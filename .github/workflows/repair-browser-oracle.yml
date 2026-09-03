@@ -1,0 +1,52 @@
+name: One-time browser operator-mode oracle repair
+on:
+  push:
+    branches: [repair/full-spec-conformance-fcfc1c6]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/full-spec-conformance-fcfc1c6
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Bind browser oracle to current specified operator mode
+        shell: bash
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser-extra.mjs')
+          s=p.read_text()
+          old="'Continue the external conversation'"
+          new="'Continue talking to the agent. Do not import a final response file yet.'"
+          if s.count(old) != 1:
+              raise SystemExit(f'Expected exactly one stale operator-mode oracle; found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          node --check verify-browser-extra.mjs
+          node verify-file-first-operator.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove scaffolding and commit whole regression repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-browser-oracle.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-browser-extra.mjs .github/workflows/repair-browser-oracle.yml
+          git diff --cached --check
+          git commit -m "Align browser operator-mode regression with file-first flow"
+          git push origin HEAD:repair/full-spec-conformance-fcfc1c6
