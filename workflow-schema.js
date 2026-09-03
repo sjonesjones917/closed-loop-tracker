@@ -547,7 +547,11 @@ const RECORD_OWNERSHIP=Object.freeze({
   "confirmationRecords": {
     "human": [],
     "humanDecision": [],
-    "agent": [
+    "agent": [],
+    "application": [
+      "CONFIRMATION_ID",
+      "SOURCE_ITERATION_ID",
+      "CONFIRMATION_ITERATION_ID",
       "ZERO_MATERIAL_CHANGES",
       "VERSION_HASH_COMPARISON",
       "TEN_NEW_CONTEXTS",
@@ -560,11 +564,6 @@ const RECORD_OWNERSHIP=Object.freeze({
       "NEW_VARIANCE",
       "DETERMINATION",
       "EVIDENCE"
-    ],
-    "application": [
-      "CONFIRMATION_ID",
-      "SOURCE_ITERATION_ID",
-      "CONFIRMATION_ITERATION_ID"
     ]
   },
   "baselines": {
