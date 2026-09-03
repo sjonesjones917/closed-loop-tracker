@@ -22,7 +22,10 @@ jobs:
       - name: Apply the reviewed operation-contract correction
         shell: bash
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
+          diagnostic="$RUNNER_TEMP/repair-diagnostic.txt"
+          : > "$diagnostic"
+          trap 'status=$?; { echo "status=$status"; echo "command=$BASH_COMMAND"; echo "head=$(git rev-parse HEAD 2>/dev/null || true)"; echo "reviewed=$(git rev-parse refs/remotes/origin/reviewed-operation-scope 2>/dev/null || true)"; echo "status_short:"; git status --short 2>&1 || true; echo "unmerged:"; git diff --name-only --diff-filter=U 2>&1 || true; echo "patch_head:"; sed -n "1,120p" "$RUNNER_TEMP/operation-scope.patch" 2>&1 || true; } > "$diagnostic"; exit $status' ERR
           git fetch --no-tags origin refs/pull/812/head:refs/remotes/origin/reviewed-operation-scope
           test "$(git rev-parse refs/remotes/origin/reviewed-operation-scope)" = "50dd730fc679c76874ceb9d6625b21bb504ae4db"
           base="$(git merge-base HEAD refs/remotes/origin/reviewed-operation-scope)"
@@ -53,6 +56,15 @@ jobs:
           PY
           git add workflow-schema.js verify-operation-scope-authority.mjs
           git diff --cached --check
+          printf 'status=0\nhead=%s\nreviewed=%s\n' "$(git rev-parse HEAD)" "$(git rev-parse refs/remotes/origin/reviewed-operation-scope)" > "$diagnostic"
+      - name: Preserve exact application diagnostic
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operation-scope-repair-diagnostic-${{ github.sha }}
+          path: ${{ runner.temp }}/repair-diagnostic.txt
+          if-no-files-found: error
+          retention-days: 1
       - name: Prove the exact fixed oracle and affected downstream paths
         shell: bash
         run: |
