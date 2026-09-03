@@ -1,0 +1,51 @@
+import fs from 'node:fs';
+
+const path='workflow-schema.js';
+let source=fs.readFileSync(path,'utf8');
+
+const oldBlock=/const HUMAN_JOB_FIELDS=Object\.freeze\(\[[\s\S]*?const JOB_FIELDS=Object\.freeze\(Object\.fromEntries\(\[\.\.\.new Set\(\[\.\.\.HUMAN_DECISION_JOB_FIELDS,\.\.\.HUMAN_JOB_FIELDS,\.\.\.APPLICATION_JOB_FIELDS,\.\.\.AGENT_JOB_FIELDS\]\)\]\.map\(name=>\[name,jobFieldDefinition\(name\)\]\)\)\);/;
+if(!oldBlock.test(source))throw new Error('Section 15 job-field block not found exactly once.');
+
+const replacement=`const HUMAN_JOB_FIELDS=Object.freeze([
+  'EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',
+  'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES',
+  'AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS'
+]);
+const HUMAN_DECISION_JOB_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER']);
+const APPLICATION_JOB_FIELDS=Object.freeze([
+  'JOB_ID','CONTRACT_PROFILE_ID','DATE_OPENED','CURRENT_ITERATION','CURRENT_STAGE','CURRENT_STATE','CURRENT_INPUT_VERSION',
+  'CURRENT_SOURCE_SET_VERSION','CURRENT_RESEARCH_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION',
+  'CURRENT_INSTRUCTION_VERSION','CURRENT_CANDIDATE_ID','CURRENT_BASELINE_ID','CURRENT_PRODUCT_ID','CURRENT_PRODUCT_VERSION',
+  'CURRENT_DELIVERY_CANDIDATE_SET_ID','CURRENT_REVIEW_VERSION','CURRENT_RECONCILED_REVIEW_VERSION','CURRENT_RELEASE_ID',
+  'CURRENT_HASH_REVIEW_ID','CURRENT_EVIDENCE_CHAIN_VERSION','CURRENT_DELIVERY_ID','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION',
+  'LATEST_EVIDENCE_REFERENCE','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE'
+]);
+const AGENT_JOB_FIELDS=Object.freeze([
+  'EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'
+]);
+const NULLABLE_APPLICATION_JOB_FIELDS=new Set([
+  'CURRENT_ITERATION','CURRENT_SOURCE_SET_VERSION','CURRENT_RESEARCH_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION',
+  'CURRENT_INSTRUCTION_VERSION','CURRENT_CANDIDATE_ID','CURRENT_BASELINE_ID','CURRENT_PRODUCT_ID','CURRENT_PRODUCT_VERSION',
+  'CURRENT_DELIVERY_CANDIDATE_SET_ID','CURRENT_REVIEW_VERSION','CURRENT_RECONCILED_REVIEW_VERSION','CURRENT_RELEASE_ID',
+  'CURRENT_HASH_REVIEW_ID','CURRENT_EVIDENCE_CHAIN_VERSION','CURRENT_DELIVERY_ID','LATEST_EVIDENCE_REFERENCE'
+]);
+
+function jobFieldDefinition(name){
+  if(HUMAN_DECISION_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN_DECISION,{nullable:true,provenanceRequired:false});
+  if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});
+  if(AGENT_JOB_FIELDS.includes(name))return field(name,PRODUCER.AGENT,{requiredAtStage:1,valueType:'STRING'});
+  if(APPLICATION_JOB_FIELDS.includes(name)){
+    const options={nullable:NULLABLE_APPLICATION_JOB_FIELDS.has(name),derivation:\`Application derives \${name} from canonical project state.\`};
+    if(name==='CONTRACT_PROFILE_ID')options.authority='closed-loop-completion-profile/1';
+    if(name==='CURRENT_BLOCKERS'||name==='NEXT_REQUIRED_ACTION')options.valueType='OBJECT';
+    if(name==='CURRENT_STATE')options.enumValues=['BLOCKED','AWAITING_HUMAN_INPUT','PROPOSAL_PENDING_REVIEW','RESPONSE_STAGED','AWAITING_EXTERNAL_RESPONSE','READY_FOR_NEXT_OPERATION','WORKFLOW_COMPLETE'];
+    if(name==='JOB_RECORD_STATUS')options.enumValues=['INCOMPLETE','BLOCKED','COMPLETE'];
+    return field(name,PRODUCER.APPLICATION,options);
+  }
+  throw new Error(\`UNDEFINED_FIELD_CONTRACT: unclassified job field \${name}\`);
+}
+const JOB_FIELDS=Object.freeze(Object.fromEntries([...new Set([...HUMAN_DECISION_JOB_FIELDS,...HUMAN_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])].map(name=>[name,jobFieldDefinition(name)])));`;
+
+source=source.replace(oldBlock,replacement);
+fs.writeFileSync(path,source);
+console.log('Repaired Section 15 job field contracts.');
