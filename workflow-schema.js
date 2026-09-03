@@ -1378,3 +1378,75 @@ const schema=Object.freeze({...s0,version:'closed-loop-workflow-schema/3',__cont
 const augmented=globalThis.closedLoopWorkflowSchema;
 globalThis.closedLoopWorkflowSchema=Object.freeze({...augmented,TRUTH_VALUES:Object.freeze([...E.truth]),EPISTEMIC_BASES:Object.freeze([...E.basis]),APPLICABILITY_VALUES:Object.freeze([...E.applicability]),ENTAILMENT_VALUES:Object.freeze([...E.entailment]),PROOF_EXPRESSION_OPERATORS:Object.freeze(['LEAF','ALL_OF','ANY_OF','AT_LEAST_K']),NORMATIVE_CLASS_VALUES:Object.freeze([...E.normative]),SEMANTIC_COVERAGE_VALUES:Object.freeze([...E.coverage]),OBSERVATION_ORIGIN_VALUES:Object.freeze([...E.origin]),DELIVERY_STATE_VALUES:Object.freeze([...E.delivery])});
 })();
+
+
+/* CLOSED OPERATION / SCOPE CONTRACT CLOSURE */
+;(()=>{
+'use strict';
+const prior=globalThis.closedLoopWorkflowSchema;
+if(!prior)throw new Error('workflow schema must load before operation/scope closure');
+const SCOPE_REQUIREMENTS=Object.freeze({
+1:Object.freeze(['inputVersion']),
+2:Object.freeze(['inputVersion','sourceSetVersion']),
+3:Object.freeze(['inputVersion','sourceSetVersion','researchVersion']),
+4:Object.freeze(['inputVersion','sourceSetVersion','researchVersion','requirementsVersion']),
+5:Object.freeze(['inputVersion','sourceSetVersion','researchVersion','requirementsVersion']),
+6:Object.freeze(['requirementsVersion','testSuiteVersion']),
+7:Object.freeze(['requirementsVersion','testSuiteVersion']),
+8:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion']),
+9:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion']),
+10:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId']),
+11:Object.freeze(['iterationId','candidateId','runId']),
+12:Object.freeze(['iterationId','candidateId','runId','requirementsVersion','testSuiteVersion']),
+13:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),
+14:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),
+15:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),
+16:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),
+17:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),
+18:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),
+19:Object.freeze(['sourceConvergedIterationId','confirmationIterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),
+20:Object.freeze(['confirmationIterationId','baselineId']),
+21:Object.freeze(['baselineId','productId']),
+22:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),
+23:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),
+24:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),
+25:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId']),
+26:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion']),
+27:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','reconciledReviewVersion']),
+28:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId']),
+29:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId']),
+30:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion'])
+});
+const EXECUTOR_CLASS=Object.freeze({EXTERNAL_AGENT:'EXTERNAL_AGENT',APPLICATION:'APPLICATION',HUMAN_DECISION:'HUMAN_DECISION',OPERATOR_ACTION:'OPERATOR_ACTION'});
+const ACCEPTANCE_MODE=Object.freeze({HUMAN_ACCEPTANCE_REQUIRED:'HUMAN_ACCEPTANCE_REQUIRED',VALIDATED_AUTO_COMMIT:'VALIDATED_AUTO_COMMIT',NOT_APPLICABLE:'NOT_APPLICABLE'});
+const applicationKeys=new Set([
+'7:EXECUTE_FAILURE_TEST','10:FREEZE','15:EXECUTE_REGRESSION','18:COMPLETE','19:CONFIRM_FREEZE','19:REGRESSION_VERIFY','19:CONFIRM','20:FREEZE_BASELINE','22:RUN_NATIVE_TESTS','24:RUN_NATIVE_ATTACKS','25:FREEZE_DELIVERY_CANDIDATE','27:CALCULATE_RELEASE','28:VERIFY_IDENTITY','29:CALCULATE_EVIDENCE_CHAINS','30:CALCULATE_TERMINAL'
+]);
+const humanDecisionKeys=new Set(['28:CAPTURE_DELIVERY_INTENT']);
+const nonAgentWritable=new Set([...applicationKeys,...humanDecisionKeys]);
+const applicationResponseTypes=Object.freeze([]);
+function operationKey(stage,operation){return Number(stage)+':'+String(operation);}
+function classify(stage,operation){const key=operationKey(stage,operation);if(humanDecisionKeys.has(key))return EXECUTOR_CLASS.HUMAN_DECISION;if(applicationKeys.has(key))return EXECUTOR_CLASS.APPLICATION;return EXECUTOR_CLASS.EXTERNAL_AGENT;}
+function operationContract(stage,operation){
+ const n=Number(stage),op=String(operation||''),operations=prior.STAGE_OPERATIONS?.[n];
+ if(!Array.isArray(operations)||!operations.includes(op))return null;
+ const legacy=prior.operationContract?.(n,op)||{};
+ const executorClass=classify(n,op),key=operationKey(n,op),isExternal=executorClass===EXECUTOR_CLASS.EXTERNAL_AGENT;
+ const agentWritableCollections=nonAgentWritable.has(key)?[]:[...(legacy.agentWritableCollections||[])];
+ const allowedStageData=nonAgentWritable.has(key)?[]:[...(legacy.allowedStageData||[])];
+ const responseTypes=isExternal?Object.freeze(['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']):applicationResponseTypes;
+ const acceptanceMode=isExternal?(n===1&&['COMPLETE','RECONCILE_INTAKE'].includes(op)?ACCEPTANCE_MODE.HUMAN_ACCEPTANCE_REQUIRED:ACCEPTANCE_MODE.HUMAN_ACCEPTANCE_REQUIRED):ACCEPTANCE_MODE.NOT_APPLICABLE;
+ return Object.freeze({...legacy,operation:op,executorClass,responseTypes,acceptanceMode,agentWritableCollections:Object.freeze(agentWritableCollections),allowedStageData:Object.freeze(allowedStageData),scopeRequirements:SCOPE_REQUIREMENTS[n],reservationRequired:isExternal});
+}
+const STAGE_OPERATION_SCOPE_MATRIX=Object.freeze(Object.fromEntries(Object.entries(prior.STAGE_OPERATIONS||{}).flatMap(([stage,ops])=>ops.map(operation=>{
+ const n=Number(stage),key=operationKey(n,operation);return [key,Object.freeze({stage:n,operation,requiredDimensions:SCOPE_REQUIREMENTS[n],projectRevisionRequired:true,contractProfileIdRequired:true,scopeHashRequired:true})];
+}))));
+const STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(prior.STAGE_OPERATIONS||{}).flatMap(([stage,ops])=>ops.map(operation=>{const n=Number(stage),c=operationContract(n,operation);return [operationKey(n,operation),c];}))));
+for(const [key,contract] of Object.entries(STAGE_OPERATION_REGISTRY)){
+ if(!contract)throw new Error('Missing operation contract '+key);
+ if(contract.executorClass!==EXECUTOR_CLASS.EXTERNAL_AGENT&&(contract.agentWritableCollections.length||contract.allowedStageData.length||contract.responseTypes.length))throw new Error('Non-agent operation exposes external write/response authority '+key);
+}
+const operationCount=Object.values(prior.STAGE_OPERATIONS||{}).reduce((n,ops)=>n+ops.length,0);
+if(operationCount!==66||Object.keys(STAGE_OPERATION_REGISTRY).length!==66)throw new Error('Closed operation registry must contain exactly 66 stage-operation combinations.');
+globalThis.closedLoopWorkflowSchema=Object.freeze({...prior,version:'closed-loop-operation-scope-closure/1',SCOPE_REQUIREMENTS,EXECUTOR_CLASS,ACCEPTANCE_MODE,STAGE_OPERATION_SCOPE_MATRIX,STAGE_OPERATION_REGISTRY,operationContract});
+})();

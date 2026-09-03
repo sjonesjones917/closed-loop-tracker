@@ -1,3 +1,4 @@
+await import('./verify-operation-scope-authority.mjs');
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
