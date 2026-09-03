@@ -1,5 +1,10 @@
 name: Transplant proven file-first path onto current main
 on:
+  push:
+    branches: [repair/full-spec-conformance-fcfc1c6]
+    paths:
+      - SOURCE_EXPORT_REQUEST.txt
+      - .github/workflows/transplant-file-first-current-main.yml
   pull_request:
     branches: [main]
     paths:
