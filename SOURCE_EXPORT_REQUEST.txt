@@ -1,0 +1,1 @@
+Temporary source-capture marker for closed-loop-monotonic-build-controller/2 Stage 01. This file is branch-only and must be removed before any stage merge.
