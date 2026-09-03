@@ -16,6 +16,15 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Repair stale workflow insertion anchor in one-time transform
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const path='.repair-scope-contract.mjs';
+          let text=fs.readFileSync(path,'utf8');
+          text=text.replace("const anchor='          node verify-reservation-contract.mjs\\n';","const anchor='          node verify-spec3-contract.mjs\\n';");
+          fs.writeFileSync(path,text);
+          NODE
       - run: node .repair-scope-contract.mjs
       - run: node --check workflow-schema.js && node --check prompt-engine.js && node --check response-ingestion.js && node verify-stage-operation-scope-matrix.mjs
       - name: Commit repaired canonical files and remove scaffolding
