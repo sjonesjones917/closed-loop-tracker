@@ -47,7 +47,12 @@ function buildMetricFixture(){
   project.projectData.iterations.push(rec('ITER-METRIC-1',10,{ITERATION_ID:'ITER-METRIC-1',CANDIDATE_ID:'CAND-METRIC-1',STATUS:'FROZEN'}));
   project.projectData.candidateFreezes.push(rec('CAND-METRIC-1',10,{CANDIDATE_ID:'CAND-METRIC-1',ITERATION_ID:'ITER-METRIC-1',STATUS:'FROZEN'}));
   project.projectData.requirements.push(rec('REQ-METRIC-1',4,{REQ_ID:'REQ-METRIC-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}));
-  project.projectData.tests.push(rec('TEST-METRIC-1',6,{TEST_ID:'TEST-METRIC-1',REQ_ID:'REQ-METRIC-1',STATUS:'READY'}));
+  project.projectData.tests.push(rec('TEST-METRIC-1',6,{
+    TEST_ID:'TEST-METRIC-1',REQ_ID:'REQ-METRIC-1',STATUS:'READY',
+    VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,
+    PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,
+    TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}
+  }));
   for(let index=1;index<=10;index++){
     const runId=`RUN-METRIC-${String(index).padStart(2,'0')}`;
     project.projectData.runs.push(rec(runId,11,{RUN_ID:runId,ITERATION_ID:'ITER-METRIC-1',CANDIDATE_ID:'CAND-METRIC-1'}));
@@ -58,7 +63,7 @@ function buildMetricFixture(){
 function metricFor(project){
   const matrix=engine.verificationMatrix(project,'ITER-METRIC-1');
   const universe=[...matrix.expected].map(String);
-  assert(universe.length===10,'Section 49 REQ × RUN × TEST fixture must contain exactly ten required tuples.');
+  assert(universe.length===10,'Section 49 REQ × RUN × TEST fixture must contain exactly ten required due per-run tuples.');
   const included=universe.filter(key=>matrix.counts.get(key)===1);
   const excluded=[
     ...matrix.missing.map(id=>({id:String(id),reason:'MISSING_CURRENT_REQUIRED_TRIPLE'})),
@@ -67,7 +72,7 @@ function metricFor(project){
   return Object.freeze({
     metricId:'REQ_RUN_TEST_COVERAGE',
     derivationVersion:'closed-loop-section49-state-metrics/1',
-    universeDefinition:'Exact current required REQ_ID × RUN_ID × TEST_ID tuples derived by workflow-engine.verificationMatrix for the controlled ten-run acceptance fixture.',
+    universeDefinition:'Exact current required and due PREPRODUCT_ITERATION per-run REQ_ID × RUN_ID × TEST_ID tuples derived by workflow-engine.verificationMatrix for the controlled ten-run acceptance fixture.',
     numerator:included.length,
     denominator:universe.length,
     includedIds:included,
