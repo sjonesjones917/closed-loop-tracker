@@ -1,0 +1,26 @@
+name: One-time sync current main
+on:
+  push:
+    branches: [codex/exact-stage-operation-registry]
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/exact-stage-operation-registry
+          fetch-depth: 0
+      - name: Merge current main and remove sync scaffold
+        run: |
+          set -euo pipefail
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git fetch origin main
+          git merge --no-edit origin/main
+          rm .github/workflows/one-time-sync-main.yml
+          git add -A
+          git diff --cached --check
+          git commit -m "Sync exact operation fix with current main"
+          git push origin HEAD:codex/exact-stage-operation-registry
