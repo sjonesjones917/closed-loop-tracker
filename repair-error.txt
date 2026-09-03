@@ -1,25 +1,11 @@
-node:internal/modules/run_main:123
-    triggerUncaughtException(
-    ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.repair-runtime-spec-2.mjs:26
+if(!repair.includes(looseA)||!repair.includes(looseB))throw new Error('Loose regression oracle patterns not found exactly.');
+                                                            ^
 
-AssertionError [ERR_ASSERTION]: current runtime must not contain the repaired contradiction patterns
-+ actual - expected
-
-+ [
-+   'sentinel-current-id'
-+ ]
-- []
-
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-runtime-spec-contradictions.mjs:5:471
+Error: Loose regression oracle patterns not found exactly.
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.repair-runtime-spec-2.mjs:26:61
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
-  generatedMessage: false,
-  code: 'ERR_ASSERTION',
-  actual: [ 'sentinel-current-id' ],
-  expected: [],
-  operator: 'deepStrictEqual',
-  diff: 'simple'
-}
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
 
 Node.js v22.23.2
