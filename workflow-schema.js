@@ -1443,7 +1443,27 @@ for(const [stageText,fields] of Object.entries(s0.STAGE_FIELDS||{}))for(const [n
 const FIELD_REGISTRY=Object.freeze(FIELD_REGISTRY_ENTRIES);
 const DURABLE_OBJECT_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(RS).map(([family,definition])=>[family,Object.freeze({family,idField:definition.idField,prefix:definition.prefix,stage:definition.stage??'GLOBAL',policy:definition.commitPolicy,producerPartitions:Object.freeze({human:Object.freeze([...(definition.ownership?.human||[])]),humanDecision:Object.freeze([...(definition.ownership?.humanDecision||[])]),agent:Object.freeze([...(definition.ownership?.agent||[])]),application:Object.freeze([...(definition.ownership?.application||[])])}),relationships:Object.freeze({...definition.relationships}),scope:'REGISTERED_CURRENT_SCOPE',invalidationOwner:'workflow-engine.js',hashInclusion:'REGISTERED_RECORD_PREIMAGE'})])));
 const normalizerRegistry=Object.freeze({identity:'closed-loop-normalizer-registry/1',entries:Object.freeze({})});
-const derivationRegistry=Object.freeze({identity:'closed-loop-derivation-registry/1',entries:Object.freeze({})});
+const DERIVATION_REGISTRY_VERSION='closed-loop-derivation-registry/1';
+const DERIVATION_ENTRY_VERSION='closed-loop-derivation-contract/1';
+const derivationEntries={};
+for(const entry of Object.values(FIELD_REGISTRY)){
+  const registryId=entry.derivationIdentity;
+  if(!registryId||derivationEntries[registryId])continue;
+  derivationEntries[registryId]=Object.freeze({
+    registryId,
+    version:DERIVATION_ENTRY_VERSION,
+    implementationOwnerFile:entry.invalidationOwner||'workflow-engine.js',
+    canonicalInputContract:Object.freeze({
+      dependencyClosure:'CURRENT_CANONICAL_DEPENDENCY_CLOSURE',
+      sourceRecordHashes:'REQUIRED_FOR_PERSISTED_DERIVED_VALUES',
+      scopeDimensions:Object.freeze([...(entry.scopeDimensions||[])])
+    }),
+    outputContract:Object.freeze({path:entry.path,valueType:entry.valueType,nullable:entry.nullable,cardinality:entry.cardinality}),
+    implementationIdentity:VERSION,
+    invalidationConsequences:'CONSERVATIVE_STAGE_INVALIDATION'
+  });
+}
+const derivationRegistry=Object.freeze({identity:DERIVATION_REGISTRY_VERSION,entries:Object.freeze(derivationEntries)});
 
 const schema=Object.freeze({...s0,version:'closed-loop-workflow-schema/3',__controllingCompletionAmendmentVersion:VERSION,CONTROLLING_COMPLETION_ENUMS:E,RECORD_SCHEMAS:Object.freeze(RS),RECORD_OWNERSHIP:Object.freeze(RO),STAGE_COLLECTIONS:SC,READ_COLLECTIONS:RC,APPLICATION_COLLECTIONS:AC,STAGE_CONTRACTS:CONTRACTS,operationContract:registeredOperationContract,FIELD_REGISTRY,STAGE_OPERATION_REGISTRY,STAGE_OPERATION_SCOPE_MATRIX,DURABLE_OBJECT_REGISTRY,normalizerRegistry,derivationRegistry,VERIFICATION_PHASE_VALUES,EXACT_SCOPE_DIMENSIONS,TARGET_DIMENSIONS_BY_OPERATION,allowedCollections:n=>Object.freeze([...(SC[n]||[])]),recordAgentFields:c=>Object.freeze(Object.values(RS[c]?.fieldDefinitions||{}).filter(d=>d.producer===P.AGENT).map(d=>d.name)),recordHumanFields:c=>Object.freeze(Object.values(RS[c]?.fieldDefinitions||{}).filter(d=>d.producer===P.HUMAN||d.producer===P.HUMAN_DECISION).map(d=>d.name))});globalThis.closedLoopWorkflowSchema=schema;
 const augmented=globalThis.closedLoopWorkflowSchema;
