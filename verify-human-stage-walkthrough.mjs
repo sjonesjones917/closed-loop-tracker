@@ -64,6 +64,7 @@ try{
       if(!text.includes('STRICT RESPONSE CONTRACT'))throw new Error('Stage '+stage+' '+operation+' omitted its response contract.');
       checked.push(stage+':'+operation);
     }
+    const newProjectButton=document.querySelector('#new-project');if(!newProjectButton)throw new Error('New project action is missing.');newProjectButton.click();await new Promise(r=>setTimeout(r,150));
     const workflowButton=document.querySelector('[data-view="Workflow"]');if(!workflowButton)throw new Error('Workflow navigation is missing.');workflowButton.click();await new Promise(r=>setTimeout(r,100));
     const picker=document.querySelector('#stage-picker');if(!picker)throw new Error('Stage picker is missing after opening Workflow.');
     const operatorChecks=document.querySelector('#next-required-action .operator-checks');if(!operatorChecks)throw new Error('Current operator action does not expose the compact double-check guide.');
