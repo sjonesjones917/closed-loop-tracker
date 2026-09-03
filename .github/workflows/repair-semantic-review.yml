@@ -17,16 +17,20 @@ jobs:
           set +e
           {
             node .repair-semantic-review.mjs &&
+            node .repair-prompt-identity-reuse.mjs &&
             node --check response-ingestion.js &&
+            node --check prompt-engine.js &&
             node verify-semantic-review-independence.mjs &&
+            node verify-prompt-identity-reuse.mjs &&
             node verify-contract-closure.mjs &&
+            node verify-prompt-semantics.mjs &&
             node verify-ingestion.mjs &&
             node verify-complete.mjs
           } > semantic-review-error.txt 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            git checkout -- response-ingestion.js verify-ingestion.mjs verify-complete.mjs || true
-            rm -f verify-semantic-review-independence.mjs
+            git checkout -- response-ingestion.js prompt-engine.js verify-ingestion.mjs verify-complete.mjs verify-prompt-semantics.mjs || true
+            rm -f verify-semantic-review-independence.mjs verify-prompt-identity-reuse.mjs
             git config user.name closed-loop-repair
             git config user.email closed-loop-repair@users.noreply.github.com
             git add -A semantic-review-error.txt
@@ -35,9 +39,9 @@ jobs:
             exit "$status"
           fi
           set -euo pipefail
-          rm -f semantic-review-error.txt .repair-semantic-review.mjs .github/workflows/repair-semantic-review.yml
+          rm -f semantic-review-error.txt .repair-semantic-review.mjs .repair-prompt-identity-reuse.mjs .github/workflows/repair-semantic-review.yml
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
           git add -A
-          git commit -m "Prevent semantic self-approval [semantic-review-repair-applied]"
+          git commit -m "Prevent semantic self-approval and stale prompt identity reuse [semantic-review-repair-applied]"
           git push origin HEAD:fix/spec-runtime-contradictions-20260903
