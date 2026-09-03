@@ -9,10 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Locate failing browser dereference
+      - name: Run browser verifiers with identity
+        env:
+          BROWSER: /usr/bin/google-chrome
         run: |
-          grep -RIn -C 3 'contentSha256' verify-*browser*.mjs verify-human-stage-walkthrough.mjs verify-mobile-stage-action.mjs || true
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           for f in verify-human-stage-walkthrough.mjs verify-mobile-stage-action.mjs verify-browser.mjs verify-browser-extra.mjs; do
-            echo "===== $f lines ====="
-            wc -l "$f"
+            echo "===== START $f ====="
+            node "$f"
+            echo "===== PASS $f ====="
           done
