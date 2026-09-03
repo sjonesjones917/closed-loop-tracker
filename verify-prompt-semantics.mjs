@@ -14,6 +14,8 @@ assert(core.WORKFLOW_ID==='mobile-closed-loop/30','Workflow identity changed.');
 assert(core.STAGE_COUNT===30,'Stage count changed.');
 assert(core.PROJECT_SCHEMA==='closed-loop-project/3','Project schema is not /3.');
 assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema is not /3.');
+assert(!fs.existsSync('IMPLEMENTATION_GOVERNANCE.md'),'Implementation-agent governance must not be stored in the repository.');
+assert(!fs.existsSync('specification'),'Controlling implementation instructions must not be stored in a repository specification directory.');
 
 const source=fs.readFileSync('prompt-engine.js','utf8');
 for(const forbidden of [
@@ -128,5 +130,6 @@ console.log(JSON.stringify({
   exactPromptIdentity:true,
   promptDelimiterEscapePrevented:true,
   shortValueInstructionCorruptionPrevented:true,
-  postGenerationPromptWrapperAbsent:true
+  postGenerationPromptWrapperAbsent:true,
+  repositoryImplementationInstructionBoundary:true
 },null,2));
