@@ -404,3 +404,5 @@ console.log(JSON.stringify({nativeHandoffNoExternalReturn:true,capabilityNegatio
 console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperationalMetrics:true},null,2));
 
 await import('./verify-spec-residual-closure.mjs');
+
+await import('./verify-operation-scope-classification.mjs');
