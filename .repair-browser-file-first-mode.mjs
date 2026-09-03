@@ -1,0 +1,8 @@
+import fs from 'node:fs';
+const path='verify-browser-extra.mjs';
+let source=fs.readFileSync(path,'utf8');
+const old=`// reliability-v2 responsive UI source obligations (runtime browser suite above still exercises 320/393/desktop).\n{\n const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Exact handoff','Continue the external conversation','Canonical state changed: NO','Execution stability','Regression lifecycle','Current evidence is contradictory','Why the application believes each requirement is established'])if(!source.includes(token))throw new Error('Missing operator reliability UI: '+token);\n}`;
+const replacement=`// reliability-v2 responsive UI source obligations (runtime browser suite above still exercises 320/393/desktop).\n{\n const source=fs.readFileSync('app-core.js','utf8');\n const required=['Exact handoff','Continue talking to the agent. Do not import a final response file yet.','The current external conversation is ready for its final response file. Select the returned response.json below.','Canonical state changed: NO','Execution stability','Regression lifecycle','Current evidence is contradictory','Why the application believes each requirement is established'];\n const verify=current=>{for(const token of required)if(!current.includes(token))throw new Error('Missing operator reliability UI: '+token);};\n verify(source);\n for(const token of required.slice(1,3))assert.throws?.(()=>verify(source.replace(token,'')));\n}`;
+if(!source.includes(old))throw new Error('Expected obsolete conversation-mode source assertion was not found.');
+source=source.replace(old,replacement);
+fs.writeFileSync(path,source);
