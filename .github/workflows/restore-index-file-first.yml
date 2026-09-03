@@ -1,0 +1,49 @@
+name: One-time restore index file-first repair
+on:
+  push:
+    branches:
+      - repair/full-spec-conformance-fcfc1c6
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/full-spec-conformance-fcfc1c6
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore exact parent and apply one operator-text correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 59cd3e3bdb4be923af362177115e261caa62adb7:index.html > index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='<strong>Select that exact response JSON file in the application</strong>'
+          new='<strong>Select the exact response.json file returned by the agent in the application</strong>'
+          if s.count(old) != 1:
+              raise SystemExit(f'Expected exactly one operator-guidance target; found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          git diff --check
+          node verify-file-first-response.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify.mjs
+      - name: Commit whole repair and remove scaffold
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/restore-index-file-first.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add index.html .github/workflows/restore-index-file-first.yml
+          git diff --cached --check
+          git commit -m "Restore index and conform response-file guidance"
+          git push origin HEAD:repair/full-spec-conformance-fcfc1c6
