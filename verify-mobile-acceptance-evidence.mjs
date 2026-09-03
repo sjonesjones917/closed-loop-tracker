@@ -55,6 +55,8 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(target.basePath!==MOBILE_ACCEPTANCE_BASE_PATH)issue(errors,'TARGET_BASE_PATH_INVALID','Target base path must be the canonical deployment base path.');
   if(!NONEMPTY(target.testProjectId))issue(errors,'TARGET_TEST_PROJECT_REQUIRED','Target testProjectId is required.');
   if(!NONEMPTY(target.procedureVersion))issue(errors,'TARGET_PROCEDURE_REQUIRED','Target procedureVersion is required.');
+  if(!NONEMPTY(target.performer))issue(errors,'TARGET_PERFORMER_REQUIRED','Pinned target performer identity is required.');
+  if(!NONEMPTY(target.identityAssurance))issue(errors,'TARGET_IDENTITY_ASSURANCE_REQUIRED','Pinned target performer identity assurance is required.');
   if(!NONEMPTY(target.iosVersion))issue(errors,'TARGET_IOS_VERSION_REQUIRED','Pinned target iOS version is required.');
   if(!validSafariUserAgent(target.safariUserAgent))issue(errors,'TARGET_SAFARI_USER_AGENT_INVALID','Pinned target must identify Safari on the physical iPhone and reject substitute browsers.');
   if(!target.viewport||!finite(target.viewport.width)||!finite(target.viewport.height)||!finite(target.viewport.devicePixelRatio)||target.viewport.width<=0||target.viewport.height<=0||target.viewport.devicePixelRatio<=0)issue(errors,'TARGET_VIEWPORT_INVALID','Target viewport dimensions and device-pixel ratio are required.');
@@ -73,6 +75,8 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     ['basePath','EVIDENCE_BASE_PATH_MISMATCH'],
     ['testProjectId','EVIDENCE_TEST_PROJECT_MISMATCH'],
     ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH'],
+    ['performer','EVIDENCE_PERFORMER_MISMATCH'],
+    ['identityAssurance','EVIDENCE_IDENTITY_ASSURANCE_MISMATCH'],
     ['iosVersion','EVIDENCE_IOS_VERSION_MISMATCH'],
     ['safariUserAgent','EVIDENCE_SAFARI_USER_AGENT_MISMATCH']
   ];
@@ -116,7 +120,8 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     evidenceId:evidence.mobileAcceptanceEvidenceId||null,
     challenge:target.challenge||null,
     evidenceBasis:evidence.evidenceBasis||'NONE',
-    performer:evidence.performer||null,
+    performer:target.performer||null,
+    identityAssurance:target.identityAssurance||null,
     physicalDeviceAssertion:evidence.physicalDeviceAssertion===true,
     iosVersion:target.iosVersion||null,
     safariUserAgent:target.safariUserAgent||null,
