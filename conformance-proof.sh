@@ -6,6 +6,7 @@ node --check response-ingestion.js
 node verify-canonical-job-contract.mjs
 node verify-contract-profile-migration.mjs
 node verify-closed-contract-registries.mjs
+node verify-operation-authority-compatibility.mjs
 node verify-response-envelope-conformance.mjs
 node verify-hash.mjs
 node verify-v3-migration.mjs
