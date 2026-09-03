@@ -1,0 +1,39 @@
+name: One-time sync scope-authority repair with current main
+on:
+  push:
+    branches:
+      - repair/scope-authority-e2aab
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/scope-authority-e2aab
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Merge exact current main and prove focused ratchet
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git fetch origin main
+          git merge --no-edit origin/main
+          node verify-operation-scope-authority.mjs
+          node verify-v3-contract.mjs
+          node verify-data-route-closure.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          git diff --check
+      - name: Remove one-time scaffold and commit synchronized branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/sync-scope-authority-current-main.yml
+          git add -A
+          if ! git diff --cached --quiet; then git commit -m "Sync exact current main into operation authority repair"; fi
+          git push origin HEAD:repair/scope-authority-e2aab
