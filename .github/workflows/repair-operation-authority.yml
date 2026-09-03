@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   repair:
-    if: ${{ !contains(github.event.head_commit.message, '[operation-authority-repaired]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[operation-authority-repaired]') && !contains(github.event.head_commit.message, '[operation-authority-diagnostic]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -20,21 +20,41 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Patch owning schema and permanent proof
+      - name: Attempt whole repair atomically
         shell: bash
-        run: |
-          node -e "const fs=require('fs');const p='workflow-schema.js';let s=fs.readFileSync(p,'utf8');if(s.includes('CLOSED_OPERATION_AUTHORITY_REGISTRY_V1'))throw new Error('already repaired');fs.writeFileSync(p,s+JSON.parse(process.env.AUTHORITY_PATCH));fs.writeFileSync('verify-operation-authority.mjs',JSON.parse(process.env.AUTHORITY_PROOF));let w=fs.readFileSync('.github/workflows/pages.yml','utf8');const m='          node verify.mjs\\n';if(!w.includes(m))throw new Error('verification insertion point missing');if(!w.includes('node verify-operation-authority.mjs'))w=w.replace(m,m+'          node verify-operation-authority.mjs\\n');fs.writeFileSync('.github/workflows/pages.yml',w);fs.rmSync('.github/workflows/repair-operation-authority.yml');"
-          node --check workflow-schema.js
-          node verify-operation-authority.mjs
-          git diff --check
         env:
           AUTHORITY_PATCH: '"\n/* CLOSED_OPERATION_AUTHORITY_REGISTRY_V1 */\n;(()=>{\n\u0027use strict\u0027;\nconst prior=globalThis.closedLoopWorkflowSchema;\nif(!prior)throw new Error(\u0027Workflow schema must exist before operation-authority closure.\u0027);\nconst APPLICATION_OPERATION_KEYS=Object.freeze(new Set([\u002710:FREEZE\u0027,\u002717:FREEZE\u0027,\u002718:COMPLETE\u0027,\u002719:CONFIRM_FREEZE\u0027,\u002719:CONFIRM\u0027,\u002720:FREEZE_BASELINE\u0027,\u002722:RUN_NATIVE_TESTS\u0027,\u002724:RUN_NATIVE_ATTACKS\u0027,\u002725:FREEZE_DELIVERY_CANDIDATE\u0027,\u002727:CALCULATE_RELEASE\u0027,\u002728:VERIFY_IDENTITY\u0027,\u002729:CALCULATE_EVIDENCE_CHAINS\u0027,\u002730:CALCULATE_TERMINAL\u0027]));\nconst HUMAN_DECISION_OPERATION_KEYS=Object.freeze(new Set([\u002728:CAPTURE_DELIVERY_INTENT\u0027]));\nconst OPERATOR_OPERATION_KEYS=Object.freeze(new Set([\u002730:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS\u0027,\u002730:RECORD_DELIVERY_EVIDENCE\u0027]));\nconst ROUTED_EXECUTION_OPERATION_KEYS=Object.freeze(new Set([\u00277:EXECUTE_FAILURE_TEST\u0027,\u002715:EXECUTE_REGRESSION\u0027,\u002719:REGRESSION_VERIFY\u0027]));\nconst operationKey=(stage,operation)=>String(Number(stage))+\u0027:\u0027+String(operation);\nfunction operationExecutorClass(stage,operation){const key=operationKey(stage,operation);if(APPLICATION_OPERATION_KEYS.has(key))return \u0027APPLICATION\u0027;if(HUMAN_DECISION_OPERATION_KEYS.has(key))return \u0027HUMAN_DECISION\u0027;if(OPERATOR_OPERATION_KEYS.has(key))return \u0027OPERATOR_ACTION\u0027;if(ROUTED_EXECUTION_OPERATION_KEYS.has(key))return \u0027ROUTE_DEPENDENT\u0027;return \u0027EXTERNAL_AGENT\u0027;}\nfunction closedOperationContract(stage,operation){const base=prior.operationContract(stage,operation);if(!base)return null;const key=operationKey(stage,operation),executorClass=operationExecutorClass(stage,operation);let agentWritableCollections=[...(base.agentWritableCollections||[])],allowedStageData=[...(base.allowedStageData||[])];if(executorClass===\u0027APPLICATION\u0027||executorClass===\u0027HUMAN_DECISION\u0027||executorClass===\u0027OPERATOR_ACTION\u0027){agentWritableCollections=[];allowedStageData=[];}if(key===\u002727:ADVISORY_REVIEW\u0027)agentWritableCollections=[\u0027releaseGateReviews\u0027];if(key===\u002722:EXECUTE_EXTERNAL_TEST\u0027)agentWritableCollections=agentWritableCollections.filter(collection=>collection!==\u0027deterministicResults\u0027);const responseEnvelopeAllowed=executorClass===\u0027EXTERNAL_AGENT\u0027||executorClass===\u0027ROUTE_DEPENDENT\u0027;return Object.freeze({...base,executorClass,responseEnvelopeAllowed,allowedResponseTypes:Object.freeze(responseEnvelopeAllowed?[...prior.RESPONSE_TYPES]:[]),acceptanceMode:responseEnvelopeAllowed?\u0027HUMAN_ACCEPTANCE_REQUIRED\u0027:null,reservationRequirement:executorClass===\u0027EXTERNAL_AGENT\u0027?\u0027REQUIRED\u0027:executorClass===\u0027ROUTE_DEPENDENT\u0027?\u0027ROUTE_DEPENDENT\u0027:\u0027NONE\u0027,agentWritableCollections:Object.freeze(agentWritableCollections),allowedStageData:Object.freeze(allowedStageData)});}\nconst STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(prior.STAGE_OPERATIONS).flatMap(([stage,operations])=>operations.map(operation=>[operationKey(stage,operation),closedOperationContract(Number(stage),operation)]))));\nglobalThis.closedLoopWorkflowSchema=Object.freeze({...prior,STAGE_OPERATION_REGISTRY,operationContract:closedOperationContract});\n})();\n"'
           AUTHORITY_PROOF: '"import fs from \u0027node:fs\u0027;\nimport vm from \u0027node:vm\u0027;\nimport assert from \u0027node:assert/strict\u0027;\nfor(const file of [\u0027workbook.js\u0027,\u0027hash.js\u0027,\u0027workflow-schema.js\u0027])vm.runInThisContext(fs.readFileSync(file,\u0027utf8\u0027),{filename:file});\nconst schema=globalThis.closedLoopWorkflowSchema;if(!schema)throw new Error(\u0027Schema failed to load.\u0027);\nconst application=[\u002710:FREEZE\u0027,\u002717:FREEZE\u0027,\u002718:COMPLETE\u0027,\u002719:CONFIRM_FREEZE\u0027,\u002719:CONFIRM\u0027,\u002720:FREEZE_BASELINE\u0027,\u002722:RUN_NATIVE_TESTS\u0027,\u002724:RUN_NATIVE_ATTACKS\u0027,\u002725:FREEZE_DELIVERY_CANDIDATE\u0027,\u002727:CALCULATE_RELEASE\u0027,\u002728:VERIFY_IDENTITY\u0027,\u002729:CALCULATE_EVIDENCE_CHAINS\u0027,\u002730:CALCULATE_TERMINAL\u0027];const humanDecision=[\u002728:CAPTURE_DELIVERY_INTENT\u0027];const operator=[\u002730:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS\u0027,\u002730:RECORD_DELIVERY_EVIDENCE\u0027];\nfunction assertClosed(candidate){assert.equal(Object.keys(candidate.STAGE_OPERATION_REGISTRY||{}).length,66,\u0027Exactly 66 stage-operation contracts must be registered.\u0027);for(const key of application){const c=candidate.STAGE_OPERATION_REGISTRY[key];assert.ok(c,key+\u0027 missing\u0027);assert.equal(c.executorClass,\u0027APPLICATION\u0027,key+\u0027 executor\u0027);assert.deepEqual(Array.from(c.agentWritableCollections),[],key+\u0027 inherited agent writes\u0027);assert.deepEqual(Array.from(c.allowedStageData),[],key+\u0027 inherited agent stage writes\u0027);assert.equal(c.responseEnvelopeAllowed,false,key+\u0027 accepts external response\u0027);assert.deepEqual(Array.from(c.allowedResponseTypes),[],key+\u0027 exposes response types\u0027);}for(const key of humanDecision){const c=candidate.STAGE_OPERATION_REGISTRY[key];assert.equal(c.executorClass,\u0027HUMAN_DECISION\u0027);assert.deepEqual(Array.from(c.agentWritableCollections),[]);assert.equal(c.responseEnvelopeAllowed,false);}for(const key of operator){const c=candidate.STAGE_OPERATION_REGISTRY[key];assert.equal(c.executorClass,\u0027OPERATOR_ACTION\u0027);assert.deepEqual(Array.from(c.agentWritableCollections),[]);assert.equal(c.responseEnvelopeAllowed,false);}const advisory=candidate.STAGE_OPERATION_REGISTRY[\u002727:ADVISORY_REVIEW\u0027];assert.equal(advisory.executorClass,\u0027EXTERNAL_AGENT\u0027);assert.deepEqual(Array.from(advisory.agentWritableCollections),[\u0027releaseGateReviews\u0027],\u0027Stage 27 advisory review escaped its sole family\u0027);assert.equal(advisory.responseEnvelopeAllowed,true);const native22=candidate.STAGE_OPERATION_REGISTRY[\u002722:RUN_NATIVE_TESTS\u0027];assert.ok(!native22.agentWritableCollections.includes(\u0027deterministicResults\u0027),\u0027Native deterministic results became agent writable\u0027);const external22=candidate.STAGE_OPERATION_REGISTRY[\u002722:EXECUTE_EXTERNAL_TEST\u0027];assert.ok(!external22.agentWritableCollections.includes(\u0027deterministicResults\u0027),\u0027External executor can write canonical deterministic results\u0027);assert.equal(candidate.STAGE_OPERATION_REGISTRY[\u002715:COMPLETE\u0027].executorClass,\u0027EXTERNAL_AGENT\u0027);assert.equal(candidate.STAGE_OPERATION_REGISTRY[\u002715:COMPLETE\u0027].reservationRequirement,\u0027REQUIRED\u0027);assert.equal(candidate.operationContract(31,\u0027COMPLETE\u0027),null);}\nassertClosed(schema);const mutated={...schema,STAGE_OPERATION_REGISTRY:{...schema.STAGE_OPERATION_REGISTRY,\u002722:RUN_NATIVE_TESTS\u0027:{...schema.STAGE_OPERATION_REGISTRY[\u002722:RUN_NATIVE_TESTS\u0027],agentWritableCollections:[\u0027deterministicResults\u0027]}}};assert.throws(()=>assertClosed(mutated),/inherited agent writes|agent writable/i);console.log(JSON.stringify({operationAuthorityClosure:\u0027PASS\u0027,registeredOperations:Object.keys(schema.STAGE_OPERATION_REGISTRY).length,mutationDetected:true},null,2));\n"'
-      - name: Commit completed repair and remove scaffolding
-        shell: bash
         run: |
+          set +e
+          node -e "const fs=require('fs');const p='workflow-schema.js';let s=fs.readFileSync(p,'utf8');if(s.includes('CLOSED_OPERATION_AUTHORITY_REGISTRY_V1'))throw new Error('already repaired');fs.writeFileSync(p,s+JSON.parse(process.env.AUTHORITY_PATCH));fs.writeFileSync('verify-operation-authority.mjs',JSON.parse(process.env.AUTHORITY_PROOF));let w=fs.readFileSync('.github/workflows/pages.yml','utf8');const m='          node verify.mjs\\n';if(!w.includes(m))throw new Error('verification insertion point missing');if(!w.includes('node verify-operation-authority.mjs'))w=w.replace(m,m+'          node verify-operation-authority.mjs\\n');fs.writeFileSync('.github/workflows/pages.yml',w);"
+          setup_status=$?
+          if [ "$setup_status" -eq 0 ]; then
+            node --check workflow-schema.js > /tmp/repair.out 2>&1
+            check_status=$?
+            if [ "$check_status" -eq 0 ]; then
+              node verify-operation-authority.mjs >> /tmp/repair.out 2>&1
+              check_status=$?
+            fi
+          else
+            check_status=$setup_status
+            echo "Patch setup failed with status $setup_status" > /tmp/repair.out
+          fi
+          if [ "$check_status" -ne 0 ]; then
+            git checkout -- workflow-schema.js .github/workflows/pages.yml
+            rm -f verify-operation-authority.mjs
+            cp /tmp/repair.out repair-operation-authority-error.txt
+            git config user.name "closed-loop-repair"
+            git config user.email "closed-loop-repair@users.noreply.github.com"
+            git add repair-operation-authority-error.txt
+            git commit -m "Capture operation authority repair failure [operation-authority-diagnostic]"
+            git push origin HEAD:fix/operation-authority-closure
+            exit 0
+          fi
+          rm -f repair-operation-authority-error.txt .github/workflows/repair-operation-authority.yml
+          git diff --check
           git config user.name "closed-loop-repair"
           git config user.email "closed-loop-repair@users.noreply.github.com"
-          git add workflow-schema.js verify-operation-authority.mjs .github/workflows/pages.yml .github/workflows/repair-operation-authority.yml
+          git add -A workflow-schema.js verify-operation-authority.mjs .github/workflows/pages.yml .github/workflows/repair-operation-authority.yml repair-operation-authority-error.txt
           git commit -m "Close stage-operation authority contracts [operation-authority-repaired]"
           git push origin HEAD:fix/operation-authority-closure
