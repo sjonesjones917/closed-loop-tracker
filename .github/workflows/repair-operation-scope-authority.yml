@@ -1,0 +1,34 @@
+name: one-time-operation-scope-authority-repair
+on:
+  push:
+    branches:
+      - repair/scope-authority-e2aab
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[operation-scope-authority-repaired]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply repair
+        run: node repair-operation-scope-authority.mjs
+      - name: Prove focused and repository contracts
+        run: |
+          node --check workflow-schema.js
+          node verify-operation-scope-authority.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node verify-v3-contract.mjs
+      - name: Remove one-time scaffolding and commit
+        run: |
+          rm repair-operation-scope-authority.mjs .github/workflows/repair-operation-scope-authority.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git commit -m 'Conform operation scope and executor authority [operation-scope-authority-repaired]'
+          git push origin HEAD:repair/scope-authority-e2aab
