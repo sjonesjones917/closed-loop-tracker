@@ -1,0 +1,43 @@
+name: One-time conformance repair
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+env:
+  REPAIR_MARKER: closed-loop-conformance-repair-20260902
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact owning-layer corrections
+        run: node .repair-conformance.mjs
+      - name: Prove syntax and targeted regressions
+        run: |
+          set -euo pipefail
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check response-ingestion.js
+          node verify-current-spec-contradictions.mjs
+          node verify-ingestion.mjs
+          node verify-v3-contract.mjs
+      - name: Remove one-time scaffolding and commit the complete ratchet step
+        run: |
+          set -euo pipefail
+          rm -f .repair-conformance.mjs .github/workflows/repair-conformance.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close canonical job and response-byte contradictions"
+          git push origin HEAD:main
