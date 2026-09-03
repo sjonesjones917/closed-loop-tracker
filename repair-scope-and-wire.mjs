@@ -57,9 +57,16 @@ schema=schema.replace(operationFn,`function operationContract(stage,operation){
 const HUMAN_INTAKE_FIELDS`);
 fs.writeFileSync('workflow-schema.js',schema);
 
+let route=fs.readFileSync('verify-data-route-closure.mjs','utf8');
+const oldRoute="    const scope={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,contextId:collectionSentinels.freshContexts.currentId,baselineId:'BASE-ROUTE-v1',productId:'PROD-ROUTE-v1'};\n    for(const key of op.scopeRequirements)assert(scope[key]!==undefined,`Fixture missing required scope ${key} for Stage ${stage}/${operation}.`);";
+if(!route.includes(oldRoute))throw new Error('Data-route scope fixture block not found.');
+const newRoute="    const scopeValues={inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,researchVersion:'RESEARCH-ROUTE-v1',requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,sourceConvergedIterationId:'ITER-CONVERGED-ROUTE-v1',confirmationIterationId:'ITER-CONFIRM-ROUTE-v1',baselineId:'BASE-ROUTE-v1',productId:'PROD-ROUTE-v1',productVersion:'PRODUCT-VERSION-ROUTE-v1',deliveryCandidateSetId:'DELIVERY-CANDIDATE-ROUTE-v1',reviewVersion:'REVIEW-ROUTE-v1',reconciledReviewVersion:'RECONCILED-REVIEW-ROUTE-v1',releaseId:'RELEASE-ROUTE-v1',hashReviewId:'HASH-ROUTE-v1',evidenceChainVersion:'EVIDENCE-CHAIN-ROUTE-v1'};\n    const scope=Object.fromEntries(op.scopeRequirements.map(key=>[key,scopeValues[key]]));\n    for(const key of op.scopeRequirements)assert(scope[key]!==undefined,`Fixture missing required scope ${key} for Stage ${stage}/${operation}.`);";
+route=route.replace(oldRoute,newRoute);
+fs.writeFileSync('verify-data-route-closure.mjs',route);
+
 let workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
 const needle='          node verify-v3-contract.mjs\n          node verify-spec3-contract.mjs\n';
 if(!workflow.includes(needle))throw new Error('Migration-and-v3 workflow insertion point not found.');
 workflow=workflow.replace(needle,'          node verify-v3-contract.mjs\n          node verify-section15-job-contract.mjs\n          node verify-section14-scope-matrix.mjs\n          node verify-spec3-contract.mjs\n');
 fs.writeFileSync('.github/workflows/pages.yml',workflow);
-console.log('Repaired exact scope matrix and wired fixed contract regressions.');
+console.log('Repaired exact scope matrix, data-route fixture, and fixed contract regression wiring.');
