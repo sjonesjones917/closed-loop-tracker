@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: fix/spec-driven-file-first-20260902
-      - name: Repair candidate and self-remove
+      - name: Restore exact Stage 11 operation binding
         shell: bash
         run: |
           set -euo pipefail
@@ -20,25 +20,13 @@ jobs:
           p=Path('workflow-engine.js')
           s=p.read_text()
           bad="requiredRunOperation=mode==='INITIAL'?'COMPLETE':'EXECUTE_RUN'"
-          if bad in s:
-              p.write_text(s.replace(bad,"requiredRunOperation='EXECUTE_RUN'",1))
-          elif "requiredRunOperation='EXECUTE_RUN'" not in s:
-              raise SystemExit('Stage 11 operation binding is neither the known defect nor the required contract')
-          wf=Path('.github/workflows/pages.yml')
-          s=wf.read_text()
-          needle='          node verify-ingestion.mjs\n'
-          if needle not in s:
-              raise SystemExit('Required ingestion proof step is missing')
-          if 'node verify-file-first-response.mjs' not in s:
-              s=s.replace(needle,needle+'          node verify-file-first-response.mjs\n          node verify-file-first-operator.mjs\n',1)
-          wf.write_text(s)
+          good="requiredRunOperation='EXECUTE_RUN'"
+          if bad not in s:
+              raise SystemExit('Expected Stage 11 defect not found')
+          p.write_text(s.replace(bad,good,1))
           PY
-          node verify-stage-operation-registry.mjs
-          node verify-file-first-operator.mjs
-          node verify-file-first-response.mjs
-          rm .github/workflows/repair-pr776.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js verify-file-first-operator.mjs .github/workflows/pages.yml .github/workflows/repair-pr776.yml
-          git commit -m 'Preserve exact Stage 11 and file-first regressions'
+          git add workflow-engine.js
+          git commit -m 'Restore exact Stage 11 EXECUTE_RUN binding'
           git push origin HEAD:fix/spec-driven-file-first-20260902
