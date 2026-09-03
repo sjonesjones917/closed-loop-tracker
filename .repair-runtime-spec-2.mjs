@@ -18,11 +18,10 @@ if(!ingestion.includes(oldTarget))throw new Error('Old prompt target scope key s
 ingestion=ingestion.replace(oldTarget,newTarget);
 fs.writeFileSync('response-ingestion.js',ingestion);
 
-let repair=fs.readFileSync('.repair-runtime-spec.mjs','utf8');
-const looseA="if(/CURRENT_(?:SOURCE_SET_VERSION|REQUIREMENTS_VERSION|TEST_SUITE_VERSION|INSTRUCTION_VERSION):[^\\n]*\\|\\|'NOT APPLICABLE'/.test(appText))out.push('sentinel-current-pointer');";
-const tightA="if(/CURRENT_(?:SOURCE_SET_VERSION|REQUIREMENTS_VERSION|TEST_SUITE_VERSION|INSTRUCTION_VERSION):[^,;\\n]*\\|\\|'NOT APPLICABLE'/.test(appText))out.push('sentinel-current-pointer');";
-const looseB="if(/CURRENT_(?:BASELINE_ID|PRODUCT_ID):[^\\n]*\\|\\|'NONE'/.test(appText))out.push('sentinel-current-id');";
-const tightB="if(/CURRENT_(?:BASELINE_ID|PRODUCT_ID):[^,;\\n]*\\|\\|'NONE'/.test(appText))out.push('sentinel-current-id');";
-if(!repair.includes(looseA)||!repair.includes(looseB))throw new Error('Loose regression oracle patterns not found exactly.');
-repair=repair.replace(looseA,tightA).replace(looseB,tightB);
-fs.writeFileSync('.repair-runtime-spec.mjs',repair);
+let regression=fs.readFileSync('verify-runtime-spec-contradictions.mjs','utf8');
+const replacements=[
+  ["CURRENT_(?:SOURCE_SET_VERSION|REQUIREMENTS_VERSION|TEST_SUITE_VERSION|INSTRUCTION_VERSION):[^\\n]*\\|\\|'NOT APPLICABLE'","CURRENT_(?:SOURCE_SET_VERSION|REQUIREMENTS_VERSION|TEST_SUITE_VERSION|INSTRUCTION_VERSION):[^,;\\n]*\\|\\|'NOT APPLICABLE'"],
+  ["CURRENT_(?:BASELINE_ID|PRODUCT_ID):[^\\n]*\\|\\|'NONE'","CURRENT_(?:BASELINE_ID|PRODUCT_ID):[^,;\\n]*\\|\\|'NONE'"]
+];
+for(const [from,to] of replacements){if(!regression.includes(from))throw new Error('Generated loose regression oracle pattern not found: '+from);regression=regression.replace(from,to);}
+fs.writeFileSync('verify-runtime-spec-contradictions.mjs',regression);
