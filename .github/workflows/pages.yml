@@ -321,7 +321,7 @@ jobs:
           node verify-data-route-closure.mjs > /tmp/data-route.json
           node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
           node verify-mobile-release-governance.mjs > /tmp/mobile-governance.json
-          USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\\n/).filter(Boolean).map(l=>l.trim().split(/\\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\\^\\{\\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
+          USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\n/).filter(Boolean).map(l=>l.trim().split(/\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\^\{\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
           export USED_MOBILE_CHALLENGES_JSON
           node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json
           node - <<'NODE'
@@ -376,7 +376,7 @@ jobs:
             routeHumanExperiencePromptContract:dataRoute.humanExperiencePromptContract,
             infrastructureFamiliesChecked:infrastructureRoute.infrastructureFamilies,
             infrastructureRawFirstCapture:infrastructureRoute.rawFirstCapture,
-            infrastructurePrecommitRevalidation:infrastructureRoute.infrastructurePrecommitRevalidation,
+            infrastructurePrecommitRevalidation:infrastructureRoute.precommitRevalidation,
             infrastructureExtractionManifestProvenance:infrastructureRoute.extractionManifestProvenance,
             infrastructurePromptContextManifestRoute:infrastructureRoute.promptContextManifestRoute,
             infrastructureAuthorityPartitionsSeparated:infrastructureRoute.authorityPartitionsSeparated,
