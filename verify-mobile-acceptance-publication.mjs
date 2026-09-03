@@ -13,7 +13,7 @@ const BLOCKER={
   controllingClauses:['45.1','45.2','46','49']
 };
 
-export function mobilePublicationStatus({target=null,evidence=null,deploymentManifest=null,sourceCommit=null,verificationTime=null,usedChallenges=[]}={}){
+export function mobilePublicationStatus({target=null,evidence=null,deploymentManifest=null,sourceCommit=null,verificationTime=null,usedChallenges=[],submitter=null}={}){
   const blocked=(reason,errors=[])=>({
     actualIPhoneSafariAcceptance:false,
     mobileAcceptanceResult:'BLOCKED_ENVIRONMENT',
@@ -26,6 +26,7 @@ export function mobilePublicationStatus({target=null,evidence=null,deploymentMan
     mobileAcceptanceBasePath:target?.basePath||CANONICAL_BASE_PATH,
     mobileAcceptanceTestProjectId:target?.testProjectId||null,
     mobileAcceptancePerformer:evidence?.performer||null,
+    mobileAcceptanceSubmitter:NONEMPTY(submitter)?submitter:null,
     mobileAcceptancePhysicalDeviceAssertion:evidence?.physicalDeviceAssertion===true,
     finalAcceptancePublication:false,
     releaseTagEligible:false,
@@ -35,6 +36,7 @@ export function mobilePublicationStatus({target=null,evidence=null,deploymentMan
 
   if(!target&&!evidence)return blocked('No authenticated physical-iPhone target/evidence submission was supplied.');
   if(!target||!evidence)return blocked('Both the pinned target and the physical-device evidence are required together.');
+  if(!NONEMPTY(submitter))return blocked('Authenticated workflow submitter identity is required for physical-device evidence publication.');
   if(!deploymentManifest||deploymentManifest.schema!=='closed-loop-deployment-manifest/1')return blocked('The exact deployed manifest is unavailable or invalid.');
   if(!NONEMPTY(sourceCommit)||deploymentManifest.sourceCommit!==sourceCommit)return blocked('The deployed manifest is not bound to the exact source commit.');
   const digest=deploymentManifest.manifestDigest?.digest;
@@ -66,6 +68,7 @@ export function mobilePublicationStatus({target=null,evidence=null,deploymentMan
     mobileAcceptanceBasePath:result.basePath,
     mobileAcceptanceTestProjectId:result.testProjectId,
     mobileAcceptancePerformer:result.performer,
+    mobileAcceptanceSubmitter:submitter,
     mobileAcceptancePhysicalDeviceAssertion:result.physicalDeviceAssertion,
     mobileAcceptanceIosVersion:result.iosVersion,
     mobileAcceptanceSafariUserAgent:result.safariUserAgent,
@@ -122,14 +125,17 @@ function fixture(){
 export function runPublicationRegressions(){
   const f=fixture();
   assert.equal(mobilePublicationStatus({deploymentManifest:f.deploymentManifest,sourceCommit:f.sourceCommit}).finalAcceptancePublication,false,'Missing physical evidence must remain blocked.');
-  const accepted=mobilePublicationStatus({...f,verificationTime:'2026-09-03T00:00:00.000Z'});
+  assert.equal(mobilePublicationStatus({...f,verificationTime:'2026-09-03T00:00:00.000Z'}).finalAcceptancePublication,false,'Physical evidence without authenticated submitter identity must remain blocked.');
+  const accepted=mobilePublicationStatus({...f,verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917'});
   assert.equal(accepted.actualIPhoneSafariAcceptance,true,'Valid pinned physical evidence must be able to transition acceptance.');
+  assert.equal(accepted.mobileAcceptanceSubmitter,'sjonesjones917','Accepted physical evidence must record the authenticated workflow submitter.');
   assert.equal(accepted.finalAcceptancePublication,true,'Valid pinned physical evidence must make final publication eligible.');
   assert.equal(accepted.releaseTagEligible,true,'Valid pinned physical evidence must make the exact commit tag-eligible.');
-  assert.equal(mobilePublicationStatus({...f,target:{...f.target,sourceCommit:'f'.repeat(40)},verificationTime:'2026-09-03T00:00:00.000Z'}).finalAcceptancePublication,false,'Wrong-commit target must fail closed.');
-  assert.equal(mobilePublicationStatus({...f,evidence:{...f.evidence,evidenceBasis:'SELF_ASSERTED'},verificationTime:'2026-09-03T00:00:00.000Z'}).finalAcceptancePublication,false,'Self-asserted physical evidence must fail closed.');
-  assert.equal(mobilePublicationStatus({...f,evidence:{...f.evidence,iosVersion:'18.7'},verificationTime:'2026-09-03T00:00:00.000Z'}).finalAcceptancePublication,false,'Changed iOS version must stale the pinned physical target.');
-  return {mobileAcceptancePublication:'PASS',missingEvidenceBlocked:true,validEvidenceCanPublish:true,wrongCommitRejected:true,selfAssertionRejected:true,pinnedIosMismatchRejected:true};
+  assert.equal(mobilePublicationStatus({...f,target:{...f.target,sourceCommit:'f'.repeat(40)},verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917'}).finalAcceptancePublication,false,'Wrong-commit target must fail closed.');
+  assert.equal(mobilePublicationStatus({...f,evidence:{...f.evidence,evidenceBasis:'SELF_ASSERTED'},verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917'}).finalAcceptancePublication,false,'Self-asserted physical evidence must fail closed.');
+  assert.equal(mobilePublicationStatus({...f,evidence:{...f.evidence,iosVersion:'18.7'},verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917'}).finalAcceptancePublication,false,'Changed iOS version must stale the pinned physical target.');
+  assert.equal(mobilePublicationStatus({...f,verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917',usedChallenges:[f.target.challenge]}).finalAcceptancePublication,false,'Previously accepted challenge must fail closed.');
+  return {mobileAcceptancePublication:'PASS',missingEvidenceBlocked:true,authenticatedSubmitterRequired:true,submitterRecorded:true,validEvidenceCanPublish:true,wrongCommitRejected:true,selfAssertionRejected:true,pinnedIosMismatchRejected:true,reusedChallengeRejected:true};
 }
 
 if(import.meta.url===`file://${process.argv[1]}`){
@@ -137,11 +143,13 @@ if(import.meta.url===`file://${process.argv[1]}`){
   else {
     const target=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_TARGET_JSON,'MOBILE_ACCEPTANCE_TARGET_JSON');
     const evidence=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_EVIDENCE_JSON,'MOBILE_ACCEPTANCE_EVIDENCE_JSON');
+    const usedChallenges=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON,'MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON')||[];
+    if(!Array.isArray(usedChallenges))throw new Error('MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON must be a JSON array.');
     let deploymentManifest=null;
     try{deploymentManifest=await fetchAndVerifyDeployment(process.env.DEPLOYMENT_MANIFEST_URL);}catch(error){
       if(target||evidence)throw error;
     }
-    const status=mobilePublicationStatus({target,evidence,deploymentManifest,sourceCommit:process.env.GITHUB_SHA||null});
+    const status=mobilePublicationStatus({target,evidence,deploymentManifest,sourceCommit:process.env.GITHUB_SHA||null,usedChallenges,submitter:process.env.GITHUB_ACTOR||null});
     console.log(JSON.stringify(status,null,2));
   }
 }
