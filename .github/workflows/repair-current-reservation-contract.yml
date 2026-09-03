@@ -7,6 +7,9 @@ on:
       - .github/workflows/repair-current-reservation-contract.yml
   pull_request:
     branches: [main]
+    paths:
+      - repair-current-reservation-contract.mjs
+      - .github/workflows/repair-current-reservation-contract.yml
 permissions:
   contents: write
 jobs:
@@ -20,13 +23,26 @@ jobs:
         with:
           node-version: '22'
       - run: node repair-current-reservation-contract.mjs
-      - name: Remove invalid Node global assignments from the generated permanent regression
-        run: sed -i '/globalThis\.crypto=/d; /globalThis\.TextEncoder=/d' verify-reservation-contract.mjs
-      - run: node verify-reservation-contract.mjs
+      - name: Run permanent reservation regression
+        run: |
+          set +e
+          node verify-reservation-contract.mjs > /tmp/reservation-regression.log 2>&1
+          status=$?
+          cat /tmp/reservation-regression.log
+          if [ "$status" -ne 0 ]; then
+            cp /tmp/reservation-regression.log reservation-regression-error.txt
+            git config user.name "closed-loop-repair"
+            git config user.email "closed-loop-repair@users.noreply.github.com"
+            git add reservation-regression-error.txt
+            git commit -m "Capture reservation regression failure"
+            git push origin HEAD:repair/spec-conformance-current-20260903
+            exit "$status"
+          fi
       - run: node verify-v3-contract.mjs
       - run: node verify.mjs
       - name: Commit repaired implementation
         run: |
+          rm -f reservation-regression-error.txt
           git config user.name "closed-loop-repair"
           git config user.email "closed-loop-repair@users.noreply.github.com"
           git add -A
