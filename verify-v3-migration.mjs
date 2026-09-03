@@ -44,6 +44,7 @@ const audit=migrated.projectData.nonOperationalImportedPayloads.at(-1);
 assert.equal(audit.operational,false);
 assert.equal(audit.sourceSchema,'closed-loop-project/2');
 assert.deepEqual(audit.payload,original,'original imported payload must be preserved as non-operational audit evidence');
+assert.equal(audit.payload.job.EXACT_USER_OBJECTIVE_VERBATIM,'Preserved migration objective','legacy human authority must remain preserved as historical evidence while not being promoted to current agent semantics');
 for(const key of ['intakeCoverageManifests','obligationManifests','promptContextManifests','blindAliasMaps','nativeExecutionEvents'])assert.ok(Array.isArray(migrated.projectData[key]),`migration default missing: ${key}`);
 assert.deepEqual(previous,original,'migration must not mutate the imported object');
 assert.equal(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),'','/2 -> /3 migration must not fabricate current agent-owned Stage 01 semantic intake from preserved human authority');
