@@ -36,24 +36,22 @@ jobs:
           export_new="root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,TEST_IR_LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256,JSON_SELECTOR_REGISTRY_VERSION,JSON_SELECTOR_REGISTRY_SHA256,XML_SELECTOR_REGISTRY_VERSION,XML_SELECTOR_REGISTRY_SHA256,REGEX_REGISTRY_VERSION,REGEX_REGISTRY_SHA256,OPS,OP_DEFINITIONS,PORT_CONTRACTS,INPUT_PORT_TYPES,LIMITS,STATUS"
           if export_old not in s: raise SystemExit('test-runtime export point missing')
           p.write_text(s.replace(export_old,export_new,1))
-          lines=[
-          "import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';",
-          "const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const r=context.closedLoopTestRuntime;",
-          "const base={version:r.SPEC_VERSION,languageVersion:r.TEST_IR_LANGUAGE_VERSION,operationRegistryVersion:r.OPERATION_REGISTRY_VERSION,operationRegistrySha256:r.OPERATION_REGISTRY_SHA256,steps:[{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'PRODUCT'}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},{stepId:'S003',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S002',output:'bytes'}}}],result:{stepRef:'S003',output:'text'}};",
-          "assert.equal(r.validateSpec(base,{PRODUCT:'ARTIFACT-1'}).valid,true);",
-          "const wrong={...base,steps:[...base.steps,{stepId:'S004',op:'PARSE_JSON',inputs:{text:{stepRef:'S003',output:'text'}}},{stepId:'S005',op:'COUNT',inputs:{value:{stepRef:'S004',output:'value'}}},{stepId:'S006',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S005',output:'count'}}}],result:{stepRef:'S006',output:'text'}};",
-          "const check=r.validateSpec(wrong,{PRODUCT:'ARTIFACT-1'});assert.equal(check.valid,false);assert(check.issues.some(x=>/requires BYTES.*produces INTEGER/.test(x)),check.issues.join('\\n'));",
-          "const wrongBytes={...base,steps:[{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'PRODUCT'}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},{stepId:'S003',op:'HASH_SHA256',inputs:{bytes:{stepRef:'S001',output:'artifact'}}}],result:{stepRef:'S003',output:'sha256'}};const check2=r.validateSpec(wrongBytes,{PRODUCT:'ARTIFACT-1'});assert.equal(check2.valid,false);assert(check2.issues.some(x=>/requires BYTES.*produces ARTIFACT/.test(x)),check2.issues.join('\\n'));",
-          "console.log(JSON.stringify({testIrPortTypes:'PASS',wrongPortTypeRejected:true}));"
-          ]
-          Path('verify-test-ir-port-types.mjs').write_text('\n'.join(lines)+'\n')
-          wf=Path('.github/workflows/pages.yml')
-          w=wf.read_text()
-          needle2='          node verify-test-runtime.mjs\n          node verify-hash.mjs\n'
-          repl='          node verify-test-runtime.mjs\n          node verify-test-ir-port-types.mjs\n          node verify-hash.mjs\n'
-          if needle2 not in w: raise SystemExit('pages insertion point missing')
-          wf.write_text(w.replace(needle2,repl,1))
-          Path('.github/workflows/spec-port-type-repair.yml').unlink()
+          Path('verify-test-ir-port-types.mjs').write_text("""import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const r=context.closedLoopTestRuntime;
+const base={version:r.SPEC_VERSION,languageVersion:r.TEST_IR_LANGUAGE_VERSION,operationRegistryVersion:r.OPERATION_REGISTRY_VERSION,operationRegistrySha256:r.OPERATION_REGISTRY_SHA256,steps:[{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'PRODUCT'}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},{stepId:'S003',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S002',output:'bytes'}}}],result:{stepRef:'S003',output:'text'}};
+assert.equal(r.validateSpec(base,{PRODUCT:'ARTIFACT-1'}).valid,true);
+const wrong={...base,steps:[...base.steps,{stepId:'S004',op:'PARSE_JSON',inputs:{text:{stepRef:'S003',output:'text'}}},{stepId:'S005',op:'COUNT',inputs:{value:{stepRef:'S004',output:'value'}}},{stepId:'S006',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S005',output:'count'}}}],result:{stepRef:'S006',output:'text'}};
+const check=r.validateSpec(wrong,{PRODUCT:'ARTIFACT-1'});assert.equal(check.valid,false);assert(check.issues.some(x=>/requires BYTES.*produces INTEGER/.test(x)),check.issues.join('\n'));
+const wrongBytes={...base,steps:[{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'PRODUCT'}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},{stepId:'S003',op:'HASH_SHA256',inputs:{bytes:{stepRef:'S001',output:'artifact'}}}],result:{stepRef:'S003',output:'sha256'}};const check2=r.validateSpec(wrongBytes,{PRODUCT:'ARTIFACT-1'});assert.equal(check2.valid,false);assert(check2.issues.some(x=>/requires BYTES.*produces ARTIFACT/.test(x)),check2.issues.join('\n'));
+console.log(JSON.stringify({testIrPortTypes:'PASS',wrongPortTypeRejected:true}));
+""")
+          v=Path('verify-v3-contract.mjs')
+          t=v.read_text()
+          marker="import fs from 'node:fs';"
+          if "import './verify-test-ir-port-types.mjs';" not in t:
+            if marker not in t: raise SystemExit('verify-v3-contract import point missing')
+            t=t.replace(marker,"import './verify-test-ir-port-types.mjs';\n"+marker,1)
+            v.write_text(t)
           PY
       - name: Prove correction
         run: |
@@ -61,6 +59,7 @@ jobs:
           node --check test-runtime.js
           node --check verify-test-ir-port-types.mjs
           node verify-test-ir-port-types.mjs
+          node verify-v3-contract.mjs
           node verify-test-runtime-v3.mjs
           node verify-test-runtime-limits.mjs
           node verify-test-runtime.mjs
@@ -70,6 +69,6 @@ jobs:
           set -euo pipefail
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
-          git add -A
+          git add test-runtime.js verify-test-ir-port-types.mjs verify-v3-contract.mjs
           git commit -m "Enforce Test IR port type contracts"
           git push origin HEAD:repair/spec-conformance-response-file-20260903
