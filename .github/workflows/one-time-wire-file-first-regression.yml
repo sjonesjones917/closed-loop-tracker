@@ -1,0 +1,35 @@
+name: One-time wire file-first regression
+on:
+  push:
+    branches: [fix/file-first-operator-path]
+permissions:
+  contents: write
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/file-first-operator-path
+      - name: Wire permanent regression and remove scaffold
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml')
+          text=p.read_text()
+          needle='          node verify-prompt-semantics.mjs\n          node verify-semantic-invariant.mjs\n'
+          replacement=needle+'          node verify-file-first-operator.mjs\n'
+          if needle not in text:
+              raise SystemExit('Prompt-semantics insertion point not found.')
+          if 'node verify-file-first-operator.mjs' not in text:
+              text=text.replace(needle,replacement,1)
+          p.write_text(text)
+          PY
+          rm .github/workflows/one-time-wire-file-first-regression.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add verify-file-first-operator.mjs .github/workflows/pages.yml .github/workflows/one-time-wire-file-first-regression.yml
+          git diff --cached --check
+          git commit -m "Wire file-first operator regression"
+          git push origin HEAD:fix/file-first-operator-path
