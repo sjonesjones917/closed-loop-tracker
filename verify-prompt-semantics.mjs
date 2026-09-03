@@ -133,3 +133,4 @@ console.log(JSON.stringify({
   postGenerationPromptWrapperAbsent:true,
   repositoryImplementationInstructionBoundary:true
 },null,2));
+await import('./verify-file-first-operator.mjs');
