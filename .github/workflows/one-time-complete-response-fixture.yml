@@ -1,0 +1,69 @@
+name: One-time complete response fixture repair
+
+on:
+  push:
+    branches: [repair/response-envelope-binding-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Repair the proposal-reload response fixture
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('verify-browser-extra.mjs')
+          source = path.read_text()
+
+          old_envelope = "const envelope={schema:'closed-loop-stage-response/3',jobId:'JOB-20260823144121'"
+          new_envelope = "const envelope={schema:'closed-loop-stage-response/3',contractProfileId:retained.job.CONTRACT_PROFILE_ID,jobId:'JOB-20260823144121'"
+          if old_envelope in source:
+              source = source.replace(old_envelope, new_envelope, 1)
+          elif new_envelope not in source:
+              raise SystemExit('Could not locate the Stage 02 proposal-reload response envelope.')
+
+          old_wording = "'Continue the external conversation'"
+          new_wording = "'Continue talking to the agent. Do not import a final response file yet.'"
+          if old_wording in source:
+              source = source.replace(old_wording, new_wording, 1)
+          elif new_wording not in source:
+              raise SystemExit('Could not locate the conversation-mode wording oracle.')
+
+          path.write_text(source)
+          PY
+          node --check verify-browser-extra.mjs
+          node verify-response-contract-profile.mjs
+      - name: Replay the exact proposal-reload Chromium path
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser-extra.mjs
+      - name: Commit without leaving repair scaffolding
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/one-time-complete-response-fixture.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-browser-extra.mjs .github/workflows/one-time-complete-response-fixture.yml
+          git diff --cached --check
+          git commit -m 'Bind proposal-reload fixture to current response contract'
+          git fetch origin repair/response-envelope-binding-20260903
+          git rebase origin/repair/response-envelope-binding-20260903
+          git push origin HEAD:repair/response-envelope-binding-20260903
