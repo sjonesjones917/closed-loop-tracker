@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {verifyMobileAcceptanceEvidence} from './verify-mobile-acceptance-evidence.mjs';
 
@@ -158,4 +159,4 @@ async function main(){
   console.log(JSON.stringify(result,null,2));
 }
 
-if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])await main();
+if(process.argv[1]&&fileURLToPath(import.meta.url)===path.resolve(process.argv[1]))await main();
