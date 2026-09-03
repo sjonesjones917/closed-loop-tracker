@@ -1426,7 +1426,7 @@ function classifyOperation(stage,operation,base){
   if(humanDecisionOperations.has(key))return Object.freeze({executorClass:'HUMAN_DECISION',responseEnvelopeAllowed:false,acceptanceMode:'HUMAN_DECISION_COMMAND',agentWritableCollections:Object.freeze([])});
   if(operatorActions.has(key))return Object.freeze({executorClass:'OPERATOR',responseEnvelopeAllowed:false,acceptanceMode:'OPERATOR_ACTION',agentWritableCollections:Object.freeze([])});
   if(routedExecutions.has(key))return Object.freeze({executorClass:'ROUTED_APPLICATION_OR_EXTERNAL_AGENT',responseEnvelopeAllowed:'ROUTE_DEPENDENT',acceptanceMode:'ROUTE_DEPENDENT',agentWritableCollections:Object.freeze([...(base?.agentWritableCollections||[])])});
-  return Object.freeze({executorClass:'EXTERNAL_AGENT',responseEnvelopeAllowed:true,acceptanceMode:'HUMAN_ACCEPTANCE_REQUIRED',agentWritableCollections:Object.freeze([...(EXTERNAL_AGENT_WRITES[key]||base?.agentWritableCollections||[])])});
+  return Object.freeze({executorClass:'EXTERNAL_AGENT',responseEnvelopeAllowed:true,acceptanceMode:'HUMAN_ACCEPTANCE_REQUIRED',agentWritableCollections:Object.freeze([...(base?.agentWritableCollections||[])])});
 }
 
 const STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(s0.STAGE_OPERATIONS).flatMap(([stage,operations])=>operations.map(operation=>{
