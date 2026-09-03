@@ -23,6 +23,7 @@ const deploymentEnvironment='github-pages';
 const runtimeOrder=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
 const deployedSources=['index.html',...runtimeOrder.slice(0,4),'test-worker.js',...runtimeOrder.slice(4),'TEST_PROJECT.json','.nojekyll'];
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const sourceTestWorkerSha256=sha256(fs.readFileSync('test-worker.js'));
 const mediaType=file=>file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':file.endsWith('.json')?'application/json':file==='.nojekyll'?'application/octet-stream':'application/octet-stream';
 const assertUnicodeScalars=(value,label='canonical string')=>{for(let i=0;i<value.length;i++){const unit=value.charCodeAt(i);if(unit>=0xD800&&unit<=0xDBFF){const next=value.charCodeAt(i+1);if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Unpaired UTF-16 high surrogate in ${label}.`);i++;}else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Unpaired UTF-16 low surrogate in ${label}.`);}return value;};
 const compareUnicodeScalarSequence=(a,b)=>{const left=Array.from(assertUnicodeScalars(String(a),'canonical object key'),ch=>ch.codePointAt(0));const right=Array.from(assertUnicodeScalars(String(b),'canonical object key'),ch=>ch.codePointAt(0));const length=Math.min(left.length,right.length);for(let i=0;i<length;i++)if(left[i]!==right[i])return left[i]-right[i];return left.length-right.length;};
@@ -51,6 +52,7 @@ for(const file of deployedSources){
   let bytes=fs.readFileSync(file);
   if(file==='index.html'){
     let html=bytes.toString('utf8').replace(/\?v=[^"']+/g,`?v=${buildIdentity}`);
+    html=html.replace(`test-runtime.js?v=${buildIdentity}`,`test-runtime.js?v=${buildIdentity}&workerSha256=${sourceTestWorkerSha256}`);
     const meta=`<meta name="closed-loop-build-identity" content="${buildIdentity}">`;
     html=html.replace(/<meta name="theme-color"[^>]*>/,match=>`${match}\n${meta}`);
     bytes=Buffer.from(html,'utf8');
@@ -61,6 +63,7 @@ for(const file of deployedSources){
 const runtimeResources=deployedSources.map(file=>{const bytes=fs.readFileSync(path.join(outDir,file));return {path:file,mediaType:mediaType(file),byteSize:bytes.length,hashAlgorithm,digest:sha256(bytes),buildIdentity};});
 const testWorkerResource=runtimeResources.find(resource=>resource.path==='test-worker.js');
 if(!testWorkerResource)throw new Error('test-worker.js is missing from the deployment resource graph.');
+if(testWorkerResource.digest!==sourceTestWorkerSha256)throw new Error('Built test-worker.js bytes differ from the worker digest bound into the runtime URL.');
 const csp=fs.readFileSync(path.join(outDir,'index.html'),'utf8').match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/)?.[1];
 if(!csp)throw new Error('CSP was not found in built index.html.');
 const manifest={
