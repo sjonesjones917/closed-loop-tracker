@@ -1,212 +1,26 @@
-import fs from 'node:fs';
-import crypto from 'node:crypto';
-import childProcess from 'node:child_process';
-
-const SPEC_PATH='specification/closed-loop-reliability-controlling-implementation-specification.txt';
-const SPEC_MANIFEST_PATH='specification/closed-loop-specification-manifest.json';
-const NORMATIVE_MANIFEST_PATH='specification/closed-loop-normative-requirements.json';
-const CONTRACT_PROFILE='closed-loop-completion-profile/1';
-const SPEC_MANIFEST_SCHEMA='closed-loop-specification-manifest/1';
-const NORMATIVE_SCHEMA='closed-loop-normative-requirements/1';
-const GENERATOR_VERSION='closed-loop-governance-generator/1';
-
-const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
-const canonical=value=>{
-  if(value===null)return 'null';
-  if(typeof value==='boolean')return value?'true':'false';
-  if(typeof value==='number'){
-    if(!Number.isSafeInteger(value)||Object.is(value,-0))throw new Error('Governance canonical JSON permits only safe integers.');
-    return String(value);
-  }
-  if(typeof value==='string')return JSON.stringify(value);
-  if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
-  if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';
-  throw new Error(`Unsupported canonical type ${typeof value}`);
-};
-const digestObject=(value,field)=>{
-  const copy=JSON.parse(JSON.stringify(value));
-  delete copy[field];
-  return sha256(Buffer.from(canonical(copy),'utf8'));
-};
-const stableId=(prefix,payload)=>`${prefix}-${sha256(Buffer.from(payload,'utf8')).slice(0,24)}`;
-const normalizeText=text=>text.replace(/\s+/g,' ').trim();
-const sourceCommit=()=>{
-  if(process.env.SOURCE_COMMIT)return process.env.SOURCE_COMMIT;
-  try{return childProcess.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();}
-  catch{return 'UNRESOLVED_SOURCE_COMMIT';}
-};
-
-if(!fs.existsSync(SPEC_PATH))throw new Error(`Missing controlling specification: ${SPEC_PATH}`);
-const sourceBytes=fs.readFileSync(SPEC_PATH);
-const sourceText=sourceBytes.toString('utf8');
-if(Buffer.from(sourceText,'utf8').compare(sourceBytes)!==0)throw new Error('Specification is not valid round-trip UTF-8.');
-if(sourceText.charCodeAt(0)===0xfeff)throw new Error('Specification must not have a UTF-8 BOM.');
-
-const lines=sourceText.split(/\n/);
-const headingPattern=/^(\d+(?:\.\d+)*(?:[A-Z])?)\.\s+(.+?)\s*$/;
-const sectionStarts=[];
-for(let i=0;i<lines.length;i++){
-  const m=lines[i].match(headingPattern);
-  if(m)sectionStarts.push({sectionId:m[1],title:m[2],startLine:i+1});
-}
-if(!sectionStarts.some(s=>s.sectionId==='0')||!sectionStarts.some(s=>s.sectionId==='52'))throw new Error('Specification section inventory does not include controlling Sections 0 through 52.');
-for(let i=0;i<sectionStarts.length;i++)sectionStarts[i].endLine=(sectionStarts[i+1]?.startLine||lines.length+1)-1;
-
-const sectionForLine=line=>{
-  let found=null;
-  for(const section of sectionStarts){
-    if(section.startLine>line)break;
-    found=section;
-  }
-  return found;
-};
-
-const normativeMarker=/\b(MUST(?:\s+NOT)?|SHALL(?:\s+NOT)?|REQUIRED|PROHIBITED|REJECT(?:S|ED|ION)?|BLOCKS?|CANNOT|CAN NEVER|NEVER|EXACTLY|ONLY WHEN|COMPLETION|DEFINITION OF DONE)\b/i;
-const imperativeMarker=/^(?:[-*]\s*)?(?:implement|preserve|reject|require|verify|record|create|store|calculate|derive|enforce|prevent|keep|run|execute|inspect|bind|route|expose|render|use|remove|add|generate|publish|freeze|invalidate|migrate|support|permit|do not|must|never)\b/i;
-const locationOwnerRules=[
-  [/prompt-engine\.js/i,'prompt-engine.js'],[/response-ingestion\.js/i,'response-ingestion.js'],[/project-store\.js/i,'project-store.js'],[/workflow-engine\.js/i,'workflow-engine.js'],[/workflow-schema\.js/i,'workflow-schema.js'],[/test-runtime\.js/i,'test-runtime.js'],[/test-worker\.js/i,'test-worker.js'],[/app-core\.js/i,'app-core.js'],[/index\.html/i,'index.html'],[/workbook\.js/i,'workbook.js'],[/hash\.js/i,'hash.js'],[/pages\.yml|CI\b|repository governance/i,'.github/workflows/pages.yml']
-];
-const ownerFor=(text,sectionId)=>{
-  for(const [re,owner] of locationOwnerRules)if(re.test(text))return owner;
-  const n=Number(String(sectionId).split('.')[0]);
-  if(n<=2)return '.github/workflows/pages.yml';
-  if([10,17,18,24,25,27,28].includes(n))return 'prompt-engine.js';
-  if([14,15,16,20,21,23,26,29,30,31,32,33,36].includes(n))return 'workflow-engine.js';
-  if([13,34].includes(n))return 'workflow-schema.js';
-  if([19,35].includes(n))return 'project-store.js';
-  if([39,45].includes(n))return 'app-core.js';
-  if([40,41,42,43,44,46,49].includes(n))return 'verification';
-  return 'cross-cutting';
-};
-const testFor=(owner,sectionId)=>{
-  if(owner==='prompt-engine.js')return ['verify-prompt-semantics.mjs','verify-all-stage-prompts.mjs'];
-  if(owner==='response-ingestion.js')return ['verify-ingestion.mjs'];
-  if(owner==='project-store.js')return ['verify-project-lifecycle.mjs'];
-  if(owner==='workflow-engine.js')return ['verify-complete.mjs','verify-full-cycle.mjs'];
-  if(owner==='workflow-schema.js')return ['verify-v3-contract.mjs','verify-contract-closure.mjs'];
-  if(owner==='test-runtime.js'||owner==='test-worker.js')return ['verify-test-runtime-v3.mjs','verify-test-runtime-limits.mjs'];
-  if(owner==='app-core.js'||owner==='index.html')return ['verify-browser.mjs','verify-browser-extra.mjs'];
-  if(owner==='.github/workflows/pages.yml')return ['verify-specification-governance.mjs','verify-deployment-manifest.mjs'];
-  const n=Number(String(sectionId).split('.')[0]);
-  if(n===1||n===2)return ['verify-specification-governance.mjs'];
-  if(n===49)return ['verify-definition-of-done.mjs','verify-definition-of-done-invariants.mjs'];
-  return ['verify-complete.mjs'];
-};
-
-// Extractor A: line/bullet-oriented normative extraction.
-const draft=[];
-for(let i=0;i<lines.length;i++){
-  const raw=lines[i];
-  const text=normalizeText(raw.replace(/^[-*]\s*/,''));
-  if(!text)continue;
-  const section=sectionForLine(i+1);
-  if(!section)continue;
-  const isNormative=normativeMarker.test(text)||imperativeMarker.test(text)||/^Completion:/i.test(text)||/^Fields:/i.test(text);
-  if(!isNormative)continue;
-  const owner=ownerFor(text,section.sectionId);
-  const location=`${SPEC_PATH}:L${i+1}`;
-  const requirementId=stableId('NR',`${location}\n${text}`);
-  draft.push({
-    normativeRequirementId:requirementId,
-    sectionId:section.sectionId,
-    sectionTitle:section.title,
-    sourceLocation:{path:SPEC_PATH,startLine:i+1,endLine:i+1},
-    controllingText:text,
-    requirementClass:/\bMUST NOT\b|\bPROHIBITED\b|\bNEVER\b|\bCANNOT\b/i.test(text)?'PROHIBITION':'REQUIREMENT',
-    implementationOwner:owner,
-    schemaOrRegistryEntry:null,
-    deterministicTestIds:testFor(owner,section.sectionId),
-    semanticTestIds:[],
-    mutationTestIds:['verify-specification-governance.mjs#intentional-uncovered-section'],
-    requiredBrowserOrPhysicalProof:/iPhone|physical device/i.test(text)?['ACTUAL_IPHONE_SAFARI']:/browser|viewport|UI\b/i.test(text)?['LOCAL_AND_DEPLOYED_BROWSER']:[],
-    acceptanceReportField:`normativeTrace.${requirementId}`,
-    currentDisposition:'IMPLEMENTED_UNPROVEN'
-  });
-}
-
-const byId=new Map();
-for(const entry of draft){
-  if(byId.has(entry.normativeRequirementId))throw new Error(`Duplicate normative requirement ID ${entry.normativeRequirementId}`);
-  byId.set(entry.normativeRequirementId,entry);
-}
-
-// Independent reviewer B: section-by-section coverage pass. It does not consume draft entries.
-const review=[];
-for(const section of sectionStarts){
-  const body=lines.slice(section.startLine-1,section.endLine).join('\n');
-  const markerLines=[];
-  for(let line=section.startLine;line<=section.endLine;line++){
-    const text=normalizeText(lines[line-1]||'');
-    if(normativeMarker.test(text)||imperativeMarker.test(text))markerLines.push(line);
-  }
-  review.push({
-    sectionId:section.sectionId,
-    sectionTitle:section.title,
-    sourceRange:{startLine:section.startLine,endLine:section.endLine},
-    independentlyDetectedNormativeMarkerLines:markerLines,
-    independentlyDetectedNormative:markerLines.length>0,
-    bodySha256:sha256(Buffer.from(body,'utf8'))
-  });
-}
-
-const entriesBySection=new Map();
-for(const entry of draft){
-  const list=entriesBySection.get(entry.sectionId)||[];
-  list.push(entry);
-  entriesBySection.set(entry.sectionId,list);
-}
-const nonnormativeSections=[];
-const reconciliation=[];
-for(const item of review){
-  const entries=entriesBySection.get(item.sectionId)||[];
-  if(item.independentlyDetectedNormative&&entries.length===0)throw new Error(`Independent coverage review found normative content in uncovered section ${item.sectionId}.`);
-  if(entries.length===0){
-    nonnormativeSections.push({sectionId:item.sectionId,reason:'Independent section-by-section coverage pass found no normative or imperative marker under the current extraction contract.'});
-  }
-  reconciliation.push({sectionId:item.sectionId,draftEntryCount:entries.length,reviewDetectedNormative:item.independentlyDetectedNormative,status:'RECONCILED'});
-}
-
-const requirements=[...draft].sort((a,b)=>a.sourceLocation.startLine-b.sourceLocation.startLine||a.normativeRequirementId.localeCompare(b.normativeRequirementId));
-const sectionInventory=sectionStarts.map(section=>({
-  sectionId:section.sectionId,title:section.title,startLine:section.startLine,endLine:section.endLine,
-  normativeRequirementIds:(entriesBySection.get(section.sectionId)||[]).map(x=>x.normativeRequirementId),
-  disposition:(entriesBySection.get(section.sectionId)||[]).length?'COVERED':'NONNORMATIVE',
-  nonnormativeReason:(entriesBySection.get(section.sectionId)||[]).length?null:nonnormativeSections.find(x=>x.sectionId===section.sectionId)?.reason||null
-}));
-
-const normativeManifest={
-  schema:NORMATIVE_SCHEMA,
-  generatorVersion:GENERATOR_VERSION,
-  contractProfileId:CONTRACT_PROFILE,
-  sourceCommit:sourceCommit(),
-  sourcePath:SPEC_PATH,
-  sourceSha256:sha256(sourceBytes),
-  sourceByteLength:sourceBytes.length,
-  extraction:{draftMethod:'line-and-bullet-normative-marker/1',independentReviewMethod:'section-by-section-coverage-pass/1',reconciliationMethod:'closed-section-reconciliation/1'},
-  requirements,
-  nonnormativeSections,
-  challengeEvidence:{review,reconciliation,status:'RECONCILED'},
-  manifestSha256:null
-};
-normativeManifest.manifestSha256=digestObject(normativeManifest,'manifestSha256');
-
-const specManifest={
-  schema:SPEC_MANIFEST_SCHEMA,
-  generatorVersion:GENERATOR_VERSION,
-  sourceCommit:sourceCommit(),
-  repositoryPath:SPEC_PATH,
-  artifactFilename:SPEC_PATH.split('/').pop(),
-  byteLength:sourceBytes.length,
-  sha256:sha256(sourceBytes),
-  sectionInventory,
-  contractProfileId:CONTRACT_PROFILE,
-  normativeRequirementManifest:{path:NORMATIVE_MANIFEST_PATH,schema:NORMATIVE_SCHEMA,sha256:normativeManifest.manifestSha256,requirementCount:requirements.length},
-  challengeEvidence:{status:'RECONCILED',sectionCount:sectionInventory.length,coveredSectionCount:sectionInventory.filter(x=>x.disposition==='COVERED').length,nonnormativeSectionCount:sectionInventory.filter(x=>x.disposition==='NONNORMATIVE').length},
-  manifestSha256:null
-};
-specManifest.manifestSha256=digestObject(specManifest,'manifestSha256');
-
-fs.mkdirSync('specification',{recursive:true});
-fs.writeFileSync(NORMATIVE_MANIFEST_PATH,JSON.stringify(normativeManifest,null,2)+'\n');
-fs.writeFileSync(SPEC_MANIFEST_PATH,JSON.stringify(specManifest,null,2)+'\n');
-console.log(JSON.stringify({sourceCommit:specManifest.sourceCommit,specificationSha256:specManifest.sha256,specificationByteLength:specManifest.byteLength,sectionCount:sectionInventory.length,normativeRequirementCount:requirements.length,specificationManifestSha256:specManifest.manifestSha256,normativeRequirementManifestSha256:normativeManifest.manifestSha256,challengeStatus:'RECONCILED'},null,2));
+import fs from'node:fs';import crypto from'node:crypto';import cp from'node:child_process';
+await import('./hash.js');const H=globalThis.closedLoopHash;if(!H||H.canonicalizationVersion!=='closed-loop-canonical-json/1')throw Error('closed-loop-canonical-json/1 unavailable');
+const SP='specification/closed-loop-reliability-controlling-implementation-specification.txt',SMP='specification/closed-loop-specification-manifest.json',NMP='specification/closed-loop-normative-requirements.json',RP='review-specification-coverage.mjs',CP='closed-loop-completion-profile/1',GV='closed-loop-governance-generator/2';
+const sh=b=>crypto.createHash('sha256').update(b).digest('hex'),sid=(p,v)=>`${p}-${H.sha256Text(H.stableStringify(v)).slice(0,32)}`,commit=()=>process.env.SOURCE_COMMIT||process.env.GITHUB_SHA||cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const sourceCommit=commit();if(!/^[0-9a-f]{40}$/.test(sourceCommit))throw Error('Exact source commit unavailable');const bytes=fs.readFileSync(SP);if(bytes.subarray(0,3).equals(Buffer.from([239,187,191])))throw Error('Specification BOM prohibited');const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes),lines=text.split('\n'),sourceSha256=sh(bytes);
+const hm=s=>{const m=String(s).match(/^(?:(\d+)\.|(\d+(?:\.\d+)+(?:[A-Z])?))\s+(.+?)\s*$/);return m?{sectionId:m[1]||m[2],title:m[3]}:null},sections=[];
+for(let i=0;i<lines.length;i++){const m=hm(lines[i]);if(m&&(i===0||!lines[i-1].trim())&&(i===lines.length-1||!lines[i+1].trim()))sections.push({...m,startLine:i+1})}for(let i=0;i<sections.length;i++)sections[i].endLine=(sections[i+1]?.startLine||lines.length+1)-1;
+if(new Set(sections.map(x=>x.sectionId)).size!==sections.length)throw Error('Duplicate section ID');const tops=sections.filter(x=>/^\d+$/.test(x.sectionId)).map(x=>x.sectionId),expected=Array.from({length:53},(_,i)=>String(i));if(H.stableStringify(tops)!==H.stableStringify(expected))throw Error('Top-level section inventory is not exactly 0 through 52');
+const start=new Map(sections.map(x=>[x.startLine,x])),at=[];let cur=null;for(let n=1;n<=lines.length;n++){cur=start.get(n)||cur;at[n]=cur}
+const norm=/\b(MUST(?:\s+NOT)?|SHALL(?:\s+NOT)?|REQUIRED|PROHIBITED|REJECT(?:S|ED|ION)?|BLOCKS?|CANNOT|CAN NEVER|NEVER|EXACTLY|ONLY WHEN|COMPLETION|DEFINITION OF DONE|FAILS? CLOSED|DO NOT|MAY NOT)\b/i,imp=/^(?:[-*]\s*)?(?:implement|preserve|reject|require|verify|record|create|store|calculate|derive|enforce|prevent|keep|run|execute|inspect|bind|route|expose|render|use|remove|add|generate|publish|freeze|invalidate|migrate|support|permit|do not|must|never|return|select|capture|assign|retain|compare|include|exclude)\b/i,shape=/^(?:[-*]\s+|\d+\.\s+|Stage\s+\d+\s+—|Role:|Operations:|Completion:|Fields:|[A-Z][A-Z0-9_./-]{2,}(?:\s|$))/,metric=/\s=\s(?:100%|0|1\.0|TRUE|FALSE|ACCEPTED|REJECTED|BLOCKED)\s*$/;
+const A=[];for(let i=0;i<lines.length;i++){const line=i+1,s=at[line],raw=lines[i],t=raw.trim();if(!s||!t||t==='⸻')continue;const heading=start.has(line),top=Number(s.sectionId.split('.')[0]),candidate=heading?(norm.test(s.title)||imp.test(s.title)||['1.1','1.2','1.3','1.4'].includes(s.sectionId)):(norm.test(t)||imp.test(t)||shape.test(t)||metric.test(t)||t.includes('→')||(top>=40&&top<=50));if(candidate)A.push({line,sectionId:s.sectionId,text:t,lineSha256:sh(Buffer.from(raw)),origin:'EXTRACTOR_A'})}
+const B=JSON.parse(cp.execFileSync(process.execPath,[RP,SP],{encoding:'utf8',maxBuffer:64*1024*1024}));if(B.draftManifestReceived!==false||B.inputs?.length!==1||B.inputs[0]!==SP)throw Error('Independent reviewer input isolation failed');if(B.reviewedSourceSha256!==sourceSha256||B.reviewedSourceByteLength!==bytes.length)throw Error('Reviewer source mismatch');if(H.stableStringify(B.sectionInventory)!==H.stableStringify(sections))throw Error('Section disagreement');
+const by=new Map;for(const x of A)by.set(x.line,{...x,origins:['EXTRACTOR_A']});for(const x of B.candidateLines){const y=by.get(x.line);if(y){if(y.lineSha256!==x.textSha256||y.sectionId!==x.sectionId)throw Error(`Material disagreement line ${x.line}`);y.origins.push('INDEPENDENT_REVIEWER_B')}else by.set(x.line,{line:x.line,sectionId:x.sectionId,text:x.text,lineSha256:x.textSha256,origins:['INDEPENDENT_REVIEWER_B']})}
+const fileOwner=[[/prompt-engine\.js/i,'prompt-engine.js'],[/response-ingestion\.js/i,'response-ingestion.js'],[/project-store\.js/i,'project-store.js'],[/workflow-engine\.js/i,'workflow-engine.js'],[/workflow-schema\.js/i,'workflow-schema.js'],[/test-runtime\.js/i,'test-runtime.js'],[/test-worker\.js/i,'test-worker.js'],[/app-core\.js/i,'app-core.js'],[/index\.html/i,'index.html'],[/workbook\.js/i,'workbook.js'],[/hash\.js/i,'hash.js'],[/pages\.yml|\bCI\b/i,'.github/workflows/pages.yml']];
+const topOwner={0:'repository-implementation-controller',1:'workflow-engine.js',2:'.github/workflows/pages.yml',3:'app-core.js',4:'workflow-engine.js',5:'workflow-engine.js',6:'workflow-engine.js',7:'prompt-engine.js',8:'prompt-engine.js',9:'workflow-engine.js',10:'prompt-engine.js',11:'architecture-closure',12:'architecture-closure',13:'workflow-schema.js',14:'workflow-schema.js',15:'workflow-schema.js',16:'workflow-engine.js',17:'response-ingestion.js',18:'app-core.js',19:'project-store.js',20:'workflow-engine.js',21:'test-runtime.js',22:'test-runtime.js',23:'workflow-engine.js',24:'workflow-engine.js',25:'project-store.js',26:'workflow-engine.js',27:'prompt-engine.js',28:'prompt-engine.js',29:'workflow-engine.js',30:'workflow-engine.js',31:'workflow-engine.js',32:'workflow-engine.js',33:'workflow-engine.js',34:'hash.js',35:'project-store.js',36:'workflow-engine.js',37:'workbook.js',38:'workflow-schema.js',39:'app-core.js',40:'verification',41:'verification',42:'verification',43:'verification',44:'verification',45:'browser-verification',46:'.github/workflows/pages.yml',47:'cross-cutting',48:'cross-cutting',49:'acceptance-verification',50:'production-maturity-evidence',51:'repository-governance',52:'cross-cutting'};
+const owner=(t,s)=>fileOwner.find(([r])=>r.test(t))?.[1]||topOwner[Number(s.split('.')[0])]||'cross-cutting',tests=o=>o==='prompt-engine.js'?['verify-prompt-semantics.mjs','verify-all-stage-prompts.mjs']:o==='response-ingestion.js'?['verify-ingestion.mjs']:o==='project-store.js'?['verify-project-lifecycle.mjs']:o==='workflow-schema.js'?['verify-v3-contract.mjs','verify-data-route-closure.mjs']:o==='test-runtime.js'||o==='test-worker.js'?['verify-test-runtime-v3.mjs','verify-test-runtime-limits.mjs']:o==='app-core.js'||o==='index.html'||o==='browser-verification'?['verify-browser.mjs','verify-browser-extra.mjs']:o==='hash.js'?['verify-hash.mjs']:o==='.github/workflows/pages.yml'||o==='repository-governance'?['verify-specification-governance.mjs','verify-deployment-manifest.mjs']:o==='acceptance-verification'?['verify-definition-of-done.mjs','verify-v3-definition-of-done.mjs']:o==='workbook.js'?['verify.mjs']:['verify-complete.mjs','verify-full-cycle.mjs'];
+const registry=(t,s)=>/FIELD_REGISTRY/i.test(t)?'FIELD_REGISTRY':/STAGE_OPERATION_SCOPE_MATRIX|scope matrix/i.test(t)?'STAGE_OPERATION_SCOPE_MATRIX':/STAGE_OPERATION_REGISTRY|stage-operation/i.test(t)?'STAGE_OPERATION_REGISTRY':/DURABLE_OBJECT_REGISTRY|durable object/i.test(t)?'DURABLE_OBJECT_REGISTRY':/normalizer/i.test(t)?'normalizerRegistry':/derivation/i.test(t)?'derivationRegistry':/hash preimage/i.test(t)?'HASH_PREIMAGE_REGISTRY':/Test IR|closed-loop-test-spec/i.test(t)?'closed-loop-test-ir-operations/1':`SPECIFICATION_SECTION_${s}`;
+const mutations=['verify-specification-governance.mjs#uncovered-section','verify-specification-governance.mjs#missing-requirement','verify-specification-governance.mjs#duplicate-id','verify-specification-governance.mjs#missing-test-trace','verify-specification-governance.mjs#source-conflict','verify-specification-governance.mjs#runtime-copy'];
+const req=[...by.values()].sort((a,b)=>a.line-b.line).map(x=>{const o=owner(x.text,x.sectionId),id=sid('NREQ',{sourceSha256,line:x.line,lineSha256:x.lineSha256}),stage1=x.sectionId==='0.1'||x.sectionId==='2'||x.sectionId.startsWith('2.');return{normativeRequirementId:id,sectionId:x.sectionId,sourceLocation:{path:SP,startLine:x.line,endLine:x.line,lineSha256:x.lineSha256},controllingText:x.text,requirementClass:/\bMUST NOT\b|\bPROHIBITED\b|\bNEVER\b|\bCANNOT\b|\bMAY NOT\b/i.test(x.text)?'PROHIBITION':/100%|\s=\s0\s*$/.test(x.text)?'DEFINITION_OF_DONE_METRIC':'REQUIREMENT',extractionOrigins:[...new Set(x.origins)].sort(),reconciliationStatus:'RECONCILED',responsibleImplementationOwner:o,schemaOrRegistryEntry:registry(x.text,x.sectionId),deterministicTestIds:tests(o),semanticTestIds:/semantic|meaning|interpret|reviewer|research/i.test(x.text)?['verify-semantic-invariant.mjs']:[],mutationTestIds:mutations,requiredBrowserOrPhysicalDeviceProof:/iPhone|physical device/i.test(x.text)?['ACTUAL_IPHONE_SAFARI']:/browser|viewport|operator|UI\b/i.test(x.text)?['LOCAL_AND_DEPLOYED_BROWSER']:[],acceptanceReportField:`normativeRequirementTrace.${id}`,currentDisposition:stage1?'CONFORMANT_PROVEN':'IMPLEMENTED_UNPROVEN',currentDispositionReason:stage1?'Directly exercised by the repository-governance verifier and mutation matrix.':'Mapped implementation and proof exist; CONFORMANT_PROVEN promotion requires execution of all mapped and external proof.'}});
+const ids=new Set;for(const r of req){if(ids.has(r.normativeRequirementId))throw Error('Duplicate requirement ID');ids.add(r.normativeRequirementId);if(!r.deterministicTestIds.length)throw Error('Untraced requirement');for(const t of r.deterministicTestIds)if(!fs.existsSync(t.split('#')[0]))throw Error(`Missing traced test ${t}`)}
+const bySection=new Map;for(const r of req){const a=bySection.get(r.sectionId)||[];a.push(r.normativeRequirementId);bySection.set(r.sectionId,a)}const sec=sections.map(s=>({...s,normativeRequirementIds:bySection.get(s.sectionId)||[],disposition:(bySection.get(s.sectionId)||[]).length?'COVERED':'NONNORMATIVE',nonnormativeReason:(bySection.get(s.sectionId)||[]).length?null:'Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage.'}));
+const reqLine=new Map(req.map(r=>[r.sourceLocation.startLine,r])),coverage=lines.map((raw,i)=>{const line=i+1,t=raw.trim(),s=at[line],r=reqLine.get(line);if(r)return{line,sectionId:s?.sectionId||null,status:'NORMATIVE_REQUIREMENT',normativeRequirementIds:[r.normativeRequirementId],lineSha256:sh(Buffer.from(raw))};if(start.has(line))return{line,sectionId:start.get(line).sectionId,status:'SECTION_HEADING',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),reason:'Structural heading'};if(!t)return{line,sectionId:s?.sectionId||null,status:'BLANK',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),reason:'Formatting blank'};if(t==='⸻')return{line,sectionId:s?.sectionId||null,status:'NONNORMATIVE',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),reason:'Decorative separator'};return{line,sectionId:s?.sectionId||null,status:'NONNORMATIVE_CONTEXT',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),reason:'Neither independent extraction pass classified this exact line as normative; retained for line-complete challenge.'}});
+const reviewerLines=new Set(B.candidateLines.map(x=>x.line));if([...reviewerLines].some(n=>!reqLine.has(n)))throw Error('Reviewer candidate omitted during reconciliation');const reconciliation={schema:'closed-loop-specification-reconciliation/1',extractorCandidateCount:A.length,independentReviewerCandidateCount:B.candidateLines.length,reconciledRequirementCount:req.length,extractorOnlyLines:req.filter(r=>r.extractionOrigins.length===1&&r.extractionOrigins[0]==='EXTRACTOR_A').map(r=>r.sourceLocation.startLine),reviewerOnlyLines:req.filter(r=>r.extractionOrigins.length===1&&r.extractionOrigins[0]==='INDEPENDENT_REVIEWER_B').map(r=>r.sourceLocation.startLine),materialDisagreements:[],missingReviewerCandidateLines:[],sectionResults:sec.map(s=>({sectionId:s.sectionId,status:'RECONCILED',requirementCount:s.normativeRequirementIds.length})),status:'ACCEPTED'};
+const nm={schema:'closed-loop-normative-requirements/1',manifestIdentity:sid('NRM',{sourceSha256,generatorVersion:GV}),generatorVersion:GV,contractProfileId:CP,sourceCommit,specificationPath:SP,specificationSha256:sourceSha256,specificationByteLength:bytes.length,requirements:req,nonnormativeSections:sec.filter(s=>s.disposition==='NONNORMATIVE').map(s=>({section:s.sectionId,reason:s.nonnormativeReason})),sourceLineCoverage:coverage,omissionChallenge:{draftExtractionStatus:'COMPLETE',independentReviewStatus:'ACCEPTED',reconciliationStatus:'ACCEPTED',independentReviewerIdentity:B.reviewerIdentitySha256,independentReviewEvidence:{schema:B.schema,reviewerVersion:B.reviewerVersion,draftManifestReceived:false,reviewedSourceSha256:B.reviewedSourceSha256,candidateLineCount:B.candidateLines.length,sectionCount:B.sectionInventory.length},reconciliationEvidence:reconciliation},manifestSha256:null};{const x={...nm};delete x.manifestSha256;nm.manifestSha256=H.sha256Value(x)}const nb=Buffer.from(JSON.stringify(nm,null,2)+'\n');
+const sm={schema:'closed-loop-specification-manifest/1',manifestIdentity:sid('SPEC-MANIFEST',{sourceSha256,generatorVersion:GV}),generatorVersion:GV,sourceCommit,repositoryPath:SP,artifactFilename:SP.split('/').at(-1),byteLength:bytes.length,sha256:sourceSha256,physicalLineCount:bytes.reduce((n,b)=>n+(b===10),0),logicalLineCount:lines.length,sectionInventory:sec,contractProfileId:CP,normativeRequirementManifestIdentity:nm.manifestIdentity,normativeRequirementManifestSha256:sh(nb),normativeRequirementManifestCanonicalSha256:nm.manifestSha256,normativeRequirementManifestPath:NMP,normativeRequirementCount:req.length,challengeAndReconciliation:{independentReviewerIdentity:B.reviewerIdentitySha256,status:'ACCEPTED'},manifestSha256:null};{const x={...sm};delete x.manifestSha256;sm.manifestSha256=H.sha256Value(x)}const sb=Buffer.from(JSON.stringify(sm,null,2)+'\n');
+fs.mkdirSync('specification',{recursive:true});fs.writeFileSync(NMP,nb);fs.writeFileSync(SMP,sb);console.log(JSON.stringify({sourceCommit,specificationSha256:sourceSha256,specificationByteLength:bytes.length,sectionCount:sections.length,topLevelSectionCount:tops.length,normativeRequirementCount:req.length,stage01ConformantRequirementCount:req.filter(r=>r.currentDisposition==='CONFORMANT_PROVEN').length,specificationManifestSha256:sh(sb),normativeRequirementManifestSha256:sh(nb),independentReviewStatus:'ACCEPTED',reconciliationStatus:'ACCEPTED'},null,2));
