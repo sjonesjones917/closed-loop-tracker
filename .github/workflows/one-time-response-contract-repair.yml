@@ -45,6 +45,7 @@ jobs:
           if(t.includes(anchor))t=t.replace(anchor,"assert(promptIdentityRecord.prompt.includes('STRICT RESPONSE CONTRACT'),'Authoritative instruction omits the exact writable response contract.');\nassert(promptIdentityRecord.prompt.includes('Echo promptIdentity, packageId, operationReservationId, challengeNonce, and every scope value exactly from manifest.json'),'Authoritative instruction does not direct the external actor to echo manifest-owned bindings.');");
           write('verify-prompt-semantics.mjs',t);
           NODE
+          rm .github/workflows/one-time-response-contract-repair.yml
       - name: Prove prompt contract
         shell: bash
         run: |
@@ -57,7 +58,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/one-time-response-contract-repair.yml
           git add -A
           git commit -m "Bind non-circular response contract into authoritative prompt"
           git push origin HEAD:repair/controlling-prompt-scope-closure
