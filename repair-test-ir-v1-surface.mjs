@@ -21,6 +21,7 @@ const regexBlock=`function validateRegex(pattern,flags=''){
     if(text[index]!=='('||text[index-1]==='\\\\')continue;
     if(text[index+1]==='?'&&text.slice(index,index+3)!=='(?:')issues.push('Regex lookaround, named groups, and inline mode groups are not supported.');
   }
+  if(/\\((?:\\\\.|[^()])*(?:[+*]|\\{\\d+(?:,\\d*)?\\})(?:\\\\.|[^()])*\\)(?:[+*]|\\{\\d+(?:,\\d*)?\\})/.test(text))issues.push('Regex nested quantified groups are outside the registered safe subset.');
   if((text.match(/[+*]/g)||[]).length>16)issues.push('Regex contains too many unbounded quantifiers.');
   try{if(!issues.length)new RegExp(text,flagText);}catch(error){issues.push(\`Regex is invalid: \${error.message}\`);}
   return [...new Set(issues)];
@@ -116,10 +117,18 @@ source=source.replace(xmlRange,()=>xmlBlock+'\n\nfunction validateJsonSourceExac
 
 fs.writeFileSync(runtimePath,source);
 
+const runtimeV3Path='verify-test-runtime-v3.mjs';
+let runtimeV3=fs.readFileSync(runtimeV3Path,'utf8');
+const oldRegexAssertion="assert.equal(dangerousRegex.valid,false);assert.match(dangerousRegex.issues.join(' '),/grouping/);";
+const newRegexAssertion="assert.equal(dangerousRegex.valid,false);assert.match(dangerousRegex.issues.join(' '),/nested quantified/i);";
+if(!runtimeV3.includes(oldRegexAssertion))throw new Error('Existing nested-quantifier safety assertion was not found.');
+runtimeV3=runtimeV3.replace(oldRegexAssertion,newRegexAssertion);
+fs.writeFileSync(runtimeV3Path,runtimeV3);
+
 const workflowPath='.github/workflows/pages.yml';
 let workflow=fs.readFileSync(workflowPath,'utf8');
 const testIrNeedle='          node verify-test-runtime-v3.mjs\n';
 if(!workflow.includes(testIrNeedle))throw new Error('Test IR CI insertion point missing.');
 if(!workflow.includes('node verify-test-ir-v1-surface.mjs'))workflow=workflow.replace(testIrNeedle,testIrNeedle+'          node verify-test-ir-v1-surface.mjs\n');
 fs.writeFileSync(workflowPath,workflow);
-console.log('Applied exact Version 1 operation, selector, and regex surface repair.');
+console.log('Applied exact Version 1 operation, selector, regex, and nested-quantifier safety repair.');
