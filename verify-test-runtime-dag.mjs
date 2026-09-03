@@ -8,6 +8,7 @@ context.globalThis=context;
 vm.createContext(context);
 vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});
 const runtime=context.closedLoopTestRuntime;
+const plain=value=>JSON.parse(JSON.stringify(value));
 
 assert.equal(runtime.TEST_IR_LANGUAGE_VERSION,'closed-loop-test-ir-language/1');
 assert.equal(runtime.OPERATION_REGISTRY_VERSION,'closed-loop-test-ir-operations/1');
@@ -26,14 +27,14 @@ const legacy={version:runtime.SPEC_VERSION,steps:[
   {op:'ASSERT_EQ',value:2}
 ]};
 const normalized=runtime.normalizeSpec(legacy);
-assert.deepEqual(Object.keys(normalized),['version','languageVersion','operationRegistryVersion','operationRegistrySha256','steps','result']);
+assert.deepEqual(plain(Object.keys(normalized)),['version','languageVersion','operationRegistryVersion','operationRegistrySha256','steps','result']);
 assert.equal(normalized.steps.length,7);
 for(const [index,step] of normalized.steps.entries()){
   assert.equal(step.stepId,`S${String(index+1).padStart(3,'0')}`);
   assert.equal(typeof step.inputs,'object');
   assert.equal(Array.isArray(step.inputs),false);
 }
-assert.deepEqual(normalized.result,{stepRef:'S007',output:'assertion'});
+assert.deepEqual(plain(normalized.result),{stepRef:'S007',output:'assertion'});
 assert.equal(normalized.steps[5].inputs.value.stepRef,'S005');
 assert.equal(normalized.steps[6].inputs.actual.stepRef,'S006');
 
@@ -65,13 +66,14 @@ const implicit={version:runtime.SPEC_VERSION,languageVersion:runtime.TEST_IR_LAN
 assert.equal(runtime.validateSpec(implicit).valid,false,'Canonical DAG assertions cannot use an implicit current operand.');
 
 const compareContract=runtime.operationContracts().COMPARE;
-assert.deepEqual(compareContract.requiredInputs,['left','right']);
+assert.deepEqual(plain(compareContract.requiredInputs),['left','right']);
 const byteCompareContract=runtime.operationContracts().BYTE_COMPARE;
-assert.deepEqual(byteCompareContract.requiredInputs,['left','right']);
+assert.deepEqual(plain(byteCompareContract.requiredInputs),['left','right']);
 
 assert.equal(runtime.validateRegex('(ab)+').length,0,'Capturing groups are required by closed-loop-regex/1.');
 assert.equal(runtime.validateRegex('(?:ab)+').length,0,'Non-capturing groups are required by closed-loop-regex/1.');
 assert.ok(runtime.validateRegex('(?=ab)').length>0,'Lookaround remains prohibited.');
+assert.ok(runtime.validateRegex('(a+)+$').length>0,'Nested unbounded quantification must be rejected.');
 
 const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));
 const sha=Array.from(new Uint8Array(await webcrypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
