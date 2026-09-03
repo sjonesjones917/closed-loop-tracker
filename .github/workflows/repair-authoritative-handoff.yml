@@ -1,0 +1,46 @@
+name: One-time authoritative handoff repair
+on:
+  push:
+    branches:
+      - repair/authoritative-handoff-closure-20260903
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prove regression fails before repair
+        shell: bash
+        run: |
+          set +e
+          node verify-authoritative-handoff-identity.mjs > /tmp/pre.txt 2>&1
+          code=$?
+          cat /tmp/pre.txt
+          if [ "$code" -eq 0 ]; then
+            echo 'Regression unexpectedly passed before repair.' >&2
+            exit 1
+          fi
+      - name: Apply minimal in-place repair
+        run: python3 repair-authoritative-handoff.py
+      - name: Prove repaired invariant
+        run: node verify-authoritative-handoff-identity.mjs
+      - name: Run affected contract tests
+        shell: bash
+        run: |
+          node verify-spec3-contract.mjs
+          node verify-ingestion.mjs
+          node verify-response-contract-profile.mjs
+          node verify-file-first-operator-path.mjs
+          node verify-reservation-contract.mjs
+      - name: Commit repaired implementation and remove scaffolding
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Close authoritative prompt and response handoff identity'
+          git push origin HEAD:${GITHUB_REF_NAME}
