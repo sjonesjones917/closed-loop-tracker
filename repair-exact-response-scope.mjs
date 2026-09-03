@@ -20,5 +20,9 @@ const old="for(const [name,stage,key] of [['project revision',2,'projectRevision
 const replacement="for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',1,'inputVersion'],['source set version',2,'sourceSetVersion'],['research version',3,'researchVersion'],['requirements version',4,'requirementsVersion'],['test suite version',6,'testSuiteVersion'],['instruction version',8,'instructionVersion'],['iteration',10,'iterationId'],['candidate',10,'candidateId'],['run',11,'runId'],['source converged iteration',19,'sourceConvergedIterationId'],['confirmation iteration',19,'confirmationIterationId'],['baseline',20,'baselineId'],['product',21,'productId'],['product version',22,'productVersion'],['delivery candidate set',25,'deliveryCandidateSetId'],['review version',26,'reviewVersion'],['reconciled review version',27,'reconciledReviewVersion'],['release',28,'releaseId'],['hash review',29,'hashReviewId'],['evidence chain version',30,'evidenceChainVersion']])scopeNegative(name,stage,key);";
 if(!test.includes(old))throw new Error('Old ingestion scope negative matrix not found.');
 test=test.replace(old,replacement);
+const oldClarify="if(!active.some(x=>x.operation==='EXECUTE_RUN'&&x.scope?.runId==='RUN-CLARIFY'&&x.scope?.contextId==='CTX-CLARIFY'))throw new Error('Scoped clarification did not regenerate the exact operation/run prompt.');";
+const newClarify="if(!active.some(x=>x.operation==='EXECUTE_RUN'&&JSON.stringify(x.scope)===JSON.stringify(pr.scope)))throw new Error('Scoped clarification did not regenerate the exact operation and designated Stage 17 scope.');";
+if(!test.includes(oldClarify))throw new Error('Old Stage 17 clarification assertion not found.');
+test=test.replace(oldClarify,newClarify);
 fs.writeFileSync('verify-ingestion.mjs',test);
-console.log('Integrated exact response-scope stale detection, stage-designated prompt scope, and negative coverage.');
+console.log('Integrated exact response-scope stale detection, stage-designated prompt scope, and exact clarification regression.');
