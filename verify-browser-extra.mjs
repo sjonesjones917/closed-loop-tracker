@@ -62,7 +62,7 @@ async function main(){
   await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const z=document.querySelector('#project-danger-zone');if(!z)return false;z.open=true;return true;})()`);await fill(cdp,'#delete-project-confirmation',copiedJob);await waitExpr(cdp,`document.querySelector('#delete-project')&&!document.querySelector('#delete-project').disabled`);await click(cdp,'#delete-project');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>!all.some(p=>p.job?.JOB_ID===${JSON.stringify(copiedJob)}))`,12000);assert(!(await evalValue(cdp,`closedLoopProjectStore.listArtifacts(${JSON.stringify(copiedJob)}).then(x=>x.length)`)),'Deleted project left artifact Blob rows behind.');
 
   console.log('extra:closed-connection-prompt-save');
-  await openStage(cdp,2);await evalValue(cdp,`(async()=>{const db=await closedLoopProjectStore.openDatabase();db.close();return true;})()`);await click(cdp,'#save-prompt');let retained=await activeProject(cdp);const pr=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(pr?.prompt&&pr?.instructionId&&pr?.sha256,'Stage 02 prompt was not saved after the cached IndexedDB connection was closed.');
+  await openStage(cdp,2);await evalValue(cdp,`(async()=>{const db=await closedLoopProjectStore.openDatabase();db.close();return true;})()`);await click(cdp,'#save-prompt');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0],p=all.find(x=>x.job?.JOB_ID===id)||all[0];return Boolean((p?.projectData?.generatedPrompts||[]).find(x=>Number(x.stage)===2&&x.prompt&&x.instructionId&&x.sha256));})`,12000);let retained=await activeProject(cdp);const pr=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(pr?.prompt&&pr?.instructionId&&pr?.sha256,'Stage 02 prompt was not saved after the cached IndexedDB connection was closed.');
   await evalValue(cdp,`(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedPrompt=text;}}});return true})()`);await click(cdp,'#copy-prompt');assert(await evalValue(cdp,`window.__copiedPrompt`)===pr.prompt,'Copy Instruction did not copy the exact saved prompt.');
   await evalValue(cdp,`(()=>{window.__promptExportBlob=null;window.__promptExportName='';const prior=URL.createObjectURL;window.__priorCreateObjectURL=prior;URL.createObjectURL=b=>{window.__promptExportBlob=b;return 'blob:prompt-export-proof';};URL.revokeObjectURL=()=>{};const priorClick=HTMLAnchorElement.prototype.click;window.__priorAnchorClick=priorClick;HTMLAnchorElement.prototype.click=function(){window.__promptExportName=this.download;};return true})()`);await click(cdp,'#export-prompt-file');const promptExport=await evalValue(cdp,`(async()=>({size:window.__promptExportBlob?.size||0,name:window.__promptExportName,type:window.__promptExportBlob?.type,text:window.__promptExportBlob?await window.__promptExportBlob.text():''}))()`);assert(promptExport.size>0&&promptExport.name.endsWith('.txt')&&promptExport.type==='text/plain;charset=utf-8'&&promptExport.text===pr.prompt,'Instruction-file export did not preserve the exact saved prompt bytes independently of clipboard use.');await evalValue(cdp,`(()=>{if(window.__priorCreateObjectURL)URL.createObjectURL=window.__priorCreateObjectURL;if(window.__priorAnchorClick)HTMLAnchorElement.prototype.click=window.__priorAnchorClick;return true})()`);
 
@@ -136,7 +136,6 @@ try{await main();}finally{await cleanup();}
  const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Observed reliability — this project only','Materially independent accepted operations','Observed silent failures','Approximate 95% upper bound','not a guarantee'])if(!source.includes(token))throw new Error('Missing project-local reliability presentation: '+token);
 }
 
-
 // Mobile responsiveness regression: hashing must remain computation-only, and provenance must not duplicate large raw/prompt payloads per accepted field.
 {
  const hashSource=fs.readFileSync('hash.js','utf8'),appSource=fs.readFileSync('app-core.js','utf8');
@@ -144,7 +143,6 @@ try{await main();}finally{await cleanup();}
  for(const token of ['Long-section navigation belongs to the UI layer','scheduleMatchedScrollJumps','elementFromPoint','Large raw responses and prompts are rendered once per source record','Provenance source records'])if(!appSource.includes(token))throw new Error('Missing mobile responsiveness regression protection: '+token);
  if(appSource.includes("raw?details('Preserved raw response',raw)"))throw new Error('Provenance regressed to duplicating the full raw response inside every field trace.');
 }
-
 
 // reliability-hardening-final: context-aware action-first verification and verified-byte transfer remain visible without architecture-first clutter.
 {
