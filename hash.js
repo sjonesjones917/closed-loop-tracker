@@ -3,6 +3,11 @@
 
 const MAX_SAFE_INTEGER=Number.MAX_SAFE_INTEGER;
 const MIN_SAFE_INTEGER=Number.MIN_SAFE_INTEGER;
+const CANONICALIZATION_VERSION='closed-loop-canonical-json/1';
+const ID_VERSION='closed-loop-id/1';
+const HASH_PREIMAGE_REGISTRY_VERSION='closed-loop-hash-preimages/1';
+const SET_SEMANTICS_REGISTRY_VERSION='closed-loop-set-semantics/1';
+const BASE32HEX_ALPHABET='0123456789abcdefghijklmnopqrstuv';
 
 function assertUnicodeScalars(value,path){
   for(let i=0;i<value.length;i++){
@@ -95,9 +100,83 @@ function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).pad
 async function sha256Bytes(bytes){let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else if(bytes instanceof Blob)view=new Uint8Array(await bytes.arrayBuffer());else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',view)));}
 function rawResponseSha256(raw){return sha256Text(String(raw??''));}
 function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
-function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
+
+const HASH_PREIMAGE_REGISTRY=Object.freeze({
+  CANONICAL_ENVELOPE:Object.freeze({id:'CANONICAL_ENVELOPE',version:HASH_PREIMAGE_REGISTRY_VERSION,mode:'WHOLE_VALUE',omitPointers:Object.freeze([])}),
+  RECORD:Object.freeze({id:'RECORD',version:HASH_PREIMAGE_REGISTRY_VERSION,mode:'WHOLE_RECORD_EXCEPT',omitPointers:Object.freeze(['/recordSha256','/sha256'])}),
+  CONTENT_RECORD:Object.freeze({id:'CONTENT_RECORD',version:HASH_PREIMAGE_REGISTRY_VERSION,mode:'REGISTERED_CONTENT_FIELDS',omitPointers:Object.freeze(['/fields/CREATED_AT','/fields/UPDATED_AT','/fields/VERSION','/fields/STATUS'])}),
+  CLOSED_LOOP_ID:Object.freeze({id:'CLOSED_LOOP_ID',version:HASH_PREIMAGE_REGISTRY_VERSION,mode:'EXACT_OBJECT',includePointers:Object.freeze(['/idVersion','/familyNamespace','/jobNamespace','/commandId','/targetSlot','/parentId','/allocationSequence','/collisionCounter'])})
+});
+const SET_SEMANTICS_REGISTRY=Object.freeze({});
+function clonePlain(value){return value===undefined?undefined:JSON.parse(stableStringify(value));}
+function omitTopLevel(value,keys){const out={};for(const key of Object.keys(value||{}))if(!keys.has(key))out[key]=value[key];return out;}
+function recordSha256(record){return sha256Value(omitTopLevel(record,new Set(['recordSha256','sha256'])));}
+function contentRecordValue(record,idField){
+  if(typeof idField!=='string'||!idField)throw new TypeError('contentRecordValue requires the registered canonical ID field name.');
+  const fields={...(record?.fields||{})};
+  for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];
+  return {fields,relationships:clonePlain(record?.relationships||{}),evidenceRefs:clonePlain(record?.evidenceRefs||[])};
+}
 function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
-function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
-globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',canonicalizationVersion:'closed-loop-canonical-json/1',stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
+function registeredHash(kind,value,{idField}={}){
+  if(!Object.prototype.hasOwnProperty.call(HASH_PREIMAGE_REGISTRY,kind))throw new TypeError(`UNDEFINED_HASH_PREIMAGE: ${kind}`);
+  if(kind==='CANONICAL_ENVELOPE')return sha256Value(value);
+  if(kind==='RECORD')return recordSha256(value);
+  if(kind==='CONTENT_RECORD')return contentRecordSha256(value,idField);
+  if(kind==='CLOSED_LOOP_ID')return sha256Value(value);
+  throw new TypeError(`UNDEFINED_HASH_PREIMAGE: ${kind}`);
+}
+
+function hexToBytes(hex){if(!/^[0-9a-f]+$/i.test(hex)||hex.length%2)throw new TypeError('hexToBytes requires an even-length hexadecimal string.');const out=new Uint8Array(hex.length/2);for(let i=0;i<out.length;i++)out[i]=parseInt(hex.slice(i*2,i*2+2),16);return out;}
+function base32hex(bytes){
+  let bits=0,value=0,out='';
+  for(const byte of bytes){value=(value<<8)|byte;bits+=8;while(bits>=5){out+=BASE32HEX_ALPHABET[(value>>>(bits-5))&31];bits-=5;}}
+  if(bits)out+=BASE32HEX_ALPHABET[(value<<(5-bits))&31];
+  return out;
+}
+function assertIdToken(value,name,{allowEmpty=false}={}){const text=String(value??'');if(!allowEmpty&&!text)throw new TypeError(`${name} is required for ${ID_VERSION}.`);if(/[\u0000-\u001f\u007f]/.test(text))throw new TypeError(`${name} contains a control character.`);assertUnicodeScalars(text,name);return text;}
+function canonicalIdPreimage({familyNamespace,jobNamespace,commandId,targetSlot='',parentId='',allocationSequence,collisionCounter=0}){
+  if(!Number.isSafeInteger(allocationSequence)||allocationSequence<0)throw new TypeError('allocationSequence must be a nonnegative safe integer.');
+  if(!Number.isSafeInteger(collisionCounter)||collisionCounter<0)throw new TypeError('collisionCounter must be a nonnegative safe integer.');
+  return {
+    idVersion:ID_VERSION,
+    familyNamespace:assertIdToken(familyNamespace,'familyNamespace'),
+    jobNamespace:assertIdToken(jobNamespace,'jobNamespace'),
+    commandId:assertIdToken(commandId,'commandId'),
+    targetSlot:assertIdToken(targetSlot,'targetSlot',{allowEmpty:true}),
+    parentId:assertIdToken(parentId,'parentId',{allowEmpty:true}),
+    allocationSequence,
+    collisionCounter
+  };
+}
+function canonicalIdPayload(input){const digest=sha256Value(canonicalIdPreimage(input));return base32hex(hexToBytes(digest).slice(0,20));}
+function canonicalId({familyPrefix,...input}){
+  const prefix=String(familyPrefix??'');
+  if(!/^[A-Z][A-Z0-9_]*$/.test(prefix))throw new TypeError('familyPrefix must be the registered uppercase ASCII family prefix.');
+  return `${prefix}-${canonicalIdPayload(input)}`;
+}
+function allocateCanonicalId(input,{exists=()=>false,maxCollisions=100000}={}){
+  if(typeof exists!=='function')throw new TypeError('exists must be a collision-check function.');
+  for(let collisionCounter=input.collisionCounter??0;collisionCounter<=maxCollisions;collisionCounter++){
+    const tuple={...input,collisionCounter};const id=canonicalId(tuple);
+    const existing=exists(id,canonicalIdPreimage(tuple));
+    if(!existing)return Object.freeze({id,collisionCounter,preimage:canonicalIdPreimage(tuple),algorithmVersion:ID_VERSION,hashPreimageRegistryVersion:HASH_PREIMAGE_REGISTRY_VERSION});
+    if(existing===true)continue;
+    if(existing&&stableStringify(existing)===stableStringify(canonicalIdPreimage(tuple)))return Object.freeze({id,collisionCounter,preimage:canonicalIdPreimage(tuple),algorithmVersion:ID_VERSION,hashPreimageRegistryVersion:HASH_PREIMAGE_REGISTRY_VERSION,idempotent:true});
+  }
+  throw new Error('Canonical ID collision limit exceeded.');
+}
+
+const REGISTRY_IDENTITIES=Object.freeze({canonicalJson:CANONICALIZATION_VERSION,canonicalId:ID_VERSION,hashPreimages:HASH_PREIMAGE_REGISTRY_VERSION,setSemantics:SET_SEMANTICS_REGISTRY_VERSION});
+
+globalThis.closedLoopHash=Object.freeze({
+  version:'closed-loop-hash/4',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,
+  hashPreimageRegistryVersion:HASH_PREIMAGE_REGISTRY_VERSION,setSemanticsRegistryVersion:SET_SEMANTICS_REGISTRY_VERSION,
+  HASH_PREIMAGE_REGISTRY,SET_SEMANTICS_REGISTRY,REGISTRY_IDENTITIES,
+  stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,
+  contentRecordValue,contentRecordSha256,recordSha256,registeredHash,
+  base32hex,canonicalIdPreimage,canonicalIdPayload,canonicalId,allocateCanonicalId,
+  knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})
+});
 
 })();
