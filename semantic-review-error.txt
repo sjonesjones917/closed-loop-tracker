@@ -1,63 +1,9 @@
-semantic review independence regressions passed
-{"contractClosure":"PASS","stageOperations":66,"durableFamilies":65,"fieldContracts":1413}
-{
-  "fileFirstResponseContract": "PASS",
-  "primaryResponseFileSelection": true,
-  "durableByteStaging": true,
-  "stagedReadBackRehash": true,
-  "strictUtf8": true,
-  "textFallbackNonauthoritative": true,
-  "promptFileExportExposed": true,
-  "responseFileOriginBound": true,
-  "requiredIngestionProofInvocation": true,
-  "pastePrimaryMutationDetected": true,
-  "fileSelectorMutationDetected": true,
-  "stagedRehashMutationDetected": true,
-  "provenanceMutationDetected": true,
-  "responseOriginMutationDetected": true,
-  "ciInvocationMutationDetected": true
-}
-{
-  "fileFirstOperatorPath": "PASS",
-  "promptFileExport": true,
-  "responseFileSelector": true,
-  "durableByteStaging": true,
-  "readBackRehash": true,
-  "pasteNotPrimary": true,
-  "fallbackSameStagingPath": true,
-  "mutationsDetected": 7
-}
-{"responseContractProfileBinding":"PASS"}
-{
-  "stagesExercised": 30,
-  "responseSchema": "closed-loop-stage-response/3",
-  "negativeCases": 70,
-  "clarificationLoop": true,
-  "atomicPrecommit": true,
-  "extractionManifest": true,
-  "canonicalIdsApplicationAssigned": true,
-  "scopeIdentityMatrix": true,
-  "verifiedAttachmentBinding": true
-}
-{
-  "pr3Dispositions": true,
-  "preconditions": true,
-  "promptEnginePreconditions": true,
-  "idempotentAcceptance": true,
-  "canonicalEnvelopeIdempotency": true,
-  "typedHumanAnswers": true,
-  "clarificationPromptInvalidation": true,
-  "exactManifestPointers": true,
-  "acceptanceAfterRejectionBlocked": true,
-  "staleProjectRevisionBlocked": true,
-  "totalNegativeCases": 74
-}
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:350
-  if(!prepared.validation.valid)throw new Error('Replacement recovery fixture is invalid: '+JSON.stringify(prepared.validation.issues));
-                                      ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.repair-prompt-identity-reuse.mjs:26
+if(count!==1)throw new Error(`Expected one prompt identity-reuse block, found ${count}.`);
+                   ^
 
-Error: Replacement recovery fixture is invalid: [{"code":"STALE_PROMPT_HASH","path":"/promptIdentity/bodySha256","message":"Expected body SHA-256 e640fa642efb824340a9653f8119da39ff653d898de104aa5494a14e2e4c572b.","severity":"ERROR"}]
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:350:39
+Error: Expected one prompt identity-reuse block, found 0.
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.repair-prompt-identity-reuse.mjs:26:20
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
