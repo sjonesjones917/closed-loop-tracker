@@ -9,16 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Run browser verifiers with identity
-        env:
-          BROWSER: /usr/bin/google-chrome
+      - name: Locate legacy Stage 01 disposition producer
         run: |
           set -euo pipefail
-          python3 -m http.server 4173 >/tmp/http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          for f in verify-human-stage-walkthrough.mjs verify-mobile-stage-action.mjs verify-browser.mjs verify-browser-extra.mjs; do
-            echo "===== START $f ====="
-            node "$f"
-            echo "===== PASS $f ====="
-          done
+          grep -RIn -C 4 --exclude='verify-*.mjs' --exclude='*.yml' 'incorporated into the job definition' . || true
+          grep -RIn -C 4 --exclude='verify-*.mjs' --exclude='*.yml' 'retained as context' . || true
