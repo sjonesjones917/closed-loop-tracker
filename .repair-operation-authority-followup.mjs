@@ -1,13 +1,5 @@
 import fs from 'node:fs';
 
-const schemaPath='workflow-schema.js';
-let source=fs.readFileSync(schemaPath,'utf8');
-const before="agentWritableCollections:Object.freeze([...(EXTERNAL_AGENT_WRITES[key]||base?.agentWritableCollections||[])])";
-const after="agentWritableCollections:Object.freeze([...(base?.agentWritableCollections||[])])";
-if(!source.includes(before))throw new Error('Expected external-agent narrowing expression not found.');
-source=source.replace(before,after);
-fs.writeFileSync(schemaPath,source);
-
 const oraclePath='verify-spec-grounded-route-oracle.mjs';
 let oracle=fs.readFileSync(oraclePath,'utf8');
 if(!oracle.includes('const NON_AGENT_WRITE_OPS=')){
