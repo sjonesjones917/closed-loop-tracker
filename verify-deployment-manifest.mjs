@@ -33,6 +33,7 @@ try{
   if(manifest.projectSchema!=='closed-loop-project/3'||manifest.responseSchema!=='closed-loop-stage-response/3')throw new Error('Deployment manifest runtime schema identity is wrong.');
   if(manifest.testIrSchema!=='closed-loop-test-spec/1'||manifest.verificationPackageSchema!=='closed-loop-verification-package/1')throw new Error('Deployment manifest verification contract identity is wrong.');
   if(manifest.contractProfileId!=='closed-loop-completion-profile/1')throw new Error('Deployment manifest contract profile is missing or wrong.');
+  if(manifest.testWorkerProtocolVersion!=='closed-loop-test-worker-protocol/1')throw new Error('Deployment manifest worker protocol identity is missing or wrong.');
   const withoutDigest={...manifest};delete withoutDigest.manifestDigest;
   if(manifest.manifestDigest?.hashAlgorithm!=='SHA-256'||manifest.manifestDigest?.digest!==sha256(Buffer.from(canonical(withoutDigest),'utf8')))throw new Error('Deployment manifest digest mismatch.');
   if(!Array.isArray(manifest.runtimeResources)||manifest.runtimeResources.length!==13)throw new Error('Deployment resource closure is incomplete.');
@@ -43,6 +44,12 @@ try{
     if(resource.byteSize!==bytes.length||resource.hashAlgorithm!=='SHA-256'||resource.digest!==sha256(bytes))throw new Error(`Deployment digest mismatch: ${resource.path}`);
     if(resource.buildIdentity!==manifest.buildIdentity)throw new Error(`Mixed build identity: ${resource.path}`);
   }
+  const workerResource=manifest.runtimeResources.find(resource=>resource.path==='test-worker.js');
+  if(!workerResource||manifest.testWorkerSha256!==workerResource.digest)throw new Error('Deployment manifest does not bind testWorkerSha256 to the exact deployed worker bytes.');
+  const workerSource=fs.readFileSync(path.join(first,'test-worker.js'),'utf8');
+  if(!workerSource.includes("const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1'"))throw new Error('Worker source is not bound to the declared worker protocol.');
+  if(!workerSource.includes('workerProtocolVersion:WORKER_PROTOCOL_VERSION'))throw new Error('Worker success/failure results do not expose the worker protocol identity.');
+  if(!workerSource.includes('testWorkerSha256'))throw new Error('Worker results do not carry the worker-byte identity field.');
   const html=fs.readFileSync(path.join(first,'index.html'),'utf8');
   const tokens=[...html.matchAll(/<script\s+defer\s+src="[^"]+\?v=([^"]+)"/g)].map(match=>match[1]);
   if(tokens.length!==9||tokens.some(token=>token!==manifest.buildIdentity))throw new Error('HTML runtime graph has mixed build identities.');
@@ -50,7 +57,7 @@ try{
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
   if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,noControllingServiceWorker:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,noControllingServiceWorker:true},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }
