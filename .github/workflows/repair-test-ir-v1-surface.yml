@@ -24,6 +24,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add test-runtime.js .github/workflows/pages.yml
+          git add test-runtime.js verify-test-runtime-v3.mjs .github/workflows/pages.yml
           git commit -m 'Conform Test IR v1 operation selector and regex surface'
           git push origin HEAD:fix/test-ir-v1-surface-20260902
