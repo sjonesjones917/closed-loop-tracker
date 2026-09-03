@@ -1,13 +1,14 @@
-name: One-time current file-first transplant
+name: One-time current file-first reconciliation
 on:
   push:
     branches: [codex/spec-response-file-binding]
 permissions:
   contents: write
 jobs:
-  transplant:
+  reconcile:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -16,90 +17,87 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Apply the proven file-first implementation diff
+      - name: Apply marker-checked authoritative exchange repair
         shell: bash
         run: |
           set -euo pipefail
-          SOURCE=78d1760734d0d396adc6468d3702c2cb9ffb3a05
+          SOURCE=44982136c959ca28c6b308540e3f2e8fac5e1266
           git fetch --no-tags origin "$SOURCE"
-          git diff "$SOURCE^" "$SOURCE" -- \
-            app-core.js \
-            build-test-project.mjs \
-            index.html \
-            project-store.js \
-            response-ingestion.js \
-            verify-browser-extra.mjs \
-            verify-browser.mjs \
-            verify-file-first-operator.mjs \
-            verify-file-first-response.mjs \
-            verify-ingestion.mjs \
-            verify-prompt-semantics.mjs \
-            verify.mjs \
-            workflow-engine.js > /tmp/file-first.patch
-          test -s /tmp/file-first.patch
-          git apply --3way /tmp/file-first.patch
-          ! grep -R -nE '^(<<<<<<<|=======|>>>>>>>)' -- \
-            app-core.js workflow-engine.js response-ingestion.js project-store.js index.html
-      - name: Remove implementation-instruction leakage and pin response-file wording
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          app = Path('app-core.js')
-          text = app.read_text()
-          old = '<strong>The agent should now return one final JSON response file. Select that file below.</strong>'
-          new = '<strong>One final JSON response file is now required. Select that file below.</strong>'
-          if old in text:
-              text = text.replace(old, new)
-              app.write_text(text)
-          html = Path('index.html')
-          text = html.read_text()
-          old = '<strong>Select that exact response JSON file in the application</strong>'
-          new = '<strong>Select the exact response.json file returned by the agent in the application</strong>'
-          if old in text:
-              text = text.replace(old, new)
-              html.write_text(text)
-          proof = Path('verify-file-first-response.mjs')
-          if proof.exists():
-              text = proof.read_text()
-              old = '/Select that exact response JSON file in the application/'
-              new = '/Select the exact response\\.json file returned by the agent in the application/'
-              if old in text:
-                  proof.write_text(text.replace(old, new))
-          PY
-      - name: Prove the ratchet step locally
+          for f in repair-authoritative-exchange.py repair-authoritative-exchange-v2.py repair-authoritative-exchange-v3.py repair-authoritative-exchange-v4.py; do
+            git show "$SOURCE:$f" > "/tmp/$f"
+          done
+          cp /tmp/repair-authoritative-exchange*.py .
+          python3 -m py_compile repair-authoritative-exchange-v4.py
+          python3 repair-authoritative-exchange-v4.py
+      - name: Prove syntax architecture and file-first contracts
         shell: bash
         run: |
           set -euo pipefail
           for file in *.js *.mjs; do node --check "$file"; done
           node build-test-project.mjs
+          node verify.mjs
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
           node verify-reservation-contract.mjs
           node verify-file-first-response.mjs
           node verify-file-first-operator.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+      - name: Complete source proof suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-deployment-manifest.mjs
+          node verify-mobile-release-governance.mjs
           node verify-data-route-closure.mjs
           node verify-infrastructure-route-closure.mjs
+          node verify-v3-migration.mjs
           node verify-v3-contract.mjs
           node verify-spec3-contract.mjs
-          node verify-ingestion.mjs
-          node verify-prompt-semantics.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
           node verify-complete.mjs
-          node verify.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-semantic-invariant.mjs
+      - name: Local Chromium operator path
+        shell: bash
+        run: |
+          set -euo pipefail
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
           node verify-browser.mjs
-      - name: Commit only permanent implementation and regression files
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only permanent repair and regressions
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/one-time-transplant-file-first-current.yml
+          rm -f repair-authoritative-exchange.py repair-authoritative-exchange-v2.py repair-authoritative-exchange-v3.py repair-authoritative-exchange-v4.py
+          rm -f .github/workflows/one-time-transplant-file-first-current.yml
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
           git add -A
           git diff --cached --check
           test -z "$(git diff --cached --name-only | grep '^\.github/workflows/' || true)"
-          git commit -m 'Make the external response path file-first'
+          git diff --cached --quiet && { echo 'No proven repair diff produced'; exit 1; }
+          git commit -m 'Conform authoritative file-first exchange contracts'
           git push origin HEAD:codex/spec-response-file-binding
