@@ -39,9 +39,10 @@ fixture_map={
     'later-resolvable':'LATER_RESOLVABLE',
     'inapplicable with reason':'NO_PROJECT_RELEVANT_INFORMATION',
 }
-for path in Path('.').glob('verify-*.mjs'):
-    t=path.read_text()
-    original=t
+fixture_paths=list(Path('.').glob('verify-*.mjs'))+[Path('verify.mjs')]
+for path in fixture_paths:
+    if not path.exists():continue
+    t=path.read_text();original=t
     for retired,current in fixture_map.items():
         t=t.replace(f"disposition:'{retired}'",f"disposition:'{current}'")
         t=t.replace(f'disposition:"{retired}"',f'disposition:"{current}"')
