@@ -1,0 +1,47 @@
+name: Transient ratchet transplant
+
+on:
+  push:
+    branches:
+      - 'fix/spec-conformance-20260903-v3'
+
+permissions:
+  contents: write
+
+jobs:
+  transplant:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/spec-conformance-20260903-v3
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Transplant proven changes
+        run: |
+          set -euo pipefail
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git cherry-pick d8fe47435ef0ce4dbd23a06fa7e1cac91f02d39a
+          git cherry-pick 43b1a95771b1d388a3345fe61fc4e2b5f3eb53fa
+      - name: Reprove transplanted ratchets
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-prompt-semantics.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+      - name: Remove transient workflow and push
+        run: |
+          set -euo pipefail
+          rm .github/workflows/rebase-proven-ratchets.yml
+          git add -A
+          git commit -m 'Remove transient ratchet transplant workflow'
+          git push origin HEAD:fix/spec-conformance-20260903-v3
