@@ -25,11 +25,11 @@ jobs:
           node verify-terminal-due-contract.mjs
           node verify-state-release-contract.mjs
           node verify-contract-closure.mjs
-      - name: Commit validated correction
+      - name: Commit validated runtime correction
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js prompt-engine.js verify-stage01-intake-closure.mjs verify-stage01-disposition-contract.mjs verify-terminal-due-contract.mjs .github/workflows/pages.yml
+          git add workflow-engine.js prompt-engine.js verify-stage01-intake-closure.mjs
           git commit -m "Fix Stage 01 and terminal contract contradictions"
           git push origin HEAD:repair/section49-trace-closure-20260903
