@@ -73,6 +73,11 @@ assert.match(worker,/Network access is unavailable/,'worker must deny network ac
 assert.match(worker,/EXECUTE_TEST_IR/,'worker must accept only the registered execution command');
 assert.doesNotMatch(worker,/\beval\s*\(/,'worker must not use eval');
 assert.doesNotMatch(worker,/\bFunction\s*\(/,'worker must not use Function');
+assert.match(worker,/self\.eval=unavailable\('eval'\)/,'worker must make the eval execution surface unavailable after bootstrap');
+assert.match(worker,/self\.Function=unavailable\('Function'\)/,'worker must make the Function constructor unavailable after bootstrap');
+for(const mutation of [worker.replace("self.eval=unavailable('eval')","self.eval=globalThis.eval"),worker.replace("self.Function=unavailable('Function')","self.Function=globalThis.Function")]){
+  assert.ok(!/self\.eval=unavailable\('eval'\)/.test(mutation)||!/self\.Function=unavailable\('Function'\)/.test(mutation),'dynamic-code denial mutation must remove a required worker guard');
+}
 
 for(const helper of ['testExecutionPlan','evaluateContextIndependence','evaluateEvidenceSufficiency','detectCurrentContradictions','operationalNextAction'])assert.match(engine,new RegExp(`\\b${helper}\\b`),`workflow engine helper missing: ${helper}`);
 assert.match(store,/\bcreateExecutionPackage\b/,'project store must construct execution packages');
