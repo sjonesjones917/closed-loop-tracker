@@ -19,7 +19,10 @@ jobs:
         with:
           node-version: '22'
       - name: Apply exact contract repair
-        run: node .repair-scope-contract.mjs
+        run: |
+          set -euo pipefail
+          node .repair-scope-contract.mjs
+          git diff 551333a47ae590e544b8d83b01d09fcc0e9256c9 6d12955a9500e4d60ffdc647e9c1c68cc2e3d0a9 -- verify-full-cycle.mjs | git apply
       - name: Prove exact matrix and affected contracts
         run: |
           set -euo pipefail
@@ -35,6 +38,6 @@ jobs:
           rm .repair-scope-contract.mjs .github/workflows/repair-scope-matrix.yml
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
-          git add workflow-schema.js verify-section14-scope-matrix.mjs .github/workflows/pages.yml .repair-scope-contract.mjs .github/workflows/repair-scope-matrix.yml
+          git add workflow-schema.js verify-section14-scope-matrix.mjs verify-full-cycle.mjs .github/workflows/pages.yml .repair-scope-contract.mjs .github/workflows/repair-scope-matrix.yml
           git commit -m "Conform exact stage-operation scope matrix"
           git push origin HEAD:repair/scope-matrix-726b
