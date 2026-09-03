@@ -47,7 +47,7 @@ const capture={
   units:intake.units.map((unit,index)=>({
     sourceUnitId:unit.unitId,
     sourceRawValueSha256:unit.rawValueSha256,
-    disposition:'incorporated into the job definition',
+    disposition:'EXTRACTED_RELEVANT_INFORMATION',
     reason:'Preserved once as controlling project authority for downstream reuse.',
     extractedStatements:[{
       statementKey:`statement-${String(index+1).padStart(3,'0')}`,
