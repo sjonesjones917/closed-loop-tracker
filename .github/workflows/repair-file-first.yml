@@ -5,29 +5,138 @@ on:
 permissions:
   contents: write
 jobs:
-  inspect:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Inspect exact remaining anchors
+      - name: Patch existing file-first owners in place
         shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          targets={
-            'app-core.js':['id="save-prompt"','id="copy-prompt"',"$('#save-prompt')","$('#copy-prompt')","$('#parse-output')",'function responsePromptRecord','async function savePromptRecord'],
-            'project-store.js':['async function putArtifact','async function getArtifact','async function deleteArtifact','async function createExecutionPackage'],
-            'response-ingestion.js':['function captureRaw(','function prepareCaptured('],
-            '.github/workflows/pages.yml':['verify-browser-extra.mjs','verify-definition-of-done.mjs']
-          }
-          for filename,needles in targets.items():
-            text=Path(filename).read_text()
-            print(f'===== {filename} =====')
-            for needle in needles:
-              index=text.find(needle)
-              print(f'--- {needle!r}: {index} ---')
-              if index>=0:
-                lo=max(0,index-1200); hi=min(len(text),index+2600)
-                print(text[lo:hi])
-          raise SystemExit('INSPECTION_ONLY')
+          import re
+
+          def replace_once(text, old, new, label):
+              count=text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+              return text.replace(old,new,1)
+
+          # response-ingestion.js: preserve exact selected file bytes before parsing.
+          path=Path('response-ingestion.js'); text=path.read_text()
+          insert="""
+async function captureRawFile(project,{stage,file,promptRecord,contextId='UNKNOWN',files=[],fileMetadata={}}={}){
+  if(!(file instanceof Blob))throw Object.assign(new TypeError('The authoritative response must be selected as a JSON file.'),{code:'RESPONSE_FILE_REQUIRED'});
+  const bytes=new Uint8Array(await file.arrayBuffer()),actualByteSize=bytes.byteLength,actualSha256=await hash.sha256Bytes(bytes);let rawText;
+  try{rawText=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);}catch(error){throw Object.assign(new Error('The selected response file is not valid UTF-8.'),{code:'INVALID_RESPONSE_UTF8',cause:error});}
+  const roundTripSha256=await hash.sha256Bytes(new TextEncoder().encode(rawText));if(roundTripSha256!==actualSha256)throw Object.assign(new Error('The selected response bytes cannot be represented exactly as authoritative UTF-8 text.'),{code:'RESPONSE_BYTE_TEXT_DIVERGENCE'});
+  const metadata={sourceTransport:'RESPONSE_JSON_FILE',stagingId:fileMetadata.stagingId||null,rawFilename:String(fileMetadata.rawFilename||file.name||'response.json'),mediaType:String(fileMetadata.mediaType||file.type||'application/json'),byteSize:actualByteSize,sha256:actualSha256};
+  const captured=captureRaw(project,{stage,text:rawText,promptRecord,contextId,files:[...safe(files),metadata]});
+  if(String(captured.rawRecord.sha256)!==actualSha256)throw Object.assign(new Error('Preserved raw response identity differs from the selected response-file bytes.'),{code:'RESPONSE_FILE_HASH_DIVERGENCE'});
+  Object.assign(captured.rawRecord,{sourceTransport:'RESPONSE_JSON_FILE',stagingId:metadata.stagingId,rawFilename:metadata.rawFilename,mediaType:metadata.mediaType,byteSize:metadata.byteSize,fileSha256:metadata.sha256});
+  const generated=safe(captured.project.projectData.generatedOutputs).find(record=>record.outputId===captured.rawRecord.outputId);if(generated)Object.assign(generated,{sourceTransport:'RESPONSE_JSON_FILE',stagingId:metadata.stagingId,rawFilename:metadata.rawFilename,byteSize:metadata.byteSize,fileSha256:metadata.sha256});
+  return captured;
+}
+
+"""
+          text=replace_once(text,"function prepareCaptured(project,{rawResponseId,promptRecord=null,expectedCommittedRevision=null}={}){",insert+"function prepareCaptured(project,{rawResponseId,promptRecord=null,expectedCommittedRevision=null}={}){",'response file capture insertion')
+          text=replace_once(text,"version:'closed-loop-response-ingestion/4'","version:'closed-loop-response-ingestion/5'",'response ingestion version')
+          text=replace_once(text,"proposalPreconditions,captureRaw,prepareCaptured","proposalPreconditions,captureRaw,captureRawFile,prepareCaptured",'response ingestion export')
+          path.write_text(text)
+
+          # project-store.js: use the existing artifact store for durable staged response bytes and rehash readback.
+          path=Path('project-store.js'); text=path.read_text()
+          insert="""
+async function stageResponseFile({jobId,stage,file,promptInstructionId=null}={}){
+  const owner=String(jobId||'').trim(),stageNumber=Number(stage);if(!owner)throw storageError('JOB_ID is required for response-file staging.','RESPONSE_STAGING_JOB_REQUIRED');if(!Number.isInteger(stageNumber)||stageNumber<1||stageNumber>30)throw storageError('A valid stage is required for response-file staging.','RESPONSE_STAGING_STAGE_REQUIRED');if(!(file instanceof Blob))throw storageError('Select the authoritative response JSON file before validation.','RESPONSE_FILE_REQUIRED');
+  const bytes=new Uint8Array(await file.arrayBuffer()),byteSize=bytes.byteLength,sha256=await hash.sha256Bytes(bytes),random=new Uint8Array(16);if(!globalThis.crypto?.getRandomValues)throw storageError('Cryptographically secure randomness is unavailable for response staging.','RESPONSE_STAGING_CSPRNG_UNAVAILABLE');globalThis.crypto.getRandomValues(random);const nonce=Array.from(random,b=>b.toString(16).padStart(2,'0')).join(''),stagingId=`STAGED-RESPONSE-${sha256.slice(0,20)}-${nonce}`,rawFilename=String(file.name||'response.json'),mediaType=String(file.type||'application/json'),blob=new Blob([bytes],{type:mediaType});
+  const stored=await putArtifact({artifactId:stagingId,jobId:owner,blob,filename:rawFilename,mediaType,lineage:{kind:'RESPONSE_STAGING',canonical:false,stage:stageNumber,promptInstructionId:promptInstructionId||null}}),readback=await getArtifact(stagingId);if(!stored||!readback)throw storageError('The selected response file was not preserved in staging.','RESPONSE_STAGING_MISSING');const readbackBytes=new Uint8Array(await readback.blob.arrayBuffer()),readbackSha256=await hash.sha256Bytes(readbackBytes);if(readbackBytes.byteLength!==byteSize||readbackSha256!==sha256){await deleteArtifact(stagingId,owner);throw storageError('Response-file staging read-back verification failed.','RESPONSE_STAGING_REHASH_MISMATCH');}
+  return {stagingId,rawFilename,mediaType,byteSize,sha256,blob:readback.blob,status:'HASHED_AND_REVERIFIED'};
+}
+
+"""
+          text=replace_once(text,"async function createExecutionPackage({project=null,jobId=null,stage,operation=null,testIds=[],productId=null,runId=null,reviewerAliasContext=null,instructionId=null}={}){",insert+"async function createExecutionPackage({project=null,jobId=null,stage,operation=null,testIds=[],productId=null,runId=null,reviewerAliasContext=null,instructionId=null}={}){",'response staging insertion')
+          text=replace_once(text,"verifyProjectArtifacts,createExecutionPackage","verifyProjectArtifacts,stageResponseFile,createExecutionPackage",'project store export')
+          path.write_text(text)
+
+          # app-core.js: make file selection/export the primary operator path; retain text only as diagnostic fallback.
+          path=Path('app-core.js'); text=path.read_text()
+          text=text.replace("'PASTE_FINAL_JSON'","'SELECT_RESPONSE_JSON_FILE'")
+          text=text.replace("PASTE_FINAL_JSON:'Human operator'","SELECT_RESPONSE_JSON_FILE:'Human operator'")
+          text=text.replace('do not send a prompt or paste a response for this stage yet.','do not send an instruction file or select a response file for this stage yet.')
+          text=text.replace('Do not send a prompt and do not paste agent JSON for this stage.','Do not export an external instruction and do not select an agent response file for this stage.')
+          text=text.replace('Do not send an agent prompt or paste agent JSON.','Do not export an external instruction or select an agent response file.')
+          text=text.replace('before generating, saving, copying, sending, or responding to a controlling instruction','before generating, saving, exporting, sending, or responding to a controlling instruction')
+          text=text.replace('before it can be saved or copied.','before it can be saved or exported.')
+
+          old_toolbar='<button id="toggle-prompt" aria-expanded="false">Expand preview</button><button id="save-prompt"${locked||applicationOnlyInteraction?\' disabled\':\'\'}>Save instruction</button><button class="primary" id="copy-prompt"${locked||applicationOnlyInteraction?\' disabled\':\'\'}>Save and copy instruction</button>'
+          new_toolbar='<button id="toggle-prompt" aria-expanded="false">Expand preview</button><button id="save-prompt"${locked||applicationOnlyInteraction?\' disabled\':\'\'}>Save instruction</button><button class="primary" id="export-prompt-file"${locked||applicationOnlyInteraction?\' disabled\':\'\'}>Export instruction file</button><button id="copy-prompt"${locked||applicationOnlyInteraction?\' disabled\':\'\'}>Copy instruction (optional)</button>'
+          text=replace_once(text,old_toolbar,new_toolbar,'prompt toolbar')
+
+          old_response='<textarea class="code-text stage-output" id="stage-output"${responseLocked?\' disabled\':\'\'}>${esc(s.responseDraft||\'\')}</textarea><div class="stage-output-hint"><span>Complete JSON only — no Markdown wrapper.</span><span>${s.responseDraft?`${s.responseDraft.length.toLocaleString()} characters pasted`:\'No response pasted yet\'}</span></div><div class="button-row"><button class="primary" id="parse-output"${responseLocked?\' disabled\':\'\'}>Parse / validate response</button></div>'
+          new_response='<label class="field-label" for="stage-response-file">Authoritative response.json file</label><input id="stage-response-file" type="file" accept=".json,application/json"${responseLocked?\' disabled\':\'\'}><div class="stage-output-hint"><span>Select the exact response JSON file returned for this instruction.</span><span id="stage-response-file-status">No response file selected yet</span></div><div class="button-row"><button class="primary" id="parse-output"${responseLocked?\' disabled\':\'\'}>Stage / validate response.json</button></div><details class="record-card"><summary>Diagnostic text fallback<span>Nonpreferred</span></summary><div class="record-body"><p class="section-intro">If file selection is unavailable, this text is materialized as an application-generated response.json file and sent through the same byte-staging and Parse / validate response path.</p><textarea class="code-text stage-output" id="stage-output"${responseLocked?\' disabled\':\'\'}>${esc(s.responseDraft||\'\')}</textarea><div class="stage-output-hint"><span>Diagnostic JSON only — no Markdown wrapper.</span><span>${s.responseDraft?`${s.responseDraft.length.toLocaleString()} fallback characters`:\'No diagnostic fallback text\'}</span></div></div></details>'
+          text=replace_once(text,old_response,new_response,'response control')
+
+          text=text.replace("'Paste only the final strict JSON from ChatGPT after the conversation is complete. If ChatGPT is still asking you questions, answer them there instead of pasting that conversation here. Parse / validate preserves the raw response first, then validates it without changing canonical project records. If the final response declares returned files, attach only those exact returned files when this stage shows a returned-file control. Never reattach the original Stage 01 intent file; later stages consume the canonical captured project authority and upstream records embedded in their controlling prompts.'","'Select the exact response.json file returned for the current instruction after the external conversation is complete. If the external agent is still asking questions, answer them there instead of importing conversational text here. The application stages, hashes, reads back, and rehashes the selected file before parsing it, then validates it without changing canonical project records. If returned files are declared, select only the exact returned files requested by the current handoff. Never reattach the original Stage 01 intent file merely to rediscover accepted semantics; later stages reuse current canonical intake.'")
+
+          helper="""
+function promptTransportFilename(record){const clean=value=>String(value||'UNKNOWN').replace(/[^A-Za-z0-9._-]+/g,'_').replace(/^_+|_+$/g,'')||'UNKNOWN';return `${clean(current?.job?.JOB_ID)}_${String(Number(record?.stage||current?.activeStage||0)).padStart(2,'0')}_${clean(record?.operation||'COMPLETE')}_${clean(record?.instructionId||record?.promptId)}.txt`;}
+async function exportPromptFile(){const record=await savePromptRecord(current.activeStage),blob=new Blob([String(record.prompt||'')],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=promptTransportFilename(record);a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0);announce('instruction file ready');return record;}
+"""
+          text=replace_once(text,"function downloadRawRecovery(text,prompt,error){",helper+"\nfunction downloadRawRecovery(text,prompt,error){",'prompt export helper')
+
+          replacement="""async function prepareStageResponse(){
+  const n=current.activeStage,fileNode=$('#stage-response-file'),selectedFile=fileNode?.files?.[0]||null,fallbackText=$('#stage-output')?.value||'';
+  if(!selectedFile&&!fallbackText.trim()){alert('Select the authoritative response.json file. The diagnostic text fallback is available only when file selection cannot be used.');fileNode?.focus();return;}
+  const responseFile=selectedFile||new Blob([fallbackText],{type:'application/json'}),fallbackFilename=`${String(current?.job?.JOB_ID||'project').replace(/[^A-Za-z0-9._-]+/g,'_')}_STAGE_${String(n).padStart(2,'0')}_RESPONSE.json`;let staged,text,prompt,captured;
+  try{staged=await projectStore.stageResponseFile({jobId:current.job.JOB_ID,stage:n,file:responseFile,promptInstructionId:null});if(!selectedFile)staged.rawFilename=fallbackFilename;announce('response file staged');}
+  catch(error){console.error(error);announce('storage failed');if(!selectedFile)downloadRawRecovery(fallbackText,null,error);alert(`Response-file staging failed. Canonical state did not change. ${selectedFile?'The selected file remains available for retry.':'The diagnostic fallback remains in place and a recovery file was produced.'} ${error.message||error}`);return;}
+  try{text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await staged.blob.arrayBuffer());}
+  catch(error){announce('validation failed');alert(`The staged response file is not valid UTF-8. Canonical state did not change: ${error.message||error}`);return;}
+  prompt=responsePromptRecord(n,text);if(!prompt){alert('The staged response file does not identify a saved current instruction for this stage. Export the current instruction file, execute that exact instruction externally, then select its response.json. The staged bytes remain preserved; validation does not create a new instruction.');return;}
+  try{captured=await ingestion.captureRawFile(current,{stage:n,file:staged.blob,promptRecord:prompt,contextId:prompt.scope?.contextId||'UNKNOWN',files:safe(current.stages[n].authorizedFiles),fileMetadata:{stagingId:staged.stagingId,rawFilename:selectedFile?.name||fallbackFilename,mediaType:staged.mediaType,byteSize:staged.byteSize,sha256:staged.sha256}});captured.project.stages[n].responseDraft=selectedFile?'':fallbackText;await persistReplacement(captured.project);announce('raw response preserved');}
+  catch(error){console.error(error);announce('storage failed');if(!selectedFile)downloadRawRecovery(fallbackText,prompt,error);alert(`The response file was staged, but raw response custody failed. Canonical state did not change. Staged bytes remain preserved for recovery: ${error.message||error}`);return;}
+  try{const prepared=ingestion.prepareCaptured(current,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:prompt,expectedCommittedRevision:Number(current.revision||0)+1});await persistReplacement(prepared.project);announce(prepared.validation?.valid?'proposal ready':'validation failed');render();queueMicrotask(()=>$(prepared.validation?.valid?'#proposal-heading':'#validation-report')?.focus());}
+  catch(error){console.error(error);announce('storage failed');alert(`The exact raw response file was preserved, but validation/proposal storage failed. Canonical state did not change: ${error.message||error}`);}
+}
+"""
+          text,repl_count=re.subn(r"async function prepareStageResponse\(\)\{[\s\S]*?\n\}\nfunction pendingProposal\(\)",replacement+"function pendingProposal()",text,count=1)
+          if repl_count!=1: raise SystemExit(f'prepareStageResponse replacement count {repl_count}')
+
+          text=replace_once(text,"if($('#save-prompt'))$('#save-prompt').onclick=async()=>{try{await savePromptRecord(current.activeStage);announce('instruction saved');render();}catch(error){alert(error.message||error);}};","if($('#save-prompt'))$('#save-prompt').onclick=async()=>{try{await savePromptRecord(current.activeStage);announce('instruction saved');render();}catch(error){alert(error.message||error);}};if($('#export-prompt-file'))$('#export-prompt-file').onclick=async()=>{try{await exportPromptFile();render();}catch(error){alert(error.message||error);}};",'prompt export wiring')
+          text=replace_once(text,"if($('#stage-output'))$('#stage-output').oninput=()=>{","if($('#stage-response-file'))$('#stage-response-file').onchange=()=>{const file=$('#stage-response-file')?.files?.[0]||null,status=$('#stage-response-file-status');if(status)status.textContent=file?`${file.name} · ${file.size.toLocaleString()} bytes`:'No response file selected yet';announce(file?'response file selected':'response file selection cleared');};if($('#stage-output'))$('#stage-output').oninput=()=>{",'response file wiring')
+          path.write_text(text)
+
+          # index.html help: the normal flow is file-first.
+          path=Path('index.html'); text=path.read_text()
+          text=replace_once(text,'<li><strong>When the application says final JSON is required, obtain the final JSON for the current instruction.</strong></li><li><strong>Paste only that final JSON into the response box</strong>, then tap <em>Parse / validate response</em>. Review the proposed change before accepting it.</li>','<li><strong>When the application says a final response is required, obtain the exact response.json file for the current instruction.</strong></li><li><strong>Select that exact response.json file</strong>, then tap <em>Stage / validate response.json</em>. Review the proposed change before accepting it. The diagnostic text fallback is nonauthoritative until the application materializes it as a response file and sends it through the same byte-staging path.</li>','index response help')
+          text=text.replace('After <em>Parse / validate response</em> rejects a final JSON response, the application preserves the failure and prepares the replacement instruction. Save and copy the new current instruction before obtaining a replacement response. After replacing a rejected response, the status remains <strong>Replacement not evaluated</strong> until <em>Parse / validate response</em> runs again.','After <em>Stage / validate response.json</em> rejects a response file, the application preserves the failure and prepares the replacement instruction. Export the new current instruction file before obtaining a replacement response. After selecting a replacement response, the status remains <strong>Replacement not evaluated</strong> until the application stages and validates that file.')
+          path.write_text(text)
+
+          # Permanent focused regression.
+          Path('verify-file-first-transport.mjs').write_text("""import fs from 'node:fs';\nimport assert from 'node:assert/strict';\nconst app=fs.readFileSync('app-core.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),html=fs.readFileSync('index.html','utf8');\nassert(!app.includes(\"actionType:'PASTE_FINAL_JSON'\"),'Legacy paste-first action remains authoritative.');\nassert(app.includes(\"actionType:'SELECT_RESPONSE_JSON_FILE'\"),'File-selection action is not authoritative.');\nassert(app.includes('id=\\\"stage-response-file\\\" type=\\\"file\\\"'),'Normal response.json file control is missing.');\nassert(app.includes('Diagnostic text fallback')&&app.includes('Nonpreferred'),'Text input is not explicitly isolated as a diagnostic fallback.');\nassert(app.includes('projectStore.stageResponseFile')&&app.includes('ingestion.captureRawFile'),'UI does not route selected response bytes through durable staging and file capture.');\nassert(app.includes('id=\\\"export-prompt-file\\\"')&&app.includes('exportPromptFile'),'Prompt-file export action is missing.');\nassert(ingestion.includes('async function captureRawFile')&&ingestion.includes("new TextDecoder('utf-8',{fatal:true,ignoreBOM:true})")&&ingestion.includes('actualSha256=await hash.sha256Bytes(bytes)'),'Response ingestion does not hash exact selected bytes before text parsing.');\nassert(store.includes('async function stageResponseFile')&&store.includes('readbackSha256=await hash.sha256Bytes(readbackBytes)')&&store.includes("status:'HASHED_AND_REVERIFIED'"),'Response staging does not rehash read-back bytes.');\nassert(!html.includes('Paste only that final JSON into the response box'),'Primary help still instructs paste-first transport.');\nconsole.log(JSON.stringify({fileFirstResponseTransport:'PASS',promptFileExport:true,responseFileSelection:true,stagedBeforeParse:true,readbackRehashed:true,diagnosticTextFallbackOnly:true}));\n""")
+
+          # Run the permanent regression in the existing single Pages workflow.
+          path=Path('.github/workflows/pages.yml'); text=path.read_text()
+          text=replace_once(text,'          node verify-ingestion.mjs\n','          node verify-ingestion.mjs\n          node verify-file-first-transport.mjs\n','CI file-first regression')
+          path.write_text(text)
           PY
+
+          node --check app-core.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node verify-file-first-transport.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+
+      - name: Commit completed repair and remove scaffold
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git rm .github/workflows/repair-file-first.yml
+          git add app-core.js response-ingestion.js project-store.js index.html verify-file-first-transport.mjs .github/workflows/pages.yml
+          git commit -m "Make external response transport file-first"
+          git push origin HEAD:closed-loop-file-first-transport
