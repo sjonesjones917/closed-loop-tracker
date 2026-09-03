@@ -24,6 +24,4 @@ jobs:
         run: |
           node --check test-runtime.js
           node verify-test-ir-dag-contract.mjs
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-          node verify-test-runtime.mjs
+          node verify-test-runtime-safety-dag.mjs
