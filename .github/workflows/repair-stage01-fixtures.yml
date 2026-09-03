@@ -18,6 +18,7 @@ jobs:
       - name: Migrate only Stage 01 proof fixtures to the closed vocabulary
         run: |
           set -euo pipefail
+          cp .github/workflows/repair-stage01-fixtures.yml /tmp/repair-stage01-fixtures.yml
           node <<'NODE'
           const fs=require('fs');
           const replacements=new Map([
@@ -36,12 +37,15 @@ jobs:
           for(const file of fs.readdirSync('.').filter(n=>n.endsWith('.mjs'))){let s=fs.readFileSync(file,'utf8'),n=s;for(const [a,b] of replacements)n=n.split(a).join(b);if(n!==s){fs.writeFileSync(file,n);changed.push(file);}}
           console.log(JSON.stringify({changed}));
           NODE
+          rm .github/workflows/repair-stage01-fixtures.yml
           node build-test-project.mjs
           node verify-stage01-intake-closure.mjs
           node verify-spec-grounded-route-oracle.mjs
           node verify-zero-loss-accounting.mjs
           node verify-complete.mjs
           node verify-full-cycle.mjs
+          mkdir -p .github/workflows
+          cp /tmp/repair-stage01-fixtures.yml .github/workflows/repair-stage01-fixtures.yml
       - name: Commit fixture migration
         run: |
           set -euo pipefail
