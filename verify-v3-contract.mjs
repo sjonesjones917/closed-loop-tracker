@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
+const workbook=read('./workbook.js');
 const schema=read('./workflow-schema.js');
 const runtime=read('./test-runtime.js');
 const worker=read('./test-worker.js');
@@ -26,10 +27,28 @@ const requiredLimits=[
   'maxCollectionItems','maxRegexPatternBytes','maxRegexInputBytes','workerTimeoutMs','maxArchiveExpansionBytes'
 ];
 
+assert.match(workbook,/CONTRACT_PROFILE_ID='closed-loop-completion-profile\/1'/,'blank-project owner must bind the current contract profile');
+for(const token of [
+  'CURRENT_ITERATION:null','CURRENT_SOURCE_SET_VERSION:null','CURRENT_RESEARCH_VERSION:null',
+  'CURRENT_REQUIREMENTS_VERSION:null','CURRENT_TEST_SUITE_VERSION:null','CURRENT_INSTRUCTION_VERSION:null',
+  'CURRENT_CANDIDATE_ID:null','CURRENT_BASELINE_ID:null','CURRENT_PRODUCT_ID:null','CURRENT_PRODUCT_VERSION:null',
+  'CURRENT_DELIVERY_CANDIDATE_SET_ID:null','CURRENT_REVIEW_VERSION:null','CURRENT_RECONCILED_REVIEW_VERSION:null',
+  'CURRENT_RELEASE_ID:null','CURRENT_HASH_REVIEW_ID:null','CURRENT_EVIDENCE_CHAIN_VERSION:null','CURRENT_DELIVERY_ID:null',
+  'LATEST_EVIDENCE_REFERENCE:null'
+])assert.ok(workbook.includes(token),`blank-project canonical pointer contract missing: ${token}`);
+assert.match(workbook,/CURRENT_STATE:'AWAITING_HUMAN_INPUT'/,'new project must start in the closed CURRENT_STATE enum');
+assert.match(workbook,/JOB_RECORD_STATUS:'INCOMPLETE'/,'new project must start in the closed JOB_RECORD_STATUS enum');
+assert.doesNotMatch(workbook,/CURRENT_(?:ITERATION|SOURCE_SET_VERSION|REQUIREMENTS_VERSION|TEST_SUITE_VERSION|INSTRUCTION_VERSION):''/,'nullable canonical pointers must not use empty-string sentinels');
+assert.doesNotMatch(workbook,/CURRENT_(?:BASELINE_ID|PRODUCT_ID):'NONE'/,'nullable canonical pointers must not use NONE sentinels');
+
 assert.match(schema,/closed-loop-project\/3/,'project schema /3 is required');
 assert.match(schema,/closed-loop-stage-response\/3/,'response schema /3 is required');
 assert.match(schema,/closed-loop-test-spec\/1/,'Test IR schema /1 is required');
 assert.match(schema,/closed-loop-verification-package\/1/,'verification-package schema /1 is required');
+assert.match(schema,/closed-loop-completion-profile\/1/,'current contract profile identity is required');
+for(const name of ['CONTRACT_PROFILE_ID','CURRENT_RESEARCH_VERSION','CURRENT_CANDIDATE_ID','CURRENT_PRODUCT_VERSION','CURRENT_DELIVERY_CANDIDATE_SET_ID','CURRENT_REVIEW_VERSION','CURRENT_RECONCILED_REVIEW_VERSION','CURRENT_RELEASE_ID','CURRENT_HASH_REVIEW_ID','CURRENT_EVIDENCE_CHAIN_VERSION','CURRENT_DELIVERY_ID'])assert.match(schema,new RegExp(`['"]${name}['"]`),`canonical Job field missing: ${name}`);
+assert.match(schema,/BLOCKED','AWAITING_HUMAN_INPUT','PROPOSAL_PENDING_REVIEW','RESPONSE_STAGED','AWAITING_EXTERNAL_RESPONSE','READY_FOR_NEXT_OPERATION','WORKFLOW_COMPLETE/,'CURRENT_STATE must use the closed enum');
+assert.match(schema,/INCOMPLETE','BLOCKED','COMPLETE/,'JOB_RECORD_STATUS must use the closed enum');
 assert.match(schema,/fields\.EXECUTABLE_KIND='NONE'/,'schema migration/default path must define NONE as the non-executable state');
 assert.doesNotMatch(schema,/enumValues\s*:\s*\[[^\]]*CUSTOM_PIPELINE[^\]]*\]/,'CUSTOM_PIPELINE cannot remain an active executable enum member');
 assert.match(schema,/fields\.EXECUTABLE_KIND==='CUSTOM_PIPELINE'[^\n]*fields\.EXECUTABLE_KIND='TEST_IR'/,'historical CUSTOM_PIPELINE records must migrate deterministically to TEST_IR');
@@ -57,6 +76,8 @@ assert.match(prompt,/FILES YOU MUST RECEIVE/,'prompt handoff must name files to 
 assert.match(prompt,/FILES YOU MUST NOT RECEIVE/,'prompt handoff must name withheld material');
 assert.match(prompt,/FILES OR EVIDENCE YOU MUST RETURN/,'prompt handoff must name required returns');
 assert.match(ingestion,/duplicate member/i,'ingestion must scan duplicate JSON members');
+assert.match(ingestion,/UNSAFE_SMART_QUOTES/,'authoritative response JSON must reject smart/curly delimiters');
+assert.doesNotMatch(ingestion,/normalizeSmartJsonDelimiters|SMART_JSON_DELIMITERS/,'authoritative response JSON must never be repaired before parsing');
 
 const scripts=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1].split('?')[0]);
 assert.deepEqual(scripts,[
