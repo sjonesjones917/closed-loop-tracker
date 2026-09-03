@@ -36,7 +36,12 @@ if(run.status!==0)process.exit(run.status??1);
 
 const ownerPath='test-runtime.js';
 let owner=fs.readFileSync(ownerPath,'utf8');
-const duplicate='const encoder=new TextEncoder();const encoder=new TextEncoder();';
-if(!owner.includes(duplicate))throw new Error('Expected materializer duplicate declaration was not found; refusing an unreviewed repair path.');
-owner=owner.replace(duplicate,'const encoder=new TextEncoder();');
+const exactRepairs=[
+  ['const encoder=new TextEncoder();const encoder=new TextEncoder();','const encoder=new TextEncoder();','duplicate encoder declaration'],
+  ['function workerUrl(){function workerUrl(){','function workerUrl(){','duplicate workerUrl declaration']
+];
+for(const [needle,replacement,label] of exactRepairs){
+  if(!owner.includes(needle))throw new Error(`Expected materializer ${label} was not found; refusing an unreviewed repair path.`);
+  owner=owner.replace(needle,replacement);
+}
 fs.writeFileSync(ownerPath,owner);
