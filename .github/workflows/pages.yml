@@ -17,7 +17,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
   statuses: write
@@ -36,19 +36,6 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-
-      - name: Apply one-time due-stage repair
-        if: github.event_name == 'pull_request' && github.head_ref == 'repair/due-stage-proof-20260903-r1'
-        run: |
-          set -euo pipefail
-          git fetch origin "$GITHUB_HEAD_REF"
-          git checkout "$GITHUB_HEAD_REF"
-          node repair-due-stage.mjs
-          git config user.name closed-loop-repair
-          git config user.email closed-loop-repair@users.noreply.github.com
-          git add -A
-          git commit -m "Enforce due-stage verification timing"
-          git push origin "HEAD:$GITHUB_HEAD_REF"
 
       - name: Capture exact PR source workspace
         if: github.event_name == 'pull_request'
