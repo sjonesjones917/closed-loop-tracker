@@ -6,16 +6,17 @@ permissions:
   contents: write
 jobs:
   inspect:
-    if: ${{ !contains(github.event.head_commit.message, '[spec-repair-applied]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[inspection-output]') && !contains(github.event.head_commit.message, '[spec-repair-applied]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Inspect exact repair seams
+      - name: Capture exact repair seams
         run: |
           python - <<'PY'
           from pathlib import Path
+          out=[]
           for file, needles in {
             'app-core.js':['savePromptRecord','export-prompt-file','prepareStageResponseFile'],
             'workflow-engine.js':['reserveOperation','reservationTargetSlot'],
@@ -24,9 +25,15 @@ jobs:
             'response-ingestion.js':['function validateEnvelope','function planProposal'],
           }.items():
             text=Path(file).read_text()
-            print(f'===== {file} =====')
+            out.append(f'===== {file} =====')
             for needle in needles:
               i=text.find(needle)
-              print(f'--- {needle} @ {i} ---')
-              if i>=0: print(text[max(0,i-1400):min(len(text),i+5000)])
+              out.append(f'--- {needle} @ {i} ---')
+              if i>=0: out.append(text[max(0,i-2500):min(len(text),i+10000)])
+          Path('repair-inspection.txt').write_text('\n'.join(out))
           PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add repair-inspection.txt
+          git commit -m 'Capture repair inspection seams [inspection-output]'
+          git push
