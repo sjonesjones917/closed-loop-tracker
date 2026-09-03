@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 
+await import('./verify-specification-governance.mjs');
 await import('./hash.js');
 const hashAuthority=globalThis.closedLoopHash;
 if(!hashAuthority||hashAuthority.canonicalizationVersion!=='closed-loop-canonical-json/1'||typeof hashAuthority.stableStringify!=='function'||typeof hashAuthority.sha256Value!=='function')throw new Error('Shared canonical hash authority is unavailable to deployment verification.');
@@ -61,6 +62,9 @@ try{
     if(resource.byteSize!==bytes.length||resource.hashAlgorithm!=='SHA-256'||resource.digest!==sha256(bytes))throw new Error(`Deployment digest mismatch: ${resource.path}`);
     if(resource.buildIdentity!==manifest.buildIdentity)throw new Error(`Mixed build identity: ${resource.path}`);
   }
+  for(const prohibited of ['specification/closed-loop-reliability-controlling-implementation-specification.txt','specification/closed-loop-specification-manifest.json','specification/closed-loop-normative-requirements.json','generate-specification-governance.mjs','verify-specification-governance.mjs']){
+    if(paths.has(prohibited)||fs.existsSync(path.join(first,prohibited)))throw new Error(`Repository-only governance content leaked into deployed runtime: ${prohibited}`);
+  }
   const workerResource=manifest.runtimeResources.find(resource=>resource.path==='test-worker.js');
   if(!workerResource||manifest.testWorkerSha256!==workerResource.digest)throw new Error('Deployment manifest does not bind testWorkerSha256 to the exact deployed worker bytes.');
   const workerSource=fs.readFileSync(path.join(first,'test-worker.js'),'utf8');
@@ -88,7 +92,7 @@ try{
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
   if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build and worker-byte identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true,repositoryGovernanceExcludedFromRuntime:true},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }
