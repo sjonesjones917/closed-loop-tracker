@@ -1,10 +1,13 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
+import {createMobileAcceptanceTarget,deploymentManifestDigest,verifyMobileAcceptanceSubmission} from './verify-mobile-acceptance-submission.mjs';
 
 const WORKFLOW_PATH=new URL('./.github/workflows/pages.yml',import.meta.url);
 const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
 const ACCEPTABLE_PHYSICAL_BASES=new Set(['HUMAN_OBSERVATION','VERIFIED_EXTERNAL']);
+const SHA256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 
 export function releaseTagEligibility(status){
   return Boolean(
@@ -36,10 +39,15 @@ export function assertWorkflowGovernance(workflow){
   assert.match(workflow,/actual_iphone=\$\{report\.actualIPhoneSafariAcceptance\}/,'The report step must publish the physical-iPhone result through GITHUB_OUTPUT.');
   assert.match(workflow,/final_acceptance=\$\{report\.finalAcceptancePublication\}/,'The report step must publish final-acceptance eligibility through GITHUB_OUTPUT.');
   assert.match(workflow,/fs\.appendFileSync\(process\.env\.GITHUB_OUTPUT/,'The release decision must be passed from the exact generated report.');
+  assert.match(workflow,/mobile_acceptance_target_json:/,'The one workflow must accept an authenticated pinned-target submission.');
+  assert.match(workflow,/mobile_acceptance_evidence_json:/,'The one workflow must accept authenticated physical-device evidence.');
+  assert.match(workflow,/MOBILE_ACCEPTANCE_MODE:\s*CREATE_TARGET/,'The workflow must create a pinned target/challenge against the exact deployed build.');
+  assert.match(workflow,/verify-mobile-acceptance-submission\.mjs/,'The workflow must execute the physical-device evidence verifier rather than hardcode success.');
+  assert.match(workflow,/mobile-challenge-/,'A successful physical-device proof must consume a persistent single-use challenge marker.');
 
   const tagStep=workflow.match(/\n\s*- name: Create release tag[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
   assert.ok(tagStep,'A release-tag step must exist.');
-  assert.match(tagStep.groups.body,/^\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/m,'The release-tag step must be conditionally gated by final acceptance.');
+  assert.match(tagStep.groups.body,/^\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/m,'The push-path release-tag step must be conditionally gated by final acceptance.');
   assert.match(tagStep.groups.body,/git push origin "refs\/tags\/\$TAG"/,'The condition must govern the actual remote tag write.');
 
   const blockedStep=workflow.match(/\n\s*- name: Record blocked actual-iPhone acceptance[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
@@ -47,6 +55,13 @@ export function assertWorkflowGovernance(workflow){
   assert.match(blockedStep.groups.body,/if:\s*steps\.acceptance\.outputs\.final_acceptance\s*!=\s*'true'/,'The blocked-status step must be the complement of release eligibility.');
   assert.match(blockedStep.groups.body,/Release tag blocked/,'The blocked path must identify that no release tag was created.');
 
+  const mobileJob=workflow.match(/\n\s*verify-mobile-acceptance:\n(?<body>[\s\S]*?)$/);
+  assert.ok(mobileJob,'An authenticated mobile-acceptance verification job must exist in the single Pages workflow.');
+  assert.match(mobileJob.groups.body,/needs:\s*test/,'Physical acceptance must follow the complete source/local proof job.');
+  assert.match(mobileJob.groups.body,/verifyLiveDeploymentForMobile|verify-mobile-acceptance-submission\.mjs/,'Physical acceptance must bind live deployed bytes.');
+  assert.match(mobileJob.groups.body,/verify-browser\.mjs/,'Deployed Chromium must be replayed before final physical acceptance publication.');
+  assert.match(mobileJob.groups.body,/mobile-challenge-/,'Physical acceptance must make the challenge single-use across workflow runs.');
+  assert.match(mobileJob.groups.body,/acceptance-\$\{GITHUB_SHA::12\}/,'The final tag must bind the exact accepted commit.');
   return true;
 }
 
@@ -118,12 +133,47 @@ assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operat
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected,usedChallenges:[target.challenge]}).accepted,false,'A reused physical acceptance challenge must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected:{...expected,verificationTime:'2026-09-04T00:00:00.000Z'}}).accepted,false,'Expired physical acceptance evidence must be rejected.');
 
+const deployedBytes=Buffer.from('verified deployed runtime bytes','utf8');
+const manifest={
+  schema:'closed-loop-deployment-manifest/1',
+  sourceCommit:target.sourceCommit,
+  workflowRunIdentity:'1001',
+  buildIdentity:'build-test',
+  runtimeResources:[{path:'app-core.js',mediaType:'text/javascript; charset=utf-8',byteSize:deployedBytes.length,hashAlgorithm:'SHA-256',digest:SHA256(deployedBytes),buildIdentity:'build-test'}],
+  manifestDigest:null
+};
+manifest.manifestDigest={hashAlgorithm:'SHA-256',digest:deploymentManifestDigest(manifest)};
+const responseFor=(url,bytes)=>({status:200,url:String(url),arrayBuffer:async()=>Uint8Array.from(bytes).buffer});
+const fakeFetch=async url=>{
+  const parsed=new URL(url);
+  if(parsed.pathname.endsWith('/closed-loop-deployment-manifest.json'))return responseFor(url,Buffer.from(JSON.stringify(manifest),'utf8'));
+  if(parsed.pathname.endsWith('/app-core.js'))return responseFor(url,deployedBytes);
+  return {status:404,url:String(url),arrayBuffer:async()=>new ArrayBuffer(0)};
+};
+const generatedTarget=await createMobileAcceptanceTarget({expectedCommit:target.sourceCommit,testProjectId:target.testProjectId,viewport:target.viewport,fetchImpl:fakeFetch,now:new Date('2026-09-02T20:00:00.000Z')});
+assert.equal(generatedTarget.sourceCommit,target.sourceCommit,'Generated target must bind the exact deployed commit.');
+assert.equal(generatedTarget.deploymentManifestDigest,manifest.manifestDigest.digest,'Generated target must bind the recomputed live manifest digest.');
+assert.match(generatedTarget.challenge,/^[0-9a-f]{32}$/,'Generated target challenge must contain 128 random bits encoded as hex.');
+const generatedEvidence={...evidence,mobileAcceptanceTargetId:generatedTarget.mobileAcceptanceTargetId,challenge:generatedTarget.challenge,sourceCommit:generatedTarget.sourceCommit,deploymentManifestDigest:generatedTarget.deploymentManifestDigest,origin:generatedTarget.origin,basePath:generatedTarget.basePath,testProjectId:generatedTarget.testProjectId,procedureVersion:generatedTarget.procedureVersion,viewport:{...generatedTarget.viewport}};
+const submission=await verifyMobileAcceptanceSubmission({target:generatedTarget,evidence:generatedEvidence,expectedCommit:target.sourceCommit,fetchImpl:fakeFetch,verificationTime:'2026-09-03T00:00:00.000Z'});
+assert.equal(submission.accepted,true,'Valid authenticated physical evidence must be executable through the live-deployment gate.');
+assert.equal(releaseTagEligibility(submission.acceptance),true,'The executable acceptance result must satisfy release-tag eligibility.');
+const mutatedFetch=async url=>{
+  const parsed=new URL(url);
+  if(parsed.pathname.endsWith('/closed-loop-deployment-manifest.json'))return responseFor(url,Buffer.from(JSON.stringify(manifest),'utf8'));
+  if(parsed.pathname.endsWith('/app-core.js'))return responseFor(url,Buffer.from('modified bytes','utf8'));
+  return {status:404,url:String(url),arrayBuffer:async()=>new ArrayBuffer(0)};
+};
+await assert.rejects(()=>verifyMobileAcceptanceSubmission({target:generatedTarget,evidence:generatedEvidence,expectedCommit:target.sourceCommit,fetchImpl:mutatedFetch,verificationTime:'2026-09-03T00:00:00.000Z'}),/byte length differs|bytes differ/,'Changed deployed bytes must reject physical acceptance before tagging.');
+
 const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
 assertWorkflowGovernance(workflow);
 const unconditionalMutation=workflow.replace(/\n\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/,'');
 assert.throws(()=>assertWorkflowGovernance(unconditionalMutation),/conditionally gated/,'The regression must fail when release tagging becomes unconditional.');
 const androidSubstitutionMutation=workflow.replace('actualIPhoneSafariAcceptance:false','actualAndroidChromeAcceptance:true');
 assert.throws(()=>assertWorkflowGovernance(androidSubstitutionMutation),/Android acceptance/,'The regression must fail when Android is substituted for the required iPhone target.');
+const disconnectedSubmissionMutation=workflow.replace(/\n\s*verify-mobile-acceptance:[\s\S]*$/,'\n');
+assert.throws(()=>assertWorkflowGovernance(disconnectedSubmissionMutation),/verification job/,'The regression must fail when valid physical evidence has no executable CI path.');
 
 console.log(JSON.stringify({
   mobileReleaseGovernance:'PASS',
@@ -138,6 +188,10 @@ console.log(JSON.stringify({
   expiredChallengeRejected:true,
   substituteIosBrowserRejected:true,
   requiredOperatorPathReceiptCoverage:true,
+  executableTargetGenerationVerified:true,
+  executableEvidenceSubmissionVerified:true,
+  liveByteMutationRejected:true,
+  disconnectedEvidencePathMutationDetected:true,
   unconditionalTagMutationDetected:true,
   falseAcceptanceTagRegressionCovered:true
 },null,2));
