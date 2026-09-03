@@ -34,21 +34,23 @@ jobs:
           bash /tmp/stage10-repair.sh
           node <<'NODE'
           const fs=require('fs');
+          let p=fs.readFileSync('prompt-engine.js','utf8');
+          const replacements=[
+            ["inputVersion:job.CURRENT_INPUT_VERSION||null","inputVersion:own('inputVersion',job.CURRENT_INPUT_VERSION||null)"],
+            ["sourceSetVersion:job.CURRENT_SOURCE_SET_VERSION||null","sourceSetVersion:own('sourceSetVersion',job.CURRENT_SOURCE_SET_VERSION||null)"],
+            ["researchVersion:job.CURRENT_RESEARCH_VERSION||null","researchVersion:own('researchVersion',job.CURRENT_RESEARCH_VERSION||null)"],
+            ["requirementsVersion:job.CURRENT_REQUIREMENTS_VERSION||null","requirementsVersion:own('requirementsVersion',job.CURRENT_REQUIREMENTS_VERSION||null)"],
+            ["testSuiteVersion:job.CURRENT_TEST_SUITE_VERSION||null","testSuiteVersion:own('testSuiteVersion',job.CURRENT_TEST_SUITE_VERSION||null)"],
+            ["instructionVersion:job.CURRENT_INSTRUCTION_VERSION||null","instructionVersion:own('instructionVersion',job.CURRENT_INSTRUCTION_VERSION||null)"]
+          ];
+          for(const [a,b] of replacements){if(!p.includes(a))throw new Error(`prompt scope override anchor missing: ${a}`);p=p.replace(a,b);}
+          fs.writeFileSync('prompt-engine.js',p);
           const path='verify-spec-grounded-route-oracle.mjs';
           let s=fs.readFileSync(path,'utf8');
-          const a="CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1'";
-          const b="CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_RESEARCH_VERSION:'RESEARCH-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1'";
-          if(!s.includes(a))throw new Error('route oracle research-version anchor missing');
-          s=s.replace(a,b);
-          const c="CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1'";
-          const d="CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1',CURRENT_PRODUCT_VERSION:'PRODVER-ORACLE-v1',CURRENT_DELIVERY_CANDIDATE_SET_ID:'DELIVERYSET-ORACLE-v1',CURRENT_REVIEW_VERSION:'REVIEW-ORACLE-v1',CURRENT_RECONCILED_REVIEW_VERSION:'RECON-ORACLE-v1',CURRENT_RELEASE_ID:'RELEASE-ORACLE-v1',CURRENT_HASH_REVIEW_ID:'HASHREVIEW-ORACLE-v1',CURRENT_EVIDENCE_CHAIN_VERSION:'CHAIN-ORACLE-v1'";
-          if(!s.includes(c))throw new Error('route oracle terminal-version anchor missing');
-          s=s.replace(c,d);
           const oldLane="const lane={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ORACLE-v1',candidateId:'CAND-ORACLE-v1',runId:sent.runs.id,contextId:sent.freshContexts.id,baselineId:'BASE-ORACLE-v1',productId:'PROD-ORACLE-v1'};";
-          const newLane="const lane={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,researchVersion:state.job.CURRENT_RESEARCH_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ORACLE-v1',candidateId:'CAND-ORACLE-v1',runId:sent.runs.id,sourceConvergedIterationId:'ITER-ORACLE-v1',confirmationIterationId:'CONFIRM-ORACLE-v1',baselineId:'BASE-ORACLE-v1',productId:'PROD-ORACLE-v1',productVersion:state.job.CURRENT_PRODUCT_VERSION,deliveryCandidateSetId:state.job.CURRENT_DELIVERY_CANDIDATE_SET_ID,reviewVersion:state.job.CURRENT_REVIEW_VERSION,reconciledReviewVersion:state.job.CURRENT_RECONCILED_REVIEW_VERSION,releaseId:state.job.CURRENT_RELEASE_ID,hashReviewId:state.job.CURRENT_HASH_REVIEW_ID,evidenceChainVersion:state.job.CURRENT_EVIDENCE_CHAIN_VERSION};";
+          const newLane="const lane={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,researchVersion:'RESEARCH-ORACLE-v1',requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ORACLE-v1',candidateId:'CAND-ORACLE-v1',runId:sent.runs.id,sourceConvergedIterationId:'ITER-ORACLE-v1',confirmationIterationId:'CONFIRM-ORACLE-v1',baselineId:'BASE-ORACLE-v1',productId:'PROD-ORACLE-v1',productVersion:'PRODVER-ORACLE-v1',deliveryCandidateSetId:'DELIVERYSET-ORACLE-v1',reviewVersion:'REVIEW-ORACLE-v1',reconciledReviewVersion:'RECON-ORACLE-v1',releaseId:'RELEASE-ORACLE-v1',hashReviewId:'HASHREVIEW-ORACLE-v1',evidenceChainVersion:'CHAIN-ORACLE-v1'};";
           if(!s.includes(oldLane))throw new Error('route oracle lane anchor missing');
-          s=s.replace(oldLane,newLane);
-          fs.writeFileSync(path,s);
+          fs.writeFileSync(path,s.replace(oldLane,newLane));
           NODE
       - name: Syntax proof
         run: node --check prompt-engine.js
