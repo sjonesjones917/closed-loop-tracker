@@ -1,0 +1,51 @@
+name: One-time full-cycle external-operation repair
+
+on:
+  push:
+    branches: [codex/exact-stage-operation-registry]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/exact-stage-operation-registry
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Align full-cycle external operations to the closed registry
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const p='verify-full-cycle.mjs';
+          let t=fs.readFileSync(p,'utf8');
+          const replacements=[
+            ["runBatch(11,'COMPLETE'","runBatch(11,'EXECUTE_RUN'"],
+            ["verifyBatch(12,'COMPLETE'","verifyBatch(12,'VERIFY'"],
+            ["data(13,{records:","data(13,{operation:'COMPARE',records:"],
+            ["data(14,{records:","data(14,{operation:'ROOT_CAUSE',records:"],
+            ["data(16,{records:","data(16,{operation:'CORRECT',records:"],
+            ["data(22,{records:","data(22,{operation:'EXECUTE_EXTERNAL_TEST',records:"],
+            ["data(27,{records:","data(27,{operation:'ADVISORY_REVIEW',records:"]
+          ];
+          for(const [from,to] of replacements){
+            if(!t.includes(from))throw new Error(`Expected legacy operation call not found: ${from}`);
+            t=t.replace(from,to);
+          }
+          fs.writeFileSync(p,t);
+          NODE
+          node --check verify-full-cycle.mjs
+          node verify-stage-operation-registry.mjs
+      - name: Remove one-time scaffolding and commit
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/repair-full-cycle-external-operations.yml
+          git add verify-full-cycle.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "Use exact external operation names in full-cycle proof"
+          git push origin HEAD:codex/exact-stage-operation-registry
