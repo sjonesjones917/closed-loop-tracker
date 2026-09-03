@@ -16,7 +16,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node repair-test-runtime-dag.mjs
+          node repair-test-runtime-dag-bootstrap.mjs
           node --check test-runtime.js
           node --check test-worker.js
           node verify-test-runtime.mjs
@@ -29,9 +29,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm repair-test-runtime-dag.mjs .github/workflows/test-ir-dag-repair.yml
+          rm -f repair-test-runtime-dag.mjs repair-test-runtime-dag-bootstrap.mjs .repair-test-runtime-dag.compiled.mjs .github/workflows/test-ir-dag-repair.yml
           git config user.name "closed-loop-repair"
           git config user.email "closed-loop-repair@users.noreply.github.com"
-          git add test-runtime.js verify-test-runtime-v3.mjs verify-test-runtime-dag.mjs repair-test-runtime-dag.mjs .github/workflows/test-ir-dag-repair.yml
+          git add -A test-runtime.js verify-test-runtime-v3.mjs verify-test-runtime-dag.mjs repair-test-runtime-dag.mjs repair-test-runtime-dag-bootstrap.mjs .github/workflows/test-ir-dag-repair.yml
           git commit -m "Replace implicit Test IR pipeline with explicit DAG semantics"
           git push origin HEAD:fix/test-ir-explicit-dag
