@@ -113,7 +113,7 @@ assert.match(workflow,/\.\.\.definition/,'acceptance report must include the exe
 assert.match(workflow,/\.\.\.v3/,'acceptance report must include the executed v3 result');
 const proofSource=definitionProof+'\n'+v3Proof;
 for(const field of [
-  'stage01IntakeCoverage','stage04ObligationCoverage','mandatoryEvidenceSufficiencyCoverage','nativeExecutionCoverage',
+  'stage01RawInputAccounting','stage01RequiredFileInspectionAccounting','stage01AcceptedSemanticMappingCoverage','stage04ObligationAccounting','mandatoryEvidenceSufficiencyCoverage','nativeExecutionCoverage',
   'acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage',
   'exactReqRunTestCoverage','applicableCurrentRegressionSuccess','releaseArtifactIdentityCoverage',
   'unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof',
