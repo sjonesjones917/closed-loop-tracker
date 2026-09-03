@@ -21,11 +21,21 @@ async function selectResponseFile(cdp,text,filename='response.json'){
   const safeName=String(filename||'response.json').replace(/[^A-Za-z0-9._-]/g,'_'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-response-file-')),filePath=path.join(directory,safeName);
   fs.writeFileSync(filePath,String(text??''),'utf8');
   await cdp.send('DOM.enable');
-  const handle=await cdp.send('Runtime.evaluate',{expression:`document.querySelector('#response-json-file')`,returnByValue:false});
-  assert(handle.result?.objectId,'Authoritative response-file input is unavailable.');
-  await cdp.send('DOM.setFileInputFiles',{files:[filePath],objectId:handle.result.objectId});
-  const selected=await evalValue(cdp,`(()=>{const input=document.querySelector('#response-json-file');if(!input||input.files.length!==1)return false;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));return input.files[0].name===${JSON.stringify(safeName)};})()`);
-  assert(selected,'The browser did not select the authoritative response file.');
+  let lastState=null;
+  for(let attempt=1;attempt<=4;attempt++){
+    const ready=await evalValue(cdp,`(()=>{const input=document.querySelector('#response-json-file'),button=document.querySelector('#process-response-file');return {input:Boolean(input),connected:Boolean(input?.isConnected),inputDisabled:Boolean(input?.disabled),button:Boolean(button),buttonDisabled:Boolean(button?.disabled),buttonWired:typeof button?.onclick==='function'};})()`);
+    assert(ready?.input&&ready?.button,'Authoritative response-file controls are unavailable.');
+    assert(!ready.inputDisabled&&!ready.buttonDisabled&&ready.buttonWired,`Authoritative response-file controls are not ready: ${JSON.stringify(ready)}`);
+    const handle=await cdp.send('Runtime.evaluate',{expression:`document.querySelector('#response-json-file')`,returnByValue:false});
+    assert(handle.result?.objectId,'Authoritative response-file input is unavailable.');
+    await cdp.send('DOM.setFileInputFiles',{files:[filePath],objectId:handle.result.objectId});
+    const selected=await evalValue(cdp,`(()=>{const input=document.querySelector('#response-json-file');if(!input||input.files.length!==1)return false;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));return input.files[0].name===${JSON.stringify(safeName)};})()`);
+    if(!selected){await sleep(120);continue;}
+    await sleep(180);
+    lastState=await evalValue(cdp,`(()=>{const input=document.querySelector('#response-json-file'),button=document.querySelector('#process-response-file'),status=document.querySelector('#response-file-status')?.textContent||'';return {connected:Boolean(input?.isConnected),selectedName:input?.files?.[0]?.name||null,fileCount:input?.files?.length||0,status,buttonDisabled:Boolean(button?.disabled),buttonWired:typeof button?.onclick==='function'};})()`);
+    if(lastState.connected&&lastState.fileCount===1&&lastState.selectedName===safeName&&lastState.status.includes(safeName)&&!lastState.buttonDisabled&&lastState.buttonWired)return;
+  }
+  throw new Error(`The authoritative response-file selection did not remain bound to a stable current control: ${JSON.stringify(lastState)}`);
 }
 async function setWidth(cdp,width,height=900){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});await sleep(120);}
 async function positionNode(cdp,selector,mode='center',visible=120){const ok=await evalValue(cdp,`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node)return false;const rect=node.getBoundingClientRect(),pageTop=scrollY+rect.top,pageBottom=pageTop+rect.height,maxScroll=Math.max(0,document.documentElement.scrollHeight-innerHeight);let target;if(${JSON.stringify(mode)}==='top')target=pageTop;else if(${JSON.stringify(mode)}==='bottom')target=pageBottom-innerHeight;else if(${JSON.stringify(mode)}==='sliver'){const before=pageTop-innerHeight+${Number(visible)},after=pageBottom-${Number(visible)};target=before>=0?before:after<=maxScroll?after:Math.max(0,Math.min(maxScroll,after));}else target=pageTop+rect.height/2-innerHeight/2;scrollTo(0,Math.max(0,Math.min(maxScroll,target)));return true})()`);assert(ok,`Missing scroll target ${selector}`);await sleep(180);}
