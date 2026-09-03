@@ -1,0 +1,36 @@
+name: Apply corrected operation authority closure repair
+on:
+  push:
+    branches: [fix/semantic-registry-scope-closure-20260903]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[operation-authority-repair-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/semantic-registry-scope-closure-20260903
+      - name: Execute corrected authority repair
+        run: |
+          set -euo pipefail
+          cp .github/workflows/repair-operation-authority.yml /tmp/repair.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          wf=Path('/tmp/repair.yml').read_text()
+          start=wf.index("          python3 - <<'PY'\n")+len("          python3 - <<'PY'\n")
+          end=wf.index("\n          PY\n",start)
+          Path('/tmp/repair.py').write_text(wf[start:end].replace('          ','',1))
+          PY
+          python3 /tmp/repair.py
+          rm .github/workflows/repair-operation-authority.yml .github/workflows/repair-operation-authority-v2.yml
+          node --check workflow-schema.js
+          node --check verify-spec-grounded-route-oracle.mjs
+          node verify-contract-closure.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add workflow-schema.js verify-spec-grounded-route-oracle.mjs .github/workflows/repair-operation-authority.yml .github/workflows/repair-operation-authority-v2.yml
+          git commit -m "Close application command write authority [operation-authority-repair-applied]"
+          git push origin HEAD:fix/semantic-registry-scope-closure-20260903
