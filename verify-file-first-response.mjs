@@ -27,7 +27,7 @@ export function assertFileFirstResponseContract({appSource=app,engineSource=engi
   assert.match(ingestionSource,/NONAUTHORITATIVE_TEXT_FALLBACK/,'Fallback transport must remain explicitly nonauthoritative.');
   assert.match(ingestionSource,/RESPONSE_FILE_DECODE_HASH_MISMATCH/,'Decoded text must remain bound to exact staged bytes.');
   assert.match(appSource,/id="export-prompt-file"/,'External work must expose instruction-file export without requiring clipboard use.');
-  assert.match(htmlSource,/Select that exact response JSON file in the application/,'Static operator guidance must describe file-first response ingestion.');
+  assert.match(htmlSource,/Select the exact response\.json file returned by the agent\./,'Static operator guidance must state the exact authoritative response-file action.');
   assert.doesNotMatch(htmlSource,/Paste only that final JSON|Parse \/ validate response/,'Static guidance must not require pasted final JSON.');
   assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-response\.mjs['"]/,'The required ingestion proof must permanently execute this file-first regression.');
   assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-operator\.mjs['"]/,'The required ingestion proof must permanently execute the operator-path mutation regression.');
