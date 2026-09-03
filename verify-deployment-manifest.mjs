@@ -7,17 +7,23 @@ const root=process.cwd();
 const first=path.join(root,'.verify-deployment-a');
 const second=path.join(root,'.verify-deployment-b');
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const assertUnicodeScalars=(value,label='canonical string')=>{for(let i=0;i<value.length;i++){const unit=value.charCodeAt(i);if(unit>=0xD800&&unit<=0xDBFF){const next=value.charCodeAt(i+1);if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Unpaired UTF-16 high surrogate in ${label}.`);i++;}else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Unpaired UTF-16 low surrogate in ${label}.`);}return value;};
+const compareUnicodeScalarSequence=(a,b)=>{const left=Array.from(assertUnicodeScalars(String(a),'canonical object key'),ch=>ch.codePointAt(0));const right=Array.from(assertUnicodeScalars(String(b),'canonical object key'),ch=>ch.codePointAt(0));const length=Math.min(left.length,right.length);for(let i=0;i<length;i++)if(left[i]!==right[i])return left[i]-right[i];return left.length-right.length;};
 const canonical=value=>{
   if(value===null)return 'null';
   if(typeof value==='boolean')return value?'true':'false';
-  if(typeof value==='string')return JSON.stringify(value);
+  if(typeof value==='string')return JSON.stringify(assertUnicodeScalars(value));
   if(typeof value==='number'){if(!Number.isSafeInteger(value)||Object.is(value,-0))throw new TypeError('Invalid canonical number.');return String(value);}
   if(Array.isArray(value))return `[${value.map(canonical).join(',')}]`;
-  if(value&&Object.getPrototypeOf(value)===Object.prototype)return `{${Object.keys(value).sort().map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+  if(value&&Object.getPrototypeOf(value)===Object.prototype){const keys=Object.keys(value);for(const key of keys)assertUnicodeScalars(key,'canonical object key');keys.sort(compareUnicodeScalarSequence);return `{${keys.map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;}
   throw new TypeError('Invalid canonical value.');
 };
 const build=out=>execFileSync(process.execPath,['build-static-site.mjs','--out',out,'--source-commit','TEST-COMMIT','--workflow-run','TEST-RUN'],{stdio:'pipe'});
 try{
+  const bmp='\uE000',astral='\u{10000}';
+  if(canonical({[bmp]:1,[astral]:2})!==`{"${bmp}":1,"${astral}":2}`)throw new Error('Deployment-manifest canonicalizer does not order object keys by unsigned Unicode scalar sequence.');
+  if(canonical({'2':'two','10':'ten',a:'aye'})!=='{"10":"ten","2":"two","a":"aye"}')throw new Error('Deployment-manifest canonicalizer allows JavaScript integer-like key enumeration to override canonical scalar ordering.');
+  let rejectedSurrogate=false;try{canonical({'\uD800':1});}catch{rejectedSurrogate=true;}if(!rejectedSurrogate)throw new Error('Deployment-manifest canonicalizer accepted an unpaired surrogate key.');
   build(first);build(second);
   const manifestBytesA=fs.readFileSync(path.join(first,'closed-loop-deployment-manifest.json'));
   const manifestBytesB=fs.readFileSync(path.join(second,'closed-loop-deployment-manifest.json'));
@@ -57,7 +63,7 @@ try{
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
   if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,noControllingServiceWorker:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,noControllingServiceWorker:true},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }
