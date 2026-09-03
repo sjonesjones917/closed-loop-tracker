@@ -8,6 +8,7 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 const schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine;
 const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.recordId(record,'operationReservations');
 assert.deepEqual(schema.CONTROLLING_COMPLETION_ENUMS.reservation,['RESERVED','EXPORTED','ORPHANED','RESUMED','RESPONSE_STAGED','ACCEPTED','REJECTED','CANCELLED','SUPERSEDED','EXPIRED_BY_SCOPE']);
+assert.equal(schema.RECORD_SCHEMAS.operationReservations.fieldDefinitions.RESERVATION_REVISION.valueType,'INTEGER');
 const p={revision:7,activeStage:1,job:{JOB_ID:'JOB-RESERVATION-TEST',CONTRACT_PROFILE_ID:'closed-loop-completion-profile/1'},projectData:{},stages:{}};engine.ensureShape(p);
 const operationScope={projectRevision:7,inputVersion:'INPUT-v001'};
 const target=engine.reservationTargetSlot(p,{stage:1,operation:'COMPLETE',scope:operationScope});
