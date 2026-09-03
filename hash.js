@@ -5,6 +5,12 @@ const MAX_SAFE_INTEGER=Number.MAX_SAFE_INTEGER;
 const MIN_SAFE_INTEGER=Number.MIN_SAFE_INTEGER;
 const CANONICALIZATION_VERSION='closed-loop-canonical-json/1';
 const ID_VERSION='closed-loop-id/1';
+const FILENAME_VERSION='closed-loop-filename/1';
+const TRUSTED_TIME_VERSION='closed-loop-trusted-time/1';
+const UNICODE_VERSION='15.1.0';
+const UNICODE_SOURCE_IDENTITY='unicode-15.1.0/final-15.1-20230908';
+const UNICODE_SOURCE_COMMIT='9595f090650e99e3e752b37a7a3866ac8a91999b';
+const CASE_FOLDING_BLOB_SHA1='69c5c64b4c6a124f4608722db723a9e32667f190';
 const BASE32HEX_ALPHABET='0123456789abcdefghijklmnopqrstuv';
 
 function assertUnicodeScalars(value,path){
@@ -135,7 +141,62 @@ function canonicalIdPayload({familyNamespace,jobNamespace,commandId,targetSlot='
 function allocateCanonicalId({familyPrefix,...tuple}){const prefix=String(familyPrefix||'');if(!/^[A-Z][A-Z0-9_]*$/.test(prefix))throw new TypeError('familyPrefix must be a registered uppercase ASCII prefix.');const payload=canonicalIdPayload(tuple);const digestBytes=hexToBytes(sha256Value(payload)).slice(0,20);return {id:`${prefix}-${base32hex(digestBytes)}`,payload,digestHex:bytesToHex(digestBytes),idVersion:ID_VERSION};}
 function allocateCanonicalIdWithCollisionCheck(options,{exists,maxCollisionCounter=1024}={}){if(typeof exists!=='function')throw new TypeError('A collision-check function is required.');for(let collisionCounter=0;collisionCounter<=maxCollisionCounter;collisionCounter++){const allocation=allocateCanonicalId({...options,collisionCounter});const existing=exists(allocation.id);if(existing===false||existing===null||existing===undefined)return {...allocation,collisionCounter};if(existing&&stableStringify(existing)===stableStringify(allocation.payload))return {...allocation,collisionCounter,exactRetry:true};}throw new Error('Canonical ID collision counter exhausted.');}
 
-const api={version:'closed-loop-hash/5',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
+const UNICODE_CONTRACT=Object.freeze({version:UNICODE_VERSION,sourceIdentity:UNICODE_SOURCE_IDENTITY,sourceCommit:UNICODE_SOURCE_COMMIT,caseFoldingBlobSha1:CASE_FOLDING_BLOB_SHA1,nfcContract:'Unicode 15.1.0 NFC',defaultCaseFoldContract:'Unicode 15.1.0 default case folding (C+F, T excluded)',confusableContract:'Unicode 15.1.0 UTS #39 confusables',filenameAcceptedRepertoire:'ASCII U+0020..U+007E excluding path/control hazards; non-ASCII fails closed until pinned full tables are bundled'});
+function assertPinnedUnicodeHost(){
+  if(typeof ''.normalize!=='function')throw new Error('UNICODE_TABLE_UNAVAILABLE: String normalization is unavailable.');
+  const nfcFixtures=[['e\u0301','é'],['A\u030A','Å'],['\u212B','Å']];
+  for(const [input,expected] of nfcFixtures)if(input.normalize('NFC')!==expected)throw new Error('UNICODE_TABLE_MISMATCH: host NFC behavior failed pinned Unicode 15.1 fixture.');
+  return UNICODE_CONTRACT;
+}
+function asciiCaseFold(value){const text=String(value);if(/[^\x20-\x7E]/.test(text))throw new TypeError('UNSUPPORTED_UNICODE_FILENAME: non-ASCII filename requires pinned full Unicode 15.1 case-fold/confusable tables.');return text.replace(/[A-Z]/g,ch=>ch.toLowerCase());}
+function filenameRiskSkeleton(value){const folded=asciiCaseFold(value);return folded.replace(/0/g,'o').replace(/[1lI]/g,'i').replace(/5/g,'s');}
+function normalizeFilename(rawFilename,{allowPath=false}={}){
+  assertPinnedUnicodeHost();
+  const raw=assertUnicodeScalars(String(rawFilename??''),'filename');
+  if(!raw)throw new TypeError('UNSAFE_FILENAME: filename is empty.');
+  if(/[\x00-\x1F\x7F]/.test(raw))throw new TypeError('UNSAFE_FILENAME: control characters are prohibited.');
+  if(/^[A-Za-z]:/.test(raw)||raw.startsWith('/')||raw.startsWith('\\'))throw new TypeError('UNSAFE_FILENAME: absolute paths and drive prefixes are prohibited.');
+  if(!allowPath&&/[\\/]/.test(raw))throw new TypeError('UNSAFE_FILENAME: path separators are prohibited in a filename.');
+  const segments=allowPath?raw.split(/[\\/]/):[raw];
+  if(segments.some(segment=>!segment||segment==='.'||segment==='..'))throw new TypeError('UNSAFE_FILENAME: empty, dot, and parent segments are prohibited.');
+  for(const segment of segments){if(/[. ]$/.test(segment))throw new TypeError('UNSAFE_FILENAME: trailing dot or space is prohibited.');if(/[^\x20-\x7E]/.test(segment))throw new TypeError('UNSUPPORTED_UNICODE_FILENAME: non-ASCII filename fails closed until pinned full Unicode 15.1 tables are bundled.');}
+  const canonicalPath=segments.map(segment=>segment.normalize('NFC')).join('/');
+  const displayFilename=segments.at(-1);
+  return Object.freeze({filenameVersion:FILENAME_VERSION,unicodeVersion:UNICODE_VERSION,rawFilename:raw,displayFilename,canonicalPath,caseFoldCollisionKey:asciiCaseFold(canonicalPath),platformRiskCollisionKey:filenameRiskSkeleton(canonicalPath)});
+}
+function filenameCollisionKeys(filename){const normalized=normalizeFilename(filename,{allowPath:true});return Object.freeze([normalized.canonicalPath,normalized.caseFoldCollisionKey,normalized.platformRiskCollisionKey]);}
+
+const RFC3339_INSTANT=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/;
+const DATE_ONLY=/^(\d{4})-(\d{2})-(\d{2})$/;
+function validCalendarDate(year,month,day){const date=new Date(Date.UTC(year,month-1,day));return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day;}
+function normalizeDateTime(value){
+  const input=String(value??'');
+  let match=input.match(DATE_ONLY);
+  if(match){const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);if(!validCalendarDate(year,month,day))throw new TypeError('INVALID_DATE_TIME: invalid date-only value.');return Object.freeze({version:TRUSTED_TIME_VERSION,kind:'DATE_ONLY',original:input,normalized:input,timeBasis:'NOT_APPLICABLE'});}
+  match=input.match(RFC3339_INSTANT);
+  if(!match)throw new TypeError('INVALID_DATE_TIME: value must be RFC 3339 date-only or instant.');
+  const [,ys,mos,ds,hs,mis,ss,fraction='',zone]=match;
+  const year=Number(ys),month=Number(mos),day=Number(ds),hour=Number(hs),minute=Number(mis),second=Number(ss);
+  if(second===60)throw new TypeError('INVALID_DATE_TIME: leap seconds are rejected.');
+  if(!validCalendarDate(year,month,day)||hour>23||minute>59||second>59)throw new TypeError('INVALID_DATE_TIME: invalid calendar or clock component.');
+  let offsetMinutes=0;
+  if(zone!=='Z'){const sign=zone[0]==='-'?-1:1,oh=Number(zone.slice(1,3)),om=Number(zone.slice(4,6));if(oh>23||om>59)throw new TypeError('INVALID_DATE_TIME: invalid UTC offset.');offsetMinutes=sign*(oh*60+om);}
+  const millis=Number((fraction+'000').slice(0,3));
+  const epoch=Date.UTC(year,month-1,day,hour,minute,second,millis)-offsetMinutes*60000;
+  const normalized=new Date(epoch).toISOString();
+  return Object.freeze({version:TRUSTED_TIME_VERSION,kind:'INSTANT',original:input,normalized,timeBasis:'DEVICE_REPORTED'});
+}
+function evaluateTrustedTimeEvidence({basis='NONE',attestationContractId=null,attributableExternalSystem=false}={}){
+  const normalizedBasis=String(basis||'NONE');
+  if(normalizedBasis==='VERIFIED_EXTERNAL'){
+    if(!String(attestationContractId||'').trim()&&!attributableExternalSystem)throw new TypeError('TRUSTED_TIME_UNVERIFIED: VERIFIED_EXTERNAL requires a registered attestation contract or accepted attributable external-system time authority.');
+    return Object.freeze({version:TRUSTED_TIME_VERSION,basis:'VERIFIED_EXTERNAL',trusted:true,attestationContractId:attestationContractId||null,attributableExternalSystem:Boolean(attributableExternalSystem)});
+  }
+  if(!['DEVICE_REPORTED','SOURCE_ASSERTED','EXTERNALLY_SUPPORTED','SELF_ASSERTED','NONE'].includes(normalizedBasis))throw new TypeError('TRUSTED_TIME_BASIS_UNKNOWN');
+  return Object.freeze({version:TRUSTED_TIME_VERSION,basis:normalizedBasis,trusted:false,attestationContractId:null,attributableExternalSystem:false});
+}
+
+const api={version:'closed-loop-hash/6',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,unicodeContract:UNICODE_CONTRACT,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,assertPinnedUnicodeHost,normalizeFilename,filenameCollisionKeys,normalizeDateTime,evaluateTrustedTimeEvidence,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
 globalThis.closedLoopHash=Object.freeze(api);
 
 })();
