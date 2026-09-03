@@ -28,7 +28,6 @@ p.write_text(s)
 Path('verify-response-envelope-conformance.mjs').write_text(r'''import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});const ingestion=globalThis.closedLoopResponseIngestion;assert(ingestion,'ingestion missing');let smart=false;try{ingestion.strictParse('{“schema”:“closed-loop-stage-response/3”}');}catch(e){smart=e?.code==='SMART_JSON_QUOTATION';}assert(smart,'authoritative smart-quote JSON must be rejected, not repaired');const src=fs.readFileSync('response-ingestion.js','utf8');for(const key of ['contractProfileId','packageId','operationReservationId','challengeNonce','humanAuthorityCandidates','researchVersion','productVersion','deliveryCandidateSetId','reviewVersion','reconciledReviewVersion','releaseId','hashReviewId','evidenceChainVersion'])assert(src.includes(`'${key}'`),`response contract missing ${key}`);assert(!src.includes("normalization='SMART_JSON_DELIMITERS'"),'smart quote repair remains reachable');console.log('response envelope conformance regressions passed');
 ''')
 
-# Replace the obsolete acceptance assertion: authoritative curly-quoted JSON must fail closed and preserve raw bytes without mutation.
 p=Path('verify-ingestion.mjs');t=p.read_text()
 old="""// Mobile/chat smart punctuation is normalized while the exact raw response remains preserved for audit.
 {
@@ -71,5 +70,7 @@ new="""// Authoritative response bytes with smart/curly JSON delimiters are reje
   if(prepared.project.projectData.acceptedChanges.length)throw new Error('Rejected smart-quoted response changed canonical state.');
 }
 """
-if old not in t:raise SystemExit('smart quote legacy regression anchor changed')
-p.write_text(t.replace(old,new,1))
+if new not in t:
+    if old not in t:raise SystemExit('smart quote legacy regression anchor changed')
+    t=t.replace(old,new,1)
+p.write_text(t)
