@@ -141,7 +141,7 @@ const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
 assertWorkflowGovernance(workflow);
 const unconditionalMutation=workflow.replace(/\n\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/,'');
 assert.throws(()=>assertWorkflowGovernance(unconditionalMutation),/conditionally gated/,'The regression must fail when release tagging becomes unconditional.');
-const hardCodedBlockMutation=workflow.replace('...mobileAcceptance','actualIPhoneSafariAcceptance:false');
+const hardCodedBlockMutation=workflow.replace('...mobileAcceptance,','...mobileAcceptance,actualIPhoneSafariAcceptance:false,');
 assert.throws(()=>assertWorkflowGovernance(hardCodedBlockMutation),/hard-code/,'The regression must fail when valid physical evidence is made impossible to accept.');
 const missingEvaluatorMutation=workflow.replace('node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json','true');
 assert.throws(()=>assertWorkflowGovernance(missingEvaluatorMutation),/strict mobile-evidence evaluator/,'The regression must fail when the workflow stops executing the evidence verifier.');
