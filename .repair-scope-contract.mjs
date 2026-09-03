@@ -55,3 +55,5 @@ const newOperation=`function operationContract(stage,operation){
 if(!schema.includes(oldOperation))throw new Error('Expected legacy operationContract implementation not found.');
 schema=schema.replace(oldOperation,newOperation);
 fs.writeFileSync(schemaPath,schema);
+
+// Trigger marker: source-only repair run; permanent source changes are committed separately from workflow files.
