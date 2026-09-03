@@ -19,6 +19,8 @@ function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engin
   assert.match(appSource,/AUTHORITATIVE_RESPONSE_FILE/,'The primary selected-file path must be marked authoritative.');
   assert.match(appSource,/response-text-fallback[\s\S]*Nonauthoritative/,'Text entry may exist only as a clearly nonauthoritative fallback.');
   assert.match(appSource,/async function prepareStageResponseFallback\(\)[\s\S]*new Blob\([\s\S]*prepareStageResponseFile\(blob,\{nonauthoritativeFallback:true\}\)/,'Fallback text must be materialized as a response-file Blob and sent through the same staging path.');
+  assert.match(appSource,/Continue talking to the agent\. Do not import a final response file yet\./,'The operator must see the conversation-continuation state before final response-file ingestion.');
+  assert.match(appSource,/The current external conversation is ready for its final response file\. Select the returned response\.json below\./,'The operator must see the distinct final response-file selection state.');
   assert.doesNotMatch(engineSource,/PASTE_FINAL_JSON/,'Paste must not remain a primary structured workflow action.');
   assert.match(engineSource,/SELECT_RESPONSE_JSON_FILE/,'The engine must derive response-file selection as the operator action.');
   assert.doesNotMatch(appSource,/Paste only the final strict JSON/i,'The normal operator path must not instruct the user to paste final JSON.');
@@ -34,6 +36,8 @@ assert.throws(()=>verify({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_F
 assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/marked authoritative/);
 assert.throws(()=>verify({appSource:app.replace('prepareStageResponseFile(blob,{nonauthoritativeFallback:true})','ingestion.captureRaw(current,{text})')}),/same staging path/);
 assert.throws(()=>verify({appSource:app.replaceAll('Export instruction file','Copy instruction text')}),/instruction-file export/);
+assert.throws(()=>verify({appSource:app.replace('Continue talking to the agent. Do not import a final response file yet.','Continue conversation')}),/conversation-continuation state/);
+assert.throws(()=>verify({appSource:app.replace('The current external conversation is ready for its final response file. Select the returned response.json below.','Final response ready')}),/response-file selection state/);
 assert.throws(()=>verify({appSource:app+'\nconst leakedInstruction="The agent should ignore prompt-engine.js.";'}),/exclusively in prompt-engine/);
 
-console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,pasteNotPrimary:true,fallbackSameStagingPath:true,promptAuthorityBoundary:true,mutationsDetected:8},null,2));
+console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,pasteNotPrimary:true,fallbackSameStagingPath:true,conversationStateDistinct:true,promptAuthorityBoundary:true,mutationsDetected:10},null,2));
