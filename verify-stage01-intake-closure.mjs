@@ -21,10 +21,13 @@ assert(prompt.contextManifest.intakeCoverageManifest.manifestSha256===manifest.m
 for(const unit of manifest.units)assert(prompt.prompt.includes(unit.unitId),`Prompt 01 omitted controlled input unit ${unit.unitId}.`);
 assert(prompt.prompt.includes('INPUT_SET_CONTENTS must be a JSON STRING'),'Prompt 01 does not command the current closed Stage 01 accounting response.');
 assert(prompt.prompt.includes('first semantic reader')||prompt.prompt.includes('FIRST SEMANTIC READER'),'Prompt 01 does not identify Stage 01 as the first semantic reader.');
+for(const value of ['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'])assert(prompt.prompt.includes(value),`Prompt 01 omitted controlling disposition ${value}.`);
+for(const legacy of ['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'])assert(!prompt.prompt.includes(legacy),`Prompt 01 still advertises legacy disposition ${legacy}.`);
 assert(!prompt.prompt.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),'Prompt still contains obsolete CUSTOM_PIPELINE instruction.');
 
-const capture={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Preserved as current human-authority input.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
+const capture={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Preserved as current human-authority input.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
 assert(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(capture)}).complete,'Complete Stage 01 intake accounting did not close.');
+const inaccessible=structuredClone(capture);inaccessible.units[0].disposition='INACCESSIBLE_OR_BLOCKED';assert(!engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(inaccessible)}).complete,'Stage 01 incorrectly completed with inaccessible required material.');
 const incomplete=structuredClone(capture);incomplete.units.pop();
 assert(!engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(incomplete)}).complete,'Stage 01 accepted incomplete controlled-input accounting.');
 
