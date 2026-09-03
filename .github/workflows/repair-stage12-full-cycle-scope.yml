@@ -1,0 +1,35 @@
+name: One-time Stage 12 full-cycle proof repair
+
+on:
+  push:
+    branches:
+      - fix/semantic-registry-scope-closure-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact Stage 12 proof correction
+        run: node .repair-stage12-full-cycle-scope.cjs
+      - name: Prove corrected full cycle
+        run: |
+          set -euo pipefail
+          node --check verify-full-cycle.mjs
+          node verify-full-cycle.mjs
+      - name: Remove scaffolding and commit permanent proof repair
+        run: |
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git rm .github/workflows/repair-stage12-full-cycle-scope.yml .repair-stage12-full-cycle-scope.cjs
+          git add verify-full-cycle.mjs
+          git commit -m 'Bind Stage 12 full-cycle verification per run'
+          git push origin HEAD:fix/semantic-registry-scope-closure-20260903
