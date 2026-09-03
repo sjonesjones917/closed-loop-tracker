@@ -23,6 +23,22 @@ jobs:
         with:
           node-version: '22'
       - run: node repair-current-reservation-contract.mjs
+      - name: Normalize the generated Node verification harness
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('verify-reservation-contract.mjs')
+          text = path.read_text()
+          text = text.replace("globalThis.crypto=globalThis.crypto||await import('node:crypto').then(m=>m.webcrypto);\n", "")
+          text = text.replace("globalThis.TextEncoder=globalThis.TextEncoder||await import('node:util').then(m=>m.TextEncoder);\n", "")
+          marker = "import assert from 'node:assert/strict';\n"
+          setup = "globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\n"
+          if setup not in text:
+              if marker not in text:
+                  raise SystemExit('reservation regression import marker not found')
+              text = text.replace(marker, marker + setup, 1)
+          path.write_text(text)
+          PY
       - name: Run permanent reservation regression
         run: |
           set +e
