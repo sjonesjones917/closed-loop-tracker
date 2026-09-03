@@ -32,8 +32,7 @@ for(const line of checked){
   const sha256=crypto.createHash('sha256').update(bytes).digest('hex');
   const text=(()=>{try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{return '';}})();
   const hasTitle=text.includes(TITLE)||text.includes('Zero-Loss Controlling Implementation Specification');
-  const entry={gitBlobSha:sha,size,sha256,hasTitle};
-  candidates.push(entry);
+  candidates.push({gitBlobSha:sha,size,sha256,hasTitle});
 }
 const exactMatches=candidates.filter(entry=>entry.sha256===TARGET_SHA256);
 const titleMatches=candidates.filter(entry=>entry.hasTitle);
@@ -41,4 +40,5 @@ const targetSizeMatches=candidates.filter(entry=>entry.size===TARGET_SIZE);
 const report={target:{sha256:TARGET_SHA256,size:TARGET_SIZE},remoteTipCount:tips.length,scannedObjectCount:checked.length,candidateCount:candidates.length,exactMatches,titleMatches,targetSizeMatches};
 fs.mkdirSync('/tmp/spec-source-scan',{recursive:true});
 fs.writeFileSync('/tmp/spec-source-scan/report.json',JSON.stringify(report,null,2)+'\n');
-console.log(JSON.stringify(report,null,2));
+const compact=list=>list.map(entry=>`${entry.gitBlobSha}:${entry.size}:${entry.sha256}`).join(',')||'NONE';
+throw new Error(`SPEC_SCAN exact=${compact(exactMatches)} title=${compact(titleMatches)} size=${compact(targetSizeMatches)} candidates=${candidates.length} objects=${checked.length} tips=${tips.length}`);
