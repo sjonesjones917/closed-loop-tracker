@@ -1,0 +1,23 @@
+name: Temporary current source capture
+
+on:
+  push:
+    branches:
+      - agent/source-capture-97974b8
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: tar --exclude='.git' -czf /tmp/current-source.tar.gz .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: current-source-${{ github.sha }}
+          path: /tmp/current-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
