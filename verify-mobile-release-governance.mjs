@@ -132,8 +132,8 @@ const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
 assertWorkflowGovernance(workflow);
 const unconditionalMutation=workflow.replace(/\n\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/,'');
 assert.throws(()=>assertWorkflowGovernance(unconditionalMutation),/conditionally gated/,'The regression must fail when release tagging becomes unconditional.');
-const androidSubstitutionMutation=workflow.replace('actualIPhoneSafariAcceptance:false','actualAndroidChromeAcceptance:true');
-assert.throws(()=>assertWorkflowGovernance(androidSubstitutionMutation),/Android acceptance/,'The regression must fail when Android is substituted for the required iPhone target.');
+const androidSubstitutionMutation=workflow.replace('...mobilePublication','actualAndroidChromeAcceptance:true');
+assert.throws(()=>assertWorkflowGovernance(androidSubstitutionMutation),/Android acceptance/,'The regression must fail when Android is substituted for the verified iPhone publication handoff.');
 const missingPublicationBridgeMutation=workflow.replace(/verify-mobile-acceptance-publication\.mjs/g,'missing-mobile-publication-bridge.mjs');
 assert.throws(()=>assertWorkflowGovernance(missingPublicationBridgeMutation),/publication bridge/,'The regression must fail when valid physical evidence has no executable publication bridge.');
 
