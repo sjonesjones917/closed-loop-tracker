@@ -91,7 +91,15 @@ assert.match(workflow,/deployedByteIdentity\s*:\s*process\.env\.LIVE_RESULT\s*==
 assert.match(workflow,/deployedChromiumAcceptance\s*:\s*process\.env\.LIVE_RESULT\s*===\s*['"]success['"]/,'deployed browser acceptance must derive from the successful live-verification job');
 assert.match(workflow,/localChromiumAcceptance\s*:\s*process\.env\.TEST_RESULT\s*===\s*['"]success['"]/,'local browser acceptance must derive from the successful test job');
 assert.doesNotMatch(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy byte identity must not be hard-coded');
-assert.doesNotMatch(workflow,/(?:deployedChromiumAcceptance|liveBrowserVerification)\s*:\s*true/,'deployed browser acceptance must not be hard-coded');
+const publishStatusJob=workflow.match(/\n\s*publish-status:\n(?<body>[\s\S]*?)(?=\n\s*(?:create-mobile-acceptance-target|verify-mobile-acceptance):|\s*$)/);
+assert.ok(publishStatusJob,'push-path acceptance publication job is required');
+assert.doesNotMatch(publishStatusJob.groups.body,/(?:deployedChromiumAcceptance|liveBrowserVerification)\s*:\s*true/,'push-path deployed browser acceptance must not be hard-coded');
+const mobileAcceptanceJob=workflow.match(/\n\s*verify-mobile-acceptance:\n(?<body>[\s\S]*?)$/);
+assert.ok(mobileAcceptanceJob,'physical-iPhone verification job is required');
+const browserProofIndex=mobileAcceptanceJob.groups.body.indexOf('run_browser_verifier verify-browser.mjs');
+const finalReportIndex=mobileAcceptanceJob.groups.body.indexOf('closed-loop-final-acceptance.json');
+assert.ok(browserProofIndex>=0&&finalReportIndex>browserProofIndex,'physical final acceptance may be published only after deployed Chromium proof executes successfully in the same fail-closed job');
+assert.doesNotMatch(mobileAcceptanceJob.groups.body,/continue-on-error\s*:\s*true/,'physical acceptance proof steps must not continue after a failed deployed-browser proof');
 
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
@@ -101,5 +109,6 @@ console.log(JSON.stringify({
   packageSchema:'closed-loop-verification-package/1',
   stageCount:30,
   runtimeOperations:requiredRuntimeOps.length,
-  centralizedLimits:requiredLimits.length
+  centralizedLimits:requiredLimits.length,
+  physicalAcceptanceBrowserOrderChecked:true
 }));
