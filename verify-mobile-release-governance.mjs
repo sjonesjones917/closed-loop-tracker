@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
+import {runPublicationRegressions} from './verify-mobile-acceptance-publication.mjs';
 
 const WORKFLOW_PATH=new URL('./.github/workflows/pages.yml',import.meta.url);
 const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
@@ -36,6 +37,10 @@ export function assertWorkflowGovernance(workflow){
   assert.match(workflow,/actual_iphone=\$\{report\.actualIPhoneSafariAcceptance\}/,'The report step must publish the physical-iPhone result through GITHUB_OUTPUT.');
   assert.match(workflow,/final_acceptance=\$\{report\.finalAcceptancePublication\}/,'The report step must publish final-acceptance eligibility through GITHUB_OUTPUT.');
   assert.match(workflow,/fs\.appendFileSync\(process\.env\.GITHUB_OUTPUT/,'The release decision must be passed from the exact generated report.');
+  assert.match(workflow,/verify-mobile-acceptance-publication\.mjs/,'The workflow must execute the physical-evidence publication bridge.');
+  assert.match(workflow,/mobile_acceptance_target_json/,'Authenticated workflow input for the pinned mobile target is missing.');
+  assert.match(workflow,/mobile_acceptance_evidence_json/,'Authenticated workflow input for physical-device evidence is missing.');
+  assert.match(workflow,/Finalize pinned actual-iPhone acceptance/,'The workflow must contain an executable finalization path for valid physical evidence.');
 
   const tagStep=workflow.match(/\n\s*- name: Create release tag[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
   assert.ok(tagStep,'A release-tag step must exist.');
@@ -73,6 +78,7 @@ assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptance
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceOrigin:'https://example.invalid'}),false,'A different origin cannot satisfy the canonical deployment identity.');
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,actualAndroidChromeAcceptance:true,actualIPhoneSafariAcceptance:false}),false,'Android acceptance cannot satisfy the iPhone requirement.');
 
+const safariUserAgent='Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1';
 const target={
   mobileAcceptanceTargetId:'MOBILE-TARGET-001',
   physicalDeviceRequired:true,
@@ -85,6 +91,8 @@ const target={
   basePath:'/closed-loop-tracker/',
   testProjectId:'JOB-MOBILE-001',
   procedureVersion:'actual-iphone-safari/1',
+  iosVersion:'19.0',
+  safariUserAgent,
   viewport:{width:393,height:852,devicePixelRatio:3}
 };
 const evidence={
@@ -101,8 +109,8 @@ const evidence={
   evidenceBasis:'HUMAN_OBSERVATION',
   performer:'authorized-operator',
   identityAssurance:'SELF_ASSERTED',
-  iosVersion:'19.0',
-  safariUserAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1',
+  iosVersion:target.iosVersion,
+  safariUserAgent:target.safariUserAgent,
   viewport:{...target.viewport},
   operationReceipts:REQUIRED_MOBILE_RECEIPT_KINDS.map((kind,index)=>({kind,receiptId:`MR-${String(index+1).padStart(3,'0')}`,result:'PASS'})),
   runtimeFindings:{runtimeExceptions:0,unhandledRejections:0},
@@ -112,11 +120,17 @@ const evidence={
 };
 const expected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T00:00:00.000Z'};
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true,'Complete pinned mobile evidence must validate.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,iosVersion:''},evidence,expected}).accepted,false,'Target without pinned iOS version must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,safariUserAgent:''},evidence,expected}).accepted,false,'Target without pinned Safari identity must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,iosVersion:'18.7'},expected}).accepted,false,'Evidence from a changed iOS version must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challenge:'f'.repeat(32)},expected}).accepted,false,'Mismatched challenge must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Safari/604.1','CriOS/140.0.0.0 Mobile/15E148 Safari/604.1')},expected}).accepted,false,'A substitute iOS browser must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operationReceipts:evidence.operationReceipts.slice(1)},expected}).accepted,false,'Missing required physical operator-path evidence must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected,usedChallenges:[target.challenge]}).accepted,false,'A reused physical acceptance challenge must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected:{...expected,verificationTime:'2026-09-04T00:00:00.000Z'}}).accepted,false,'Expired physical acceptance evidence must be rejected.');
+
+const publicationRegressions=runPublicationRegressions();
+assert.equal(publicationRegressions.validEvidenceCanPublish,true,'Valid physical evidence must have a reachable publication path.');
 
 const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
 assertWorkflowGovernance(workflow);
@@ -124,6 +138,8 @@ const unconditionalMutation=workflow.replace(/\n\s*if:\s*steps\.acceptance\.outp
 assert.throws(()=>assertWorkflowGovernance(unconditionalMutation),/conditionally gated/,'The regression must fail when release tagging becomes unconditional.');
 const androidSubstitutionMutation=workflow.replace('actualIPhoneSafariAcceptance:false','actualAndroidChromeAcceptance:true');
 assert.throws(()=>assertWorkflowGovernance(androidSubstitutionMutation),/Android acceptance/,'The regression must fail when Android is substituted for the required iPhone target.');
+const missingPublicationBridgeMutation=workflow.replace(/verify-mobile-acceptance-publication\.mjs/g,'missing-mobile-publication-bridge.mjs');
+assert.throws(()=>assertWorkflowGovernance(missingPublicationBridgeMutation),/publication bridge/,'The regression must fail when valid physical evidence has no executable publication bridge.');
 
 console.log(JSON.stringify({
   mobileReleaseGovernance:'PASS',
@@ -134,10 +150,12 @@ console.log(JSON.stringify({
   selfAssertionRejected:true,
   canonicalOriginBound:true,
   exactTargetBindingVerified:true,
+  pinnedIosAndSafariIdentityVerified:true,
   singleUseChallengeVerified:true,
   expiredChallengeRejected:true,
   substituteIosBrowserRejected:true,
   requiredOperatorPathReceiptCoverage:true,
+  validEvidenceCanPublish:true,
   unconditionalTagMutationDetected:true,
   falseAcceptanceTagRegressionCovered:true
 },null,2));
