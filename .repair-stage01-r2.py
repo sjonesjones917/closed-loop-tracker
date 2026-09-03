@@ -31,12 +31,21 @@ ptext=ptext.replace(anchor,anchor+addition)
 prompt.write_text(ptext)
 
 # Existing synthetic fixtures were authored against the obsolete canonical enum.
-# Update only verification files, never runtime prose or project data.
+# Update disposition literals only; leave prose and the focused legacy-rejection assertion untouched.
+fixture_map={
+    'incorporated into the job definition':'EXTRACTED_RELEVANT_INFORMATION',
+    'retained as context':'RETAINED_AS_CONTEXT',
+    'unresolved human-only':'UNRESOLVED_HUMAN_AUTHORITY',
+    'later-resolvable':'LATER_RESOLVABLE',
+    'inapplicable with reason':'NO_PROJECT_RELEVANT_INFORMATION',
+}
 for path in Path('.').glob('verify-*.mjs'):
     t=path.read_text()
-    if "disposition:'incorporated into the job definition'" in t:
-        t=t.replace("disposition:'incorporated into the job definition'","disposition:'EXTRACTED_RELEVANT_INFORMATION'")
-        path.write_text(t)
+    original=t
+    for retired,current in fixture_map.items():
+        t=t.replace(f"disposition:'{retired}'",f"disposition:'{current}'")
+        t=t.replace(f'disposition:"{retired}"',f'disposition:"{current}"')
+    if t!=original:path.write_text(t)
 
 # Permanent focused regression. Use the same non-DOM module surface as the existing Stage 01 closure test.
 reg=Path('verify-stage01-disposition-contract.mjs')
