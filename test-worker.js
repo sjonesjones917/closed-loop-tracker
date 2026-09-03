@@ -2,6 +2,9 @@
 'use strict';
 
 const query=self.location?.search||'';
+const params=new URLSearchParams(query);
+const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1';
+const WORKER_BUILD_ID=params.get('v')||'UNMANIFESTED_LOCAL_RUNTIME';
 importScripts(`test-runtime.js${query}`);
 
 /* The worker entry owns the only permitted bootstrap load. Once the declarative
@@ -22,9 +25,10 @@ self.addEventListener('message',async event=>{
     const validation=runtime.validateSpec(message.spec,message.bindings);
     if(!validation.valid)throw Object.assign(new Error(validation.issues.join(' ')),{code:'INVALID_TEST_IR'});
     const result=await runtime.execute({spec:message.spec,artifacts:message.artifacts||{},canonicalBindings:message.canonicalBindings||{},metadata:message.metadata||{}});
-    self.postMessage({requestId:message.requestId,ok:true,result});
+    const testWorkerSha256=typeof message.metadata?.testWorkerSha256==='string'&&/^[0-9a-f]{64}$/.test(message.metadata.testWorkerSha256)?message.metadata.testWorkerSha256:null;
+    self.postMessage({requestId:message.requestId,ok:true,result:{...result,runtimeBuildIdentity:result.runtimeBuildIdentity||WORKER_BUILD_ID,workerProtocolVersion:WORKER_PROTOCOL_VERSION,testWorkerSha256}});
   }catch(error){
-    self.postMessage({requestId:message.requestId,ok:false,error:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error),disposition:error?.disposition||'EXECUTION_FAILED'}});
+    self.postMessage({requestId:message.requestId,ok:false,error:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error),disposition:error?.disposition||'EXECUTION_FAILED',runtimeBuildIdentity:WORKER_BUILD_ID,workerProtocolVersion:WORKER_PROTOCOL_VERSION}});
   }
 });
 })();
