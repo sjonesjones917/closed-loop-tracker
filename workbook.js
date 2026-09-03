@@ -739,18 +739,7 @@ function validateStageDraft(stage,s,state){const issues=[];if(!String(s.draftRec
 async function immutableRevision(revisions,payload,meta={}){const hash=await sha256Text(JSON.stringify(payload));const latest=(revisions||[]).at(-1);if(latest?.sha256===hash)return {changed:false,record:latest};return {changed:true,record:{...meta,version:`v${String((revisions||[]).length+1).padStart(3,'0')}`,sha256:hash,createdAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(payload))}};}
 function invalidateDownstream(state,n,changeId){const out=[];for(let i=n+1;i<=30;i++){const s=state?.stages?.[i];if(!s)continue;if(s.status!=='NOT STARTED'||s.decision||s.decisionEvidence)out.push(`STAGE-${String(i).padStart(2,'0')}`);Object.assign(s,{status:'NOT STARTED',decision:'',decisionEvidence:'',nextStage:'',decidedBy:'',dateTime:'',invalidatedBy:changeId});}if(state?.release)Object.assign(state.release,{gateState:'',authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]});return out;}
 function compareArtifactSets(a=[],r=[],gateState=''){const comparisons=[];for(let i=0;i<Math.max(a.length,r.length);i++){const x=a[i],y=r[i];comparisons.push({artifactId:x?.artifactId||`ARTIFACT-${String(i+1).padStart(3,'0')}`,auditedFile:x?.name||'MISSING',releaseFile:y?.name||'MISSING',auditedSha256:x?.sha256||'UNKNOWN',releaseSha256:y?.sha256||'UNKNOWN',hashesIdentical:Boolean(x&&y&&x.sha256===y.sha256),byteSizesIdentical:Boolean(x&&y&&Number(x.size)===Number(y.size))});}const exact=gateState==='ACCEPTED'&&a.length>0&&a.length===r.length&&comparisons.every(x=>x.hashesIdentical&&x.byteSizesIdentical);return {gateState,comparisons,authorization:exact?'AUTHORIZED':'NOT AUTHORIZED'};}
-function restoreLegacyStage01AcceptedCapture(migrated,original){
-  const stage01=migrated?.stages?.['1']||migrated?.stages?.[1];
-  if(!stage01||String(stage01.status||'').toUpperCase()!=='COMPLETE')return migrated;
-  stage01.agentData=stage01.agentData&&typeof stage01.agentData==='object'&&!Array.isArray(stage01.agentData)?stage01.agentData:{};
-  const accepted=stage01.acceptedData&&typeof stage01.acceptedData==='object'&&!Array.isArray(stage01.acceptedData)?stage01.acceptedData:{};
-  if(String(stage01.agentData.INPUT_SET_CONTENTS||'').trim())return migrated;
-  if(String(accepted.INPUT_SET_CONTENTS||'').trim()){stage01.agentData.INPUT_SET_CONTENTS=String(accepted.INPUT_SET_CONTENTS);return migrated;}
-  const supplied=original?.userJobInput&&typeof original.userJobInput==='object'&&!Array.isArray(original.userJobInput)?original.userJobInput:null;
-  const captured=supplied&&Object.keys(supplied).length?JSON.stringify(supplied):String(stage01.draftRecord||'').trim();
-  if(captured)stage01.agentData.INPUT_SET_CONTENTS=captured;
-  return migrated;
-}
+function restoreLegacyStage01AcceptedCapture(migrated,original){return migrated;}
 function migrateState(p){
   if(!p||typeof p!=='object')return createBlankState();
   if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
