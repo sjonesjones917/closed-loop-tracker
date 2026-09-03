@@ -33,3 +33,10 @@ fs.writeFileSync(generatedPath,source);
 const run=spawnSync(process.execPath,[generatedPath],{stdio:'inherit'});
 try{fs.unlinkSync(generatedPath);}catch{}
 if(run.status!==0)process.exit(run.status??1);
+
+const ownerPath='test-runtime.js';
+let owner=fs.readFileSync(ownerPath,'utf8');
+const duplicate='const encoder=new TextEncoder();const encoder=new TextEncoder();';
+if(!owner.includes(duplicate))throw new Error('Expected materializer duplicate declaration was not found; refusing an unreviewed repair path.');
+owner=owner.replace(duplicate,'const encoder=new TextEncoder();');
+fs.writeFileSync(ownerPath,owner);
