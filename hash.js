@@ -49,7 +49,7 @@ function stableStringify(value){
       output=input.map((item,index)=>normalize(item,`${path}[${index}]`));
     }else{
       const prototype=Object.getPrototypeOf(input);
-      if(prototype!==null&&prototype!==Object.prototype&&Object.getPrototypeOf(prototype)!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
+      if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
       if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
       output={};
       const keys=Object.keys(input);
