@@ -2,12 +2,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
+await import('./hash.js');
+const hashAuthority=globalThis.closedLoopHash;
+if(!hashAuthority||hashAuthority.canonicalizationVersion!=='closed-loop-canonical-json/1'||typeof hashAuthority.stableStringify!=='function'||typeof hashAuthority.sha256Value!=='function')throw new Error('The shared closed-loop-canonical-json/1 authority from hash.js is unavailable.');
+
 const args=process.argv.slice(2);
 const valueOf=(name,fallback)=>{const index=args.indexOf(name);return index>=0&&args[index+1]?args[index+1]:fallback;};
 const outDir=path.resolve(valueOf('--out','_site'));
 const sourceCommit=valueOf('--source-commit',process.env.GITHUB_SHA||'LOCAL_UNCOMMITTED');
 const workflowRunIdentity=valueOf('--workflow-run',process.env.GITHUB_RUN_ID||'LOCAL');
-const canonicalizationVersion='closed-loop-canonical-json/1';
+const canonicalizationVersion=hashAuthority.canonicalizationVersion;
 const hashAlgorithm='SHA-256';
 const workflowIdentity='mobile-closed-loop/30';
 const projectSchema='closed-loop-project/3';
@@ -25,17 +29,6 @@ const deployedSources=['index.html',...runtimeOrder.slice(0,4),'test-worker.js',
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const sourceTestWorkerSha256=sha256(fs.readFileSync('test-worker.js'));
 const mediaType=file=>file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':file.endsWith('.json')?'application/json':file==='.nojekyll'?'application/octet-stream':'application/octet-stream';
-const assertUnicodeScalars=(value,label='canonical string')=>{for(let i=0;i<value.length;i++){const unit=value.charCodeAt(i);if(unit>=0xD800&&unit<=0xDBFF){const next=value.charCodeAt(i+1);if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Unpaired UTF-16 high surrogate in ${label}.`);i++;}else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Unpaired UTF-16 low surrogate in ${label}.`);}return value;};
-const compareUnicodeScalarSequence=(a,b)=>{const left=Array.from(assertUnicodeScalars(String(a),'canonical object key'),ch=>ch.codePointAt(0));const right=Array.from(assertUnicodeScalars(String(b),'canonical object key'),ch=>ch.codePointAt(0));const length=Math.min(left.length,right.length);for(let i=0;i<length;i++)if(left[i]!==right[i])return left[i]-right[i];return left.length-right.length;};
-const canonical=value=>{
-  if(value===null)return 'null';
-  if(typeof value==='boolean')return value?'true':'false';
-  if(typeof value==='string')return JSON.stringify(assertUnicodeScalars(value));
-  if(typeof value==='number'){if(!Number.isSafeInteger(value)||Object.is(value,-0))throw new TypeError('Manifest canonical numbers must be safe integers.');return String(value);}
-  if(Array.isArray(value))return `[${value.map(canonical).join(',')}]`;
-  if(value&&Object.getPrototypeOf(value)===Object.prototype){const keys=Object.keys(value);for(const key of keys)assertUnicodeScalars(key,'canonical object key');keys.sort(compareUnicodeScalarSequence);return `{${keys.map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;}
-  throw new TypeError('Unsupported manifest value.');
-};
 
 for(const file of deployedSources)if(!fs.existsSync(file))throw new Error(`Missing deployment source: ${file}`);
 const sourceBundle=deployedSources.map(file=>{
@@ -98,6 +91,6 @@ const manifest={
   manifestDigest:null
 };
 const manifestWithoutDigest={...manifest};delete manifestWithoutDigest.manifestDigest;
-manifest.manifestDigest={hashAlgorithm,digest:sha256(Buffer.from(canonical(manifestWithoutDigest),'utf8'))};
+manifest.manifestDigest={hashAlgorithm,digest:hashAuthority.sha256Value(manifestWithoutDigest)};
 fs.writeFileSync(path.join(outDir,'closed-loop-deployment-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 console.log(JSON.stringify({schema:manifest.schema,sourceCommit,workflowRunIdentity,buildIdentity,resources:runtimeResources.length,manifestDigest:manifest.manifestDigest.digest,outDir},null,2));
