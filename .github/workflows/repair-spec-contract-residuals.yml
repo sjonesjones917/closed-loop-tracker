@@ -46,11 +46,8 @@ jobs:
 
           verify=Path('verify-complete.mjs')
           v=verify.read_text()
-          marker="await import('./verify-stage-contract-closure.mjs');"
-          if marker not in v:
-              raise SystemExit('verify-complete integration marker not found')
           if "verify-spec-residual-closure.mjs" not in v:
-              v=v.replace(marker,marker+"\nawait import('./verify-spec-residual-closure.mjs');",1)
+              v += "\nawait import('./verify-spec-residual-closure.mjs');\n"
           verify.write_text(v)
           PY
           node verify-spec-residual-closure.mjs
