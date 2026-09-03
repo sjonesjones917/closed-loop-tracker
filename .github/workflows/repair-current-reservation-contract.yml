@@ -20,6 +20,8 @@ jobs:
         with:
           node-version: '22'
       - run: node repair-current-reservation-contract.mjs
+      - name: Remove invalid Node global assignments from the generated permanent regression
+        run: sed -i '/globalThis\.crypto=/d; /globalThis\.TextEncoder=/d' verify-reservation-contract.mjs
       - run: node verify-reservation-contract.mjs
       - run: node verify-v3-contract.mjs
       - run: node verify.mjs
