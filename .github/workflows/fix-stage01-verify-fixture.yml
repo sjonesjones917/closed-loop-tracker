@@ -13,13 +13,11 @@ jobs:
         with:
           ref: fix/stage01-disposition-contract-20260903c
           fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288ca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22'
       - name: Repair retained verifier fixture
         run: python .github/fix-stage01-verify-fixture.py
       - name: Prove exact CI prerequisite sequence
         run: |
+          node --version
           node build-test-project.mjs
           node verify.mjs
           node verify-complete.mjs
