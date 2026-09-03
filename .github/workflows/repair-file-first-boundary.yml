@@ -25,10 +25,11 @@ jobs:
           set -euo pipefail
           node --check app-core.js
           node verify-data-route-closure.mjs
-          node verify-file-first-contract.mjs
+          node verify-file-first-operator.mjs
+          node verify-file-first-response.mjs
           node verify-prompt-semantics.mjs
           node verify-ingestion.mjs
-          node verify-zero-loss-contract.mjs
+          node verify.mjs
       - name: Commit proven source change
         run: |
           set -euo pipefail
