@@ -1,130 +1,18 @@
-import fs from 'node:fs';
-import vm from 'node:vm';
-import assert from 'node:assert/strict';
-import {webcrypto} from 'node:crypto';
-
-const source=fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8');
-const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};
-context.globalThis=context;
-vm.createContext(context);
-vm.runInContext(source,context,{filename:'test-runtime.js'});
-const runtime=context.closedLoopTestRuntime;
-assert.ok(runtime,'runtime must load');
-
-const artifact=(id,text)=>({artifactId:id,filename:`${id}.txt`,bytes:new TextEncoder().encode(text)});
-const test=(spec,bindings={PRODUCT:{kind:'ARTIFACT',artifactId:'ART-PRODUCT'}})=>({
-  TEST_ID:'TEST-1',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',
-  EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_SPEC:spec,EXECUTABLE_INPUT_BINDINGS:bindings
-});
-const spec=steps=>({version:'closed-loop-test-spec/1',steps});
-
-assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');
-assert.equal(runtime.EXECUTABLE_KIND,'TEST_IR');
-assert.equal(runtime.supports(test(spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'x'}]))),true);
-assert.equal(runtime.supports({...test(spec([{op:'ASSERT_EQ',value:1}]),{}),EXECUTABLE_KIND:'CUSTOM_PIPELINE'}),false);
-
-for(const operation of [
-  'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML',
-  'COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE',
-  'ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'
-])assert.ok(runtime.OPS.includes(operation),`missing operation ${operation}`);
-
-const unknown=runtime.validateSpec(spec([{op:'SHELL',command:'rm -rf /'},{op:'ASSERT_EQ',value:true}]));
-assert.equal(unknown.valid,false);assert.match(unknown.issues.join(' '),/unknown operation/i);
-const unknownProperty=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:true,javascript:'return true'}]));
-assert.equal(unknownProperty.valid,false);assert.match(unknownProperty.issues.join(' '),/unknown property javascript/i);
-const wrongVersion=runtime.validateSpec({version:'closed-loop-test-spec/2',steps:[{op:'ASSERT_EQ',value:true}]});
-assert.equal(wrongVersion.valid,false);
-const noAssertion=runtime.validateSpec(spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'}]));
-assert.equal(noAssertion.valid,false);assert.match(noAssertion.issues.join(' '),/assertion/i);
-
-const jsonSpec=spec([
-  {op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},
-  {op:'SELECT_JSON_PATH',path:'$.items'},{op:'COUNT'},{op:'ASSERT_EQ',value:10}
-]);
-const jsonResult=await runtime.execute({spec:jsonSpec,artifacts:{PRODUCT:artifact('ART-PRODUCT',JSON.stringify({items:Array(10).fill(0)}))},metadata:{testId:'TEST-JSON',bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-PRODUCT'}}}});
-assert.equal(jsonResult.determination,'SATISFIED');
-assert.equal(jsonResult.testId,'TEST-JSON');
-await assert.rejects(()=>runtime.execute({spec:jsonSpec,artifacts:{PRODUCT:artifact('ART-DUP','{\"a\":1,\"a\":2}')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-DUP'}}}}),error=>error.code==='DUPLICATE_JSON_MEMBER');
-await assert.rejects(()=>runtime.execute({spec:jsonSpec,artifacts:{PRODUCT:artifact('ART-DECIMAL','{\"items\":[0.1]}')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-DECIMAL'}}}}),error=>error.code==='UNSUPPORTED_JSON_NUMBER');
-
-assert.equal(jsonResult.inputArtifactIds[0],'ART-PRODUCT');
-assert.match(jsonResult.inputArtifactSha256Values[0],/^[0-9a-f]{64}$/);
-assert.match(jsonResult.testSpecSha256,/^[0-9a-f]{64}$/);
-
-const csvWithoutContract=runtime.validateSpec(spec([
-  {op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_CSV'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}
-]));
-assert.equal(csvWithoutContract.valid,false);assert.match(csvWithoutContract.issues.join(' '),/delimiter/);assert.match(csvWithoutContract.issues.join(' '),/header/);assert.match(csvWithoutContract.issues.join(' '),/newline/);
-const csvSpec=spec([
-  {op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},
-  {op:'PARSE_CSV',delimiter:';',header:true,quote:'"',newline:'LF',encoding:'UTF-8'},
-  {op:'COUNT'},{op:'ASSERT_EQ',value:2}
-]);
-const csvResult=await runtime.execute({spec:csvSpec,artifacts:{PRODUCT:artifact('ART-CSV','name;value\na;1\nb;2\n')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-CSV'}}}});
-assert.equal(csvResult.determination,'SATISFIED');
-
-const xmlSpec=spec([
-  {op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_XML'},
-  {op:'SELECT_XML',path:'/root/item'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}
-]);
-const xmlResult=await runtime.execute({spec:xmlSpec,artifacts:{PRODUCT:artifact('ART-XML','<root><item id="1">a</item><item id="2">b</item></root>')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-XML'}}}});
-assert.equal(xmlResult.determination,'SATISFIED');
-assert.equal(runtime.validateSpec(spec([{op:'PARSE_XML'},{op:'SELECT_XML',path:'//item'},{op:'ASSERT_EQ',value:1}])).valid,false);
-
-const byteBindings={LEFT:{kind:'ARTIFACT',artifactId:'ART-L'},RIGHT:{kind:'ARTIFACT',artifactId:'ART-R'}};
-const byteSpec=spec([{op:'LOAD_ARTIFACT',binding:'LEFT'},{op:'READ_BYTES'},{op:'BYTE_COMPARE',binding:'RIGHT'},{op:'ASSERT_EQ',value:true}]);
-const equalBytes=await runtime.execute({spec:byteSpec,artifacts:{LEFT:artifact('ART-L','same'),RIGHT:artifact('ART-R','same')},metadata:{bindings:byteBindings}});
-assert.equal(equalBytes.determination,'SATISFIED');
-const unequalBytes=await runtime.execute({spec:byteSpec,artifacts:{LEFT:artifact('ART-L','same'),RIGHT:artifact('ART-R','different')},metadata:{bindings:byteBindings}});
-assert.equal(unequalBytes.determination,'VIOLATED');
-
-const integer=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUES'},{op:'SUM'},{op:'ASSERT_EQ',value:6}]),canonicalBindings:{VALUES:{value:[1,2,3]}},metadata:{bindings:{VALUES:{kind:'CANONICAL_VALUE',canonicalKey:'VALUES'}}}});
-assert.equal(integer.determination,'SATISFIED');
-const unsafeEquality=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:0.1}]));
-assert.equal(unsafeEquality.valid,false);assert.match(unsafeEquality.issues.join(' '),/typed DECIMAL/i);
-const missingTolerance=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:{numberType:'DECIMAL',value:'0.1'},numericMode:'APPROXIMATE'}]));
-assert.equal(missingTolerance.valid,false);assert.match(missingTolerance.issues.join(' '),/tolerance/i);
-const approximate=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:{numberType:'DECIMAL',value:'0.3'},numericMode:'APPROXIMATE',absTol:'0.000000000001'}]),canonicalBindings:{VALUE:{value:{numberType:'DECIMAL',value:'0.30000000000000004'}}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});
-assert.equal(approximate.determination,'SATISFIED');
-const decimal=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:'1.2300',numericMode:'DECIMAL_STRING'}]),canonicalBindings:{VALUE:{value:'1.23'}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});
-assert.equal(decimal.determination,'SATISFIED');
-const sortSpec=spec([{op:'LOAD_ARTIFACT',binding:'VALUES'},{op:'SORT',domain:'STRING'},{op:'ASSERT_EQ',value:['','𐀀']}]);
-const sorted=await runtime.execute({spec:sortSpec,canonicalBindings:{VALUES:{value:['𐀀','']}},metadata:{bindings:{VALUES:{kind:'CANONICAL_VALUE',canonicalKey:'VALUES'}}}});
-assert.equal(sorted.determination,'SATISFIED');
-
-
-const dangerousRegex=runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:'(a+)+$',flags:''}]));
-assert.equal(dangerousRegex.valid,false);assert.match(dangerousRegex.issues.join(' '),/grouping/);
-const hugeRegex='a'.repeat(runtime.LIMITS.maxRegexPatternBytes+1);
-assert.equal(runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:hugeRegex}])).valid,false);
-const tooManySteps=spec(Array(runtime.LIMITS.maxSteps+1).fill(null).map(()=>({op:'ASSERT_EQ',value:true})));
-assert.equal(runtime.validateSpec(tooManySteps).valid,false);
-
-const normalized=runtime.normalizeSpec(jsonSpec);
-const hashA=await runtime.sha256Canonical(normalized);
-const hashB=await runtime.sha256Canonical(runtime.normalizeSpec(JSON.parse(JSON.stringify(jsonSpec))));
-assert.equal(hashA,hashB,'normalized Test IR hash must be stable');
-const changed=JSON.parse(JSON.stringify(jsonSpec));changed.steps.at(-1).value=11;
-assert.notEqual(hashA,await runtime.sha256Canonical(runtime.normalizeSpec(changed)),'semantic Test IR change must change the hash');
-
-const invalidUtf8=new Uint8Array([0xc3,0x28]);
-await assert.rejects(()=>runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'x'}]),artifacts:{PRODUCT:{artifactId:'ART-BAD',bytes:invalidUtf8}},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-BAD'}}}}),error=>error.code==='INVALID_UTF8'&&error.disposition==='UNDETERMINED');
-
-class SilentWorker{
-  postMessage(){}
-  terminate(){this.terminated=true;}
-}
-const timeoutResult=await runtime.executeTest(test(jsonSpec),{PRODUCT:artifact('ART-PRODUCT','{}')},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});
-assert.equal(timeoutResult.status,'EXECUTION_FAILED');
-assert.equal(timeoutResult.failure.code,'WORKER_TIMEOUT');
-assert.equal(timeoutResult.observations.length,0,'timeout must produce no partial result');
-
-console.log(JSON.stringify({
-  verifyTestRuntimeV3:'PASS',
-  operations:runtime.OPS.length,
-  inputLimit:runtime.LIMITS.maxTotalInputBytes,
-  workerTimeoutMs:runtime.LIMITS.workerTimeoutMs,
-  json:true,csv:true,xml:true,byteCompare:true,integerExact:true,approximateTolerance:true,
-  unknownOperationRejected:true,unknownPropertyRejected:true,arbitraryCodeRejected:true,timeoutNoPartialResult:true
-}));
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {webcrypto} from 'node:crypto';
+const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise,Blob};context.globalThis=context;vm.createContext(context);for(const file of ['hash.js','test-runtime.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});const r=context.closedLoopTestRuntime;assert.ok(r);
+assert.equal(r.SPEC_VERSION,'closed-loop-test-spec/1');assert.equal(r.LANGUAGE_VERSION,'closed-loop-test-ir-language/1');assert.equal(r.OPERATION_REGISTRY_VERSION,'closed-loop-test-ir-operations/1');assert.match(r.OPERATION_REGISTRY_SHA256,/^[0-9a-f]{64}$/);assert.equal(r.OPS.length,27);
+const required=['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'];assert.deepEqual([...r.OPS],required);for(const banned of ['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE','SHELL','JAVASCRIPT','PYTHON'])assert.ok(!r.OPS.includes(banned));
+const binding=(name,id)=>({[name]:{kind:'ARTIFACT',artifactId:id}});const artifact=(id,text)=>({artifactId:id,filename:id+'.txt',bytes:new TextEncoder().encode(text)});const base=(steps,result,bindings={})=>({version:r.SPEC_VERSION,languageVersion:r.LANGUAGE_VERSION,operationRegistryVersion:r.OPERATION_REGISTRY_VERSION,operationRegistrySha256:r.OPERATION_REGISTRY_SHA256,steps,result});
+const jsonDag=base([{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'PRODUCT'}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},{stepId:'S003',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S002',output:'bytes'}}},{stepId:'S004',op:'PARSE_JSON',inputs:{text:{stepRef:'S003',output:'text'}}},{stepId:'S005',op:'SELECT_JSON_PATH',inputs:{value:{stepRef:'S004',output:'value'},path:{literal:'$.items'}}},{stepId:'S006',op:'COUNT',inputs:{value:{stepRef:'S005',output:'selection'}}},{stepId:'S007',op:'ASSERT_EQ',inputs:{actual:{stepRef:'S006',output:'count'},expected:{literal:10}}}],{stepRef:'S007',output:'assertion'});const productBinding=binding('PRODUCT','ART-PRODUCT');assert.equal(r.validateSpec(jsonDag,productBinding).valid,true);
+const native={TEST_ID:'TEST-1',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:r.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:r.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:productBinding,EXECUTABLE_SPEC:jsonDag};assert.equal(r.supports(native),true);assert.equal(r.supports({...native,EXECUTABLE_KIND:'CUSTOM_PIPELINE'}),false);
+const mutations=[s=>delete s.steps[0].stepId,s=>s.steps[1].stepId='S001',s=>s.steps[1].inputs.artifact={stepRef:'S999',output:'artifact'},s=>s.steps[1].inputs.artifact={stepRef:'S002',output:'bytes'},s=>s.steps[1].inputs.artifact={stepRef:'S001',output:'missing'},s=>s.steps[1].inputs.extra={literal:true},s=>s.result={stepRef:'S007',output:'missing'},s=>s.operationRegistrySha256='0'.repeat(64)];for(const mutate of mutations){const v=structuredClone(jsonDag);mutate(v);assert.equal(r.validateSpec(v,productBinding).valid,false,'invalid DAG mutation escaped');}
+assert.equal(r.validateSpec({version:r.SPEC_VERSION,steps:[{op:'ASSERT_EQ',value:1}]},{}).valid,false,'legacy implicit pipeline must be rejected');assert.equal(r.validateSpec(base([{stepId:'S001',op:'SHELL',inputs:{}}],{stepRef:'S001',output:'x'}),{}).valid,false);
+const compare=base([{stepId:'S001',op:'COMPARE',inputs:{left:{literal:2},right:{literal:2},operator:{literal:'EQ'}}}],{stepRef:'S001',output:'comparison'});assert.equal(r.validateSpec(compare,{}).valid,true);assert.equal((await r.execute({spec:compare,metadata:{bindings:{}}})).determination,'SATISFIED');const byteCompare=base([{stepId:'S001',op:'BYTE_COMPARE',inputs:{left:{bindingRef:'LEFT'},right:{bindingRef:'RIGHT'}}}],{stepRef:'S001',output:'equal'});const twoBindings={LEFT:{kind:'ARTIFACT',artifactId:'ART-L'},RIGHT:{kind:'ARTIFACT',artifactId:'ART-R'}};assert.equal(r.validateSpec(byteCompare,twoBindings).valid,true);const equalBytes=await r.execute({spec:byteCompare,artifacts:{LEFT:artifact('ART-L','same'),RIGHT:artifact('ART-R','same')},metadata:{bindings:twoBindings}});assert.equal(equalBytes.determination,'SATISFIED');assert.equal(new Set(equalBytes.inputArtifactIds).size,2);
+const bytes=new TextEncoder().encode(JSON.stringify({items:Array(10).fill(0)}));const jsonResult=await r.execute({spec:jsonDag,artifacts:{PRODUCT:{artifactId:'ART-PRODUCT',filename:'data.json',bytes}},metadata:{testId:'TEST-JSON',bindings:productBinding}});assert.equal(jsonResult.determination,'SATISFIED');assert.equal(jsonResult.resultPort.stepRef,'S007');assert.equal(jsonResult.resultPort.output,'assertion');assert.equal(jsonResult.normalizedDagSha256,jsonResult.testSpecSha256);assert.equal(jsonResult.TEST_IR_LANGUAGE_VERSION,r.LANGUAGE_VERSION);assert.equal(jsonResult.OPERATION_REGISTRY_SHA256,r.OPERATION_REGISTRY_SHA256);assert.match(jsonResult.inputArtifactSha256Values[0],/^[0-9a-f]{64}$/);
+const selector=base([{stepId:'S001',op:'SELECT_JSON_PATH',inputs:{value:{literal:{items:[{v:1},{v:2}]}},path:{literal:"$['items'][*]"}}},{stepId:'S002',op:'COUNT',inputs:{value:{stepRef:'S001',output:'selection'}}},{stepId:'S003',op:'ASSERT_EQ',inputs:{actual:{stepRef:'S002',output:'count'},expected:{literal:2}}}],{stepRef:'S003',output:'assertion'});assert.equal((await r.execute({spec:selector,metadata:{bindings:{}}})).determination,'SATISFIED');
+const regex=base([{stepId:'S001',op:'ASSERT_MATCH',inputs:{actual:{literal:'abc'},pattern:{literal:'^(a)(?:bc)$'}}}],{stepRef:'S001',output:'assertion'});assert.equal(r.validateSpec(regex,{}).valid,true);assert.equal((await r.execute({spec:regex,metadata:{bindings:{}}})).determination,'SATISFIED');for(const pattern of ['a(?=b)','(a)\\1','\\p{L}']){const bad=structuredClone(regex);bad.steps[0].inputs.pattern.literal=pattern;assert.equal(r.validateSpec(bad,{}).valid,false);}
+const csv=base([{stepId:'S001',op:'PARSE_CSV',inputs:{text:{literal:'name;value\na;1\nb;2\n'},delimiter:{literal:';'},header:{literal:true},quote:{literal:'"'},newline:{literal:'LF'},encoding:{literal:'UTF-8'}}},{stepId:'S002',op:'SELECT_JSON_PATH',inputs:{value:{stepRef:'S001',output:'value'},path:{literal:'$[*]'}}},{stepId:'S003',op:'COUNT',inputs:{value:{stepRef:'S002',output:'selection'}}},{stepId:'S004',op:'ASSERT_EQ',inputs:{actual:{stepRef:'S003',output:'count'},expected:{literal:2}}}],{stepRef:'S004',output:'assertion'});assert.equal((await r.execute({spec:csv,metadata:{bindings:{}}})).determination,'SATISFIED');
+const xml=base([{stepId:'S001',op:'PARSE_XML',inputs:{text:{literal:'<root><item>a</item><item>b</item></root>'}}},{stepId:'S002',op:'SELECT_XML',inputs:{value:{stepRef:'S001',output:'value'},path:{literal:'/root/*'}}},{stepId:'S003',op:'COUNT',inputs:{value:{stepRef:'S002',output:'selection'}}},{stepId:'S004',op:'ASSERT_EQ',inputs:{actual:{stepRef:'S003',output:'count'},expected:{literal:2}}}],{stepRef:'S004',output:'assertion'});assert.equal((await r.execute({spec:xml,metadata:{bindings:{}}})).determination,'SATISFIED');
+const badJson=structuredClone(jsonDag);badJson.steps[4].inputs.path.literal='$.items[?(@.x)]';assert.equal(r.validateSpec(badJson,productBinding).valid,false);const changed=structuredClone(jsonDag);changed.steps.at(-1).inputs.expected.literal=11;assert.notEqual(await r.sha256Canonical(r.normalizeSpec(jsonDag,productBinding)),await r.sha256Canonical(r.normalizeSpec(changed,productBinding)));
+class SilentWorker{postMessage(){}terminate(){this.terminated=true;}}const timeout=await r.executeTest(native,{PRODUCT:artifact('ART-PRODUCT','{}')},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.code,'WORKER_TIMEOUT');assert.equal(timeout.observations.length,0);
+console.log(JSON.stringify({verifyTestRuntimeV3:'PASS',explicitDag:true,operations:r.OPS.length,registryIdentity:true,selectors:true,regex:true,csv:true,xml:true,byteCompare:true,timeoutNoPartialResult:true}));
