@@ -19,10 +19,38 @@ const COLLECTION_POLICIES=Object.freeze({REPLACE_CURRENT_STAGE_SET:'REPLACE_CURR
 const DEFAULT_RESOURCE_LIMITS=Object.freeze({maxRawResponseBytes:1048576,maxJsonDepth:32,maxRecordsPerCollection:250,maxEvidenceRecords:500,maxAttachments:25,maxTextFieldLength:200000});
 const RESPONSE_TYPES=Object.freeze(['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']);
 const CONFLICT_POLICIES=Object.freeze(['reject','request clarification','controlled override']);
-const STAGE_OPERATIONS=Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>[i+1,Object.freeze(['COMPLETE'])]));
-STAGE_OPERATIONS[17]=Object.freeze(['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']);
-STAGE_OPERATIONS[19]=Object.freeze(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']);
-Object.freeze(STAGE_OPERATIONS);
+const STAGE_OPERATIONS=Object.freeze({
+  1:Object.freeze(['COMPLETE','SEMANTIC_CHALLENGE','RECONCILE_INTAKE']),
+  2:Object.freeze(['COMPLETE','SEARCH_ADEQUACY_REVIEW','RECONCILE_SOURCE_SEARCH']),
+  3:Object.freeze(['COMPLETE','SEMANTIC_CHALLENGE','RECONCILE_RESEARCH']),
+  4:Object.freeze(['COMPLETE','DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE','RECONCILE_REQUIREMENTS']),
+  5:Object.freeze(['COMPLETE','SEMANTIC_REVIEW','RECONCILE_REQUIREMENT_SET']),
+  6:Object.freeze(['COMPLETE','PROOF_REVIEW','RECONCILE_VERIFICATION_SUITE']),
+  7:Object.freeze(['COMPLETE','EXECUTE_FAILURE_TEST']),
+  8:Object.freeze(['COMPLETE']),
+  9:Object.freeze(['COMPLETE']),
+  10:Object.freeze(['FREEZE']),
+  11:Object.freeze(['EXECUTE_RUN']),
+  12:Object.freeze(['VERIFY']),
+  13:Object.freeze(['COMPARE']),
+  14:Object.freeze(['ROOT_CAUSE']),
+  15:Object.freeze(['COMPLETE','EXECUTE_REGRESSION']),
+  16:Object.freeze(['CORRECT']),
+  17:Object.freeze(['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']),
+  18:Object.freeze(['COMPLETE']),
+  19:Object.freeze(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),
+  20:Object.freeze(['FREEZE_BASELINE']),
+  21:Object.freeze(['COMPLETE']),
+  22:Object.freeze(['RUN_NATIVE_TESTS','EXECUTE_EXTERNAL_TEST']),
+  23:Object.freeze(['COMPLETE']),
+  24:Object.freeze(['RUN_NATIVE_ATTACKS','COMPLETE']),
+  25:Object.freeze(['FREEZE_DELIVERY_CANDIDATE','COMPLETE']),
+  26:Object.freeze(['COMPLETE','SEMANTIC_REVIEW','RECONCILE']),
+  27:Object.freeze(['CALCULATE_RELEASE','ADVISORY_REVIEW']),
+  28:Object.freeze(['VERIFY_IDENTITY','CAPTURE_DELIVERY_INTENT']),
+  29:Object.freeze(['CALCULATE_EVIDENCE_CHAINS','INVESTIGATE_MISSING_EVIDENCE']),
+  30:Object.freeze(['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'])
+});
 
 const titleCase=value=>String(value||'').toLowerCase().replace(/(^|[_\s-])([a-z0-9])/g,(_,a,b)=>`${a?' ':''}${b.toUpperCase()}`).trim();
 const field=(name,producer,options={})=>Object.freeze({
