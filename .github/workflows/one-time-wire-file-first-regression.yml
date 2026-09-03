@@ -11,25 +11,23 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: fix/file-first-operator-path
-      - name: Wire permanent regression and remove scaffold
+      - name: Wire permanent regression into existing prompt verifier
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('.github/workflows/pages.yml')
+          p=Path('verify-prompt-semantics.mjs')
           text=p.read_text()
-          needle='          node verify-prompt-semantics.mjs\n          node verify-semantic-invariant.mjs\n'
-          replacement=needle+'          node verify-file-first-operator.mjs\n'
-          if needle not in text:
-              raise SystemExit('Prompt-semantics insertion point not found.')
-          if 'node verify-file-first-operator.mjs' not in text:
-              text=text.replace(needle,replacement,1)
+          line="\nawait import('./verify-file-first-operator.mjs');\n"
+          if line.strip() not in text:
+              text=text.rstrip()+line
           p.write_text(text)
           PY
-          rm .github/workflows/one-time-wire-file-first-regression.yml
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add verify-file-first-operator.mjs .github/workflows/pages.yml .github/workflows/one-time-wire-file-first-regression.yml
+          git add verify-prompt-semantics.mjs
           git diff --cached --check
-          git commit -m "Wire file-first operator regression"
-          git push origin HEAD:fix/file-first-operator-path
+          if ! git diff --cached --quiet; then
+            git commit -m "Wire file-first operator regression"
+            git push origin HEAD:fix/file-first-operator-path
+          fi
