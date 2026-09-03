@@ -93,8 +93,7 @@ const sortSpec=spec([{op:'LOAD_ARTIFACT',binding:'VALUES'},{op:'SORT',domain:'ST
 const sorted=await runtime.execute({spec:sortSpec,canonicalBindings:{VALUES:{value:['𐀀','']}},metadata:{bindings:{VALUES:{kind:'CANONICAL_VALUE',canonicalKey:'VALUES'}}}});
 assert.equal(sorted.determination,'SATISFIED');
 
-
-const dangerousRegex=runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:'(a+)+$',flags:''}]));
+const dangerousRegex=runtime.validateSpec(spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_MATCH',pattern:'(a+)+$',flags:''}]));
 assert.equal(dangerousRegex.valid,false);assert.match(dangerousRegex.issues.join(' '),/grouping/);
 const hugeRegex='a'.repeat(runtime.LIMITS.maxRegexPatternBytes+1);
 assert.equal(runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:hugeRegex}])).valid,false);
