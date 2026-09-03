@@ -1,0 +1,60 @@
+name: One-time pre-profile v3 repair
+on:
+  push:
+    paths:
+      - .github/workflows/one-time-pre-profile-v3-repair.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Close profile-less v3 activation path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          schema=Path('workflow-schema.js')
+          s=schema.read_text()
+          old="if(input.schema===CURRENT_PROJECT_SCHEMA)return ensureV3Defaults(clone(input));"
+          new="if(input.schema===CURRENT_PROJECT_SCHEMA){if(String(input?.job?.CONTRACT_PROFILE_ID||'')!==String(base.CONTRACT_PROFILE_ID||'')){const error=new Error('A closed-loop-project/3 project without the current contract profile is legacy, non-gating data and requires a controlled profile migration before activation.');error.code='PRE_PROFILE_V3_NON_GATING';throw error;}return ensureV3Defaults(clone(input));}"
+          if old not in s: raise SystemExit('schema current-v3 shortcut anchor missing')
+          schema.write_text(s.replace(old,new,1))
+
+          workbook=Path('workbook.js')
+          w=workbook.read_text()
+          old="if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\n    const migrated=JSON.parse(JSON.stringify(p));"
+          new="if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\n    if(String(p?.job?.CONTRACT_PROFILE_ID||'')!==CONTRACT_PROFILE_ID){const error=new Error('A closed-loop-project/3 project without the current contract profile is legacy, non-gating data and requires a controlled profile migration before activation.');error.code='PRE_PROFILE_V3_NON_GATING';throw error;}\n    const migrated=JSON.parse(JSON.stringify(p));"
+          if old not in w: raise SystemExit('workbook current-v3 shortcut anchor missing')
+          workbook.write_text(w.replace(old,new,1))
+
+          test=Path('verify-v3-migration.mjs')
+          t=test.read_text()
+          anchor="assert.equal(second.projectData.nonOperationalImportedPayloads.length,migrated.projectData.nonOperationalImportedPayloads.length,'current migration must be idempotent');"
+          regression="assert.equal(second.projectData.nonOperationalImportedPayloads.length,migrated.projectData.nonOperationalImportedPayloads.length,'current migration must be idempotent');\nconst profileless=structuredClone(second);delete profileless.job.CONTRACT_PROFILE_ID;assert.throws(()=>schema.migrateProjectToCurrent(profileless),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','profile-less /3 schema migration must fail closed instead of becoming current by schema-name equality');assert.throws(()=>context.closedLoopCore.migrateState(profileless),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','profile-less /3 core migration must remain legacy/non-gating rather than fabricate current-profile conformance');"
+          if anchor not in t: raise SystemExit('v3 migration idempotency anchor missing')
+          t=t.replace(anchor,regression,1)
+          t=t.replace("currentV3NoSilentHeal:true","currentV3NoSilentHeal:true,preProfileV3FailsClosed:true")
+          test.write_text(t)
+          PY
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          rm .github/workflows/one-time-pre-profile-v3-repair.yml
+      - name: Commit repair and remove one-time scaffold
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workbook.js workflow-schema.js verify-v3-migration.mjs .github/workflows/one-time-pre-profile-v3-repair.yml
+          git commit -m "Fail closed on pre-profile v3 projects"
+          git push origin HEAD:repair/pre-profile-v3-fail-closed-20260903
