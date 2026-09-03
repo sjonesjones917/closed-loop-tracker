@@ -17,8 +17,11 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
-      - name: Apply exact owner-file repair
-        run: python3 .repair-r1.py
+      - name: Apply exact owner-file repair and remove one-time scaffolding
+        run: |
+          set -euo pipefail
+          python3 .repair-r1.py
+          rm .repair-r1.py .github/workflows/spec-repair-r1.yml
       - name: Prove repaired invariants
         run: |
           set -euo pipefail
@@ -26,13 +29,12 @@ jobs:
           node --check verify-v3-definition-of-done.mjs
           node build-test-project.mjs
           node verify-v3-definition-of-done.mjs
-      - name: Commit repair and remove one-time scaffolding
+      - name: Commit proven repair
         run: |
           set -euo pipefail
-          rm .repair-r1.py .github/workflows/spec-repair-r1.yml
           git config user.name "closed-loop-repair-bot"
           git config user.email "closed-loop-repair-bot@users.noreply.github.com"
-          git add workflow-engine.js verify-v3-definition-of-done.mjs .repair-r1.py .github/workflows/spec-repair-r1.yml
+          git add -A
           git diff --cached --check
           git commit -m "Fix nullable source pointer and Stage 30 ownership mapping"
           git push origin HEAD:repair/spec-p4-contracts-20260903-r1
