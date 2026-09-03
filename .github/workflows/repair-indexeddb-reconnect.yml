@@ -20,11 +20,12 @@ jobs:
           node-version: '22'
       - name: Apply exact reconnect correction
         run: node .repair-indexeddb-reconnect.cjs
-      - name: Prove syntax and focused persistence contracts
+      - name: Prove syntax and storage-facing contracts
         run: |
+          set -euo pipefail
           node --check project-store.js
-          node verify-project-store.mjs
-          node verify-storage-reliability.mjs
+          node verify-project-lifecycle.mjs
+          node verify-complete.mjs
       - name: Remove scaffolding and commit permanent repair
         run: |
           git config user.name 'closed-loop-repair'
