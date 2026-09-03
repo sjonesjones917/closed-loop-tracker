@@ -1,0 +1,42 @@
+name: One-time Stage 10 route log
+
+on:
+  push:
+    branches: [controller-stage10-authoritative-prompt-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller-stage10-authoritative-prompt-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Reproduce and capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          awk '
+            /- name: Apply the exact current Stage 10 repair script/{found=1;next}
+            found && /- name: Syntax proof/{exit}
+            found && /^        run: \|/{inrun=1;next}
+            found && inrun{sub(/^          /,""); print}
+          ' .github/workflows/controller-stage10-diagnostic.yml > /tmp/apply.sh
+          bash /tmp/apply.sh
+          set +e
+          node verify-spec-grounded-route-oracle.mjs > stage10-route.log 2>&1
+          rc=$?
+          set -e
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add stage10-route.log
+          git commit -m "Capture Stage 10 route-oracle rejection"
+          git push origin HEAD:controller-stage10-authoritative-prompt-20260903
+          exit "$rc"
