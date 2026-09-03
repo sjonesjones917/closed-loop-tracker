@@ -16,6 +16,7 @@ const workflow=read('./.github/workflows/pages.yml');
 const definitionProof=read('./verify-definition-of-done.mjs');
 const v3Proof=read('./verify-v3-definition-of-done.mjs');
 const reservationProof=read('./verify-reservation-contract.mjs');
+const stateReleaseProof=read('./verify-state-release-contract.mjs');
 
 const requiredRuntimeOps=[
   'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML',
@@ -53,6 +54,8 @@ assert.match(schema,/INCOMPLETE','BLOCKED','COMPLETE/,'JOB_RECORD_STATUS must us
 assert.match(reservationProof,/RESERVED','EXPORTED','ORPHANED','RESUMED','RESPONSE_STAGED','ACCEPTED','REJECTED','CANCELLED','SUPERSEDED','EXPIRED_BY_SCOPE/,'permanent reservation regression must pin the closed state machine');
 assert.match(engine,/p.revision=reservationRevision/,'reservation creation must commit R+1');
 assert.match(engine,/TARGET_SLOT is application-calculated/,'caller-supplied target slots must be rejected');
+assert.match(stateReleaseProof,/mandatory refutation must control/,'release precedence regression must distinguish refutation from blockers');
+assert.doesNotMatch(engine,/CURRENT_STATE=projectOpenBlockers.length\?'BLOCKED':completed===30\?'COMPLETE'/,'runtime must not emit legacy CURRENT_STATE values');
 assert.match(schema,/fields\.EXECUTABLE_KIND='NONE'/,'schema migration/default path must define NONE as the non-executable state');
 assert.doesNotMatch(schema,/enumValues\s*:\s*\[[^\]]*CUSTOM_PIPELINE[^\]]*\]/,'CUSTOM_PIPELINE cannot remain an active executable enum member');
 assert.match(schema,/fields\.EXECUTABLE_KIND==='CUSTOM_PIPELINE'[^\n]*fields\.EXECUTABLE_KIND='TEST_IR'/,'historical CUSTOM_PIPELINE records must migrate deterministically to TEST_IR');
