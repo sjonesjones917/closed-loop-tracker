@@ -28,7 +28,7 @@ const regexBlock=`function validateRegex(pattern,flags=''){
 `;
 const beforeRegex=/function validateRegex\(pattern,flags=''\)\{[\s\S]*?\n\}\n\nfunction parseJsonSelector/;
 if(!beforeRegex.test(source))throw new Error('validateRegex block not found');
-source=source.replace(beforeRegex,regexBlock+'\nfunction parseJsonSelector');
+source=source.replace(beforeRegex,()=>regexBlock+'\nfunction parseJsonSelector');
 
 const jsonBlock=`function parseJsonSelector(path){
   const text=String(path||'');
@@ -85,7 +85,7 @@ function selectJsonPath(value,path){
 `;
 const jsonRange=/function parseJsonSelector\(path\)\{[\s\S]*?\nfunction decodeXmlEntity/;
 if(!jsonRange.test(source))throw new Error('JSON selector block not found');
-source=source.replace(jsonRange,jsonBlock+'\nfunction decodeXmlEntity');
+source=source.replace(jsonRange,()=>jsonBlock+'\nfunction decodeXmlEntity');
 
 const xmlBlock=`function parseXmlSelector(path){
   const text=String(path||'');if(!text.startsWith('/')||text.startsWith('//'))fail('UNSUPPORTED_XML_SELECTOR','XML selector must be an absolute child path beginning with one /.');
@@ -112,7 +112,7 @@ function selectXml(rootNode,path){
 `;
 const xmlRange=/function parseXmlSelector\(path\)\{[\s\S]*?\n\nfunction validateJsonSourceExact/;
 if(!xmlRange.test(source))throw new Error('XML selector block not found');
-source=source.replace(xmlRange,xmlBlock+'\n\nfunction validateJsonSourceExact');
+source=source.replace(xmlRange,()=>xmlBlock+'\n\nfunction validateJsonSourceExact');
 
 fs.writeFileSync(runtimePath,source);
 
