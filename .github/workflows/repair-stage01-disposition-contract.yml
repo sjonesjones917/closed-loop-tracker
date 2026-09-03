@@ -53,6 +53,12 @@ jobs:
           for(const file of fs.readdirSync('.').filter(n=>/\.(?:js|mjs)$/.test(n)&&n!==path)){
             let t=fs.readFileSync(file,'utf8'),next=t;
             for(const [from,to] of replacements)next=next.split(from).join(to);
+            if(file==='prompt-engine.js'){
+              const anchor='Classify every APPLICATION INTAKE MANIFEST unit exactly once.';
+              const contract=' Classify each unit using exactly one of these closed disposition values: EXTRACTED_RELEVANT_INFORMATION, RETAINED_AS_CONTEXT, NO_PROJECT_RELEVANT_INFORMATION, UNRESOLVED_HUMAN_AUTHORITY, LATER_RESOLVABLE, or INACCESSIBLE_OR_BLOCKED. INACCESSIBLE_OR_BLOCKED means the required semantic content could not be inspected; report the exact blocker and do not claim Stage 01 completion.';
+              if(!next.includes(anchor))throw new Error('Stage 01 prompt classification anchor changed; restart from main and inspect.');
+              if(!next.includes('INACCESSIBLE_OR_BLOCKED'))next=next.replace(anchor,anchor+contract);
+            }
             if(next!==t)fs.writeFileSync(file,next);
           }
           NODE
@@ -76,8 +82,8 @@ jobs:
           const noRelevant=structuredClone(base);noRelevant.units[0]={...noRelevant.units[0],disposition:'NO_PROJECT_RELEVANT_INFORMATION',reason:'Mechanically present but contains no project-relevant information.',extractedStatements:[]};const nr=engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(noRelevant)});assert.equal(nr.complete,true,JSON.stringify(nr.reasons));
           const inaccessible=structuredClone(base);inaccessible.units[0]={...inaccessible.units[0],disposition:'INACCESSIBLE_OR_BLOCKED',reason:'Semantic content cannot be inspected.',extractedStatements:[]};const blocked=engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(inaccessible)});assert.equal(blocked.complete,false,'INACCESSIBLE_OR_BLOCKED must block Stage 01 completion.');assert(blocked.reasons.some(r=>/inaccessible or blocked/i.test(r)),JSON.stringify(blocked.reasons));
           const legacy=structuredClone(base);legacy.units[0].disposition='retained as context';const rejected=engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(legacy)});assert.equal(rejected.complete,false,'Legacy Stage 01 disposition must be rejected.');
-          const prompt=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;for(const value of exact)assert(prompt.includes(value),`Stage 01 prompt omitted ${value}`);
-          console.log(JSON.stringify({stage01DispositionContract:'PASS',closedSet:exact,inaccessibleBlocks:true,legacyRejected:true}));
+          const prompt=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;for(const value of exact)assert(prompt.includes(value),`Stage 01 prompt omitted ${value}`);assert(/INACCESSIBLE_OR_BLOCKED means .*do not claim Stage 01 completion/i.test(prompt),'Stage 01 prompt must state the fail-closed consequence for inaccessible content.');
+          console.log(JSON.stringify({stage01DispositionContract:'PASS',closedSet:exact,inaccessibleBlocks:true,legacyRejected:true,promptPublishesClosedSet:true}));
           NODE
           node verify-stage01-disposition-contract.mjs
           for f in workflow-engine.js prompt-engine.js response-ingestion.js; do node --check "$f"; done
