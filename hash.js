@@ -3,6 +3,9 @@
 
 const MAX_SAFE_INTEGER=Number.MAX_SAFE_INTEGER;
 const MIN_SAFE_INTEGER=Number.MIN_SAFE_INTEGER;
+const CANONICALIZATION_VERSION='closed-loop-canonical-json/1';
+const ID_VERSION='closed-loop-id/1';
+const BASE32HEX_ALPHABET='0123456789abcdefghijklmnopqrstuv';
 
 function assertUnicodeScalars(value,path){
   for(let i=0;i<value.length;i++){
@@ -98,6 +101,56 @@ function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
 function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
 function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
 function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
-globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',canonicalizationVersion:'closed-loop-canonical-json/1',stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
+
+function assertCanonicalIdTuple(input){
+  if(!input||typeof input!=='object'||Array.isArray(input))throw new TypeError('closed-loop-id/1 requires an allocation tuple object.');
+  if(!/^[A-Z][A-Z0-9]*$/.test(String(input.familyPrefix||'')))throw new TypeError('familyPrefix must be nonempty uppercase ASCII alphanumeric and begin with A-Z.');
+  for(const key of ['familyNamespace','jobNamespace','commandId'])if(typeof input[key]!=='string'||!input[key])throw new TypeError(`${key} must be a nonempty string.`);
+  for(const key of ['targetSlot','parentId'])if(input[key]!==undefined&&typeof input[key]!=='string')throw new TypeError(`${key} must be a string when supplied.`);
+  for(const key of ['allocationSequence','collisionCounter'])if(!Number.isSafeInteger(input[key])||input[key]<0)throw new TypeError(`${key} must be a nonnegative safe integer.`);
+}
+function base32hex(bytes){
+  let output='',accumulator=0,bits=0;
+  for(const byte of bytes){
+    accumulator=(accumulator<<8)|byte;bits+=8;
+    while(bits>=5){bits-=5;output+=BASE32HEX_ALPHABET[(accumulator>>bits)&31];accumulator&=bits?((1<<bits)-1):0;}
+  }
+  if(bits)output+=BASE32HEX_ALPHABET[(accumulator<<(5-bits))&31];
+  return output;
+}
+function canonicalIdCandidate(input){
+  const tuple={...input,targetSlot:input?.targetSlot??'',parentId:input?.parentId??''};
+  assertCanonicalIdTuple(tuple);
+  const preimage={
+    idVersion:ID_VERSION,
+    familyNamespace:tuple.familyNamespace,
+    jobNamespace:tuple.jobNamespace,
+    commandId:tuple.commandId,
+    targetSlot:tuple.targetSlot,
+    parentId:tuple.parentId,
+    allocationSequence:tuple.allocationSequence,
+    collisionCounter:tuple.collisionCounter
+  };
+  const digestHex=sha256Text(stableStringify(preimage)).slice(0,40);
+  const digestBytes=new Uint8Array(20);
+  for(let index=0;index<20;index++)digestBytes[index]=Number.parseInt(digestHex.slice(index*2,index*2+2),16);
+  return `${tuple.familyPrefix}-${base32hex(digestBytes)}`;
+}
+function allocateCanonicalId(input){
+  if(!input||typeof input!=='object'||Array.isArray(input))throw new TypeError('closed-loop-id/1 requires an allocation tuple object.');
+  const collisionExists=input.collisionExists;
+  if(typeof collisionExists!=='function')throw new TypeError('allocateCanonicalId requires collisionExists(id) so collisions are checked by the owning transaction.');
+  let collisionCounter=Number.isSafeInteger(input.collisionCounter)?input.collisionCounter:0;
+  if(collisionCounter<0)throw new TypeError('collisionCounter must be a nonnegative safe integer.');
+  for(;;){
+    const tuple={...input,collisionCounter};delete tuple.collisionExists;
+    const id=canonicalIdCandidate(tuple);
+    if(!collisionExists(id))return Object.freeze({id,idVersion:ID_VERSION,familyNamespace:tuple.familyNamespace,jobNamespace:tuple.jobNamespace,commandId:tuple.commandId,targetSlot:tuple.targetSlot??'',parentId:tuple.parentId??'',allocationSequence:tuple.allocationSequence,collisionCounter});
+    if(collisionCounter===MAX_SAFE_INTEGER)throw new RangeError('closed-loop-id/1 collisionCounter exhausted the safe-integer range.');
+    collisionCounter++;
+  }
+}
+
+globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,canonicalIdCandidate,allocateCanonicalId,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 
 })();
