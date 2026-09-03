@@ -1,0 +1,30 @@
+name: Repair current reservation contract
+on:
+  push:
+    branches: [repair/spec-conformance-current-20260903]
+    paths:
+      - repair-current-reservation-contract.mjs
+      - .github/workflows/repair-current-reservation-contract.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/spec-conformance-current-20260903
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node repair-current-reservation-contract.mjs
+      - run: node verify-reservation-contract.mjs
+      - run: node verify-v3-contract.mjs
+      - run: node verify.mjs
+      - name: Commit repaired implementation
+        run: |
+          git config user.name "closed-loop-repair"
+          git config user.email "closed-loop-repair@users.noreply.github.com"
+          git add -A
+          git commit -m "Conform operation reservation transaction contract"
+          git push origin HEAD:repair/spec-conformance-current-20260903
