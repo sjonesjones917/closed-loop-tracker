@@ -19,7 +19,16 @@ const OP={
 const WITHHOLD={'11:EXECUTE_RUN':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],'12:VERIFY':['comparisons','rootCauses','changes'],'17:EXECUTE_RUN':['verification','comparisons','rootCauses','changes'],'17:VERIFY':['comparisons','rootCauses','changes'],'19:EXECUTE_RUN':['verification','comparisons','rootCauses','changes'],'19:VERIFY':['comparisons','rootCauses','changes'],'23:COMPLETE':['deterministicResults','adversarialResults'],'24:COMPLETE':['deterministicResults','meaningResults']};
 const COMPLETION_READ=['propositions','propositionEquivalenceReviews','applicabilityRecords','proofExpressions','proofObligations','observationRecords','entailmentReviews','environmentDependencies'];
 const COMPLETION_WRITES={4:['propositions'],5:['propositionEquivalenceReviews','applicabilityRecords'],6:['proofExpressions','environmentDependencies'],12:['observationRecords','entailmentReviews'],17:['observationRecords','entailmentReviews'],19:['observationRecords','entailmentReviews'],22:['observationRecords','entailmentReviews'],23:['observationRecords','entailmentReviews'],24:['observationRecords','entailmentReviews'],25:['observationRecords','entailmentReviews'],29:['observationRecords','entailmentReviews']};
-const expected=(s,o)=>{const base=OP[`${s}:${o}`]||{r:READ[s],w:WRITES[s]};return {r:s>=5?[...new Set([...(base.r||[]),...COMPLETION_READ])]:[...(base.r||[])],w:[...new Set([...(base.w||[]),...(COMPLETION_WRITES[s]||[])])]};};
+const legacyExpected=(s,o)=>{const base=OP[`${s}:${o}`]||{r:READ[s],w:WRITES[s]};return {r:s>=5?[...new Set([...(base.r||[]),...COMPLETION_READ])]:[...(base.r||[])],w:[...new Set([...(base.w||[]),...(COMPLETION_WRITES[s]||[])])]};};
+const NON_AGENT_WRITE_OPS=new Set([
+  '10:FREEZE','17:FREEZE','18:COMPLETE','19:CONFIRM_FREEZE','19:CONFIRM','20:FREEZE_BASELINE',
+  '22:RUN_NATIVE_TESTS','24:RUN_NATIVE_ATTACKS','25:FREEZE_DELIVERY_CANDIDATE',
+  '27:CALCULATE_RELEASE','28:VERIFY_IDENTITY','28:CAPTURE_DELIVERY_INTENT',
+  '29:CALCULATE_EVIDENCE_CHAINS','30:CALCULATE_TERMINAL',
+  '30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','30:RECORD_DELIVERY_EVIDENCE'
+]);
+const expected=(s,o)=>{const x=legacyExpected(s,o);return NON_AGENT_WRITE_OPS.has(String(s)+':'+String(o))?{...x,w:[]}:x;};
+
 
 const state=core.createBlankState('JOB-SPEC-ROUTE-ORACLE');
 Object.assign(state.job,{JOB_ID:'JOB-SPEC-ROUTE-ORACLE',JOB_TITLE:'Specification-grounded route proof',JOB_OWNER:'Operator',EXACT_USER_OBJECTIVE_VERBATIM:'Prove the complete thirty-stage canonical data route against an independent specification-side oracle.',SUPPLIED_MATERIALS_INVENTORY:'intent-spec.txt',REQUIRED_OUTPUT_FORMAT:'Controlled deliverable',DEADLINE_OR_TEMPORAL_SCOPE:'NONE',DESIRED_SOURCE_COUNT:1,KNOWN_AUTHORITATIVE_SOURCES:'NONE',AVAILABLE_TOOLS:'Authorized tools',PROHIBITED_ACTIONS:'Do not repeat captured user information.',EXPLICIT_USER_REQUIREMENTS:'Use the complete current canonical route and keep the operator experience concise.',CURRENT_INPUT_VERSION:'INPUT-ORACLE-v1',CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1',CURRENT_TEST_SUITE_VERSION:'TEST-ORACLE-v1',CURRENT_INSTRUCTION_VERSION:'INST-ORACLE-v1',CURRENT_ITERATION:'ITER-ORACLE-v1',CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1'});
