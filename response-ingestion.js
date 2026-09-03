@@ -376,11 +376,11 @@ function createReceipt(project,{stage,promptRecord,rawRecord,validationRecord,pr
   project.projectData.outputReceipts.push(receipt);return receipt;
 }
 
-function captureRaw(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[]}={}){
+function captureRaw(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[],authoritativeResponseFile=null}={}){
   const next=clone(project);workflow.ensureShape(next);const stageNumber=Number(stage),prompt=promptRecordFor(next,promptRecord);
   if(!Number.isInteger(stageNumber)||stageNumber<1||stageNumber>schema.STAGE_COUNT)throw new Error('A valid stage is required for raw capture.');if(!prompt)throw new Error('The controlling persisted prompt is required for raw capture.');
   const rawResponseId=workflow.allocateInfrastructureId(next,'RAW-RESPONSE','rawResponses'),outputId=workflow.allocateInfrastructureId(next,`STAGE-${String(stageNumber).padStart(2,'0')}-OUTPUT`,'generatedOutputs'),rawText=String(text??''),rawSha256=hash.rawResponseSha256(rawText),createdAt=now();
-  const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId:prompt.scope?.contextId||contextId||'NOT APPLICABLE',runId:prompt.scope?.runId||'NOT APPLICABLE',iteration:prompt.scope?.iterationId||next.job.CURRENT_ITERATION||'NOT APPLICABLE',promptInstructionId:prompt.instructionId||prompt.promptId,promptBodySha256:prompt.bodySha256||prompt.sha256,promptContractSha256:prompt.contractSha256,promptContextSignature:prompt.contextSignature,promptScope:clone(prompt.scope||{}),createdAt,sha256:rawSha256,completeRawResponse:rawText,files:clone(files),status:'PRESERVED',projectRevisionAtCapture:Number(next.revision||0)};
+  const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId:prompt.scope?.contextId||contextId||'NOT APPLICABLE',runId:prompt.scope?.runId||'NOT APPLICABLE',iteration:prompt.scope?.iterationId||next.job.CURRENT_ITERATION||'NOT APPLICABLE',promptInstructionId:prompt.instructionId||prompt.promptId,promptBodySha256:prompt.bodySha256||prompt.sha256,promptContractSha256:prompt.contractSha256,promptContextSignature:prompt.contextSignature,promptScope:clone(prompt.scope||{}),createdAt,sha256:rawSha256,completeRawResponse:rawText,files:clone(files),authoritativeResponseFile:clone(authoritativeResponseFile),status:'PRESERVED',projectRevisionAtCapture:Number(next.revision||0)};
   next.projectData.rawResponses.push(rawRecord);next.projectData.generatedOutputs.push({outputId,rawResponseId,stage:stageNumber,role:rawRecord.role,iteration:rawRecord.iteration,createdAt,sha256:rawSha256,output:rawText,status:'RAW_RESPONSE_PRESERVED'});workflow.addHistory(next,'RAW_RESPONSE_PRESERVED',{stage:stageNumber,rawResponseId,outputId,sha256:rawSha256,promptInstructionId:rawRecord.promptInstructionId});return {project:next,rawRecord,promptRecord:prompt};
 }
 
@@ -396,6 +396,26 @@ function prepareCaptured(project,{rawResponseId,promptRecord=null,expectedCommit
   next.projectData.responseValidations.push(validationRecord);rawRecord.validationId=validationId;rawRecord.status=validation.valid?'VALIDATED_PENDING_REVIEW':'VALIDATION_FAILED';let proposal=null;if(validation.valid){proposal=planProposal(next,envelope,{rawRecord,promptRecord:prompt,validationRecord,expectedProjectRevision:expectedCommittedRevision===null?Number(next.revision||0):Number(expectedCommittedRevision)});next.projectData.responseProposals.push(proposal);rawRecord.proposalId=proposal.proposalId;}
   const receipt=createReceipt(next,{stage:stageNumber,promptRecord:prompt,rawRecord,validationRecord,proposal});let responseDisposition=null;if(!validation.valid){responseDisposition=disposition(next,'VALIDATION_FAILED_RESPONSE',{stage:stageNumber,rawResponseId:rawRecord.rawResponseId,promptId:prompt.instructionId||prompt.promptId,validationId,receiptId:receipt.receiptId,details:{issueCodes:validation.issues.map(x=>x.code)}});receipt.rejectedResponseId=responseDisposition.dispositionId;receipt.completionState='VALIDATION_FAILED_RESPONSE';rawRecord.dispositionId=responseDisposition.dispositionId;}
   rawRecord.receiptId=receipt.receiptId;validationRecord.receiptId=receipt.receiptId;if(proposal)proposal.receiptId=receipt.receiptId;workflow.addHistory(next,validation.valid?'RESPONSE_VALIDATED':'RESPONSE_VALIDATION_FAILED',{stage:stageNumber,rawResponseId:rawRecord.rawResponseId,validationId,proposalId:proposal?.proposalId||'NONE',issueCodes:validation.issues.map(item=>item.code)});workflow.recalculate(next);if(proposal)proposal.preconditions.referencedRecordHashes=referencedRecordHashes(next,proposal.envelope);return {project:next,rawRecord,validation:validationRecord,proposal,receipt,disposition:responseDisposition};
+}
+
+async function captureResponseFile(project,{stage,file,promptRecord,contextId='UNKNOWN',files=[]}={}){
+  if(!file||typeof file.arrayBuffer!=='function')throw Object.assign(new Error('Select the authoritative response JSON file.'),{code:'RESPONSE_FILE_REQUIRED'});
+  const store=globalThis.closedLoopProjectStore;if(!store?.metaPut||!store?.metaGet)throw Object.assign(new Error('Application staging storage is unavailable.'),{code:'RESPONSE_STAGING_UNAVAILABLE'});
+  const selectedBytes=new Uint8Array(await file.arrayBuffer());
+  const random=new Uint8Array(16);if(!globalThis.crypto?.getRandomValues)throw Object.assign(new Error('Cryptographic randomness is unavailable for response staging.'),{code:'CSPRNG_UNAVAILABLE'});crypto.getRandomValues(random);
+  const stagingId=`RESPONSE-STAGING-${[...random].map(x=>x.toString(16).padStart(2,'0')).join('')}`;
+  const key=`response-staging:${stagingId}`;
+  const blob=new Blob([selectedBytes],{type:file.type||'application/json'});
+  await store.metaPut(key,{stagingId,status:'PENDING_BYTES',jobId:project?.job?.JOB_ID||null,stage:Number(stage),filename:String(file.name||''),mediaType:String(file.type||'application/json'),byteSize:selectedBytes.byteLength,blob,selectedAt:new Date().toISOString()});
+  let staged=await store.metaGet(key);if(!staged?.blob)throw Object.assign(new Error('Selected response bytes were not durably staged.'),{code:'RESPONSE_STAGING_FAILED'});
+  const readback=new Uint8Array(await staged.blob.arrayBuffer());
+  const selectedSha256=await hash.sha256Bytes(selectedBytes),readbackSha256=await hash.sha256Bytes(readback);
+  if(selectedBytes.byteLength!==readback.byteLength||selectedSha256!==readbackSha256)throw Object.assign(new Error('Staged response bytes failed read-back identity verification.'),{code:'RESPONSE_STAGING_REHASH_MISMATCH'});
+  staged={...staged,status:'HASHED_AND_REVERIFIED',sha256:readbackSha256,rehashSha256:readbackSha256,verifiedAt:new Date().toISOString()};await store.metaPut(key,staged);
+  let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(readback);}catch{throw Object.assign(new Error('Authoritative response file is not valid UTF-8.'),{code:'INVALID_UTF8'});}
+  const captured=captureRaw(project,{stage,text,promptRecord,contextId,files,authoritativeResponseFile:{stagingId,status:'HASHED_AND_REVERIFIED',filename:staged.filename,mediaType:staged.mediaType,byteSize:staged.byteSize,sha256:staged.sha256,selectionEvent:'SELECT_RESPONSE_JSON_FILE'}});
+  await store.metaPut(key,{...staged,status:'READY_FOR_PROPOSAL',rawResponseId:captured.rawRecord.rawResponseId});
+  return {...captured,stagingId,authoritativeText:text};
 }
 
 function prepare(project,options={}){const captured=captureRaw(project,options);return prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:captured.promptRecord,expectedCommittedRevision:options.expectedProjectRevision??options.expectedCommittedRevision??null});}
@@ -446,7 +466,7 @@ function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
   workflow.addHistory(next,'HUMAN_INPUT_REQUESTS_ANSWERED',{answerCount:changed.length,inputVersion:version.version,requestIds:changed,generatedPromptIds});workflow.recalculate(next);return {project:next,version,answeredCount:changed.length,generatedPromptIds};
 }
 
-globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/4',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,prepareCaptured,prepare,commit,reject,abandon,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
+globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/4',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,captureResponseFile,prepareCaptured,prepare,commit,reject,abandon,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
 })();
 ;(()=>{
 'use strict';
