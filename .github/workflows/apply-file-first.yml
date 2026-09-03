@@ -22,6 +22,7 @@ jobs:
           cat .repair-file-first.mjs.gz.part00 .repair-file-first.mjs.gz.part01a .repair-file-first.mjs.gz.part01b .repair-file-first.mjs.gz.part01c | base64 --decode | gzip --decompress > /tmp/apply-file-first.mjs
           test "$(sha256sum /tmp/apply-file-first.mjs | cut -d' ' -f1)" = "09b336bf76be6ffb971aff49ed9bd2fc39fa2ba93206001b72864354138886ee"
           node /tmp/apply-file-first.mjs
+          git checkout -- .github/workflows/pages.yml
           rm -f .repair-file-first.mjs.gz.part00 .repair-file-first.mjs.gz.part01 .repair-file-first.mjs.gz.part01a .repair-file-first.mjs.gz.part01b .repair-file-first.mjs.gz.part01c .github/workflows/apply-file-first.yml
           git diff --check
           git config user.name "closed-loop-repair-bot"
