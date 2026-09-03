@@ -92,6 +92,7 @@ context.closedLoopWorkflowEngine.recalculate(recalculated);
 assert.ok(['BLOCKED','AWAITING_HUMAN_INPUT','PROPOSAL_PENDING_REVIEW','RESPONSE_STAGED','AWAITING_EXTERNAL_RESPONSE','READY_FOR_NEXT_OPERATION','WORKFLOW_COMPLETE'].includes(recalculated.job.CURRENT_STATE),'Recalculation must keep CURRENT_STATE inside its closed enum.');
 assert.ok(['INCOMPLETE','BLOCKED','COMPLETE'].includes(recalculated.job.JOB_RECORD_STATUS),'Recalculation must keep JOB_RECORD_STATUS inside its closed enum.');
 assert.equal(typeof recalculated.job.CURRENT_BLOCKERS,'object');
+assert.deepEqual(Object.keys(recalculated.job.CURRENT_BLOCKERS),['blockerIds']);
 assert.ok(Array.isArray(recalculated.job.CURRENT_BLOCKERS.blockerIds));
 
 console.log(JSON.stringify({section15JobContract:'PASS',fields:expectedNames.length}));
