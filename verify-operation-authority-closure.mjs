@@ -16,6 +16,8 @@ export function assertOperationAuthoritySourceClosure(schemaSource=source){
 
 assertOperationAuthoritySourceClosure();
 
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js']){
   vm.runInThisContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),{filename:file});
 }
