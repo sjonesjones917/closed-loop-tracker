@@ -53,14 +53,20 @@ p.job.CURRENT_INPUT_VERSION='INPUT-v001';
 engine.ensureShape(p);engine.recalculate(p);
 const manifest=engine.intakeCoverageManifest(p);
 function capture(disposition){return {schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition,reason:'Fixture accounting.',extractedStatements:disposition==='EXTRACTED_RELEVANT_INFORMATION'?[{statementKey:`S${index}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]:[]}))};}
-for(const disposition of required){const result=engine.evaluateIntakeAccounting(p,{capture:capture(disposition)});assert.equal(result.complete,true,`Required disposition ${disposition} was not accepted: ${result.reasons?.join('; ')}`);}
+for(const disposition of required){
+  const result=engine.evaluateIntakeAccounting(p,{capture:capture(disposition)});
+  const invalid=(result.reasons||[]).some(reason=>/disposition/i.test(String(reason))&&/(invalid|unsupported|not allowed|unknown)/i.test(String(reason)));
+  assert.equal(invalid,false,`Required closed disposition ${disposition} was rejected as a vocabulary value: ${result.reasons?.join('; ')}`);
+}
 for(const disposition of legacy){const result=engine.evaluateIntakeAccounting(p,{capture:capture(disposition)});assert.equal(result.complete,false,`Legacy disposition ${disposition} was accepted.`);}
+assert.equal(engine.evaluateIntakeAccounting(p,{capture:capture('RETAINED_AS_CONTEXT')}).complete,true,'RETAINED_AS_CONTEXT must support complete accounting when all units are accounted for.');
+assert.equal(engine.evaluateIntakeAccounting(p,{capture:capture('INACCESSIBLE_OR_BLOCKED')}).complete,false,'INACCESSIBLE_OR_BLOCKED must not close Stage 01 accounting.');
 const prompt=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;
 for(const disposition of required)assert(prompt.includes(disposition),`Prompt omits required disposition ${disposition}.`);
 const accountingBlock=prompt.split('STAGE 01 ACCOUNTING OUTPUT')[1]?.split('Every unitId')[0]||prompt;
 for(const disposition of legacy)assert(!accountingBlock.includes(disposition),`Prompt still publishes legacy disposition ${disposition}.`);
-const mutation=capture('EXTRACTED_RELEVANT_INFORMATION');
+const mutation=capture('RETAINED_AS_CONTEXT');
 mutation.units[0].disposition='retained as context';
 assert.equal(engine.evaluateIntakeAccounting(p,{capture:mutation}).complete,false,'Mutation restoring a legacy disposition was not detected.');
-console.log(JSON.stringify({stage01DispositionContract:'PASS',acceptedClosedValues:required.length,rejectedLegacyValues:legacy.length,mutationDetected:true}));
+console.log(JSON.stringify({stage01DispositionContract:'PASS',closedValues:required.length,rejectedLegacyValues:legacy.length,blockingDispositionFailsClosed:true,mutationDetected:true}));
 ''')
