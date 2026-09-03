@@ -3,21 +3,15 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 
+await import('./hash.js');
+const hashAuthority=globalThis.closedLoopHash;
+if(!hashAuthority||hashAuthority.canonicalizationVersion!=='closed-loop-canonical-json/1'||typeof hashAuthority.stableStringify!=='function'||typeof hashAuthority.sha256Value!=='function')throw new Error('Shared canonical hash authority is unavailable to deployment verification.');
+const canonical=value=>hashAuthority.stableStringify(value);
+
 const root=process.cwd();
 const first=path.join(root,'.verify-deployment-a');
 const second=path.join(root,'.verify-deployment-b');
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
-const assertUnicodeScalars=(value,label='canonical string')=>{for(let i=0;i<value.length;i++){const unit=value.charCodeAt(i);if(unit>=0xD800&&unit<=0xDBFF){const next=value.charCodeAt(i+1);if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Unpaired UTF-16 high surrogate in ${label}.`);i++;}else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Unpaired UTF-16 low surrogate in ${label}.`);}return value;};
-const compareUnicodeScalarSequence=(a,b)=>{const left=Array.from(assertUnicodeScalars(String(a),'canonical object key'),ch=>ch.codePointAt(0));const right=Array.from(assertUnicodeScalars(String(b),'canonical object key'),ch=>ch.codePointAt(0));const length=Math.min(left.length,right.length);for(let i=0;i<length;i++)if(left[i]!==right[i])return left[i]-right[i];return left.length-right.length;};
-const canonical=value=>{
-  if(value===null)return 'null';
-  if(typeof value==='boolean')return value?'true':'false';
-  if(typeof value==='string')return JSON.stringify(assertUnicodeScalars(value));
-  if(typeof value==='number'){if(!Number.isSafeInteger(value)||Object.is(value,-0))throw new TypeError('Invalid canonical number.');return String(value);}
-  if(Array.isArray(value))return `[${value.map(canonical).join(',')}]`;
-  if(value&&Object.getPrototypeOf(value)===Object.prototype){const keys=Object.keys(value);for(const key of keys)assertUnicodeScalars(key,'canonical object key');keys.sort(compareUnicodeScalarSequence);return `{${keys.map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;}
-  throw new TypeError('Invalid canonical value.');
-};
 const build=out=>execFileSync(process.execPath,['build-static-site.mjs','--out',out,'--source-commit','TEST-COMMIT','--workflow-run','TEST-RUN'],{stdio:'pipe'});
 const runtimeScriptSources=html=>[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
 function verifyRuntimeUrlBindings(html,manifest){
@@ -31,10 +25,16 @@ function verifyRuntimeUrlBindings(html,manifest){
   return true;
 }
 try{
+  const buildSource=fs.readFileSync(path.join(root,'build-static-site.mjs'),'utf8');
+  if(!buildSource.includes("await import('./hash.js')"))throw new Error('Deployment build does not load the shared hash.js authority.');
+  if(!buildSource.includes("hashAuthority.canonicalizationVersion"))throw new Error('Deployment build does not bind canonicalization to the shared hash.js identity.');
+  if(!buildSource.includes('hashAuthority.sha256Value(manifestWithoutDigest)'))throw new Error('Deployment manifest digest is not produced by the shared hash.js authority.');
+  if(/const\s+assertUnicodeScalars\s*=|const\s+compareUnicodeScalarSequence\s*=|const\s+canonical\s*=\s*value\s*=>\s*\{/.test(buildSource))throw new Error('Deployment build contains a parallel canonical JSON implementation instead of using hash.js.');
+
   const bmp='\uE000',astral='\u{10000}';
-  if(canonical({[bmp]:1,[astral]:2})!==`{"${bmp}":1,"${astral}":2}`)throw new Error('Deployment-manifest canonicalizer does not order object keys by unsigned Unicode scalar sequence.');
-  if(canonical({'2':'two','10':'ten',a:'aye'})!=='{"10":"ten","2":"two","a":"aye"}')throw new Error('Deployment-manifest canonicalizer allows JavaScript integer-like key enumeration to override canonical scalar ordering.');
-  let rejectedSurrogate=false;try{canonical({'\uD800':1});}catch{rejectedSurrogate=true;}if(!rejectedSurrogate)throw new Error('Deployment-manifest canonicalizer accepted an unpaired surrogate key.');
+  if(canonical({[bmp]:1,[astral]:2})!==`{"${bmp}":1,"${astral}":2}`)throw new Error('Shared deployment-manifest canonicalizer does not order object keys by unsigned Unicode scalar sequence.');
+  if(canonical({'2':'two','10':'ten',a:'aye'})!=='{"10":"ten","2":"two","a":"aye"}')throw new Error('Shared deployment-manifest canonicalizer allows JavaScript integer-like key enumeration to override canonical scalar ordering.');
+  let rejectedSurrogate=false;try{canonical({'\uD800':1});}catch{rejectedSurrogate=true;}if(!rejectedSurrogate)throw new Error('Shared deployment-manifest canonicalizer accepted an unpaired surrogate key.');
   build(first);build(second);
   const manifestBytesA=fs.readFileSync(path.join(first,'closed-loop-deployment-manifest.json'));
   const manifestBytesB=fs.readFileSync(path.join(second,'closed-loop-deployment-manifest.json'));
@@ -52,7 +52,7 @@ try{
   if(manifest.contractProfileId!=='closed-loop-completion-profile/1')throw new Error('Deployment manifest contract profile is missing or wrong.');
   if(manifest.testWorkerProtocolVersion!=='closed-loop-test-worker-protocol/1')throw new Error('Deployment manifest worker protocol identity is missing or wrong.');
   const withoutDigest={...manifest};delete withoutDigest.manifestDigest;
-  if(manifest.manifestDigest?.hashAlgorithm!=='SHA-256'||manifest.manifestDigest?.digest!==sha256(Buffer.from(canonical(withoutDigest),'utf8')))throw new Error('Deployment manifest digest mismatch.');
+  if(manifest.manifestDigest?.hashAlgorithm!=='SHA-256'||manifest.manifestDigest?.digest!==hashAuthority.sha256Value(withoutDigest))throw new Error('Deployment manifest digest mismatch.');
   if(!Array.isArray(manifest.runtimeResources)||manifest.runtimeResources.length!==13)throw new Error('Deployment resource closure is incomplete.');
   const paths=new Set();
   for(const resource of manifest.runtimeResources){
@@ -88,7 +88,7 @@ try{
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
   if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build and worker-byte identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }
