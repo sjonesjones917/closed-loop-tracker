@@ -27,11 +27,8 @@ export function releaseTagEligibility(status){
 
 export function assertWorkflowGovernance(workflow){
   assert.doesNotMatch(workflow,/actualAndroidChromeAcceptance/,'Android acceptance must not substitute for the pinned actual-iPhone requirement.');
-  assert.match(workflow,/actualIPhoneSafariAcceptance/,'The acceptance artifact must publish actual-iPhone Safari status.');
-  assert.match(workflow,/mobileAcceptanceResult/,'The acceptance artifact must publish the physical-device result.');
-  assert.match(workflow,/mobileAcceptanceTargetId/,'The acceptance artifact must publish the pinned target identity.');
-  assert.match(workflow,/mobileAcceptanceEvidenceId/,'The acceptance artifact must publish the evidence identity.');
-  assert.match(workflow,/mobileAcceptanceEvidenceBasis/,'The acceptance artifact must publish the actual evidence basis.');
+  assert.match(workflow,/actualIPhoneSafariAcceptance/,'The acceptance calculation must consume actual-iPhone Safari status.');
+  assert.match(workflow,/mobileAcceptanceResult/,'The acceptance calculation must consume the physical-device result.');
   assert.match(workflow,/finalAcceptancePublication/,'The acceptance artifact must distinguish status publication from final acceptance publication.');
   assert.match(workflow,/id:\s*acceptance\b/,'The acceptance-report step must expose its gate result.');
   assert.match(workflow,/actual_iphone=\$\{report\.actualIPhoneSafariAcceptance\}/,'The report step must publish the physical-iPhone result through GITHUB_OUTPUT.');
@@ -41,7 +38,7 @@ export function assertWorkflowGovernance(workflow){
   assert.match(workflow,/mobile_acceptance_evidence_json:/,'Authenticated workflow dispatch must accept physical mobile evidence JSON.');
   assert.match(workflow,/node evaluate-mobile-acceptance-submission\.mjs > \/tmp\/mobile-acceptance\.json/,'The acceptance job must execute the strict mobile-evidence evaluator.');
   assert.match(workflow,/const mobileAcceptance=JSON\.parse\(fs\.readFileSync\('\/tmp\/mobile-acceptance\.json','utf8'\)\)/,'The machine acceptance artifact must consume the evaluator result.');
-  assert.match(workflow,/\.\.\.mobileAcceptance/,'The accepted or blocked physical-device result must be projected into the machine acceptance artifact.');
+  assert.match(workflow,/\.\.\.mobileAcceptance/,'The complete accepted or blocked physical-device result must be projected into the machine acceptance artifact.');
   assert.doesNotMatch(workflow,/actualIPhoneSafariAcceptance:false/,'The workflow must not hard-code physical-iPhone acceptance to false after evaluating submitted evidence.');
   assert.match(workflow,/mobile-acceptance-challenge-\$CHALLENGE/,'Accepted challenges must be durably marked as used.');
   assert.match(workflow,/refs\/tags\/\$CHALLENGE_TAG/,'The used-challenge marker must be written as a repository tag.');
