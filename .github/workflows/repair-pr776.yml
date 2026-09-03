@@ -11,24 +11,51 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: fix/spec-driven-file-first-20260902
-      - name: Bind file-first checks into required ingestion verifier
+      - name: Apply exact integration corrections and remove scaffolding
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+          p=Path('build-test-project.mjs')
+          s=p.read_text()
+          s=s.replace("['Parse / validate response','Proposed extracted changes'","['Stage and validate response file','Proposed extracted changes'",1)
+          p.write_text(s)
+
+          p=Path('verify.mjs')
+          s=p.read_text()
+          old="""const prepareSource=appSourceForStatus.match(/async function prepareStageResponse\\(\\)\\{[\\s\\S]*?\\n\\}/)?.[0]||'';
+          if(!prepareSource||prepareSource.includes('savePromptRecord(n)'))throw new Error('Parse / validate still creates a new controlling instruction before validation.');
+          for(const token of ['function responsePromptRecord(n,text)','ingestion.strictParse(text)','Parse / validate does not create a new instruction.'])if(!appSourceForStatus.includes(token))throw new Error(`Returned-instruction validation regression missing ${token}.`);
+          """
+          new="""const prepareSource=appSourceForStatus.match(/async function prepareStageResponseFile\\(file,[\\s\\S]*?\\n\\}/)?.[0]||'';
+          if(!prepareSource||prepareSource.includes('savePromptRecord(n)'))throw new Error('Response-file staging still creates a new controlling instruction before validation.');
+          for(const token of ['function responsePromptRecord(n,text)','ingestion.captureRaw(current','projectStore.stageResponseFile','projectStore.readStagedResponseFile'])if(!appSourceForStatus.includes(token))throw new Error(`Returned-instruction validation regression missing ${token}.`);
+          """
+          if old in s: s=s.replace(old,new,1)
+          elif new not in s: raise SystemExit('Response validation invariant block not found')
+          p.write_text(s)
+
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          old="requiredRunOperation=mode==='INITIAL'?'COMPLETE':'EXECUTE_RUN'"
+          new="requiredRunOperation='EXECUTE_RUN'"
+          if old in s: s=s.replace(old,new,1)
+          elif new not in s: raise SystemExit('Stage 11 run-operation evaluator token not found')
+          p.write_text(s)
+
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
           marker="import vm from 'node:vm';\n"
-          if marker not in s:
-              raise SystemExit('Required verifier import marker is missing')
           prefix="import './verify-file-first-response.mjs';\nimport './verify-file-first-operator.mjs';\n"
-          if "import './verify-file-first-response.mjs';" not in s:
-              s=s.replace(marker,marker+prefix,1)
+          if marker not in s: raise SystemExit('Required ingestion verifier import marker is missing')
+          if "import './verify-file-first-response.mjs';" not in s: s=s.replace(marker,marker+prefix,1)
           p.write_text(s)
+
+          Path('.github/workflows/repair-pr776.yml').unlink()
           PY
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add verify-ingestion.mjs
-          git commit -m 'Make file-first regressions part of ingestion proof'
+          git add -A
+          git commit -m 'Complete file-first response ratchet and remove repair scaffolding'
           git push origin HEAD:fix/spec-driven-file-first-20260902
