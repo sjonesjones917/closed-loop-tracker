@@ -20,6 +20,7 @@ jobs:
         run: |
           node apply-contract-profile-response-repair.mjs
           node fix-contract-profile-proof.mjs
+          node fix-contract-profile-fixtures.mjs
       - name: Prove correction
         run: |
           set -euo pipefail
@@ -28,6 +29,10 @@ jobs:
           node --check verify-response-contract-profile.mjs
           node verify-response-contract-profile.mjs
           node verify-ingestion.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-zero-loss-accounting.mjs
           node verify-prompt-semantics.mjs
           node verify-v3-contract.mjs
       - name: Commit source correction
