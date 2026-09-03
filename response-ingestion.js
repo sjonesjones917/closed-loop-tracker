@@ -314,18 +314,20 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
     const proposition=currentAndProposedPropositions.find(item=>String(item.fields?.REQUIREMENT_ID||item.relationships?.REQUIREMENT_ID||'')===requirementId);
     test.fields.TARGET_PROPOSITION_IDS=proposition?[workflow.recordId(proposition,'propositions')]:[];
     test.TARGET_PROPOSITION_IDS=test.fields.TARGET_PROPOSITION_IDS;
-    test.fields.SEMANTIC_REVIEW_IDS=[rawRecord.rawResponseId];
-    test.SEMANTIC_REVIEW_IDS=test.fields.SEMANTIC_REVIEW_IDS;
-    test.fields.RELEASE_BEARING=Boolean(proposition&&String(test.fields.SEMANTIC_COVERAGE_DISPOSITION||'').toUpperCase()==='EQUIVALENT'&&['REQUIRED_PROOF','SUPPORTING_PROOF','REGRESSION'].includes(String(test.fields.TEST_ROLE||'').toUpperCase()));
-    test.RELEASE_BEARING=test.fields.RELEASE_BEARING;
+    // The authoring response may propose semantic coverage, but it cannot serve as its own independent review.
+    test.fields.SEMANTIC_REVIEW_IDS=[];
+    test.SEMANTIC_REVIEW_IDS=[];
+    test.fields.RELEASE_BEARING=false;
+    test.RELEASE_BEARING=false;
   }
   for(const expression of safe(canonicalRecords.proofExpressions)){
+    // Syntactic normalization is application-owned; semantic sufficiency remains UNKNOWN until a distinct accepted review exists.
     expression.fields.NORMALIZED_EXPRESSION=clone(expression.fields.PROPOSED_EXPRESSION);
     expression.NORMALIZED_EXPRESSION=expression.fields.NORMALIZED_EXPRESSION;
-    expression.fields.SEMANTIC_EQUIVALENCE_DISPOSITION='EQUIVALENT';
-    expression.SEMANTIC_EQUIVALENCE_DISPOSITION='EQUIVALENT';
-    expression.fields.ACCEPTED_SEMANTIC_REVIEW_IDS=[rawRecord.rawResponseId];
-    expression.ACCEPTED_SEMANTIC_REVIEW_IDS=expression.fields.ACCEPTED_SEMANTIC_REVIEW_IDS;
+    expression.fields.SEMANTIC_EQUIVALENCE_DISPOSITION='UNKNOWN';
+    expression.SEMANTIC_EQUIVALENCE_DISPOSITION='UNKNOWN';
+    expression.fields.ACCEPTED_SEMANTIC_REVIEW_IDS=[];
+    expression.ACCEPTED_SEMANTIC_REVIEW_IDS=[];
   }
   for(const observation of safe(canonicalRecords.observationRecords)){
     observation.scope=clone(workflow.currentScope(project));
