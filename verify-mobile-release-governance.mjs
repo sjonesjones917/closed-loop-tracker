@@ -27,11 +27,7 @@ export function releaseTagEligibility(status){
 
 export function assertWorkflowGovernance(workflow){
   assert.doesNotMatch(workflow,/actualAndroidChromeAcceptance/,'Android acceptance must not substitute for the pinned actual-iPhone requirement.');
-  assert.match(workflow,/actualIPhoneSafariAcceptance/,'The acceptance artifact must publish actual-iPhone Safari status.');
-  assert.match(workflow,/mobileAcceptanceResult/,'The acceptance artifact must publish the physical-device result.');
-  assert.match(workflow,/mobileAcceptanceTargetId/,'The acceptance artifact must publish the pinned target identity.');
-  assert.match(workflow,/mobileAcceptanceEvidenceId/,'The acceptance artifact must publish the evidence identity.');
-  assert.match(workflow,/mobileAcceptanceEvidenceBasis/,'The acceptance artifact must publish the actual evidence basis.');
+  assert.match(workflow,/\.\.\.mobilePublication/,'The machine acceptance artifact must consume the verified physical-publication object rather than hard-code physical fields.');
   assert.match(workflow,/finalAcceptancePublication/,'The acceptance artifact must distinguish status publication from final acceptance publication.');
   assert.match(workflow,/id:\s*acceptance\b/,'The acceptance-report step must expose its gate result.');
   assert.match(workflow,/actual_iphone=\$\{report\.actualIPhoneSafariAcceptance\}/,'The report step must publish the physical-iPhone result through GITHUB_OUTPUT.');
