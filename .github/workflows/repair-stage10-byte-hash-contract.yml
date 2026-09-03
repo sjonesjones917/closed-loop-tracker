@@ -1,0 +1,60 @@
+name: One-time Stage 10 byte-hash contract repair
+
+on:
+  push:
+    branches:
+      - repair/stage10-byte-hash-contract-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Prove the regression fails before repair
+        run: |
+          if node verify-stage10-byte-hash-contract.mjs; then
+            echo 'Regression unexpectedly passed before repair.' >&2
+            exit 1
+          fi
+      - name: Apply the minimal complete correction
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const paths=['workbook.js','workflow-schema.js','TEST_PROJECT.json','verify-complete.mjs'];
+          const oldName='HASHES_RECORDED_WHERE_PRACTICAL';
+          const newName='ALL_FROZEN_COMPONENT_BYTES_HASHED';
+          for(const path of paths){
+            const before=fs.readFileSync(path,'utf8');
+            if(!before.includes(oldName))throw new Error(`${path} did not contain ${oldName}; refusing a non-exact repair.`);
+            const after=before.replaceAll(oldName,newName);
+            fs.writeFileSync(path,after);
+          }
+          const v3Path='verify-v3-contract.mjs';
+          let v3=fs.readFileSync(v3Path,'utf8');
+          const importLine="import './verify-stage10-byte-hash-contract.mjs';\n";
+          if(!v3.includes(importLine))v3=importLine+v3;
+          fs.writeFileSync(v3Path,v3);
+          NODE
+      - name: Prove repaired contract and affected suites
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node verify-stage10-byte-hash-contract.mjs
+          node verify-v3-contract.mjs
+          node verify-complete.mjs
+      - name: Remove one-time scaffolding and commit the whole ratchet step
+        run: |
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git rm .github/workflows/repair-stage10-byte-hash-contract.yml
+          git add workbook.js workflow-schema.js TEST_PROJECT.json verify-complete.mjs verify-v3-contract.mjs verify-stage10-byte-hash-contract.mjs
+          git commit -m 'Fix Stage 10 frozen-component byte hashing contract'
+          git push origin HEAD:repair/stage10-byte-hash-contract-20260903
