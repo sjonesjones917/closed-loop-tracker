@@ -402,3 +402,5 @@ console.log(JSON.stringify({nativeHandoffNoExternalReturn:true,capabilityNegatio
   metrics=engine.operationalMetrics(p);assert(metrics.materiallyIndependentAcceptedOperations===10,'Ten completed application-established run contexts did not count as ten independent accepted operations.');
 }
 console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperationalMetrics:true},null,2));
+
+await import('./verify-spec-residual-closure.mjs');
