@@ -71,6 +71,12 @@ const xmlSpec=spec([
 ]);
 const xmlResult=await runtime.execute({spec:xmlSpec,artifacts:{PRODUCT:artifact('ART-XML','<root><item id="1">a</item><item id="2">b</item></root>')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-XML'}}}});
 assert.equal(xmlResult.determination,'SATISFIED');
+const xmlWildcardSpec=spec([
+  {op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_XML'},
+  {op:'SELECT_XML',path:'/root/*'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}
+]);
+const xmlWildcardResult=await runtime.execute({spec:xmlWildcardSpec,artifacts:{PRODUCT:artifact('ART-XML-WILDCARD','<root><item>a</item><other>b</other></root>')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-XML-WILDCARD'}}}});
+assert.equal(xmlWildcardResult.determination,'SATISFIED','closed-loop-xml-selector/1 must support the element wildcard *');
 assert.equal(runtime.validateSpec(spec([{op:'PARSE_XML'},{op:'SELECT_XML',path:'//item'},{op:'ASSERT_EQ',value:1}])).valid,false);
 
 const byteBindings={LEFT:{kind:'ARTIFACT',artifactId:'ART-L'},RIGHT:{kind:'ARTIFACT',artifactId:'ART-R'}};
@@ -128,6 +134,6 @@ console.log(JSON.stringify({
   operations:runtime.OPS.length,
   inputLimit:runtime.LIMITS.maxTotalInputBytes,
   workerTimeoutMs:runtime.LIMITS.workerTimeoutMs,
-  json:true,csv:true,xml:true,byteCompare:true,integerExact:true,approximateTolerance:true,
+  json:true,csv:true,xml:true,xmlWildcard:true,byteCompare:true,integerExact:true,approximateTolerance:true,
   unknownOperationRejected:true,unknownPropertyRejected:true,arbitraryCodeRejected:true,timeoutNoPartialResult:true
 }));
