@@ -113,7 +113,10 @@ const section49CoverageMetrics=Object.freeze({
   ],['workflow-schema.js','workflow-engine.js','verify-semantic-invariant.mjs']),
   dueStageObligationCoverage:metric('DUE_STAGE_OBLIGATION_COVERAGE',[
     ['due-now-derivation',/DUE_NOW|dueNow/i.test(engine)],
-    ['premature-due-negative',/(nondue|not due|before.*target|target.*exists)/i.test(completeTests)]
+    ['premature-due-negative',/(nondue|not due|before.*target|target.*exists)/i.test(completeTests)],
+    ['stage22-final-phase-selection',/FINAL_PRODUCT_DETERMINISTIC/.test(engine)&&/testDueState\(project,test,22\)/.test(engine)],
+    ['stage23-final-phase-selection',/FINAL_PRODUCT_MEANING/.test(engine)&&/testDueState\(project,test,23\)/.test(engine)],
+    ['stage24-final-phase-selection',/FINAL_PRODUCT_ADVERSARIAL/.test(engine)&&/testDueState\(project,test,24\)/.test(engine)]
   ],['workflow-engine.js','verify-complete.mjs']),
   activationProofCoverage:metric('ACTIVATION_PROOF_COVERAGE',[
     ['activation-proof-contract',/activation/i.test(engine+schema)],
