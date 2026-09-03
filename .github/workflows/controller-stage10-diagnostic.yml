@@ -32,6 +32,15 @@ jobs:
           ' .github/workflows/controller-stage10-repair.yml > /tmp/stage10-repair.sh
           test -s /tmp/stage10-repair.sh
           bash /tmp/stage10-repair.sh
+          node <<'NODE'
+          const fs=require('fs');
+          const path='verify-spec-grounded-route-oracle.mjs';
+          let s=fs.readFileSync(path,'utf8');
+          const old="for(const [c,list] of producers){for(const producer of list)for(const consumer of consumers.get(c)||[])assert(producer.stage<consumer.stage||(producer.stage===consumer.stage&&producer.operation===consumer.operation)||[17,19].includes(producer.stage),`${c}: later-stage producer ${producer.stage}/${producer.operation} is routed into earlier ${consumer.stage}/${consumer.operation}.`);}";
+          const neu="for(const [c,list] of producers){for(const producer of list)for(const consumer of consumers.get(c)||[]){const sameStage=producer.stage===consumer.stage;const order=schema.STAGE_OPERATIONS[producer.stage]||[];const producerIndex=order.indexOf(producer.operation),consumerIndex=order.indexOf(consumer.operation);const forwardSameStage=sameStage&&producerIndex>=0&&consumerIndex>=0&&producerIndex<=consumerIndex;assert(producer.stage<consumer.stage||forwardSameStage,`${c}: producer ${producer.stage}/${producer.operation} is routed backward into ${consumer.stage}/${consumer.operation}.`);}}";
+          const n=s.split(old).length-1;if(n!==1)throw new Error(`route oracle anchor count ${n}`);
+          fs.writeFileSync(path,s.replace(old,neu));
+          NODE
       - name: Syntax proof
         run: node --check prompt-engine.js
       - name: Build proof
