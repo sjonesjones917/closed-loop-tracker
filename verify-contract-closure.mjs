@@ -65,4 +65,5 @@ const source=fs.readFileSync('workflow-schema.js','utf8');
 const result=verify(source);
 assert.throws(()=>verify(source.replace("30:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion']","30:['baselineId','productId']")),/deepStrictEqual|Expected values to be strictly deep-equal/,'Mutation removing terminal scope dimensions must fail.');
 assert.throws(()=>verify(source.replace("addRequiredFamily('humanDecisions'","addRequiredFamily('humanDecisionBROKEN'")),/humanDecisions must be a canonical family/,'Mutation removing humanDecisions must fail.');
+assert.throws(()=>verify(source.replace("const derivationRegistry=Object.freeze({identity:DERIVATION_REGISTRY_VERSION,entries:Object.freeze(derivationEntries)});","const derivationRegistry=Object.freeze({identity:DERIVATION_REGISTRY_VERSION,entries:Object.freeze({})});")),/Missing derivation registry entry/,'Mutation deleting derivation-registry entries must fail.');
 console.log(JSON.stringify(result));
