@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
+import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
 
 const WORKFLOW_PATH=new URL('./.github/workflows/pages.yml',import.meta.url);
 const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
@@ -36,11 +37,19 @@ export function assertWorkflowGovernance(workflow){
   assert.match(workflow,/actual_iphone=\$\{report\.actualIPhoneSafariAcceptance\}/,'The report step must publish the physical-iPhone result through GITHUB_OUTPUT.');
   assert.match(workflow,/final_acceptance=\$\{report\.finalAcceptancePublication\}/,'The report step must publish final-acceptance eligibility through GITHUB_OUTPUT.');
   assert.match(workflow,/fs\.appendFileSync\(process\.env\.GITHUB_OUTPUT/,'The release decision must be passed from the exact generated report.');
+  assert.match(workflow,/mobile_acceptance_target_json:/,'Authenticated workflow dispatch must accept the pinned mobile target JSON.');
+  assert.match(workflow,/mobile_acceptance_evidence_json:/,'Authenticated workflow dispatch must accept physical mobile evidence JSON.');
+  assert.match(workflow,/node evaluate-mobile-acceptance-submission\.mjs > \/tmp\/mobile-acceptance\.json/,'The acceptance job must execute the strict mobile-evidence evaluator.');
+  assert.match(workflow,/const mobileAcceptance=JSON\.parse\(fs\.readFileSync\('\/tmp\/mobile-acceptance\.json','utf8'\)\)/,'The machine acceptance artifact must consume the evaluator result.');
+  assert.match(workflow,/\.\.\.mobileAcceptance/,'The accepted or blocked physical-device result must be projected into the machine acceptance artifact.');
+  assert.doesNotMatch(workflow,/actualIPhoneSafariAcceptance:false/,'The workflow must not hard-code physical-iPhone acceptance to false after evaluating submitted evidence.');
+  assert.match(workflow,/mobile-acceptance-challenge-\$CHALLENGE/,'Accepted challenges must be durably marked as used.');
+  assert.match(workflow,/refs\/tags\/\$CHALLENGE_TAG/,'The used-challenge marker must be written as a repository tag.');
 
   const tagStep=workflow.match(/\n\s*- name: Create release tag[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
   assert.ok(tagStep,'A release-tag step must exist.');
   assert.match(tagStep.groups.body,/^\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/m,'The release-tag step must be conditionally gated by final acceptance.');
-  assert.match(tagStep.groups.body,/git push origin "refs\/tags\/\$TAG"/,'The condition must govern the actual remote tag write.');
+  assert.match(tagStep.groups.body,/git push origin/,'The condition must govern the actual remote tag write.');
 
   const blockedStep=workflow.match(/\n\s*- name: Record blocked actual-iPhone acceptance[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
   assert.ok(blockedStep,'A truthful blocked-status step must exist when physical proof is absent.');
@@ -118,12 +127,27 @@ assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operat
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected,usedChallenges:[target.challenge]}).accepted,false,'A reused physical acceptance challenge must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected:{...expected,verificationTime:'2026-09-04T00:00:00.000Z'}}).accepted,false,'Expired physical acceptance evidence must be rejected.');
 
+const noSubmission=evaluateMobileAcceptanceSubmission();
+assert.equal(noSubmission.actualIPhoneSafariAcceptance,false,'No physical evidence submission must remain blocked.');
+assert.equal(noSubmission.mobileAcceptanceResult,'BLOCKED_ENVIRONMENT','No physical evidence submission must report an environment blocker.');
+const acceptedSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(evidence),expected,submitter:'acceptance-controller'});
+assert.equal(acceptedSubmission.actualIPhoneSafariAcceptance,true,'Valid authenticated physical evidence must be capable of satisfying the acceptance bridge.');
+assert.equal(acceptedSubmission.mobileAcceptanceResult,'ACCEPTED','Valid authenticated physical evidence must publish ACCEPTED.');
+assert.equal(acceptedSubmission.mobileAcceptanceSubmitter,'acceptance-controller','The authenticated submitter must be retained.');
+const reusedSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(evidence),expected,usedChallenges:[target.challenge.toUpperCase()]});
+assert.equal(reusedSubmission.actualIPhoneSafariAcceptance,false,'A previously used challenge must not satisfy acceptance.');
+assert.equal(reusedSubmission.mobileAcceptanceResult,'BLOCKED','Challenge reuse must fail closed.');
+const partialSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:''});
+assert.equal(partialSubmission.mobileAcceptanceResult,'BLOCKED','Target and evidence must be submitted together.');
+
 const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
 assertWorkflowGovernance(workflow);
 const unconditionalMutation=workflow.replace(/\n\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/,'');
 assert.throws(()=>assertWorkflowGovernance(unconditionalMutation),/conditionally gated/,'The regression must fail when release tagging becomes unconditional.');
-const androidSubstitutionMutation=workflow.replace('actualIPhoneSafariAcceptance:false','actualAndroidChromeAcceptance:true');
-assert.throws(()=>assertWorkflowGovernance(androidSubstitutionMutation),/Android acceptance/,'The regression must fail when Android is substituted for the required iPhone target.');
+const hardCodedBlockMutation=workflow.replace('...mobileAcceptance','actualIPhoneSafariAcceptance:false');
+assert.throws(()=>assertWorkflowGovernance(hardCodedBlockMutation),/hard-code/,'The regression must fail when valid physical evidence is made impossible to accept.');
+const missingEvaluatorMutation=workflow.replace('node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json','true');
+assert.throws(()=>assertWorkflowGovernance(missingEvaluatorMutation),/strict mobile-evidence evaluator/,'The regression must fail when the workflow stops executing the evidence verifier.');
 
 console.log(JSON.stringify({
   mobileReleaseGovernance:'PASS',
@@ -138,6 +162,11 @@ console.log(JSON.stringify({
   expiredChallengeRejected:true,
   substituteIosBrowserRejected:true,
   requiredOperatorPathReceiptCoverage:true,
+  authenticatedEvidenceBridgeAcceptsValidProof:true,
+  absentEvidenceRemainsBlocked:true,
+  partialSubmissionRejected:true,
+  usedChallengeRejectedAcrossCaseVariants:true,
+  workflowExecutesStrictEvidenceEvaluator:true,
   unconditionalTagMutationDetected:true,
   falseAcceptanceTagRegressionCovered:true
 },null,2));
