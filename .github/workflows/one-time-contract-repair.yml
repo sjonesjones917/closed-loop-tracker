@@ -1,0 +1,29 @@
+name: One-time contract repair
+on:
+  push:
+    branches:
+      - repair/spec-conformance-20260902
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[one-time-repair-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/spec-conformance-20260902
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - run: node repair-contracts.mjs
+      - run: node --check workbook.js && node --check workflow-schema.js && node verify-canonical-id-contract.mjs && node verify-section15-job-contract.mjs
+      - name: Commit repaired owners
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workbook.js workflow-schema.js .github/workflows/pages.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Repair Section 15 job contract [one-time-repair-applied]"
+          git push origin HEAD:repair/spec-conformance-20260902
