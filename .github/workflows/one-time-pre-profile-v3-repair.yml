@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Close profile-less v3 activation path
+      - name: Close profile-less v3 activation and gate paths
         shell: bash
         run: |
           set -euo pipefail
@@ -36,13 +36,25 @@ jobs:
           if old not in w: raise SystemExit('workbook current-v3 shortcut anchor missing')
           workbook.write_text(w.replace(old,new,1))
 
+          engine=Path('workflow-engine.js')
+          e=engine.read_text()
+          anchor="function recalculate(project){\n  ensureShape(project);"
+          replacement="function recalculate(project){\n  ensureShape(project);\n  if(String(project?.job?.CONTRACT_PROFILE_ID||'')!==String(core.CONTRACT_PROFILE_ID||schema.CONTRACT_PROFILE_ID||'closed-loop-completion-profile/1')){const error=new Error('Project lacks the exact current contract profile and is non-gating legacy data.');error.code='PRE_PROFILE_V3_NON_GATING';throw error;}"
+          if anchor not in e: raise SystemExit('workflow-engine recalculate anchor missing')
+          engine.write_text(e.replace(anchor,replacement,1))
+
           test=Path('verify-v3-migration.mjs')
           t=test.read_text()
+          t=t.replace("for(const file of ['workbook.js','hash.js','workflow-schema.js'])", "for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])",1)
+          old="const currentReprocessed=context.closedLoopCore.migrateState(currentBroken);assert.equal(String(currentReprocessed.stages[1]?.agentData?.INPUT_SET_CONTENTS||''),'','current /3 corruption must not be silently reconstructed by legacy migration logic');"
+          new="assert.throws(()=>context.closedLoopCore.migrateState(currentBroken),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','profile-less /3 legacy output must remain non-gating instead of being silently normalized as current');assert.throws(()=>context.closedLoopWorkflowEngine.recalculate(currentBroken),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','runtime gate evaluation must refuse profile-less /3 even if migration is bypassed');"
+          if old not in t: raise SystemExit('legacy currentBroken assertion anchor missing')
+          t=t.replace(old,new,1)
           anchor="assert.equal(second.projectData.nonOperationalImportedPayloads.length,migrated.projectData.nonOperationalImportedPayloads.length,'current migration must be idempotent');"
-          regression="assert.equal(second.projectData.nonOperationalImportedPayloads.length,migrated.projectData.nonOperationalImportedPayloads.length,'current migration must be idempotent');\nconst profileless=structuredClone(second);delete profileless.job.CONTRACT_PROFILE_ID;assert.throws(()=>schema.migrateProjectToCurrent(profileless),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','profile-less /3 schema migration must fail closed instead of becoming current by schema-name equality');assert.throws(()=>context.closedLoopCore.migrateState(profileless),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','profile-less /3 core migration must remain legacy/non-gating rather than fabricate current-profile conformance');"
+          regression="assert.equal(second.projectData.nonOperationalImportedPayloads.length,migrated.projectData.nonOperationalImportedPayloads.length,'current migration must be idempotent');\nconst profileless=structuredClone(second);delete profileless.job.CONTRACT_PROFILE_ID;assert.throws(()=>schema.migrateProjectToCurrent(profileless),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','profile-less /3 schema migration must fail closed instead of becoming current by schema-name equality');assert.throws(()=>context.closedLoopCore.migrateState(profileless),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','profile-less /3 core migration must remain legacy/non-gating rather than fabricate current-profile conformance');assert.throws(()=>context.closedLoopWorkflowEngine.recalculate(profileless),error=>error?.code==='PRE_PROFILE_V3_NON_GATING','profile-less /3 cannot satisfy runtime gates merely because its schema name is current');"
           if anchor not in t: raise SystemExit('v3 migration idempotency anchor missing')
           t=t.replace(anchor,regression,1)
-          t=t.replace("currentV3NoSilentHeal:true","currentV3NoSilentHeal:true,preProfileV3FailsClosed:true")
+          t=t.replace("currentV3NoSilentHeal:true","currentV3NoSilentHeal:true,preProfileV3FailsClosed:true,runtimeProfileGate:true")
           test.write_text(t)
           PY
           node verify-v3-migration.mjs
@@ -55,6 +67,6 @@ jobs:
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workbook.js workflow-schema.js verify-v3-migration.mjs .github/workflows/one-time-pre-profile-v3-repair.yml
+          git add workbook.js workflow-schema.js workflow-engine.js verify-v3-migration.mjs .github/workflows/one-time-pre-profile-v3-repair.yml
           git commit -m "Fail closed on pre-profile v3 projects"
           git push origin HEAD:repair/pre-profile-v3-fail-closed-20260903
