@@ -1,9 +1,4 @@
 import fs from 'node:fs';
-let app=fs.readFileSync('app-core.js','utf8');
-let residual=0;
-app=app.replace(/(CURRENT_(?:ITERATION|SOURCE_SET_VERSION|RESEARCH_VERSION|REQUIREMENTS_VERSION|TEST_SUITE_VERSION|INSTRUCTION_VERSION|CANDIDATE_ID|BASELINE_ID|PRODUCT_ID|PRODUCT_VERSION|DELIVERY_CANDIDATE_SET_ID|REVIEW_VERSION|RECONCILED_REVIEW_VERSION|RELEASE_ID|HASH_REVIEW_ID|EVIDENCE_CHAIN_VERSION|DELIVERY_ID):[^\n]*?)\|\|(?:'NONE'|'NOT APPLICABLE'|'')/g,(m,prefix)=>{residual++;return `${prefix}||null`;});
-if(!residual)throw new Error('Expected at least one residual canonical-pointer sentinel to repair.');
-fs.writeFileSync('app-core.js',app);
 
 let prompt=fs.readFileSync('prompt-engine.js','utf8');
 const oldScope="function scopeFor(stage,state,overrides={}){const job=state?.job||{},own=(key,fallback)=>Object.prototype.hasOwnProperty.call(overrides,key)?overrides[key]:fallback,iterationId=own('iterationId',job.CURRENT_ITERATION||null),candidate=safe(state?.projectData?.candidateFreezes).filter(x=>x?.active!==false&&!x?.invalidatedBy).filter(x=>!iterationId||String(recordValue(x,'ITERATION_ID')||x?.scope?.iterationId||'')===String(iterationId)).at(-1);return {projectRevision:Number(state?.revision||0),inputVersion:job.CURRENT_INPUT_VERSION||null,sourceSetVersion:job.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:job.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:job.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:job.CURRENT_INSTRUCTION_VERSION||null,iterationId,candidateId:own('candidateId',candidate?recordId(candidate,'candidateFreezes'):null),runId:own('runId',null),contextId:own('contextId',null),baselineId:own('baselineId',!placeholder(job.CURRENT_BASELINE_ID)?job.CURRENT_BASELINE_ID:null),productId:own('productId',!placeholder(job.CURRENT_PRODUCT_ID)?job.CURRENT_PRODUCT_ID:null)};}";
@@ -22,3 +17,12 @@ const newTarget="const PROMPT_TARGET_SCOPE_KEYS=Object.freeze(['inputVersion','s
 if(!ingestion.includes(oldTarget))throw new Error('Old prompt target scope key set not found exactly.');
 ingestion=ingestion.replace(oldTarget,newTarget);
 fs.writeFileSync('response-ingestion.js',ingestion);
+
+let repair=fs.readFileSync('.repair-runtime-spec.mjs','utf8');
+const looseA="if(/CURRENT_(?:SOURCE_SET_VERSION|REQUIREMENTS_VERSION|TEST_SUITE_VERSION|INSTRUCTION_VERSION):[^\\n]*\\|\\|'NOT APPLICABLE'/.test(appText))out.push('sentinel-current-pointer');";
+const tightA="if(/CURRENT_(?:SOURCE_SET_VERSION|REQUIREMENTS_VERSION|TEST_SUITE_VERSION|INSTRUCTION_VERSION):[^,;\\n]*\\|\\|'NOT APPLICABLE'/.test(appText))out.push('sentinel-current-pointer');";
+const looseB="if(/CURRENT_(?:BASELINE_ID|PRODUCT_ID):[^\\n]*\\|\\|'NONE'/.test(appText))out.push('sentinel-current-id');";
+const tightB="if(/CURRENT_(?:BASELINE_ID|PRODUCT_ID):[^,;\\n]*\\|\\|'NONE'/.test(appText))out.push('sentinel-current-id');";
+if(!repair.includes(looseA)||!repair.includes(looseB))throw new Error('Loose regression oracle patterns not found exactly.');
+repair=repair.replace(looseA,tightA).replace(looseB,tightB);
+fs.writeFileSync('.repair-runtime-spec.mjs',repair);
