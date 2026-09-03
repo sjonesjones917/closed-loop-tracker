@@ -13,7 +13,7 @@ s=s.replace(opening,"return `STAGE ${String(stage).padStart(2,'0')} — ${defini
 start=s.index("  const bodyText=`${UNTRUSTED_DATA_RULE}")
 end_marker="untrustedDataBoundaryVersion:UNTRUSTED_DATA_SCHEMA};"
 end=s.index(end_marker,start)+len(end_marker)
-new="""  const descriptor=responseContractDescriptor(stage,operation);
+new=r"""  const descriptor=responseContractDescriptor(stage,operation);
   const contractSha256=hash.sha256Value(descriptor);
   const responseInstructions=`STRICT RESPONSE CONTRACT\n${JSON.stringify(descriptor,null,2)}\n\nFINAL RESPONSE TRANSPORT\nReturn one UTF-8 application/json file named response.json plus any required returned files. Echo the exact promptIdentity, packageId, operationReservationId, challengeNonce, contractProfileId, and scope supplied by manifest.json. Do not return Markdown-wrapped JSON and do not substitute pasted text for response.json.`;
   let prompt=`${UNTRUSTED_DATA_RULE}\n\n${refreshDataEnvelopes(aliasedBody)}\n\n${responseInstructions}\n`;
@@ -33,7 +33,7 @@ t=Path('verify-prompt-semantics.mjs')
 q=t.read_text()
 start=q.index("const promptIdentityRecord=prompts.buildPromptRecord(1,promptIdentityProject,{});")
 end=q.index("assert(promptIdentityRecord.promptInjectionBoundaryApplied===true",start)
-replacement="""const promptIdentityRecord=prompts.buildPromptRecord(1,promptIdentityProject,{});
+replacement=r"""const promptIdentityRecord=prompts.buildPromptRecord(1,promptIdentityProject,{});
 const promptBytes=new TextEncoder().encode(promptIdentityRecord.prompt);
 assert(promptIdentityRecord.promptCanonicalPath==='instruction.txt','Canonical authoritative prompt path is not instruction.txt.');
 assert(promptIdentityRecord.promptMediaType==='text/plain;charset=utf-8','Authoritative prompt media type is wrong.');
