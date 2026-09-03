@@ -46,7 +46,9 @@ const validSpec={
   ],
   result:{stepRef:'S007',output:'assertion'}
 };
-assert.deepEqual(runtime.validateSpec(validSpec),{valid:true,issues:[]});
+const validCheck=runtime.validateSpec(validSpec);
+assert.equal(validCheck.valid,true,Array.from(validCheck.issues).join(' | '));
+assert.deepEqual(Array.from(validCheck.issues),[]);
 const execution=await runtime.execute({
   spec:validSpec,
   artifacts:{PRODUCT:{artifactId:'ART-1',bytes:new TextEncoder().encode('{"items":[1,2]}')}},
