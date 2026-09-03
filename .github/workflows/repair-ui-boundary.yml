@@ -1,0 +1,49 @@
+name: One-time UI instruction-boundary repair
+on:
+  push:
+    branches:
+      - repair/full-spec-conformance-fcfc1c6
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/full-spec-conformance-fcfc1c6
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Keep external-agent behavior inside prompt-engine.js
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old='<strong>The agent should now return one final JSON response file. Select that file below.</strong>'
+          new='<strong>One final JSON response file is now required. Select that file below.</strong>'
+          if s.count(old) != 1:
+              raise SystemExit(f'Expected exactly one leaked UI instruction; found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          node verify-data-route-closure.mjs
+          node verify-infrastructure-route-closure.mjs
+          node verify-file-first-response.mjs
+          node verify-file-first-operator.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+      - name: Remove repair scaffolding and commit whole ratchet step
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-ui-boundary.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add app-core.js .github/workflows/repair-ui-boundary.yml
+          git diff --cached --check
+          git commit -m "Keep external-agent behavior inside prompt authority"
+          git push origin HEAD:repair/full-spec-conformance-fcfc1c6
