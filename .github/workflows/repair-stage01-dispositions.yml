@@ -1,0 +1,90 @@
+name: One-time Stage 01 disposition contract repair
+
+on:
+  push:
+    branches: [codex/response-envelope-closure-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/response-envelope-closure-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Repair closed Stage 01 accounting dispositions
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+          const path=require('path');
+          const replacements=new Map([
+            ["'incorporated into the job definition'", "'EXTRACTED_RELEVANT_INFORMATION'"],
+            ['"incorporated into the job definition"', '"EXTRACTED_RELEVANT_INFORMATION"'],
+            ["'retained as context'", "'RETAINED_AS_CONTEXT'"],
+            ['"retained as context"', '"RETAINED_AS_CONTEXT"'],
+            ["'unresolved human-only'", "'UNRESOLVED_HUMAN_AUTHORITY'"],
+            ['"unresolved human-only"', '"UNRESOLVED_HUMAN_AUTHORITY"'],
+            ["'later-resolvable'", "'LATER_RESOLVABLE'"],
+            ['"later-resolvable"', '"LATER_RESOLVABLE"'],
+            ["'inapplicable with reason'", "'NO_PROJECT_RELEVANT_INFORMATION'"],
+            ['"inapplicable with reason"', '"NO_PROJECT_RELEVANT_INFORMATION"']
+          ]);
+          const files=fs.readdirSync('.').filter(name=>/\.(?:js|mjs)$/.test(name));
+          let changes=0;
+          for(const file of files){
+            let text=fs.readFileSync(file,'utf8'),next=text;
+            for(const [from,to] of replacements)next=next.split(from).join(to);
+            if(next!==text){fs.writeFileSync(file,next);changes++;console.log('updated',file);}
+          }
+          if(!changes)throw new Error('No Stage 01 disposition literals were repaired; current source shape must be inspected.');
+          NODE
+          cat > verify-stage01-disposition-contract.mjs <<'NODE'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          import assert from 'node:assert/strict';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const engine=globalThis.closedLoopWorkflowEngine,core=globalThis.closedLoopCore,prompt=globalThis.closedLoopPromptEngine;
+          const exact=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'];
+          assert.deepEqual([...engine.INTAKE_ACCOUNTING_DISPOSITIONS],exact,'Stage 01 accounting dispositions must equal the controlling closed set in order.');
+          const p=core.createBlankState('JOB-STAGE01-DISPOSITION');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve every raw unit and account for it under the closed disposition contract.';engine.ensureShape(p);const manifest=engine.intakeCoverageManifest(p);
+          const good={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:i===0?'EXTRACTED_RELEVANT_INFORMATION':'RETAINED_AS_CONTEXT',reason:'Current closed disposition.',extractedStatements:[{statementKey:`S${i}`,text:u.rawValueText||'context',statementClass:'CONTEXT'}]}))};
+          assert.equal(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(good)}).complete,true,'Current closed dispositions must be accepted.');
+          const bad=structuredClone(good);bad.units[0].disposition='incorporated into the job definition';assert.equal(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(bad)}).complete,false,'Legacy disposition must fail closed.');
+          const pr=prompt.buildPromptRecord(1,p).prompt;for(const value of exact)assert(pr.includes(value),`Stage 01 prompt must publish ${value}.`);
+          const runtime=fs.readFileSync('workflow-engine.js','utf8');for(const old of ['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'])assert(!runtime.includes(`'${old}'`),`Legacy Stage 01 disposition remains in runtime: ${old}`);
+          console.log(JSON.stringify({stage01DispositionContract:'PASS',dispositions:exact}));
+          NODE
+          node verify-stage01-disposition-contract.mjs
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml')
+          s=p.read_text()
+          needle='          node verify-zero-loss-accounting.mjs\n'
+          addition=needle+'          node verify-stage01-disposition-contract.mjs\n'
+          if 'node verify-stage01-disposition-contract.mjs' not in s:
+              if needle not in s: raise SystemExit('Stage 01 verification insertion point not found')
+              s=s.replace(needle,addition,1)
+              p.write_text(s)
+          PY
+          rm .github/workflows/repair-stage01-dispositions.yml
+      - name: Commit integrated repair and permanent regression
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Conform Stage 01 accounting disposition contract'
+          git push origin HEAD:codex/response-envelope-closure-20260903
