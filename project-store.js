@@ -54,17 +54,34 @@ function resetDatabaseConnection(db=null){
   databaseHandle=null;
   databasePromise=null;
 }
-function openDatabase(){
-  if(!globalThis.indexedDB)return Promise.reject(Object.assign(new Error('IndexedDB is required by the supported browser contract.'),{code:'INDEXEDDB_REQUIRED'}));
-  if(databasePromise)return databasePromise;
-  const opening=new Promise((resolve,reject)=>{
+function indexedDbOpenAttempt(){
+  return new Promise((resolve,reject)=>{
     const req=indexedDB.open(DB_NAME,DB_VERSION);
     req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(PROJECTS))db.createObjectStore(PROJECTS,{keyPath:'jobId'});if(!db.objectStoreNames.contains(ARTIFACTS))db.createObjectStore(ARTIFACTS,{keyPath:'artifactId'});if(!db.objectStoreNames.contains(META))db.createObjectStore(META,{keyPath:'key'});};
     req.onsuccess=()=>{const db=req.result;databaseHandle=db;db.onclose=()=>resetDatabaseConnection(db);db.onversionchange=()=>{resetDatabaseConnection(db);try{db.close();}catch{}};resolve(db);};
-    req.onerror=()=>{resetDatabaseConnection();reject(req.error||new Error('IndexedDB open failed.'));};
-    req.onblocked=()=>{resetDatabaseConnection();reject(Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'}));};
+    req.onerror=()=>reject(req.error||new Error('IndexedDB open failed.'));
+    req.onblocked=()=>reject(Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'}));
   });
+}
+async function openDatabaseWithRetry(){
+  let lastError=null;
+  for(let attempt=0;attempt<3;attempt++){
+    try{return await indexedDbOpenAttempt();}
+    catch(error){
+      lastError=error;
+      const transient=error?.name==='UnknownError'||error?.name==='AbortError';
+      if(!transient||attempt===2)throw error;
+      await new Promise(resolve=>setTimeout(resolve,50*(attempt+1)));
+    }
+  }
+  throw lastError||storageError('IndexedDB connection could not be opened.','INDEXEDDB_CONNECTION_UNAVAILABLE');
+}
+function openDatabase(){
+  if(!globalThis.indexedDB)return Promise.reject(Object.assign(new Error('IndexedDB is required by the supported browser contract.'),{code:'INDEXEDDB_REQUIRED'}));
+  if(databasePromise)return databasePromise;
+  const opening=openDatabaseWithRetry();
   databasePromise=opening;
+  opening.catch(()=>{if(databasePromise===opening)resetDatabaseConnection();});
   return opening;
 }
 async function openTransaction(stores,mode='readonly'){
