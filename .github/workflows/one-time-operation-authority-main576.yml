@@ -1,0 +1,99 @@
+name: One-time operation authority main576
+on:
+  push:
+    branches: [codex/spec-operation-authority-main576]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/spec-operation-authority-main576
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install permanent failing regression and prove current failure
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > verify-operation-authority-closure.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          import {webcrypto} from 'node:crypto';
+          const c={console,TextEncoder,TextDecoder,crypto:webcrypto,structuredClone};c.globalThis=c;vm.createContext(c);
+          for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(f,'utf8'),c,{filename:f});
+          const s=c.closedLoopWorkflowSchema,ing=c.closedLoopResponseIngestion;
+          assert.equal(Object.keys(s.STAGE_OPERATION_REGISTRY).length,66,'closed operation registry must have exactly 66 entries');
+          for(const key of ['10:FREEZE','18:COMPLETE','19:CONFIRM_FREEZE','19:CONFIRM','20:FREEZE_BASELINE','22:RUN_NATIVE_TESTS','24:RUN_NATIVE_ATTACKS','25:FREEZE_DELIVERY_CANDIDATE','27:CALCULATE_RELEASE','28:VERIFY_IDENTITY','29:CALCULATE_EVIDENCE_CHAINS','30:CALCULATE_TERMINAL']){
+            const op=s.STAGE_OPERATION_REGISTRY[key];assert.equal(op.executorClass,'APPLICATION',key);assert.equal(op.acceptsExternalResponse,false,key);assert.deepEqual(Array.from(op.responseTypes),[],key);assert.deepEqual(Array.from(op.agentWritableCollections),[],key);
+          }
+          for(const key of ['7:EXECUTE_FAILURE_TEST','15:EXECUTE_REGRESSION','19:REGRESSION_VERIFY']){
+            const op=s.STAGE_OPERATION_REGISTRY[key];assert.equal(op.executorClass,'ROUTED',key);assert.deepEqual(Array.from(op.executorClasses),['APPLICATION','EXTERNAL_AGENT'],key);assert.equal(op.reservationRequirement,'WHEN_EXTERNAL',key);assert.equal(op.nativeExternalResponseAllowed,false,key);
+          }
+          assert.equal(s.STAGE_OPERATION_REGISTRY['28:CAPTURE_DELIVERY_INTENT'].executorClass,'HUMAN_DECISION');
+          for(const key of ['30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','30:RECORD_DELIVERY_EVIDENCE'])assert.equal(s.STAGE_OPERATION_REGISTRY[key].executorClass,'OPERATOR_ACTION');
+          const p={job:{JOB_ID:'JOB-AUTH',CONTRACT_PROFILE_ID:s.CONTRACT_PROFILE_ID,CURRENT_INPUT_VERSION:'INPUT-1'},revision:1,projectData:{generatedPrompts:[],responseDispositions:[],validations:[],rawResponses:[],pendingProposals:[],acceptedChanges:[],outputReceipts:[],extractionManifests:[],history:[]},stages:{}};
+          c.closedLoopWorkflowEngine.ensureShape(p);
+          const op=s.STAGE_OPERATION_REGISTRY['18:COMPLETE'];
+          const promptRecord={operation:'COMPLETE',stage:18,promptEngineVersion:c.closedLoopPromptEngine.version,instructionId:'INSTRUCTION-AUTH',bodySha256:'a'.repeat(64),contractSha256:'b'.repeat(64),contextSignature:'c'.repeat(64),scope:{projectRevision:1,iterationId:'ITER-1',candidateId:'CAND-1',requirementsVersion:'REQ-1',testSuiteVersion:'TEST-1',instructionVersion:'INST-1'}};
+          p.projectData.generatedPrompts.push(promptRecord);
+          const envelope={schema:s.RESPONSE_SCHEMA,contractProfileId:s.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:18,operation:'COMPLETE',promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+          const validation=ing.validateEnvelope(p,envelope,{stage:18,promptRecord});assert.equal(validation.valid,false,'application command must reject external response envelope');assert(validation.issues.some(x=>x.code==='EXTERNAL_RESPONSE_NOT_ALLOWED'),'missing explicit external-response authority rejection');
+          console.log(JSON.stringify({operationAuthorityClosure:'PASS',operations:66}));
+          EOF
+          if node verify-operation-authority-closure.mjs >/tmp/before.log 2>&1; then cat /tmp/before.log; echo 'Current source unexpectedly conforms; refusing unnecessary repair' >&2; exit 1; else cat /tmp/before.log; fi
+      - name: Repair existing registry in place
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-schema.js');s=p.read_text()
+          old="const EXTERNAL_OPERATION_KEYS=new Set();\nfor(const [stageText,ops] of Object.entries(s0.STAGE_OPERATIONS)){const stage=Number(stageText);for(const operation of ops){const key=`${stage}:${operation}`;const app=(stage===10&&operation==='FREEZE')||(stage===18&&operation==='COMPLETE')||(stage===19&&['CONFIRM_FREEZE','CONFIRM'].includes(operation))||(stage===20&&operation==='FREEZE_BASELINE')||(stage===22&&operation==='RUN_NATIVE_TESTS')||(stage===24&&operation==='RUN_NATIVE_ATTACKS')||(stage===25&&operation==='FREEZE_DELIVERY_CANDIDATE')||(stage===27&&operation==='CALCULATE_RELEASE')||(stage===28&&operation==='VERIFY_IDENTITY')||(stage===29&&operation==='CALCULATE_EVIDENCE_CHAINS')||(stage===30&&operation==='CALCULATE_TERMINAL');const humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT';const operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation);if(!app&&!humanDecision&&!operator)EXTERNAL_OPERATION_KEYS.add(key);}}\nconst STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(s0.STAGE_OPERATIONS).flatMap(([stageText,operations])=>{const stage=Number(stageText);return operations.map(operation=>{const key=`${stage}:${operation}`,external=EXTERNAL_OPERATION_KEYS.has(key),humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT',operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation);const base=amendedOperationContract(stage,operation)||{};const acceptanceMode=external?((stage===1&&['COMPLETE','RECONCILE_INTAKE'].includes(operation))?'HUMAN_ACCEPTANCE_REQUIRED':'HUMAN_ACCEPTANCE_REQUIRED'):'DIRECT_COMMAND';return [key,Object.freeze({stage,operation,executorClass:external?'EXTERNAL_AGENT':humanDecision?'HUMAN_DECISION':operator?'OPERATOR_ACTION':'APPLICATION',acceptsExternalResponse:external,responseTypes:Object.freeze(external?[...s0.RESPONSE_TYPES]:[]),acceptanceMode,reservationRequired:external,scope:STAGE_OPERATION_SCOPE_MATRIX[key],readCollections:Object.freeze([...(base.readCollections||[])]),writableCollections:Object.freeze(external?[...(base.agentWritableCollections||[])]:[]),agentWritableCollections:Object.freeze(external?[...(base.agentWritableCollections||[])]:[]),allowedStageData:Object.freeze([...(base.allowedStageData||[])]),scopeRequirements:Object.freeze([...(STAGE_OPERATION_SCOPE_MATRIX[key]?.requiredDimensions||[])]),applicationCollections:Object.freeze([...(base.applicationCollections||[])]),completionPredicate:`STAGE_${String(stage).padStart(2,'0')}_${operation}_COMPLETION`,retryRule:external?'EXACT_RETRY_OR_REPLACEMENT_PROMPT':'IDEMPOTENT_COMMAND'})];});})));"
+          new="const APPLICATION_OPERATION_KEYS=new Set(['10:FREEZE','18:COMPLETE','19:CONFIRM_FREEZE','19:CONFIRM','20:FREEZE_BASELINE','22:RUN_NATIVE_TESTS','24:RUN_NATIVE_ATTACKS','25:FREEZE_DELIVERY_CANDIDATE','27:CALCULATE_RELEASE','28:VERIFY_IDENTITY','29:CALCULATE_EVIDENCE_CHAINS','30:CALCULATE_TERMINAL']);\nconst ROUTED_OPERATION_KEYS=new Set(['7:EXECUTE_FAILURE_TEST','15:EXECUTE_REGRESSION','19:REGRESSION_VERIFY']);\nconst HUMAN_DECISION_OPERATION_KEYS=new Set(['28:CAPTURE_DELIVERY_INTENT']);\nconst OPERATOR_ACTION_KEYS=new Set(['30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','30:RECORD_DELIVERY_EVIDENCE']);\nconst STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(s0.STAGE_OPERATIONS).flatMap(([stageText,operations])=>{const stage=Number(stageText);return operations.map(operation=>{const key=`${stage}:${operation}`,application=APPLICATION_OPERATION_KEYS.has(key),routed=ROUTED_OPERATION_KEYS.has(key),humanDecision=HUMAN_DECISION_OPERATION_KEYS.has(key),operator=OPERATOR_ACTION_KEYS.has(key),external=!application&&!routed&&!humanDecision&&!operator;const base=amendedOperationContract(stage,operation)||{},canonicalWritable=Object.freeze([...(base.agentWritableCollections||base.applicationCollections||[])]),agentWritable=Object.freeze(external||routed?[...(base.agentWritableCollections||[])]:[]),applicationWritable=Object.freeze(application||routed?[...canonicalWritable]:[]),executorClass=routed?'ROUTED':external?'EXTERNAL_AGENT':humanDecision?'HUMAN_DECISION':operator?'OPERATOR_ACTION':'APPLICATION',acceptsExternalResponse=external||routed;return [key,Object.freeze({stage,operation,executorClass,executorClasses:Object.freeze(routed?['APPLICATION','EXTERNAL_AGENT']:[executorClass]),acceptsExternalResponse,responseTypes:Object.freeze(acceptsExternalResponse?[...s0.RESPONSE_TYPES]:[]),acceptanceMode:acceptsExternalResponse?'HUMAN_ACCEPTANCE_REQUIRED':'DIRECT_COMMAND',reservationRequired:external,reservationRequirement:routed?'WHEN_EXTERNAL':external?'REQUIRED':'NONE',nativeExternalResponseAllowed:false,scope:STAGE_OPERATION_SCOPE_MATRIX[key],readCollections:Object.freeze([...(base.readCollections||[])]),canonicalWritableCollections:canonicalWritable,writableCollections:agentWritable,agentWritableCollections:agentWritable,applicationWritableCollections:applicationWritable,allowedStageData:Object.freeze(external||routed?[...(base.allowedStageData||[])]:[]),scopeRequirements:Object.freeze([...(STAGE_OPERATION_SCOPE_MATRIX[key]?.requiredDimensions||[])]),applicationCollections:Object.freeze([...(base.applicationCollections||[])]),completionPredicate:`STAGE_${String(stage).padStart(2,'0')}_${operation}_COMPLETION`,retryRule:acceptsExternalResponse?'EXACT_RETRY_OR_REPLACEMENT_PROMPT':'IDEMPOTENT_COMMAND'})];});})));"
+          if s.count(old)!=1: raise SystemExit(f'operation registry anchor count={s.count(old)}; refusing blind rewrite')
+          p.write_text(s.replace(old,new,1))
+          p=Path('response-ingestion.js');s=p.read_text()
+          old="const expectedOperation=promptRecord?.operation||contract?.operations?.[0];const operationContract=schema.operationContract(stageNumber,expectedOperation);if(String(envelope.operation||'')!==String(expectedOperation||''))issues.push(issue('WRONG_OPERATION','/operation',`Expected operation ${expectedOperation||'UNKNOWN'}.`));"
+          new=old+"if(operationContract&&operationContract.acceptsExternalResponse===false)issues.push(issue('EXTERNAL_RESPONSE_NOT_ALLOWED','/operation',`Operation ${expectedOperation||'UNKNOWN'} is not an external-response operation and cannot accept an external response envelope.`));"
+          if s.count(old)!=1: raise SystemExit(f'ingestion operation anchor count={s.count(old)}; refusing blind rewrite')
+          p.write_text(s.replace(old,new,1))
+          p=Path('verify-ingestion.mjs');s=p.read_text()
+          old="function validEnvelope(p,stage,promptRecord){\n  const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;"
+          new=old+"\n  if(operationContract?.acceptsExternalResponse===false)return null;"
+          if s.count(old)!=1: raise SystemExit(f'ingestion fixture anchor count={s.count(old)}; refusing blind rewrite')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Prove whole ratchet step
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in *.js *.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          node verify-operation-authority-closure.mjs
+          node verify-contract-registry-closure.mjs
+          node verify-v3-contract.mjs
+          node verify-ingestion.mjs
+          node verify-data-route-closure.mjs
+          node verify-infrastructure-route-closure.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node verify-full-cycle.mjs
+          node verify.mjs
+      - name: Commit permanent code and regression only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/one-time-operation-authority-main576.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only | grep '^\.github/workflows/' || true)"
+          git commit -m 'Close routed and application operation authority'
+          git push origin HEAD:codex/spec-operation-authority-main576
