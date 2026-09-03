@@ -23,7 +23,6 @@ jobs:
       - run: node repair-contracts.mjs
       - run: node --check workbook.js && node --check workflow-schema.js && node verify-canonical-id-contract.mjs && node verify-section15-job-contract.mjs
       - name: Commit repaired owners
-        if: ${{ github.event_name == 'push' }}
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
