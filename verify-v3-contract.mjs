@@ -137,3 +137,4 @@ console.log(JSON.stringify({
   runtimeOperations:requiredRuntimeOps.length,
   centralizedLimits:requiredLimits.length
 }));
+await import('./verify-stage-contract-closure.mjs');
