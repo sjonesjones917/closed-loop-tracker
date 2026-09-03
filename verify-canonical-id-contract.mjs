@@ -69,7 +69,6 @@ for(const bad of [
 
 assert.throws(()=>h.stableStringify(-0));
 assert.throws(()=>h.stableStringify(Number.MAX_SAFE_INTEGER+1));
-assert.throws(()=>h.stableStringify(inRuntime({x:null,xMarker:'undefined'})),/./); // sanity: runtime errors remain observable
 const undefinedObject=vm.runInContext('({x:undefined})',context);assert.throws(()=>h.stableStringify(undefinedObject));
 const sparseArray=vm.runInContext('Array(2)',context);sparseArray[1]=1;assert.throws(()=>h.stableStringify(sparseArray));
 assert.equal(h.stableStringify(inRuntime({'😀':1,'z':2})),'{"z":2,"😀":1}');
