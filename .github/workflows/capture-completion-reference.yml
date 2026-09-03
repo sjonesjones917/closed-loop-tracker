@@ -1,0 +1,26 @@
+name: capture-completion-reference
+
+on:
+  push:
+    branches:
+      - codex/completion-reference-capture
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/completion-reference-capture
+      - name: Capture exact reference source
+        run: tar --exclude=.git -czf /tmp/completion-reference.tar.gz .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: completion-reference-${{ github.sha }}
+          path: /tmp/completion-reference.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
