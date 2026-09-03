@@ -1,0 +1,104 @@
+name: One-time profile migration repair
+
+on:
+  push:
+    branches: [fix/profile-migration-contract-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          ref: fix/profile-migration-contract-20260903
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Patch earliest responsible migration layers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def remove_function(text, name, next_marker):
+              start = text.index(f'function {name}')
+              end = text.index(next_marker, start)
+              return text[:start] + text[end:]
+
+          p = Path('workbook.js')
+          text = p.read_text()
+          text = remove_function(text, 'restoreLegacyStage01AcceptedCapture', '\nfunction migrateState')
+          text = text.replace('  restoreLegacyStage01AcceptedCapture(migrated,original);\n', '')
+          current_anchor = "  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\n    const migrated=JSON.parse(JSON.stringify(p));"
+          current_replacement = "  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\n    const migrated=JSON.parse(JSON.stringify(p));\n    if(migrated?.job?.CONTRACT_PROFILE_ID!==CONTRACT_PROFILE_ID){\n      migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};\n      migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];\n      if(!migrated.projectData.migrationArchives.some(x=>x?.kind==='PRE_PROFILE_V3_SOURCE'&&x?.revision===Number(p.revision||0)))migrated.projectData.migrationArchives.push({kind:'PRE_PROFILE_V3_SOURCE',schema:PROJECT_SCHEMA,revision:Number(p.revision||0),payload:JSON.parse(JSON.stringify(p))});\n      migrated.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema:PROJECT_SCHEMA,targetProfile:CONTRACT_PROFILE_ID,semanticProofMigrated:false};\n      migrated.job=migrated.job&&typeof migrated.job==='object'?migrated.job:{};\n      delete migrated.job.CONTRACT_PROFILE_ID;\n      migrated.job.CURRENT_STATE='BLOCKED';\n      migrated.job.JOB_RECORD_STATUS='INCOMPLETE';\n      migrated.job.CURRENT_STAGE='STAGE 01';\n      migrated.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(migrated.job.CURRENT_BLOCKERS)?migrated.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];\n      const stage01=migrated?.stages?.['1']||migrated?.stages?.[1];\n      if(stage01){stage01.status='NOT STARTED';stage01.decision='';stage01.decisionEvidence='';stage01.agentData={};stage01.acceptedData={};stage01.gate={satisfied:false,reasons:['Legacy/pre-profile semantic evidence cannot satisfy the current contract profile.']};}\n      migrated.activeStage=1;\n      return migrated;\n    }"
+          if current_anchor not in text: raise SystemExit('workbook current-profile anchor not found')
+          text = text.replace(current_anchor, current_replacement, 1)
+          legacy_anchor = "  migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:new Date().toISOString(),payload:original});\n"
+          legacy_replacement = legacy_anchor + "  migrated.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema:'human-project/30',targetProfile:CONTRACT_PROFILE_ID,semanticProofMigrated:false};\n  if(migrated.job){delete migrated.job.CONTRACT_PROFILE_ID;migrated.job.CURRENT_STATE='BLOCKED';migrated.job.JOB_RECORD_STATUS='INCOMPLETE';migrated.job.CURRENT_STAGE='STAGE 01';migrated.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(migrated.job.CURRENT_BLOCKERS)?migrated.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];}\n  const legacyStage01=migrated?.stages?.['1']||migrated?.stages?.[1];if(legacyStage01){legacyStage01.status='NOT STARTED';legacyStage01.decision='';legacyStage01.decisionEvidence='';legacyStage01.agentData={};legacyStage01.acceptedData={};legacyStage01.gate={satisfied:false,reasons:['Legacy semantic evidence is historical only until current-profile Stage 01 is performed.']};}\n  migrated.activeStage=1;\n"
+          if legacy_anchor not in text: raise SystemExit('workbook legacy migration anchor not found')
+          text = text.replace(legacy_anchor, legacy_replacement, 1)
+          p.write_text(text)
+
+          p = Path('workflow-schema.js')
+          text = p.read_text()
+          text = remove_function(text, 'restoreMigratedStage01AcceptedCapture', '\nfunction normalizeTestRecords')
+          text = text.replace('  restoreMigratedStage01AcceptedCapture(migrated,original);\n', '')
+          insert_anchor = "function ensureV3Defaults(project){\n"
+          helper = "function markLegacyNonGating(project,original){\n  project=ensureV3Defaults(project);project.job=project.job&&typeof project.job==='object'?project.job:{};\n  project.projectData.nonOperationalImportedPayloads=Array.isArray(project.projectData.nonOperationalImportedPayloads)?project.projectData.nonOperationalImportedPayloads:[];\n  const sourceSchema=String(original?.schema||project.schema||'');const sourceRevision=Number(original?.revision||0);\n  if(!project.projectData.nonOperationalImportedPayloads.some(item=>item&&item.sourceSchema===sourceSchema&&item.sourceRevision===sourceRevision&&item.operational===false))project.projectData.nonOperationalImportedPayloads.push({sourceSchema,sourceRevision,operational:false,purpose:'ORIGINAL_IMPORTED_PAYLOAD_AUDIT_EVIDENCE',payload:clone(original)});\n  project.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema,targetProfile:base.CONTRACT_PROFILE_ID,semanticProofMigrated:false};\n  delete project.job.CONTRACT_PROFILE_ID;project.job.CURRENT_STATE='BLOCKED';project.job.JOB_RECORD_STATUS='INCOMPLETE';project.job.CURRENT_STAGE='STAGE 01';project.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(project.job.CURRENT_BLOCKERS)?project.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];\n  const stage01=project?.stages?.['1']||project?.stages?.[1];if(stage01){stage01.status='NOT STARTED';stage01.decision='';stage01.decisionEvidence='';stage01.agentData={};stage01.acceptedData={};stage01.gate={satisfied:false,reasons:['Legacy/pre-profile semantic evidence cannot satisfy current-profile Stage 01.']};}\n  project.activeStage=1;project.projectHash='';return project;\n}\nfunction validateContractProfile(project){const reasons=[];if(project?.schema!==CURRENT_PROJECT_SCHEMA)reasons.push('Wrong project schema.');if(project?.job?.CONTRACT_PROFILE_ID!==base.CONTRACT_PROFILE_ID)reasons.push('Missing or wrong contract profile.');if(project?.projectData?.contractProfileMigration?.status==='LEGACY_NON_GATING')reasons.push('Project is preserved as legacy/non-gating.');return {valid:reasons.length===0,reasons};}\n"
+          if insert_anchor not in text: raise SystemExit('workflow-schema ensureV3Defaults anchor not found')
+          text = text.replace(insert_anchor, helper + insert_anchor, 1)
+          current_line = "  if(input.schema===CURRENT_PROJECT_SCHEMA)return ensureV3Defaults(clone(input));\n  const original=clone(input);"
+          current_replacement = "  const original=clone(input);\n  if(input.schema===CURRENT_PROJECT_SCHEMA){const current=ensureV3Defaults(clone(input));return current?.job?.CONTRACT_PROFILE_ID===base.CONTRACT_PROFILE_ID?current:markLegacyNonGating(current,original);}"
+          if current_line not in text: raise SystemExit('workflow-schema current /3 migration anchor not found')
+          text = text.replace(current_line, current_replacement, 1)
+          return_anchor = "  const already=migrated.projectData.nonOperationalImportedPayloads.some(item=>item&&item.sourceSchema===original.schema&&item.sourceRevision===Number(original.revision||0)&&item.operational===false);\n  if(!already)migrated.projectData.nonOperationalImportedPayloads.push({sourceSchema:String(original.schema||''),sourceRevision:Number(original.revision||0),operational:false,purpose:'ORIGINAL_IMPORTED_PAYLOAD_AUDIT_EVIDENCE',payload:original});\n  migrated.projectHash='';\n  return migrated;"
+          if return_anchor not in text: raise SystemExit('workflow-schema legacy return anchor not found')
+          text = text.replace(return_anchor, "  return markLegacyNonGating(migrated,original);", 1)
+          export_anchor = "const replacement={...base,PROJECT_SCHEMA:CURRENT_PROJECT_SCHEMA,PROJECT_SCHEMA_ID:CURRENT_PROJECT_SCHEMA,RESPONSE_SCHEMA:CURRENT_RESPONSE_SCHEMA,RESPONSE_SCHEMA_ID:CURRENT_RESPONSE_SCHEMA,PREVIOUS_PROJECT_SCHEMA,PREVIOUS_RESPONSE_SCHEMA,TEST_IR_SCHEMA,PACKAGE_SCHEMA,migrateProjectToCurrent};"
+          export_new = "const replacement={...base,PROJECT_SCHEMA:CURRENT_PROJECT_SCHEMA,PROJECT_SCHEMA_ID:CURRENT_PROJECT_SCHEMA,RESPONSE_SCHEMA:CURRENT_RESPONSE_SCHEMA,RESPONSE_SCHEMA_ID:CURRENT_RESPONSE_SCHEMA,PREVIOUS_PROJECT_SCHEMA,PREVIOUS_RESPONSE_SCHEMA,TEST_IR_SCHEMA,PACKAGE_SCHEMA,migrateProjectToCurrent,validateContractProfile};"
+          if export_anchor not in text: raise SystemExit('workflow-schema export anchor not found')
+          text = text.replace(export_anchor, export_new, 1)
+          p.write_text(text)
+
+          p = Path('verify-v3-migration.mjs')
+          text = p.read_text()
+          old = "assert.match(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),/Preserved migration objective/,'/2 -> /3 migration must reconstruct completed Stage 01 accepted input-set capture from preserved human authority');"
+          new = "assert.equal(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),'','/2 -> /3 migration must not synthesize agent-owned Stage 01 semantic intake');\nassert.equal(migrated.job.CONTRACT_PROFILE_ID,undefined,'legacy /2 data must not acquire the current contract profile by default');\nassert.equal(migrated.job.CURRENT_STATE,'BLOCKED');\nassert.equal(migrated.job.JOB_RECORD_STATUS,'INCOMPLETE');\nassert.equal(migrated.projectData.contractProfileMigration.status,'LEGACY_NON_GATING');\nassert.equal(schema.validateContractProfile(migrated).valid,false,'legacy migration must remain non-gating');"
+          if old not in text: raise SystemExit('verify-v3 /2 assertion not found')
+          text = text.replace(old,new,1)
+          old = "assert.match(String(legacyMigrated.stages[1]?.agentData?.INPUT_SET_CONTENTS||''),/Legacy intent supplied exactly once/,'human-project/30 migration must retain once-supplied Stage 01 input in canonical accepted Stage 01 data');"
+          new = "assert.equal(String(legacyMigrated.stages[1]?.agentData?.INPUT_SET_CONTENTS||''),'','human-project/30 migration must preserve legacy intent as history, not fabricate current agent semantic intake');\nassert.equal(legacyMigrated.job.CONTRACT_PROFILE_ID,undefined);\nassert.equal(legacyMigrated.job.CURRENT_STATE,'BLOCKED');\nassert.equal(legacyMigrated.projectData.contractProfileMigration.status,'LEGACY_NON_GATING');"
+          if old not in text: raise SystemExit('verify-v3 legacy assertion not found')
+          text = text.replace(old,new,1)
+          old = "const second=schema.migrateProjectToCurrent(migrated);\nassert.equal(second.schema,'closed-loop-project/3');"
+          new = "const second=schema.migrateProjectToCurrent(migrated);\nassert.equal(second.schema,'closed-loop-project/3');\nassert.equal(schema.validateContractProfile(second).valid,false);"
+          if old not in text: raise SystemExit('verify-v3 idempotency anchor not found')
+          text = text.replace(old,new,1)
+          text = text.replace('legacyStage01CapturePreserved:true','legacySemanticEvidenceHistoricalOnly:true')
+          marker = "console.log(JSON.stringify({verifyV3Migration:'PASS'"
+          addition = "const profilelessCurrent=context.closedLoopCore.createBlankState('JOB-PREPROFILE');delete profilelessCurrent.job.CONTRACT_PROFILE_ID;profilelessCurrent.stages[1].status='COMPLETE';profilelessCurrent.stages[1].agentData={INPUT_SET_CONTENTS:'must not remain current proof'};\nconst guarded=schema.migrateProjectToCurrent(profilelessCurrent);assert.equal(schema.validateContractProfile(guarded).valid,false);assert.equal(guarded.job.CURRENT_STATE,'BLOCKED');assert.equal(guarded.stages[1].status,'NOT STARTED');assert.equal(String(guarded.stages[1].agentData.INPUT_SET_CONTENTS||''),'');assert.ok(guarded.projectData.nonOperationalImportedPayloads.some(x=>x.sourceSchema==='closed-loop-project/3'&&x.operational===false),'pre-profile /3 source must be preserved as non-operational history');\n\n"
+          if marker not in text: raise SystemExit('verify-v3 final marker not found')
+          text = text.replace(marker,addition+marker,1)
+          p.write_text(text)
+          PY
+      - name: Prove migration repair
+        run: |
+          set -euo pipefail
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check verify-v3-migration.mjs
+          node verify-v3-migration.mjs
+          node verify.mjs
+      - name: Commit repaired owners and remove scaffold
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/repair-migration-profile.yml
+          git add workbook.js workflow-schema.js verify-v3-migration.mjs
+          git config user.name 'closed-loop repair'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Fail closed on pre-profile project migration'
+          git push origin HEAD:fix/profile-migration-contract-20260903
