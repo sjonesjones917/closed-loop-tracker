@@ -4,8 +4,10 @@ import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};context.globalThis=context;vm.createContext(context);
+vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),context,{filename:'hash.js'});
 vm.runInContext(fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8'),context,{filename:'test-runtime.js'});
 const runtime=context.closedLoopTestRuntime;const encoder=new TextEncoder();
+assert.equal(context.closedLoopHash?.canonicalizationVersion,'closed-loop-canonical-json/1','Test IR verifier must load the shared canonical hash authority before the runtime.');
 const spec=steps=>({version:'closed-loop-test-spec/1',steps});
 const binding=(id,bytes)=>({artifactId:id,filename:`${id}.bin`,bytes});
 const metadata=names=>({bindings:Object.fromEntries(names.map(name=>[name,{kind:'ARTIFACT',artifactId:`ART-${name}`}]))});

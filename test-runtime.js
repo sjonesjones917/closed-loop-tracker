@@ -122,7 +122,7 @@ const hasOwn=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
 const field=(test,key)=>test?.fields?.[key]??test?.[key];
 const scalarCompare=(a,b)=>{const aa=Array.from(String(a),ch=>ch.codePointAt(0)),bb=Array.from(String(b),ch=>ch.codePointAt(0)),n=Math.min(aa.length,bb.length);for(let i=0;i<n;i++)if(aa[i]!==bb[i])return aa[i]-bb[i];return aa.length-bb.length;};
-const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>scalarCompare(a,b))):v);
+const canonical=value=>{const authority=root.closedLoopHash;if(!authority||authority.canonicalizationVersion!=='closed-loop-canonical-json/1'||typeof authority.stableStringify!=='function')fail('CANONICAL_HASH_AUTHORITY_UNAVAILABLE','Test IR requires the shared closed-loop-canonical-json/1 authority.');return authority.stableStringify(value);};
 const byteLength=value=>encoder.encode(String(value)).byteLength;
 
 class RuntimeError extends Error{
