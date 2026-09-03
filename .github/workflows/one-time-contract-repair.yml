@@ -3,11 +3,14 @@ on:
   push:
     branches:
       - repair/spec-conformance-20260902
+  pull_request:
+    branches:
+      - main
 permissions:
   contents: write
 jobs:
   repair:
-    if: ${{ !contains(github.event.head_commit.message, '[one-time-repair-applied]') }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.ref == 'repair/spec-conformance-20260902' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -20,6 +23,7 @@ jobs:
       - run: node repair-contracts.mjs
       - run: node --check workbook.js && node --check workflow-schema.js && node verify-canonical-id-contract.mjs && node verify-section15-job-contract.mjs
       - name: Commit repaired owners
+        if: ${{ github.event_name == 'push' }}
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
