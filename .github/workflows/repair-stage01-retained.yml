@@ -29,8 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           for file in *.js *.mjs; do node --check "$file"; done
-          node verify-stage01-contract.mjs
-          node verify-v3-authority-and-intake.mjs
+          node verify-stage01-disposition-contract.mjs
           node verify-stage01-intake-closure.mjs
           node verify-one-time-intent-intake.mjs
           node verify-zero-loss-accounting.mjs
