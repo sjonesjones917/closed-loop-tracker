@@ -17,7 +17,7 @@ jobs:
         run: |
           set -euo pipefail
           node repair-test-runtime-dag-bootstrap.mjs
-          node --check test-runtime.js
+          node --check test-runtime.js || { nl -ba test-runtime.js | sed -n '500,610p'; exit 1; }
           node --check test-worker.js
           node verify-test-runtime.mjs
           node verify-test-runtime-v3.mjs
