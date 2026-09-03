@@ -25,8 +25,12 @@ self.addEventListener('message',async event=>{
     const validation=runtime.validateSpec(message.spec,message.bindings);
     if(!validation.valid)throw Object.assign(new Error(validation.issues.join(' ')),{code:'INVALID_TEST_IR'});
     const result=await runtime.execute({spec:message.spec,artifacts:message.artifacts||{},canonicalBindings:message.canonicalBindings||{},metadata:message.metadata||{}});
+    const runtimeReportedBuildIdentity=String(result?.runtimeBuildIdentity||'');
+    if(runtimeReportedBuildIdentity&&runtimeReportedBuildIdentity!=='UNMANIFESTED_LOCAL_RUNTIME'&&runtimeReportedBuildIdentity!==WORKER_BUILD_ID){
+      throw Object.assign(new Error('Test IR runtime build identity does not match the worker build identity.'),{code:'RUNTIME_BUILD_IDENTITY_MISMATCH'});
+    }
     const testWorkerSha256=typeof message.metadata?.testWorkerSha256==='string'&&/^[0-9a-f]{64}$/.test(message.metadata.testWorkerSha256)?message.metadata.testWorkerSha256:null;
-    self.postMessage({requestId:message.requestId,ok:true,result:{...result,runtimeBuildIdentity:result.runtimeBuildIdentity||WORKER_BUILD_ID,workerProtocolVersion:WORKER_PROTOCOL_VERSION,testWorkerSha256}});
+    self.postMessage({requestId:message.requestId,ok:true,result:{...result,runtimeBuildIdentity:WORKER_BUILD_ID,workerProtocolVersion:WORKER_PROTOCOL_VERSION,testWorkerSha256}});
   }catch(error){
     self.postMessage({requestId:message.requestId,ok:false,error:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error),disposition:error?.disposition||'EXECUTION_FAILED',runtimeBuildIdentity:WORKER_BUILD_ID,workerProtocolVersion:WORKER_PROTOCOL_VERSION}});
   }
