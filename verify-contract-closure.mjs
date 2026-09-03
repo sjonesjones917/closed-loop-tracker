@@ -25,7 +25,30 @@ function verify(source){
   assert.equal(schema.STAGE_OPERATION_REGISTRY['28:CAPTURE_DELIVERY_INTENT'].executorClass,'HUMAN_DECISION');
   assert.equal(schema.STAGE_OPERATION_REGISTRY['1:COMPLETE'].executorClass,'EXTERNAL_AGENT');
   assert.equal(schema.STAGE_OPERATION_REGISTRY['1:COMPLETE'].reservationRequired,true);
-  return {contractClosure:'PASS',stageOperations:66,durableFamilies:Object.keys(schema.DURABLE_OBJECT_REGISTRY).length,fieldContracts:Object.keys(schema.FIELD_REGISTRY).length};
+
+  // The scope matrix is an operation contract, not a stage-wide label. Creation operations
+  // reserve their target; later operations consume the already-created identity.
+  assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX['25:FREEZE_DELIVERY_CANDIDATE'].dimensions.deliveryCandidateSetId,'TARGET_RESERVED','Stage 25 freeze must reserve the delivery-candidate set.');
+  assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX['25:COMPLETE'].dimensions.deliveryCandidateSetId,'INPUT_CURRENT','Stage 25 inspection must consume the frozen delivery-candidate set.');
+  assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX['19:CONFIRM_FREEZE'].dimensions.confirmationIterationId,'TARGET_RESERVED','Stage 19 freeze must reserve the confirmation iteration.');
+  for(const operation of ['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM'])assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX[`19:${operation}`].dimensions.confirmationIterationId,'INPUT_CURRENT',`Stage 19 ${operation} must consume the current confirmation iteration.`);
+  assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX['27:CALCULATE_RELEASE'].dimensions.reconciledReviewVersion,'INPUT_CURRENT','Stage 27 must consume the Stage 26 reconciled review.');
+  assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX['28:VERIFY_IDENTITY'].dimensions.releaseId,'INPUT_CURRENT','Stage 28 must consume the Stage 27 release.');
+  assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX['29:CALCULATE_EVIDENCE_CHAINS'].dimensions.hashReviewId,'INPUT_CURRENT','Stage 29 must consume the Stage 28 hash review.');
+  assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX['30:CALCULATE_TERMINAL'].dimensions.evidenceChainVersion,'INPUT_CURRENT','Stage 30 must consume the Stage 29 evidence-chain version.');
+
+  // A named derivation registry is not closed if FIELD_REGISTRY points at derivations that
+  // have no registered contract. Every referenced derivation must resolve to metadata that
+  // identifies its owner, contracts, implementation identity, and invalidation consequence.
+  const derivationIds=[...new Set(Object.values(schema.FIELD_REGISTRY).map(entry=>entry.derivationIdentity).filter(Boolean))];
+  assert.ok(derivationIds.length>0,'The field registry must contain application derivations.');
+  for(const id of derivationIds){
+    const entry=schema.derivationRegistry?.entries?.[id];
+    assert.ok(entry,`Missing derivation registry entry ${id}.`);
+    for(const key of ['registryId','version','implementationOwnerFile','canonicalInputContract','outputContract','implementationIdentity','invalidationConsequences'])assert.ok(entry[key]!==undefined&&entry[key]!==null&&entry[key]!=='',`Derivation ${id} is missing ${key}.`);
+  }
+
+  return {contractClosure:'PASS',stageOperations:66,durableFamilies:Object.keys(schema.DURABLE_OBJECT_REGISTRY).length,fieldContracts:Object.keys(schema.FIELD_REGISTRY).length,derivations:derivationIds.length};
 }
 
 const source=fs.readFileSync('workflow-schema.js','utf8');
