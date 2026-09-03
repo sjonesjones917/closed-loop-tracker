@@ -1,0 +1,38 @@
+name: One-time Stage 19 application confirmation repair v2
+
+on:
+  push:
+    branches:
+      - fix/semantic-registry-scope-closure-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact Stage 19 authority correction
+        run: node .repair-stage19-application-confirm-v2.cjs
+      - name: Prove Stage 19 command and full-cycle path
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check verify-full-cycle.mjs
+          node verify-v3-contract.mjs
+          node verify-full-cycle.mjs
+      - name: Remove scaffolding and commit permanent correction
+        run: |
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git rm .github/workflows/repair-stage19-application-confirm-v2.yml .repair-stage19-application-confirm-v2.cjs
+          git add workflow-schema.js workflow-engine.js verify-full-cycle.mjs
+          git commit -m 'Make Stage 19 confirmation application-derived'
+          git push origin HEAD:fix/semantic-registry-scope-closure-20260903
