@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
 
 const WORKFLOW_PATH=new URL('./.github/workflows/pages.yml',import.meta.url);
 const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
@@ -72,6 +73,51 @@ assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptance
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceOrigin:'https://example.invalid'}),false,'A different origin cannot satisfy the canonical deployment identity.');
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,actualAndroidChromeAcceptance:true,actualIPhoneSafariAcceptance:false}),false,'Android acceptance cannot satisfy the iPhone requirement.');
 
+const target={
+  mobileAcceptanceTargetId:'MOBILE-TARGET-001',
+  physicalDeviceRequired:true,
+  challenge:'0123456789abcdef0123456789abcdef',
+  challengeIssuedAt:'2026-09-02T20:00:00.000Z',
+  challengeExpiresAt:'2026-09-03T20:00:00.000Z',
+  sourceCommit:'0123456789abcdef0123456789abcdef01234567',
+  deploymentManifestDigest:'a'.repeat(64),
+  origin:'https://sjonesjones917.github.io',
+  basePath:'/closed-loop-tracker/',
+  testProjectId:'JOB-MOBILE-001',
+  procedureVersion:'actual-iphone-safari/1',
+  viewport:{width:393,height:852,devicePixelRatio:3}
+};
+const evidence={
+  mobileAcceptanceEvidenceId:'MOBILE-EVIDENCE-001',
+  mobileAcceptanceTargetId:target.mobileAcceptanceTargetId,
+  challenge:target.challenge,
+  sourceCommit:target.sourceCommit,
+  deploymentManifestDigest:target.deploymentManifestDigest,
+  origin:target.origin,
+  basePath:target.basePath,
+  testProjectId:target.testProjectId,
+  procedureVersion:target.procedureVersion,
+  physicalDeviceAssertion:true,
+  evidenceBasis:'HUMAN_OBSERVATION',
+  performer:'authorized-operator',
+  identityAssurance:'SELF_ASSERTED',
+  iosVersion:'19.0',
+  safariUserAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1',
+  viewport:{...target.viewport},
+  operationReceipts:REQUIRED_MOBILE_RECEIPT_KINDS.map((kind,index)=>({kind,receiptId:`MR-${String(index+1).padStart(3,'0')}`,result:'PASS'})),
+  runtimeFindings:{runtimeExceptions:0,unhandledRejections:0},
+  measurements:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44},
+  exportedProjectDigest:'b'.repeat(64),
+  screenshotOrRecordingReferences:['capture-001']
+};
+const expected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T00:00:00.000Z'};
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true,'Complete pinned mobile evidence must validate.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challenge:'f'.repeat(32)},expected}).accepted,false,'Mismatched challenge must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Safari/604.1','CriOS/140.0.0.0 Mobile/15E148 Safari/604.1')},expected}).accepted,false,'A substitute iOS browser must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operationReceipts:evidence.operationReceipts.slice(1)},expected}).accepted,false,'Missing required physical operator-path evidence must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected,usedChallenges:[target.challenge]}).accepted,false,'A reused physical acceptance challenge must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected:{...expected,verificationTime:'2026-09-04T00:00:00.000Z'}}).accepted,false,'Expired physical acceptance evidence must be rejected.');
+
 const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
 assertWorkflowGovernance(workflow);
 const unconditionalMutation=workflow.replace(/\n\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/,'');
@@ -87,6 +133,11 @@ console.log(JSON.stringify({
   missingEvidenceBlocks:true,
   selfAssertionRejected:true,
   canonicalOriginBound:true,
+  exactTargetBindingVerified:true,
+  singleUseChallengeVerified:true,
+  expiredChallengeRejected:true,
+  substituteIosBrowserRejected:true,
+  requiredOperatorPathReceiptCoverage:true,
   unconditionalTagMutationDetected:true,
   falseAcceptanceTagRegressionCovered:true
 },null,2));
