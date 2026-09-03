@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
 
 export const CANONICAL_ORIGIN='https://sjonesjones917.github.io';
@@ -12,6 +13,21 @@ const BLOCKER={
   actor:'Authorized physical-iPhone performer and repository acceptance controller',
   controllingClauses:['45.1','45.2','46','49']
 };
+
+export function releaseTagName(sourceCommit){
+  if(!/^[0-9a-f]{40}$/.test(sourceCommit||''))throw new Error('Exact source commit is required to derive release-tag identity.');
+  return `acceptance-${sourceCommit.slice(0,12)}`;
+}
+
+export function acceptedReleaseAlreadyExists(sourceCommit){
+  if(process.env.GITHUB_ACTIONS!=='true')return false;
+  const tag=releaseTagName(sourceCommit);
+  const output=execFileSync('git',['ls-remote','--tags','origin',`refs/tags/${tag}`],{encoding:'utf8'}).trim();
+  if(!output)return false;
+  const [sha]=output.split(/\s+/);
+  if(sha!==sourceCommit)throw new Error(`Existing release tag ${tag} points to ${sha}, not ${sourceCommit}.`);
+  return true;
+}
 
 export function mobilePublicationStatus({target=null,evidence=null,deploymentManifest=null,sourceCommit=null,verificationTime=null,usedChallenges=[],submitter=null}={}){
   const blocked=(reason,errors=[])=>({
@@ -124,6 +140,7 @@ function fixture(){
 
 export function runPublicationRegressions(){
   const f=fixture();
+  assert.equal(releaseTagName(f.sourceCommit),'acceptance-0123456789ab','Release tag identity must be deterministic from the exact commit.');
   assert.equal(mobilePublicationStatus({deploymentManifest:f.deploymentManifest,sourceCommit:f.sourceCommit}).finalAcceptancePublication,false,'Missing physical evidence must remain blocked.');
   assert.equal(mobilePublicationStatus({...f,verificationTime:'2026-09-03T00:00:00.000Z'}).finalAcceptancePublication,false,'Physical evidence without authenticated submitter identity must remain blocked.');
   const accepted=mobilePublicationStatus({...f,verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917'});
@@ -135,7 +152,7 @@ export function runPublicationRegressions(){
   assert.equal(mobilePublicationStatus({...f,evidence:{...f.evidence,evidenceBasis:'SELF_ASSERTED'},verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917'}).finalAcceptancePublication,false,'Self-asserted physical evidence must fail closed.');
   assert.equal(mobilePublicationStatus({...f,evidence:{...f.evidence,iosVersion:'18.7'},verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917'}).finalAcceptancePublication,false,'Changed iOS version must stale the pinned physical target.');
   assert.equal(mobilePublicationStatus({...f,verificationTime:'2026-09-03T00:00:00.000Z',submitter:'sjonesjones917',usedChallenges:[f.target.challenge]}).finalAcceptancePublication,false,'Previously accepted challenge must fail closed.');
-  return {mobileAcceptancePublication:'PASS',missingEvidenceBlocked:true,authenticatedSubmitterRequired:true,submitterRecorded:true,validEvidenceCanPublish:true,wrongCommitRejected:true,selfAssertionRejected:true,pinnedIosMismatchRejected:true,reusedChallengeRejected:true};
+  return {mobileAcceptancePublication:'PASS',missingEvidenceBlocked:true,authenticatedSubmitterRequired:true,submitterRecorded:true,validEvidenceCanPublish:true,wrongCommitRejected:true,selfAssertionRejected:true,pinnedIosMismatchRejected:true,reusedChallengeRejected:true,persistentReleaseIdentityDefined:true};
 }
 
 if(import.meta.url===`file://${process.argv[1]}`){
@@ -143,8 +160,10 @@ if(import.meta.url===`file://${process.argv[1]}`){
   else {
     const target=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_TARGET_JSON,'MOBILE_ACCEPTANCE_TARGET_JSON');
     const evidence=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_EVIDENCE_JSON,'MOBILE_ACCEPTANCE_EVIDENCE_JSON');
-    const usedChallenges=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON,'MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON')||[];
-    if(!Array.isArray(usedChallenges))throw new Error('MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON must be a JSON array.');
+    const explicitUsed=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON,'MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON')||[];
+    if(!Array.isArray(explicitUsed))throw new Error('MOBILE_ACCEPTANCE_USED_CHALLENGES_JSON must be a JSON array.');
+    const usedChallenges=[...explicitUsed];
+    if(target&&evidence&&process.env.GITHUB_ACTIONS==='true'&&acceptedReleaseAlreadyExists(process.env.GITHUB_SHA||target.sourceCommit))usedChallenges.push(target.challenge);
     let deploymentManifest=null;
     try{deploymentManifest=await fetchAndVerifyDeployment(process.env.DEPLOYMENT_MANIFEST_URL);}catch(error){
       if(target||evidence)throw error;
