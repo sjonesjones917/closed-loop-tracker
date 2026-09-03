@@ -589,6 +589,7 @@ function deriveStageData(project,stage){ensureShape(project);const derived={};co
 
 function recalculate(project){
   ensureShape(project);
+  if(String(project?.job?.CONTRACT_PROFILE_ID||'')!==String(core.CONTRACT_PROFILE_ID||schema.CONTRACT_PROFILE_ID||'closed-loop-completion-profile/1')){const error=new Error('Project lacks the exact current contract profile and is non-gating legacy data.');error.code='PRE_PROFILE_V3_NON_GATING';throw error;}
   project.job.INPUT_SET_HASH_OR_MANIFEST=intakeCoverageManifest(project).manifestSha256;
   let previousComplete=true;
   for(let stage=1;stage<=30;stage++){

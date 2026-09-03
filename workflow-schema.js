@@ -1311,7 +1311,7 @@ const priorMigrationName=['migrateProjectToCurrent','migrateProject','migrateLeg
 const priorMigration=priorMigrationName?base[priorMigrationName].bind(base):null;
 function migrateProjectToCurrent(input){
   if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Imported project must be an object.');
-  if(input.schema===CURRENT_PROJECT_SCHEMA)return ensureV3Defaults(clone(input));
+  if(input.schema===CURRENT_PROJECT_SCHEMA){if(String(input?.job?.CONTRACT_PROFILE_ID||'')!==String(base.CONTRACT_PROFILE_ID||'')){const error=new Error('A closed-loop-project/3 project without the current contract profile is legacy, non-gating data and requires a controlled profile migration before activation.');error.code='PRE_PROFILE_V3_NON_GATING';throw error;}return ensureV3Defaults(clone(input));}
   const original=clone(input);
   let migrated;
   if(input.schema===PREVIOUS_PROJECT_SCHEMA)migrated=clone(input);

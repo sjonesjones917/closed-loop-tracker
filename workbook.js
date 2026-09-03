@@ -743,6 +743,7 @@ function restoreLegacyStage01AcceptedCapture(migrated,original){return migrated;
 function migrateState(p){
   if(!p||typeof p!=='object')return createBlankState();
   if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
+    if(String(p?.job?.CONTRACT_PROFILE_ID||'')!==CONTRACT_PROFILE_ID){const error=new Error('A closed-loop-project/3 project without the current contract profile is legacy, non-gating data and requires a controlled profile migration before activation.');error.code='PRE_PROFILE_V3_NON_GATING';throw error;}
     const migrated=JSON.parse(JSON.stringify(p));
     migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
     migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
