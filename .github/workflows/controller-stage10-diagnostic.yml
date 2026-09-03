@@ -35,6 +35,9 @@ jobs:
           node <<'NODE'
           const fs=require('fs');
           let p=fs.readFileSync('prompt-engine.js','utf8');
+          const start=p.indexOf('function scopeFor('),end=p.indexOf('\nfunction assertRequiredPromptScope',start);
+          if(start<0||end<0)throw new Error('scopeFor function boundaries missing');
+          let segment=p.slice(start,end);
           const replacements=[
             ["inputVersion:job.CURRENT_INPUT_VERSION||null","inputVersion:own('inputVersion',job.CURRENT_INPUT_VERSION||null)"],
             ["sourceSetVersion:job.CURRENT_SOURCE_SET_VERSION||null","sourceSetVersion:own('sourceSetVersion',job.CURRENT_SOURCE_SET_VERSION||null)"],
@@ -43,7 +46,8 @@ jobs:
             ["testSuiteVersion:job.CURRENT_TEST_SUITE_VERSION||null","testSuiteVersion:own('testSuiteVersion',job.CURRENT_TEST_SUITE_VERSION||null)"],
             ["instructionVersion:job.CURRENT_INSTRUCTION_VERSION||null","instructionVersion:own('instructionVersion',job.CURRENT_INSTRUCTION_VERSION||null)"]
           ];
-          for(const [a,b] of replacements){if(!p.includes(a))throw new Error(`prompt scope override anchor missing: ${a}`);p=p.replace(a,b);}
+          for(const [a,b] of replacements){if(!segment.includes(a))throw new Error(`scopeFor override anchor missing: ${a}`);segment=segment.replace(a,b);}
+          p=p.slice(0,start)+segment+p.slice(end);
           fs.writeFileSync('prompt-engine.js',p);
           const path='verify-spec-grounded-route-oracle.mjs';
           let s=fs.readFileSync(path,'utf8');
@@ -78,7 +82,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/controller-stage10-repair.yml .github/workflows/controller-stage10-diagnostic.yml
+          rm -f .github/workflows/controller-stage10-repair.yml .github/workflows/controller-stage10-diagnostic.yml .github/workflows/controller-stage10-log.yml stage10-route.log
           git add -A
           git commit -m "Repair authoritative Stage 10 prompt bytes"
           git push --force-with-lease origin HEAD:controller-stage10-authoritative-prompt-20260903
