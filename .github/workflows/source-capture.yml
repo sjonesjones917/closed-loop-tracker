@@ -13,11 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - run: tar --exclude=.git -czf /tmp/completion-source.tar.gz .
+        with:
+          ref: c1d1478b832c5c5e46cee6e2b85e8ee1b39e4045
+          path: main-src
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 4024bc1a8ad781a744d98a2916792a5131f1cd06
+          path: base-src
+      - run: tar --exclude='*/.git' -czf /tmp/integration-sources.tar.gz main-src base-src
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: completion-source-${{ github.sha }}
-          path: /tmp/completion-source.tar.gz
+          name: integration-sources-${{ github.sha }}
+          path: /tmp/integration-sources.tar.gz
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
