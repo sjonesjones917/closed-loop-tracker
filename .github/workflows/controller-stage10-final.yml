@@ -1,0 +1,74 @@
+name: Controller Stage 10 authoritative prompt final
+on:
+  push:
+    branches: [controller/stage10-authoritative-prompt-final]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller/stage10-authoritative-prompt-final
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Materialize authoritative prompt repair on exact main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main controller-stage10-authoritative-prompt-20260903
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rebase origin/main
+          git show origin/controller-stage10-authoritative-prompt-20260903:.github/workflows/controller-stage10-repair.yml > /tmp/source.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/source.yml').read_text().splitlines()
+          start=next(i for i,l in enumerate(lines) if l.strip()=="node <<'NODE'")+1
+          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='NODE')
+          block=[]
+          for l in lines[start:end]:
+              block.append(l[10:] if l.startswith('          ') else l)
+          Path('/tmp/repair.js').write_text('\n'.join(block)+'\n')
+          PY
+          node /tmp/repair.js
+          node <<'NODE'
+          const fs=require('fs');
+          let s=fs.readFileSync('verify-spec-grounded-route-oracle.mjs','utf8');
+          const once=(a,b,label)=>{const n=s.split(a).length-1;if(n!==1)throw new Error(`${label}: expected one anchor, found ${n}`);s=s.replace(a,b);};
+          once("CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1'","CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_RESEARCH_VERSION:'RESEARCH-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1'",'research pointer');
+          once("CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1'","CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1',CURRENT_PRODUCT_VERSION:'PRODVER-ORACLE-v1',CURRENT_DELIVERY_CANDIDATE_SET_ID:'DELIVERYSET-ORACLE-v1',CURRENT_REVIEW_VERSION:'REVIEW-ORACLE-v1',CURRENT_RECONCILED_REVIEW_VERSION:'RECON-ORACLE-v1',CURRENT_RELEASE_ID:'RELEASE-ORACLE-v1',CURRENT_HASH_REVIEW_ID:'HASHREVIEW-ORACLE-v1',CURRENT_EVIDENCE_CHAIN_VERSION:'CHAIN-ORACLE-v1'",'terminal pointers');
+          const oldLane="const lane={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ORACLE-v1',candidateId:'CAND-ORACLE-v1',runId:sent.runs.id,contextId:sent.freshContexts.id,baselineId:'BASE-ORACLE-v1',productId:'PROD-ORACLE-v1'};";
+          const newLane="const lane={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,researchVersion:state.job.CURRENT_RESEARCH_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ORACLE-v1',candidateId:'CAND-ORACLE-v1',runId:sent.runs.id,contextId:sent.freshContexts.id,sourceConvergedIterationId:'ITER-CONVERGED-ORACLE-v1',confirmationIterationId:'ITER-CONFIRM-ORACLE-v1',baselineId:'BASE-ORACLE-v1',productId:'PROD-ORACLE-v1',productVersion:'PRODVER-ORACLE-v1',deliveryCandidateSetId:'DELIVERYSET-ORACLE-v1',reviewVersion:'REVIEW-ORACLE-v1',reconciledReviewVersion:'RECON-ORACLE-v1',releaseId:'RELEASE-ORACLE-v1',hashReviewId:'HASHREVIEW-ORACLE-v1',evidenceChainVersion:'CHAIN-ORACLE-v1'};";
+          once(oldLane,newLane,'route oracle lane');
+          fs.writeFileSync('verify-spec-grounded-route-oracle.mjs',s);
+          NODE
+          rm .github/workflows/controller-stage10-final.yml
+      - name: Prove repair and regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-file-first-operator.mjs
+          node verify-file-first-response.mjs
+          node verify-ingestion.mjs
+          node verify-full-cycle.mjs
+          node verify-hash.mjs
+          node verify-specification-governance.mjs
+          node verify-v3-definition-of-done.mjs
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+      - name: Commit proven materialized repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git commit -m 'Fix authoritative prompt byte identity and response contract'
+          git push --force-with-lease origin HEAD:controller/stage10-authoritative-prompt-final
