@@ -26,6 +26,16 @@ function verify(source){
   assert.equal(schema.STAGE_OPERATION_REGISTRY['1:COMPLETE'].executorClass,'EXTERNAL_AGENT');
   assert.equal(schema.STAGE_OPERATION_REGISTRY['1:COMPLETE'].reservationRequired,true);
 
+  // The authoritative registry must be the contract API consumed by runtime callers.
+  for(const [key,registered] of Object.entries(schema.STAGE_OPERATION_REGISTRY)){
+    const [stageText,operation]=key.split(':');
+    const resolved=schema.operationContract(Number(stageText),operation);
+    assert.ok(resolved,`operationContract() failed to resolve ${key}.`);
+    assert.deepEqual([...resolved.scopeRequirements],[...registered.scopeRequirements],`${key} runtime scope contract differs from the authoritative registry.`);
+    assert.equal(resolved.executorClass,registered.executorClass,`${key} runtime executor differs from the authoritative registry.`);
+    assert.equal(resolved.reservationRequired,registered.reservationRequired,`${key} runtime reservation rule differs from the authoritative registry.`);
+  }
+
   // The scope matrix is an operation contract, not a stage-wide label. Creation operations
   // reserve their target; later operations consume the already-created identity.
   assert.equal(schema.STAGE_OPERATION_SCOPE_MATRIX['25:FREEZE_DELIVERY_CANDIDATE'].dimensions.deliveryCandidateSetId,'TARGET_RESERVED','Stage 25 freeze must reserve the delivery-candidate set.');
