@@ -1,0 +1,14 @@
+name: One-time contract repair runner
+on:
+  push:
+    branches:
+      - "repair/spec-p4-contracts-20260903-r1"
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Validate runner
+        run: echo ready
