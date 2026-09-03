@@ -56,6 +56,9 @@ try{
   if(!workerSource.includes("const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1'"))throw new Error('Worker source is not bound to the declared worker protocol.');
   if(!workerSource.includes('workerProtocolVersion:WORKER_PROTOCOL_VERSION'))throw new Error('Worker success/failure results do not expose the worker protocol identity.');
   if(!workerSource.includes('testWorkerSha256'))throw new Error('Worker results do not carry the worker-byte identity field.');
+  if(!workerSource.includes('runtimeBuildIdentity:WORKER_BUILD_ID'))throw new Error('Worker results do not bind the runtime build identity to the exact worker URL build identity.');
+  if(workerSource.includes('runtimeBuildIdentity:result.runtimeBuildIdentity||WORKER_BUILD_ID'))throw new Error('Worker results may not prefer an unmanifested runtime sentinel over the authoritative worker build identity.');
+  if(!workerSource.includes('RUNTIME_BUILD_IDENTITY_MISMATCH'))throw new Error('Worker does not fail closed when a meaningful runtime build identity disagrees with the worker build identity.');
   const workerHashIndex=workerSource.indexOf('`hash.js${query}`');
   const workerRuntimeIndex=workerSource.indexOf('`test-runtime.js${query}`');
   if(workerHashIndex<0||workerRuntimeIndex<0||workerHashIndex>workerRuntimeIndex)throw new Error('Test IR worker must load hash.js before test-runtime.js so the shared canonical hash authority exists in the worker global.');
@@ -66,7 +69,7 @@ try{
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
   if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,noControllingServiceWorker:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,noControllingServiceWorker:true},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }
