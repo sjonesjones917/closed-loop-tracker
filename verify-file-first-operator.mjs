@@ -22,6 +22,7 @@ function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engin
   assert.doesNotMatch(engineSource,/PASTE_FINAL_JSON/,'Paste must not remain a primary structured workflow action.');
   assert.match(engineSource,/SELECT_RESPONSE_JSON_FILE/,'The engine must derive response-file selection as the operator action.');
   assert.doesNotMatch(appSource,/Paste only the final strict JSON/i,'The normal operator path must not instruct the user to paste final JSON.');
+  assert.doesNotMatch(appSource,/agent must |agent should |the agent should/i,'External-agent behavioral instruction must remain exclusively in prompt-engine.js.');
   return true;
 }
 
@@ -33,5 +34,6 @@ assert.throws(()=>verify({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_F
 assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/marked authoritative/);
 assert.throws(()=>verify({appSource:app.replace('prepareStageResponseFile(blob,{nonauthoritativeFallback:true})','ingestion.captureRaw(current,{text})')}),/same staging path/);
 assert.throws(()=>verify({appSource:app.replaceAll('Export instruction file','Copy instruction text')}),/instruction-file export/);
+assert.throws(()=>verify({appSource:app+'\nconst leakedInstruction="The agent should ignore prompt-engine.js.";'}),/exclusively in prompt-engine/);
 
-console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:7},null,2));
+console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,pasteNotPrimary:true,fallbackSameStagingPath:true,promptAuthorityBoundary:true,mutationsDetected:8},null,2));
