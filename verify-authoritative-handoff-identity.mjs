@@ -23,7 +23,7 @@ const bytes=new TextEncoder().encode(record.prompt);
 assert.equal(bytes[0]===0xef&&bytes[1]===0xbb&&bytes[2]===0xbf,false,'instruction.txt contains a UTF-8 BOM.');
 assert.equal(record.prompt.includes('\r'),false,'instruction.txt contains a non-LF line ending.');
 assert.equal(record.prompt.endsWith('\n'),true,'instruction.txt lacks the required final newline.');
-assert.equal(hash.sha256Bytes(bytes),record.bodySha256,'bodySha256 does not bind the exact authoritative instruction.txt bytes.');
+assert.equal(await hash.sha256Bytes(bytes),record.bodySha256,'bodySha256 does not bind the exact authoritative instruction.txt bytes.');
 assert.equal(record.fullTextSha256,record.bodySha256,'The prompt record exposes two different authoritative prompt identities.');
 for(const forbidden of ['PROMPT IDENTITY — ECHO EXACTLY','BODY_SHA256:','END HASHED INSTRUCTION BODY','COPY BLOCK —','END COPY BLOCK —'])assert.equal(record.prompt.includes(forbidden),false,`instruction.txt contains forbidden wrapper/self-reference: ${forbidden}`);
 assert.equal(record.promptCanonicalPath,'instruction.txt');
