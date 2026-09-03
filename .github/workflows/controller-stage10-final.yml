@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Materialize authoritative prompt repair on exact main
+      - name: Materialize repair on exact main
         shell: bash
         run: |
           set -euo pipefail
@@ -31,29 +31,30 @@ jobs:
           lines=Path('/tmp/source.yml').read_text().splitlines()
           start=next(i for i,l in enumerate(lines) if l.strip()=="node <<'NODE'")+1
           end=next(i for i in range(start,len(lines)) if lines[i].strip()=='NODE')
-          block=[]
-          for l in lines[start:end]:
-              block.append(l[10:] if l.startswith('          ') else l)
-          Path('/tmp/repair.js').write_text('\n'.join(block)+'\n')
+          Path('/tmp/repair.js').write_text('\n'.join((l[10:] if l.startswith('          ') else l) for l in lines[start:end])+'\n')
           PY
           node /tmp/repair.js
           node <<'NODE'
           const fs=require('fs');
-          const replaceOnce=(text,a,b,label)=>{const n=text.split(a).length-1;if(n!==1)throw new Error(`${label}: expected one anchor, found ${n}`);return text.replace(a,b);};
+          const once=(text,a,b,label)=>{const n=text.split(a).length-1;if(n!==1)throw new Error(`${label}: expected one anchor, found ${n}`);return text.replace(a,b);};
           let p=fs.readFileSync('prompt-engine.js','utf8');
           const oldSelector="function selectedContextRecords(state,collection,scope={}){const list=safe(state?.projectData?.[collection]).filter(record=>record?.active!==false&&!record?.invalidatedBy),keys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'],policy=schema.RECORD_SCHEMAS?.[collection]?.commitPolicy,scoped=['REPLACE_CURRENT_STAGE_SET','APPEND_SCOPED','UPDATE_RESERVED','APPLICATION_DERIVED'].includes(policy);return list.filter(record=>{const rs=record?.scope||{};if(scoped&&!Object.keys(rs).length)return false;for(const key of keys){const expected=scope?.[key];if(expected===undefined||expected===null||expected==='')continue;const actual=rs?.[key];if(actual!==undefined&&actual!==null&&actual!==''&&String(actual)!==String(expected))return false;}if(collection==='runs'&&scope.runId&&recordId(record,'runs')!==String(scope.runId))return false;if(collection==='freshContexts'&&scope.contextId&&recordId(record,'freshContexts')!==String(scope.contextId))return false;return true;});}";
           const newSelector="function selectedContextRecords(state,collection,scope={}){const list=workflow.recordsForCurrentScope(state,collection),keys=['inputVersion','sourceSetVersion','researchVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','sourceConvergedIterationId','confirmationIterationId','baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion','reconciledReviewVersion','releaseId','hashReviewId','evidenceChainVersion'];return list.filter(record=>{const rs=record?.scope||{};for(const key of keys){const expected=scope?.[key];if(expected===undefined||expected===null||expected==='')continue;const actual=rs?.[key];if(actual!==undefined&&actual!==null&&actual!==''&&String(actual)!==String(expected))return false;}if(collection==='runs'&&scope.runId&&recordId(record,'runs')!==String(scope.runId))return false;if(collection==='freshContexts'&&scope.contextId&&recordId(record,'freshContexts')!==String(scope.contextId))return false;return true;});}";
-          p=replaceOnce(p,oldSelector,newSelector,'canonical current-scope prompt selector');
+          p=once(p,oldSelector,newSelector,'canonical current-scope prompt selector');
           fs.writeFileSync('prompt-engine.js',p);
 
           let s=fs.readFileSync('verify-spec-grounded-route-oracle.mjs','utf8');
-          const once=(a,b,label)=>{s=replaceOnce(s,a,b,label);};
-          once("CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1'","CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_RESEARCH_VERSION:'RESEARCH-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1'",'research pointer');
-          once("CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1'","CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1',CURRENT_PRODUCT_VERSION:'PRODVER-ORACLE-v1',CURRENT_DELIVERY_CANDIDATE_SET_ID:'DELIVERYSET-ORACLE-v1',CURRENT_REVIEW_VERSION:'REVIEW-ORACLE-v1',CURRENT_RECONCILED_REVIEW_VERSION:'RECON-ORACLE-v1',CURRENT_RELEASE_ID:'RELEASE-ORACLE-v1',CURRENT_HASH_REVIEW_ID:'HASHREVIEW-ORACLE-v1',CURRENT_EVIDENCE_CHAIN_VERSION:'CHAIN-ORACLE-v1'",'terminal pointers');
+          s=once(s,"CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1'","CURRENT_SOURCE_SET_VERSION:'SOURCE-ORACLE-v1',CURRENT_RESEARCH_VERSION:'RESEARCH-ORACLE-v1',CURRENT_REQUIREMENTS_VERSION:'REQ-ORACLE-v1'",'route research pointer');
+          s=once(s,"CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1'","CURRENT_BASELINE_ID:'BASE-ORACLE-v1',CURRENT_PRODUCT_ID:'PROD-ORACLE-v1',CURRENT_PRODUCT_VERSION:'PRODVER-ORACLE-v1',CURRENT_DELIVERY_CANDIDATE_SET_ID:'DELIVERYSET-ORACLE-v1',CURRENT_REVIEW_VERSION:'REVIEW-ORACLE-v1',CURRENT_RECONCILED_REVIEW_VERSION:'RECON-ORACLE-v1',CURRENT_RELEASE_ID:'RELEASE-ORACLE-v1',CURRENT_HASH_REVIEW_ID:'HASHREVIEW-ORACLE-v1',CURRENT_EVIDENCE_CHAIN_VERSION:'CHAIN-ORACLE-v1'",'route terminal pointers');
           const oldLane="const lane={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ORACLE-v1',candidateId:'CAND-ORACLE-v1',runId:sent.runs.id,contextId:sent.freshContexts.id,baselineId:'BASE-ORACLE-v1',productId:'PROD-ORACLE-v1'};";
           const newLane="const lane={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,researchVersion:state.job.CURRENT_RESEARCH_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ORACLE-v1',candidateId:'CAND-ORACLE-v1',runId:sent.runs.id,contextId:sent.freshContexts.id,sourceConvergedIterationId:'ITER-CONVERGED-ORACLE-v1',confirmationIterationId:'ITER-CONFIRM-ORACLE-v1',baselineId:'BASE-ORACLE-v1',productId:'PROD-ORACLE-v1',productVersion:'PRODVER-ORACLE-v1',deliveryCandidateSetId:'DELIVERYSET-ORACLE-v1',reviewVersion:'REVIEW-ORACLE-v1',reconciledReviewVersion:'RECON-ORACLE-v1',releaseId:'RELEASE-ORACLE-v1',hashReviewId:'HASHREVIEW-ORACLE-v1',evidenceChainVersion:'CHAIN-ORACLE-v1'};";
-          once(oldLane,newLane,'route oracle lane');
+          s=once(s,oldLane,newLane,'route oracle lane');
           fs.writeFileSync('verify-spec-grounded-route-oracle.mjs',s);
+
+          let u=fs.readFileSync('verify-user-prompt-invariants.mjs','utf8');
+          u=once(u,"p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-SET-v001';engine.ensureShape(p)","p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-SET-v001';p.job.CURRENT_RESEARCH_VERSION='RESEARCH-v001';p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';engine.ensureShape(p)",'Stage 04 current versions fixture');
+          u=u.replaceAll("scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'}","scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',researchVersion:'RESEARCH-v001'}");
+          fs.writeFileSync('verify-user-prompt-invariants.mjs',u);
           NODE
           rm .github/workflows/controller-stage10-final.yml
       - name: Prove repair and regressions
