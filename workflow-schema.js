@@ -14,6 +14,7 @@ const PROJECT_SCHEMA=core.PROJECT_SCHEMA;
 const WORKFLOW_ID=core.WORKFLOW_ID;
 const STAGE_COUNT=core.STAGE_COUNT;
 const RESPONSE_SCHEMA='closed-loop-stage-response/3';
+const CONTRACT_PROFILE_ID='closed-loop-completion-profile/1';
 const VALUE_TYPES=Object.freeze(['STRING','INTEGER','NUMBER','BOOLEAN','STRING_ARRAY','REFERENCE','REFERENCE_ARRAY','OBJECT','OBJECT_ARRAY']);
 const COLLECTION_POLICIES=Object.freeze({REPLACE_CURRENT_STAGE_SET:'REPLACE_CURRENT_STAGE_SET',APPEND_SCOPED:'APPEND_SCOPED',UPDATE_RESERVED:'UPDATE_RESERVED',APPEND_ONLY:'APPEND_ONLY',APPLICATION_DERIVED:'APPLICATION_DERIVED'});
 const DEFAULT_RESOURCE_LIMITS=Object.freeze({maxRawResponseBytes:1048576,maxJsonDepth:32,maxRecordsPerCollection:250,maxEvidenceRecords:500,maxAttachments:25,maxTextFieldLength:200000});
@@ -73,9 +74,10 @@ const HUMAN_JOB_FIELDS=Object.freeze([
 ]);
 const HUMAN_DECISION_JOB_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER']);
 const APPLICATION_JOB_FIELDS=Object.freeze([
-  'JOB_ID','DATE_OPENED','CURRENT_ITERATION','CURRENT_STAGE','CURRENT_STATE','CURRENT_INPUT_VERSION',
-  'CURRENT_SOURCE_SET_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION',
-  'CURRENT_INSTRUCTION_VERSION','CURRENT_BASELINE_ID','CURRENT_PRODUCT_ID','CURRENT_BLOCKERS',
+  'JOB_ID','CONTRACT_PROFILE_ID','DATE_OPENED','CURRENT_ITERATION','CURRENT_STAGE','CURRENT_STATE','CURRENT_INPUT_VERSION',
+  'CURRENT_SOURCE_SET_VERSION','CURRENT_RESEARCH_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION',
+  'CURRENT_INSTRUCTION_VERSION','CURRENT_CANDIDATE_ID','CURRENT_BASELINE_ID','CURRENT_PRODUCT_ID','CURRENT_PRODUCT_VERSION',
+  'CURRENT_DELIVERY_CANDIDATE_SET_ID','CURRENT_REVIEW_VERSION','CURRENT_RECONCILED_REVIEW_VERSION','CURRENT_RELEASE_ID','CURRENT_HASH_REVIEW_ID','CURRENT_EVIDENCE_CHAIN_VERSION','CURRENT_DELIVERY_ID','CURRENT_BLOCKERS',
   'NEXT_REQUIRED_ACTION','LATEST_EVIDENCE_REFERENCE','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS',
   'STATUS_EVIDENCE'
 ]);
@@ -85,7 +87,11 @@ const AGENT_JOB_FIELDS=Object.freeze([
 
 function jobFieldDefinition(name){
   if(HUMAN_DECISION_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN_DECISION,{nullable:true,provenanceRequired:false});
-  if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});
+  if(APPLICATION_JOB_FIELDS.includes(name)){
+    const nullablePointers=new Set(['CURRENT_ITERATION','CURRENT_SOURCE_SET_VERSION','CURRENT_RESEARCH_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION','CURRENT_INSTRUCTION_VERSION','CURRENT_CANDIDATE_ID','CURRENT_BASELINE_ID','CURRENT_PRODUCT_ID','CURRENT_PRODUCT_VERSION','CURRENT_DELIVERY_CANDIDATE_SET_ID','CURRENT_REVIEW_VERSION','CURRENT_RECONCILED_REVIEW_VERSION','CURRENT_RELEASE_ID','CURRENT_HASH_REVIEW_ID','CURRENT_EVIDENCE_CHAIN_VERSION','CURRENT_DELIVERY_ID','LATEST_EVIDENCE_REFERENCE']);
+    const enumValues=name==='CURRENT_STATE'?['BLOCKED','AWAITING_HUMAN_INPUT','PROPOSAL_PENDING_REVIEW','RESPONSE_STAGED','AWAITING_EXTERNAL_RESPONSE','READY_FOR_NEXT_OPERATION','WORKFLOW_COMPLETE']:name==='JOB_RECORD_STATUS'?['INCOMPLETE','BLOCKED','COMPLETE']:[];
+    return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`,nullable:nullablePointers.has(name),enumValues,authority:name==='CONTRACT_PROFILE_ID'?CONTRACT_PROFILE_ID:undefined});
+  }
   if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});
   if(AGENT_JOB_FIELDS.includes(name))return field(name,PRODUCER.AGENT,{requiredAtStage:1,valueType:name==='INPUT_SET_CONTENTS'?'OBJECT':'STRING'});
   return field(name,PRODUCER.APPLICATION,{derivation:`Application owns unclassified job-control field ${name}.`});
@@ -1254,7 +1260,7 @@ function sourceClassificationIssues(fields={}){
 
 globalThis.closedLoopWorkflowSchema=Object.freeze({
   version:'closed-loop-workflow-schema/2',
-  PROJECT_SCHEMA,WORKFLOW_ID,STAGE_COUNT,VALUE_TYPES,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
+  PROJECT_SCHEMA,WORKFLOW_ID,STAGE_COUNT,CONTRACT_PROFILE_ID,VALUE_TYPES,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
   PRODUCER,RESPONSE_SCHEMA,RESPONSE_TYPES,CONFLICT_POLICIES,TEST_IR,validateTestIRSpec,validateTestIRBindings,validateTestIRTest,
   JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS,
   STAGE_FIELDS,STAGE_CONTRACTS,STAGE_COLLECTIONS,SUPPORT_COLLECTIONS,RECORD_SCHEMAS,
@@ -1274,6 +1280,24 @@ const CURRENT_RESPONSE_SCHEMA='closed-loop-stage-response/3';
 const PREVIOUS_RESPONSE_SCHEMA='closed-loop-stage-response/2';
 const TEST_IR_SCHEMA='closed-loop-test-spec/1';
 const PACKAGE_SCHEMA='closed-loop-verification-package/1';
+const CURRENT_CONTRACT_PROFILE=base.CONTRACT_PROFILE_ID||'closed-loop-completion-profile/1';
+const PROFILE_MIGRATION_SCHEMA='closed-loop-contract-profile-migration/1';
+function contractProfileIdOf(project){return project?.job?.CONTRACT_PROFILE_ID??project?.contractProfileId??null;}
+function validateContractProfile(project){
+  const reasons=[];
+  if(!project||typeof project!=='object'||Array.isArray(project))reasons.push('PROJECT_OBJECT_REQUIRED');
+  if(project?.schema!==CURRENT_PROJECT_SCHEMA)reasons.push('CURRENT_PROJECT_SCHEMA_REQUIRED');
+  if(contractProfileIdOf(project)!==CURRENT_CONTRACT_PROFILE)reasons.push('CURRENT_CONTRACT_PROFILE_REQUIRED');
+  if(project?.projectData?.currentProfileEligible===false)reasons.push('HISTORICAL_NON_GATING_PROFILE_MIGRATION');
+  for(const name of ['JOB_ID','CONTRACT_PROFILE_ID','CURRENT_STAGE','CURRENT_STATE','CURRENT_INPUT_VERSION','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS'])if(!Object.prototype.hasOwnProperty.call(project?.job||{},name))reasons.push(`MISSING_JOB_FIELD:${name}`);
+  return Object.freeze({valid:reasons.length===0,current:reasons.length===0,contractProfileId:contractProfileIdOf(project),reasons:Object.freeze(reasons)});
+}
+function markHistoricalNonGating(project,original){
+  project.projectData=project.projectData&&typeof project.projectData==='object'?project.projectData:{};
+  project.projectData.currentProfileEligible=false;
+  project.projectData.contractProfileMigration={schema:PROFILE_MIGRATION_SCHEMA,status:'HISTORICAL_NON_GATING',targetContractProfileId:CURRENT_CONTRACT_PROFILE,sourceSchema:String(original?.schema||project?.schema||''),sourceRevision:Number(original?.revision||0),reason:'Legacy data is preserved without fabricating current-profile semantic review, human authority, execution, evidence, file-first exchange, backup, mobile, or delivery proof.',fabricatedProof:false};
+  return project;
+}
 const clone=value=>typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));
 const STAGE01_HUMAN_CAPTURE_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS']);
 function restoreMigratedStage01AcceptedCapture(migrated,original){
@@ -1317,20 +1341,18 @@ const priorMigrationName=['migrateProjectToCurrent','migrateProject','migrateLeg
 const priorMigration=priorMigrationName?base[priorMigrationName].bind(base):null;
 function migrateProjectToCurrent(input){
   if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Imported project must be an object.');
-  if(input.schema===CURRENT_PROJECT_SCHEMA)return ensureV3Defaults(clone(input));
   const original=clone(input);
+  if(input.schema===CURRENT_PROJECT_SCHEMA){const current=ensureV3Defaults(clone(input));if(contractProfileIdOf(current)!==CURRENT_CONTRACT_PROFILE)return markHistoricalNonGating(current,original);if(current.projectData?.currentProfileEligible===false)return current;current.projectData.currentProfileEligible=true;return current;}
   let migrated;
   if(input.schema===PREVIOUS_PROJECT_SCHEMA)migrated=clone(input);
   else if(priorMigration){migrated=priorMigration(clone(input));if(migrated&&typeof migrated.then==='function')throw new Error('Project migration must be deterministic and synchronous.');}
   else throw new Error('Unsupported project schema '+String(input.schema));
-  migrated=ensureV3Defaults(migrated);
-  restoreMigratedStage01AcceptedCapture(migrated,original);
+  migrated=ensureV3Defaults(migrated);restoreMigratedStage01AcceptedCapture(migrated,original);
   const already=migrated.projectData.nonOperationalImportedPayloads.some(item=>item&&item.sourceSchema===original.schema&&item.sourceRevision===Number(original.revision||0)&&item.operational===false);
   if(!already)migrated.projectData.nonOperationalImportedPayloads.push({sourceSchema:String(original.schema||''),sourceRevision:Number(original.revision||0),operational:false,purpose:'ORIGINAL_IMPORTED_PAYLOAD_AUDIT_EVIDENCE',payload:original});
-  migrated.projectHash='';
-  return migrated;
+  markHistoricalNonGating(migrated,original);migrated.projectHash='';return migrated;
 }
-const replacement={...base,PROJECT_SCHEMA:CURRENT_PROJECT_SCHEMA,PROJECT_SCHEMA_ID:CURRENT_PROJECT_SCHEMA,RESPONSE_SCHEMA:CURRENT_RESPONSE_SCHEMA,RESPONSE_SCHEMA_ID:CURRENT_RESPONSE_SCHEMA,PREVIOUS_PROJECT_SCHEMA,PREVIOUS_RESPONSE_SCHEMA,TEST_IR_SCHEMA,PACKAGE_SCHEMA,migrateProjectToCurrent};
+const replacement={...base,PROJECT_SCHEMA:CURRENT_PROJECT_SCHEMA,PROJECT_SCHEMA_ID:CURRENT_PROJECT_SCHEMA,RESPONSE_SCHEMA:CURRENT_RESPONSE_SCHEMA,RESPONSE_SCHEMA_ID:CURRENT_RESPONSE_SCHEMA,PREVIOUS_PROJECT_SCHEMA,PREVIOUS_RESPONSE_SCHEMA,TEST_IR_SCHEMA,PACKAGE_SCHEMA,CONTRACT_PROFILE_ID:CURRENT_CONTRACT_PROFILE,PROFILE_MIGRATION_SCHEMA,validateContractProfile,migrateProjectToCurrent};
 if(priorMigrationName)replacement[priorMigrationName]=migrateProjectToCurrent;
 globalThis.closedLoopWorkflowSchema=Object.freeze(replacement);
 })();
@@ -1370,4 +1392,61 @@ function amendedOperationContract(stage,operation){const base=s0.operationContra
 const schema=Object.freeze({...s0,version:'closed-loop-workflow-schema/3',__controllingCompletionAmendmentVersion:VERSION,CONTROLLING_COMPLETION_ENUMS:E,RECORD_SCHEMAS:Object.freeze(RS),RECORD_OWNERSHIP:Object.freeze(RO),STAGE_COLLECTIONS:SC,READ_COLLECTIONS:RC,APPLICATION_COLLECTIONS:AC,STAGE_CONTRACTS:CONTRACTS,operationContract:amendedOperationContract,allowedCollections:n=>Object.freeze([...(SC[n]||[])]),recordAgentFields:c=>Object.freeze(Object.values(RS[c]?.fieldDefinitions||{}).filter(d=>d.producer===P.AGENT).map(d=>d.name)),recordHumanFields:c=>Object.freeze(Object.values(RS[c]?.fieldDefinitions||{}).filter(d=>d.producer===P.HUMAN||d.producer===P.HUMAN_DECISION).map(d=>d.name))});globalThis.closedLoopWorkflowSchema=schema;
 const augmented=globalThis.closedLoopWorkflowSchema;
 globalThis.closedLoopWorkflowSchema=Object.freeze({...augmented,TRUTH_VALUES:Object.freeze([...E.truth]),EPISTEMIC_BASES:Object.freeze([...E.basis]),APPLICABILITY_VALUES:Object.freeze([...E.applicability]),ENTAILMENT_VALUES:Object.freeze([...E.entailment]),PROOF_EXPRESSION_OPERATORS:Object.freeze(['LEAF','ALL_OF','ANY_OF','AT_LEAST_K']),NORMATIVE_CLASS_VALUES:Object.freeze([...E.normative]),SEMANTIC_COVERAGE_VALUES:Object.freeze([...E.coverage]),OBSERVATION_ORIGIN_VALUES:Object.freeze([...E.origin]),DELIVERY_STATE_VALUES:Object.freeze([...E.delivery])});
+})();
+
+/* CLOSED CONTRACT REGISTRY RATC HET /1 */
+;(()=>{
+'use strict';
+const b=globalThis.closedLoopWorkflowSchema;if(!b)throw new Error('workflow schema required');
+const CP=b.CONTRACT_PROFILE_ID||'closed-loop-completion-profile/1';
+const RESPONSE_TYPES=Object.freeze(['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']);
+const appOps=new Set(['10:FREEZE','18:COMPLETE','19:CONFIRM_FREEZE','19:CONFIRM','20:FREEZE_BASELINE','22:RUN_NATIVE_TESTS','24:RUN_NATIVE_ATTACKS','25:FREEZE_DELIVERY_CANDIDATE','27:CALCULATE_RELEASE','28:VERIFY_IDENTITY','29:CALCULATE_EVIDENCE_CHAINS','30:CALCULATE_TERMINAL','17:FREEZE']);
+const humanDecisionOps=new Set(['28:CAPTURE_DELIVERY_INTENT']);
+const operatorOps=new Set(['30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','30:RECORD_DELIVERY_EVIDENCE']);
+const routedOps=new Set(['7:EXECUTE_FAILURE_TEST','15:EXECUTE_REGRESSION','17:REGRESSION','19:REGRESSION_VERIFY']);
+const stageDims={
+1:['inputVersion'],2:['inputVersion','sourceSetVersion'],3:['inputVersion','sourceSetVersion','researchVersion'],4:['inputVersion','sourceSetVersion','researchVersion','requirementsVersion'],5:['inputVersion','sourceSetVersion','researchVersion','requirementsVersion'],6:['requirementsVersion','testSuiteVersion'],7:['requirementsVersion','testSuiteVersion'],8:['requirementsVersion','testSuiteVersion','instructionVersion'],9:['requirementsVersion','testSuiteVersion','instructionVersion'],10:['requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId'],11:['iterationId','candidateId','runId'],12:['iterationId','candidateId','runId','requirementsVersion','testSuiteVersion'],13:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],14:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],15:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],16:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],17:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],18:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],19:['sourceConvergedIterationId','confirmationIterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],20:['confirmationIterationId','baselineId'],21:['baselineId','productId'],22:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],23:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],24:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],25:['baselineId','productId','productVersion','deliveryCandidateSetId'],26:['baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion'],27:['baselineId','productId','productVersion','deliveryCandidateSetId','reconciledReviewVersion'],28:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId'],29:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId'],30:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion']};
+const stageTargets={2:new Set(['sourceSetVersion']),3:new Set(['researchVersion']),4:new Set(['requirementsVersion']),5:new Set(['requirementsVersion']),6:new Set(['testSuiteVersion']),8:new Set(['instructionVersion']),10:new Set(['iterationId','candidateId']),11:new Set(['runId']),19:new Set(['confirmationIterationId']),20:new Set(['baselineId']),21:new Set(['productId']),25:new Set(['deliveryCandidateSetId']),26:new Set(['reviewVersion']),27:new Set(['reconciledReviewVersion']),28:new Set(['releaseId']),29:new Set(['hashReviewId']),30:new Set(['evidenceChainVersion'])};
+const stageFamilies={1:[],2:['sources','sourceConflicts','sourceSearchContracts'],3:['research','candidateRequirements'],4:['requirements','propositions'],5:['requirementResolutions','applicabilityRecords','semanticReviews'],6:['tests','proofExpressions','expectedVarianceContracts','semanticReviews'],7:['failureTests','regressionExecutions'],8:['instructions','instructionTraces'],9:['preflightRecords'],10:[],11:['runs'],12:['verification'],13:['comparisons'],14:['defects','rootCauses'],15:['regressions','regressionExecutions'],16:['changes'],17:['runs','verification','comparisons','rootCauses','regressions','regressionExecutions','changes'],18:[],19:['runs','verification','comparisons','regressionExecutions','confirmationRecords'],20:[],21:['products'],22:['observationRecords','evidenceRecords'],23:['meaningResults','observationRecords','evidenceRecords'],24:['adversarialResults','observationRecords','evidenceRecords'],25:['representationInspections'],26:['processAudits','productAudits','semanticReviews'],27:['releaseGateReviews'],28:[],29:['evidenceInvestigations'],30:[]};
+const opSpecific={
+'1:SEMANTIC_CHALLENGE':['semanticChallenges'],'1:RECONCILE_INTAKE':['semanticChallenges','semanticReviews'],
+'2:SEARCH_ADEQUACY_REVIEW':['semanticReviews'],'2:RECONCILE_SOURCE_SEARCH':['sourceSearchContracts','semanticReviews'],
+'3:SEMANTIC_CHALLENGE':['semanticChallenges'],'3:RECONCILE_RESEARCH':['research','candidateRequirements','semanticReviews'],
+'4:DISPOSITION_CHALLENGE':['semanticChallenges','semanticReviews'],'4:ATOMICITY_CHALLENGE':['semanticChallenges','semanticReviews'],'4:RECONCILE_REQUIREMENTS':['requirements','propositions','semanticReviews'],
+'5:SEMANTIC_REVIEW':['semanticReviews'],'5:RECONCILE_REQUIREMENT_SET':['requirementResolutions','applicabilityRecords','semanticReviews'],
+'6:PROOF_REVIEW':['semanticReviews'],'6:RECONCILE_VERIFICATION_SUITE':['tests','proofExpressions','expectedVarianceContracts','semanticReviews'],
+'27:ADVISORY_REVIEW':['releaseGateReviews'],'29:INVESTIGATE_MISSING_EVIDENCE':['evidenceInvestigations']};
+function familiesFor(stage,op,executor){if(executor==='APPLICATION'||executor==='HUMAN_DECISION'||executor==='OPERATOR')return [];return Object.freeze([...(opSpecific[`${stage}:${op}`]||stageFamilies[stage]||[])]);}
+const STAGE_OPERATION_SCOPE_MATRIX={};const STAGE_OPERATION_REGISTRY={};
+for(const [stageText,ops] of Object.entries(b.STAGE_OPERATIONS)){const stage=Number(stageText);for(const op of ops){const key=`${stage}:${op}`;const executor=appOps.has(key)?'APPLICATION':humanDecisionOps.has(key)?'HUMAN_DECISION':operatorOps.has(key)?'OPERATOR':routedOps.has(key)?'ROUTED':'EXTERNAL_AGENT';const dims={projectRevision:'INPUT_CURRENT',contractProfileId:'IMMUTABLE_REFERENCE',scopeHash:'APPLICATION_DERIVED',promptOrCommandIdentity:executor==='EXTERNAL_AGENT'||executor==='ROUTED'?'IMMUTABLE_REFERENCE':'APPLICATION_DERIVED'};for(const d of stageDims[stage]||[])dims[d]=(stageTargets[stage]?.has(d)?'TARGET_RESERVED':'INPUT_CURRENT');STAGE_OPERATION_SCOPE_MATRIX[key]=Object.freeze(dims);STAGE_OPERATION_REGISTRY[key]=Object.freeze({stage,operation:op,executorClass:executor,responseTypes:Object.freeze(executor==='EXTERNAL_AGENT'||executor==='ROUTED'?[...RESPONSE_TYPES]:[]),acceptsExternalResponse:executor==='EXTERNAL_AGENT'||executor==='ROUTED',reservationRequired:executor==='EXTERNAL_AGENT'||executor==='ROUTED',acceptanceMode:executor==='EXTERNAL_AGENT'||executor==='ROUTED'?'HUMAN_ACCEPTANCE_REQUIRED':'NOT_APPLICABLE',writableFamilies:familiesFor(stage,op,executor),requiredScope:Object.freeze(Object.keys(dims)),scopeContract:Object.freeze(dims),targetSlotAlgorithm:'SHA-256(closed-loop-canonical-json/1({contractProfileId,jobId,stage,operation,operationSpecificTargetIdentities}))',retryRule:'Exact committed command retry returns its prior receipt; changed payload or stale scope is rejected.',completionPredicate:`Stage ${stage} completion contract`,independenceRequired:['SEMANTIC_CHALLENGE','SEARCH_ADEQUACY_REVIEW','DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE','SEMANTIC_REVIEW','PROOF_REVIEW','VERIFY','COMPARE','ADVISORY_REVIEW'].includes(op)});}}
+Object.freeze(STAGE_OPERATION_SCOPE_MATRIX);Object.freeze(STAGE_OPERATION_REGISTRY);
+
+function defFamily(name,idField,stage,policy,producerFields={}){const defs={};const ownership={human:[],humanDecision:[],agent:[],application:[]};for(const [producer,names] of Object.entries(producerFields))for(const n of names){ownership[producer].push(n);defs[n]=b.field(n,{human:b.PRODUCER.HUMAN,humanDecision:b.PRODUCER.HUMAN_DECISION,agent:b.PRODUCER.AGENT,application:b.PRODUCER.APPLICATION}[producer],{nullable:false});}return Object.freeze({title:name,idField,prefix:idField.replace(/_ID$/,''),stage,fields:Object.freeze(Object.keys(defs)),required:Object.freeze([idField]),relationships:Object.freeze({}),fieldDefinitions:Object.freeze(defs),ownership:Object.freeze(Object.fromEntries(Object.entries(ownership).map(([k,v])=>[k,Object.freeze(v)]))),commitPolicy:policy});}
+const extras={
+humanDecisions:defFamily('humanDecisions','HUMAN_DECISION_ID',null,b.COLLECTION_POLICIES.APPEND_SCOPED,{humanDecision:['PURPOSE','VALUE'],application:['HUMAN_DECISION_ID','TARGET_ID','SCOPE_HASH','IDENTITY_ASSURANCE','STATUS','RECEIPT_ID']}),
+sourceSearchContracts:defFamily('sourceSearchContracts','SOURCE_SEARCH_CONTRACT_ID',2,b.COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,{agent:['SEARCH_SCOPE','JURISDICTION_OR_SYSTEM_SCOPE','SOURCE_CLASSES','LOCATIONS','QUERIES_OR_STRATEGIES','DATE_OR_VERSION_CUTOFF','EXCLUSIONS','ACCESS_LIMITATIONS','ADEQUACY_RATIONALE','UNRESOLVED_DISCOVERY_RISK'],application:['SOURCE_SEARCH_CONTRACT_ID','EXECUTION_EVIDENCE_IDS','CURRENT_SCOPE_HASH','STATUS']}),
+semanticChallenges:defFamily('semanticChallenges','SEMANTIC_CHALLENGE_ID',null,b.COLLECTION_POLICIES.APPEND_SCOPED,{agent:['FINDINGS','REASONING'],application:['SEMANTIC_CHALLENGE_ID','TRIGGER','REVIEWED_TARGET_ID','AUTHOR_CONTEXT_ID','REVIEWER_CONTEXT_ID','RECONCILIATION_ID','CURRENT_SCOPE_HASH','STATUS']}),
+semanticReviews:defFamily('semanticReviews','SEMANTIC_REVIEW_ID',null,b.COLLECTION_POLICIES.APPEND_SCOPED,{agent:['FINDING','REASONING'],application:['SEMANTIC_REVIEW_ID','AUTHOR_CONTEXT_ID','REVIEWER_CONTEXT_ID','RECONCILER_CONTEXT_ID','REVIEWED_HASHES','INDEPENDENCE_DETERMINATION','ACCEPTED_DISPOSITION','CURRENT_SCOPE_HASH','STATUS']}),
+expectedVarianceContracts:defFamily('expectedVarianceContracts','VARIANCE_CONTRACT_ID',6,b.COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,{agent:['DIMENSIONS','RATIONALE'],application:['VARIANCE_CONTRACT_ID','NORMALIZED_CONTRACT','FROZEN_AT','CURRENT_SCOPE_HASH','STATUS']}),
+environmentManifests:defFamily('environmentManifests','ENVIRONMENT_MANIFEST_ID',null,b.COLLECTION_POLICIES.APPEND_SCOPED,{application:['ENVIRONMENT_MANIFEST_ID','OBSERVED_RUNTIME','REQUIRED_FIELDS','UNAVAILABLE_FIELDS','EVIDENCE_BASES','CURRENT_SCOPE_HASH','STATUS']}),
+externalCapabilities:defFamily('externalCapabilities','CAPABILITY_ID',null,b.COLLECTION_POLICIES.APPEND_SCOPED,{agent:['CAPABILITY_CLAIM'],application:['CAPABILITY_ID','VERIFICATION_BASIS','FRESHNESS_STATUS','ENVIRONMENT_MANIFEST_ID','CURRENT_SCOPE_HASH','ROUTING_CONSEQUENCE','STATUS']}),
+materialityReviews:defFamily('materialityReviews','MATERIALITY_REVIEW_ID',null,b.COLLECTION_POLICIES.APPEND_SCOPED,{agent:['REASONING'],application:['MATERIALITY_REVIEW_ID','TARGET_ID','MATERIALITY','CURRENT_SCOPE_HASH','ACCEPTED_STATUS','GATE_CONSEQUENCE']}),
+commandReceipts:defFamily('commandReceipts','COMMAND_RECEIPT_ID',null,b.COLLECTION_POLICIES.APPEND_ONLY,{application:['COMMAND_RECEIPT_ID','COMMAND_ID','IDEMPOTENCY_KEY','EXPECTED_REVISION','COMMITTED_REVISION','PAYLOAD_HASH','TARGET_ID','RESULT_IDS','RETRY_DISPOSITION']}),
+backupPolicies:defFamily('backupPolicies','BACKUP_POLICY_ID',null,b.COLLECTION_POLICIES.APPEND_SCOPED,{humanDecision:['POLICY_CHOICE'],application:['BACKUP_POLICY_ID','CURRENT_SELECTION','CHECKPOINT_TRIGGERS','ENFORCEMENT','CURRENT_SCOPE_HASH','STATUS']}),
+backupCheckpoints:defFamily('backupCheckpoints','CHECKPOINT_ID',null,b.COLLECTION_POLICIES.APPEND_ONLY,{application:['CHECKPOINT_ID','PACKAGE_ID','PACKAGE_SHA256','AUTHORIZED_ARTIFACT_IDS','CUSTODY_STATE','CURRENT_SCOPE_HASH','STATUS']}),
+deliveryCandidateSets:defFamily('deliveryCandidateSets','DELIVERY_CANDIDATE_SET_ID',25,b.COLLECTION_POLICIES.APPLICATION_DERIVED,{application:['DELIVERY_CANDIDATE_SET_ID','ARTIFACT_IDS','AUTHORIZED_FILENAMES','BYTE_LENGTHS','SHA256_VALUES','TRANSFORMATIONS','PACKAGE_MEMBERSHIP','PRODUCT_LINEAGE','CURRENT_SCOPE_HASH','STATUS']}),
+deliveryAttempts:defFamily('deliveryAttempts','DELIVERY_ATTEMPT_ID',30,b.COLLECTION_POLICIES.APPEND_ONLY,{application:['DELIVERY_ATTEMPT_ID','DELIVERY_ID','ARTIFACT_IDS','BYTE_HASHES','OPERATOR_ACTION','DESTINATION','CHANNEL','DEVICE_REPORTED_TIME','RESULT','EXTERNAL_RECEIPT_ID']}),
+mobileAcceptanceRecords:defFamily('mobileAcceptanceRecords','MOBILE_ACCEPTANCE_RECORD_ID',null,b.COLLECTION_POLICIES.APPEND_ONLY,{application:['MOBILE_ACCEPTANCE_RECORD_ID','MOBILE_ACCEPTANCE_TARGET_ID','DEPLOYED_COMMIT','DEPLOYMENT_MANIFEST_SHA256','ORIGIN','TEST_PROJECT_ID','RESULT','EVIDENCE_IDS','EPISTEMIC_BASIS']})};
+const RECORD_SCHEMAS=Object.freeze({...b.RECORD_SCHEMAS,...extras});
+const DURABLE_OBJECT_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(RECORD_SCHEMAS).map(([name,r])=>[name,Object.freeze({family:name,idField:r.idField,stage:r.stage??null,policy:r.commitPolicy,scope:'REGISTERED_CURRENT_SCOPE',relationships:r.relationships||Object.freeze({}),producerPartitions:r.ownership,lifecycle:'PRESERVE_HISTORY_AND_APPLY_FAMILY_POLICY',hashInclusion:'REGISTERED_HASH_PREIMAGE_REQUIRED',gateUse:'AS_DECLARED_BY_STAGE_AND_PROOF_OBLIGATION'})])));
+const FIELD_REGISTRY={};
+function addField(key,fd,classification,operations=[]){FIELD_REGISTRY[key]=Object.freeze({name:fd.name||key.split('.').at(-1),producer:fd.producer,valueType:fd.valueType,enumValues:fd.enumValues||Object.freeze([]),nullable:Boolean(fd.nullable),cardinality:String(fd.valueType||'').endsWith('_ARRAY')?'MANY':'ONE',requiredness:fd.requiredAtStage==null?'CONTRACT_DEPENDENT':`REQUIRED_AT_STAGE_${fd.requiredAtStage}`,writableOperations:Object.freeze(operations),classification,relationshipTarget:null,currentScopeDimensions:'REGISTERED_BY_OWNING_OPERATION',migrationDefault:'NO_SEMANTIC_DEFAULT',invalidationOwner:'workflow-engine.js',normalizerId:fd.normalizerKey||fd.normalizer||null,derivationId:fd.derivationKey||fd.derivation||null});}
+for(const [n,fd] of Object.entries(b.JOB_FIELDS||{}))addField(`job.${n}`,fd,'CANONICAL_JOB_FIELD');
+for(const [stage,defs] of Object.entries(b.STAGE_FIELDS||{}))for(const [n,fd] of Object.entries(defs||{}))addField(`stage.${stage}.${n}`,fd,'STAGE_PROJECTION');
+for(const [family,r] of Object.entries(RECORD_SCHEMAS))for(const [n,fd] of Object.entries(r.fieldDefinitions||{})){const ops=Object.entries(STAGE_OPERATION_REGISTRY).filter(([,c])=>c.writableFamilies.includes(family)).map(([k])=>k);addField(`collection.${family}.${n}`,fd,'CANONICAL_RECORD_FIELD',ops);FIELD_REGISTRY[`collection.${family}.${n}`]=Object.freeze({...FIELD_REGISTRY[`collection.${family}.${n}`],relationshipTarget:r.relationships?.[n]||null});}
+Object.freeze(FIELD_REGISTRY);
+const normalizerRegistry=Object.freeze(Object.fromEntries([...new Set(Object.values(FIELD_REGISTRY).map(x=>x.normalizerId).filter(Boolean))].map(id=>[id,Object.freeze({id,owner:'workflow-schema.js',inputContract:'FIELD_DECLARED',outputContract:'FIELD_DECLARED',versionBound:true})])));
+const derivationRegistry=Object.freeze(Object.fromEntries([...new Set(Object.values(FIELD_REGISTRY).map(x=>x.derivationId).filter(Boolean))].map(id=>[id,Object.freeze({id,owner:'workflow-engine.js',inputContract:'REGISTERED_SOURCE_RECORD_HASHES',outputContract:'FIELD_DECLARED',versionBound:true})])));
+function operationContract(stage,operation){const c=STAGE_OPERATION_REGISTRY[`${Number(stage)}:${String(operation||'')}`];if(!c)throw new Error(`Unknown stage-operation ${stage}:${operation}`);return c;}
+globalThis.closedLoopWorkflowSchema=Object.freeze({...b,FIELD_REGISTRY,STAGE_OPERATION_REGISTRY,STAGE_OPERATION_SCOPE_MATRIX,DURABLE_OBJECT_REGISTRY,normalizerRegistry,derivationRegistry,RECORD_SCHEMAS,operationContract});
 })();
