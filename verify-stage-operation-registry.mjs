@@ -8,6 +8,7 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisCon
 const schema=globalThis.closedLoopWorkflowSchema;
 assert.ok(schema,'workflow-schema.js did not load.');
 
+// Independent permanent regression for the controlling closed stage-operation set.
 const expected=Object.freeze({
   1:['COMPLETE','SEMANTIC_CHALLENGE','RECONCILE_INTAKE'],
   2:['COMPLETE','SEARCH_ADEQUACY_REVIEW','RECONCILE_SOURCE_SEARCH'],
