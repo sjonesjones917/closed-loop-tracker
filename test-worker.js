@@ -15,6 +15,8 @@ try{self.XMLHttpRequest=unavailable('XMLHttpRequest');}catch{}
 try{self.WebSocket=unavailable('WebSocket');}catch{}
 try{self.EventSource=unavailable('EventSource');}catch{}
 try{self.importScripts=unavailable('Dynamic importScripts');}catch{}
+try{self.eval=unavailable('eval');}catch{}
+try{self.Function=unavailable('Function');}catch{}
 
 self.addEventListener('message',async event=>{
   const message=event?.data||{};
