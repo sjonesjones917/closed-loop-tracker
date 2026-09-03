@@ -12,29 +12,32 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: fix/spec-runtime-contradictions-20260903
-      - name: Apply exact repair
+      - name: Apply exact repair and verify
         run: |
           set +e
-          node .repair-runtime-spec.mjs > repair-error.txt 2>&1
+          {
+            node .repair-runtime-spec.mjs &&
+            node --check app-core.js &&
+            node --check prompt-engine.js &&
+            node verify-runtime-spec-contradictions.mjs &&
+            node verify-contract-closure.mjs &&
+            node verify-file-first-operator.mjs &&
+            node verify-file-first-response.mjs &&
+            node verify-prompt-semantics.mjs
+          } > repair-error.txt 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
+            git checkout -- app-core.js prompt-engine.js || true
+            rm -f verify-runtime-spec-contradictions.mjs .repair-trigger
             git config user.name closed-loop-repair
             git config user.email closed-loop-repair@users.noreply.github.com
-            git add repair-error.txt
-            git commit -m "Capture runtime repair assertion [repair-debug]"
+            git add -A repair-error.txt
+            git commit -m "Capture runtime verification failure [repair-debug]"
             git push origin HEAD:fix/spec-runtime-contradictions-20260903
             exit "$status"
           fi
           set -euo pipefail
-          rm -f repair-error.txt
-          node --check app-core.js
-          node --check prompt-engine.js
-          node verify-runtime-spec-contradictions.mjs
-          node verify-contract-closure.mjs
-          node verify-file-first-operator.mjs
-          node verify-file-first-response.mjs
-          node verify-prompt-semantics.mjs
-          rm .repair-runtime-spec.mjs .github/workflows/repair-runtime-spec.yml
+          rm -f repair-error.txt .repair-trigger .repair-runtime-spec.mjs .github/workflows/repair-runtime-spec.yml
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
           git add -A
