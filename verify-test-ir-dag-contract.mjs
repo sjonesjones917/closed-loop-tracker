@@ -8,6 +8,7 @@ context.globalThis=context;
 vm.createContext(context);
 for(const file of ['hash.js','test-runtime.js'])vm.runInContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),context,{filename:file});
 const runtime=context.closedLoopTestRuntime;
+const inRuntime=value=>vm.runInContext(`JSON.parse(${JSON.stringify(JSON.stringify(value))})`,context);
 assert.ok(runtime,'Test runtime must load.');
 assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');
 assert.equal(runtime.TEST_IR_LANGUAGE_VERSION,'closed-loop-test-ir-language/1');
@@ -30,7 +31,7 @@ for(const [name,definition] of Object.entries(runtime.OP_DEFINITIONS)){
   assert.equal(typeof definition.resourceCost,'string',`${name} must declare a resource-cost category.`);
 }
 
-const validSpec={
+const validSpecValue={
   version:'closed-loop-test-spec/1',
   languageVersion:'closed-loop-test-ir-language/1',
   operationRegistryVersion:'closed-loop-test-ir-operations/1',
@@ -46,6 +47,7 @@ const validSpec={
   ],
   result:{stepRef:'S007',output:'assertion'}
 };
+const validSpec=inRuntime(validSpecValue);
 const validCheck=runtime.validateSpec(validSpec);
 assert.equal(validCheck.valid,true,Array.from(validCheck.issues).join(' | '));
 assert.deepEqual(Array.from(validCheck.issues),[]);
@@ -60,16 +62,16 @@ assert.equal(execution.selectedResultOutputPort,'assertion');
 assert.equal(execution.normalizedDagSha256.length,64);
 assert.equal(execution.operationRegistrySha256,runtime.OPERATION_REGISTRY_SHA256);
 
-const badSpecs=[
-  {...validSpec,steps:validSpec.steps.map(({stepId,...rest})=>rest)},
-  {...validSpec,steps:[...validSpec.steps,{stepId:'S007',op:'COUNT',inputs:{value:{literal:[]}}}]},
-  {...validSpec,steps:[{stepId:'S001',op:'COUNT',inputs:{value:{stepRef:'S002',output:'selection'}}},{stepId:'S002',op:'SELECT_JSON_PATH',inputs:{value:{literal:[]},path:{literal:'$'}}}],result:{stepRef:'S001',output:'count'}},
-  {...validSpec,steps:[{stepId:'S001',op:'COUNT',inputs:{value:{stepRef:'S001',output:'count'}}}],result:{stepRef:'S001',output:'count'}},
-  {...validSpec,steps:[{stepId:'S001',op:'BYTE_COMPARE',inputs:{left:{literal:new Uint8Array([1])}}}],result:{stepRef:'S001',output:'comparison'}},
-  {...validSpec,steps:[{stepId:'S001',op:'COMPARE',inputs:{left:{literal:1},right:{literal:1},extra:{literal:1}}}],result:{stepRef:'S001',output:'comparison'}},
-  {...validSpec,steps:[{stepId:'S001',op:'ASSERT_EXISTS',inputs:{actual:{literal:1}}}],result:{stepRef:'S001',output:'assertion'}}
+const badSpecValues=[
+  {...validSpecValue,steps:validSpecValue.steps.map(({stepId,...rest})=>rest)},
+  {...validSpecValue,steps:[...validSpecValue.steps,{stepId:'S007',op:'COUNT',inputs:{value:{literal:[]}}}]},
+  {...validSpecValue,steps:[{stepId:'S001',op:'COUNT',inputs:{value:{stepRef:'S002',output:'selection'}}},{stepId:'S002',op:'SELECT_JSON_PATH',inputs:{value:{literal:[]},path:{literal:'$'}}}],result:{stepRef:'S001',output:'count'}},
+  {...validSpecValue,steps:[{stepId:'S001',op:'COUNT',inputs:{value:{stepRef:'S001',output:'count'}}}],result:{stepRef:'S001',output:'count'}},
+  {...validSpecValue,steps:[{stepId:'S001',op:'BYTE_COMPARE',inputs:{left:{literal:'not-bytes'}}}],result:{stepRef:'S001',output:'comparison'}},
+  {...validSpecValue,steps:[{stepId:'S001',op:'COMPARE',inputs:{left:{literal:1},right:{literal:1},extra:{literal:1}}}],result:{stepRef:'S001',output:'comparison'}},
+  {...validSpecValue,steps:[{stepId:'S001',op:'ASSERT_EXISTS',inputs:{actual:{literal:1}}}],result:{stepRef:'S001',output:'assertion'}}
 ];
-for(const [index,spec] of badSpecs.entries())assert.equal(runtime.validateSpec(spec).valid,false,`Invalid DAG fixture ${index+1} must fail.`);
+for(const [index,spec] of badSpecValues.map(inRuntime).entries())assert.equal(runtime.validateSpec(spec).valid,false,`Invalid DAG fixture ${index+1} must fail.`);
 
 for(const selector of ["$['a']",'$[*]',"$['a'][0]",'$[0]'])assert.equal(runtime.validateJsonSelector(selector).valid,true,`${selector} must be supported.`);
 for(const selector of ['$..a','$[?(@.a)]','$[0:2]'])assert.equal(runtime.validateJsonSelector(selector).valid,false,`${selector} must be rejected.`);
