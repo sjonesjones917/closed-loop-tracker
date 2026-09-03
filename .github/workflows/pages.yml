@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      mobile_acceptance_target_json:
+        description: Authenticated pinned MOBILE_ACCEPTANCE_TARGET JSON for the exact currently deployed main commit
+        required: false
+        type: string
+      mobile_acceptance_evidence_json:
+        description: Authenticated mobile-acceptance-evidence JSON produced by the pinned physical iPhone Safari run
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -282,6 +291,7 @@ jobs:
           node verify-data-route-closure.mjs > /tmp/data-route.json
           node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
           node verify-mobile-release-governance.mjs > /tmp/mobile-governance.json
+          node verify-mobile-acceptance-publication.mjs > /tmp/mobile-publication.json
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
@@ -292,6 +302,7 @@ jobs:
           const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
           const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
           const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
+          const mobilePublication=JSON.parse(fs.readFileSync('/tmp/mobile-publication.json','utf8'));
           const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
           const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
           const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
@@ -370,30 +381,10 @@ jobs:
             deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
             testedBrowserWidths:[320,393,'desktop'],
             mobileReleaseTagGovernanceCoverage:Number(mobileGovernance.mobileReleaseGovernance==='PASS'),
-            actualIPhoneSafariAcceptance:false,
-            mobileAcceptanceResult:'BLOCKED_ENVIRONMENT',
-            mobileAcceptanceTargetId:null,
-            mobileAcceptanceEvidenceId:null,
-            mobileAcceptanceEvidenceBasis:'NONE',
-            mobileAcceptanceSourceCommit:null,
-            mobileAcceptanceDeploymentManifestDigest:null,
-            mobileAcceptanceOrigin:'https://sjonesjones917.github.io',
-            mobileAcceptanceBasePath:'/closed-loop-tracker/',
-            mobileAcceptanceTestProjectId:null,
-            mobileAcceptancePerformer:null,
-            mobileAcceptancePhysicalDeviceAssertion:false,
-            finalAcceptancePublication:false,
-            releaseTagEligible:false,
-            mobileAcceptanceBlockers:[{
-              disposition:'BLOCKED_ENVIRONMENT',
-              requiredAction:'Create a pinned MOBILE_ACCEPTANCE_TARGET_ID and single-use challenge, execute the complete Section 45.1 operator path on an actual iPhone in Safari against this exact deployed commit and manifest, then submit mobile-acceptance-evidence.json for CI verification.',
-              actor:'Authorized physical-iPhone performer and repository acceptance controller',
-              controllingClauses:['45.1','45.2','46','49']
-            }],
+            ...mobilePublication,
             realThirtyStageProjectAcceptance:false,
             fullProductionMaturity:false,
-            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:'BLOCKED_ENVIRONMENT'},
-            nextProofStep:'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
+            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobilePublication.mobileAcceptanceResult},
             proofSources:{
               ownership:'verify.mjs',
               canonicalDataRoutes:'verify-data-route-closure.mjs',
@@ -413,7 +404,7 @@ jobs:
               deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
               deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
               physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
-              physicalIPhoneAcceptance:'BLOCKED_ENVIRONMENT: no pinned target or physical-device evidence is present'
+              physicalIPhoneAcceptance:mobilePublication.actualIPhoneSafariAcceptance?'verify-mobile-acceptance-publication.mjs':'BLOCKED_ENVIRONMENT: no authenticated pinned physical-device evidence was supplied'
             }
           };
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
@@ -437,6 +428,73 @@ jobs:
           test "${{ steps.acceptance.outputs.actual_iphone }}" = false
       - name: Create release tag only after deployed and actual-iPhone proof
         if: steps.acceptance.outputs.final_acceptance == 'true'
+        run: |
+          set -euo pipefail
+          TAG="acceptance-${GITHUB_SHA::12}"
+          git config user.name closed-loop-release
+          git config user.email closed-loop-release@users.noreply.github.com
+          EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
+          if [ -n "$EXISTING" ]; then
+            test "$EXISTING" = "$GITHUB_SHA"
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi
+
+  finalize-mobile-acceptance:
+    name: Finalize pinned actual-iPhone acceptance
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.mobile_acceptance_target_json != '' && inputs.mobile_acceptance_evidence_json != ''
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verify exact currently deployed resource bytes
+        run: |
+          set -euo pipefail
+          node verify-mobile-acceptance-publication.mjs > /tmp/deployed-mobile-precheck.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const status=JSON.parse(fs.readFileSync('/tmp/deployed-mobile-precheck.json','utf8'));
+          if(status.actualIPhoneSafariAcceptance!==false||status.finalAcceptancePublication!==false)throw new Error('Pre-mobile verification unexpectedly fabricated physical acceptance.');
+          NODE
+      - name: Re-run deployed Chromium operator path before physical evidence acceptance
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Verify authenticated pinned physical-iPhone evidence
+        id: mobile_acceptance
+        env:
+          MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json }}
+          MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json }}
+        run: |
+          set -euo pipefail
+          node verify-mobile-acceptance-publication.mjs > closed-loop-mobile-final-acceptance.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const report=JSON.parse(fs.readFileSync('closed-loop-mobile-final-acceptance.json','utf8'));
+          if(report.actualIPhoneSafariAcceptance!==true)throw new Error('Physical-iPhone Safari acceptance is not proven.');
+          if(report.mobileAcceptanceResult!=='ACCEPTED')throw new Error('Physical-iPhone result is not ACCEPTED.');
+          if(report.finalAcceptancePublication!==true||report.releaseTagEligible!==true)throw new Error('Final acceptance is not eligible.');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,[`final_acceptance=${report.finalAcceptancePublication}`,''].join('\n'));
+          NODE
+      - name: Publish final physical-device acceptance artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-loop-final-acceptance-${{ github.sha }}
+          path: closed-loop-mobile-final-acceptance.json
+      - name: Create release tag from accepted physical evidence
+        if: steps.mobile_acceptance.outputs.final_acceptance == 'true'
         run: |
           set -euo pipefail
           TAG="acceptance-${GITHUB_SHA::12}"
