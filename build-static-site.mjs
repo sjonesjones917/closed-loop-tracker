@@ -9,6 +9,16 @@ const sourceCommit=valueOf('--source-commit',process.env.GITHUB_SHA||'LOCAL_UNCO
 const workflowRunIdentity=valueOf('--workflow-run',process.env.GITHUB_RUN_ID||'LOCAL');
 const canonicalizationVersion='closed-loop-canonical-json/1';
 const hashAlgorithm='SHA-256';
+const workflowIdentity='mobile-closed-loop/30';
+const projectSchema='closed-loop-project/3';
+const responseSchema='closed-loop-stage-response/3';
+const testIrSchema='closed-loop-test-spec/1';
+const verificationPackageSchema='closed-loop-verification-package/1';
+const contractProfileId='closed-loop-completion-profile/1';
+const canonicalOrigin='https://sjonesjones917.github.io';
+const canonicalHost='sjonesjones917.github.io';
+const canonicalBasePath='/closed-loop-tracker/';
+const deploymentEnvironment='github-pages';
 const runtimeOrder=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
 const deployedSources=['index.html',...runtimeOrder.slice(0,4),'test-worker.js',...runtimeOrder.slice(4),'TEST_PROJECT.json','.nojekyll'];
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -50,6 +60,18 @@ const csp=fs.readFileSync(path.join(outDir,'index.html'),'utf8').match(/<meta ht
 if(!csp)throw new Error('CSP was not found in built index.html.');
 const manifest={
   schema:'closed-loop-deployment-manifest/1',
+  canonicalOrigin,
+  canonicalHost,
+  canonicalBasePath,
+  deploymentEnvironment,
+  noCrossOriginRedirect:true,
+  permittedRuntimeOrigin:'SAME_ORIGIN_ONLY',
+  workflowIdentity,
+  projectSchema,
+  responseSchema,
+  testIrSchema,
+  verificationPackageSchema,
+  contractProfileId,
   sourceCommit,
   workflowRunIdentity,
   buildIdentity,
