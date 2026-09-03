@@ -1,0 +1,51 @@
+name: One-time fix file-first operator guidance
+
+on:
+  push:
+    branches: [repair/full-spec-conformance-fcfc1c6]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Correct exact response-file guidance
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text()
+          old = '<li><strong>Select that exact response JSON file in the application</strong>, then tap <em>Stage and validate response file</em>. Review the proposed change before accepting it.</li>'
+          new = '<li><strong>Select the exact response.json file returned by the agent in the application</strong>, then tap <em>Stage and validate response file</em>. Review the proposed change before accepting it.</li>'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one obsolete guidance phrase, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+      - name: Prove the corrected file-first path
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-file-first-response.mjs
+          node verify-file-first-operator.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+      - name: Remove one-time scaffolding and commit
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/one-time-fix-file-first-guidance.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html .github/workflows/one-time-fix-file-first-guidance.yml
+          git diff --cached --check
+          git commit -m 'Clarify authoritative response-file selection'
+          git push origin HEAD:repair/full-spec-conformance-fcfc1c6
