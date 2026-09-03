@@ -3,7 +3,7 @@ const RUNTIME_BUILD_ID=(()=>{try{return document.currentScript?.src?new URL(docu
 const $=s=>document.querySelector(s),safe=v=>Array.isArray(v)?v:[],clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v)),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const views=['Overview','Project','Workflow','Records','Files','Release'];
 let core,schema,engine,ingestion,projectStore,projects=[],current,projectUi={},projectStorage={artifactCount:0,byteSize:0,integrity:'NOT CHECKED',lastVerifiedAt:null,lastBackup:null,mismatches:[]};
-const operationSelection={},runSelection={};
+const operationSelection={},runSelection={},responseFileSelection={};
 const stageRecordText=(value,fallback)=>typeof value==='string'&&value.trim()?value:value&&typeof value==='object'&&Object.keys(value).length?JSON.stringify(value,null,2):fallback;
 const stageOutputText=value=>typeof value==='string'?value:value&&typeof value==='object'?JSON.stringify(value,null,2):'';
 const label=k=>String(k||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replaceAll('_',' ').replace(/\s+/g,' ').trim().replace(/\b\w/g,c=>c.toUpperCase());
