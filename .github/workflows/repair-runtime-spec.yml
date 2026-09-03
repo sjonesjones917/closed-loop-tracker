@@ -17,8 +17,10 @@ jobs:
           set +e
           {
             node .repair-runtime-spec.mjs &&
+            node .repair-runtime-spec-2.mjs &&
             node --check app-core.js &&
             node --check prompt-engine.js &&
+            node --check response-ingestion.js &&
             node verify-runtime-spec-contradictions.mjs &&
             node verify-contract-closure.mjs &&
             node verify-file-first-operator.mjs &&
@@ -27,17 +29,17 @@ jobs:
           } > repair-error.txt 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            git checkout -- app-core.js prompt-engine.js || true
+            git checkout -- app-core.js prompt-engine.js response-ingestion.js || true
             rm -f verify-runtime-spec-contradictions.mjs .repair-trigger
             git config user.name closed-loop-repair
             git config user.email closed-loop-repair@users.noreply.github.com
             git add -A repair-error.txt
-            git commit -m "Capture runtime verification failure [repair-debug]"
+            git commit -m "Capture expanded runtime verification failure [repair-debug]"
             git push origin HEAD:fix/spec-runtime-contradictions-20260903
             exit "$status"
           fi
           set -euo pipefail
-          rm -f repair-error.txt .repair-trigger .repair-runtime-spec.mjs .github/workflows/repair-runtime-spec.yml
+          rm -f repair-error.txt .repair-trigger .repair-runtime-spec.mjs .repair-runtime-spec-2.mjs .github/workflows/repair-runtime-spec.yml
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
           git add -A
