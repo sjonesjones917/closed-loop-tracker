@@ -1,0 +1,109 @@
+name: Temporary authoritative exchange convergence
+
+on:
+  push:
+    branches: [fix/file-first-authoritative-exchange-20260903]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: authoritative-exchange-convergence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repair-and-prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/file-first-authoritative-exchange-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply the responsible-layer repair
+        run: |
+          set -euo pipefail
+          python3 -m py_compile repair-authoritative-exchange-v4.py
+          python3 repair-authoritative-exchange-v4.py
+      - name: Syntax and architecture boundaries
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify.mjs
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+      - name: Authoritative file-first regression
+        run: |
+          set -euo pipefail
+          node verify-file-first-response.mjs
+          node verify-file-first-operator.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+      - name: Complete source proof suite
+        run: |
+          set -euo pipefail
+          node verify-deployment-manifest.mjs
+          node verify-mobile-release-governance.mjs
+          node verify-data-route-closure.mjs
+          node verify-infrastructure-route-closure.mjs
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-semantic-invariant.mjs
+      - name: Local Chromium operator path
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          if [ ! -x "$BROWSER" ]; then
+            BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+            export BROWSER
+          fi
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove every temporary repair artifact
+        run: |
+          set -euo pipefail
+          rm -f repair-authoritative-exchange.py repair-authoritative-exchange-v2.py repair-authoritative-exchange-v3.py repair-authoritative-exchange-v4.py
+          rm -f .github/workflows/repair-authoritative-exchange.yml .github/workflows/repair-authoritative-exchange-v2.yml .github/workflows/repair-authoritative-exchange-v3.yml .github/workflows/repair-authoritative-exchange-v4.yml
+          test -z "$(find . -maxdepth 1 -type f -name 'repair-authoritative-exchange*.py' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
+      - name: Commit the proven in-place repair
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && { echo 'No proven repair diff was produced.' >&2; exit 1; }
+          git commit -m "Conform authoritative file-first exchange contracts"
+          git push origin HEAD:fix/file-first-authoritative-exchange-20260903
