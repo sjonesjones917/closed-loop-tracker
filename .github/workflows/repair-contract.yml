@@ -1,0 +1,29 @@
+name: Apply contract closure repair
+on:
+  push:
+    branches: [fix/spec-contract-closure-20260903]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[contract-repair-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/spec-contract-closure-20260903
+      - name: Apply exact tested repair and remove scaffolding
+        run: |
+          set -euo pipefail
+          cat .repair-contract.patch.1 .repair-contract.patch.2 .repair-contract.patch.3 .repair-contract.patch.4 > /tmp/contract.patch
+          git apply --check /tmp/contract.patch
+          git apply /tmp/contract.patch
+          rm .repair-contract.patch.1 .repair-contract.patch.2 .repair-contract.patch.3 .repair-contract.patch.4 .github/workflows/repair-contract.yml
+          node --check workflow-schema.js
+          node verify-contract-closure.mjs
+          node verify-test-ir-port-types.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add workflow-schema.js verify-contract-closure.mjs verify-test-ir-port-types.mjs .github/workflows/repair-contract.yml .repair-contract.patch.1 .repair-contract.patch.2 .repair-contract.patch.3 .repair-contract.patch.4
+          git commit -m "Close schema contract registries [contract-repair-applied]"
+          git push origin HEAD:fix/spec-contract-closure-20260903
