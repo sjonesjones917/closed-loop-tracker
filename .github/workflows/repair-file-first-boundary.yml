@@ -1,0 +1,39 @@
+name: One-time file-first boundary repair
+
+on:
+  push:
+    branches: [repair/file-first-clean-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/file-first-clean-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Correct implementation-instruction boundary
+        run: node .repair-file-first-boundary.mjs
+      - name: Prove file-first and prompt-authority boundaries
+        run: |
+          set -euo pipefail
+          node --check app-core.js
+          node verify-data-route-closure.mjs
+          node verify-file-first-contract.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-zero-loss-contract.mjs
+      - name: Commit proven source change
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add app-core.js
+          git commit -m "Keep external-agent directives inside prompt authority"
+          git push origin HEAD:repair/file-first-clean-20260903
