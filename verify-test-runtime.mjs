@@ -29,5 +29,6 @@ const stage4Prompt=prompts.buildPromptRecord(4,project,{operation:'COMPLETE'});a
 for(const prohibited of ['REQUIRED INPUT FILES NOT READY','FILES YOU MUST RECEIVE','The operator must attach every file listed above','Add and verify the exact supplied project file before copying'])assert.ok(!stage4Prompt.prompt.includes(prohibited),`Stage 04 reintroduced a filename-derived upload gate: ${prohibited}`);
 const nextAction=String(engine.operationalNextAction(project)||'');assert.ok(!/required stage 04 input file|add the exact supplied project file|missing or unverified.*stage 04/i.test(nextAction),'Stage 04 next action must not require a filename-derived re-upload.');
 const uiSource=fs.readFileSync('app-core.js','utf8');for(const prohibited of ['function stagePromptBlocked(','function outgoingHandoffMarkup(','Required Stage 04 input file is missing','Attach every file shown in “Send with this instruction”'])assert.ok(!uiSource.includes(prohibited),`Stage 04 UI reintroduced the removed upload gate: ${prohibited}`);
-console.log(JSON.stringify({genericTestIr:true,stage04CanonicalInputBoundary:true,stage04UpstreamClosureFixture:true},null,2));
+await import('./verify-test-ir-port-types.mjs');
+console.log(JSON.stringify({genericTestIr:true,stage04CanonicalInputBoundary:true,stage04UpstreamClosureFixture:true,testIrPortTypeRegressionExecuted:true},null,2));
 console.log('verify-test-runtime: PASS');

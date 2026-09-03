@@ -5,7 +5,7 @@ const query=self.location?.search||'';
 const params=new URLSearchParams(query);
 const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1';
 const WORKER_BUILD_ID=params.get('v')||'UNMANIFESTED_LOCAL_RUNTIME';
-importScripts(`test-runtime.js${query}`);
+importScripts(`hash.js${query}`,`test-runtime.js${query}`);
 
 /* The worker entry owns the only permitted bootstrap load. Once the declarative
    runtime is loaded, all general network and dynamic-code surfaces are denied. */
