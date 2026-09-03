@@ -1,0 +1,38 @@
+name: fix-file-first-browser-timeout
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/spec-driven-file-first-20260902]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/spec-driven-file-first-20260902
+      - name: Extend only the durable file-first validation wait
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const path='verify-browser.mjs';
+          let text=fs.readFileSync(path,'utf8');
+          const old="await selectResponseFile(cdp,'{\"schema\":}');await click(cdp,'#process-response-file');await waitExpr(cdp,`document.body.innerText.includes('Response rejected before canonical mutation.')`);";
+          const replacement="await selectResponseFile(cdp,'{\"schema\":}');await click(cdp,'#process-response-file');await waitExpr(cdp,`document.body.innerText.includes('Response rejected before canonical mutation.')`,30000);";
+          if(!text.includes(old)) throw new Error('Expected file-first rejection wait not found exactly.');
+          text=text.replace(old,replacement);
+          fs.writeFileSync(path,text);
+          NODE
+          node --check verify-browser.mjs
+          rm .github/workflows/fix-file-first-browser-timeout.yml
+      - name: Commit browser timing correction and remove scaffolding
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add verify-browser.mjs .github/workflows/fix-file-first-browser-timeout.yml
+          git commit -m 'Allow durable file-first rejection validation to finish'
+          git push origin HEAD:fix/spec-driven-file-first-20260902
