@@ -1,3 +1,4 @@
+import './verify-stage10-byte-hash-contract.mjs';
 import './verify-test-ir-port-types.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
