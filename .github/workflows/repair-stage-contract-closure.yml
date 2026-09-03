@@ -1,0 +1,56 @@
+name: One-time stage contract closure repair
+
+on:
+  push:
+    branches:
+      - repair/stage-contract-closure-20260903-r1
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/stage-contract-closure-20260903-r1
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Prove regression fails before repair
+        run: |
+          set -euo pipefail
+          if node verify-stage-contract-closure.mjs >/tmp/pre-repair.log 2>&1; then
+            cat /tmp/pre-repair.log
+            echo 'Regression unexpectedly passed before repair.' >&2
+            exit 1
+          fi
+          cat /tmp/pre-repair.log
+      - name: Apply minimal contract repair
+        run: node .repair-stage-contract-closure.mjs
+      - name: Remove one-time scaffolding before verification
+        run: rm .repair-stage-contract-closure.mjs .github/workflows/repair-stage-contract-closure.yml
+      - name: Verify affected and complete source suites
+        run: |
+          set -euo pipefail
+          node --check workbook.js
+          node verify-stage-contract-closure.mjs
+          node build-test-project.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+      - name: Commit completed ratchet step
+        run: |
+          set -euo pipefail
+          git config user.name 'closed-loop repair'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Close Stage 10, 25, 28, and 30 field contracts'
+          git push origin HEAD:repair/stage-contract-closure-20260903-r1
