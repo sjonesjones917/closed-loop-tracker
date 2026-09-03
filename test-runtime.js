@@ -2,442 +2,70 @@
 'use strict';
 
 const root=globalThis;
+const hash=root.closedLoopHash;
+if(!hash)throw new Error('hash.js must load before test-runtime.js.');
+
 const VERSION='closed-loop-test-runtime/1';
-const RUNTIME_BUILD_ID=(()=>{try{return typeof document!=='undefined'&&document.currentScript?.src?new URL(document.currentScript.src).searchParams.get('v')||'UNMANIFESTED_LOCAL_RUNTIME':'UNMANIFESTED_LOCAL_RUNTIME';}catch{return 'UNMANIFESTED_LOCAL_RUNTIME';}})();
 const SPEC_VERSION='closed-loop-test-spec/1';
+const LANGUAGE_VERSION='closed-loop-test-ir-language/1';
+const OPERATION_REGISTRY_VERSION='closed-loop-test-ir-operations/1';
+const JSON_SELECTOR_REGISTRY_VERSION='closed-loop-json-selector/1';
+const XML_SELECTOR_REGISTRY_VERSION='closed-loop-xml-selector/1';
+const REGEX_REGISTRY_VERSION='closed-loop-regex/1';
+const PARSER_REGISTRY_VERSION='closed-loop-parser-registry/1';
+const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1';
 const EXECUTABLE_KIND='TEST_IR';
 const CAPABILITY='CLOSED_LOOP_TEST_IR';
+const RUNTIME_BUILD_ID=(()=>{try{return typeof document!=='undefined'&&document.currentScript?.src?new URL(document.currentScript.src).searchParams.get('v')||'UNMANIFESTED_LOCAL_RUNTIME':'UNMANIFESTED_LOCAL_RUNTIME';}catch{return 'UNMANIFESTED_LOCAL_RUNTIME';}})();
 
-/* Centralized implementation limits. These are support-contract limits, not claims
-   about every browser or every possible project. Every boundary is fail-closed. */
-const LIMITS=Object.freeze({
-  maxTotalInputBytes:32*1024*1024,
-  maxTextBytes:16*1024*1024,
-  maxDecompressedBytes:64*1024*1024,
-  maxSteps:128,
-  maxSelectorDepth:32,
-  maxParsedDepth:64,
-  maxParsedNodes:250000,
-  maxCollectionItems:100000,
-  maxRegexPatternBytes:2048,
-  maxRegexLength:2000,
-  maxRegexInputBytes:2*1024*1024,
-  maxCsvCells:250000,
-  maxXmlNodes:100000,
-  workerTimeoutMs:5000,
-  maxArchiveExpansionBytes:64*1024*1024
-});
-
-const STATUS=Object.freeze({
-  SATISFIED:'SATISFIED',
-  VIOLATED:'VIOLATED',
-  UNDETERMINED:'UNDETERMINED',
-  EXECUTION_FAILED:'EXECUTION_FAILED'
-});
+const LIMITS=Object.freeze({maxTotalInputBytes:32*1024*1024,maxTextBytes:16*1024*1024,maxDecompressedBytes:64*1024*1024,maxSteps:128,maxSelectorDepth:32,maxParsedDepth:64,maxParsedNodes:250000,maxCollectionItems:100000,maxRegexPatternBytes:2048,maxRegexInputBytes:2*1024*1024,maxCsvCells:250000,maxXmlNodes:100000,workerTimeoutMs:5000,maxArchiveExpansionBytes:64*1024*1024});
+const STATUS=Object.freeze({SATISFIED:'SATISFIED',VIOLATED:'VIOLATED',UNDETERMINED:'UNDETERMINED',EXECUTION_FAILED:'EXECUTION_FAILED'});
 
 const OP_DEFINITIONS=Object.freeze({
-  LOAD_ARTIFACT:{required:['binding'],optional:[],types:{binding:'binding'}},
-  READ_BYTES:{required:[],optional:[],types:{}},
-  DECODE_UTF8:{required:[],optional:[],types:{}},
-  PARSE_JSON:{required:[],optional:[],types:{}},
-  PARSE_CSV:{required:['delimiter','header','quote','newline','encoding'],optional:[],types:{delimiter:'delimiter',header:'boolean',quote:'quote',newline:'csvNewline',encoding:'utf8'}},
-  PARSE_XML:{required:[],optional:[],types:{}},
-  SELECT_JSON_PATH:{required:['path'],optional:[],types:{path:'jsonSelector'}},
-  SELECT_XML:{required:['path'],optional:[],types:{path:'xmlSelector'}},
-  COUNT:{required:[],optional:[],types:{}},
-  SUM:{required:[],optional:[],types:{}},
-  MIN:{required:[],optional:[],types:{}},
-  MAX:{required:[],optional:[],types:{}},
-  SORT:{required:[],optional:['direction','domain'],types:{direction:'sortDirection',domain:'sortDomain'}},
-  UNIQUE:{required:[],optional:[],types:{}},
-  HASH_SHA256:{required:[],optional:[],types:{}},
-  REGEX:{required:['pattern'],optional:['flags'],types:{pattern:'regex',flags:'regexFlags'}},
-  COMPARE:{required:[],optional:['value','binding','operator','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{binding:'binding',operator:'compareOperator',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'},oneOf:[['value'],['binding']]},
-  ASSERT_EXISTS:{required:[],optional:['message'],types:{message:'string'}},
-  ASSERT_TYPE:{required:['value'],optional:['message'],types:{value:'typeName',message:'string'}},
-  ASSERT_NE:{required:['value'],optional:['message','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'}},
-  ASSERT_EQ:{required:['value'],optional:['message','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'}},
-  ASSERT_GT:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_GTE:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_LT:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_LTE:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_MATCH:{required:['pattern'],optional:['flags','message'],types:{pattern:'regex',flags:'regexFlags',message:'string'}},
-  ASSERT_CONTAINS:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_NOT_CONTAINS:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_SET_EQUAL:{required:['value'],optional:['message'],types:{message:'string',value:'array'}},
-  BYTE_COMPARE:{required:['binding'],optional:[],types:{binding:'binding'}}
+  LOAD_ARTIFACT:Object.freeze({inputs:Object.freeze({binding:'BINDING_REF'}),outputs:Object.freeze({artifact:'ARTIFACT'}),cost:'IO'}),
+  READ_BYTES:Object.freeze({inputs:Object.freeze({artifact:'ARTIFACT'}),outputs:Object.freeze({bytes:'BYTES'}),cost:'IO'}),
+  DECODE_UTF8:Object.freeze({inputs:Object.freeze({bytes:'BYTES'}),outputs:Object.freeze({text:'STRING'}),cost:'LINEAR_BYTES'}),
+  PARSE_JSON:Object.freeze({inputs:Object.freeze({text:'STRING'}),outputs:Object.freeze({value:'JSON_VALUE'}),cost:'PARSE'}),
+  PARSE_CSV:Object.freeze({inputs:Object.freeze({text:'STRING',delimiter:'STRING',header:'BOOLEAN',quote:'STRING',newline:'CSV_NEWLINE',encoding:'UTF8'}),outputs:Object.freeze({value:'JSON_VALUE'}),cost:'PARSE'}),
+  PARSE_XML:Object.freeze({inputs:Object.freeze({text:'STRING'}),outputs:Object.freeze({value:'XML_DOCUMENT'}),cost:'PARSE'}),
+  SELECT_JSON_PATH:Object.freeze({inputs:Object.freeze({value:'JSON_VALUE',path:'STRING'}),outputs:Object.freeze({selection:'ANY'}),cost:'SELECT'}),
+  SELECT_XML:Object.freeze({inputs:Object.freeze({value:'XML_DOCUMENT',path:'STRING'}),outputs:Object.freeze({selection:'ANY'}),cost:'SELECT'}),
+  COUNT:Object.freeze({inputs:Object.freeze({value:'COUNTABLE'}),outputs:Object.freeze({count:'INTEGER'}),cost:'LINEAR_COLLECTION'}),
+  SUM:Object.freeze({inputs:Object.freeze({value:'INTEGER_ARRAY'}),outputs:Object.freeze({value:'INTEGER'}),cost:'LINEAR_COLLECTION'}),
+  MIN:Object.freeze({inputs:Object.freeze({value:'INTEGER_ARRAY'}),outputs:Object.freeze({value:'INTEGER'}),cost:'LINEAR_COLLECTION'}),
+  MAX:Object.freeze({inputs:Object.freeze({value:'INTEGER_ARRAY'}),outputs:Object.freeze({value:'INTEGER'}),cost:'LINEAR_COLLECTION'}),
+  SORT:Object.freeze({inputs:Object.freeze({value:'ARRAY',direction:'SORT_DIRECTION?'}),outputs:Object.freeze({value:'ARRAY'}),cost:'N_LOG_N'}),
+  UNIQUE:Object.freeze({inputs:Object.freeze({value:'ARRAY'}),outputs:Object.freeze({value:'ARRAY'}),cost:'LINEAR_COLLECTION'}),
+  HASH_SHA256:Object.freeze({inputs:Object.freeze({bytes:'BYTES'}),outputs:Object.freeze({sha256:'STRING'}),cost:'LINEAR_BYTES'}),
+  REGEX:Object.freeze({inputs:Object.freeze({value:'STRING',pattern:'STRING',flags:'STRING?'}),outputs:Object.freeze({matches:'BOOLEAN'}),cost:'BOUNDED_REGEX'}),
+  COMPARE:Object.freeze({inputs:Object.freeze({left:'ANY',right:'ANY',operator:'COMPARE_OPERATOR?',absTolerance:'EXACT_DECIMAL?',relTolerance:'EXACT_DECIMAL?'}),outputs:Object.freeze({comparison:'BOOLEAN'}),cost:'CONSTANT'}),
+  ASSERT_EQ:Object.freeze({inputs:Object.freeze({actual:'ANY',expected:'ANY',absTolerance:'EXACT_DECIMAL?',relTolerance:'EXACT_DECIMAL?'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_GT:Object.freeze({inputs:Object.freeze({actual:'ORDERED',expected:'ORDERED'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_GTE:Object.freeze({inputs:Object.freeze({actual:'ORDERED',expected:'ORDERED'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_LT:Object.freeze({inputs:Object.freeze({actual:'ORDERED',expected:'ORDERED'}),outputs:Object.freeze({asertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_LTE:Object.freeze({inputs:Object.freeze({actual:'ORDERED',expected:'ORDERED'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_MATCH:Object.freeze({inputs:Object.freeze({actual:'STRING',pattern:'STRING',flags:'STRING?'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'BOUNDED_REGEX'}),
+  ASSERT_CONTAINS:Object.freeze({inputs:Object.freeze({actual:'ANY',expected:'ANY'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'LINEAR_COLLECTION'}),
+  ASSERT_NOT_CONTAINS:Object.freeze({inputs:Object.freeze({actual:'ANY',expected:'ANY'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'LINEAR_COLLECTION'}),
+  ASSERT_SET_EQUAL:Object.freeze({inputs:Object.freeze({actual:'ARRAY',expected:'ARRAY'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'N_LOG_N'}),
+  BYTE_COMPARE:Object.freeze({inputs:Object.freeze({left:'BYTES',right:'BYTES'}),outputs:Object.freeze({equal:'BOOLEAN'}),cost:'LINEAR_BYTES'})
 });
 const OPS=Object.freeze(Object.keys(OP_DEFINITIONS));
-const ASSERTION_OPS=new Set(['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']);
-const encoder=new TextEncoder();
-const hasOwn=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
-const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
+const OPERATION_REGISTRY_SHA256=hash.sha256Value(OP_DEFINITIONS);
+const JSON_SELECTOR_REGISTRY=Object.freeze({version:JSON_SELECTOR_REGISTRY_VERSION,root:true,childIdentifier:true,singleQuotedBracketName:true,nonnegativeArrayIndex:true,wildcardObjectValues:true,wildcardArrayElements:true,recursiveDescent:false,filters:false,unions:false,slices:false,scripts:false});
+const XML_SELECTOR_REGISTRY=Object.freeze({version:XML_SELECTOR_REGISTRY_VERSION,absoluteChildPaths:true,elementWildcard:true,positionIndexOneBased:true,attributeAccess:true,textExtraction:true,otherAxes:false,otherFunctions:false});
+const REGEX_REGISTRY=Object.freeze({version:REGEX_REGISTRY_VERSION,literals:true,dot:true,characterClasses:true,predefinedClasses:true,anchors:true,alternation:true,capturingGroups:true,nonCapturingGroups:true,greedyAndLazyQuantifiers:true,backreferences:false,lookaround:false,unicodePropertyEscapes:false});
+const PARSER_REGISTRY=Object.freeze({version:PARSER_REGISTRY_VERSION,utf8:true,json:'closed-json-safe-integer/1',csv:'closed-csv/1',xml:'closed-xml/1'});
+const JSON_SELECTOR_REGISTRY_SHA256=hash.sha256Value(JSON_SELECTOR_REGISTRY,XML_SELECTOR_REGISTRY_SHA256=hash.sha256Value(XML_SELECTOR_REGISTRY),REGEX_REGISTRY_SHA256=hash.sha256Value(REGEX_REGISTRY,PARSER_REGISTRY_SHA256=hash.sha256Value(PARSER_REGISTRY);
+
+const hasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k),encoder=new TextEncoder();
+const bytesOf=v=>v instanceof Uint8Array?v:v instanceof ArrayBuffer?new Uint8Array(v):ArrayBuffer.isView(v)?new Uint8Array(v.buffer,v.byteOffset,v.byteLength):null;
 const field=(test,key)=>test?.fields?.[key]??test?.[key];
-const scalarCompare=(a,b)=>{const aa=Array.from(String(a),ch=>ch.codePointAt(0)),bb=Array.from(String(b),ch=>ch.codePointAt(0)),n=Math.min(aa.length,bb.length);for(let i=0;i<n;i++)if(aa[i]!==bb[i])return aa[i]-bb[i];return aa.length-bb.length;};
-const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>scalarCompare(a,b))):v);
-const byteLength=value=>encoder.encode(String(value)).byteLength;
-
-class RuntimeError extends Error{
-  constructor(code,message,disposition=STATUS.EXECUTION_FAILED){super(message);this.name='ClosedLoopTestRuntimeError';this.code=code;this.disposition=disposition;}
-}
+class RuntimeError extends Error{constructor(code,message,disposition=STATUS.EXECUTION_FAILED){super(message);this.name='ClosedLoopTestRuntimeError';this.code=code;this.disposition=disposition;}}
 const fail=(code,message,disposition)=>{throw new RuntimeError(code,message,disposition);};
-
-async function sha256(bytes){
-  const data=bytesOf(bytes);if(!data)fail('BYTES_REQUIRED','SHA-256 requires byte input.');
-  const digest=await crypto.subtle.digest('SHA-256',data);
-  return [...new Uint8Array(digest)].map(value=>value.toString(16).padStart(2,'0')).join('');
-}
-async function sha256Canonical(value){return sha256(encoder.encode(canonical(value)));}
-
-function validateResourceEnvelope(claim={}){
-  const issues=[];const allowed=new Set(['totalInputBytes','decompressedBytes','archiveExpansionBytes']);for(const key of Object.keys(claim||{}))if(!allowed.has(key))issues.push('Unknown resource-envelope property '+key+'.');
-  const checks=[['totalInputBytes','maxTotalInputBytes'],['decompressedBytes','maxDecompressedBytes'],['archiveExpansionBytes','maxArchiveExpansionBytes']];
-  for(const [key,limitKey] of checks){if(!Object.prototype.hasOwnProperty.call(claim,key))continue;const value=claim[key];if(!Number.isSafeInteger(value)||value<0)issues.push(key+' must be a nonnegative safe integer.');else if(value>LIMITS[limitKey])issues.push(key+' exceeds '+limitKey+'.');}
-  return {valid:issues.length===0,issues};
-}
-function validateRegex(pattern,flags=''){
-  const issues=[];const text=String(pattern);const flagText=String(flags||'');
-  if(byteLength(text)>LIMITS.maxRegexPatternBytes||text.length>LIMITS.maxRegexLength)issues.push('Regex pattern exceeds the registered byte limit.');
-  if(!/^[imsu]*$/.test(flagText)||new Set(flagText).size!==flagText.length)issues.push('Regex flags must be a unique subset of i, m, s, and u.');
-  if(/\\[1-9]/.test(text)||/\\k</.test(text))issues.push('Regex backreferences are not supported.');
-  if(/\(\?/.test(text))issues.push('Regex lookaround, named groups, and inline mode groups are not supported.');
-  if(/[()]/.test(text))issues.push('Regex grouping is outside the registered safe subset.');
-  if((text.match(/[+*]/g)||[]).length>16)issues.push('Regex contains too many unbounded quantifiers.');
-  try{if(!issues.length)new RegExp(text,flagText);}catch(error){issues.push(`Regex is invalid: ${error.message}`);}
-  return issues;
-}
-
-function parseJsonSelector(path){
-  const text=String(path||'');
-  if(text==='$')return [];
-  if(!text.startsWith('$.'))fail('UNSUPPORTED_JSON_SELECTOR','JSON selector must be $ or begin with $.');
-  const parts=[];let i=2;let token='';
-  const pushToken=()=>{if(!token)fail('UNSUPPORTED_JSON_SELECTOR',`Empty JSON selector segment in ${text}.`);parts.push(token);token='';};
-  while(i<text.length){
-    const ch=text[i];
-    if(ch==='.') {pushToken();i++;continue;}
-    if(ch==='['){if(token)pushToken();const end=text.indexOf(']',i+1);if(end<0)fail('UNSUPPORTED_JSON_SELECTOR',`Unclosed JSON selector index in ${text}.`);const raw=text.slice(i+1,end);if(!/^(0|[1-9]\d*)$/.test(raw))fail('UNSUPPORTED_JSON_SELECTOR',`Only nonnegative numeric JSON selector indexes are supported: ${text}.`);parts.push(Number(raw));i=end+1;if(text[i]==='.')i++;continue;}
-    if(!/[A-Za-z0-9_:-]/.test(ch))fail('UNSUPPORTED_JSON_SELECTOR',`Unsupported JSON selector character ${ch}.`);
-    token+=ch;i++;
-  }
-  if(token)pushToken();
-  if(parts.length>LIMITS.maxSelectorDepth)fail('SELECTOR_LIMIT','JSON selector exceeds the registered depth limit.');
-  return parts;
-}
-function selectJsonPath(value,path){
-  const parts=parseJsonSelector(path);let current=value;
-  for(const part of parts){
-    if(current===null||current===undefined||!hasOwn(Object(current),part))fail('JSON_PATH_MISSING',`JSON selector does not resolve: ${path}.`,STATUS.UNDETERMINED);
-    current=current[part];
-  }
-  return current;
-}
-
-function decodeXmlEntity(entity){
-  const known={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"};if(hasOwn(known,entity))return known[entity];
-  if(/^#\d+$/.test(entity)){const code=Number(entity.slice(1));if(Number.isInteger(code)&&code>=0&&code<=0x10ffff)return String.fromCodePoint(code);}
-  if(/^#x[0-9a-f]+$/i.test(entity)){const code=parseInt(entity.slice(2),16);if(Number.isInteger(code)&&code>=0&&code<=0x10ffff)return String.fromCodePoint(code);}
-  fail('UNSUPPORTED_XML_ENTITY',`Unsupported XML entity &${entity};.`);
-}
-const decodeXmlText=text=>String(text).replace(/&([^;]+);/g,(_,entity)=>decodeXmlEntity(entity));
-function parseXmlAttributes(source){
-  const attributes={};let rest=String(source||'').trim();
-  while(rest){
-    const match=rest.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*("[^"]*"|'[^']*')\s*/);if(!match)fail('MALFORMED_XML',`Malformed XML attribute text: ${rest.slice(0,80)}.`);
-    if(hasOwn(attributes,match[1]))fail('MALFORMED_XML',`Duplicate XML attribute ${match[1]}.`);
-    attributes[match[1]]=decodeXmlText(match[2].slice(1,-1));rest=rest.slice(match[0].length);
-  }
-  return attributes;
-}
-function parseXml(text){
-  let source=String(text||'');
-  if(/<!DOCTYPE|<!ENTITY/i.test(source))fail('UNSAFE_XML','DTD and entity declarations are prohibited.');
-  source=source.replace(/^\uFEFF?\s*<\?xml\s[^?]*\?>\s*/i,'');
-  const documentNode={name:'#document',attributes:{},children:[],textParts:[]};const stack=[documentNode];let nodes=0;let index=0;
-  const appendText=value=>{if(value)stack.at(-1).textParts.push(decodeXmlText(value));};
-  while(index<source.length){
-    const open=source.indexOf('<',index);if(open<0){appendText(source.slice(index));break;}appendText(source.slice(index,open));
-    if(source.startsWith('<!--',open)){const end=source.indexOf('-->',open+4);if(end<0)fail('MALFORMED_XML','Unterminated XML comment.');index=end+3;continue;}
-    if(source.startsWith('<![CDATA[',open)){const end=source.indexOf(']]>',open+9);if(end<0)fail('MALFORMED_XML','Unterminated XML CDATA section.');stack.at(-1).textParts.push(source.slice(open+9,end));index=end+3;continue;}
-    if(source.startsWith('<?',open))fail('UNSAFE_XML','XML processing instructions are not supported.');
-    const close=source.indexOf('>',open+1);if(close<0)fail('MALFORMED_XML','Unterminated XML tag.');
-    let body=source.slice(open+1,close).trim();
-    if(body.startsWith('!'))fail('UNSAFE_XML','Unsupported XML declaration.');
-    if(body.startsWith('/')){
-      const name=body.slice(1).trim();if(stack.length===1||stack.at(-1).name!==name)fail('MALFORMED_XML',`Unexpected XML closing tag ${name}.`);stack.pop();index=close+1;continue;
-    }
-    const selfClosing=/\/$/.test(body);if(selfClosing)body=body.slice(0,-1).trim();
-    const nameMatch=body.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)/);if(!nameMatch)fail('MALFORMED_XML','XML element name is invalid.');
-    const node={name:nameMatch[1],attributes:parseXmlAttributes(body.slice(nameMatch[0].length)),children:[],textParts:[]};
-    stack.at(-1).children.push(node);nodes++;if(nodes>LIMITS.maxXmlNodes)fail('XML_NODE_LIMIT','XML exceeds the registered node limit.');
-    if(!selfClosing)stack.push(node);index=close+1;
-  }
-  if(stack.length!==1)fail('MALFORMED_XML',`Unclosed XML element ${stack.at(-1).name}.`);
-  if(documentNode.children.length!==1)fail('MALFORMED_XML','XML must contain exactly one document element.');
-  return documentNode.children[0];
-}
-function parseXmlSelector(path){
-  const text=String(path||'');if(!text.startsWith('/')||text.startsWith('//'))fail('UNSUPPORTED_XML_SELECTOR','XML selector must be an absolute child path beginning with one /.');
-  const raw=text.slice(1).split('/');if(!raw.length||raw.some(part=>!part))fail('UNSUPPORTED_XML_SELECTOR','XML selector contains an empty segment.');
-  if(raw.length>LIMITS.maxSelectorDepth)fail('SELECTOR_LIMIT','XML selector exceeds the registered depth limit.');
-  return raw.map((part,index)=>{
-    if(part==='text()'){if(index!==raw.length-1)fail('UNSUPPORTED_XML_SELECTOR','text() is supported only as the final XML selector segment.');return {kind:'text'};}
-    if(part.startsWith('@')){if(index!==raw.length-1||!/^@[A-Za-z_][A-Za-z0-9_.:-]*$/.test(part))fail('UNSUPPORTED_XML_SELECTOR','XML attributes are supported only as a valid final @name segment.');return {kind:'attribute',name:part.slice(1)};}
-    const match=part.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)(?:\[(\d+)\])?$/);if(!match||match[2]==='0')fail('UNSUPPORTED_XML_SELECTOR',`Unsupported XML selector segment ${part}.`);return {kind:'element',name:match[1],index:match[2]?Number(match[2]):null};
-  });
-}
-function xmlText(node){return [...node.textParts,...node.children.map(xmlText)].join('');}
-function selectXml(rootNode,path){
-  const parts=parseXmlSelector(path);const first=parts.shift();if(first.kind!=='element'||first.name!==rootNode.name||(first.index&&first.index!==1))fail('XML_PATH_MISSING',`XML selector does not address document element ${rootNode.name}.`,STATUS.UNDETERMINED);
-  let current=[rootNode];
-  for(const part of parts){
-    if(part.kind==='text')return current.map(xmlText);
-    if(part.kind==='attribute')return current.map(node=>node.attributes[part.name]).filter(value=>value!==undefined);
-    const next=[];for(const node of current){const matches=node.children.filter(child=>child.name===part.name);if(part.index){if(matches[part.index-1])next.push(matches[part.index-1]);}else next.push(...matches);}current=next;
-  }
-  if(!current.length)fail('XML_PATH_MISSING',`XML selector does not resolve: ${path}.`,STATUS.UNDETERMINED);
-  return current;
-}
-
-
-function validateJsonSourceExact(text){
-  const source=String(text),length=source.length;let i=0;
-  const ws=()=>{while(i<length&&/[\x20\x09\x0a\x0d]/.test(source[i]))i++;};
-  const error=message=>fail('MALFORMED_JSON',`JSON parse failed: ${message} at character ${i}.`,STATUS.UNDETERMINED);
-  const stringToken=()=>{if(source[i]!=='"')error('Expected string');const start=i++;let escaped=false;for(;i<length;i++){const ch=source[i];if(escaped){if(ch==='u'){if(!/^[0-9a-fA-F]{4}$/.test(source.slice(i+1,i+5)))error('Invalid Unicode escape');i+=4;}else if(!'"\\/bfnrt'.includes(ch))error('Invalid string escape');escaped=false;continue;}if(ch==='\\'){escaped=true;continue;}if(ch==='"'){i++;try{return JSON.parse(source.slice(start,i));}catch{error('Invalid JSON string');}}if(ch.charCodeAt(0)<0x20)error('Unescaped control character');}error('Unterminated string');};
-  const numberToken=()=>{const match=source.slice(i).match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);if(!match)error('Invalid number');const raw=match[0];i+=raw.length;if(raw.includes('.')||/[eE]/.test(raw))fail('UNSUPPORTED_JSON_NUMBER',`PARSE_JSON numeric token ${raw} is not a safe-integer JSON number. Use a typed exact number representation.`,STATUS.UNDETERMINED);const n=Number(raw);if(!Number.isSafeInteger(n)||Object.is(n,-0))fail('UNSUPPORTED_JSON_NUMBER',`PARSE_JSON numeric token ${raw} is outside the finite safe-integer domain.`,STATUS.UNDETERMINED);};
-  let parseValue,parseObject,parseArray;
-  parseObject=()=>{i++;ws();const keys=new Set();if(source[i]==='}'){i++;return;}while(i<length){ws();const key=stringToken();if(keys.has(key))fail('DUPLICATE_JSON_MEMBER',`PARSE_JSON rejects duplicate object member ${key}.`,STATUS.UNDETERMINED);keys.add(key);ws();if(source[i++]!==':')error('Expected colon');parseValue();ws();if(source[i]==='}'){i++;return;}if(source[i++]!==',')error('Expected comma');}error('Unterminated object');};
-  parseArray=()=>{i++;ws();if(source[i]===']'){i++;return;}while(i<length){parseValue();ws();if(source[i]===']'){i++;return;}if(source[i++]!==',')error('Expected comma');}error('Unterminated array');};
-  parseValue=()=>{ws();const ch=source[i];if(ch==='"'){stringToken();return;}if(ch==='{'){parseObject();return;}if(ch==='['){parseArray();return;}if(source.startsWith('true',i)){i+=4;return;}if(source.startsWith('false',i)){i+=5;return;}if(source.startsWith('null',i)){i+=4;return;}if(ch==='-'||/\d/.test(ch||'')){numberToken();return;}error('Unexpected token');};
-  ws();parseValue();ws();if(i!==length)error('Trailing content');return true;
-}
-function exactDecimalParts(value){
-  if(value&&typeof value==='object'&&!Array.isArray(value)&&value.numberType==='DECIMAL')value=value.value;
-  const text=String(value);if(!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(text)||text==='-0'||/^-0(?:\.0+)?$/.test(text))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal value must be canonical plain decimal text with no exponent or negative zero.',STATUS.UNDETERMINED);
-  const neg=text[0]==='-',body=neg?text.slice(1):text,[whole,fraction='']=body.split('.'),scale=fraction.length,digits=BigInt((whole+fraction)||'0');return{sign:neg?-1n:1n,digits,scale};
-}
-function decimalAlign(a,b){const scale=Math.max(a.scale,b.scale),pow=n=>10n**BigInt(n);return{a:a.sign*a.digits*pow(scale-a.scale),b:b.sign*b.digits*pow(scale-b.scale),scale};}
-function decimalAbsDiff(a,b){const x=decimalAlign(exactDecimalParts(a),exactDecimalParts(b));return{digits:x.a>=x.b?x.a-x.b:x.b-x.a,scale:x.scale};}
-function decimalAbs(value){const p=exactDecimalParts(value);return{digits:p.digits,scale:p.scale};}
-function decimalMaxAbs(a,b){const aa=decimalAbs(a),bb=decimalAbs(b),x=decimalAlign({...aa,sign:1n},{...bb,sign:1n});return x.a>=x.b?{digits:x.a,scale:x.scale}:{digits:x.b,scale:x.scale};}
-function decimalMultiply(a,b){const aa=exactDecimalParts(a),bb=b&&b.digits!==undefined?b:decimalAbs(b);return{digits:aa.digits*bb.digits,scale:aa.scale+bb.scale};}
-function decimalLTE(left,right){const x=decimalAlign({sign:1n,digits:left.digits,scale:left.scale},{sign:1n,digits:right.digits,scale:right.scale});return x.a<=x.b;}
-function exactApproximate(actual,expected,step){const absTol=step.absTol??step.absoluteTolerance??'0',relTol=step.relTol??step.relativeTolerance??'0',diff=decimalAbsDiff(actual,expected),abs=decimalAbs(absTol),relProduct=decimalMultiply(relTol,decimalMaxAbs(actual,expected)),maxTol=decimalLTE(abs,relProduct)?relProduct:abs;return decimalLTE(diff,maxTol);}
-function sortDomain(values,declared){if(!values.length)return declared||'STRING';const inferred=typeof values[0]==='string'?'STRING':typeof values[0]==='boolean'?'BOOLEAN':Number.isSafeInteger(values[0])?'INTEGER':values[0]&&values[0].numberType==='DECIMAL'?'DECIMAL':null,domain=declared||inferred;if(!domain)fail('SORT_DOMAIN','SORT requires an explicit supported homogeneous domain.',STATUS.UNDETERMINED);const ok=v=>domain==='STRING'?typeof v==='string':domain==='BOOLEAN'?typeof v==='boolean':domain==='INTEGER'?Number.isSafeInteger(v):domain==='DECIMAL'&&v&&v.numberType==='DECIMAL';if(!values.every(ok))fail('SORT_DOMAIN','SORT input is not homogeneous in the declared domain.',STATUS.UNDETERMINED);return domain;}
-function compareSortValues(a,b,domain){if(domain==='STRING')return scalarCompare(a,b);if(domain==='BOOLEAN')return a===b?0:a?1:-1;if(domain==='INTEGER')return a===b?0:a<b?-1:1;if(domain==='DECIMAL')return compareDecimal(a.value,b.value);return 0;}
-
-function inspectStructure(value){
-  let nodes=0,maxDepth=0;const seen=new Set();const stack=[{value,depth:1}];
-  while(stack.length){const item=stack.pop();nodes++;maxDepth=Math.max(maxDepth,item.depth);if(nodes>LIMITS.maxParsedNodes)fail('PARSED_NODE_LIMIT','Parsed structure exceeds the registered node limit.');if(maxDepth>LIMITS.maxParsedDepth)fail('PARSED_DEPTH_LIMIT','Parsed structure exceeds the registered depth limit.');const current=item.value;if(!current||typeof current!=='object'||seen.has(current))continue;seen.add(current);if(Array.isArray(current)){if(current.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','Parsed array exceeds the registered collection limit.');for(const child of current)stack.push({value:child,depth:item.depth+1});}else for(const child of Object.values(current))stack.push({value:child,depth:item.depth+1});}
-  return {nodes,maxDepth};
-}
-
-function parseCsv(text,configuration){
-  const {delimiter,header,quote,newline,encoding}=configuration;if(encoding!=='UTF-8')fail('UNSUPPORTED_ENCODING','Version 1 CSV supports UTF-8 only.');
-  const rows=[];let row=[],cell='',quoted=false,cells=0,index=0;const source=String(text);
-  const newlineAt=position=>{if(newline==='LF')return source[position]==='\n'?1:0;if(newline==='CR')return source[position]==='\r'?1:0;if(newline==='CRLF')return source.startsWith('\r\n',position)?2:0;if(source.startsWith('\r\n',position))return 2;if(source[position]==='\n'||source[position]==='\r')return 1;return 0;};
-  const pushCell=()=>{row.push(cell);cell='';cells++;if(cells>LIMITS.maxCsvCells)fail('CSV_CELL_LIMIT','CSV exceeds the registered cell limit.');};
-  while(index<source.length){const ch=source[index];if(quoted){if(ch===quote&&source[index+1]===quote){cell+=quote;index+=2;continue;}if(ch===quote){quoted=false;index++;continue;}cell+=ch;index++;continue;}if(ch===quote){if(cell.length)fail('MALFORMED_CSV','CSV quote begins inside an unquoted field.');quoted=true;index++;continue;}if(ch===delimiter){pushCell();index++;continue;}const width=newlineAt(index);if(width){pushCell();rows.push(row);row=[];index+=width;continue;}cell+=ch;index++;}
-  if(quoted)fail('MALFORMED_CSV','CSV has an unterminated quoted field.');if(cell.length||row.length){pushCell();rows.push(row);}if(rows.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','CSV exceeds the registered row limit.');
-  if(!header)return rows;if(!rows.length)return [];const names=rows.shift();if(new Set(names).size!==names.length)fail('MALFORMED_CSV','CSV header names must be unique.');return rows.map((values,rowIndex)=>{if(values.length!==names.length)fail('MALFORMED_CSV',`CSV row ${rowIndex+2} has ${values.length} cells; expected ${names.length}.`);return Object.fromEntries(names.map((name,column)=>[name,values[column]]));});
-}
-
-function normalizeDecimal(value){
-  const text=String(value).trim();const match=text.match(/^([+-]?)(\d+)(?:\.(\d+))?$/);if(!match)return null;let whole=match[2].replace(/^0+(?=\d)/,'');let fraction=(match[3]||'').replace(/0+$/,'');if(whole==='0'&&!fraction)return '0';return `${match[1]==='-'?'-':''}${whole}${fraction?'.'+fraction:''}`;
-}
-function compareDecimal(left,right){
-  const a=normalizeDecimal(left),b=normalizeDecimal(right);if(a===null||b===null)fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal comparison requires plain decimal strings.',STATUS.UNDETERMINED);if(a===b)return 0;const negA=a.startsWith('-'),negB=b.startsWith('-');if(negA!==negB)return negA?-1:1;const aa=negA?a.slice(1):a,bb=negB?b.slice(1):b;const [aw,af='']=aa.split('.'),[bw,bf='']=bb.split('.');let result=aw.length!==bw.length?(aw.length<bw.length?-1:1):aw!==bw?(aw<bw?-1:1):af.padEnd(Math.max(af.length,bf.length),'0')===bf.padEnd(Math.max(af.length,bf.length),'0')?0:af.padEnd(Math.max(af.length,bf.length),'0')<bf.padEnd(Math.max(af.length,bf.length),'0')?-1:1;return negA?-result:result;
-}
-function isSafeIntegerValue(value){return typeof value==='number'&&Number.isSafeInteger(value);}
-function exactEqual(actual,expected,step){
-  const mode=step.numericMode;
-  if(mode==='DECIMAL_STRING')return compareDecimal(actual,expected)===0;
-  if(mode==='APPROXIMATE')return exactApproximate(actual,expected,step);
-  if(typeof actual==='number'||typeof expected==='number'){
-    if(!isSafeIntegerValue(actual)||!isSafeIntegerValue(expected))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit.',STATUS.UNDETERMINED);
-    return actual===expected;
-  }
-  return canonical(actual)===canonical(expected);
-}
-function orderedCompare(actual,expected){
-  if(isSafeIntegerValue(actual)&&isSafeIntegerValue(expected))return actual===expected?0:actual<expected?-1:1;
-  if(typeof actual==='string'&&typeof expected==='string'&&normalizeDecimal(actual)!==null&&normalizeDecimal(expected)!==null)return compareDecimal(actual,expected);
-  fail('UNSUPPORTED_NUMERIC_PRECISION','Ordered numeric comparison supports safe integers or plain decimal strings only.',STATUS.UNDETERMINED);
-}
-function validateType(value,type){
-  switch(type){
-    case 'string':return typeof value==='string';case 'boolean':return typeof value==='boolean';case 'array':return Array.isArray(value);
-    case 'binding':return typeof value==='string'&&/^[A-Z][A-Z0-9_]{0,63}$/.test(value);
-    case 'delimiter':return typeof value==='string'&&[...value].length===1&&!['\r','\n'].includes(value);
-    case 'quote':return typeof value==='string'&&[...value].length===1&&!['\r','\n'].includes(value);
-    case 'csvNewline':return ['AUTO','LF','CRLF','CR'].includes(value);
-    case 'utf8':return value==='UTF-8';case 'sortDirection':return ['ASC','DESC'].includes(value);case 'sortDomain':return ['STRING','BOOLEAN','INTEGER','DECIMAL'].includes(value);
-    case 'regex':return typeof value==='string';case 'regexFlags':return typeof value==='string';
-    case 'jsonSelector':try{parseJsonSelector(value);return true;}catch{return false;}
-    case 'xmlSelector':try{parseXmlSelector(value);return true;}catch{return false;}
-    case 'compareOperator':return ['EQ','NE','GT','GTE','LT','LTE'].includes(value);
-    case 'typeName':return ['string','number','boolean','object','array','null','undefined','bytes'].includes(value);
-    case 'numericMode':return ['INTEGER','DECIMAL_STRING','APPROXIMATE'].includes(value);
-    case 'exactNonnegativeDecimal':try{const p=exactDecimalParts(value);return p.sign>0n||p.digits===0n;}catch{return false;}case 'nonnegativeNumber':return typeof value==='number'&&Number.isFinite(value)&&value>=0;
-    default:return true;
-  }
-}
-function validateStep(step,index){
-  const issues=[];if(!step||typeof step!=='object'||Array.isArray(step))return [`Step ${index} must be an object.`];const definition=OP_DEFINITIONS[step.op];if(!definition)return [`Step ${index} uses unknown operation ${String(step.op)}.`];
-  const allowed=new Set(['op',...definition.required,...definition.optional]);for(const key of Object.keys(step))if(!allowed.has(key))issues.push(`Step ${index} operation ${step.op} contains unknown property ${key}.`);
-  for(const key of definition.required)if(!hasOwn(step,key))issues.push(`Step ${index} operation ${step.op} is missing required property ${key}.`);
-  for(const [key,type] of Object.entries(definition.types||{}))if(hasOwn(step,key)&&!validateType(step[key],type))issues.push(`Step ${index} operation ${step.op} has invalid ${key}.`);
-  for(const alternatives of definition.oneOf||[]){/* evaluated together below */}
-  if(definition.oneOf){const present=definition.oneOf.filter(group=>group.every(key=>hasOwn(step,key)));if(present.length!==1)issues.push(`Step ${index} operation ${step.op} requires exactly one of ${definition.oneOf.map(group=>group.join('+')).join(' or ')}.`);}
-  if((step.op==='REGEX'||step.op==='ASSERT_MATCH')&&typeof step.pattern==='string')issues.push(...validateRegex(step.pattern,step.flags).map(message=>`Step ${index}: ${message}`));
-  if(['COMPARE','ASSERT_EQ'].includes(step.op)&&step.numericMode==='APPROXIMATE'&&!['absTol','relTol','absoluteTolerance','relativeTolerance'].some(key=>hasOwn(step,key)))issues.push(`Step ${index} approximate comparison requires absTol, relTol, or an explicitly supported compatibility tolerance.`);
-  if(['COMPARE','ASSERT_EQ'].includes(step.op)&&typeof step.value==='number'&&!Number.isSafeInteger(step.value))issues.push(`Step ${index} numeric literals must be finite safe integers; use a typed DECIMAL value for precision-sensitive comparisons.`);
-  if(step.op==='PARSE_CSV'&&step.delimiter===step.quote)issues.push(`Step ${index} CSV delimiter and quote must differ.`);
-  return issues;
-}
-function validateSpec(spec,bindings){
-  const issues=[];
-  if(!spec||typeof spec!=='object'||Array.isArray(spec))return {valid:false,issues:['Test IR must be an object.']};
-  for(const key of Object.keys(spec))if(!['version','steps'].includes(key))issues.push(`Test IR contains unknown root property ${key}.`);
-  if(spec.version!==SPEC_VERSION)issues.push(`Unsupported Test IR version ${String(spec.version)}.`);
-  if(!Array.isArray(spec.steps)||!spec.steps.length)issues.push('Test IR requires a nonempty steps array.');
-  if((spec.steps?.length||0)>LIMITS.maxSteps)issues.push(`Test IR exceeds the ${LIMITS.maxSteps}-step limit.`);
-  for(const [index,step] of (spec.steps||[]).entries())issues.push(...validateStep(step,index));
-  if(Array.isArray(spec.steps)&&spec.steps.length&&!spec.steps.some(step=>ASSERTION_OPS.has(step?.op)))issues.push('Test IR must contain at least one registered assertion operation.');
-  if(bindings!==undefined){const bindingResult=validateBindings(bindings);issues.push(...bindingResult.issues);const declared=new Set(Object.keys(bindings||{}));for(const [index,step] of (spec.steps||[]).entries())if(step&&typeof step.binding==='string'&&!declared.has(step.binding))issues.push(`Step ${index} references undeclared binding ${step.binding}.`);}
-  return {valid:issues.length===0,issues};
-}
-function validateBindings(bindings){
-  const issues=[];if(!bindings||typeof bindings!=='object'||Array.isArray(bindings))return {valid:false,issues:['EXECUTABLE_INPUT_BINDINGS must be a closed object.']};
-  for(const [name,binding] of Object.entries(bindings)){
-    if(!/^[A-Z][A-Z0-9_]{0,63}$/.test(name))issues.push(`Invalid Test IR binding name ${name}.`);
-    if(typeof binding==='string'){if(!binding.trim())issues.push(`Binding ${name} cannot be empty.`);continue;}
-    if(!binding||typeof binding!=='object'||Array.isArray(binding)){issues.push(`Binding ${name} must be an artifact ID string or a closed binding object.`);continue;}
-    const allowed=new Set(['kind','artifactId','source','artifactRole','filename','expectedSha256','canonicalKey','valueSha256']);for(const key of Object.keys(binding))if(!allowed.has(key))issues.push(`Binding ${name} contains unknown property ${key}.`);
-    const kind=binding.kind||'ARTIFACT';if(!['ARTIFACT','CANONICAL_VALUE'].includes(kind))issues.push(`Binding ${name} has unsupported kind ${kind}.`);
-    if(kind==='ARTIFACT'&&!binding.artifactId&&!binding.artifactRole&&!binding.filename)issues.push(`Binding ${name} does not identify an artifact.`);
-    if(kind==='CANONICAL_VALUE'&&!binding.canonicalKey)issues.push(`Binding ${name} does not identify an immutable canonical value.`);
-    if(binding.source&&!['CURRENT_PRODUCT','CURRENT_SCOPE','EXPLICIT_ARTIFACT'].includes(binding.source))issues.push(`Binding ${name} has unsupported source ${binding.source}.`);
-    if(binding.expectedSha256&&!/^[0-9a-f]{64}$/.test(binding.expectedSha256))issues.push(`Binding ${name} expectedSha256 is invalid.`);
-    if(binding.valueSha256&&!/^[0-9a-f]{64}$/.test(binding.valueSha256))issues.push(`Binding ${name} valueSha256 is invalid.`);
-  }
-  return {valid:issues.length===0,issues};
-}
-function normalizeSpec(spec){
-  const check=validateSpec(spec);if(!check.valid)fail('INVALID_TEST_IR',check.issues.join(' '));
-  return {version:SPEC_VERSION,steps:spec.steps.map(step=>Object.fromEntries(Object.entries(step).sort(([a],[b])=>a==='op'?-1:b==='op'?1:a.localeCompare(b))))};
-}
-function supports(test){
-  if(String(field(test,'EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;
-  if(String(field(test,'REQUIRED_CAPABILITY')||'').toUpperCase()!==CAPABILITY)return false;
-  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!==EXECUTABLE_KIND)return false;
-  if(field(test,'EXECUTABLE_SPEC_VERSION')!==SPEC_VERSION)return false;
-  return validateSpec(field(test,'EXECUTABLE_SPEC'),field(test,'EXECUTABLE_INPUT_BINDINGS')).valid;
-}
-function resolveBinding(name,artifacts,canonicalBindings){
-  if(hasOwn(artifacts||{},name))return {kind:'ARTIFACT',value:artifacts[name]};
-  if(hasOwn(canonicalBindings||{},name))return {kind:'CANONICAL_VALUE',value:canonicalBindings[name]};
-  fail('MISSING_BINDING',`Required binding ${name} is unavailable.`);
-}
-function valueFromBinding(name,artifacts,canonicalBindings){const resolved=resolveBinding(name,artifacts,canonicalBindings);return resolved.kind==='ARTIFACT'?(resolved.value?.value??resolved.value):resolved.value?.value??resolved.value;}
-function collection(value,op){if(!Array.isArray(value))fail('COLLECTION_REQUIRED',`${op} requires an array.`);if(value.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT',`${op} input exceeds the registered collection limit.`);return value;}
-function resultForAssertion(ok,expected,actual,message){return {determination:ok?STATUS.SATISFIED:STATUS.VIOLATED,expected,actual,message:message||null};}
-
-async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
-  const normalized=normalizeSpec(spec);const bindingCheck=validateBindings(metadata.bindings||Object.fromEntries([...Object.keys(artifacts),...Object.keys(canonicalBindings)].map(key=>[key,{kind:hasOwn(artifacts,key)?'ARTIFACT':'CANONICAL_VALUE',artifactId:hasOwn(artifacts,key)?String(artifacts[key]?.artifactId||key):undefined,canonicalKey:hasOwn(canonicalBindings,key)?key:undefined}])));if(!bindingCheck.valid)fail('INVALID_BINDINGS',bindingCheck.issues.join(' '));
-  const uniqueBuffers=new Set();let totalInputBytes=0;for(const artifact of Object.values(artifacts||{})){const bytes=bytesOf(artifact?.bytes??artifact);if(bytes&&!uniqueBuffers.has(bytes.buffer)){uniqueBuffers.add(bytes.buffer);totalInputBytes+=bytes.byteLength;}}
-  const envelope=validateResourceEnvelope({totalInputBytes});if(!envelope.valid)fail('INPUT_BYTE_LIMIT',envelope.issues.join(' '));
-  let value=null,current=null;const observations=[];let finalAssertion=null;const inputArtifactIds=[];const inputArtifactSha256Values=[];
-  /* PREHASH_EVERY_BOUND_ARTIFACT: every consumed package input is identity-bound, even when a comparison operation references it without LOAD_ARTIFACT. */
-  for(const [bindingName,artifact] of Object.entries(artifacts||{})){const bytes=bytesOf(artifact?.bytes??artifact);if(!bytes)continue;const calculated=await sha256(bytes);if(artifact?.sha256&&String(artifact.sha256).toLowerCase()!==calculated)fail('ARTIFACT_HASH_MISMATCH',`Artifact ${artifact.artifactId||bindingName} bytes do not match its declared SHA-256.`);inputArtifactIds.push(String(artifact?.artifactId||bindingName));inputArtifactSha256Values.push(calculated);}
-  for(const [index,step] of normalized.steps.entries()){
-    switch(step.op){
-      case 'LOAD_ARTIFACT':{
-        const resolved=resolveBinding(step.binding,artifacts,canonicalBindings);current=resolved;value=resolved.kind==='CANONICAL_VALUE'?(resolved.value?.value??resolved.value):resolved.value;
-        if(resolved.kind==='ARTIFACT'){const artifact=resolved.value;const bytes=bytesOf(artifact?.bytes??artifact);const calculated=bytes?await sha256(bytes):null;if(artifact?.sha256&&calculated&&String(artifact.sha256).toLowerCase()!==calculated)fail('ARTIFACT_HASH_MISMATCH',`Artifact ${artifact.artifactId||step.binding} bytes do not match its declared SHA-256.`);inputArtifactIds.push(String(artifact?.artifactId||step.binding));inputArtifactSha256Values.push(calculated||String(artifact?.sha256||''));observations.push({step:index,op:step.op,binding:step.binding,bindingKind:'ARTIFACT',artifactId:artifact?.artifactId||null,filename:artifact?.filename||null,sha256:calculated||artifact?.sha256||null});}
-        else observations.push({step:index,op:step.op,binding:step.binding,bindingKind:'CANONICAL_VALUE'});
-        break;
-      }
-      case 'READ_BYTES':{const bytes=bytesOf(current?.kind==='ARTIFACT'?(current.value?.bytes??current.value):value);if(!bytes)fail('BYTES_REQUIRED','READ_BYTES requires a byte-backed artifact binding.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
-      case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)fail('BYTES_REQUIRED','DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxTextBytes)fail('TEXT_BYTE_LIMIT','UTF-8 input exceeds the registered text-byte limit.');if(bytes.byteLength>LIMITS.maxDecompressedBytes)fail('DECOMPRESSED_BYTE_LIMIT','UTF-8 input exceeds the registered decompressed-byte limit.');try{value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{fail('INVALID_UTF8','Input is not valid UTF-8.',STATUS.UNDETERMINED);}break;}
-      case 'PARSE_JSON':{const source=String(value);validateJsonSourceExact(source);try{value=JSON.parse(source);}catch(error){fail('MALFORMED_JSON',`JSON parse failed: ${error.message}`,STATUS.UNDETERMINED);}inspectStructure(value);break;}
-      case 'PARSE_CSV':value=parseCsv(String(value),step);inspectStructure(value);break;
-      case 'PARSE_XML':value=parseXml(String(value));inspectStructure(value);break;
-      case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;
-      case 'SELECT_XML':value=selectXml(value,step.path);break;
-      case 'COUNT':{if(value==null||typeof value.length!=='number')fail('COUNT_INPUT','COUNT requires an array, string, or array-like value.',STATUS.UNDETERMINED);if(value.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','COUNT input exceeds the registered collection limit.');value=value.length;break;}
-      case 'SUM':case 'MIN':case 'MAX':{const values=collection(value,step.op);if(!values.every(isSafeIntegerValue))fail('UNSUPPORTED_NUMERIC_PRECISION',`${step.op} supports safe integers only in version 1.`,STATUS.UNDETERMINED);value=step.op==='SUM'?values.reduce((sum,item)=>{const next=sum+item;if(!Number.isSafeInteger(next))fail('INTEGER_OVERFLOW','SUM exceeded exact safe-integer range.',STATUS.UNDETERMINED);return next;},0):step.op==='MIN'?Math.min(...values):Math.max(...values);break;}
-      case 'SORT':{const direction=step.direction||'ASC',items=[...collection(value,'SORT')],domain=sortDomain(items,step.domain);value=items.sort((a,b)=>compareSortValues(a,b,domain));if(direction==='DESC')value.reverse();break;}
-      case 'UNIQUE':{const seen=new Set();value=collection(value,'UNIQUE').filter(item=>{const key=canonical(item);if(seen.has(key))return false;seen.add(key);return true;});break;}
-      case 'HASH_SHA256':value=await sha256(value);break;
-      case 'REGEX':{const input=String(value);if(byteLength(input)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds the registered byte limit.');const regexIssues=validateRegex(step.pattern,step.flags);if(regexIssues.length)fail('UNSAFE_REGEX',regexIssues.join(' '));value=new RegExp(step.pattern,step.flags||'').test(input);break;}
-      case 'COMPARE':{const expected=hasOwn(step,'value')?step.value:valueFromBinding(step.binding,artifacts,canonicalBindings);const operator=step.operator||'EQ';const cmp=['EQ','NE'].includes(operator)?null:orderedCompare(value,expected);if(operator==='EQ')value=exactEqual(value,expected,step);else if(operator==='NE')value=!exactEqual(value,expected,step);else if(operator==='GT')value=cmp>0;else if(operator==='GTE')value=cmp>=0;else if(operator==='LT')value=cmp<0;else value=cmp<=0;break;}
-      case 'BYTE_COMPARE':{const left=bytesOf(value),resolved=resolveBinding(step.binding,artifacts,canonicalBindings),right=bytesOf(resolved.kind==='ARTIFACT'?(resolved.value?.bytes??resolved.value):resolved.value?.value??resolved.value);if(!left||!right)fail('BYTES_REQUIRED','BYTE_COMPARE requires byte-backed current and target bindings.');let equal=left.byteLength===right.byteLength;if(equal)for(let i=0;i<left.byteLength;i++)if(left[i]!==right[i]){equal=false;break;}value=equal;break;}
-      case 'ASSERT_EXISTS':finalAssertion=resultForAssertion(value!==null&&value!==undefined,'present',value,step.message);break;
-      case 'ASSERT_TYPE':{const actual=bytesOf(value)?'bytes':Array.isArray(value)?'array':value===null?'null':typeof value;finalAssertion=resultForAssertion(actual===step.value,step.value,actual,step.message);break;}
-      case 'ASSERT_NE':finalAssertion=resultForAssertion(!exactEqual(value,step.value,step),`not ${canonical(step.value)}`,value,step.message);break;
-      case 'ASSERT_EQ':finalAssertion=resultForAssertion(exactEqual(value,step.value,step),step.value,value,step.message);break;
-      case 'ASSERT_GT':finalAssertion=resultForAssertion(orderedCompare(value,step.value)>0,`> ${step.value}`,value,step.message);break;
-      case 'ASSERT_GTE':finalAssertion=resultForAssertion(orderedCompare(value,step.value)>=0,`>= ${step.value}`,value,step.message);break;
-      case 'ASSERT_LT':finalAssertion=resultForAssertion(orderedCompare(value,step.value)<0,`< ${step.value}`,value,step.message);break;
-      case 'ASSERT_LTE':finalAssertion=resultForAssertion(orderedCompare(value,step.value)<=0,`<= ${step.value}`,value,step.message);break;
-      case 'ASSERT_MATCH':{const input=String(value);if(byteLength(input)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds the registered byte limit.');const regexIssues=validateRegex(step.pattern,step.flags);if(regexIssues.length)fail('UNSAFE_REGEX',regexIssues.join(' '));finalAssertion=resultForAssertion(new RegExp(step.pattern,step.flags||'').test(input),`matches /${step.pattern}/${step.flags||''}`,value,step.message);break;}
-      case 'ASSERT_CONTAINS':{const ok=Array.isArray(value)?value.some(item=>canonical(item)===canonical(step.value)):String(value).includes(String(step.value));finalAssertion=resultForAssertion(ok,`contains ${canonical(step.value)}`,value,step.message);break;}
-      case 'ASSERT_NOT_CONTAINS':{const ok=Array.isArray(value)?!value.some(item=>canonical(item)===canonical(step.value)):!String(value).includes(String(step.value));finalAssertion=resultForAssertion(ok,`does not contain ${canonical(step.value)}`,value,step.message);break;}
-      case 'ASSERT_SET_EQUAL':{const actual=collection(value,'ASSERT_SET_EQUAL');const left=[...new Set(actual.map(canonical))].sort(),right=[...new Set(step.value.map(canonical))].sort();finalAssertion=resultForAssertion(canonical(left)===canonical(right),step.value,actual,step.message);break;}
-      default:fail('UNKNOWN_OPERATION',`Unsupported Test IR operation ${step.op}.`);
-    }
-    if(finalAssertion){observations.push({step:index,op:step.op,...finalAssertion});if(finalAssertion.determination===STATUS.VIOLATED)break;}
-  }
-  const testSpecSha256=await sha256Canonical(normalized);
-  return {
-    testId:metadata.testId||null,
-    testSpecVersion:SPEC_VERSION,
-    testSpecSha256,
-    status:'COMPLETE',
-    determination:finalAssertion?.determination||STATUS.UNDETERMINED,
-    expected:finalAssertion?.expected??null,
-    actual:finalAssertion?.actual??value,
-    observations,
-    evidence:[{kind:'APPLICATION_NATIVE_RUNTIME_OBSERVATION',testSpecSha256,inputArtifactIds:[...new Set(inputArtifactIds)],inputArtifactSha256Values:[...new Set(inputArtifactSha256Values)]}],
-    executorVersion:VERSION,
-    runtimeVersion:VERSION,
-    inputArtifactIds:[...new Set(inputArtifactIds)],
-    inputArtifactSha256Values:[...new Set(inputArtifactSha256Values)]
-  };
-}
-
-function workerUrl(){
-  const source=typeof document!=='undefined'?document.currentScript?.src:null;const base=source||root.location?.href;if(!base)return 'test-worker.js';const url=new URL('test-worker.js',base);if(source)url.search=new URL(source).search;return url.href;
-}
-function executionFailure(test,startedAtDeviceTime,error){
-  const disposition=error?.disposition===STATUS.UNDETERMINED?STATUS.UNDETERMINED:STATUS.EXECUTION_FAILED;
-  return {testId:field(test,'TEST_ID')||test?.testId||null,testSpecVersion:SPEC_VERSION,testSpecSha256:null,status:disposition,determination:STATUS.UNDETERMINED,expected:null,actual:null,observations:[],evidence:[],executorVersion:VERSION,runtimeVersion:VERSION,inputArtifactIds:[],inputArtifactSha256Values:[],startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString(),failure:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error)}};
-}
-function executeTest(test,artifacts,canonicalBindings,options={}){
-  const spec=field(test,'EXECUTABLE_SPEC');const bindings=field(test,'EXECUTABLE_INPUT_BINDINGS');const check=validateSpec(spec,bindings);const startedAtDeviceTime=new Date().toISOString();if(!check.valid)return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('INVALID_TEST_IR',check.issues.join(' '))));
-  const WorkerClass=options.Worker||root.Worker;if(typeof WorkerClass!=='function')return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_UNAVAILABLE','The isolated Test IR worker is unavailable.')));
-  return new Promise(resolve=>{
-    const requestId=`test-ir-${Date.now()}-${Math.random().toString(36).slice(2)}`;let settled=false;const worker=new WorkerClass(options.workerUrl||workerUrl());
-    const finish=result=>{if(settled)return;settled=true;clearTimeout(timer);try{worker.terminate();}catch{}resolve(result);};
-    const timer=setTimeout(()=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_TIMEOUT',`Test IR worker exceeded ${LIMITS.workerTimeoutMs} ms.`))),Number(options.timeoutMs||LIMITS.workerTimeoutMs));
-    worker.onmessage=event=>{const message=event?.data||{};if(message.requestId!==requestId)return;if(message.ok){finish({...message.result,startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString()});}else finish(executionFailure(test,startedAtDeviceTime,new RuntimeError(message.error?.code||'WORKER_EXECUTION_FAILED',message.error?.message||'Worker execution failed.',message.error?.disposition||STATUS.EXECUTION_FAILED)));};
-    worker.onerror=event=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_ERROR',event?.message||'Test IR worker failed.')));
-    try{worker.postMessage({type:'EXECUTE_TEST_IR',requestId,spec:normalizeSpec(spec),bindings,artifacts:artifacts||{},canonicalBindings:canonicalBindings||{},metadata:{testId:field(test,'TEST_ID')||test?.testId||null,bindings}});}catch(error){finish(executionFailure(test,startedAtDeviceTime,error));}
-  });
-}
-
-const operationContracts=()=>JSON.parse(JSON.stringify(OP_DEFINITIONS));
-const capabilities=()=>Object.freeze([CAPABILITY]);
-root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,OPS,OP_DEFINITIONS,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope});
-})();
-
-/* INTEGRATED CONTROLLING COMPLETION 53-70 */
-;(()=>{
-'use strict';
-const r0=globalThis.closedLoopTestRuntime;
-if(!r0)throw new Error('Base Test IR runtime must load before integrated completion runtime.');
-const VERSION='closed-loop-controlling-completion/53-70/1',safe=v=>Array.isArray(v)?v:[],up=v=>String(v==null?'':v).trim().toUpperCase(),fv=(r,k)=>r?.fields?.[k]??r?.[k];
-function exactIssues(spec){const out=[];const walk=(v,path='$')=>{if(typeof v==='number'&&(!Number.isSafeInteger(v)||Object.is(v,-0)))out.push(`${path} contains an unsupported numeric literal; use an exact typed number representation.`);if(Array.isArray(v))v.forEach((x,i)=>walk(x,`${path}[${i}]`));else if(v&&typeof v==='object')for(const[k,x]of Object.entries(v))walk(x,`${path}.${k}`);};walk(spec);return out;}function validate(spec){let b;try{b=r0.validateSpec(spec);}catch(err){return{valid:false,issues:[String(err?.message||err)]};}const issues=[...(b?.issues||[]),...exactIssues(spec)];return{...b,valid:issues.length===0,issues:[...new Set(issues)]};}const runtime=Object.freeze({...r0,VERSION:'closed-loop-test-runtime/3',__controllingCompletionAmendmentVersion:VERSION,validateSpec:validate,supports:test=>{const spec=fv(test,'EXECUTABLE_SPEC')||test?.EXECUTABLE_SPEC;return validate(spec).valid&&r0.supports(test);},execute:async (request,...args)=>{const spec=request?.spec??request;const v=validate(spec);if(!v.valid)throw new r0.RuntimeError('UNSUPPORTED_EXACT_SEMANTICS',v.issues.join(' '));return r0.execute(request,...args);},executeTest:async (test,...args)=>{const spec=fv(test,'EXECUTABLE_SPEC')||test?.EXECUTABLE_SPEC,v=validate(spec);if(!v.valid)throw new r0.RuntimeError('UNSUPPORTED_EXACT_SEMANTICS',v.issues.join(' '));return r0.executeTest(test,...args);}});globalThis.closedLoopTestRuntime=runtime;
-})();
+async function sha256(bytes){const b=bytesOf(bytes);if(!b)fail('BYTES_REQUIRED','SHA-256 requires bytes.');return hash.sha256Bytes(b);}
+const sha256Canonical=value=>Promise.resolve(hash.sha256Value(value)),canonical=value=>hash.stableStringify(value),byteLength=value=>encoder.encode(String(value)).byteLength;
+function validateResourceEnvelope(claim={}){const issues=[];const allowed=new Set(['totalInputBytes','decompressedBytes','archiveExpansionBytes']);for(const k of Object.keys(claim||{}))if(!allowed.has(k))issues.push('Unknown resource-envelope property '+k+'.');for(const [key,limit] of [['totalInputBytes','maxTotalInputBytes'],['decompressedBytes','maxDecompressedBytes'],['archiveExpansionBytes','maxArchiveExpansionBytes']])if(hasOwn(claim,key)){const v=claim[key];if(!Number.isSafeInteger(v)||v<0)issues.push(key+' must be a nonnegative safe integer.');else if(v>LIMITS[limit])issues.push(key+' exceeds '+limit+'.');}return{valid:issues.length===0,issues};}
+function inspectStructure(value){let nodes=0,maxDepth=0;const seen=new Set(),stack=[{value,depth:1}];while(stack.length){const {value:v,depth}=stack.pop();nodes++;maxDepth=Math.max(maxDepth,depth);if(nodes>LIMITS.maxParsedNodes)fail('PARSED_NODE_LIMIT','Parsed structure exceeds node limit.');if(depth>LIMITS.maxParsedDepth)fail('PARSED_DEPTH_LIMIT','Parsed structure exceeds depth limit.');if(!v||typeof v!=='object'||seen.has(v))continue;seen.add(v);if(Array.isArray(v)){if(v.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','Collection exceeds limit.');v.forEach(x=>stack.push({value:x,depth:depth+1}));}else Object.values(v).forEach(x=>stack.push({value:x,depth:depth+1}));}return{nodes,maxDepth};}
+function validateRegex(pattern,flags=''){const issues=[];const text=String(pattern),f=String(flags||'');if(byteLength(text)>LIMITS.maxRegexPatternBytes)issues.push('Regex pattern exceeds the registered byte limit.');if(!/^[imsu]*$/.test(f)||new Set(f).size!==f.length)issues.push('Regex flags must be a unique subset of i, m, s, and u.');if(/\\[{1-9}|\\k</.test(text))issues.push('Regex backreferences are prohibited.');if(/\(\?(?:=|!|<=|<!|<[^=!])/.test(text))issues.push('Regex lookaround and named groups are prohibited.');if(/\\[pP]\{/.test(text))issues.push('Unicode property escapes are prohibited.');try{if(!issues.length)new RegExp(text,f);}catch(e){issues.push('Regex is invalid: '+e.message);}return issues;}
+function parseJsonSelector(path){const text=String(path||'');if(text==='$')return[];if(!text.startsWith('$'))fail('UNSUPPORTED_JSON_SELECTOR','JSON selector must start with $.');const parts=[];let i=1;while(i<text.length){if(text[i]==='.'){i++;if(text[i]==='*'){parts.push({kind:'wildcard'});i++;continue;}const m=text.slice(i).match(/^[A-Za-z_][A-Za-z0-9_:-]*/);if(!m)fail('UNSUPPORTED_JSON_SELECTOR','Invalid child identifier.');parts.push({kind:'key',key:m[0]});i+=m[0].length;continue;}if(text[i]===''){if(text[i+1]==="'"){let j=i+2,key='';for(;j<text.length;j++){if(text[j]==='\\'){j++;if(j>=text.length)fail('UNSUPPORTED_JSON_SELECTOR','Bad bracket escape.');key+=text[j];continue;}if(text[j]==="'"&&text[j+1]===']')e‰É•…¬í­•ä¬õÑ•áÑm©tíõ¥˜¡¨øõÑ•áĞ¹±•¹Ñ ¥™…¥° U9MUAA=IQ})M=9}M1Q=Hœ°U¹±½Í•‰É…­•Ğ¹…µ”¸œ¤íÁ…ÉÑÌ¹ÁÕÍ ¡í­¥¹è­•äœ±­•åô¤í¤õ¨¬Èí½¹Ñ¥¹Õ”íõ¥˜¡Ñ•áÑm¤¬Åtôôôœ¨œ˜™Ñ•áÑm¤¬Étôôôtœ¥íÁ…ÉÑÌ¹ÁÕÍ ¡í­¥¹èİ¥±‘…Éô¤í¤¬ôÌí½¹Ñ¥¹Õ”íõ½¹ÍĞ•¹õÑ•áĞ¹¥¹‘•á=˜ tœ±¤¬Ä¤í¥˜¡•¹ğÀ¥™…¥° U9MUAA=IQ})M=9}M1Q=Hœ°U¹±½Í•…ÉÉ…ä¥¹‘•à¸œ¤í½¹ÍĞÉ…ÜõÑ•áĞ¹Í±¥”¡¤¬Ä±•¹¤í¥˜ „½x ÁñlÄ´åuq¨¤¼¹Ñ•ÍĞ¡É…Ü¤¥™…¥° U9MUAA=IQ})M=9}M1Q=Hœ°=¹±ä¹½¹¹•…Ñ¥Ù”…ÉÉ…ä¥¹‘•á•Ì…É”ÍÕÁÁ½ÉÑ•¸œ¤íÁ…ÉÑÌ¹ÁÕÍ ¡í­¥¹è¥¹‘•àœ±¥¹‘•àé9Õµ‰•È¡É…Ü¥ô¤í¤õ•¹¬Äí½¹Ñ¥¹Õ”íõ™…¥° U9MUAA=IQ})M=9}M1Q=Hœ°U¹ÍÕÁÁ½ÉÑ•)M=8Í•±•Ñ½ÈÍå¹Ñ…à¸œ¤íõ¥˜¡Á…ÉÑÌ¹±•¹Ñ ù1%5%QL¹µ…áM•±•Ñ½É•ÁÑ ¥™…¥° M1Q=I}1%5%Pœ°M•±•Ñ½È‘•ÁÑ ±¥µ¥Ğ•á••‘•¸œ¤íÉ•ÑÕÉ¸Á…ÉÑÌíô)™Õ¹Ñ¥½¸Í•±•Ñ)Í½¹A…Ñ ¡Ù…±Õ”±Á…Ñ ¥í±•ĞÕÉÉ•¹ĞõmÙ…±Õ•tí™½È¡½¹ÍĞÁ…ÉĞ½˜Á…ÉÍ•)Í½¹M•±•Ñ½È¡Á…Ñ ¤¥í½¹ÍĞ¹•áĞõmtí™½È¡½¹ÍĞØ½˜ÕÉÉ•¹Ğ¥í¥˜¡Á…ÉĞ¹­¥¹ôôô­•äœ¥í¥˜¡Ø˜™ÑåÁ•½˜Ø€ôôô€½‰©•Ğœ˜™¡…Í=İ¸¡Ø±Á…ÉĞ¹­•ä¤¥¹•áĞ¹ÁÕÍ ¡ÙmÁ…ÉĞ¹­•åt¤íõ•±Í”¥˜¡Á…ÉĞ¹­¥¹ôôô¥¹‘•àœ¥í¥˜¡ÉÉ…ä¹¥ÍÉÉ…ä¡Ø¤˜™Á…ÉĞ¹¥¹‘•àñØ¹±•¹Ñ ¥¹•áĞ¹ÁÕÍ ¡ÙmÁ…ÉĞ¹¥¹‘•át¤íõ•±Í”¥˜¡ÉÉ…ä¹¥ÍÉÉ…ä¡Ø¤¥¹•áĞ¹ÁÕÍ  ¸¸¹Ø¤í•±Í”¥˜¡Ø˜™ÑåÁ•½˜Øôôô½‰©•Ğœ¥¹•áĞ¹ÁÕÍ  ¸¸¹=‰©•Ğ¹Ù…±Õ•Ì¡Ø¤¤íõ¥˜ …¹•áĞ¹±•¹Ñ ¥™…¥° )M=9}AQ!}5%MM%9œ°)M=8Í•±•Ñ½È‘½•Ì¹½ĞÉ•Í½±Ù”è€œ­Á…Ñ ¬œ¸œ±MQQUL¹U9QI5%9¤íÕÉÉ•¹Ğõ¹•áĞíõÉ•ÑÕÉ¸ÕÉÉ•¹Ğ¹±•¹Ñ ôôôÄıÕÉÉ•¹ÑlÁtéÕÉÉ•¹Ğíô)™Õ¹Ñ¥½¸‘•½‘•aµ±¹Ñ¥Ñä¡•¹Ñ¥Ñä¥í½¹ÍĞ­¹½İ¸õí…µÀèœ˜œ±±Ğèœğœ±Ğèœøœ±ÅÕ½Ğèœˆœ±…Á½Ìèˆœ‰ôí¥˜¡¡…Í=İ¸¡­¹½İ¸±•¹Ñ¥Ñä¤¥É•ÑÕÉ¸­¹½İ¹m•¹Ñ¥Ñåtí¥˜ ½yqp¬¼¹Ñ•ÍĞ¡•¹Ñ¥Ñä¤¥í½¹ÍĞŒõ9Õµ‰•È¡•¹Ñ¥Ñä¹Í±¥” Ä¤¤í¥˜¡9Õµ‰•È¹¥Í%¹Ñ••È¡Œ¤˜™ŒğôÁàÄÁ™™™˜¥É•ÑÕÉ¸MÑÉ¥¹œ¹™É½µ½‘•A½¥¹Ğ¡Œ¤íõ¥˜ ½yálÀ´å„µ™t¬½¤¹Ñ•ÍĞ¡•¹Ñ¥Ñä¤¥í½¹ÍĞŒõÁ…ÉÍ•%¹Ğ¡•¹Ñ¥Ñä¹Í±¥” È¤°ÄØ¤í¥˜¡9Õµ‰•È¹¥Í%¹Ñ••È¡Œ¤˜™ŒğôÁàÄÁ™™™˜¥É•ÑÕÉ¸MÑÉ¥¹œ¹™É½µ½‘•A½¥¹Ğ¡Œ¤íõ™…¥° U9MUAA=IQ}a51}9Q%Qdœ°U¹ÍÕÁÁ½ÉÑ•a50•¹Ñ¥Ñä¸œ¤íô)½¹ÍĞ‘•½‘•aµ±Q•áĞõÑ•áĞôùMÑÉ¥¹œ¡Ñ•áĞ¤¹É•Á±…” ¼˜¡mxít¬¤ì½œ°¡|±”¤ôù‘•½‘•aµ±¹Ñ¥Ñä¡”¤¤ì)™Õ¹Ñ¥½¸Á…ÉÍ•aµ±ÑÑÉ¥‰ÕÑ•Ì¡Í½ÕÉ”¥í½¹ÍĞ…ÑÑÉ¥‰ÕÑ•Ìõíôí±•ĞÉ•ÍĞõMÑÉ¥¹œ¡Í½ÕÉ•ñğœœ¤¹ÑÉ¥´ ¤íİ¡¥±”¡É•ÍĞ¥í½¹ÍĞ´õÉ•ÍĞ¹µ…Ñ  ½x¡mµi„µé}umµi„µèÀ´å|¸èµt¨¥qÌ¨õqÌ¨ ‰mx‰t¨‰ğmxt¨œ¥qÌ¨¼¤í¥˜ …´¥™…¥° 51=I5}a50œ°5…±™½Éµ•a50…ÑÑÉ¥‰ÕÑ”Ñ•áĞ¸œ¤í¥˜¡¡…Í=İ¸¡…ÑÑÉ¥‰ÕÑ•Ì±µlÅt¤¥™…¥° 51=I5}a50œ°ÕÁ±¥…Ñ”a50…ÑÑÉ¥‰ÕÑ”¸œ¤í…ÑÑÉ¥‰ÕÑ•ÍmµlÅutõ‘•½‘•aµ±Q•áĞ¡µlÉt¹Í±¥” Ä°´Ä¤¤íÉ•ÍĞõÉ•ÍĞ¹Í±¥”¡µlÁt¹±•¹Ñ ¤íõÉ•ÑÕÉ¸…ÑÑÉ¥‰ÕÑ•Ìíô)™Õ¹Ñ¥½¸Á…ÉÍ•aµ°¡Ñ•áĞ¥í±•ĞÍ½ÕÉ”õMÑÉ¥¹œ¡Ñ•áÑñğœœ¤í¥˜ ¼ğ…=QeAğğ…9Q%Qd½¤¹Ñ•ÍĞ¡Í½ÕÉ”¤¥™…¥° U9M}a50œ°Q…¹•¹Ñ¥Ñä‘•±…É…Ñ¥½¹Ì…É”ÁÉ½¡¥‰¥Ñ•¸œ¤íÍ½ÕÉ”õÍ½ÕÉ”¹É•Á±…” ½yqÕıqÌ¨ñpıáµ±qÍmxıt©püùmÍt¨½¤°œœ¤í½¹ÍĞ‘½Œõí¹…µ”èœ‘½Õµ•¹Ğœ±…ÑÑÉ¥‰ÕÑ•Ìéíô±¡¥±‘É•¸émt±Ñ•áÑA…ÉÑÌémuô±ÍÑ…¬õm‘½tí±•Ğ¹½‘•ÌôÀ±¥¹‘•àôÀí½¹ÍĞ…ÁÁ•¹õĞôùí¥˜¡Ğ¥ÍÑ…¬¹…Ğ ´Ä¤¹Ñ•áÑA…ÉÑÌ¹ÁÕÍ ¡‘•½‘•aµ±Q•áĞ¡Ğ¤¤íôíİ¡¥±”¡¥¹‘•àñÍ½ÕÉ”¹±•¹Ñ ¥í½¹ÍĞ½Á•¸õÍ½ÕÉ”¹¥¹‘•á=˜ œğœ±¥¹‘•à¤í¥˜¡½Á•¸ğÀ¥í…ÁÁ•¹¡Í½ÕÉ”¹Í±¥”¡¥¹‘•à¤¤í‰É•…¬íõ…ÁÁ•¹¡Í½ÕÉ”¹Í±¥”¡¥¹‘•à±½Á•¸¤¤í¥˜¡Í½ÕÉ”¹ÍÑ…ÉÑÍ]¥Ñ  œğ„´´œ±½Á•¸¤¥í½¹ÍĞ•¹õÍ½ÕÉ”¹¥¹‘•á=˜ œ´´øœ±½Á•¸¬Ğ¤í¥˜¡•¹ğÀ¥™…¥° 51=I5}a50œ°U¹Ñ•Éµ¥¹…Ñ•a50½µµ•¹Ğ¸œ¤í¥¹‘•àõ•¹¬Ìí½¹Ñ¥¹Õ”íõ¥˜¡Í½ÕÉ”¹ÍÑ…ÉÑÍ]¥Ñ  œğ…mQlœ±½Á•¸¤¥í½¹ÍĞ•¹õÍ½ÕÉ”¹¥¹‘•á=˜ utøœ±½Á•¸¬ä¤í¥˜¡•¹ğÀ¥™…¥° 51=I5}a50œ°U¹Ñ•Éµ¥¹…Ñ•Q¸œ¤íÍÑ…¬¹…Ğ ´Ä¤¹Ñ•áÑA…ÉÑÌ¹ÁÕÍ ¡Í½ÕÉ”¹Í±¥”¡½Á•¸¬ä±•¹¤¤í¥¹‘•àõ•¹¬Ìí½¹Ñ¥¹Õ”íõ¥˜¡Í½ÕÉ”¹ÍÑ…ÉÑÍ]¥Ñ  œğüœ±½Á•¸¤¥™…¥° U9M}a50œ°AÉ½•ÍÍ¥¹œ¥¹ÍÑÉÕÑ¥½¹Ì…É”Õ¹ÍÕÁÁ½ÉÑ•¸œ¤í½¹ÍĞ±½Í”õÍ½ÕÉ”¹¥¹‘•á=˜ œøœ±½Á•¸¬Ä¤í¥˜¡±½Í”ğÀ¥™…¥° 51=I5}a50œ°U¹Ñ•Éµ¥¹…Ñ•Ñ…œ¸œ¤í±•Ğ‰½‘äõÍ½ÕÉ”¹Í±¥”¡½Á•¸¬Ä±±½Í”¤¹ÑÉ¥´ ¤í¥˜¡‰½‘ä¹ÍÑ…ÉÑÍ]¥Ñ  œ¼œ¤¥í½¹ÍĞ¹…µ”õ‰½‘ä¹Í±¥” Ä¤¹ÑÉ¥´ ¤í¥˜¡ÍÑ…¬¹±•¹Ñ ôôôÅññÍÑ…¬¹…Ğ ´Ä¤¹¹…µ”„ôõ¹…µ”¥™…¥° 51=I5}a50œ°U¹•áÁ•Ñ•±½Í¥¹œÑ…œ¸œ¤íÍÑ…¬¹Á½À ¤í¥¹‘•àõ±½Í”¬Äí½¹Ñ¥¹Õ”íõ½¹ÍĞÍ•±™±½Í¥¹œô½p¼¼¹Ñ•ÍĞ¡‰½‘ä¤í¥˜¡Í•±™±½Í¥¹œ¥‰½‘äõ‰½‘ä¹Í±¥” À°´Ä¤¹ÑÉ¥´ ¤í½¹ÍĞ¹´õ‰½‘ä¹µ…Ñ  ½x¡mµi„µé}umµi„µèÀ´å|¸èµt¨¤¼¤í¥˜ …¹´¥™…¥° 51=I5}a50œ°%¹Ù…±¥•±•µ•¹Ğ¹…µ”¸œ¤í½¹ÍĞ¹½‘”õí¹…µ”é¹µlÅt±…ÑÑÉ¥‰ÕÑ•ÌéÁ…ÉÍ•aµ±ÑÑÉ¥‰ÕÑ•Ì¡‰½‘ä¹Í±¥”¡¹µlÁt¹±•¹Ñ ¤¤±¡¥±‘É•¸émt±Ñ•áÑA…ÉÑÌémuôíÍÑ…¬¹…Ğ ´Ä¤¹¡¥±‘É•¸¹ÁÕÍ ¡¹½‘”¤í¹½‘•Ì¬¬í¥˜¡¹½‘•Ìù1%5%QL¹µ…áaµ±9½‘•Ì¥™…¥° a51}9=}1%5%Pœ°a50¹½‘”±¥µ¥Ğ•á••‘•¸œ¤í¥˜ …Í•±™±½Í¥¹œ¥ÍÑ…¬¹ÁÕÍ ¡¹½‘”¤í¥¹‘•àõ±½Í”¬Äíõ¥˜¡ÍÑ…¬¹±•¹Ñ „ôôÅññ‘½Œ¹¡¥±‘É•¸¹±•¹Ñ „ôôÄ¥™…¥° 51=I5}a50œ°a50µÕÍĞ½¹Ñ…¥¸½¹”±½Í•‘½Õµ•¹Ğ•±•µ•¹Ğ¸œ¤íÉ•ÑÕÉ¸‘½Œ¹¡¥±‘É•¹lÁtíô)™Õ¹Ñ¥½¸Á…ÉÍ•aµ±M•±•Ñ½È¡Á…Ñ ¥í½¹ÍĞÑ•áĞõMÑÉ¥¹œ¡Á…Ñ¡ñğœœ¤í¥˜ …Ñ•áĞ¹ÍÑ…ÉÑÍ]¥Ñ  œ¼œ¥ññÑ•áĞ¹ÍÑ…ÉÑÍ]¥Ñ  œ¼¼œ¤¥™…¥° U9MUAA=IQ}a51}M1Q=Hœ°a50Í•±•Ñ½ÈµÕÍĞ‰”…¸…‰Í½±ÕÑ”¡¥±Á…Ñ ¸œ¤í½¹ÍĞÉ…ÜõÑ•áĞ¹Í±¥” Ä¤¹ÍÁ±¥Ğ œ¼œ¤í¥˜¡É…Ü¹Í½µ”¡àôø…à¤¥™…¥° U9MUAA=IQ}a51}M1Q=Hœ°a50Í•±•Ñ½È½¹Ñ…¥¹Ì…¸•µÁÑäÍ•µ•¹Ğ¸œ¤í¥˜¡É…Ü¹±•¹Ñ ù1%5%QL¹µ…áM•±•Ñ½É•ÁÑ ¥™…¥° M1Q=I}1%5%Pœ°M•±•Ñ½È‘•ÁÑ ±¥µ¥Ğ•á••‘•¸œ¤íÉ•ÑÕÉ¸É…Ü¹µ…À ¡Á…ÉĞ±¥¹‘•à¤ôùí¥˜¡Á…ÉĞôôôÑ•áĞ ¤œ¥í¥˜¡¥¹‘•à„ôõÉ…Ü¹±•¹Ñ ´Ä¥™…¥° U9MUAA=IQ}a51}M1Q=Hœ°Ñ•áĞ ¤µÕÍĞ‰”™¥¹…°¸œ¤íÉ•ÑÕÉ¹í­¥¹èÑ•áĞôíõ¥˜¡Á…ÉĞ¹ÍÑ…ÉÑÍ]¥Ñ   œ¤¥í¥˜¡¥¹‘•à„ôõÉ…Ü¹±•¹Ñ ´Åñğ„½ymµi„µé}umµi„µèÀ´å|¸èµt¨¼¹Ñ•ÍĞ¡Á…ÉĞ¤¥™…¥° U9MUAA=IQ}a51}M1Q=Hœ°ÑÑÉ¥‰ÕÑ”…•ÍÌµÕÍĞ‰”™¥¹…°¹…µ”¸œ¤íÉ•ÑÕÉ¹í­¥¹è¡…ÑÑÉ¥‰ÕÑ”œ±¹…µ”éÁ…ÉĞ¹Í±¥” Ä¥ôíõ½¹ÍĞ´õÁ…ÉĞ¹µ…Ñ  ½x ©qñm„µé„µé}um„µé„µèÀ´å|¸èµt¨¤ üéql¡q‘œ¤¥qt¤ü¼¤í¥˜ …´¥™…¥° U9MUAA=IQ}a51}M1Q=Hœ°U¹ÍÕÁÁ½ÉÑ•a50•±•µ•¹ĞÍ•µ•¹Ğ¸œ¤íÉ•ÑÕÉ¹í­¥¹è•±•µ•¹Ğœ±¹…µ”éµlÅt±Á½Í¥Ñ¥½¸éµlÉtı9Õµ‰•È¡µlÉt¤é¹Õ±±ôíô¤íô)™Õ¹Ñ¥½¸Í•±•Ñaµ°¡‘½Õµ•¹Ğ±Á…Ñ ¥í½¹ÍĞÁ…ÉÑÌõÁ…ÉÍ•aµ±M•±•Ñ½È¡Á…Ñ ¤í±•ĞÕÉÉ•¹Ğõm‘½Õµ•¹Ñtí™½È¡±•Ğ¤ôÀí¤ñÁ…ÉÑÌ¹±•¹Ñ í¤¬¬¥í½¹ÍĞÁ…ÉĞõÁ…ÉÑÍm¥tí¥˜¡Á…ÉĞ¹­¥¹ôôôÑ•áĞœ¥É•ÑÕÉ¸ÕÉÉ•¹Ğ¹µ…À¡¸ôù¸¹Ñ•áÑA…ÉÑÌ¹©½¥¸ œœ¤¤í¥˜¡Á…ÉĞ¹­¥¹ôôô…ÑÑÉ¥‰ÕÑ”œ¥íÉ•ÑÕÉ¸ÕÉÉ•¹Ğ¹™¥±Ñ•È¡¸ôù¡…Í=İ¸¡¸¹…ÑÑÉ¥‰ÕÑ•Ì±Á…ÉĞ¹¹…µ”¤¤¹µ…À¡¸ôù¸¹…ÑÑÉ¥‰ÕÑ•ÍmÁ…ÉĞ¹¹…µ•t¤íõ½¹ÍĞ¹•áĞõmtí™½È¡½¹ÍĞ¸½˜ÕÉÉ•¹Ğ¥í½¹ÍĞ…¹‘¥‘…Ñ•Ìõ¤ôôôÀım¹té¸¹¡¥±‘É•¸í±•Ğµ…Ñ¡•õ…¹‘¥‘…Ñ•Ì¹™¥±Ñ•È¡ŒôùÁ…ÉĞ¹¹…µ”ôôôœ¨ññŒ¹¹…µ”ôôõÁ…ÉĞ¹¹…µ”¤í¥˜¡Á…ÉĞ¹Á½Í¥Ñ¥½¸¥µ…Ñ¡•õµ…Ñ¡•‘mÁ…ÉĞ¹Á½Í¥Ñ¥½¸´Åtımµ…Ñ¡•‘mÁ…ÉĞ¹Á½Í¥Ñ¥½¸´Åutémtí¹•áĞ¹ÁÕÍ  ¸¸¹µ…Ñ¡•¤íõÕÉÉ•¹Ğõ¹•áĞí¥˜ …ÕÉÉ•¹Ğ¹±•¹Ñ ¥™…¥° a51}M1Q=I}5%MM%9œ°a50Í•±•Ñ½È‘½•Ì¹½ĞÉ•Í½±Ù”è€œ­Á…Ñ ¬œ¸œ±MQQUL¹U9QI5%9¤íõÉ•ÑÕÉ¸ÕÉÉ•¹Ğ¹±•¹Ñ ôôôÄıÕÉÉ•¹ÑlÁtéÕÉÉ•¹Ğíô)™Õ¹Ñ¥½¸Á…ÉÍ•ÍØ¡Ñ•áĞ±½¹™¥œ¥í¥˜¡½¹™¥œ¹•¹½‘¥¹œ„ôôUQ´àœ¥™…¥° U9MUAA=IQ}MY}9=%9œ°MXÙ•ÉÍ¥½¸€ÄÍÕÁÁ½ÉÑÌUQ´à½¹±ä¸œ¤í½¹ÍĞ‘•±¥µ¥Ñ•Èõ½¹™¥œ¹‘•±¥µ¥Ñ•Èí¥˜¡ÑåÁ•½˜‘•±¥µ¥Ñ•È„ôôÍÑÉ¥¹œññ‘•±¥µ¥Ñ•È¹±•¹Ñ „ôôÄ¥™…¥° MY}1%5%QHœ°MX‘•±¥µ¥Ñ•ÈµÕÍĞ‰”½¹”¡…É…Ñ•È¸œ¤í¥˜¡½¹™¥œ¹ÅÕ½Ñ”„ôôœˆœ¥™…¥° MY}EU=Qœ°MXÙ•ÉÍ¥½¸€ÄÉ•ÅÕ¥É•Ì‘½Õ‰±”µÅÕ½Ñ”ÅÕ½Ñ¥¹œ¸œ¤í½¹ÍĞ¹•İ±¥¹”õ½¹™¥œ¹¹•İ±¥¹”í¥˜ …l1œ°I1œ°UQ<t¹¥¹±Õ‘•Ì¡¹•İ±¥¹”¤¥™…¥° MY}9]1%9œ°MXå•İ±¥¹”µÕÍĞ1°I1°½ÈUQ<¸œ¤í½¹ÍĞÍ½ÕÉ”õMÑÉ¥¹œ¡Ñ•áĞ¤í¥˜¡¹•İ±¥¹”ôôô1œ˜™Í½ÕÉ”¹¥¹±Õ‘•Ì qÈœ¤¥™…¥° MY}9]1%9œ°MX‘•±…É•1‰ÕĞ½¹Ñ…¥¹ÌH¸œ¤í¥˜¡¹•İ±¥¹”ôôôI1œ˜˜½ÉqÉq¹q¸¼¹Ñ•ÍĞ¡Í½ÕÉ”¹É•Á±…” ½qÉq¸½œ°œœ¤¤¥™…¥° MY}9]1%9œ°MX‘•±…É•I1‰ÕĞ½¹Ñ…¥¹Ì‰…É”1¸œ¤í½¹ÍĞÉ½İÌõmtí±•ĞÉ½Üõmt±™¥•±ôœœ±¤ôÄ±¥¹EÕ½Ñ”õ™…±Í”íİ¡¥±”¡¤ñÍ½ÕÉ”¹±•¹Ñ ¥í½¹ÍĞŒõÍ½ÕÉ•m¥tí¥˜¡¥¹EÕ½Ñ”¥í¥˜¡Œôôôœˆœ¥í¥˜¡Í½ÕÉ•m¤¬Åtôôôœˆœ¥í™¥•±¬ôœˆœí¤¬ôÈí½¹Ñ¥¹Õ”íõ¥¹EÕ½Ñ”õ™…±Í”í¤¬¬í½¹Ñ¥¹Õ”íõ™¥•±¬õŒí¤¬¬í½¹Ñ¥¹Õ”íõ¥˜¡Œôôôœˆœ¥í¥¹EÕ½Ñ”õÑÉÕ”í¤¬¬í½¹Ñ¥¹Õ”íõ¥˜¡Œôôõ‘•±¥µ¥Ñ•È¥íÉ½Ü¹ÁÕÍ ¡™¥•±¤í™¥•±ôœœí¤¬¬í½¹Ñ¥¹Õ”íõ¥˜¡Œôôôq¸ñğ¡ŒôôôqÈœ˜™Í½ÕÉ•m¤¬Åtôôôq¸œ¤¥í¥˜¡ŒôôôqÈœ¥¤¬¬íÉ½Ü¹ÁÕÍ ¡™¥•±¤íÉ½İÌ¹ÁÕÍ ¡É½Ü¤íÉ½Üõmtí™¥•±ôœœí¤¬¬í½¹Ñ¥¹Õ”íõ™¥•±¬õŒí¤¬¬íõ¥˜¡¥¹EÕ½Ñ”¥™…¥° MY}51=I5œ°MX•¹‘•¥¸ÅÕ½Ñ•™¥•±¸œ¤í¥˜¡™¥•±¹±•¹Ñ¡ññÉ½Ü¹±•¹Ñ ¥É½Ü¹ÁÕÍ ¡™¥•±¤±É½İÌ¹ÁÕÍ ¡É½Ü¤í¥˜¡É½İÌ¹±•¹Ñ ˜™É½İÌ¹…Ğ ´Ä¤¹±•¹Ñ ôôôÄ˜™É½İÌ¹…Ğ ´Ä¥lÁtôôôœœ¥É½İÌ¹Á½À ¤í½¹ÍĞ•±±ÌõÉ½İÌ¹É•‘Õ” ¡¸±È¤ôù¸­È¹±•¹Ñ °À¤í¥˜¡•±±Ìù1%5%QL¹µ…áÍÙ•±±Ì¥™…¥° MY}11}1%5%Pœ°MX•±°±¥µ¥Ğ•á••‘•¸œ¤í¥˜ …½¹™¥œ¹¡•…‘•È¥É•ÑÕÉ¸É½İÌí¥˜ …É½İÌ¹±•¹Ñ ¥É•ÑÕÉ¹mtí½¹ÍĞ¡•…‘•ÉÌõÉ½İÍlÁtí¥˜¡¹•ÜM•Ğ¡¡•…‘•ÉÌ¤¹Í¥é”„ôõ¡•…‘•ÉÌ¹±•¹Ñ ¥™…¥° MY}UA1%Q}!Hœ°MX¡•…‘•ÉÌµÕÍĞ‰”Õ¹¥ÅÕ”¸œ¤íÉ•ÑÕÉ¸É½İÌ¹Í±¥” Ä¤¹µ…À¡Èôùí¥˜¡È¹±•¹Ñ „ôõ¡•…‘•ÉÌ¹±•¹Ñ ¥™…¥° MY}]I=9}I%91%Qdœ°MXÉ½Ü¡…ÌİÉ½¹œ™¥•±½Õ¹Ğ¸œ¤í½¹ÍĞ¼õíôí¡•…‘•ÉÌ¹™½É…  ¡ ±¨¤ôù½m¡tõÉm©t¤íÉ•ÑÕÉ¸¼íô¤íô)™Õ¹Ñ¥½¸•á…Ñ•¥µ…°¡Ù…±Õ”¥í½¹ÍĞĞõMÑÉ¥¹œ¡Ù…±Õ”¤í¥˜ „½x üèÁñlÄ´åuq¨¤ üép¹q¬¤ü¼¹Ñ•ÍĞ¡Ğ¤¥™…¥° U9MUAA=IQ}9U5I%}AI%M%=8œ°Q½±•É…¹”µÕÍĞ‰”„…¹½¹¥…°¹½¹¹•…Ñ¥Ù”‘•¥µ…°ÍÑÉ¥¹œ¸œ±MQQUL¹U9QI5%9¤í½¹ÍĞmÜ±˜ôœtõĞ¹ÍÁ±¥Ğ œ¸œ¤íÉ•ÑÕÉ¹í‘¥¥ÑÌé	¥%¹Ğ¡Ü­˜¤±Í…±”é˜¹±•¹Ñ¡ôíô)™Õ¹Ñ¥½¸‘•¥µ…±Y…±Õ”¡Ù…±Õ”¥í¥˜¡ÑåÁ•½˜Ù…±Õ”ôôô¹Õµ‰•Èœ¥í¥˜ …9Õµ‰•È¹¥ÍM…™•%¹Ñ••È¡Ù…±Õ”¤¥™…¥° U9MUAA=IQ}9U5I%}AI%M%=8œ°=¹±äÍ…™”¥¹Ñ••ÉÌ…É”•á…Ğ¹Õµ•É¥Œ)M=8Ù…±Õ•Ì¸œ±MQQUL¹U9QI5%9¤íÉ•ÑÕÉ¹íÍ¥¸éÙ…±Õ”ğÀü´Å¸èÅ¸±‘¥¥ÑÌé	¥%¹Ğ¡5…Ñ ¹…‰Ì¡Ù…±Õ”¤¤±Í…±”èÁôíõ½¹ÍĞĞõMÑÉ¥¹œ¡Ù…±Õ”¤í¥˜ „½x´ü üèÁñlÄ´åuq¨¤ üép¹q¬¤ü¼¹Ñ•ÍĞ¡Ğ¥ñğ½x´À üép¸À¬¤ü¼¹Ñ•ÍĞ¡Ğ¤¥™…¥° U9MUAA=IQ}9U5I%}AI%M%=8œ°=É‘•É•‘•¥µ…°Ù…±Õ•ÌÉ•ÅÕ¥É”…¹½¹¥…°‘•¥µ…°Ñ•áĞ¸œ±MQQUL¹U9QI5%9¤í½¹ÍĞ¹•œõĞ¹ÍÑ…ÉÑÍ]¥Ñ  œ´œ¤±‰½‘äõ¹•œıĞ¹Í±¥” Ä¤éĞ±mÜ±˜ôœtõ‰½‘ä¹ÍÁ±¥Ğ œ¸œ¤íÉ•ÑÕÉ¹íÍ¥¸é¹•œü´Å¸èÅ¸±‘¥¥ÑÌé	¥%¹Ğ¡Ü­˜¤±Í…±”é˜¹±•¹Ñ¡ôíô)½¹ÍĞ…±¥¸ô¡„±ˆ¤ôùí½¹ÍĞÌõ5…Ñ ¹µ…à¡„¹Í…±”±ˆ¹Í…±”¤±Á½Üõ¸ôøÄÁ¸¨©	¥%¹Ğ¡¸¤íÉ•ÑÕÉ¹í„é„¹Í¥¸©„¹‘¥¥ÑÌ©Á½Ü¡Ìµ„¹Í…±”¤±ˆéˆ¹Í¥¸©ˆ¹‘¥¥ÑÌ©Á½Ü¡Ìµˆ¹Í…±”¤±Í…±”éÍôíôì)™Õ¹Ñ¥½¸½µÁ…É•=É‘•É•¡„±ˆ¥í½¹ÍĞàõ…±¥¸¡‘•¥µ…±Y…±Õ”¡„¤±‘•¥µ…±Y…±Õ”¡ˆ¤¤íÉ•ÑÕÉ¸à¹„ôôõà¹ˆüÀéà¹„ñà¹ˆü´ÄèÄíô)™Õ¹Ñ¥½¸…ÁÁÉ½áÅÕ…°¡„±ˆ±…‰ÍQ½°ôœÀœ±É•±Q½°ôœÀœ¥í½¹ÍĞàõ…±¥¸¡‘•¥µ…±Y…±Õ”¡„¤±‘•¥µ…±Y…±Õ”¡ˆ¤¤±‘¥™˜õà¹„øõà¹ˆıà¹„µà¹ˆéà¹ˆµà¹„í½¹ÍĞ…‰Ìõ•á…Ñ•¥µ…°¡…‰ÍQ½°¤±É•°õ•á…Ñ•¥µ…°¡É•±Q½°¤±Í…±”õ5…Ñ ¹µ…à¡à¹Í…±”±…‰Ì¹Í…±”¤±Á½Üõ¸ôøÄÁ¸¨©	¥%¹Ğ¡¸¤±‘¥™™M…±•õ‘¥™˜©Á½Ü¡Í…±”µà¹Í…±”¤±…‰ÍM…±•õ…‰Ì¹‘¥¥ÑÌ©Á½Ü¡Í…±”µ…‰Ì¹Í…±”¤í¥˜¡‘¥™™M…±•ğõ…‰ÍM…±•¥É•ÑÕÉ¸ÑÉÕ”í½¹ÍĞ…„õà¹„ğÁ¸üµà¹„éà¹„±‰ˆõà¹ˆğÁ¸üµà¹ˆéà¹ˆ±µ…àõ…„ù‰ˆı…„é‰ˆí½¹ÍĞÉ•±M…±”õà¹Í…±”­É•°¹Í…±”±É•±AÉ½‘ÕĞõµ…à©É•°¹‘¥¥ÑÌ±½µµ½¸õ5…Ñ ¹µ…à¡à¹Í…±”±É•±M…±”¤±±¡Ìõ‘¥™˜©Á½Ü¡½µµ½¸µà¹Í…±”¤±É¡ÌõÉ•±AÉ½‘ÕĞ©Á½Ü¡½µµ½¸µÉ•±M…±”¤íÉ•ÑÕÉ¸±¡ÌğõÉ¡Ìíô)™Õ¹Ñ¥½¸•ÅÕ…°¡„±ˆ±…‰ÍQ½°±É•±Q½°¥í¥˜¡…‰ÍQ½°„ôõÕ¹‘•™¥¹•‘ññÉ•±Q½°„ôõÕ¹‘•™¥¹•¥É•ÑÕÉ¸…ÁÁÉ½áÅÕ…°¡„±ˆ±…‰ÍQ½°üüœÀœ±É•±Q½°üüœÀœ¤íÉ•ÑÕÉ¸…¹½¹¥…°¡„¤ôôõ…¹½¹¥…°¡ˆ¤íô)™Õ¹Ñ¥½¸½¹Ñ…¥¹Ì¡…ÑÕ…°±•áÁ•Ñ•¥íÉ•ÑÕÉ¸ÉÉ…ä¹¥ÍÉÉ…ä¡…ÑÕ…°¤ı…ÑÕ…°¹Í½µ”¡àôù…¹½¹¥…°¡à¤ôôõ…¹½¹¥…°¡•áÁ•Ñ•¤¤éMÑÉ¥¹œ¡…ÑÕ…°¤¹¥¹±Õ‘•Ì¡MÑÉ¥¹œ¡•áÁ•Ñ•¤¤íô)™Õ¹Ñ¥½¸…ÍÍ•ÉÑ¥½¸¡½¬±•áÁ•Ñ•±…ÑÕ…°¥íÉ•ÑÕÉ¹í‘•Ñ•Éµ¥¹…Ñ¥½¸é½¬ıMQQUL¹MQ%M%éMQQUL¹Y%=1Q±•áÁ•Ñ•±…ÑÕ…±ôíô)™Õ¹Ñ¥½¸Ù…±¥‘…Ñ•	¥¹‘¥¹Ì¡‰¥¹‘¥¹Ì¥í½¹ÍĞ¥ÍÍÕ•Ìõmtí¥˜ …‰¥¹‘¥¹ÍññÑåÁ•½˜‰¥¹‘¥¹Ì„ôô½‰©•ĞññÉÉ…ä¹¥ÍÉÉ…ä¡‰¥¹‘¥¹Ì¤¥É•ÑÕÉ¹íÙ…±¥é™…±Í”±¥ÍÍÕ•ÌélaUQ	1}%9AUQ}	%9%9LµÕÍĞ‰”…¸½‰©•Ğ¸uôí™½È¡½¹ÍĞm¹…µ”±‰t½˜=‰©•Ğ¹•¹ÑÉ¥•Ì¡‰¥¹‘¥¹Ì¤¥í¥˜ „½ymµiumµhÀ´å}uìÀ°ØÍô¼¹Ñ•ÍĞ¡¹…µ”¤¥¥ÍÍÕ•Ì¹ÁÕÍ  %¹Ù…±¥‰¥¹‘¥¹œ¹…µ”€œ­¹…µ”¬œ¸œ¤í¥˜¡ÑåÁ•½˜ˆôôôÍÑÉ¥¹œœ¥í¥˜ …ˆ¹ÑÉ¥´ ¤¥¥ÍÍÕ•Ì¹ÁÕÍ  	¥¹‘¥¹œ€œ­¹…µ”¬œ…¹¹½Ğ‰”•µÁÑä¸œ¤í½¹Ñ¥¹Õ”íõ¥˜ …‰ññÑåÁ•½˜ˆ„ôô½‰©•ĞññÉÉ…ä¹¥ÍÉÉ…ä¡ˆ¤¥í¥ÍÍÕ•Ì¹ÁÕÍ  	¥¹‘¥¹œ€œ­¹…µ”¬œµÕÍĞ‰”…¸…ÉÑ¥™…Ğ%ÍÑÉ¥¹œ½È‰¥¹‘¥¹œ½‰©•Ğ¸œ¤í½¹Ñ¥¹Õ”íõ½¹ÍĞ…±±½İ•õ¹•ÜM•Ğ¡l­¥¹œ°…ÉÑ¥™…Ñ%œ°Í½ÕÉ”œ°…ÉÑ¥™…ÑI½±”œ°™¥±•¹…µ”œ°•áÁ•Ñ•‘M¡„ÈÔØœ°…¹½¹¥…±-•äœ°Ù…±Õ•M¡„ÈÔØt¤í™½È¡½¹ÍĞ¬½˜=‰©•Ğ¹­•åÌ¡ˆ¤¥¥˜ ……±±½İ•¹¡…Ì¡¬¤¥¥ÍÍÕ•Ì¹ÁÕÍ  	¥¹‘¥¹œ€œ­¹…µ”¬œ½¹Ñ…¥¹ÌÕ¹­¹½İ¸ÁÉ½Á•ÉÑä€œ­¬¬œ¸œ¤í½¹ÍĞ­¥¹õˆ¹­¥¹‘ñğIQ%Pœí¥˜ …lIQ%Pœ°9=9%1}Y1Ut¹¥¹±Õ‘•Ì¡­¥¹¤¥¥ÍÍÕ•Ì¹ÁÕÍ  	¥¹‘¥¹œ€œ­¹…µ”¬œ¡…ÌÕ¹ÍÕÁÁ½ÉÑ•­¥¹€œ­­¥¹¬œ¸œ¤í¥˜¡­¥¹ôôôIQ%Pœ˜˜…ˆ¹…ÉÑ¥™…Ñ%˜˜…ˆ¹…ÉÑ¥™…ÑI½±”˜˜…ˆ¹™¥±•¹…µ”¥í¥ÍÍÕ•Ì¹ÁÕÍ  	¥¹‘¥¹œ€œ­¹…µ”¬œ‘½•Ì¹½Ğ¥‘•¹Ñ¥™ä…¸…ÉÑ¥™…Ğ¸œ¤íõ¥˜¡­¥¹ôôô9=9%1}Y1Uœ˜˜…ˆ¹…¹½¹¥…±-•ä¥¥ÍÍÕ•Ì¹ÁÕÍ  	¥¹‘¥¹œ€œ­¹…µ”¬œ‘½•Ì¹½Ğ¥‘•¹Ñ¥™ä„…¹½¹¥…°Ù…±Õ”¸œ¤í¥˜¡ˆ¹•áÁ•Ñ•‘M¡„ÈÔØ˜˜„½ylÀ´å„µ™uìØÑô¼¹Ñ•ÍĞ¡ˆ¹•áÁ•Ñ•‘M¡„ÈÔØ¤¥¥ÍÍÕ•Ì¹ÁÕÍ  	¥¹‘¥¹œ€œ­¹…µ”¬œ•áÁ•Ñ•‘M¡„ÈÔØ¥Ì¥¹Ù…±¥¸œ¤íõÉ•ÑÕÉ¹íÙ…±¥é¥ÍÍÕ•Ì¹±•¹Ñ ôôôÀ±¥ÍÍÕ•Íôíô)™Õ¹Ñ¥½¸¥¹ÁÕÑI•™%ÍÍÕ•Ì¡É•˜±±…‰•°±ÁÉ¥½É%‘Ì±‰¥¹‘¥¹Ì¥í½¹ÍĞ¥ÍÍÕ•Ìõmtí¥˜ …É•™ññÑåÁ•½˜É•˜„ôô½‰©•ĞññÉÉ…ä¹¥ÍÉÉ…ä¡É•˜¤¥í¥ÍÍÕ•Ì¹ÁÕÍ ¡±…‰•°¬œµÕÍĞ‰”„É•™•É•¹”½‰©•Ğ¸œ¤íÉ•ÑÕÉ¸¥ÍÍÕ•Ìíõ½¹ÍĞ­•åÌõ=‰©•Ğ¹­•åÌ¡É•˜¤±™½ÉµÌõm¡…Í=İ¸¡É•˜°±¥Ñ•É…°œ¤±¡…Í=İ¸¡É•˜°‰¥¹‘¥¹I•˜œ¤±¡…Í=İ¸¡É•˜°ÍÑ•ÁI•˜œ¥t¹™¥±Ñ•È¡	½½±•…¸¤¹±•¹Ñ í¥˜¡™½ÉµÌ„ôôÄ¥¥ÍÍÕ•Ì¹ÁÕÍ ¡±…‰•°¬œµÕÍĞ½¹Ñ…¥¸•á…Ñ±ä½¹”½˜±¥Ñ•É…°°‰¥¹‘¥¹I•˜°½ÈÍÑ•ÁI•˜¸œ¤í¥˜¡¡…Í=İ¸¡É•˜°‰¥¹‘¥¹I•˜œ¤¥í¥˜¡­•åÌ¹Í½µ”¡¬ôù¬„ôô‰¥¹‘¥¹I•˜œ¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡±…‰•°¬œ‰¥¹‘¥¹I•˜½¹Ñ…¥¹Ì•áÑÉ„ÁÉ½Á•ÉÑ¥•Ì¸œ¤í¥˜¡ÑåÁ•½˜É•˜¹‰¥¹‘¥¹I•˜„ôôÍÑÉ¥¹œñğ…¡…Í=İ¸¡‰¥¹‘¥¹Íññíô±É•˜¹‰¥¹‘¥¹I•˜¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡±…‰•°¬œÉ•™•É•¹•ÌÕ¹‘•±…É•‰¥¹‘¥¹œ€œ­MÑÉ¥¹œ¡É•˜¹‰¥¹‘¥¹I•˜¤¬œ¸œ¤íõ¥˜¡¡…Í=İ¸¡É•˜°ÍÑ•ÁI•˜œ¤¥í¥˜¡­•åÌ¹Í½µ”¡¬ôø…lÍÑ•ÁI•˜œ°½ÕÑÁÕĞt¹¥¹±Õ‘•Ì¡¬¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡±…‰•°¬œÍÑ•ÁI•˜½¹Ñ…¥¹Ì•áÑÉ„ÁÉ½Á•ÉÑ¥•Ì¸œ¤í¥˜¡ÑåÁ•½˜É•˜¹ÍÑ•ÁI•˜„ôôÍÑÉ¥¹œñğ…ÁÉ¥½É%‘Ì¹¡…Ì¡É•˜¹ÍÑ•ÁI•˜¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡±…‰•°¬œµÕÍĞÉ•™•É•¹”…¸•…É±¥•ÈÍÑ•À¸œ¤í¥˜¡ÑåÁ•½˜É•˜¹½ÕÑÁÕĞ„ôôÍÑÉ¥¹œñğ…É•˜¹½ÕÑÁÕĞ¥¥ÍÍÕ•Ì¹ÁÕÍ ¡±…‰•°¬œÍÑ•ÁI•˜É•ÅÕ¥É•Ì½ÕÑÁÕĞ¸œ¤íõ¥˜¡¡…Í=İ¸¡É•˜°¡¥Ñ•É…°œ¤˜™­•åÌ¹Í½µ”¡¬ôù¬„ôô±¥Ñ•É…°œ¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡±…‰•°¬œ±¥Ñ•É…°½¹Ñ…¥¹Ì•áÑÉ„ÁÉ½Á•ÉÑ¥•Ì¸œ¤íÉ•ÑÕÉ¸¥ÍÍÕ•Ìíô)™Õ¹Ñ¥½¸Ù…±¥‘…Ñ•MÁ•Œ¡ÍÁ•Œ±‰¥¹‘¥¹Ìõíô¥í½¹ÍĞ¥ÍÍÕ•Ìõmtí¥˜ …ÍÁ•ññÑåÁ•½˜ÍÁ•Œ„ôô½‰©•ĞññÉÉ…ä¹¥ÍÉÉ…ä¡ÍÁ•Œ¤¥É•ÑÕÉ¹íÙ…±¥é™…±Í”±¥ÍÍÕ•ÌélQ•ÍĞ%HµÕÍĞ‰”…¸½‰©•Ğ¸uôí½¹ÍĞ…±±½İ•‘I½½Ğõ¹•ÜM•Ğ¡lÙ•ÉÍ¥½¸œ°±…¹Õ…•Y•ÉÍ¥½¸œ°½Á•É…Ñ¥½¹I•¥ÍÑÉåY•ÉÍ¥½¸œ°½Á•É…Ñ¥½¹I•¥ÍÑÉåM¡„ÈÔØœ°ÍÑ•ÁÌœ°É•ÍÕ±Ğt¤í™½È¡½¹ÍĞ¬½˜=‰©•Ğ¹­•åÌ¡ÍÁ•Œ¤¥¥˜ ……±±½İ•‘I½½Ğ¹¡…Ì¡¬¤¥¥ÍÍÕ•Ì¹ÁÕÍ  U¹­¹½İ¸Q•ÍĞ%HÉ½½ĞÁÉ½Á•ÉÑä€œ­¬¬œ¸œ¤í¥˜¡ÍÁ•Œ¹Ù•ÉÍ¥½¸„ôõMA}YIM%=8¥¥ÍÍÕ•Ì¹ÁÕÍ  U¹ÍÕÁÁ½ÉÑ•Q•ÍĞ%HÙ•ÉÍ¥½¸€œ­MÑÉ¥¹œ¡ÍÁ•Œ¹Ù•ÉÍ¥½¸¤¬œ¸œ¤í¥˜¡ÍÁ•Œ¹±…¹Õ…•Y•ÉÍ¥½¸„ôõ19U}YIM%=8¥¥ÍÍÕ•Ì¹ÁÕÍ  ]É½¹œQ•ÍĞ%H±…¹Õ…•Y•ÉÍ¥½¸¸œ¤í¥˜¡ÍÁ•Œ¹½Á•É…Ñ¥½¹I•¥ÍÑÉåY•ÉÍ¥½¸„ôõ=AIQ%=9}I%MQIe}YIM%=8¥¥ÍÍÕ•Ì¹ÁÕÍ  ]É½¹œ½Á•É…Ñ¥½¹I•¥ÍÑÉåY•ÉÍ¥½¸¸œ¤í¥˜¡ÍÁ•Œ¹½Á•É…Ñ¥½¹I•¥ÍÑÉåM¡„ÈÔØ„ôõ=AIQ%=9}I%MQIe}M!ÈÔØ¥¥ÍÍÕ•Ì¹ÁÕÍ  ]É½¹œ½Á•É…Ñ¥½¹I•¥ÍÑÉåM¡„ÈÔØ¸œ¤í¥˜ …ÉÉ…ä¹¥ÍÉÉ…ä¡ÍÁ•Œ¹ÍÑ•ÁÌ¥ñğ…ÍÁ•Œ¹ÍÑ•ÁÌ¹±•¹Ñ ¥¥ÍÍÕ•Ì¹ÁÕÍ  Q•ÍĞ%HÉ•ÅÕ¥É•Ì¹½¹•µÁÑäÍÑ•ÁÌ¸œ¤í¥˜ ¡ÍÁ•Œ¹ÍÑ•ÁÌü¹±•¹Ñ¡ñğÀ¤ù1%5%QL¹µ…áMÑ•ÁÌ¥¥ÍÍÕ•Ì¹ÁÕÍ  Q•ÍĞ%HÍÑ•À±¥µ¥Ğ•á••‘•¸œ¤í½¹ÍĞ‰¥¹‘¥¹¡•¬õÙ…±¥‘…Ñ•	¥¹‘¥¹Ì¡‰¥¹‘¥¹Ì¤í¥ÍÍÕ•Ì¹ÁÕÍ  ¸¸¹‰¥¹‘¥¹¡•¬¹¥ÍÍÕ•Ì¤í½¹ÍĞÁÉ¥½É%‘Ìõ¹•ÜM•Ğ ¤±½ÕÑÁÕÑÍ	å%õ¹•Ü5…À ¤í™½È¡½¹ÍĞm¥¹‘•à±ÍÑ•Át½˜€¡ÍÁ•Œ¹ÍÑ•ÁÍññmt¤¹•¹ÑÉ¥•Ì ¤¥í¥˜ …ÍÑ•ÁññÑåÁ•½˜ÍÑ•À„ôô½‰©•ĞññÉÉ…ä¹¥ÍÉÉ…ä¡ÍÑ•À¤¥í¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘í¥¹‘•áôµÕÍĞ‰”…¸½‰©•Ğ¹€¤í½¹Ñ¥¹Õ”íõ™½È¡½¹ÍĞ¬½˜=‰©•Ğ¹­•åÌ¡ÍÑ•À¤¥¥˜ …lÍÑ•Á%œ°½Àœ°¥¹ÁÕÑÌt¹¥¹±Õ‘•Ì¡¬¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘í¥¹‘•áô½¹Ñ…¥¹ÌÕ¹­¹½İ¸ÁÉ½Á•ÉÑä€‘í­ô¹€¤í¥˜¡ÑåÁ•½˜ÍÑ•À¹ÍÑ•Á%„ôôÍÑÉ¥¹œñğ„½yMlÀ´åµi|µuìÄ°ØÍô¼¹Ñ•ÍĞ¡ÍÑ•À¹ÍÑ•Á%¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘í¥¹‘•áô¡…Ì¥¹Ù…±¥ÍÑ•Á%¹€¤í•±Í”¥˜¡ÁÉ¥½É%‘Ì¹¡…Ì¡ÍÑ•À¹ÍÑ•Á%¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡ÕÁ±¥…Ñ”ÍÑ•Á%€‘íÍÑ•À¹ÍÑ•Á%‘ô¹€¤í½¹ÍĞ‘•˜õ=A}%9%Q%=9MmÍÑ•À¹½Átí¥˜ …‘•˜¥í¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘í¥¹‘•áôÕÍ•ÌÕ¹­¹½İ¸½Á•É…Ñ¥½¸€‘íMÑÉ¥¹œ¡ÍÑ•À¹½À¥ô¹€¤í½¹Ñ¥¹Õ”íõ¥˜ …ÍÑ•À¹¥¹ÁÕÑÍññÑåÁ•½˜ÍÑ•À¹¥¹ÁÕÑÌ„ôô½‰©•ĞññÉÉ…ä¹¥ÍÉÉ…ä¡ÍÑ•À¹¥¹ÁÕÑÌ¤¥í¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áô¥¹ÁÕÑÌµÕÍĞ‰”…¸½‰©•Ğ¹€¤í½¹Ñ¥¹Õ”íõ™½È¡½¹ÍĞ¬½˜=‰©•Ğ¹­•åÌ¡ÍÑ•À¹¥¹ÁÕÑÌ¤¥¥˜ …¡…Í=İ¸¡‘•˜¹¥¹ÁÕÑÌ±¬¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áô½Á•É…Ñ¥½¸€‘íÍÑ•À¹½Áô¡…ÌÕ¹­¹½İ¸¥¹ÁÕĞÁ½ÉĞ€‘í­ô¹€¤í™½È¡½¹ÍĞmÁ½ÉĞ±ÑåÁ•t½˜=‰©•Ğ¹•¹ÑÉ¥•Ì¡‘•˜¹¥¹ÁÕÑÌ¤¥í½¹ÍĞ½ÁÑ¥½¹…°õÑåÁ”¹•¹‘Í]¥Ñ  œüœ¤í¥˜ …½ÁÑ¥½¹…°˜˜…¡…Í=İ¸¡ÍÑ•À¹¥¹ÁÕÑÌ±Á½ÉĞ¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áô½Á•É…Ñ¥½¸€‘íÍÑ•À¹½Áô¥Ìµ¥ÍÍ¥¹œ¥¹ÁÕĞ€‘íÁ½ÉÑô¹€¤í¥˜¡¡…Í=İ¸¡ÍÑ•À¹¥¹ÁÕÑÌ±Á½ÉĞ¤¥í¥ÍÍÕ•Ì¹ÁÕÍ  ¸¸¹¥¹ÁÕÑI•™%ÍÍÕ•Ì¡ÍÑ•À¹¥¹ÁÕÑÍmÁ½ÉÑt±MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áô¥¹ÁÕĞ€‘íÁ½ÉÑõ€±ÁÉ¥½É%‘Ì±‰¥¹‘¥¹Ì¤¤í½¹ÍĞÉ•˜õÍÑ•À¹¥¹ÁÕÑÍmÁ½ÉÑt±É•ÅÕ¥É•‘QåÁ”õÑåÁ”¹É•Á±…” ½qpü¼°œœ¤í¥˜¡É•ÅÕ¥É•‘QåÁ”ôôô	%9%9}Iœ˜˜…¡…Í=İ¸¡É•™ññíô°‰¥¹‘¥¹I•˜œ¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áô¥¹ÁÕĞ€‘íÁ½ÉÑôµÕÍĞ‰”„‰¥¹‘¥¹I•˜¹€¤í¥˜¡É•˜ü¹‰¥¹‘¥¹I•˜˜™É•ÅÕ¥É•‘QåÁ”„ôô	%9%9}Iœ¥í½¹ÍĞ‰¥¹‘¥¹œõ‰¥¹‘¥¹Ìü¹mÉ•˜¹‰¥¹‘¥¹I•™t±­¥¹õÑåÁ•½˜‰¥¹‘¥¹œôôôÍÑÉ¥¹œœüIQ%Pœé‰¥¹‘¥¹œü¹­¥¹‘ñğIQ%Pœí¥˜¡É•ÅÕ¥É•‘QåÁ”ôôôIQ%Pœ˜™­¥¹„ôôIQ%Pœ¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áô¥¹ÁÕĞ€‘íÁ½ÉÑôÉ•ÅÕ¥É•ÌIQ%P‰¥¹‘¥¹œ¹€¤í¥˜¡É•ÅÕ¥É•‘QåÁ”ôôô	eQLœ˜™­¥¹„ôôIQ%Pœ¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áô¥¹ÁÕĞ€‘íÁ½ÉÑôÉ•ÅÕ¥É•Ì‰åÑ”µ‰…­•IQ%P‰¥¹‘¥¹œ¹€¤íõ¥˜¡É•˜ü¹ÍÑ•ÁI•˜˜™½ÕÑÁÕÑÍ	å%¹¡…Ì¡É•˜¹ÍÑ•ÁI•˜¤¥í½¹ÍĞ½ÕÑÁÕÑÌõ½ÕÑÁÕÑÍ	å%¹•Ğ¡É•˜¹ÍÑ•ÁI•˜¤í¥˜ …¡…Í=İ¸¡½ÕÑÁÕÑÌ±É•˜¹½ÕÑÁÕĞ¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áôÉ•™•É•¹•ÌÕ¹­¹½İ¸½ÕÑÁÕĞ€‘íÉ•˜¹½ÕÑÁÕÑô½¸€‘íÉ•˜¹ÍÑ•ÁI•™ô¹€¤í•±Í•í½¹ÍĞ…ÑÕ…±QåÁ”õ½ÕÑÁÕÑÍmÉ•˜¹½ÕÑÁÕÑtí¥˜¡É•ÅÕ¥É•‘QåÁ”„ôô9dœ˜™É•ÅÕ¥É•‘QåÁ”„ôô=U9Q	1œ˜™É•ÅÕ¥É•‘QåÁ”„ôô=IIœ˜™É•ÅÕ¥É•‘QåÁ”„ôõ…ÑÕ…±QåÁ”˜˜„¡É•ÅÕ¥É•‘QåÁ”ôôô)M=9}Y1Uœ˜™…ÑÕ…±QåÁ”ôôô9dœ¤˜˜„¡É•ÅÕ¥É•‘QåÁ”ôôôIIdœ˜™…ÑÕ…±QåÁ”ôôô9dœ¤¥¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áô¥¹ÁÕĞ€‘íÁ½ÉÑô•áÁ•ÑÌ€‘íÉ•ÅÕ¥É•‘QåÁ•ô‰ÕĞ€‘íÉ•˜¹ÍÑ•ÁI•™ô¸‘íÉ•˜¹½ÕÑÁÕÑôÁÉ½Ù¥‘•Ì€‘í…ÑÕ…±QåÁ•ô¹€¤íõõõõ¥˜ ¡ÍÑ•À¹½ÀôôôI`ññÍÑ•À¹½ÀôôôMMIQ}5Q œ¤˜™¡…Í=İ¸¡ÍÑ•À¹¥¹ÁÕÑÌ°Á…ÑÑ•É¸œ¤˜™¡…Í=İ¸¡ÍÑ•À¹¥¹ÁÕÑÌ¹Á…ÑÑ•É¸°±¥Ñ•É…°œ¤¥¥ÍÍÕ•Ì¹ÁÕÍ  ¸¸¹Ù…±¥‘…Ñ•I••à¡ÍÑ•À¹¥¹ÁÕÑÌ¹Á…ÑÑ•É¸¹±¥Ñ•É…°±ÍÑ•À¹¥¹ÁÕÑÌ¹™±…Ìü¹±¥Ñ•É…±ñğœœ¤¹µ…À¡àôùMÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áôè€‘íáõ€¤¤í¥˜¡ÍÑ•À¹½ÀôôôM1Q})M=9}AQ œ˜™¡…Í=İ¸¡ÍÑ•À¹¥¹ÁÕÑÌ°Á…Ñ œ¤˜™¡…Í=İ¸¡ÍÑ•À¹¥¹ÁÕÑÌ¹Á…Ñ °±¥Ñ•É…°œ¤¥íÑÉåíÁ…ÉÍ•)Í½¹M•±•Ñ½È¡ÍÑ•À¹¥¹ÁÕÑÌ¹Á…Ñ ¹±¥Ñ•É…°¤íõ…Ñ ¡•ÉÉ½È¥í¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áôè€‘í•ÉÉ½È¹µ•ÍÍ…•õ€¤íõõ¥˜¡ÍÑ•À¹½ÀôôôM1Q}a50œ˜™¡…Í=İ¸¡ÍÑ•À¹¥¹ÁÕÑÌ°Á…Ñ œ¤˜™¡…Í=İ¸¡ÍÑ•À¹¥¹ÁÕÑÌ¹Á…Ñ °±¥Ñ•É…°œ¤¥íÑÉåíÁ…ÉÍ•aµ±M•±•Ñ½È¡ÍÑ•À¹¥¹ÁÕÑÌ¹Á…Ñ ¹±¥Ñ•É…°¤íõ…Ñ ¡•ÉÉ½È¥í¥ÍÍÕ•Ì¹ÁÕÍ ¡MÑ•À€‘íÍÑ•À¹ÍÑ•Á%‘ññ¥¹‘•áôè€‘í•ÉÉ½È¹µ•ÍÍ…•õ€¤íõõ¥˜¡ÑåÁ•½˜ÍÑ•À¹ÍÑ•Á%ôôôÍÑÉ¥¹œœ˜˜…ÁÉ¥½É%‘Ì¹¡…Ì¡ÍÑ•À¹ÍÑ•Á%¤¥íÁÉ¥½É%‘Ì¹…‘¡ÍÑ•À¹ÍÑ•Á%¤í½ÕÑÁÕÑÍ	å%¹Í•Ğ¡ÍÑ•À¹ÍÑ•Á%±‘•˜¹½ÕÑÁÕÑÌ¤íõô(€¥˜ …ÍÁ•Œ¹É•ÍÕ±ÑññÑåÁ•½˜ÍÁ•Œ¹É•ÍÕ±Ğ„ôô½‰©•ĞññÉÉ…ä¹¥ÍÉÉ…ä¡ÍÁ•Œ¹É•ÍÕ±Ğ¤¥¥ÍÍÕ•Ì¹ÁÕÍ  Q•ÍĞ%HÉ•ÅÕ¥É•ÌÉ•ÍÕ±ĞÍÑ•ÁI•˜½½ÕÑÁÕĞ¸œ¤í•±Í•í™½È¡½¹ÍĞ¬½˜=‰©•Ğ¹­•åÌ¡ÍÁ•Œ¹É•ÍÕ±Ğ¤¥¥˜ …lÍÑ•ÁI•˜œ°½ÕÑÁÕĞt¹¥¹±Õ‘•Ì¡¬¤¥¥ÍÍÕ•Ì¹ÁÕÍ  I•ÍÕ±Ğ½¹Ñ…¥¹ÌÕ¹­¹½İ¸ÁÉ½Á•ÉÑä€œ­¬¬œ¸œ¤í¥˜¡ÑåÁ•½˜ÍÁ•Œ¹É•ÍÕ±Ğ¹ÍÑ•ÁI•˜„ôôÍÑÉ¥¹œñğ…ÁÉ¥½É%‘Ì¹¡…Ì¡ÍÁ•Œ¹É•ÍÕ±Ğ¹ÍÑ•ÁI•˜¤¥¥ÍÍÕ•Ì¹ÁÕÍ  I•ÍÕ±ĞÍÑ•ÁI•˜µÕÍĞÉ•™•É•¹”…¸•á¥ÍÑ¥¹œÍÑ•À¸œ¤í•±Í”¥˜ …¡…Í=İ¸¡½ÕÑÁÕÑÍ	å%¹•Ğ¡ÍÁ•Œ¹É•ÍÕ±Ğ¹ÍÑ•ÁI•˜¥ññíô±ÍÁ•Œ¹É•ÍÕ±Ğ¹½ÕÑÁÕĞ¤¥¥ÍÍÕ•Ì¹ÁÕÍ  I•ÍÕ±Ğ½ÕÑÁÕĞ¥Ì¹½Ğ‘•±…É•‰ä¥ÑÌÍÑ•À¸œ¤íõÉ•ÑÕÉ¹íÙ…±¥é¥ÍÍÕ•Ì¹±•¹Ñ ôôôÀ±¥ÍÍÕ•Ìél¸¸¹¹•ÜM•Ğ¡¥ÍÍÕ•Ì¥uôíô)™Õ¹Ñ¥½¸¹½Éµ…±¥é•MÁ•Œ¡ÍÁ•Œ±‰¥¹‘¥¹Ìõíô¥í½¹ÍĞ¡•¬õÙ…±¥‘…Ñ•MÁ•Œ¡ÍÁ•Œ±‰¥¹‘¥¹Ì¤í¥˜ …¡•¬¹Ù…±¥¥™…¥° %9Y1%}QMQ}%Hœ±¡•¬¹¥ÍÍÕ•Ì¹©½¥¸ œ€œ¤¤í½¹ÍĞ‘…Ñ„õ)M=8¹Á…ÉÍ”¡)M=8¹ÍÑÉ¥¹¥™ä¡ÍÁ•Œ¤¤íÉ•ÑÕÉ¸)M=8¹Á…ÉÍ”¡…¹½¹¥…°¡‘…Ñ„¤¤íô)™Õ¹Ñ¥½¸ÍÕÁÁ½ÉÑÌ¡Ñ•ÍĞ¥í¥˜¡MÑÉ¥¹œ¡%•±¡Ñ•ÍĞ°aUQ%=9}5=œ¥ñğœœ¤¹Ñ½UÁÁ•É…Í” ¤„ôôAA1%Q%=9}QI5%9%MQ%œ¥É•ÑÕÉ¸™…±Í”í¥˜¡MÑÉ¥¹œ¡™¥•±¡Ñ•ÍĞ°IEU%I}A	%1%Qdœ¥ñğœœ¤¹Ñ½UÁÁ•É…Í” ¤„ôõA	%1%Qd¥É•ÑÕÉ¸™…±Í”í¥˜¡MÑÉ¥¹œ¡%•±¡Ñ•ÍĞ°aUQ	1}-%9œ¥ñğœœ¤¹Ñ½UÁÁ•É…Í” ¤„ôõaUQ	1}-%9¥É•ÑÕÉ¸™…±Í”í¥˜¡™¥•±¡Ñ•ÍĞ°aUQ	1}MA}YIM%=8œ¤„ôõMA}YIM%=8¥É•ÑÕÉ¸™…±Í”íÉ•ÑÕÉ¸Ù…±¥‘…Ñ•MÁ•Œ¡%•±¡Ñ•ÍĞ°aUQ	1}MAœ¥ñ°±™¥•±¡Ñ•ÍĞ°aUQ	1}%9AUQ}	%9%9Lœ¤¤¹Ù…±¥íô)™Õ¹Ñ¥½¸É•Í½±Ù•	¥¹‘¥¹œ¡¹…µ”±…ÉÑ¥™…ÑÌ±…¹½¹¥…±	¥¹‘¥¹Ì¥í¥˜¡¡…Í=İ¸¡…ÉÑ¥™…ÑÍññíô±¹…µ”¤¥É•ÑÕÉ¹í­¥¹èIQ%Pœ±Ù…±Õ”é…ÉÑ¥™…ÑÍm¹…µ•uôí¥˜¡¡…Í=İ¸¡…¹½¹¥…±	¥¹‘¥¹Íññíô±¹…µ”¤¥É•ÑÕÉ¹í­¥¹è9=9%1}Y1Uœ±Ù…±Õ”é…¹½¹¥…±	¥¹‘¥¹Ím¹…µ•uôí™…¥° 5%MM%9}	%9%9œ°I•ÅÕ¥É•‰¥¹‘¥¹œ€œ­¹…µ”¬œ¥ÌÕ¹…Ù…¥±…‰±”¸œ¤íô)™Õ¹Ñ¥½¸É•Í½±Ù•%¹ÁÕĞ¡É•˜±½ÕÑÁÕÑÌ±…ÉÑ¥™…ÑÌ±…¹½¹¥…±	¥¹‘¥¹Ì¥í¥˜¡¡…Í=İ¸¡É•˜°±¥Ñ•É…°œ¤¥É•ÑÕÉ¸É•˜¹±¥Ñ•É…°í¥˜¡¡…Í=İ¸¡É•˜°‰¥¹‘¥¹I•˜œ¤¥É•ÑÕÉ¸É•Í½±Ù•	¥¹‘¥¹œ¡É•˜¹‰¥¹‘¥¹I•˜±…ÉÑ¥™…ÑÌ±…¹½¹¥…±	¥¹‘¥¹Ì¤í½¹ÍĞÁÉ¥½Èõ½ÕÑÁÕÑÌ¹•Ğ¡É•˜¹ÍÑ•ÁI•˜¤í¥˜ …ÁÉ¥½Éñğ…¡…Í=İ¸¡ÁÉ¥½È±É•˜¹½ÕÑÁÕĞ¤¥™…¥° 5%MM%9}MQA}=UQAUPœ°AÉ¥½ÈÍÑ•À½ÕÑÁÕĞÕ¹…Ù…¥±…‰±”¸œ¤íÉ•ÑÕÉ¸ÁÉ¥½ÉmÉ•˜¹½ÕÑÁÕÑtíô)™Õ¹Ñ¥½¸Õ¹İÉ…À¡Ø¥íÉ•ÑÕÉ¸Ø˜™ÑåÁ•½˜Øôôô½‰©•Ğœ˜™lIQ%Pœ°9=9%1}Y1Ut¹¥¹±Õ‘•Ì¡Ø¹­¥¹¤ıØ¹Ù…±Õ”éØíô)™Õ¹Ñ¥½¸…ÉÑ¥™…Ñ	åÑ•Ì¡Ø¥í½¹ÍĞ„õÕ¹İÉ…À¡Ø¤±ˆõ‰åÑ•Í=˜¡„ü¹‰åÑ•Ì¤íÉ•ÑÕÉ¸‰ññ‰åÑ•Í=˜¡„ü¹‰±½ˆ¤íô)™Õ¹Ñ¥½¸Ù…±¥‘…Ñ•)Í½¹M½ÕÉ•á…Ğ¡Ñ•áĞ¥í¥˜ ½qÕ¼¹Ñ•ÍĞ¡MÑÉ¥¹œ¡Ñ•áĞ¤¤¥™…¥° )M=9}	=4œ°)M=8	=4¥Ì¹½Ğ…•ÁÑ•¸œ¤í¥˜ ½oŠsŠwŠ{Š}t¼¹Ñ•ÍĞ¡MÑÉ¥¹œ¡Ñ•áĞ¤¤¥™…¥° U9M})M=9}EU=QM%=8œ°Mµ…ÉĞÅÕ½Ñ…Ñ¥½¸µ…É­Ì…É”¹½Ğ…•ÁÑ•¥¸)M=8¸œ¤íô)…Íå¹Œ™Õ¹Ñ¥½¸•á•ÕÑ”¡íÍÁ•Œ±…ÉÑ¥™…ÑÌõíô±…¹½¹¥…±	¥¹‘¥¹Ìõíô±µ•Ñ…‘…Ñ„õíõô¥í½¹ÍĞ‰¥¹‘¥¹Ìõµ•Ñ…‘…Ñ„¹‰¥¹‘¥¹Íññíô±¹½Éµ…±¥é•õ¹½Éµ…±¥é•MÁ•Œ¡ÍÁ•Œ±‰¥¹‘¥¹Ì¤í±•ĞÑ½Ñ…±%¹ÁÕÑ	åÑ•ÌôÀí½¹ÍĞ¥¹ÁÕÑÉÑ¥™…Ñ%‘Ìõmt±¥¹ÁÕÑÉÑ¥™…ÑM¡„ÈÔÙY…±Õ•Ìõmtí™½È¡½¹ÍĞm¹…µ”±…ÉÑ¥™…Ñt½˜=‰©•Ğ¹•¹ÑÉ¥•Ì¡…ÉÑ¥™…ÑÍññíô¤¥í½¹ÍĞˆõ…ÉÑ¥™…Ñ	åÑ•Ì¡…ÉÑ¥™…Ğ¤í¥˜ …ˆ¥½¹Ñ¥¹Õ”íÑ½Ñ…±%¹ÁÕÑ	åÑ•Ì¬õˆ¹‰åÑ•1•¹Ñ í½¹ÍĞ‘¥•ÍĞõ…İ…¥ĞÍ¡„ÈÔØ¡ˆ¤í¥˜¡…ÉÑ¥™…Ğü¹Í¡„ÈÔØ˜™MÑÉ¥¹œ¡…ÉÑ¥™…Ğ¹Í¡„ÈÔØ¤¹Ñ½1½İ•É…Í” ¤„ôõ‘¥•ÍĞ¥™…¥° IQ%Q}!M!}5%M5Q œ°ÉÑ¥™…Ğ€œ­…ÉÑ¥™…Ğü¹…ÉÑ¥™…Ñ%‘ññ¹…µ”¬œ‘¥•ÍĞµ¥Íµ…Ñ ¸œ¤í¥¹ÁÕÑÉÑ¥™…Ñ%‘Ì¹ÁÕÍ ¡MÑÉ¥¹œ¡…ÉÑ¥™…Ğü¹…ÉÑ¥™…Ñ%‘ññ¹…µ”¤¤í¥¹ÁÕÑÉÑ¥™…ÑM¡„ÈÔÙY…±Õ•Ì¹ÁÕÍ ¡‘¥•ÍĞ¤íõ½¹ÍĞ•¹Ù•±½Á”õÙ…±¥‘…Ñ•I•Í½ÕÉ•¹Ù•±½Á”¡íÑ½Ñ…±%¹ÁÕÑ	åÑ•Íô¤í¥˜ …•¹Ù•±½Á”¹Ù…±¥¥™…¥° %9AUQ}	eQ}1%5%Pœ±•¹Ù•±½Á”¹¥ÍÍÕ•Ì¹©½¥¸ œ€œ¤¤í½¹ÍĞ½ÕÑÁÕÑÌõ¹•Ü5…À ¤±½‰Í•ÉÙ…Ñ¥½¹Ìõmt±ÕÍ•‘A…ÉÍ•ÉÌõ¹•ÜM•Ğ ¤±ÕÍ•‘M•±•Ñ½ÉÌõ¹•ÜM•Ğ ¤í±•ĞÕÍ•‘I••àõ™…±Í”í™½È¡½¹ÍĞÍÑ•À½˜¹½Éµ…±¥é•¹ÍÑ•ÁÌ¥í½¹ÍĞ¥¹ÁÕĞõíôí™½È¡½¹ÍĞmÁ½ÉĞ±É•™t½˜=‰©•Ğ¹•¹ÑÉ¥•Ì¡ÍÑ•À¹¥¹ÁÕÑÌ¤¥¥¹ÁÕÑmÁ½ÉÑtõÉ•Í½±Ù•%¹ÁÕĞ¡É•˜±½ÕÑÁÕÑÌ±…ÉÑ¥™…ÑÌ±…¹½¹¥…±	¥¹‘¥¹Ì¤í±•Ğ½ÕĞõíôíÑÉåíÍİ¥Ñ ¡ÍÑ•À¹½À¥í…Í”1=}IQ%Pœéí½¹ÍĞˆõ¥¹ÁÕĞ¹‰¥¹‘¥¹œí¥˜ …‰ññˆ¹­¥¹„ôôIQ%Pœ¥™…¥° IQ%Q}IEU%Iœ°1=}IQ%PÉ•ÅÕ¥É•Ì…ÉÑ¥™…Ğ‰¥¹‘¥¹I•˜¸œ¤í½ÕĞ¹…ÉÑ¥™…Ğõˆí‰É•…¬íõ…Í”I}	eQLœéí½¹ÍĞˆõ…ÉÑ¥™…Ñ	åÑ•Ì¡¥¹ÁÕĞ¹…ÉÑ¥™…Ğ¤í¥˜ …ˆ¥™…¥° 	eQM}IEU%Iœ°I}	eQLÉ•ÅÕ¥É•Ì‰åÑ”µ‰…­•…ÉÑ¥™…Ğ¸œ¤í½ÕĞ¹‰åÑ•Ìõˆí‰É•…¬íõ…Í”=}UQàœéí½¹ÍĞˆõ‰åÑ•Í=˜¡¥¹ÁÕĞ¹‰åÑ•Ì¤í¥˜ …ˆ¥™…¥° 	eQM}IEU%Iœ°=}UQàÉ•ÅÕ¥É•Ì‰åÑ•Ì¸œ¤í¥˜¡ˆ¹‰åÑ•1•¹Ñ ù1%5%QL¹µ…áQ•áÑ	åÑ•Ì¥™…¥° QaQ}	eQ}1%5%Pœ°UQ´à¥¹ÁÕĞ•á••‘Ì±¥µ¥Ğ¸œ¤íÑÉåí½ÕĞ¹Ñ•áĞõ¹•ÜQ•áÑ•½‘•È ÕÑ˜´àœ±í™…Ñ…°éÑÉÕ•ô¤¹‘•½‘”¡ˆ¤íõ…Ñ¡í™…¥° %9Y1%}UQàœ°%¹ÁÕĞ¥Ì¹½ĞÙ…±¥UQ´à¸œ±MQQUL¹U9QI5%9¤íõ¶»§q«^

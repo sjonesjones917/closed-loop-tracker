@@ -1,74 +1,20 @@
-import fs from 'node:fs';
-import vm from 'node:vm';
-import assert from 'node:assert/strict';
-import {webcrypto,createHash} from 'node:crypto';
-
-const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};context.globalThis=context;vm.createContext(context);
-vm.runInContext(fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8'),context,{filename:'test-runtime.js'});
-const runtime=context.closedLoopTestRuntime;const encoder=new TextEncoder();
-const spec=steps=>({version:'closed-loop-test-spec/1',steps});
-const binding=(id,bytes)=>({artifactId:id,filename:`${id}.bin`,bytes});
-const metadata=names=>({bindings:Object.fromEntries(names.map(name=>[name,{kind:'ARTIFACT',artifactId:`ART-${name}`}]))});
-async function rejectsCode(promise,code){await assert.rejects(promise,error=>error?.code===code,`expected ${code}`);}
-
-for(const [name,value] of Object.entries(runtime.LIMITS))assert.equal(Number.isFinite(value)&&value>0,true,`limit ${name} must be an explicit positive finite constant`);
-for(const name of ['maxTotalInputBytes','maxDecompressedBytes','maxTextBytes','maxSteps','maxSelectorDepth','maxParsedDepth','maxParsedNodes','maxCollectionItems','maxRegexPatternBytes','maxRegexInputBytes','maxCsvCells','maxXmlNodes','workerTimeoutMs','maxArchiveExpansionBytes'])assert.ok(name in runtime.LIMITS,`missing centralized limit ${name}`);
-
-assert.equal(runtime.validateResourceEnvelope({totalInputBytes:runtime.LIMITS.maxTotalInputBytes}).valid,true);
-assert.equal(runtime.validateResourceEnvelope({totalInputBytes:runtime.LIMITS.maxTotalInputBytes+1}).valid,false);
-assert.equal(runtime.validateResourceEnvelope({decompressedBytes:runtime.LIMITS.maxDecompressedBytes}).valid,true);
-assert.equal(runtime.validateResourceEnvelope({decompressedBytes:runtime.LIMITS.maxDecompressedBytes+1}).valid,false);
-assert.equal(runtime.validateResourceEnvelope({archiveExpansionBytes:runtime.LIMITS.maxArchiveExpansionBytes}).valid,true);
-assert.equal(runtime.validateResourceEnvelope({archiveExpansionBytes:runtime.LIMITS.maxArchiveExpansionBytes+1}).valid,false);
-const resourceEnvelopeBoundaries=true;
-
-const totalBytes=new Uint8Array(runtime.LIMITS.maxTotalInputBytes+1);
-await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:true}]),artifacts:{PRODUCT:binding('ART-PRODUCT',totalBytes)},metadata:metadata(['PRODUCT'])}),'INPUT_BYTE_LIMIT');
-
-const textBytes=new Uint8Array(runtime.LIMITS.maxTextBytes+1);textBytes.fill(97);
-await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'x'}]),artifacts:{PRODUCT:binding('ART-PRODUCT',textBytes)},metadata:metadata(['PRODUCT'])}),'TEXT_BYTE_LIMIT');
-
-let deep={leaf:true};for(let i=0;i<runtime.LIMITS.maxParsedDepth+2;i++)deep={next:deep};
-await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'ASSERT_EQ',value:true}]),artifacts:{PRODUCT:binding('ART-PRODUCT',encoder.encode(JSON.stringify(deep)))},metadata:metadata(['PRODUCT'])}),'PARSED_DEPTH_LIMIT');
-
-const largeCollection=Array(runtime.LIMITS.maxCollectionItems+1).fill(0);
-await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'COUNT'},{op:'ASSERT_EQ',value:0}]),artifacts:{PRODUCT:binding('ART-PRODUCT',encoder.encode(JSON.stringify(largeCollection)))},metadata:metadata(['PRODUCT'])}),'COLLECTION_LIMIT');
-
-const tooDeepJsonPath='$.'+Array(runtime.LIMITS.maxSelectorDepth+1).fill('x').join('.');
-assert.equal(runtime.validateSpec(spec([{op:'SELECT_JSON_PATH',path:tooDeepJsonPath},{op:'ASSERT_EQ',value:true}])).valid,false);
-const tooDeepXmlPath='/'+Array(runtime.LIMITS.maxSelectorDepth+1).fill('x').join('/');
-assert.equal(runtime.validateSpec(spec([{op:'SELECT_XML',path:tooDeepXmlPath},{op:'ASSERT_EQ',value:true}])).valid,false);
-
-const longPattern='a'.repeat(runtime.LIMITS.maxRegexPatternBytes+1);
-assert.equal(runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:longPattern}])).valid,false);
-const regexInput='a'.repeat(runtime.LIMITS.maxRegexInputBytes+1);
-await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'TEXT'},{op:'ASSERT_MATCH',pattern:'a+'}]),canonicalBindings:{TEXT:{value:regexInput}},metadata:{bindings:{TEXT:{kind:'CANONICAL_VALUE',canonicalKey:'TEXT'}}}}),'REGEX_INPUT_LIMIT');
-
-const csvCells=runtime.LIMITS.maxCsvCells+1;const csvText=Array(csvCells).fill('x').join(',');
-await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_CSV',delimiter:',',header:false,quote:'"',newline:'AUTO',encoding:'UTF-8'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]),artifacts:{PRODUCT:binding('ART-CSV',encoder.encode(csvText))},metadata:metadata(['PRODUCT'])}),'CSV_CELL_LIMIT');
-
-const xmlText='<root>'+Array(runtime.LIMITS.maxXmlNodes+1).fill('<n/>').join('')+'</root>';
-await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_XML'},{op:'SELECT_XML',path:'/root/n'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]),artifacts:{PRODUCT:binding('ART-XML',encoder.encode(xmlText))},metadata:metadata(['PRODUCT'])}),'XML_NODE_LIMIT');
-
-const forbidden=[
-  {version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:true,javascript:'return true'}]},
-  {version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:true,python:'pass'}]},
-  {version:'closed-loop-test-spec/1',steps:[{op:'SHELL',command:'echo no'},{op:'ASSERT_EQ',value:true}]}
-];
-for(const candidate of forbidden)assert.equal(runtime.validateSpec(candidate).valid,false,'arbitrary executable source must be impossible');
-
-const bytes=encoder.encode('hash authority');
-const hashResult=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:createHash('sha256').update(bytes).digest('hex')}]),artifacts:{PRODUCT:binding('ART-HASH',bytes)},metadata:metadata(['PRODUCT'])});
-assert.equal(hashResult.determination,'SATISFIED');
-
-const one=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'ONE'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'one'}]),artifacts:{ONE:binding('ART-ONE',encoder.encode('one'))},metadata:metadata(['ONE'])});
-assert.equal(one.determination,'SATISFIED');
-const two=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'LEFT'},{op:'READ_BYTES'},{op:'BYTE_COMPARE',binding:'RIGHT'},{op:'ASSERT_EQ',value:true}]),artifacts:{LEFT:binding('ART-LEFT',encoder.encode('same')),RIGHT:binding('ART-RIGHT',encoder.encode('same'))},metadata:metadata(['LEFT','RIGHT'])});
-assert.equal(two.determination,'SATISFIED');assert.equal(new Set(two.inputArtifactIds).size,2);
-
-class SilentWorker{postMessage(){}terminate(){this.terminated=true;}}
-const timeoutTest={TEST_ID:'TEST-TIMEOUT',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-TIMEOUT'}},EXECUTABLE_SPEC:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:true}])};
-const timeout=await runtime.executeTest(timeoutTest,{PRODUCT:binding('ART-TIMEOUT',encoder.encode('x'))},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});
-assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.code,'WORKER_TIMEOUT');assert.equal(Array.isArray(timeout.observations)&&timeout.observations.length===0,true);
-
-console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(runtime.LIMITS).sort(),totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,oneArtifact:true,multiArtifact:true,arbitraryCodeImpossible:true,resourceEnvelopeBoundaries}));
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {webcrypto,createHash} from 'node:crypto';
+const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise,Blob};context.globalThis=context;vm.createContext(context);for(const file of ['hash.js','test-runtime.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});const r=context.closedLoopTestRuntime,encoder=new TextEncoder();
+const base=(steps,result)=>({version:r.SPEC_VERSION,languageVersion:r.LANGUAGE_VERSION,operationRegistryVersion:r.OPERATION_REGISTRY_VERSION,operationRegistrySha256:r.OPERATION_REGISTRY_SHA256,steps,result});const artifact=(id,bytes)=>({artifactId:id,filename:id+'.bin',bytes});const bindings=names=>Object.fromEntries(names.map(n=>[n,{kind:'ARTIFACT',artifactId:'ART-'+n}]));async function rejectsCode(p,code){await assert.rejects(p,e=>e?.code===code,`expected ${code}`);}
+for(const [name,value] of Object.entries(r.LIMITS))assert.equal(Number.isFinite(value)&&value>0,true,`limit ${name} must be explicit positive finite`);for(const name of ['maxTotalInputBytes','maxDecompressedBytes','maxTextBytes','maxSteps','maxSelectorDepth','maxParsedDepth','maxParsedNodes','maxCollectionItems','maxRegexPatternBytes','maxRegexInputBytes','maxCsvCells','maxXmlNodes','workerTimeoutMs','maxArchiveExpansionBytes'])assert.ok(name in r.LIMITS,`missing ${name}`);
+for(const [key,limit] of [['totalInputBytes','maxTotalInputBytes'],['decompressedBytes','maxDecompressedBytes'],['archiveExpansionBytes','maxArchiveExpansionBytes']]){assert.equal(r.validateResourceEnvelope({[key]:r.LIMITS[limit]}).valid,true);assert.equal(r.validateResourceEnvelope({[key]:r.LIMITS[limit]+1}).valid,false);}
+const byteRead=(finalStep,finalResult,bindingName='PRODUCT')=>base([{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:bindingName}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},...finalStep],finalResult);
+const total=new Uint8Array(r.LIMITS.maxTotalInputBytes+1);await rejectsCode(r.execute({spec:byteRead([{stepId:'S003',op:'HASH_SHA256',inputs:{bytes:{stepRef:'S002',output:'bytes'}}}],{stepRef:'S003',output:'sha256'}),artifacts:{PRODUCT:artifact('ART-PRODUCT',total)},metadata:{bindings:bindings(['PRODUCT'])}}),'INPUT_BYTE_LIMIT');
+const textBytes=new Uint8Array(r.LIMITS.maxTextBytes+1);textBytes.fill(97);await rejectsCode(r.execute({spec:byteRead([{stepId:'S003',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S002',output:'bytes'}}}],{stepRef:'S003',output:'text'}),artifacts:{PRODUCT:artifact('ART-PRODUCT',textBytes)},metadata:{bindings:bindings(['PRODUCT'])}}),'TEXT_BYTE_LIMIT');
+let deep={leaf:true};for(let i=0;i<r.LIMITS.maxParsedDepth+2;i++)deep={next:deep};const deepSpec=byteRead([{stepId:'S003',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S002',output:'bytes'}}},{stepId:'S004',op:'PARSE_JSON',inputs:{text:{stepRef:'S003',output:'text'}}}],{stepRef:'S004',output:'value'});await rejectsCode(r.execute({spec:deepSpec,artifacts:{PRODUCT:artifact('ART-PRODUCT',encoder.encode(JSON.stringify(deep)))},metadata:{bindings:bindings(['PRODUCT'])}}),'PARSED_DEPTH_LIMIT');
+const large=Array(r.LIMITS.maxCollectionItems+1).fill(0);await rejectsCode(r.execute({spec:deepSpec,artifacts:{PRODUCT:artifact('ART-PRODUCT',encoder.encode(JSON.stringify(large)))},metadata:{bindings:bindings(['PRODUCT'])}}),'COLLECTION_LIMIT');
+const path='$.x'+'.x'.repeat(r.LIMITS.maxSelectorDepth);const selector=base([{stepId:'S001',op:'SELECT_JSON_PATH',inputs:{value:{literal:{}},path:{literal:path}}}],{stepRef:'S001',output:'selection'});assert.equal(r.validateSpec(selector,{}).valid,false);const xmlPath='/'+Array(r.LIMITS.maxSelectorDepth+1).fill('x').join('/');const xmlSelector=base([{stepId:'S001',op:'SELECT_XML',inputs:{value:{literal:{}},path:{literal:xmlPath}}}],{stepRef:'S001',output:'selection'});assert.equal(r.validateSpec(xmlSelector,{}).valid,false);
+const longPattern='a'.repeat(r.LIMITS.maxRegexPatternBytes+1);const regexBad=base([{stepId:'S001',op:'ASSERT_MATCH',inputs:{actual:{literal:'a'},pattern:{literal:longPattern}}}],{stepRef:'S001',output:'assertion'});assert.equal(r.validateSpec(regexBad,{}).valid,false);const regexInput='a'.repeat(r.LIMITS.maxRegexInputBytes+1),regexRun=base([{stepId:'S001',op:'ASSERT_MATCH',inputs:{actual:{literal:regexInput},pattern:{literal:'a+'}}}],{stepRef:'S001',output:'assertion'});await rejectsCode(r.execute({spec:regexRun,metadata:{bindings:{}}}),'REGEX_INPUT_LIMIT');
+const csvText=Array(r.LIMITS.maxCsvCells+1).fill('x').join(','),csv=base([{stepId:'S001',op:'PARSE_CSV',inputs:{text:{literal:csvText},delimiter:{literal:','},header:{literal:false},quote:{literal:'"'},newline:{literal:'AUTO'},encoding:{literal:'UTF-8'}}}],{stepRef:'S001',output:'value'});await rejectsCode(r.execute({spec:csv,metadata:{bindings:{}}}),'CSV_CELL_LIMIT');
+const xmlText='<root>'+Array(r.LIMITS.maxXmlNodes+1).fill('<n/>').join('')+'</root>',xml=base([{stepId:'S001',op:'PARSE_XML',inputs:{text:{literal:xmlText}}}],{stepRef:'S001',output:'value'});await rejectsCode(r.execute({spec:xml,metadata:{bindings:{}}}),'XML_NODE_LIMIT');
+const tooMany=base(Array.from({length:r.LIMITS.maxSteps+1},(_,i)=>({stepId:'S'+String(i+1).padStart(3,'0'),op:'ASSERT_EQ',inputs:{actual:{literal:1},expected:{literal:1}}})),{stepRef:'S001',output:'assertion'});assert.equal(r.validateSpec(tooMany,{}).valid,false);
+for(const candidate of [base([{stepId:'S001',op:'SHELL',inputs:{command:{literal:'echo no'}}}],{stepRef:'S001',output:'x'}),{version:r.SPEC_VERSION,languageVersion:r.LANGUAGE_VERSION,operationRegistryVersion:r.OPERATION_REGISTRY_VERSION,operationRegistrySha256:r.OPERATION_REGISTRY_SHA256,steps:[{stepId:'S001',op:'ASSERT_EQ',inputs:{actual:{literal:true},expected:{literal:true}},javascript:'return true'}],result:{stepRef:'S001',output:'assertion'}}])assert.equal(r.validateSpec(candidate,{}).valid,false);
+const bytes=encoder.encode('hash authority'),hashSpec=byteRead([{stepId:'S003',op:'HASH_SHA256',inputs:{bytes:{stepRef:'S002',output:'bytes'}}},{stepId:'S004',op:'ASSERT_EQ',inputs:{actual:{stepRef:'S003',output:'sha256'},expected:{literal:createHash('sha256').update(bytes).digest('hex')}}}],{stepRef:'S004',output:'assertion'});assert.equal((await r.execute({spec:hashSpec,artifacts:{PRODUCT:artifact('ART-PRODUCT',bytes)},metadata:{bindings:bindings(['PRODUCT'])}})).determination,'SATISFIED');
+const multi=base([{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'LEFT'}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},{stepId:'S003',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'RIGHT'}}},{stepId:'S004',op:'READ_BYTES',inputs:{artifact:{stepRef:'S003',output:'artifact'}}},{stepId:'S005',op:'BYTE_COMPARE',inputs:{left:{stepRef:'S002',output:'bytes'},right:{stepRef:'S004',output:'bytes'}}}],{stepRef:'S005',output:'equal'}),multiBindings=bindings(['LEFT','RIGHT']);const multiResult=await r.execute({spec:multi,artifacts:{LEFT:artifact('ART-LEFT',encoder.encode('same')),RIGHT:artifact('ART-RIGHT',encoder.encode('same'))},metadata:{bindings:multiBindings}});assert.equal(multiResult.determination,'SATISFIED');assert.equal(new Set(multiResult.inputArtifactIds).size,2);
+class SilentWorker{postMessage(){}terminate(){this.terminated=true;}}const timeoutTest={TEST_ID:'TEST-TIMEOUT',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:r.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:r.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:bindings(['PRODUCT']),EXECUTABLE_SPEC:hashSpec};const timeout=await r.executeTest(timeoutTest,{PRODUCT:artifact('ART-PRODUCT',bytes)},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.code,'WORKER_TIMEOUT');assert.equal(timeout.observations.length,0);
+console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(r.LIMITS).sort(),resourceEnvelopeBoundaries:true,totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,multiArtifact:true,arbitraryCodeImpossible:true}));
