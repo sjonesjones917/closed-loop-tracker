@@ -12,7 +12,8 @@ assert.equal(h.idVersion,'closed-loop-id/1');
 assert.equal(typeof h.canonicalIdCandidate,'function');
 assert.equal(typeof h.allocateCanonicalId,'function');
 
-const tuple={
+const inRuntime=value=>vm.runInContext(`JSON.parse(${JSON.stringify(JSON.stringify(value))})`,context);
+const tupleValue={
   familyPrefix:'REQ',
   familyNamespace:'requirements',
   jobNamespace:'JOB-ALPHA',
@@ -22,7 +23,8 @@ const tuple={
   allocationSequence:42,
   collisionCounter:0
 };
-const preimage={
+const tuple=inRuntime(tupleValue);
+const preimage=inRuntime({
   idVersion:'closed-loop-id/1',
   familyNamespace:'requirements',
   jobNamespace:'JOB-ALPHA',
@@ -31,7 +33,7 @@ const preimage={
   parentId:'',
   allocationSequence:42,
   collisionCounter:0
-};
+});
 const canonical='{"allocationSequence":42,"collisionCounter":0,"commandId":"COMMAND-17","familyNamespace":"requirements","idVersion":"closed-loop-id/1","jobNamespace":"JOB-ALPHA","parentId":"","targetSlot":"slot-9"}';
 assert.equal(h.stableStringify(preimage),canonical,'ID preimage must use canonical JSON exactly.');
 const digest=createHash('sha256').update(Buffer.from(canonical,'utf8')).digest();
@@ -46,27 +48,30 @@ const expected=`REQ-${payload}`;
 assert.equal(h.canonicalIdCandidate(tuple),expected,'closed-loop-id/1 candidate must match an independent SHA-256/base32hex vector.');
 
 const occupied=new Set([expected]);
-const allocation=h.allocateCanonicalId({...tuple,collisionExists:id=>occupied.has(id)});
+const collisionTuple=inRuntime(tupleValue);collisionTuple.collisionExists=id=>occupied.has(id);
+const allocation=h.allocateCanonicalId(collisionTuple);
 assert.equal(allocation.collisionCounter,1,'Allocator must increment collisionCounter only after an actual collision.');
 assert.notEqual(allocation.id,expected);
 assert.equal(allocation.allocationSequence,42);
 assert.equal(allocation.idVersion,'closed-loop-id/1');
-const retry=h.allocateCanonicalId({...tuple,collisionExists:()=>false});
+const retryTuple=inRuntime(tupleValue);retryTuple.collisionExists=()=>false;
+const retry=h.allocateCanonicalId(retryTuple);
 assert.equal(retry.id,expected,'Same allocation tuple must be deterministic.');
 
 for(const bad of [
-  {...tuple,familyPrefix:'req'},
-  {...tuple,familyPrefix:'REQ_1'},
-  {...tuple,allocationSequence:-1},
-  {...tuple,collisionCounter:-1},
-  {...tuple,jobNamespace:''},
-  {...tuple,commandId:''}
-])assert.throws(()=>h.canonicalIdCandidate(bad));
+  {...tupleValue,familyPrefix:'req'},
+  {...tupleValue,familyPrefix:'REQ_1'},
+  {...tupleValue,allocationSequence:-1},
+  {...tupleValue,collisionCounter:-1},
+  {...tupleValue,jobNamespace:''},
+  {...tupleValue,commandId:''}
+])assert.throws(()=>h.canonicalIdCandidate(inRuntime(bad)));
 
 assert.throws(()=>h.stableStringify(-0));
 assert.throws(()=>h.stableStringify(Number.MAX_SAFE_INTEGER+1));
-assert.throws(()=>h.stableStringify({x:undefined}));
-assert.throws(()=>h.stableStringify([,1]));
-assert.equal(h.stableStringify({'😀':1,'z':2}),'{"z":2,"😀":1}');
+assert.throws(()=>h.stableStringify(inRuntime({x:null,xMarker:'undefined'})),/./); // sanity: runtime errors remain observable
+const undefinedObject=vm.runInContext('({x:undefined})',context);assert.throws(()=>h.stableStringify(undefinedObject));
+const sparseArray=vm.runInContext('Array(2)',context);sparseArray[1]=1;assert.throws(()=>h.stableStringify(sparseArray));
+assert.equal(h.stableStringify(inRuntime({'😀':1,'z':2})),'{"z":2,"😀":1}');
 
 console.log(JSON.stringify({canonicalIdContract:'PASS',expected}));
