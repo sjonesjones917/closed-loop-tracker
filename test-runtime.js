@@ -9,7 +9,7 @@ const EXECUTABLE_KIND='TEST_IR';
 const CAPABILITY='CLOSED_LOOP_TEST_IR';
 const TEST_IR_LANGUAGE_VERSION='closed-loop-test-ir-language/1';
 const OPERATION_REGISTRY_VERSION='closed-loop-test-ir-operations/1';
-const OPERATION_REGISTRY_SHA256='370d3c04ffe55cb21311607833de5311afde8a15e443093abf43425bb44eb393';
+const OPERATION_REGISTRY_SHA256='929be82a05d8a08798009a7f7245a231a4f517291053b0bf549ff52ad6f8afc9';
 const JSON_SELECTOR_REGISTRY_VERSION='closed-loop-json-selector/1';
 const JSON_SELECTOR_REGISTRY_SHA256='546daaa22cccdbbdb10ba55da859b21b09c852781f42726cd5fb4f8356cd1ee5';
 const XML_SELECTOR_REGISTRY_VERSION='closed-loop-xml-selector/1';
@@ -105,16 +105,62 @@ const PORT_CONTRACTS=Object.freeze({
   ASSERT_SET_EQUAL:Object.freeze({requiredInputs:Object.freeze(['actual','expected']),optionalInputs:Object.freeze(['message']),outputs:Object.freeze({assertion:'ASSERTION'})}),
   BYTE_COMPARE:Object.freeze({requiredInputs:Object.freeze(['left','right']),optionalInputs:Object.freeze([]),outputs:Object.freeze({comparison:'BOOLEAN'})})
 });
-const INPUT_PORT_TYPES=Object.freeze({
-  READ_BYTES:Object.freeze({artifact:Object.freeze(['ARTIFACT'])}),
-  DECODE_UTF8:Object.freeze({bytes:Object.freeze(['BYTES'])}),
-  PARSE_JSON:Object.freeze({text:Object.freeze(['STRING'])}),
-  PARSE_CSV:Object.freeze({text:Object.freeze(['STRING'])}),
-  PARSE_XML:Object.freeze({text:Object.freeze(['STRING'])}),
-  SELECT_XML:Object.freeze({value:Object.freeze(['XML_NODE'])}),
-  HASH_SHA256:Object.freeze({bytes:Object.freeze(['BYTES'])}),
-  BYTE_COMPARE:Object.freeze({left:Object.freeze(['BYTES']),right:Object.freeze(['BYTES'])})
+const PORT_TYPE_SETS=Object.freeze({
+  ARTIFACT:Object.freeze(['ARTIFACT']),
+  BYTES:Object.freeze(['BYTES']),
+  BYTE_BACKED:Object.freeze(['BYTES','ARTIFACT']),
+  STRING:Object.freeze(['STRING']),
+  BOOLEAN:Object.freeze(['BOOLEAN']),
+  VALUE:Object.freeze(['VALUE']),
+  XML_NODE:Object.freeze(['XML_NODE']),
+  JSON_VALUE:Object.freeze(['VALUE','STRING','INTEGER','BOOLEAN']),
+  COUNTABLE:Object.freeze(['VALUE','STRING']),
+  DECIMAL_INPUT:Object.freeze(['STRING','INTEGER'])
 });
+const INPUT_PORT_TYPES=Object.freeze({
+  LOAD_ARTIFACT:Object.freeze({binding:Object.freeze(['ARTIFACT','VALUE'])}),
+  READ_BYTES:Object.freeze({artifact:PORT_TYPE_SETS.ARTIFACT}),
+  DECODE_UTF8:Object.freeze({bytes:PORT_TYPE_SETS.BYTES}),
+  PARSE_JSON:Object.freeze({text:PORT_TYPE_SETS.STRING}),
+  PARSE_CSV:Object.freeze({text:PORT_TYPE_SETS.STRING,delimiter:PORT_TYPE_SETS.STRING,header:PORT_TYPE_SETS.BOOLEAN,quote:PORT_TYPE_SETS.STRING,newline:PORT_TYPE_SETS.STRING,encoding:PORT_TYPE_SETS.STRING}),
+  PARSE_XML:Object.freeze({text:PORT_TYPE_SETS.STRING}),
+  SELECT_JSON_PATH:Object.freeze({value:PORT_TYPE_SETS.JSON_VALUE,path:PORT_TYPE_SETS.STRING}),
+  SELECT_XML:Object.freeze({value:PORT_TYPE_SETS.XML_NODE,path:PORT_TYPE_SETS.STRING}),
+  COUNT:Object.freeze({value:PORT_TYPE_SETS.COUNTABLE}),
+  SUM:Object.freeze({value:PORT_TYPE_SETS.VALUE}),
+  MIN:Object.freeze({value:PORT_TYPE_SETS.VALUE}),
+  MAX:Object.freeze({value:PORT_TYPE_SETS.VALUE}),
+  SORT:Object.freeze({value:PORT_TYPE_SETS.VALUE,direction:PORT_TYPE_SETS.STRING,domain:PORT_TYPE_SETS.STRING}),
+  UNIQUE:Object.freeze({value:PORT_TYPE_SETS.VALUE}),
+  HASH_SHA256:Object.freeze({bytes:PORT_TYPE_SETS.BYTES}),
+  REGEX:Object.freeze({value:PORT_TYPE_SETS.JSON_VALUE,pattern:PORT_TYPE_SETS.STRING,flags:PORT_TYPE_SETS.STRING}),
+  COMPARE:Object.freeze({left:PORT_TYPE_SETS.JSON_VALUE,right:PORT_TYPE_SETS.JSON_VALUE,operator:PORT_TYPE_SETS.STRING,numericMode:PORT_TYPE_SETS.STRING,absTol:PORT_TYPE_SETS.DECIMAL_INPUT,relTol:PORT_TYPE_SETS.DECIMAL_INPUT,absoluteTolerance:PORT_TYPE_SETS.DECIMAL_INPUT,relativeTolerance:PORT_TYPE_SETS.DECIMAL_INPUT}),
+  ASSERT_EQ:Object.freeze({actual:PORT_TYPE_SETS.JSON_VALUE,expected:PORT_TYPE_SETS.JSON_VALUE,numericMode:PORT_TYPE_SETS.STRING,absTol:PORT_TYPE_SETS.DECIMAL_INPUT,relTol:PORT_TYPE_SETS.DECIMAL_INPUT,absoluteTolerance:PORT_TYPE_SETS.DECIMAL_INPUT,relativeTolerance:PORT_TYPE_SETS.DECIMAL_INPUT,message:PORT_TYPE_SETS.STRING}),
+  ASSERT_GT:Object.freeze({actual:PORT_TYPE_SETS.JSON_VALUE,expected:PORT_TYPE_SETS.JSON_VALUE,message:PORT_TYPE_SETS.STRING}),
+  ASSERT_GTE:Object.freeze({actual:PORT_TYPE_SETS.JSON_VALUE,expected:PORT_TYPE_SETS.JSON_VALUE,message:PORT_TYPE_SETS.STRING}),
+  ASSERT_LT:Object.freeze({actual:PORT_TYPE_SETS.JSON_VALUE,expected:PORT_TYPE_SETS.JSON_VALUE,message:PORT_TYPE_SETS.STRING}),
+  ASSERT_LTE:Object.freeze({actual:PORT_TYPE_SETS.JSON_VALUE,expected:PORT_TYPE_SETS.JSON_VALUE,message:PORT_TYPE_SETS.STRING}),
+  ASSERT_MATCH:Object.freeze({actual:PORT_TYPE_SETS.JSON_VALUE,pattern:PORT_TYPE_SETS.STRING,flags:PORT_TYPE_SETS.STRING,message:PORT_TYPE_SETS.STRING}),
+  ASSERT_CONTAINS:Object.freeze({actual:PORT_TYPE_SETS.JSON_VALUE,expected:PORT_TYPE_SETS.JSON_VALUE,message:PORT_TYPE_SETS.STRING}),
+  ASSERT_NOT_CONTAINS:Object.freeze({actual:PORT_TYPE_SETS.JSON_VALUE,expected:PORT_TYPE_SETS.JSON_VALUE,message:PORT_TYPE_SETS.STRING}),
+  ASSERT_SET_EQUAL:Object.freeze({actual:PORT_TYPE_SETS.VALUE,expected:PORT_TYPE_SETS.VALUE,message:PORT_TYPE_SETS.STRING}),
+  BYTE_COMPARE:Object.freeze({left:PORT_TYPE_SETS.BYTE_BACKED,right:PORT_TYPE_SETS.BYTE_BACKED})
+});
+function operationRegistryDefinitionIssues(){
+  const issues=[];
+  for(const [op,contract] of Object.entries(PORT_CONTRACTS)){
+    const declared=INPUT_PORT_TYPES[op];
+    if(!declared){issues.push(`Operation ${op} has no registered input-type contract.`);continue;}
+    const ports=[...contract.requiredInputs,...contract.optionalInputs];
+    for(const port of ports)if(!Array.isArray(declared[port])||!declared[port].length)issues.push(`Operation ${op} input ${port} has no accepted type set.`);
+    for(const port of Object.keys(declared))if(!ports.includes(port))issues.push(`Operation ${op} has an input-type contract for undeclared port ${port}.`);
+    for(const [port,type] of Object.entries(contract.outputs||{}))if(typeof type!=='string'||!type)issues.push(`Operation ${op} output ${port} has no exact type.`);
+  }
+  for(const op of Object.keys(INPUT_PORT_TYPES))if(!PORT_CONTRACTS[op])issues.push(`Input-type registry contains unknown operation ${op}.`);
+  return issues;
+}
+const OPERATION_REGISTRY_DEFINITION_ISSUES=Object.freeze(operationRegistryDefinitionIssues());
+if(OPERATION_REGISTRY_DEFINITION_ISSUES.length)throw new Error(`Invalid Test IR operation registry: ${OPERATION_REGISTRY_DEFINITION_ISSUES.join(' ')}`);
 const OPS=Object.freeze(Object.keys(PORT_CONTRACTS));
 const ASSERTION_OPS=new Set(['ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']);
 const encoder=new TextEncoder();
@@ -370,6 +416,35 @@ function isInputRef(value){
   if(keys.length===2&&keys.includes('stepRef')&&keys.includes('output'))return typeof value.stepRef==='string'&&typeof value.output==='string'&&value.output.length>0;
   return false;
 }
+function literalPortType(value){
+  if(bytesOf(value))return 'BYTES';
+  if(typeof value==='string')return 'STRING';
+  if(typeof value==='boolean')return 'BOOLEAN';
+  if(typeof value==='number')return Number.isSafeInteger(value)?'INTEGER':'INVALID_NUMBER';
+  if(value===null||Array.isArray(value)||(value&&typeof value==='object'))return 'VALUE';
+  return 'UNSUPPORTED_LITERAL';
+}
+function bindingPortType(name,bindings){
+  if(bindings===undefined||!hasOwn(bindings||{},name))return null;
+  const binding=bindings[name];
+  if(typeof binding==='string')return 'ARTIFACT';
+  if(!binding||typeof binding!=='object'||Array.isArray(binding))return null;
+  return (binding.kind||'ARTIFACT')==='CANONICAL_VALUE'?'VALUE':'ARTIFACT';
+}
+function stepOutputPortType(step,output,bindings){
+  const contract=PORT_CONTRACTS[step?.op];if(!contract||!hasOwn(contract.outputs,output))return null;
+  if(step.op==='LOAD_ARTIFACT'&&output==='artifact'){
+    const name=step.inputs?.binding?.bindingRef;
+    return typeof name==='string'?bindingPortType(name,bindings):null;
+  }
+  return contract.outputs[output];
+}
+function inputReferencePortType(ref,prior,bindings){
+  if(hasOwn(ref,'literal'))return literalPortType(ref.literal);
+  if(hasOwn(ref,'bindingRef'))return bindingPortType(ref.bindingRef,bindings);
+  if(hasOwn(ref,'stepRef'))return prior.has(ref.stepRef)?stepOutputPortType(prior.get(ref.stepRef),ref.output,bindings):null;
+  return null;
+}
 function validateDagSpec(spec,bindings){
   const issues=[];
   if(!spec||typeof spec!=='object'||Array.isArray(spec))return {valid:false,issues:['Test IR must be an object.']};
@@ -395,10 +470,17 @@ function validateDagSpec(spec,bindings){
     for(const [name,ref] of Object.entries(step.inputs)){
       if(!isInputRef(ref)){issues.push(`Step ${index} input ${name} is not one literal, bindingRef, or prior step output reference.`);continue;}
       if(hasOwn(ref,'bindingRef')&&bindings!==undefined&&!hasOwn(bindings||{},ref.bindingRef))issues.push(`Step ${index} references undeclared binding ${ref.bindingRef}.`);
+      if(step.op==='LOAD_ARTIFACT'&&name==='binding'&&!hasOwn(ref,'bindingRef'))issues.push(`Step ${index} LOAD_ARTIFACT binding must be an explicit bindingRef.`);
       if(hasOwn(ref,'stepRef')){
         if(!prior.has(ref.stepRef))issues.push(`Step ${index} has a forward, missing, or cyclic reference to ${ref.stepRef}.`);
-        else {const priorStep=prior.get(ref.stepRef),priorContract=PORT_CONTRACTS[priorStep.op];if(!priorContract||!hasOwn(priorContract.outputs,ref.output))issues.push(`Step ${index} references unknown output port ${ref.output} on ${ref.stepRef}.`);else {const producedType=priorContract.outputs[ref.output],acceptedTypes=INPUT_PORT_TYPES[step.op]?.[name];if(acceptedTypes&&!acceptedTypes.includes(producedType))issues.push(`Step ${index} input ${name} requires ${acceptedTypes.join(' or ')} but ${ref.stepRef}.${ref.output} produces ${producedType}.`);}}
+        else {const priorStep=prior.get(ref.stepRef),priorContract=PORT_CONTRACTS[priorStep.op];if(!priorContract||!hasOwn(priorContract.outputs,ref.output))issues.push(`Step ${index} references unknown output port ${ref.output} on ${ref.stepRef}.`);}
       }
+      const acceptedTypes=INPUT_PORT_TYPES[step.op]?.[name],providedType=inputReferencePortType(ref,prior,bindings);
+      if(!acceptedTypes)issues.push(`Step ${index} operation ${step.op} input ${name} has no registered type contract.`);
+      else if(providedType&&providedType!=='UNSUPPORTED_LITERAL'&&providedType!=='INVALID_NUMBER'&&!acceptedTypes.includes(providedType)){
+        const source=hasOwn(ref,'stepRef')?`${ref.stepRef}.${ref.output}`:hasOwn(ref,'bindingRef')?`binding ${ref.bindingRef}`:'literal';
+        issues.push(`Step ${index} input ${name} requires ${acceptedTypes.join(' or ')} but ${source} produces ${providedType}.`);
+      }else if(providedType==='UNSUPPORTED_LITERAL'||providedType==='INVALID_NUMBER')issues.push(`Step ${index} input ${name} has unsupported literal type ${providedType}.`);
     }
     if(step.op==='REGEX'||step.op==='ASSERT_MATCH'){
       const pattern=step.inputs?.pattern?.literal,flags=step.inputs?.flags?.literal;if(typeof pattern==='string')issues.push(...validateRegex(pattern,flags).map(message=>`Step ${index}: ${message}`));
@@ -587,7 +669,7 @@ function executeTest(test,artifacts,canonicalBindings,options={}){
   });
 }
 
-const operationContracts=()=>JSON.parse(JSON.stringify(PORT_CONTRACTS));
+const operationContracts=()=>Object.fromEntries(Object.entries(PORT_CONTRACTS).map(([op,contract])=>[op,{...JSON.parse(JSON.stringify(contract)),inputTypes:JSON.parse(JSON.stringify(INPUT_PORT_TYPES[op])),outputTypeResolver:op==='LOAD_ARTIFACT'?'BINDING_KIND':null}]));
 const capabilities=()=>Object.freeze([CAPABILITY]);
-root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,TEST_IR_LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256,JSON_SELECTOR_REGISTRY_VERSION,JSON_SELECTOR_REGISTRY_SHA256,XML_SELECTOR_REGISTRY_VERSION,XML_SELECTOR_REGISTRY_SHA256,REGEX_REGISTRY_VERSION,REGEX_REGISTRY_SHA256,OPS,OP_DEFINITIONS,PORT_CONTRACTS,INPUT_PORT_TYPES,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope,validateRegex,parseJsonSelector});
+root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,TEST_IR_LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256,JSON_SELECTOR_REGISTRY_VERSION,JSON_SELECTOR_REGISTRY_SHA256,XML_SELECTOR_REGISTRY_VERSION,XML_SELECTOR_REGISTRY_SHA256,REGEX_REGISTRY_VERSION,REGEX_REGISTRY_SHA256,OPS,OP_DEFINITIONS,PORT_CONTRACTS,INPUT_PORT_TYPES,OPERATION_REGISTRY_DEFINITION_ISSUES,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope,validateRegex,parseJsonSelector});
 })();

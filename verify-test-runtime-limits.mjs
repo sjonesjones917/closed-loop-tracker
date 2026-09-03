@@ -25,7 +25,7 @@ assert.equal(runtime.validateResourceEnvelope({archiveExpansionBytes:runtime.LIM
 const resourceEnvelopeBoundaries=true;
 
 const totalBytes=new Uint8Array(runtime.LIMITS.maxTotalInputBytes+1);
-await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:true}]),artifacts:{PRODUCT:binding('ART-PRODUCT',totalBytes)},metadata:metadata(['PRODUCT'])}),'INPUT_BYTE_LIMIT');
+await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]),artifacts:{PRODUCT:binding('ART-PRODUCT',totalBytes)},metadata:metadata(['PRODUCT'])}),'INPUT_BYTE_LIMIT');
 
 const textBytes=new Uint8Array(runtime.LIMITS.maxTextBytes+1);textBytes.fill(97);
 await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'x'}]),artifacts:{PRODUCT:binding('ART-PRODUCT',textBytes)},metadata:metadata(['PRODUCT'])}),'TEXT_BYTE_LIMIT');
@@ -69,7 +69,7 @@ const two=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'LEFT'},
 assert.equal(two.determination,'SATISFIED');assert.equal(new Set(two.inputArtifactIds).size,2);
 
 class SilentWorker{postMessage(){}terminate(){this.terminated=true;}}
-const timeoutTest={TEST_ID:'TEST-TIMEOUT',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-TIMEOUT'}},EXECUTABLE_SPEC:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:true}])};
+const timeoutTest={TEST_ID:'TEST-TIMEOUT',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-TIMEOUT'}},EXECUTABLE_SPEC:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}])};
 const timeout=await runtime.executeTest(timeoutTest,{PRODUCT:binding('ART-TIMEOUT',encoder.encode('x'))},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});
 assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.code,'WORKER_TIMEOUT');assert.equal(Array.isArray(timeout.observations)&&timeout.observations.length===0,true);
 
