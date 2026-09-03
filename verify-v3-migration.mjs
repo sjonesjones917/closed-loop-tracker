@@ -48,6 +48,8 @@ assert.equal(audit.payload.job.EXACT_USER_OBJECTIVE_VERBATIM,'Preserved migratio
 for(const key of ['intakeCoverageManifests','obligationManifests','promptContextManifests','blindAliasMaps','nativeExecutionEvents'])assert.ok(Array.isArray(migrated.projectData[key]),`migration default missing: ${key}`);
 assert.deepEqual(previous,original,'migration must not mutate the imported object');
 assert.equal(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),'','/2 -> /3 migration must not fabricate current agent-owned Stage 01 semantic intake from preserved human authority');
+assert.equal(migrated.job.CONTRACT_PROFILE_ID,undefined,'legacy /2 migration must not acquire current profile without complete profile proof');
+assert.equal(migrated.job.CURRENT_STATE,'BLOCKED');assert.equal(migrated.job.JOB_RECORD_STATUS,'INCOMPLETE');assert.equal(migrated.projectData.contractProfileMigration.status,'LEGACY_NON_GATING');assert.equal(schema.validateContractProfile(migrated).valid,false);
 
 const legacyStages={};for(let stage=1;stage<=30;stage++)legacyStages[stage]={stage,status:stage===1?'COMPLETE':'NOT STARTED',agentData:{},humanData:{},derivedData:{}};
 const legacy={schema:'human-project/30',jobId:'JOB-LEGACY-MIGRATION',userJobInput:{objective:'Legacy intent supplied exactly once',deliverable:'Legacy deliverable',explicitRequirements:['Never ask for this supplied intent again.'],authorizedOperation01:'Complete legacy Stage 01 authority packet'},job:{JOB_ID:'JOB-LEGACY-MIGRATION'},stages:legacyStages,projectData:{}};
@@ -59,6 +61,9 @@ const currentReprocessed=context.closedLoopCore.migrateState(currentBroken);asse
 
 const second=schema.migrateProjectToCurrent(migrated);
 assert.equal(second.schema,'closed-loop-project/3');
+assert.equal(schema.validateContractProfile(second).valid,false);
 assert.equal(second.projectData.nonOperationalImportedPayloads.length,migrated.projectData.nonOperationalImportedPayloads.length,'current migration must be idempotent');
+
+const profileless=context.closedLoopCore.createBlankState('JOB-PREPROFILE');delete profileless.job.CONTRACT_PROFILE_ID;profileless.stages[1].status='COMPLETE';profileless.stages[1].agentData={INPUT_SET_CONTENTS:'must not gate'};const guarded=schema.migrateProjectToCurrent(profileless);assert.equal(schema.validateContractProfile(guarded).valid,false);assert.equal(guarded.job.CURRENT_STATE,'BLOCKED');assert.equal(guarded.stages[1].status,'NOT STARTED');assert.equal(String(guarded.stages[1].agentData.INPUT_SET_CONTENTS||''),'');assert.ok(guarded.projectData.nonOperationalImportedPayloads.some(x=>x.sourceSchema==='closed-loop-project/3'&&x.operational===false));
 
 console.log(JSON.stringify({verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,idempotent:true,legacyStage01SemanticFabricationRejected:true,currentV3NoSilentHeal:true}));

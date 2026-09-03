@@ -745,6 +745,17 @@ function migrateState(p){
   if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
     const migrated=JSON.parse(JSON.stringify(p));
     migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
+    if(migrated?.job?.CONTRACT_PROFILE_ID!==CONTRACT_PROFILE_ID){
+      migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
+      const alreadyLegacy=migrated.projectData.contractProfileMigration?.status==='LEGACY_NON_GATING';
+      if(!alreadyLegacy&&!migrated.projectData.migrationArchives.some(x=>x?.kind==='PRE_PROFILE_V3_SOURCE'&&x?.revision===Number(p.revision||0)))migrated.projectData.migrationArchives.push({kind:'PRE_PROFILE_V3_SOURCE',schema:PROJECT_SCHEMA,revision:Number(p.revision||0),payload:JSON.parse(JSON.stringify(p))});
+      migrated.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema:alreadyLegacy?String(migrated.projectData.contractProfileMigration.sourceSchema||PROJECT_SCHEMA):PROJECT_SCHEMA,targetProfile:CONTRACT_PROFILE_ID,semanticProofMigrated:false};
+      migrated.job=migrated.job&&typeof migrated.job==='object'?migrated.job:{};delete migrated.job.CONTRACT_PROFILE_ID;
+      migrated.job.CURRENT_STATE='BLOCKED';migrated.job.JOB_RECORD_STATUS='INCOMPLETE';migrated.job.CURRENT_STAGE='STAGE 01';
+      migrated.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(migrated.job.CURRENT_BLOCKERS)?migrated.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];
+      const stage01=migrated?.stages?.['1']||migrated?.stages?.[1];if(stage01){stage01.status='NOT STARTED';stage01.decision='';stage01.decisionEvidence='';stage01.agentData={};stage01.acceptedData={};stage01.gate={satisfied:false,reasons:['Legacy/pre-profile data cannot satisfy current-profile Stage 01.']};}
+      migrated.activeStage=1;return migrated;
+    }
     migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
     migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
     if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:PROJECT_SCHEMA,records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});migrated.projectData.stageRecords={};}
