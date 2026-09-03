@@ -1,0 +1,44 @@
+name: Repair current scope authority once
+on:
+  push:
+    branches: [repair/scope-current-2612]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: "!contains(github.event.head_commit.message, '[current-scope-authority-repaired]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Repair the single current-scope authority and prove the exposed path
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          old="const SCOPE_KEYS=Object.freeze(['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','baselineId','productId']);\nconst scopeValue=value=>{const text=String(value??'').trim();return !text||['NONE','NOT APPLICABLE','UNKNOWN','PENDING','UNASSIGNED'].includes(text.toUpperCase())?null:value;};\nfunction currentScope(project){return {inputVersion:scopeValue(project.job.CURRENT_INPUT_VERSION),sourceSetVersion:scopeValue(project.job.CURRENT_SOURCE_SET_VERSION),requirementsVersion:scopeValue(project.job.CURRENT_REQUIREMENTS_VERSION),testSuiteVersion:scopeValue(project.job.CURRENT_TEST_SUITE_VERSION),instructionVersion:scopeValue(project.job.CURRENT_INSTRUCTION_VERSION),iterationId:scopeValue(recordId(latestIteration(project,[10,17,19]),'iterations')||project.job.CURRENT_ITERATION),candidateId:scopeValue(recordId(records(project,'candidateFreezes').at(-1),'candidateFreezes')),baselineId:scopeValue(recordId(records(project,'baselines').at(-1),'baselines')||project.job.CURRENT_BASELINE_ID),productId:scopeValue(recordId(records(project,'products').at(-1),'products')||project.job.CURRENT_PRODUCT_ID)};}"
+          new="const SCOPE_KEYS=Object.freeze(['inputVersion','sourceSetVersion','researchVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','sourceConvergedIterationId','confirmationIterationId','baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion','reconciledReviewVersion','releaseId','hashReviewId','evidenceChainVersion']);\nconst scopeValue=value=>{const text=String(value??'').trim();return !text||['NONE','NOT APPLICABLE','UNKNOWN','PENDING','UNASSIGNED'].includes(text.toUpperCase())?null:value;};\nfunction currentScope(project){const convergence=records(project,'convergenceRecords').at(-1),confirmation=records(project,'confirmationRecords').at(-1);return {inputVersion:scopeValue(project.job.CURRENT_INPUT_VERSION),sourceSetVersion:scopeValue(project.job.CURRENT_SOURCE_SET_VERSION),researchVersion:scopeValue(project.job.CURRENT_RESEARCH_VERSION),requirementsVersion:scopeValue(project.job.CURRENT_REQUIREMENTS_VERSION),testSuiteVersion:scopeValue(project.job.CURRENT_TEST_SUITE_VERSION),instructionVersion:scopeValue(project.job.CURRENT_INSTRUCTION_VERSION),iterationId:scopeValue(recordId(latestIteration(project,[10,17,19]),'iterations')||project.job.CURRENT_ITERATION),candidateId:scopeValue(project.job.CURRENT_CANDIDATE_ID||recordId(records(project,'candidateFreezes').at(-1),'candidateFreezes')),sourceConvergedIterationId:scopeValue(recordValue(convergence,'ITERATION_ID')||recordValue(confirmation,'SOURCE_ITERATION_ID')),confirmationIterationId:scopeValue(recordValue(confirmation,'CONFIRMATION_ITERATION_ID')),baselineId:scopeValue(recordId(records(project,'baselines').at(-1),'baselines')||project.job.CURRENT_BASELINE_ID),productId:scopeValue(recordId(records(project,'products').at(-1),'products')||project.job.CURRENT_PRODUCT_ID),productVersion:scopeValue(project.job.CURRENT_PRODUCT_VERSION),deliveryCandidateSetId:scopeValue(project.job.CURRENT_DELIVERY_CANDIDATE_SET_ID),reviewVersion:scopeValue(project.job.CURRENT_REVIEW_VERSION),reconciledReviewVersion:scopeValue(project.job.CURRENT_RECONCILED_REVIEW_VERSION),releaseId:scopeValue(project.job.CURRENT_RELEASE_ID),hashReviewId:scopeValue(project.job.CURRENT_HASH_REVIEW_ID),evidenceChainVersion:scopeValue(project.job.CURRENT_EVIDENCE_CHAIN_VERSION)};}"
+          if old not in s:
+              if new not in s: raise SystemExit('currentScope authority block not found')
+          else:
+              p.write_text(s.replace(old,new))
+          PY
+          node verify-data-route-closure.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify.mjs
+          rm .github/workflows/repair-current-scope-authority.yml
+          git add -A
+          git commit -m 'Align current-scope authority with exact operation dimensions [current-scope-authority-repaired]'
+          git push origin HEAD:repair/scope-current-2612
