@@ -31,3 +31,7 @@ let verify=fs.readFileSync('verify-v3-contract.mjs','utf8');
 const line="await import('./verify-stage-contract-closure.mjs');";
 if(!verify.includes(line))verify=verify.replace(/\s*$/,'\n'+line+'\n');
 fs.writeFileSync('verify-v3-contract.mjs',verify);
+
+let baseVerify=fs.readFileSync('verify.mjs','utf8');
+baseVerify=replaceOnce(baseVerify,"'Preserve the Complete Evidence Chain','Preserve Failures Permanently'];","'Preserve the Complete Evidence Chain','Preserve Failures Permanently and Close Delivery'];",'Stage 30 verification title oracle');
+fs.writeFileSync('verify.mjs',baseVerify);
