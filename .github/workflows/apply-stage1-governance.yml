@@ -1,0 +1,45 @@
+name: Apply staged Stage 01 governance source
+
+on:
+  push:
+    branches:
+      - repair/current-main-contract-closure-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/current-main-contract-closure-20260903
+          fetch-depth: 0
+      - name: Apply exact staged source
+        run: |
+          set -euo pipefail
+          cat .stage1-governance-payload.00 \
+              .stage1-governance-payload.01 \
+              .stage1-governance-payload.02 \
+              .stage1-governance-payload.03 > /tmp/stage1-governance.b64
+          test "$(wc -c </tmp/stage1-governance.b64)" -eq 39052
+          base64 -d /tmp/stage1-governance.b64 > /tmp/stage1-governance.tar.gz
+          echo "b19bc2fd0655415205dbe024d896dd7bdbf8db27fd48b30b74a0acff394127ea  /tmp/stage1-governance.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/stage1-governance.tar.gz
+          rm -f .stage1-governance-payload.00 \
+                .stage1-governance-payload.01 \
+                .stage1-governance-payload.02 \
+                .stage1-governance-payload.03 \
+                .github/workflows/apply-stage1-governance.yml
+          rm -f specification/closed-loop-specification-manifest.json \
+                specification/closed-loop-normative-requirements.json
+          SOURCE_COMMIT="$(git rev-parse HEAD)" node verify-specification-governance.mjs
+          rm -f specification/closed-loop-specification-manifest.json \
+                specification/closed-loop-normative-requirements.json
+          git config user.name closed-loop-stage1
+          git config user.email closed-loop-stage1@users.noreply.github.com
+          git add -A
+          git commit -m "Strengthen Stage 01 specification governance proof"
+          git push origin HEAD:repair/current-main-contract-closure-20260903
