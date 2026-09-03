@@ -28,7 +28,7 @@ export function assertFileFirstResponseContract({appSource=app,engineSource=engi
   assert.match(ingestionSource,/RESPONSE_FILE_DECODE_HASH_MISMATCH/,'Decoded text must remain bound to exact staged bytes.');
   assert.match(appSource,/id="export-prompt-file"/,'External work must expose instruction-file export without requiring clipboard use.');
   assert.match(htmlSource,/obtain the authoritative response\.json file for the current instruction/i,'Static operator guidance must identify the authoritative response.json filename and current-instruction binding.');
-  assert.match(htmlSource,/Select that exact response JSON file in the application/,'Static operator guidance must describe file-first response ingestion.');
+  assert.match(htmlSource,/Select the exact response\.json file returned by the agent in the application/i,'Static operator guidance must identify the selected response.json file and its external-agent origin.');
   assert.doesNotMatch(htmlSource,/Paste only that final JSON|Parse \/ validate response/,'Static guidance must not require pasted final JSON.');
   assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-response\.mjs['"]/,'The required ingestion proof must permanently execute this file-first regression.');
   assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-operator\.mjs['"]/,'The required ingestion proof must permanently execute the operator-path mutation regression.');
@@ -40,6 +40,7 @@ assert.throws(()=>assertFileFirstResponseContract({engineSource:engine.replaceAl
 assert.throws(()=>assertFileFirstResponseContract({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/file input/,'Mutation replacing the primary file selector must fail.');
 assert.throws(()=>assertFileFirstResponseContract({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/Read-back byte mismatch/,'Mutation removing staged-byte mismatch enforcement must fail.');
 assert.throws(()=>assertFileFirstResponseContract({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/authoritative response-file transport/,'Mutation erasing authoritative transport provenance must fail.');
+assert.throws(()=>assertFileFirstResponseContract({htmlSource:html.replace('returned by the agent','from an unspecified source')}),/external-agent origin/,'Mutation erasing the returned-file origin must fail.');
 assert.throws(()=>assertFileFirstResponseContract({ingestionProofSource:ingestionProof.replace("import './verify-file-first-response.mjs';",'')}),/permanently execute this file-first regression/,'Mutation removing the regression from the required ingestion proof must fail.');
 
 console.log(JSON.stringify({
@@ -50,10 +51,12 @@ console.log(JSON.stringify({
   strictUtf8:true,
   textFallbackNonauthoritative:true,
   promptFileExportExposed:true,
+  responseFileOriginBound:true,
   requiredIngestionProofInvocation:true,
   pastePrimaryMutationDetected:true,
   fileSelectorMutationDetected:true,
   stagedRehashMutationDetected:true,
   provenanceMutationDetected:true,
+  responseOriginMutationDetected:true,
   ciInvocationMutationDetected:true
 },null,2));
