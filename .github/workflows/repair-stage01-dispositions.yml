@@ -45,10 +45,8 @@ jobs:
           p.write_text(text.replace(old,new))
           e=Path('workflow-engine.js')
           text=e.read_text()
-          if 'INACCESSIBLE_OR_BLOCKED' not in text:
-              text=text.replace("'EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','NO_PROJECT_RELEVANT_INFORMATION'", "'EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'")
-          if 'INACCESSIBLE_OR_BLOCKED' not in text:
-              raise SystemExit('Could not extend Stage 01 engine disposition set')
+          text=text.replace("['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','NO_PROJECT_RELEVANT_INFORMATION']", "['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED']")
+          text=text.replace("new Set(['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','NO_PROJECT_RELEVANT_INFORMATION'])", "new Set(['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'])")
           e.write_text(text)
           t=Path('verify-stage01-intake-closure.mjs')
           text=t.read_text()
@@ -60,6 +58,9 @@ jobs:
               text=text.replace(marker,marker+addition,1)
           t.write_text(text)
           PY
+      - name: Show evaluator contract
+        run: |
+          grep -n -B 8 -A 45 'evaluateIntakeAccounting' workflow-engine.js | head -120
       - name: Prove repaired Stage 01 contract
         run: |
           set -euo pipefail
