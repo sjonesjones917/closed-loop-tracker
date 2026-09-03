@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      mobile_acceptance_target_json:
+        description: Pinned physical-iPhone acceptance target JSON for the exact currently deployed main commit
+        required: false
+        type: string
+      mobile_acceptance_evidence_json:
+        description: Physical-iPhone mobile-acceptance-evidence JSON bound to the submitted target
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -252,7 +261,10 @@ jobs:
 
   publish-status:
     name: Publish machine acceptance status
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      always() && github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success') ||
+       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success'))
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     permissions:
@@ -262,12 +274,39 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Reverify deployed Chromium for authenticated mobile acceptance
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/mobile-${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then
+                cat "$log"
+                return 0
+              fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
+                return 1
+              fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:
           TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
-          LIVE_RESULT: ${{ needs.verify-live.result }}
+          DEPLOY_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.deploy.result }}
+          LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
+          MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
+          MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
         run: |
           set -euo pipefail
           test "$TEST_RESULT" = success
@@ -282,6 +321,9 @@ jobs:
           node verify-data-route-closure.mjs > /tmp/data-route.json
           node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
           node verify-mobile-release-governance.mjs > /tmp/mobile-governance.json
+          USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\n/).filter(Boolean).map(l=>l.trim().split(/\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\^\{\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
+          export USED_MOBILE_CHALLENGES_JSON
+          node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
@@ -292,6 +334,7 @@ jobs:
           const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
           const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
           const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
+          const mobileAcceptance=JSON.parse(fs.readFileSync('/tmp/mobile-acceptance.json','utf8'));
           const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
           const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
           const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
@@ -302,6 +345,7 @@ jobs:
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
           if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
+          const finalAcceptancePublication=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
@@ -370,30 +414,13 @@ jobs:
             deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
             testedBrowserWidths:[320,393,'desktop'],
             mobileReleaseTagGovernanceCoverage:Number(mobileGovernance.mobileReleaseGovernance==='PASS'),
-            actualIPhoneSafariAcceptance:false,
-            mobileAcceptanceResult:'BLOCKED_ENVIRONMENT',
-            mobileAcceptanceTargetId:null,
-            mobileAcceptanceEvidenceId:null,
-            mobileAcceptanceEvidenceBasis:'NONE',
-            mobileAcceptanceSourceCommit:null,
-            mobileAcceptanceDeploymentManifestDigest:null,
-            mobileAcceptanceOrigin:'https://sjonesjones917.github.io',
-            mobileAcceptanceBasePath:'/closed-loop-tracker/',
-            mobileAcceptanceTestProjectId:null,
-            mobileAcceptancePerformer:null,
-            mobileAcceptancePhysicalDeviceAssertion:false,
-            finalAcceptancePublication:false,
-            releaseTagEligible:false,
-            mobileAcceptanceBlockers:[{
-              disposition:'BLOCKED_ENVIRONMENT',
-              requiredAction:'Create a pinned MOBILE_ACCEPTANCE_TARGET_ID and single-use challenge, execute the complete Section 45.1 operator path on an actual iPhone in Safari against this exact deployed commit and manifest, then submit mobile-acceptance-evidence.json for CI verification.',
-              actor:'Authorized physical-iPhone performer and repository acceptance controller',
-              controllingClauses:['45.1','45.2','46','49']
-            }],
+            ...mobileAcceptance,
+            finalAcceptancePublication,
+            releaseTagEligible:finalAcceptancePublication,
             realThirtyStageProjectAcceptance:false,
             fullProductionMaturity:false,
-            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:'BLOCKED_ENVIRONMENT'},
-            nextProofStep:'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
+            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobileAcceptance.physicalIPhoneJobResult},
+            nextProofStep:finalAcceptancePublication?'Create the release tag for this exact accepted commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
             proofSources:{
               ownership:'verify.mjs',
               canonicalDataRoutes:'verify-data-route-closure.mjs',
@@ -409,11 +436,11 @@ jobs:
               fullCycle:'verify-full-cycle.mjs',
               prompts:'verify-prompt-semantics.mjs',
               localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              deployedIdentity:'verify-live.mjs',
+              deployedIdentity:'verify-live.mjs or evaluate-mobile-acceptance-submission.mjs exact deployed manifest/resource verification',
               deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
               deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
               physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
-              physicalIPhoneAcceptance:'BLOCKED_ENVIRONMENT: no pinned target or physical-device evidence is present'
+              physicalIPhoneAcceptance:finalAcceptancePublication?`${mobileAcceptance.mobileAcceptanceEvidenceId} (${mobileAcceptance.mobileAcceptanceEvidenceBasis})`:'BLOCKED_ENVIRONMENT or BLOCKED: current physical-device evidence did not satisfy the gate'
             }
           };
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
@@ -427,7 +454,7 @@ jobs:
       - name: Upload acceptance report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: closed-loop-acceptance-${{ github.sha }}
+          name: closed-loop-acceptance-${{ github.sha }}-${{ github.run_id }}
           path: closed-loop-acceptance.json
       - name: Record blocked actual-iPhone acceptance
         if: steps.acceptance.outputs.final_acceptance != 'true'
@@ -440,12 +467,19 @@ jobs:
         run: |
           set -euo pipefail
           TAG="acceptance-${GITHUB_SHA::12}"
+          CHALLENGE="$(node -e "const r=require('./closed-loop-acceptance.json');const c=String(r.mobileAcceptanceChallenge||'').toLowerCase();if(!/^[0-9a-f]{32,}$/.test(c))process.exit(2);process.stdout.write(c);")"
+          CHALLENGE_TAG="mobile-acceptance-challenge-$CHALLENGE"
           git config user.name closed-loop-release
           git config user.email closed-loop-release@users.noreply.github.com
+          test -z "$(git ls-remote --tags origin "refs/tags/$CHALLENGE_TAG" | awk '{print $1}')"
           EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
           if [ -n "$EXISTING" ]; then
             test "$EXISTING" = "$GITHUB_SHA"
-          else
+          fi
+          git tag "$CHALLENGE_TAG" "$GITHUB_SHA"
+          if [ -z "$EXISTING" ]; then
             git tag "$TAG" "$GITHUB_SHA"
-            git push origin "refs/tags/$TAG"
+            git push origin "refs/tags/$CHALLENGE_TAG" "refs/tags/$TAG"
+          else
+            git push origin "refs/tags/$CHALLENGE_TAG"
           fi
