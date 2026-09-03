@@ -1,0 +1,39 @@
+name: Repair exact response-file operator instruction
+on:
+  push:
+    branches: [fix/spec-driven-file-first-20260902]
+    paths: [.github/workflows/repair-response-file-wording.yml]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/spec-driven-file-first-20260902
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact operator instruction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('index.html')
+          source=path.read_text()
+          old='<li><strong>Select that exact response JSON file in the application</strong>, then tap <em>Stage and validate response file</em>. Review the proposed change before accepting it.</li>'
+          new='<li><strong>Select the exact response.json file returned by the agent.</strong> Then tap <em>Stage and validate response file</em>. Review the proposed change before accepting it.</li>'
+          if source.count(old) != 1:
+              raise SystemExit(f'expected one operator-instruction target, found {source.count(old)}')
+          path.write_text(source.replace(old,new))
+          PY
+          grep -Fq 'Select the exact response.json file returned by the agent.' index.html
+          node --check app-core.js
+          rm .github/workflows/repair-response-file-wording.yml
+      - name: Commit complete repair
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git commit -m 'State the exact response-file operator action'
+          git push origin HEAD:fix/spec-driven-file-first-20260902
