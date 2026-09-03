@@ -1,0 +1,40 @@
+name: One-time scope matrix repair
+
+on:
+  push:
+    branches: [repair/scope-matrix-726b]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/scope-matrix-726b
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact contract repair
+        run: node .repair-scope-contract.mjs
+      - name: Prove exact matrix and affected contracts
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node verify-section14-scope-matrix.mjs
+          node verify-v3-contract.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Remove one-time repair scaffolding and commit
+        run: |
+          set -euo pipefail
+          rm .repair-scope-contract.mjs .github/workflows/repair-scope-matrix.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add workflow-schema.js verify-section14-scope-matrix.mjs .github/workflows/pages.yml .repair-scope-contract.mjs .github/workflows/repair-scope-matrix.yml
+          git commit -m "Conform exact stage-operation scope matrix"
+          git push origin HEAD:repair/scope-matrix-726b
