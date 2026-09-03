@@ -406,3 +406,5 @@ console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperation
 await import('./verify-spec-residual-closure.mjs');
 
 await import('./verify-operation-scope-classification.mjs');
+
+await import('./verify-terminal-human-authority.mjs');
