@@ -1,0 +1,169 @@
+===== workflow-engine.js =====
+--- incorporated into the job definition @ 102451 ---
+equireAccepted();const defects=confirmedDefects(project,{allScopes:true}),regs=records(project,'regressions'),covered=new Set(regs.map(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''))),executions=recordsForCurrentScope(project,'regressionExecutions');const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression information is missing for: '+missing.join(', ')+'.');for(const reg of regs.filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED')){const id=recordId(reg,'regressions');const latest=executions.filter(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id).at(-1);if(!latest||effectiveRegressionDetermination(project,latest).determination!=='SATISFIED')reasons.push('Latest applicable regression execution is not successful for '+id+'.');}break;}
+  }
+  const blocked=questions.length>0||blockers.length>0||executionFailures.length>0;
+  return {stage,complete:reasons.length===0,blocked,reasons,acceptedResponseCount:changes.length,checkedAt:now(),priorReasonCount:previousReasons};
+}
+
+
+const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);
+const INTAKE_STATEMENT_CLASSES=Object.freeze(['FACT','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY','CONTEXT']);
+const OBLIGATION_DISPOSITIONS=Object.freeze(['retained nonnormative context','inapplicable','blocked']);
+function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersion,extra={}}={}){
+  if(value===undefined||value===null)return;
+  if(typeof value==='string'){
+    const normalized=value.replace(/\r\n/g,'\n').replace(/\r/g,'\n'),lines=normalized.split('\n');let emitted=0;
+    lines.forEach((rawLine,index)=>{if(!rawLine.trim())return;const location=lines.length>1?`${sourceLocation}#line=${index+1}`:sourceLocation,rawValueSha256=hash.sha256Value(rawLine),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation:location,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation:location,label:lines.length>1?`${label} line ${index+1}`:label,rawValueSha256,rawValueText:rawLine,...clone(extra)});emitted++;});
+    if(!emitted&&value.length){const rawValueSha256=hash.sha256Value(value),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation,label,rawValueSha256,rawValueText:value,...clone(extra)});}
+    return;
+  }
+  if(Array.isArray(value)){value.forEach((item,index)=>enumerateInputLeaves(item,`${sourceLocation}[${index}]`,kind,`${label}[${index}]`,units,{inputVersion,extra}));return;}
+  if(typeof value==='object'){for(const key of Object.keys(value).sort())enumerateInputLeaves(value[key],`${sourceLocation}.${key}`,kind,`${label}.${key}`,units,{inputVersion,extra});return;}
+  enumerateInputLeaves(String(value),sourceLocation,kind,label,units,{inputVersion,extra});
+}
+function intakeCoverageManifest(project){
+  ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',units=[];
+  for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{})){if(!['HUMAN
+--- retained as context @ 102490 ---
+dDefects(project,{allScopes:true}),regs=records(project,'regressions'),covered=new Set(regs.map(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''))),executions=recordsForCurrentScope(project,'regressionExecutions');const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression information is missing for: '+missing.join(', ')+'.');for(const reg of regs.filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED')){const id=recordId(reg,'regressions');const latest=executions.filter(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id).at(-1);if(!latest||effectiveRegressionDetermination(project,latest).determination!=='SATISFIED')reasons.push('Latest applicable regression execution is not successful for '+id+'.');}break;}
+  }
+  const blocked=questions.length>0||blockers.length>0||executionFailures.length>0;
+  return {stage,complete:reasons.length===0,blocked,reasons,acceptedResponseCount:changes.length,checkedAt:now(),priorReasonCount:previousReasons};
+}
+
+
+const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);
+const INTAKE_STATEMENT_CLASSES=Object.freeze(['FACT','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY','CONTEXT']);
+const OBLIGATION_DISPOSITIONS=Object.freeze(['retained nonnormative context','inapplicable','blocked']);
+function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersion,extra={}}={}){
+  if(value===undefined||value===null)return;
+  if(typeof value==='string'){
+    const normalized=value.replace(/\r\n/g,'\n').replace(/\r/g,'\n'),lines=normalized.split('\n');let emitted=0;
+    lines.forEach((rawLine,index)=>{if(!rawLine.trim())return;const location=lines.length>1?`${sourceLocation}#line=${index+1}`:sourceLocation,rawValueSha256=hash.sha256Value(rawLine),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation:location,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation:location,label:lines.length>1?`${label} line ${index+1}`:label,rawValueSha256,rawValueText:rawLine,...clone(extra)});emitted++;});
+    if(!emitted&&value.length){const rawValueSha256=hash.sha256Value(value),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation,label,rawValueSha256,rawValueText:value,...clone(extra)});}
+    return;
+  }
+  if(Array.isArray(value)){value.forEach((item,index)=>enumerateInputLeaves(item,`${sourceLocation}[${index}]`,kind,`${label}[${index}]`,units,{inputVersion,extra}));return;}
+  if(typeof value==='object'){for(const key of Object.keys(value).sort())enumerateInputLeaves(value[key],`${sourceLocation}.${key}`,kind,`${label}.${key}`,units,{inputVersion,extra});return;}
+  enumerateInputLeaves(String(value),sourceLocation,kind,label,units,{inputVersion,extra});
+}
+function intakeCoverageManifest(project){
+  ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',units=[];
+  for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{})){if(!['HUMAN','HUMAN_DECISION'].includes(definition
+--- unresolved human-only @ 102512 ---
+copes:true}),regs=records(project,'regressions'),covered=new Set(regs.map(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''))),executions=recordsForCurrentScope(project,'regressionExecutions');const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression information is missing for: '+missing.join(', ')+'.');for(const reg of regs.filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED')){const id=recordId(reg,'regressions');const latest=executions.filter(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id).at(-1);if(!latest||effectiveRegressionDetermination(project,latest).determination!=='SATISFIED')reasons.push('Latest applicable regression execution is not successful for '+id+'.');}break;}
+  }
+  const blocked=questions.length>0||blockers.length>0||executionFailures.length>0;
+  return {stage,complete:reasons.length===0,blocked,reasons,acceptedResponseCount:changes.length,checkedAt:now(),priorReasonCount:previousReasons};
+}
+
+
+const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);
+const INTAKE_STATEMENT_CLASSES=Object.freeze(['FACT','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY','CONTEXT']);
+const OBLIGATION_DISPOSITIONS=Object.freeze(['retained nonnormative context','inapplicable','blocked']);
+function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersion,extra={}}={}){
+  if(value===undefined||value===null)return;
+  if(typeof value==='string'){
+    const normalized=value.replace(/\r\n/g,'\n').replace(/\r/g,'\n'),lines=normalized.split('\n');let emitted=0;
+    lines.forEach((rawLine,index)=>{if(!rawLine.trim())return;const location=lines.length>1?`${sourceLocation}#line=${index+1}`:sourceLocation,rawValueSha256=hash.sha256Value(rawLine),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation:location,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation:location,label:lines.length>1?`${label} line ${index+1}`:label,rawValueSha256,rawValueText:rawLine,...clone(extra)});emitted++;});
+    if(!emitted&&value.length){const rawValueSha256=hash.sha256Value(value),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation,label,rawValueSha256,rawValueText:value,...clone(extra)});}
+    return;
+  }
+  if(Array.isArray(value)){value.forEach((item,index)=>enumerateInputLeaves(item,`${sourceLocation}[${index}]`,kind,`${label}[${index}]`,units,{inputVersion,extra}));return;}
+  if(typeof value==='object'){for(const key of Object.keys(value).sort())enumerateInputLeaves(value[key],`${sourceLocation}.${key}`,kind,`${label}.${key}`,units,{inputVersion,extra});return;}
+  enumerateInputLeaves(String(value),sourceLocation,kind,label,units,{inputVersion,extra});
+}
+function intakeCoverageManifest(project){
+  ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',units=[];
+  for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{})){if(!['HUMAN','HUMAN_DECISION'].includes(definition?.producer))continue;e
+--- later-resolvable @ 102536 ---
+s(project,'regressions'),covered=new Set(regs.map(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''))),executions=recordsForCurrentScope(project,'regressionExecutions');const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression information is missing for: '+missing.join(', ')+'.');for(const reg of regs.filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED')){const id=recordId(reg,'regressions');const latest=executions.filter(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id).at(-1);if(!latest||effectiveRegressionDetermination(project,latest).determination!=='SATISFIED')reasons.push('Latest applicable regression execution is not successful for '+id+'.');}break;}
+  }
+  const blocked=questions.length>0||blockers.length>0||executionFailures.length>0;
+  return {stage,complete:reasons.length===0,blocked,reasons,acceptedResponseCount:changes.length,checkedAt:now(),priorReasonCount:previousReasons};
+}
+
+
+const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);
+const INTAKE_STATEMENT_CLASSES=Object.freeze(['FACT','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY','CONTEXT']);
+const OBLIGATION_DISPOSITIONS=Object.freeze(['retained nonnormative context','inapplicable','blocked']);
+function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersion,extra={}}={}){
+  if(value===undefined||value===null)return;
+  if(typeof value==='string'){
+    const normalized=value.replace(/\r\n/g,'\n').replace(/\r/g,'\n'),lines=normalized.split('\n');let emitted=0;
+    lines.forEach((rawLine,index)=>{if(!rawLine.trim())return;const location=lines.length>1?`${sourceLocation}#line=${index+1}`:sourceLocation,rawValueSha256=hash.sha256Value(rawLine),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation:location,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation:location,label:lines.length>1?`${label} line ${index+1}`:label,rawValueSha256,rawValueText:rawLine,...clone(extra)});emitted++;});
+    if(!emitted&&value.length){const rawValueSha256=hash.sha256Value(value),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation,label,rawValueSha256,rawValueText:value,...clone(extra)});}
+    return;
+  }
+  if(Array.isArray(value)){value.forEach((item,index)=>enumerateInputLeaves(item,`${sourceLocation}[${index}]`,kind,`${label}[${index}]`,units,{inputVersion,extra}));return;}
+  if(typeof value==='object'){for(const key of Object.keys(value).sort())enumerateInputLeaves(value[key],`${sourceLocation}.${key}`,kind,`${label}.${key}`,units,{inputVersion,extra});return;}
+  enumerateInputLeaves(String(value),sourceLocation,kind,label,units,{inputVersion,extra});
+}
+function intakeCoverageManifest(project){
+  ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',units=[];
+  for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{})){if(!['HUMAN','HUMAN_DECISION'].includes(definition?.producer))continue;enumerateInputLeaves(proj
+--- sourceUnitId @ 109087 ---
+,...parsed,raw:String(raw)};}catch{}return {format:'LEGACY_TEXT',units:[],raw:String(raw)};}
+function evaluateIntakeAccounting(project,{capture}={}){
+  ensureShape(project);const manifest=intakeCoverageManifest(project),parsed=capture===undefined?parseCapturedInputSet(project):(()=>{try{const value=typeof capture==='string'?JSON.parse(capture):capture;return value&&typeof value==='object'&&Array.isArray(value.units)?{format:'STRUCTURED',...value}:{format:'INVALID',units:[]};}catch{return {format:'INVALID',units:[]};}})(),reasons=[];
+  if(parsed.format!=='STRUCTURED')reasons.push('Stage 01 INPUT_SET_CONTENTS must be the structured current intake accounting capture.');
+  if(String(parsed.inputVersion||'')!==String(manifest.inputVersion))reasons.push('Stage 01 intake accounting is not bound to the current input version.');
+  if(String(parsed.manifestSha256||'')!==String(manifest.manifestSha256))reasons.push('Stage 01 intake accounting is not bound to the current application intake manifest.');
+  const expected=new Map(manifest.units.map(unit=>[unit.unitId,unit])),counts=new Map(),accounted=new Set();
+  for(const [index,unit] of safe(parsed.units).entries()){
+    const id=String(unit?.sourceUnitId||'').trim();if(!id){reasons.push(`Stage 01 intake unit ${index+1} has no sourceUnitId.`);continue;}counts.set(id,(counts.get(id)||0)+1);const source=expected.get(id);if(!source){reasons.push(`Stage 01 intake accounting contains unknown unit ${id}.`);continue;}
+    const hashMatches=String(unit?.sourceRawValueSha256||'')===String(source.rawValueSha256);if(!hashMatches)reasons.push(`Stage 01 intake unit ${id} is not bound to the exact source raw-value hash.`);
+    const disposition=String(unit?.disposition||'').trim().toLowerCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='inapplicable with reason'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);
+    const statements=safe(unit?.extractedStatements);if(disposition!=='inapplicable with reason'&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;
+    for(const statement of statements){const key=String(statement?.statementKey||'').trim(),text=String(statement?.text||'').trim(),classification=String(statement?.statementClass||'').trim().toUpperCase();if(!key||statementKeys.has(key)){reasons.push(`Stage 01 intake unit ${id} has a missing or duplicate statementKey.`);statementsValid=false;}statementKeys.add(key);if(!text){reasons.push(`Stage 01 intake unit ${id} contains an empty extracted statement.`);statementsValid=false;}if(!INTAKE_STATEMENT_CLASSES.includes(classification)){reasons.push(`Stage 01 intake unit ${id} has an invalid statementClass.`);statementsValid=false;}}
+    if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(disposition==='inapplicable with reason'?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);
+  }
+  for(const [id,count] of counts)if(count!==1)reasons.push(`Stage 01 intake unit ${id} is accounted ${count} times; exactly one accounting entry is required.`);for(const id of expected.keys())if(!counts.has(id))reasons.push(`Stage 01 intake acc
+--- sourceUnitId @ 109173 ---
+aw)};}
+function evaluateIntakeAccounting(project,{capture}={}){
+  ensureShape(project);const manifest=intakeCoverageManifest(project),parsed=capture===undefined?parseCapturedInputSet(project):(()=>{try{const value=typeof capture==='string'?JSON.parse(capture):capture;return value&&typeof value==='object'&&Array.isArray(value.units)?{format:'STRUCTURED',...value}:{format:'INVALID',units:[]};}catch{return {format:'INVALID',units:[]};}})(),reasons=[];
+  if(parsed.format!=='STRUCTURED')reasons.push('Stage 01 INPUT_SET_CONTENTS must be the structured current intake accounting capture.');
+  if(String(parsed.inputVersion||'')!==String(manifest.inputVersion))reasons.push('Stage 01 intake accounting is not bound to the current input version.');
+  if(String(parsed.manifestSha256||'')!==String(manifest.manifestSha256))reasons.push('Stage 01 intake accounting is not bound to the current application intake manifest.');
+  const expected=new Map(manifest.units.map(unit=>[unit.unitId,unit])),counts=new Map(),accounted=new Set();
+  for(const [index,unit] of safe(parsed.units).entries()){
+    const id=String(unit?.sourceUnitId||'').trim();if(!id){reasons.push(`Stage 01 intake unit ${index+1} has no sourceUnitId.`);continue;}counts.set(id,(counts.get(id)||0)+1);const source=expected.get(id);if(!source){reasons.push(`Stage 01 intake accounting contains unknown unit ${id}.`);continue;}
+    const hashMatches=String(unit?.sourceRawValueSha256||'')===String(source.rawValueSha256);if(!hashMatches)reasons.push(`Stage 01 intake unit ${id} is not bound to the exact source raw-value hash.`);
+    const disposition=String(unit?.disposition||'').trim().toLowerCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='inapplicable with reason'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);
+    const statements=safe(unit?.extractedStatements);if(disposition!=='inapplicable with reason'&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;
+    for(const statement of statements){const key=String(statement?.statementKey||'').trim(),text=String(statement?.text||'').trim(),classification=String(statement?.statementClass||'').trim().toUpperCase();if(!key||statementKeys.has(key)){reasons.push(`Stage 01 intake unit ${id} has a missing or duplicate statementKey.`);statementsValid=false;}statementKeys.add(key);if(!text){reasons.push(`Stage 01 intake unit ${id} contains an empty extracted statement.`);statementsValid=false;}if(!INTAKE_STATEMENT_CLASSES.includes(classification)){reasons.push(`Stage 01 intake unit ${id} has an invalid statementClass.`);statementsValid=false;}}
+    if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(disposition==='inapplicable with reason'?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);
+  }
+  for(const [id,count] of counts)if(count!==1)reasons.push(`Stage 01 intake unit ${id} is accounted ${count} times; exactly one accounting entry is required.`);for(const id of expected.keys())if(!counts.has(id))reasons.push(`Stage 01 intake accounting omitted controlled input unit ${id}.`);const coverage=manifest.unitCount?accou
+--- sourceUnitId @ 112999 ---
+t(line,lines.length>1?`${path}#line=${index+1}`:path);return;}if(Array.isArray(value)){value.forEach((item,index)=>semanticLeaves(item,emit,`${path}[${index}]`));return;}if(typeof value==='object'){for(const key of Object.keys(value).sort())semanticLeaves(value[key],emit,`${path}.${key}`);return;}emit(String(value),path);}
+function obligationManifest(project){
+  ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',sourceSetVersion=project.job.CURRENT_SOURCE_SET_VERSION||null,items=[];const add=(text,origin,provenance,sourceIdentity=null,evidenceRefs=[],classification='UNCLASSIFIED')=>{const value=String(text??'');if(!value.trim())return;const obligationId=`OBLIGATION-${hash.sha256Value({origin,provenance,text:value}).slice(0,20).toUpperCase()}`;items.push({obligationId,text:value,origin,classification,provenance:clone(provenance),sourceIdentity:sourceIdentity||null,evidenceRefs:[...new Set(safe(evidenceRefs).map(String))]});};
+  const directHumanIntake=intakeCoverageManifest(project);for(const unit of safe(directHumanIntake.units)){if(String(unit?.kind||'').toUpperCase()==='SUPPLIED_MATERIAL')continue;add(unit?.rawValueText,'CURRENT_USER_JOB_INPUT',{sourceUnitId:String(unit?.unitId||'UNKNOWN'),sourceLocation:String(unit?.sourceLocation||'UNKNOWN'),rawValueSha256:String(unit?.rawValueSha256||''),inputVersion},null,[],'HUMAN_AUTHORITY_RAW');}
+  const capture=parseCapturedInputSet(project);for(const unit of safe(capture.units))for(const [index,statement] of safe(unit?.extractedStatements).entries())add(statement?.text,'STAGE01_CAPTURED_HUMAN_AUTHORITY',{sourceUnitId:String(unit?.sourceUnitId||'UNKNOWN'),statementKey:String(statement?.statementKey||index+1),inputVersion},null,[],String(statement?.statementClass||'UNCLASSIFIED').toUpperCase());
+  const stageOne=project.stages?.[1]?.agentData||project.stages?.[1]?.acceptedData||{};for(const field of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION'])semanticLeaves(stageOne[field],(text,location)=>add(text,'STAGE01_ACCEPTED_JOB_DEFINITION',{field,location,inputVersion}),null,[],'STAGE01_JOB_DEFINITION');
+  const stageThree=project.stages?.[3]?.agentData||project.stages?.[3]?.acceptedData||{};for(const field of ['EXCEPTIONS_AND_EDGE_CONDITIONS','CONFLICTING_OR_INVALIDATING_MATERIAL','RESEARCH_GAPS_AND_BLOCKERS'])semanticLeaves(stageThree[field],(text,location)=>add(text,'STAGE03_ACCEPTED_RESEARCH_SUMMARY',{field,location,sourceSetVersion}),null,[],'STAGE03_RESEARCH_SUMMARY');
+  const researchFields=['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','EXAMPLES','EXPLANATORY_MATERIAL','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'];for(const record of recordsForCurrentScope(project,'research')){const researchId=recordId(record,'research'),sourceId=String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')||null;for(const field of researchFields)semanticLeaves(recordValue(record,field),(text,location)=>add(text,'STAGE03_SOURCE_RESEARCH',{researchId,field,location,sourceId,sourceSetVersion},sourceId,record.evidenceRefs,field));}
+  for(const record of recordsForCurrentScope(project,'candidateRequirements')){const candidateRequirementId=recordId(record,'candidateRequirements'),sourceId=String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')||null;se
+--- sourceUnitId @ 113408 ---
+ect.job.CURRENT_INPUT_VERSION||'UNKNOWN',sourceSetVersion=project.job.CURRENT_SOURCE_SET_VERSION||null,items=[];const add=(text,origin,provenance,sourceIdentity=null,evidenceRefs=[],classification='UNCLASSIFIED')=>{const value=String(text??'');if(!value.trim())return;const obligationId=`OBLIGATION-${hash.sha256Value({origin,provenance,text:value}).slice(0,20).toUpperCase()}`;items.push({obligationId,text:value,origin,classification,provenance:clone(provenance),sourceIdentity:sourceIdentity||null,evidenceRefs:[...new Set(safe(evidenceRefs).map(String))]});};
+  const directHumanIntake=intakeCoverageManifest(project);for(const unit of safe(directHumanIntake.units)){if(String(unit?.kind||'').toUpperCase()==='SUPPLIED_MATERIAL')continue;add(unit?.rawValueText,'CURRENT_USER_JOB_INPUT',{sourceUnitId:String(unit?.unitId||'UNKNOWN'),sourceLocation:String(unit?.sourceLocation||'UNKNOWN'),rawValueSha256:String(unit?.rawValueSha256||''),inputVersion},null,[],'HUMAN_AUTHORITY_RAW');}
+  const capture=parseCapturedInputSet(project);for(const unit of safe(capture.units))for(const [index,statement] of safe(unit?.extractedStatements).entries())add(statement?.text,'STAGE01_CAPTURED_HUMAN_AUTHORITY',{sourceUnitId:String(unit?.sourceUnitId||'UNKNOWN'),statementKey:String(statement?.statementKey||index+1),inputVersion},null,[],String(statement?.statementClass||'UNCLASSIFIED').toUpperCase());
+  const stageOne=project.stages?.[1]?.agentData||project.stages?.[1]?.acceptedData||{};for(const field of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION'])semanticLeaves(stageOne[field],(text,location)=>add(text,'STAGE01_ACCEPTED_JOB_DEFINITION',{field,location,inputVersion}),null,[],'STAGE01_JOB_DEFINITION');
+  const stageThree=project.stages?.[3]?.agentData||project.stages?.[3]?.acceptedData||{};for(const field of ['EXCEPTIONS_AND_EDGE_CONDITIONS','CONFLICTING_OR_INVALIDATING_MATERIAL','RESEARCH_GAPS_AND_BLOCKERS'])semanticLeaves(stageThree[field],(text,location)=>add(text,'STAGE03_ACCEPTED_RESEARCH_SUMMARY',{field,location,sourceSetVersion}),null,[],'STAGE03_RESEARCH_SUMMARY');
+  const researchFields=['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','EXAMPLES','EXPLANATORY_MATERIAL','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'];for(const record of recordsForCurrentScope(project,'research')){const researchId=recordId(record,'research'),sourceId=String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')||null;for(const field of researchFields)semanticLeaves(recordValue(record,field),(text,location)=>add(text,'STAGE03_SOURCE_RESEARCH',{researchId,field,location,sourceId,sourceSetVersion},sourceId,record.evidenceRefs,field));}
+  for(const record of recordsForCurrentScope(project,'candidateRequirements')){const candidateRequirementId=recordId(record,'candidateRequirements'),sourceId=String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')||null;semanticLeaves(recordValue(record,'CANDIDATE_OBLIGATION'),(text,location)=>add(text,'STAGE03_CANDIDATE_REQUIREMENT',{candidateRequirementId,location,sourceId,sourceSetVersion},sourceId,record.evidenceRefs,'CANDIDATE_OBLIGATION'));}
+  const unique=[],seen=new Set();for(const item of items){if(seen.has(item.obligationId))continue;seen.add(item.obligationId);unique.push(item);}const sourceContext=recordsForCurr
+--- sourceUnitId @ 113434 ---
+ION||'UNKNOWN',sourceSetVersion=project.job.CURRENT_SOURCE_SET_VERSION||null,items=[];const add=(text,origin,provenance,sourceIdentity=null,evidenceRefs=[],classification='UNCLASSIFIED')=>{const value=String(text??'');if(!value.trim())return;const obligationId=`OBLIGATION-${hash.sha256Value({origin,provenance,text:value}).slice(0,20).toUpperCase()}`;items.push({obligationId,text:value,origin,classification,provenance:clone(provenance),sourceIdentity:sourceIdentity||null,evidenceRefs:[...new Set(safe(evidenceRefs).map(String))]});};
+  const directHumanIntake=intakeCoverageManifest(project);for(const unit of safe(directHumanIntake.units)){if(String(unit?.kind||'').toUpperCase()==='SUPPLIED_MATERIAL')continue;add(unit?.rawValueText,'CURRENT_USER_JOB_INPUT',{sourceUnitId:String(unit?.unitId||'UNKNOWN'),sourceLocation:String(unit?.sourceLocation||'UNKNOWN'),rawValueSha256:String(unit?.rawValueSha256||''),inputVersion},null,[],'HUMAN_AUTHORITY_RAW');}
+  const capture=parseCapturedInputSet(project);for(const unit of safe(capture.units))for(const [index,statement] of safe(unit?.extractedStatements).entries())add(statement?.text,'STAGE01_CAPTURED_HUMAN_AUTHORITY',{sourceUnitId:String(unit?.sourceUnitId||'UNKNOWN'),statementKey:String(statement?.statementKey||index+1),inputVersion},null,[],String(statement?.statementClass||'UNCLASSIFIED').toUpperCase());
+  const stageOne=project.stages?.[1]?.agentData||project.stages?.[1]?.acceptedData||{};for(const field of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION'])semanticLeaves(stageOne[field],(text,location)=>add(text,'STAGE01_ACCEPTED_JOB_DEFINITION',{field,location,inputVersion}),null,[],'STAGE01_JOB_DEFINITION');
+  const stageThree=project.stages?.[3]?.agentData||project.stages?.[3]?.acceptedData||{};for(const field of ['EXCEPTIONS_AND_EDGE_CONDITIONS','CONFLICTING_OR_INVALIDATING_MATERIAL','RESEARCH_GAPS_AND_BLOCKERS'])semanticLeaves(stageThree[field],(text,location)=>add(text,'STAGE03_ACCEPTED_RESEARCH_SUMMARY',{field,location,sourceSetVersion}),null,[],'STAGE03_RESEARCH_SUMMARY');
+  const researchFields=['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','EXAMPLES','EXPLANATORY_MATERIAL','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'];for(const record of recordsForCurrentScope(project,'research')){const researchId=recordId(record,'research'),sourceId=String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')||null;for(const field of researchFields)semanticLeaves(recordValue(record,field),(text,location)=>add(text,'STAGE03_SOURCE_RESEARCH',{researchId,field,location,sourceId,sourceSetVersion},sourceId,record.evidenceRefs,field));}
+  for(const record of recordsForCurrentScope(project,'candidateRequirements')){const candidateRequirementId=recordId(record,'candidateRequirements'),sourceId=String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')||null;semanticLeaves(recordValue(record,'CANDIDATE_OBLIGATION'),(text,location)=>add(text,'STAGE03_CANDIDATE_REQUIREMENT',{candidateRequirementId,location,sourceId,sourceSetVersion},sourceId,record.evidenceRefs,'CANDIDATE_OBLIGATION'));}
+  const unique=[],seen=new Set();for(const item of items){if(seen.has(item.obligationId))continue;seen.add(item.obligationId);unique.push(item);}const sourceContext=recordsForCurrentScope(project,'sources'
+===== response-ingestion.js =====
+===== workflow-schema.js =====
