@@ -9,17 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Inspect exact repair anchors
+      - name: Inspect exact remaining anchors
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           targets={
-            'app-core.js':['function currentNextAction','PASTE_FINAL_JSON','stage-output','async function prepareStageResponse','function wire()'],
-            'response-ingestion.js':['const TOP_LEVEL_KEYS','function captureRaw(','closedLoopResponseIngestion'],
-            'prompt-engine.js':['function buildPromptRecord','PROMPT IDENTITY','END HASHED INSTRUCTION BODY','closedLoopPromptEngine'],
-            'project-store.js':['async function createExecutionPackage','closedLoopProjectStore'],
-            'index.html':['Paste only that final JSON']
+            'app-core.js':['id="save-prompt"','id="copy-prompt"',"$('#save-prompt')","$('#copy-prompt')","$('#parse-output')",'function responsePromptRecord','async function savePromptRecord'],
+            'project-store.js':['async function putArtifact','async function getArtifact','async function deleteArtifact','async function createExecutionPackage'],
+            'response-ingestion.js':['function captureRaw(','function prepareCaptured('],
+            '.github/workflows/pages.yml':['verify-browser-extra.mjs','verify-definition-of-done.mjs']
           }
           for filename,needles in targets.items():
             text=Path(filename).read_text()
@@ -28,7 +27,7 @@ jobs:
               index=text.find(needle)
               print(f'--- {needle!r}: {index} ---')
               if index>=0:
-                lo=max(0,index-700); hi=min(len(text),index+1800)
+                lo=max(0,index-1200); hi=min(len(text),index+2600)
                 print(text[lo:hi])
           raise SystemExit('INSPECTION_ONLY')
           PY
