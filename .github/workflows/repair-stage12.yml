@@ -1,0 +1,28 @@
+name: repair-stage12-full-cycle
+on:
+  push:
+    branches:
+      - fix/section15-job-contract
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/section15-job-contract
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node repair-stage12-full-cycle.mjs
+      - run: node verify-full-cycle.mjs
+      - run: node verify-section14-scope-matrix.mjs
+      - name: Commit repaired lifecycle fixture
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add verify-full-cycle.mjs
+          git commit -m 'Bind Stage 12 verification responses to one run'
+          git push origin HEAD:fix/section15-job-contract
