@@ -1,0 +1,40 @@
+name: One-time Stage 01 disposition repair
+
+on:
+  push:
+    branches: [repair/stage01-disposition-current-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply Stage 01 disposition correction
+        run: node .repair-stage01-disposition.mjs
+      - name: Prove Stage 01 contract and affected paths
+        run: |
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node verify-stage01-disposition-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-ingestion.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-full-cycle.mjs
+      - name: Remove transient scaffolding and commit correction
+        run: |
+          set -euo pipefail
+          git config user.name "closed-loop repair automation"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .repair-stage01-disposition.mjs .github/workflows/one-time-stage01-disposition.yml
+          git add -A
+          git commit -m "Conform Stage 01 accounting dispositions"
+          git push origin HEAD:repair/stage01-disposition-current-20260903
