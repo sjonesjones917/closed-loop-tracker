@@ -1,0 +1,69 @@
+name: One-time operation authority repair
+
+on:
+  push:
+    branches:
+      - fix/operation-authority-closure
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[operation-authority-repaired]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/operation-authority-closure
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Patch the owning schema and permanent proof
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path='workflow-schema.js';
+          let source=fs.readFileSync(path,'utf8');
+          const old="function amendedOperationContract(stage,operation){const base=s0.operationContract(stage,operation);if(!base)return null;const addedAgent=addedAgentCollections[stage]||[],addedRead=stage>=5?completionReadCollections:[],addedApplication=stage===30?['operationReservations','proofObligations','deliveryRecords','deploymentManifests']:['operationReservations','proofObligations'];return Object.freeze({...base,readCollections:Object.freeze([...new Set([...(base.readCollections||[]),...addedRead])]),agentWritableCollections:Object.freeze([...new Set([...(base.agentWritableCollections||[]),...addedAgent])]),applicationCollections:Object.freeze([...new Set([...(base.applicationCollections||[]),...addedApplication])]),allowedStageData:Object.freeze([...(CONTRACTS[stage]?.allowedStageData||base.allowedStageData||[])])});}\n";
+          const replacement=`const APPLICATION_OPERATION_KEYS=Object.freeze(new Set(['10:FREEZE','17:FREEZE','18:COMPLETE','19:CONFIRM_FREEZE','19:CONFIRM','20:FREEZE_BASELINE','22:RUN_NATIVE_TESTS','24:RUN_NATIVE_ATTACKS','25:FREEZE_DELIVERY_CANDIDATE','27:CALCULATE_RELEASE','28:VERIFY_IDENTITY','29:CALCULATE_EVIDENCE_CHAINS','30:CALCULATE_TERMINAL']));
+          const HUMAN_DECISION_OPERATION_KEYS=Object.freeze(new Set(['28:CAPTURE_DELIVERY_INTENT']));
+          const OPERATOR_OPERATION_KEYS=Object.freeze(new Set(['30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','30:RECORD_DELIVERY_EVIDENCE']));
+          const ROUTED_EXECUTION_OPERATION_KEYS=Object.freeze(new Set(['7:EXECUTE_FAILURE_TEST','15:EXECUTE_REGRESSION','19:REGRESSION_VERIFY']));
+          const operationKey=(stage,operation)=>\`${'${Number(stage)}:${String(operation)}'}\`;
+          function operationExecutorClass(stage,operation){const key=operationKey(stage,operation);if(APPLICATION_OPERATION_KEYS.has(key))return 'APPLICATION';if(HUMAN_DECISION_OPERATION_KEYS.has(key))return 'HUMAN_DECISION';if(OPERATOR_OPERATION_KEYS.has(key))return 'OPERATOR_ACTION';if(ROUTED_EXECUTION_OPERATION_KEYS.has(key))return 'ROUTE_DEPENDENT';return 'EXTERNAL_AGENT';}
+          function amendedOperationContract(stage,operation){const base=s0.operationContract(stage,operation);if(!base)return null;const key=operationKey(stage,operation),executorClass=operationExecutorClass(stage,operation),addedRead=stage>=5?completionReadCollections:[],addedApplication=stage===30?['operationReservations','proofObligations','deliveryRecords','deploymentManifests']:['operationReservations','proofObligations'];let addedAgent=addedAgentCollections[stage]||[];let agentWritableCollections=[...new Set([...(base.agentWritableCollections||[]),...addedAgent])];let allowedStageData=[...(CONTRACTS[stage]?.allowedStageData||base.allowedStageData||[])];if(executorClass==='APPLICATION'||executorClass==='HUMAN_DECISION'||executorClass==='OPERATOR_ACTION'){agentWritableCollections=[];allowedStageData=[];}if(key==='27:ADVISORY_REVIEW')agentWritableCollections=['releaseGateReviews'];if(key==='22:EXECUTE_EXTERNAL_TEST')agentWritableCollections=agentWritableCollections.filter(collection=>collection!=='deterministicResults');const externalResponseAllowed=executorClass==='EXTERNAL_AGENT'||executorClass==='ROUTE_DEPENDENT';return Object.freeze({...base,executorClass,responseEnvelopeAllowed:externalResponseAllowed,allowedResponseTypes:Object.freeze(externalResponseAllowed?[...s0.RESPONSE_TYPES]:[]),acceptanceMode:externalResponseAllowed?'HUMAN_ACCEPTANCE_REQUIRED':null,reservationRequirement:executorClass==='EXTERNAL_AGENT'?'REQUIRED':executorClass==='ROUTE_DEPENDENT'?'ROUTE_DEPENDENT':'NONE',readCollections:Object.freeze([...new Set([...(base.readCollections||[]),...addedRead])]),agentWritableCollections:Object.freeze(agentWritableCollections),applicationCollections:Object.freeze([...new Set([...(base.applicationCollections||[]),...addedApplication])]),allowedStageData:Object.freeze(allowedStageData)});}
+          const STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(s0.STAGE_OPERATIONS).flatMap(([stage,operations])=>operations.map(operation=>{const contract=amendedOperationContract(Number(stage),operation);return [operationKey(stage,operation),contract];}))));
+          `;
+          if(!source.includes(old))throw new Error('Expected amendedOperationContract source was not found exactly; refusing partial repair.');
+          source=source.replace(old,replacement);
+          const schemaNeedle="const schema=Object.freeze({...s0,version:'closed-loop-workflow-schema/3',__controllingCompletionAmendmentVersion:VERSION,";
+          const schemaReplacement="const schema=Object.freeze({...s0,version:'closed-loop-workflow-schema/3',__controllingCompletionAmendmentVersion:VERSION,STAGE_OPERATION_REGISTRY,";
+          if(!source.includes(schemaNeedle))throw new Error('Expected final schema export source was not found exactly.');
+          source=source.replace(schemaNeedle,schemaReplacement);
+          fs.writeFileSync(path,source);
+
+          const proof=`import fs from 'node:fs';\nimport vm from 'node:vm';\nimport assert from 'node:assert/strict';\n\nfor(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});\nconst schema=globalThis.closedLoopWorkflowSchema;\nif(!schema)throw new Error('Schema failed to load.');\nconst application=['10:FREEZE','17:FREEZE','18:COMPLETE','19:CONFIRM_FREEZE','19:CONFIRM','20:FREEZE_BASELINE','22:RUN_NATIVE_TESTS','24:RUN_NATIVE_ATTACKS','25:FREEZE_DELIVERY_CANDIDATE','27:CALCULATE_RELEASE','28:VERIFY_IDENTITY','29:CALCULATE_EVIDENCE_CHAINS','30:CALCULATE_TERMINAL'];\nconst humanDecision=['28:CAPTURE_DELIVERY_INTENT'];\nconst operator=['30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','30:RECORD_DELIVERY_EVIDENCE'];\nfunction assertClosed(candidate){\n  assert.equal(Object.keys(candidate.STAGE_OPERATION_REGISTRY||{}).length,66,'Exactly 66 stage-operation contracts must be registered.');\n  for(const key of application){const c=candidate.STAGE_OPERATION_REGISTRY[key];assert.ok(c,key+' missing');assert.equal(c.executorClass,'APPLICATION',key+' executor');assert.deepEqual(c.agentWritableCollections,[],key+' inherited agent writes');assert.deepEqual(c.allowedStageData,[],key+' inherited agent stage writes');assert.equal(c.responseEnvelopeAllowed,false,key+' accepts external response');assert.deepEqual(c.allowedResponseTypes,[],key+' exposes response types');}\n  for(const key of humanDecision){const c=candidate.STAGE_OPERATION_REGISTRY[key];assert.equal(c.executorClass,'HUMAN_DECISION');assert.deepEqual(c.agentWritableCollections,[]);assert.equal(c.responseEnvelopeAllowed,false);}\n  for(const key of operator){const c=candidate.STAGE_OPERATION_REGISTRY[key];assert.equal(c.executorClass,'OPERATOR_ACTION');assert.deepEqual(c.agentWritableCollections,[]);assert.equal(c.responseEnvelopeAllowed,false);}\n  const advisory=candidate.STAGE_OPERATION_REGISTRY['27:ADVISORY_REVIEW'];assert.equal(advisory.executorClass,'EXTERNAL_AGENT');assert.deepEqual(advisory.agentWritableCollections,['releaseGateReviews'],'Stage 27 advisory review escaped its sole family');assert.equal(advisory.responseEnvelopeAllowed,true);\n  const native22=candidate.STAGE_OPERATION_REGISTRY['22:RUN_NATIVE_TESTS'];assert.ok(!native22.agentWritableCollections.includes('deterministicResults'),'Native deterministic results became agent writable');\n  const external22=candidate.STAGE_OPERATION_REGISTRY['22:EXECUTE_EXTERNAL_TEST'];assert.ok(!external22.agentWritableCollections.includes('deterministicResults'),'External executor can write canonical deterministic results');\n  assert.equal(candidate.STAGE_OPERATION_REGISTRY['15:COMPLETE'].executorClass,'EXTERNAL_AGENT','Stage 15 COMPLETE must remain external-agent work');\n  assert.equal(candidate.STAGE_OPERATION_REGISTRY['15:COMPLETE'].reservationRequirement,'REQUIRED','External operation must require reservation');\n  assert.equal(candidate.operationContract(31,'COMPLETE'),null,'Unknown stage-operation combination must fail closed');\n}\nassertClosed(schema);\nconst mutated={...schema,STAGE_OPERATION_REGISTRY:{...schema.STAGE_OPERATION_REGISTRY,'22:RUN_NATIVE_TESTS':{...schema.STAGE_OPERATION_REGISTRY['22:RUN_NATIVE_TESTS'],agentWritableCollections:['deterministicResults']}}};\nassert.throws(()=>assertClosed(mutated),/inherited agent writes|agent writable/i,'Mutation giving an application command agent-write authority was not detected');\nconsole.log(JSON.stringify({operationAuthorityClosure:'PASS',registeredOperations:Object.keys(schema.STAGE_OPERATION_REGISTRY).length,applicationCommandsChecked:application.length,humanDecisionCommandsChecked:humanDecision.length,operatorActionsChecked:operator.length,advisoryWriteFamily:'releaseGateReviews',mutationDetected:true},null,2));\n`;
+          fs.writeFileSync('verify-operation-authority.mjs',proof);
+
+          const workflowPath='.github/workflows/pages.yml';
+          let workflow=fs.readFileSync(workflowPath,'utf8');
+          const marker='          node verify.mjs\n';
+          if(!workflow.includes(marker))throw new Error('Could not locate schema verification insertion point.');
+          if(!workflow.includes('node verify-operation-authority.mjs'))workflow=workflow.replace(marker,marker+'          node verify-operation-authority.mjs\n');
+          fs.writeFileSync(workflowPath,workflow);
+          fs.rmSync('.github/workflows/repair-operation-authority.yml');
+          NODE
+          node --check workflow-schema.js
+          node verify-operation-authority.mjs
+          git diff --check
+      - name: Commit completed repair and remove scaffolding
+        shell: bash
+        run: |
+          git config user.name "closed-loop-repair"
+          git config user.email "closed-loop-repair@users.noreply.github.com"
+          git add workflow-schema.js verify-operation-authority.mjs .github/workflows/pages.yml .github/workflows/repair-operation-authority.yml
+          git commit -m "Close stage-operation authority contracts [operation-authority-repaired]"
+          git push origin HEAD:fix/operation-authority-closure
