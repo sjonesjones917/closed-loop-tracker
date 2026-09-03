@@ -56,7 +56,7 @@ file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestio
   if(!prepared.validation.valid)throw new Error('Replacement recovery fixture is invalid: '+JSON.stringify(prepared.validation.issues));
                                       ^
 
-Error: Replacement recovery fixture is invalid: [{"code":"STALE_PROMPT_HASH","path":"/promptIdentity/bodySha256","message":"Expected body SHA-256 9795f1751092c96f169d32bf4f9ad55e6e6e3cd854fad957481229bf8f5db92e.","severity":"ERROR"}]
+Error: Replacement recovery fixture is invalid: [{"code":"STALE_PROMPT_HASH","path":"/promptIdentity/bodySha256","message":"Expected body SHA-256 e640fa642efb824340a9653f8119da39ff653d898de104aa5494a14e2e4c572b.","severity":"ERROR"}]
     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:350:39
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
