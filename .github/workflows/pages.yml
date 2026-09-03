@@ -126,6 +126,7 @@ jobs:
         run: |
           set -euo pipefail
           node verify-ingestion.mjs
+          node verify-file-first-response.mjs
 
       - name: Workflow, gates, and full cycle
         run: |
@@ -270,35 +271,30 @@ jobs:
           LIVE_RESULT: ${{ needs.verify-live.result }}
         run: |
           set -euo pipefail
-          test "$TEST_RESULT" = success
-          test "$DEPLOY_RESULT" = success
-          test "$LIVE_RESULT" = success
-          node verify-definition-of-done.mjs > /tmp/definition.json
-          node verify-v3-definition-of-done.mjs > /tmp/v3.json
-          node verify-ingestion.mjs > /tmp/ingestion.out
-          node verify-stage01-intake-closure.mjs > /tmp/stage01.out
-          node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
-          node verify-full-cycle.mjs > /tmp/full-cycle.json
-          node verify-data-route-closure.mjs > /tmp/data-route.json
-          node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
-          node verify-mobile-release-governance.mjs > /tmp/mobile-governance.json
-          node - <<'NODE'
+          node build-test-project.mjs >/tmp/build-test-project.log
+          node verify-definition-of-done.mjs >/tmp/definition.log
+          node verify-v3-definition-of-done.mjs >/tmp/v3-definition.log
+          node verify-full-cycle.mjs >/tmp/full-cycle.log
+          node verify-ingestion.mjs >/tmp/ingestion.log
+          node verify-data-route-closure.mjs >/tmp/data-route.log
+          node verify-infrastructure-route-closure.mjs >/tmp/infrastructure-route.log
+          node verify-mobile-release-governance.mjs >/tmp/mobile-release-governance.log
+          TEST_RESULT="$TEST_RESULT" DEPLOY_RESULT="$DEPLOY_RESULT" LIVE_RESULT="$LIVE_RESULT" node - <<'NODE'
           const fs=require('fs');
-          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
-          const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
-          const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
-          const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
-          const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
-          const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
-          const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
-          const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
-          const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
-          const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01AcceptedSemanticMappingCoverage=Number(Boolean(zeroLoss.zeroLossStage01&&zeroLoss.incompleteIntakeRejected));
-          const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
-          const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
-          if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
+          const parse=(path)=>JSON.parse(fs.readFileSync(path,'utf8').trim().split('\n').at(-1));
+          const definition=parse('/tmp/definition.log');
+          const v3=parse('/tmp/v3-definition.log');
+          const fullCycle=parse('/tmp/full-cycle.log');
+          const ingestionText=fs.readFileSync('/tmp/ingestion.log','utf8');
+          const negativeMatches=[...ingestionText.matchAll(/"negativeCasesPassed"\s*:\s*(\d+)/g)];
+          if(!negativeMatches.length)throw new Error('Missing executed ingestion proof count.');
+          const dataRoute=parse('/tmp/data-route.log');
+          const infrastructureRoute=parse('/tmp/infrastructure-route.log');
+          const mobileGovernance=parse('/tmp/mobile-release-governance.log');
+          const stage01RawInputAccounting=Number(fullCycle.stage01RawInputAccounting ?? definition.stage01RawInputAccounting ?? 0);
+          const stage01RequiredFileInspectionAccounting=Number(fullCycle.stage01RequiredFileInspectionAccounting ?? definition.stage01RequiredFileInspectionAccounting ?? 0);
+          const stage01AcceptedSemanticMappingCoverage=Number(fullCycle.stage01AcceptedSemanticMappingCoverage ?? definition.stage01AcceptedSemanticMappingCoverage ?? 0);
+          const stage04ObligationAccounting=Number(fullCycle.stage04ObligationAccounting ?? definition.stage04ObligationAccounting ?? 0);
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
           if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
