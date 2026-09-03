@@ -25,7 +25,7 @@ const applicationCommands=new Set(APPLICATION_COMMAND_KEYS);
 const routedExecutions=new Set(ROUTED_EXECUTION_KEYS);
 const humanDecisionOperations=new Set(HUMAN_DECISION_OPERATION_KEYS);
 const operatorActions=new Set(OPERATOR_ACTION_KEYS);
-const opKey=(stage,operation)=>\`\${Number(stage)}:\${String(operation)}\`;
+const opKey=(stage,operation)=>String(Number(stage))+':'+String(operation);
 
 const EXTERNAL_AGENT_WRITES=Object.freeze({
   '1:COMPLETE':Object.freeze([]),
@@ -101,7 +101,7 @@ function classifyOperation(stage,operation,base){
 const STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(
   Object.entries(s0.STAGE_OPERATIONS).flatMap(([stage,operations])=>operations.map(operation=>{
     const numericStage=Number(stage),base=s0.operationContract(numericStage,operation);
-    if(!base)throw new Error(\`Undefined operation contract for \${stage}:\${operation}.\`);
+    if(!base)throw new Error('Undefined operation contract for '+stage+':'+operation+'.');
     const authority=classifyOperation(numericStage,operation,base);
     return [opKey(stage,operation),Object.freeze({
       ...base,
