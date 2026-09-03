@@ -36,8 +36,6 @@ for p in Path('.').glob('verify-*.mjs'):
 Path('verify-stage01-disposition-contract.mjs').write_text(r'''import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { webcrypto } from 'node:crypto';
-globalThis.crypto=webcrypto;
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js']) vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
