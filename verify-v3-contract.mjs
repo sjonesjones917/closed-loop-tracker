@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
+const workbook=read('./workbook.js');
 const schema=read('./workflow-schema.js');
 const runtime=read('./test-runtime.js');
 const worker=read('./test-worker.js');
@@ -26,6 +27,9 @@ const requiredLimits=[
   'maxCollectionItems','maxRegexPatternBytes','maxRegexInputBytes','workerTimeoutMs','maxArchiveExpansionBytes'
 ];
 
+assert.match(workbook,/const CONTRACT_PROFILE='closed-loop-completion-profile\/1'/,'canonical creation owner must define the controlling contract profile');
+assert.match(workbook,/contractProfileId:CONTRACT_PROFILE/,'new /3 projects must carry the controlling contract profile at the project root');
+assert.match(workbook,/CONTRACT_PROFILE_ID:CONTRACT_PROFILE/,'new /3 projects must carry CONTRACT_PROFILE_ID in the canonical Job record');
 assert.match(schema,/closed-loop-project\/3/,'project schema /3 is required');
 assert.match(schema,/closed-loop-stage-response\/3/,'response schema /3 is required');
 assert.match(schema,/closed-loop-test-spec\/1/,'Test IR schema /1 is required');
@@ -96,6 +100,7 @@ assert.doesNotMatch(workflow,/(?:deployedChromiumAcceptance|liveBrowserVerificat
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
   projectSchema:'closed-loop-project/3',
+  contractProfile:'closed-loop-completion-profile/1',
   responseSchema:'closed-loop-stage-response/3',
   testIrSchema:'closed-loop-test-spec/1',
   packageSchema:'closed-loop-verification-package/1',
