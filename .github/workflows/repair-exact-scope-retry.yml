@@ -1,0 +1,54 @@
+name: Retry exact scope repair
+on:
+  push:
+    branches: [repair/exact-scope-37dcd]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/exact-scope-37dcd
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Reuse exact repair with fail-closed operation registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/repair-exact-scope.yml')
+          s=p.read_text()
+          old="const operations=STAGE_OPERATIONS[stage]||['COMPLETE'];if(!operations.includes(operation))return null;"
+          new="const operations=STAGE_OPERATIONS[stage];if(!operations||!operations.includes(operation))return null;"
+          if s.count(old)!=1: raise SystemExit(f'operation fallback patch count={s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          awk '/^          from pathlib import Path$/{flag=1} /^          PY$/{flag=0} flag {sub(/^          /,""); print}' .github/workflows/repair-exact-scope.yml > /tmp/apply_exact_scope.py
+          python3 /tmp/apply_exact_scope.py
+      - name: Prove focused correction
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check response-ingestion.js
+          node --check verify-full-cycle.mjs
+          node verify-section14-scope-matrix.mjs
+          node verify-v3-contract.mjs
+          node verify-ingestion.mjs
+          node verify-data-route-closure.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+      - name: Remove scaffolding and commit
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-exact-scope.yml .github/workflows/repair-exact-scope-retry.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git commit -m 'Conform exact stage-operation scope matrix'
+          git push origin HEAD:repair/exact-scope-37dcd
