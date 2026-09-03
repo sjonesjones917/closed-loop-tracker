@@ -26,7 +26,7 @@ jobs:
           node - <<'NODE'
           const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
           global.Event=global.Event||class Event{constructor(t){this.type=t}};global.dispatchEvent=global.dispatchEvent||(()=>true);
-          for(const f of ['workbook.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          for(const f of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
           const s=global.closedLoopWorkflowSchema;
           for(let stage=1;stage<=30;stage++)for(const op of s.STAGE_OPERATIONS[stage])assert.deepEqual([...s.operationContract(stage,op).scopeRequirements],[...s.SCOPE_REQUIREMENTS[stage]],`${stage}/${op}`);
           assert(!s.operationContract(17,'VERIFY').scopeRequirements.includes('contextId'));
