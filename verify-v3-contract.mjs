@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
+await import('./verify-section15-job-contract.mjs');
+await import('./verify-section14-scope-matrix.mjs');
+
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const schema=read('./workflow-schema.js');
 const runtime=read('./test-runtime.js');

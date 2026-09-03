@@ -1,0 +1,30 @@
+name: repair-exact-response-scope
+on:
+  push:
+    branches:
+      - fix/section15-job-contract
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/section15-job-contract
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node repair-exact-response-scope.mjs
+      - run: node verify-ingestion.mjs
+      - run: node verify-definition-of-done.mjs
+      - run: node verify-section14-scope-matrix.mjs
+      - name: Commit exact response-scope validation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add response-ingestion.js prompt-engine.js verify-ingestion.mjs
+          git commit -m 'Reject stale exact operation scope dimensions'
+          git push origin HEAD:fix/section15-job-contract
+# exact Stage 17 clarification scope assertion included
