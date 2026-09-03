@@ -1,9 +1,39 @@
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.repair-runtime-spec-2.mjs:26
-if(!repair.includes(looseA)||!repair.includes(looseB))throw new Error('Loose regression oracle patterns not found exactly.');
-                                                            ^
+runtime specification contradiction regressions passed
+{"contractClosure":"PASS","stageOperations":66,"durableFamilies":65,"fieldContracts":1413}
+{
+  "fileFirstOperatorPath": "PASS",
+  "promptFileExport": true,
+  "responseFileSelector": true,
+  "durableByteStaging": true,
+  "readBackRehash": true,
+  "pasteNotPrimary": true,
+  "fallbackSameStagingPath": true,
+  "mutationsDetected": 7
+}
+{
+  "fileFirstResponseContract": "PASS",
+  "primaryResponseFileSelection": true,
+  "durableByteStaging": true,
+  "stagedReadBackRehash": true,
+  "strictUtf8": true,
+  "textFallbackNonauthoritative": true,
+  "promptFileExportExposed": true,
+  "responseFileOriginBound": true,
+  "requiredIngestionProofInvocation": true,
+  "pastePrimaryMutationDetected": true,
+  "fileSelectorMutationDetected": true,
+  "stagedRehashMutationDetected": true,
+  "provenanceMutationDetected": true,
+  "responseOriginMutationDetected": true,
+  "ciInvocationMutationDetected": true
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:4
+const assert=(condition,message)=>{if(!condition)throw new Error(message);};
+                                                       ^
 
-Error: Loose regression oracle patterns not found exactly.
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.repair-runtime-spec-2.mjs:26:61
+Error: Generated prompt is missing its identity block.
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:4:56)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:75:1
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
