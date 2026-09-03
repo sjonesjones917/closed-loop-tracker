@@ -18,6 +18,7 @@ jobs:
         run: |
           python3 conformance-repair.py
           python3 conformance-repair-2.py
+          python3 conformance-repair-3.py
       - name: Prove current ratchet step
         run: bash conformance-proof.sh
       - name: Commit implementation and permanent regressions only
@@ -25,7 +26,7 @@ jobs:
           set -euo pipefail
           git config user.name 'closed-loop-conformance-bot'
           git config user.email 'closed-loop-conformance-bot@users.noreply.github.com'
-          git add -A -- ':!.github/workflows/conformance-agent.yml' ':!conformance-repair.py' ':!conformance-repair-2.py' ':!conformance-proof.sh'
+          git add -A -- ':!.github/workflows/conformance-agent.yml' ':!conformance-repair.py' ':!conformance-repair-2.py' ':!conformance-repair-3.py' ':!conformance-proof.sh'
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Ratchet controlling-spec conformance"
           git push origin HEAD:closed-loop-spec-conformance
