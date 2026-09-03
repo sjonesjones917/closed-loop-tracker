@@ -700,7 +700,52 @@ const sha256Bytes=async v=>bytesToHex(new Uint8Array(await crypto.subtle.digest(
 const sha256Text=async v=>sha256Bytes(new TextEncoder().encode(String(v)).buffer);
 function stageTemplate(s){return [`STAGE ${String(s.number).padStart(2,'0')} — ${s.title}`,...s.fields.map(f=>`${f}: <<ENTER>>`)].join('\n');}
 function blankStage(s){return {number:s.number,status:'NOT STARTED',decision:'',decisionEvidence:'',nextStage:'',decidedBy:'',dateTime:'',draftRecord:stageTemplate(s),responseDraft:'',authorizedFiles:[],humanChecks:{},gateChecks:{},evidenceChecks:{},revisions:[]};}
-function createBlankState(jobId){const id=jobId||`JOB-${new Date().toISOString().replace(/\D/g,'').slice(0,14)}`;return {schema:PROJECT_SCHEMA,workflow:WORKFLOW_ID,stageCount:STAGE_COUNT,revision:0,job:{JOB_ID:id,JOB_TITLE:'New project',JOB_OWNER:'',DATE_OPENED:new Date().toISOString(),EXACT_USER_OBJECTIVE_VERBATIM:'',EXACT_DELIVERABLE_REQUESTED:'',SUPPLIED_MATERIALS_INVENTORY:'',REQUIRED_OUTPUT_FORMAT:'',DEADLINE_OR_TEMPORAL_SCOPE:'',KNOWN_AUTHORITATIVE_SOURCES:'',AVAILABLE_TOOLS:'',PROHIBITED_ACTIONS:'',EXPLICIT_USER_REQUIREMENTS:'',ASSUMPTIONS:'',UNKNOWN_INFORMATION:'',CURRENT_ITERATION:'',CURRENT_STAGE:'STAGE 01',CURRENT_STATE:'NOT STARTED',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'',CURRENT_REQUIREMENTS_VERSION:'',CURRENT_TEST_SUITE_VERSION:'',CURRENT_INSTRUCTION_VERSION:'',CURRENT_BASELINE_ID:'NONE',CURRENT_PRODUCT_ID:'NONE',CURRENT_BLOCKERS:'NONE',NEXT_REQUIRED_ACTION:'Complete Stage 01.',LATEST_EVIDENCE_REFERENCE:'',INPUT_SET_CONTENTS:'',INPUT_SET_HASH_OR_MANIFEST:'',JOB_RECORD_STATUS:'NOT READY',STATUS_EVIDENCE:''},stages:Object.fromEntries(STAGES.map(s=>[s.number,blankStage(s)])),appendices:Object.fromEntries(Object.keys(APPENDICES).map(k=>[k,{draft:'',records:[]}])),release:{gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]},projectData:{userEntered:{},sources:[],research:[],requirements:[],tests:[],failureTests:[],instructions:[],generatedPrompts:[],generatedOutputs:[],outputReceipts:[],freshContexts:[],runs:[],verification:[],comparisons:[],defects:[],regressions:[],changes:[],blockers:[],artifacts:[],reviews:[],releaseRecords:[],evidenceChains:[],history:[],permanentRegistry:{},stageRecords:{},fullProject:{}},activeStage:1,activeView:'Project',jobRevisions:[],snapshots:[]};}
+function createBlankState(jobId){const id=jobId||`JOB-${new Date().toISOString().replace(/\D/g,'').slice(0,14)}`;return {schema:PROJECT_SCHEMA,workflow:WORKFLOW_ID,stageCount:STAGE_COUNT,revision:0,job:{
+JOB_ID:id,
+CONTRACT_PROFILE_ID:'closed-loop-completion-profile/1',
+JOB_TITLE:'New project',
+JOB_OWNER:null,
+DATE_OPENED:new Date().toISOString(),
+EXACT_USER_OBJECTIVE_VERBATIM:'',
+EXACT_DELIVERABLE_REQUESTED:'',
+SUPPLIED_MATERIALS_INVENTORY:null,
+REQUIRED_OUTPUT_FORMAT:null,
+DEADLINE_OR_TEMPORAL_SCOPE:null,
+DESIRED_SOURCE_COUNT:null,
+KNOWN_AUTHORITATIVE_SOURCES:null,
+AVAILABLE_TOOLS:null,
+PROHIBITED_ACTIONS:null,
+EXPLICIT_USER_REQUIREMENTS:null,
+ASSUMPTIONS:'',
+UNKNOWN_INFORMATION:'',
+CURRENT_ITERATION:null,
+CURRENT_STAGE:'STAGE 01',
+CURRENT_STATE:'AWAITING_HUMAN_INPUT',
+CURRENT_INPUT_VERSION:'INPUT-v001',
+CURRENT_SOURCE_SET_VERSION:null,
+CURRENT_RESEARCH_VERSION:null,
+CURRENT_REQUIREMENTS_VERSION:null,
+CURRENT_TEST_SUITE_VERSION:null,
+CURRENT_INSTRUCTION_VERSION:null,
+CURRENT_CANDIDATE_ID:null,
+CURRENT_BASELINE_ID:null,
+CURRENT_PRODUCT_ID:null,
+CURRENT_PRODUCT_VERSION:null,
+CURRENT_DELIVERY_CANDIDATE_SET_ID:null,
+CURRENT_REVIEW_VERSION:null,
+CURRENT_RECONCILED_REVIEW_VERSION:null,
+CURRENT_RELEASE_ID:null,
+CURRENT_HASH_REVIEW_ID:null,
+CURRENT_EVIDENCE_CHAIN_VERSION:null,
+CURRENT_DELIVERY_ID:null,
+CURRENT_BLOCKERS:[],
+NEXT_REQUIRED_ACTION:{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Complete Stage 01 intake',explanation:'Provide the current human-authority intake needed to define the job.',primaryButton:'Continue',secondaryAction:null,filesToSend:[],filesToWithhold:[],expectedReturnFiles:[],blockingReason:null,canonicalStateChanged:false,newPromptRequired:true},
+LATEST_EVIDENCE_REFERENCE:null,
+INPUT_SET_CONTENTS:'',
+INPUT_SET_HASH_OR_MANIFEST:'',
+JOB_RECORD_STATUS:'INCOMPLETE',
+STATUS_EVIDENCE:''
+},stages:Object.fromEntries(STAGES.map(s=>[s.number,blankStage(s)])),appendices:Object.fromEntries(Object.keys(APPENDICES).map(k=>[k,{draft:'',records:[]}])),release:{gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]},projectData:{userEntered:{},sources:[],research:[],requirements:[],tests:[],failureTests:[],instructions:[],generatedPrompts:[],generatedOutputs:[],outputReceipts:[],freshContexts:[],runs:[],verification:[],comparisons:[],defects:[],regressions:[],changes:[],blockers:[],artifacts:[],reviews:[],releaseRecords:[],evidenceChains:[],history:[],permanentRegistry:{},stageRecords:{},fullProject:{}},activeStage:1,activeView:'Project',jobRevisions:[],snapshots:[]};}
 function parseRecordFields(text){const out={};let key='';for(const line of String(text||'').split(/\r?\n/)){const m=line.match(/^([A-Z0-9][A-Z0-9_ -]*):\s*(.*)$/);if(m){key=m[1].trim().replace(/\s+/g,'_');out[key]=m[2].trim();}else if(key&&line.trim())out[key]+=`\n${line}`;}return out;}
 const n=v=>Number(String(v??'').replace(/[^0-9.-]/g,''));const truth=v=>['TRUE','YES','SATISFIED','ACCEPTED','AUTHORIZED','CONFIRMED','CONVERGED'].includes(String(v||'').trim().toUpperCase());
 function validateCriticalFields(stage,record){
