@@ -37,11 +37,19 @@ if "if(disposition==='INACCESSIBLE_OR_BLOCKED')" not in s:
   s=s.replace(reason_anchor,reason_anchor+"if(disposition==='INACCESSIBLE_OR_BLOCKED')reasons.push(`Stage 01 intake unit ${id} is inaccessible or blocked and cannot complete Stage 01.`);",1)
 e.write_text(s)
 
-# Test fixtures must submit the same closed enum; do not preserve acceptance of legacy values.
+# Test fixtures must submit the same closed enum; legacy fixture values are not accepted compatibility aliases.
+fixture_map={
+  'incorporated into the job definition':'EXTRACTED_RELEVANT_INFORMATION',
+  'retained as context':'RETAINED_AS_CONTEXT',
+  'unresolved human-only':'UNRESOLVED_HUMAN_AUTHORITY',
+  'later-resolvable':'LATER_RESOLVABLE',
+  'inapplicable with reason':'NO_PROJECT_RELEVANT_INFORMATION',
+}
 for f in Path('.').glob('verify-*.mjs'):
-  s=f.read_text()
-  s2=s.replace("disposition:'retained as context'","disposition:'RETAINED_AS_CONTEXT'")
-  s2=s2.replace('disposition:"retained as context"','disposition:"RETAINED_AS_CONTEXT"')
+  s=f.read_text(); s2=s
+  for old_value,new_value in fixture_map.items():
+    s2=s2.replace(f"disposition:'{old_value}'",f"disposition:'{new_value}'")
+    s2=s2.replace(f'disposition:"{old_value}"',f'disposition:"{new_value}"')
   if s2!=s: f.write_text(s2)
 
 # Permanent Stage 01 regression without touching unrelated browser behavior.
