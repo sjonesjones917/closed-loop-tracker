@@ -1,0 +1,47 @@
+name: One-time response-selection state repair
+
+on:
+  push:
+    branches: [fix/spec-driven-file-first-20260902]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Declare the one file-selection state owner
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('app-core.js')
+          text = path.read_text(encoding='utf-8')
+          old = "const operationSelection={},runSelection={};"
+          new = "const operationSelection={},runSelection={},responseFileSelection={};"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one selection-state declaration anchor; found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          node --check app-core.js
+          node verify-file-first-response.mjs
+          node verify-file-first-operator.mjs
+          node verify-ingestion.mjs
+          rm .github/workflows/agent-declare-response-selection.yml
+      - name: Commit the complete repair and remove scaffolding
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app-core.js .github/workflows/agent-declare-response-selection.yml
+          git commit -m 'Preserve selected response files until byte staging'
+          git push origin HEAD:${GITHUB_REF_NAME}
