@@ -89,5 +89,5 @@ try{
   child.kill('SIGKILL');
   await Promise.race([exited,sleep(1200)]);
   await new Promise(r=>server.close(r));
-  fs.rmSync(profile,{recursive:true,force:true});
+  fs.rmSync(profile,{recursive:true,force:true,maxRetries:8,retryDelay:100});
 }
