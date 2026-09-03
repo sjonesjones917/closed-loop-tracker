@@ -31,6 +31,7 @@ const finite=value=>typeof value==='number'&&Number.isFinite(value);
 
 function issue(errors,code,message){errors.push({code,message});}
 function same(actual,expected){return actual===expected;}
+function validSafariUserAgent(value){return NONEMPTY(value)&&/(iPhone|iPod)/.test(value)&&/Safari\//.test(value)&&!/(CriOS|FxiOS|EdgiOS|OPiOS)/.test(value);}
 
 export function verifyMobileAcceptanceEvidence({target,evidence,expected={},usedChallenges=[]}={}){
   const errors=[];
@@ -54,6 +55,8 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(target.basePath!==MOBILE_ACCEPTANCE_BASE_PATH)issue(errors,'TARGET_BASE_PATH_INVALID','Target base path must be the canonical deployment base path.');
   if(!NONEMPTY(target.testProjectId))issue(errors,'TARGET_TEST_PROJECT_REQUIRED','Target testProjectId is required.');
   if(!NONEMPTY(target.procedureVersion))issue(errors,'TARGET_PROCEDURE_REQUIRED','Target procedureVersion is required.');
+  if(!NONEMPTY(target.iosVersion))issue(errors,'TARGET_IOS_VERSION_REQUIRED','Pinned target iOS version is required.');
+  if(!validSafariUserAgent(target.safariUserAgent))issue(errors,'TARGET_SAFARI_USER_AGENT_INVALID','Pinned target must identify Safari on the physical iPhone and reject substitute browsers.');
   if(!target.viewport||!finite(target.viewport.width)||!finite(target.viewport.height)||!finite(target.viewport.devicePixelRatio)||target.viewport.width<=0||target.viewport.height<=0||target.viewport.devicePixelRatio<=0)issue(errors,'TARGET_VIEWPORT_INVALID','Target viewport dimensions and device-pixel ratio are required.');
 
   if(expected.sourceCommit&&!same(target.sourceCommit,expected.sourceCommit))issue(errors,'TARGET_COMMIT_MISMATCH','Target commit does not match the exact deployed commit.');
@@ -69,7 +72,9 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     ['origin','EVIDENCE_ORIGIN_MISMATCH'],
     ['basePath','EVIDENCE_BASE_PATH_MISMATCH'],
     ['testProjectId','EVIDENCE_TEST_PROJECT_MISMATCH'],
-    ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH']
+    ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH'],
+    ['iosVersion','EVIDENCE_IOS_VERSION_MISMATCH'],
+    ['safariUserAgent','EVIDENCE_SAFARI_USER_AGENT_MISMATCH']
   ];
   for(const [field,code] of bindings){if(!same(evidence[field],target[field]))issue(errors,code,`Evidence ${field} does not match the pinned target.`);}
   if(!NONEMPTY(evidence.mobileAcceptanceEvidenceId))issue(errors,'EVIDENCE_ID_REQUIRED','mobileAcceptanceEvidenceId is required.');
@@ -78,7 +83,7 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(evidence.performer))issue(errors,'PERFORMER_REQUIRED','Evidence performer identity is required.');
   if(!NONEMPTY(evidence.identityAssurance))issue(errors,'IDENTITY_ASSURANCE_REQUIRED','Evidence performer identity assurance is required.');
   if(!NONEMPTY(evidence.iosVersion))issue(errors,'IOS_VERSION_REQUIRED','Reported iOS version is required.');
-  if(!NONEMPTY(evidence.safariUserAgent)||!/(iPhone|iPod)/.test(evidence.safariUserAgent)||!/Safari\//.test(evidence.safariUserAgent)||/(CriOS|FxiOS|EdgiOS|OPiOS)/.test(evidence.safariUserAgent))issue(errors,'SAFARI_USER_AGENT_INVALID','Evidence must identify Safari on the pinned iPhone target and reject substitute browsers.');
+  if(!validSafariUserAgent(evidence.safariUserAgent))issue(errors,'SAFARI_USER_AGENT_INVALID','Evidence must identify Safari on the pinned iPhone target and reject substitute browsers.');
   if(!evidence.viewport||!same(evidence.viewport.width,target.viewport.width)||!same(evidence.viewport.height,target.viewport.height)||!same(evidence.viewport.devicePixelRatio,target.viewport.devicePixelRatio))issue(errors,'VIEWPORT_MISMATCH','Evidence viewport must match the pinned target exactly.');
 
   const receipts=Array.isArray(evidence.operationReceipts)?evidence.operationReceipts:[];
@@ -113,6 +118,8 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     evidenceBasis:evidence.evidenceBasis||'NONE',
     performer:evidence.performer||null,
     physicalDeviceAssertion:evidence.physicalDeviceAssertion===true,
+    iosVersion:target.iosVersion||null,
+    safariUserAgent:target.safariUserAgent||null,
     sourceCommit:target.sourceCommit||null,
     deploymentManifestDigest:target.deploymentManifestDigest||null,
     origin:target.origin||null,
