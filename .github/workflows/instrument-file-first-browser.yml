@@ -1,0 +1,37 @@
+name: instrument-file-first-browser
+on:
+  push:
+    branches: [fix/spec-driven-file-first-20260902]
+permissions:
+  contents: write
+jobs:
+  instrument:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/spec-driven-file-first-20260902
+      - name: Add failure-state diagnostics without weakening assertions
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const path='verify-browser.mjs';
+          let text=fs.readFileSync(path,'utf8');
+          const old="await selectResponseFile(cdp,'{\"schema\":}');await click(cdp,'#process-response-file');await waitExpr(cdp,`document.body.innerText.includes('Response rejected before canonical mutation.')`,30000);";
+          const replacement="await evalValue(cdp,`(()=>{globalThis.__closedLoopBrowserAlerts=[];globalThis.alert=(message)=>{globalThis.__closedLoopBrowserAlerts.push(String(message));};return true;})()`);await selectResponseFile(cdp,'{\"schema\":}');await click(cdp,'#process-response-file');try{await waitExpr(cdp,`document.body.innerText.includes('Response rejected before canonical mutation.')`,30000);}catch(error){const diagnostic=await evalValue(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];const all=await globalThis.closedLoopProjectStore.readAll();const p=all.find(x=>x.job?.JOB_ID===id)||all[0],stage=Number(document.querySelector('#stage-picker')?.value||0),prompts=(p?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage),raw=(p?.projectData?.rawResponses||[]).at(-1),validation=(p?.projectData?.responseValidations||[]).at(-1);return {alerts:globalThis.__closedLoopBrowserAlerts||[],live:document.querySelector('#live-status')?.textContent||'',responseStatus:document.querySelector('#response-file-status')?.textContent||'',revision:p?.revision,promptCount:prompts.length,lastPrompt:prompts.at(-1)?{instructionId:prompts.at(-1).instructionId||prompts.at(-1).promptId,scopeRevision:prompts.at(-1).scope?.projectRevision,invalidatedBy:prompts.at(-1).invalidatedBy||null}:null,raw:raw?{status:raw.status,stagingId:raw.responseFileStagingId,projectRevisionAtCapture:raw.projectRevisionAtCapture,validationId:raw.validationId||null}:null,validation:validation?{valid:validation.valid,issues:(validation.issues||[]).map(x=>x.code)}:null};})()`);throw new Error(`Malformed response file did not reach visible rejection. Diagnostic: ${JSON.stringify(diagnostic)}`);}";
+          if(!text.includes(old)) throw new Error('Expected malformed-response browser step not found.');
+          text=text.replace(old,replacement);
+          fs.writeFileSync(path,text);
+          NODE
+          node --check verify-browser.mjs
+          rm .github/workflows/instrument-file-first-browser.yml
+      - name: Commit diagnostics and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add verify-browser.mjs .github/workflows/instrument-file-first-browser.yml
+          git commit -m 'Expose file-first browser failure state'
+          git push origin HEAD:fix/spec-driven-file-first-20260902
