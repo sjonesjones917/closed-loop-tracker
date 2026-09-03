@@ -92,7 +92,8 @@ function validEnvelope(p,stage,promptRecord){
   if(stage===1){const m=promptRecord.contextManifest.intakeCoverageManifest;stageData.EXACT_DELIVERABLE_REQUESTED='Verified deliverable';stageData.ASSUMPTIONS='NONE';stageData.UNKNOWN_INFORMATION='NONE';stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});}
   const records={};
   if(!Object.keys(stageData).length||stage===4){
-    const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
+    const createableCollections=writableCollections.filter(name=>schema.RECORD_SCHEMAS[name]?.commitPolicy!==schema.COLLECTION_POLICIES.UPDATE_RESERVED);
+    const collection=createableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||createableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
     const fields={};
@@ -159,7 +160,7 @@ function negativeAt(name,stage,mutate,expectedCode){
 function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);e.scope[key]=`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: stale scope mutated canonical state.`);negativeCount++;}
 const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode);
 
-// Mobile/chat smart punctuation is normalized while the exact raw response remains preserved for audit.
+// Authoritative response bytes with smart/curly JSON delimiters are rejected exactly; they are never repaired into a different authoritative response.
 {
   const p=project('JOB-SMART-QUOTE-JSON'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord);
   envelope.evidence[0].content='He said "keep the exact words".';
@@ -168,17 +169,14 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
   for(let i=0;i<canonical.length;i++){
     const c=canonical[i];
     if(!inString&&c==='"'){smart+='“';inString=true;continue;}
-    if(inString){
-      if(c==='\\'&&canonical[i+1]==='"'){smart+='"';i++;continue;}
-      if(c==='"'){smart+='”';inString=false;continue;}
-    }
+    if(inString){if(c==='\\'&&canonical[i+1]==='"'){smart+='"';i++;continue;}if(c==='"'){smart+='”';inString=false;continue;}}
     smart+=c;
   }
   const prepared=ingestion.prepare(p,{stage,text:smart,promptRecord});
-  if(!prepared.validation.valid)throw new Error(`Smart-quoted mobile JSON was not normalized: ${JSON.stringify(prepared.validation.issues)}`);
-  if(!prepared.validation.issues.some(issue=>issue.code==='JSON_TYPOGRAPHY_NORMALIZED'&&issue.severity==='WARNING'))throw new Error('Smart-quote normalization warning was not preserved.');
-  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Exact smart-quoted raw response was not preserved unchanged.');
-  if(prepared.project.projectData.acceptedChanges.length)throw new Error('Smart-quoted response changed canonical state before operator acceptance.');
+  if(prepared.validation.valid)throw new Error('Smart-quoted authoritative JSON was accepted instead of rejected.');
+  if(!prepared.validation.issues.some(issue=>issue.code==='SMART_JSON_QUOTATION'))throw new Error(`Smart-quoted authoritative JSON did not fail with SMART_JSON_QUOTATION: ${JSON.stringify(prepared.validation.issues)}`);
+  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Exact rejected smart-quoted raw response was not preserved unchanged.');
+  if(prepared.project.projectData.acceptedChanges.length)throw new Error('Rejected smart-quoted response changed canonical state.');
 }
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
@@ -481,17 +479,16 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
 },'FIELD_OWNERSHIP_VIOLATION');
 
 
-// demonstrated-smart-quote-and-stageData-provenance-regression-v1
+// demonstrated-smart-quote-fail-closed-regression-v2
 {
-  let p=project('JOB-SMART-JSON-RECOVERY'),pr=savePrompt(p,1),e=validEnvelope(p,1,pr);
-  e.stageData={...e.stageData,EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts'};
+  let p=project('JOB-SMART-JSON-REJECT'),pr=savePrompt(p,1),e=validEnvelope(p,1,pr);
+  e.stageData={...e.stageData,EXACT_DELIVERABLE_REQUESTED:'Controlled deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later-stage facts'};
   const standard=JSON.stringify(e);const smart=standard.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g,'“$1”');
   const prepared=ingestion.prepare(p,{stage:1,text:smart,promptRecord:pr});
-  if(!prepared.validation.valid)throw new Error('Deterministic smart-quote delimiter recovery failed: '+JSON.stringify(prepared.validation.issues));
-  if(!prepared.validation.issues.some(x=>x.code==='JSON_TYPOGRAPHY_NORMALIZED'&&x.severity==='WARNING'))throw new Error('Smart-quote recovery was not auditable.');
-  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Smart-quote recovery changed the preserved raw response.');
-  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SMART_QUOTE_REGRESSION'});const stageEntries=committed.manifest.entries.filter(x=>x.canonicalCollection==='stageData');
-  if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');
+  if(prepared.validation.valid)throw new Error('Authoritative smart-quote JSON was accepted instead of rejected.');
+  if(!prepared.validation.issues.some(x=>x.code==='SMART_JSON_QUOTATION'&&x.severity==='ERROR'))throw new Error('Smart-quote rejection did not use the controlling closed failure code.');
+  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Smart-quote rejection changed the preserved raw response.');
+  if(prepared.proposal)throw new Error('Rejected smart-quote response created a canonical proposal.');
 }
 
 

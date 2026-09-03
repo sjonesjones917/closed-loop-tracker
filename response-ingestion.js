@@ -7,7 +7,7 @@ const hash=globalThis.closedLoopHash;
 const testRuntime=globalThis.closedLoopTestRuntime;
 if(!schema||!workflow||!hash||!testRuntime)throw new Error('workflow-schema.js, test-runtime.js, workflow-engine.js, and hash.js must load before response-ingestion.js.');
 
-const TOP_LEVEL_KEYS=Object.freeze(['schema','jobId','stage','operation','promptIdentity','scope','responseType','humanInputRequests','stageData','records','evidence','unresolved','warnings','attachments']);
+const TOP_LEVEL_KEYS=Object.freeze(['schema','contractProfileId','jobId','stage','operation','promptIdentity','packageId','operationReservationId','challengeNonce','scope','responseType','humanInputRequests','humanAuthorityCandidates','stageData','records','evidence','unresolved','warnings','attachments']);
 const RECORD_KEYS=Object.freeze(['tempKey','targetId','fields','relationships','evidenceRefs','notes']);
 const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes']);
 const QUESTION_KEYS=Object.freeze(['temporaryKey','question','whyRequired','affectedStageFields','affectedRecords','answerType','allowedValues','blocking']);
@@ -16,7 +16,7 @@ const UNRESOLVED_KEYS=Object.freeze(['temporaryKey','kind','description','whyBlo
 const WARNING_KEYS=Object.freeze(['code','message','path']);
 const UNRESOLVED_KINDS=Object.freeze(['MISSING_HUMAN_INPUT','MISSING_APPLICATION_CONTEXT','INADEQUATE_PRIOR_OUTPUT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','WORK_TOO_LARGE_FOR_ENVIRONMENT','MISSING_ARTIFACT','UNRESOLVED_CONFLICT','EXECUTION_FAILURE','TOOL_FAILURE','UNKNOWN']);
 const ANSWER_TYPES=Object.freeze(['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_CHOICE','DATE','FILE_REFERENCE']);
-const RESPONSE_SCOPE_KEYS=Object.freeze(['projectRevision','inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId']);
+const RESPONSE_SCOPE_KEYS=Object.freeze(['projectRevision','inputVersion','sourceSetVersion','researchVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','sourceConvergedIterationId','confirmationIterationId','baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion','reconciledReviewVersion','releaseId','hashReviewId','evidenceChainVersion']);
 
 const clone=workflow.clone;
 const now=workflow.now;
@@ -53,8 +53,11 @@ function currentPromptEngineVersion(){return globalThis.closedLoopPromptEngine?.
 function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
   const raw=String(text??'');const trimmed=raw.trim();if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});if(trimmed.startsWith('```')||trimmed.endsWith('```'))throw Object.assign(new Error('The response must be one JSON object without a Markdown code fence.'),{code:'NON_JSON_WRAPPER'});
   const parseCandidate=(candidate)=>{try{scanJsonAmbiguity(candidate,limits.maxJsonDepth);}catch(error){if(error.code)throw error;}return JSON.parse(candidate);};
-  let envelope,normalization=null,firstError=null;try{envelope=parseCandidate(trimmed);}catch(error){if(error.code)throw error;firstError=error;const repaired=normalizeSmartJsonDelimiters(trimmed);if(repaired.changed){try{envelope=parseCandidate(repaired.text);normalization='SMART_JSON_DELIMITERS';}catch(repairError){if(repairError.code)throw repairError;firstError=repairError;}}if(!envelope){const likelyTruncated=!trimmed.endsWith('}')||((trimmed.match(/{/g)||[]).length!==(trimmed.match(/}/g)||[]).length);throw Object.assign(new Error(`Response JSON could not be parsed: ${firstError?.message||error.message}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:firstError||error});}}
-  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});if(normalization)Object.defineProperty(envelope,'__parseNormalization',{value:normalization,enumerable:false});return envelope;
+  if(/[“”]/.test(trimmed))throw Object.assign(new Error('Unsafe smart or curly quotation marks are invalid in an authoritative response JSON file.'),{code:'SMART_JSON_QUOTATION'});
+  let envelope;
+  try{envelope=parseCandidate(trimmed);}catch(error){if(error.code)throw error;const likelyTruncated=!trimmed.endsWith('}')||((trimmed.match(/{/g)||[]).length!==(trimmed.match(/}/g)||[]).length);throw Object.assign(new Error(`Response JSON could not be parsed: ${error.message}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:error});}
+  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});
+  return envelope;
 }
 
 function remapBlindAliases(envelope,promptRecord){const entries=Array.isArray(promptRecord?.contextManifest?.blindAliasMap)?promptRecord.contextManifest.blindAliasMap:[];if(!entries.length)return {envelope,changed:false};const byAlias=new Map(entries.map(entry=>[String(entry.alias||''),String(entry.canonicalId||'')]).filter(([alias,id])=>alias&&id));let changed=false;const walk=value=>{if(typeof value==='string'&&byAlias.has(value)){changed=true;return byAlias.get(value);}if(Array.isArray(value))return value.map(walk);if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,walk(item)]));return value;};const mapped=walk(envelope);if(changed)Object.defineProperty(mapped,'__blindAliasRemap',{value:true,enumerable:false});return {envelope:mapped,changed};}
