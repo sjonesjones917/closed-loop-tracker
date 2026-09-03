@@ -22,12 +22,13 @@ jobs:
       - run: node verify-v3-contract.mjs
       - run: node verify-data-route-closure.mjs
       - run: node verify-ingestion.mjs
-      - name: Commit repaired source and required-test wiring
+      - name: Commit repaired source and data-route fixture
         run: |
-          test -n "$(git status --short -- workflow-schema.js .github/workflows/pages.yml verify-data-route-closure.mjs)"
+          test -n "$(git status --short -- workflow-schema.js verify-data-route-closure.mjs)"
+          git checkout -- .github/workflows/pages.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add workflow-schema.js .github/workflows/pages.yml verify-data-route-closure.mjs
+          git add workflow-schema.js verify-data-route-closure.mjs
           git commit -m 'Conform exact stage-operation scope matrix'
           git push origin HEAD:fix/section15-job-contract
-# retrigger after fixed data-route scope fixture
+# retrigger with workflow-file mutation excluded from bot push
