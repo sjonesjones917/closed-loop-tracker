@@ -1,0 +1,83 @@
+name: One-time exact operation scope and authority repair
+
+on:
+  push:
+    branches: [repair/live-spec-conformance-20260903-gpt56]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply the reviewed operation-contract correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin refs/pull/812/head:refs/remotes/origin/reviewed-operation-scope
+          test "$(git rev-parse refs/remotes/origin/reviewed-operation-scope)" = "50dd730fc679c76874ceb9d6625b21bb504ae4db"
+          base="$(git merge-base HEAD refs/remotes/origin/reviewed-operation-scope)"
+          git diff --binary "$base" refs/remotes/origin/reviewed-operation-scope -- \
+            verify-data-route-closure.mjs \
+            verify-operation-scope-authority.mjs \
+            verify-spec-grounded-route-oracle.mjs \
+            verify-v3-contract.mjs \
+            workflow-schema.js > "$RUNNER_TEMP/operation-scope.patch"
+          test -s "$RUNNER_TEMP/operation-scope.patch"
+          git apply --3way --index "$RUNNER_TEMP/operation-scope.patch"
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('workflow-schema.js')
+          source = path.read_text()
+          old = "globalThis.closedLoopWorkflowSchema=Object.freeze({...prior,version:'closed-loop-operation-scope-closure/1',SCOPE_REQUIREMENTS"
+          new = "globalThis.closedLoopWorkflowSchema=Object.freeze({...prior,version:prior.version,SCOPE_REQUIREMENTS"
+          if source.count(old) != 1:
+              raise SystemExit(f'Expected exactly one temporary schema-identity override; found {source.count(old)}')
+          path.write_text(source.replace(old, new))
+          test = Path('verify-operation-scope-authority.mjs')
+          content = test.read_text()
+          anchor = "const expected={"
+          assertion = "assert.equal(s.version,'closed-loop-workflow-schema/3','Operation closure must not replace the controlling workflow-schema identity.');\n"
+          if assertion not in content:
+              content = content.replace(anchor, assertion + anchor, 1)
+          test.write_text(content)
+          PY
+          git add workflow-schema.js verify-operation-scope-authority.mjs
+          git diff --cached --check
+      - name: Prove the exact fixed oracle and affected downstream paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check verify-operation-scope-authority.mjs
+          node verify-operation-scope-authority.mjs
+          node verify-v3-contract.mjs
+          node verify-stage-operation-registry.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node verify-data-route-closure.mjs
+          node verify-infrastructure-route-closure.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-file-first-response.mjs
+          node verify-reservation-contract.mjs
+          node verify-state-release-contract.mjs
+      - name: Remove one-time scaffolding and commit the complete ratchet step
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/one-time-gpt56-operation-scope-repair.yml
+          git add -A
+          git diff --cached --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m 'Close operation scope and executor authority'
+          git push origin HEAD:repair/live-spec-conformance-20260903-gpt56
