@@ -1,5 +1,17 @@
 import assert from 'node:assert/strict';
 
+// Closed output fields that this executed definition-of-done proof must retain.
+// This is a compatibility contract for downstream acceptance publication, not a substitute for executing the measurements below.
+const EXECUTED_DEFINITION_PROOF_FIELDS=Object.freeze([
+  'acceptedAgentValueExtractionCoverage',
+  'acceptedRelationshipProvenanceCoverage',
+  'currentScopeSelectorCoverage',
+  'exactReqRunTestCoverage',
+  'applicableCurrentRegressionSuccess',
+  'mandatoryEvidenceChainCoverage',
+  'releaseArtifactIdentityCoverage'
+]);
+
 const originalLog=console.log;
 const captured=[];
 console.log=(...args)=>captured.push(args.map(String).join(' '));
@@ -10,6 +22,7 @@ try{
 }
 assert.equal(captured.length,1,'Definition-of-done invariant verifier must emit exactly one JSON report.');
 const report=JSON.parse(captured[0]);
+for(const field of EXECUTED_DEFINITION_PROOF_FIELDS)assert(Object.hasOwn(report,field),`Definition-of-done proof omitted required report field ${field}.`);
 const core=globalThis.closedLoopCore;
 const engine=globalThis.closedLoopWorkflowEngine;
 const hash=globalThis.closedLoopHash;
