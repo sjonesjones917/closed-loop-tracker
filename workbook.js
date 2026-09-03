@@ -739,22 +739,28 @@ function validateStageDraft(stage,s,state){const issues=[];if(!String(s.draftRec
 async function immutableRevision(revisions,payload,meta={}){const hash=await sha256Text(JSON.stringify(payload));const latest=(revisions||[]).at(-1);if(latest?.sha256===hash)return {changed:false,record:latest};return {changed:true,record:{...meta,version:`v${String((revisions||[]).length+1).padStart(3,'0')}`,sha256:hash,createdAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(payload))}};}
 function invalidateDownstream(state,n,changeId){const out=[];for(let i=n+1;i<=30;i++){const s=state?.stages?.[i];if(!s)continue;if(s.status!=='NOT STARTED'||s.decision||s.decisionEvidence)out.push(`STAGE-${String(i).padStart(2,'0')}`);Object.assign(s,{status:'NOT STARTED',decision:'',decisionEvidence:'',nextStage:'',decidedBy:'',dateTime:'',invalidatedBy:changeId});}if(state?.release)Object.assign(state.release,{gateState:'',authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]});return out;}
 function compareArtifactSets(a=[],r=[],gateState=''){const comparisons=[];for(let i=0;i<Math.max(a.length,r.length);i++){const x=a[i],y=r[i];comparisons.push({artifactId:x?.artifactId||`ARTIFACT-${String(i+1).padStart(3,'0')}`,auditedFile:x?.name||'MISSING',releaseFile:y?.name||'MISSING',auditedSha256:x?.sha256||'UNKNOWN',releaseSha256:y?.sha256||'UNKNOWN',hashesIdentical:Boolean(x&&y&&x.sha256===y.sha256),byteSizesIdentical:Boolean(x&&y&&Number(x.size)===Number(y.size))});}const exact=gateState==='ACCEPTED'&&a.length>0&&a.length===r.length&&comparisons.every(x=>x.hashesIdentical&&x.byteSizesIdentical);return {gateState,comparisons,authorization:exact?'AUTHORIZED':'NOT AUTHORIZED'};}
-function restoreLegacyStage01AcceptedCapture(migrated,original){
-  const stage01=migrated?.stages?.['1']||migrated?.stages?.[1];
-  if(!stage01||String(stage01.status||'').toUpperCase()!=='COMPLETE')return migrated;
-  stage01.agentData=stage01.agentData&&typeof stage01.agentData==='object'&&!Array.isArray(stage01.agentData)?stage01.agentData:{};
-  const accepted=stage01.acceptedData&&typeof stage01.acceptedData==='object'&&!Array.isArray(stage01.acceptedData)?stage01.acceptedData:{};
-  if(String(stage01.agentData.INPUT_SET_CONTENTS||'').trim())return migrated;
-  if(String(accepted.INPUT_SET_CONTENTS||'').trim()){stage01.agentData.INPUT_SET_CONTENTS=String(accepted.INPUT_SET_CONTENTS);return migrated;}
-  const supplied=original?.userJobInput&&typeof original.userJobInput==='object'&&!Array.isArray(original.userJobInput)?original.userJobInput:null;
-  const captured=supplied&&Object.keys(supplied).length?JSON.stringify(supplied):String(stage01.draftRecord||'').trim();
-  if(captured)stage01.agentData.INPUT_SET_CONTENTS=captured;
-  return migrated;
-}
+
 function migrateState(p){
   if(!p||typeof p!=='object')return createBlankState();
   if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
     const migrated=JSON.parse(JSON.stringify(p));
+    if(migrated?.job?.CONTRACT_PROFILE_ID!==CONTRACT_PROFILE_ID){
+      migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
+      migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
+      const alreadyLegacyProfile=migrated.projectData.contractProfileMigration?.status==='LEGACY_NON_GATING';
+      if(!alreadyLegacyProfile&&!migrated.projectData.migrationArchives.some(x=>x?.kind==='PRE_PROFILE_V3_SOURCE'&&x?.revision===Number(p.revision||0)))migrated.projectData.migrationArchives.push({kind:'PRE_PROFILE_V3_SOURCE',schema:PROJECT_SCHEMA,revision:Number(p.revision||0),payload:JSON.parse(JSON.stringify(p))});
+      migrated.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema:alreadyLegacyProfile?String(migrated.projectData.contractProfileMigration.sourceSchema||PROJECT_SCHEMA):PROJECT_SCHEMA,targetProfile:CONTRACT_PROFILE_ID,semanticProofMigrated:false};
+      migrated.job=migrated.job&&typeof migrated.job==='object'?migrated.job:{};
+      delete migrated.job.CONTRACT_PROFILE_ID;
+      migrated.job.CURRENT_STATE='BLOCKED';
+      migrated.job.JOB_RECORD_STATUS='INCOMPLETE';
+      migrated.job.CURRENT_STAGE='STAGE 01';
+      migrated.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(migrated.job.CURRENT_BLOCKERS)?migrated.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];
+      const stage01=migrated?.stages?.['1']||migrated?.stages?.[1];
+      if(stage01){stage01.status='NOT STARTED';stage01.decision='';stage01.decisionEvidence='';stage01.agentData={};stage01.acceptedData={};stage01.gate={satisfied:false,reasons:['Legacy/pre-profile semantic evidence cannot satisfy the current contract profile.']};}
+      migrated.activeStage=1;
+      return migrated;
+    }
     migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
     migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
     migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
@@ -772,7 +778,10 @@ function migrateState(p){
   if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:'human-project/30',records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});delete migrated.projectData.stageRecords;}
   if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length)delete migrated.projectData.fullProject;
   migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:new Date().toISOString(),payload:original});
-  restoreLegacyStage01AcceptedCapture(migrated,original);
+  migrated.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema:'human-project/30',targetProfile:CONTRACT_PROFILE_ID,semanticProofMigrated:false};
+  if(migrated.job){delete migrated.job.CONTRACT_PROFILE_ID;migrated.job.CURRENT_STATE='BLOCKED';migrated.job.JOB_RECORD_STATUS='INCOMPLETE';migrated.job.CURRENT_STAGE='STAGE 01';migrated.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(migrated.job.CURRENT_BLOCKERS)?migrated.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];}
+  const legacyStage01=migrated?.stages?.['1']||migrated?.stages?.[1];if(legacyStage01){legacyStage01.status='NOT STARTED';legacyStage01.decision='';legacyStage01.decisionEvidence='';legacyStage01.agentData={};legacyStage01.acceptedData={};legacyStage01.gate={satisfied:false,reasons:['Legacy semantic evidence is historical only until current-profile Stage 01 is performed.']};}
+  migrated.activeStage=1;
   if(!migrated.stages||Object.keys(migrated.stages).length!==STAGE_COUNT)throw new Error('Legacy project migration requires exactly 30 stages.');
   return migrated;
 }
