@@ -1,0 +1,62 @@
+name: One-time Stage 10 proof isolation
+
+on:
+  push:
+    branches: [controller-stage10-authoritative-prompt-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller-stage10-authoritative-prompt-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply the exact current Stage 10 repair script
+        shell: bash
+        run: |
+          set -euo pipefail
+          awk '
+            /- name: Rebase repair on exact current main and apply minimal Stage 10 correction/{found=1;next}
+            found && /- name: Prove Stage 10 and affected prior paths/{exit}
+            found && /^        run: \|/{inrun=1;next}
+            found && inrun{sub(/^          /,""); print}
+          ' .github/workflows/controller-stage10-repair.yml > /tmp/stage10-repair.sh
+          test -s /tmp/stage10-repair.sh
+          bash /tmp/stage10-repair.sh
+      - name: Syntax proof
+        run: node --check prompt-engine.js
+      - name: Build proof
+        run: node build-test-project.mjs
+      - name: Prompt semantics proof
+        run: node verify-prompt-semantics.mjs
+      - name: User prompt invariants proof
+        run: node verify-user-prompt-invariants.mjs
+      - name: File-first operator proof
+        run: node verify-file-first-operator.mjs
+      - name: File-first response proof
+        run: node verify-file-first-response.mjs
+      - name: Ingestion proof
+        run: node verify-ingestion.mjs
+      - name: Full-cycle proof
+        run: node verify-full-cycle.mjs
+      - name: Hash prior-stage proof
+        run: node verify-hash.mjs
+      - name: Governance prior-stage proof
+        run: node verify-specification-governance.mjs
+      - name: Commit integrated correction and remove transient workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/controller-stage10-repair.yml .github/workflows/controller-stage10-diagnostic.yml
+          git add -A
+          git commit -m "Repair authoritative Stage 10 prompt bytes"
+          git push --force-with-lease origin HEAD:controller-stage10-authoritative-prompt-20260903
