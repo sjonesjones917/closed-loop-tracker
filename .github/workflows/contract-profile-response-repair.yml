@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply repair
-        run: node apply-contract-profile-response-repair.mjs
+        run: |
+          node apply-contract-profile-response-repair.mjs
+          node fix-contract-profile-proof.mjs
       - name: Prove correction
         run: |
           set -euo pipefail
