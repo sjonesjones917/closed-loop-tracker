@@ -5,55 +5,35 @@ on:
 permissions:
   contents: write
 jobs:
-  diagnose:
-    if: ${{ !contains(github.event.head_commit.message, '[diagnostic-output]') }}
+  locate:
+    if: ${{ !contains(github.event.head_commit.message, '[locator-output]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Reproduce Stage 01 repair and capture failure
+      - name: Capture Stage 01 accounting evaluator seams
         run: |
-          set +e
           python - <<'PY'
           from pathlib import Path
-          replacements={
-            "'incorporated into the job definition'":"'EXTRACTED_RELEVANT_INFORMATION'",
-            '"incorporated into the job definition"':'"EXTRACTED_RELEVANT_INFORMATION"',
-            "'retained as context'":"'RETAINED_AS_CONTEXT'",
-            '"retained as context"':'"RETAINED_AS_CONTEXT"',
-            "'unresolved human-only'":"'UNRESOLVED_HUMAN_AUTHORITY'",
-            '"unresolved human-only"':'"UNRESOLVED_HUMAN_AUTHORITY"',
-            "'later-resolvable'":"'LATER_RESOLVABLE'",
-            '"later-resolvable"':'"LATER_RESOLVABLE"',
-            "'inapplicable with reason'":"'NO_PROJECT_RELEVANT_INFORMATION'",
-            '"inapplicable with reason"':'"NO_PROJECT_RELEVANT_INFORMATION"',
-          }
-          for p in list(Path('.').glob('*.js'))+list(Path('.').glob('*.mjs')):
-            s=p.read_text(); before=s
-            for a,b in replacements.items(): s=s.replace(a,b)
-            s=s.replace('incorporated into the job definition|retained as context|unresolved human-only|later-resolvable|inapplicable with reason','EXTRACTED_RELEVANT_INFORMATION|RETAINED_AS_CONTEXT|NO_PROJECT_RELEVANT_INFORMATION|UNRESOLVED_HUMAN_AUTHORITY|LATER_RESOLVABLE|INACCESSIBLE_OR_BLOCKED')
-            if s!=before:p.write_text(s)
+          needles=['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','sourceUnitId','ACCOUNTING_COMPLETE','raw unit','RAW_UNIT']
+          out=[]
+          for name in ['workflow-engine.js','response-ingestion.js','workflow-schema.js']:
+            text=Path(name).read_text()
+            out.append('===== '+name+' =====')
+            for needle in needles:
+              pos=0
+              while True:
+                i=text.find(needle,pos)
+                if i<0: break
+                out.append(f'--- {needle} @ {i} ---')
+                out.append(text[max(0,i-1200):min(len(text),i+2200)])
+                pos=i+len(needle)
+          Path('/tmp/repair-locator.txt').write_text('\n'.join(out))
           PY
-          : > /tmp/repair-failure.txt
-          for cmd in \
-            "node --check prompt-engine.js" \
-            "node verify-stage01-intake-closure.mjs" \
-            "node verify-zero-loss-accounting.mjs" \
-            "node verify-one-time-intent-intake.mjs" \
-            "node verify-prompt-semantics.mjs"; do
-            echo "===== $cmd =====" >> /tmp/repair-failure.txt
-            bash -lc "$cmd" >> /tmp/repair-failure.txt 2>&1
-            echo "exit=$?" >> /tmp/repair-failure.txt
-          done
-          git reset --hard HEAD
-          git clean -fd
-          cp /tmp/repair-failure.txt repair-failure.txt
+          cp /tmp/repair-locator.txt repair-locator.txt
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add repair-failure.txt
-          git commit -m 'Capture Stage 01 repair diagnostics [diagnostic-output]'
+          git add repair-locator.txt
+          git commit -m 'Capture Stage 01 accounting evaluator seams [locator-output]'
           git push
