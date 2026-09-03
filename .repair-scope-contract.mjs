@@ -62,3 +62,5 @@ const marker='          node verify-spec3-contract.mjs\n';
 if(!workflow.includes(marker))throw new Error('Expected v3 verification marker not found.');
 if(!workflow.includes('node verify-section14-scope-matrix.mjs'))workflow=workflow.replace(marker,marker+'          node verify-section14-scope-matrix.mjs\n');
 fs.writeFileSync(workflowPath,workflow);
+
+// One-time runner only; this file removes itself after successful proof.
