@@ -1,0 +1,32 @@
+name: Temporary spec repair bootstrap
+on:
+  push:
+    branches: [fix/spec-conformance-envelope-20260903]
+permissions:
+  contents: write
+jobs:
+  inspect:
+    if: ${{ !contains(github.event.head_commit.message, '[spec-repair-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Inspect exact repair seams
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for file, needles in {
+            'app-core.js':['savePromptRecord','export-prompt-file','prepareStageResponseFile'],
+            'workflow-engine.js':['reserveOperation','reservationTargetSlot'],
+            'project-store.js':['createExecutionPackage','stageResponseFile'],
+            'prompt-engine.js':['function buildPromptRecord','function responseContractDescriptor'],
+            'response-ingestion.js':['function validateEnvelope','function planProposal'],
+          }.items():
+            text=Path(file).read_text()
+            print(f'===== {file} =====')
+            for needle in needles:
+              i=text.find(needle)
+              print(f'--- {needle} @ {i} ---')
+              if i>=0: print(text[max(0,i-1400):min(len(text),i+5000)])
+          PY
