@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {verifyMobileAcceptanceEvidence} from './verify-mobile-acceptance-evidence.mjs';
 
 export const CANONICAL_MOBILE_PAGE_URL='https://sjonesjones917.github.io/closed-loop-tracker/';
+export const MOBILE_ACCEPTANCE_PROCEDURE_VERSION='actual-iphone-safari/1';
 
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const safeInteger=value=>Number.isSafeInteger(value)&&!Object.is(value,-0);
@@ -47,10 +48,10 @@ function validateManifestBinding({manifest,target,expectedCommit}){
   const add=(code,message)=>errors.push({code,message});
   if(manifest?.schema!=='closed-loop-deployment-manifest/1')add('DEPLOYMENT_MANIFEST_SCHEMA','Live deployment manifest schema is not closed-loop-deployment-manifest/1.');
   if(manifest?.sourceCommit!==expectedCommit)add('DEPLOYED_COMMIT_MISMATCH','Live deployment source commit does not equal the selected workflow commit.');
-  if(target?.sourceCommit!==expectedCommit)add('TARGET_COMMIT_MISMATCH','Pinned mobile target source commit does not equal the selected workflow commit.');
+  if(target&&target.sourceCommit!==expectedCommit)add('TARGET_COMMIT_MISMATCH','Pinned mobile target source commit does not equal the selected workflow commit.');
   const computed=manifest&&deploymentManifestDigest(manifest);
   if(manifest?.manifestDigest?.hashAlgorithm!=='SHA-256'||manifest?.manifestDigest?.digest!==computed)add('DEPLOYMENT_MANIFEST_DIGEST_INVALID','Live deployment manifest digest does not verify from its canonical preimage.');
-  if(target?.deploymentManifestDigest!==computed)add('TARGET_DEPLOYMENT_MANIFEST_MISMATCH','Pinned mobile target does not bind the exact live deployment manifest digest.');
+  if(target&&target.deploymentManifestDigest!==computed)add('TARGET_DEPLOYMENT_MANIFEST_MISMATCH','Pinned mobile target does not bind the exact live deployment manifest digest.');
   return {accepted:errors.length===0,errors,computedDigest:computed};
 }
 
@@ -62,7 +63,7 @@ function validateResourcePath(base,resourcePath){
   return url;
 }
 
-export async function verifyLiveDeploymentForMobile({target,expectedCommit,pageUrl=CANONICAL_MOBILE_PAGE_URL,fetchImpl=fetch}={}){
+export async function verifyLiveDeploymentForMobile({target=null,expectedCommit,pageUrl=CANONICAL_MOBILE_PAGE_URL,fetchImpl=fetch}={}){
   requiredString(expectedCommit,'expectedCommit');
   const base=new URL(pageUrl);
   if(base.href!==CANONICAL_MOBILE_PAGE_URL)throw new Error(`Mobile acceptance must verify ${CANONICAL_MOBILE_PAGE_URL}.`);
@@ -94,6 +95,34 @@ export async function verifyLiveDeploymentForMobile({target,expectedCommit,pageU
     if(sha256(bytes)!==resource.digest)throw new Error(`${resource.path} bytes differ from deployment manifest digest.`);
   }
   return {manifest,manifestDigest:binding.computedDigest,filesCompared:seen.size,sourceCommit:manifest.sourceCommit,buildIdentity:manifest.buildIdentity};
+}
+
+export async function createMobileAcceptanceTarget({expectedCommit,pageUrl=CANONICAL_MOBILE_PAGE_URL,testProjectId,viewport,procedureVersion=MOBILE_ACCEPTANCE_PROCEDURE_VERSION,validForMinutes=1440,fetchImpl=fetch,now=new Date()}={}){
+  requiredString(testProjectId,'testProjectId');
+  if(!viewport||!safeInteger(viewport.width)||!safeInteger(viewport.height)||typeof viewport.devicePixelRatio!=='number'||!Number.isFinite(viewport.devicePixelRatio)||viewport.width<=0||viewport.height<=0||viewport.devicePixelRatio<=0)throw new Error('Pinned viewport width, height, and devicePixelRatio are required.');
+  if(!safeInteger(validForMinutes)||validForMinutes<=0)throw new Error('validForMinutes must be a positive safe integer.');
+  const live=await verifyLiveDeploymentForMobile({expectedCommit,pageUrl,fetchImpl});
+  const challenge=crypto.randomBytes(16).toString('hex');
+  const issuedAt=new Date(now);
+  if(!Number.isFinite(issuedAt.getTime()))throw new Error('Target issue time is invalid.');
+  const expiresAt=new Date(issuedAt.getTime()+validForMinutes*60_000);
+  const targetSeed={sourceCommit:expectedCommit,deploymentManifestDigest:live.manifestDigest,challenge,testProjectId,procedureVersion,viewport};
+  const mobileAcceptanceTargetId=`MOBILE-TARGET-${sha256(Buffer.from(canonical(targetSeed),'utf8')).slice(0,24).toUpperCase()}`;
+  return {
+    mobileAcceptanceTargetId,
+    physicalDeviceRequired:true,
+    challenge,
+    challengeIssuedAt:issuedAt.toISOString(),
+    challengeExpiresAt:expiresAt.toISOString(),
+    sourceCommit:expectedCommit,
+    deploymentManifestDigest:live.manifestDigest,
+    origin:'https://sjonesjones917.github.io',
+    basePath:'/closed-loop-tracker/',
+    testProjectId,
+    procedureVersion,
+    viewport:{width:viewport.width,height:viewport.height,devicePixelRatio:viewport.devicePixelRatio},
+    liveBuildIdentity:live.buildIdentity
+  };
 }
 
 export async function verifyMobileAcceptanceSubmission({target,evidence,expectedCommit,pageUrl=CANONICAL_MOBILE_PAGE_URL,usedChallenges=[],verificationTime,fetchImpl=fetch}={}){
@@ -139,7 +168,26 @@ export async function verifyMobileAcceptanceSubmission({target,evidence,expected
   };
 }
 
+function envViewport(){
+  const width=Number(process.env.MOBILE_VIEWPORT_WIDTH);
+  const height=Number(process.env.MOBILE_VIEWPORT_HEIGHT);
+  const devicePixelRatio=Number(process.env.MOBILE_DEVICE_PIXEL_RATIO);
+  return {width,height,devicePixelRatio};
+}
+
 async function main(){
+  const mode=process.env.MOBILE_ACCEPTANCE_MODE||'VERIFY_EVIDENCE';
+  if(mode==='CREATE_TARGET'){
+    const target=await createMobileAcceptanceTarget({
+      expectedCommit:process.env.GITHUB_SHA,
+      pageUrl:process.env.PAGE_URL||CANONICAL_MOBILE_PAGE_URL,
+      testProjectId:process.env.MOBILE_TEST_PROJECT_ID,
+      viewport:envViewport()
+    });
+    console.log(JSON.stringify(target,null,2));
+    return;
+  }
+  if(mode!=='VERIFY_EVIDENCE')throw new Error(`Unsupported MOBILE_ACCEPTANCE_MODE ${mode}.`);
   const target=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_TARGET_JSON,'MOBILE_ACCEPTANCE_TARGET_JSON');
   const evidence=parseAuthenticatedJson(process.env.MOBILE_ACCEPTANCE_EVIDENCE_JSON,'MOBILE_ACCEPTANCE_EVIDENCE_JSON');
   const usedChallenges=process.env.USED_MOBILE_CHALLENGES_JSON?JSON.parse(process.env.USED_MOBILE_CHALLENGES_JSON):[];
