@@ -5,16 +5,25 @@ import {spawnSync} from 'node:child_process';
 const TARGET_SHA256='101f23168d7e7c1713d702f4c09ef7cbfd2d0f369700ac4c8de6bc044da447e6';
 const TARGET_SIZE=416621;
 const TITLE='Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification';
-const run=(args,input)=>{
+const execGit=(args,{input=null,allowFailure=false}={})=>{
   const out=spawnSync('git',args,{input,encoding:null,maxBuffer:1024*1024*1024});
-  if(out.status!==0)throw new Error(`git ${args.join(' ')} failed: ${String(out.stderr)}`);
-  return out.stdout;
+  if(out.status!==0&&!allowFailure)throw new Error(`git ${args.join(' ')} failed: ${String(out.stderr)}`);
+  return out;
 };
-run(['fetch','--force','--no-tags','origin','+refs/heads/*:refs/remotes/origin/*','+refs/pull/*/head:refs/remotes/pull/*']);
-const objects=run(['rev-list','--objects','--all']).toString('utf8').trim().split('\n').filter(Boolean);
-const unique=[...new Set(objects.map(line=>line.split(' ')[0]))];
-const checkInput=Buffer.from(unique.join('\n')+'\n');
-const checked=run(['cat-file','--batch-check=%(objectname) %(objecttype) %(objectsize)'],checkInput).toString('utf8').trim().split('\n');
+const run=(args,input)=>execGit(args,{input}).stdout;
+const remoteLines=[
+  ...run(['ls-remote','--heads','origin']).toString('utf8').trim().split('\n'),
+  ...run(['ls-remote','origin','refs/pull/*/head']).toString('utf8').trim().split('\n')
+].filter(Boolean);
+const tips=[...new Set(remoteLines.map(line=>line.split(/\s+/)[0]).filter(value=>/^[0-9a-f]{40}$/.test(value)))];
+for(let offset=0;offset<tips.length;offset+=40){
+  const chunk=tips.slice(offset,offset+40);
+  const fetched=execGit(['fetch','--force','--no-tags','--depth=1000000','origin',...chunk],{allowFailure:true});
+  if(fetched.status!==0){
+    for(const sha of chunk)execGit(['fetch','--force','--no-tags','--depth=1000000','origin',sha],{allowFailure:true});
+  }
+}
+const checked=run(['cat-file','--batch-all-objects','--batch-check=%(objectname) %(objecttype) %(objectsize)']).toString('utf8').trim().split('\n');
 const candidates=[];
 for(const line of checked){
   const [sha,type,sizeText]=line.split(' '); const size=Number(sizeText);
@@ -23,16 +32,13 @@ for(const line of checked){
   const sha256=crypto.createHash('sha256').update(bytes).digest('hex');
   const text=(()=>{try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{return '';}})();
   const hasTitle=text.includes(TITLE)||text.includes('Zero-Loss Controlling Implementation Specification');
-  const refs=objects.filter(row=>row.startsWith(sha+' ')).map(row=>row.slice(sha.length+1));
-  const entry={gitBlobSha:sha,size,sha256,hasTitle,paths:refs.slice(0,50)};
+  const entry={gitBlobSha:sha,size,sha256,hasTitle};
   candidates.push(entry);
-  if(sha256===TARGET_SHA256){
-    fs.mkdirSync('/tmp/spec-source-scan',{recursive:true});
-    fs.writeFileSync('/tmp/spec-source-scan/closed-loop-reliability-controlling-implementation-specification.txt',bytes);
-  }
 }
-const exact=candidates.filter(c=>c.sha256===TARGET_SHA256);
-const report={target:{sha256:TARGET_SHA256,size:TARGET_SIZE},objectCount:unique.length,candidateCount:candidates.length,exactMatches:exact,candidates};
+const exactMatches=candidates.filter(entry=>entry.sha256===TARGET_SHA256);
+const titleMatches=candidates.filter(entry=>entry.hasTitle);
+const targetSizeMatches=candidates.filter(entry=>entry.size===TARGET_SIZE);
+const report={target:{sha256:TARGET_SHA256,size:TARGET_SIZE},remoteTipCount:tips.length,scannedObjectCount:checked.length,candidateCount:candidates.length,exactMatches,titleMatches,targetSizeMatches};
 fs.mkdirSync('/tmp/spec-source-scan',{recursive:true});
 fs.writeFileSync('/tmp/spec-source-scan/report.json',JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report,null,2));
