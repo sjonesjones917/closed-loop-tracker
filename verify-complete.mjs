@@ -1,5 +1,8 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {execFileSync} from 'node:child_process';
+
+execFileSync(process.execPath,['verify-stage01-disposition-contract.mjs'],{stdio:'inherit'});
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
