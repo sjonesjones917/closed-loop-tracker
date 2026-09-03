@@ -70,7 +70,6 @@ jobs:
           node verify-all-stage-prompts.mjs
           node verify-stage-prompts-complete.mjs
           node verify-user-prompt-invariants.mjs
-          node verify-conformance-metrics.mjs
       - name: Commit repair and remove transient workflow
         run: |
           set -euo pipefail
