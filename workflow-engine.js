@@ -479,7 +479,7 @@ function gate(stage,project){
 }
 
 
-const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);
+const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED']);
 const INTAKE_STATEMENT_CLASSES=Object.freeze(['FACT','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY','CONTEXT']);
 const OBLIGATION_DISPOSITIONS=Object.freeze(['retained nonnormative context','inapplicable','blocked']);
 function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersion,extra={}}={}){
@@ -519,10 +519,10 @@ function evaluateIntakeAccounting(project,{capture}={}){
   for(const [index,unit] of safe(parsed.units).entries()){
     const id=String(unit?.sourceUnitId||'').trim();if(!id){reasons.push(`Stage 01 intake unit ${index+1} has no sourceUnitId.`);continue;}counts.set(id,(counts.get(id)||0)+1);const source=expected.get(id);if(!source){reasons.push(`Stage 01 intake accounting contains unknown unit ${id}.`);continue;}
     const hashMatches=String(unit?.sourceRawValueSha256||'')===String(source.rawValueSha256);if(!hashMatches)reasons.push(`Stage 01 intake unit ${id} is not bound to the exact source raw-value hash.`);
-    const disposition=String(unit?.disposition||'').trim().toLowerCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='inapplicable with reason'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);
-    const statements=safe(unit?.extractedStatements);if(disposition!=='inapplicable with reason'&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;
+    const disposition=String(unit?.disposition||'').trim().toUpperCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='INACCESSIBLE_OR_BLOCKED')reasons.push(`Stage 01 intake unit ${id} is inaccessible or blocked and remains material until human authority removes it from scope through a new input version.`);
+    const statements=safe(unit?.extractedStatements),statementRequired=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE'].includes(disposition);if(statementRequired&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;
     for(const statement of statements){const key=String(statement?.statementKey||'').trim(),text=String(statement?.text||'').trim(),classification=String(statement?.statementClass||'').trim().toUpperCase();if(!key||statementKeys.has(key)){reasons.push(`Stage 01 intake unit ${id} has a missing or duplicate statementKey.`);statementsValid=false;}statementKeys.add(key);if(!text){reasons.push(`Stage 01 intake unit ${id} contains an empty extracted statement.`);statementsValid=false;}if(!INTAKE_STATEMENT_CLASSES.includes(classification)){reasons.push(`Stage 01 intake unit ${id} has an invalid statementClass.`);statementsValid=false;}}
-    if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(disposition==='inapplicable with reason'?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);
+    if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&disposition!=='INACCESSIBLE_OR_BLOCKED'&&statementsValid&&(!statementRequired||statements.length>0))accounted.add(id);
   }
   for(const [id,count] of counts)if(count!==1)reasons.push(`Stage 01 intake unit ${id} is accounted ${count} times; exactly one accounting entry is required.`);for(const id of expected.keys())if(!counts.has(id))reasons.push(`Stage 01 intake accounting omitted controlled input unit ${id}.`);const coverage=manifest.unitCount?accounted.size/manifest.unitCount:1;return {complete:reasons.length===0,coverage,reasons,manifest,parsed,expectedUnitCount:manifest.unitCount,accountedUnitCount:accounted.size};
 }
