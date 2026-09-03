@@ -6,6 +6,7 @@ permissions:
   contents: write
 jobs:
   repair:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -24,12 +25,11 @@ jobs:
           node verify-terminal-due-contract.mjs
           node verify-state-release-contract.mjs
           node verify-contract-closure.mjs
-      - name: Commit correction and remove repair scaffold
+      - name: Commit validated correction
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm -r .repair-section49 .github/workflows/repair-section49.yml
           git add workflow-engine.js prompt-engine.js verify-stage01-intake-closure.mjs verify-stage01-disposition-contract.mjs verify-terminal-due-contract.mjs .github/workflows/pages.yml
           git commit -m "Fix Stage 01 and terminal contract contradictions"
           git push origin HEAD:repair/section49-trace-closure-20260903
