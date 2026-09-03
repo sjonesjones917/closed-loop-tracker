@@ -1,0 +1,82 @@
+name: Transient Stage 01 contract repair
+
+on:
+  push:
+    branches:
+      - 'fix/spec-conformance-20260903-v2'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/spec-conformance-20260903-v2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply controlling Stage 01 disposition contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          replacements={
+              'incorporated into the job definition':'EXTRACTED_RELEVANT_INFORMATION',
+              'retained as context':'RETAINED_AS_CONTEXT',
+              'unresolved human-only':'UNRESOLVED_HUMAN_AUTHORITY',
+              'later-resolvable':'LATER_RESOLVABLE',
+              'inapplicable with reason':'NO_PROJECT_RELEVANT_INFORMATION',
+          }
+          for path in list(Path('.').glob('*.js'))+list(Path('.').glob('*.mjs')):
+              text=path.read_text(); old=text
+              for a,b in replacements.items(): text=text.replace(a,b)
+              if text!=old: path.write_text(text)
+          p=Path('prompt-engine.js'); text=p.read_text()
+          old='EXTRACTED_RELEVANT_INFORMATION|RETAINED_AS_CONTEXT|UNRESOLVED_HUMAN_AUTHORITY|LATER_RESOLVABLE|NO_PROJECT_RELEVANT_INFORMATION'
+          new='EXTRACTED_RELEVANT_INFORMATION|RETAINED_AS_CONTEXT|NO_PROJECT_RELEVANT_INFORMATION|UNRESOLVED_HUMAN_AUTHORITY|LATER_RESOLVABLE|INACCESSIBLE_OR_BLOCKED'
+          if old not in text: raise SystemExit('Stage 01 prompt disposition contract not found')
+          p.write_text(text.replace(old,new))
+          e=Path('workflow-engine.js'); text=e.read_text()
+          text=text.replace("const disposition=String(unit?.disposition||'').trim().toLowerCase();", "const disposition=String(unit?.disposition||'').trim().toUpperCase();")
+          text=text.replace("['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','NO_PROJECT_RELEVANT_INFORMATION']", "['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED']")
+          if "if(disposition==='INACCESSIBLE_OR_BLOCKED')" not in text:
+              anchor="if(disposition==='NO_PROJECT_RELEVANT_INFORMATION'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);"
+              if anchor not in text: raise SystemExit('Stage 01 evaluator anchor missing')
+              text=text.replace(anchor,anchor+"if(disposition==='INACCESSIBLE_OR_BLOCKED')reasons.push(`Stage 01 intake unit ${id} is inaccessible or blocked and cannot complete Stage 01.`);",1)
+          e.write_text(text)
+          t=Path('verify-stage01-intake-closure.mjs'); text=t.read_text()
+          marker="assert(prompt.prompt.includes('first semantic reader')||prompt.prompt.includes('FIRST SEMANTIC READER'),'Prompt 01 does not identify Stage 01 as the first semantic reader.');"
+          addition="\nfor(const value of ['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'])assert(prompt.prompt.includes(value),`Prompt 01 omitted controlling disposition ${value}.`);\nfor(const legacy of ['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'])assert(!prompt.prompt.includes(legacy),`Prompt 01 still advertises legacy disposition ${legacy}.`);"
+          if addition.strip() not in text:
+              if marker not in text: raise SystemExit('Stage 01 prompt regression anchor missing')
+              text=text.replace(marker,marker+addition,1)
+          marker2="assert(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(capture)}).complete,'Complete Stage 01 intake accounting did not close.');"
+          addition2="\nconst inaccessible=structuredClone(capture);inaccessible.units[0].disposition='INACCESSIBLE_OR_BLOCKED';assert(!engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(inaccessible)}).complete,'Stage 01 incorrectly completed with inaccessible required material.');"
+          if addition2.strip() not in text:
+              if marker2 not in text: raise SystemExit('Stage 01 blocking regression anchor missing')
+              text=text.replace(marker2,marker2+addition2,1)
+          t.write_text(text)
+          PY
+      - name: Prove Stage 01 repair
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-conformance-metrics.mjs
+      - name: Commit repair and remove transient workflow
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-stage01-dispositions.yml
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git add -A
+          git commit -m 'Conform Stage 01 raw-unit disposition contract'
+          git push origin HEAD:fix/spec-conformance-20260903-v2
