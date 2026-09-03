@@ -26,6 +26,16 @@ jobs:
           for f in repair-authoritative-exchange.py repair-authoritative-exchange-v2.py repair-authoritative-exchange-v3.py repair-authoritative-exchange-v4.py; do
             git show "$SOURCE:$f" > "/tmp/$f"
           done
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/repair-authoritative-exchange.py')
+          s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/3';"
+          new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/58';"
+          if old not in s:
+              raise SystemExit('repair script prompt-version anchor changed unexpectedly')
+          p.write_text(s.replace(old,new,1))
+          PY
           cp /tmp/repair-authoritative-exchange*.py .
           python3 -m py_compile repair-authoritative-exchange-v4.py
           python3 repair-authoritative-exchange-v4.py
@@ -91,6 +101,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -f RUN_FILE_FIRST_RECONCILE
           rm -f repair-authoritative-exchange.py repair-authoritative-exchange-v2.py repair-authoritative-exchange-v3.py repair-authoritative-exchange-v4.py
           rm -f .github/workflows/one-time-transplant-file-first-current.yml
           git config user.name closed-loop-repair
