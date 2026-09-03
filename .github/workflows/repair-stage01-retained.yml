@@ -21,8 +21,11 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Apply exact migration correction
-        run: node .repair-stage01-retained.mjs
+      - name: Apply exact migration correction and remove repair scaffolding from the proof tree
+        run: |
+          set -euo pipefail
+          node .repair-stage01-retained.mjs
+          rm .repair-stage01-retained.mjs .github/workflows/repair-stage01-retained.yml
       - name: Prove source and live operator path
         env:
           BROWSER: /usr/bin/google-chrome
@@ -46,7 +49,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .repair-stage01-retained.mjs .github/workflows/repair-stage01-retained.yml
+          git add -u .repair-stage01-retained.mjs .github/workflows/repair-stage01-retained.yml
           git add app-core.js
           git diff --cached --check
           git commit -m 'Migrate retained Stage 01 accounting disposition'
