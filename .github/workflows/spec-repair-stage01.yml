@@ -21,6 +21,8 @@ jobs:
           node-version: '22'
       - name: Apply exact Stage 01 repair
         run: python3 .repair-stage01.py
+      - name: Remove one-time scaffolding before proof
+        run: rm .repair-stage01.py .github/workflows/spec-repair-stage01.yml
       - name: Prove Stage 01 and downstream invariants
         env:
           BROWSER: /usr/bin/google-chrome
@@ -61,10 +63,9 @@ jobs:
           node verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
-      - name: Commit repair and remove one-time scaffolding
+      - name: Commit repair
         run: |
           set -euo pipefail
-          rm .repair-stage01.py .github/workflows/spec-repair-stage01.yml
           git config user.name 'closed-loop-repair-bot'
           git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
           git add -A
