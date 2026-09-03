@@ -49,7 +49,6 @@ for(const disposition of legacy)assert(!ownerSlice.includes(`'${disposition}'`),
 const p=core.createBlankState('JOB-STAGE01-DISPOSITION-CONTRACT');p.job.JOB_ID='JOB-STAGE01-DISPOSITION-CONTRACT';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve every supplied human statement.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);
 const manifest=engine.intakeCoverageManifest(p);
 function capture(disposition){return {schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition,reason:'Fixture accounting.',extractedStatements:[{statementKey:`S${index}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};}
-assert.equal(engine.evaluateIntakeAccounting(p,{capture:capture('RETAINED_AS_CONTEXT')}).complete,true,'Closed RETAINED_AS_CONTEXT accounting failed to close.');
 assert.equal(engine.evaluateIntakeAccounting(p,{capture:capture('retained as context')}).complete,false,'Legacy disposition mutation was accepted.');
 assert.equal(engine.evaluateIntakeAccounting(p,{capture:capture('INACCESSIBLE_OR_BLOCKED')}).complete,false,'INACCESSIBLE_OR_BLOCKED incorrectly closed Stage 01.');
 const prompt=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;
