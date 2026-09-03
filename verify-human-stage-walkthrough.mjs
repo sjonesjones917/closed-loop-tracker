@@ -55,7 +55,6 @@ try{
     state.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'};
     for(let prerequisite=1;prerequisite<30;prerequisite++){state.stages[prerequisite].status='COMPLETE';state.stages[prerequisite].gate={complete:true,blocked:false,reasons:[]};}
     if(!engine.evaluateIntakeAccounting(state).complete)throw new Error('Sequential browser prompt audit failed to establish valid Stage 01 accounting.');
-    engine.recalculate(state);
     const checked=[],lane={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
     for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){
       const record=prompts.buildPromptRecord(stage,state,{operation,scope:lane}),text=record.prompt;
@@ -89,5 +88,5 @@ try{
   child.kill('SIGKILL');
   await Promise.race([exited,sleep(1200)]);
   await new Promise(r=>server.close(r));
-  fs.rmSync(profile,{recursive:true,force:true,maxRetries:8,retryDelay:100});
+  try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:5,retryDelay:100});}catch{}
 }
