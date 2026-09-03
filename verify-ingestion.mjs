@@ -88,7 +88,9 @@ function safeValue(name){
 }
 function valueForDefinition(def){if(def.enumValues?.length)return def.enumValues[0];if(def.valueType==='INTEGER')return 1;if(def.valueType==='NUMBER')return 1;if(def.valueType==='BOOLEAN')return true;if(def.valueType==='STRING_ARRAY'||def.valueType==='REFERENCE_ARRAY')return ['verified'];if(def.valueType==='OBJECT')return {};return 'verified';}
 function validEnvelope(p,stage,promptRecord){
-  const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
+  const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation);
+  if(operationContract?.responseEnvelopeAllowed===false)return null;
+  const stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
   const agentStageFields=stageFields.filter(name=>schema.stageFieldDefinition(stage,name).producer===schema.PRODUCER.AGENT);
   if(agentStageFields.length)stageData[agentStageFields[0]]=safeValue(agentStageFields[0]);

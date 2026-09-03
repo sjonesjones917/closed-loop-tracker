@@ -95,6 +95,7 @@ assert.equal(advisory.executorClass,'EXTERNAL_AGENT');
 assert.deepEqual([...advisory.agentWritableCollections],['releaseGateReviews'],'Stage 27 advisory review must write only releaseGateReviews');
 const calculateRelease=schema.operationContract(27,'CALCULATE_RELEASE');
 assert.deepEqual([...calculateRelease.agentWritableCollections],[],'Stage 27 release calculation must not expose release records or reviews to the agent');
+assert.equal(Object.prototype.hasOwnProperty.call(schema.STAGE_FIELDS[15]||{},'POST_CORRECTION_SUCCESSES_PROVEN'),false,'Stage 15 must not expose post-correction success as a Stage 15 field; correction success belongs to a distinct later execution.');
 
 assert.throws(()=>assertOperationAuthoritySourceClosure(source.replaceAll('agentWritableCollections:Object.freeze([])','agentWritableCollections:Object.freeze([\'releaseGateReviews\'])')),/empty agent-writable/,'mutation granting a non-agent operation an agent write surface must fail');
 assert.throws(()=>assertOperationAuthoritySourceClosure(source.replaceAll('responseEnvelopeAllowed:false','responseEnvelopeAllowed:true')),/reject external response envelopes/,'mutation allowing an external response envelope for a non-agent operation must fail');
