@@ -1,0 +1,80 @@
+name: One-time legacy Stage 01 migration repair
+on:
+  push:
+    paths:
+      - .github/workflows/one-time-legacy-stage01-migration-repair.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Remove semantic fabrication and regress it
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          schema=Path('workflow-schema.js')
+          s=schema.read_text()
+          start=s.find('function restoreMigratedStage01AcceptedCapture(migrated,original){')
+          end=s.find('function normalizeTestRecords',start)
+          if start<0 or end<0: raise SystemExit('schema legacy Stage 01 restoration function not found')
+          old=s[start:end]
+          if 'INPUT_SET_CONTENTS' not in old: raise SystemExit('schema restoration function no longer has expected semantic-promotion behavior')
+          s=s[:start]+'function restoreMigratedStage01AcceptedCapture(migrated,original){return migrated;}\n'+s[end:]
+          schema.write_text(s)
+
+          workbook=Path('workbook.js')
+          w=workbook.read_text()
+          replaced=False
+          for m in list(re.finditer(r'function\s+([A-Za-z_$][A-Za-z0-9_$]*)\(migrated,original\)\{',w)):
+              i=m.end()-1; depth=0; j=i
+              while j<len(w):
+                  if w[j]=='{': depth+=1
+                  elif w[j]=='}':
+                      depth-=1
+                      if depth==0:
+                          j+=1; break
+                  j+=1
+              body=w[m.start():j]
+              if 'INPUT_SET_CONTENTS=captured' in body:
+                  name=m.group(1)
+                  w=w[:m.start()]+f'function {name}(migrated,original){{return migrated;}}'+w[j:]
+                  replaced=True
+                  break
+          if not replaced: raise SystemExit('workbook legacy Stage 01 semantic restoration function not found')
+          workbook.write_text(w)
+
+          test=Path('verify-v3-migration.mjs')
+          t=test.read_text()
+          old1="assert.match(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),/Preserved migration objective/,'/2 -> /3 migration must reconstruct completed Stage 01 accepted input-set capture from preserved human authority');"
+          new1="assert.equal(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),'','/2 -> /3 migration must not fabricate current agent-owned Stage 01 semantic intake from preserved human authority');"
+          old2="assert.match(String(legacyMigrated.stages[1]?.agentData?.INPUT_SET_CONTENTS||''),/Legacy intent supplied exactly once/,'human-project/30 migration must retain once-supplied Stage 01 input in canonical accepted Stage 01 data');"
+          new2="assert.equal(String(legacyMigrated.stages[1]?.agentData?.INPUT_SET_CONTENTS||''),'','human-project/30 migration must not promote raw human input into current agent-owned Stage 01 semantic intake');"
+          if old1 not in t or old2 not in t: raise SystemExit('migration regression anchors not found')
+          t=t.replace(old1,new1,1).replace(old2,new2,1)
+          t=t.replace("legacyStage01CapturePreserved:true","legacyStage01SemanticFabricationRejected:true")
+          test.write_text(t)
+          PY
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          rm .github/workflows/one-time-legacy-stage01-migration-repair.yml
+      - name: Commit repair and remove one-time scaffold
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workbook.js workflow-schema.js verify-v3-migration.mjs .github/workflows/one-time-legacy-stage01-migration-repair.yml
+          git commit -m "Reject fabricated Stage 01 semantics during migration"
+          git push origin HEAD:repair/no-fabricated-legacy-stage01-20260903
