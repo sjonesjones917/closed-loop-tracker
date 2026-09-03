@@ -42,6 +42,17 @@ assert(/^REQ-[0-9a-v]{32}$/.test(allocation.id),'closed-loop-id/1 output format 
 const retry=h.allocateCanonicalIdWithCollisionCheck({familyPrefix:'REQ',familyNamespace:'requirements',jobNamespace:'JOB-1',commandId:'CMD-1',targetSlot:'SLOT-1',parentId:'',allocationSequence:1},{exists:id=>id===allocation.id?allocation.payload:false});
 assert(retry.id===allocation.id&&retry.exactRetry===true,'Exact canonical-ID retry must return the original allocation identity.');
 
+assert(h.filenameVersion==='closed-loop-filename/1','Filename contract identity is not pinned.');
+assert(h.unicodeVersion==='Unicode 15.1.0','Unicode behavior identity is not pinned.');
+assert(h.trustedTimeVersion==='closed-loop-trusted-time/1','Trusted-time contract identity is not pinned.');
+assert(h.normalizeFilename('report.txt').canonicalPath==='report.txt','Filename normalization failed.');
+for(const invalidFilename of ['../x','/abs.txt','C:\\abs.txt','bad\0name','é.txt']){let rejected=false;try{h.normalizeFilename(invalidFilename);}catch{rejected=true;}assert(rejected,`Unsafe filename ${JSON.stringify(invalidFilename)} was accepted.`);}
+let caseCollisionRejected=false;try{h.assertFilenameSetSafe(['A.txt','a.txt']);}catch{caseCollisionRejected=true;}assert(caseCollisionRejected,'Case-fold collision was accepted.');
+let confusableCollisionRejected=false;try{h.assertFilenameSetSafe(['m.txt','rn.txt']);}catch{confusableCollisionRejected=true;}assert(confusableCollisionRejected,'Supported confusable collision was accepted.');
+assert(h.normalizeMachineTime('2026-09-03T07:34:56-05:00').normalizedValue==='2026-09-03T12:34:56.000Z','Offset-bearing RFC 3339 normalization failed.');
+for(const invalidTime of ['2026-09-03T12:34:56','2026-09-03T12:34:60Z','2026-02-30']){let rejected=false;try{h.normalizeMachineTime(invalidTime);}catch{rejected=true;}assert(rejected,`Unsupported time ${invalidTime} was accepted.`);}
+let unverifiedTrustedTimeRejected=false;try{h.validateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL',time:'2026-09-03T12:34:56Z'});}catch{unverifiedTrustedTimeRejected=true;}assert(unverifiedTrustedTimeRejected,'VERIFIED_EXTERNAL time without a verification contract was accepted.');
+
 const index=fs.readFileSync('index.html','utf8');
 const scripts=[...index.matchAll(/<script\s+src="\.\/([^"?]+)\?b=([^"]+)"/g)].map(match=>({file:match[1],build:match[2]}));
 assert(scripts.length===9,'Runtime must contain exactly the nine controlling script entries.');
@@ -50,4 +61,4 @@ const worker=fs.readFileSync('test-runtime.js','utf8');
 assert(/test-worker\.js\?b=/.test(worker),'Worker URL must carry the shared build/cache identity.');
 assert(fs.readFileSync('verify-complete.mjs','utf8').includes('Stage 04 input MUST NOT ask the user to attach, resend, or resupply'),'Stage 04 no-repeat attachment regression control is missing.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity:scripts[0].build,runtimeScriptCount:scripts.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,filenameContract:true,unicodeIdentity:h.unicodeVersion,trustedTimeContract:true,sharedBuildIdentity:scripts[0].build,runtimeScriptCount:scripts.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
