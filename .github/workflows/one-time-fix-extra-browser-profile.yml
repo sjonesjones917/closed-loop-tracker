@@ -1,4 +1,4 @@
-name: One-time repair proposal-reload profile fixture
+name: One-time repair proposal-reload response fixture
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Bind the proposal-reload response to the active contract profile
+      - name: Bind the proposal-reload response and current conversation wording
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -27,11 +27,20 @@ jobs:
 
           path = Path('verify-browser-extra.mjs')
           source = path.read_text()
-          old = "const envelope={schema:'closed-loop-stage-response/3',jobId:'JOB-20260823144121'"
-          new = "const envelope={schema:'closed-loop-stage-response/3',contractProfileId:retained.job.CONTRACT_PROFILE_ID,jobId:'JOB-20260823144121'"
-          if source.count(old) != 1:
-              raise SystemExit(f'Expected exactly one legacy proposal-reload envelope; found {source.count(old)}')
-          path.write_text(source.replace(old, new))
+
+          envelope_old = "const envelope={schema:'closed-loop-stage-response/3',jobId:'JOB-20260823144121'"
+          envelope_new = "const envelope={schema:'closed-loop-stage-response/3',contractProfileId:retained.job.CONTRACT_PROFILE_ID,jobId:'JOB-20260823144121'"
+          if source.count(envelope_old) != 1:
+              raise SystemExit(f'Expected exactly one legacy proposal-reload envelope; found {source.count(envelope_old)}')
+          source = source.replace(envelope_old, envelope_new)
+
+          wording_old = "'Continue the external conversation'"
+          wording_new = "'Continue talking to the agent. Do not import a final response file yet.'"
+          if source.count(wording_old) != 1:
+              raise SystemExit(f'Expected exactly one stale conversation wording oracle; found {source.count(wording_old)}')
+          source = source.replace(wording_old, wording_new)
+
+          path.write_text(source)
           PY
           node --check verify-browser-extra.mjs
           node verify-response-contract-profile.mjs
@@ -59,5 +68,5 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add verify-browser-extra.mjs .github/workflows/one-time-fix-extra-browser-profile.yml
           git diff --cached --check
-          git commit -m 'Bind proposal-reload fixture to current contract profile'
+          git commit -m 'Bind proposal-reload fixture to current response contract'
           git push origin HEAD:repair/response-envelope-binding-20260903
