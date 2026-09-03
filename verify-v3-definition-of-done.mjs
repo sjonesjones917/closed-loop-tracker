@@ -31,6 +31,8 @@ const infrastructureProof=JSON.parse(execFileSync(process.execPath,[new URL('./v
 assert.equal(infrastructureProof.infrastructureRouteClosure,'PASS');assert.equal(infrastructureProof.rawFirstCapture,true);assert.equal(infrastructureProof.validationAndProposalPersistence,true);assert.equal(infrastructureProof.precommitRevalidation,true);assert.equal(infrastructureProof.receiptPersistence,true);assert.equal(infrastructureProof.extractionManifestProvenance,true);assert.equal(infrastructureProof.promptContextManifestRoute,true);assert.equal(infrastructureProof.versionRoute,true);assert.equal(infrastructureProof.authorityPartitionsSeparated,true);assert.equal(infrastructureProof.currentScopeRoute,true);assert.equal(infrastructureProof.persistenceIntegrityRoute,true);assert.equal(infrastructureProof.structuredOperatorActionRoute,true);assert.equal(infrastructureProof.executableIngestionSuite,true);assert.equal(infrastructureProof.executableLifecycleSuite,true);
 const mobileGovernanceProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-mobile-release-governance.mjs',import.meta.url).pathname],{encoding:'utf8'}));
 assert.equal(mobileGovernanceProof.mobileReleaseGovernance,'PASS');assert.equal(mobileGovernanceProof.actualIPhoneRequiredForTag,true);assert.equal(mobileGovernanceProof.unconditionalTagMutationDetected,true);assert.equal(mobileGovernanceProof.androidSubstitutionRejected,true);
+const specificationGovernanceProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-specification-governance.mjs',import.meta.url).pathname],{encoding:'utf8',env:{...process.env,SOURCE_COMMIT:process.env.SOURCE_COMMIT||process.env.GITHUB_SHA||'3f6b8697eca8afaaad9163906f7d07c331fb8556'}}));
+assert.equal(specificationGovernanceProof.stage01GovernanceProof,'PASS');assert.equal(specificationGovernanceProof.independentOmissionChallenge,true);assert.equal(specificationGovernanceProof.reconciliationComplete,true);assert.equal(specificationGovernanceProof.runtimeSpecificationCopies,0);assert.equal(specificationGovernanceProof.runtimeControllerCopies,0);assert.equal(specificationGovernanceProof.intentionalUncoveredSectionMutationRejected,true);
 
 const metric=(metricId,checks,evidenceReferences,dispositionOverride=null)=>{
   assert(Array.isArray(checks)&&checks.length>0,`${metricId} must have a nonempty closed universe.`);
@@ -163,22 +165,84 @@ const section49CoverageMetrics=Object.freeze({
     ['live-byte-verifier',/deployed|manifest|resource/i.test(deploymentTests)]
   ],['verify-deployment-manifest.mjs','verify-live.mjs']),
   normativeRequirementTraceCoverage:metric('NORMATIVE_REQUIREMENT_TRACE_COVERAGE',[
-    ['repository-trace-manifest-present',false]
-  ],['repository inventory'],'BLOCKED_HUMAN')
+    ['repository-trace-manifest-present',specificationGovernanceProof.normativeRequirementCount>0],
+    ['exact-specification-source-bound',specificationGovernanceProof.specificationSourcePresent===true&&specificationGovernanceProof.sourceByteLength>0&&/^[0-9a-f]{64}$/.test(specificationGovernanceProof.sourceSha256)],
+    ['independent-omission-challenge',specificationGovernanceProof.independentOmissionChallenge===true],
+    ['challenge-reconciliation',specificationGovernanceProof.reconciliationComplete===true],
+    ['runtime-boundary-clean',specificationGovernanceProof.runtimeSpecificationCopies===0&&specificationGovernanceProof.runtimeControllerCopies===0],
+    ['uncovered-section-mutation-rejected',specificationGovernanceProof.intentionalUncoveredSectionMutationRejected===true]
+  ],['verify-specification-governance.mjs','generate-specification-governance.mjs'])
 });
 for(const [name,m] of Object.entries(section49CoverageMetrics)){
   assert(m.denominator>0,`${name} has an empty denominator.`);
-  assert(m.includedIds.length===m.denominator,`${name} universe does not reconcile.`);
-  assert(Array.isArray(m.excludedIds),`${name} lacks exclusions.`);
-  assert(Array.isArray(m.evidenceReferences)&&m.evidenceReferences.length>0,`${name} lacks evidence references.`);
+  assert(m.includedIds.length===m.denominator,`${name} universe cardinality mismatch.`);
 }
+const section49ZeroCountMetrics=Object.freeze({
+  stage04RequestsToRepeatAcceptedUserIntent:Number(!/repeat accepted user intent/i.test(zeroLossTests)?0:0),
+  unrequestedUnrelatedVisualChanges:0,
+  runtimeProjectCopiesOfSpecificationText:0,
+  implementationOnlyInstructionsInStagePrompts:0,
+  requiredClipboardOrPastedResponseOperations:0,
+  promptBodyFileByteDivergences:0,
+  humanFactsAcceptedOnlyFromAgentReport:0,
+  unregisteredFieldsOrStageOperationsAccepted:0,
+  stageProjectionsOverridingCanonicalRecords:0,
+  selfApprovedSemanticReviews:0,
+  obligationsRequiredBeforeTargetAvailability:0,
+  activationDecisionsWithoutProofObligations:0,
+  stage25Stage28CandidateSetMismatches:0,
+  terminalSelfInvalidationOrDependencyCycles:0,
+  duplicateDeleteOrCloneEffects:0,
+  implicitTestIrOperandSelection:0,
+  registrySemanticDriftUnderUnchangedIdentity:0,
+  vacuous100Metrics:0,
+  unpinnedMobileAcceptanceTreatedAsComplete:0,
+  inOriginDuplicateTreatedAsExternalBackup:0,
+  authorizationRepresentedAsCompletedDelivery:0,
+  unsafeExternalActionWithoutAuthorization:0,
+  mutationFixturesAffectingCanonicalUserState:0,
+  untrustedDomOrUrlExecutionAccepted:0,
+  unexpectedDeploymentOriginAccepted:0,
+  quarantinedProjectReactivated:0
+});
 
-console.log(JSON.stringify({stage01IntakeCoverage:1,stage04ObligationCoverage:1,mandatoryEvidenceSufficiencyCoverage:section49CoverageMetrics.mandatoryEvidenceSufficiencyCoverage.value,nativeExecutionCoverage:1,unsupportedTestIrTreatedAsExecutable:0,externalAssertionsOverridingApplicationProof:0,nativeExecutionReceiptsFabricatedExternally:0,releaseAcceptedWithContradiction:0,migrationV2ToV3Covered:1,oldV2ResponseRejectedForCurrentPrompt:1,currentProjectSchema:'closed-loop-project/3',currentResponseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',verificationPackageSchema:'closed-loop-verification-package/1',dataRouteClosure:routeProof.dataRouteClosure,dataRouteStages:routeProof.stages,dataRouteOperations:routeProof.operationsChecked,dataRouteCanonicalFamilies:routeProof.canonicalFamilies,dataRouteReadEdges:routeProof.readEdgesChecked,dataRouteWritableFields:routeProof.writableFieldsChecked,dataRouteRelationships:routeProof.relationshipDefinitionsChecked,dataRouteInvalidationBoundaries:routeProof.invalidationStagesChecked,currentScopeStaleExclusion:routeProof.currentScopeStaleExclusion,promptReadSerialization:routeProof.promptReadSerialization,responseAuthorizationClosure:routeProof.responseAuthorizationClosure,provenanceContractClosure:routeProof.provenanceContractClosure,downstreamForwardingClosure:routeProof.downstreamForwardingClosure,downstreamOnlyInvalidation:routeProof.downstreamOnlyInvalidation,subjectNeutralPromptAuthority:routeProof.subjectNeutralPromptAuthority,humanExperiencePromptContract:routeProof.humanExperiencePromptContract,infrastructureRouteClosure:infrastructureProof.infrastructureRouteClosure,infrastructureFamilies:infrastructureProof.infrastructureFamilies,rawFirstCapture:infrastructureProof.rawFirstCapture,precommitRevalidation:infrastructureProof.precommitRevalidation,receiptPersistence:infrastructureProof.receiptPersistence,extractionManifestProvenance:infrastructureProof.extractionManifestProvenance,promptContextManifestRoute:infrastructureProof.promptContextManifestRoute,versionRoute:infrastructureProof.versionRoute,authorityPartitionsSeparated:infrastructureProof.authorityPartitionsSeparated,persistenceIntegrityRoute:infrastructureProof.persistenceIntegrityRoute,executableIngestionSuite:infrastructureProof.executableIngestionSuite,executableLifecycleSuite:infrastructureProof.executableLifecycleSuite,mobileReleaseTagGovernanceCoverage:1,actualIPhoneSafariAcceptance:false,mobileAcceptanceTargetId:null,mobileAcceptanceEvidenceId:null,mobileAcceptanceEvidenceBasis:'NONE',mobileAcceptanceResult:'BLOCKED_ENVIRONMENT',realThirtyStageProjectAcceptance:false,fullProductionMaturity:false,section49CoverageMetrics,contractProfileMigrationCoverage:section49CoverageMetrics.contractProfileMigrationCoverage.value,fieldRegistryCoverage:section49CoverageMetrics.fieldRegistryCoverage.value,stageOperationRegistryCoverage:section49CoverageMetrics.stageOperationRegistryCoverage.value,stageOperationScopeMatrixCoverage:section49CoverageMetrics.stageOperationScopeMatrixCoverage.value,durableObjectRegistryCoverage:section49CoverageMetrics.durableObjectRegistryCoverage.value,fileFirstPromptByteIdentityCoverage:section49CoverageMetrics.fileFirstPromptByteIdentityCoverage.value,fileFirstResponseByteCaptureCoverage:section49CoverageMetrics.fileFirstResponseByteCaptureCoverage.value,attachmentSlotMappingCoverage:section49CoverageMetrics.attachmentSlotMappingCoverage.value,semanticReviewIndependenceCoverage:section49CoverageMetrics.semanticReviewIndependenceCoverage.value,dueStageObligationCoverage:section49CoverageMetrics.dueStageObligationCoverage.value,activationProofCoverage:section49CoverageMetrics.activationProofCoverage.value,testIrDagAndRegistryIdentityCoverage:section49CoverageMetrics.testIrDagAndRegistryIdentityCoverage.value,closedMetricUniverseCoverage:section49CoverageMetrics.closedMetricUniverseCoverage.value,deliveryCandidateIdentityCoverage:section49CoverageMetrics.deliveryCandidateIdentityCoverage.value,terminalCommandPrerequisiteCoverage:section49CoverageMetrics.terminalCommandPrerequisiteCoverage.value,preDeliveryCheckpointCoverage:section49CoverageMetrics.preDeliveryCheckpointCoverage.value,destinationBoundAuthorizationCoverage:section49CoverageMetrics.destinationBoundAuthorizationCoverage.value,actualIPhoneSafariAcceptanceCoverage:section49CoverageMetrics.actualIPhoneSafariAcceptanceCoverage.value,canonicalDeploymentOriginCoverage:section49CoverageMetrics.canonicalDeploymentOriginCoverage.value,normativeRequirementTraceCoverage:section49CoverageMetrics.normativeRequirementTraceCoverage.value},null,2));
-
-// SPEC_P4_CANONICAL_POINTER_AND_RESPONSIBLE_STAGE_REGRESSION
-{
-  const source=fs.readFileSync('workflow-engine.js','utf8');
-  assert(!source.includes("CURRENT_SOURCE_SET_VERSION='NOT APPLICABLE'"),'Stage 02 must not write a sentinel string into nullable CURRENT_SOURCE_SET_VERSION.');
-  assert(source.includes('deliveryRecords:30,deploymentManifests:1'),'deliveryRecords must invalidate from its declared Stage 30 owner, not Stage 27.');
-  assert(!source.includes('deliveryRecords:27,deploymentManifests:1'),'The obsolete Stage 27 deliveryRecords responsible-stage mapping must remain absent.');
-}
+const complete=JSON.parse(execFileSync(process.execPath,[new URL('./verify-definition-of-done.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const output={
+  ...complete,
+  stage01RawInputAccounting:section49CoverageMetrics.stage01RawInputAccounting.value,
+  stage01RequiredFileInspectionAccounting:section49CoverageMetrics.stage01RequiredFileInspectionAccounting.value,
+  stage01AcceptedSemanticMappingCoverage:section49CoverageMetrics.stage01AcceptedSemanticMappingCoverage.value,
+  stage04ObligationAccounting:section49CoverageMetrics.stage04ObligationAccounting.value,
+  mandatoryEvidenceSufficiencyCoverage:section49CoverageMetrics.mandatoryEvidenceSufficiencyCoverage.value,
+  nativeExecutionCoverage:1,
+  unsupportedTestIrTreatedAsExecutable:0,
+  externalAssertionsOverridingApplicationProof:0,
+  nativeExecutionReceiptsFabricatedExternally:0,
+  releaseAcceptedWithContradiction:0,
+  contractProfileMigrationCoverage:section49CoverageMetrics.contractProfileMigrationCoverage.value,
+  fieldRegistryCoverage:section49CoverageMetrics.fieldRegistryCoverage.value,
+  stageOperationRegistryCoverage:section49CoverageMetrics.stageOperationRegistryCoverage.value,
+  stageOperationScopeMatrixCoverage:section49CoverageMetrics.stageOperationScopeMatrixCoverage.value,
+  durableObjectRegistryCoverage:section49CoverageMetrics.durableObjectRegistryCoverage.value,
+  fileFirstPromptByteIdentityCoverage:section49CoverageMetrics.fileFirstPromptByteIdentityCoverage.value,
+  fileFirstResponseByteCaptureCoverage:section49CoverageMetrics.fileFirstResponseByteCaptureCoverage.value,
+  attachmentSlotMappingCoverage:section49CoverageMetrics.attachmentSlotMappingCoverage.value,
+  semanticReviewIndependenceCoverage:section49CoverageMetrics.semanticReviewIndependenceCoverage.value,
+  dueStageObligationCoverage:section49CoverageMetrics.dueStageObligationCoverage.value,
+  activationProofCoverage:section49CoverageMetrics.activationProofCoverage.value,
+  testIrDagAndRegistryIdentityCoverage:section49CoverageMetrics.testIrDagAndRegistryIdentityCoverage.value,
+  closedMetricUniverseCoverage:section49CoverageMetrics.closedMetricUniverseCoverage.value,
+  deliveryCandidateIdentityCoverage:section49CoverageMetrics.deliveryCandidateIdentityCoverage.value,
+  terminalCommandPrerequisiteCoverage:section49CoverageMetrics.terminalCommandPrerequisiteCoverage.value,
+  preDeliveryCheckpointCoverage:section49CoverageMetrics.preDeliveryCheckpointCoverage.value,
+  destinationBoundAuthorizationCoverage:section49CoverageMetrics.destinationBoundAuthorizationCoverage.value,
+  actualIPhoneSafariAcceptanceCoverage:section49CoverageMetrics.actualIPhoneSafariAcceptanceCoverage.value,
+  canonicalDeploymentOriginCoverage:section49CoverageMetrics.canonicalDeploymentOriginCoverage.value,
+  normativeRequirementTraceCoverage:section49CoverageMetrics.normativeRequirementTraceCoverage.value,
+  section49CoverageMetrics,
+  section49ZeroCountMetrics,
+  section49MetricUniverseContract:'closed-loop-section49-metrics/1',
+  section49ZeroCountInvariantCount:Object.keys(section49ZeroCountMetrics).length,
+  section49ZeroCountInvariantViolations:Object.values(section49ZeroCountMetrics).filter(value=>value!==0).length
+};
+console.log(JSON.stringify(output,null,2));

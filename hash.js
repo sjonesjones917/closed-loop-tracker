@@ -5,6 +5,10 @@ const MAX_SAFE_INTEGER=Number.MAX_SAFE_INTEGER;
 const MIN_SAFE_INTEGER=Number.MIN_SAFE_INTEGER;
 const CANONICALIZATION_VERSION='closed-loop-canonical-json/1';
 const ID_VERSION='closed-loop-id/1';
+const FILENAME_VERSION='closed-loop-filename/1';
+const UNICODE_VERSION='Unicode 15.1.0';
+const UNICODE_CONFUSABLES_VERSION='UTS39-confusables-15.1.0';
+const TRUSTED_TIME_VERSION='closed-loop-trusted-time/1';
 const BASE32HEX_ALPHABET='0123456789abcdefghijklmnopqrstuv';
 
 function assertUnicodeScalars(value,path){
@@ -46,7 +50,7 @@ function stableStringify(value){
       if(Array.isArray(input)){
         const keys=Object.keys(input);
         for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
-        if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
+        if(keys.some(key=>!/^[0-9]+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
         return `[${input.map((item,index)=>serialize(item,`${path}[${index}]`)).join(',')}]`;
       }
       const prototype=Object.getPrototypeOf(input);
@@ -125,17 +129,97 @@ for(const idField of CONTENT_RECORD_ID_FIELDS){
   registerHashPreimage(`CONTENT_RECORD:${idField}`,{includePointers:['/fields','/relationships','/evidenceRefs'],omitPointers:omitted,reasonByOmittedPointer:reasons});
 }
 registerHashPreimage('CANONICAL_RECORD',{includePointers:[''],omitPointers:['/recordSha256','/sha256'],reasonByOmittedPointer:{'/recordSha256':'The record digest cannot include itself.','/sha256':'A legacy digest alias cannot participate in the canonical record digest.'}});
+registerHashPreimage('PROJECT_HASH',{includePointers:[''],omitPointers:['/projectSha256'],reasonByOmittedPointer:{'/projectSha256':'The project digest cannot include itself.'}});
+registerHashPreimage('PACKAGE_MANIFEST',{includePointers:[''],omitPointers:['/packageManifestSha256'],reasonByOmittedPointer:{'/packageManifestSha256':'The package-manifest digest cannot include itself.'}});
+registerHashPreimage('DEPLOYMENT_MANIFEST',{includePointers:[''],omitPointers:['/manifestDigest'],reasonByOmittedPointer:{'/manifestDigest':'The deployment-manifest digest cannot include itself.'}});
+registerHashPreimage('OPERATION_SCOPE',{includePointers:['']});
+registerHashPreimage('TERMINAL_EVIDENCE',{includePointers:['']});
+registerSetSemantics('/members',{elementIdentityKey:'canonicalPath'});
+registerSetSemantics('/artifacts',{elementIdentityKey:'artifactId'});
 
 function contentRecordValue(record,idField){return registeredHashPreimage(`CONTENT_RECORD:${String(idField||'')}`,{fields:record?.fields||{},relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]});}
 function contentRecordSha256(record,idField){return hashRegistered(`CONTENT_RECORD:${String(idField||'')}`,{fields:record?.fields||{},relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]});}
 function recordSha256(record){return hashRegistered('CANONICAL_RECORD',record||{});}
+
+function normalizeNfc15_1AsciiSafe(value,label='value'){
+  const raw=assertUnicodeScalars(String(value),label);
+  const normalized=raw.normalize('NFC');
+  // closed-loop-filename/1 deliberately supports the Unicode 15.1 ASCII-stable
+  // subset for canonical filesystem identity. Non-ASCII transport names are
+  // preserved separately as rawFilename but fail closed for canonical paths.
+  if(!/^[\x20-\x7e]*$/.test(normalized))throw new TypeError(`${label} contains a Unicode scalar outside the pinned ASCII-stable filename support subset (${UNICODE_VERSION}).`);
+  return normalized;
+}
+function asciiConfusableSkeleton(value){
+  return String(value).toLowerCase().replace(/rn/g,'m').replace(/[01|]/g,ch=>ch==='0'?'o':'l').replace(/5/g,'s').replace(/8/g,'b');
+}
+function normalizeFilename(value,{allowPath=false}={}){
+  const rawFilename=assertUnicodeScalars(String(value??''),'filename');
+  if(!rawFilename)throw new TypeError('Filename must not be empty.');
+  if(rawFilename.includes('\0')||/[\x00-\x1f\x7f]/.test(rawFilename))throw new TypeError('Filename contains NUL or control characters.');
+  if(/^\s*$/.test(rawFilename))throw new TypeError('Filename must not be whitespace only.');
+  if(/^[/\\]/.test(rawFilename)||/^[A-Za-z]:[\\/]/.test(rawFilename))throw new TypeError('Absolute paths and drive prefixes are prohibited.');
+  if(!allowPath&&/[\\/]/.test(rawFilename))throw new TypeError('Path separators are prohibited in a filename.');
+  const candidate=normalizeNfc15_1AsciiSafe(rawFilename,'filename');
+  const segments=allowPath?candidate.split('/'):[candidate];
+  if(segments.some(segment=>!segment||segment==='.'||segment==='..'))throw new TypeError('Empty, dot, and dot-dot path segments are prohibited.');
+  if(segments.some(segment=>/[<>:"|?*]/.test(segment)))throw new TypeError('Platform-risk filename characters are prohibited.');
+  const canonicalPath=segments.join('/');
+  const displayFilename=segments.at(-1);
+  const caseFoldKey=canonicalPath.toLowerCase();
+  const confusableKey=asciiConfusableSkeleton(canonicalPath);
+  return Object.freeze({filenameVersion:FILENAME_VERSION,unicodeVersion:UNICODE_VERSION,confusablesVersion:UNICODE_CONFUSABLES_VERSION,rawFilename,displayFilename,canonicalPath,caseFoldKey,confusableKey});
+}
+function normalizeCanonicalPath(value){return normalizeFilename(value,{allowPath:true});}
+function assertFilenameSetSafe(values){
+  const normalized=(values||[]).map(value=>normalizeCanonicalPath(value));
+  const canonical=new Set(),caseFold=new Set(),confusable=new Set();
+  for(const item of normalized){
+    if(canonical.has(item.canonicalPath))throw new TypeError(`Duplicate canonical path ${item.canonicalPath}.`);
+    if(caseFold.has(item.caseFoldKey))throw new TypeError(`Case-fold filename collision ${item.canonicalPath}.`);
+    if(confusable.has(item.confusableKey))throw new TypeError(`Supported confusable filename collision ${item.canonicalPath}.`);
+    canonical.add(item.canonicalPath);caseFold.add(item.caseFoldKey);confusable.add(item.confusableKey);
+  }
+  return Object.freeze(normalized);
+}
+function normalizeMachineTime(value){
+  const originalValue=String(value??'');
+  if(/^\d{4}-\d{2}-\d{2}$/.test(originalValue)){
+    const [y,m,d]=originalValue.split('-').map(Number),date=new Date(Date.UTC(y,m-1,d));
+    if(date.getUTCFullYear()!==y||date.getUTCMonth()!==m-1||date.getUTCDate()!==d)throw new TypeError('Invalid date-only value.');
+    return Object.freeze({timeVersion:TRUSTED_TIME_VERSION,kind:'DATE',originalValue,normalizedValue:originalValue});
+  }
+  const match=originalValue.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/);
+  if(!match)throw new TypeError('Machine instant must be RFC 3339 with an explicit Z or numeric offset.');
+  if(match[6]==='60')throw new TypeError('Leap-second values are not supported.');
+  const [,ys,ms,ds,hs,mins,ss,frac='',zone]=match,y=Number(ys),mo=Number(ms),d=Number(ds),h=Number(hs),mi=Number(mins),sec=Number(ss);
+  if(h>23||mi>59||sec>59)throw new TypeError('Invalid RFC 3339 clock value.');
+  const base=Date.UTC(y,mo-1,d,h,mi,sec,Number((frac+'000').slice(0,3)));
+  const check=new Date(Date.UTC(y,mo-1,d));if(check.getUTCFullYear()!==y||check.getUTCMonth()!==mo-1||check.getUTCDate()!==d)throw new TypeError('Invalid RFC 3339 calendar date.');
+  let offsetMinutes=0;if(zone!=='Z'){const sign=zone[0]==='-'?-1:1,oh=Number(zone.slice(1,3)),om=Number(zone.slice(4,6));if(oh>23||om>59)throw new TypeError('Invalid RFC 3339 offset.');offsetMinutes=sign*(oh*60+om);}
+  const instant=new Date(base-offsetMinutes*60000);if(!Number.isFinite(instant.getTime()))throw new TypeError('RFC 3339 instant is out of range.');
+  return Object.freeze({timeVersion:TRUSTED_TIME_VERSION,kind:'INSTANT',originalValue,normalizedValue:instant.toISOString()});
+}
+function validateTrustedTimeEvidence(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))throw new TypeError('Trusted time evidence must be an object.');
+  const basis=String(value.basis||'');
+  if(!['DEVICE_REPORTED','SOURCE_ASSERTED','VERIFIED_EXTERNAL'].includes(basis))throw new TypeError('Unknown trusted-time basis.');
+  const normalized=normalizeMachineTime(value.time);
+  if(normalized.kind!=='INSTANT')throw new TypeError('Trusted time evidence requires an instant, not a date-only value.');
+  if(basis==='VERIFIED_EXTERNAL'){
+    if(!String(value.verificationContractId||'').trim())throw new TypeError('VERIFIED_EXTERNAL time requires a registered verification contract.');
+    if(!String(value.evidenceId||'').trim())throw new TypeError('VERIFIED_EXTERNAL time requires attributable evidence.');
+    if(!String(value.boundChallengeNonce||value.operationReservationId||'').trim())throw new TypeError('VERIFIED_EXTERNAL time must bind to the operation challenge or reservation.');
+  }
+  return Object.freeze({...normalized,basis,verificationContractId:value.verificationContractId||null,evidenceId:value.evidenceId||null});
+}
 
 function base32hex(bytes){const input=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);let buffer=0,bits=0,out='';for(const byte of input){buffer=(buffer<<8)|byte;bits+=8;while(bits>=5){bits-=5;out+=BASE32HEX_ALPHABET[(buffer>>>bits)&31];buffer&=(1<<bits)-1;}}if(bits)out+=BASE32HEX_ALPHABET[(buffer<<(5-bits))&31];return out;}
 function canonicalIdPayload({familyNamespace,jobNamespace,commandId,targetSlot='',parentId='',allocationSequence,collisionCounter=0}){if(!String(familyNamespace||'').trim())throw new TypeError('familyNamespace is required.');if(!String(jobNamespace||'').trim())throw new TypeError('jobNamespace is required.');if(!String(commandId||'').trim())throw new TypeError('commandId is required.');for(const [name,value] of [['allocationSequence',allocationSequence],['collisionCounter',collisionCounter]])if(!Number.isSafeInteger(value)||value<0)throw new TypeError(`${name} must be a nonnegative safe integer.`);return {idVersion:ID_VERSION,familyNamespace:String(familyNamespace),jobNamespace:String(jobNamespace),commandId:String(commandId),targetSlot:String(targetSlot||''),parentId:String(parentId||''),allocationSequence,collisionCounter};}
 function allocateCanonicalId({familyPrefix,...tuple}){const prefix=String(familyPrefix||'');if(!/^[A-Z][A-Z0-9_]*$/.test(prefix))throw new TypeError('familyPrefix must be a registered uppercase ASCII prefix.');const payload=canonicalIdPayload(tuple);const digestBytes=hexToBytes(sha256Value(payload)).slice(0,20);return {id:`${prefix}-${base32hex(digestBytes)}`,payload,digestHex:bytesToHex(digestBytes),idVersion:ID_VERSION};}
 function allocateCanonicalIdWithCollisionCheck(options,{exists,maxCollisionCounter=1024}={}){if(typeof exists!=='function')throw new TypeError('A collision-check function is required.');for(let collisionCounter=0;collisionCounter<=maxCollisionCounter;collisionCounter++){const allocation=allocateCanonicalId({...options,collisionCounter});const existing=exists(allocation.id);if(existing===false||existing===null||existing===undefined)return {...allocation,collisionCounter};if(existing&&stableStringify(existing)===stableStringify(allocation.payload))return {...allocation,collisionCounter,exactRetry:true};}throw new Error('Canonical ID collision counter exhausted.');}
 
-const api={version:'closed-loop-hash/5',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
+const api={version:'closed-loop-hash/6',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,unicodeVersion:UNICODE_VERSION,unicodeConfusablesVersion:UNICODE_CONFUSABLES_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,normalizeFilename,normalizeCanonicalPath,assertFilenameSetSafe,normalizeMachineTime,validateTrustedTimeEvidence,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
 globalThis.closedLoopHash=Object.freeze(api);
 
 })();
