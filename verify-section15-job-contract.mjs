@@ -50,7 +50,7 @@ for(const name of expectedNames)assert.equal(schema.JOB_FIELDS[name].nullable,nu
 
 assert.equal(schema.JOB_FIELDS.DESIRED_SOURCE_COUNT.valueType,'INTEGER');
 assert.equal(schema.JOB_FIELDS.NEXT_REQUIRED_ACTION.valueType,'OBJECT');
-assert.equal(schema.JOB_FIELDS.CURRENT_BLOCKERS.valueType,'OBJECT_ARRAY');
+assert.equal(schema.JOB_FIELDS.CURRENT_BLOCKERS.valueType,'OBJECT');
 assert.equal(schema.JOB_FIELDS.INPUT_SET_CONTENTS.valueType,'STRING');
 assert.deepEqual(Array.from(schema.JOB_FIELDS.CURRENT_STATE.enumValues),[
   'BLOCKED','AWAITING_HUMAN_INPUT','PROPOSAL_PENDING_REVIEW','RESPONSE_STAGED','AWAITING_EXTERNAL_RESPONSE','READY_FOR_NEXT_OPERATION','WORKFLOW_COMPLETE'
@@ -63,8 +63,7 @@ const blank=core.createBlankState('JOB-SECTION15-REGRESSION');
 assert.equal(blank.job.CONTRACT_PROFILE_ID,'closed-loop-completion-profile/1');
 assert.equal(blank.job.CURRENT_STATE,'AWAITING_HUMAN_INPUT');
 assert.equal(blank.job.JOB_RECORD_STATUS,'INCOMPLETE');
-assert.equal(Array.isArray(blank.job.CURRENT_BLOCKERS),true);
-assert.equal(blank.job.CURRENT_BLOCKERS.length,0);
+assert.deepEqual(JSON.parse(JSON.stringify(blank.job.CURRENT_BLOCKERS)),{blockerIds:[]});
 assert.equal(blank.job.CURRENT_ITERATION,null);
 assert.equal(blank.job.CURRENT_SOURCE_SET_VERSION,null);
 assert.equal(blank.job.CURRENT_RESEARCH_VERSION,null);
@@ -85,5 +84,14 @@ assert.equal(blank.job.CURRENT_DELIVERY_ID,null);
 assert.equal(blank.job.LATEST_EVIDENCE_REFERENCE,null);
 assert.equal(typeof blank.job.NEXT_REQUIRED_ACTION,'object');
 assert.equal(blank.job.NEXT_REQUIRED_ACTION.actionType,'CONTINUE_AGENT_CONVERSATION');
+
+const recalculated=core.createBlankState('JOB-SECTION15-DERIVATION');
+vm.runInContext(fs.readFileSync(new URL('./workflow-engine.js',import.meta.url),'utf8'),context,{filename:'workflow-engine.js'});
+context.closedLoopWorkflowEngine.ensureShape(recalculated);
+context.closedLoopWorkflowEngine.recalculate(recalculated);
+assert.ok(['BLOCKED','AWAITING_HUMAN_INPUT','PROPOSAL_PENDING_REVIEW','RESPONSE_STAGED','AWAITING_EXTERNAL_RESPONSE','READY_FOR_NEXT_OPERATION','WORKFLOW_COMPLETE'].includes(recalculated.job.CURRENT_STATE),'Recalculation must keep CURRENT_STATE inside its closed enum.');
+assert.ok(['INCOMPLETE','BLOCKED','COMPLETE'].includes(recalculated.job.JOB_RECORD_STATUS),'Recalculation must keep JOB_RECORD_STATUS inside its closed enum.');
+assert.equal(typeof recalculated.job.CURRENT_BLOCKERS,'object');
+assert.ok(Array.isArray(recalculated.job.CURRENT_BLOCKERS.blockerIds));
 
 console.log(JSON.stringify({section15JobContract:'PASS',fields:expectedNames.length}));
