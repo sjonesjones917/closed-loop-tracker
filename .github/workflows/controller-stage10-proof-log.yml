@@ -1,0 +1,58 @@
+name: One-time Stage 10 proof log
+on:
+  push:
+    branches: [controller-stage10-authoritative-prompt-20260903]
+permissions:
+  contents: write
+jobs:
+  capture:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller-stage10-authoritative-prompt-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply current repair and capture every proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          awk '
+            /- name: Apply authoritative prompt and exact-scope repairs/{found=1;next}
+            found && /- name: Stage 10 proof order/{exit}
+            found && /^        run: \|/{inrun=1;next}
+            found && inrun{sub(/^          /,""); print}
+          ' .github/workflows/controller-stage10-context-fix.yml > /tmp/apply.sh
+          bash /tmp/apply.sh
+          : > stage10-proof.log
+          rc=0
+          for cmd in \
+            'node --check prompt-engine.js' \
+            'node verify-spec-grounded-route-oracle.mjs' \
+            'node build-test-project.mjs' \
+            'node verify-prompt-semantics.mjs' \
+            'node verify-user-prompt-invariants.mjs' \
+            'node verify-file-first-operator.mjs' \
+            'node verify-file-first-response.mjs' \
+            'node verify-ingestion.mjs' \
+            'node verify-full-cycle.mjs' \
+            'node verify-hash.mjs' \
+            'node verify-specification-governance.mjs'; do
+            printf '\n===== %s =====\n' "$cmd" >> stage10-proof.log
+            set +e
+            bash -lc "$cmd" >> stage10-proof.log 2>&1
+            code=$?
+            set -e
+            printf 'EXIT=%s\n' "$code" >> stage10-proof.log
+            if [ "$code" -ne 0 ]; then rc=$code; fi
+          done
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add stage10-proof.log
+          git commit -m 'Capture Stage 10 proof failures'
+          git push origin HEAD:controller-stage10-authoritative-prompt-20260903
+          exit "$rc"
