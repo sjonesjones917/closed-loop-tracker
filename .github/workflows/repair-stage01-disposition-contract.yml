@@ -1,0 +1,104 @@
+name: One-time Stage 01 disposition contract repair
+
+on:
+  push:
+    branches: [codex/stage01-disposition-contract-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/stage01-disposition-contract-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Repair Stage 01 closed disposition contract
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+          const path='workflow-engine.js';
+          let s=fs.readFileSync(path,'utf8');
+          const legacy="const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);";
+          const current="const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED']);";
+          if(!s.includes(legacy))throw new Error('Current Stage 01 disposition declaration no longer matches the demonstrated contradiction; restart from main and inspect.');
+          s=s.replace(legacy,current);
+          const oldBlock="const disposition=String(unit?.disposition||'').trim().toLowerCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='inapplicable with reason'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);\n    const statements=safe(unit?.extractedStatements);if(disposition!=='inapplicable with reason'&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;";
+          const newBlock="const disposition=String(unit?.disposition||'').trim().toUpperCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);const noStatementDisposition=['NO_PROJECT_RELEVANT_INFORMATION','INACCESSIBLE_OR_BLOCKED'].includes(disposition);if(noStatementDisposition&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires a reason for ${disposition}.`);if(disposition==='INACCESSIBLE_OR_BLOCKED')reasons.push(`Stage 01 intake unit ${id} is inaccessible or blocked and cannot satisfy Stage 01 completion.`);\n    const statements=safe(unit?.extractedStatements);if(!noStatementDisposition&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;";
+          if(!s.includes(oldBlock))throw new Error('Current Stage 01 evaluator shape no longer matches the demonstrated contradiction; restart from main and inspect.');
+          s=s.replace(oldBlock,newBlock);
+          const oldAccount="if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(disposition==='inapplicable with reason'?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);";
+          const newAccount="if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(noStatementDisposition?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);";
+          if(!s.includes(oldAccount))throw new Error('Current Stage 01 accounting closure expression changed; restart and inspect.');
+          s=s.replace(oldAccount,newAccount);
+          const exportBefore="version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,ACTION_TYPES,";
+          const exportAfter="version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,ACTION_TYPES,INTAKE_ACCOUNTING_DISPOSITIONS,";
+          if(!s.includes(exportBefore))throw new Error('Workflow-engine export contract shape changed; restart and inspect.');
+          s=s.replace(exportBefore,exportAfter);
+          fs.writeFileSync(path,s);
+
+          const replacements=new Map([
+            ['incorporated into the job definition','EXTRACTED_RELEVANT_INFORMATION'],
+            ['retained as context','RETAINED_AS_CONTEXT'],
+            ['unresolved human-only','UNRESOLVED_HUMAN_AUTHORITY'],
+            ['later-resolvable','LATER_RESOLVABLE'],
+            ['inapplicable with reason','NO_PROJECT_RELEVANT_INFORMATION']
+          ]);
+          for(const file of fs.readdirSync('.').filter(n=>/\.(?:js|mjs)$/.test(n)&&n!==path)){
+            let t=fs.readFileSync(file,'utf8'),next=t;
+            for(const [from,to] of replacements)next=next.split(from).join(to);
+            if(next!==t)fs.writeFileSync(file,next);
+          }
+          NODE
+          cat > verify-stage01-disposition-contract.mjs <<'NODE'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          import assert from 'node:assert/strict';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const engine=globalThis.closedLoopWorkflowEngine,core=globalThis.closedLoopCore,prompts=globalThis.closedLoopPromptEngine;
+          const exact=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'];
+          assert.deepEqual([...engine.INTAKE_ACCOUNTING_DISPOSITIONS],exact,'Stage 01 disposition registry differs from the controlling closed set.');
+          const p=core.createBlankState('JOB-STAGE01-DISPOSITIONS');
+          Object.assign(p.job,{JOB_TITLE:'Stage 01 disposition contract',JOB_OWNER:'Operator',EXACT_USER_OBJECTIVE_VERBATIM:'Account every raw input unit under the exact closed Stage 01 disposition contract.',EXPLICIT_USER_REQUIREMENTS:'Required inaccessible material must block completion.',SUPPLIED_MATERIALS_INVENTORY:'NONE',CURRENT_INPUT_VERSION:'INPUT-v001'});
+          p.projectData.userEntered={constraint:'Do not silently omit any raw input unit.'};
+          engine.ensureShape(p);
+          const manifest=engine.intakeCoverageManifest(p);
+          const base={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Retained as project context.',extractedStatements:[{statementKey:`S${i}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT'}]}))};
+          const valid=engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(base)});assert.equal(valid.complete,true,JSON.stringify(valid.reasons));
+          const noRelevant=structuredClone(base);noRelevant.units[0]={...noRelevant.units[0],disposition:'NO_PROJECT_RELEVANT_INFORMATION',reason:'Mechanically present but contains no project-relevant information.',extractedStatements:[]};const nr=engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(noRelevant)});assert.equal(nr.complete,true,JSON.stringify(nr.reasons));
+          const inaccessible=structuredClone(base);inaccessible.units[0]={...inaccessible.units[0],disposition:'INACCESSIBLE_OR_BLOCKED',reason:'Semantic content cannot be inspected.',extractedStatements:[]};const blocked=engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(inaccessible)});assert.equal(blocked.complete,false,'INACCESSIBLE_OR_BLOCKED must block Stage 01 completion.');assert(blocked.reasons.some(r=>/inaccessible or blocked/i.test(r)),JSON.stringify(blocked.reasons));
+          const legacy=structuredClone(base);legacy.units[0].disposition='retained as context';const rejected=engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(legacy)});assert.equal(rejected.complete,false,'Legacy Stage 01 disposition must be rejected.');
+          const prompt=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;for(const value of exact)assert(prompt.includes(value),`Stage 01 prompt omitted ${value}`);
+          console.log(JSON.stringify({stage01DispositionContract:'PASS',closedSet:exact,inaccessibleBlocks:true,legacyRejected:true}));
+          NODE
+          node verify-stage01-disposition-contract.mjs
+          for f in workflow-engine.js prompt-engine.js response-ingestion.js; do node --check "$f"; done
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml')
+          s=p.read_text()
+          marker='          node verify-stage01-intake-closure.mjs\n'
+          line='          node verify-stage01-disposition-contract.mjs\n'
+          if line not in s:
+              if marker not in s: raise SystemExit('Stage 01 test insertion point not found')
+              s=s.replace(marker,marker+line,1)
+              p.write_text(s)
+          PY
+          rm .github/workflows/repair-stage01-disposition-contract.yml
+      - name: Commit complete ratchet step
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Conform Stage 01 accounting dispositions'
+          git push origin HEAD:codex/stage01-disposition-contract-20260903
