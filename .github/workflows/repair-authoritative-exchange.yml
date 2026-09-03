@@ -1,0 +1,50 @@
+name: Temporary authoritative exchange repair
+
+on:
+  push:
+    branches: [fix/file-first-authoritative-exchange-20260903]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-authoritative-exchange-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/file-first-authoritative-exchange-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply responsible-layer repair
+        run: |
+          set -euo pipefail
+          python3 -m py_compile repair-authoritative-exchange.py
+          python3 repair-authoritative-exchange.py
+          rm repair-authoritative-exchange.py .github/workflows/repair-authoritative-exchange.yml
+      - name: Prove the regression and affected paths
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-file-first-response.mjs
+          node verify-file-first-operator.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-definition-of-done.mjs
+      - name: Commit repaired canonical branch state
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && { echo 'Repair produced no canonical diff.' >&2; exit 1; }
+          git commit -m "Conform authoritative file-first exchange contracts"
+          git push origin HEAD:fix/file-first-authoritative-exchange-20260903
