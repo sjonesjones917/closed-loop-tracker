@@ -1,0 +1,66 @@
+name: One-time current operation authority repair
+on:
+  push:
+    branches: [codex/spec-operation-authority-current]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/spec-operation-authority-current
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Establish failing authority regression on current source
+        shell: bash
+        run: |
+          set -euo pipefail
+          CLEAN=1d97af878304f5625d8515ad95c72c2a43f2c6d0
+          git fetch --no-tags origin "$CLEAN"
+          git show "$CLEAN:verify-operation-authority-closure.mjs" > verify-operation-authority-closure.mjs
+          if node verify-operation-authority-closure.mjs >/tmp/authority-before.log 2>&1; then
+            cat /tmp/authority-before.log
+            echo 'Current source unexpectedly passes the authority regression; refusing an unnecessary repair.' >&2
+            exit 1
+          fi
+          cat /tmp/authority-before.log
+      - name: Replay only permanent authority runtime changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=750cbdcc9981e13c45a79ed4b819e36bd46f59aa
+          CLEAN=1d97af878304f5625d8515ad95c72c2a43f2c6d0
+          git diff "$BASE" "$CLEAN" -- workflow-schema.js workflow-engine.js response-ingestion.js verify-v3-contract.mjs verify-spec-grounded-route-oracle.mjs > /tmp/authority.patch
+          test -s /tmp/authority.patch
+          git apply --3way /tmp/authority.patch
+          ! grep -R -nE '^(<<<<<<<|=======|>>>>>>>)' -- workflow-schema.js workflow-engine.js response-ingestion.js verify-v3-contract.mjs verify-spec-grounded-route-oracle.mjs
+      - name: Prove repaired authority boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify-operation-authority-closure.mjs
+          node verify-v3-contract.mjs
+          node verify-ingestion.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node verify-full-cycle.mjs
+          node verify.mjs
+      - name: Commit whole ratchet step and remove scaffold
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/one-time-operation-authority-current.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only | grep '^\.github/workflows/' || true)"
+          git commit -m 'Close current stage-operation authority contracts'
+          git push origin HEAD:codex/spec-operation-authority-current
