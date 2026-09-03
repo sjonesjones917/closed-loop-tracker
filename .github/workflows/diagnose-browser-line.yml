@@ -27,7 +27,7 @@ jobs:
           replaceExact('prompt-engine.js','"disposition":"incorporated into the job definition|retained as context|unresolved human-only|later-resolvable|inapplicable with reason"','"disposition":"EXTRACTED_RELEVANT_INFORMATION|RETAINED_AS_CONTEXT|NO_PROJECT_RELEVANT_INFORMATION|UNRESOLVED_HUMAN_AUTHORITY|LATER_RESOLVABLE|INACCESSIBLE_OR_BLOCKED"');
           replaceExact('verify-stage01-disposition-contract.mjs',
             "const promptText=p.buildPromptRecord(1,x,{operation:'COMPLETE'}).prompt;for(const value of exact)assert(promptText.includes(value));assert(/INACCESSIBLE_OR_BLOCKED means .*do not claim Stage 01 completion/i.test(promptText));console.log(JSON.stringify({stage01DispositionContract:'PASS'}));",
-            "const promptText=p.buildPromptRecord(1,x,{operation:'COMPLETE'}).prompt;for(const value of exact)assert(promptText.includes(value));for(const retired of ['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'])assert(!promptText.includes(retired),`Stage 01 prompt still advertises retired disposition: ${retired}`);assert(/INACCESSIBLE_OR_BLOCKED means .*do not claim Stage 01 completion/i.test(promptText));console.log(JSON.stringify({stage01DispositionContract:'PASS'}));");
+            "const promptText=p.buildPromptRecord(1,x,{operation:'COMPLETE'}).prompt;const currentUnion='EXTRACTED_RELEVANT_INFORMATION|RETAINED_AS_CONTEXT|NO_PROJECT_RELEVANT_INFORMATION|UNRESOLVED_HUMAN_AUTHORITY|LATER_RESOLVABLE|INACCESSIBLE_OR_BLOCKED',retiredUnion='incorporated into the job definition|retained as context|unresolved human-only|later-resolvable|inapplicable with reason';for(const value of exact)assert(promptText.includes(value));assert(promptText.includes(currentUnion),'Stage 01 machine-output contract must advertise the exact closed disposition union.');assert(!promptText.includes(retiredUnion),'Stage 01 machine-output contract still advertises the retired disposition union.');assert(/INACCESSIBLE_OR_BLOCKED means .*do not claim Stage 01 completion/i.test(promptText));console.log(JSON.stringify({stage01DispositionContract:'PASS'}));");
           NODE
           node --check app-core.js
           node --check prompt-engine.js
@@ -42,7 +42,11 @@ jobs:
           python3 -m http.server 4173 >/tmp/http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          for f in verify-human-stage-walkthrough.mjs verify-mobile-stage-action.mjs verify-browser.mjs verify-browser-extra.mjs; do node "$f"; done
+          for f in verify-human-stage-walkthrough.mjs verify-mobile-stage-action.mjs verify-browser.mjs verify-browser-extra.mjs; do
+            echo "===== START $f ====="
+            node "$f"
+            echo "===== PASS $f ====="
+          done
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
           rm .github/workflows/diagnose-browser-line.yml
