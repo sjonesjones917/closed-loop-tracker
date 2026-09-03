@@ -6,6 +6,7 @@ import {webcrypto} from 'node:crypto';
 const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:webcrypto,Blob};
 context.globalThis=context;
 vm.createContext(context);
+vm.runInContext(fs.readFileSync('hash.js','utf8'),context,{filename:'hash.js'});
 vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});
 const runtime=context.closedLoopTestRuntime;
 const plain=value=>JSON.parse(JSON.stringify(value));
@@ -84,6 +85,7 @@ assert.equal(result.operationRegistryVersion,runtime.OPERATION_REGISTRY_VERSION)
 assert.equal(result.operationRegistrySha256,runtime.OPERATION_REGISTRY_SHA256);
 assert.equal(result.selectedResultPort,'assertion');
 assert.match(result.normalizedDagSha256,/^[0-9a-f]{64}$/);
+assert.equal(await runtime.sha256Canonical(normalized),context.closedLoopHash.sha256Value(normalized),'Test IR canonical hashing must use the single shared closed-loop-canonical-json/1 authority.');
 
 const nonAdjacent={...explicit,steps:[explicit.steps[0],explicit.steps[1],explicit.steps[2],{stepId:'S004',op:'HASH_SHA256',inputs:{bytes:{stepRef:'S002',output:'bytes'}}},{stepId:'S005',op:'ASSERT_MATCH',inputs:{actual:{stepRef:'S004',output:'sha256'},pattern:{literal:'^[0-9a-f]{64}$'}}}],result:{stepRef:'S005',output:'assertion'}};
 assert.equal(runtime.validateSpec(nonAdjacent,{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-1'}}).valid,true);
