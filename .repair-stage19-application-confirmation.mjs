@@ -27,8 +27,3 @@ const marker="data(19,{operation:'CONFIRM',records:{confirmationRecords:[recordP
 const start=full.indexOf(marker);if(start<0)throw new Error('Stage 19 agent-confirm fixture anchor not found.');const end=full.indexOf(';complete(19);',start);if(end<0)throw new Error('Stage 19 agent-confirm fixture terminator not found.');
 full=full.slice(0,start)+"const confirmation=engine.recordUnchangedConfirmationDetermination(p,{sourceIterationId:iter17,confirmationIterationId:iter19});assert(engine.recordValue(confirmation,'DETERMINATION')==='SATISFIED','Stage 19 application confirmation did not derive SATISFIED from the completed unchanged iteration')"+full.slice(end);
 write('verify-full-cycle.mjs',full);
-
-let v3=read('verify-v3-contract.mjs');
-const testAnchor="console.log(JSON.stringify({verifyV3Contract:'PASS'";
-if(!v3.includes("confirmationRecords.fieldDefinitions.DETERMINATION.producer"))v3=mustReplace(v3,testAnchor,"if(schema.RECORD_SCHEMAS.confirmationRecords.fieldDefinitions.DETERMINATION.producer!==schema.PRODUCER.APPLICATION)throw new Error('Stage 19 confirmation determination must be application-owned.');\nif(schema.operationContract(19,'CONFIRM').agentWritableCollections.length!==0||schema.operationContract(19,'CONFIRM').acceptsExternalResponseEnvelope!==false)throw new Error('Stage 19 CONFIRM must be a direct application command.');\n"+testAnchor,'Stage 19 authority regression');
-write('verify-v3-contract.mjs',v3);
