@@ -1,24 +1,12 @@
-node:internal/modules/run_main:123
-    triggerUncaughtException(
-    ^
+workflow-engine.js:1018
+function reserve(p,o={}){ensure(p);const n=Number(o.stage==null?p.activeStage:o.stage),operation=String(o.operation||'COMPLETE'),baseScope={...(o.scope||scope(p))},targetSlot=reservationTargetSlot(p,{stage:n,operation,scope:baseScope});if(o.targetSlot!=null&&String(o.targetSlot)!==targetSlot)throw new Error('TARGET_SLOT is application-calculated and cannot be supplied or overridden.');const ph=h.sha256Value(o.payload||{}),key=h.sha256Value({commandType:'RESERVE_OPERATION',contractProfileId:String(p.job?.CONTRACT_PROFILE_ID||schema.CONTRACT_PROFILE_ID||''),jobId:String(p.job?.JOB_ID||''),stage:n,operation,targetSlot,scope:Object.fromEntries(Object.entries(baseScope).filter(([scopeKey])=>scopeKey!=='projectRevision')),payloadHash:ph});const matching=records(p,'operationReservations',{active:true}).filter(r=>Number(fv(r,'STAGE'))===n&&String(fv(r,'OPERATION'))===operation&&String(fv(r,'TARGET_SLOT'))===targetSlot);const exact=matching.find(r=>String(fv(r,'IDEMPOTENCY_KEY'))===key);if(exact)return exact;if(matching.some(r=>RESERVATION_PRESERVING_STATES.has(up(fv(r,'STATUS')))))throw new Error('An authoritative reservation already controls this target operation slot.');const rev=Number(p.revision||0),reservationRevision=rev+1,reservationScope={...baseScope,projectRevision:reservationRevision},created=put(p,'operationReservations',{JOB_ID:String(p.job?.JOB_ID||''),STAGE:n,OPERATION:operation,TARGET_SLOT:targetSlot,PACKAGE_ID:String(o.packageId||''),PROMPT_ID:String(o.promptId||''),SCOPE:reservationScope,EXPECTED_REVISION:reservationRevision,RESERVATION_REVISION:reservationRevision,CHALLENGE_NONCE:nonce(),STATUS:'RESERVED',OWNING_TAB_INSTANCE:String(o.owningTabInstance||'UNKNOWN'),IDEMPOTENCY_KEY:key,PAYLOAD_HASH:ph},{stage:n,source:'APPLICATION_RESERVATION',scope:reservationScope});p.revision=reservationRevision;return created;}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
 
-AssertionError [ERR_ASSERTION]: exact retry must return the existing reservation
-+ actual - expected
-
-+ 'RESERVATION-000002'
-- 'RESERVATION-000001'
-                    ^
-
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-reservation-contract.mjs:18:8
+ReferenceError: records is not defined
+    at Object.reserve [as reserveOperation] (workflow-engine.js:1018:759)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-reservation-contract.mjs:16:16
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
-  generatedMessage: false,
-  code: 'ERR_ASSERTION',
-  actual: 'RESERVATION-000002',
-  expected: 'RESERVATION-000001',
-  operator: 'strictEqual',
-  diff: 'simple'
-}
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
 
 Node.js v22.23.2
