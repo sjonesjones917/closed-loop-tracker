@@ -21,7 +21,16 @@ async function evalValue(cdp,expression){const r=await cdp.send('Runtime.evaluat
 async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
 async function click(cdp,selector){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(180);}
 async function fill(cdp,selector,value){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);assert(ok,`Missing input ${selector}`);}
-async function selectResponseFile(cdp,text,filename='response.json'){const ok=await evalValue(cdp,`(()=>{const input=document.querySelector('#response-json-file');if(!input)return false;const file=new File([new TextEncoder().encode(${JSON.stringify(text)})],${JSON.stringify(filename)},{type:'application/json'}),dt=new DataTransfer();dt.items.add(file);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));return input.files.length===1&&input.files[0].name===${JSON.stringify(filename)};})()`);assert(ok,'Authoritative response-file input is unavailable.');}
+async function selectResponseFile(cdp,text,filename='response.json'){
+  const safeName=String(filename||'response.json').replace(/[^A-Za-z0-9._-]/g,'_'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-response-file-')),filePath=path.join(directory,safeName);
+  fs.writeFileSync(filePath,String(text??''),'utf8');
+  await cdp.send('DOM.enable');
+  const handle=await cdp.send('Runtime.evaluate',{expression:`document.querySelector('#response-json-file')`,returnByValue:false});
+  assert(handle.result?.objectId,'Authoritative response-file input is unavailable.');
+  await cdp.send('DOM.setFileInputFiles',{files:[filePath],objectId:handle.result.objectId});
+  const selected=await evalValue(cdp,`(()=>{const input=document.querySelector('#response-json-file');if(!input||input.files.length!==1)return false;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));return input.files[0].name===${JSON.stringify(safeName)};})()`);
+  assert(selected,'The browser did not select the authoritative response file.');
+}
 async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');if(!s)return false;s.value='${n}';s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitExpr(cdp,`document.querySelector('#stage-picker')?.value==='${n}'`);}
 async function projects(cdp){return evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`);}
 async function activeProject(cdp){return evalValue(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];const all=await globalThis.closedLoopProjectStore.readAll();return all.find(p=>p.job?.JOB_ID===id)||all[0];})()`);}
