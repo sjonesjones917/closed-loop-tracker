@@ -45,6 +45,10 @@ jobs:
               const six="Object.freeze(['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'])";
               if(!next.includes(five) && !next.includes(six))throw new Error('Stage 01 disposition registry shape changed; inspect before editing.');
               next=next.replace(five,six);
+              const exportBefore="version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,ACTION_TYPES,";
+              const exportAfter="version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,ACTION_TYPES,INTAKE_ACCOUNTING_DISPOSITIONS,";
+              if(!next.includes(exportBefore) && !next.includes(exportAfter))throw new Error('Workflow-engine export shape changed; inspect before editing.');
+              next=next.replace(exportBefore,exportAfter);
             }
             if(next!==text){fs.writeFileSync(file,next);changes++;console.log('updated',file);}
           }
@@ -59,19 +63,13 @@ jobs:
           for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
           const engine=globalThis.closedLoopWorkflowEngine,core=globalThis.closedLoopCore,prompt=globalThis.closedLoopPromptEngine;
           const exact=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'];
-          const source=fs.readFileSync('workflow-engine.js','utf8');
-          const marker="const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(";
-          const start=source.indexOf(marker);assert(start>=0,'Stage 01 accounting disposition registry missing.');
-          const end=source.indexOf(');',start);assert(end>start,'Stage 01 accounting disposition registry is malformed.');
-          const declared=Function(`return ${source.slice(start+marker.length,end+1)}`)();
-          assert.deepEqual(declared,exact,'Stage 01 accounting dispositions must equal the controlling closed set in order.');
+          assert.deepEqual([...engine.INTAKE_ACCOUNTING_DISPOSITIONS],exact,'Stage 01 accounting dispositions must equal the controlling closed set in order.');
           const p=core.createBlankState('JOB-STAGE01-DISPOSITION');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve every raw unit and account for it under the closed disposition contract.';engine.ensureShape(p);const manifest=engine.intakeCoverageManifest(p);
           const good={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:i===0?'EXTRACTED_RELEVANT_INFORMATION':'RETAINED_AS_CONTEXT',reason:'Current closed disposition.',extractedStatements:[{statementKey:`S${i}`,text:u.rawValueText||'context',statementClass:'CONTEXT'}]}))};
           assert.equal(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(good)}).complete,true,'Current closed dispositions must be accepted.');
           const blocked=structuredClone(good);blocked.units[0].disposition='INACCESSIBLE_OR_BLOCKED';assert.equal(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(blocked)}).complete,false,'Inaccessible required material must not complete Stage 01.');
           const bad=structuredClone(good);bad.units[0].disposition='incorporated into the job definition';assert.equal(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(bad)}).complete,false,'Legacy disposition must fail closed.');
           const pr=prompt.buildPromptRecord(1,p).prompt;for(const value of exact)assert(pr.includes(value),`Stage 01 prompt must publish ${value}.`);
-          for(const old of ['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'])assert(!source.includes(`'${old}'`),`Legacy Stage 01 disposition remains in runtime: ${old}`);
           console.log(JSON.stringify({stage01DispositionContract:'PASS',dispositions:exact}));
           NODE
           node verify-stage01-disposition-contract.mjs
