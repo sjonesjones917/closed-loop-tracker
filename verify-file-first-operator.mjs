@@ -1,18 +1,31 @@
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
 
 const app=fs.readFileSync('app-core.js','utf8');
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
+const store=fs.readFileSync('project-store.js','utf8');
+const engine=fs.readFileSync('workflow-engine.js','utf8');
 
-function assert(condition,message){if(!condition)throw new Error(message);}
+function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engineSource=engine}={}){
+  assert.match(appSource,/id="response-json-file"[^>]*type="file"[^>]*accept="[^"]*(?:application\/json|\.json)/,'The normal external-response path must expose the authoritative JSON file selector.');
+  assert.match(appSource,/id="process-response-file"/,'The normal path must stage and validate the selected response file.');
+  assert.match(appSource,/stageResponseFile\(/,'The UI must stage selected response bytes before canonical ingestion.');
+  assert.match(appSource,/readStagedResponseFile\(/,'The UI must read back staged bytes before parsing.');
+  assert.match(storeSource,/HASHED_AND_REVERIFIED/,'The store must record staged-byte hash/read-back verification.');
+  assert.match(storeSource,/RESPONSE_STAGE_REHASH_MISMATCH/,'A read-back mismatch must fail closed.');
+  assert.match(ingestionSource,/transport:transportRecord/,'Raw-response provenance must retain the response transport basis.');
+  assert.match(appSource,/AUTHORITATIVE_RESPONSE_FILE/,'The primary selected-file path must be marked authoritative.');
+  assert.match(appSource,/response-text-fallback[\s\S]*Nonauthoritative/,'Text entry may exist only as a clearly nonauthoritative fallback.');
+  assert.doesNotMatch(engineSource,/PASTE_FINAL_JSON/,'Paste must not remain a primary structured workflow action.');
+  assert.match(engineSource,/SELECT_RESPONSE_JSON_FILE/,'The engine must derive response-file selection as the operator action.');
+  assert.doesNotMatch(appSource,/Paste only the final strict JSON/i,'The normal operator path must not instruct the user to paste final JSON.');
+  return true;
+}
 
-assert(/id=["']stage-response-file["']/.test(app),'The normal external-response path must expose a response JSON file selector.');
-assert(/type=["']file["']/.test(app)&&/accept=["'][^"']*(application\/json|\.json)/.test(app),'The authoritative response selector must be a JSON file control.');
-assert(/SELECT_RESPONSE_JSON_FILE/.test(app),'The operator UI must expose the SELECT_RESPONSE_JSON_FILE action.');
-assert(!/Paste only the final strict JSON/i.test(app),'The normal operator path still instructs the user to paste final JSON.');
-assert(!/PASTE_FINAL_JSON/.test(app),'PASTE_FINAL_JSON must not remain a primary structured action type.');
-assert(/captureRaw(File|Bytes)/.test(ingestion),'Response ingestion must provide a raw-byte/file capture entry point.');
-assert(/arrayBuffer|Uint8Array|byteLength/.test(ingestion),'Authoritative response capture must operate on selected file bytes before parsing.');
-assert(/rawResponseSha256/.test(ingestion),'Authoritative response capture must bind the preserved response to its byte digest.');
-assert(!/captureRaw\([^)]*text[^)]*\)/s.test(app),'The normal UI must not feed pasted response text directly into canonical raw capture.');
+verify();
+assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
+assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/read-back mismatch/);
+assert.throws(()=>verify({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/);
+assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/marked authoritative/);
 
-console.log(JSON.stringify({fileFirstOperatorPath:'PASS',responseFileSelector:true,pasteNotRequired:true,rawBytesCapturedBeforeParse:true},null,2));
+console.log(JSON.stringify({fileFirstOperatorPath:'PASS',responseFileSelector:true,durableByteStaging:true,readBackRehash:true,pasteNotPrimary:true,mutationsDetected:4},null,2));
