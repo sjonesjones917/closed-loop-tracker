@@ -1,0 +1,122 @@
+name: One-time exact scope conformance repair
+on:
+  push:
+    branches: [repair/exact-scope-current-main]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/exact-scope-current-main
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact stage-operation scope contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('workflow-schema.js'); s=p.read_text()
+          old="const SCOPE_REQUIREMENTS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>{const s=i+1,keys=['projectRevision','inputVersion'];if(s>=3)keys.push('sourceSetVersion');if(s>=5)keys.push('requirementsVersion');if(s>=7)keys.push('testSuiteVersion');if(s>=9)keys.push('instructionVersion');if(s>=10&&s<=20)keys.push('iterationId','candidateId');if(s===9)keys.push('contextId');if(s===11)keys.push('runId','contextId');if(s>=20)keys.push('baselineId');if(s>=21)keys.push('productId');return [s,Object.freeze([...new Set(keys)])];})));"
+          new="""const SCOPE_REQUIREMENTS=Object.freeze({
+          1:Object.freeze(['inputVersion']),2:Object.freeze(['inputVersion','sourceSetVersion']),3:Object.freeze(['inputVersion','sourceSetVersion','researchVersion']),
+          4:Object.freeze(['inputVersion','sourceSetVersion','researchVersion','requirementsVersion']),5:Object.freeze(['inputVersion','sourceSetVersion','researchVersion','requirementsVersion']),
+          6:Object.freeze(['requirementsVersion','testSuiteVersion']),7:Object.freeze(['requirementsVersion','testSuiteVersion']),8:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion']),9:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion']),
+          10:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId']),11:Object.freeze(['iterationId','candidateId','runId']),12:Object.freeze(['iterationId','candidateId','runId','requirementsVersion','testSuiteVersion']),
+          13:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),14:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),15:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),16:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),17:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),18:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),
+          19:Object.freeze(['sourceConvergedIterationId','confirmationIterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),20:Object.freeze(['confirmationIterationId','baselineId']),21:Object.freeze(['baselineId','productId']),
+          22:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),23:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),24:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),
+          25:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId']),26:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion']),27:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','reconciledReviewVersion']),28:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId']),29:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId']),30:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion'])
+          });"""
+          if s.count(old)!=1: raise SystemExit(f'workflow scope anchor count={s.count(old)}')
+          s=s.replace(old,new)
+          pattern=r"function operationContract\(stage,operation\)\{const operations=STAGE_OPERATIONS\[stage\]\|\|\['COMPLETE'\];if\(!operations.includes\(operation\)\)return null;const override=OPERATION_CONTRACT_OVERRIDES\[stage\]\?\.\[operation\]\|\|\{\};let scopeRequirements=override.scopeRequirements\|\|SCOPE_REQUIREMENTS\[stage\]\|\|\[\];if\(\(stage===17\|\|stage===19\)&&!\['EXECUTE_RUN','VERIFY'\]\.includes\(operation\)\)scopeRequirements=scopeRequirements.filter\(key=>key!=='runId'&&key!=='contextId'\);const independentReview=stage===9\|\|stage===12\|\|stage===23\|\|stage===24\|\|\(\(stage===17\|\|stage===19\)&&operation==='VERIFY'\);if\(independentReview&&!scopeRequirements.includes\('contextId'\)\)scopeRequirements=\[\.\.\.scopeRequirements,'contextId'\];return Object.freeze\(\{operation,readCollections:Object.freeze\(override.readCollections\|\|READ_COLLECTIONS\[stage\]\|\|\[\]\),agentWritableCollections:Object.freeze\(override.agentWritableCollections\|\|STAGE_COLLECTIONS\[stage\]\|\|\[\]\),allowedStageData:Object.freeze\(override.allowedStageData\|\|STAGE_CONTRACTS\[stage\]\?\.allowedStageData\|\|\[\]\),applicationCollections:Object.freeze\(APPLICATION_COLLECTIONS\[stage\]\|\|\[\]\),humanActions:Object.freeze\(HUMAN_ACTIONS\[stage\]\|\|\[\]\),scopeRequirements:Object.freeze\(scopeRequirements\)\}\);\}"
+          repl="function operationContract(stage,operation){if(!Number.isInteger(stage)||stage<1||stage>STAGE_COUNT||!STAGE_OPERATIONS[stage])return null;const operations=STAGE_OPERATIONS[stage];if(!operations.includes(operation))return null;const override=OPERATION_CONTRACT_OVERRIDES[stage]?.[operation]||{};const scopeRequirements=override.scopeRequirements||SCOPE_REQUIREMENTS[stage]||[];return Object.freeze({operation,readCollections:Object.freeze(override.readCollections||READ_COLLECTIONS[stage]||[]),agentWritableCollections:Object.freeze(override.agentWritableCollections||STAGE_COLLECTIONS[stage]||[]),allowedStageData:Object.freeze(override.allowedStageData||STAGE_CONTRACTS[stage]?.allowedStageData||[]),applicationCollections:Object.freeze(APPLICATION_COLLECTIONS[stage]||[]),humanActions:Object.freeze(HUMAN_ACTIONS[stage]||[]),scopeRequirements:Object.freeze(scopeRequirements)});}"
+          s,n=re.subn(pattern,repl,s,count=1)
+          if n!=1: raise SystemExit(f'operationContract anchor count={n}')
+          p.write_text(s)
+
+          p=Path('response-ingestion.js'); s=p.read_text()
+          old="const RESPONSE_SCOPE_KEYS=Object.freeze(['projectRevision','inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId']);"
+          new="const RESPONSE_SCOPE_KEYS=Object.freeze(['projectRevision','inputVersion','sourceSetVersion','researchVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','sourceConvergedIterationId','confirmationIterationId','baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion','reconciledReviewVersion','releaseId','hashReviewId','evidenceChainVersion']);"
+          if s.count(old)!=1: raise SystemExit(f'response scope anchor count={s.count(old)}')
+          p.write_text(s.replace(old,new))
+
+          p=Path('verify-data-route-closure.mjs'); s=p.read_text()
+          old="const scope={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,contextId:collectionSentinels.freshContexts.currentId,baselineId:'BASE-ROUTE-v1',productId:'PROD-ROUTE-v1'};"
+          new="const scopeValues={inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,researchVersion:'RESEARCH-ROUTE-v1',requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,sourceConvergedIterationId:'ITER-CONVERGED-ROUTE-v1',confirmationIterationId:'ITER-CONFIRM-ROUTE-v1',baselineId:'BASE-ROUTE-v1',productId:'PROD-ROUTE-v1',productVersion:'PRODUCT-VERSION-ROUTE-v1',deliveryCandidateSetId:'DELIVERY-CANDIDATE-ROUTE-v1',reviewVersion:'REVIEW-ROUTE-v1',reconciledReviewVersion:'RECONCILED-REVIEW-ROUTE-v1',releaseId:'RELEASE-ROUTE-v1',hashReviewId:'HASH-ROUTE-v1',evidenceChainVersion:'EVIDENCE-CHAIN-ROUTE-v1'};const scope=Object.fromEntries(op.scopeRequirements.map(key=>[key,scopeValues[key]]));"
+          if s.count(old)!=1: raise SystemExit(f'data-route scope anchor count={s.count(old)}')
+          p.write_text(s.replace(old,new))
+
+          p=Path('verify-full-cycle.mjs'); s=p.read_text()
+          pattern=r"function verifyBatch\(stage,operation,slots\)\{.*?\}\nverifyBatch\(12,'VERIFY',initialSlots\);complete\(12\);"
+          replacement="""function verifyBatch(stage,operation,slots){
+            let verifierNumber=0;
+            for(const {runId} of slots){
+              verifierNumber+=1;
+              engine.registerFreshContext(p,{stage,externalContextIdentifier:`VERIFY-CONTEXT-${stage}-${operation}-${verifierNumber}`,operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'});
+              const verifierContextId=rid('freshContexts'),verification=[],observationRecords=[],entailmentReviews=[];
+              for(const test of stage6Tests){
+                const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE'),key=`${runId}-${currentTestId}`;
+                verification.push(recordProposal(schema,'verification',{tempKey:`verify-${key}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:verifierContextId,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${key}`,DETERMINATION:'SATISFIED'}}));
+                observationRecords.push(recordProposal(schema,'observationRecords',{tempKey:`obs-${key}`,relationships:{SUBJECT_ID:{recordId:currentTestId}},overrides:{EXTERNAL_OR_AGENT_OBSERVED_VALUE:`SATISFIED observation ${key}`}}));
+                entailmentReviews.push(recordProposal(schema,'entailmentReviews',{tempKey:`entail-${key}`,relationships:{OBSERVATION_ID:{tempKey:`obs-${key}`},TARGET_PROPOSITION_ID:{recordId:propId}},overrides:{ENTAILMENT_FINDING:'ESTABLISHES',REASONING:'The current independent observation establishes the tested proposition.'}}));
+              }
+              data(stage,{operation,scope:{runId},records:{verification,observationRecords,entailmentReviews}});
+            }
+          }
+          verifyBatch(12,'VERIFY',initialSlots);complete(12);"""
+          s,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit(f'full-cycle verifyBatch anchor count={n}')
+          p.write_text(s)
+
+          p=Path('verify-v3-contract.mjs'); s=p.read_text()
+          line="await import('./verify-section14-scope-matrix.mjs');\n"
+          if line not in s: p.write_text(line+s)
+          PY
+          cat > verify-section14-scope-matrix.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js']) vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const schema=globalThis.closedLoopWorkflowSchema;
+          const expected={1:['inputVersion'],2:['inputVersion','sourceSetVersion'],3:['inputVersion','sourceSetVersion','researchVersion'],4:['inputVersion','sourceSetVersion','researchVersion','requirementsVersion'],5:['inputVersion','sourceSetVersion','researchVersion','requirementsVersion'],6:['requirementsVersion','testSuiteVersion'],7:['requirementsVersion','testSuiteVersion'],8:['requirementsVersion','testSuiteVersion','instructionVersion'],9:['requirementsVersion','testSuiteVersion','instructionVersion'],10:['requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId'],11:['iterationId','candidateId','runId'],12:['iterationId','candidateId','runId','requirementsVersion','testSuiteVersion'],13:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],14:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],15:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],16:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],17:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],18:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],19:['sourceConvergedIterationId','confirmationIterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],20:['confirmationIterationId','baselineId'],21:['baselineId','productId'],22:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],23:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],24:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],25:['baselineId','productId','productVersion','deliveryCandidateSetId'],26:['baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion'],27:['baselineId','productId','productVersion','deliveryCandidateSetId','reconciledReviewVersion'],28:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId'],29:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId'],30:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion']};
+          let operations=0;
+          for(let stage=1;stage<=30;stage++){assert.deepEqual([...schema.SCOPE_REQUIREMENTS[stage]],expected[stage],`Stage ${stage} scope matrix mismatch`);for(const operation of schema.STAGE_OPERATIONS[stage]){operations++;const contract=schema.operationContract(stage,operation);assert(contract,`Missing operation contract ${stage}/${operation}`);assert.deepEqual([...contract.scopeRequirements],expected[stage],`Operation ${stage}/${operation} scope mismatch`);}}
+          assert.equal(schema.operationContract(31,'COMPLETE'),null);
+          assert.equal(schema.operationContract(1,'NOT_A_REAL_OPERATION'),null);
+          console.log(JSON.stringify({section14ScopeMatrix:'PASS',stages:30,operations}));
+          EOF
+      - name: Prove focused correction
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check response-ingestion.js
+          node --check verify-full-cycle.mjs
+          node verify-section14-scope-matrix.mjs
+          node verify-v3-contract.mjs
+          node verify-ingestion.mjs
+          node verify-data-route-closure.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+      - name: Remove scaffolding and commit repair
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-exact-scope-current.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Conform exact stage-operation scope matrix'
+          git push origin HEAD:repair/exact-scope-current-main
