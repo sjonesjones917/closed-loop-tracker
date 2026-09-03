@@ -24,6 +24,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add response-ingestion.js verify-ingestion.mjs
+          git add response-ingestion.js prompt-engine.js verify-ingestion.mjs
           git commit -m 'Reject stale exact operation scope dimensions'
           git push origin HEAD:fix/section15-job-contract
+# prompt owner fix included
