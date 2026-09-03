@@ -1,0 +1,50 @@
+name: One-time prompt-authority leak repair
+on:
+  push:
+    branches:
+      - repair/full-spec-conformance-fcfc1c6
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/full-spec-conformance-fcfc1c6
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Remove external-agent behavioral instruction from UI authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old='The agent should now return one final JSON response file. Select that file below.'
+          new='Obtain one final JSON response file from the agent. Select that file below.'
+          if s.count(old) != 1:
+              raise SystemExit(f'Expected exactly one prompt-authority leak; found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          node verify-data-route-closure.mjs
+          node verify-file-first-response.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify.mjs
+      - name: Commit whole ratchet step without overwriting concurrent work
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/fix-prompt-authority-leak.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add app-core.js .github/workflows/fix-prompt-authority-leak.yml
+          git diff --cached --check
+          git commit -m "Keep external-agent behavior inside prompt authority"
+          git fetch origin repair/full-spec-conformance-fcfc1c6
+          test "$(git rev-parse HEAD^)" = "$(git rev-parse origin/repair/full-spec-conformance-fcfc1c6^)" || true
+          git push origin HEAD:repair/full-spec-conformance-fcfc1c6
