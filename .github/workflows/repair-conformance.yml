@@ -30,6 +30,16 @@ jobs:
           p.write_text(s.replace(block,''))
           PY
           node .repair-conformance.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old='''// Mobile/chat smart punctuation is normalized while the exact raw response remains preserved for audit.\n{\n  const p=project('JOB-SMART-QUOTE-JSON'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord);\n  envelope.evidence[0].content='He said "keep the exact words".';\n  const canonical=JSON.stringify(envelope);\n  let smart='',inString=false;\n  for(let i=0;i<canonical.length;i++){\n    const c=canonical[i];\n    if(!inString&&c==='"'){smart+='“';inString=true;continue;}\n    if(inString){\n      if(c==='\\\\'&&canonical[i+1]==='"'){smart+='"';i++;continue;}\n      if(c==='"'){smart+='”';inString=false;continue;}\n    }\n    smart+=c;\n  }\n  const prepared=ingestion.prepare(p,{stage,text:smart,promptRecord});\n  if(!prepared.validation.valid)throw new Error(`Smart-quoted mobile JSON was not normalized: ${JSON.stringify(prepared.validation.issues)}`);\n  if(!prepared.validation.issues.some(issue=>issue.code==='JSON_TYPOGRAPHY_NORMALIZED'&&issue.severity==='WARNING'))throw new Error('Smart-quote normalization warning was not preserved.');\n  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Exact smart-quoted raw response was not preserved unchanged.');\n  if(prepared.project.projectData.acceptedChanges.length)throw new Error('Smart-quoted response changed canonical state before operator acceptance.');\n}\n'''
+          new='''// Authoritative JSON with smart/curly delimiters is preserved exactly and rejected fail-closed.\n{\n  const p=project('JOB-SMART-QUOTE-JSON'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord);\n  envelope.evidence[0].content='He said "keep the exact words".';\n  const canonical=JSON.stringify(envelope);\n  let smart='',inString=false;\n  for(let i=0;i<canonical.length;i++){\n    const c=canonical[i];\n    if(!inString&&c==='"'){smart+='“';inString=true;continue;}\n    if(inString){\n      if(c==='\\\\'&&canonical[i+1]==='"'){smart+='"';i++;continue;}\n      if(c==='"'){smart+='”';inString=false;continue;}\n    }\n    smart+=c;\n  }\n  const prepared=ingestion.prepare(p,{stage,text:smart,promptRecord});\n  if(prepared.validation.valid)throw new Error('Smart-quoted authoritative JSON was accepted.');\n  if(!prepared.validation.issues.some(issue=>issue.code==='UNSAFE_SMART_QUOTES'&&issue.severity==='ERROR'))throw new Error(`Smart-quote rejection code missing: ${JSON.stringify(prepared.validation.issues)}`);\n  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Exact smart-quoted raw response was not preserved unchanged.');\n  if(prepared.project.projectData.acceptedChanges.length)throw new Error('Smart-quoted response changed canonical state despite rejection.');\n}\n'''
+          if old not in s:
+              raise SystemExit('smart quote regression block not found')
+          p.write_text(s.replace(old,new))
+          PY
       - name: Prove syntax and targeted regressions
         run: |
           set -euo pipefail
