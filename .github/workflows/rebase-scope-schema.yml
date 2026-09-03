@@ -1,0 +1,43 @@
+name: One-time scope schema rebase
+on:
+  push:
+    branches: [repair/spec-scope-current2-20260903]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/spec-scope-current2-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact schema correction to new main
+        run: node .repair-scope-schema.mjs
+      - name: Prove schema loads and all operation scopes equal the controlling stage matrix
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
+          global.Event=global.Event||class Event{constructor(t){this.type=t}};global.dispatchEvent=global.dispatchEvent||(()=>true);
+          for(const f of ['workbook.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          const s=global.closedLoopWorkflowSchema;
+          for(let stage=1;stage<=30;stage++)for(const op of s.STAGE_OPERATIONS[stage])assert.deepEqual([...s.operationContract(stage,op).scopeRequirements],[...s.SCOPE_REQUIREMENTS[stage]],`${stage}/${op}`);
+          assert(!s.operationContract(17,'VERIFY').scopeRequirements.includes('contextId'));
+          assert(!s.operationContract(19,'VERIFY').scopeRequirements.includes('contextId'));
+          NODE
+      - name: Commit only schema owner correction
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add workflow-schema.js
+          git diff --cached --check
+          git commit -m "Conform exact operation scope on current main"
+          git push origin HEAD:repair/spec-scope-current2-20260903
