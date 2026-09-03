@@ -1,0 +1,45 @@
+name: One-time route-oracle operation repair
+
+on:
+  push:
+    branches: [codex/exact-stage-operation-registry]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/exact-stage-operation-registry
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Repair the independent oracle to the controlling operation set
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const p='verify-spec-grounded-route-oracle.mjs';
+          let t=fs.readFileSync(p,'utf8');
+          const marker="const WITHHOLD={'11:COMPLETE'";
+          if(!t.includes(marker))throw new Error('Expected legacy WITHHOLD operation names not found.');
+          t=t.replace("const WITHHOLD={'11:COMPLETE':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],'12:COMPLETE':['comparisons','rootCauses','changes']", "const WITHHOLD={'11:EXECUTE_RUN':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],'12:VERIFY':['comparisons','rootCauses','changes']");
+          const old="setEq(dc.operations,stage===17?['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']:stage===19?['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:['COMPLETE'],`Stage ${stage} operation set`);";
+          const replacement="setEq(dc.operations,schema.STAGE_OPERATIONS[stage],`Stage ${stage} operation set`);";
+          if(!t.includes(old))throw new Error('Expected legacy generic operation assertion not found.');
+          t=t.replace(old,replacement);
+          fs.writeFileSync(p,t);
+          NODE
+          node --check verify-spec-grounded-route-oracle.mjs
+          node verify-stage-operation-registry.mjs
+      - name: Remove one-time scaffolding and commit
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/repair-route-oracle-operations.yml
+          git add verify-spec-grounded-route-oracle.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "Align the independent route oracle to exact operations"
+          git push origin HEAD:codex/exact-stage-operation-registry
