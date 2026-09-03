@@ -48,6 +48,10 @@ jobs:
           once(oldLane,newLane,'route oracle lane');
           fs.writeFileSync('verify-spec-grounded-route-oracle.mjs',s);
           NODE
+          echo '--- prompt-engine current-scope anchors after materialization ---'
+          grep -nE 'recordsForCurrentScope|currentScope|scopeRecord|scopeMatch|record.*scope' prompt-engine.js || true
+          echo '--- buildPromptRecord surrounding source ---'
+          grep -nE 'buildPromptRecord|contextManifest|projectData' prompt-engine.js | tail -80 || true
           rm .github/workflows/controller-stage10-final.yml
       - name: Prove repair and regressions
         shell: bash
