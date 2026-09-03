@@ -5,8 +5,8 @@ on:
 permissions:
   contents: write
 jobs:
-  repair:
-    if: ${{ !contains(github.event.head_commit.message, '[spec-repair-applied]') }}
+  diagnose:
+    if: ${{ !contains(github.event.head_commit.message, '[diagnostic-output]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,8 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply Stage 01 closed-accounting repair
+      - name: Reproduce Stage 01 repair and capture failure
         run: |
+          set +e
           python - <<'PY'
           from pathlib import Path
           replacements={
@@ -31,31 +32,27 @@ jobs:
             "'inapplicable with reason'":"'NO_PROJECT_RELEVANT_INFORMATION'",
             '"inapplicable with reason"':'"NO_PROJECT_RELEVANT_INFORMATION"',
           }
-          changed=[]
           for p in list(Path('.').glob('*.js'))+list(Path('.').glob('*.mjs')):
-            s=p.read_text()
-            before=s
+            s=p.read_text(); before=s
             for a,b in replacements.items(): s=s.replace(a,b)
-            enum_old='incorporated into the job definition|retained as context|unresolved human-only|later-resolvable|inapplicable with reason'
-            enum_new='EXTRACTED_RELEVANT_INFORMATION|RETAINED_AS_CONTEXT|NO_PROJECT_RELEVANT_INFORMATION|UNRESOLVED_HUMAN_AUTHORITY|LATER_RESOLVABLE|INACCESSIBLE_OR_BLOCKED'
-            s=s.replace(enum_old,enum_new)
-            if s!=before:
-              p.write_text(s); changed.append(p.name)
-          if 'prompt-engine.js' not in changed: raise SystemExit('Stage 01 prompt contract was not repaired.')
-          test="""import fs from 'node:fs';\nimport vm from 'node:vm';\nimport assert from 'node:assert/strict';\nimport { webcrypto } from 'node:crypto';\nglobalThis.crypto=webcrypto;\nglobalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\nfor(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});\nconst core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;\nconst p=core.createBlankState('JOB-STAGE01-DISPOSITIONS');p.job.JOB_ID='JOB-STAGE01-DISPOSITIONS';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve all human input exactly.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);\nconst prompt=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;\nconst required=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'];\nfor(const token of required)assert(prompt.includes(token),`Stage 01 prompt must publish ${token}.`);\nconst enumLine=prompt.split('STAGE 01 ACCOUNTING OUTPUT')[1]?.split('Every unitId')[0]||'';\nfor(const token of ['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'])assert(!enumLine.includes(token),`Legacy Stage 01 disposition remains: ${token}.`);\nassert.throws(()=>{const bad=enumLine.replace('INACCESSIBLE_OR_BLOCKED','inapplicable with reason');assert(!bad.includes('inapplicable with reason'));},/false == true|AssertionError/);\nconsole.log(JSON.stringify({stage01DispositionContract:'PASS',requiredDispositionCount:required.length,mutationDetected:true}));\n"""
-          Path('verify-stage01-disposition-contract.mjs').write_text(test)
-          print('changed',changed)
+            s=s.replace('incorporated into the job definition|retained as context|unresolved human-only|later-resolvable|inapplicable with reason','EXTRACTED_RELEVANT_INFORMATION|RETAINED_AS_CONTEXT|NO_PROJECT_RELEVANT_INFORMATION|UNRESOLVED_HUMAN_AUTHORITY|LATER_RESOLVABLE|INACCESSIBLE_OR_BLOCKED')
+            if s!=before:p.write_text(s)
           PY
-          node --check prompt-engine.js
-          node verify-stage01-disposition-contract.mjs
-          node verify-stage01-intake-closure.mjs
-          node verify-zero-loss-accounting.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-prompt-semantics.mjs
-      - name: Commit complete ratchet step
-        run: |
+          : > repair-failure.txt
+          for cmd in \
+            "node --check prompt-engine.js" \
+            "node verify-stage01-intake-closure.mjs" \
+            "node verify-zero-loss-accounting.mjs" \
+            "node verify-one-time-intent-intake.mjs" \
+            "node verify-prompt-semantics.mjs"; do
+            echo "===== $cmd =====" >> repair-failure.txt
+            bash -lc "$cmd" >> repair-failure.txt 2>&1
+            echo "exit=$?" >> repair-failure.txt
+          done
+          git reset --hard HEAD
+          git clean -fd
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add '*.js' '*.mjs'
-          git commit -m 'Enforce closed Stage 01 accounting dispositions [spec-repair-applied]'
+          git add repair-failure.txt
+          git commit -m 'Capture Stage 01 repair diagnostics [diagnostic-output]'
           git push
