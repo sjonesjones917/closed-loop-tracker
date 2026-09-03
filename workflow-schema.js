@@ -1378,3 +1378,48 @@ const schema=Object.freeze({...s0,version:'closed-loop-workflow-schema/3',__cont
 const augmented=globalThis.closedLoopWorkflowSchema;
 globalThis.closedLoopWorkflowSchema=Object.freeze({...augmented,TRUTH_VALUES:Object.freeze([...E.truth]),EPISTEMIC_BASES:Object.freeze([...E.basis]),APPLICABILITY_VALUES:Object.freeze([...E.applicability]),ENTAILMENT_VALUES:Object.freeze([...E.entailment]),PROOF_EXPRESSION_OPERATORS:Object.freeze(['LEAF','ALL_OF','ANY_OF','AT_LEAST_K']),NORMATIVE_CLASS_VALUES:Object.freeze([...E.normative]),SEMANTIC_COVERAGE_VALUES:Object.freeze([...E.coverage]),OBSERVATION_ORIGIN_VALUES:Object.freeze([...E.origin]),DELIVERY_STATE_VALUES:Object.freeze([...E.delivery])});
 })();
+
+
+/* CLOSED STAGE-OPERATION SCOPE AND EXECUTOR AUTHORITY */
+;(()=>{
+'use strict';
+const prior=globalThis.closedLoopWorkflowSchema;
+if(!prior)throw new Error('workflow schema must load before scope closure');
+const SCOPE_REQUIREMENTS=Object.freeze({
+1:Object.freeze(['inputVersion']),2:Object.freeze(['inputVersion','sourceSetVersion']),3:Object.freeze(['inputVersion','sourceSetVersion','researchVersion']),4:Object.freeze(['inputVersion','sourceSetVersion','researchVersion','requirementsVersion']),5:Object.freeze(['inputVersion','sourceSetVersion','researchVersion','requirementsVersion']),6:Object.freeze(['requirementsVersion','testSuiteVersion']),7:Object.freeze(['requirementsVersion','testSuiteVersion']),8:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion']),9:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion']),10:Object.freeze(['requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId']),11:Object.freeze(['iterationId','candidateId','runId']),12:Object.freeze(['iterationId','candidateId','runId','requirementsVersion','testSuiteVersion']),13:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),14:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),15:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),16:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),17:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),18:Object.freeze(['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),19:Object.freeze(['sourceConvergedIterationId','confirmationIterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion']),20:Object.freeze(['confirmationIterationId','baselineId']),21:Object.freeze(['baselineId','productId']),22:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),23:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),24:Object.freeze(['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion']),25:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId']),26:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion']),27:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','reconciledReviewVersion']),28:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId']),29:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId']),30:Object.freeze(['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion'])
+});
+const EXECUTOR_CLASS=Object.freeze({EXTERNAL_AGENT:'EXTERNAL_AGENT',APPLICATION:'APPLICATION',ROUTED:'ROUTED',HUMAN_DECISION:'HUMAN_DECISION',OPERATOR_ACTION:'OPERATOR_ACTION'});
+const ACCEPTANCE_MODE=Object.freeze({HUMAN_ACCEPTANCE_REQUIRED:'HUMAN_ACCEPTANCE_REQUIRED',VALIDATED_AUTO_COMMIT:'VALIDATED_AUTO_COMMIT',NOT_APPLICABLE:'NOT_APPLICABLE'});
+const applicationKeys=new Set(['10:FREEZE','17:FREEZE','18:COMPLETE','19:CONFIRM_FREEZE','19:CONFIRM','20:FREEZE_BASELINE','22:RUN_NATIVE_TESTS','24:RUN_NATIVE_ATTACKS','25:FREEZE_DELIVERY_CANDIDATE','27:CALCULATE_RELEASE','28:VERIFY_IDENTITY','29:CALCULATE_EVIDENCE_CHAINS','30:CALCULATE_TERMINAL']);
+const routedKeys=new Set(['7:EXECUTE_FAILURE_TEST','15:EXECUTE_REGRESSION','19:REGRESSION_VERIFY']);
+const humanDecisionKeys=new Set(['28:CAPTURE_DELIVERY_INTENT']);
+const operatorActionKeys=new Set(['30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','30:RECORD_DELIVERY_EVIDENCE']);
+const empty=Object.freeze([]);
+const opKey=(stage,operation)=>Number(stage)+':'+String(operation);
+function executorClass(stage,operation){const key=opKey(stage,operation);if(operatorActionKeys.has(key))return EXECUTOR_CLASS.OPERATOR_ACTION;if(humanDecisionKeys.has(key))return EXECUTOR_CLASS.HUMAN_DECISION;if(routedKeys.has(key))return EXECUTOR_CLASS.ROUTED;if(applicationKeys.has(key))return EXECUTOR_CLASS.APPLICATION;return EXECUTOR_CLASS.EXTERNAL_AGENT;}
+function operationContract(stage,operation){
+ const n=Number(stage),op=String(operation||''),ops=prior.STAGE_OPERATIONS?.[n];
+ if(!Array.isArray(ops)||!ops.includes(op))return null;
+ const legacy=prior.operationContract?.(n,op)||{};
+ const cls=executorClass(n,op),canExternal=cls===EXECUTOR_CLASS.EXTERNAL_AGENT||cls===EXECUTOR_CLASS.ROUTED;
+ const canonicalWritableCollections=Object.freeze([...(legacy.agentWritableCollections||[])]);
+ const agentWritableCollections=canExternal?canonicalWritableCollections:empty;
+ const applicationWritableCollections=(cls===EXECUTOR_CLASS.APPLICATION||cls===EXECUTOR_CLASS.ROUTED)?canonicalWritableCollections:empty;
+ const allowedStageData=canExternal?Object.freeze([...(legacy.allowedStageData||[])]):empty;
+ const responseTypes=canExternal?Object.freeze(['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']):empty;
+ const acceptanceMode=canExternal?ACCEPTANCE_MODE.HUMAN_ACCEPTANCE_REQUIRED:ACCEPTANCE_MODE.NOT_APPLICABLE;
+ const reservationRequirement=cls===EXECUTOR_CLASS.ROUTED?'WHEN_EXTERNAL':cls===EXECUTOR_CLASS.EXTERNAL_AGENT?'REQUIRED':'PROHIBITED';
+ return Object.freeze({...legacy,operation:op,executorClass:cls,executorClasses:Object.freeze(cls===EXECUTOR_CLASS.ROUTED?[EXECUTOR_CLASS.APPLICATION,EXECUTOR_CLASS.EXTERNAL_AGENT]:[cls]),canonicalWritableCollections,agentWritableCollections,applicationWritableCollections,allowedStageData,responseTypes,acceptanceMode,scopeRequirements:SCOPE_REQUIREMENTS[n],reservationRequired:reservationRequirement==='REQUIRED',reservationRequirement,nativeExternalResponseAllowed:false});
+}
+const STAGE_OPERATION_SCOPE_MATRIX=Object.freeze(Object.fromEntries(Object.entries(prior.STAGE_OPERATIONS||{}).flatMap(([stage,ops])=>ops.map(operation=>{const n=Number(stage);return [opKey(n,operation),Object.freeze({stage:n,operation,requiredDimensions:SCOPE_REQUIREMENTS[n],projectRevisionRequired:true,contractProfileIdRequired:true,promptOrCommandIdentityRequired:true,scopeHashRequired:true})];}))));
+const STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(prior.STAGE_OPERATIONS||{}).flatMap(([stage,ops])=>ops.map(operation=>{const n=Number(stage);return [opKey(n,operation),operationContract(n,operation)];}))));
+const operationCount=Object.values(prior.STAGE_OPERATIONS||{}).reduce((n,ops)=>n+ops.length,0);
+if(operationCount!==66||Object.keys(STAGE_OPERATION_REGISTRY).length!==66)throw new Error('closed operation registry must contain exactly 66 combinations');
+for(const [key,c] of Object.entries(STAGE_OPERATION_REGISTRY)){
+ if(!c)throw new Error('missing operation contract '+key);
+ if(![EXECUTOR_CLASS.EXTERNAL_AGENT,EXECUTOR_CLASS.ROUTED].includes(c.executorClass)&&(c.agentWritableCollections.length||c.allowedStageData.length||c.responseTypes.length))throw new Error('non-agent lane exposes external mutation/response authority '+key);
+ if(c.executorClass===EXECUTOR_CLASS.APPLICATION&&JSON.stringify(c.applicationWritableCollections)!==JSON.stringify(c.canonicalWritableCollections))throw new Error('application command lost canonical output ownership '+key);
+ if(c.executorClass===EXECUTOR_CLASS.ROUTED&&(c.reservationRequirement!=='WHEN_EXTERNAL'||c.executorClasses.length!==2))throw new Error('dual-route contract incomplete '+key);
+}
+globalThis.closedLoopWorkflowSchema=Object.freeze({...prior,version:'closed-loop-operation-scope-closure/1',SCOPE_REQUIREMENTS,EXECUTOR_CLASS,ACCEPTANCE_MODE,STAGE_OPERATION_SCOPE_MATRIX,STAGE_OPERATION_REGISTRY,operationContract});
+})();
