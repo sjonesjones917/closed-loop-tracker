@@ -15,13 +15,17 @@ assert(core.STAGE_COUNT===30,'Stage count changed.');
 assert(core.PROJECT_SCHEMA==='closed-loop-project/3','Project schema is not /3.');
 assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema is not /3.');
 assert(!fs.existsSync('IMPLEMENTATION_GOVERNANCE.md'),'Implementation-agent controller/governance must not be stored as repository project content.');
-const runtimeAuthorityFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html'];
-for(const file of runtimeAuthorityFiles){
-  const runtimeText=fs.readFileSync(file,'utf8');
+const assertRepositoryOnlyGovernanceBoundary=(file,runtimeText)=>{
   assert(!runtimeText.includes('specification/closed-loop-reliability-controlling-implementation-specification.txt'),`${file} must not load or embed the repository-only controlling specification path.`);
   assert(!runtimeText.includes('closed-loop-specification-manifest/1'),`${file} must not load or embed the repository-only specification manifest.`);
   assert(!runtimeText.includes('closed-loop-normative-requirements/1'),`${file} must not load or embed the repository-only normative-requirement manifest.`);
-}
+};
+const runtimeAuthorityFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html'];
+for(const file of runtimeAuthorityFiles)assertRepositoryOnlyGovernanceBoundary(file,fs.readFileSync(file,'utf8'));
+let governanceLeakMutationRejected=false;
+try{assertRepositoryOnlyGovernanceBoundary('synthetic-runtime.js','const schema = "closed-loop-normative-requirements/1";');}
+catch{governanceLeakMutationRejected=true;}
+assert(governanceLeakMutationRejected,'Repository-only governance boundary test did not reject an intentional runtime-leak mutation.');
 
 const source=fs.readFileSync('prompt-engine.js','utf8');
 for(const forbidden of [
@@ -137,6 +141,7 @@ console.log(JSON.stringify({
   promptDelimiterEscapePrevented:true,
   shortValueInstructionCorruptionPrevented:true,
   postGenerationPromptWrapperAbsent:true,
-  repositoryImplementationInstructionBoundary:true
+  repositoryImplementationInstructionBoundary:true,
+  governanceLeakMutationRejected
 },null,2));
 await import('./verify-file-first-operator.mjs');
