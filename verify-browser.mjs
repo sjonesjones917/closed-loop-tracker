@@ -11,7 +11,7 @@ const a=source.indexOf(start),b=source.indexOf(end,a);
 if(a<0||b<0||b<=a)throw new Error('Browser verifier core no longer contains the exact legacy-promotion precondition.');
 if(source.indexOf(start,a+1)>=0)throw new Error('Browser verifier core contains the legacy-promotion precondition more than once.');
 
-const replacement=String.raw`// Clean state: retained human-project/30 data is historical evidence, not current /3 semantic proof.
+const replacement=`// Clean state: retained human-project/30 data is historical evidence, not current /3 semantic proof.
  await waitExpr(cdp,\`document.querySelector('#project-picker')?.options.length>=1\`,20000);
  assert((await allProjects(cdp)).filter(p=>p.job?.JOB_ID==='JOB-20260823144121').length===1,'Retained project missing or duplicated in clean state.');
  let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(String(retained.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim().length>0,'Exact legacy user objective was not preserved as human authority.');
