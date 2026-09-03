@@ -1,0 +1,93 @@
+name: One-time terminal human-authority repair
+
+on:
+  push:
+    branches:
+      - fix/terminal-human-authority-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/terminal-human-authority-20260903
+          fetch-depth: 0
+      - name: Apply fail-closed terminal authority repair
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          old="function artifactOK(p){const x=old(p,'artifactIdentities');return x.length>0&&x.every(r=>fv(r,'EXACT_HASH_MATCH')===true&&fv(r,'EXACT_SIZE_MATCH')===true&&!fv(r,'POST_AUDIT_MODIFICATION_EVIDENCE'));}function intent(p){const s=p.stages?.[28]||{},x={...(s.agentData||{}),...(s.acceptedData||{}),...(s.humanData||{}),...(s.derivedData||{})};return['AUTHORIZED','AUTHORIZE','TRUE','YES','APPROVED','SELECTED'].includes(up(x.DELIVERY_AUTHORIZATION||x.HUMAN_DELIVERY_INTENT));}function chainOK(p){"
+          new="function artifactOK(p){const x=old(p,'artifactIdentities');return x.length>0&&x.every(r=>fv(r,'EXACT_HASH_MATCH')===true&&fv(r,'EXACT_SIZE_MATCH')===true&&!fv(r,'POST_AUDIT_MODIFICATION_EVIDENCE'));}function deliveryIntentRecord(p){const candidates=scoped(p,'humanDecisions').filter(r=>{const purpose=up(fv(r,'PURPOSE')||r.PURPOSE||r.purpose),status=up(fv(r,'STATUS')||r.STATUS||r.status||'CURRENT'),assurance=up(fv(r,'IDENTITY_ASSURANCE')||r.identityAssurance||''),value=fv(r,'VALUE')??r.value;if(purpose!=='DELIVERY_INTENT'||!['CURRENT','ACTIVE','ACCEPTED','AUTHORIZED'].includes(status)||assurance!=='SELF_ASSERTED'||!value||typeof value!=='object'||Array.isArray(value)||value.authorized!==true)return false;for(const key of['recipientOrClass','destination','transferPurpose','transferChannel','disclosureClassification'])if(!String(value[key]||'').trim())return false;const count=Number(value.permittedTransferCount);return Number.isInteger(count)&&count>=1;});return candidates.length===1?candidates[0]:null;}function intent(p){return Boolean(deliveryIntentRecord(p));}function chainOK(p){"
+          if old not in s:
+              raise SystemExit('terminal intent source pattern not found; refusing partial repair')
+          s=s.replace(old,new,1)
+          old_auth="auth=`HUMAN-DELIVERY-${h.sha256Value({ids,revision:Number(p.revision||0)}).slice(0,20).toUpperCase()}`,terminalHash="
+          new_auth="intentRecord=deliveryIntentRecord(p),auth=intentRecord?(rid(intentRecord,'humanDecisions')||String(intentRecord.decisionId||'')):'';if(!auth)return null;const terminalHash="
+          if old_auth not in s:
+              raise SystemExit('synthetic delivery authorization source pattern not found; refusing partial repair')
+          s=s.replace(old_auth,new_auth,1)
+          s=s.replace("if(!intent(p))why.push('Human delivery intent is missing.');","if(!intent(p))why.push('Current destination-bound human delivery intent is missing.');",1)
+          p.write_text(s)
+
+          test=Path('verify-terminal-human-authority.mjs')
+          test.write_text(r'''import fs from 'node:fs';
+          import vm from 'node:vm';
+          import assert from 'node:assert/strict';
+          import {webcrypto} from 'node:crypto';
+
+          class Event { constructor(type){ this.type=type; } }
+          const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Blob,structuredClone,performance:{now:()=>0},setTimeout,clearTimeout,URL,Event,dispatchEvent:()=>true};
+          context.globalThis=context;
+          vm.createContext(context);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),context,{filename:file});
+          const core=context.closedLoopCore,engine=context.closedLoopWorkflowEngine;
+          const project=core.createBlankState('JOB-TERMINAL-AUTHORITY-REGRESSION');
+          engine.ensureShape(project);
+
+          assert.equal(engine.humanDeliveryIntent(project),false,'No human decision means delivery intent is absent.');
+          project.stages[28].agentData.DELIVERY_AUTHORIZATION='AUTHORIZED';
+          project.stages[28].acceptedData.DELIVERY_AUTHORIZATION='AUTHORIZED';
+          project.stages[28].humanData.DELIVERY_AUTHORIZATION='AUTHORIZED';
+          project.stages[28].derivedData.DELIVERY_AUTHORIZATION='AUTHORIZED';
+          assert.equal(engine.humanDeliveryIntent(project),false,'Stage data, including an agent claim or loose human text, cannot create delivery authority.');
+
+          project.projectData.humanDecisions.push({id:'HUMAN-DECISION-INCOMPLETE',active:true,scope:{},fields:{HUMAN_DECISION_ID:'HUMAN-DECISION-INCOMPLETE',PURPOSE:'DELIVERY_INTENT',VALUE:{authorized:true,recipientOrClass:'OPERATOR'},IDENTITY_ASSURANCE:'SELF_ASSERTED',STATUS:'CURRENT'}});
+          assert.equal(engine.humanDeliveryIntent(project),false,'An incomplete destination binding cannot authorize delivery.');
+
+          project.projectData.humanDecisions.length=0;
+          project.projectData.humanDecisions.push({id:'HUMAN-DECISION-CURRENT',active:true,scope:{},fields:{HUMAN_DECISION_ID:'HUMAN-DECISION-CURRENT',PURPOSE:'DELIVERY_INTENT',VALUE:{authorized:true,recipientOrClass:'OPERATOR',destination:'LOCAL_DOWNLOAD',transferPurpose:'DELIVER_FINAL_ARTIFACTS',transferChannel:'BROWSER_DOWNLOAD',disclosureClassification:'CONFIDENTIAL',permittedTransferCount:1},IDENTITY_ASSURANCE:'SELF_ASSERTED',STATUS:'CURRENT'}});
+          assert.equal(engine.humanDeliveryIntent(project),true,'Exactly one current destination-bound human decision may satisfy delivery intent.');
+
+          const source=fs.readFileSync(new URL('./workflow-engine.js',import.meta.url),'utf8');
+          assert.doesNotMatch(source,/HUMAN-DELIVERY-\$\{h\.sha256Value/,'The application must not synthesize a human delivery authorization identifier.');
+          console.log(JSON.stringify({terminalHumanAuthority:'PASS',agentStageDataRejected:true,incompleteDecisionRejected:true,destinationBoundDecisionAccepted:true,syntheticAuthorizationRemoved:true}));
+          ''')
+
+          wf=Path('.github/workflows/pages.yml')
+          y=wf.read_text()
+          needle='node verify-complete.mjs'
+          if 'node verify-terminal-human-authority.mjs' not in y:
+              if needle not in y:
+                  raise SystemExit('pages workflow insertion point not found')
+              y=y.replace(needle,needle+'\n          node verify-terminal-human-authority.mjs',1)
+              wf.write_text(y)
+          PY
+      - name: Prove regression before commit
+        run: node verify-terminal-human-authority.mjs
+      - name: Remove one-time repair scaffolding and commit repair
+        shell: bash
+        run: |
+          git config user.name "closed-loop-repair-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/repair-terminal-human-authority.yml
+          git add workflow-engine.js verify-terminal-human-authority.mjs .github/workflows/pages.yml
+          git commit -m "Reject synthesized terminal human authority"
+          git push origin HEAD:fix/terminal-human-authority-20260903
