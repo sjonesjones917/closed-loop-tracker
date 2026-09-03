@@ -27,10 +27,15 @@ jobs:
           const fs=require('fs');
           const path='test-runtime.js';
           let text=fs.readFileSync(path,'utf8');
-          const from="const port=(type,required=true,defaultValue)=>Object.freeze({type,required,...(arguments.length>2?{defaultValue}:{})});";
-          const to="function port(type,required=true,defaultValue){return Object.freeze({type,required,...(arguments.length>2?{defaultValue}:{})});}";
-          if(!text.includes(from))throw new Error('Port helper repair target not found.');
-          fs.writeFileSync(path,text.replace(from,to));
+          const replacements=[
+            ["const port=(type,required=true,defaultValue)=>Object.freeze({type,required,...(arguments.length>2?{defaultValue}:{})});","function port(type,required=true,defaultValue){return Object.freeze({type,required,...(arguments.length>2?{defaultValue}:{})});}"],
+            ["function typeCompatible(actual,expected){if(expected==='ANY')return true;","function typeCompatible(actual,expected){if(actual==='ANY'||expected==='ANY')return true;"]
+          ];
+          for(const [from,to] of replacements){
+            if(!text.includes(from))throw new Error('Test IR repair target not found: '+from);
+            text=text.replace(from,to);
+          }
+          fs.writeFileSync(path,text);
           NODE
       - run: node --check test-runtime.js && node verify-test-ir-dag-contract.mjs
       - name: Commit repaired runtime
