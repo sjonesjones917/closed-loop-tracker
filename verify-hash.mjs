@@ -30,6 +30,24 @@ let duplicateSetRejected=false;
 try{h.hashRegistered('TEST_HASH',{a:1,members:[{id:'A'},{id:'A'}],digest:''});}catch(error){duplicateSetRejected=/Duplicate set element identity/.test(String(error));}
 assert(duplicateSetRejected,'Duplicate registered set identities must fail closed.');
 
+assert(h.hashPreimageRegistry.has('CONTENT_RECORD:REQ_ID'),'Requirement content hash preimage is not explicitly registered.');
+assert(h.hashPreimageRegistry.has('CANONICAL_RECORD'),'Canonical record hash preimage is not explicitly registered.');
+const contentRecord={fields:{REQ_ID:'REQ-1',OBLIGATION:'must hold',STATUS:'CURRENT',VERSION:'V1',CREATED_AT:'device-a',UPDATED_AT:'device-b'},relationships:{SOURCE_ID:'SOURCE-1'},evidenceRefs:['EVIDENCE-1']};
+const contentPreimage=h.contentRecordValue(contentRecord,'REQ_ID');
+assert(!Object.prototype.hasOwnProperty.call(contentPreimage.fields,'REQ_ID'),'Content hash preimage did not apply the registered identity omission.');
+assert(!Object.prototype.hasOwnProperty.call(contentPreimage.fields,'STATUS'),'Content hash preimage did not apply the registered lifecycle omission.');
+assert(contentPreimage.fields.OBLIGATION==='must hold','Content hash preimage lost substantive canonical content.');
+const contentHash=h.contentRecordSha256(contentRecord,'REQ_ID');
+assert(contentHash===h.contentRecordSha256({fields:{...contentRecord.fields,REQ_ID:'REQ-2',STATUS:'SUPERSEDED',VERSION:'V2',CREATED_AT:'other',UPDATED_AT:'other'},relationships:contentRecord.relationships,evidenceRefs:contentRecord.evidenceRefs},'REQ_ID'),'Registered noncontent omissions changed content identity.');
+assert(contentHash!==h.contentRecordSha256({fields:{...contentRecord.fields,OBLIGATION:'different'},relationships:contentRecord.relationships,evidenceRefs:contentRecord.evidenceRefs},'REQ_ID'),'Substantive content change did not change content identity.');
+let unknownContentKindRejected=false;
+try{h.contentRecordSha256({fields:{UNKNOWN_ID:'X'},relationships:{},evidenceRefs:[]},'UNKNOWN_ID');}catch(error){unknownContentKindRejected=/UNDEFINED_HASH_PREIMAGE/.test(String(error));}
+assert(unknownContentKindRejected,'Unknown content-record hash kind must fail closed instead of inventing a preimage.');
+const canonicalRecord={fields:{REQ_ID:'REQ-1',OBLIGATION:'must hold'},relationships:{},evidenceRefs:[],recordSha256:'old',sha256:'legacy'};
+const canonicalRecordHash=h.recordSha256(canonicalRecord);
+assert(canonicalRecordHash===h.recordSha256({...canonicalRecord,recordSha256:'changed',sha256:'changed'}),'Canonical record digest fields must be omitted only through the registered preimage.');
+assert(canonicalRecordHash!==h.recordSha256({...canonicalRecord,fields:{...canonicalRecord.fields,OBLIGATION:'changed'}}),'Canonical record substantive change did not change record identity.');
+
 const idInput={familyPrefix:'REQ',familyNamespace:'requirements',jobNamespace:'JOB-123',commandId:'CMD-1',targetSlot:'slot',parentId:'',allocationSequence:7,collisionCounter:0};
 const idA=h.allocateCanonicalId(idInput),idB=h.allocateCanonicalId(idInput);
 assert(idA.id===idB.id,'Canonical ID allocation is not stable for an identical allocation tuple.');
@@ -61,4 +79,4 @@ const appCore=fs.readFileSync('app-core.js','utf8');
 assert(/function\s+artifactControlMarkup\s*\(\s*n\s*,\s*locked\s*\)\s*\{\s*if\s*\(\s*n\s*===\s*19\s*\)/.test(appCore),'Artifact controls must retain the established Stage 19 unchanged-candidate boundary; whitespace or formatting changes must not alter the invariant.');
 assert(!/function\s+artifactControlMarkup\s*\(\s*n\s*,\s*locked\s*\)\s*\{[\s\S]{0,500}?if\s*\(\s*n\s*===\s*4\s*\)\s*return\s*['"]{2}\s*;/.test(appCore),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
