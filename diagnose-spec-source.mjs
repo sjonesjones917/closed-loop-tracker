@@ -10,6 +10,7 @@ const run=(args,input)=>{
   if(out.status!==0)throw new Error(`git ${args.join(' ')} failed: ${String(out.stderr)}`);
   return out.stdout;
 };
+run(['fetch','--force','--no-tags','origin','+refs/heads/*:refs/remotes/origin/*','+refs/pull/*/head:refs/remotes/pull/*']);
 const objects=run(['rev-list','--objects','--all']).toString('utf8').trim().split('\n').filter(Boolean);
 const unique=[...new Set(objects.map(line=>line.split(' ')[0]))];
 const checkInput=Buffer.from(unique.join('\n')+'\n');
