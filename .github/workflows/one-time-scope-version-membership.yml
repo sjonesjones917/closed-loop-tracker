@@ -1,0 +1,36 @@
+name: One-time scope version membership repair
+
+on:
+  push:
+    branches: [repair/scope-current-2612]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply version membership repair
+        run: node .repair-scope-version-membership.mjs
+      - name: Prove scope and full-cycle contracts
+        run: |
+          node --check workflow-engine.js
+          node verify-stage-operation-scope-matrix.mjs
+          node verify-full-cycle.mjs
+          node verify-v3-contract.mjs
+      - name: Commit completed repair
+        run: |
+          set -euo pipefail
+          git config user.name "closed-loop repair automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add workflow-engine.js verify-stage-operation-scope-matrix.mjs
+          git diff --cached --exit-code && exit 0
+          git commit -m "Bind current versions to all scoped owner families"
+          git push origin HEAD:repair/scope-current-2612
