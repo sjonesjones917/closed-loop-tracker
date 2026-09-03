@@ -24,6 +24,15 @@ try{
   if(!manifestBytesA.equals(manifestBytesB))throw new Error('Two clean builds did not produce the same deployment manifest.');
   const manifest=JSON.parse(manifestBytesA);
   if(manifest.schema!=='closed-loop-deployment-manifest/1')throw new Error('Wrong deployment manifest schema.');
+  if(manifest.canonicalOrigin!=='https://sjonesjones917.github.io')throw new Error('Deployment manifest canonical origin is wrong.');
+  if(manifest.canonicalHost!=='sjonesjones917.github.io')throw new Error('Deployment manifest canonical host is wrong.');
+  if(manifest.canonicalBasePath!=='/closed-loop-tracker/')throw new Error('Deployment manifest canonical base path is wrong.');
+  if(manifest.deploymentEnvironment!=='github-pages')throw new Error('Deployment environment identity is wrong.');
+  if(manifest.noCrossOriginRedirect!==true||manifest.permittedRuntimeOrigin!=='SAME_ORIGIN_ONLY')throw new Error('Deployment origin/redirect policy is not closed.');
+  if(manifest.workflowIdentity!=='mobile-closed-loop/30')throw new Error('Deployment manifest workflow identity is wrong.');
+  if(manifest.projectSchema!=='closed-loop-project/3'||manifest.responseSchema!=='closed-loop-stage-response/3')throw new Error('Deployment manifest runtime schema identity is wrong.');
+  if(manifest.testIrSchema!=='closed-loop-test-spec/1'||manifest.verificationPackageSchema!=='closed-loop-verification-package/1')throw new Error('Deployment manifest verification contract identity is wrong.');
+  if(manifest.contractProfileId!=='closed-loop-completion-profile/1')throw new Error('Deployment manifest contract profile is missing or wrong.');
   const withoutDigest={...manifest};delete withoutDigest.manifestDigest;
   if(manifest.manifestDigest?.hashAlgorithm!=='SHA-256'||manifest.manifestDigest?.digest!==sha256(Buffer.from(canonical(withoutDigest),'utf8')))throw new Error('Deployment manifest digest mismatch.');
   if(!Array.isArray(manifest.runtimeResources)||manifest.runtimeResources.length!==13)throw new Error('Deployment resource closure is incomplete.');
@@ -41,7 +50,7 @@ try{
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
   if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,noControllingServiceWorker:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,noControllingServiceWorker:true},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }
