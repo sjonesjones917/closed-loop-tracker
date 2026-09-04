@@ -82,6 +82,13 @@ assert.equal(releaseTagEligibility({...completePhysicalEvidence,actualAndroidChr
 const target={
   mobileAcceptanceTargetId:'MOBILE-TARGET-001',
   physicalDeviceRequired:true,
+  deviceHardwareClass:'iPhone physical test device',
+  iosVersion:'19.0',
+  iosBuild:'23A000',
+  safariVersion:'19.0',
+  webKitBuildIdentity:'605.1.15',
+  performer:'authorized-operator',
+  identityAssurance:'SELF_ASSERTED',
   challenge:'0123456789abcdef0123456789abcdef',
   challengeIssuedAt:'2026-09-02T20:00:00.000Z',
   challengeExpiresAt:'2026-09-03T20:00:00.000Z',
@@ -103,11 +110,15 @@ const evidence={
   basePath:target.basePath,
   testProjectId:target.testProjectId,
   procedureVersion:target.procedureVersion,
+  deviceHardwareClass:target.deviceHardwareClass,
+  iosVersion:target.iosVersion,
+  iosBuild:target.iosBuild,
+  safariVersion:target.safariVersion,
+  webKitBuildIdentity:target.webKitBuildIdentity,
   physicalDeviceAssertion:true,
   evidenceBasis:'HUMAN_OBSERVATION',
-  performer:'authorized-operator',
-  identityAssurance:'SELF_ASSERTED',
-  iosVersion:'19.0',
+  performer:target.performer,
+  identityAssurance:target.identityAssurance,
   safariUserAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1',
   viewport:{...target.viewport},
   operationReceipts:REQUIRED_MOBILE_RECEIPT_KINDS.map((kind,index)=>({kind,receiptId:`MR-${String(index+1).padStart(3,'0')}`,result:'PASS'})),
@@ -119,6 +130,8 @@ const evidence={
 const expected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T00:00:00.000Z'};
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true,'Complete pinned mobile evidence must validate.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challenge:'f'.repeat(32)},expected}).accepted,false,'Mismatched challenge must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,deviceHardwareClass:'iPad'},expected}).accepted,false,'A different hardware class must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,iosBuild:'DIFFERENT'},expected}).accepted,false,'A changed iOS build must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Safari/604.1','CriOS/140.0.0.0 Mobile/15E148 Safari/604.1')},expected}).accepted,false,'A substitute iOS browser must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operationReceipts:evidence.operationReceipts.slice(1)},expected}).accepted,false,'Missing required physical operator-path evidence must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected,usedChallenges:[target.challenge]}).accepted,false,'A reused physical acceptance challenge must be rejected.');
@@ -155,6 +168,9 @@ console.log(JSON.stringify({
   selfAssertionRejected:true,
   canonicalOriginBound:true,
   exactTargetBindingVerified:true,
+  pinnedHardwareClassVerified:true,
+  pinnedIosBuildVerified:true,
+  pinnedSafariAndWebKitVerified:true,
   singleUseChallengeVerified:true,
   expiredChallengeRejected:true,
   substituteIosBrowserRejected:true,
