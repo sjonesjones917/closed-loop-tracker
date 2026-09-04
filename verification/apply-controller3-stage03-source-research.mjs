@@ -1,0 +1,30 @@
+import fs from 'node:fs';
+
+const schemaPath='workflow-schema.js';
+let schema=fs.readFileSync(schemaPath,'utf8');
+const oldFn="function amendedOperationContract(stage,operation){const base=s0.operationContract(stage,operation);if(!base)return null;const addedAgent=addedAgentCollections[stage]||[],addedRead=stage>=5?completionReadCollections:[],addedApplication=stage===30?['operationReservations','proofObligations','deliveryRecords','deploymentManifests']:['operationReservations','proofObligations'];return Object.freeze({...base,readCollections:Object.freeze([...new Set([...(base.readCollections||[]),...addedRead])]),agentWritableCollections:Object.freeze([...new Set([...(base.agentWritableCollections||[]),...addedAgent])]),applicationCollections:Object.freeze([...new Set([...(base.applicationCollections||[]),...addedApplication])]),allowedStageData:Object.freeze([...(CONTRACTS[stage]?.allowedStageData||base.allowedStageData||[])])});}";
+const newFn="const OPERATION_CONTRACT_OVERRIDES=Object.freeze({'3:SEMANTIC_CHALLENGE':Object.freeze({readCollections:Object.freeze(['sources','sourceConflicts']),agentWritableCollections:Object.freeze(['semanticChallenges'])}),'3:RECONCILE_RESEARCH':Object.freeze({readCollections:Object.freeze(['sources','sourceConflicts','research','candidateRequirements','semanticChallenges']),agentWritableCollections:Object.freeze(['semanticReviews'])})});\nfunction amendedOperationContract(stage,operation){const base=s0.operationContract(stage,operation);if(!base)return null;const override=OPERATION_CONTRACT_OVERRIDES[`${stage}:${operation}`]||null,addedAgent=override?[]:(addedAgentCollections[stage]||[]),addedRead=stage>=5?completionReadCollections:[],addedApplication=stage===30?['operationReservations','proofObligations','deliveryRecords','deploymentManifests']:['operationReservations','proofObligations'];return Object.freeze({...base,readCollections:Object.freeze([...new Set([...(override?.readCollections||base.readCollections||[]),...addedRead])]),agentWritableCollections:Object.freeze([...new Set([...(override?.agentWritableCollections||base.agentWritableCollections||[]),...addedAgent])]),applicationCollections:Object.freeze([...new Set([...(base.applicationCollections||[]),...addedApplication])]),allowedStageData:Object.freeze([...(CONTRACTS[stage]?.allowedStageData||base.allowedStageData||[])])});}";
+if(!schema.includes(oldFn))throw new Error('Expected amendedOperationContract source not found; refuse ambiguous patch.');
+schema=schema.replace(oldFn,newFn);
+fs.writeFileSync(schemaPath,schema);
+
+const oraclePath='verify-spec-grounded-route-oracle.mjs';
+let oracle=fs.readFileSync(oraclePath,'utf8');
+const opStart="const OP={\n'17:FREEZE'";
+const opReplacement="const OP={\n'3:SEMANTIC_CHALLENGE':{r:['sources','sourceConflicts'],w:['semanticChallenges']},'3:RECONCILE_RESEARCH':{r:['sources','sourceConflicts','research','candidateRequirements','semanticChallenges'],w:['semanticReviews']},\n'17:FREEZE'";
+if(!oracle.includes(opStart))throw new Error('Expected route-oracle OP map source not found.');
+oracle=oracle.replace(opStart,opReplacement);
+fs.writeFileSync(oraclePath,oracle);
+
+const verifier=`import fs from 'node:fs';\nimport vm from 'node:vm';\nconst assert=(condition,message)=>{if(!condition)throw new Error(message);};\nglobalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\nfor(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});\nconst schema=globalThis.closedLoopWorkflowSchema;\nconst complete=schema.operationContract(3,'COMPLETE');\nconst challenge=schema.operationContract(3,'SEMANTIC_CHALLENGE');\nconst reconcile=schema.operationContract(3,'RECONCILE_RESEARCH');\nassert(complete.agentWritableCollections.includes('research')&&complete.agentWritableCollections.includes('candidateRequirements'),'Stage 03 COMPLETE lost canonical extraction outputs.');\nassert(challenge.agentWritableCollections.includes('semanticChallenges'),'Stage 03 SEMANTIC_CHALLENGE must write semanticChallenges.');\nassert(!challenge.agentWritableCollections.includes('research')&&!challenge.agentWritableCollections.includes('candidateRequirements'),'Stage 03 challenge can overwrite author extraction.');\nassert(challenge.readCollections.includes('sources'),'Stage 03 challenge must receive sources.');\nassert(!challenge.readCollections.includes('research')&&!challenge.readCollections.includes('candidateRequirements'),'Stage 03 challenge received first extraction before independent extraction completed.');\nassert(reconcile.agentWritableCollections.includes('semanticReviews'),'Stage 03 reconciliation must write semanticReviews.');\nassert(!reconcile.agentWritableCollections.includes('research')&&!reconcile.agentWritableCollections.includes('candidateRequirements'),'Stage 03 reconciliation must not overwrite author extraction.');\nassert(reconcile.readCollections.includes('research')&&reconcile.readCollections.includes('candidateRequirements')&&reconcile.readCollections.includes('semanticChallenges'),'Stage 03 reconciliation lacks author/challenge inputs.');\nconsole.log(JSON.stringify({stage03SourceResearchOperationClosure:true}));\n`;
+fs.writeFileSync('verify-stage03-source-research.mjs',verifier);
+
+const workflowPath='.github/workflows/pages.yml';
+let workflow=fs.readFileSync(workflowPath,'utf8');
+if(!workflow.includes('node verify-stage03-source-research.mjs')){
+  const anchor='node verify-stage-operation-registry.mjs';
+  if(!workflow.includes(anchor))throw new Error('Pages verification anchor not found.');
+  workflow=workflow.replace(anchor,`${anchor}\n          node verify-stage03-source-research.mjs`);
+  fs.writeFileSync(workflowPath,workflow);
+}
+console.log('Stage 03 source-research repair applied.');
