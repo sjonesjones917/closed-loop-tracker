@@ -9,11 +9,11 @@ jobs:
   repair:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: controller3-exec-20260904-2628669
           fetch-depth: 0
-      - uses: actions/setup-node@5e2628c959b9a0733e173b40a961100b681af08c
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
       - name: Apply repair
