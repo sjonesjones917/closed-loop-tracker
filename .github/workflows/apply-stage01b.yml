@@ -25,7 +25,8 @@ jobs:
           base64 -d /tmp/stage01b.b64 > /tmp/stage01b.tar.gz
           echo "2281ff87159986780d24b91029640eb8060a0f22235cbf3df72f9126f2eff17a  /tmp/stage01b.tar.gz" | sha256sum -c -
           tar -xzf /tmp/stage01b.tar.gz
-          rm -f .stage01b-payload.00 .stage01b-payload.01 .stage01b-payload.02 .stage01b-payload.03 .stage01b-payload.04 .stage01b-payload.05 .stage01b-payload.06 .github/workflows/apply-stage01b.yml
+          git checkout HEAD -- .github/workflows/pages.yml
+          rm -f .stage01b-payload.00 .stage01b-payload.01 .stage01b-payload.02 .stage01b-payload.03 .stage01b-payload.04 .stage01b-payload.05 .stage01b-payload.06
           node --check generate-specification-governance.mjs
           node --check review-specification-coverage.mjs
           node --check verify-specification-governance.mjs
@@ -37,5 +38,5 @@ jobs:
           git config user.name closed-loop-controller
           git config user.email closed-loop-controller@users.noreply.github.com
           git add -A
-          git commit -m "Build Stage 01: establish controller v2 governance proof"
+          git commit -m "Build Stage 01: establish controller v2 governance proof source"
           git push origin HEAD:controller-v2-stage01b-governance-20260904
