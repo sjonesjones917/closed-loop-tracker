@@ -1,0 +1,132 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "20",
+  "stageName": "CORRECTED TEN-RUN ITERATION",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "7fa282e2d19a3a0750c4309247da757366da0560",
+  "endingMainCommit": "7fa282e2d19a3a0750c4309247da757366da0560",
+  "implementationCommitIds": [
+    "7b86d5c7b3ffb7522eb35c6a404015b39d390fb5",
+    "7fa282e2d19a3a0750c4309247da757366da0560"
+  ],
+  "changedFiles": [
+    "workflow-engine.js",
+    "verify-corrected-iteration.mjs",
+    "verify-spec-residual-closure.mjs"
+  ],
+  "specificationSections": [
+    "36.2 Shared repeated-iteration evaluator",
+    "37 Stage 17 — RE-RUN THE COMPLETE TEN-EXECUTION ITERATION",
+    "38 iterations",
+    "38 candidateFreezes",
+    "38 verification",
+    "38 comparisons",
+    "38 changes",
+    "40 Permanent regression obligations",
+    "41 Mandatory deterministic and behavioral tests",
+    "43 Test the tests",
+    "44 Negative test matrix",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "verify-corrected-iteration.mjs",
+    "verify-root-cause-correction.mjs",
+    "verify-independent-run-verification.mjs",
+    "verify-cross-run-comparison.mjs",
+    "verify-full-cycle.mjs",
+    "verify-spec-residual-closure.mjs"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_REVERIFIED_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "Controller Stage 20 maps to application Stage 17 corrected repeated iteration. PR 1125 repaired the real workflow engine so a corrected Stage 17 iteration cannot close unless it is bound to the immediate prior iteration, a distinct frozen candidate, the current Stage 17 candidate-component human decision, and the responsible correction lineage. The engine also requires complete effective SATISFIED due verification, one clean comparison per current mandatory requirement, and zero current confirmed defects before corrected-iteration closure. The permanent verify-corrected-iteration.mjs exercises the real engine against five intentional invalid fixtures and a repaired progression fixture, and is permanently replayed by verify-spec-residual-closure.mjs. Exact canonical main 7fa282e2d19a3a0750c4309247da757366da0560 then passed the full repository test barrier and local Chromium, deployed successfully, and passed exact deployed-byte verification plus deployed Chromium.",
+  "proofCommands": [
+    {
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33919035679, test job 101172841620, exact canonical main 7fa282e2d19a3a0750c4309247da757366da0560."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33919035679, test job 101172841620. Local Chromium operator path completed success."
+    },
+    {
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33919035679, deploy job 101173982639. Exact canonical main deployment completed success."
+    },
+    {
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33919035679, deployment verification job 101174084254. Exact deployed-byte verification and deployed Chromium operator path completed success."
+    },
+    {
+      "command": "pull-request verification barrier for Stage 20 implementation repair",
+      "exitCode": 0,
+      "basis": "PR 1125 head 7b86d5c7b3ffb7522eb35c6a404015b39d390fb5 passed workflow run 33918663405 before merge; the permanent corrected-iteration verifier executed repaired progression and all intentional invalid fixtures."
+    }
+  ],
+  "directSourceFindings": [
+    "workflow-engine.js exposes evaluateCorrectedIterationLineage() and consumes it only for CORRECTED repeated-iteration evaluation.",
+    "The corrected iteration must identify the immediate prior iteration and use a distinct current candidate identity.",
+    "The current candidate freeze must agree with its frozen component manifest/hash map and consume a current Stage 17 CANDIDATE_COMPONENT_SELECTION human decision.",
+    "The corrected iteration must bind to the responsible changeset/RCA lineage, reject in-place rewrites, and require repeated preflight when the production instruction changes.",
+    "Corrected-iteration closure requires effective SATISFIED due verification, a clean current comparison for every mandatory requirement, and zero current confirmed defects.",
+    "verify-corrected-iteration.mjs runs the real engine on isolated disposable project state, includes repaired progression, and is permanently wired into verify-spec-residual-closure.mjs.",
+    "The exact current-main workflow passed local Chromium, deployment, exact deployed-byte verification, and deployed Chromium after the repair.",
+    "No UI, CSS, prompt-box geometry, project store, parser family, prompt authority, response-ingestion path, or application shell was changed by the Stage 20 repair."
+  ],
+  "intentionalInvalidFixtures": [
+    "corrected-iteration-reuses-prior-candidate",
+    "corrected-iteration-missing-changeset-binding",
+    "corrected-iteration-wrong-responsible-layer",
+    "corrected-iteration-missing-stage17-candidate-selection-authority",
+    "corrected-iteration-candidate-manifest-hash-disagreement"
+  ],
+  "repairedStateProofs": [
+    "A new Stage 17 iteration bound to the immediate prior iteration, a distinct candidate, current candidate-selection authority, and current responsible correction lineage is accepted by evaluateCorrectedIterationLineage().",
+    "A candidate manifest whose exact component hashes agree with the frozen hash map progresses.",
+    "The full synthetic 30-stage lifecycle still completes after the corrected-iteration closure repair."
+  ],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},
+    {"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [
+    {"workflowRunId":33919035679,"jobId":101172841620,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"7fa282e2d19a3a0750c4309247da757366da0560"},
+    {"workflowRunId":33919035679,"jobId":101174084254,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"7fa282e2d19a3a0750c4309247da757366da0560"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33919035679,"jobId":101173982639,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"7fa282e2d19a3a0750c4309247da757366da0560"},
+    {"workflowRunId":33919035679,"jobId":101174084254,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"7fa282e2d19a3a0750c4309247da757366da0560"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
+  "unprovenItems": [],
+  "stageDisposition": "PROVEN",
+  "directEvidenceReview": "PASS",
+  "nextStage": "21",
+  "notes": "This advances only controller Stage 20 after current direct evidence proves corrected Stage 17 repeated-iteration closure. Stages 21-30, objective visual-baseline authority, physical-iPhone acceptance, release tagging, and Section 49 completion remain unproven and are not claimed."
+}
