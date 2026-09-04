@@ -127,10 +127,12 @@ export function assertAcceptedMobileEvidence(args){
   return result;
 }
 
-// Repository-only controller progression hook. It executes only after the exact-main
-// source/local-browser and deployed-byte/deployed-browser jobs have succeeded. It
-// advances one earliest non-PROVEN build stage per canonical-main workflow run.
+// Repository-only controller progression hook. It executes only from the acceptance
+// submission entry point after exact-main source/local-browser and deployed-byte/
+// deployed-browser jobs have succeeded, so imported verification modules cannot
+// advance more than one stage in a single canonical-main workflow run.
 if(
+  process.argv[1]?.endsWith('evaluate-mobile-acceptance-submission.mjs')&&
   process.env.TEST_RESULT==='success'&&
   process.env.LIVE_RESULT==='success'&&
   process.env.GITHUB_REF==='refs/heads/main'&&
