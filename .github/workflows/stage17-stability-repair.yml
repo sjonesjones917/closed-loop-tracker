@@ -1,0 +1,41 @@
+name: Stage 17 stability repair
+
+on:
+  push:
+    branches:
+      - controller-stage17-cross-run-metrics-20260904
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Apply Stage 17 stability repair and remove one-time files
+        run: |
+          set -euo pipefail
+          python stage17-stability-repair.py
+          rm stage17-stability-repair.py .github/workflows/stage17-stability-repair.yml
+      - name: Verify focused and residual Stage 17 behavior
+        run: |
+          set -euo pipefail
+          node --check workflow-engine.js
+          node --check verify-cross-run-comparison.mjs
+          node verify-cross-run-comparison.mjs
+          node verify-spec-residual-closure.mjs
+      - name: Commit repaired shared evaluator
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Stage 17: complete cross-run stability metrics"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
