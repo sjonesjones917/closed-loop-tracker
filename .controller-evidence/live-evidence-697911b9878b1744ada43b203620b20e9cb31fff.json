@@ -1,0 +1,21 @@
+{
+  "targetCommit": "697911b9878b1744ada43b203620b20e9cb31fff",
+  "canonicalOrigin": "https://sjonesjones917.github.io",
+  "basePath": "/closed-loop-tracker/",
+  "results": [
+    {
+      "command": "node verify-deployment-manifest.mjs",
+      "status": 0,
+      "signal": null,
+      "stdout": "{\n  \"specificationSourcePresent\": true,\n  \"sourceCommit\": \"c47f605bc684cc1f31ae67a053dc2be52a37106a\",\n  \"sourceByteLength\": 309472,\n  \"sourceSha256\": \"6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9\",\n  \"topLevelSectionCount\": 53,\n  \"sectionCount\": 253,\n  \"normativeRequirementCount\": 3825,\n  \"stage01GovernanceRequirementCount\": 7,\n  \"dispositionCounts\": {\n    \"CONFORMANT_PROVEN\": 7,\n    \"IMPLEMENTED_UNPROVEN\": 3818,\n    \"MISSING\": 0,\n    \"CONTRADICTED\": 0,\n    \"BLOCKED_HUMAN\": 0,\n    \"BLOCKED_ENVIRONMENT\": 0,\n    \"UNKNOWN\": 0\n  },\n  \"independentOmissionChallenge\": true,\n  \"reconciliationComplete\": true,\n  \"runtimeSpecificationCopies\": 0,\n  \"runtimeControllerCopies\": 0,\n  \"mutationCount\": 6,\n  \"mutations\": [\n    \"uncovered-section\",\n    \"missing-requirement\",\n    \"duplicate-id\",\n    \"missing-test-trace\",\n    \"source-conflict\",\n    \"runtime-copy\"\n  ],\n  \"intentionalUncoveredSectionMutationRejected\": true,\n  \"allNormativeRequirementsConformant\": false,\n  \"stage01GovernanceProof\": \"PASS\",\n  \"sourceCommitReachabilityChecked\": true,\n  \"committedManifestBytesValidated\": true,\n  \"independentRegenerationCompared\": true,\n  \"verifierDidNotRewriteCommittedManifests\": true,\n  \"committedManifestMutationRejected\": true\n}\n{\"doneStages\":0,\"currentStage\":\"01\",\"specificationSha256\":\"6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9\",\"specificationSourceCommit\":\"c47f605bc684cc1f31ae67a053dc2be52a37106a\",\"ledgerVerified\":true,\"statusContract\":[\"NOT_STARTED\",\"IN_PROGRESS\",\"BLOCKED\",\"DONE\"],\"intentionalInvalidFixturesRejected\":6,\"singleControllerLedger\":true}\n{\n  \"deploymentManifest\": \"PASS\",\n  \"schema\": \"closed-loop-deployment-manifest/1\",\n  \"canonicalOrigin\": \"https://sjonesjones917.github.io\",\n  \"canonicalBasePath\": \"/closed-loop-tracker/\",\n  \"contractProfileId\": \"closed-loop-completion-profile/1\",\n  \"testWorkerProtocolVersion\": \"closed-loop-test-worker-protocol/1\",\n  \"testWorkerSha256\": \"0175059995472489b26265bd2c3b0e1327432a4ce4f25cde2b6aac1e7ccb820c\",\n  \"resources\": 13,\n  \"buildIdentity\": \"build-sha256-ceea03fb2f0d20162834cc657ad9931b9ba09fd24549ddca1777a356d7c321db\",\n  \"manifestDigest\": \"90c92f3ed46ae51244f1e0e2c28bfbb624c90b55ec1f3d8d7793a1e3705d50c2\",\n  \"reproducible\": true,\n  \"sharedCanonicalHashAuthority\": true,\n  \"canonicalUnicodeScalarOrdering\": true,\n  \"integerLikeKeyOrdering\": true,\n  \"unpairedSurrogateRejected\": true,\n  \"workerCanonicalHashDependency\": true,\n  \"workerResultBuildIdentityBound\": true,\n  \"workerResultByteIdentityBound\": true,\n  \"missingWorkerDigestMutationDetected\": true,\n  \"changedWorkerDigestMutationDetected\": true,\n  \"noControllingServiceWorker\": true,\n  \"repositoryGovernanceExcludedFromRuntime\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node verify-live-deployment.mjs",
+      "status": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "node:internal/modules/cjs/loader:1433\n  throw err;\n  ^\n\nError: Cannot find module '/home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-live-deployment.mjs'\n    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)\n    at Function._load (node:internal/modules/cjs/loader:1216:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)\n    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)\n    at node:internal/main/run_main_module:36:49 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v22.23.2\n"
+    }
+  ]
+}
