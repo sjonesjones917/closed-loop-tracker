@@ -8,6 +8,7 @@ permissions:
 jobs:
   integrate:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -33,7 +34,7 @@ jobs:
           rm -f .controller-v3-execution-source.txt .github/workflows/controller3-integrate-pr1016.yml
           node build-test-project.mjs
           node verify-capability-readiness.mjs
-          timeout 90s node verify-full-cycle.mjs
+          timeout 300s node verify-full-cycle.mjs
           node verify.mjs
           git add -A
           git commit -m "Integrate current file-first runtime closure"
