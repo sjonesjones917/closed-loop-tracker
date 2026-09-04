@@ -50,6 +50,7 @@ function commitStage9(prepared){const committed=ingestion.commit(prepared.projec
 let promptSemanticsChecked=false;
 {
   const p=submitStage8(base('JOB-STAGE13-MISSING-REVIEWER'));
+  p.projectData.freshContexts=p.projectData.freshContexts.filter(r=>Number(r.stage)!==9);
   engine.recalculate(p);
   const action=engine.operationalNextAction(p,9),gate=engine.gate(9,p);
   assert(!gate.complete,'Stage 09 completed without any accepted independent preflight review.');
