@@ -1,0 +1,10 @@
+name: Controller Stage 21 workflow smoke
+on:
+  push:
+    branches:
+      - controller-v2/stage21-convergence-20260904
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo stage21-workflow-smoke-ok
