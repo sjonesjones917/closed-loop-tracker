@@ -1,0 +1,33 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "17",
+  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
+  "startingMainCommit": "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f",
+  "endingMainCommit": "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f",
+  "implementationCommitIds": ["315722e7b0210b89cc6f44f9c8b46fe37d4ae00f"],
+  "changedFiles": [],
+  "normativeRequirementChanges": [],
+  "proofCommands": [
+    {"command":"node verify-build-stage-ledger.mjs","exitCode":0},
+    {"command":"node verify-complete.mjs","exitCode":0},
+    {"command":"node verify-semantic-invariant.mjs","exitCode":0}
+  ],
+  "proofArtifactDigests": [
+    {"path":"specification/closed-loop-reliability-controlling-implementation-specification.txt","sha256":"3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564","byteLength":294591},
+    {"path":"specification/closed-loop-normative-requirements.json","sha256":"1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"}
+  ],
+  "intentionalInvalidFixtures": ["self-review","same-context-review","unsupported-reduction","missing-activation-proof","circular-dependency","unreconciled-disagreement"],
+  "earlierStageProofsReplayed": [],
+  "browserProofs": [],
+  "deployedProofs": [],
+  "externalActorProofs": [{"proof":"independent-context/semantic-review executable fixture","status":"PASS","basis":"stage-mapped verifier"}],
+  "unprovenItems": [],
+  "proofCountBefore": 68,
+  "proofCountAfter": 71,
+  "conformantCountBefore": 7,
+  "conformantCountAfter": 7,
+  "stageDisposition": "PROVEN",
+  "nextStage": "18",
+  "archivedReason": "Superseded by current specification 6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9 and current Stage 17 implementation evidence. This archive is historical only and cannot satisfy current gates."
+}
