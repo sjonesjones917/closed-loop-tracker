@@ -1,0 +1,23 @@
+name: Apply current controlling specification source
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - verification/.apply-current-spec-source.sh
+      - .github/workflows/apply-current-spec-source.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-source:
+    if: github.head_ref == 'controller/current-spec-stage01a-20260904'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Apply exact normalized specification source and remove one-time scaffolding
+        run: bash verification/.apply-current-spec-source.sh
