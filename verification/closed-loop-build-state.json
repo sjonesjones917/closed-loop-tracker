@@ -2,7 +2,7 @@
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
   "specificationSourceCommit": "bf960bb9b1300ac8d59ecc6555de2b6092f6b2ba",
-  "lastObservedMainCommit": "3a6fed9524a572e15b13b6279de43fdc8c075a76",
+  "lastObservedMainCommit": "755e9c6c15acb23f80606fc286a38b63b7b0654f",
   "stages": {
     "01": {
       "status": "IN_PROGRESS",
@@ -217,5 +217,5 @@
   },
   "proofCount": 0,
   "conformantRequirementCount": 0,
-  "lastUpdatedByCommandId": "stage-01-current-spec-reset-ci-20260904"
+  "lastUpdatedByCommandId": "stage-01-refresh-main-755e9c6c"
 }
