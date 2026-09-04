@@ -1,0 +1,39 @@
+name: Persist full controller evidence on temporary branch
+on:
+  push:
+    branches: [controller/c3-live-verification-20260904]
+permissions:
+  contents: write
+jobs:
+  evidence:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - id: run
+        shell: bash
+        run: |
+          cp controller-full-evidence.mjs /tmp/controller-full-evidence.mjs
+          git fetch origin main --no-tags
+          TARGET=$(git merge-base HEAD origin/main)
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          git checkout --detach "$TARGET"
+          set +e
+          TARGET_COMMIT="$TARGET" BROWSER=/usr/bin/google-chrome REPORT_PATH=/tmp/controller-full-evidence.json node /tmp/controller-full-evidence.mjs
+          STATUS=$?
+          set -e
+          git checkout controller/c3-live-verification-20260904
+          mkdir -p .controller-evidence
+          cp /tmp/controller-full-evidence.json ".controller-evidence/full-evidence-$TARGET.json"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .controller-evidence
+          git commit -m "Persist executable evidence for $TARGET"
+          git push origin HEAD:controller/c3-live-verification-20260904
+          exit "$STATUS"
