@@ -72,8 +72,8 @@ try{
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker cannot traverse all 30 stages in order.');
     picker.value='2';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,100));
     const promptElement=document.querySelector('.prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
-    const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join('\n');
-    const compact=css.replace(/\s+/g,' ');
+    const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join(' ');
+    const compact=css;
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
     if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
     if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
