@@ -2,144 +2,115 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "15",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "ffc70c56190daee90a908e2ff5958542b1f0d13a",
-  "endingMainCommit": "ffc70c56190daee90a908e2ff5958542b1f0d13a",
+  "stageName": "TEN INDEPENDENT RUNS",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "a1fd6b925d9285dfd952cffcf6cc8f79142e47e1",
+  "endingMainCommit": "a1fd6b925d9285dfd952cffcf6cc8f79142e47e1",
   "implementationCommitIds": [
-    "ffc70c56190daee90a908e2ff5958542b1f0d13a"
+    "153845986c2c23f29b37aad4940be74422b19636",
+    "a1fd6b925d9285dfd952cffcf6cc8f79142e47e1"
   ],
-  "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "changedFiles": [
+    "verify-ten-independent-runs.mjs",
+    "verify-spec-residual-closure.mjs"
+  ],
+  "specificationSections": [
+    "17.12 Fresh-context and independence semantics",
+    "37 Stage 11",
+    "38 runs",
+    "38 freshContexts",
+    "38 outputReceipts",
+    "49"
+  ],
+  "implementationFilesReviewed": [
+    "verify-ten-independent-runs.mjs",
+    "verify-spec-residual-closure.mjs",
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "prompt-engine.js",
+    "verify-complete.mjs",
+    "verify-definition-of-done.mjs"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_PROVEN_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "The controller Stage 15 verifier executes the application Stage 11 run-batch machinery on disposable project states. It freezes one candidate, reserves exactly ten current run/context targets, proves exact retry idempotency without duplicate allocations, verifies distinct RUN_ID and CONTEXT_ID identities, binds every run to the same frozen candidate, preserves separate accepted changes and output receipts, and exercises the real Stage 11 completion gate. Permanent invalid fixtures reject duplicate context identity, known contamination/prohibited inputs, wrong candidate binding, fewer than ten current runs, and silent partial-batch top-up. This establishes the application's deterministic run-batch and current-context isolation behavior only; it does not claim independently observable provider separation or a genuine external execution actor.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33883779415, test job 101058502727, exact canonical main a1fd6b925d9285dfd952cffcf6cc8f79142e47e1, Workflow, gates, and full cycle step completed success. The permanent definition-of-done chain executes verify-ten-independent-runs.mjs through verify-spec-residual-closure.mjs."
     },
     {
-      "command": "node verify-complete.mjs",
-      "exitCode": 0
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33883779415, test job 101058502727, Local Chromium operator path completed success on exact canonical main."
     },
     {
-      "command": "node verify-full-cycle.mjs",
-      "exitCode": 0
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33883779415, deploy job 101059561981, exact canonical main deployment completed success."
     },
     {
-      "command": "node verify-semantic-invariant.mjs",
-      "exitCode": 0
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33883779415, deployment verification job 101059669164, Exact deployed-byte verification and Deployed Chromium operator path completed success for exact canonical main."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "verify-ten-independent-runs.mjs freezes one candidate and calls reserveRunBatch for exactly ten Stage 11 run/context targets.",
+    "An exact reserveRunBatch retry returns the same targets and does not create duplicate run records, fresh-context records, or reservation history events.",
+    "The repaired fixture establishes ten distinct current RUN_ID values and ten distinct current CONTEXT_ID values, with every run bound to the exact frozen candidate.",
+    "Each completed run has a separate raw response, committed accepted change, and output receipt in the disposable project fixture.",
+    "evaluateContextIndependence rejects duplicate context identity and known contamination; wrong-candidate binding is not represented as APPLICATION_ESTABLISHED.",
+    "A nine-run current set and an attempted partial-batch top-up fail closed instead of satisfying the exactly-ten condition.",
+    "The verifier is wired into the permanent definition-of-done chain and therefore ran in exact-main CI before deployment.",
+    "Synthetic external-context identifiers used by the disposable regression are test inputs only and are not evidence of real external-provider independence."
   ],
   "intentionalInvalidFixtures": [
-    "fabricated-source",
-    "project-material-as-authority",
-    "narrow-search-universe",
-    "desired-count-cap",
-    "missing-stopping-criterion",
-    "stale-source",
-    "uncovered-source-unit"
+    "duplicate-external-context-identity",
+    "known-context-contamination-and-prohibited-inputs",
+    "wrong-candidate-run",
+    "fewer-than-ten-current-runs",
+    "partial-batch-top-up"
+  ],
+  "repairedStateProofs": [
+    "Exactly ten current run records and exactly ten current fresh-context records are reserved from one frozen candidate.",
+    "Exact retry is idempotent and does not allocate a second batch or duplicate reservation history.",
+    "All ten current run IDs and context IDs are distinct and each run remains bound to the exact candidate.",
+    "Separate accepted changes and separate output receipts are retained for the ten completed disposable runs.",
+    "Exact current main passed permanent CI, local Chromium, exact deployment, deployed-byte verification, and deployed Chromium."
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "10",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "status": "PASS"
-    },
-    {
-      "stage": "11",
-      "proofDigest": "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-      "status": "PASS"
-    },
-    {
-      "stage": "12",
-      "proofDigest": "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-      "status": "PASS"
-    },
-    {
-      "stage": "13",
-      "proofDigest": "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-      "status": "PASS"
-    },
-    {
-      "stage": "14",
-      "proofDigest": "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-      "status": "PASS"
-    },
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"}
   ],
   "browserProofs": [
-    {
-      "proof": "local Chromium operator path",
-      "status": "PASS",
-      "basis": "GitHub Actions run 33835432800 test job completed before proof advancement"
-    }
+    {"workflowRunId":33883779415,"jobId":101058502727,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"a1fd6b925d9285dfd952cffcf6cc8f79142e47e1"},
+    {"workflowRunId":33883779415,"jobId":101059669164,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"a1fd6b925d9285dfd952cffcf6cc8f79142e47e1"}
   ],
-  "deployedProofs": [],
-  "externalActorProofs": [
-    {
-      "proof": "independent-context/semantic-review executable fixture",
-      "status": "PASS",
-      "basis": "stage-mapped verifier"
-    }
+  "deployedProofs": [
+    {"workflowRunId":33883779415,"jobId":101059561981,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"a1fd6b925d9285dfd952cffcf6cc8f79142e47e1"},
+    {"workflowRunId":33883779415,"jobId":101059669164,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"a1fd6b925d9285dfd952cffcf6cc8f79142e47e1"}
   ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 61,
-  "proofCountAfter": 65,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "16"
+  "directEvidenceReview": "PASS",
+  "nextStage": "16",
+  "notes": "This proves controller Stage 15 TEN INDEPENDENT RUNS implementation behavior under the current specification using exact-main deterministic and browser/deployment evidence. It does not represent disposable synthetic context identifiers as genuine external independent-context evidence, and it makes no human-authority, physical-iPhone, external-system, Stage 16+, convergence, release, terminal-delivery, or Section 49 completion claim."
 }
