@@ -13,7 +13,7 @@ jobs:
         with:
           ref: controller3-stage13-operational-next-action-20260904
           fetch-depth: 0
-      - name: Repair operational next-action stage forwarding and remove applicator
+      - name: Diagnose Stage 08 to Stage 09 progression
         shell: bash
         run: |
           set -euo pipefail
@@ -23,17 +23,16 @@ jobs:
           text=path.read_text()
           old="function next(p){const b=e0.operationalNextAction(p),n=Number(p.activeStage||p.job?.CURRENT_STAGE||0);"
           new="function next(p,currentStage){const b=e0.operationalNextAction(p,currentStage),n=Number(currentStage||p.activeStage||String(p.job?.CURRENT_STAGE||'').replace(/[^0-9]/g,'')||0);"
-          if old not in text:
-              raise SystemExit('Expected operationalNextAction wrapper source not found exactly once.')
           if text.count(old)!=1:
               raise SystemExit(f'Expected one wrapper occurrence; found {text.count(old)}')
           path.write_text(text.replace(old,new,1))
+          vp=Path('verify-independent-preflight.mjs')
+          v=vp.read_text()
+          needle="const gate=engine.gate(8,committed);assert(gate.complete,`Stage 08 prerequisite did not complete: ${JSON.stringify(gate)}`);"
+          repl="const gate=engine.gate(8,committed);console.error('STAGE8_DIAGNOSTIC',JSON.stringify({status:committed.stages[8].status,storedGate:committed.stages[8].gate,computedGate:gate,activeStage:committed.activeStage,currentStage:committed.job.CURRENT_STAGE,acceptedChanges:committed.projectData.acceptedChanges.filter(c=>Number(c.stage)===8)}));assert(gate.complete,`Stage 08 prerequisite did not complete: ${JSON.stringify(gate)}`);"
+          if v.count(needle)!=1:
+              raise SystemExit('diagnostic insertion target not found')
+          vp.write_text(v.replace(needle,repl,1))
           PY
           node --check workflow-engine.js
           node verify-independent-preflight.mjs
-          rm .github/workflows/controller-stage13-repair.yml
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js verify-independent-preflight.mjs verify-definition-of-done.mjs .github/workflows/controller-stage13-repair.yml
-          git commit -m "Fix Stage 09 independent reviewer next action"
-          git push origin HEAD:controller3-stage13-operational-next-action-20260904
