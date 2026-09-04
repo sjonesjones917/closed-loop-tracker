@@ -1,0 +1,86 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "06",
+  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
+  "startingMainCommit": "faba84ccbf02290460ac93661463bbdde087d60d",
+  "endingMainCommit": "faba84ccbf02290460ac93661463bbdde087d60d",
+  "implementationCommitIds": [
+    "faba84ccbf02290460ac93661463bbdde087d60d"
+  ],
+  "changedFiles": [],
+  "normativeRequirementChanges": [],
+  "proofCommands": [
+    {
+      "command": "node verify-build-stage-ledger.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node verify-v3-contract.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node verify-ingestion.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node verify-data-route-closure.mjs",
+      "exitCode": 0
+    }
+  ],
+  "proofArtifactDigests": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
+      "byteLength": 294591
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
+    }
+  ],
+  "intentionalInvalidFixtures": [
+    "cross-owner-write",
+    "direct-collection-write",
+    "stale-revision",
+    "conflicting-idempotency-payload",
+    "external-native-receipt-fabrication"
+  ],
+  "earlierStageProofsReplayed": [
+    {
+      "stage": "01",
+      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+      "status": "PASS"
+    },
+    {
+      "stage": "02",
+      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+      "status": "PASS"
+    },
+    {
+      "stage": "03",
+      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
+      "status": "PASS"
+    },
+    {
+      "stage": "04",
+      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
+      "status": "PASS"
+    },
+    {
+      "stage": "05",
+      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
+      "status": "PASS"
+    }
+  ],
+  "browserProofs": [],
+  "deployedProofs": [],
+  "externalActorProofs": [],
+  "unprovenItems": [],
+  "proofCountBefore": 29,
+  "proofCountAfter": 33,
+  "conformantCountBefore": 7,
+  "conformantCountAfter": 7,
+  "stageDisposition": "PROVEN",
+  "nextStage": "07"
+}
