@@ -25,23 +25,55 @@ jobs:
           git checkout HEAD -- .github/workflows/pages.yml
           rm controller-stage21-hotfix.py controller-stage21-apply.py
       - name: Focused proof
+        id: focused
+        shell: bash
         run: |
-          set -euo pipefail
+          set +e
+          : > stage21-focused.log
           python3 -m http.server 4173 >/tmp/closed-loop-stage21-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check app-core.js
-          node verify-convergence.mjs
-          node verify-due-stage-timing.mjs
-          node verify-definition-of-done.mjs
-          node verify-complete.mjs
-          node verify-browser.mjs
-          node verify-full-cycle.mjs
+          {
+            node --check workflow-schema.js &&
+            node --check workflow-engine.js &&
+            node --check app-core.js &&
+            node verify-convergence.mjs &&
+            node verify-due-stage-timing.mjs &&
+            node verify-definition-of-done.mjs &&
+            node verify-complete.mjs &&
+            node verify-browser.mjs &&
+            node verify-full-cycle.mjs
+          } >> stage21-focused.log 2>&1
+          status=$?
+          kill "$SERVER_PID" 2>/dev/null || true
+          wait "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload focused proof diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage21-focused-commit-diagnostics
+          path: |
+            stage21-focused.log
+            /tmp/closed-loop-stage21-http.log
+            workflow-engine.js
+            workflow-schema.js
+            app-core.js
+            verify-browser.mjs
+            verify-full-cycle.mjs
+            verify-convergence.mjs
+            index.html
+          if-no-files-found: error
+      - name: Require focused proof success
+        run: |
+          cat stage21-focused.log
+          test "${{ steps.focused.outputs.status }}" = "0"
       - name: Commit source correction
         run: |
           set -euo pipefail
+          rm -f stage21-focused.log
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add workflow-schema.js workflow-engine.js app-core.js verify-convergence.mjs verify-due-stage-timing.mjs verify-definition-of-done-invariants.mjs verify-full-cycle.mjs verify-browser.mjs controller-stage21-hotfix.py controller-stage21-apply.py
