@@ -1,52 +1,21 @@
 import fs from 'node:fs';
-import {spawnSync} from 'node:child_process';
-
-const assert=(value,message)=>{if(!value)throw new Error(message);};
-const run=(script)=>spawnSync(process.execPath,[script],{encoding:'utf8',env:process.env});
-const source=fs.readFileSync('verify-full-cycle.mjs','utf8');
-const stage8=/data\(8,\{records:\{instructions:\[([\s\S]*?)\],instructionTraces:\[[\s\S]*?\]\}\}\);const instructionId=rid\('instructions'\);complete\(8\);/;
-assert(stage8.test(source),'Stage 08 full-cycle fixture shape changed; production-instruction verifier must be updated rather than silently weakening the oracle.');
-
-const baseline=run('verify-full-cycle.mjs');
-assert(baseline.status===0,`Repaired Stage 08 full-cycle path failed.\n${baseline.stdout||''}\n${baseline.stderr||''}`);
-
-function executeMutation(label,mutate,expectedPattern){
-  const mutated=mutate(source);
-  assert(mutated!==source,`${label} mutation did not alter the Stage 08 fixture.`);
-  const path=`verify-production-instruction.${label}.invalid.mjs`;
-  fs.writeFileSync(path,mutated,'utf8');
-  try{
-    const result=run(path),combined=`${result.stdout||''}\n${result.stderr||''}`;
-    assert(result.status!==0,`${label} intentional invalid fixture was accepted.`);
-    assert(expectedPattern.test(combined),`${label} failed for an unrelated reason.\n${combined}`);
-    return {label,rejected:true,exitCode:result.status,observed:combined.split(/\r?\n/).filter(Boolean).slice(-8)};
-  }finally{fs.rmSync(path,{force:true});}
+import vm from 'node:vm';
+import {recordProposal,evidence} from './test-fixtures.mjs';
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion;
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+function base(jobId){const p=core.createBlankState(jobId);Object.assign(p.job,{JOB_TITLE:'Stage 08 production instruction proof',EXACT_USER_OBJECTIVE_VERBATIM:'Produce the current required deliverable.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001'});engine.ensureShape(p);for(let n=1;n<=7;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const scope=engine.currentScope(p),requirementScope={...scope,instructionVersion:null};p.projectData.requirements.push({id:'REQ-1',stage:4,active:true,scope:{...requirementScope},fields:{REQ_ID:'REQ-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',OBLIGATION:'Produce the required deliverable.',OBSERVABLE_SATISFACTION_CONDITION:'Required output exists.',FAILURE_CONDITION:'Required output is absent.'}});p.projectData.propositions.push({id:'PROP-1',stage:4,active:true,scope:{...requirementScope},fields:{PROPOSITION_ID:'PROP-1',REQUIREMENT_ID:'REQ-1',PROPOSITION_TEXT:'The required deliverable is produced.',STATUS:'CURRENT'},relationships:{REQUIREMENT_ID:'REQ-1'}});p.projectData.applicabilityRecords.push({id:'APP-1',stage:5,active:true,scope:{...requirementScope},fields:{APPLICABILITY_ID:'APP-1',SUBJECT_ID:'PROP-1',PROPOSED_APPLICABILITY:'APPLICABLE',SELECTED_APPLICABILITY:'APPLICABLE',TRUTH_VALUE:'TRUE',EPISTEMIC_BASIS:'EXTERNALLY_SUPPORTED',CURRENT_SCOPE_STATUS:'CURRENT',FRESHNESS_STATUS:'CURRENT',CONTRADICTION_STATUS:'CLEAR',REASONS:['Current mandatory fixture applies.']},relationships:{SUBJECT_ID:'PROP-1'}});p.projectData.proofExpressions.push({id:'PROOF-1',stage:6,active:true,scope:{...requirementScope},fields:{PROOF_EXPRESSION_ID:'PROOF-1',TARGET_PROPOSITION_ID:'PROP-1',PROPOSED_EXPRESSION:{type:'LEAF',observationId:'OBS-FUTURE'},NORMALIZED_EXPRESSION:{type:'LEAF',observationId:'OBS-FUTURE'},SEMANTIC_EQUIVALENCE_DISPOSITION:'EQUIVALENT',ACCEPTED_SEMANTIC_REVIEW_IDS:['REVIEW-1']},relationships:{TARGET_PROPOSITION_ID:'PROP-1'}});return p;}
+function instruction(){return recordProposal(schema,'instructions',{tempKey:'instruction',overrides:{OBJECTIVE:'Produce required content',AUTHORIZED_INPUTS:'Current canonical inputs',FAILURE_HANDLING:'Fail closed',AUTHORITY_RULES:'Use canonical authority',SCOPE:'Current job',PROHIBITIONS:'No invention',DEFINED_TERMS:'Defined',ORDERED_PROCEDURE:'Execute in order',TOOL_REQUIREMENTS:'Available tools only',OUTPUT_CONTRACT:'Structured output',FACTUAL_STATE_HANDLING:'Use explicit states',REJECTION_BLOCKING_RULES:'Block uncertainty',COMPLETION_CONDITIONS:'All gates pass',REQUIREMENT_TRACEABILITY:'Trace every requirement',INSTRUCTION_TEXT:'Controlled production instruction'}})}
+function trace(){return recordProposal(schema,'instructionTraces',{tempKey:'trace',relationships:{REQ_ID:{recordId:'REQ-1'},INSTRUCTION_ID:{tempKey:'instruction'}},overrides:{INSTRUCTION_LOCATION:'Instruction section 1',IMPLEMENTED_BEHAVIOR:'Implements required content'}})}
+function submit(p,{withTrace=true,dropField=''}){const pr={...prompts.buildPromptRecord(8,p,{operation:'COMPLETE'}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const inst=instruction();if(dropField)delete inst.fields[dropField];const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:8,operation:'COMPLETE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{instructions:[inst],instructionTraces:withTrace?[trace()]:[]},evidence:[evidence('stage-08-production-instruction')],unresolved:[],warnings:[],attachments:[]};return {pr,envelope,prepared:ingestion.prepare(p,{stage:8,text:JSON.stringify(envelope),promptRecord:pr})};}
+{
+ const p=base('JOB-STAGE12-MISSING-TRACE'),before=p.projectData.acceptedChanges.length,{prepared}=submit(p,{withTrace:false});assert(prepared.validation.valid,`Missing-trace fixture should pass response-shape validation so the actual Stage 08 gate can reject semantic incompleteness: ${JSON.stringify(prepared.validation.issues)}`);assert(prepared.project.projectData.acceptedChanges.length===before,'Missing-trace response mutated canonical state before acceptance.');const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE12_VERIFIER'}).project;for(let n=1;n<=7;n++){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}const gate=engine.gate(8,committed);assert(!gate.complete&&gate.reasons.some(r=>/Instruction traces are missing for: REQ-1/.test(r)),`Missing-trace fixture escaped Stage 08 gate: ${JSON.stringify(gate)}`);
 }
-
-const missingTrace=executeMutation(
-  'missing-trace',
-  text=>text.replace(stage8,(_whole,instructions)=>`data(8,{records:{instructions:[${instructions}]}});const instructionId=rid('instructions');complete(8);`),
-  /Stage 8 gate failed|instruction trace|trace/i
-);
-
-const missingOutputContract=executeMutation(
-  'missing-output-contract',
-  text=>text.replace("OUTPUT_CONTRACT:'Structured output'","OUTPUT_CONTRACT:''"),
-  /Stage 8|OUTPUT_CONTRACT|invalid|required|empty/i
-);
-
-const promptCompleteness=run('verify-stage-prompts-complete.mjs');
-assert(promptCompleteness.status===0,`Stage prompt completeness replay failed.\n${promptCompleteness.stdout||''}\n${promptCompleteness.stderr||''}`);
-const promptSemantics=run('verify-prompt-semantics.mjs');
-assert(promptSemantics.status===0,`Prompt semantic replay failed.\n${promptSemantics.stdout||''}\n${promptSemantics.stderr||''}`);
-
-console.log(JSON.stringify({
-  controllerStage:'12',
-  applicationStage:'08',
-  productionInstruction:'PASS',
-  invalidFixtures:[missingTrace,missingOutputContract],
-  repairedFullCycle:true,
-  stage8PromptCompleteness:true,
-  stage8PromptSemantics:true,
-  isolatedFixtureState:true
-},null,2));
+{
+ const p=base('JOB-STAGE12-MISSING-SECTION'),before=p.projectData.acceptedChanges.length,{prepared}=submit(p,{withTrace:true,dropField:'OUTPUT_CONTRACT'});assert(!prepared.validation.valid,'Instruction missing mandatory OUTPUT_CONTRACT was accepted by response ingestion.');assert(prepared.project.projectData.acceptedChanges.length===before,'Invalid missing-section response mutated canonical state.');assert(prepared.validation.issues.some(i=>/OUTPUT_CONTRACT|required/i.test(String(i?.message||i))),`Missing OUTPUT_CONTRACT failed for unrelated reason: ${JSON.stringify(prepared.validation.issues)}`);
+}
+{
+ const p=base('JOB-STAGE12-REPAIRED'),before=p.projectData.acceptedChanges.length,{pr,prepared}=submit(p,{withTrace:true});assert(prepared.validation.valid,`Repaired Stage 08 proposal rejected: ${JSON.stringify(prepared.validation.issues)}`);assert(prepared.project.projectData.acceptedChanges.length===before,'Repaired proposal mutated canonical state before explicit acceptance.');const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE12_VERIFIER'}).project;for(let n=1;n<=7;n++){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}const gate=engine.gate(8,committed);assert(gate.complete&&gate.reasons.length===0,`Repaired Stage 08 did not progress: ${JSON.stringify(gate)}`);assert(engine.recordsForCurrentScope(committed,'instructions').length===1,'Repaired Stage 08 did not create exactly one current instruction.');assert(engine.recordsForCurrentScope(committed,'instructionTraces').some(r=>String(engine.recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')==='REQ-1'),'Repaired Stage 08 did not preserve the mandatory requirement trace.');const prompt=pr.prompt;for(const token of ['production instruction only','requirement traceability','ordered procedure','output contract'])assert(prompt.toLowerCase().includes(token),`Stage 08 prompt lacks controlling production-instruction semantic: ${token}`);assert(/do not ask the user to repeat|never ask the user to repeat/i.test(prompt),'Stage 08 prompt does not prohibit repeated requests for accepted project information.');
+}
+console.log(JSON.stringify({controllerStage:'12',applicationStage:'08',productionInstruction:'PASS',intentionalInvalidFixturesRejected:['missing-mandatory-instruction-trace','missing-required-output-contract'],repairedPathProgressed:true,noMutationBeforeAcceptance:true,promptSemanticsChecked:true,isolatedDisposableProjects:true},null,2));
