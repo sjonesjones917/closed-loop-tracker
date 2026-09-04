@@ -130,7 +130,8 @@ export function assertAcceptedMobileEvidence(args){
 // Repository-only controller progression hook. It executes only from the acceptance
 // submission process invoked directly by the GitHub Actions shell after exact-main
 // source/local-browser and deployed-byte/deployed-browser jobs have succeeded. A
-// nested evaluator spawned by another Node verifier is deliberately non-mutating.
+// nested evaluator spawned through a Node verifier (including an intermediate shell)
+// is deliberately non-mutating.
 if(
   process.argv[1]?.endsWith('evaluate-mobile-acceptance-submission.mjs')&&
   process.env.TEST_RESULT==='success'&&
@@ -141,8 +142,25 @@ if(
   const fs=(await import('node:fs')).default;
   let directShellInvocation=false;
   try{
-    const parentCommand=fs.readFileSync(`/proc/${process.ppid}/cmdline`,'utf8').replace(/\0/g,' ').trim();
-    directShellInvocation=parentCommand.length>0&&!/(^|[\/\s])node(?:[\s\0]|$)/i.test(parentCommand);
+    const processName=pid=>fs.readFileSync(`/proc/${pid}/cmdline`,'utf8').replace(/\0/g,' ').trim();
+    const parentPid=pid=>{
+      const status=fs.readFileSync(`/proc/${pid}/status`,'utf8');
+      const match=status.match(/^PPid:\s+(\d+)$/m);
+      return match?Number(match[1]):0;
+    };
+    let pid=process.ppid;
+    let depth=0;
+    let first=true;
+    let nodeAncestor=false;
+    while(pid>1&&depth<12){
+      const command=processName(pid);
+      if(first&&/(^|[\/\s])node(?:[\s]|$)/i.test(command))nodeAncestor=true;
+      if(!first&&/(^|[\/\s])node(?:[\s]|$)/i.test(command)){nodeAncestor=true;break;}
+      first=false;
+      pid=parentPid(pid);
+      depth++;
+    }
+    directShellInvocation=!nodeAncestor;
   }catch{
     directShellInvocation=false;
   }
