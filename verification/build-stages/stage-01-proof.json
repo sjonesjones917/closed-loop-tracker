@@ -1,0 +1,57 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "01",
+  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
+  "startingMainCommit": "b71e828461c86184e9a08f738453443e6b579aab",
+  "endingMainCommit": "4506407ca6238eba083485c7d29aacab3c35dba6",
+  "implementationCommitIds": [
+    "903ef54d5eeb2cd80cde76deac049530ddc734af",
+    "a06940b93a30acfdebf80cc8cf4f6602bcfa607c",
+    "4506407ca6238eba083485c7d29aacab3c35dba6"
+  ],
+  "changedFiles": [
+    "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "specification/closed-loop-specification-manifest.json",
+    "specification/closed-loop-normative-requirements.json"
+  ],
+  "normativeRequirementChanges": [
+    {"normativeRequirementId":"NREQ-0a7d4eee5cf603d62944a5034ac4801f","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-43f37c9b4342e21da2877c4e811ee872","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-f0a1ca7147b50755050079e8792f130c","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-4bb9a61adb2c0abfa59b847fec2f54cd","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-86fbf81ae24502beba9e86ee3098f3b7","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-fb5cf46d306cb1cba5734b88aa9880de","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-2713787ffb8a8b83bd4086899e340cf0","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"}
+  ],
+  "proofCommands": [
+    {"command":"node verify-specification-governance.mjs (SOURCE_COMMIT=b71e828461c86184e9a08f738453443e6b579aab)","exitCode":0},
+    {"command":"node verify-deployment-manifest.mjs","exitCode":0},
+    {"command":"GitHub Actions run 33821677013 test job 100865483283","exitCode":0},
+    {"command":"GitHub Actions run 33821677013 deploy job 100866188831","exitCode":0},
+    {"command":"GitHub Actions run 33821677013 deployed-byte/browser job 100866257757","exitCode":0}
+  ],
+  "proofArtifactDigests": [
+    {"path":"specification/closed-loop-reliability-controlling-implementation-specification.txt","sha256":"3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564","byteLength":294591},
+    {"path":"specification/closed-loop-specification-manifest.json","sha256":"365fa2d5007f09dfe7b3ff2f898e09e4f394a66cc43f1e7a5e0c198eb8549e8a"},
+    {"path":"specification/closed-loop-normative-requirements.json","sha256":"1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"}
+  ],
+  "intentionalInvalidFixtures": ["uncovered-section","missing-requirement","duplicate-id","missing-test-trace","source-conflict","runtime-copy"],
+  "earlierStageProofsReplayed": [],
+  "browserProofs": [
+    {"proof":"local Chromium operator path","status":"PASS","workflowRunId":33821677013},
+    {"proof":"deployed Chromium operator path","status":"PASS","workflowRunId":33821677013}
+  ],
+  "deployedProofs": [
+    {"proof":"exact deployed bytes and deployment origin","status":"PASS","workflowRunId":33821677013},
+    {"proof":"repository-only governance excluded from deployment","status":"PASS","workflowRunId":33821677013}
+  ],
+  "externalActorProofs": [{"proof":"independent specification coverage pass and reconciliation","status":"PASS"}],
+  "unprovenItems": [],
+  "proofCountBefore": 0,
+  "proofCountAfter": 10,
+  "conformantCountBefore": 0,
+  "conformantCountAfter": 7,
+  "stageDisposition": "PROVEN",
+  "nextStage": "02"
+}
