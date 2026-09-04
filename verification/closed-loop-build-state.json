@@ -4,36 +4,260 @@
   "specificationSourceCommit": "b71e828461c86184e9a08f738453443e6b579aab",
   "lastObservedMainCommit": "8aa627bc1edd3556d4eeaddc64729a62775d4cfc",
   "stages": {
-    "01": {"status":"PROVEN","provenCommit":"4506407ca6238eba083485c7d29aacab3c35dba6","proofRecordPath":"verification/build-stages/stage-01-proof.json","proofDigest":"3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","prerequisiteStageDigests":[]},
-    "02": {"status":"PROVEN","provenCommit":"3da813c1aa3a9bbba3640f71b46c370d3c94dbc3","proofRecordPath":"verification/build-stages/stage-02-proof.json","proofDigest":"c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea"]},
-    "03": {"status":"PROVEN","provenCommit":"175d1fae392514d6e31296602d3dfa9541cd1160","proofRecordPath":"verification/build-stages/stage-03-proof.json","proofDigest":"0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015"]},
-    "04": {"status":"PROVEN","provenCommit":"a07d36f8c46b6b8a6e4cd04c22756c20cdd99b52","proofRecordPath":"verification/build-stages/stage-04-proof.json","proofDigest":"caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015","0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade"]},
-    "05": {"status":"PROVEN","provenCommit":"18cc62d3029be23582960d968fcf6b8b646d0ed3","proofRecordPath":"verification/build-stages/stage-05-proof.json","proofDigest":"8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015","0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade","caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd"]},
-    "06": {"status":"PROVEN","provenCommit":"faba84ccbf02290460ac93661463bbdde087d60d","proofRecordPath":"verification/build-stages/stage-06-proof.json","proofDigest":"60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015","0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade","caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd","8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8"]},
-    "07": {"status":"PROVEN","provenCommit":"e5ec8fb19a36f190cfdb44f1a8520ccbab31df0c","proofRecordPath":"verification/build-stages/stage-07-proof.json","proofDigest":"a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015","0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade","caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd","8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8","60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881"]},
-    "08": {"status":"PROVEN","provenCommit":"c309970bbbad472e590ed70a3a0774579c6b005d","proofRecordPath":"verification/build-stages/stage-08-proof.json","proofDigest":"1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015","0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade","caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd","8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8","60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881","a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5"]},
-    "09": {"status":"PROVEN","provenCommit":"8aa627bc1edd3556d4eeaddc64729a62775d4cfc","proofRecordPath":"verification/build-stages/stage-09-proof.json","proofDigest":"2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015","0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade","caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd","8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8","60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881","a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5","1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9"]},
-    "10": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "11": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "12": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "13": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "14": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "15": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "16": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "17": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "18": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "19": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "20": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "21": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "22": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "23": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "24": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "25": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "26": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "27": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "28": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "29": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
-    "30": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]}
+    "10": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "11": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "12": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "13": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "14": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "15": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "16": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "17": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "18": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "19": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "20": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "21": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "22": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "23": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "24": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "25": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "26": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "27": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "28": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "29": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "30": {
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
+    },
+    "01": {
+      "status": "PROVEN",
+      "provenCommit": "4506407ca6238eba083485c7d29aacab3c35dba6",
+      "proofRecordPath": "verification/build-stages/stage-01-proof.json",
+      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+      "prerequisiteStageDigests": []
+    },
+    "02": {
+      "status": "PROVEN",
+      "provenCommit": "3da813c1aa3a9bbba3640f71b46c370d3c94dbc3",
+      "proofRecordPath": "verification/build-stages/stage-02-proof.json",
+      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+      "prerequisiteStageDigests": [
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea"
+      ]
+    },
+    "03": {
+      "status": "PROVEN",
+      "provenCommit": "175d1fae392514d6e31296602d3dfa9541cd1160",
+      "proofRecordPath": "verification/build-stages/stage-03-proof.json",
+      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
+      "prerequisiteStageDigests": [
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015"
+      ]
+    },
+    "04": {
+      "status": "PROVEN",
+      "provenCommit": "a07d36f8c46b6b8a6e4cd04c22756c20cdd99b52",
+      "proofRecordPath": "verification/build-stages/stage-04-proof.json",
+      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
+      "prerequisiteStageDigests": [
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade"
+      ]
+    },
+    "05": {
+      "status": "PROVEN",
+      "provenCommit": "18cc62d3029be23582960d968fcf6b8b646d0ed3",
+      "proofRecordPath": "verification/build-stages/stage-05-proof.json",
+      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
+      "prerequisiteStageDigests": [
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
+        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd"
+      ]
+    },
+    "06": {
+      "status": "PROVEN",
+      "provenCommit": "faba84ccbf02290460ac93661463bbdde087d60d",
+      "proofRecordPath": "verification/build-stages/stage-06-proof.json",
+      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
+      "prerequisiteStageDigests": [
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
+        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
+        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8"
+      ]
+    },
+    "07": {
+      "status": "PROVEN",
+      "provenCommit": "e5ec8fb19a36f190cfdb44f1a8520ccbab31df0c",
+      "proofRecordPath": "verification/build-stages/stage-07-proof.json",
+      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
+      "prerequisiteStageDigests": [
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
+        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
+        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
+        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881"
+      ]
+    },
+    "08": {
+      "status": "PROVEN",
+      "provenCommit": "c309970bbbad472e590ed70a3a0774579c6b005d",
+      "proofRecordPath": "verification/build-stages/stage-08-proof.json",
+      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
+      "prerequisiteStageDigests": [
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
+        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
+        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
+        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
+        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5"
+      ]
+    },
+    "09": {
+      "status": "PROVEN",
+      "provenCommit": "8aa627bc1edd3556d4eeaddc64729a62775d4cfc",
+      "proofRecordPath": "verification/build-stages/stage-09-proof.json",
+      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
+      "prerequisiteStageDigests": [
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
+        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
+        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
+        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
+        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
+        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9"
+      ]
+    }
   },
   "proofCount": 45,
   "conformantRequirementCount": 7,
