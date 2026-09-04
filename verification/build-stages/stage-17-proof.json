@@ -2,143 +2,152 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "17",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f",
-  "endingMainCommit": "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f",
+  "stageName": "REQUIREMENT RESOLUTION",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "394844ffab2ff9ebd8c5788577bb1c5233baeff4",
+  "endingMainCommit": "d59d3159210ecbad7f929d1ed11a5400bf5443d6",
   "implementationCommitIds": [
-    "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f"
+    "b1d68c204ebbef3d4f4ce15257b2d035ef67ac70",
+    "068df771963f3ee206431c47aae6ebc117333b00",
+    "f8707c980f7d67662268ebe67b29d09450afe283",
+    "0d6100565cc0ce026b2baf41601d2c126ca8ff96",
+    "17484f9370698d478a532be91adb6e98c0dffa35",
+    "9b4c348ac384bf5081b79b226711f8c7f1dc4666",
+    "a99eff239e2e233ea60802830a5d2673eec4928f",
+    "b8e48931dc68f12695584c571274bb4ae82c8c3d",
+    "d59d3159210ecbad7f929d1ed11a5400bf5443d6"
   ],
-  "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "changedFiles": [
+    "workflow-engine.js",
+    "app-core.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "verify-semantic-operation-boundaries.mjs",
+    "verify-full-cycle.mjs",
+    "verify-production-instruction.mjs",
+    "verify-independent-preflight.mjs"
+  ],
+  "specificationSections": [
+    "14.5 Authoritative field registry",
+    "14.6 Closed stage-operation registry",
+    "14.10 Human-origin facts first supplied during an external conversation",
+    "26.5 Independent semantic-review contract",
+    "29.10 Activation-proposition proof",
+    "29.12 Universal proposition state and three-valued logic",
+    "29.13 Proposition and proof-expression contract",
+    "29.15 Normative classification, controlled exceptions, severity, and materiality",
+    "37 Stage 05 — RESOLVE THE REQUIREMENT SET",
+    "38 requirementResolutions",
+    "38.1 semanticReviews",
+    "38.1 applicabilityRecords",
+    "40 Permanent regression obligations",
+    "41 tests 172-179, 222, 239-242, 248-249",
+    "44 Negative test matrix",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "app-core.js",
+    "verify-semantic-operation-boundaries.mjs",
+    "verify-full-cycle.mjs",
+    "verify-production-instruction.mjs",
+    "verify-independent-preflight.mjs"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_PROVEN_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "Controller Stage 17 now enforces application Stage 05 requirement-resolution semantics at the authoritative engine, prompt, ingestion, and visible operator-context layers. Applicability remains UNKNOWN until an accepted current independent semantic review exists; self/same-context review and unreconciled disagreement fail closed; conditional applicability requires a satisfied activation proof obligation; possible-mandatory reductions without independent review block; UNKNOWN normative classification blocks; circular requirement dependencies block. The real full-cycle fixture performs COMPLETE, observes the blocked pre-review state, performs SEMANTIC_REVIEW from a distinct registered reviewer context, and progresses only after the application derives the reviewed target set and independence consequence. The implementation was merged through PR 1105 and the exact canonical main commit passed full source, local Chromium, deployment, exact deployed-byte, and deployed Chromium verification.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-semantic-operation-boundaries.mjs",
+      "exitCode": 0,
+      "basis": "PR 1105 CI repeatedly exercised the focused Stage 17 verifier. An initial red run exposed the responsible defect ('Stage 05 promoted an agent applicability assertion without an accepted independent semantic review'); repaired PR head b8e48931dc68f12695584c571274bb4ae82c8c3d passed the focused verifier and the broader permanent suite."
     },
     {
-      "command": "node verify-complete.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33898082950, test job 101105399465, exact canonical main d59d3159210ecbad7f929d1ed11a5400bf5443d6; Workflow, gates, and full cycle completed success."
     },
     {
-      "command": "node verify-semantic-invariant.mjs",
-      "exitCode": 0
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33898082950, test job 101105399465; Local Chromium operator path completed success on exact canonical main."
+    },
+    {
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33898082950, deploy job 101106467046; exact canonical main deployment completed success."
+    },
+    {
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33898082950, deployment verification job 101106643234; Exact deployed-byte verification and Deployed Chromium operator path completed success for exact canonical main."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "workflow-engine.js now derives Stage 05 applicability conservatively and requires an accepted independent semantic review of the current applicability record before APPLICABLE or NOT_APPLICABLE can control gates.",
+    "The Stage 05 semantic-review admissibility check requires distinct nonempty author/reviewer context IDs, an acceptable application-observable independence basis, accepted review disposition, and no unresolved reconciliation requirement.",
+    "A current DISAGREED review with unresolved reconciliation keeps Stage 05 blocked instead of promoting either author or reviewer output.",
+    "Conditional applicability remains UNKNOWN until the applicability record references a current proof obligation whose satisfaction state is SATISFIED.",
+    "Possible-mandatory reductions through CONDITIONAL or OPTIONAL classification require an accepted independent semantic review; UNKNOWN normative classification remains blocked.",
+    "The engine detects circular requirement dependencies and reports them as a Stage 05 gate blocker.",
+    "app-core.js requires a Stage 05 author context before COMPLETE prompt storage and a fresh distinct reviewer context for SEMANTIC_REVIEW.",
+    "prompt-engine.js binds the Stage 05 author/reviewer contexts and exact current review target IDs/hashes into the prompt context manifest.",
+    "response-ingestion.js derives Stage 05 semantic-review reviewed IDs/hashes, author/reviewer context IDs, independence determination, accepted disposition, reconciliation state, current scope, and gate effect instead of accepting those application-owned consequences from the external response.",
+    "verify-full-cycle.mjs exercises the real Stage 05 author/reviewer sequence and proves Stage 05 cannot progress before independent semantic review but progresses afterward.",
+    "Downstream Stage 08 production-instruction and Stage 09 independent-preflight fixtures were repaired to carry valid Stage 05 prerequisite evidence rather than bypassing the strengthened gate."
   ],
   "intentionalInvalidFixtures": [
+    "missing-independent-applicability-review",
     "self-review",
     "same-context-review",
-    "unsupported-reduction",
+    "unreconciled-disagreement",
     "missing-activation-proof",
-    "circular-dependency",
-    "unreconciled-disagreement"
+    "unsupported-normative-reduction",
+    "circular-dependency"
+  ],
+  "repairedStateProofs": [
+    "Accepted current independent semantic review restores Stage 05 applicability progression.",
+    "Supplying a satisfied activation proof obligation restores conditional applicability progression.",
+    "Removing the circular dependency restores the Stage 05 cycle blocker.",
+    "The real full-cycle path progresses from Stage 05 only after a distinct current reviewer context and application-normalized semantic-review record exist.",
+    "Exact current main passed permanent CI, local Chromium, exact deployment, deployed-byte verification, and deployed Chromium."
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "10",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "status": "PASS"
-    },
-    {
-      "stage": "11",
-      "proofDigest": "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-      "status": "PASS"
-    },
-    {
-      "stage": "12",
-      "proofDigest": "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-      "status": "PASS"
-    },
-    {
-      "stage": "13",
-      "proofDigest": "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-      "status": "PASS"
-    },
-    {
-      "stage": "14",
-      "proofDigest": "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-      "status": "PASS"
-    },
-    {
-      "stage": "15",
-      "proofDigest": "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-      "status": "PASS"
-    },
-    {
-      "stage": "16",
-      "proofDigest": "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
-      "status": "PASS"
-    },
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"}
   ],
-  "browserProofs": [],
-  "deployedProofs": [],
-  "externalActorProofs": [
-    {
-      "proof": "independent-context/semantic-review executable fixture",
-      "status": "PASS",
-      "basis": "stage-mapped verifier"
-    }
+  "browserProofs": [
+    {"workflowRunId":33898082950,"jobId":101105399465,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"d59d3159210ecbad7f929d1ed11a5400bf5443d6"},
+    {"workflowRunId":33898082950,"jobId":101106643234,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"d59d3159210ecbad7f929d1ed11a5400bf5443d6"}
   ],
+  "deployedProofs": [
+    {"workflowRunId":33898082950,"jobId":101106467046,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"d59d3159210ecbad7f929d1ed11a5400bf5443d6"},
+    {"workflowRunId":33898082950,"jobId":101106643234,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"d59d3159210ecbad7f929d1ed11a5400bf5443d6"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 68,
-  "proofCountAfter": 71,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "18"
+  "directEvidenceReview": "PASS",
+  "nextStage": "18",
+  "notes": "This proves controller Stage 17 REQUIREMENT RESOLUTION implementation behavior under the current specification using exact-main deterministic, local-browser, deployment, deployed-byte, and deployed-browser evidence. It does not represent synthetic fixture context IDs as proof of hidden provider independence and makes no Stage 18+, convergence, release, terminal-delivery, physical-iPhone, full Section 49, or production-maturity completion claim."
 }
