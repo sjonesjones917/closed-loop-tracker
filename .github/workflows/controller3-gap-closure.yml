@@ -1,0 +1,87 @@
+name: Controller 3 executable gap closure
+on:
+  push:
+    branches: [controller3-runtime-closure-20260904]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-runtime-closure-20260904
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply earliest-layer corrections and permanent regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          needle="const INTAKE_ACCOUNTING_DISPOSITIONS="
+          if "RAW_UNITIZATION_VERSION='closed-loop-raw-units/1'" not in s:
+              i=s.find(needle)
+              if i < 0: raise SystemExit('intake accounting constant not found')
+              s=s[:i]+"const RAW_UNITIZATION_VERSION='closed-loop-raw-units/1';\nconst RAW_INPUT_ACCOUNTING_VERSION=RAW_UNITIZATION_VERSION;\n"+s[i:]
+          old="const seen=new Set(),deduped=[];for(const unit of units){const key=`${unit.sourceLocation}|${unit.rawValueSha256}`;if(seen.has(key))continue;seen.add(key);deduped.push(unit);}const base={schema:'closed-loop-intake-manifest/1',inputVersion,units:deduped,unitCount:deduped.length};"
+          new="const seen=new Set(),deduped=[];for(const unit of units){const key=`${unit.sourceLocation}|${unit.rawValueSha256}`;if(seen.has(key))continue;seen.add(key);deduped.push(unit);}const base={schema:'closed-loop-intake-manifest/1',rawUnitizationVersion:RAW_UNITIZATION_VERSION,inputVersion,units:deduped,unitCount:deduped.length};"
+          if old in s: s=s.replace(old,new,1)
+          old="if(String(parsed.inputVersion||'')!==String(manifest.inputVersion))reasons.push('Stage 01 intake accounting is not bound to the current input version.');"
+          new="if(String(parsed.rawUnitizationVersion||RAW_UNITIZATION_VERSION)!==RAW_UNITIZATION_VERSION)reasons.push('Stage 01 raw input accounting uses an unsupported RAW_UNITIZATION_VERSION.');\n  if(String(parsed.inputVersion||'')!==String(manifest.inputVersion))reasons.push('Stage 01 intake accounting is not bound to the current input version.');"
+          if old in s: s=s.replace(old,new,1)
+          s=s.replace("upper(recordValue(test,'TEST_TYPE'))==='DETERMINISTIC'&&!['RETIRED'", "upper(recordValue(test,'TEST_TYPE'))==='DETERMINISTIC'&&testDueState(project,test,22).dueNow&&!['RETIRED'",1)
+          s=s.replace("upper(recordValue(test,'TEST_TYPE'))==='MEANING'&&!['RETIRED'", "upper(recordValue(test,'TEST_TYPE'))==='MEANING'&&testDueState(project,test,23).dueNow&&!['RETIRED'",1)
+          s=s.replace("upper(recordValue(test,'TEST_TYPE'))==='ADVERSARIAL'&&!['RETIRED'", "upper(recordValue(test,'TEST_TYPE'))==='ADVERSARIAL'&&testDueState(project,test,24).dueNow&&!['RETIRED'",1)
+          p.write_text(s)
+
+          p=Path('response-ingestion.js'); s=p.read_text()
+          s=s.replace("const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','filename','mediaType','byteSize','sha256','required']);","const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','attachmentSlotId','filename','mediaType','byteSize','sha256','required']);")
+          old="const filename=String(attachment.filename||'').trim(),mediaType=String(attachment.mediaType||'').trim(),claimedSize=Number(attachment.byteSize),claimedHash=String(attachment.sha256||'').toLowerCase();"
+          new="const attachmentSlotId=String(attachment.attachmentSlotId||'').trim(),filename=String(attachment.filename||'').trim(),mediaType=String(attachment.mediaType||'').trim(),claimedSize=Number(attachment.byteSize),claimedHash=String(attachment.sha256||'').toLowerCase();\n    if(!attachmentSlotId)issues.push(issue('MISSING_ATTACHMENT_SLOT_ID',`${path}/attachmentSlotId`,'ATTACHMENT_SLOT_ID is required; selection order or filename alone never establishes returned-file mapping.'));"
+          if old in s: s=s.replace(old,new,1)
+          old="const byName=suppliedFiles.filter(file=>String(file?.name??file?.filename??'')===filename);\n    if(!byName.length){if(attachment.required!==false)issues.push(issue(suppliedFiles.length?'ATTACHMENT_FILENAME_MISMATCH':'MISSING_REQUIRED_ATTACHMENT',path,suppliedFiles.length?`No supplied file has required filename ${filename}.`:`Required attachment ${filename} was not supplied.`));return;}"
+          new="const bySlot=suppliedFiles.filter(file=>String(file?.attachmentSlotId||'')===attachmentSlotId);\n    if(!bySlot.length){if(attachment.required!==false)issues.push(issue('MISSING_REQUIRED_ATTACHMENT_SLOT',path,`No supplied file is mapped through ATTACHMENT_SLOT_ID ${attachmentSlotId}. Filename alone and selection order are nonauthoritative.`));return;}\n    if(bySlot.length!==1){issues.push(issue('AMBIGUOUS_ATTACHMENT_SLOT',path,`ATTACHMENT_SLOT_ID ${attachmentSlotId} must map to exactly one selected file.`));return;}\n    const byName=bySlot.filter(file=>String(file?.name??file?.filename??'')===filename);\n    if(!byName.length){issues.push(issue('ATTACHMENT_FILENAME_MISMATCH',path,`The file mapped to ATTACHMENT_SLOT_ID ${attachmentSlotId} does not satisfy required filename ${filename}.`));return;}"
+          if old in s: s=s.replace(old,new,1)
+          old="for(const attachment of safe(envelope.attachments)){const match=safe(rawRecord.files).find(file=>String(file?.name??file?.filename??'')===String(attachment.filename||'')&&String(file?.type??file?.mediaType??'')===String(attachment.mediaType||'')&&Number(file?.size??file?.byteSize)===Number(attachment.byteSize)&&String(file?.sha256||'').toLowerCase()===String(attachment.sha256||'').toLowerCase());"
+          new="for(const attachment of safe(envelope.attachments)){const match=safe(rawRecord.files).find(file=>String(file?.attachmentSlotId||'')===String(attachment.attachmentSlotId||'')&&String(file?.name??file?.filename??'')===String(attachment.filename||'')&&String(file?.type??file?.mediaType??'')===String(attachment.mediaType||'')&&Number(file?.size??file?.byteSize)===Number(attachment.byteSize)&&String(file?.sha256||'').toLowerCase()===String(attachment.sha256||'').toLowerCase());"
+          if old in s: s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('verify-ingestion.mjs'); s=p.read_text()
+          s=s.replace("const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf'", "const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',attachmentSlotId:'ATTACHMENT-SLOT-1',name:'result.pdf'",1)
+          s=s.replace("e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf'", "e.attachments=[{temporaryKey:'attachment-1',attachmentSlotId:'ATTACHMENT-SLOT-1',filename:'result.pdf'",1)
+          s=s.replace("['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT']", "['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT_SLOT']",1)
+          needle="if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}"
+          if 'JOB-ATTACHMENT-FILENAME-ONLY' not in s:
+              s=s.replace(needle,needle+"\n  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-FILENAME-ONLY'),filenameOnly={...exactFile};delete filenameOnly.attachmentSlotId;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[filenameOnly]});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='MISSING_REQUIRED_ATTACHMENT_SLOT'))throw new Error('Filename alone or selection order incorrectly satisfied ATTACHMENT_SLOT_ID mapping authority.');negativeCount++;}",1)
+          s=s.replace("e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js'", "e.attachments=[{temporaryKey:'test-artifact-1',attachmentSlotId:'ATTACHMENT-SLOT-TEST-1',filename:'fixture.js'",1)
+          s=s.replace("files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js'", "files:[{artifactId:'ARTIFACT-TEST-000001',attachmentSlotId:'ATTACHMENT-SLOT-TEST-1',name:'fixture.js'",1)
+          p.write_text(s)
+
+          p=Path('verify-complete.mjs'); s=p.read_text()
+          s=s.replace("CURRENT_PRODUCT_ID:'PRODUCT-NATIVE'", "CURRENT_PRODUCT_ID:'PRODUCT-NATIVE',CURRENT_PRODUCT_VERSION:'PRODUCT-v001'",1)
+          old="REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC'"
+          new="REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true},EXECUTION_MODE:'APPLICATION_DETERMINISTIC'"
+          if old in s: s=s.replace(old,new,1)
+          marker="console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));"
+          addition="""// A final-product obligation is not due before its target exists and becomes due at its declared target stage.\n{const dueProject=core.createBlankState('DUE-STAGE-MUTATION');engine.ensureShape(dueProject);const dueTest={fields:{VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}}};assert(engine.testDueState(dueProject,dueTest,18).dueNow===false,'Final-product test became due before target exists.');dueProject.job.CURRENT_PRODUCT_ID='PRODUCT-DUE';dueProject.job.CURRENT_PRODUCT_VERSION='PRODUCT-v001';assert(engine.testDueState(dueProject,dueTest,22).dueNow===true,'Final-product test did not become due when its target exists at Stage 22.');}\n// Conditional activation remains UNKNOWN until a current activation proof obligation is affirmatively satisfied.\n{const activationProject=core.createBlankState('ACTIVATION-PROOF-MUTATION');engine.ensureShape(activationProject);const rec=(collection,fields,id)=>({id,recordId:id,stage:schema.RECORD_SCHEMAS[collection]?.stage||5,active:true,scope:{inputVersion:activationProject.job.CURRENT_INPUT_VERSION},fields:{[schema.RECORD_SCHEMAS[collection].idField]:id,...fields},relationships:{}});activationProject.projectData.requirements.push(rec('requirements',{MANDATORY_OPTIONAL_STATUS:'CONDITIONAL',STATUS:'ACTIVE'},'REQ-ACT'));activationProject.projectData.propositions.push(rec('propositions',{REQUIREMENT_ID:'REQ-ACT'},'PROP-ACT'));const app=rec('applicabilityRecords',{SUBJECT_ID:'PROP-ACT',SELECTED_APPLICABILITY:'APPLICABLE',PROPOSED_APPLICABILITY:'APPLICABLE',ACTIVATION_PROOF_OBLIGATION_ID:'PROOF-ACT'},'APP-ACT');app.relationships={SUBJECT_ID:'PROP-ACT',ACTIVATION_PROOF_OBLIGATION_ID:'PROOF-ACT'};activationProject.projectData.applicabilityRecords.push(app);assert(engine.evaluateApplicability(activationProject,'PROP-ACT')==='UNKNOWN','Conditional activation passed without a satisfied activation proof obligation.');activationProject.projectData.proofObligations.push(rec('proofObligations',{SATISFACTION_STATE:'SATISFIED'},'PROOF-ACT'));assert(engine.evaluateApplicability(activationProject,'PROP-ACT')==='APPLICABLE','Satisfied activation proof did not permit conditional applicability progression.');}\n"""
+          if 'DUE-STAGE-MUTATION' not in s: s=s.replace(marker,marker+'\n'+addition,1)
+          p.write_text(s)
+          PY
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node verify-due-stage-timing.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-v3-definition-of-done.mjs > /tmp/section49.json
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/section49.json','utf8'));const bad=Object.entries(d.section49CoverageMetrics).filter(([k,v])=>k!=='actualIPhoneSafariAcceptanceCoverage'&&v.value!==1);if(bad.length)throw new Error('Executable Section 49 metrics incomplete: '+JSON.stringify(bad));if(d.section49ZeroCountInvariantViolations!==0)throw new Error('Section 49 zero-count invariant violation');"
+          rm .github/workflows/controller3-gap-closure.yml
+          git config user.name closed-loop-controller
+          git config user.email closed-loop-controller@users.noreply.github.com
+          git add workflow-engine.js response-ingestion.js verify-ingestion.mjs verify-complete.mjs .github/workflows/controller3-gap-closure.yml
+          git commit -m "Close executable Section 49 accounting and due-stage gaps"
+          git push origin HEAD:controller3-runtime-closure-20260904
