@@ -199,6 +199,13 @@ function blindReviewAliasEntries(stage,state,operation,scope,batchPlan){
   return entries;
 }
 function applyBlindReviewAliases(value,entries,direction='PUBLIC'){const pairs=safe(entries).map(entry=>direction==='CANONICAL'?[entry.alias,entry.canonicalId]:[entry.canonicalId,entry.alias]).filter(([a,b])=>a&&b).sort((a,b)=>String(b[0]).length-String(a[0]).length);if(typeof value==='string'){let out=value;for(const [from,to] of pairs)out=out.split(String(from)).join(String(to));return out;}if(Array.isArray(value))return value.map(item=>applyBlindReviewAliases(item,entries,direction));if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,applyBlindReviewAliases(item,entries,direction)]));return value;}
+function stage5SemanticReviewBinding(state,operation,options={}){
+  if(String(operation)==='COMPLETE'){const authorContextId=clean(options.authorContextId);if(!authorContextId)return {authorContextId:null,reviewerContextId:null,reviewedRecordIds:[],reviewedRecordHashes:[],bindingStatus:'UNBOUND_AUTHOR_CONTEXT'};const context=safe(state?.projectData?.freshContexts).find(r=>recordId(r,'freshContexts')===authorContextId&&r?.active!==false&&!r?.invalidatedBy&&Number(r?.stage)===5&&r?.source!=='HUMAN_REVIEWER_CONTEXT');if(!context)throw new Error('Stage 05 author context is not a current registered non-reviewer context.');return {authorContextId,reviewerContextId:null,reviewedRecordIds:[],reviewedRecordHashes:[],bindingStatus:'BOUND'};}
+  if(String(operation)!=='SEMANTIC_REVIEW')return null;
+  const reviewerContextId=clean(options.reviewerContextId);if(!reviewerContextId)return {authorContextId:null,reviewerContextId:null,reviewedRecordIds:[],reviewedRecordHashes:[],bindingStatus:'UNBOUND_REVIEWER_CONTEXT'};const reviewer=safe(state?.projectData?.freshContexts).find(r=>recordId(r,'freshContexts')===reviewerContextId&&r?.active!==false&&!r?.invalidatedBy&&Number(r?.stage)===5&&r?.source==='HUMAN_REVIEWER_CONTEXT');if(!reviewer)throw new Error('Stage 05 reviewer context is not a current application-registered reviewer context.');
+  const completeChange=safe(state?.projectData?.acceptedChanges).filter(x=>Number(x?.stage)===5&&!x?.invalidatedBy&&String(x?.operation||'COMPLETE')==='COMPLETE').at(-1);const authorPrompt=completeChange?safe(state?.projectData?.generatedPrompts).find(x=>(x?.instructionId||x?.promptId)===completeChange?.promptId):null,authorContextId=clean(authorPrompt?.contextManifest?.semanticReviewBinding?.authorContextId);if(!authorContextId)return {authorContextId:null,reviewerContextId,reviewedRecordIds:[],reviewedRecordHashes:[],bindingStatus:'UNBOUND_AUTHOR_CONTEXT'};if(authorContextId===reviewerContextId)throw new Error('Stage 05 semantic author and reviewer contexts must be distinct.');
+  const targetCollections=['requirementResolutions','propositionEquivalenceReviews','applicabilityRecords'];const targets=[];for(const collection of targetCollections)for(const record of workflow.recordsForCurrentScope(state,collection))targets.push({id:recordId(record,collection),hash:record.recordSha256||record.sha256||hash.sha256Value(recordFields(record))});for(const req of workflow.recordsForCurrentScope(state,'requirements')){const cls=upper(recordValue(req,'MANDATORY_OPTIONAL_STATUS'));if(cls.includes('OPTIONAL')||cls.includes('CONDITIONAL'))targets.push({id:recordId(req,'requirements'),hash:req.recordSha256||req.sha256||hash.sha256Value(recordFields(req))});}if(!targets.length)throw new Error('Stage 05 semantic review has no current semantic target records to review.');return {authorContextId,reviewerContextId,reviewedRecordIds:targets.map(x=>x.id),reviewedRecordHashes:targets.map(x=>x.hash),bindingStatus:'BOUND'};
+}
 function buildPromptRecord(stageOrDefinition,state,options={}){
   const stage=Number(stageOrDefinition?.number||stageOrDefinition);
   if(!Number.isInteger(stage)||stage<1||stage>schema.STAGE_COUNT)throw new Error(`Stage must be 1 through ${schema.STAGE_COUNT}.`);
@@ -214,8 +221,10 @@ function buildPromptRecord(stageOrDefinition,state,options={}){
   const batchPlan=verificationBatchPlan(stage,state,operation,scope);
   const blindAliasMap=blindReviewAliasEntries(stage,state,operation,scope,batchPlan);
   const handoff=stage===4?{send:[],withhold:[],expectBack:[]}:workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)});
+  const semanticReviewBinding=stage===5?stage5SemanticReviewBinding(state,operation,options):null;
   const contextManifest={
     stage,operation,scope,
+    semanticReviewBinding,
     promptEngineVersion:PROMPT_ENGINE_VERSION,
     untrustedDataBoundary:{schema:UNTRUSTED_DATA_SCHEMA,applied:true,controllingCompletionVersion:CONTROLLING_COMPLETION_VERSION},
     blindAliasMap:blindAliasMap.map(x=>({...x})),
