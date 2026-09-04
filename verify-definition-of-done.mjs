@@ -22,6 +22,12 @@ assert.equal(independentPreflightProof.independentPreflight,'PASS','Stage 13 ind
 assert.equal(independentPreflightProof.isolatedDisposableProjects,true,'Stage 13 independent-preflight mutations were not isolated to disposable project state.');
 assert.equal(independentPreflightProof.noMutationBeforeAcceptance,true,'Stage 13 independent-preflight verifier did not prove zero canonical mutation before acceptance.');
 assert.equal(independentPreflightProof.independenceEpistemicLimitPreserved,true,'Stage 13 independent-preflight verifier overclaimed unobservable external independence.');
+const candidateFreezeProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-candidate-freeze.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+assert.equal(candidateFreezeProof.candidateFreeze,'PASS','Stage 14 candidate-freeze regression proof did not pass.');
+assert.equal(candidateFreezeProof.noPartialMutationOnRejectedFreeze,true,'Stage 14 rejected candidate freeze partially mutated application state.');
+assert.equal(candidateFreezeProof.exactHumanSelectionReferenced,true,'Stage 14 frozen candidate did not bind the exact registered human component-selection decision.');
+assert.equal(candidateFreezeProof.frozenManifestImmutable,true,'Stage 14 frozen candidate manifest was not immutable.');
+assert.equal(candidateFreezeProof.isolatedDisposableProjects,true,'Stage 14 candidate-freeze mutations were not isolated.');
 
 const originalLog=console.log;
 const captured=[];
@@ -209,4 +215,6 @@ assert.equal(report.independentPreflightCoverage,1,'Stage 13 independent-preflig
 assert.equal(report.independentPreflightMutationProof.missingIndependentReviewerBlocked,true,'Stage 13 missing-reviewer mutation was not rejected.');
 assert.equal(report.independentPreflightMutationProof.materialAmbiguityBlocked,true,'Stage 13 material-ambiguity mutation was not rejected.');
 assert.equal(report.independentPreflightMutationProof.contaminatedReviewerBlocked,true,'Stage 13 contaminated-reviewer mutation was not rejected.');
+report.candidateFreezeCoverage=Number(candidateFreezeProof.candidateFreeze==='PASS'&&candidateFreezeProof.repairedPathProgressed===true&&candidateFreezeProof.noPartialMutationOnRejectedFreeze===true&&candidateFreezeProof.exactHumanSelectionReferenced===true&&candidateFreezeProof.frozenManifestImmutable===true&&candidateFreezeProof.isolatedDisposableProjects===true);
+assert.equal(report.candidateFreezeCoverage,1,'Stage 14 candidate-freeze coverage is not complete.');
 originalLog(JSON.stringify(report,null,2));
