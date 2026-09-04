@@ -2,51 +2,112 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "01",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "d18cd91e112b8c9737bec126e3e79b5fe1539631",
-  "endingMainCommit": "4506407ca6238eba083485c7d29aacab3c35dba6",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "startingMainCommit": "3a6fed9524a572e15b13b6279de43fdc8c075a76",
+  "endingMainCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
   "implementationCommitIds": [
-    "903ef54d5eeb2cd80cde76deac049530ddc734af",
-    "a06940b93a30acfdebf80cc8cf4f6602bcfa607c",
-    "4506407ca6238eba083485c7d29aacab3c35dba6"
+    "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e"
   ],
   "changedFiles": [
     "specification/closed-loop-reliability-controlling-implementation-specification.txt",
     "specification/closed-loop-specification-manifest.json",
-    "specification/closed-loop-normative-requirements.json"
+    "specification/closed-loop-normative-requirements.json",
+    "verification/build-stages/stage-01-proof.json",
+    "verification/closed-loop-build-state.json"
   ],
   "normativeRequirementChanges": [
-    {"normativeRequirementId":"NREQ-0a7d4eee5cf603d62944a5034ac4801f","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-43f37c9b4342e21da2877c4e811ee872","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-f0a1ca7147b50755050079e8792f130c","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-4bb9a61adb2c0abfa59b847fec2f54cd","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-86fbf81ae24502beba9e86ee3098f3b7","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-fb5cf46d306cb1cba5734b88aa9880de","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-2713787ffb8a8b83bd4086899e340cf0","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"}
+    {
+      "normativeRequirementId": "NREQ-87f1cb253000192eb140b21f559210f7",
+      "oldDisposition": "MISSING",
+      "newDisposition": "CONFORMANT_PROVEN"
+    },
+    {
+      "normativeRequirementId": "NREQ-b130456cd0c836a734b70a22f82c84fa",
+      "oldDisposition": "MISSING",
+      "newDisposition": "CONFORMANT_PROVEN"
+    },
+    {
+      "normativeRequirementId": "NREQ-296a0b1017ebf1253231b5cbf0c21dc3",
+      "oldDisposition": "MISSING",
+      "newDisposition": "CONFORMANT_PROVEN"
+    },
+    {
+      "normativeRequirementId": "NREQ-b5ea5f9ccd0a3202197874055f5e99f8",
+      "oldDisposition": "MISSING",
+      "newDisposition": "CONFORMANT_PROVEN"
+    },
+    {
+      "normativeRequirementId": "NREQ-550e6824febe8a391764ae9ab923cf24",
+      "oldDisposition": "MISSING",
+      "newDisposition": "CONFORMANT_PROVEN"
+    },
+    {
+      "normativeRequirementId": "NREQ-c744673d7ae0c5dafbc2eb1ad62b4a3c",
+      "oldDisposition": "MISSING",
+      "newDisposition": "CONFORMANT_PROVEN"
+    },
+    {
+      "normativeRequirementId": "NREQ-ac2f7064b426b4b173225290252a79ef",
+      "oldDisposition": "MISSING",
+      "newDisposition": "CONFORMANT_PROVEN"
+    }
   ],
   "proofCommands": [
-    {"command":"node verify-specification-governance.mjs (SOURCE_COMMIT=b71e828461c86184e9a08f738453443e6b579aab)","exitCode":0},
-    {"command":"node verify-deployment-manifest.mjs","exitCode":0},
-    {"command":"GitHub Actions run 33821677013 test job 100865483283","exitCode":0},
-    {"command":"GitHub Actions run 33821677013 deploy job 100866188831","exitCode":0},
-    {"command":"GitHub Actions run 33821677013 deployed-byte/browser job 100866257757","exitCode":0}
+    {
+      "command": "SOURCE_COMMIT=2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e node generate-specification-governance.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node verify-specification-governance.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node verify-deployment-manifest.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "Prepare Stage 01B governance workflow 33838478815 on the exact Stage 01B branch head",
+      "exitCode": 0
+    }
   ],
   "proofArtifactDigests": [
-    {"path":"specification/closed-loop-reliability-controlling-implementation-specification.txt","sha256":"3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564","byteLength":294591},
-    {"path":"specification/closed-loop-specification-manifest.json","sha256":"365fa2d5007f09dfe7b3ff2f898e09e4f394a66cc43f1e7a5e0c198eb8549e8a"},
-    {"path":"specification/closed-loop-normative-requirements.json","sha256":"1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"}
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+      "byteLength": 309472
+    },
+    {
+      "path": "specification/closed-loop-specification-manifest.json",
+      "sha256": "a4d974846fd36b1622c578648d05abd0d4338a0cbda2a0f31a3ec4ee85630d89"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "df04c9de847b1a8553da18b26317b9bf0ee78115de3364603f0fdc762731befc"
+    }
   ],
-  "intentionalInvalidFixtures": ["uncovered-section","missing-requirement","duplicate-id","missing-test-trace","source-conflict","runtime-copy"],
+  "intentionalInvalidFixtures": [
+    "uncovered-section",
+    "missing-requirement",
+    "duplicate-id",
+    "conflicting-disposition",
+    "runtime-specification-copy"
+  ],
   "earlierStageProofsReplayed": [],
-  "browserProofs": [
-    {"proof":"local Chromium operator path","status":"PASS","workflowRunId":33821677013},
-    {"proof":"deployed Chromium operator path","status":"PASS","workflowRunId":33821677013}
-  ],
+  "browserProofs": [],
   "deployedProofs": [
-    {"proof":"exact deployed bytes and deployment origin","status":"PASS","workflowRunId":33821677013},
-    {"proof":"repository-only governance excluded from deployment","status":"PASS","workflowRunId":33821677013}
+    {
+      "proof": "repository-only governance deployment exclusion",
+      "status": "PASS",
+      "basis": "verify-deployment-manifest.mjs"
+    }
   ],
-  "externalActorProofs": [{"proof":"independent specification coverage pass and reconciliation","status":"PASS"}],
+  "externalActorProofs": [
+    {
+      "proof": "independent specification section coverage and reconciliation",
+      "status": "PASS",
+      "basis": "closed-loop-specification-manifest/1 challenge and reconciliation records"
+    }
+  ],
   "unprovenItems": [],
   "proofCountBefore": 0,
   "proofCountAfter": 10,

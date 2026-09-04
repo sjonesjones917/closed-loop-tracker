@@ -1,223 +1,78 @@
 {
   "controllerId": "closed-loop-monotonic-build-controller/2",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "specificationSourceCommit": "b71e828461c86184e9a08f738453443e6b579aab",
-  "lastObservedMainCommit": "3a6fed9524a572e15b13b6279de43fdc8c075a76",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationSourceCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
+  "lastObservedMainCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
   "stages": {
     "10": {
-      "status": "PROVEN",
-      "provenCommit": "e9955b8a7bfc1102768df71454126dec56d8bda0",
-      "proofRecordPath": "verification/build-stages/stage-10-proof.json",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "11": {
-      "status": "PROVEN",
-      "provenCommit": "313a845b28222097ac3a67d87679497e2ceb23ae",
-      "proofRecordPath": "verification/build-stages/stage-11-proof.json",
-      "proofDigest": "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "12": {
-      "status": "PROVEN",
-      "provenCommit": "da2ebbe0394c19ab39fd622e0f21742d006706ed",
-      "proofRecordPath": "verification/build-stages/stage-12-proof.json",
-      "proofDigest": "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "13": {
-      "status": "PROVEN",
-      "provenCommit": "d7b92d2181ccdc5853547279a63f186477d2bb79",
-      "proofRecordPath": "verification/build-stages/stage-13-proof.json",
-      "proofDigest": "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-        "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "14": {
-      "status": "PROVEN",
-      "provenCommit": "9e68519dacc85a99907f36e3a0a1c5adfba3d96c",
-      "proofRecordPath": "verification/build-stages/stage-14-proof.json",
-      "proofDigest": "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-        "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-        "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "15": {
-      "status": "PROVEN",
-      "provenCommit": "ffc70c56190daee90a908e2ff5958542b1f0d13a",
-      "proofRecordPath": "verification/build-stages/stage-15-proof.json",
-      "proofDigest": "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-        "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-        "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-        "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "16": {
-      "status": "PROVEN",
-      "provenCommit": "77fc61c5bb6626710d0a19f0e5020f6f9c1d36d7",
-      "proofRecordPath": "verification/build-stages/stage-16-proof.json",
-      "proofDigest": "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-        "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-        "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-        "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-        "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "17": {
-      "status": "PROVEN",
-      "provenCommit": "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f",
-      "proofRecordPath": "verification/build-stages/stage-17-proof.json",
-      "proofDigest": "1952f2d7902e247d5da6d90b5fbc67774078b84283392e9069d059e84c1949da",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-        "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-        "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-        "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-        "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-        "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "18": {
-      "status": "PROVEN",
-      "provenCommit": "b9655e2632eea3a974a16c79b9e5c4f2fbbb05bf",
-      "proofRecordPath": "verification/build-stages/stage-18-proof.json",
-      "proofDigest": "cbc7c2143d22294b2e1ae3a6872dd98f15e0b93763ed5566886cf12e1b8a431d",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-        "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-        "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-        "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-        "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-        "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
-        "1952f2d7902e247d5da6d90b5fbc67774078b84283392e9069d059e84c1949da",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "19": {
-      "status": "PROVEN",
-      "provenCommit": "3a6fed9524a572e15b13b6279de43fdc8c075a76",
-      "proofRecordPath": "verification/build-stages/stage-19-proof.json",
-      "proofDigest": "c3bf5ef4eca380379836ca8baf06aa1a763d6aec3db1f4d3a744047b48ac36ae",
-      "prerequisiteStageDigests": [
-        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-        "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-        "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-        "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-        "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-        "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
-        "1952f2d7902e247d5da6d90b5fbc67774078b84283392e9069d059e84c1949da",
-        "cbc7c2143d22294b2e1ae3a6872dd98f15e0b93763ed5566886cf12e1b8a431d",
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "20": {
       "status": "NOT_STARTED",
@@ -298,113 +153,69 @@
     },
     "01": {
       "status": "PROVEN",
-      "provenCommit": "4506407ca6238eba083485c7d29aacab3c35dba6",
+      "provenCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
       "proofRecordPath": "verification/build-stages/stage-01-proof.json",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+      "proofDigest": "8e512f9a03a6568aeb842cd9986e94c1e8aff6e36163858ad2faadaa4b3081b9",
       "prerequisiteStageDigests": []
     },
     "02": {
-      "status": "PROVEN",
-      "provenCommit": "3da813c1aa3a9bbba3640f71b46c370d3c94dbc3",
-      "proofRecordPath": "verification/build-stages/stage-02-proof.json",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "03": {
-      "status": "PROVEN",
-      "provenCommit": "175d1fae392514d6e31296602d3dfa9541cd1160",
-      "proofRecordPath": "verification/build-stages/stage-03-proof.json",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "04": {
-      "status": "PROVEN",
-      "provenCommit": "a07d36f8c46b6b8a6e4cd04c22756c20cdd99b52",
-      "proofRecordPath": "verification/build-stages/stage-04-proof.json",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "05": {
-      "status": "PROVEN",
-      "provenCommit": "18cc62d3029be23582960d968fcf6b8b646d0ed3",
-      "proofRecordPath": "verification/build-stages/stage-05-proof.json",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "06": {
-      "status": "PROVEN",
-      "provenCommit": "faba84ccbf02290460ac93661463bbdde087d60d",
-      "proofRecordPath": "verification/build-stages/stage-06-proof.json",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "07": {
-      "status": "PROVEN",
-      "provenCommit": "e5ec8fb19a36f190cfdb44f1a8520ccbab31df0c",
-      "proofRecordPath": "verification/build-stages/stage-07-proof.json",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "08": {
-      "status": "PROVEN",
-      "provenCommit": "c309970bbbad472e590ed70a3a0774579c6b005d",
-      "proofRecordPath": "verification/build-stages/stage-08-proof.json",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     },
     "09": {
-      "status": "PROVEN",
-      "provenCommit": "8aa627bc1edd3556d4eeaddc64729a62775d4cfc",
-      "proofRecordPath": "verification/build-stages/stage-09-proof.json",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "prerequisiteStageDigests": [
-        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9"
-      ]
+      "status": "NOT_STARTED",
+      "provenCommit": null,
+      "proofRecordPath": null,
+      "proofDigest": null,
+      "prerequisiteStageDigests": []
     }
   },
-  "proofCount": 79,
+  "proofCount": 10,
   "conformantRequirementCount": 7,
-  "lastUpdatedByCommandId": "CI-33838144563-STAGE19"
+  "lastUpdatedByCommandId": "STAGE01B-PR960-SYNCHRONIZE"
 }
