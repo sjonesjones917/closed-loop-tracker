@@ -16,17 +16,14 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Apply current-main repair
-        shell: bash
+      - name: Fetch repair source
         run: |
           set -euo pipefail
           git fetch origin controller3-prompt-byte-identity-20260904
-          git checkout origin/controller3-prompt-byte-identity-20260904 -- \
-            prompt-engine.js \
-            build-test-project.mjs \
-            verify-browser.mjs \
-            verify-file-first-response.mjs \
-            verify-prompt-semantics.mjs
+          git checkout origin/controller3-prompt-byte-identity-20260904 -- prompt-engine.js build-test-project.mjs verify-browser.mjs verify-file-first-response.mjs verify-prompt-semantics.mjs
+      - name: Reconcile Stage 01 and CI contracts
+        run: |
+          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           p=Path('prompt-engine.js')
@@ -37,7 +34,6 @@ jobs:
               raise SystemExit('Stage 01 accounting anchor not found in transplanted prompt engine')
           s=s.replace(anchor,replacement,1)
           p.write_text(s)
-
           y=Path('.github/workflows/pages.yml')
           w=y.read_text()
           marker='          node verify-semantic-invariant.mjs\n'
@@ -48,9 +44,15 @@ jobs:
               w=w.replace(marker,marker+addition,1)
           y.write_text(w)
           PY
+      - name: Commit materialized repair
+        run: |
+          set -euo pipefail
           git rm .github/workflows/materialize-prompt-byte-identity.yml
           git config user.name github-actions
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add prompt-engine.js build-test-project.mjs verify-browser.mjs verify-file-first-response.mjs verify-prompt-semantics.mjs .github/workflows/pages.yml
           git commit -m 'Apply exact prompt-file identity repair'
+      - name: Push materialized repair
+        run: |
+          set -euo pipefail
           git push origin HEAD:controller3-prompt-file-identity-current-20260904
