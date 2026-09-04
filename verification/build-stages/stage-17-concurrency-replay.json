@@ -1,0 +1,19 @@
+{
+  "schema": "closed-loop-stage-concurrency-replay/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "17",
+  "originalImplementationMainCommit": "d59d3159210ecbad7f929d1ed11a5400bf5443d6",
+  "observedMovedMainCommit": "72bbc9f9a7262584854de6050f4f21d9016ef327",
+  "movedMainChange": "Merge Controller Stage 17 cross-run comparison",
+  "reconciliationWorkflowRunId": 33899326479,
+  "reconciliationJobId": 101109417655,
+  "reconciliationResult": "PASS",
+  "proofCommands": [
+    "node verify-build-stage-ledger.mjs",
+    "node verify-semantic-operation-boundaries.mjs",
+    "node verify-cross-run-comparison.mjs",
+    "node verify-full-cycle.mjs"
+  ],
+  "result": "The proof branch merged the moved canonical main, encountered no unresolved conflict, and replayed both the requirement-resolution behavior and the concurrently landed cross-run comparison behavior successfully before PR verification.",
+  "runtimeBehaviorChangedByThisRecord": false
+}
