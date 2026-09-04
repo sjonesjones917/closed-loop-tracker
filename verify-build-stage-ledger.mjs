@@ -12,12 +12,16 @@ const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const readJson=path=>JSON.parse(fs.readFileSync(path,'utf8'));
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 const stageKey=n=>String(n).padStart(2,'0');
+let historyPrepared=false;
 
 function proveAncestor(commit){
   if(process.env.GITHUB_ACTIONS!=='true')return true;
-  if(cp.spawnSync('git',['cat-file','-e',`${commit}^{commit}`],{stdio:'ignore'}).status!==0){
-    const fetch=cp.spawnSync('git',['fetch','--no-tags','--depth=64','origin',commit],{stdio:'ignore'});
-    assert(fetch.status===0,`Unable to fetch proven commit ${commit} for ancestry verification.`);
+  if(!historyPrepared){
+    const shallow=cp.execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
+    const args=shallow?['fetch','--no-tags','--unshallow','origin','main']:['fetch','--no-tags','origin','main'];
+    const fetch=cp.spawnSync('git',args,{stdio:'ignore'});
+    assert(fetch.status===0,'Unable to fetch canonical main history for proof ancestry verification.');
+    historyPrepared=true;
   }
   return cp.spawnSync('git',['merge-base','--is-ancestor',commit,'HEAD'],{stdio:'ignore'}).status===0;
 }
