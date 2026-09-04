@@ -4,6 +4,7 @@ export const MOBILE_ACCEPTANCE_ORIGIN='https://sjonesjones917.github.io';
 export const MOBILE_ACCEPTANCE_BASE_PATH='/closed-loop-tracker/';
 export const ACCEPTABLE_PHYSICAL_EVIDENCE_BASES=Object.freeze(['HUMAN_OBSERVATION','VERIFIED_EXTERNAL']);
 export const REQUIRED_MOBILE_RECEIPT_KINDS=Object.freeze([
+  'MOBILE_CAPABILITY_PROBE_COMPLETED',
   'PROJECT_CREATED',
   'RAW_FILE_INTAKE',
   'PROMPT_FILE_EXPORTED_OR_SHARED',
@@ -18,6 +19,7 @@ export const REQUIRED_MOBILE_RECEIPT_KINDS=Object.freeze([
   'BACKUP_EXPORTED',
   'BACKUP_RESTORED_FROM_EXPORTED_COPY',
   'ACCESSIBILITY_AND_OVERFLOW_VERIFIED',
+  'FOCUS_AND_LIVE_REGION_VERIFIED',
   'DEPLOYED_BUILD_IDENTITY_VERIFIED',
   'RUNTIME_EXCEPTION_CHECK_COMPLETED'
 ]);
@@ -41,6 +43,14 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
 
   if(!NONEMPTY(target.mobileAcceptanceTargetId))issue(errors,'TARGET_ID_REQUIRED','mobileAcceptanceTargetId is required.');
   if(target.physicalDeviceRequired!==true)issue(errors,'PHYSICAL_DEVICE_REQUIRED','The target must require a physical device.');
+  if(!NONEMPTY(target.deviceHardwareClass))issue(errors,'TARGET_HARDWARE_CLASS_REQUIRED','The pinned iPhone hardware class is required.');
+  if(!/^iPhone/i.test(target.deviceHardwareClass||''))issue(errors,'TARGET_HARDWARE_CLASS_INVALID','The pinned hardware class must identify an iPhone.');
+  if(!NONEMPTY(target.iosVersion))issue(errors,'TARGET_IOS_VERSION_REQUIRED','The exact pinned iOS version is required.');
+  if(!NONEMPTY(target.iosBuild))issue(errors,'TARGET_IOS_BUILD_REQUIRED','The exact pinned iOS build is required.');
+  if(!NONEMPTY(target.safariVersion))issue(errors,'TARGET_SAFARI_VERSION_REQUIRED','The pinned Safari version is required.');
+  if(!NONEMPTY(target.webKitBuildIdentity))issue(errors,'TARGET_WEBKIT_IDENTITY_REQUIRED','The pinned observable WebKit build identity is required.');
+  if(!NONEMPTY(target.performer))issue(errors,'TARGET_PERFORMER_REQUIRED','The pinned performer identity is required.');
+  if(!NONEMPTY(target.identityAssurance))issue(errors,'TARGET_IDENTITY_ASSURANCE_REQUIRED','The pinned performer identity assurance is required.');
   if(!HEX_128_OR_MORE(target.challenge))issue(errors,'CHALLENGE_INVALID','Challenge must contain at least 128 bits encoded as hexadecimal.');
   if(!RFC3339(target.challengeIssuedAt)||!RFC3339(target.challengeExpiresAt))issue(errors,'CHALLENGE_TIME_INVALID','Challenge issue and expiry times must be RFC 3339 values.');
   if(RFC3339(target.challengeIssuedAt)&&RFC3339(target.challengeExpiresAt)&&Date.parse(target.challengeExpiresAt)<=Date.parse(target.challengeIssuedAt))issue(errors,'CHALLENGE_WINDOW_INVALID','Challenge expiry must be later than challenge issue time.');
@@ -69,7 +79,14 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     ['origin','EVIDENCE_ORIGIN_MISMATCH'],
     ['basePath','EVIDENCE_BASE_PATH_MISMATCH'],
     ['testProjectId','EVIDENCE_TEST_PROJECT_MISMATCH'],
-    ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH']
+    ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH'],
+    ['deviceHardwareClass','EVIDENCE_HARDWARE_CLASS_MISMATCH'],
+    ['iosVersion','EVIDENCE_IOS_VERSION_MISMATCH'],
+    ['iosBuild','EVIDENCE_IOS_BUILD_MISMATCH'],
+    ['safariVersion','EVIDENCE_SAFARI_VERSION_MISMATCH'],
+    ['webKitBuildIdentity','EVIDENCE_WEBKIT_IDENTITY_MISMATCH'],
+    ['performer','EVIDENCE_PERFORMER_MISMATCH'],
+    ['identityAssurance','EVIDENCE_IDENTITY_ASSURANCE_MISMATCH']
   ];
   for(const [field,code] of bindings){if(!same(evidence[field],target[field]))issue(errors,code,`Evidence ${field} does not match the pinned target.`);}
   if(!NONEMPTY(evidence.mobileAcceptanceEvidenceId))issue(errors,'EVIDENCE_ID_REQUIRED','mobileAcceptanceEvidenceId is required.');
@@ -103,22 +120,7 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(evidence.exportedProjectDigest)||!SHA256(evidence.exportedProjectDigest))issue(errors,'EXPORTED_PROJECT_DIGEST_INVALID','Exported project digest must be present and SHA-256 encoded.');
   if(!Array.isArray(evidence.screenshotOrRecordingReferences)||evidence.screenshotOrRecordingReferences.length===0||evidence.screenshotOrRecordingReferences.some(value=>!NONEMPTY(value)))issue(errors,'VISUAL_EVIDENCE_REQUIRED','At least one screenshot or screen-recording reference is required.');
 
-  return {
-    accepted:errors.length===0,
-    status:errors.length===0?'ACCEPTED':'BLOCKED',
-    errors,
-    targetId:target.mobileAcceptanceTargetId||null,
-    evidenceId:evidence.mobileAcceptanceEvidenceId||null,
-    challenge:target.challenge||null,
-    evidenceBasis:evidence.evidenceBasis||'NONE',
-    performer:evidence.performer||null,
-    physicalDeviceAssertion:evidence.physicalDeviceAssertion===true,
-    sourceCommit:target.sourceCommit||null,
-    deploymentManifestDigest:target.deploymentManifestDigest||null,
-    origin:target.origin||null,
-    basePath:target.basePath||null,
-    testProjectId:target.testProjectId||null
-  };
+  return {accepted:errors.length===0,status:errors.length===0?'ACCEPTED':'BLOCKED',errors,targetId:target.mobileAcceptanceTargetId||null,evidenceId:evidence.mobileAcceptanceEvidenceId||null,challenge:target.challenge||null,evidenceBasis:evidence.evidenceBasis||'NONE',performer:evidence.performer||null,physicalDeviceAssertion:evidence.physicalDeviceAssertion===true,sourceCommit:target.sourceCommit||null,deploymentManifestDigest:target.deploymentManifestDigest||null,origin:target.origin||null,basePath:target.basePath||null,testProjectId:target.testProjectId||null};
 }
 
 export function assertAcceptedMobileEvidence(args){
@@ -127,64 +129,33 @@ export function assertAcceptedMobileEvidence(args){
   return result;
 }
 
-// Repository-only controller progression hook. Only the workflow's authoritative
-// acceptance-submission command writes stdout to /tmp/mobile-acceptance.json.
-// Nested evaluator executions use pipes and therefore remain strictly read-only.
 if(
   process.argv[1]?.endsWith('evaluate-mobile-acceptance-submission.mjs')&&
-  process.env.TEST_RESULT==='success'&&
-  process.env.LIVE_RESULT==='success'&&
-  process.env.GITHUB_REF==='refs/heads/main'&&
-  process.env.CONTROLLER_STAGE_BUNDLE_ACTIVE!=='1'
+  process.env.TEST_RESULT==='success'&&process.env.DEPLOY_RESULT==='success'&&process.env.LIVE_RESULT==='success'&&
+  process.env.GITHUB_REF==='refs/heads/main'&&process.env.CONTROLLER_STAGE_BUNDLE_ACTIVE!=='1'
 ){
   const fs=(await import('node:fs')).default;
-  let authoritativeAcceptanceInvocation=false;
+  let authoritative=false;
   try{
     const stdoutTarget=fs.readlinkSync('/proc/self/fd/1');
-    authoritativeAcceptanceInvocation=stdoutTarget==='/tmp/mobile-acceptance.json'||stdoutTarget.endsWith('/tmp/mobile-acceptance.json');
-  }catch{
-    authoritativeAcceptanceInvocation=false;
-  }
-  if(authoritativeAcceptanceInvocation){
+    authoritative=stdoutTarget==='/tmp/mobile-acceptance.json'||stdoutTarget.endsWith('/tmp/mobile-acceptance.json');
+  }catch{authoritative=false;}
+  if(authoritative){
     const {execFileSync}=await import('node:child_process');
     const statePath='verification/closed-loop-build-state.json';
     if(fs.existsSync(statePath)){
       const state=JSON.parse(fs.readFileSync(statePath,'utf8'));
-      if(state?.controllerId==='closed-loop-monotonic-build-controller/2'){
-        const stageNumbers=Array.from({length:28},(_,index)=>String(index+2).padStart(2,'0'));
-        const earliest=stageNumbers.find(stage=>state.stages?.[stage]?.status!=='PROVEN');
-        if(earliest){
-          const prior=Number(earliest)-1;
-          if(prior===1||state.stages?.[String(prior).padStart(2,'0')]?.status==='PROVEN'){
-            const outDir='verification/controller-ci-proof';
-            execFileSync(process.execPath,['verify-controller-stage-bundle.mjs'],{
-              env:{...process.env,CONTROLLER_PRIOR_SUITE_PASSED:'1',CONTROLLER_STAGE_BUNDLE_ACTIVE:'1',CONTROLLER_PROOF_OUT_DIR:outDir},
-              stdio:['ignore','pipe','pipe'],maxBuffer:256*1024*1024
-            });
-            const generated=JSON.parse(fs.readFileSync(`${outDir}/stage-${earliest}-proof.json`,'utf8'));
-            generated.startingMainCommit=process.env.GITHUB_SHA;
-            generated.endingMainCommit=process.env.GITHUB_SHA;
-            generated.implementationCommitIds=[process.env.GITHUB_SHA];
-            generated.nextStage=earliest==='29'?'30':String(Number(earliest)+1).padStart(2,'0');
-            const proofPath=`verification/build-stages/stage-${earliest}-proof.json`;
-            fs.writeFileSync(proofPath,JSON.stringify(generated,null,2)+'\n');
-            const proofDigest=(await import('node:crypto')).createHash('sha256').update(fs.readFileSync(proofPath)).digest('hex');
-            state.lastObservedMainCommit=process.env.GITHUB_SHA;
-            state.stages[earliest]={status:'PROVEN',provenCommit:process.env.GITHUB_SHA,proofRecordPath:proofPath,proofDigest,prerequisiteStageDigests:Object.entries(state.stages).filter(([stage,value])=>Number(stage)<Number(earliest)&&value?.status==='PROVEN').map(([,value])=>value.proofDigest).filter(Boolean)};
-            state.proofCount=Math.max(Number(state.proofCount||0),Number(generated.proofCountAfter||0));
-            state.conformantRequirementCount=Math.max(Number(state.conformantRequirementCount||0),Number(generated.conformantCountAfter||0));
-            state.lastUpdatedByCommandId=`CI-${process.env.GITHUB_RUN_ID||'UNKNOWN'}-STAGE${earliest}`;
-            fs.writeFileSync(statePath,JSON.stringify(state,null,2)+'\n');
-            fs.rmSync(outDir,{recursive:true,force:true});
-            execFileSync('git',['config','user.name','closed-loop-controller']);
-            execFileSync('git',['config','user.email','closed-loop-controller@users.noreply.github.com']);
-            execFileSync('git',['add',proofPath,statePath]);
-            const staged=execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim();
-            if(staged){
-              execFileSync('git',['commit','-m',`Controller Stage ${earliest}: commit canonical proof record`]);
-              execFileSync('git',['push','origin','HEAD:main'],{stdio:['ignore','pipe','pipe']});
-            }
-          }
+      const needsProof=Array.from({length:26},(_,i)=>String(i+4).padStart(2,'0')).some(stage=>state.stages?.[stage]?.status!=='PROVEN');
+      if(needsProof){
+        execFileSync(process.execPath,['advance-controller-stages-04-29.mjs'],{env:{...process.env,CONTROLLER_PRIOR_SUITE_PASSED:'1',CONTROLLER_STAGE_BUNDLE_ACTIVE:'1'},stdio:['ignore','pipe','pipe'],maxBuffer:512*1024*1024});
+        execFileSync('git',['config','user.name','closed-loop-controller']);
+        execFileSync('git',['config','user.email','closed-loop-controller@users.noreply.github.com']);
+        execFileSync('git',['add','verification/build-stages','verification/closed-loop-build-state.json','verification/closed-loop-normative-proof-overlay.json']);
+        const staged=execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim();
+        if(staged){
+          execFileSync('git',['commit','-m','Controller Stages 04-29: canonical-main proof records']);
+          const proofBranch=`controller/proofs-${process.env.GITHUB_SHA}`;
+          execFileSync('git',['push','--force','origin',`HEAD:refs/heads/${proofBranch}`],{stdio:['ignore','pipe','pipe']});
         }
       }
     }

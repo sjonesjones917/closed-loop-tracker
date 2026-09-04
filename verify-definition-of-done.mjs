@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
 
 // Closed output fields that this executed definition-of-done proof must retain.
 // This is a compatibility contract for downstream acceptance publication, not a substitute for executing the measurements below.
@@ -147,6 +148,12 @@ const emptyDenominatorAccepted=closedMetricFromUniverse({
 assert.equal(emptyDenominatorAccepted.disposition,'SATISFIED','A current independently accepted evidence-supported empty-universe determination should satisfy the empty-universe metric contract.');
 assert.equal(emptyDenominatorAccepted.value,1,'A reviewed evidence-supported empty universe should publish 100% only through the explicit empty-universe rule.');
 
+const stage01Proof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-stage01-intake-closure.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const zeroLossProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-zero-loss-accounting.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+report.stage01IntakeCoverage=Number(Boolean(stage01Proof.stage01IntakeClosure&&stage01Proof.currentManifestBound&&stage01Proof.incompleteAccountingRejected));
+report.stage04ObligationCoverage=Number(Boolean(zeroLossProof.zeroLossStage04&&zeroLossProof.completeStage03ResearchUnion&&zeroLossProof.incompleteObligationRejected));
+assert.equal(report.stage01IntakeCoverage,1,'Measured Stage 01 intake coverage is not complete.');
+assert.equal(report.stage04ObligationCoverage,1,'Measured Stage 04 obligation coverage is not complete.');
 report.exactReqRunTestCoverage=exactReqRunTestMetric.value;
 report.exactReqRunTestMetric=exactReqRunTestMetric;
 report.coverageMetrics={...(report.coverageMetrics||{}),exactReqRunTestCoverage:exactReqRunTestMetric};
