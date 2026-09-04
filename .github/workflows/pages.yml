@@ -27,6 +27,7 @@ jobs:
           set -euo pipefail
           git fetch origin main controller3-runtime-current-spec-closure
           git checkout -B controller3-runtime-current-spec-closure origin/controller3-runtime-current-spec-closure
+          python3 controller3-repair-fix.py
           python3 controller3-repair.py
           node --check workflow-schema.js
           node --check workflow-engine.js
@@ -39,7 +40,7 @@ jobs:
           node verify-ingestion.mjs
           node verify-complete.mjs
           git checkout origin/main -- .github/workflows/pages.yml
-          rm controller3-repair.py
+          rm controller3-repair.py controller3-repair-fix.py
           git config user.name closed-loop-controller
           git config user.email closed-loop-controller@users.noreply.github.com
           git add -A
