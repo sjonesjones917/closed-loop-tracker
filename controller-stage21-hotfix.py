@@ -24,4 +24,10 @@ old="REQUIREMENT_COVERAGE:metrics.requirementCoverage===null?'UNKNOWN':String(me
 new="REQUIREMENT_COVERAGE:metrics.requirementCoverage,VERIFICATION_COVERAGE:metrics.verificationCoverage,REGRESSION_SUCCESS:metrics.regressionSuccess,CRITICAL_DEFECT_COUNT:metrics.criticalDefects,MAJOR_DEFECT_COUNT:metrics.majorDefects,MANDATORY_UNRESOLVED_UNKNOWN_COUNT:metrics.mandatoryUnresolvedUnknowns,CORRECTNESS_AFFECTING_CONTRADICTION_COUNT:metrics.contradictions,CORRECTNESS_AFFECTING_AMBIGUITY_COUNT:metrics.ambiguities,UNEXPLAINED_CORRECTNESS_AFFECTING_VARIANCE_COUNT:metrics.unexplainedVariance"
 if old not in s: raise SystemExit('Stage 21 convergence numeric-field marker missing')
 s=s.replace(old,new,1)
+insert="""
+replace_once('verify-browser.mjs',"await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));","await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true||Boolean(globalThis.closedLoopAppError)`,20000);{const appError=await evalValue(cdp,`globalThis.closedLoopAppError||''`);assert(!appError,appError);}assert(await evalValue(cdp,`globalThis.closedLoopAppReady===true`),'Application did not reach ready state.');")
+"""
+marker="print('Stage 21 applicator completed.')"
+if marker not in s: raise SystemExit('Stage 21 applicator final marker missing')
+s=s.replace(marker,insert+"\n"+marker,1)
 p.write_text(s)
