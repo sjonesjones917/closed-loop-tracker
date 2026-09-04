@@ -13,25 +13,20 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
-      - name: Repair full-cycle capability fixture and restore canonical workflow
+      - name: Restore canonical workflow after verified current runtime replay
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('verify-full-cycle.mjs'); s=p.read_text()
-          old="complete(6);\ndata(7,"
-          new="complete(6);p.projectData.externalCapabilities.push({id:'CAPABILITY-FULL-CYCLE',active:true,scope:engine.currentScope(p),fields:{CAPABILITY_ID:'CAPABILITY-FULL-CYCLE',CAPABILITY_CLAIM:'fixture-required_capability',FRESHNESS_STATUS:'CURRENT',STATUS:'CURRENT',AUTHORIZED:true,PERMISSIONS_READY:true,INPUTS_TRANSFERABLE:true,ROUTE_USABLE:true,EVIDENCE_OBTAINABLE:true}});engine.recalculate(p);\ndata(7,"
-          if s.count(old)!=1: raise SystemExit(f'full-cycle anchor count {s.count(old)}')
-          p.write_text(s.replace(old,new,1))
-          PY
           timeout 180s node verify-full-cycle.mjs
           node verify-capability-readiness.mjs
           node verify-stage01-intake-closure.mjs
+          node verify-build-stage-ledger.mjs
           git fetch origin main
           git checkout origin/main -- .github/workflows/pages.yml
           git config user.name closed-loop-controller
           git config user.email closed-loop-controller@users.noreply.github.com
-          git add verify-full-cycle.mjs .github/workflows/pages.yml
-          git commit -m 'Repair full-cycle canonical capability fixture'
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git add .github/workflows/pages.yml
+          if ! git diff --cached --quiet; then
+            git commit -m 'Restore canonical Pages verification workflow'
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
