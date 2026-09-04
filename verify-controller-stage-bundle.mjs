@@ -6,7 +6,7 @@ import path from 'node:path';
 const CONTROLLER_ID='closed-loop-monotonic-build-controller/2';
 const SPEC_PATH='specification/closed-loop-reliability-controlling-implementation-specification.txt';
 const NORM_PATH='specification/closed-loop-normative-requirements.json';
-const STAGE1_PATH='verification/build-stages/stage-01-proof.json';
+const STATE_PATH='verification/closed-loop-build-state.json';
 const OUT_DIR=process.env.CONTROLLER_PROOF_OUT_DIR||'verification/controller-ci-proof';
 const sha256=data=>crypto.createHash('sha256').update(data).digest('hex');
 const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
@@ -15,23 +15,16 @@ const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 
 const gitSha=String(process.env.GITHUB_SHA||cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()).toLowerCase();
 assert(/^[0-9a-f]{40}$/.test(gitSha),'Exact canonical commit SHA unavailable.');
-assert(process.env.CONTROLLER_PRIOR_SUITE_PASSED==='1','Controller stage proof may run only after the canonical CI source and local-browser suite passed.');
-assert(fs.existsSync(SPEC_PATH),'Controlling specification file is missing.');
-assert(fs.existsSync(NORM_PATH),'Normative-requirement manifest is missing.');
-assert(fs.existsSync(STAGE1_PATH),'Stage 01 proof record is missing.');
-const specBytes=fs.readFileSync(SPEC_PATH);
-const specificationSha256=sha256(specBytes);
-const stage1=readJson(STAGE1_PATH);
-assert(stage1.controllerId===CONTROLLER_ID&&stage1.stage==='01'&&stage1.stageDisposition==='PROVEN','Stage 01 is not proven.');
-assert(stage1.specificationSha256===specificationSha256,'Stage 01 specification digest is stale.');
-const normative=readJson(NORM_PATH);
-assert(normative.schema==='closed-loop-normative-requirements/1','Wrong normative manifest schema.');
+assert(process.env.CONTROLLER_PRIOR_SUITE_PASSED==='1','Controller stage proof may run only after canonical CI and local browser proof passed.');
+for(const file of [SPEC_PATH,NORM_PATH,STATE_PATH])assert(fs.existsSync(file),`Required controller input missing: ${file}`);
+const specBytes=fs.readFileSync(SPEC_PATH),specificationSha256=sha256(specBytes);
+const normative=readJson(NORM_PATH),state=readJson(STATE_PATH);
+assert(state.controllerId===CONTROLLER_ID,'Controller state identity mismatch.');
+assert(state.specificationSha256===specificationSha256,'Controller state specification digest mismatch.');
 assert(normative.specificationSha256===specificationSha256,'Normative manifest specification digest mismatch.');
-const requirements=Array.isArray(normative.requirements)?normative.requirements:[];
-assert(requirements.length>0,'Normative requirement universe is empty.');
 
 const stageCommands={
-  '02':['verify-hash.mjs','verify-definition-of-done-invariants.mjs'],
+  '02':['verify-hash.mjs','verify-stage02-primitives.mjs'],
   '03':['verify-contract-closure.mjs','verify-v3-contract.mjs','verify-data-route-closure.mjs'],
   '04':['verify-data-route-closure.mjs','verify-infrastructure-route-closure.mjs','verify-complete.mjs'],
   '05':['verify-project-lifecycle.mjs','verify-complete.mjs'],
@@ -60,23 +53,9 @@ const stageCommands={
   '28':['verify-file-first-operator.mjs','verify-definition-of-done-invariants.mjs'],
   '29':['verify-definition-of-done.mjs','verify-v3-definition-of-done.mjs','verify-definition-of-done-invariants.mjs','verify-full-cycle.mjs','verify-data-route-closure.mjs','verify-infrastructure-route-closure.mjs']
 };
-const allCommands=[...new Set(Object.values(stageCommands).flat())];
-for(const file of allCommands)assert(fs.existsSync(file),`Required proof command is missing: ${file}`);
-
-const commandResults=new Map();
-const run=(file)=>{
-  const result=cp.spawnSync(process.execPath,[file],{encoding:'utf8',env:process.env,maxBuffer:128*1024*1024});
-  const exitCode=Number.isInteger(result.status)?result.status:1;
-  if(result.stdout)process.stdout.write(result.stdout);
-  if(result.stderr)process.stderr.write(result.stderr);
-  commandResults.set(file,{command:`node ${file}`,exitCode});
-  assert(exitCode===0,`Controller proof command failed: node ${file}`);
-};
-for(const file of allCommands)run(file);
-
 const fixtureByStage={
   '02':['canonical-json-invalid-scalar','unknown-hash-kind','unknown-set-semantics','id-exact-retry','filename-confusable-collision','trusted-time-unverified-device-time'],
-  '03':['unknown-field','duplicate-producer','unknown-stage-operation','scope-dimension-mismatch','unregistered-durable-object','undefined-derivation-normalizer'],
+  '03':['unknown-field','duplicate-producer','missing-operation-property','unknown-stage-operation','scope-dimension-mismatch','unregistered-durable-object','undefined-derivation-normalizer','identity-assurance-below-minimum'],
   '04':['agent-writes-human','cross-project-target','wrong-cardinality','stage-data-override','append-only-rewrite'],
   '05':['stale-tab','project-corruption','artifact-byte-loss','import-failure','durable-boundary-failure'],
   '06':['cross-owner-write','direct-collection-write','stale-revision','conflicting-idempotency-payload','external-native-receipt-fabrication'],
@@ -104,66 +83,38 @@ const fixtureByStage={
   '28':['dom-injection','url-injection','filename-injection','viewport-overflow','touch-target','focus-live-region','visual-diff'],
   '29':['invalid-gate-state','storage-boundary-failure','worker-timeout','two-tab-conflict','full-30-stage-lifecycle','visual-baseline-mutation']
 };
+const earliest=Object.keys(stageCommands).find(stage=>state.stages?.[stage]?.status!=='PROVEN');
+assert(earliest,'Stages 02-29 are already proven.');
+const priorNumber=Number(earliest)-1,priorKey=String(priorNumber).padStart(2,'0');
+assert(priorNumber===1||state.stages?.[priorKey]?.status==='PROVEN',`Prior Stage ${priorKey} is not PROVEN.`);
+if(earliest==='29'&&process.env.ALLOW_STAGE29_PROMOTION!=='1')throw new Error('Stage 29 requires normative-manifest disposition promotion and is intentionally not auto-advanced.');
 
-const initialConformant=requirements.filter(r=>r.currentDisposition==='CONFORMANT_PROVEN').length;
-let proofCount=Number(stage1.proofCountAfter||10);
-let conformantCount=initialConformant;
-let previousDigest=sha256(fs.readFileSync(STAGE1_PATH));
-const stages={
-  '01':{status:'PROVEN',provenCommit:stage1.endingMainCommit,proofRecordPath:STAGE1_PATH,proofDigest:previousDigest,prerequisiteStageDigests:[]}
-};
-for(let n=2;n<=30;n++)stages[String(n).padStart(2,'0')]={status:'NOT_STARTED',provenCommit:null,proofRecordPath:null,proofDigest:null,prerequisiteStageDigests:[]};
-const effectiveDisposition=new Map(requirements.map(r=>[r.normativeRequirementId,r.currentDisposition]));
-
-for(let n=2;n<=29;n++){
-  const stage=String(n).padStart(2,'0');
-  const stageProofCommands=stageCommands[stage].map(file=>commandResults.get(file));
-  const changes=[];
-  if(stage==='29'){
-    for(const r of requirements){
-      if(effectiveDisposition.get(r.normativeRequirementId)==='CONFORMANT_PROVEN')continue;
-      const proofs=Array.isArray(r.requiredBrowserOrPhysicalDeviceProof)?r.requiredBrowserOrPhysicalDeviceProof:[];
-      const top=Number(String(r.sectionId||'').split('.')[0]);
-      const requiresExternalDeployment=proofs.includes('ACTUAL_IPHONE_SAFARI')||proofs.includes('LOCAL_AND_DEPLOYED_BROWSER')||top===46;
-      if(!requiresExternalDeployment){
-        changes.push({normativeRequirementId:r.normativeRequirementId,oldDisposition:effectiveDisposition.get(r.normativeRequirementId),newDisposition:'CONFORMANT_PROVEN'});
-        effectiveDisposition.set(r.normativeRequirementId,'CONFORMANT_PROVEN');
-      }
-    }
-    conformantCount=[...effectiveDisposition.values()].filter(x=>x==='CONFORMANT_PROVEN').length;
-  }
-  const before=proofCount;
-  proofCount+=Math.max(1,stageProofCommands.length);
-  const proof={
-    schema:'closed-loop-build-stage-proof/1',controllerId:CONTROLLER_ID,stage,specificationSha256,
-    startingMainCommit:gitSha,endingMainCommit:gitSha,implementationCommitIds:[gitSha],changedFiles:[],
-    normativeRequirementChanges:changes,proofCommands:stageProofCommands,
-    proofArtifactDigests:[
-      {path:SPEC_PATH,sha256:specificationSha256,byteLength:specBytes.length},
-      {path:NORM_PATH,sha256:sha256(fs.readFileSync(NORM_PATH))}
-    ],
-    intentionalInvalidFixtures:fixtureByStage[stage]||[],
-    earlierStageProofsReplayed:n===2?[previousDigest]:Object.values(stages).filter(s=>s.status==='PROVEN').map(s=>s.proofDigest),
-    browserProofs:(n>=28||[5,10,11,12,13,14,15,16,23,25,26,27].includes(n))?[{proof:'local Chromium operator path',status:'PASS',basis:'same GitHub Actions test job completed before controller proof step'}]:[],
-    deployedProofs:[],
-    externalActorProofs:[14,15,16,17,21,23,24,25,26].includes(n)?[{proof:'independent-context and semantic-review contract fixture',status:'PASS',basis:'mapped executable verification command'}]:[],
-    unprovenItems:[],proofCountBefore:before,proofCountAfter:proofCount,
-    conformantCountBefore:n===29?initialConformant:conformantCount,
-    conformantCountAfter:conformantCount,stageDisposition:'PROVEN',nextStage:n===29?'30':String(n+1).padStart(2,'0')
-  };
-  if(stage==='29')proof.conformantCountBefore=initialConformant;
-  const file=path.join(OUT_DIR,`stage-${stage}-proof.json`);
-  writeJson(file,proof);
-  const digest=sha256(fs.readFileSync(file));
-  stages[stage]={status:'PROVEN',provenCommit:gitSha,proofRecordPath:file,proofDigest:digest,prerequisiteStageDigests:Object.values(stages).filter(s=>s.status==='PROVEN').map(s=>s.proofDigest)};
-  previousDigest=digest;
+const files=['verify-build-stage-ledger.mjs',...stageCommands[earliest]];
+for(const file of files)assert(fs.existsSync(file),`Proof command missing: ${file}`);
+const proofCommands=[];
+for(const file of files){
+  const result=cp.spawnSync(process.execPath,[file],{encoding:'utf8',env:process.env,maxBuffer:128*1024*1024});
+  if(result.stdout)process.stdout.write(result.stdout);
+  if(result.stderr)process.stderr.write(result.stderr);
+  const exitCode=Number.isInteger(result.status)?result.status:1;
+  proofCommands.push({command:`node ${file}`,exitCode});
+  assert(exitCode===0,`Proof command failed: node ${file}`);
 }
-
-const effectiveRequirements=requirements.map(r=>({...r,currentDisposition:effectiveDisposition.get(r.normativeRequirementId),currentDispositionReason:effectiveDisposition.get(r.normativeRequirementId)==='CONFORMANT_PROVEN'?'Current canonical-main implementation is exercised by the controller-mapped executable proof suite; deployment/physical-device obligations remain unpromoted until Stage 30.':r.currentDispositionReason}));
-const effectiveManifest={...normative,requirements:effectiveRequirements,manifestSha256:null};
-const manifestCopy={...effectiveManifest};delete manifestCopy.manifestSha256;effectiveManifest.manifestSha256=sha256(Buffer.from(JSON.stringify(manifestCopy)));
-writeJson(path.join(OUT_DIR,'closed-loop-normative-requirements-effective.json'),effectiveManifest);
-const state={controllerId:CONTROLLER_ID,specificationSha256,specificationSourceCommit:readJson('specification/closed-loop-specification-manifest.json').sourceCommit,lastObservedMainCommit:gitSha,stages,proofCount,conformantRequirementCount:conformantCount,lastUpdatedByCommandId:`CI-${process.env.GITHUB_RUN_ID||'LOCAL'}-STAGE29`};
-writeJson(path.join(OUT_DIR,'closed-loop-build-state.json'),state);
-writeJson(path.join(OUT_DIR,'controller-stage-bundle-summary.json'),{controllerId:CONTROLLER_ID,commit:gitSha,specificationSha256,stagesProven:'29/30',proofCount,conformantRequirementCount:conformantCount,normativeRequirementCount:requirements.length,remainingRequirements:requirements.length-conformantCount,nextStage:'30',localBrowserAcceptance:'PASS'});
-console.log(JSON.stringify({controllerStageBundle:'PASS',commit:gitSha,stagesProven:'29/30',proofCount,conformantRequirementCount:conformantCount,normativeRequirementCount:requirements.length,nextStage:'30'}));
+const priorProofs=Object.entries(state.stages).filter(([stage,value])=>Number(stage)<Number(earliest)&&value?.status==='PROVEN').map(([stage,value])=>({stage,proofDigest:value.proofDigest,status:'PASS'}));
+const proofCountBefore=Number(state.proofCount||0),proofCountAfter=proofCountBefore+proofCommands.length;
+const conformantCount=Number(state.conformantRequirementCount||0);
+const proof={
+  schema:'closed-loop-build-stage-proof/1',controllerId:CONTROLLER_ID,stage:earliest,specificationSha256,
+  startingMainCommit:gitSha,endingMainCommit:gitSha,implementationCommitIds:[gitSha],changedFiles:[],
+  normativeRequirementChanges:[],proofCommands,
+  proofArtifactDigests:[{path:SPEC_PATH,sha256:specificationSha256,byteLength:specBytes.length},{path:NORM_PATH,sha256:sha256(fs.readFileSync(NORM_PATH))}],
+  intentionalInvalidFixtures:fixtureByStage[earliest]||[],earlierStageProofsReplayed:priorProofs,
+  browserProofs:(Number(earliest)>=28||[5,10,11,12,13,14,15,16,23,25,26,27].includes(Number(earliest)))?[{proof:'local Chromium operator path',status:'PASS',basis:`GitHub Actions run ${process.env.GITHUB_RUN_ID||'UNKNOWN'} test job completed before proof advancement`}]:[],
+  deployedProofs:[],
+  externalActorProofs:[14,15,16,17,21,23,24,25,26].includes(Number(earliest))?[{proof:'independent-context/semantic-review executable fixture',status:'PASS',basis:'stage-mapped verifier'}]:[],
+  unprovenItems:[],proofCountBefore,proofCountAfter,conformantCountBefore:conformantCount,conformantCountAfter:conformantCount,
+  stageDisposition:'PROVEN',nextStage:earliest==='29'?'30':String(Number(earliest)+1).padStart(2,'0')
+};
+writeJson(path.join(OUT_DIR,`stage-${earliest}-proof.json`),proof);
+writeJson(path.join(OUT_DIR,'controller-stage-summary.json'),{controllerId:CONTROLLER_ID,commit:gitSha,stage:earliest,proofCountBefore,proofCountAfter,conformantCount,nextStage:proof.nextStage});
+console.log(JSON.stringify({controllerStageProof:'PASS',stage:earliest,commit:gitSha,proofCountAfter,nextStage:proof.nextStage}));
