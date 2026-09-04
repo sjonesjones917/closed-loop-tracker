@@ -20,7 +20,9 @@ jobs:
       - name: Apply convergence correction and remove temporary delivery files
         run: |
           set -euo pipefail
+          python3 controller-stage21-hotfix.py
           python3 controller-stage21-apply.py
+          rm controller-stage21-hotfix.py
           rm controller-stage21-apply.py
           rm .github/workflows/controller-stage21-apply.yml
       - name: Focused Stage 21 proof
