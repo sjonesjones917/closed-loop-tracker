@@ -1,0 +1,41 @@
+name: Reconcile Stage 17 proof branch
+
+on:
+  push:
+    branches:
+      - controller-stage17-proof-bind-20260904
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Merge current canonical main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin main
+          git merge --no-edit origin/main
+          rm .github/workflows/reconcile-stage17-proof.yml
+      - name: Replay Stage 17 and downstream proof after main movement
+        run: |
+          set -euo pipefail
+          node verify-build-stage-ledger.mjs
+          node verify-semantic-operation-boundaries.mjs
+          node verify-cross-run-comparison.mjs
+          node verify-full-cycle.mjs
+      - name: Commit workflow removal and push reconciled branch
+        run: |
+          set -euo pipefail
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Stage 17: remove one-time reconciliation workflow"
+          fi
+          git push origin "HEAD:${{ github.ref_name }}"
