@@ -1,0 +1,95 @@
+name: Advance Controller Stage 13 proof ledger v2
+on:
+  push:
+    branches: [controller-stage13-proof-ledger-20260904]
+permissions:
+  contents: write
+jobs:
+  advance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_MAIN: 8243224ecee1f15a24728ebbcc2bfd89fff05a02
+      EXPECTED_MAIN_RUN: '33876256226'
+      EXPECTED_TEST_JOB: '101033905374'
+      EXPECTED_DEPLOY_JOB: '101034998467'
+      EXPECTED_LIVE_JOB: '101035120266'
+      BRANCH: controller-stage13-proof-ledger-20260904
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller-stage13-proof-ledger-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Require exact canonical main proof
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$EXPECTED_MAIN"
+          test "$(gh api repos/${GITHUB_REPOSITORY}/actions/runs/${EXPECTED_MAIN_RUN} --jq .head_sha)" = "$EXPECTED_MAIN"
+          test "$(gh api repos/${GITHUB_REPOSITORY}/actions/runs/${EXPECTED_MAIN_RUN} --jq .status)" = completed
+          test "$(gh api repos/${GITHUB_REPOSITORY}/actions/runs/${EXPECTED_MAIN_RUN} --jq .conclusion)" = success
+          jobs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${EXPECTED_MAIN_RUN}/jobs?per_page=100")"
+          JOBS_JSON="$jobs" python3 - <<'PY'
+          import json, os
+          d=json.loads(os.environ['JOBS_JSON']); by={int(j['id']):j for j in d['jobs']}
+          expected={int(os.environ['EXPECTED_TEST_JOB']):'test',int(os.environ['EXPECTED_DEPLOY_JOB']):'Deploy exact verified bytes',int(os.environ['EXPECTED_LIVE_JOB']):'Verify deployed bytes and operator path'}
+          for jid,name in expected.items():
+              j=by.get(jid); assert j and j['name']==name and j['status']=='completed' and j['conclusion']=='success', (jid,name,j)
+          live={s['name']:s for s in by[int(os.environ['EXPECTED_LIVE_JOB'])]['steps']}
+          assert live['Exact deployed-byte verification']['conclusion']=='success'
+          assert live['Deployed Chromium operator path']['conclusion']=='success'
+          test={s['name']:s for s in by[int(os.environ['EXPECTED_TEST_JOB'])]['steps']}
+          assert test['Workflow, gates, and full cycle']['conclusion']=='success'
+          assert test['Prompt semantics and leakage']['conclusion']=='success'
+          assert test['Local Chromium operator path']['conclusion']=='success'
+          print(json.dumps({'exactMainProof':'PASS'}))
+          PY
+      - name: Replay focused Stage 13 verifier
+        run: |
+          set -euo pipefail
+          node verify-build-stage-ledger.mjs
+          node verify-independent-preflight.mjs > /tmp/preflight.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/preflight.json'))
+          assert p['independentPreflight']=='PASS'
+          assert p['repairedPathProgressed'] is True
+          assert p['independenceEpistemicLimitPreserved'] is True
+          assert p['noMutationBeforeAcceptance'] is True
+          assert p['promptSemanticsChecked'] is True
+          assert p['isolatedDisposableProjects'] is True
+          assert set(p['intentionalInvalidFixturesRejected'])=={'missing-independent-reviewer','material-ambiguity-with-favorable-claim','contaminated-reviewer-context'}
+          print(json.dumps({'focusedStage13Replay':'PASS'}))
+          PY
+      - name: Advance only Stage 13 and preserve stale proof
+        run: python3 controller-advance-stage13-proof.py
+      - name: Verify monotonic Stage 13 advancement
+        run: |
+          set -euo pipefail
+          node verify-build-stage-ledger.mjs
+          node verify-independent-preflight.mjs > /tmp/preflight-after.json
+          python3 - <<'PY'
+          import json
+          s=json.load(open('verification/closed-loop-build-state.json'))
+          p=json.load(open('verification/build-stages/stage-13-proof.json'))
+          assert s['currentStage']=='14'
+          assert s['stages']['13']['status']=='DONE'
+          assert all(s['stages'][f'{n:02d}']['status']=='DONE' for n in range(1,14))
+          assert s['stages']['14']['status']=='NOT_STARTED'
+          assert p['stageDisposition']=='PROVEN' and p['nextStage']=='14'
+          assert p['specificationSha256']==s['specificationSha256']
+          print(json.dumps({'monotonicStage13Advance':'PASS','currentStage':'14'}))
+          PY
+      - name: Commit only proof advancement and remove applicator
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-controller
+          git config user.email closed-loop-controller@users.noreply.github.com
+          git rm .github/workflows/controller-stage13-proof-ledger-v2.yml controller-advance-stage13-proof.py
+          git add verification/closed-loop-build-state.json verification/build-stages/stage-13-proof.json verification/build-stages/archive/
+          git diff --cached --name-status
+          git commit -m "Controller Stage 13: advance monotonic ledger from direct evidence"
+          git push origin HEAD:${BRANCH}
