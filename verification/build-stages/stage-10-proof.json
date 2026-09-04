@@ -2,109 +2,194 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "10",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "e9955b8a7bfc1102768df71454126dec56d8bda0",
-  "endingMainCommit": "e9955b8a7bfc1102768df71454126dec56d8bda0",
-  "implementationCommitIds": [
-    "e9955b8a7bfc1102768df71454126dec56d8bda0"
-  ],
+  "stageName": "VERIFICATION SUITE",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "c903fe606ba0fac38be3294d34d0caa406589a38",
+  "endingMainCommit": "c903fe606ba0fac38be3294d34d0caa406589a38",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "specificationSections": [
+    "16.1",
+    "21",
+    "21.1",
+    "21.2",
+    "21.3",
+    "21.4",
+    "21.5",
+    "21.6",
+    "21.7",
+    "21.8",
+    "21.9",
+    "21.10",
+    "21.11",
+    "21.12",
+    "21.13",
+    "21.14",
+    "21.15",
+    "21.16",
+    "21.17",
+    "23",
+    "23.1",
+    "26.5",
+    "29.10",
+    "29.11",
+    "29.12",
+    "29.13",
+    "29.14",
+    "31.1",
+    "32.1",
+    "37 Stage 06",
+    "38 tests",
+    "38 proofExpressions",
+    "38 proofObligations",
+    "38 expectedVarianceContracts",
+    "38 environmentManifests",
+    "38 externalCapabilities",
+    "40",
+    "41",
+    "42",
+    "43",
+    "44",
+    "45",
+    "49",
+    "52"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "test-runtime.js",
+    "test-worker.js",
+    "verify-complete.mjs",
+    "verify-stage-prompts-complete.mjs",
+    "verify-test-runtime-v3.mjs",
+    "verify-test-runtime-limits.mjs",
+    "verify-test-runtime.mjs",
+    "verify-v3-contract.mjs",
+    "verify-spec3-contract.mjs",
+    "verify-definition-of-done.mjs",
+    "verify-v3-definition-of-done.mjs",
+    "verify-prompt-semantics.mjs",
+    "verify-semantic-invariant.mjs",
+    "verify-full-cycle.mjs"
+  ],
+  "implementationDisposition": "NO_APPLICATION_CHANGE_REQUIRED_AFTER_DIRECT_REVIEW",
+  "implementationDispositionReason": "Exact current main already implements the Stage 06 verification-suite contract through the closed Stage 06 operation registry, current proof-expression/proof-obligation families, application-derived proof-obligation closure, Test IR validation and routing, due-stage timing validation, fail-closed capability/artifact readiness, false-positive-analysis prompt semantics, evidence and independence evaluators, and current-scope gate integration. The required invalid and repaired paths were re-executed by the exact-main CI run cited below; no responsible-layer defect was reproduced that justified an application change.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-data-route-closure.mjs && node verify-infrastructure-route-closure.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33863941998, test job 100994383814, step 10, exact canonical main c903fe606ba0fac38be3294d34d0caa406589a38, completed success."
     },
     {
-      "command": "node verify-prompt-semantics.mjs",
-      "exitCode": 0
+      "command": "node verify-v3-migration.mjs && node verify-v3-contract.mjs && node verify-spec3-contract.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33863941998, test job 100994383814, step 11, exact canonical main, completed success; /3 contracts and Stage 06 registry/schema closure were re-executed."
     },
     {
-      "command": "node verify-all-stage-prompts.mjs",
-      "exitCode": 0
+      "command": "node verify-all-stage-prompts.mjs && node verify-stage-prompts-complete.mjs && node verify-user-prompt-invariants.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33863941998, test job 100994383814, step 13, exact canonical main, completed success; the Stage 06 prompt publishes closed-loop-test-spec/1 and TEST_IR and requires explicit false-positive analysis without later-stage work."
+    },
+    {
+      "command": "node verify-test-runtime-v3.mjs && node verify-test-runtime-limits.mjs && node verify-test-runtime.mjs && node verify-hash.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33863941998, test job 100994383814, step 14, exact canonical main, completed success; native representability, closed operations, deterministic dataflow, limits, and registry/hash identities were re-executed."
+    },
+    {
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33863941998, test job 100994383814, step 16, exact canonical main, completed success; Stage 06 fail-closed routing, mandatory coverage, proof/due-stage closure, evidence, independence, and closed Section 49 metric universes were re-executed."
+    },
+    {
+      "command": "node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33863941998, test job 100994383814, step 18, exact canonical main, completed success; semantic/evidence and independence false-acceptance regressions were re-executed."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33863941998, test job 100994383814, step 19, exact canonical main, completed success; Stage 06 operator-visible prompt/action behavior was exercised through local Chromium."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "workflow-schema.js exposes Stage 06 operations COMPLETE, PROOF_REVIEW, and RECONCILE_VERIFICATION_SUITE and registers proofExpressions and proofObligations as durable canonical families.",
+    "workflow-schema.js exposes the closed verification timing fields VERIFICATION_PHASE, EARLIEST_EXECUTABLE_STAGE, REQUIRED_BY_STAGE, PER_RUN_REQUIRED, FINAL_PRODUCT_REQUIRED, DELIVERY_REQUIRED, and TARGET_AVAILABILITY_CONDITION.",
+    "workflow-engine.js derives application-owned proof obligations and blocks Stage 06 for missing/non-equivalent proof expressions, unknown normative class or applicability, incomplete execution responsibility, UNAVAILABLE capability, unsupported native capability, missing verified artifact bytes, and invalid verification timing.",
+    "workflow-engine.js leaves future product, representation, delivery, evidence, registry, and terminal obligations registered but not due before their target phase exists.",
+    "prompt-engine.js Stage 06 semantics require closed-loop-test-spec/1, Test IR representability analysis, complete executor/capability/artifact/evidence contracts, and explicit false-positive analysis including defective-product apparent-compliance cases.",
+    "test-runtime.js remains the single native Test IR authority and workflow-engine.js routes rather than creating a second executor.",
+    "the Section 49 verifier publishes nonempty closed universes for semantic-review independence, due-stage obligations, activation proof, and Test IR DAG/registry identity rather than accepting an unreviewed empty denominator."
   ],
   "intentionalInvalidFixtures": [
-    "prompt-bom",
-    "prompt-crlf",
-    "prompt-missing-final-lf",
-    "prompt-wrapper",
-    "preview-divergence",
-    "clipboard-denial",
-    "context-leakage"
+    "mandatory test with EXECUTION_MODE UNAVAILABLE is rejected by the Stage 06 gate",
+    "APPLICATION_DETERMINISTIC test with an unregistered native capability is rejected",
+    "required artifact absent or metadata-only cannot satisfy Stage 06 readiness; verified current bytes repair readiness",
+    "unknown or unsupported Test IR operation/specification cannot be accepted as native execution",
+    "unsafe or incomplete Test IR parser/selector/regex/numeric contracts fail closed",
+    "worker timeout terminates execution with no partial deterministic result",
+    "prose or weak authority cannot substitute for the evidence class required by the proposition",
+    "self-asserted/reused review context cannot become release-grade independence",
+    "future final-product obligations are not promoted into premature Stage 06/preproduct execution"
+  ],
+  "repairedStateProofs": [
+    "a current mandatory test with a registered supported native route is executable through the application-owned Test IR runtime",
+    "a missing-byte Stage 06 plan becomes ready only after the exact canonical artifact is marked BYTES_PERSISTED_AND_VERIFIED",
+    "Stage 06 prompt output includes the declared Test IR language and false-positive-analysis instructions while preserving one prompt authority",
+    "current proof expressions and application-derived proof obligations remain version/scope bound and feed downstream due-stage and release calculations",
+    "semantic-review and evidence-strength checks remain fail-closed rather than trusting favorable agent strings"
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"}
   ],
   "browserProofs": [
     {
-      "proof": "local Chromium operator path",
+      "workflowRunId": 33863941998,
+      "jobId": 100994383814,
+      "proof": "LOCAL_CHROMIUM_OPERATOR_PATH",
       "status": "PASS",
-      "basis": "GitHub Actions run 33832255068 test job completed before proof advancement"
+      "commit": "c903fe606ba0fac38be3294d34d0caa406589a38"
+    },
+    {
+      "workflowRunId": 33863941998,
+      "jobId": 100995104264,
+      "proof": "DEPLOYED_CHROMIUM_OPERATOR_PATH",
+      "status": "PASS",
+      "commit": "c903fe606ba0fac38be3294d34d0caa406589a38"
     }
   ],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {
+      "workflowRunId": 33863941998,
+      "jobId": 100994988889,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
+      "status": "PASS",
+      "commit": "c903fe606ba0fac38be3294d34d0caa406589a38"
+    },
+    {
+      "workflowRunId": 33863941998,
+      "jobId": 100995104264,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "c903fe606ba0fac38be3294d34d0caa406589a38"
+    }
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 45,
-  "proofCountAfter": 48,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "11"
+  "directEvidenceReview": "PASS",
+  "nextStage": "11",
+  "notes": "This proves Controller Stage 10 only. It re-establishes the current verification-suite implementation from exact current-main code, executed invalid/repaired paths, local/deployed Chromium, and exact deployed-byte evidence. It does not claim later failure-test execution, ten-run execution, human authority, external-system observations, or physical-iPhone acceptance."
 }
