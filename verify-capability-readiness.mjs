@@ -19,6 +19,8 @@ for(const field of ['AUTHORIZED','PERMISSIONS_READY','INPUTS_TRANSFERABLE','ROUT
 }
 const unknown=structuredClone(p);delete unknown.projectData.externalCapabilities[0].fields.EVIDENCE_OBTAINABLE;
 assert.equal(engine.evaluateCapabilityReadiness(unknown,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null).truthValue,'UNKNOWN','Unknown conjunction input must remain UNKNOWN.');
+const unknownFreshness=structuredClone(p);delete unknownFreshness.projectData.externalCapabilities[0].fields.FRESHNESS_STATUS;
+assert.equal(engine.evaluateCapabilityReadiness(unknownFreshness,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null).truthValue,'UNKNOWN','Unknown capability freshness must remain UNKNOWN.');
 const stale=structuredClone(p);stale.projectData.externalCapabilities[0].fields.FRESHNESS_STATUS='EXPIRED';
 assert.equal(engine.capabilityAffirmativelyAvailable(stale,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null),false,'Expired capability must block.');
-console.log(JSON.stringify({capabilityReadyClosedConjunction:true,proseCannotEstablishCapability:true,unknownFailsClosed:true}));
+console.log(JSON.stringify({capabilityReadyClosedConjunction:true,proseCannotEstablishCapability:true,unknownFailsClosed:true,unknownFreshnessFailsClosed:true}));
