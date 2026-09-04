@@ -12,6 +12,20 @@ const prompts=globalThis.closedLoopPromptEngine;
 const ingestion=globalThis.closedLoopResponseIngestion;
 assert(core&&schema&&engine&&prompts&&ingestion,'Data-route audit runtime failed to load.');
 
+// Regression: Stage 03 independent omission challenge cannot see or overwrite the author extraction,
+// and reconciliation must consume both completed outputs before Stage 04 can use the research.
+{
+  const complete=schema.operationContract(3,'COMPLETE');
+  const challenge=schema.operationContract(3,'SEMANTIC_CHALLENGE');
+  const reconcile=schema.operationContract(3,'RECONCILE_RESEARCH');
+  assert(complete.agentWritableCollections.includes('research')&&complete.agentWritableCollections.includes('candidateRequirements'),'Stage 03 COMPLETE lost canonical extraction outputs.');
+  assert(challenge.readCollections.includes('sources')&&!challenge.readCollections.includes('research')&&!challenge.readCollections.includes('candidateRequirements'),'Stage 03 challenge is not independent from the first extraction.');
+  assert(challenge.agentWritableCollections.includes('semanticChallenges')&&!challenge.agentWritableCollections.includes('research')&&!challenge.agentWritableCollections.includes('candidateRequirements'),'Stage 03 challenge can overwrite author extraction.');
+  assert(reconcile.readCollections.includes('research')&&reconcile.readCollections.includes('candidateRequirements')&&reconcile.readCollections.includes('semanticChallenges'),'Stage 03 reconciliation lacks author/challenge inputs.');
+  assert(reconcile.agentWritableCollections.includes('semanticReviews')&&!reconcile.agentWritableCollections.includes('research')&&!reconcile.agentWritableCollections.includes('candidateRequirements'),'Stage 03 reconciliation has incorrect write authority.');
+  for(const operation of ['COMPLETE','DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE','RECONCILE_REQUIREMENTS'])assert(schema.operationContract(4,operation).readCollections.includes('semanticReviews'),'Stage 04/'+operation+' does not consume reconciled Stage 03 review.');
+}
+
 const state=core.createBlankState('JOB-DATA-ROUTE-CLOSURE');
 Object.assign(state.job,{
   JOB_ID:'JOB-DATA-ROUTE-CLOSURE',
