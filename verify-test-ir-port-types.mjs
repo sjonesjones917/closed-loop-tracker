@@ -1,4 +1,5 @@
 import './verify-contract-closure.mjs';
+import './verify-test-worker-isolation.mjs';
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const r=context.closedLoopTestRuntime;
 const base={version:r.SPEC_VERSION,languageVersion:r.TEST_IR_LANGUAGE_VERSION,operationRegistryVersion:r.OPERATION_REGISTRY_VERSION,operationRegistrySha256:r.OPERATION_REGISTRY_SHA256,steps:[{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'PRODUCT'}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},{stepId:'S003',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S002',output:'bytes'}}}],result:{stepRef:'S003',output:'text'}};
