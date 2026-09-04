@@ -42,7 +42,7 @@
     "verify-full-cycle.mjs"
   ],
   "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_PROVEN_ON_EXACT_CANONICAL_MAIN_WITHOUT_OVERCLAIMING_EXTERNAL_INDEPENDENCE",
-  "implementationDispositionReason": "The current Stage 09 preflight path is exercised through real prompt construction, response ingestion, explicit acceptance, centralized effective determination, the real Stage 09 gate, and current fresh-context independence evaluation. The permanent focused verifier rejects absence of a reviewer context, rejects a material ambiguity even when the agent claims SATISFIED, rejects a contaminated reviewer context, proves zero canonical mutation before explicit acceptance, and proves the repaired path progresses. The repaired fixture is deliberately adjudicated only EXTERNALLY_SUPPORTED because the external Stage 08 author context is not fully observable; this proof does not fabricate or claim an independently observed external actor/context. verify-definition-of-done.mjs permanently executes the focused verifier. Exact canonical-main CI and local Chromium passed, and the exact current main deployment plus deployed-byte identity verification passed for the implementation commit.",
+  "implementationDispositionReason": "The current Stage 09 preflight path is exercised through real prompt construction, response ingestion, explicit acceptance, centralized effective determination, the real Stage 09 gate, and current fresh-context independence evaluation. The permanent focused verifier rejects absence of a reviewer context, rejects a material ambiguity even when the agent claims SATISFIED, rejects a contaminated reviewer context, proves zero canonical mutation before explicit acceptance, and proves the repaired path progresses. The repaired fixture is deliberately adjudicated only EXTERNALLY_SUPPORTED because the external Stage 08 author context is not fully observable; this proof does not fabricate or claim an independently observed external actor/context. verify-definition-of-done.mjs permanently executes the focused verifier. Exact canonical-main CI, local Chromium, exact deployment, deployed-byte verification, and deployed Chromium all passed for the implementation commit.",
   "proofCommands": [
     {
       "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
@@ -65,9 +65,9 @@
       "basis": "GitHub Actions run 33876256226, deploy job 101034998467, exact canonical main deployment completed success."
     },
     {
-      "command": "node verify-live.mjs",
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
       "exitCode": 0,
-      "basis": "GitHub Actions run 33876256226, deployment verification job 101035120266, exact deployed-byte verification step completed success for exact canonical main."
+      "basis": "GitHub Actions run 33876256226, deployment verification job 101035120266, exact deployed-byte verification and deployed Chromium operator path completed success for exact canonical main."
     }
   ],
   "directSourceFindings": [
@@ -92,7 +92,7 @@
     "Clean Stage 09 proposal validates, commits only after explicit acceptance, creates exactly one current preflight record, and completes the real Stage 09 gate.",
     "The repaired path preserves EXTERNALLY_SUPPORTED rather than falsely promoting unobservable provider independence to APPLICATION_ESTABLISHED.",
     "Permanent definition-of-done execution requires independentPreflightCoverage=1, repaired progression, the epistemic limit, zero pre-acceptance mutation, prompt semantics, isolated fixtures, and all three negative-fixture rejections.",
-    "Exact current main passed permanent CI, local Chromium, exact deployment, and exact deployed-byte verification."
+    "Exact current main passed permanent CI, local Chromium, exact deployment, deployed-byte verification, and deployed Chromium."
   ],
   "earlierStageProofsReplayed": [
     {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
@@ -109,7 +109,8 @@
     {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"}
   ],
   "browserProofs": [
-    {"workflowRunId":33876256226,"jobId":101033905374,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"8243224ecee1f15a24728ebbcc2bfd89fff05a02"}
+    {"workflowRunId":33876256226,"jobId":101033905374,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"8243224ecee1f15a24728ebbcc2bfd89fff05a02"},
+    {"workflowRunId":33876256226,"jobId":101035120266,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"8243224ecee1f15a24728ebbcc2bfd89fff05a02"}
   ],
   "deployedProofs": [
     {"workflowRunId":33876256226,"jobId":101034998467,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"8243224ecee1f15a24728ebbcc2bfd89fff05a02"},
