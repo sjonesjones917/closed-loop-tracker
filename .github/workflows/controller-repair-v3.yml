@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '22'
       - run: python controller-repair-v3.py
-      - run: rm controller-repair-v3.py .github/workflows/controller-repair-v3.yml .controller-source-snapshot-v3-r2
+      - run: rm -f controller-repair-v3.py .github/workflows/controller-repair-v3.yml .controller-source-snapshot-v3-r2
       - run: |
           node --check prompt-engine.js
           node verify-prompt-semantics.mjs
