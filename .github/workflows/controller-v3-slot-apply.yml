@@ -17,6 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Locate returned-file UI owner
+        run: |
+          grep -n "stage-files\|stage-directory\|authorizedFiles\|returned file\|Returned file" app-core.js | head -80 || true
+          grep -n "function .*artifact\|function .*Artifact\|function .*file\|function .*File" app-core.js | head -80 || true
       - run: node controller-v3-slot-apply.mjs
       - name: Verify attachment slots
         run: |
@@ -33,7 +37,7 @@ jobs:
       - name: Commit source corrections
         run: |
           git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git config user.email 41898282+users.noreply.github.com
           git add workflow-engine.js response-ingestion.js app-core.js verify-attachment-slot-mapping.mjs
           git diff --cached --quiet && exit 0
           git commit -m 'Map returned files through application-owned attachment slots'
