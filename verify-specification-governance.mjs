@@ -1,25 +1,121 @@
-import fs from'node:fs';import crypto from'node:crypto';import cp from'node:child_process';
-await import('./hash.js');const H=globalThis.closedLoopHash,SP='specification/closed-loop-reliability-controlling-implementation-specification.txt',SMP='specification/closed-loop-specification-manifest.json',NMP='specification/closed-loop-normative-requirements.json',RP='review-specification-coverage.mjs',allowed=new Set(['CONFORMANT_PROVEN','IMPLEMENTED_UNPROVEN','MISSING','CONTRADICTED','BLOCKED_HUMAN','BLOCKED_ENVIRONMENT','UNKNOWN']),A=(x,m)=>{if(!x)throw Error(m)},sh=b=>crypto.createHash('sha256').update(b).digest('hex');
-A(fs.existsSync(SP),'Specification absent');A(fs.existsSync(SMP),'Specification manifest absent');const source=fs.readFileSync(SP),text=new TextDecoder('utf-8',{fatal:true}).decode(source),lines=text.split('\n'),committedSpec=JSON.parse(fs.readFileSync(SMP,'utf8')),sourceCommit=process.env.SOURCE_COMMIT||committedSpec.sourceCommit;A(/^[0-9a-f]{40}$/.test(sourceCommit),'Exact source commit absent');
-cp.execFileSync(process.execPath,['generate-specification-governance.mjs'],{stdio:'pipe',env:{...process.env,SOURCE_COMMIT:sourceCommit}});const spec=JSON.parse(fs.readFileSync(SMP)),norm=JSON.parse(fs.readFileSync(NMP)),review=JSON.parse(cp.execFileSync(process.execPath,[RP,SP],{encoding:'utf8',maxBuffer:64*1024*1024}));
-const runtimePaths=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html','TEST_PROJECT.json'];
-const validate=(sm,nm,virtual={},skipDigest=false)=>{
- A(sm.schema==='closed-loop-specification-manifest/1','Wrong specification manifest schema');A(nm.schema==='closed-loop-normative-requirements/1','Wrong normative manifest schema');A(sm.generatorVersion==='closed-loop-governance-generator/2'&&nm.generatorVersion===sm.generatorVersion,'Wrong governance generator identity');A(sm.contractProfileId==='closed-loop-completion-profile/1'&&nm.contractProfileId===sm.contractProfileId,'Wrong contract profile');A(sm.sourceCommit===sourceCommit&&nm.sourceCommit===sourceCommit,'Source commit mismatch');A(sm.repositoryPath===SP&&nm.specificationPath===SP,'Specification path mismatch');A(sm.byteLength===source.length&&nm.specificationByteLength===source.length,'Specification byte length mismatch');A(sm.sha256===sh(source)&&nm.specificationSha256===sm.sha256,'Specification digest mismatch');
- if(!skipDigest){const ncopy=structuredClone(nm);delete ncopy.manifestSha256;A(nm.manifestSha256===H.sha256Value(ncopy),'Normative canonical digest mismatch');const nb=fs.readFileSync(NMP);A(sm.normativeRequirementManifestSha256===sh(nb),'Normative file digest mismatch');A(sm.normativeRequirementManifestCanonicalSha256===nm.manifestSha256,'Normative canonical cross-binding mismatch');const scopy=structuredClone(sm);delete scopy.manifestSha256;A(sm.manifestSha256===H.sha256Value(scopy),'Specification canonical digest mismatch')}A(sm.normativeRequirementCount===nm.requirements.length,'Requirement count mismatch');
- A(Array.isArray(sm.sectionInventory)&&sm.sectionInventory.length>0,'Section inventory absent');const tops=sm.sectionInventory.filter(s=>/^\d+$/.test(s.sectionId)).map(s=>s.sectionId);A(H.stableStringify(tops)===H.stableStringify(Array.from({length:53},(_,i)=>String(i))),'Top-level sections are not exactly 0 through 52');A(new Set(sm.sectionInventory.map(s=>s.sectionId)).size===sm.sectionInventory.length,'Duplicate section ID');
- A(nm.omissionChallenge?.independentReviewStatus==='ACCEPTED'&&nm.omissionChallenge?.reconciliationStatus==='ACCEPTED','Challenge/reconciliation not accepted');A(nm.omissionChallenge?.independentReviewEvidence?.draftManifestReceived===false,'Reviewer received draft manifest');A(nm.omissionChallenge?.independentReviewEvidence?.reviewedSourceSha256===sh(source),'Reviewer source mismatch');A(nm.omissionChallenge?.reconciliationEvidence?.status==='ACCEPTED','Reconciliation record absent');A((nm.omissionChallenge?.reconciliationEvidence?.materialDisagreements||[]).length===0,'Unresolved material disagreement');A((nm.omissionChallenge?.reconciliationEvidence?.missingReviewerCandidateLines||[]).length===0,'Reviewer candidate omitted');
- const ids=new Set,byLine=new Map;for(const r of nm.requirements){A(r.normativeRequirementId&&!ids.has(r.normativeRequirementId),`Missing or duplicate requirement ID ${r.normativeRequirementId}`);ids.add(r.normativeRequirementId);A(r.sourceLocation?.path===SP,'Wrong requirement source path');const line=r.sourceLocation.startLine;A(Number.isInteger(line)&&line>0&&line<=lines.length&&r.sourceLocation.endLine===line,'Invalid requirement line');A(r.sourceLocation.lineSha256===sh(Buffer.from(lines[line-1])),'Requirement source-location conflict');A(r.controllingText===lines[line-1].trim(),'Requirement controlling text conflict');A(!byLine.has(line),'Duplicated normative line');byLine.set(line,r);A(r.responsibleImplementationOwner&&r.schemaOrRegistryEntry,'Requirement owner/registry trace missing');A(Array.isArray(r.deterministicTestIds)&&r.deterministicTestIds.length>0,'Requirement deterministic test trace missing');for(const t of r.deterministicTestIds)A(fs.existsSync(t.split('#')[0]),`Traced test missing: ${t}`);A(Array.isArray(r.semanticTestIds)&&Array.isArray(r.mutationTestIds)&&r.mutationTestIds.length>0,'Requirement semantic/mutation trace missing');A(Array.isArray(r.requiredBrowserOrPhysicalDeviceProof),'Requirement browser/physical proof trace missing');A(typeof r.acceptanceReportField==='string'&&r.acceptanceReportField.includes(r.normativeRequirementId),'Requirement acceptance trace missing');A(allowed.has(r.currentDisposition),'Unknown requirement disposition')}
- A(Array.isArray(nm.sourceLineCoverage)&&nm.sourceLineCoverage.length===lines.length,'Source line universe incomplete');for(let i=0;i<nm.sourceLineCoverage.length;i++){const c=nm.sourceLineCoverage[i];A(c.line===i+1&&c.lineSha256===sh(Buffer.from(lines[i])),'Source line coverage conflict');A(typeof c.status==='string','Source line disposition missing');if(c.status==='NORMATIVE_REQUIREMENT'){A(c.normativeRequirementIds?.length===1&&ids.has(c.normativeRequirementIds[0]),'Normative line not mapped exactly once')}else A(typeof c.reason==='string'&&c.reason.length>0,'Nonnormative line reason missing')}
- for(const s of sm.sectionInventory){const covered=(s.normativeRequirementIds||[]).length>0,non=s.disposition==='NONNORMATIVE'&&typeof s.nonnormativeReason==='string'&&s.nonnormativeReason.length>0;A(covered||non,`Uncovered specification section ${s.sectionId}`);for(const id of s.normativeRequirementIds||[])A(ids.has(id),`Section ${s.sectionId} references missing requirement ${id}`)}
- for(const c of review.candidateLines)A(byLine.has(c.line),`Independent reviewer candidate omitted at line ${c.line}`);A(review.draftManifestReceived===false&&review.inputs?.length===1&&review.inputs[0]===SP,'Independent reviewer isolation false');A(review.reviewedSourceSha256===sh(source)&&review.sectionInventory.length===sm.sectionInventory.length,'Independent review not bound to source/sections');
- const stage1=nm.requirements.filter(r=>r.sectionId==='0.1'||r.sectionId==='2'||r.sectionId.startsWith('2.'));A(stage1.length>0&&stage1.every(r=>r.currentDisposition==='CONFORMANT_PROVEN'),'Stage 01 governance requirements are not all CONFORMANT_PROVEN');
- for(const p of runtimePaths){const body=virtual[p]??(fs.existsSync(p)?fs.readFileSync(p,'utf8'):'');A(!body.includes('Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification'),`Specification text leaked into runtime ${p}`);A(!body.includes('closed-loop-monotonic-build-controller/1'),`Controller leaked into runtime ${p}`);A(!body.includes('specification/closed-loop-reliability-controlling-implementation-specification.txt'),`Runtime loads repository-only specification ${p}`);A(!body.includes('closed-loop-normative-requirements/1')&&!body.includes('closed-loop-specification-manifest/1'),`Runtime loads repository-only governance schema ${p}`)}return{stage1Count:stage1.length,total:ids.size};
-};
-const ok=validate(spec,norm),mut=[];const reject=(name,edit,pattern,virtual)=>{const s=structuredClone(spec),n=structuredClone(norm);edit(s,n);s.normativeRequirementCount=n.requirements.length;let e;try{validate(s,n,virtual,true)}catch(x){e=x}A(e&&pattern.test(String(e.message)),`${name} mutation not rejected for correct reason: ${e?.message||'accepted'}`);mut.push(name)};
-reject('uncovered-section',(s)=>{const x=s.sectionInventory.find(y=>y.normativeRequirementIds.length);x.normativeRequirementIds=[];x.disposition='COVERED';x.nonnormativeReason=null},/Uncovered specification section/);
-reject('missing-requirement',(_,n)=>{n.requirements.splice(0,1)},/references missing requirement|Normative line not mapped/);
-reject('duplicate-id',(_,n)=>{n.requirements.push(structuredClone(n.requirements[0]))},/duplicate requirement ID/);
-reject('missing-test-trace',(_,n)=>{n.requirements[0].deterministicTestIds=[]},/test trace missing/);
-reject('source-conflict',(_,n)=>{n.requirements[0].sourceLocation.lineSha256='0'.repeat(64)},/source-location conflict/);
-reject('runtime-copy',()=>{},/Specification text leaked into runtime/,{'workbook.js':'Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification'});
-const counts=Object.fromEntries([...allowed].map(x=>[x,norm.requirements.filter(r=>r.currentDisposition===x).length]));console.log(JSON.stringify({specificationSourcePresent:true,sourceCommit,sourceByteLength:source.length,sourceSha256:sh(source),topLevelSectionCount:53,sectionCount:spec.sectionInventory.length,normativeRequirementCount:ok.total,stage01GovernanceRequirementCount:ok.stage1Count,dispositionCounts:counts,independentOmissionChallenge:true,reconciliationComplete:true,runtimeSpecificationCopies:0,runtimeControllerCopies:0,mutationCount:mut.length,mutations:mut,allNormativeRequirementsConformant:norm.requirements.every(r=>r.currentDisposition==='CONFORMANT_PROVEN'),stage01GovernanceProof:'PASS'},null,2));
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import cp from 'node:child_process';
+
+const SPEC_PATH='specification/closed-loop-reliability-controlling-implementation-specification.txt';
+const SPEC_MANIFEST_PATH='specification/closed-loop-specification-manifest.json';
+const NORMATIVE_MANIFEST_PATH='specification/closed-loop-normative-requirements.json';
+const CORE_PATH='specification-governance-core.mjs';
+const CONTROLLER_ID='closed-loop-monotonic-build-controller/2';
+const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const assert=(condition,message)=>{if(!condition)throw new Error(message);};
+const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
+
+for(const file of [SPEC_PATH,SPEC_MANIFEST_PATH,NORMATIVE_MANIFEST_PATH,CORE_PATH])assert(fs.existsSync(file),`Required governance input missing: ${file}`);
+const sourceBytes=fs.readFileSync(SPEC_PATH);
+const sourceText=new TextDecoder('utf-8',{fatal:true}).decode(sourceBytes);
+const committedSpecBytes=fs.readFileSync(SPEC_MANIFEST_PATH);
+const committedNormativeBytes=fs.readFileSync(NORMATIVE_MANIFEST_PATH);
+const committedSpec=JSON.parse(committedSpecBytes.toString('utf8'));
+const sourceCommit=String(process.env.SOURCE_COMMIT||committedSpec.sourceCommit||'').toLowerCase();
+
+assert(/^[0-9a-f]{40}$/.test(sourceCommit),'Exact specification source commit is unavailable.');
+assert(!sourceBytes.subarray(0,3).equals(Buffer.from([0xef,0xbb,0xbf])),'Specification BOM is prohibited.');
+assert(!sourceText.includes('\r'),'Specification contains CR or CRLF bytes.');
+assert(!sourceText.startsWith('\n'),'Specification has a leading blank line.');
+assert(sourceText.endsWith('\n')&&!sourceText.endsWith('\n\n'),'Specification must end with exactly one LF.');
+assert(sourceText.startsWith('Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification\n'),'Specification start boundary is wrong.');
+assert(sourceText.endsWith('Completion additionally requires the current exact deployed origin and bytes and the pinned actual physical-iPhone Safari operator path.\n'),'Specification end boundary is wrong.');
+assert(committedSpec.sha256===sha256(sourceBytes),'Committed specification manifest does not bind the exact source bytes.');
+assert(committedSpec.byteLength===sourceBytes.length,'Committed specification manifest byte length is wrong.');
+assert(committedSpec.sourceCommit===sourceCommit,'Committed specification source commit is wrong.');
+
+function verifySourceCommit(){
+  if(process.env.GITHUB_ACTIONS!=='true')return {checked:false};
+  const shallow=cp.execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
+  const fetchArgs=shallow?['fetch','--no-tags','--unshallow','origin','main']:['fetch','--no-tags','origin','main'];
+  const fetched=cp.spawnSync('git',fetchArgs,{stdio:'ignore'});
+  assert(fetched.status===0,'Unable to fetch complete canonical main history.');
+  assert(cp.spawnSync('git',['merge-base','--is-ancestor',sourceCommit,'HEAD'],{stdio:'ignore'}).status===0,'Specification source commit is not reachable from current canonical main.');
+  const shown=cp.spawnSync('git',['show',`${sourceCommit}:${SPEC_PATH}`],{encoding:null,maxBuffer:64*1024*1024});
+  assert(shown.status===0,'Specification is absent from the recorded source commit.');
+  assert(Buffer.compare(Buffer.from(shown.stdout),sourceBytes)===0,'Recorded source commit does not contain the current exact specification bytes.');
+  return {checked:true};
+}
+const sourceCommitEvidence=verifySourceCommit();
+
+for(const runtimePath of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html','TEST_PROJECT.json']){
+  if(!fs.existsSync(runtimePath))continue;
+  const body=fs.readFileSync(runtimePath,'utf8');
+  assert(!body.includes('Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification'),`Specification text leaked into runtime ${runtimePath}.`);
+  assert(!body.includes(CONTROLLER_ID)&&!body.includes('closed-loop-monotonic-build-controller/1'),`Controller text leaked into runtime ${runtimePath}.`);
+}
+
+function copyWorkspace(target){
+  const root=path.resolve('.');
+  fs.cpSync(root,target,{recursive:true,filter:source=>{
+    const relative=path.relative(root,path.resolve(source));
+    if(!relative)return true;
+    return !relative.split(path.sep).some(part=>part==='.git'||part==='node_modules'||part==='_site')&&!relative.startsWith(path.join('verification','controller-ci-proof'));
+  }});
+}
+function runCore(workspace){
+  const beforeSpec=fs.readFileSync(path.join(workspace,SPEC_MANIFEST_PATH));
+  const beforeNormative=fs.readFileSync(path.join(workspace,NORMATIVE_MANIFEST_PATH));
+  const result=cp.spawnSync(process.execPath,[CORE_PATH],{
+    cwd:workspace,
+    env:{...process.env,SOURCE_COMMIT:sourceCommit,GITHUB_ACTIONS:'false'},
+    encoding:'utf8',maxBuffer:256*1024*1024
+  });
+  const afterSpec=fs.readFileSync(path.join(workspace,SPEC_MANIFEST_PATH));
+  const afterNormative=fs.readFileSync(path.join(workspace,NORMATIVE_MANIFEST_PATH));
+  return {result,beforeSpec,beforeNormative,afterSpec,afterNormative,changed:!beforeSpec.equals(afterSpec)||!beforeNormative.equals(afterNormative)};
+}
+
+const temporaryRoots=[];
+try{
+  const validationRoot=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-governance-validation-'));
+  temporaryRoots.push(validationRoot);
+  copyWorkspace(validationRoot);
+  const validation=runCore(validationRoot);
+  if(validation.result.status!==0)throw new Error(`Independent governance validation failed:\n${validation.result.stdout||''}\n${validation.result.stderr||''}`);
+  assert(!validation.changed,'Governance verifier would rewrite committed manifests instead of validating them.');
+  assert(fs.readFileSync(SPEC_MANIFEST_PATH).equals(committedSpecBytes),'Governance validation modified the committed specification manifest.');
+  assert(fs.readFileSync(NORMATIVE_MANIFEST_PATH).equals(committedNormativeBytes),'Governance validation modified the committed normative manifest.');
+
+  const mutationRoot=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-governance-mutation-'));
+  temporaryRoots.push(mutationRoot);
+  copyWorkspace(mutationRoot);
+  const mutationPath=path.join(mutationRoot,SPEC_MANIFEST_PATH);
+  const mutation=readJson(mutationPath);
+  mutation.sha256='0'.repeat(64);
+  fs.writeFileSync(mutationPath,JSON.stringify(mutation,null,2)+'\n');
+  const mutatedBytes=fs.readFileSync(mutationPath);
+  const mutationRun=runCore(mutationRoot);
+  assert(mutationRun.result.status===0,'Intentional committed-manifest mutation did not reach the rewrite-detection boundary.');
+  assert(mutationRun.changed,'Intentional committed-manifest mutation was not detected by byte comparison.');
+  let mutationRejected=false;
+  try{assert(!mutationRun.changed,'Committed governance bytes changed during validation.');}catch{mutationRejected=true;}
+  assert(mutationRejected,'Intentional committed-manifest mutation was not rejected.');
+  assert(mutatedBytes.equals(mutationRun.beforeSpec),'Intentional mutation fixture changed before validation began.');
+
+  cp.execFileSync(process.execPath,['verify-v3-migration.mjs'],{stdio:'pipe'});
+  cp.execFileSync(process.execPath,['verify-response-contract-profile.mjs'],{stdio:'pipe'});
+
+  const coreReport=JSON.parse((validation.result.stdout||'').trim());
+  console.log(JSON.stringify({
+    ...coreReport,
+    sourceCommit,
+    sourceCommitReachabilityChecked:sourceCommitEvidence.checked,
+    committedManifestBytesValidated:true,
+    independentRegenerationCompared:true,
+    verifierDidNotRewriteCommittedManifests:true,
+    committedManifestMutationRejected:true,
+    runtimeControllerCopies:0,
+    stage01GovernanceProof:'PASS'
+  },null,2));
+}finally{
+  for(const root of temporaryRoots)fs.rmSync(root,{recursive:true,force:true});
+}
