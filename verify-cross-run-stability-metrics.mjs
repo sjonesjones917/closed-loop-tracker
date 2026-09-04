@@ -30,18 +30,18 @@ for(let i=0;i<slots.length;i++){
   const verification=record('verification',12,{REQ_ID:'REQ-STAGE17-STABILITY',RUN_ID:slots[i].runId,TEST_ID:'TEST-STAGE17-STABILITY',VERIFIER_CONTEXT_ID:`VERIFY-CONTEXT-${i+1}`,OBSERVED_RESULT:'SATISFIED',EXPECTED_RESULT:'SATISFIED',DETERMINATION:'SATISFIED'},`VERIFY-STAGE17-STABILITY-${i+1}`,{...scope,runId:slots[i].runId});
   p.projectData.verification.push(verification);
 }
-const stability=()=>engine.operationalMetrics(p).iterationStability.find(x=>x.iterationId===iterationId);
-let metric=stability(),req=metric.requirementStability['REQ-STAGE17-STABILITY'];
+const stability=()=>engine.executionStability(p,iterationId),requirementMetric=metric=>metric.requirementStability?.['REQ-STAGE17-STABILITY']||metric.requirements?.['REQ-STAGE17-STABILITY'];
+let metric=stability(),req=requirementMetric(metric);
 assert(metric.runCount===10,'Stability universe did not contain exactly ten current runs.');
-assert(req.satisfied===10&&req.violated===0&&req.undetermined===0&&req.agreementRate===1,'Ten identical determinations did not produce agreementRate 1.0.');
+assert(req&&req.satisfied===10&&req.violated===0&&req.undetermined===0&&req.agreementRate===1,'Ten identical determinations did not produce agreementRate 1.0.');
 const first=p.projectData.verification[0];
 setField(first,'OBSERVED_RESULT','VIOLATED');setField(first,'DETERMINATION','VIOLATED');
-metric=stability();req=metric.requirementStability['REQ-STAGE17-STABILITY'];
-assert(req.satisfied===9&&req.violated===1&&req.undetermined===0&&req.agreementRate===0.9,'Nine-of-ten agreement with one violation did not produce exact 0.9 agreement.');
+metric=stability();req=requirementMetric(metric);
+assert(req&&req.satisfied===9&&req.violated===1&&req.undetermined===0&&req.agreementRate===0.9,'Nine-of-ten agreement with one violation did not produce exact 0.9 agreement.');
 setField(first,'OBSERVED_RESULT','UNDETERMINED');setField(first,'DETERMINATION','UNDETERMINED');
-metric=stability();req=metric.requirementStability['REQ-STAGE17-STABILITY'];
-assert(req.satisfied===9&&req.violated===0&&req.undetermined===1&&req.agreementRate===0.9,'Nine-of-ten agreement with one undetermined result did not produce exact 0.9 agreement.');
+metric=stability();req=requirementMetric(metric);
+assert(req&&req.satisfied===9&&req.violated===0&&req.undetermined===1&&req.agreementRate===0.9,'Nine-of-ten agreement with one undetermined result did not produce exact 0.9 agreement.');
 setField(first,'OBSERVED_RESULT','SATISFIED');setField(first,'DETERMINATION','SATISFIED');
-metric=stability();req=metric.requirementStability['REQ-STAGE17-STABILITY'];
-assert(req.satisfied===10&&req.violated===0&&req.undetermined===0&&req.agreementRate===1,'Repaired ten-of-ten fixture did not restore agreementRate 1.0.');
+metric=stability();req=requirementMetric(metric);
+assert(req&&req.satisfied===10&&req.violated===0&&req.undetermined===0&&req.agreementRate===1,'Repaired ten-of-ten fixture did not restore agreementRate 1.0.');
 console.log(JSON.stringify({controllerStage:'17',applicationStage:'13',crossRunStabilityMetrics:'PASS',runCount:10,intentionalInvalidFixturesRejected:['one-violation-in-ten','one-undetermined-in-ten'],repairedPathProgressed:true,isolatedDisposableProject:true}));
