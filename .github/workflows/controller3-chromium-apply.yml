@@ -1,0 +1,41 @@
+name: Apply pinned Chromium proof runtime
+on:
+  push:
+    branches: [controller3-due-activation-closure-20260904]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-due-activation-closure-20260904
+      - name: Patch the single Pages workflow only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml'); s=p.read_text()
+          setup="""      - name: Install pinned Chrome for Testing\n        id: setup-chrome\n        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4\n        with:\n          chrome-version: '152.0.7977.82'\n"""
+          marker="""      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020\n        with:\n          node-version: '22'\n"""
+          positions=[]; start=0
+          while True:
+              i=s.find(marker,start)
+              if i<0: break
+              positions.append(i+len(marker)); start=i+len(marker)
+          if len(positions)<3: raise SystemExit(f'Expected at least three Node setup blocks, got {len(positions)}')
+          shift=0
+          for pos in [positions[0],positions[2],positions[3] if len(positions)>3 else positions[-1]]:
+              actual=pos+shift; s=s[:actual]+setup+s[actual:]; shift+=len(setup)
+          s=s.replace("""        env:\n          BROWSER: /usr/bin/google-chrome\n""","""        env:\n          BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}\n""",1)
+          s=s.replace("""          if [ ! -x \"$BROWSER\" ]; then\n            BROWSER=\"$(command -v google-chrome || command -v chromium || command -v chrome || true)\"\n            export BROWSER\n          fi\n          test -n \"$BROWSER\"\n""","""          test -x \"$BROWSER\"\n""",1)
+          s=s.replace("""      - name: Deployed Chromium operator path\n        run: |\n          set -euo pipefail\n          export BROWSER=\"$(command -v google-chrome || command -v chromium || command -v chrome || true)\"\n          test -n \"$BROWSER\"\n""","""      - name: Deployed Chromium operator path\n        env:\n          BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}\n        run: |\n          set -euo pipefail\n          test -x \"$BROWSER\"\n""",1)
+          s=s.replace("""          export BROWSER=\"$(command -v google-chrome || command -v chromium || command -v chrome || true)\"\n          test -n \"$BROWSER\"\n""","""          export BROWSER=\"${{ steps.setup-chrome.outputs.chrome-path }}\"\n          test -x \"$BROWSER\"\n""",1)
+          p.write_text(s)
+          PY
+          rm .github/workflows/controller3-chromium-apply.yml
+          git config user.name 'closed-loop-controller'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .github/workflows/pages.yml .github/workflows/controller3-chromium-apply.yml
+          git commit -m 'Provision pinned Chromium for browser acceptance'
+          git push origin HEAD:controller3-due-activation-closure-20260904
