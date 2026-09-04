@@ -1,0 +1,42 @@
+name: Controller 3 clean prompt identity applicator
+on:
+  push:
+    branches: [controller3-prompt-identity-clean-20260904]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[controller3-clean-prompt-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-prompt-identity-clean-20260904
+          fetch-depth: 0
+      - name: Apply prompt-identity files without mobile regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE=825c24592d06064709fa0ee23ebe169a5cbf008b
+          for f in build-test-project.mjs prompt-engine.js verify-browser.mjs verify-file-first-response.mjs verify-human-stage-walkthrough.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-spec-grounded-route-oracle.mjs verify-stage-prompts-complete.mjs verify.mjs; do
+            git show "$SOURCE:$f" > "$f"
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-semantic-invariant.mjs')
+          s=p.read_text()
+          old="q.job.AVAILABLE_TOOLS='SOLIDWORKS_IMPORT';plan=engine.testExecutionPlan(q).items[0];assert(plan.executableNow&&plan.operatorAction==='SEND_TO_TOOL_AGENT','Affirmatively available external capability did not restore routing');"
+          new="q.projectData.externalCapabilities.push({id:'CAPABILITY-SOLIDWORKS',active:true,scope:{inputVersion:q.job.CURRENT_INPUT_VERSION},fields:{CAPABILITY_ID:'CAPABILITY-SOLIDWORKS',CAPABILITY_CLAIM:'SOLIDWORKS_IMPORT',FRESHNESS_STATUS:'CURRENT',STATUS:'CURRENT',AUTHORIZED:true,PERMISSIONS_READY:true,INPUTS_TRANSFERABLE:true,ROUTE_USABLE:true,EVIDENCE_OBTAINABLE:true}});plan=engine.testExecutionPlan(q).items[0];assert(plan.executableNow&&plan.operatorAction==='SEND_TO_TOOL_AGENT','Affirmatively available canonical external capability did not restore routing');"
+          if old not in s: raise SystemExit('stale capability fixture not found')
+          p.write_text(s.replace(old,new))
+          PY
+          node verify-prompt-semantics.mjs
+          node verify-file-first-response.mjs
+          node verify-semantic-invariant.mjs
+          node verify-mobile-release-governance.mjs
+          rm .github/workflows/controller3-apply-clean-prompt.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Enforce exact authoritative prompt bytes [controller3-clean-prompt-applied]'
+          git push origin HEAD:controller3-prompt-identity-clean-20260904
