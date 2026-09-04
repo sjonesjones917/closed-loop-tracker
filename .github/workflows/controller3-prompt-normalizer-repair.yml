@@ -17,16 +17,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          grep -R -n "Authoritative prompt body does not enforce\|trimEnd" verify-prompt-semantics.mjs prompt-engine.js || true
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('prompt-engine.js')
           s=p.read_text()
-          new="function normalizePromptBody(body){\n  const normalized=String(body??'').replace(/\\r\\n?/g,'\\n');\n  return `${normalized.trimEnd()}\\n`;\n}"
-          s2,n=re.subn(r"function normalizePromptBody\(body\)\{[^\n]*\}",new,s,count=1)
-          if n != 1:
-              raise SystemExit(f'prompt normalizer replacement count {n}')
-          p.write_text(s2)
+          old=".replace(/\\r\\n?/g,'\\n').replace(/\\n*$/,'\\n');"
+          new=".replace(/\\r\\n?/g,'\\n').trimEnd()+'\\n';"
+          if old not in s:
+              raise SystemExit('bodyText final-LF target not found')
+          p.write_text(s.replace(old,new,1))
           PY
           rm .github/workflows/controller3-prompt-normalizer-repair.yml
           node --check prompt-engine.js
