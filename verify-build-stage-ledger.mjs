@@ -17,6 +17,23 @@ const isSha=value=>typeof value==='string'&&/^[0-9a-f]{40}$/.test(value);
 const arrays=['changedFiles','specificationSections','testsActuallyRun','browserEvidence','deploymentEvidence','deviceEvidence','regressions','openAcceptanceItems'];
 let historyPrepared=false;
 
+function repositoryFiles(){
+  const files=[];
+  const walk=dir=>{
+    for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
+      if(entry.name==='.git'||entry.name==='node_modules')continue;
+      const file=dir==='.'?entry.name:`${dir}/${entry.name}`;
+      if(entry.isDirectory())walk(file);else files.push(file);
+    }
+  };
+  walk('.');
+  return files;
+}
+function validateSingleLedger(paths){
+  const ledgers=paths.filter(path=>/(^|\/)closed-loop-build-state\.json$/.test(path));
+  assert(ledgers.length===1&&ledgers[0]===STATE_PATH,`Exactly one controller ledger is permitted at ${STATE_PATH}; found ${ledgers.join(', ')||'NONE'}.`);
+}
+
 function proveAncestor(commit){
   if(process.env.GITHUB_ACTIONS!=='true')return true;
   if(!historyPrepared){
@@ -111,6 +128,12 @@ function validateLedger(state,mutation=null){
   return {doneStages:doneCount,currentStage:expectedCurrent,specificationSha256:s.specificationSha256,specificationSourceCommit:s.specificationSourceCommit};
 }
 
+const files=repositoryFiles();
+validateSingleLedger(files);
+let duplicateLedgerRejected=false;
+try{validateSingleLedger([...files,'implementation/closed-loop-build-state.json']);}catch{duplicateLedgerRejected=true;}
+assert(duplicateLedgerRejected,'Intentional invalid ledger fixture duplicate-controller-ledger was not rejected.');
+
 const state=readJson(STATE_PATH);
 const result=validateLedger(state);
 for(const fixture of ['specification-digest-mismatch','invalid-status','skipped-stage','false-done-open-item','done-without-execution']){
@@ -118,4 +141,4 @@ for(const fixture of ['specification-digest-mismatch','invalid-status','skipped-
   try{validateLedger(state,fixture);}catch{rejected=true;}
   assert(rejected,`Intentional invalid ledger fixture ${fixture} was not rejected.`);
 }
-console.log(JSON.stringify({...result,ledgerVerified:true,statusContract:[...VALID_STATUS],intentionalInvalidFixturesRejected:5}));
+console.log(JSON.stringify({...result,ledgerVerified:true,statusContract:[...VALID_STATUS],intentionalInvalidFixturesRejected:6,singleControllerLedger:true}));
