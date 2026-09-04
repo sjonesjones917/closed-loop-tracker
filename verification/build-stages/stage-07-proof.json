@@ -2,90 +2,207 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "07",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "e5ec8fb19a36f190cfdb44f1a8520ccbab31df0c",
-  "endingMainCommit": "e5ec8fb19a36f190cfdb44f1a8520ccbab31df0c",
-  "implementationCommitIds": [
-    "e5ec8fb19a36f190cfdb44f1a8520ccbab31df0c"
-  ],
+  "stageName": "OBLIGATION COMPILATION",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "specificationSourceCommit": "c47f605bc684cc1f31ae67a053dc2be52a37106a",
+  "startingMainCommit": "53998cc2b7f85cf8809b93dfbc91e3c1da5bc383",
+  "endingMainCommit": "53998cc2b7f85cf8809b93dfbc91e3c1da5bc383",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
-  "proofCommands": [
+  "specificationSections": [
+    "9.1",
+    "9.2",
+    "9.3",
+    "9.4",
+    "9.5",
+    "9.6",
+    "14.6",
+    "14.7",
+    "14.8",
+    "26.5",
+    "29.15",
+    "37 Stage 04",
+    "38 requirements",
+    "38 semanticChallenges",
+    "38 semanticReviews",
+    "40",
+    "41",
+    "43",
+    "44",
+    "45",
+    "49",
+    "52"
+  ],
+  "implementationFiles": [
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js"
+  ],
+  "requirements": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "requirementId": "S07-REQ-01",
+      "state": "PROVEN",
+      "proposition": "Stage 04 receives the complete current obligation universe assembled from current human input, accepted Stage 01 semantic/material obligations, and current Stage 03 research/candidate obligations.",
+      "evidence": [
+        "verify-zero-loss-accounting.mjs constructs the real workflow obligationManifest and rejects loss of the complete current union.",
+        "verify-one-time-intent-intake.mjs verifies Stage 04 consumes complete current Stage 01 and Stage 03 information.",
+        "GitHub Actions run 33854476599 test job 100964486648 steps 12 and 13 completed successfully on the unchanged application bytes."
+      ]
     },
     {
-      "command": "node verify-v3-migration.mjs",
-      "exitCode": 0
+      "requirementId": "S07-REQ-02",
+      "state": "PROVEN",
+      "proposition": "Stage 04 does not ask the operator to repeat accepted intent or reattach the original intent file merely to rediscover captured semantics.",
+      "evidence": [
+        "verify-one-time-intent-intake.mjs exercises the no-repeat-intent and no-original-file-rediscovery path.",
+        "verify-user-prompt-invariants.mjs and verify-stage-prompts-complete.mjs passed in GitHub Actions run 33854476599 step 13."
+      ]
     },
     {
-      "command": "node verify-v3-contract.mjs",
-      "exitCode": 0
+      "requirementId": "S07-REQ-03",
+      "state": "PROVEN",
+      "proposition": "Every current obligation must receive a valid disposition and omission of a manifest obligation fails closed.",
+      "evidence": [
+        "verify-zero-loss-accounting.mjs deliberately removes a requirement/disposition and requires workflow.evaluateObligationAccounting(...).complete to become false.",
+        "verify-one-time-intent-intake.mjs separately rejects omitted Stage 04 obligations.",
+        "The invalid and repaired paths passed on exact application commit 12d92614730d2950fca2121e9ee6792b367b4f5e in run 33854476599."
+      ]
     },
     {
-      "command": "GitHub Actions run 33830422334 test job 100892065042",
-      "exitCode": 0
+      "requirementId": "S07-REQ-04",
+      "state": "PROVEN",
+      "proposition": "Obligation identity and provenance are preserved across distinct human/material/source origins, including materially identical text from different source identities.",
+      "evidence": [
+        "verify-zero-loss-accounting.mjs verifies distinct canonical artifact occurrences and obligation origins are not collapsed.",
+        "verify-stage04-multi-source-obligation.mjs and verify-stage04-obligation-universe.mjs are permanent source fixtures for source-distinct and multi-origin obligation construction; their owned behavior is also exercised through the shared obligationManifest path covered by the passing Stage 01/Stage 04 acceptance commands."
+      ]
+    },
+    {
+      "requirementId": "S07-REQ-05",
+      "state": "PROVEN",
+      "proposition": "Stage 04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, and RECONCILE_REQUIREMENTS are closed registered operations with registered scope and semantic-review boundaries rather than ad hoc prompt paths.",
+      "evidence": [
+        "workflow-schema.js is the sole stage-operation authority.",
+        "verify-v3-contract.mjs imports verify-stage-contract-closure.mjs and passed in GitHub Actions run 33854476599 step 11, exercising current /3 stage-operation contract closure.",
+        "verify-all-stage-prompts.mjs passed for all stage prompt operations in run 33854476599."
+      ]
+    },
+    {
+      "requirementId": "S07-REQ-06",
+      "state": "PROVEN",
+      "proposition": "An upstream Stage 01 correction invalidates stale Stage 04 work and regenerated Stage 04 context uses the current canonical intake rather than stale data.",
+      "evidence": [
+        "verify-one-time-intent-intake.mjs performs an upstream Stage 01 correction and verifies Stage 04 invalidation plus generation of a new current prompt.",
+        "verify-ingestion.mjs and verify-full-cycle.mjs passed downstream stale-state and lifecycle checks in run 33854476599."
+      ]
     }
   ],
-  "proofArtifactDigests": [
+  "proofCommands": [
     {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564"
+      "command": "node verify-stage01-intake-closure.mjs && node verify-one-time-intent-intake.mjs && node verify-zero-loss-accounting.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 12 (Stage 01 raw intake and semantic accounting), exact application commit 12d92614730d2950fca2121e9ee6792b367b4f5e, completed success."
+    },
+    {
+      "command": "node verify-all-stage-prompts.mjs && node verify-stage-prompts-complete.mjs && node verify-user-prompt-invariants.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 13 (Stage 04 obligation accounting and prompt completeness), exact application commit, completed success."
+    },
+    {
+      "command": "node verify-v3-migration.mjs && node verify-v3-contract.mjs && node verify-spec3-contract.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 11, completed success; verify-v3-contract.mjs executes the stage-contract-closure verifier."
+    },
+    {
+      "command": "node verify-ingestion.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 15, completed success; stale/wrong-scope/ownership/relationship mutations fail before canonical mutation."
+    },
+    {
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 16, completed success; complete workflow and Section 49 metrics include Stage 04 obligation coverage."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 19, local Chromium operator path completed success."
+    },
+    {
+      "command": "node verify-live.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, live-verification job 100965275640, exact deployed-byte verification and deployed Chromium operator path completed success."
     }
   ],
   "intentionalInvalidFixtures": [
-    "profile-less-v3",
-    "legacy-v2-historical-stage01",
-    "missing-current-semantic-intake",
-    "repeated-migration",
-    "stale-registry-identity"
+    "Stage 04 omission: removing one obligation disposition makes obligation accounting incomplete and rejects completion",
+    "Stage 04 stale upstream intake: changing Stage 01 invalidates old Stage 04 state and requires a regenerated current prompt",
+    "Stage 04 repeated-intent path: prompt invariants reject asking for already captured project intent or the original intent file merely for rediscovery",
+    "Stage 04 origin conflation: distinct source/material obligation identities are preserved rather than silently collapsed",
+    "Stage 04 stale/wrong-scope response: ingestion rejects before canonical mutation"
   ],
-  "earlierStageProofsReplayed": [
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    }
+  "repairedStateProofs": [
+    "Complete current Stage 01 and Stage 03 inputs produce a closed Stage 04 obligation manifest.",
+    "Every manifest obligation has a traceable current disposition in the repaired fixture.",
+    "Stage 04 prompt reuses accepted current canonical intake and research without operator resupply.",
+    "Current stage-operation and scope contracts remain closed under the /3 contract profile.",
+    "Upstream correction invalidates stale downstream Stage 04 state and the replacement prompt binds current context.",
+    "The Stage 04 operator path is exercised in local Chromium and the exact deployed application."
   ],
   "browserProofs": [
     {
-      "command": "GitHub Actions run 33830422334 local Chromium operator path",
-      "status": "PASS"
+      "workflowRunId": 33854476599,
+      "jobId": 100964486648,
+      "proof": "local Chromium operator path on the exact application bytes used for Stage 04 verification",
+      "status": "PASS",
+      "commit": "12d92614730d2950fca2121e9ee6792b367b4f5e"
+    },
+    {
+      "workflowRunId": 33854476599,
+      "jobId": 100965275640,
+      "proof": "deployed Chromium operator path on exact deployed bytes",
+      "status": "PASS",
+      "commit": "12d92614730d2950fca2121e9ee6792b367b4f5e"
     }
   ],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {
+      "workflowRunId": 33854476599,
+      "jobId": 100965197095,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
+      "status": "PASS",
+      "commit": "12d92614730d2950fca2121e9ee6792b367b4f5e"
+    },
+    {
+      "workflowRunId": 33854476599,
+      "jobId": 100965275640,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "12d92614730d2950fca2121e9ee6792b367b4f5e"
+    }
+  ],
+  "currentMainReconciliation": {
+    "currentMain": "53998cc2b7f85cf8809b93dfbc91e3c1da5bc383",
+    "testedApplicationCommit": "12d92614730d2950fca2121e9ee6792b367b4f5e",
+    "applicationByteDifference": "NONE",
+    "basis": "GitHub compare 12d92614730d2950fca2121e9ee6792b367b4f5e...53998cc2b7f85cf8809b93dfbc91e3c1da5bc383 changes only verification/build-stages/stage-06-proof.json and verification/closed-loop-build-state.json; no runtime, verifier, workflow, specification, or deployment resource changed."
+  },
+  "earlierStageProofsReplayed": [
+    {"stage": "01", "proofPath": "verification/build-stages/stage-01-proof.json", "status": "PASS"},
+    {"stage": "02", "proofPath": "verification/build-stages/stage-02-proof.json", "status": "PASS"},
+    {"stage": "03", "proofPath": "verification/build-stages/stage-03-proof.json", "status": "PASS"},
+    {"stage": "04", "proofPath": "verification/build-stages/stage-04-proof.json", "status": "PASS"},
+    {"stage": "05", "proofPath": "verification/build-stages/stage-05-proof.json", "status": "PASS"},
+    {"stage": "06", "proofPath": "verification/build-stages/stage-06-proof.json", "status": "PASS"}
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 34,
-  "proofCountAfter": 38,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "08"
+  "directEvidenceReview": "PASS",
+  "nextStage": "08",
+  "notes": "Controller Stage 07 proves the repository/application mechanisms for obligation compilation and Stage 04 closure. It does not claim that a real external semantic reviewer has independently authored or reconciled a real project's requirement set. The current-main merge after the tested application commit changed only prior controller proof/ledger artifacts, so the executed application/browser/deployment evidence remains byte-applicable to current runtime behavior."
 }
