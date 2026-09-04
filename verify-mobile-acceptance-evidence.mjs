@@ -21,20 +21,53 @@ export const REQUIRED_MOBILE_RECEIPT_KINDS=Object.freeze([
   'DEPLOYED_BUILD_IDENTITY_VERIFIED',
   'RUNTIME_EXCEPTION_CHECK_COMPLETED'
 ]);
+export const REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS=Object.freeze([
+  'FILE_EXPORT_OR_SHARE',
+  'RESPONSE_FILE_SELECTION',
+  'RETURNED_FILE_SLOT_SELECTION',
+  'PERSISTENT_STORAGE_REQUEST',
+  'LOGICAL_PACKAGE_EXPORT',
+  'BACKUP_EXPORT_AND_RESTORE'
+]);
 
 const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
 const HEX_128_OR_MORE=value=>typeof value==='string'&&/^[0-9a-fA-F]{32,}$/.test(value);
 const SHA256=value=>typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);
 const COMMIT_SHA=value=>typeof value==='string'&&/^[0-9a-f]{40}$/.test(value);
-const RFC3339=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
 const finite=value=>typeof value==='number'&&Number.isFinite(value);
+const STRICT_UTC_INSTANT=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+
+export function isClosedLoopUtcInstant(value){
+  if(typeof value!=='string'||!STRICT_UTC_INSTANT.test(value))return false;
+  const parsed=Date.parse(value);
+  return Number.isFinite(parsed)&&new Date(parsed).toISOString()===value;
+}
 
 function issue(errors,code,message){errors.push({code,message});}
 function same(actual,expected){return actual===expected;}
 
+function validateCapabilityProbe(errors,probe){
+  if(!probe||typeof probe!=='object'||Array.isArray(probe)){
+    issue(errors,'MOBILE_CAPABILITY_PROBE_REQUIRED','A recorded MOBILE_CAPABILITY_PROBE is required before the physical acceptance run.');
+    return;
+  }
+  if(!NONEMPTY(probe.probeId))issue(errors,'MOBILE_CAPABILITY_PROBE_ID_REQUIRED','MOBILE_CAPABILITY_PROBE must have an application-recorded probeId.');
+  if(probe.result!=='PASS')issue(errors,'MOBILE_CAPABILITY_PROBE_BLOCKED','MOBILE_CAPABILITY_PROBE must be PASS; a missing, false, or unknown required capability blocks physical acceptance.');
+  const capabilities=probe.capabilities;
+  if(!capabilities||typeof capabilities!=='object'||Array.isArray(capabilities)){
+    issue(errors,'MOBILE_CAPABILITY_PROBE_CAPABILITIES_REQUIRED','MOBILE_CAPABILITY_PROBE capabilities are required.');
+    return;
+  }
+  const keys=Object.keys(capabilities);
+  for(const key of keys){if(!REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS.includes(key))issue(errors,'MOBILE_CAPABILITY_PROBE_UNKNOWN_CAPABILITY',`Unknown MOBILE_CAPABILITY_PROBE capability ${key}.`);}
+  for(const key of REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS){
+    if(capabilities[key]!==true)issue(errors,'MOBILE_CAPABILITY_PROBE_CAPABILITY_UNAVAILABLE',`Required mobile capability ${key} is not affirmatively available.`);
+  }
+}
+
 export function verifyMobileAcceptanceEvidence({target,evidence,expected={},usedChallenges=[]}={}){
   const errors=[];
-  const used=new Set(Array.isArray(usedChallenges)?usedChallenges:[...usedChallenges]);
+  const used=new Set((Array.isArray(usedChallenges)?usedChallenges:[...usedChallenges]).filter(NONEMPTY).map(value=>value.toLowerCase()));
   if(!target||typeof target!=='object'||Array.isArray(target))issue(errors,'TARGET_REQUIRED','Pinned mobile acceptance target is required.');
   if(!evidence||typeof evidence!=='object'||Array.isArray(evidence))issue(errors,'EVIDENCE_REQUIRED','Physical-device evidence is required.');
   if(errors.length)return {accepted:false,status:'BLOCKED',errors};
@@ -42,11 +75,12 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(target.mobileAcceptanceTargetId))issue(errors,'TARGET_ID_REQUIRED','mobileAcceptanceTargetId is required.');
   if(target.physicalDeviceRequired!==true)issue(errors,'PHYSICAL_DEVICE_REQUIRED','The target must require a physical device.');
   if(!HEX_128_OR_MORE(target.challenge))issue(errors,'CHALLENGE_INVALID','Challenge must contain at least 128 bits encoded as hexadecimal.');
-  if(!RFC3339(target.challengeIssuedAt)||!RFC3339(target.challengeExpiresAt))issue(errors,'CHALLENGE_TIME_INVALID','Challenge issue and expiry times must be RFC 3339 values.');
-  if(RFC3339(target.challengeIssuedAt)&&RFC3339(target.challengeExpiresAt)&&Date.parse(target.challengeExpiresAt)<=Date.parse(target.challengeIssuedAt))issue(errors,'CHALLENGE_WINDOW_INVALID','Challenge expiry must be later than challenge issue time.');
-  if(used.has(target.challenge))issue(errors,'CHALLENGE_REUSED','The mobile acceptance challenge was already accepted.');
+  if(!isClosedLoopUtcInstant(target.challengeIssuedAt)||!isClosedLoopUtcInstant(target.challengeExpiresAt))issue(errors,'CHALLENGE_TIME_INVALID','Challenge issue and expiry times must be UTC RFC 3339 instants with uppercase Z and exactly three fractional-second digits.');
+  if(isClosedLoopUtcInstant(target.challengeIssuedAt)&&isClosedLoopUtcInstant(target.challengeExpiresAt)&&Date.parse(target.challengeExpiresAt)<=Date.parse(target.challengeIssuedAt))issue(errors,'CHALLENGE_WINDOW_INVALID','Challenge expiry must be later than challenge issue time.');
+  if(HEX_128_OR_MORE(target.challenge)&&used.has(target.challenge.toLowerCase()))issue(errors,'CHALLENGE_REUSED','The mobile acceptance challenge was already accepted.');
   const verificationTime=expected.verificationTime||new Date().toISOString();
-  if(RFC3339(target.challengeExpiresAt)&&Date.parse(verificationTime)>Date.parse(target.challengeExpiresAt))issue(errors,'CHALLENGE_EXPIRED','The mobile acceptance challenge is expired.');
+  if(!isClosedLoopUtcInstant(verificationTime))issue(errors,'VERIFICATION_TIME_INVALID','Verification time must use the closed UTC instant contract.');
+  if(isClosedLoopUtcInstant(target.challengeExpiresAt)&&isClosedLoopUtcInstant(verificationTime)&&Date.parse(verificationTime)>Date.parse(target.challengeExpiresAt))issue(errors,'CHALLENGE_EXPIRED','The mobile acceptance challenge is expired.');
 
   if(!COMMIT_SHA(target.sourceCommit))issue(errors,'TARGET_COMMIT_INVALID','Target sourceCommit must be an exact 40-character commit SHA.');
   if(!SHA256(target.deploymentManifestDigest))issue(errors,'TARGET_MANIFEST_DIGEST_INVALID','Target deploymentManifestDigest must be a SHA-256 digest.');
@@ -80,6 +114,8 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(evidence.iosVersion))issue(errors,'IOS_VERSION_REQUIRED','Reported iOS version is required.');
   if(!NONEMPTY(evidence.safariUserAgent)||!/(iPhone|iPod)/.test(evidence.safariUserAgent)||!/Safari\//.test(evidence.safariUserAgent)||/(CriOS|FxiOS|EdgiOS|OPiOS)/.test(evidence.safariUserAgent))issue(errors,'SAFARI_USER_AGENT_INVALID','Evidence must identify Safari on the pinned iPhone target and reject substitute browsers.');
   if(!evidence.viewport||!same(evidence.viewport.width,target.viewport.width)||!same(evidence.viewport.height,target.viewport.height)||!same(evidence.viewport.devicePixelRatio,target.viewport.devicePixelRatio))issue(errors,'VIEWPORT_MISMATCH','Evidence viewport must match the pinned target exactly.');
+
+  validateCapabilityProbe(errors,evidence.mobileCapabilityProbe);
 
   const receipts=Array.isArray(evidence.operationReceipts)?evidence.operationReceipts:[];
   const kinds=new Set();
@@ -117,7 +153,8 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     deploymentManifestDigest:target.deploymentManifestDigest||null,
     origin:target.origin||null,
     basePath:target.basePath||null,
-    testProjectId:target.testProjectId||null
+    testProjectId:target.testProjectId||null,
+    mobileCapabilityProbeId:evidence.mobileCapabilityProbe?.probeId||null
   };
 }
 
