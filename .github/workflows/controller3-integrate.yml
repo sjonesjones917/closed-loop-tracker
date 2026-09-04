@@ -1,0 +1,47 @@
+name: Controller 3 integrate prompt and browser proof
+on:
+  push:
+    branches: [controller3-integrate-prompt-chrome-20260904]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Apply verified prompt files and pinned Chromium provision
+        env:
+          PROMPT_FIX_SHA: 401f63db58da83bb9b399e62626c58761a916c0e
+        run: |
+          set -euo pipefail
+          git fetch origin "$PROMPT_FIX_SHA"
+          git checkout "$PROMPT_FIX_SHA" -- build-test-project.mjs prompt-engine.js verify-browser.mjs verify-file-first-response.mjs verify-human-stage-walkthrough.mjs verify-prompt-semantics.mjs verify-spec-grounded-route-oracle.mjs verify-stage-prompts-complete.mjs verify.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml')
+          s=p.read_text()
+          setup="""      - name: Install pinned Chrome for Testing\n        id: setup-chrome\n        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4\n        with:\n          chrome-version: '152.0.7977.82'\n"""
+          first="""      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020\n        with:\n          node-version: '22'\n\n      - name: Capture exact PR source workspace\n"""
+          assert first in s
+          s=s.replace(first,"""      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020\n        with:\n          node-version: '22'\n"""+setup+"\n      - name: Capture exact PR source workspace\n",1)
+          s=s.replace("""      - name: Local Chromium operator path\n        env:\n          BROWSER: /usr/bin/google-chrome\n        run: |\n          set -euo pipefail\n          if [ ! -x \"$BROWSER\" ]; then\n            BROWSER=\"$(command -v google-chrome || command -v chromium || command -v chrome || true)\"\n            export BROWSER\n          fi\n          test -n \"$BROWSER\"\n""","""      - name: Local Chromium operator path\n        env:\n          BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}\n        run: |\n          set -euo pipefail\n          test -x \"$BROWSER\"\n""",1)
+          second="""      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020\n        with:\n          node-version: '22'\n      - name: Rebuild retained fixture used by deployment\n"""
+          assert second in s
+          s=s.replace(second,"""      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020\n        with:\n          node-version: '22'\n"""+setup+"      - name: Rebuild retained fixture used by deployment\n",1)
+          s=s.replace("""      - name: Deployed Chromium operator path\n        run: |\n          set -euo pipefail\n          export BROWSER=\"$(command -v google-chrome || command -v chromium || command -v chrome || true)\"\n          test -n \"$BROWSER\"\n""","""      - name: Deployed Chromium operator path\n        env:\n          BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}\n        run: |\n          set -euo pipefail\n          test -x \"$BROWSER\"\n""",1)
+          pre,post=s.split('  publish-status:\n',1)
+          third="""      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020\n        with:\n          node-version: '22'\n      - name: Reverify deployed Chromium for authenticated mobile acceptance\n"""
+          assert third in post
+          post=post.replace(third,"""      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020\n        with:\n          node-version: '22'\n"""+setup+"      - name: Reverify deployed Chromium for authenticated mobile acceptance\n",1)
+          post=post.replace("""      - name: Reverify deployed Chromium for authenticated mobile acceptance\n        if: github.event_name == 'workflow_dispatch'\n        env:\n          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/\n        run: |\n          set -euo pipefail\n          export BROWSER=\"$(command -v google-chrome || command -v chromium || command -v chrome || true)\"\n          test -n \"$BROWSER\"\n""","""      - name: Reverify deployed Chromium for authenticated mobile acceptance\n        if: github.event_name == 'workflow_dispatch'\n        env:\n          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/\n          BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}\n        run: |\n          set -euo pipefail\n          test -x \"$BROWSER\"\n""",1)
+          p.write_text(pre+'  publish-status:\n'+post)
+          PY
+          node verify-mobile-release-governance.mjs >/dev/null
+          rm .github/workflows/controller3-integrate.yml
+          git config user.name closed-loop-controller
+          git config user.email closed-loop-controller@users.noreply.github.com
+          git add -A
+          git commit -m "Enforce prompt byte identity and pinned Chromium proof"
+          git push origin HEAD:controller3-integrate-prompt-chrome-20260904
