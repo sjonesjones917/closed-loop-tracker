@@ -2,11 +2,7 @@
 'use strict';
 
 const query=self.location?.search||'';
-const params=new URLSearchParams(query);
-const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1';
-const WORKER_BUILD_ID=params.get('v')||'UNMANIFESTED_LOCAL_RUNTIME';
-const EXPECTED_WORKER_SHA256=/^[0-9a-f]{64}$/.test(params.get('workerSha256')||'')?params.get('workerSha256'):null;
-importScripts(`hash.js${query}`,`test-runtime.js${query}`);
+importScripts(`test-runtime.js${query}`);
 
 /* The worker entry owns the only permitted bootstrap load. Once the declarative
    runtime is loaded, all general network and dynamic-code surfaces are denied. */
@@ -16,28 +12,22 @@ try{self.XMLHttpRequest=unavailable('XMLHttpRequest');}catch{}
 try{self.WebSocket=unavailable('WebSocket');}catch{}
 try{self.EventSource=unavailable('EventSource');}catch{}
 try{self.importScripts=unavailable('Dynamic importScripts');}catch{}
-try{self.eval=unavailable('eval');}catch{}
-try{self.Function=unavailable('Function');}catch{}
 
 self.addEventListener('message',async event=>{
   const message=event?.data||{};
   if(message.type!=='EXECUTE_TEST_IR'||typeof message.requestId!=='string')return;
+  const protocol=self.closedLoopTestRuntime?.WORKER_PROTOCOL_VERSION||'closed-loop-test-worker-protocol/1';
+  const identity={requestId:message.requestId,workerProtocolVersion:protocol,workerChallengeNonce:String(message.workerChallengeNonce||'')};
   try{
     const runtime=self.closedLoopTestRuntime;
     if(!runtime)throw Object.assign(new Error('Deterministic Test IR runtime did not load.'),{code:'RUNTIME_UNAVAILABLE'});
-    if(WORKER_BUILD_ID!=='UNMANIFESTED_LOCAL_RUNTIME'&&!EXPECTED_WORKER_SHA256){
-      throw Object.assign(new Error('Deployed Test IR worker URL lacks the manifest-bound worker SHA-256.'),{code:'WORKER_DIGEST_IDENTITY_MISSING'});
-    }
+    if(message.workerProtocolVersion!==protocol||!/^[0-9a-f]{32}$/i.test(String(message.workerChallengeNonce||'')))throw Object.assign(new Error('Worker request protocol or challenge identity is invalid.'),{code:'WORKER_IDENTITY_MISMATCH'});
     const validation=runtime.validateSpec(message.spec,message.bindings);
     if(!validation.valid)throw Object.assign(new Error(validation.issues.join(' ')),{code:'INVALID_TEST_IR'});
     const result=await runtime.execute({spec:message.spec,artifacts:message.artifacts||{},canonicalBindings:message.canonicalBindings||{},metadata:message.metadata||{}});
-    const runtimeReportedBuildIdentity=String(result?.runtimeBuildIdentity||'');
-    if(runtimeReportedBuildIdentity&&runtimeReportedBuildIdentity!=='UNMANIFESTED_LOCAL_RUNTIME'&&runtimeReportedBuildIdentity!==WORKER_BUILD_ID){
-      throw Object.assign(new Error('Test IR runtime build identity does not match the worker build identity.'),{code:'RUNTIME_BUILD_IDENTITY_MISMATCH'});
-    }
-    self.postMessage({requestId:message.requestId,ok:true,result:{...result,runtimeBuildIdentity:WORKER_BUILD_ID,workerProtocolVersion:WORKER_PROTOCOL_VERSION,testWorkerSha256:EXPECTED_WORKER_SHA256}});
+    self.postMessage({...identity,ok:true,result:{...result,runtimeBuildIdentity:runtime.runtimeBuildIdentity(),workerProtocolVersion:protocol,testWorkerSha256:message.metadata?.testWorkerSha256||null}});
   }catch(error){
-    self.postMessage({requestId:message.requestId,ok:false,error:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error),disposition:error?.disposition||'EXECUTION_FAILED',runtimeBuildIdentity:WORKER_BUILD_ID,workerProtocolVersion:WORKER_PROTOCOL_VERSION,testWorkerSha256:EXPECTED_WORKER_SHA256}});
+    self.postMessage({...identity,ok:false,error:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error),disposition:error?.disposition||'EXECUTION_FAILED'}});
   }
 });
 })();

@@ -33,6 +33,14 @@ project.projectData.userEntered={
   acceptance:{oneTimeSupply:'Project information is supplied once and remains available to every later stage.'}
 };
 engine.ensureShape(project);
+const promptContextIds={};
+for(const stage of [1,3,4]){const context=engine.registerFreshContext(project,{stage,externalContextIdentifier:`ONE-TIME-INTENT-STAGE-${stage}`,operatorLabel:'ONE_TIME_INTENT_VERIFIER',purpose:'GENERAL'});promptContextIds[stage]=engine.recordId(context,'freshContexts');}
+function activatePrompt(stage,operation='COMPLETE',extraScope={}){
+  const contextId=promptContextIds[stage],scope=prompts.scopeFor(stage,{...project,revision:Number(project.revision||0)+1},{...extraScope,contextId}),prepared=engine.prepareCurrentOperationReservation(project,{stage,operation,contextId,scope,owningTabInstance:'ONE_TIME_INTENT_VERIFIER'}),preview=engine.clone(project);
+  preview.revision=prepared.expectedRevision;
+  const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared});
+  engine.registerGeneratedPrompt(project,record);engine.reserveOperation(project,{preparedReservation:prepared,promptId:record.instructionId});project.revision=prepared.expectedRevision;return record;
+}
 
 const intake=engine.intakeCoverageManifest(project);
 assert(intake.unitCount>=8,'The intake manifest did not enumerate the complete human-authority input.');
@@ -47,7 +55,7 @@ const capture={
   units:intake.units.map((unit,index)=>({
     sourceUnitId:unit.unitId,
     sourceRawValueSha256:unit.rawValueSha256,
-    disposition:'EXTRACTED_RELEVANT_INFORMATION',
+    disposition:'incorporated into the job definition',
     reason:'Preserved once as controlling project authority for downstream reuse.',
     extractedStatements:[{
       statementKey:`statement-${String(index+1).padStart(3,'0')}`,
@@ -74,7 +82,7 @@ project.job.EXACT_DELIVERABLE_REQUESTED=project.stages[1].agentData.EXACT_DELIVE
 project.stages[1].status='COMPLETE';
 project.stages[1].gate={complete:true,blocked:false,reasons:[]};
 
-const stage1Prompt=prompts.buildPromptRecord(1,project,{operation:'COMPLETE'});
+const stage1Prompt=activatePrompt(1);
 assert(stage1Prompt.prompt.includes('The user supplies project information once'),'Stage 01 does not instruct the agent to capture project information once.');
 assert(stage1Prompt.prompt.includes('Classify every APPLICATION INTAKE MANIFEST unit exactly once'),'Stage 01 does not require exhaustive application-accounted intake.');
 assert(stage1Prompt.prompt.includes('INPUT_SET_CONTENTS must preserve the complete durable meaning needed by later stages'),'Stage 01 does not require a durable downstream capture.');
@@ -119,7 +127,7 @@ project.stages[3].agentData={
 project.stages[3].status='COMPLETE';
 project.stages[3].gate={complete:true,blocked:false,reasons:[]};
 
-const stage3Prompt=prompts.buildPromptRecord(3,project,{operation:'COMPLETE'});
+const stage3Prompt=activatePrompt(3);
 assert(stage3Prompt.prompt.includes(project.job.EXACT_USER_OBJECTIVE_VERBATIM),'Stage 03 did not receive the current human objective.');
 assert(stage3Prompt.prompt.includes(project.stages[1].agentData.EXACT_DELIVERABLE_REQUESTED),'Stage 03 did not receive the accepted Stage 01 deliverable definition.');
 assert(/never ask the (?:human|user) to repeat available project facts/i.test(stage3Prompt.prompt),'Stage 03 permits repeated project-data entry.');
@@ -137,7 +145,7 @@ for(const required of [
   'Candidate external obligation retained from Stage 03.'
 ])assert(obligationText.includes(required),`Stage 04 obligation universe omitted: ${required}`);
 
-const stage4Prompt=prompts.buildPromptRecord(4,project,{operation:'COMPLETE'});
+const stage4Prompt=activatePrompt(4);
 const exhausted=stage4Prompt.contextManifest.stage4ExhaustedInputs;
 assert(exhausted.stage01AcceptedCapture.units.length===intake.unitCount,'Stage 04 did not receive every accepted Stage 01 intake unit.');
 assert(exhausted.stage03Research.length===1,'Stage 04 did not receive the complete current Stage 03 research set.');

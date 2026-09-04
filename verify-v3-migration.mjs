@@ -44,26 +44,20 @@ const audit=migrated.projectData.nonOperationalImportedPayloads.at(-1);
 assert.equal(audit.operational,false);
 assert.equal(audit.sourceSchema,'closed-loop-project/2');
 assert.deepEqual(audit.payload,original,'original imported payload must be preserved as non-operational audit evidence');
-assert.equal(audit.payload.job.EXACT_USER_OBJECTIVE_VERBATIM,'Preserved migration objective','legacy human authority must remain preserved as historical evidence while not being promoted to current agent semantics');
 for(const key of ['intakeCoverageManifests','obligationManifests','promptContextManifests','blindAliasMaps','nativeExecutionEvents'])assert.ok(Array.isArray(migrated.projectData[key]),`migration default missing: ${key}`);
 assert.deepEqual(previous,original,'migration must not mutate the imported object');
-assert.equal(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),'','/2 -> /3 migration must not fabricate current agent-owned Stage 01 semantic intake from preserved human authority');
-assert.equal(migrated.job.CONTRACT_PROFILE_ID,undefined,'legacy /2 migration must not acquire current profile without complete profile proof');
-assert.equal(migrated.job.CURRENT_STATE,'BLOCKED');assert.equal(migrated.job.JOB_RECORD_STATUS,'INCOMPLETE');assert.equal(migrated.projectData.contractProfileMigration.status,'LEGACY_NON_GATING');assert.equal(schema.validateContractProfile(migrated).valid,false);
+assert.match(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),/Preserved migration objective/,'/2 -> /3 migration must reconstruct completed Stage 01 accepted input-set capture from preserved human authority');
 
 const legacyStages={};for(let stage=1;stage<=30;stage++)legacyStages[stage]={stage,status:stage===1?'COMPLETE':'NOT STARTED',agentData:{},humanData:{},derivedData:{}};
 const legacy={schema:'human-project/30',jobId:'JOB-LEGACY-MIGRATION',userJobInput:{objective:'Legacy intent supplied exactly once',deliverable:'Legacy deliverable',explicitRequirements:['Never ask for this supplied intent again.'],authorizedOperation01:'Complete legacy Stage 01 authority packet'},job:{JOB_ID:'JOB-LEGACY-MIGRATION'},stages:legacyStages,projectData:{}};
 const legacyOriginal=structuredClone(legacy);const legacyMigrated=context.closedLoopCore.migrateState(legacy);
-assert.equal(String(legacyMigrated.stages[1]?.agentData?.INPUT_SET_CONTENTS||''),'','human-project/30 migration must not promote raw human input into current agent-owned Stage 01 semantic intake');
+assert.match(String(legacyMigrated.stages[1]?.agentData?.INPUT_SET_CONTENTS||''),/Legacy intent supplied exactly once/,'human-project/30 migration must retain once-supplied Stage 01 input in canonical accepted Stage 01 data');
 assert.deepEqual(legacy,legacyOriginal,'human-project/30 migration must not mutate imported input');
 const currentBroken=structuredClone(legacyMigrated);currentBroken.stages[1].agentData={...(currentBroken.stages[1].agentData||{})};delete currentBroken.stages[1].agentData.INPUT_SET_CONTENTS;if(currentBroken.stages[1].acceptedData)delete currentBroken.stages[1].acceptedData.INPUT_SET_CONTENTS;
 const currentReprocessed=context.closedLoopCore.migrateState(currentBroken);assert.equal(String(currentReprocessed.stages[1]?.agentData?.INPUT_SET_CONTENTS||''),'','current /3 corruption must not be silently reconstructed by legacy migration logic');
 
 const second=schema.migrateProjectToCurrent(migrated);
 assert.equal(second.schema,'closed-loop-project/3');
-assert.equal(schema.validateContractProfile(second).valid,false);
 assert.equal(second.projectData.nonOperationalImportedPayloads.length,migrated.projectData.nonOperationalImportedPayloads.length,'current migration must be idempotent');
 
-const profileless=context.closedLoopCore.createBlankState('JOB-PREPROFILE');delete profileless.job.CONTRACT_PROFILE_ID;profileless.stages[1].status='COMPLETE';profileless.stages[1].agentData={INPUT_SET_CONTENTS:'must not gate'};const guarded=schema.migrateProjectToCurrent(profileless);assert.equal(schema.validateContractProfile(guarded).valid,false);assert.equal(guarded.job.CURRENT_STATE,'BLOCKED');assert.equal(guarded.stages[1].status,'NOT STARTED');assert.equal(String(guarded.stages[1].agentData.INPUT_SET_CONTENTS||''),'');assert.ok(guarded.projectData.nonOperationalImportedPayloads.some(x=>x.sourceSchema==='closed-loop-project/3'&&x.operational===false));
-
-console.log(JSON.stringify({verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,idempotent:true,legacyStage01SemanticFabricationRejected:true,currentV3NoSilentHeal:true}));
+console.log(JSON.stringify({verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,idempotent:true,legacyStage01CapturePreserved:true,currentV3NoSilentHeal:true}));

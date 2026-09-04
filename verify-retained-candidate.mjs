@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+
 for(const file of ['workbook.js']) vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore;
 if(!core) throw new Error('Workbook runtime failed to load.');
