@@ -13,6 +13,11 @@ const EXECUTED_DEFINITION_PROOF_FIELDS=Object.freeze([
   'releaseArtifactIdentityCoverage'
 ]);
 
+const productionInstructionProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-production-instruction.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+assert.equal(productionInstructionProof.productionInstruction,'PASS','Stage 12 production-instruction regression proof did not pass.');
+assert.equal(productionInstructionProof.isolatedDisposableProjects,true,'Stage 12 production-instruction mutations were not isolated to disposable project state.');
+assert.equal(productionInstructionProof.noMutationBeforeAcceptance,true,'Stage 12 production-instruction verifier did not prove zero canonical mutation before acceptance.');
+
 const originalLog=console.log;
 const captured=[];
 console.log=(...args)=>captured.push(args.map(String).join(' '));
@@ -159,4 +164,22 @@ report.exactReqRunTestMetric=exactReqRunTestMetric;
 report.coverageMetrics={...(report.coverageMetrics||{}),exactReqRunTestCoverage:exactReqRunTestMetric};
 report.section49ReqRunTestMutationProof={missingTupleDetected:true,duplicateTupleDetected:true,closedUniverseStable:true};
 report.section49EmptyDenominatorMutationProof={unreviewedEmptyBlocked:true,reviewedEvidenceSupportedEmptyAccepted:true};
+report.productionInstructionCoverage=Number(
+  productionInstructionProof.productionInstruction==='PASS'&&
+  productionInstructionProof.repairedPathProgressed===true&&
+  productionInstructionProof.noMutationBeforeAcceptance===true&&
+  productionInstructionProof.promptSemanticsChecked===true&&
+  productionInstructionProof.isolatedDisposableProjects===true
+);
+report.productionInstructionMutationProof={
+  missingMandatoryInstructionTraceRejected:productionInstructionProof.intentionalInvalidFixturesRejected?.includes('missing-mandatory-instruction-trace')===true,
+  missingRequiredOutputContractRejected:productionInstructionProof.intentionalInvalidFixturesRejected?.includes('missing-required-output-contract')===true,
+  repairedPathProgressed:productionInstructionProof.repairedPathProgressed===true,
+  noMutationBeforeAcceptance:productionInstructionProof.noMutationBeforeAcceptance===true,
+  promptSemanticsChecked:productionInstructionProof.promptSemanticsChecked===true,
+  isolatedDisposableProjects:productionInstructionProof.isolatedDisposableProjects===true
+};
+assert.equal(report.productionInstructionCoverage,1,'Stage 12 production-instruction coverage is not complete.');
+assert.equal(report.productionInstructionMutationProof.missingMandatoryInstructionTraceRejected,true,'Stage 12 missing-instruction-trace mutation was not rejected.');
+assert.equal(report.productionInstructionMutationProof.missingRequiredOutputContractRejected,true,'Stage 12 missing-output-contract mutation was not rejected.');
 originalLog(JSON.stringify(report,null,2));
