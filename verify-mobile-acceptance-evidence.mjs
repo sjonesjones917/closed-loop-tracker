@@ -4,6 +4,7 @@ export const MOBILE_ACCEPTANCE_ORIGIN='https://sjonesjones917.github.io';
 export const MOBILE_ACCEPTANCE_BASE_PATH='/closed-loop-tracker/';
 export const ACCEPTABLE_PHYSICAL_EVIDENCE_BASES=Object.freeze(['HUMAN_OBSERVATION','VERIFIED_EXTERNAL']);
 export const REQUIRED_MOBILE_RECEIPT_KINDS=Object.freeze([
+  'MOBILE_CAPABILITY_PROBE_COMPLETED',
   'PROJECT_CREATED',
   'RAW_FILE_INTAKE',
   'PROMPT_FILE_EXPORTED_OR_SHARED',
@@ -18,6 +19,7 @@ export const REQUIRED_MOBILE_RECEIPT_KINDS=Object.freeze([
   'BACKUP_EXPORTED',
   'BACKUP_RESTORED_FROM_EXPORTED_COPY',
   'ACCESSIBILITY_AND_OVERFLOW_VERIFIED',
+  'FOCUS_AND_LIVE_REGION_VERIFIED',
   'DEPLOYED_BUILD_IDENTITY_VERIFIED',
   'RUNTIME_EXCEPTION_CHECK_COMPLETED'
 ]);
@@ -74,6 +76,14 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
 
   if(!NONEMPTY(target.mobileAcceptanceTargetId))issue(errors,'TARGET_ID_REQUIRED','mobileAcceptanceTargetId is required.');
   if(target.physicalDeviceRequired!==true)issue(errors,'PHYSICAL_DEVICE_REQUIRED','The target must require a physical device.');
+  if(!NONEMPTY(target.deviceHardwareClass))issue(errors,'TARGET_HARDWARE_CLASS_REQUIRED','The pinned iPhone hardware class is required.');
+  if(!/^iPhone/i.test(target.deviceHardwareClass||''))issue(errors,'TARGET_HARDWARE_CLASS_INVALID','The pinned hardware class must identify an iPhone.');
+  if(!NONEMPTY(target.iosVersion))issue(errors,'TARGET_IOS_VERSION_REQUIRED','The exact pinned iOS version is required.');
+  if(!NONEMPTY(target.iosBuild))issue(errors,'TARGET_IOS_BUILD_REQUIRED','The exact pinned iOS build is required.');
+  if(!NONEMPTY(target.safariVersion))issue(errors,'TARGET_SAFARI_VERSION_REQUIRED','The pinned Safari version is required.');
+  if(!NONEMPTY(target.webKitBuildIdentity))issue(errors,'TARGET_WEBKIT_IDENTITY_REQUIRED','The pinned observable WebKit build identity is required.');
+  if(!NONEMPTY(target.performer))issue(errors,'TARGET_PERFORMER_REQUIRED','The pinned performer identity is required.');
+  if(!NONEMPTY(target.identityAssurance))issue(errors,'TARGET_IDENTITY_ASSURANCE_REQUIRED','The pinned performer identity assurance is required.');
   if(!HEX_128_OR_MORE(target.challenge))issue(errors,'CHALLENGE_INVALID','Challenge must contain at least 128 bits encoded as hexadecimal.');
   if(!isClosedLoopUtcInstant(target.challengeIssuedAt)||!isClosedLoopUtcInstant(target.challengeExpiresAt))issue(errors,'CHALLENGE_TIME_INVALID','Challenge issue and expiry times must be UTC RFC 3339 instants with uppercase Z and exactly three fractional-second digits.');
   if(isClosedLoopUtcInstant(target.challengeIssuedAt)&&isClosedLoopUtcInstant(target.challengeExpiresAt)&&Date.parse(target.challengeExpiresAt)<=Date.parse(target.challengeIssuedAt))issue(errors,'CHALLENGE_WINDOW_INVALID','Challenge expiry must be later than challenge issue time.');
@@ -103,7 +113,14 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     ['origin','EVIDENCE_ORIGIN_MISMATCH'],
     ['basePath','EVIDENCE_BASE_PATH_MISMATCH'],
     ['testProjectId','EVIDENCE_TEST_PROJECT_MISMATCH'],
-    ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH']
+    ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH'],
+    ['deviceHardwareClass','EVIDENCE_HARDWARE_CLASS_MISMATCH'],
+    ['iosVersion','EVIDENCE_IOS_VERSION_MISMATCH'],
+    ['iosBuild','EVIDENCE_IOS_BUILD_MISMATCH'],
+    ['safariVersion','EVIDENCE_SAFARI_VERSION_MISMATCH'],
+    ['webKitBuildIdentity','EVIDENCE_WEBKIT_IDENTITY_MISMATCH'],
+    ['performer','EVIDENCE_PERFORMER_MISMATCH'],
+    ['identityAssurance','EVIDENCE_IDENTITY_ASSURANCE_MISMATCH']
   ];
   for(const [field,code] of bindings){if(!same(evidence[field],target[field]))issue(errors,code,`Evidence ${field} does not match the pinned target.`);}
   if(!NONEMPTY(evidence.mobileAcceptanceEvidenceId))issue(errors,'EVIDENCE_ID_REQUIRED','mobileAcceptanceEvidenceId is required.');

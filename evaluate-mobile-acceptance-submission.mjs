@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {verifyMobileAcceptanceEvidence} from './verify-mobile-acceptance-evidence.mjs';
 
 export const MOBILE_ACCEPTANCE_ORIGIN='https://sjonesjones917.github.io';
@@ -146,6 +147,21 @@ async function deployedExpected(){
   };
 }
 
+function verifySection49BeforeMobilePublication(){
+  const output=execFileSync(process.execPath,[new URL('./verify-v3-definition-of-done.mjs',import.meta.url).pathname],{encoding:'utf8',maxBuffer:64*1024*1024});
+  const report=JSON.parse(output);
+  const metrics=report.section49CoverageMetrics;
+  if(!metrics||typeof metrics!=='object')throw new Error('Section 49 metric universe was not published.');
+  const failures=[];
+  for(const [name,metric] of Object.entries(metrics)){
+    if(name==='actualIPhoneSafariAcceptanceCoverage')continue;
+    if(!metric||metric.denominator<=0||metric.value!==1||metric.disposition!=='SATISFIED')failures.push(name);
+  }
+  if(report.section49ZeroCountInvariantViolations!==0)failures.push('section49ZeroCountInvariantViolations');
+  if(failures.length)throw new Error(`Section 49 pre-mobile proof is incomplete: ${failures.join(', ')}`);
+  return report;
+}
+
 async function main(){
   const targetJson=process.env.MOBILE_ACCEPTANCE_TARGET_JSON||'';
   const evidenceJson=process.env.MOBILE_ACCEPTANCE_EVIDENCE_JSON||'';
@@ -157,13 +173,20 @@ async function main(){
     if(!Array.isArray(parsed)||parsed.some(value=>typeof value!=='string'))throw new Error('USED_MOBILE_CHALLENGES_JSON must be a JSON string array.');
     usedChallenges=parsed;
   }
-  const result=evaluateMobileAcceptanceSubmission({
+  let result=evaluateMobileAcceptanceSubmission({
     targetJson,
     evidenceJson,
     expected,
     usedChallenges,
     submitter:process.env.GITHUB_ACTOR||null
   });
+  if(result.actualIPhoneSafariAcceptance===true&&result.mobileAcceptanceResult==='ACCEPTED'){
+    try{
+      verifySection49BeforeMobilePublication();
+    }catch(error){
+      result={...blocked('BLOCKED','Repair every non-mobile Section 49 metric or zero-count invariant before publishing physical-iPhone acceptance.','Repository acceptance controller',[error.message]),mobileAcceptanceTargetId:result.mobileAcceptanceTargetId,mobileAcceptanceEvidenceId:result.mobileAcceptanceEvidenceId,mobileAcceptanceEvidenceBasis:result.mobileAcceptanceEvidenceBasis,mobileAcceptanceSourceCommit:result.mobileAcceptanceSourceCommit,mobileAcceptanceDeploymentManifestDigest:result.mobileAcceptanceDeploymentManifestDigest,mobileAcceptanceTestProjectId:result.mobileAcceptanceTestProjectId,mobileAcceptancePerformer:result.mobileAcceptancePerformer,mobileAcceptancePhysicalDeviceAssertion:true,mobileAcceptanceChallenge:result.mobileAcceptanceChallenge,mobileAcceptanceSubmitter:result.mobileAcceptanceSubmitter};
+    }
+  }
   process.stdout.write(`${JSON.stringify(result,null,2)}\n`);
 }
 
