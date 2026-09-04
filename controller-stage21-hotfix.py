@@ -10,4 +10,13 @@ old="blank.activeStage=18;engine.recalculate(blank);"
 new="blank.activeStage=18;blank.projectData.humanInputRequests=[];blank.projectData.responseProposals=[];engine.recalculate(blank);"
 if old not in s:
     raise SystemExit('Stage 21 negative-fixture cleanup marker missing')
+s=s.replace(old,new,1)
+old="assert.equal(engine.operationalNextAction(blank,18).actionType,'CALCULATE_CONVERGENCE','Stage 18 operator path still requests an external response instead of application calculation.');"
+if old not in s:
+    raise SystemExit('Stage 21 blank operator assertion marker missing')
+s=s.replace(old,"",1)
+old="assert(engine.acceptedChanges(p,18).length===0,'Stage 18 convergence must not depend on an external accepted proposal.');engine.recordConvergenceDetermination(p);complete(18);"
+new="assert(engine.acceptedChanges(p,18).length===0,'Stage 18 convergence must not depend on an external accepted proposal.');assert(engine.operationalNextAction(p,18).actionType==='CALCULATE_CONVERGENCE','Stage 18 current operator path must expose the application-owned convergence calculation.');engine.recordConvergenceDetermination(p);complete(18);"
+if old not in s:
+    raise SystemExit('Stage 21 full-cycle operator assertion marker missing')
 p.write_text(s.replace(old,new,1))
