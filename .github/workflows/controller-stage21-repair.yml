@@ -17,9 +17,12 @@ jobs:
         with:
           node-version: '22'
       - name: Repair and execute Stage 18 convergence proofs
+        id: build
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python verification/controller-stage21-repair.py
-          set +e
+          status=pass
           : > verification/controller-stage21-run.txt
           for cmd in \
             "node verify-convergence.mjs" \
@@ -33,12 +36,33 @@ jobs:
             bash -lc "$cmd" >> verification/controller-stage21-run.txt 2>&1
             code=$?
             echo "EXIT: $code" | tee -a verification/controller-stage21-run.txt
+            if [ "$code" -ne 0 ]; then status=failed; fi
           done
           cat verification/controller-stage21-run.txt
-      - name: Commit repaired branch implementation
-        run: |
-          git config user.name "closed-loop-controller"
-          git config user.email "actions@users.noreply.github.com"
-          git add workflow-schema.js workflow-engine.js app-core.js verify-full-cycle.mjs verify-convergence.mjs .github/workflows/pages.yml verification/controller-stage21-run.txt
-          git commit -m "Stage 21: make convergence application-owned and non-vacuous [skip ci]"
-          git push origin HEAD:controller-v2/stage21-convergence-20260904-3
+          base_tree=$(git rev-parse HEAD^{tree})
+          printf '{"base_tree":"%s","tree":[' "$base_tree" > /tmp/tree.json
+          first=1
+          for path in workflow-schema.js workflow-engine.js app-core.js verify-full-cycle.mjs verify-convergence.mjs .github/workflows/pages.yml verification/controller-stage21-run.txt
+          do
+            blob=$(jq -Rs '{content:.,encoding:"utf-8"}' "$path" | gh api --method POST "repos/$GITHUB_REPOSITORY/git/blobs" --input - --jq .sha)
+            if [ "$first" -eq 0 ]; then printf ',' >> /tmp/tree.json; fi
+            first=0
+            jq -nc --arg path "$path" --arg sha "$blob" '{path:$path,mode:"100644",type:"blob",sha:$sha}' >> /tmp/tree.json
+          done
+          printf ',' >> /tmp/tree.json
+          jq -nc '{path:".github/workflows/controller-stage21-repair.yml",mode:"100644",type:"blob",sha:null}' >> /tmp/tree.json
+          printf ',' >> /tmp/tree.json
+          jq -nc '{path:"verification/controller-stage21-repair.py",mode:"100644",type:"blob",sha:null}' >> /tmp/tree.json
+          printf ']}' >> /tmp/tree.json
+          tree_sha=$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/trees" --input /tmp/tree.json --jq .sha)
+          jq -nc --arg message "Stage 21: make convergence application-owned and non-vacuous" --arg tree "$tree_sha" --arg parent "$GITHUB_SHA" '{message:$message,tree:$tree,parents:[$parent]}' > /tmp/commit.json
+          commit_sha=$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/commits" --input /tmp/commit.json --jq .sha)
+          artifact_name="stage21-commit-${commit_sha}-status-${status}"
+          echo "$commit_sha $status" > /tmp/stage21-commit.txt
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+          echo "generated_commit=$commit_sha" >> "$GITHUB_OUTPUT"
+          echo "test_status=$status" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.artifact_name }}
+          path: /tmp/stage21-commit.txt
