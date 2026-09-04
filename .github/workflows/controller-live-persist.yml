@@ -1,0 +1,37 @@
+name: Persist exact live verification on temporary branch
+on:
+  push:
+    branches: [controller/c3-live-verification-20260904]
+permissions:
+  contents: write
+jobs:
+  verify-live:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - shell: bash
+        run: |
+          cp controller-live-verify.mjs /tmp/controller-live-verify.mjs
+          git fetch origin main --no-tags
+          TARGET=$(git merge-base HEAD origin/main)
+          git checkout --detach "$TARGET"
+          set +e
+          TARGET_COMMIT="$TARGET" BROWSER=/usr/bin/google-chrome node /tmp/controller-live-verify.mjs
+          STATUS=$?
+          set -e
+          git checkout controller/c3-live-verification-20260904
+          mkdir -p .controller-evidence
+          cp controller-live-verification-result.json ".controller-evidence/live-evidence-$TARGET.json" 2>/dev/null || cp /tmp/controller-live-verification-result.json ".controller-evidence/live-evidence-$TARGET.json"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .controller-evidence
+          git commit -m "Persist live verification for $TARGET"
+          git push origin HEAD:controller/c3-live-verification-20260904
+          exit "$STATUS"
