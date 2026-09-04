@@ -1,0 +1,30 @@
+name: One-time controller v3 repair
+on:
+  push:
+    branches: [controller/repository-completion-v3-r2-20260904]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller/repository-completion-v3-r2-20260904
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: python controller-repair-v3.py
+      - run: |
+          node --check prompt-engine.js
+          node verify-prompt-semantics.mjs
+          node verify-file-first-response.mjs
+          node build-test-project.mjs
+      - run: |
+          rm controller-repair-v3.py .github/workflows/controller-repair-v3.yml .controller-source-snapshot-v3-r2
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Repair authoritative prompt byte identity'
+          git push origin HEAD:controller/repository-completion-v3-r2-20260904
