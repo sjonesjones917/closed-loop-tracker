@@ -23,4 +23,8 @@ const unknownFreshness=structuredClone(p);delete unknownFreshness.projectData.ex
 assert.equal(engine.evaluateCapabilityReadiness(unknownFreshness,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null).truthValue,'UNKNOWN','Unknown capability freshness must remain UNKNOWN.');
 const stale=structuredClone(p);stale.projectData.externalCapabilities[0].fields.FRESHNESS_STATUS='EXPIRED';
 assert.equal(engine.capabilityAffirmativelyAvailable(stale,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null),false,'Expired capability must block.');
-console.log(JSON.stringify({capabilityReadyClosedConjunction:true,proseCannotEstablishCapability:true,unknownFailsClosed:true,unknownFreshnessFailsClosed:true}));
+const wrongScope=structuredClone(p);wrongScope.projectData.externalCapabilities[0].scope={inputVersion:'INPUT-STALE'};
+assert.equal(engine.evaluateCapabilityReadiness(wrongScope,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null).truthValue,'UNKNOWN','A stale-scope capability record must not establish current readiness.');
+const unavailable=structuredClone(p);unavailable.projectData.externalCapabilities[0].fields.STATUS='UNAVAILABLE';
+assert.equal(engine.evaluateCapabilityReadiness(unavailable,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null).truthValue,'FALSE','An explicitly unavailable capability must fail closed.');
+console.log(JSON.stringify({capabilityReadyClosedConjunction:true,proseCannotEstablishCapability:true,unknownFailsClosed:true,unknownFreshnessFailsClosed:true,staleScopeFailsClosed:true,explicitUnavailableFailsClosed:true}));
