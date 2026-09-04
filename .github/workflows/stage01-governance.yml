@@ -1,0 +1,36 @@
+name: Stage 01 governance materialization
+
+on:
+  push:
+    branches:
+      - controller/stage01a-spec-6ffd7b3e
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller/stage01a-spec-6ffd7b3e
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Generate repository-only governance from exact source commit
+        env:
+          SOURCE_COMMIT: bf960bb9b1300ac8d59ecc6555de2b6092f6b2ba
+        run: |
+          set -euo pipefail
+          test "$(sha256sum specification/closed-loop-reliability-controlling-implementation-specification.txt | awk '{print $1}')" = 6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9
+          node generate-specification-governance.mjs
+          node verify-specification-governance.mjs
+          git config user.name closed-loop-controller
+          git config user.email closed-loop-controller@users.noreply.github.com
+          git rm .github/workflows/stage01-governance.yml
+          git add specification/closed-loop-specification-manifest.json specification/closed-loop-normative-requirements.json
+          git commit -m "Stage 01B: regenerate governance for current specification"
+          git push origin HEAD:controller/stage01a-spec-6ffd7b3e
