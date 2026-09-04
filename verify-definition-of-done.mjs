@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import {verifyProductionInstruction} from './verify-production-instruction.mjs';
 
 // Closed output fields that this executed definition-of-done proof must retain.
 // This is a compatibility contract for downstream acceptance publication, not a substitute for executing the measurements below.
@@ -12,6 +13,10 @@ const EXECUTED_DEFINITION_PROOF_FIELDS=Object.freeze([
   'mandatoryEvidenceChainCoverage',
   'releaseArtifactIdentityCoverage'
 ]);
+
+const productionInstructionProof=verifyProductionInstruction();
+assert.equal(productionInstructionProof.productionInstruction,'PASS','Stage 12 production-instruction regression proof did not pass.');
+assert.equal(productionInstructionProof.isolatedFixtureState,true,'Stage 12 production-instruction mutations were not isolated.');
 
 const originalLog=console.log;
 const captured=[];
@@ -159,4 +164,13 @@ report.exactReqRunTestMetric=exactReqRunTestMetric;
 report.coverageMetrics={...(report.coverageMetrics||{}),exactReqRunTestCoverage:exactReqRunTestMetric};
 report.section49ReqRunTestMutationProof={missingTupleDetected:true,duplicateTupleDetected:true,closedUniverseStable:true};
 report.section49EmptyDenominatorMutationProof={unreviewedEmptyBlocked:true,reviewedEvidenceSupportedEmptyAccepted:true};
+report.productionInstructionCoverage=Number(productionInstructionProof.productionInstruction==='PASS'&&productionInstructionProof.isolatedFixtureState===true);
+report.productionInstructionMutationProof={
+  missingTraceRejected:productionInstructionProof.invalidFixtures.some(item=>item.label==='missing-trace'&&item.rejected===true),
+  missingOutputContractRejected:productionInstructionProof.invalidFixtures.some(item=>item.label==='missing-output-contract'&&item.rejected===true),
+  repairedFullCycle:productionInstructionProof.repairedFullCycle===true,
+  promptCompleteness:productionInstructionProof.stage8PromptCompleteness===true,
+  promptSemantics:productionInstructionProof.stage8PromptSemantics===true
+};
+assert.equal(report.productionInstructionCoverage,1,'Stage 12 production-instruction coverage is not complete.');
 originalLog(JSON.stringify(report,null,2));
