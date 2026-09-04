@@ -1,0 +1,50 @@
+name: Controller Stage 21 code committer
+on:
+  push:
+    branches:
+      - controller-v2/stage21-convergence-20260904
+permissions:
+  contents: write
+jobs:
+  commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply Stage 21 source correction
+        run: |
+          set -euo pipefail
+          python3 controller-stage21-hotfix.py
+          python3 controller-stage21-apply.py
+          git checkout HEAD -- .github/workflows/pages.yml
+          rm controller-stage21-hotfix.py controller-stage21-apply.py
+      - name: Focused proof
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/closed-loop-stage21-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node verify-convergence.mjs
+          node verify-due-stage-timing.mjs
+          node verify-definition-of-done.mjs
+          node verify-complete.mjs
+          node verify-browser.mjs
+          node verify-full-cycle.mjs
+      - name: Commit source correction
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js workflow-engine.js app-core.js verify-convergence.mjs verify-due-stage-timing.mjs verify-definition-of-done-invariants.mjs verify-full-cycle.mjs verify-browser.mjs controller-stage21-hotfix.py controller-stage21-apply.py
+          git diff --cached --quiet && { echo 'No Stage 21 source changes staged'; exit 1; }
+          git commit -m 'Stage 21: close application-owned convergence'
+          git push origin HEAD:controller-v2/stage21-convergence-20260904
