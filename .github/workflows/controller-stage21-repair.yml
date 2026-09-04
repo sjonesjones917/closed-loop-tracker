@@ -21,6 +21,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          sed -i '11s/)$//' verification/controller-stage21-repair.py
+          sed -i '11a)' verification/controller-stage21-repair.py
           python verification/controller-stage21-repair.py
           status=pass
           : > verification/controller-stage21-run.txt
