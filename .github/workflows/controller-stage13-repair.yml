@@ -33,7 +33,12 @@ jobs:
           repl="const gate=engine.gate(8,committed);assert(gate.complete,`Stage 08 prerequisite did not complete: ${JSON.stringify(gate)}`);committed.stages[8].status='COMPLETE';committed.stages[8].gate=gate;"
           if v.count(needle)!=1:
               raise SystemExit(f'Expected one Stage 08 fixture-normalization insertion target; found {v.count(needle)}')
-          vp.write_text(v.replace(needle,repl,1))
+          v=v.replace(needle,repl,1)
+          recalc="  engine.recalculate(p);\n  const action=engine.operationalNextAction(p,9),gate=engine.gate(9,p);"
+          no_recalc="  const action=engine.operationalNextAction(p,9),gate=engine.gate(9,p);"
+          if v.count(recalc)!=1:
+              raise SystemExit(f'Expected one synthetic-fixture recalculate occurrence; found {v.count(recalc)}')
+          vp.write_text(v.replace(recalc,no_recalc,1))
           PY
           node --check workflow-engine.js
           node verify-independent-preflight.mjs
