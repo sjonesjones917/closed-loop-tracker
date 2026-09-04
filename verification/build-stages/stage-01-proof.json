@@ -3,10 +3,10 @@
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "01",
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
-  "startingMainCommit": "3a6fed9524a572e15b13b6279de43fdc8c075a76",
-  "endingMainCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
+  "startingMainCommit": "755e9c6c15acb23f80606fc286a38b63b7b0654f",
+  "endingMainCommit": "6961725fb4a9899d4bcdecad650c55e76a63abbb",
   "implementationCommitIds": [
-    "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e"
+    "6961725fb4a9899d4bcdecad650c55e76a63abbb"
   ],
   "changedFiles": [
     "specification/closed-loop-reliability-controlling-implementation-specification.txt",
@@ -54,7 +54,7 @@
   ],
   "proofCommands": [
     {
-      "command": "SOURCE_COMMIT=2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e node generate-specification-governance.mjs",
+      "command": "SOURCE_COMMIT=6961725fb4a9899d4bcdecad650c55e76a63abbb node generate-specification-governance.mjs",
       "exitCode": 0
     },
     {
@@ -66,7 +66,7 @@
       "exitCode": 0
     },
     {
-      "command": "GitHub pull-request test workflow on the exact Stage 01B branch head",
+      "command": "GitHub pull-request test workflow on the exact Stage 01 current-spec branch head",
       "exitCode": 0
     }
   ],
@@ -78,11 +78,11 @@
     },
     {
       "path": "specification/closed-loop-specification-manifest.json",
-      "sha256": "a4d974846fd36b1622c578648d05abd0d4338a0cbda2a0f31a3ec4ee85630d89"
+      "sha256": "f402366dcbfe2a8fc4d3c1562b9872c419d985585f49f13889432a9168b1b2da"
     },
     {
       "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "df04c9de847b1a8553da18b26317b9bf0ee78115de3364603f0fdc762731befc"
+      "sha256": "fe89402f4efe4e63de4c7f25b5005e07ac99e262725df7f4a0dd1b856fd05d6b"
     }
   ],
   "intentionalInvalidFixtures": [

@@ -1,8 +1,8 @@
 {
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
-  "specificationSourceCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
-  "lastObservedMainCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
+  "specificationSourceCommit": "6961725fb4a9899d4bcdecad650c55e76a63abbb",
+  "lastObservedMainCommit": "6961725fb4a9899d4bcdecad650c55e76a63abbb",
   "stages": {
     "10": {
       "status": "NOT_STARTED",
@@ -153,9 +153,9 @@
     },
     "01": {
       "status": "PROVEN",
-      "provenCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
+      "provenCommit": "6961725fb4a9899d4bcdecad650c55e76a63abbb",
       "proofRecordPath": "verification/build-stages/stage-01-proof.json",
-      "proofDigest": "8e512f9a03a6568aeb842cd9986e94c1e8aff6e36163858ad2faadaa4b3081b9",
+      "proofDigest": "7c84e7cf1f2c77dac716949ee7fb533da9540def7a8553fedf21bc8edf1a60af",
       "prerequisiteStageDigests": []
     },
     "02": {
@@ -217,5 +217,5 @@
   },
   "proofCount": 10,
   "conformantRequirementCount": 7,
-  "lastUpdatedByCommandId": "STAGE01B-33838478815"
+  "lastUpdatedByCommandId": "STAGE01-CURRENT-SPEC-6961725F"
 }
