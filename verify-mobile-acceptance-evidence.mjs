@@ -26,7 +26,7 @@ const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
 const HEX_128_OR_MORE=value=>typeof value==='string'&&/^[0-9a-fA-F]{32,}$/.test(value);
 const SHA256=value=>typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);
 const COMMIT_SHA=value=>typeof value==='string'&&/^[0-9a-f]{40}$/.test(value);
-const RFC3339=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
+const RFC3339_INSTANT=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value;
 const finite=value=>typeof value==='number'&&Number.isFinite(value);
 
 function issue(errors,code,message){errors.push({code,message});}
@@ -42,11 +42,12 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(target.mobileAcceptanceTargetId))issue(errors,'TARGET_ID_REQUIRED','mobileAcceptanceTargetId is required.');
   if(target.physicalDeviceRequired!==true)issue(errors,'PHYSICAL_DEVICE_REQUIRED','The target must require a physical device.');
   if(!HEX_128_OR_MORE(target.challenge))issue(errors,'CHALLENGE_INVALID','Challenge must contain at least 128 bits encoded as hexadecimal.');
-  if(!RFC3339(target.challengeIssuedAt)||!RFC3339(target.challengeExpiresAt))issue(errors,'CHALLENGE_TIME_INVALID','Challenge issue and expiry times must be RFC 3339 values.');
-  if(RFC3339(target.challengeIssuedAt)&&RFC3339(target.challengeExpiresAt)&&Date.parse(target.challengeExpiresAt)<=Date.parse(target.challengeIssuedAt))issue(errors,'CHALLENGE_WINDOW_INVALID','Challenge expiry must be later than challenge issue time.');
+  if(!RFC3339_INSTANT(target.challengeIssuedAt)||!RFC3339_INSTANT(target.challengeExpiresAt))issue(errors,'CHALLENGE_TIME_INVALID','Challenge issue and expiry times must be RFC 3339 UTC instants with exactly three fractional-second digits.');
+  if(RFC3339_INSTANT(target.challengeIssuedAt)&&RFC3339_INSTANT(target.challengeExpiresAt)&&Date.parse(target.challengeExpiresAt)<=Date.parse(target.challengeIssuedAt))issue(errors,'CHALLENGE_WINDOW_INVALID','Challenge expiry must be later than challenge issue time.');
   if(used.has(target.challenge))issue(errors,'CHALLENGE_REUSED','The mobile acceptance challenge was already accepted.');
   const verificationTime=expected.verificationTime||new Date().toISOString();
-  if(RFC3339(target.challengeExpiresAt)&&Date.parse(verificationTime)>Date.parse(target.challengeExpiresAt))issue(errors,'CHALLENGE_EXPIRED','The mobile acceptance challenge is expired.');
+  if(!RFC3339_INSTANT(verificationTime))issue(errors,'VERIFICATION_TIME_INVALID','Verification time must be an RFC 3339 UTC instant with exactly three fractional-second digits.');
+  if(RFC3339_INSTANT(target.challengeExpiresAt)&&RFC3339_INSTANT(verificationTime)&&Date.parse(verificationTime)>Date.parse(target.challengeExpiresAt))issue(errors,'CHALLENGE_EXPIRED','The mobile acceptance challenge is expired.');
 
   if(!COMMIT_SHA(target.sourceCommit))issue(errors,'TARGET_COMMIT_INVALID','Target sourceCommit must be an exact 40-character commit SHA.');
   if(!SHA256(target.deploymentManifestDigest))issue(errors,'TARGET_MANIFEST_DIGEST_INVALID','Target deploymentManifestDigest must be a SHA-256 digest.');
