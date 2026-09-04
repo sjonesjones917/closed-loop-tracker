@@ -1,0 +1,68 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "03",
+  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
+  "startingMainCommit": "0e673110d5353b3943f1843fd5a90250eda546b6",
+  "endingMainCommit": "0e673110d5353b3943f1843fd5a90250eda546b6",
+  "implementationCommitIds": [
+    "5343a0bee85030303dd482d34e00de48092be41d",
+    "d18cd91e112b8c9737bec126e3e79b5fe1539631"
+  ],
+  "changedFiles": [
+    "workflow-schema.js",
+    "verify-contract-closure.mjs",
+    "verify-data-route-closure.mjs"
+  ],
+  "normativeRequirementChanges": [],
+  "proofCommands": [
+    {
+      "command": "node verify-contract-closure.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node verify-data-route-closure.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "GitHub Actions run 33823570080 test job 100871282988",
+      "exitCode": 0
+    }
+  ],
+  "proofArtifactDigests": [
+    {
+      "path": "verify-contract-closure.mjs",
+      "gitBlobSha1": "e9651239385776f767ee81d4b476de20ea04dc98"
+    }
+  ],
+  "intentionalInvalidFixtures": [
+    "terminal-scope-dimension-removal",
+    "unregistered-durable-family",
+    "undefined-normalizer",
+    "undefined-derivation",
+    "filename-authoritative-attachment-slot",
+    "identity-assurance-below-minimum"
+  ],
+  "earlierStageProofsReplayed": [
+    {
+      "stage": "01",
+      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+      "status": "PASS"
+    },
+    {
+      "stage": "02",
+      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+      "status": "PASS"
+    }
+  ],
+  "browserProofs": [],
+  "deployedProofs": [],
+  "externalActorProofs": [],
+  "unprovenItems": [],
+  "proofCountBefore": 14,
+  "proofCountAfter": 18,
+  "conformantCountBefore": 7,
+  "conformantCountAfter": 7,
+  "stageDisposition": "PROVEN",
+  "nextStage": "04"
+}
