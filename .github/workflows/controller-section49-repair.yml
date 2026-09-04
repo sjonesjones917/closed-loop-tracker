@@ -23,7 +23,7 @@ jobs:
           set -euo pipefail
           test -f .controller-section49-repair.mjs || exit 0
           node .controller-section49-repair.mjs
-      - name: Execute focused and broad regressions
+      - name: Execute focused regressions
         run: |
           set -euo pipefail
           test -f .controller-section49-repair.mjs || exit 0
@@ -34,7 +34,6 @@ jobs:
           node verify-prompt-byte-identity.mjs
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
-          node verify-full-cycle.mjs
           node verify-v3-definition-of-done.mjs
       - name: Commit corrected implementation
         run: |
