@@ -80,14 +80,24 @@ promptIdentityProject.job.CURRENT_INPUT_VERSION='INPUT-v001';
 engine.ensureShape(promptIdentityProject);
 engine.recalculate(promptIdentityProject);
 const promptIdentityRecord=prompts.buildPromptRecord(1,promptIdentityProject,{});
-const identityMarker='\n\nPROMPT IDENTITY — ECHO EXACTLY\n';
-const markerIndex=promptIdentityRecord.prompt.indexOf(identityMarker);
-assert(markerIndex>0,'Generated prompt is missing its identity block.');
-const exactBody=promptIdentityRecord.prompt.slice(0,markerIndex);
-const embeddedBodySha256=(promptIdentityRecord.prompt.match(/BODY_SHA256:\s*([0-9a-f]{64})/i)||[])[1];
-assert(embeddedBodySha256===promptIdentityRecord.bodySha256,'Embedded BODY_SHA256 differs from the prompt record bodySha256.');
-assert(globalThis.closedLoopHash.sha256Text(exactBody)===promptIdentityRecord.bodySha256,'bodySha256 does not hash the exact displayed and copied instruction body.');
-assert(globalThis.closedLoopHash.sha256Text(promptIdentityRecord.prompt)===promptIdentityRecord.fullTextSha256,'fullTextSha256 does not hash the exact complete prompt.');
+assert(!promptIdentityRecord.prompt.startsWith('\uFEFF'),'Authoritative prompt contains a UTF-8 BOM marker.');
+assert(!promptIdentityRecord.prompt.includes('\r'),'Authoritative prompt contains a CR or CRLF line ending.');
+assert(promptIdentityRecord.prompt.endsWith('\n'),'Authoritative prompt must end with exactly the required final LF.');
+assert(!promptIdentityRecord.prompt.includes('PROMPT IDENTITY — ECHO EXACTLY'),'Prompt body must not contain its own digest-dependent identity trailer.');
+assert(!promptIdentityRecord.prompt.includes('COPY BLOCK — STAGE')&&!promptIdentityRecord.prompt.includes('END COPY BLOCK — STAGE'),'Prompt body must not contain clipboard wrapper bytes.');
+assert(globalThis.closedLoopHash.sha256Text(promptIdentityRecord.prompt)===promptIdentityRecord.bodySha256,'bodySha256 does not hash the exact authoritative instruction.txt body.');
+assert(promptIdentityRecord.fullTextSha256===promptIdentityRecord.bodySha256,'There must be only one authoritative prompt-byte identity.');
+assert(promptIdentityRecord.promptCanonicalPath==='instruction.txt','Authoritative prompt canonical path must be instruction.txt.');
+assert(promptIdentityRecord.promptMediaType==='text/plain;charset=utf-8','Authoritative prompt media type is wrong.');
+assert(promptIdentityRecord.externalChatLauncher===prompts.EXTERNAL_CHAT_LAUNCHER,'Prompt record launcher differs from the fixed prompt authority launcher.');
+assert(new TextDecoder().decode(promptIdentityRecord.promptBytes)===promptIdentityRecord.prompt,'Prompt byte view differs from the stored/previewed prompt string.');
+for(const [label,mutated] of [
+  ['BOM','\uFEFF'+promptIdentityRecord.prompt],
+  ['CRLF',promptIdentityRecord.prompt.replace(/\n/g,'\r\n')],
+  ['missing-final-newline',promptIdentityRecord.prompt.slice(0,-1)],
+  ['wrapper',promptIdentityRecord.prompt+'WRAPPER\n'],
+  ['one-byte-change',promptIdentityRecord.prompt.replace('STAGE 01','STAGE 0X')]
+])assert(globalThis.closedLoopHash.sha256Text(mutated)!==promptIdentityRecord.bodySha256,`${label} prompt-byte mutation escaped authoritative prompt identity.`);
 assert(promptIdentityRecord.promptInjectionBoundaryApplied===true,'Generated prompt does not report the untrusted-data boundary.');
 assert(promptIdentityRecord.contextManifest?.untrustedDataBoundary?.applied===true,'Context signature manifest omits the applied untrusted-data boundary.');
 assert(promptIdentityRecord.contextManifest?.promptEngineVersion===promptIdentityRecord.promptEngineVersion,'Context signature manifest omits the current prompt-engine version.');
