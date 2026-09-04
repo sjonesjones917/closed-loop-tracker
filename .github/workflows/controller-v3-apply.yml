@@ -1,0 +1,32 @@
+name: Controller v3 apply
+on:
+  push:
+    branches: [controller/repository-completion-v3-20260904]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller/repository-completion-v3-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node controller-v3-apply.mjs
+      - run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node verify-controller-v3-gap-closure.mjs
+          node verify-complete.mjs
+          node verify-v3-definition-of-done.mjs
+      - run: |
+          rm -f controller-v3-apply.mjs .controller-source-snapshot-v3 .github/workflows/controller-v3-apply.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Enforce activation proof and pre-delivery checkpoint gates'
+          git push origin HEAD:controller/repository-completion-v3-20260904
