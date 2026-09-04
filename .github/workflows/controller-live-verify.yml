@@ -1,0 +1,31 @@
+name: Exact deployed controller verification
+on:
+  push:
+    branches: [controller/c3-live-verification-20260904]
+permissions:
+  contents: read
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: git fetch origin main --no-tags
+      - id: target
+        shell: bash
+        run: echo "sha=$(git merge-base HEAD origin/main)" >> "$GITHUB_OUTPUT"
+      - name: Verify exact live resources and deployed Chromium path
+        env:
+          TARGET_COMMIT: ${{ steps.target.outputs.sha }}
+          BROWSER: /usr/bin/google-chrome
+        run: node controller-live-verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: controller-live-verification-${{ steps.target.outputs.sha }}
+          path: controller-live-verification-result.json
+          if-no-files-found: error
