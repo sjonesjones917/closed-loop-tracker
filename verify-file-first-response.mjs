@@ -3,14 +3,19 @@ import assert from 'node:assert/strict';
 
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const app=read('./app-core.js');
+const prompt=read('./prompt-engine.js');
 const engine=read('./workflow-engine.js');
 const ingestion=read('./response-ingestion.js');
 const store=read('./project-store.js');
 const html=read('./index.html');
 const ingestionProof=read('./verify-ingestion.mjs');
 
-export function assertFileFirstResponseContract({appSource=app,engineSource=engine,ingestionSource=ingestion,storeSource=store,htmlSource=html,ingestionProofSource=ingestionProof}={}){
+export function assertFileFirstResponseContract({appSource=app,promptSource=prompt,engineSource=engine,ingestionSource=ingestion,storeSource=store,htmlSource=html,ingestionProofSource=ingestionProof}={}){
   assert.doesNotMatch(engineSource,/PASTE_FINAL_JSON/,'Paste must not remain a primary workflow action.');
+  assert.match(promptSource,/create and return exactly one UTF-8 JSON file named response\.json/,'Shared stage prompts must require authoritative response.json file output.');
+  assert.match(promptSource,/Return the final machine response only as one UTF-8 file named response\.json/,'Mandatory response rules must require response.json file transport.');
+  assert.match(promptSource,/Return every separately required artifact as its own file exactly as listed under FILES OR EVIDENCE YOU MUST RETURN/,'Shared stage prompts must require separately returned artifact files when listed.');
+  assert.doesNotMatch(promptSource,/return exactly one complete strict JSON object and no surrounding prose|Return one final strict JSON object only when ready for machine ingestion/,'Shared stage prompts must not retain inline-only final JSON transport wording.');
   assert.match(engineSource,/SELECT_RESPONSE_JSON_FILE/,'Workflow engine must expose authoritative response-file selection.');
   assert.match(appSource,/id="response-json-file"[^>]*type="file"/,'Primary response UI must use a file input.');
   assert.match(appSource,/id="process-response-file"/,'Primary response UI must stage and validate the selected file.');
@@ -37,6 +42,7 @@ export function assertFileFirstResponseContract({appSource=app,engineSource=engi
 
 assertFileFirstResponseContract();
 assert.throws(()=>assertFileFirstResponseContract({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/,'Mutation restoring paste as the workflow action must fail.');
+assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('Return the final machine response only as one UTF-8 file named response.json','Return one final strict JSON object only when ready for machine ingestion')}),/response\.json file transport|inline-only final JSON transport/,'Mutation restoring inline-only prompt output must fail.');
 assert.throws(()=>assertFileFirstResponseContract({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/file input/,'Mutation replacing the primary file selector must fail.');
 assert.throws(()=>assertFileFirstResponseContract({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/Read-back byte mismatch/,'Mutation removing staged-byte mismatch enforcement must fail.');
 assert.throws(()=>assertFileFirstResponseContract({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/authoritative response-file transport/,'Mutation erasing authoritative transport provenance must fail.');
@@ -45,6 +51,9 @@ assert.throws(()=>assertFileFirstResponseContract({ingestionProofSource:ingestio
 
 console.log(JSON.stringify({
   fileFirstResponseContract:'PASS',
+  promptRequiresResponseJsonFile:true,
+  promptRequiresSeparateReturnedArtifacts:true,
+  promptInlineOutputMutationDetected:true,
   primaryResponseFileSelection:true,
   durableByteStaging:true,
   stagedReadBackRehash:true,
