@@ -17,17 +17,40 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Apply convergence correction and remove temporary delivery files
+      - name: Apply convergence correction and capture diagnostics
+        id: applicator
+        shell: bash
         run: |
-          set -euo pipefail
-          python3 controller-stage21-hotfix.py
-          python3 controller-stage21-apply.py
-          rm controller-stage21-hotfix.py
-          rm controller-stage21-apply.py
-          rm .github/workflows/controller-stage21-apply.yml
+          set +e
+          : > stage21-apply.log
+          python3 controller-stage21-hotfix.py >> stage21-apply.log 2>&1
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            python3 controller-stage21-apply.py >> stage21-apply.log 2>&1
+            status=$?
+          fi
+          if [ "$status" -eq 0 ]; then
+            rm controller-stage21-hotfix.py
+            rm controller-stage21-apply.py
+            rm .github/workflows/controller-stage21-apply.yml
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload applicator diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage21-applicator-diagnostics
+          path: stage21-apply.log
+          if-no-files-found: error
+      - name: Require applicator success
+        run: |
+          cat stage21-apply.log
+          test "${{ steps.applicator.outputs.status }}" = "0"
       - name: Focused Stage 21 proof
         run: |
           set -euo pipefail
+          node --check workflow-schema.js
           node --check workflow-engine.js
           node --check app-core.js
           node verify-convergence.mjs
@@ -39,6 +62,7 @@ jobs:
       - name: Commit actual Stage 21 implementation
         run: |
           set -euo pipefail
+          rm -f stage21-apply.log
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
