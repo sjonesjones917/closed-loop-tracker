@@ -1,0 +1,2 @@
+Temporary source-capture trigger for closed-loop-repository-completion-controller/3. Remove before merge.
+Base main: 2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c
