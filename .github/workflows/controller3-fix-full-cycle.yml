@@ -1,0 +1,39 @@
+name: Repair full-cycle canonical capability fixture
+on:
+  push:
+    branches: [controller3-prompt-byte-identity-rerun-20260904]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-prompt-byte-identity-rerun-20260904
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Repair isolated full-cycle capability prerequisite and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          anchor="engine.ensureShape(p);engine.recalculate(p);"
+          addition="engine.ensureShape(p);engine.recalculate(p);p.projectData.externalCapabilities.push({id:'CAPABILITY-FULL-CYCLE',active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{CAPABILITY_ID:'CAPABILITY-FULL-CYCLE',CAPABILITY_CLAIM:'fixture-required_capability',FRESHNESS_STATUS:'CURRENT',STATUS:'CURRENT',AUTHORIZED:true,PERMISSIONS_READY:true,INPUTS_TRANSFERABLE:true,ROUTE_USABLE:true,EVIDENCE_OBTAINABLE:true}});"
+          if s.count(anchor)!=1: raise SystemExit(f'expected one full-cycle initialization anchor, got {s.count(anchor)}')
+          p.write_text(s.replace(anchor,addition,1))
+          PY
+          rm .github/workflows/controller3-fix-full-cycle.yml
+          node build-test-project.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Bind full-cycle external execution to canonical capability evidence'
+          git push origin HEAD:controller3-prompt-byte-identity-rerun-20260904
