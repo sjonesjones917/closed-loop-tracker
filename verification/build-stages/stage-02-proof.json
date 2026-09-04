@@ -2,61 +2,116 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "02",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "3da813c1aa3a9bbba3640f71b46c370d3c94dbc3",
-  "endingMainCommit": "3da813c1aa3a9bbba3640f71b46c370d3c94dbc3",
-  "implementationCommitIds": [
-    "602eaa15d669ff02cdc61e9720681b586e0006d2",
-    "451d6f77dc688210c5654aa7544733b586c48367",
-    "5224ee0f377161a5bdbb40f4538a0b837917c125",
-    "7291231a1c2df65ade1b5d14acfec9fb514d5356"
+  "stageName": "RAW INPUT AND FILE CUSTODY",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "b3ae77d8aae65127f1f6660dbd78ed5c7d70538b",
+  "endingMainCommit": "b3ae77d8aae65127f1f6660dbd78ed5c7d70538b",
+  "currentMainTreeSha": "ea05972a6b39b4fe5aa3c129feb841c053a2a483",
+  "changedFiles": [],
+  "specificationSections": ["6.1", "6.5", "6.5A", "19.1", "19.3", "35.3", "35.11", "39.16", "45", "49", "52"],
+  "implementationFiles": [
+    "app-core.js",
+    "project-store.js",
+    "workflow-engine.js"
   ],
-  "changedFiles": [
-    "hash.js",
-    "verify-hash.mjs",
-    "verify-stage02-primitives.mjs"
-  ],
-  "normativeRequirementChanges": [],
   "proofCommands": [
-    {"command":"node verify-hash.mjs","exitCode":0},
-    {"command":"node verify-stage02-primitives.mjs","exitCode":0},
-    {"command":"GitHub Actions run 33822947107 test job 100869379526","exitCode":0}
+    {
+      "command": "node verify-stage01-intake-closure.mjs && node verify-one-time-intent-intake.mjs && node verify-zero-loss-accounting.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33844273069, test job 100932694602, step 12 (Stage 01 raw intake and semantic accounting), exact main b3ae77d8aae65127f1f6660dbd78ed5c7d70538b, completed success."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33844273069, test job 100932694602, step 19 (Local Chromium operator path), exact main b3ae77d8aae65127f1f6660dbd78ed5c7d70538b, completed success."
+    },
+    {
+      "command": "node verify-live.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33844273069, verify-live job 100933449658, step 5 (Exact deployed-byte verification), exact deployed main b3ae77d8aae65127f1f6660dbd78ed5c7d70538b, completed success."
+    },
+    {
+      "command": "node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33844273069, verify-live job 100933449658, step 6 (Deployed Chromium operator path), exact deployed main b3ae77d8aae65127f1f6660dbd78ed5c7d70538b, completed success."
+    }
   ],
   "proofArtifactDigests": [
-    {"path":"hash.js","gitBlobSha1":"9026c24f319fee053f919b116f7075655370eea3"},
-    {"path":"verify-stage02-primitives.mjs","gitBlobSha1":"7839c9d879a38a667be6d48993b48769507318bc"}
-  ],
-  "intentionalInvalidFixtures": [
-    "empty-filename",
-    "parent-traversal",
-    "dot-segment",
-    "absolute-path",
-    "drive-prefix",
-    "embedded-separator",
-    "filename-control-character",
-    "trailing-dot",
-    "trailing-space",
-    "unpinned-unicode-repertoire",
-    "leap-second",
-    "missing-time-zone",
-    "space-time-separator",
-    "invalid-calendar-date",
-    "invalid-hour",
-    "invalid-utc-offset",
-    "lowercase-z",
-    "fabricated-verified-external-time"
+    {"path":"app-core.js","gitBlobSha1":"cb5dc1ad3a1a906904cd28444c20c9a32c1e5dc1"},
+    {"path":"project-store.js","gitBlobSha1":"0a86cb59595352283f77bc8d934db5587e4bac76"},
+    {"path":"workflow-engine.js","gitBlobSha1":"2bc620a8255c26e26cc17416157d03a99bfe91d2"},
+    {"path":"verify-stage01-intake-closure.mjs","gitBlobSha1":"27a2941404795535b3c828b4d6e7d2eb5fdfc7c3"},
+    {"path":"verify-one-time-intent-intake.mjs","gitBlobSha1":"229d2851bd9f27687abac41b56bd67685401831d"},
+    {"path":"verify-zero-loss-accounting.mjs","gitBlobSha1":"d69ae53fb0033841f98dc43763f203ba238d8326"},
+    {"path":"verify-browser.mjs","gitBlobSha1":"e9f19ad5170dcac4c9eca159252a1a1e7bc88f18"},
+    {"path":"verify-browser-extra.mjs","gitBlobSha1":"cb6f169441b0878f9b1755c1393e145571b2a9c7"},
+    {"path":"verify-human-stage-walkthrough.mjs","gitBlobSha1":"8a16156fdcb0bf5f2ddeb3eeeafbef5548f271d4"},
+    {"path":"verify-mobile-stage-action.mjs","gitBlobSha1":"6786282e4ec011dd338929d73bc0e26500b3cf47"},
+    {"path":"verify-live.mjs","gitBlobSha1":"8e2352816d29d862155d279430481134a41993b4"}
   ],
   "earlierStageProofsReplayed": [
-    {"stage":"01","proofDigest":"3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","status":"PASS"}
+    {
+      "stage": "01",
+      "proofPath": "verification/build-stages/stage-01-proof.json",
+      "gitBlobSha1": "ecbae1f5d9a4c18f5d29347504659b4eb671f8c7",
+      "status": "PASS"
+    }
   ],
-  "browserProofs": [],
-  "deployedProofs": [],
+  "intentionalInvalidFixtures": [
+    "Stage 01 intake accounting omits one current raw unit and the real Stage 01 gate rejects it",
+    "A required supplied file missing INCLUDED_IN_HANDOFF or the required external inspection claim is rejected",
+    "A new human-input version makes the previously accepted semantic capture stale",
+    "A supplied-artifact hash change changes the raw-input manifest and makes the prior semantic capture stale",
+    "Stored artifact bytes whose readback digest no longer matches recorded identity are rejected and marked unavailable rather than trusted"
+  ],
+  "repairedStateProofs": [
+    "The application exposes a visible multi-file Stage 01 supplied-file control and registerStageFiles stores the selected Blob through the single project store before canonical file metadata is persisted",
+    "project-store.js computes byte length and SHA-256 from actual selected bytes, writes the Blob, reads it back, rehashes it, and fails closed on mismatch",
+    "workflow-engine.js deterministically enumerates current human input and supplied artifacts into application-owned raw units bound to the current input version",
+    "Current Stage 01 custody additionally requires application-observed INCLUDED_IN_HANDOFF plus the external inspection claim/source-location basis before a required supplied-file unit can close",
+    "Complete current raw-unit accounting progresses the Stage 01 gate; stale input, unavailable bytes, omitted units, or changed artifact identity do not",
+    "Chromium verification exercised real IndexedDB Blob put/get/readback and reload persistence through the current single project-store architecture"
+  ],
+  "browserProofs": [
+    {
+      "workflowRunId": 33844273069,
+      "jobId": 100932694602,
+      "step": "Local Chromium operator path",
+      "status": "PASS",
+      "commit": "b3ae77d8aae65127f1f6660dbd78ed5c7d70538b"
+    },
+    {
+      "workflowRunId": 33844273069,
+      "jobId": 100933449658,
+      "step": "Deployed Chromium operator path",
+      "status": "PASS",
+      "commit": "b3ae77d8aae65127f1f6660dbd78ed5c7d70538b"
+    }
+  ],
+  "deployedProofs": [
+    {
+      "workflowRunId": 33844273069,
+      "jobId": 100933374558,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
+      "status": "PASS",
+      "commit": "b3ae77d8aae65127f1f6660dbd78ed5c7d70538b"
+    },
+    {
+      "workflowRunId": 33844273069,
+      "jobId": 100933449658,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "b3ae77d8aae65127f1f6660dbd78ed5c7d70538b"
+    }
+  ],
   "externalActorProofs": [],
+  "physicalDeviceProof": {"required": false, "status": "NOT_REQUIRED_FOR_STAGE_02"},
   "unprovenItems": [],
-  "proofCountBefore": 10,
-  "proofCountAfter": 14,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "03"
+  "directEvidenceReview": "PASS",
+  "nextStage": "03",
+  "notes": "The stale historical Stage 02 hashing proof was not reused. Stage 02 was independently re-established as RAW INPUT AND FILE CUSTODY from exact-current application behavior, mutation-capable invalid/repaired fixtures, actual Blob readback verification, local Chromium execution, exact deployment, deployed-byte verification, and deployed Chromium execution. No runtime or visual change was required because current Stage 02 owner bytes already satisfy the stage contract."
 }
