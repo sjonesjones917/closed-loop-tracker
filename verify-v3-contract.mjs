@@ -52,6 +52,9 @@ assert.match(schema,/closed-loop-completion-profile\/1/,'current contract profil
 for(const name of ['CONTRACT_PROFILE_ID','CURRENT_RESEARCH_VERSION','CURRENT_CANDIDATE_ID','CURRENT_PRODUCT_VERSION','CURRENT_DELIVERY_CANDIDATE_SET_ID','CURRENT_REVIEW_VERSION','CURRENT_RECONCILED_REVIEW_VERSION','CURRENT_RELEASE_ID','CURRENT_HASH_REVIEW_ID','CURRENT_EVIDENCE_CHAIN_VERSION','CURRENT_DELIVERY_ID'])assert.match(schema,new RegExp(`['"]${name}['"]`),`canonical Job field missing: ${name}`);
 assert.match(schema,/BLOCKED','AWAITING_HUMAN_INPUT','PROPOSAL_PENDING_REVIEW','RESPONSE_STAGED','AWAITING_EXTERNAL_RESPONSE','READY_FOR_NEXT_OPERATION','WORKFLOW_COMPLETE/,'CURRENT_STATE must use the closed enum');
 assert.match(schema,/INCOMPLETE','BLOCKED','COMPLETE/,'JOB_RECORD_STATUS must use the closed enum');
+assert.match(schema,/function amendedOperationContract[\s\S]*?scopeRequirements:Object\.freeze\(\[\.\.\.\(EXACT_SCOPE_DIMENSIONS\[stage\]\|\|\[\]\)\]\)/,'exported operation contracts must take scope requirements from the closed exact scope matrix, not legacy stage-wide helpers');
+assert.match(schema,/9:\['requirementsVersion','testSuiteVersion','instructionVersion'\]/,'Stage 09 closed scope must contain only requirements, test-suite, and instruction versions');
+assert.match(schema,/11:\['iterationId','candidateId','runId'\]/,'Stage 11 closed scope must bind iteration, candidate, and run without inventing contextId as a scope dimension');
 assert.match(reservationProof,/RESERVED','EXPORTED','ORPHANED','RESUMED','RESPONSE_STAGED','ACCEPTED','REJECTED','CANCELLED','SUPERSEDED','EXPIRED_BY_SCOPE/,'permanent reservation regression must pin the closed state machine');
 assert.match(engine,/p.revision=reservationRevision/,'reservation creation must commit R+1');
 assert.match(engine,/TARGET_SLOT is application-calculated/,'caller-supplied target slots must be rejected');
@@ -137,4 +140,3 @@ console.log(JSON.stringify({
   runtimeOperations:requiredRuntimeOps.length,
   centralizedLimits:requiredLimits.length
 }));
-await import('./verify-stage-contract-closure.mjs');
