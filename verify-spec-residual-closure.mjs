@@ -19,3 +19,4 @@ console.log(JSON.stringify({specResidualClosure:'PASS',testIrOperations:controll
 
 await import('./verify-due-stage-timing.mjs');
 await import('./verify-ten-independent-runs.mjs');
+await import('./verify-independent-run-verification.mjs');
