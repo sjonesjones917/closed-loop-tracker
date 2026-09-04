@@ -1,11 +1,12 @@
 name: Controller prompt normalizer repair
 on:
-  push:
-    branches: [controller3-integrate-closure-20260904]
+  pull_request:
+    types: [opened, reopened, synchronize]
 permissions:
   contents: write
 jobs:
   repair:
+    if: github.head_ref == 'controller3-integrate-closure-20260904'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -21,7 +22,7 @@ jobs:
           p=Path('prompt-engine.js')
           s=p.read_text()
           old="function normalizePromptBody(body){return String(body??'').replace(/\\r\\n?/g,'\\n').replace(/\\n*$/,'\\n');}"
-          new="function normalizePromptBody(body){\\n  const normalized=String(body??'').replace(/\\r\\n?/g,'\\n');\\n  return `${normalized.trimEnd()}\\n`;\\n}"
+          new="function normalizePromptBody(body){\n  const normalized=String(body??'').replace(/\\r\\n?/g,'\\n');\n  return `${normalized.trimEnd()}\\n`;\n}"
           if old not in s:
               raise SystemExit('prompt normalizer target not found')
           p.write_text(s.replace(old,new,1))
