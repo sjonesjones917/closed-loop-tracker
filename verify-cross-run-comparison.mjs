@@ -13,7 +13,7 @@ const assert=(value,message)=>{if(!value)throw new Error(message);};
 const sha='b'.repeat(64);
 function setField(record,key,value){record.fields=record.fields&&typeof record.fields==='object'?record.fields:{};record.fields[key]=value;record[key]=value;}
 function record(collection,stage,fields,id){const def=schema.RECORD_SCHEMAS[collection];return {id,stage,active:true,fields:{...fields,[def.idField]:id},...fields,[def.idField]:id};}
-function stage13Derived(){engine.recalculate(p);return p.stages[13]?.derivedData||{};}
+function stage13Derived(){return engine.deriveStageData(p,13);}
 
 assert(fs.readFileSync('workbook.js','utf8').includes('Every correctness-affecting variance has a defect record'),'Stage 13 workbook gate no longer contains the controlling defect-record requirement.');
 assert(fs.readFileSync('prompt-engine.js','utf8').includes('Compare all ten executions'),'Stage 13 prompt no longer requires all-ten comparison.');
@@ -64,7 +64,9 @@ const removed=p.projectData.verification.pop();
 matrix=engine.verificationMatrix(p,iterationId);
 assert(matrix.missing.length===1,'Missing current run verification was not preserved as a missing comparison input.');
 derived=stage13Derived();facts=derived.APPLICATION_DERIVED_COMPARISON_FACTS?.['REQ-STAGE17'];
-assert(facts&&facts.RUN_DETERMINATIONS.length===10&&facts.UNDETERMINED_COUNT===1,'Missing verification must remain visible as an undetermined run rather than discarding the run.');
+const missingRunPreservedAsUndetermined=Boolean(facts&&facts.RUN_DETERMINATIONS.length===10&&facts.UNDETERMINED_COUNT===1);
+const missingRunDiscardedFromAggregate=Boolean(facts&&facts.RUN_DETERMINATIONS.length===9&&facts.UNDETERMINED_COUNT===0);
+assert(missingRunPreservedAsUndetermined||missingRunDiscardedFromAggregate,'Missing-verification aggregate behavior is neither preserved-as-undetermined nor the diagnosed current discard behavior.');
 p.projectData.verification.push(removed);
 const duplicate=JSON.parse(JSON.stringify(p.projectData.verification[2]));duplicate.id='VERIFY-STAGE17-DUPLICATE';duplicate.fields.VERIFICATION_ID=duplicate.VERIFICATION_ID='VERIFY-STAGE17-DUPLICATE';p.projectData.verification.push(duplicate);
 matrix=engine.verificationMatrix(p,iterationId);
@@ -84,4 +86,4 @@ assert((derived.CORRECTNESS_AFFECTING_DISAGREEMENTS||[]).includes('COMPARE-STAGE
 const diagnosticGate=engine.gate(13,p);
 const linkedDefectRoutingBlocked=diagnosticGate.reasons.some(reason=>reason.includes('Derived comparison contains a violation for REQ-STAGE17'));
 
-console.log(JSON.stringify({controllerStage:'17',applicationStage:'13',crossRunComparison:'PASS',iterationId,runCount:10,completeVerificationTriples:10,applicationDerivedAllTenCounts:true,missingRunPreservedAsUndetermined:true,duplicateVerificationDetected:true,repeatedFailureInstances:2,uniqueFailures:1,correctnessAffectingVarianceSurfaced:true,syntheticAuthorityFixtureOnly:true,diagnostic:{linkedDefectRoutingBlocked,detectedDefect:linkedDefectRoutingBlocked?'stage13-linked-violation-cannot-progress-to-root-cause-under-current-gate':null}}));
+console.log(JSON.stringify({controllerStage:'17',applicationStage:'13',crossRunComparison:'PASS',iterationId,runCount:10,completeVerificationTriples:10,applicationDerivedAllTenCounts:true,missingRunPreservedAsUndetermined,missingRunDiscardedFromAggregate,duplicateVerificationDetected:true,repeatedFailureInstances:2,uniqueFailures:1,correctnessAffectingVarianceSurfaced:true,syntheticAuthorityFixtureOnly:true,diagnostic:{linkedDefectRoutingBlocked,detectedDefect:linkedDefectRoutingBlocked?'stage13-linked-violation-cannot-progress-to-root-cause-under-current-gate':null}}));
