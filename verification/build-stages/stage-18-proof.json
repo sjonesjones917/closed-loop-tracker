@@ -2,147 +2,133 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "18",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "b9655e2632eea3a974a16c79b9e5c4f2fbbb05bf",
-  "endingMainCommit": "b9655e2632eea3a974a16c79b9e5c4f2fbbb05bf",
+  "stageName": "ROOT CAUSE AND REGRESSIONS",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "af247b1a16d920c412e116378b93c048316f21dd",
+  "endingMainCommit": "153290b286bd040cfab3003df58deeab851969e5",
   "implementationCommitIds": [
-    "b9655e2632eea3a974a16c79b9e5c4f2fbbb05bf"
+    "d94fe4a0b319b0e5b261ddecb9d6d11cae980393",
+    "153290b286bd040cfab3003df58deeab851969e5"
   ],
-  "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "changedFiles": [
+    "workflow-engine.js",
+    "verify-root-cause-regressions.mjs"
+  ],
+  "specificationSections": [
+    "32.3 Stage 15 regression",
+    "37 Stage 14 — ROOT-CAUSE EVERY DEFECT",
+    "37 Stage 15 — CONVERT EVERY CONFIRMED FAILURE INTO A REGRESSION TEST",
+    "38 rootCauses",
+    "38 regressions",
+    "38 regressionExecutions",
+    "40 Permanent regression obligations",
+    "41 Regression tests 43-48",
+    "43 Test the tests",
+    "44 Negative test matrix",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "verify-root-cause-regressions.mjs",
+    "verify-spec-residual-closure.mjs",
+    "verify-complete.mjs",
+    "verify-full-cycle.mjs",
+    "verify-definition-of-done.mjs",
+    "verify-v3-definition-of-done.mjs"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_PROVEN_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "Controller Stage 18 maps to application Stages 14 and 15. The real Stage 14 gate now evaluates only current-scope RCA records and requires exactly one schema-complete RCA for every current material defect, including CATEGORY, LAYER_TRACE, EARLIEST_DEFECTIVE_LAYER, ROOT_CAUSE, EVIDENCE, and DOWNSTREAM_INVALIDATION. The permanent verifier proves stale out-of-current-scope RCA cannot satisfy a current defect, incomplete and duplicate current RCA fail closed, and a repaired complete current RCA progresses. It also executes the Stage 15 permanent-regression mechanism: a confirmed defect requires an append-only permanent regression definition plus a distinct actual PRE_CORRECTION regression execution whose current canonical evidence establishes a failing result; a definition without execution, a non-failing pre-correction execution, missing canonical evidence, or a missing permanent definition is rejected. The implementation merged through PR 1113 and exact canonical main 153290b286bd040cfab3003df58deeab851969e5 passed the full repository test barrier, local Chromium, exact Pages deployment, exact deployed-byte verification, and deployed Chromium.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33903460684, test job 101122742410, exact canonical main 153290b286bd040cfab3003df58deeab851969e5. The repository barrier completed success and the permanent residual-closure path executes verify-root-cause-regressions.mjs."
     },
     {
-      "command": "node verify-due-stage-timing.mjs",
-      "exitCode": 0
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33903460684, test job 101122742410. Local Chromium operator path completed success on exact canonical main."
     },
     {
-      "command": "node verify-definition-of-done-invariants.mjs",
-      "exitCode": 0
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33903460684, deploy job 101123788447. Exact canonical main deployment completed success."
     },
     {
-      "command": "node verify-complete.mjs",
-      "exitCode": 0
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33903460684, deployment verification job 101123900649. Exact deployed-byte verification and deployed Chromium operator path completed success for exact canonical main."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "verify-root-cause-regressions.mjs loads the production workbook, hash, schema, runtime, and workflow engine and executes the real Stage 14 and Stage 15 gates on isolated disposable project state.",
+    "The positive Stage 14 fixture has one current material defect and exactly one current schema-complete RCA; the real gate closes and derived counts reconcile.",
+    "A historical RCA with a stale instructionVersion is excluded from current scope and cannot satisfy the current defect.",
+    "Each controlling RCA field is independently removed in an invalid fixture and the real gate rejects the incomplete RCA.",
+    "Two current RCA records for the same defect are rejected as ambiguous rather than silently selecting one.",
+    "The positive Stage 15 fixture creates an append-only permanent regression definition, canonical evidence, and an actual PRE_CORRECTION regression execution with VIOLATED result; the real gate closes without claiming later post-correction success.",
+    "Regression definition without execution, pre-correction SATISFIED, execution without canonical evidence, and confirmed defect without a permanent definition are each rejected.",
+    "The Stage 18 implementation branch passed the normal pull-request test barrier before merge, and the merged exact main passed local Chromium, deployment, deployed-byte, and deployed Chromium proof.",
+    "No physical-iPhone, human-authority, independent external-context, or external-system observation is represented as proof by this stage record."
   ],
   "intentionalInvalidFixtures": [
-    "premature-due",
-    "nondue-matrix-cell",
-    "missing-activation-leaf",
-    "weak-proof-branch",
-    "stale-evidence",
-    "contradiction",
-    "empty-denominator"
+    "stale-out-of-current-scope-rca",
+    "missing-rca-category",
+    "missing-rca-layer-trace",
+    "missing-earliest-defective-layer",
+    "missing-root-cause",
+    "missing-rca-evidence",
+    "missing-downstream-invalidation",
+    "duplicate-current-rca",
+    "regression-definition-without-pre-correction-execution",
+    "pre-correction-execution-does-not-fail",
+    "pre-correction-execution-without-canonical-evidence",
+    "confirmed-defect-without-permanent-regression-definition"
+  ],
+  "repairedStateProofs": [
+    "Replacing the stale RCA with one current-scope schema-complete RCA restores Stage 14 progression.",
+    "Restoring each omitted RCA field restores schema-complete current RCA admissibility.",
+    "Removing the duplicate RCA restores exactly-one current RCA coverage.",
+    "Adding a distinct actual sufficiently evidenced PRE_CORRECTION VIOLATED execution restores Stage 15 progression.",
+    "Restoring canonical execution evidence restores Stage 15 evidentiary sufficiency.",
+    "Adding the permanent regression definition restores confirmed-defect regression coverage."
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "10",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "status": "PASS"
-    },
-    {
-      "stage": "11",
-      "proofDigest": "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-      "status": "PASS"
-    },
-    {
-      "stage": "12",
-      "proofDigest": "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-      "status": "PASS"
-    },
-    {
-      "stage": "13",
-      "proofDigest": "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-      "status": "PASS"
-    },
-    {
-      "stage": "14",
-      "proofDigest": "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-      "status": "PASS"
-    },
-    {
-      "stage": "15",
-      "proofDigest": "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-      "status": "PASS"
-    },
-    {
-      "stage": "16",
-      "proofDigest": "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
-      "status": "PASS"
-    },
-    {
-      "stage": "17",
-      "proofDigest": "1952f2d7902e247d5da6d90b5fbc67774078b84283392e9069d059e84c1949da",
-      "status": "PASS"
-    },
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"}
   ],
-  "browserProofs": [],
-  "deployedProofs": [],
+  "browserProofs": [
+    {"workflowRunId":33903460684,"jobId":101122742410,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"153290b286bd040cfab3003df58deeab851969e5"},
+    {"workflowRunId":33903460684,"jobId":101123900649,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"153290b286bd040cfab3003df58deeab851969e5"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33903460684,"jobId":101123788447,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"153290b286bd040cfab3003df58deeab851969e5"},
+    {"workflowRunId":33903460684,"jobId":101123900649,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"153290b286bd040cfab3003df58deeab851969e5"}
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 71,
-  "proofCountAfter": 75,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "19"
+  "directEvidenceReview": "PASS",
+  "nextStage": "19",
+  "notes": "This proves controller Stage 18 ROOT CAUSE AND REGRESSIONS implementation behavior under the current specification using exact-main deterministic, local-browser, deployment, deployed-byte, and deployed-browser evidence. It does not fabricate physical-iPhone, human-authority, independent external-context, external-system, Stage 19+, convergence, release, terminal-delivery, Section 49, or production-maturity completion evidence."
 }
