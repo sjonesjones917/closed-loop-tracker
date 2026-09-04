@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import './verify-normative-governance-contract.mjs';
 
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
 if(project.jobId!=='JOB-20260823144121'||project.title!=='Mobile Closed-Loop Agent Reliability Workbook')throw new Error('Committed retained project is not the authorized project.');
