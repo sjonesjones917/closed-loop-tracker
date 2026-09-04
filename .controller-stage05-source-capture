@@ -1,0 +1,4 @@
+controller=closed-loop-monotonic-build-controller/2
+stage=05
+base=10b7ea272214f74673c2e366c8d5226db5e7f118
+purpose=temporary exact-source capture; remove before merge
