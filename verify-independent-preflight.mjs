@@ -29,6 +29,8 @@ function submitStage8(p){
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE13_VERIFIER'}).project;
   for(let n=1;n<=7;n++){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}
   const gate=engine.gate(8,committed);assert(gate.complete,`Stage 08 prerequisite did not complete: ${JSON.stringify(gate)}`);
+  committed.stages[8].status='COMPLETE';
+  committed.stages[8].gate=gate;
   return committed;
 }
 function reviewerContext(p,label){return engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});}
