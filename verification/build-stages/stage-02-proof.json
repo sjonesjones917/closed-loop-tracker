@@ -7,8 +7,9 @@
   "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
   "specificationByteLength": 309472,
-  "startingMainCommit": "cc8be2d01d364ab493a93a1d00c72298d08e4cf1",
-  "endingMainCommit": "cc8be2d01d364ab493a93a1d00c72298d08e4cf1",
+  "startingMainCommit": "697911b9878b1744ada43b203620b20e9cb31fff",
+  "endingMainCommit": "697911b9878b1744ada43b203620b20e9cb31fff",
+  "currentMainTreeSha": "871e21c228b3e1aa2bbe31df99019f806cf11680",
   "changedFiles": [],
   "specificationSections": ["6.1", "6.5", "6.5A", "19.1", "19.3", "35.3", "35.11", "39.16", "45", "49", "52"],
   "implementationFiles": [
@@ -18,21 +19,21 @@
   ],
   "proofCommands": [
     {
-      "command": "node verify-stage01-disposition-contract.mjs && node verify-stage01-intake-closure.mjs && node verify-one-time-intent-intake.mjs && node verify-zero-loss-accounting.mjs",
+      "command": "node verify-stage01-disposition-contract.mjs && node verify-stage01-intake-closure.mjs && node verify-one-time-intent-intake.mjs && node verify-zero-loss-accounting.mjs && node verify-capability-readiness.mjs",
       "exitCode": 0,
-      "basis": "GitHub Actions run 33841332677, job 100924490378, exact current main cc8be2d01d364ab493a93a1d00c72298d08e4cf1, step Stage 01 raw intake and semantic accounting"
+      "basis": "GitHub Actions pull-request run 33842397803, job 100927188502, PR #1013 head f50cf0e7ac14aadc5b44450d6d482b1e2841c6bb, Stage 01 raw intake and semantic accounting PASS. GitHub compare f50cf0e7ac14aadc5b44450d6d482b1e2841c6bb..e90e0b87a9476f0f072f425982bab21b6cab16bc reports zero changed files, proving the tested PR head tree equals its merged main tree. GitHub compare e90e0b87a9476f0f072f425982bab21b6cab16bc..697911b9878b1744ada43b203620b20e9cb31fff changes only verify-mobile-acceptance-evidence.mjs and verify-mobile-release-governance.mjs, so all Stage 02 implementation and focused test bytes remain identical on current main."
     },
     {
       "command": "node verify-browser.mjs && node verify-browser-extra.mjs && node verify-human-stage-walkthrough.mjs",
       "exitCode": 0,
-      "basis": "GitHub Actions run 33841332677, job 100924490378, exact current main cc8be2d01d364ab493a93a1d00c72298d08e4cf1, step Local Chromium operator path"
+      "basis": "GitHub Actions pull-request run 33842397803, job 100927188502, PR #1013 head f50cf0e7ac14aadc5b44450d6d482b1e2841c6bb, Local Chromium operator path PASS; the same tree-identity chain binds these unchanged browser tests and Stage 02 owners to current main 697911b9878b1744ada43b203620b20e9cb31fff."
     }
   ],
   "proofArtifactDigests": [
     {"path":"app-core.js","gitBlobSha1":"cb5dc1ad3a1a906904cd28444c20c9a32c1e5dc1"},
     {"path":"project-store.js","gitBlobSha1":"0a86cb59595352283f77bc8d934db5587e4bac76"},
-    {"path":"workflow-engine.js","gitBlobSha1":"1ec58136912290238820f9f7c105a3ac9ff6b7e9"},
-    {"path":"verify-stage01-intake-closure.mjs","gitBlobSha1":"c13bf3a6c87beed5a39fa00f662cf2a0cd62baba"},
+    {"path":"workflow-engine.js","gitBlobSha1":"2bc620a8255c26e26cc17416157d03a99bfe91d2"},
+    {"path":"verify-stage01-intake-closure.mjs","gitBlobSha1":"27a2941404795535b3c828b4d6e7d2eb5fdfc7c3"},
     {"path":"verify-one-time-intent-intake.mjs","gitBlobSha1":"229d2851bd9f27687abac41b56bd67685401831d"},
     {"path":"verify-zero-loss-accounting.mjs","gitBlobSha1":"d69ae53fb0033841f98dc43763f203ba238d8326"},
     {"path":"verify-browser.mjs","gitBlobSha1":"e9f19ad5170dcac4c9eca159252a1a1e7bc88f18"},
@@ -48,6 +49,7 @@
   ],
   "intentionalInvalidFixtures": [
     "Stage 01 intake accounting omits one current raw unit and the real Stage 01 gate rejects it",
+    "A required supplied file missing INCLUDED_IN_HANDOFF or the required external inspection claim is rejected",
     "A new human-input version makes the previously accepted semantic capture stale",
     "A supplied-artifact hash change changes the raw-input manifest and makes the prior semantic capture stale",
     "Stored artifact bytes whose readback digest no longer matches recorded identity are rejected and marked unavailable rather than trusted"
@@ -56,16 +58,17 @@
     "The application exposes a visible multi-file Stage 01 supplied-file control and registerStageFiles stores the selected Blob through the single project store before canonical file metadata is persisted",
     "project-store.js computes byte length and SHA-256 from actual selected bytes, writes the Blob, reads it back, rehashes it, and fails closed on mismatch",
     "workflow-engine.js deterministically enumerates current human input and supplied artifacts into application-owned raw units bound to the current input version",
-    "Complete current raw-unit accounting progresses the Stage 01 gate; stale input or artifact identity does not",
-    "Current-main Chromium verification exercised real IndexedDB Blob put/get/readback and reload persistence through the deployed application architecture"
+    "Current Stage 01 custody additionally requires application-observed INCLUDED_IN_HANDOFF plus the external inspection claim/source-location basis before a required supplied-file unit can close",
+    "Complete current raw-unit accounting progresses the Stage 01 gate; stale input, unavailable bytes, omitted units, or changed artifact identity do not",
+    "Chromium verification exercised real IndexedDB Blob put/get/readback and reload persistence through the current single project-store architecture"
   ],
   "browserProofs": [
     {
-      "workflowRunId": 33841332677,
-      "jobId": 100924490378,
+      "workflowRunId": 33842397803,
+      "jobId": 100927188502,
       "step": "Local Chromium operator path",
       "status": "PASS",
-      "basis": "Current-main Chromium exercised project creation/reload and actual IndexedDB artifact Blob persistence/readback through closedLoopProjectStore"
+      "basis": "PR #1013 full browser barrier passed on a tree byte-identical to merged main e90e0b87a9476f0f072f425982bab21b6cab16bc; later current-main changes through 697911b9878b1744ada43b203620b20e9cb31fff affect only mobile-acceptance verifier files and do not alter Stage 02 owners or browser paths."
     }
   ],
   "deployedProofs": [],
@@ -75,5 +78,5 @@
   "stageDisposition": "PROVEN",
   "directEvidenceReview": "PASS",
   "nextStage": "03",
-  "notes": "The stale historical Stage 02 hashing proof was not reused. Stage 02 was re-established from exact-current repository behavior and exact-current main CI/browser execution. No application change was required because the current raw-input and file-custody implementation passed the required invalid and repaired paths."
+  "notes": "The stale historical Stage 02 hashing proof was not reused. Stage 02 was independently re-established as RAW INPUT AND FILE CUSTODY from current repository behavior, mutation-capable invalid/repaired fixtures, actual Blob readback verification, and Chromium execution. No runtime or visual change was required because the exact current Stage 02 owner bytes already satisfy the stage contract."
 }
