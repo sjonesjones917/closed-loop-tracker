@@ -53,7 +53,7 @@ let promptSemanticsChecked=false;
   engine.recalculate(p);
   const action=engine.operationalNextAction(p,9),gate=engine.gate(9,p);
   assert(!gate.complete,'Stage 09 completed without any accepted independent preflight review.');
-  assert(action.actionType==='AI_REVIEW'&&/fresh independent reviewer context|reviewer context/i.test(`${action.heading} ${action.explanation}`),'Stage 09 operator path did not require a fresh independent reviewer context before preflight.');
+  assert(action.actionType==='AI_REVIEW'&&/fresh independent reviewer context|reviewer context/i.test(`${action.heading} ${action.explanation}`),`Stage 09 operator path did not require a fresh independent reviewer context before preflight. Actual action: ${JSON.stringify(action)}`);
 }
 {
   const p=submitStage8(base('JOB-STAGE13-MATERIAL-AMBIGUITY')),ctx=reviewerContext(p,'PREFLIGHT-CONTEXT-MATERIAL-AMBIGUITY'),before=p.projectData.acceptedChanges.length;
