@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+const {closedLoopCore:core,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion,closedLoopWorkflowSchema:schema}=globalThis;
+assert(core&&engine&&prompts&&ingestion&&schema,'runtime modules unavailable');
+for(const key of ['packageId','operationReservationId','challengeNonce','humanAuthorityCandidates'])assert(ingestion.TOP_LEVEL_KEYS.includes(key),`/3 response envelope is missing ${key}`);
+const p=core.createBlankState('JOB-RESPONSE-V3-REGRESSION');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Verify exact response envelope binding.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);
+const prompt={...prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(prompt);
+const required=['projectRevision',...(schema.operationContract(1,'COMPLETE')?.scopeRequirements||[])];
+const scope=Object.fromEntries(required.map(key=>[key,key==='projectRevision'?Number(p.revision||0):prompt.scope?.[key]]));
+const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:1,operation:'COMPLETE',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},packageId:'PACKAGE-V3',operationReservationId:'RESERVATION-V3',challengeNonce:'00112233445566778899aabbccddeeff',scope,responseType:'BLOCKED',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'u-1',kind:'MISSING_CAPABILITY',description:'Controlled blocker',whyBlocking:'Regression fixture',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+const transport={packageId:envelope.packageId,operationReservationId:envelope.operationReservationId,challengeNonce:envelope.challengeNonce};
+const valid=ingestion.validateEnvelope(p,envelope,{stage:1,promptRecord:prompt,rawSha256:'0'.repeat(64),files:[],transportRecord:transport});assert(valid.valid,JSON.stringify(valid.issues));
+for(const name of ['packageId','operationReservationId','challengeNonce']){const bad=structuredClone(envelope);bad[name]+='-WRONG';const result=ingestion.validateEnvelope(p,bad,{stage:1,promptRecord:prompt,rawSha256:'0'.repeat(64),files:[],transportRecord:transport});assert(!result.valid&&result.issues.some(i=>i.code==='WRONG_HANDOFF_BINDING'),`${name} mismatch was accepted`);}
+const extra=structuredClone(envelope);extra.scope.productId='PRODUCT-EXTRA';const extraResult=ingestion.validateEnvelope(p,extra,{stage:1,promptRecord:prompt,rawSha256:'0'.repeat(64),files:[],transportRecord:transport});assert(!extraResult.valid&&extraResult.issues.some(i=>i.code==='EXTRA_SCOPE_DIMENSION'),`extra scope dimension was accepted: ${JSON.stringify(extraResult.issues)}`);
+const candidate=structuredClone(envelope);candidate.humanAuthorityCandidates=[{temporaryKey:'human-1',value:'new human fact'}];const candidateResult=ingestion.validateEnvelope(p,candidate,{stage:1,promptRecord:prompt,rawSha256:'0'.repeat(64),files:[],transportRecord:transport});assert(!candidateResult.valid&&candidateResult.issues.some(i=>i.code==='HUMAN_AUTHORITY_CONFIRMATION_REQUIRED'),'agent-reported human authority was accepted without confirmation');
+console.log(JSON.stringify({responseEnvelopeV3:'PASS',handoffBinding:true,exactScope:true,humanAuthorityFailClosed:true}));
