@@ -1,3 +1,4 @@
+import './diagnose-spec-source.mjs';
 import fs from 'node:fs';
 
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
