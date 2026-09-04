@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 
 await import('./verify-specification-governance.mjs');
+await import('./verify-build-stage-ledger.mjs');
 await import('./hash.js');
 const hashAuthority=globalThis.closedLoopHash;
 if(!hashAuthority||hashAuthority.canonicalizationVersion!=='closed-loop-canonical-json/1'||typeof hashAuthority.stableStringify!=='function'||typeof hashAuthority.sha256Value!=='function')throw new Error('Shared canonical hash authority is unavailable to deployment verification.');
