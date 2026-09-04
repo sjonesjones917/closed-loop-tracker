@@ -7,9 +7,10 @@ globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 
 const core=globalThis.closedLoopCore;
+const hash=globalThis.closedLoopHash;
 const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
-assert(core&&schema&&engine,'Stage 20 verifier could not load runtime authorities.');
+assert(core&&hash&&schema&&engine,'Stage 20 verifier could not load runtime authorities.');
 assert.equal(typeof engine.evaluateCorrectedIterationLineage,'function','Stage 20 corrected-iteration lineage evaluator is missing.');
 
 const baseScope={
@@ -40,7 +41,10 @@ function candidate(id,stage,iterationId,decisionId,artifactId,digest){
   return record('candidateFreezes',id,stage,{CANDIDATE_ID:id,ITERATION_ID:iterationId,COMPONENT_SELECTION_DECISION_ID:decisionId,COMPONENT_MANIFEST:[{artifactId,filename:`${artifactId}.bin`,byteSize:3,sha256:digest,storageReference:`indexeddb:${artifactId}`}],COMPONENT_VERSIONS:{[artifactId]:'APPLICATION-CONTROLLED'},COMPONENT_HASHES:{[artifactId]:digest},ROLE_DISTRIBUTION:'WORKFLOW ROLE MAP',IMMUTABLE_LOCATIONS:[`indexeddb:${artifactId}`],TOOL_CONFIGURATION:'CURRENT AUTHORIZED CONFIGURATION',SETTINGS:'CURRENT AUTHORIZED SETTINGS',PERMISSIONS:'CURRENT AUTHORIZED PERMISSIONS',LIMITATIONS:'RECORDED LIMITATIONS',BATCH_CHANGE_RULE:'ANY MATERIAL CHANGE REQUIRES A NEW CANDIDATE',STATUS:'FROZEN',EVIDENCE:`EVIDENCE-${id}`},{iterationId,candidateId:id});
 }
 function iteration(id,stage,candidateId,previousIterationId,changeSetId){return record('iterations',id,stage,{ITERATION_ID:id,CANDIDATE_ID:candidateId,PREVIOUS_ITERATION_ID:previousIterationId,CHANGESET_ID:changeSetId,PURPOSE:'TEST_CANDIDATE',STATUS:'FROZEN',LINEAGE:`LINEAGE-${id}`,EVIDENCE:`EVIDENCE-${id}`},{iterationId:id,candidateId});}
-function decision(){return record('humanDecisions','HUMAN-DECISION-STAGE20',17,{HUMAN_DECISION_ID:'HUMAN-DECISION-STAGE20',PURPOSE:'CANDIDATE_COMPONENT_SELECTION',VALUE:['ARTIFACT-NEW'],JOB_ID:'JOB-STAGE20-CORRECTED-ITERATION',TARGET_ID:'TARGET-STAGE20',TARGET_FAMILY:'artifacts',SCOPE:baseScope,IDENTITY_ASSURANCE:'SELF_ASSERTED',VALID_FROM:'2026-09-04T00:00:00.000Z',VALID_UNTIL:'',RECEIPT_ID:'RECEIPT-STAGE20',STATUS:'CURRENT'});}
+function decision(){
+  const selected=['ARTIFACT-NEW'];
+  return record('humanDecisions','HUMAN-DECISION-STAGE20',17,{HUMAN_DECISION_ID:'HUMAN-DECISION-STAGE20',PURPOSE:'CANDIDATE_COMPONENT_SELECTION',VALUE:selected,JOB_ID:'JOB-STAGE20-CORRECTED-ITERATION',TARGET_ID:hash.sha256Value([...selected].sort()),TARGET_FAMILY:'artifacts',SCOPE:baseScope,IDENTITY_ASSURANCE:'SELF_ASSERTED',VALID_FROM:'2026-09-04T00:00:00.000Z',VALID_UNTIL:'',RECEIPT_ID:'RECEIPT-STAGE20',STATUS:'CURRENT'});
+}
 
 function fixture(){
   const p=core.createBlankState('JOB-STAGE20-CORRECTED-ITERATION');
