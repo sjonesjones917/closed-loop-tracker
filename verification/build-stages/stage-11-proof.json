@@ -2,114 +2,139 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "11",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "313a845b28222097ac3a67d87679497e2ceb23ae",
-  "endingMainCommit": "313a845b28222097ac3a67d87679497e2ceb23ae",
-  "implementationCommitIds": [
-    "313a845b28222097ac3a67d87679497e2ceb23ae"
-  ],
+  "stageName": "FAILURE TESTS",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "68f33c62da9a00bdf6f8b41414c03ce3183b9d6a",
+  "endingMainCommit": "68f33c62da9a00bdf6f8b41414c03ce3183b9d6a",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "specificationSections": [
+    "23.3",
+    "29",
+    "29.9",
+    "32.1",
+    "32.2",
+    "32.4",
+    "37 Stage 07",
+    "38 failureTests",
+    "40",
+    "41",
+    "43",
+    "44",
+    "45",
+    "49",
+    "52"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "test-runtime.js",
+    "test-worker.js",
+    "verify-complete.mjs",
+    "verify-full-cycle.mjs",
+    "verify-semantic-invariant.mjs",
+    "verify-ingestion.mjs",
+    "verify-file-first-operator.mjs",
+    "verify-stage-operation-registry.mjs",
+    "verify-contract-closure.mjs",
+    "verify-definition-of-done.mjs",
+    "verify-v3-definition-of-done.mjs",
+    "verify-human-stage-walkthrough.mjs",
+    "verify-mobile-stage-action.mjs",
+    "verify-browser.mjs",
+    "verify-browser-extra.mjs"
+  ],
+  "implementationDisposition": "NO_APPLICATION_CHANGE_REQUIRED_AFTER_DIRECT_REVIEW",
+  "implementationDispositionReason": "Exact current main already implements the Stage 07 failure-test contract through current-scope failureTests, explicit expected/actual execution outcomes, capable-route checks, objective evidence sufficiency, validator-defect linkage for accepted-invalid fixtures, isolated negative-fixture execution, and downstream stage gating. The exact-main invalid and repaired paths were re-executed by the cited CI run; a scoped intentionally unexecuted/undetermined fixture was rejected, narrative-only evidence was rejected, an incapable route was rejected, and the repaired rejected-invalid fixture progressed. No responsible-layer defect was reproduced that justified an application change.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-data-route-closure.mjs && node verify-infrastructure-route-closure.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33866744251, test job 101003218758, step 10, exact canonical main 68f33c62da9a00bdf6f8b41414c03ce3183b9d6a, completed success; Stage 07 failureTests and operation routes remained in the one canonical data route."
+    },
+    {
+      "command": "node verify-v3-migration.mjs && node verify-v3-contract.mjs && node verify-spec3-contract.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33866744251, test job 101003218758, step 11, exact canonical main, completed success; /3 failure-test field/operation contracts and current-profile authority were re-executed."
     },
     {
       "command": "node verify-ingestion.mjs",
-      "exitCode": 0
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33866744251, test job 101003218758, step 15, exact canonical main, completed success; raw-first validation, closed Stage 07 records, stale/invalid rejection, and no-partial-canonical-mutation paths were re-executed."
     },
     {
-      "command": "node verify-file-first-operator.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33866744251, test job 101003218758, step 16, exact canonical main, completed success. verify-complete.mjs intentionally supplies an expected-to-reject Stage 07 fixture whose ACTUAL_RESULT is ACCEPTED and proves the gate blocks; verify-full-cycle.mjs supplies the repaired REJECTED result and completes Stage 07 before downstream progression."
+    },
+    {
+      "command": "node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33866744251, test job 101003218758, step 18, exact canonical main, completed success; failure-test missing/non-executed/unknown outcomes cannot be promoted to satisfaction."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33866744251, test job 101003218758, step 19, exact canonical main, completed success; Stage 07 operator path and downstream 30-stage reachability were exercised through local Chromium."
+    },
+    {
+      "command": "node verify-file-first-operator.mjs && node verify-stage-operation-registry.mjs && node verify-contract-closure.mjs",
+      "exitCode": 0,
+      "basis": "Controller-local execution against the exact source tree of canonical main 68f33c62da9a00bdf6f8b41414c03ce3183b9d6a after the CI run: file-first operator path PASS with seven mutations detected; stage-operation registry PASS for 66 operations; contract closure PASS for 65 durable families and 1422 field contracts."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "workflow-engine.js Stage 07 adjudication reads only current-scope failureTests and rejects NOT_RUN or UNDETERMINED execution outcomes.",
+    "workflow-engine.js Stage 07 adjudication rejects narrative-only evidence where actual execution/objective evidence is required and rejects failure tests without a capable current execution route.",
+    "workflow-engine.js requires an accepted-invalid expected-to-reject fixture to link a validator defect instead of treating acceptance as success.",
+    "verify-complete.mjs contains an intentional accepted-invalid Stage 07 fixture and asserts that the Stage 07 gate remains incomplete; this fixture executes on a synthetic project object rather than a canonical user project.",
+    "verify-full-cycle.mjs executes the repaired Stage 07 fixture with EXPECTED_REJECTION REJECT and ACTUAL_RESULT REJECTED and only then progresses downstream on its synthetic test project.",
+    "verify-semantic-invariant.mjs independently enforces that missing, non-executed, or unknown observations cannot become satisfied and includes a concrete rejected-invalid failure-test case.",
+    "verify-ingestion.mjs runs stage responses against generated test projects and preserves no-partial-mutation behavior on rejected input.",
+    "the exact-main local and deployed Chromium verifiers exercise the one-application operator path after these failure-test gates."
   ],
   "intentionalInvalidFixtures": [
-    "wrong-response-file",
-    "wrong-return-slot",
-    "selection-order-mapping",
-    "missing-attachment",
-    "byte-mismatch",
-    "staging-failure",
-    "stale-scope"
+    "verify-complete.mjs: expected-to-reject Stage 07 fixture with ACTUAL_RESULT ACCEPTED is rejected; Stage 07 cannot complete while the invalid fixture is accepted",
+    "workflow-engine.js current-scope Stage 07 gate: NOT_RUN or UNDETERMINED execution outcome is a blocking reason rather than satisfaction",
+    "workflow-engine.js current-scope Stage 07 gate: narrative-only evidence is insufficient for actual failure-test execution",
+    "workflow-engine.js current-scope Stage 07 gate: absent capable route is blocking",
+    "the Stage 07 invalid fixture is constructed on a disposable synthetic project object, not a canonical user project or third-party system"
+  ],
+  "repairedStateProofs": [
+    "verify-full-cycle.mjs records EXPECTED_REJECTION REJECT and ACTUAL_RESULT REJECTED for the Stage 07 fixture and completes Stage 07 before proceeding",
+    "verify-semantic-invariant.mjs accepts the rejected-invalid failure-test semantic only when the observed outcome is concrete rather than missing/unknown",
+    "the full-cycle and complete verifiers use isolated generated project state and therefore prove defect detection/progression without mutating a retained canonical user project",
+    "the file-first operator verifier passes on the exact current source and detects its seven transport/staging mutations without weakening application-owned gate consequences"
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "10",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "status": "PASS"
-    },
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"}
   ],
   "browserProofs": [
-    {
-      "proof": "local Chromium operator path",
-      "status": "PASS",
-      "basis": "GitHub Actions run 33832928686 test job completed before proof advancement"
-    }
+    {"workflowRunId":33866744251,"jobId":101003218758,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"68f33c62da9a00bdf6f8b41414c03ce3183b9d6a"},
+    {"workflowRunId":33866744251,"jobId":101003929594,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"68f33c62da9a00bdf6f8b41414c03ce3183b9d6a"}
   ],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {"workflowRunId":33866744251,"jobId":101003856571,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"68f33c62da9a00bdf6f8b41414c03ce3183b9d6a"},
+    {"workflowRunId":33866744251,"jobId":101003929594,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"68f33c62da9a00bdf6f8b41414c03ce3183b9d6a"}
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 48,
-  "proofCountAfter": 51,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "12"
+  "directEvidenceReview": "PASS",
+  "nextStage": "12",
+  "notes": "This proves Controller Stage 11 only. It re-establishes application Stage 07 failure-test behavior from exact current-main code, executed invalid/repaired fixtures, isolated negative-state proof, local/deployed Chromium, and exact deployed-byte evidence. It does not claim the later production-instruction, preflight, ten-run, human-authority, external-system, delivery, or physical-iPhone stages."
 }
