@@ -2,58 +2,59 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "02",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "3da813c1aa3a9bbba3640f71b46c370d3c94dbc3",
-  "endingMainCommit": "3da813c1aa3a9bbba3640f71b46c370d3c94dbc3",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "startingMainCommit": "31bf0ee34e33d2dc5283bbf2083ed6bd9313a079",
+  "endingMainCommit": "31bf0ee34e33d2dc5283bbf2083ed6bd9313a079",
   "implementationCommitIds": [
-    "602eaa15d669ff02cdc61e9720681b586e0006d2",
-    "451d6f77dc688210c5654aa7544733b586c48367",
-    "5224ee0f377161a5bdbb40f4538a0b837917c125",
-    "7291231a1c2df65ade1b5d14acfec9fb514d5356"
+    "31bf0ee34e33d2dc5283bbf2083ed6bd9313a079"
   ],
-  "changedFiles": [
-    "hash.js",
-    "verify-hash.mjs",
-    "verify-stage02-primitives.mjs"
-  ],
+  "changedFiles": [],
   "normativeRequirementChanges": [],
   "proofCommands": [
-    {"command":"node verify-hash.mjs","exitCode":0},
-    {"command":"node verify-stage02-primitives.mjs","exitCode":0},
-    {"command":"GitHub Actions run 33822947107 test job 100869379526","exitCode":0}
+    {
+      "command": "node verify-build-stage-ledger.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node verify-hash.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node verify-stage02-primitives.mjs",
+      "exitCode": 0
+    }
   ],
   "proofArtifactDigests": [
-    {"path":"hash.js","gitBlobSha1":"9026c24f319fee053f919b116f7075655370eea3"},
-    {"path":"verify-stage02-primitives.mjs","gitBlobSha1":"7839c9d879a38a667be6d48993b48769507318bc"}
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+      "byteLength": 309472
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "be4c9e4705522e69adff722b725c706c75e388e26f1fce4e3effb10cca1781cb"
+    }
   ],
   "intentionalInvalidFixtures": [
-    "empty-filename",
-    "parent-traversal",
-    "dot-segment",
-    "absolute-path",
-    "drive-prefix",
-    "embedded-separator",
-    "filename-control-character",
-    "trailing-dot",
-    "trailing-space",
-    "unpinned-unicode-repertoire",
-    "leap-second",
-    "missing-time-zone",
-    "space-time-separator",
-    "invalid-calendar-date",
-    "invalid-hour",
-    "invalid-utc-offset",
-    "lowercase-z",
-    "fabricated-verified-external-time"
+    "canonical-json-invalid-scalar",
+    "unknown-hash-kind",
+    "unknown-set-semantics",
+    "id-exact-retry",
+    "filename-confusable-collision",
+    "trusted-time-unverified-device-time"
   ],
   "earlierStageProofsReplayed": [
-    {"stage":"01","proofDigest":"3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","status":"PASS"}
+    {
+      "stage": "01",
+      "proofDigest": "756a728e2bcde92063261568b6c9a1e29ebd674b4bf91df287b8a6e1339cd82a",
+      "status": "PASS"
+    }
   ],
   "browserProofs": [],
   "deployedProofs": [],
   "externalActorProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 10,
+  "proofCountBefore": 11,
   "proofCountAfter": 14,
   "conformantCountBefore": 7,
   "conformantCountAfter": 7,
