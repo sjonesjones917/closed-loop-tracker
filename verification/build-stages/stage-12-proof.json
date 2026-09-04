@@ -2,117 +2,129 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "12",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "da2ebbe0394c19ab39fd622e0f21742d006706ed",
-  "endingMainCommit": "da2ebbe0394c19ab39fd622e0f21742d006706ed",
+  "stageName": "PRODUCTION INSTRUCTION",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c",
+  "endingMainCommit": "2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c",
   "implementationCommitIds": [
-    "da2ebbe0394c19ab39fd622e0f21742d006706ed"
+    "2b00c5de06ba97b5c00284d007f485dd584e7d32",
+    "c031661609e4481091d74c4860c686f97bf8a85f",
+    "2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c"
   ],
-  "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "changedFiles": [
+    "verify-production-instruction.mjs",
+    "verify-definition-of-done.mjs"
+  ],
+  "specificationSections": [
+    "10",
+    "10.1",
+    "10.2",
+    "12",
+    "14.6",
+    "17.12",
+    "24",
+    "37 Stage 08",
+    "38 instructions",
+    "38 instructionTraces",
+    "40",
+    "41",
+    "43",
+    "44",
+    "45",
+    "47",
+    "49",
+    "52"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "verify-production-instruction.mjs",
+    "verify-definition-of-done.mjs",
+    "verify-all-stage-prompts.mjs",
+    "verify-stage-prompts-complete.mjs",
+    "verify-prompt-semantics.mjs",
+    "verify-full-cycle.mjs"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_PROVEN_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "The current Stage 08 production-instruction path is exercised through real response ingestion and the real Stage 08 gate. The permanent focused verifier rejects missing mandatory instruction trace and missing OUTPUT_CONTRACT, proves zero canonical mutation before acceptance, proves repaired instruction+trace progression, and checks Stage 08 prompt semantics. verify-definition-of-done.mjs executes that verifier permanently; exact-main CI, local Chromium, deployment, deployed-byte verification, and deployed Chromium all passed.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-all-stage-prompts.mjs && node verify-stage-prompts-complete.mjs && node verify-user-prompt-invariants.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33871551379, test job 101018754599, step 13, exact canonical main 2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c, completed success."
     },
     {
-      "command": "node verify-ingestion.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33871551379, test job 101018754599, step 16, exact canonical main 2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c, completed success. verify-definition-of-done.mjs permanently executes verify-production-instruction.mjs."
     },
     {
-      "command": "node verify-complete.mjs",
-      "exitCode": 0
+      "command": "node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33871551379, test job 101018754599, step 18, exact canonical main, completed success."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33871551379, test job 101018754599, step 19, exact canonical main, local Chromium operator path completed success."
+    },
+    {
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33871551379, live job 101019759930, exact deployed-byte verification and deployed Chromium operator path completed success."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "verify-production-instruction.mjs constructs isolated Stage 08 projects with a current mandatory requirement, proposition, applicability record and proof expression.",
+    "A missing mandatory instruction trace is structurally accepted as a proposal but the real Stage 08 workflow-engine gate rejects completion and identifies REQ-1 as untraced.",
+    "An instruction missing OUTPUT_CONTRACT is rejected by response-ingestion before canonical mutation.",
+    "The repaired instruction and trace proposal requires explicit acceptance, creates one current instruction and current requirement trace, and then completes the real Stage 08 gate.",
+    "The Stage 08 prompt is required to state production-instruction-only scope, requirement traceability, ordered procedure, output contract, and prohibition on asking the user to repeat accepted project information.",
+    "verify-definition-of-done.mjs executes the focused verifier and publishes productionInstructionCoverage and mutation-proof fields, so the regression remains in the permanent acceptance path.",
+    "prompt-engine.js remains the external prompt authority used by the focused verifier and the all-stage prompt suites."
   ],
   "intentionalInvalidFixtures": [
-    "human-authority-impersonation",
-    "hidden-candidate",
-    "candidate-value-mismatch",
-    "duplicate-confirmation",
-    "correction-invalidates-response"
+    "missing-mandatory-instruction-trace: real Stage 08 gate rejects semantic incompleteness after shape-valid proposal preparation",
+    "missing-required-output-contract: response ingestion rejects before canonical mutation",
+    "pre-acceptance-mutation check: both invalid and repaired proposals leave canonical acceptedChanges unchanged until explicit acceptance",
+    "negative fixtures use disposable in-memory projects and do not mutate a canonical user project or external target"
+  ],
+  "repairedStateProofs": [
+    "Repaired Stage 08 instruction+trace proposal validates, commits only after explicit acceptance, preserves REQ-1 traceability, and completes Stage 08.",
+    "Permanent definition-of-done execution requires productionInstructionCoverage=1 and both invalid fixture rejections.",
+    "Exact current main passed local Chromium, exact deployment, deployed-byte verification, and deployed Chromium."
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "10",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "status": "PASS"
-    },
-    {
-      "stage": "11",
-      "proofDigest": "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-      "status": "PASS"
-    },
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"}
   ],
   "browserProofs": [
-    {
-      "proof": "local Chromium operator path",
-      "status": "PASS",
-      "basis": "GitHub Actions run 33833585575 test job completed before proof advancement"
-    }
+    {"workflowRunId":33871551379,"jobId":101018754599,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c"},
+    {"workflowRunId":33871551379,"jobId":101019759930,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c"}
   ],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {"workflowRunId":33871551379,"jobId":101019674458,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c"},
+    {"workflowRunId":33871551379,"jobId":101019759930,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"2628669cfc70a16b8e8cfd7ed91b0e2b379ceb2c"}
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 51,
-  "proofCountAfter": 54,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "13"
+  "directEvidenceReview": "PASS",
+  "nextStage": "13",
+  "notes": "This proves controller Stage 12 only. It does not claim independent preflight, candidate freeze, repeated runs, convergence, release, visual-baseline authorization, terminal delivery, Section 49 completion, or physical-iPhone acceptance."
 }
