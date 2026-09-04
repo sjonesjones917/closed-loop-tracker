@@ -1,0 +1,56 @@
+name: Materialize prompt byte identity repair
+
+on:
+  push:
+    branches:
+      - controller3-prompt-file-identity-current-20260904
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, 'Apply exact prompt-file identity repair') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Apply current-main repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin controller3-prompt-byte-identity-20260904
+          git checkout origin/controller3-prompt-byte-identity-20260904 -- \
+            prompt-engine.js \
+            build-test-project.mjs \
+            verify-browser.mjs \
+            verify-file-first-response.mjs \
+            verify-prompt-semantics.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          anchor='For every unit whose kind is SUPPLIED_MATERIAL, use the exact file identified by artifactId/filename/SHA-256 in that manifest and the FILES YOU MUST RECEIVE handoff. extractedStatements must enumerate all materially relevant human-authority content found in that file; do not return only a material-reference statement when the file contains substantive project facts, requirements, constraints, decisions, prohibitions, requested outputs, acceptance conditions, or unresolved human-only issues.'
+          replacement=anchor+' For every nonempty required SUPPLIED_MATERIAL that you actually received and read, set externalInspectionClaimed to true and include sourceLocation on every extracted statement when a mechanically available source location is supplied by the application. Never set externalInspectionClaimed when you did not actually inspect the transferred bytes.'
+          if anchor not in s:
+              raise SystemExit('Stage 01 accounting anchor not found in transplanted prompt engine')
+          s=s.replace(anchor,replacement,1)
+          p.write_text(s)
+
+          y=Path('.github/workflows/pages.yml')
+          w=y.read_text()
+          marker='          node verify-semantic-invariant.mjs\n'
+          addition='          node verify-capability-readiness.mjs\n'
+          if addition not in w:
+              if marker not in w:
+                  raise SystemExit('CI insertion marker not found')
+              w=w.replace(marker,marker+addition,1)
+          y.write_text(w)
+          PY
+          git rm .github/workflows/materialize-prompt-byte-identity.yml
+          git config user.name github-actions
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js build-test-project.mjs verify-browser.mjs verify-file-first-response.mjs verify-prompt-semantics.mjs .github/workflows/pages.yml
+          git commit -m 'Apply exact prompt-file identity repair'
+          git push origin HEAD:controller3-prompt-file-identity-current-20260904
