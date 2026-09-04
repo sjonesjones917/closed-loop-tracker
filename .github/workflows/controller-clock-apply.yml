@@ -1,0 +1,31 @@
+name: Apply deterministic browser-clock verifier repair
+on:
+  push:
+    branches: [controller/c3-browser-clock-20260904]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller/c3-browser-clock-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node controller-clock-apply.mjs
+      - run: |
+          node --check verify-human-stage-walkthrough.mjs
+          node verify-human-walkthrough-clock.mjs
+          BROWSER=$(command -v chromium || command -v chromium-browser || command -v google-chrome || true)
+          if [ -n "$BROWSER" ]; then BROWSER="$BROWSER" timeout 180 node verify-human-stage-walkthrough.mjs; fi
+      - run: |
+          rm -f controller-clock-apply.mjs .github/workflows/controller-clock-apply.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Make the live browser walkthrough deterministic'
+          git push origin HEAD:controller/c3-browser-clock-20260904
