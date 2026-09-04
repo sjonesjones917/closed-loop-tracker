@@ -1,0 +1,30 @@
+name: Repair due-stage full-cycle fixture
+on:
+  push:
+    branches: [controller3-due-activation-closure-20260904]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-due-activation-closure-20260904
+      - name: Align Stage 22 fixture with final-product timing contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          old="TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL'"
+          new="TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{product:true},EXECUTION_MODE:'EXTERNAL_AGENT_TOOL'"
+          if old not in s: raise SystemExit('Stage 22 fixture pattern not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm .github/workflows/controller3-fixture-fix.yml
+          git config user.name closed-loop-controller
+          git config user.email actions@users.noreply.github.com
+          git add verify-full-cycle.mjs .github/workflows/controller3-fixture-fix.yml
+          git commit -m 'Align full-cycle Stage 22 fixture with due-stage contract'
+          git push origin HEAD:controller3-due-activation-closure-20260904
