@@ -11,7 +11,7 @@ const TOP_LEVEL_KEYS=Object.freeze(['schema','contractProfileId','jobId','stage'
 const RECORD_KEYS=Object.freeze(['tempKey','targetId','fields','relationships','evidenceRefs','notes']);
 const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes']);
 const QUESTION_KEYS=Object.freeze(['temporaryKey','question','whyRequired','affectedStageFields','affectedRecords','answerType','allowedValues','blocking']);
-const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','filename','mediaType','byteSize','sha256','required']);
+const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','attachmentSlotId','filename','mediaType','byteSize','sha256','required']);
 const UNRESOLVED_KEYS=Object.freeze(['temporaryKey','kind','description','whyBlocking','affectedStageFields','affectedRecords','blocking']);
 const WARNING_KEYS=Object.freeze(['code','message','path']);
 const UNRESOLVED_KINDS=Object.freeze(['MISSING_HUMAN_INPUT','MISSING_APPLICATION_CONTEXT','INADEQUATE_PRIOR_OUTPUT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','WORK_TOO_LARGE_FOR_ENVIRONMENT','MISSING_ARTIFACT','UNRESOLVED_CONFLICT','EXECUTION_FAILURE','TOOL_FAILURE','UNKNOWN']);
@@ -180,14 +180,18 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     if(!object(attachment)){issues.push(issue('INVALID_ATTACHMENT',path,'Attachment metadata must be an object.'));return;}
     unknownKeys(attachment,ATTACHMENT_KEYS,path,issues);
     const tempKey=registerTemp(attachment.temporaryKey,`${path}/temporaryKey`,'attachment');
-    const filename=String(attachment.filename||'').trim(),mediaType=String(attachment.mediaType||'').trim(),claimedSize=Number(attachment.byteSize),claimedHash=String(attachment.sha256||'').toLowerCase();
+    const attachmentSlotId=String(attachment.attachmentSlotId||'').trim(),filename=String(attachment.filename||'').trim(),mediaType=String(attachment.mediaType||'').trim(),claimedSize=Number(attachment.byteSize),claimedHash=String(attachment.sha256||'').toLowerCase();
+    if(!attachmentSlotId)issues.push(issue('MISSING_ATTACHMENT_SLOT_ID',`${path}/attachmentSlotId`,'ATTACHMENT_SLOT_ID is required; selection order or filename alone never establishes returned-file mapping.'));
     if(!filename)issues.push(issue('MISSING_ATTACHMENT_FILENAME',`${path}/filename`,'filename is required.'));
     if(!mediaType)issues.push(issue('MISSING_ATTACHMENT_MEDIA_TYPE',`${path}/mediaType`,'mediaType is required.'));
     if(!Number.isInteger(claimedSize)||claimedSize<0)issues.push(issue('INVALID_ATTACHMENT_BYTE_SIZE',`${path}/byteSize`,'byteSize must be a non-negative integer.'));
     if(!/^[0-9a-f]{64}$/.test(claimedHash))issues.push(issue('INVALID_ATTACHMENT_SHA256',`${path}/sha256`,'sha256 must be a 64-character hexadecimal SHA-256 digest.'));
     if(attachment.required!==undefined&&typeof attachment.required!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/required`,'required must be BOOLEAN when supplied.'));
-    const byName=suppliedFiles.filter(file=>String(file?.name??file?.filename??'')===filename);
-    if(!byName.length){if(attachment.required!==false)issues.push(issue(suppliedFiles.length?'ATTACHMENT_FILENAME_MISMATCH':'MISSING_REQUIRED_ATTACHMENT',path,suppliedFiles.length?`No supplied file has required filename ${filename}.`:`Required attachment ${filename} was not supplied.`));return;}
+    const bySlot=suppliedFiles.filter(file=>String(file?.attachmentSlotId||'')===attachmentSlotId);
+    if(!bySlot.length){if(attachment.required!==false)issues.push(issue('MISSING_REQUIRED_ATTACHMENT_SLOT',path,`No supplied file is mapped through ATTACHMENT_SLOT_ID ${attachmentSlotId}. Filename alone and selection order are nonauthoritative.`));return;}
+    if(bySlot.length!==1){issues.push(issue('AMBIGUOUS_ATTACHMENT_SLOT',path,`ATTACHMENT_SLOT_ID ${attachmentSlotId} must map to exactly one selected file.`));return;}
+    const byName=bySlot.filter(file=>String(file?.name??file?.filename??'')===filename);
+    if(!byName.length){issues.push(issue('ATTACHMENT_FILENAME_MISMATCH',path,`The file mapped to ATTACHMENT_SLOT_ID ${attachmentSlotId} does not satisfy required filename ${filename}.`));return;}
     const byType=byName.filter(file=>!mediaType||String(file?.type??file?.mediaType??'')===mediaType);if(!byType.length){issues.push(issue('ATTACHMENT_MEDIA_TYPE_MISMATCH',`${path}/mediaType`,`Supplied ${filename} media type does not match the declared value.`));return;}
     const bySize=byType.filter(file=>Number(file?.size??file?.byteSize)===claimedSize);if(!bySize.length){issues.push(issue('ATTACHMENT_BYTE_SIZE_MISMATCH',`${path}/byteSize`,`Supplied ${filename} byte size does not match the declared value.`));return;}
     const match=bySize.find(file=>String(file?.sha256||'').toLowerCase()===claimedHash);if(!match){issues.push(issue('ATTACHMENT_SHA256_MISMATCH',`${path}/sha256`,`Supplied ${filename} SHA-256 does not match the declared value.`));return;}
@@ -278,7 +282,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
 function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,expectedProjectRevision=Number(project.revision||0)}){
   const proposalId=workflow.allocateInfrastructureId(project,'PARSED-PROPOSAL','responseProposals');
   const tempToCanonical={};
-  for(const attachment of safe(envelope.attachments)){const match=safe(rawRecord.files).find(file=>String(file?.name??file?.filename??'')===String(attachment.filename||'')&&String(file?.type??file?.mediaType??'')===String(attachment.mediaType||'')&&Number(file?.size??file?.byteSize)===Number(attachment.byteSize)&&String(file?.sha256||'').toLowerCase()===String(attachment.sha256||'').toLowerCase());if(match&&attachment.temporaryKey)tempToCanonical[attachment.temporaryKey]={collection:'artifacts',id:String(match.artifactId||match.id)};}
+  for(const attachment of safe(envelope.attachments)){const match=safe(rawRecord.files).find(file=>String(file?.attachmentSlotId||'')===String(attachment.attachmentSlotId||'')&&String(file?.name??file?.filename??'')===String(attachment.filename||'')&&String(file?.type??file?.mediaType??'')===String(attachment.mediaType||'')&&Number(file?.size??file?.byteSize)===Number(attachment.byteSize)&&String(file?.sha256||'').toLowerCase()===String(attachment.sha256||'').toLowerCase());if(match&&attachment.temporaryKey)tempToCanonical[attachment.temporaryKey]={collection:'artifacts',id:String(match.artifactId||match.id)};}
   const evidence=[];
   for(const source of safe(envelope.evidence)){
     const id=workflow.allocateId(project,'evidenceRecords');

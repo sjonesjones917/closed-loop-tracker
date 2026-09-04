@@ -240,11 +240,12 @@ negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].res
 
 // Attachment declarations are claims; only application-hashed supplied bytes may satisfy them.
 {
-  const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:48203,sha256:'a'.repeat(64)};
-  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e};};
+  const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',attachmentSlotId:'ATTACHMENT-SLOT-1',name:'result.pdf',type:'application/pdf',size:48203,sha256:'a'.repeat(64)};
+  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',attachmentSlotId:'ATTACHMENT-SLOT-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e};};
   {const {p,stage,pr,e}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[exactFile]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
+  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-FILENAME-ONLY'),filenameOnly={...exactFile};delete filenameOnly.attachmentSlotId;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[filenameOnly]});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='MISSING_REQUIRED_ATTACHMENT_SLOT'))throw new Error('Filename alone or selection order incorrectly satisfied ATTACHMENT_SLOT_ID mapping authority.');negativeCount++;}
   for(const [name,files,mutate,code] of [
-    ['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT'],
+    ['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT_SLOT'],
     ['wrong attachment filename',[exactFile],e=>{e.attachments[0].filename='other.pdf';},'ATTACHMENT_FILENAME_MISMATCH'],
     ['wrong attachment byte size',[exactFile],e=>{e.attachments[0].byteSize=48204;},'ATTACHMENT_BYTE_SIZE_MISMATCH'],
     ['wrong attachment hash',[exactFile],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']
@@ -465,9 +466,9 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
   if(!prepared.validation.valid)throw new Error('Stage 06 future artifact requirement was rejected before execution readiness: '+JSON.stringify(prepared.validation.issues));
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Stage 06 incorrectly required execution bytes while accepting a test definition.');
   const sha='a'.repeat(64);
-  e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
+  e.attachments=[{temporaryKey:'test-artifact-1',attachmentSlotId:'ATTACHMENT-SLOT-TEST-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
   e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
-  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha}]});
+  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',attachmentSlotId:'ATTACHMENT-SLOT-TEST-1',name:'fixture.js',type:'application/javascript',size:3,sha256:sha}]});
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
   if(!prepared.validation.valid)throw new Error('Byte-backed TEST artifact fixture was otherwise invalid: '+JSON.stringify(prepared.validation.issues));
   const proposedTest=prepared.proposal?.canonicalRecords?.tests?.[0],proposedEvidence=prepared.proposal?.evidence?.[0];
