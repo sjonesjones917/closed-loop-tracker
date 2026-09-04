@@ -47,5 +47,6 @@ if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-res
 // Run the independent specification-side route ruler in a clean process so production declarations cannot serve as their own oracle.
 execFileSync(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'});
 execFileSync(process.execPath,['verify-stage03-source-research.mjs'],{stdio:'inherit'});
+execFileSync(process.execPath,['verify-semantic-operation-boundaries.mjs'],{stdio:'inherit'});
 
 console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true},null,2));
