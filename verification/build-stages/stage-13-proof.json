@@ -2,123 +2,118 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "13",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "d7b92d2181ccdc5853547279a63f186477d2bb79",
-  "endingMainCommit": "d7b92d2181ccdc5853547279a63f186477d2bb79",
+  "stageName": "INDEPENDENT PREFLIGHT",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "7bbe3ab69d76c941bcf63b355234a78731ac2f3f",
+  "endingMainCommit": "7bbe3ab69d76c941bcf63b355234a78731ac2f3f",
   "implementationCommitIds": [
-    "d7b92d2181ccdc5853547279a63f186477d2bb79"
+    "9b68a5135ab6416bcd1e21ef39e664c23b9761e4",
+    "7bbe3ab69d76c941bcf63b355234a78731ac2f3f"
   ],
-  "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "changedFiles": [
+    "verify-independent-preflight.mjs",
+    "verify-definition-of-done.mjs"
+  ],
+  "specificationSections": [
+    "Stage 09 — PREFLIGHT THE PRODUCTION INSTRUCTION",
+    "17.12 Fresh-context and independence semantics",
+    "37 Stage 09",
+    "38 preflightRecords",
+    "44",
+    "45",
+    "47",
+    "49",
+    "52"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "verify-independent-preflight.mjs",
+    "verify-definition-of-done.mjs",
+    "verify-stage-prompts-complete.mjs",
+    "verify-prompt-semantics.mjs",
+    "verify-semantic-invariant.mjs",
+    "verify-full-cycle.mjs"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_PROVEN_ON_EXACT_CANONICAL_MAIN_WITHOUT_OVERCLAIMING_EXTERNAL_INDEPENDENCE",
+  "implementationDispositionReason": "The current Stage 09 preflight path is exercised through real prompt construction, response ingestion, explicit acceptance, centralized effective determination, the real Stage 09 gate, and current fresh-context independence evaluation. The permanent focused verifier rejects absence of a reviewer context, rejects a material ambiguity even when the agent claims SATISFIED, rejects a contaminated reviewer context, proves zero canonical mutation before explicit acceptance, and proves the repaired path progresses. The repaired fixture is deliberately adjudicated only EXTERNALLY_SUPPORTED because the external Stage 08 author context is not fully observable; this proof does not fabricate or claim an independently observed external actor/context. verify-definition-of-done.mjs permanently executes the focused verifier. Exact canonical-main CI, local Chromium, deployment, deployed-byte verification, and deployed Chromium all passed for the implementation commit.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33875604209, test job 101031721100, workflow step 16, exact canonical main 7bbe3ab69d76c941bcf63b355234a78731ac2f3f, completed success. verify-definition-of-done.mjs permanently executes verify-independent-preflight.mjs."
     },
     {
-      "command": "node verify-stage01-intake-closure.mjs",
-      "exitCode": 0
+      "command": "node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33875604209, test job 101031721100, workflow step 18, exact canonical main, completed success."
     },
     {
-      "command": "node verify-one-time-intent-intake.mjs",
-      "exitCode": 0
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33875604209, test job 101031721100, workflow step 19, exact canonical main, local Chromium operator path completed success."
+    },
+    {
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33875604209, deployment verification job 101032965212, exact deployed-byte verification and deployed Chromium operator path completed success."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "verify-independent-preflight.mjs constructs isolated Stage 08/09 projects and submits Stage 09 responses through the actual prompt-engine and response-ingestion contracts.",
+    "With no current Stage 09 reviewer context, evaluateContextIndependence returns UNKNOWN and the real Stage 09 gate cannot complete.",
+    "A shape-valid preflight response that claims SATISFIED while reporting material ambiguity is centrally downgraded to UNDETERMINED and cannot complete Stage 09.",
+    "An accepted clean preflight bound to a reviewer context that is later marked contaminated becomes independence VIOLATED and cannot complete Stage 09.",
+    "The repaired fixture completes only after explicit acceptance and exactly one current preflight record is created.",
+    "The repaired fixture's independence result is EXTERNALLY_SUPPORTED, not APPLICATION_ESTABLISHED; the implementation explicitly preserves the epistemic limit that an external provider context cannot be mechanically observed from inside the application.",
+    "The Stage 09 prompt is permanently checked for preflight-only semantics, prohibition on executing production during preflight, and independence language.",
+    "verify-definition-of-done.mjs requires independentPreflightCoverage=1 and all three mutation rejections on every permanent definition-of-done run."
   ],
   "intentionalInvalidFixtures": [
-    "raw-unit-stable-id",
-    "omitted-unit",
-    "duplicate-byte-occurrence",
-    "inaccessible-content",
-    "challenge-threshold",
-    "whole-file-vacuity"
+    "missing-independent-reviewer: real Stage 09 gate remains incomplete and independence remains UNKNOWN",
+    "material-ambiguity-with-favorable-claim: central adjudication downgrades the favorable claim and blocks completion",
+    "contaminated-reviewer-context: independence becomes VIOLATED and the Stage 09 gate blocks",
+    "pre-acceptance-mutation check: repaired and invalid proposals do not mutate canonical accepted state before explicit acceptance",
+    "all focused fixtures are disposable in-memory projects and do not constitute external-actor evidence"
+  ],
+  "repairedStateProofs": [
+    "Clean Stage 09 proposal validates, commits only after explicit acceptance, creates exactly one current preflight record, and completes the real Stage 09 gate.",
+    "The repaired path preserves EXTERNALLY_SUPPORTED rather than falsely promoting unobservable provider independence to APPLICATION_ESTABLISHED.",
+    "Permanent definition-of-done execution requires independentPreflightCoverage=1, repaired progression, the epistemic limit, zero pre-acceptance mutation, prompt semantics, isolated fixtures, and all three negative-fixture rejections.",
+    "Exact current main passed local Chromium, exact deployment, deployed-byte verification, and deployed Chromium."
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "10",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "status": "PASS"
-    },
-    {
-      "stage": "11",
-      "proofDigest": "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-      "status": "PASS"
-    },
-    {
-      "stage": "12",
-      "proofDigest": "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-      "status": "PASS"
-    },
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"}
   ],
   "browserProofs": [
-    {
-      "proof": "local Chromium operator path",
-      "status": "PASS",
-      "basis": "GitHub Actions run 33834153393 test job completed before proof advancement"
-    }
+    {"workflowRunId":33875604209,"jobId":101031721100,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"7bbe3ab69d76c941bcf63b355234a78731ac2f3f"},
+    {"workflowRunId":33875604209,"jobId":101032965212,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"7bbe3ab69d76c941bcf63b355234a78731ac2f3f"}
   ],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {"workflowRunId":33875604209,"jobId":101032861233,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"7bbe3ab69d76c941bcf63b355234a78731ac2f3f"},
+    {"workflowRunId":33875604209,"jobId":101032965212,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"7bbe3ab69d76c941bcf63b355234a78731ac2f3f"}
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 54,
-  "proofCountAfter": 57,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "14"
+  "directEvidenceReview": "PASS",
+  "nextStage": "14",
+  "notes": "This proves controller Stage 13 implementation behavior only. Synthetic fresh-context identifiers in disposable verifier fixtures are not external-actor evidence and are not published as such. No physical-iPhone, human-authority, independent-provider, later-stage, convergence, release, terminal-delivery, or Section 49 completion claim is made."
 }
