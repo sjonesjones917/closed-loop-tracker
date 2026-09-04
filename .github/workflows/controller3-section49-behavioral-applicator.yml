@@ -1,0 +1,283 @@
+name: Apply mutation-sensitive Section 49 verification
+
+on:
+  push:
+    branches:
+      - controller3-section49-behavioral-20260904
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply-test-merge-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: sjonesjones917/closed-loop-tracker
+      BRANCH: controller3-section49-behavioral-20260904
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-section49-behavioral-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Reconcile current main and install the behavioral oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "closed-loop-controller"
+          git config user.email "closed-loop-controller@users.noreply.github.com"
+          git fetch origin main
+          git merge --no-edit origin/main
+
+          if ! grep -Fq 'EXTERNAL_CHAT_LAUNCHER' prompt-engine.js || ! grep -Fq 'evaluateCapabilityReadiness' workflow-engine.js; then
+            git fetch origin controller3-prompt-byte-identity-rerun-20260904:refs/remotes/origin/controller3-prompt-byte-identity-rerun-20260904
+            base="$(git merge-base origin/main refs/remotes/origin/controller3-prompt-byte-identity-rerun-20260904)"
+            git diff --binary "$base" refs/remotes/origin/controller3-prompt-byte-identity-rerun-20260904 -- . ':(exclude).github/workflows/*' > /tmp/runtime.patch
+            test -s /tmp/runtime.patch
+            git apply --3way /tmp/runtime.patch
+          fi
+
+          if ! grep -Fq 'MOBILE_CAPABILITY_PROBE' verify-mobile-acceptance-evidence.mjs; then
+            git fetch origin controller3-mobile-capability-time-20260904:refs/remotes/origin/controller3-mobile-capability-time-20260904
+            base="$(git merge-base origin/main refs/remotes/origin/controller3-mobile-capability-time-20260904)"
+            git diff --binary "$base" refs/remotes/origin/controller3-mobile-capability-time-20260904 -- . ':(exclude).github/workflows/*' > /tmp/mobile.patch
+            test -s /tmp/mobile.patch
+            git apply --3way /tmp/mobile.patch
+          fi
+
+          cat > verify-section49-behavioral.mjs <<'EOF'
+          import fs from 'node:fs';
+          import os from 'node:os';
+          import path from 'node:path';
+          import {spawnSync} from 'node:child_process';
+
+          const root=process.cwd();
+          const allVerifiers=fs.readdirSync(root).filter(name=>/^verify-.*\.mjs$/.test(name)&&name!=='verify-section49-behavioral.mjs'&&!/definition-of-done/.test(name)).sort();
+          const source=name=>fs.readFileSync(path.join(root,name),'utf8');
+          const unique=values=>[...new Set(values)].filter(Boolean).sort();
+          const existing=values=>values.filter(value=>fs.existsSync(path.join(root,value)));
+          const discover=(predicate,preferred=[])=>unique([...existing(preferred),...allVerifiers.filter(name=>predicate(source(name),name))]);
+          const stage01Scripts=discover((text,name)=>/Stage 01|stage01|intake/i.test(text)&&/(omitted|incomplete|handoff|inspection)/i.test(text),['verify-stage01-intake-closure.mjs','verify-zero-loss-accounting.mjs']);
+          const promptScripts=discover((text,name)=>/prompt/i.test(text)&&/(BOM|CRLF|final newline|instruction\.txt)/i.test(text)&&/(mutation|reject|mismatch)/i.test(text));
+          const attachmentScripts=discover((text,name)=>/ATTACHMENT_SLOT_ID|attachment slot/i.test(text)&&/(duplicate|order|cross-package|missing|required)/i.test(text),['verify-ingestion.mjs']);
+          const dueScripts=discover((text,name)=>/DUE_NOW|EARLIEST_EXECUTABLE_STAGE|due-stage/i.test(text)&&/(target|final product|Stage 12|stage12)/i.test(text),['verify-due-stage-timing.mjs']);
+          const activationScripts=discover((text,name)=>/activation/i.test(text)&&/proof/i.test(text)&&/(missing|unknown|reject|block|invalidate)/i.test(text));
+
+          const runScripts=(cwd,scripts)=>scripts.map(script=>{
+            const result=spawnSync(process.execPath,[script],{cwd,encoding:'utf8',env:{...process.env,CLOSED_LOOP_SECTION49_CHILD:'1'},timeout:180000});
+            return {script,status:result.status,signal:result.signal,stdout:result.stdout,stderr:result.stderr};
+          });
+          const requireCurrentPass=(id,scripts)=>{
+            if(!scripts.length)throw new Error(`${id}: behavioral verifier universe is empty.`);
+            const runs=runScripts(root,scripts);
+            const failures=runs.filter(run=>run.status!==0);
+            if(failures.length)throw new Error(`${id}: repaired-path verifier failed: ${failures.map(run=>`${run.script}:${run.status}`).join(', ')}`);
+            return runs;
+          };
+          const copyRoot=destination=>fs.cpSync(root,destination,{recursive:true,filter:sourcePath=>{
+            const relative=path.relative(root,sourcePath);
+            if(!relative)return true;
+            const first=relative.split(path.sep)[0];
+            return !['.git','node_modules','.controller-section49-work'].includes(first);
+          }});
+          const mutationDetected=({id,scripts,mutations})=>{
+            for(const mutation of mutations){
+              if(!fs.existsSync(path.join(root,mutation.file)))continue;
+              const original=fs.readFileSync(path.join(root,mutation.file),'utf8');
+              if(!original.includes(mutation.find))continue;
+              const temp=fs.mkdtempSync(path.join(os.tmpdir(),`closed-loop-${id.toLowerCase()}-`));
+              try{
+                copyRoot(temp);
+                const target=path.join(temp,mutation.file);
+                const current=fs.readFileSync(target,'utf8');
+                const changed=current.replace(mutation.find,mutation.replace);
+                if(changed===current)continue;
+                fs.writeFileSync(target,changed,'utf8');
+                const runs=runScripts(temp,scripts);
+                if(runs.some(run=>run.status!==0))return {detected:true,mutation,failedScripts:runs.filter(run=>run.status!==0).map(run=>run.script)};
+              }finally{fs.rmSync(temp,{recursive:true,force:true});}
+            }
+            return {detected:false};
+          };
+          const definitions=[
+            {
+              id:'S49-STAGE01-RAW-INPUT-ACCOUNTING',
+              label:'Stage 01 raw-input accounting',
+              scripts:stage01Scripts,
+              mutations:[
+                {file:'workflow-engine.js',find:'INCLUDED_IN_HANDOFF',replace:'INCLUDED_IN_HANDOFF_MUTATED'},
+                {file:'response-ingestion.js',find:'INSPECTION_SUPPORTED',replace:'INSPECTION_SUPPORTED_MUTATED'},
+                {file:'workflow-engine.js',find:'rawUnitId',replace:'rawUnitIdMutated'}
+              ]
+            },
+            {
+              id:'S49-FILE-FIRST-PROMPT-BYTE-IDENTITY',
+              label:'File-first prompt byte-identity coverage',
+              scripts:promptScripts,
+              mutations:[
+                {file:'prompt-engine.js',find:'instruction.txt',replace:'instruction-mutated.txt'},
+                {file:'prompt-engine.js',find:'EXTERNAL_CHAT_LAUNCHER',replace:'EXTERNAL_CHAT_LAUNCHER_MUTATED'},
+                {file:'prompt-engine.js',find:'text/plain;charset=utf-8',replace:'text/plain;charset=mutated'}
+              ]
+            },
+            {
+              id:'S49-ATTACHMENT-SLOT-MAPPING',
+              label:'Attachment-slot mapping coverage',
+              scripts:attachmentScripts,
+              mutations:[
+                {file:'response-ingestion.js',find:'ATTACHMENT_SLOT_ID',replace:'ATTACHMENT_SLOT_ID_MUTATED'},
+                {file:'project-store.js',find:'attachmentSlots',replace:'attachmentSlotsMutated'},
+                {file:'workflow-schema.js',find:'attachmentSlotId',replace:'attachmentSlotIdMutated'}
+              ]
+            },
+            {
+              id:'S49-DUE-STAGE-OBLIGATION',
+              label:'Due-stage obligation coverage',
+              scripts:dueScripts,
+              mutations:[
+                {file:'workflow-engine.js',find:'EARLIEST_EXECUTABLE_STAGE',replace:'EARLIEST_EXECUTABLE_STAGE_MUTATED'},
+                {file:'workflow-engine.js',find:'REQUIRED_BY_STAGE',replace:'REQUIRED_BY_STAGE_MUTATED'},
+                {file:'workflow-engine.js',find:'TARGET_AVAILABILITY_CONDITION',replace:'TARGET_AVAILABILITY_CONDITION_MUTATED'}
+              ]
+            },
+            {
+              id:'S49-ACTIVATION-PROOF',
+              label:'Activation-proof coverage',
+              scripts:activationScripts,
+              mutations:[
+                {file:'workflow-engine.js',find:'activationProofObligationId',replace:'activationProofObligationIdMutated'},
+                {file:'workflow-engine.js',find:'ACTIVATION_PROOF',replace:'ACTIVATION_PROOF_MUTATED'},
+                {file:'workflow-engine.js',find:'activationProofId',replace:'activationProofIdMutated'},
+                {file:'workflow-schema.js',find:'activationProofObligationId',replace:'activationProofObligationIdMutated'}
+              ]
+            }
+          ];
+
+          const metrics=[];
+          for(const definition of definitions){
+            const currentRuns=requireCurrentPass(definition.id,definition.scripts);
+            const mutation=mutationDetected(definition);
+            if(!mutation.detected)throw new Error(`${definition.id}: none of the registered intentional invalid mutations was detected by the actual verifier path.`);
+            metrics.push({
+              metricId:definition.id,
+              label:definition.label,
+              universeDefinition:`The one current implementation behavior class ${definition.id}, executed against the repaired tree and at least one isolated intentional invalid implementation mutation.`,
+              numerator:1,
+              denominator:1,
+              includedIds:[definition.id],
+              excludedIds:[],
+              excludedReasons:[],
+              derivationIdentity:'closed-loop-section49-behavioral/1',
+              evidenceReferences:[...definition.scripts,`${mutation.mutation.file}:${mutation.mutation.find}->${mutation.mutation.replace}`,...mutation.failedScripts],
+              repairedPathExecutions:currentRuns.map(run=>({script:run.script,status:run.status})),
+              intentionalInvalidMutation:mutation.mutation,
+              value:1,
+              disposition:'SATISFIED'
+            });
+          }
+          const report={
+            schema:'closed-loop-section49-behavioral-evidence/1',
+            metrics,
+            allBehavioralMetricsSatisfied:metrics.every(metric=>metric.value===1&&metric.numerator===metric.denominator),
+            emptyUniverses:metrics.filter(metric=>metric.denominator===0).map(metric=>metric.metricId),
+            sourceCommit:process.env.GITHUB_SHA||null
+          };
+          if(process.env.SECTION49_BEHAVIORAL_OUTPUT)fs.writeFileSync(process.env.SECTION49_BEHAVIORAL_OUTPUT,JSON.stringify(report,null,2)+'\n','utf8');
+          console.log(JSON.stringify(report,null,2));
+          EOF
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          page=Path('.github/workflows/pages.yml')
+          text=page.read_text(encoding='utf-8')
+          if 'workflow_dispatch:' not in text:
+              if 'on:\n' not in text:
+                  raise SystemExit('pages.yml requires a block-form on mapping.')
+              text=text.replace('on:\n','on:\n  workflow_dispatch:\n',1)
+          if 'node verify-section49-behavioral.mjs' not in text:
+              needle='node verify-v3-definition-of-done.mjs'
+              if needle not in text:
+                  raise SystemExit('pages.yml does not invoke the Section 49 definition-of-done verifier.')
+              text=text.replace(needle,'node verify-section49-behavioral.mjs\n          '+needle,1)
+          text=re.sub(r"if:\s*github\.event_name\s*==\s*'push'", "if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')", text)
+          page.write_text(text,encoding='utf-8',newline='')
+          PY
+
+          rm -f .github/workflows/controller3-section49-behavioral-applicator.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-section49-behavioral.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-ingestion.mjs
+          node verify-due-stage-timing.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-mobile-release-governance.mjs
+
+          git add -A
+          git commit -m "Replace Section 49 paper checks with mutation-sensitive behavior evidence"
+          git push origin HEAD:"$BRANCH"
+          echo "FINAL_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Open the implementation PR
+        shell: bash
+        run: |
+          set -euo pipefail
+          existing="$(gh pr list --repo "$REPOSITORY" --head "$BRANCH" --state open --json number --jq '.[0].number')"
+          if [ -n "$existing" ] && [ "$existing" != null ]; then
+            pr_number="$existing"
+          else
+            url="$(gh pr create --repo "$REPOSITORY" --head "$BRANCH" --base main --title 'Add mutation-sensitive Section 49 behavioral evidence' --body 'Runs the actual current application verifier paths against repaired state and isolated intentional invalid implementation mutations for Stage 01 raw accounting, prompt byte identity, attachment-slot mapping, due-stage timing, and activation-proof closure. The final tree retains one Pages workflow. Exact final-tree canonical CI is dispatched before merge.')"
+            pr_number="${url##*/}"
+          fi
+          echo "PR_NUMBER=$pr_number" >> "$GITHUB_ENV"
+      - name: Require canonical exact-final-tree CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api -X POST "repos/$REPOSITORY/actions/workflows/pages.yml/dispatches" -f ref="$BRANCH"
+          for attempt in $(seq 1 180); do
+            runs="$(gh api "repos/$REPOSITORY/actions/workflows/pages.yml/runs?branch=$BRANCH&event=workflow_dispatch&per_page=40")"
+            run_id="$(jq -r --arg sha "$FINAL_SHA" '.workflow_runs[] | select(.head_sha==$sha) | .id' <<<"$runs" | head -n 1)"
+            if [ -n "$run_id" ] && [ "$run_id" != null ]; then
+              status="$(gh api "repos/$REPOSITORY/actions/runs/$run_id" --jq .status)"
+              if [ "$status" = completed ]; then
+                conclusion="$(gh api "repos/$REPOSITORY/actions/runs/$run_id" --jq .conclusion)"
+                test "$conclusion" = success
+                echo "TEST_RUN_ID=$run_id" >> "$GITHUB_ENV"
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+          exit 1
+      - name: Merge exact tested head and require main deployment verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="$(gh api -X PUT "repos/$REPOSITORY/pulls/$PR_NUMBER/merge" -f merge_method=merge -f sha="$FINAL_SHA")"
+          test "$(jq -r .merged <<<"$response")" = true
+          merge_sha="$(jq -r .sha <<<"$response")"
+          gh api -X POST "repos/$REPOSITORY/actions/workflows/pages.yml/dispatches" -f ref=main
+          for attempt in $(seq 1 240); do
+            runs="$(gh api "repos/$REPOSITORY/actions/workflows/pages.yml/runs?branch=main&event=workflow_dispatch&per_page=40")"
+            run_id="$(jq -r --arg sha "$merge_sha" '.workflow_runs[] | select(.head_sha==$sha) | .id' <<<"$runs" | head -n 1)"
+            if [ -n "$run_id" ] && [ "$run_id" != null ]; then
+              status="$(gh api "repos/$REPOSITORY/actions/runs/$run_id" --jq .status)"
+              if [ "$status" = completed ]; then
+                conclusion="$(gh api "repos/$REPOSITORY/actions/runs/$run_id" --jq .conclusion)"
+                test "$conclusion" = success
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+          exit 1
