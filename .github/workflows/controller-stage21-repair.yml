@@ -35,11 +35,10 @@ jobs:
             echo "EXIT: $code" | tee -a verification/controller-stage21-run.log
           done
           cat verification/controller-stage21-run.log
-      - name: Remove temporary repair mechanism and commit branch evidence
+      - name: Commit repaired branch implementation
         run: |
-          rm .github/workflows/controller-stage21-repair.yml verification/controller-stage21-repair.py
           git config user.name "closed-loop-controller"
           git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git commit -m "Stage 21: make convergence application-owned and non-vacuous"
+          git add workflow-schema.js workflow-engine.js app-core.js verify-full-cycle.mjs verify-convergence.mjs .github/workflows/pages.yml verification/controller-stage21-run.log
+          git commit -m "Stage 21: make convergence application-owned and non-vacuous [skip ci]"
           git push origin HEAD:controller-v2/stage21-convergence-20260904-3
