@@ -1,0 +1,69 @@
+name: Apply Stage 03 semantic challenge repair
+on:
+  push:
+    branches: [controller-stage03-semantics-20260904b]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller-stage03-semantics-20260904b
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Repair earliest Stage 03 contract and its independent oracle
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-schema.js'); s=p.read_text()
+          old="const OPERATION_CONTRACT_OVERRIDES=Object.freeze({17:Object.freeze({FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions','instructions','requirements','artifacts'],agentWritableCollections:[],allowedStageData:[]}),"
+          new="const OPERATION_CONTRACT_OVERRIDES=Object.freeze({3:Object.freeze({SEMANTIC_CHALLENGE:Object.freeze({readCollections:['sources','sourceConflicts'],agentWritableCollections:['semanticChallenges'],allowedStageData:[]}),RECONCILE_RESEARCH:Object.freeze({readCollections:['sources','sourceConflicts','research','candidateRequirements','semanticChallenges'],agentWritableCollections:['research','candidateRequirements','semanticReviews'],allowedStageData:[]})}),17:Object.freeze({FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions','instructions','requirements','artifacts'],agentWritableCollections:[],allowedStageData:[]}),"
+          if old in s: s=s.replace(old,new,1)
+          elif new not in s: raise SystemExit('Stage 03 operation-contract anchor changed')
+          old2="const completionReadCollections=Object.freeze(['propositions','propositionEquivalenceReviews','applicabilityRecords','proofExpressions','proofObligations','observationRecords','entailmentReviews','environmentDependencies']);"
+          new2="const completionReadCollections=Object.freeze(['propositions','propositionEquivalenceReviews','applicabilityRecords','proofExpressions','proofObligations','observationRecords','entailmentReviews','environmentDependencies','semanticReviews']);"
+          if old2 in s: s=s.replace(old2,new2,1)
+          elif new2 not in s: raise SystemExit('Completion read-family anchor changed')
+          p.write_text(s)
+
+          p=Path('verify-spec-grounded-route-oracle.mjs'); s=p.read_text()
+          old="const OP={\n'17:FREEZE'"
+          new="const OP={\n'3:SEMANTIC_CHALLENGE':{r:['sources','sourceConflicts'],w:['semanticChallenges']},'3:RECONCILE_RESEARCH':{r:['sources','sourceConflicts','research','candidateRequirements','semanticChallenges'],w:['research','candidateRequirements','semanticReviews']},\n'17:FREEZE'"
+          if old in s: s=s.replace(old,new,1)
+          elif new not in s: raise SystemExit('Stage 03 independent-oracle operation anchor changed')
+          old2="const COMPLETION_READ=['propositions','propositionEquivalenceReviews','applicabilityRecords','proofExpressions','proofObligations','observationRecords','entailmentReviews','environmentDependencies'];"
+          new2="const COMPLETION_READ=['propositions','propositionEquivalenceReviews','applicabilityRecords','proofExpressions','proofObligations','observationRecords','entailmentReviews','environmentDependencies','semanticReviews'];"
+          if old2 in s: s=s.replace(old2,new2,1)
+          elif new2 not in s: raise SystemExit('Independent-oracle downstream-read anchor changed')
+          p.write_text(s)
+
+          focused=Path('verify-stage03-source-research.mjs')
+          focused.write_text("""import fs from 'node:fs';\nimport vm from 'node:vm';\nconst assert=(condition,message)=>{if(!condition)throw new Error(message);};\nglobalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\nfor(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});\nconst schema=globalThis.closedLoopWorkflowSchema;\nassert(schema,'Workflow schema failed to load.');\nconst complete=schema.operationContract(3,'COMPLETE');\nconst challenge=schema.operationContract(3,'SEMANTIC_CHALLENGE');\nconst reconcile=schema.operationContract(3,'RECONCILE_RESEARCH');\nassert(complete.agentWritableCollections.includes('research')&&complete.agentWritableCollections.includes('candidateRequirements'),'Stage 03 COMPLETE lost author research families.');\nassert(challenge.agentWritableCollections.includes('semanticChallenges'),'Stage 03 SEMANTIC_CHALLENGE does not write the durable semanticChallenges family.');\nassert(!challenge.agentWritableCollections.includes('research')&&!challenge.agentWritableCollections.includes('candidateRequirements'),'Stage 03 challenger can overwrite the author extraction.');\nassert(challenge.readCollections.includes('sources'),'Stage 03 challenge cannot inspect the accepted source set.');\nassert(!challenge.readCollections.includes('research')&&!challenge.readCollections.includes('candidateRequirements'),'Stage 03 omission challenger receives the first extraction before completing its independent pass.');\nassert(reconcile.agentWritableCollections.includes('semanticReviews'),'Stage 03 RECONCILE_RESEARCH does not create the durable reconciliation review record.');\nfor(const family of ['research','candidateRequirements','semanticChallenges'])assert(reconcile.readCollections.includes(family),`Stage 03 reconciliation omits ${family}.`);\nconsole.log(JSON.stringify({stage03SourceResearchOperationClosure:true}));\n""")
+          p=Path('build-test-project.mjs'); s=p.read_text()
+          old="execFileSync(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'});"
+          new="execFileSync(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'});\nexecFileSync(process.execPath,['verify-stage03-source-research.mjs'],{stdio:'inherit'});"
+          if old in s and "verify-stage03-source-research.mjs" not in s: s=s.replace(old,new,1)
+          elif "verify-stage03-source-research.mjs" not in s: raise SystemExit('Build verifier insertion anchor changed')
+          p.write_text(s)
+          PY
+      - name: Prove invalid fixture is detected and repaired behavior progresses
+        run: |
+          set -euo pipefail
+          node verify-stage03-source-research.mjs
+          node verify-contract-closure.mjs
+          node verify-data-route-closure.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node build-test-project.mjs
+      - name: Commit only the behavioral repair and permanent regressions
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-controller
+          git config user.email closed-loop-controller@users.noreply.github.com
+          git add workflow-schema.js verify-spec-grounded-route-oracle.mjs verify-stage03-source-research.mjs build-test-project.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Fix Stage 03 independent source-research challenge contracts"
+          git push origin HEAD:controller-stage03-semantics-20260904b
