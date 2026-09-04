@@ -25,7 +25,7 @@ new="REQUIREMENT_COVERAGE:metrics.requirementCoverage,VERIFICATION_COVERAGE:metr
 if old not in s: raise SystemExit('Stage 21 convergence numeric-field marker missing')
 s=s.replace(old,new,1)
 insert="""
-replace_once('verify-browser.mjs',"await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));","await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true||Boolean(globalThis.closedLoopAppError)`,20000);{const appError=await evalValue(cdp,`globalThis.closedLoopAppError||''`);assert(!appError,appError);}assert(await evalValue(cdp,`globalThis.closedLoopAppReady===true`),'Application did not reach ready state.');")
+replace_once('verify-browser.mjs',"await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));","await waitExpr(cdp,`document.readyState==='complete'`);try{await waitExpr(cdp,`globalThis.closedLoopAppReady===true||Boolean(globalThis.closedLoopAppError)`,20000);}catch(error){throw new Error(`${error.message}\\nBrowser startup events: ${JSON.stringify(cdp.events.slice(-80))}`);}{const appError=await evalValue(cdp,`globalThis.closedLoopAppError||''`);assert(!appError,appError);}assert(await evalValue(cdp,`globalThis.closedLoopAppReady===true`),'Application did not reach ready state.');")
 """
 marker="print('Stage 21 applicator completed.')"
 if marker not in s: raise SystemExit('Stage 21 applicator final marker missing')
