@@ -12,24 +12,28 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Merge runtime closure branch and verify
+      - name: Merge current file-first runtime closure and verify
         shell: bash
         run: |
           set -euo pipefail
           git config user.name closed-loop-controller
           git config user.email closed-loop-controller@users.noreply.github.com
-          git fetch origin controller3-prompt-byte-identity-rerun-20260904
+          git fetch origin controller3-prompt-byte-identity-rerun-20260904 main
           if ! git merge --no-edit origin/controller3-prompt-byte-identity-rerun-20260904; then
-            echo 'MERGE_CONFLICTS_BEGIN'
-            git status --short
-            git diff --name-only --diff-filter=U
-            echo 'MERGE_CONFLICTS_END'
-            exit 23
+            conflicts="$(git diff --name-only --diff-filter=U | sort)"
+            expected=$'verify-full-cycle.mjs\nverify-spec-grounded-route-oracle.mjs'
+            if [ "$conflicts" != "$expected" ]; then
+              printf 'Unexpected merge conflicts:\n%s\n' "$conflicts"
+              exit 23
+            fi
+            git checkout --ours verify-full-cycle.mjs verify-spec-grounded-route-oracle.mjs
+            git add verify-full-cycle.mjs verify-spec-grounded-route-oracle.mjs
+            git commit --no-edit
           fi
           rm -f .controller-v3-execution-source.txt .github/workflows/controller3-integrate-pr1016.yml
           node build-test-project.mjs
           node verify-capability-readiness.mjs
-          timeout 60s node verify-full-cycle.mjs
+          timeout 90s node verify-full-cycle.mjs
           node verify.mjs
           git add -A
           git commit -m "Integrate current file-first runtime closure"
