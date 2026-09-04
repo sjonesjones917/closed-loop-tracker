@@ -2,74 +2,110 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "04",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "a07d36f8c46b6b8a6e4cd04c22756c20cdd99b52",
-  "endingMainCommit": "a07d36f8c46b6b8a6e4cd04c22756c20cdd99b52",
-  "implementationCommitIds": [
-    "a07d36f8c46b6b8a6e4cd04c22756c20cdd99b52"
-  ],
+  "stageName": "STAGE 01 SEMANTIC INTAKE",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "2139db19a7cd961d1acfd28004657db3620d6fe4",
+  "endingMainCommit": "2139db19a7cd961d1acfd28004657db3620d6fe4",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "specificationSections": ["6.2", "6.4", "6.5", "6.5A", "6.6", "7.1", "7.2", "7.3", "7.4", "49", "52"],
+  "implementationFiles": [
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "workflow-schema.js",
+    "workbook.js"
+  ],
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-stage01-intake-closure.mjs && node verify-one-time-intent-intake.mjs && node verify-zero-loss-accounting.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33849305311, test job 100948215065, step 12 (Stage 01 raw intake and semantic accounting), exact main 2139db19a7cd961d1acfd28004657db3620d6fe4, completed success."
     },
     {
-      "command": "node verify-data-route-closure.mjs",
-      "exitCode": 0
+      "command": "node verify-all-stage-prompts.mjs && node verify-stage-prompts-complete.mjs && node verify-user-prompt-invariants.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33849305311, test job 100948215065, step 13 (Stage 04 obligation accounting and prompt completeness), exact main 2139db19a7cd961d1acfd28004657db3620d6fe4, completed success."
     },
     {
-      "command": "node verify-infrastructure-route-closure.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33849305311, test job 100948215065, step 16 (Workflow, gates, and full cycle), exact main 2139db19a7cd961d1acfd28004657db3620d6fe4, completed success."
     },
     {
-      "command": "node verify-complete.mjs",
-      "exitCode": 0
+      "command": "node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33849305311, test job 100948215065, step 18 (Prompt semantics and leakage), exact main 2139db19a7cd961d1acfd28004657db3620d6fe4, completed success."
     },
     {
-      "command": "GitHub Actions run 33828268150 test job 100885484718",
-      "exitCode": 0
+      "command": "node verify-live.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33849305311, verify-live job 100949179214, exact deployed-byte verification and deployed Chromium operator path, exact main 2139db19a7cd961d1acfd28004657db3620d6fe4, completed success."
     }
   ],
   "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564"
-    }
-  ],
-  "intentionalInvalidFixtures": [
-    "agent-writes-human",
-    "cross-project-target",
-    "wrong-cardinality",
-    "stage-data-override",
-    "append-only-rewrite"
+    {"path":"specification/closed-loop-reliability-controlling-implementation-specification.txt","sha256":"6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"},
+    {"path":"verify-stage01-intake-closure.mjs","gitBlobSha1":"27a2941404795535b3c828b4d6e7d2eb5fdfc7c3"},
+    {"path":"verify-one-time-intent-intake.mjs","gitBlobSha1":"229d2851bd9f27687abac41b56bd67685401831d"},
+    {"path":"verify-zero-loss-accounting.mjs","gitBlobSha1":"d69ae53fb0033841f98dc43763f203ba238d8326"},
+    {"path":"verify-user-prompt-invariants.mjs","gitBlobSha1":"595070a931017f8a711d76cd438263d1a76c4b69"}
   ],
   "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"}
+  ],
+  "intentionalInvalidFixtures": [
+    "omitted raw input unit is rejected",
+    "required supplied file without external inspection claim is rejected",
+    "required supplied file omitted from the authoritative handoff is rejected",
+    "incomplete semantic intake accounting is rejected at ingestion",
+    "Stage 04 generation from incomplete Stage 01 is rejected",
+    "Stage 04 generation from incomplete or unsaturated Stage 03 is rejected",
+    "later-stage repeat request for already captured project information is rejected by prompt invariants",
+    "incomplete downstream obligation accounting is rejected"
+  ],
+  "repairedStateProofs": [
+    "Stage 01 is explicitly presented to the external agent as the first semantic reader rather than a hidden pre-intake semantic process",
+    "the Stage 01 prompt is bound to the current application-owned raw-input manifest and requires exhaustive accounting of every controlled input unit",
+    "required supplied files cannot satisfy Stage 01 completion unless included in handoff and the agent claims inspection with consistent unit accounting",
+    "accepted Stage 01 semantic intake is durable canonical project information reused by later stages without requiring the user to resupply the same project facts",
+    "Stage 04 receives the complete accepted Stage 01 capture and current Stage 03 material rather than reconstructing user intent",
+    "application validation rejects incomplete Stage 01 accounting instead of treating semantic coverage as mechanically proven",
+    "the implementation preserves the authority boundary: semantic statements remain agent-owned claims while raw-unit completeness remains application-owned"
+  ],
+  "browserProofs": [
     {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
+      "workflowRunId": 33849305311,
+      "jobId": 100949179214,
+      "proof": "deployed Chromium operator path on exact deployed bytes",
+      "status": "PASS",
+      "commit": "2139db19a7cd961d1acfd28004657db3620d6fe4"
     }
   ],
-  "browserProofs": [],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {
+      "workflowRunId": 33849305311,
+      "jobId": 100949089653,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
+      "status": "PASS",
+      "commit": "2139db19a7cd961d1acfd28004657db3620d6fe4"
+    },
+    {
+      "workflowRunId": 33849305311,
+      "jobId": 100949179214,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "2139db19a7cd961d1acfd28004657db3620d6fe4"
+    }
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 20,
-  "proofCountAfter": 25,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "05"
+  "directEvidenceReview": "PASS",
+  "nextStage": "05",
+  "notes": "This is an implementation-stage proof of the Stage 01 semantic-intake contract. It does not claim that any particular external agent actually performed semantic extraction on a real user project, that any semantic interpretation is true, or that human authority, physical-iPhone, independent-context, or external-system evidence exists. The stale historical proof previously occupying this path remains preserved by Git history and is not relied upon for current-spec completion."
 }
