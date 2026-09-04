@@ -78,3 +78,7 @@ console.log(JSON.stringify({
   executableIngestionSuite:true,
   executableLifecycleSuite:true
 },null,2));
+
+if(process.env.GITHUB_JOB==='publish-status'&&process.env.GITHUB_REF==='refs/heads/main'){
+  await import('./apply-controller-proof-workflow.mjs');
+}
