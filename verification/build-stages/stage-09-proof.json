@@ -2,96 +2,157 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "09",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "8aa627bc1edd3556d4eeaddc64729a62775d4cfc",
-  "endingMainCommit": "8aa627bc1edd3556d4eeaddc64729a62775d4cfc",
-  "implementationCommitIds": [
-    "8aa627bc1edd3556d4eeaddc64729a62775d4cfc"
-  ],
+  "stageName": "TEST IR RUNTIME",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "4d439912a29f69d4becb73997a641e1b069cab7d",
+  "endingMainCommit": "4d439912a29f69d4becb73997a641e1b069cab7d",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "specificationSections": [
+    "21",
+    "21.1",
+    "21.2",
+    "21.3",
+    "21.4",
+    "21.5",
+    "21.6",
+    "21.7",
+    "21.8",
+    "21.9",
+    "21.10",
+    "21.11",
+    "21.12",
+    "21.13",
+    "21.14",
+    "21.15",
+    "21.16",
+    "21.17",
+    "22",
+    "22.1",
+    "22.2",
+    "22.3",
+    "22.4",
+    "22.5",
+    "22.6",
+    "23",
+    "23.1",
+    "49",
+    "52"
+  ],
+  "implementationFiles": [
+    "test-runtime.js",
+    "test-worker.js",
+    "hash.js",
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "verify-test-runtime-v3.mjs",
+    "verify-test-runtime-limits.mjs",
+    "verify-test-runtime.mjs",
+    "verify-test-ir-port-types.mjs",
+    "verify-hash.mjs",
+    "verify-v3-contract.mjs",
+    "verify-complete.mjs"
+  ],
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-test-runtime-v3.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33860865783, test job 100984747961, step 14 (Test IR validation, security, and deterministic runtime), exact canonical main 4d439912a29f69d4becb73997a641e1b069cab7d, completed success."
+    },
+    {
+      "command": "node verify-test-runtime-limits.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33860865783, test job 100984747961, step 14, exact canonical main, completed success; centralized hard limits and boundary failures were executed."
+    },
+    {
+      "command": "node verify-test-runtime.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33860865783, test job 100984747961, step 14, exact canonical main, completed success; generic declarative Test IR execution and the port-type regression were executed."
+    },
+    {
+      "command": "node verify-hash.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33860865783, test job 100984747961, step 14, exact canonical main, completed success; canonical SHA-256 authority, runtime build identity, and Test IR worker cache/build binding were verified."
     },
     {
       "command": "node verify-v3-contract.mjs",
-      "exitCode": 0
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33860865783, test job 100984747961, step 11 (Migration and v3 contracts), exact canonical main, completed success; closed-loop-test-spec/1 remains the required Test IR schema identity."
     },
     {
       "command": "node verify-complete.mjs",
-      "exitCode": 0
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33860865783, test job 100984747961, step 16 (Workflow, gates, and full cycle), exact canonical main, completed success; application-native execution capability remains CLOSED_LOOP_TEST_IR and native results remain application-owned."
     }
   ],
   "proofArtifactDigests": [
     {
       "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
+      "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"
     },
     {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
+      "path": "verification/build-stages/archive/stage-09-proof-spec-3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564.json",
+      "purpose": "Preserves the superseded Stage 09 proof bytes before replacing the canonical Stage 09 proof with current-spec evidence."
     }
-  ],
-  "intentionalInvalidFixtures": [
-    "self-staleness",
-    "duplicate-effect",
-    "nonce-binding",
-    "target-slot-tamper",
-    "delete-clone-retry"
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    }
+    {"stage": "01", "proofPath": "verification/build-stages/stage-01-proof.json", "status": "PASS"},
+    {"stage": "02", "proofPath": "verification/build-stages/stage-02-proof.json", "status": "PASS"},
+    {"stage": "03", "proofPath": "verification/build-stages/stage-03-proof.json", "status": "PASS"},
+    {"stage": "04", "proofPath": "verification/build-stages/stage-04-proof.json", "status": "PASS"},
+    {"stage": "05", "proofPath": "verification/build-stages/stage-05-proof.json", "status": "PASS"},
+    {"stage": "06", "proofPath": "verification/build-stages/stage-06-proof.json", "status": "PASS"},
+    {"stage": "07", "proofPath": "verification/build-stages/stage-07-proof.json", "status": "PASS"},
+    {"stage": "08", "proofPath": "verification/build-stages/stage-08-proof.json", "status": "PASS"}
+  ],
+  "intentionalInvalidFixtures": [
+    "unknown Test IR operation is rejected",
+    "unknown executable property and arbitrary JavaScript source are rejected",
+    "wrong Test IR specification version is rejected",
+    "specification without an assertion is rejected",
+    "duplicate JSON member and unsupported JSON number are rejected",
+    "CSV parser without explicit delimiter/header/newline contract is rejected",
+    "unsupported XML selector syntax is rejected",
+    "unsafe decimal equality and approximate comparison without tolerance are rejected",
+    "unsafe regex constructs and over-limit regex inputs are rejected",
+    "input-byte, text-byte, parsed-depth, collection, selector-depth, CSV-cell, XML-node, decompression, archive-expansion, and step-count limits fail closed",
+    "worker timeout yields EXECUTION_FAILED with no partial observations",
+    "semantic Test IR mutation changes the normalized Test IR hash",
+    "worker/runtime build identity divergence is rejected by the shared build-identity contract"
+  ],
+  "repairedStateProofs": [
+    "the application-owned closed-loop-test-spec/1 declarative language is the native deterministic runtime authority",
+    "the required primitive registry is present and arbitrary JavaScript, Python, shell, dynamic custom code, and unknown operations are not accepted as native Test IR",
+    "JSON, CSV, XML, restricted selectors, byte comparison, integer arithmetic, decimal modes, regex subset, canonical hashing, and multi-artifact bindings are exercised",
+    "resource limits are explicit centralized finite constants and boundary violations fail closed",
+    "worker timeout is an execution failure and produces no partial canonical result",
+    "native Test IR identity is bound to canonical specification hashes and the same runtime build identity",
+    "application-native Test IR execution remains separated from external-agent, human, independent-reviewer, and external-system routes"
   ],
   "browserProofs": [],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {
+      "workflowRunId": 33860865783,
+      "jobId": 100985587106,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
+      "status": "PASS",
+      "commit": "4d439912a29f69d4becb73997a641e1b069cab7d"
+    },
+    {
+      "workflowRunId": 33860865783,
+      "jobId": 100985785504,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "4d439912a29f69d4becb73997a641e1b069cab7d"
+    }
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 42,
-  "proofCountAfter": 45,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "10"
+  "directEvidenceReview": "PASS",
+  "nextStage": "10",
+  "notes": "This proves the repository implementation of the application-owned declarative Test IR runtime on exact current main and records the successful exact-main deployment/byte-identity jobs. It does not claim physical-iPhone execution, human authority, independent-context adjudication, or external-system execution."
 }
