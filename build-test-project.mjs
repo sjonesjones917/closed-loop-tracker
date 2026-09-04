@@ -33,7 +33,7 @@ if(fs.existsSync('app.js')||/document\.write\s*\(/.test(html))throw new Error('D
 for(const retiredToken of ['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'])if(html.includes(retiredToken))throw new Error(`Obsolete runtime layer is still loaded: ${retiredToken}`);
 for(const token of ['closed-loop-stage-response/3','PRODUCER','STAGE_CONTRACTS','sourceClassificationIssues','HUMAN_INTAKE_FIELDS'])if(!schema.includes(token))throw new Error(`Ownership/response schema control missing: ${token}`);
 for(const token of ['strictParse','validateEnvelope','PENDING_OPERATOR_REVIEW','ACCEPTED_DATA_CHANGE','extractionManifests','answerHumanInput'])if(!ingestion.includes(token))throw new Error(`Transactional ingestion control missing: ${token}`);
-for(const token of ['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
+for(const token of ['STRICT RESPONSE CONTRACT','AUTHORITATIVE FILE-FIRST RESPONSE BINDING','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
 for(const token of ['Stage and validate response file','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control'])if(!app.includes(token))throw new Error(`Human-facing ingestion UI missing: ${token}`);
 if(/MutationObserver/.test(html+app+prompts+schema+ingestion))throw new Error('Patch-style MutationObserver behavior remains in the active application.');
 const activeSource=html+app+prompts+schema+ingestion+fs.readFileSync('workflow-engine.js','utf8')+fs.readFileSync('project-store.js','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('test-runtime.js','utf8')+fs.readFileSync('test-worker.js','utf8');
@@ -46,5 +46,7 @@ if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-res
 
 // Run the independent specification-side route ruler in a clean process so production declarations cannot serve as their own oracle.
 execFileSync(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'});
+// Execute the authoritative prompt byte identity regression instead of accepting a source token as proof.
+execFileSync(process.execPath,['verify-authoritative-prompt-file-identity.mjs'],{stdio:'inherit'});
 
-console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true},null,2));
+console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true,authoritativePromptByteIdentity:true},null,2));
