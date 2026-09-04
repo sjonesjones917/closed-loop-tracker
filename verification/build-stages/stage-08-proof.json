@@ -2,95 +2,156 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "08",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "c309970bbbad472e590ed70a3a0774579c6b005d",
-  "endingMainCommit": "c309970bbbad472e590ed70a3a0774579c6b005d",
-  "implementationCommitIds": [
-    "c309970bbbad472e590ed70a3a0774579c6b005d"
-  ],
+  "stageName": "REQUIREMENT RESOLUTION",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "786aa43b2e6504c564a5cf87cbd47a275aeee801",
+  "endingMainCommit": "786aa43b2e6504c564a5cf87cbd47a275aeee801",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "specificationSections": [
+    "Stage 05 — RESOLVE THE REQUIREMENT SET",
+    "37 Stage 05",
+    "38 requirementResolutions",
+    "38 applicabilityRecords",
+    "40",
+    "41",
+    "44",
+    "45",
+    "49",
+    "52"
+  ],
+  "implementationFiles": [
+    "workbook.js",
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "verify-full-cycle.mjs",
+    "verify-project-lifecycle.mjs",
+    "verify-all-stage-prompts.mjs",
+    "verify-stage-prompts-complete.mjs",
+    "verify-user-prompt-invariants.mjs"
+  ],
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node build-test-project.mjs && node verify.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, test job 100976954289, step 9, exact canonical main 786aa43b2e6504c564a5cf87cbd47a275aeee801, completed success."
     },
     {
-      "command": "node verify-file-first-operator.mjs",
-      "exitCode": 0
+      "command": "node verify-data-route-closure.mjs && node verify-infrastructure-route-closure.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, test job 100976954289, step 10, exact canonical main, completed success; requirement-resolution and applicability records remain on the canonical current-scope route."
+    },
+    {
+      "command": "node verify-v3-migration.mjs && node verify-v3-contract.mjs && node verify-spec3-contract.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, test job 100976954289, step 11, exact canonical main, completed success."
+    },
+    {
+      "command": "node verify-all-stage-prompts.mjs && node verify-stage-prompts-complete.mjs && node verify-user-prompt-invariants.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, test job 100976954289, step 13, exact canonical main, completed success; Stage 05 prompt contract includes complete requirement-resolution defect checks and current context."
     },
     {
       "command": "node verify-ingestion.mjs",
-      "exitCode": 0
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, test job 100976954289, step 15, exact canonical main, completed success; malformed, stale, wrong-scope, ownership, relationship, evidence, and attachment failures are rejected before canonical mutation."
     },
     {
-      "command": "node verify-complete.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, test job 100976954289, step 16, exact canonical main, completed success. Direct source inspection of verify-full-cycle.mjs confirms Stage 05 resolves the current requirement set with explicit duplicate, impossible-combination, undefined-term, circular-dependency, unsupported-requirement, applicability-undetermined, and missing-verification-path fields, creates a current applicability record, and requires the Stage 05 gate before Stage 06."
+    },
+    {
+      "command": "node verify-project-lifecycle.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, test job 100976954289, step 17, exact canonical main, completed success; Stage 05 requirements-version registration does not create a replacement version when no replacement requirement set exists."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, test job 100976954289, step 19, local Chromium operator path on exact canonical main, completed success."
+    },
+    {
+      "command": "node verify-live.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33858411330, verify-deployed job 100977833395, exact deployed-byte verification and deployed Chromium operator path for exact canonical main, completed success."
     }
   ],
   "proofArtifactDigests": [
     {
       "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
+      "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"
     },
     {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
+      "path": "verification/build-stages/archive/stage-08-proof-spec-3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564.json",
+      "purpose": "Preserves the superseded Stage 08 proof bytes before replacing the canonical Stage 08 proof with current-spec evidence."
     }
-  ],
-  "intentionalInvalidFixtures": [
-    "package-order-mutation",
-    "package-rename",
-    "missing-member",
-    "duplicate-member",
-    "unsafe-archive-path"
   ],
   "earlierStageProofsReplayed": [
+    {"stage": "01", "proofPath": "verification/build-stages/stage-01-proof.json", "status": "PASS"},
+    {"stage": "02", "proofPath": "verification/build-stages/stage-02-proof.json", "status": "PASS"},
+    {"stage": "03", "proofPath": "verification/build-stages/stage-03-proof.json", "status": "PASS"},
+    {"stage": "04", "proofPath": "verification/build-stages/stage-04-proof.json", "status": "PASS"},
+    {"stage": "05", "proofPath": "verification/build-stages/stage-05-proof.json", "status": "PASS"},
+    {"stage": "06", "proofPath": "verification/build-stages/stage-06-proof.json", "status": "PASS"},
+    {"stage": "07", "proofPath": "verification/build-stages/stage-07-proof.json", "status": "PASS"}
+  ],
+  "intentionalInvalidFixtures": [
+    "unresolved duplicate cannot be silently accepted",
+    "unknown applicability cannot be treated as resolved applicability",
+    "unsupported requirement cannot silently remain in a resolved set",
+    "missing verification path cannot silently satisfy requirement resolution",
+    "Stage 05 cannot create a requirements version without a replacement requirement set"
+  ],
+  "repairedStateProofs": [
+    "Stage 05 receives the current compiled requirement set and resolves explicit defect categories rather than silently discarding them",
+    "current applicability records are represented as canonical current-scope records",
+    "requirement resolution remains fail-closed for unresolved applicability and unsupported or unverifiable requirements",
+    "requirements-version registration is conditioned on an actual replacement requirement set",
+    "Stage 06 cannot proceed until Stage 05 gate completion",
+    "the requirement-resolution operator path is exercised in local Chromium and on exact deployed bytes"
+  ],
+  "browserProofs": [
     {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
+      "workflowRunId": 33858411330,
+      "jobId": 100976954289,
+      "proof": "local Chromium operator path",
+      "status": "PASS",
+      "commit": "786aa43b2e6504c564a5cf87cbd47a275aeee801"
     },
     {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
+      "workflowRunId": 33858411330,
+      "jobId": 100977833395,
+      "proof": "deployed Chromium operator path on exact deployed bytes",
+      "status": "PASS",
+      "commit": "786aa43b2e6504c564a5cf87cbd47a275aeee801"
     }
   ],
-  "browserProofs": [],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {
+      "workflowRunId": 33858411330,
+      "jobId": 100977727284,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
+      "status": "PASS",
+      "commit": "786aa43b2e6504c564a5cf87cbd47a275aeee801"
+    },
+    {
+      "workflowRunId": 33858411330,
+      "jobId": 100977833395,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "786aa43b2e6504c564a5cf87cbd47a275aeee801"
+    }
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 38,
-  "proofCountAfter": 42,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "09"
+  "directEvidenceReview": "PASS",
+  "nextStage": "09",
+  "notes": "This proves the repository implementation of requirement resolution on exact current main. It does not claim an unavailable human decision, physical-iPhone execution, or independent external semantic adjudication."
 }
