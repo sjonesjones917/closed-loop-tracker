@@ -43,7 +43,12 @@ jobs:
           newctx="function reviewerContext(p,label){const ctx=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});for(let n=1;n<=8;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}return ctx;}"
           if v.count(oldctx)!=1:
               raise SystemExit(f'Expected one reviewerContext fixture helper; found {v.count(oldctx)}')
-          vp.write_text(v.replace(oldctx,newctx,1))
+          v=v.replace(oldctx,newctx,1)
+          oldoracle="  const before=JSON.stringify(p),prepared=ingestion.prepare(p,{stage:9,text:JSON.stringify(envelope),promptRecord:pr});\n  assert(prepared.validation.valid,`Stage 09 response rejected before semantic gate: ${JSON.stringify(prepared.validation.issues)}`);\n  assert(JSON.stringify(prepared.project)===before,'Stage 09 proposal mutated canonical project state before explicit acceptance.');"
+          neworacle="  const beforeRevision=Number(p.revision||0),beforeAccepted=p.projectData.acceptedChanges.length,beforePreflight=engine.recordsForCurrentScope(p,'preflightRecords').length,prepared=ingestion.prepare(p,{stage:9,text:JSON.stringify(envelope),promptRecord:pr});\n  assert(prepared.validation.valid,`Stage 09 response rejected before semantic gate: ${JSON.stringify(prepared.validation.issues)}`);\n  assert(Number(prepared.project.revision||0)===beforeRevision,'Stage 09 proposal changed canonical project revision before explicit acceptance.');\n  assert(prepared.project.projectData.acceptedChanges.length===beforeAccepted,'Stage 09 proposal created an accepted canonical change before explicit acceptance.');\n  assert(engine.recordsForCurrentScope(prepared.project,'preflightRecords').length===beforePreflight,'Stage 09 proposal created a canonical preflight record before explicit acceptance.');"
+          if v.count(oldoracle)!=1:
+              raise SystemExit(f'Expected one preacceptance mutation oracle; found {v.count(oldoracle)}')
+          vp.write_text(v.replace(oldoracle,neworacle,1))
           PY
           node --check workflow-engine.js
           node verify-independent-preflight.mjs
