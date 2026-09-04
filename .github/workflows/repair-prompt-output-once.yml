@@ -1,0 +1,76 @@
+name: Apply exact prompt output repair once
+
+on:
+  push:
+    branches: [fix/prompt-response-file-output-20260904]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Restore intact source and apply exactly three replacements
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import pathlib
+          import subprocess
+          baseline = 'dc725857eeca3b518e54bda44a68caf99189b6aa'
+          raw = subprocess.check_output(['git', 'show', baseline + ':prompt-engine.js'])
+          assert hashlib.sha256(raw).hexdigest() == 'd5f553432eef2ada1fb90272b0d8c3a6290033eda4f647822468b59849fbe226'
+          test_path = pathlib.Path('verify-file-first-response.mjs')
+          assert hashlib.sha256(test_path.read_bytes()).hexdigest() == 'c91444578af1b7c96044cc0b8d2b5269e25184bf2b9894091aae54bcc5d67ded'
+          source = raw.decode('utf-8')
+          replacements = [
+              ("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/58';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/59';"),
+              ('- When the stage is ready, return exactly one complete strict JSON object and no surrounding prose. The human must never be asked to repair agent JSON. Use ASCII U+0022 double quotation marks, valid escaping, only contract-declared keys, and self-check that the final text parses as JSON before sending it.', '- When the stage is ready, create exactly one authoritative UTF-8 JSON file named response.json (application/json, without a byte-order mark). The file must contain exactly one complete strict JSON object with no surrounding prose or Markdown wrapper. Return every required output artifact as a separate file matching its declared attachment entry. Do not substitute inline or pasted JSON for response.json. The final chat message must contain only links or attachments to the actual returned files. The human must never be asked to create, repair, or reformat agent JSON. Use ASCII U+0022 double quotation marks, valid escaping, only contract-declared keys, and self-check that the saved file parses as JSON before returning it.'),
+              ('- Return one final strict JSON object only when ready for machine ingestion. Use ASCII quotation marks and no Markdown wrapper.', '- Return one authoritative UTF-8 JSON file named response.json only when ready for machine ingestion, plus every required returned artifact as a separate file. Put only the strict response object inside response.json; use ASCII quotation marks and no Markdown wrapper. Preserve the exact application-provided response identity and scope from the STRICT RESPONSE CONTRACT; do not invent or recalculate them.')
+          ]
+          for old, new in replacements:
+              assert source.count(old) == 1, 'Replacement anchor must be unique'
+              source = source.replace(old, new)
+          result = source.encode('utf-8')
+          assert len(result) == 108326
+          assert hashlib.sha256(result).hexdigest() == 'd91f6f87a6681b6c93316f3d7b145ca97ab0b0e6f988dfbff2cb1ed2de650e91'
+          pathlib.Path('prompt-engine.js').write_bytes(result)
+          pathlib.Path('.github/workflows/repair-prompt-output-once.yml').unlink()
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only', baseline], text=True).splitlines())
+          assert changed == {'prompt-engine.js', 'verify-file-first-response.mjs'}, changed
+          print('Exact source bytes restored. Net diff contains only the two authorized files.')
+          PY
+      - name: Verify the repaired source and all generated output contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node --check verify-file-first-response.mjs
+          node verify-file-first-response.mjs
+          node build-test-project.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-operation-boundaries.mjs
+          echo 'd91f6f87a6681b6c93316f3d7b145ca97ab0b0e6f988dfbff2cb1ed2de650e91  prompt-engine.js' | sha256sum --check
+          echo 'c91444578af1b7c96044cc0b8d2b5269e25184bf2b9894091aae54bcc5d67ded  verify-file-first-response.mjs' | sha256sum --check
+      - name: Publish verified repair and remove this temporary runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- prompt-engine.js .github/workflows/repair-prompt-output-once.yml
+          git commit -m 'Restore intact prompt source and require response.json delivery'
+          git push origin HEAD:fix/prompt-response-file-output-20260904
