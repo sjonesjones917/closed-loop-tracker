@@ -34,7 +34,7 @@ jobs:
           replacements={
           'verify-spec-grounded-route-oracle.mjs':("extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT'}]","extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT',sourceLocation:u.kind==='SUPPLIED_MATERIAL'?u.sourceLocation:undefined}]"),
           'verify-stage-prompts-complete.mjs':("'STRICT RESPONSE CONTRACT'","'RESPONSE CONTRACT DEFINITIONS'"),
-          'verify-human-stage-walkthrough.mjs':("if(!text.includes('STRICT RESPONSE CONTRACT'))throw new Error(`Stage ${stage} generated prompt lacks response contract.`);","if(!text.includes('RESPONSE CONTRACT DEFINITIONS')||!text.includes('closed-loop-stage-response/3'))throw new Error(`Stage ${stage} generated prompt lacks response contract.`);")}
+          'verify-human-stage-walkthrough.mjs':("if(!text.includes('STRICT RESPONSE CONTRACT'))throw new Error('Stage '+stage+' '+operation+' omitted its response contract.');","if(!text.includes('RESPONSE CONTRACT DEFINITIONS')||!text.includes('closed-loop-stage-response/3'))throw new Error('Stage '+stage+' '+operation+' omitted its response contract.');")}
           for path,(old,new) in replacements.items():
               p=Path(path); s=p.read_text()
               if old in s: s=s.replace(old,new,1)
