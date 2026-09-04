@@ -2,7 +2,7 @@
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
   "specificationSourceCommit": "b71e828461c86184e9a08f738453443e6b579aab",
-  "lastObservedMainCommit": "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f",
+  "lastObservedMainCommit": "b9655e2632eea3a974a16c79b9e5c4f2fbbb05bf",
   "stages": {
     "10": {
       "status": "PROVEN",
@@ -169,11 +169,29 @@
       ]
     },
     "18": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
+      "status": "PROVEN",
+      "provenCommit": "b9655e2632eea3a974a16c79b9e5c4f2fbbb05bf",
+      "proofRecordPath": "verification/build-stages/stage-18-proof.json",
+      "proofDigest": "cbc7c2143d22294b2e1ae3a6872dd98f15e0b93763ed5566886cf12e1b8a431d",
+      "prerequisiteStageDigests": [
+        "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
+        "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
+        "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
+        "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
+        "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
+        "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
+        "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
+        "1952f2d7902e247d5da6d90b5fbc67774078b84283392e9069d059e84c1949da",
+        "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+        "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+        "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
+        "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
+        "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
+        "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
+        "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
+        "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
+        "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d"
+      ]
     },
     "19": {
       "status": "NOT_STARTED",
@@ -367,7 +385,7 @@
       ]
     }
   },
-  "proofCount": 71,
+  "proofCount": 75,
   "conformantRequirementCount": 7,
-  "lastUpdatedByCommandId": "CI-33836830338-STAGE17"
+  "lastUpdatedByCommandId": "CI-33837486984-STAGE18"
 }
