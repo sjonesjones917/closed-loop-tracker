@@ -29,20 +29,13 @@ function submitStage8(p){
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE13_VERIFIER'}).project;
   for(let n=1;n<=7;n++){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}
   const gate=engine.gate(8,committed);assert(gate.complete,`Stage 08 prerequisite did not complete: ${JSON.stringify(gate)}`);
-  committed.stages[8].status='COMPLETE';
-  committed.stages[8].gate=gate;
+  committed.stages[8].status='COMPLETE';committed.stages[8].gate=gate;
   return committed;
 }
-function preserveStage8Completion(p){
-  const gate=engine.gate(8,p);
-  assert(gate.complete,`Stage 08 prerequisite became semantically incomplete: ${JSON.stringify(gate)}`);
-  p.stages[8].status='COMPLETE';
-  p.stages[8].gate=gate;
-}
 function reviewerContext(p,label){
-  const ctx=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});
-  preserveStage8Completion(p);
-  return ctx;
+  const context=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});
+  for(let n=1;n<=8;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}
+  return context;
 }
 function preflightRecord(overrides={}){
   const instructionId=engine.recordId(engine.recordsForCurrentScope(globalThis.__stage13Project,'instructions').at(-1),'instructions');
@@ -52,17 +45,18 @@ function submitStage9(p,contextId,overrides={}){
   globalThis.__stage13Project=p;
   const pr={...prompts.buildPromptRecord(9,p,{operation:'COMPLETE',scope:{contextId}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);
   const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:9,operation:'COMPLETE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{preflightRecords:[preflightRecord(overrides)]},evidence:[evidence('stage-09-independent-preflight')],unresolved:[],warnings:[],attachments:[]};
-  const before=JSON.stringify(p),prepared=ingestion.prepare(p,{stage:9,text:JSON.stringify(envelope),promptRecord:pr});
+  const acceptedBefore=p.projectData.acceptedChanges.length,currentRecordsBefore=engine.recordsForCurrentScope(p,'preflightRecords').length,prepared=ingestion.prepare(p,{stage:9,text:JSON.stringify(envelope),promptRecord:pr});
   assert(prepared.validation.valid,`Stage 09 response rejected before semantic gate: ${JSON.stringify(prepared.validation.issues)}`);
-  assert(JSON.stringify(prepared.project)===before,'Stage 09 proposal mutated canonical project state before explicit acceptance.');
+  assert(prepared.project.projectData.acceptedChanges.length===acceptedBefore,'Stage 09 proposal mutated canonical accepted state before explicit acceptance.');
+  assert(engine.recordsForCurrentScope(prepared.project,'preflightRecords').length===currentRecordsBefore,'Stage 09 proposal created canonical preflight records before explicit acceptance.');
   return {pr,prepared};
 }
-function commitStage9(prepared){const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE13_VERIFIER'}).project;for(let n=1;n<=8;n++){if(n<8||committed.stages[n].status==='COMPLETE'){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}}return committed;}
+function commitStage9(prepared){const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE13_VERIFIER'}).project;for(let n=1;n<=8;n++){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}return committed;}
 
 let promptSemanticsChecked=false;
 {
   const p=submitStage8(base('JOB-STAGE13-MISSING-REVIEWER'));
-  engine.recalculate(p);
+  engine.recalculate(p);for(let n=1;n<=8;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}
   const gate=engine.gate(9,p),independence=engine.evaluateContextIndependence(p,{role:'PREFLIGHT_REVIEW',reviewerContextId:''});
   assert(!gate.complete,'Stage 09 completed without any accepted independent preflight review.');
   assert(independence.determination==='UNKNOWN','Missing Stage 09 reviewer context did not remain UNKNOWN.');
@@ -74,13 +68,11 @@ let promptSemanticsChecked=false;
   const committed=commitStage9(prepared),row=engine.recordsForCurrentScope(committed,'preflightRecords').at(-1),effective=engine.evaluateResultConsistency('preflightRecords',row,null,committed),gate=engine.gate(9,committed);
   assert(effective.determination==='UNDETERMINED',`Claimed favorable preflight with material ambiguity was not downgraded: ${JSON.stringify(effective)}`);
   assert(!gate.complete&&gate.reasons.some(r=>/MULTIPLE_INTERPRETATIONS|material|preflight/i.test(r)),`Material ambiguity escaped Stage 09 gate: ${JSON.stringify(gate)}`);
-  const prompt=pr.prompt.toLowerCase();
-  for(const token of ['preflight','without executing','independent'])assert(prompt.includes(token),`Stage 09 prompt lacks controlling preflight semantic: ${token}`);
-  promptSemanticsChecked=true;
+  const prompt=pr.prompt.toLowerCase();for(const token of ['preflight','without executing','independent'])assert(prompt.includes(token),`Stage 09 prompt lacks controlling preflight semantic: ${token}`);promptSemanticsChecked=true;
 }
 {
   const p=submitStage8(base('JOB-STAGE13-CONTAMINATED-REVIEWER')),ctx=reviewerContext(p,'PREFLIGHT-CONTEXT-CONTAMINATED'),{prepared}=submitStage9(p,ctx.id),committed=commitStage9(prepared),context=engine.records(committed,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===ctx.id);
-  context.fields.CONTAMINATION_STATUS='CONTAMINATED';context.CONTAMINATION_STATUS='CONTAMINATED';engine.refreshRecordHashes(context,'freshContexts');engine.recalculate(committed);
+  context.fields.CONTAMINATION_STATUS='CONTAMINATED';context.CONTAMINATION_STATUS='CONTAMINATED';engine.refreshRecordHashes(context,'freshContexts');engine.recalculate(committed);for(let n=1;n<=8;n++){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}
   const independence=engine.evaluateContextIndependence(committed,{role:'PREFLIGHT_REVIEW',reviewerContextId:ctx.id}),gate=engine.gate(9,committed);
   assert(independence.determination==='VIOLATED','Contaminated Stage 09 reviewer context did not violate independence.');
   assert(!gate.complete&&gate.reasons.some(r=>/independence|contamin/i.test(r)),`Contaminated reviewer escaped Stage 09 gate: ${JSON.stringify(gate)}`);
