@@ -3,8 +3,8 @@
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "03",
   "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "0e673110d5353b3943f1843fd5a90250eda546b6",
-  "endingMainCommit": "0e673110d5353b3943f1843fd5a90250eda546b6",
+  "startingMainCommit": "ca93fa299839680f8fcd04fbfa2a806134e771ee",
+  "endingMainCommit": "ca93fa299839680f8fcd04fbfa2a806134e771ee",
   "implementationCommitIds": [
     "5343a0bee85030303dd482d34e00de48092be41d",
     "d18cd91e112b8c9737bec126e3e79b5fe1539631"
@@ -28,18 +28,18 @@
       "exitCode": 0
     },
     {
-      "command": "GitHub Actions run 33823570080 test job 100871282988",
+      "command": "GitHub Actions run 33823850991 test job 100872617770",
       "exitCode": 0
     }
   ],
   "proofArtifactDigests": [
     {
       "path": "workflow-schema.js",
-      "sourceCommit": "d18cd91e112b8c9737bec126e3e79b5fe1539631"
+      "gitBlobSha1": "e0d1fa44b36cb45315850fab927691c88a49b882"
     },
     {
       "path": "verify-contract-closure.mjs",
-      "sourceCommit": "d18cd91e112b8c9737bec126e3e79b5fe1539631"
+      "gitBlobSha1": "e9651239385776f767ee81d4b476de20ea04dc98"
     }
   ],
   "intentionalInvalidFixtures": [
