@@ -7,6 +7,7 @@ import {spawn} from 'node:child_process';
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found.');
 const serverPort=9400+Math.floor(Math.random()*300);
+const remotePort=10400+Math.floor(Math.random()*300);
 const root=process.cwd();
 const server=http.createServer((req,res)=>{
   const raw=(req.url||'/').split('?')[0],rel=raw==='/'?'index.html':decodeURIComponent(raw.replace(/^\//,''));
@@ -18,22 +19,17 @@ const server=http.createServer((req,res)=>{
 await new Promise((resolve,reject)=>server.listen(serverPort,'127.0.0.1',resolve).once('error',reject));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-human-stage-'));
 let browserStderr='';
-const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
+const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-address=127.0.0.1',`--remote-debugging-port=${remotePort}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
 child.stderr?.on('data',chunk=>{browserStderr=(browserStderr+String(chunk)).slice(-16000);});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function poll(fn,timeout=30000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
+async function poll(fn,timeout=90000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
 async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
-let ws,remotePort;
+let ws;
 try{
-  const devToolsPortFile=path.join(profile,'DevToolsActivePort');
-  remotePort=await poll(async()=>{
+  await poll(async()=>{
     if(child.exitCode!==null)throw new Error(`Chrome exited before opening DevTools (exit ${child.exitCode}). ${browserStderr}`);
-    if(!fs.existsSync(devToolsPortFile))throw new Error('Chrome has not written DevToolsActivePort yet.');
-    const [rawPort]=fs.readFileSync(devToolsPortFile,'utf8').split(/\r?\n/);
-    const port=Number(rawPort);
-    if(!Number.isInteger(port)||port<1||port>65535)throw new Error(`Chrome wrote an invalid DevTools port: ${rawPort}`);
-    await getJson(`http://127.0.0.1:${port}/json/version`);
-    return port;
+    await getJson(`http://127.0.0.1:${remotePort}/json/version`);
+    return true;
   });
   const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(`http://127.0.0.1:${serverPort}/?walkthrough=${Date.now()}`)}`,{method:'PUT'});
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
@@ -72,8 +68,8 @@ try{
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker cannot traverse all 30 stages in order.');
     picker.value='2';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,100));
     const promptElement=document.querySelector('.prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
-    const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join('\\n');
-    const compact=css.replace(/\\s+/g,' ');
+    const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join(' ');
+    const compact=css;
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
     if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
     if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
