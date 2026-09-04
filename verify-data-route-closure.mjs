@@ -33,7 +33,7 @@ engine.recalculate(state);
 const intake=prompts.intakeCoverageManifest(state);
 state.stages[1].agentData={
   EXACT_DELIVERABLE_REQUESTED:'Complete route-proven deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',
-  INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'route closure fixture',extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT'}]}))})
+  INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'retained as context',reason:'route closure fixture',extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT'}]}))})
 };
 state.stages[1].status='COMPLETE';state.stages[1].gate={complete:true,blocked:false,reasons:[]};
 state.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};state.stages[2].status='COMPLETE';state.stages[2].gate={complete:true,blocked:false,reasons:[]};
@@ -111,9 +111,17 @@ for(let stage=1;stage<=30;stage++){
       for(const collection of op.readCollections){
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
-        assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
+        if(stage===24&&collection==='artifacts'){
+          const handedOff=(record.contextManifest?.executionHandoff?.filesToSend||[]).map(item=>String(item.artifactId||''));
+          assert(JSON.stringify(ids.slice().sort())===JSON.stringify(handedOff.slice().sort()),'Stage 24 artifact context must equal the exact application handoff allowlist.');
+          assert(!ids.includes(sent.staleId),'Stage 24 artifact context leaked stale bytes outside its exact handoff.');
+          continue;
+        }
+        const blindAlias=(record.contextManifest?.blindAliasMap||[]).find(item=>String(item.canonicalId)===String(sent.currentId))?.alias;
+        const currentVisibleId=blindAlias||sent.currentId;
+        assert(ids.includes(currentVisibleId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
-        assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
+        assert(record.prompt.includes(sent.currentText)||record.prompt.includes(currentVisibleId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
         assert(!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} prompt body leaked stale ${collection}.`);
       }
       for(const collection of op.agentWritableCollections){
@@ -125,7 +133,13 @@ for(let stage=1;stage<=30;stage++){
   }
 }
 
-const terminalFamilies=new Set(['releaseGateReviews','evidenceInvestigations']);
+// Search-adequacy reviews terminate at the application-owned Stage 02 gate.
+// They are intentionally withheld from later external prompts so an earlier
+// review conclusion cannot bias later work. Prove the deterministic consumer
+// exists instead of manufacturing a downstream prompt read solely to satisfy
+// this route-closure check.
+assert(typeof engine.acceptedSourceSearchAdequacyReview==='function'&&typeof engine.sourceSearchAdequacyReviewAssessment==='function','Stage 02 search-adequacy reviews lack their application-owned gate consumer.');
+const terminalFamilies=new Set(['releaseGateReviews','evidenceInvestigations','sourceSearchAdequacyReviews']);
 for(const [collection,producers] of writeProducers){
   if(terminalFamilies.has(collection))continue;
   const consumers=readConsumers.get(collection)||[];

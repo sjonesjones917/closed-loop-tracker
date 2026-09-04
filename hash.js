@@ -3,15 +3,25 @@
 
 const MAX_SAFE_INTEGER=Number.MAX_SAFE_INTEGER;
 const MIN_SAFE_INTEGER=Number.MIN_SAFE_INTEGER;
+const HASH_ALGORITHM='SHA-256';
 const CANONICALIZATION_VERSION='closed-loop-canonical-json/1';
-const ID_VERSION='closed-loop-id/1';
-const FILENAME_VERSION='closed-loop-filename/1';
-const TRUSTED_TIME_VERSION='closed-loop-trusted-time/1';
-const UNICODE_VERSION='15.1.0';
-const UNICODE_SOURCE_IDENTITY='unicode-15.1.0/final-15.1-20230908';
-const UNICODE_SOURCE_COMMIT='9595f090650e99e3e752b37a7a3866ac8a91999b';
-const CASE_FOLDING_BLOB_SHA1='69c5c64b4c6a124f4608722db723a9e32667f190';
-const BASE32HEX_ALPHABET='0123456789abcdefghijklmnopqrstuv';
+const HASH_PROFILES=Object.freeze({
+  contentRecord:Object.freeze({
+    version:'closed-loop-content-record-hash/1',
+    includedPointers:Object.freeze(['/fields/*','/relationships','/evidenceRefs']),
+    excludedFieldNames:Object.freeze(['CREATED_AT','UPDATED_AT','VERSION','STATUS']),
+    excludesSchemaIdField:true
+  }),
+  completeRecord:Object.freeze({
+    version:'closed-loop-complete-record-hash/1',
+    includedPointers:Object.freeze(['/**']),
+    excludedRootMembers:Object.freeze(['recordSha256','sha256'])
+  }),
+  selfDigest:Object.freeze({
+    version:'closed-loop-self-digest/1',
+    rule:'Omit the owning digest field and every directly dependent self-digest field before canonicalization.'
+  })
+});
 
 function assertUnicodeScalars(value,path){
   for(let i=0;i<value.length;i++){
@@ -33,49 +43,72 @@ function compareUnicodeScalarSequence(a,b){
 }
 function stableStringify(value){
   const seen=new WeakSet();
-  const encodeString=(input,path)=>JSON.stringify(assertUnicodeScalars(String(input),path));
-  const serialize=(input,path='$')=>{
-    if(input===null)return 'null';
+  const normalize=(input,path='$')=>{
+    if(input===null)return null;
     const type=typeof input;
-    if(type==='string')return encodeString(input,path);
-    if(type==='boolean')return input?'true':'false';
+    if(type==='string')return assertUnicodeScalars(input,path);
+    if(type==='boolean')return input;
     if(type==='number'){
       if(!Number.isFinite(input))throw new TypeError(`Cannot canonically hash non-finite number at ${path}.`);
       if(Object.is(input,-0))throw new TypeError(`Cannot canonically hash negative zero at ${path}.`);
       if(!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}; use the owning schema's typed decimal-string representation.`);
-      return String(input);
+      return input;
     }
     if(type!=='object')throw new TypeError(`Cannot canonically hash ${type} at ${path}.`);
     if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
     seen.add(input);
-    try{
-      if(Array.isArray(input)){
-        const keys=Object.keys(input);
-        for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
-        if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
-        return `[${input.map((item,index)=>serialize(item,`${path}[${index}]`)).join(',')}]`;
-      }
+    let output;
+    if(Array.isArray(input)){
+      const keys=Object.keys(input);
+      for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
+      if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
+      output=input.map((item,index)=>normalize(item,`${path}[${index}]`));
+    }else{
       const prototype=Object.getPrototypeOf(input);
       if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
       if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
+      output={};
       const keys=Object.keys(input);
       for(const key of keys)assertUnicodeScalars(key,`${path} object key`);
       keys.sort(compareUnicodeScalarSequence);
-      const members=[];
       for(const key of keys){
         const descriptor=Object.getOwnPropertyDescriptor(input,key);
         if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
-        members.push(`${encodeString(key,`${path} object key`)}:${serialize(descriptor.value,`${path}.${key}`)}`);
+        output[key]=normalize(descriptor.value,`${path}.${key}`);
       }
-      return `{${members.join(',')}}`;
-    }finally{seen.delete(input);}
+    }
+    seen.delete(input);
+    return output;
   };
-  return serialize(value);
+  return JSON.stringify(normalize(value));
 }
 
 function rightRotate(value,amount){return (value>>>amount)|(value<<(32-amount));}
+const SHA256_TEXT_CACHE_MAX_ENTRIES=512;
+const SHA256_TEXT_CACHE_MAX_INPUT_CODE_UNITS=65536;
+const SHA256_TEXT_CACHE_MAX_TOTAL_CODE_UNITS=4*1024*1024;
+const sha256TextCache=new Map();
+let sha256TextCacheCodeUnits=0;
+function cachedTextDigest(text){
+  if(text.length>SHA256_TEXT_CACHE_MAX_INPUT_CODE_UNITS)return null;
+  const digest=sha256TextCache.get(text);
+  if(digest===undefined)return null;
+  sha256TextCache.delete(text);
+  sha256TextCache.set(text,digest);
+  return digest;
+}
+function rememberTextDigest(text,digest){
+  if(text.length>SHA256_TEXT_CACHE_MAX_INPUT_CODE_UNITS)return digest;
+  const prior=sha256TextCache.get(text);
+  if(prior!==undefined){sha256TextCache.delete(text);sha256TextCacheCodeUnits-=text.length;}
+  sha256TextCache.set(text,digest);sha256TextCacheCodeUnits+=text.length;
+  while(sha256TextCache.size>SHA256_TEXT_CACHE_MAX_ENTRIES||sha256TextCacheCodeUnits>SHA256_TEXT_CACHE_MAX_TOTAL_CODE_UNITS){const oldest=sha256TextCache.keys().next().value;sha256TextCache.delete(oldest);sha256TextCacheCodeUnits-=oldest.length;}
+  return digest;
+}
 function sha256Text(text){
-  const utf8=new TextEncoder().encode(String(text));
+  const exact=assertUnicodeScalars(String(text),'text to hash');
+  const cached=cachedTextDigest(exact);if(cached!==null)return cached;
+  const utf8=new TextEncoder().encode(exact);
   const bitLength=utf8.length*8;
   const withMarker=utf8.length+1;
   const paddedLength=((withMarker+8+63)>>6)<<6;
@@ -97,106 +130,32 @@ function sha256Text(text){
     for(let i=0;i<64;i++){const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i]+w[i])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
     h[0]=(h[0]+a)>>>0;h[1]=(h[1]+b)>>>0;h[2]=(h[2]+c)>>>0;h[3]=(h[3]+d)>>>0;h[4]=(h[4]+e)>>>0;h[5]=(h[5]+f)>>>0;h[6]=(h[6]+g)>>>0;h[7]=(h[7]+hh)>>>0;
   }
-  return Array.from(h,value=>value.toString(16).padStart(8,'0')).join('');
+  return rememberTextDigest(exact,Array.from(h,value=>value.toString(16).padStart(8,'0')).join(''));
 }
 function sha256Value(value){return sha256Text(stableStringify(value));}
 function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');}
-function hexToBytes(hex){const text=String(hex||'').toLowerCase();if(!/^[0-9a-f]+$/.test(text)||text.length%2)throw new TypeError('hexToBytes requires an even-length hexadecimal string.');const out=new Uint8Array(text.length/2);for(let i=0;i<out.length;i++)out[i]=parseInt(text.slice(i*2,i*2+2),16);return out;}
 async function sha256Bytes(bytes){let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else if(bytes instanceof Blob)view=new Uint8Array(await bytes.arrayBuffer());else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',view)));}
 function rawResponseSha256(raw){return sha256Text(String(raw??''));}
 function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
-
-const HASH_PREIMAGE_REGISTRY=new Map();
-const SET_SEMANTICS_REGISTRY=new Map();
-function freezePointers(values){return Object.freeze([...new Set((values||[]).map(value=>String(value)))]);}
-function registerHashPreimage(kind,{includePointers=[],omitPointers=[],reasonByOmittedPointer={}}={}){const id=String(kind||'').trim();if(!id)throw new TypeError('Hash kind is required.');if(HASH_PREIMAGE_REGISTRY.has(id))throw new TypeError(`Hash kind ${id} is already registered.`);const include=freezePointers(includePointers),omit=freezePointers(omitPointers);if(!include.length)throw new TypeError(`Hash kind ${id} requires an explicit nonempty inclusion set.`);for(const pointer of omit)if(!String(reasonByOmittedPointer[pointer]||'').trim())throw new TypeError(`Hash kind ${id} omission ${pointer} requires a registered reason.`);const entry=Object.freeze({kind:id,includePointers:include,omitPointers:omit,reasonByOmittedPointer:Object.freeze({...reasonByOmittedPointer})});HASH_PREIMAGE_REGISTRY.set(id,entry);return entry;}
-function registerSetSemantics(pointer,{elementIdentityKey,duplicateRule='REJECT',sortRule='CANONICAL_BYTE_ORDER_OVER_ELEMENT_IDENTITY'}={}){const id=String(pointer||'').trim();if(!id.startsWith('/'))throw new TypeError('Set pointer must be an absolute JSON pointer.');if(SET_SEMANTICS_REGISTRY.has(id))throw new TypeError(`Set semantics for ${id} are already registered.`);if(!String(elementIdentityKey||'').trim())throw new TypeError(`Set semantics for ${id} require an element identity key.`);if(duplicateRule!=='REJECT'||sortRule!=='CANONICAL_BYTE_ORDER_OVER_ELEMENT_IDENTITY')throw new TypeError(`Set semantics for ${id} must use the controlling duplicate and sort rules.`);const entry=Object.freeze({pointer:id,elementIdentityKey:String(elementIdentityKey),duplicateRule,sortRule});SET_SEMANTICS_REGISTRY.set(id,entry);return entry;}
-function decodePointerSegment(segment){return segment.replace(/~1/g,'/').replace(/~0/g,'~');}
-function encodePointerSegment(segment){return String(segment).replace(/~/g,'~0').replace(/\//g,'~1');}
-function getPointer(root,pointer){if(pointer==='')return root;if(!pointer.startsWith('/'))throw new TypeError(`Invalid JSON pointer ${pointer}.`);let value=root;for(const raw of pointer.slice(1).split('/')){const key=decodePointerSegment(raw);if(value===null||typeof value!=='object'||!Object.prototype.hasOwnProperty.call(value,key))throw new TypeError(`Registered hash preimage pointer ${pointer} is missing.`);value=value[key];}return value;}
-function setPointer(root,pointer,value){if(pointer==='')return value;const parts=pointer.slice(1).split('/').map(decodePointerSegment);let current=root;for(let i=0;i<parts.length-1;i++){const key=parts[i];current[key]??={};current=current[key];}current[parts.at(-1)]=value;return root;}
-function deletePointer(root,pointer){if(pointer==='')throw new TypeError('A registered hash preimage cannot omit the selected root.');if(!pointer.startsWith('/'))throw new TypeError(`Invalid JSON pointer ${pointer}.`);const parts=pointer.slice(1).split('/').map(decodePointerSegment);let current=root;for(let i=0;i<parts.length-1;i++){const key=parts[i];if(current===null||typeof current!=='object'||!Object.prototype.hasOwnProperty.call(current,key))return false;current=current[key];}if(current===null||typeof current!=='object')return false;return delete current[parts.at(-1)];}
-function cloneCanonicalValue(value){return JSON.parse(stableStringify(value));}
-function normalizedRegisteredValue(pointer,value){const semantics=SET_SEMANTICS_REGISTRY.get(pointer);if(!semantics)return value;if(!Array.isArray(value))throw new TypeError(`Registered set pointer ${pointer} must resolve to an array.`);const seen=new Set();const copy=value.map(item=>{if(item===null||typeof item!=='object'||Array.isArray(item)||!Object.prototype.hasOwnProperty.call(item,semantics.elementIdentityKey))throw new TypeError(`Set element at ${pointer} lacks identity key ${semantics.elementIdentityKey}.`);const identity=stableStringify(item[semantics.elementIdentityKey]);if(seen.has(identity))throw new TypeError(`Duplicate set element identity at ${pointer}.`);seen.add(identity);return item;});copy.sort((a,b)=>compareUnicodeScalarSequence(stableStringify(a[semantics.elementIdentityKey]),stableStringify(b[semantics.elementIdentityKey])));return copy;}
-function registeredHashPreimage(kind,subject){const entry=HASH_PREIMAGE_REGISTRY.get(String(kind));if(!entry)throw new TypeError(`UNDEFINED_HASH_PREIMAGE: ${kind}.`);let out={};for(const pointer of entry.includePointers){const selected=cloneCanonicalValue(normalizedRegisteredValue(pointer,getPointer(subject,pointer)));out=setPointer(out,pointer,selected);}for(const pointer of entry.omitPointers)deletePointer(out,pointer);return out;}
-function hashRegistered(kind,subject){return sha256Value(registeredHashPreimage(kind,subject));}
-
-const CONTENT_RECORD_ID_FIELDS=Object.freeze([
-  'SOURCE_ID','CONFLICT_ID','RESEARCH_ID','CANDIDATE_REQ_ID','REQ_ID','RESOLUTION_ID','TEST_ID','MUTATION_ID','INSTRUCTION_ID','REVIEW_ID','ITERATION_ID','CANDIDATE_ID','RUN_ID','VERIFICATION_ID','COMPARISON_ID','DEFECT_ID','RCA_ID','REG_ID','CHANGESET_ID','CONVERGENCE_ID','CONFIRMATION_ID','BASELINE_ID','PRODUCT_ID','RESULT_ID','MEANING_REVIEW_ID','ATTACK_ID','INSPECTION_ID','PROCESS_AUDIT_ID','PRODUCT_AUDIT_ID','GATE_REVIEW_ID','RELEASE_ID','IDENTITY_ID','INVESTIGATION_ID','CHAIN_ID','TRACE_ID','REG_EXEC_ID','BLOCKER_ID','CONTEXT_ID','EVIDENCE_ID','ARTIFACT_ID','PROPOSITION_ID','PROP_EQ_REVIEW_ID','APPLICABILITY_ID','PROOF_EXPRESSION_ID','PROOF_OBLIGATION_ID','OBSERVATION_ID','ENTAILMENT_ID','DEPENDENCY_ID','OPERATION_RESERVATION_ID','DELIVERY_ID','DEPLOYMENT_MANIFEST_ID','HUMAN_DECISION_ID','SOURCE_SEARCH_CONTRACT_ID','SEMANTIC_CHALLENGE_ID','SEMANTIC_REVIEW_ID','VARIANCE_CONTRACT_ID','ENVIRONMENT_MANIFEST_ID','CAPABILITY_ID','MATERIALITY_REVIEW_ID','COMMAND_RECEIPT_ID','BACKUP_POLICY_ID','CHECKPOINT_ID','DELIVERY_CANDIDATE_SET_ID','DELIVERY_ATTEMPT_ID','MOBILE_ACCEPTANCE_RECORD_ID'
-]);
-const CONTENT_RECORD_NONCONTENT_FIELDS=Object.freeze(['CREATED_AT','UPDATED_AT','VERSION','STATUS']);
-for(const idField of CONTENT_RECORD_ID_FIELDS){
-  const omitted=[idField,...CONTENT_RECORD_NONCONTENT_FIELDS].map(name=>`/fields/${encodePointerSegment(name)}`);
-  const reasons=Object.fromEntries(omitted.map(pointer=>[pointer,pointer===`/fields/${encodePointerSegment(idField)}`?'Canonical record identity is excluded from content identity.':'Lifecycle or audit metadata is excluded from content identity.']));
-  registerHashPreimage(`CONTENT_RECORD:${idField}`,{includePointers:['/fields','/relationships','/evidenceRefs'],omitPointers:omitted,reasonByOmittedPointer:reasons});
+function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,...HASH_PROFILES.contentRecord.excludedFieldNames])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
+function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
+function omitRootMembers(value,members,path='digest value'){
+  if(!value||typeof value!=='object'||Array.isArray(value))throw new TypeError(`${path} must be a plain object.`);
+  const prototype=Object.getPrototypeOf(value);
+  if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`${path} must be a plain object.`);
+  const omitted=new Set(members||[]),copy={};
+  for(const [key,item]of Object.entries(value))if(!omitted.has(key))copy[key]=item;
+  return copy;
 }
-registerHashPreimage('CANONICAL_RECORD',{includePointers:[''],omitPointers:['/recordSha256','/sha256'],reasonByOmittedPointer:{'/recordSha256':'The record digest cannot include itself.','/sha256':'A legacy digest alias cannot participate in the canonical record digest.'}});
-
-function contentRecordValue(record,idField){return registeredHashPreimage(`CONTENT_RECORD:${String(idField||'')}`,{fields:record?.fields||{},relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]});}
-function contentRecordSha256(record,idField){return hashRegistered(`CONTENT_RECORD:${String(idField||'')}`,{fields:record?.fields||{},relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]});}
-function recordSha256(record){return hashRegistered('CANONICAL_RECORD',record||{});}
-
-function base32hex(bytes){const input=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);let buffer=0,bits=0,out='';for(const byte of input){buffer=(buffer<<8)|byte;bits+=8;while(bits>=5){bits-=5;out+=BASE32HEX_ALPHABET[(buffer>>>bits)&31];buffer&=(1<<bits)-1;}}if(bits)out+=BASE32HEX_ALPHABET[(buffer<<(5-bits))&31];return out;}
-function canonicalIdPayload({familyNamespace,jobNamespace,commandId,targetSlot='',parentId='',allocationSequence,collisionCounter=0}){if(!String(familyNamespace||'').trim())throw new TypeError('familyNamespace is required.');if(!String(jobNamespace||'').trim())throw new TypeError('jobNamespace is required.');if(!String(commandId||'').trim())throw new TypeError('commandId is required.');for(const [name,value] of [['allocationSequence',allocationSequence],['collisionCounter',collisionCounter]])if(!Number.isSafeInteger(value)||value<0)throw new TypeError(`${name} must be a nonnegative safe integer.`);return {idVersion:ID_VERSION,familyNamespace:String(familyNamespace),jobNamespace:String(jobNamespace),commandId:String(commandId),targetSlot:String(targetSlot||''),parentId:String(parentId||''),allocationSequence,collisionCounter};}
-function allocateCanonicalId({familyPrefix,...tuple}){const prefix=String(familyPrefix||'');if(!/^[A-Z][A-Z0-9_]*$/.test(prefix))throw new TypeError('familyPrefix must be a registered uppercase ASCII prefix.');const payload=canonicalIdPayload(tuple);const digestBytes=hexToBytes(sha256Value(payload)).slice(0,20);return {id:`${prefix}-${base32hex(digestBytes)}`,payload,digestHex:bytesToHex(digestBytes),idVersion:ID_VERSION};}
-function allocateCanonicalIdWithCollisionCheck(options,{exists,maxCollisionCounter=1024}={}){if(typeof exists!=='function')throw new TypeError('A collision-check function is required.');for(let collisionCounter=0;collisionCounter<=maxCollisionCounter;collisionCounter++){const allocation=allocateCanonicalId({...options,collisionCounter});const existing=exists(allocation.id);if(existing===false||existing===null||existing===undefined)return {...allocation,collisionCounter};if(existing&&stableStringify(existing)===stableStringify(allocation.payload))return {...allocation,collisionCounter,exactRetry:true};}throw new Error('Canonical ID collision counter exhausted.');}
-
-const UNICODE_CONTRACT=Object.freeze({version:UNICODE_VERSION,sourceIdentity:UNICODE_SOURCE_IDENTITY,sourceCommit:UNICODE_SOURCE_COMMIT,caseFoldingBlobSha1:CASE_FOLDING_BLOB_SHA1,nfcContract:'Unicode 15.1.0 NFC',defaultCaseFoldContract:'Unicode 15.1.0 default case folding (C+F, T excluded)',confusableContract:'Unicode 15.1.0 UTS #39 confusables',filenameAcceptedRepertoire:'ASCII U+0020..U+007E excluding path/control hazards; non-ASCII fails closed until pinned full tables are bundled'});
-function assertPinnedUnicodeHost(){
-  if(typeof ''.normalize!=='function')throw new Error('UNICODE_TABLE_UNAVAILABLE: String normalization is unavailable.');
-  const nfcFixtures=[['e\u0301','é'],['A\u030A','Å'],['\u212B','Å']];
-  for(const [input,expected] of nfcFixtures)if(input.normalize('NFC')!==expected)throw new Error('UNICODE_TABLE_MISMATCH: host NFC behavior failed pinned Unicode 15.1 fixture.');
-  return UNICODE_CONTRACT;
+function recordSha256(record){return sha256Value(omitRootMembers(record,HASH_PROFILES.completeRecord.excludedRootMembers,'record'));}
+function selfDigestValue(value,{digestField='digest',dependentDigestFields=[]}={}){
+  const omitted=[digestField,...dependentDigestFields];
+  if(new Set(omitted).size!==omitted.length)throw new TypeError('Self-digest omitted fields must be unique.');
+  return sha256Value(omitRootMembers(value,omitted,'self-digest value'));
 }
-function asciiCaseFold(value){const text=String(value);if(/[^\x20-\x7E]/.test(text))throw new TypeError('UNSUPPORTED_UNICODE_FILENAME: non-ASCII filename requires pinned full Unicode 15.1 case-fold/confusable tables.');return text.replace(/[A-Z]/g,ch=>ch.toLowerCase());}
-function filenameRiskSkeleton(value){const folded=asciiCaseFold(value);return folded.replace(/0/g,'o').replace(/[1lI]/g,'i').replace(/5/g,'s');}
-function normalizeFilename(rawFilename,{allowPath=false}={}){
-  assertPinnedUnicodeHost();
-  const raw=assertUnicodeScalars(String(rawFilename??''),'filename');
-  if(!raw)throw new TypeError('UNSAFE_FILENAME: filename is empty.');
-  if(/[\x00-\x1F\x7F]/.test(raw))throw new TypeError('UNSAFE_FILENAME: control characters are prohibited.');
-  if(/^[A-Za-z]:/.test(raw)||raw.startsWith('/')||raw.startsWith('\\'))throw new TypeError('UNSAFE_FILENAME: absolute paths and drive prefixes are prohibited.');
-  if(!allowPath&&/[\\/]/.test(raw))throw new TypeError('UNSAFE_FILENAME: path separators are prohibited in a filename.');
-  const segments=allowPath?raw.split(/[\\/]/):[raw];
-  if(segments.some(segment=>!segment||segment==='.'||segment==='..'))throw new TypeError('UNSAFE_FILENAME: empty, dot, and parent segments are prohibited.');
-  for(const segment of segments){if(/[. ]$/.test(segment))throw new TypeError('UNSAFE_FILENAME: trailing dot or space is prohibited.');if(/[^\x20-\x7E]/.test(segment))throw new TypeError('UNSUPPORTED_UNICODE_FILENAME: non-ASCII filename fails closed until pinned full Unicode 15.1 tables are bundled.');}
-  const canonicalPath=segments.map(segment=>segment.normalize('NFC')).join('/');
-  const displayFilename=segments.at(-1);
-  return Object.freeze({filenameVersion:FILENAME_VERSION,unicodeVersion:UNICODE_VERSION,rawFilename:raw,displayFilename,canonicalPath,caseFoldCollisionKey:asciiCaseFold(canonicalPath),platformRiskCollisionKey:filenameRiskSkeleton(canonicalPath)});
-}
-function filenameCollisionKeys(filename){const normalized=normalizeFilename(filename,{allowPath:true});return Object.freeze([normalized.canonicalPath,normalized.caseFoldCollisionKey,normalized.platformRiskCollisionKey]);}
-
-const RFC3339_INSTANT=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/;
-const DATE_ONLY=/^(\d{4})-(\d{2})-(\d{2})$/;
-function validCalendarDate(year,month,day){const date=new Date(Date.UTC(year,month-1,day));return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day;}
-function normalizeDateTime(value){
-  const input=String(value??'');
-  let match=input.match(DATE_ONLY);
-  if(match){const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);if(!validCalendarDate(year,month,day))throw new TypeError('INVALID_DATE_TIME: invalid date-only value.');return Object.freeze({version:TRUSTED_TIME_VERSION,kind:'DATE_ONLY',original:input,normalized:input,timeBasis:'NOT_APPLICABLE'});}
-  match=input.match(RFC3339_INSTANT);
-  if(!match)throw new TypeError('INVALID_DATE_TIME: value must be RFC 3339 date-only or instant.');
-  const [,ys,mos,ds,hs,mis,ss,fraction='',zone]=match;
-  const year=Number(ys),month=Number(mos),day=Number(ds),hour=Number(hs),minute=Number(mis),second=Number(ss);
-  if(second===60)throw new TypeError('INVALID_DATE_TIME: leap seconds are rejected.');
-  if(!validCalendarDate(year,month,day)||hour>23||minute>59||second>59)throw new TypeError('INVALID_DATE_TIME: invalid calendar or clock component.');
-  let offsetMinutes=0;
-  if(zone!=='Z'){const sign=zone[0]==='-'?-1:1,oh=Number(zone.slice(1,3)),om=Number(zone.slice(4,6));if(oh>23||om>59)throw new TypeError('INVALID_DATE_TIME: invalid UTC offset.');offsetMinutes=sign*(oh*60+om);}
-  const millis=Number((fraction+'000').slice(0,3));
-  const epoch=Date.UTC(year,month-1,day,hour,minute,second,millis)-offsetMinutes*60000;
-  const normalized=new Date(epoch).toISOString();
-  return Object.freeze({version:TRUSTED_TIME_VERSION,kind:'INSTANT',original:input,normalized,timeBasis:'DEVICE_REPORTED'});
-}
-function evaluateTrustedTimeEvidence({basis='NONE',attestationContractId=null,attributableExternalSystem=false}={}){
-  const normalizedBasis=String(basis||'NONE');
-  if(normalizedBasis==='VERIFIED_EXTERNAL'){
-    if(!String(attestationContractId||'').trim()&&!attributableExternalSystem)throw new TypeError('TRUSTED_TIME_UNVERIFIED: VERIFIED_EXTERNAL requires a registered attestation contract or accepted attributable external-system time authority.');
-    return Object.freeze({version:TRUSTED_TIME_VERSION,basis:'VERIFIED_EXTERNAL',trusted:true,attestationContractId:attestationContractId||null,attributableExternalSystem:Boolean(attributableExternalSystem)});
-  }
-  if(!['DEVICE_REPORTED','SOURCE_ASSERTED','EXTERNALLY_SUPPORTED','SELF_ASSERTED','NONE'].includes(normalizedBasis))throw new TypeError('TRUSTED_TIME_BASIS_UNKNOWN');
-  return Object.freeze({version:TRUSTED_TIME_VERSION,basis:normalizedBasis,trusted:false,attestationContractId:null,attributableExternalSystem:false});
-}
-
-const api={version:'closed-loop-hash/6',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,unicodeContract:UNICODE_CONTRACT,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,assertPinnedUnicodeHost,normalizeFilename,filenameCollisionKeys,normalizeDateTime,evaluateTrustedTimeEvidence,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
-globalThis.closedLoopHash=Object.freeze(api);
+function digestIdentityForText(text){const exact=assertUnicodeScalars(String(text),'text digest identity'),bytes=new TextEncoder().encode(exact);return Object.freeze({hashAlgorithm:HASH_ALGORITHM,digest:sha256Text(exact),byteLength:bytes.byteLength});}
+function digestIdentityForValue(value){const canonical=stableStringify(value),bytes=new TextEncoder().encode(canonical);return Object.freeze({hashAlgorithm:HASH_ALGORITHM,digest:sha256Text(canonical),canonicalByteLength:bytes.byteLength,canonicalizationVersion:CANONICALIZATION_VERSION});}
+async function digestIdentityForBytes(bytes){let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else if(bytes instanceof Blob)view=new Uint8Array(await bytes.arrayBuffer());else throw new TypeError('digestIdentityForBytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');return Object.freeze({hashAlgorithm:HASH_ALGORITHM,digest:await sha256Bytes(view),byteLength:view.byteLength});}
+globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',HASH_ALGORITHM,CANONICALIZATION_VERSION,hashAlgorithm:HASH_ALGORITHM,canonicalizationVersion:CANONICALIZATION_VERSION,hashProfiles:HASH_PROFILES,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,selfDigestValue,digestIdentityForText,digestIdentityForValue,digestIdentityForBytes,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 
 })();

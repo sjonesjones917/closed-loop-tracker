@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'sha256-qKdfVRy0msbt6cgyRlbWAa5ECKg7fTQGL595U0u7z/8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-qKdfVRy0msbt6cgyRlbWAa5ECKg7fTQGL595U0u7z/8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'; manifest-src 'none'; font-src 'none'; media-src 'none'">
 <meta name="theme-color" content="#f4f5f3">
 <link rel="icon" href="data:,">
 <title>Mobile Closed-Loop Reliability Workbook</title>
@@ -104,36 +104,26 @@ input[type="file"],#stage-files,#stage-directory{display:block;width:100%;min-wi
   .header-actions button,.project-action-menu>summary,.file-button,.button-row button{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
   .project-action-menu>summary{width:100%;justify-content:center;text-align:center}
 }
-/* Normative accessibility floor: primary body and control text 16px; secondary metadata 14px. */
-:root{--ui-small:14px;--ui-body:16px}
-body{font-size:16px}
-.app *,.app-help *{font-size:16px!important}
-.app .brand-kicker,.app .storage-status,.app .progress-line strong,.app .fact span,.app .status,.app .field .help,.app .stage-number,.app .stage-meta,.app .record-key,.app .project-field-group>summary span:last-child,.app .prompt-meta,.app .stage-output-hint{font-size:14px!important}
-.app .brand h1,.app .hero h2{font-size:18px!important}
-.app h2.section-title,.app .fact strong{font-size:16px!important}
-.app button,.app .file-button,.app .project-action-menu>summary{line-height:1.2}
-@media(max-width:420px){.app .stage-picker-display{font-size:16px!important}}
-
 </style>
 </head>
 <body>
-<div id="app-live-status" aria-live="polite" class="sr-only"></div>
+<div id="app-live-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <div class="app" id="app">
 <header class="app-header"><div class="header-main"><div class="brand"><div class="brand-kicker">Mobile closed-loop control</div><h1>Closed-Loop Reliability</h1><p id="current-project-summary" aria-live="polite">Loading the current project…</p></div><div class="project-select"><label for="project-picker">Project</label><select id="project-picker"></select></div></div><div class="header-actions"><button class="primary" id="new-project" type="button">New project</button><details class="project-action-menu"><summary id="project-actions-toggle" aria-expanded="false">Project actions</summary><div class="project-action-popover"><button id="header-backup-project" type="button">Create complete backup</button><button id="export-project" type="button">Export complete project</button><button id="import-project" type="button">Import project package</button></div></details><input id="import-file" type="file" hidden accept=".json,.gz,.closed-loop.json.gz,application/json,application/gzip,application/x-gzip"></div><div id="storage-status" class="storage-status" role="status">Storage status loading…</div><div class="progress-line"><strong id="progress-label">0/30 complete</strong><div class="progress-track" aria-hidden="true"><i id="progress-bar"></i></div></div></header>
 <nav class="view-tabs" id="view-tabs" aria-label="Project views"></nav>
-<div class="app-help"><details><summary><b>?</b> How to use this stage</summary><div class="help-body"><ol><li><strong>Export the current authoritative instruction file shown by the application.</strong> Follow the listed handoff action and send only the files the application lists for this stage.</li><li id="stage-artifact-help" hidden></li><li><strong>Continue the current external conversation when the application says conversation is required.</strong> Do not paste conversational messages into this application.</li><li><strong>When the application says the final response is required, obtain the authoritative response.json file for the current instruction.</strong></li><li><strong>Select the exact response.json file returned by the agent in the application</strong>, then tap <em>Stage and validate response file</em>. Review the proposed change before accepting it.</li></ol><p>If the current stage requires a later human-only decision, answer that decision when the application presents it. After response-file validation rejects a response, the application preserves the failure and prepares the replacement instruction. Export the new current instruction before obtaining a replacement response. Pasted response text is only a nonauthoritative diagnostic/accessibility fallback and is first materialized as a response-file Blob before the same staging and validation path runs.</p></div></details></div>
+<div class="app-help"><details><summary><b>?</b> How to use this stage</summary><div class="help-body"><ol><li><strong>Use the current instruction shown by the application.</strong> Follow the listed handoff action and send only the files the application lists for this stage.</li><li id="stage-artifact-help" hidden></li><li><strong>Continue the current external conversation when the application says conversation is required.</strong> Do not paste conversational messages into this application.</li><li><strong>When the application says final JSON is required, obtain the final JSON for the current instruction.</strong></li><li><strong>Paste only that final JSON into the response box</strong>, then tap <em>Parse / validate response</em>. Review the proposed change before accepting it.</li></ol><p>If the current stage requires a later human-only decision, answer that decision when the application presents it. After <em>Parse / validate response</em> rejects a final JSON response, the application preserves the failure and prepares the replacement instruction. Save and copy the new current instruction before obtaining a replacement response. After replacing a rejected response, the status remains <strong>Replacement not evaluated</strong> until <em>Parse / validate response</em> runs again.</p><p><strong>External-context limits:</strong> Blind aliasing without filename, path, document-metadata, author, revision, history, and timestamp redaction is not full blinding. Content-based identity inference remains a residual risk. A prompt hash proves only the exact application-generated prompt body; it does not prove that the user or provider added no other context.</p></div></details></div>
 <main><section class="screen" id="screen"><div class="panel"><h2 class="section-title">Loading the workflow…</h2></div></section></main>
 </div>
 <script>(()=>{const sync=()=>{const select=document.getElementById('stage-picker');if(!select)return;let shell=select.closest('.stage-picker-shell');if(!shell){shell=document.createElement('div');shell.className='stage-picker-shell';select.before(shell);shell.append(select);const display=document.createElement('span');display.className='stage-picker-display';display.setAttribute('aria-hidden','true');shell.append(display);}const display=shell.querySelector('.stage-picker-display');if(display)display.textContent=select.selectedOptions[0]?.textContent||'';};document.addEventListener('closed-loop-rendered',sync);document.addEventListener('change',event=>{if(event.target?.id==='stage-picker')sync();});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();})();(()=>{const menu=document.querySelector('.project-action-menu'),toggle=document.getElementById('project-actions-toggle');if(!menu||!toggle)return;const sync=()=>toggle.setAttribute('aria-expanded',menu.open?'true':'false');menu.addEventListener('toggle',sync);sync();})();</script>
-<script defer src="workbook.js?v=runtime-20260901-prompt-integrity-60"></script>
-<script defer src="hash.js?v=runtime-20260901-prompt-integrity-60"></script>
-<script defer src="workflow-schema.js?v=runtime-20260901-prompt-integrity-60"></script>
-<script defer src="test-runtime.js?v=runtime-20260901-prompt-integrity-60"></script>
-<script defer src="workflow-engine.js?v=runtime-20260901-prompt-integrity-60"></script>
-<script defer src="prompt-engine.js?v=runtime-20260901-prompt-integrity-60"></script>
-<script defer src="response-ingestion.js?v=runtime-20260901-prompt-integrity-60"></script>
-<script defer src="project-store.js?v=runtime-20260901-prompt-integrity-60"></script>
-<script defer src="app-core.js?v=runtime-20260901-prompt-integrity-60"></script>
+<script defer src="workbook.js?v=runtime-20260830-live-operator-59"></script>
+<script defer src="hash.js?v=runtime-20260830-live-operator-59"></script>
+<script defer src="workflow-schema.js?v=runtime-20260830-live-operator-59"></script>
+<script defer src="test-runtime.js?v=runtime-20260830-live-operator-59"></script>
+<script defer src="workflow-engine.js?v=runtime-20260830-live-operator-59"></script>
+<script defer src="prompt-engine.js?v=runtime-20260830-live-operator-59"></script>
+<script defer src="response-ingestion.js?v=runtime-20260830-live-operator-59"></script>
+<script defer src="project-store.js?v=runtime-20260830-live-operator-59"></script>
+<script defer src="app-core.js?v=runtime-20260830-live-operator-59"></script>
 </body>
 </html>

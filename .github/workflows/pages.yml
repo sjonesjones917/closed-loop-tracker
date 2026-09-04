@@ -6,15 +6,6 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      mobile_acceptance_target_json:
-        description: Pinned physical-iPhone acceptance target JSON for the exact currently deployed main commit
-        required: false
-        type: string
-      mobile_acceptance_evidence_json:
-        description: Physical-iPhone mobile-acceptance-evidence JSON bound to the submitted target
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -35,7 +26,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version: '22.19.0'
 
       - name: Capture exact PR source workspace
         if: github.event_name == 'pull_request'
@@ -56,21 +47,13 @@ jobs:
             node --check "$file"
           done
 
-      - name: Deployment manifest, build identity, and reproducibility
-        run: |
-          set -euo pipefail
-          node verify-deployment-manifest.mjs
-
-      - name: Physical iPhone release-tag governance
-        run: |
-          set -euo pipefail
-          node verify-mobile-release-governance.mjs
-
       - name: Schema, ownership, and single-architecture proof
         run: |
           set -euo pipefail
           node build-test-project.mjs
           node verify.mjs
+          node verify-schema-hash-sections-53-70.mjs
+          node verify-schema-type-closure.mjs
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f app.js
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
@@ -101,6 +84,7 @@ jobs:
           set -euo pipefail
           node verify-data-route-closure.mjs
           node verify-infrastructure-route-closure.mjs
+          node verify-spec-grounded-route-oracle.mjs
 
       - name: Migration and v3 contracts
         run: |
@@ -122,6 +106,10 @@ jobs:
           node verify-all-stage-prompts.mjs
           node verify-stage-prompts-complete.mjs
           node verify-user-prompt-invariants.mjs
+          node verify-prompt-ingestion-boundaries.mjs
+          node verify-semantic-review-contract.mjs
+          node verify-semantic-review-ingestion.mjs
+          node verify-stage6-package-ui.mjs
 
       - name: Test IR validation, security, and deterministic runtime
         run: |
@@ -130,6 +118,26 @@ jobs:
           node verify-test-runtime-limits.mjs
           node verify-test-runtime.mjs
           node verify-hash.mjs
+          node verify-hash-cache.mjs
+
+      - name: Deployment manifest and reproducible static build
+        run: |
+          set -euo pipefail
+          for target in .deployment-proof-a .deployment-proof-b; do
+            CLOSED_LOOP_REPRODUCIBILITY_STATUS=NOT_EVALUATED_IN_THIS_MANIFEST node build-static-site.mjs "$target"
+            CLOSED_LOOP_VERIFY_PRODUCER_ENVIRONMENT=true node verify-deployment-manifest.mjs "$target/deployment-manifest.json"
+          done
+          diff -rq .deployment-proof-a .deployment-proof-b
+          for target in .deployment-proof-a .deployment-proof-b; do
+            CLOSED_LOOP_REPRODUCIBILITY_STATUS=CHECKED_BY_SECOND_CLEAN_MANIFEST_BUILD node build-static-site.mjs "$target"
+            CLOSED_LOOP_VERIFY_PRODUCER_ENVIRONMENT=true node verify-deployment-manifest.mjs "$target/deployment-manifest.json"
+          done
+          diff -rq .deployment-proof-a .deployment-proof-b
+          rm -rf _site
+          mv .deployment-proof-a _site
+          rm -rf .deployment-proof-b
+          node verify-deployment-manifest-negative.mjs
+          node verify-release-workflow.mjs
 
       - name: Raw-first ingestion and negative cases
         run: |
@@ -140,7 +148,10 @@ jobs:
         run: |
           set -euo pipefail
           node verify-complete.mjs
-          node verify-full-cycle.mjs
+          terminal_report="$RUNNER_TEMP/full-cycle-terminal-evidence.json"
+          test ! -e "$terminal_report"
+          FULL_CYCLE_TERMINAL_REPORT_PATH="$terminal_report" node verify-full-cycle.mjs
+          FULL_CYCLE_TERMINAL_REPORT_PATH="$terminal_report" node verify-controlling-completion.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
 
@@ -148,12 +159,16 @@ jobs:
         run: |
           set -euo pipefail
           node verify-project-lifecycle.mjs
+          node verify-store-completion-amendment.mjs
+          node verify-objective-attestation.mjs
+          node verify-terminal-delivery-lifecycle.mjs
 
       - name: Prompt semantics and leakage
         run: |
           set -euo pipefail
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
+          node verify-amendment-ui.mjs
 
       - name: Local Chromium operator path
         env:
@@ -165,7 +180,9 @@ jobs:
             export BROWSER
           fi
           test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          export CLOSED_LOOP_STATIC_ROOT="$PWD/_site"
+          export PAGE_URL="http://127.0.0.1:4173/"
+          python3 -m http.server 4173 --directory _site >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           run_browser_verifier() {
@@ -187,8 +204,34 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-amendment-ui-browser.mjs
+          run_browser_verifier verify-cached-deployment-profile.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
+
+      - name: Preserve the exact verified deployment artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          CLOSED_LOOP_VERIFY_PRODUCER_ENVIRONMENT=true node verify-deployment-manifest.mjs _site/deployment-manifest.json
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -cf /tmp/closed-loop-verified-site.tar -C _site .
+          (cd /tmp && sha256sum closed-loop-verified-site.tar > closed-loop-verified-site.tar.sha256)
+      - name: Make exact verified site bytes independently retrievable
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-loop-verified-site-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            /tmp/closed-loop-verified-site.tar
+            /tmp/closed-loop-verified-site.tar.sha256
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+      - name: Hand exact verified site bytes to Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: _site
 
   deploy:
     name: Deploy exact verified bytes
@@ -201,20 +244,7 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22'
-      - name: Rebuild retained fixture from verified source
-        run: node build-test-project.mjs
-      - name: Build static application
-        run: |
-          set -euo pipefail
-          node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
-        with:
-          path: _site
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
@@ -231,10 +261,22 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
-      - name: Rebuild retained fixture used by deployment
-        run: node build-test-project.mjs
+          node-version: '22.19.0'
+      - name: Retrieve the exact verified site bytes produced by the test job
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-loop-verified-site-${{ github.sha }}-${{ github.run_id }}
+          path: /tmp/closed-loop-verified-site
+      - name: Reconstitute and verify the retained deployment artifact
+        run: |
+          set -euo pipefail
+          (cd /tmp/closed-loop-verified-site && sha256sum -c closed-loop-verified-site.tar.sha256)
+          mkdir _site
+          tar -xf /tmp/closed-loop-verified-site/closed-loop-verified-site.tar -C _site
+          node verify-deployment-manifest.mjs _site/deployment-manifest.json
       - name: Exact deployed-byte verification
+        env:
+          DEPLOYMENT_MANIFEST_PATH: _site/deployment-manifest.json
         run: node verify-live.mjs
       - name: Deployed Chromium operator path
         run: |
@@ -258,55 +300,40 @@ jobs:
           }
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-amendment-ui-browser.mjs
+          run_browser_verifier verify-deployed-resource-graph.mjs
+          run_browser_verifier verify-cached-deployment-profile.mjs
 
   publish-status:
-    name: Publish machine acceptance status
-    if: >-
-      always() && github.ref == 'refs/heads/main' &&
-      ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success') ||
-       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success'))
+    name: Publish machine acceptance
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
-      - name: Reverify deployed Chromium for authenticated mobile acceptance
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+          node-version: '22.19.0'
+      - name: Retrieve the exact verified site bytes produced by the test job
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-loop-verified-site-${{ github.sha }}-${{ github.run_id }}
+          path: /tmp/closed-loop-verified-site
+      - name: Reconstitute the retained deployment artifact
         run: |
           set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            for attempt in 1 2 3; do
-              log="/tmp/mobile-${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then
-                cat "$log"
-                return 0
-              fi
-              cat "$log"
-              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
-                return 1
-              fi
-              test "$attempt" -lt 3 || return 1
-            done
-          }
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          (cd /tmp/closed-loop-verified-site && sha256sum -c closed-loop-verified-site.tar.sha256)
+          mkdir _site
+          tar -xf /tmp/closed-loop-verified-site/closed-loop-verified-site.tar -C _site
       - name: Build acceptance artifact from executed proof jobs
-        id: acceptance
         env:
           TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.deploy.result }}
-          LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
-          MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
-          MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
         run: |
           set -euo pipefail
           test "$TEST_RESULT" = success
@@ -317,13 +344,28 @@ jobs:
           node verify-ingestion.mjs > /tmp/ingestion.out
           node verify-stage01-intake-closure.mjs > /tmp/stage01.out
           node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
-          node verify-full-cycle.mjs > /tmp/full-cycle.json
+          terminal_report=/tmp/full-cycle-terminal-evidence.json
+          test ! -e "$terminal_report"
+          FULL_CYCLE_TERMINAL_REPORT_PATH="$terminal_report" node verify-full-cycle.mjs > /tmp/full-cycle.json
           node verify-data-route-closure.mjs > /tmp/data-route.json
           node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
-          node verify-mobile-release-governance.mjs > /tmp/mobile-governance.json
-          USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\n/).filter(Boolean).map(l=>l.trim().split(/\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\^\{\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
-          export USED_MOBILE_CHALLENGES_JSON
-          node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json
+          FULL_CYCLE_TERMINAL_REPORT_PATH="$terminal_report" node verify-controlling-completion.mjs > /tmp/controlling-completion.json
+          cp "$terminal_report" full-cycle-terminal-evidence.json
+          node verify-objective-attestation.mjs > /tmp/objective-attestation.json
+          node verify-prompt-ingestion-boundaries.mjs > /tmp/prompt-ingestion-boundaries.json
+          node verify-semantic-review-contract.mjs > /tmp/semantic-review-contract.json
+          node verify-semantic-review-ingestion.mjs > /tmp/semantic-review-ingestion.json
+          node verify-stage6-package-ui.mjs > /tmp/stage6-package-ui.json
+          node verify-terminal-delivery-lifecycle.mjs > /tmp/terminal-delivery-lifecycle.json
+          node verify-deployment-manifest-negative.mjs > /tmp/deployment-negative.json
+          node verify-release-workflow.mjs > /tmp/release-workflow.json
+          node verify-deployment-manifest.mjs _site/deployment-manifest.json > /tmp/deployment-manifest.json
+          cp /tmp/deployment-manifest.json /tmp/static-build.json
+          DEPLOYMENT_MANIFEST_PATH=_site/deployment-manifest.json node verify-live.mjs > /tmp/live.json
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          DEPLOYMENT_MANIFEST_PATH=_site/deployment-manifest.json node verify-deployed-resource-graph.mjs > /tmp/deployed-resource-graph.json
+          DEPLOYMENT_MANIFEST_PATH=_site/deployment-manifest.json node verify-cached-deployment-profile.mjs > /tmp/cached-deployment-profile.json
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
@@ -331,10 +373,26 @@ jobs:
           const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
           const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
           const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
+          const fullCycleTerminalEvidence=JSON.parse(fs.readFileSync('/tmp/full-cycle-terminal-evidence.json','utf8'));
           const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
           const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
-          const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
-          const mobileAcceptance=JSON.parse(fs.readFileSync('/tmp/mobile-acceptance.json','utf8'));
+          const controllingCompletion=JSON.parse(fs.readFileSync('/tmp/controlling-completion.json','utf8'));
+          const objectiveAttestation=JSON.parse(fs.readFileSync('/tmp/objective-attestation.json','utf8'));
+          const promptIngestionBoundaries=JSON.parse(fs.readFileSync('/tmp/prompt-ingestion-boundaries.json','utf8'));
+          const semanticReviewContract=JSON.parse(fs.readFileSync('/tmp/semantic-review-contract.json','utf8'));
+          const semanticReviewIngestion=JSON.parse(fs.readFileSync('/tmp/semantic-review-ingestion.json','utf8'));
+          const stage6PackageUi=JSON.parse(fs.readFileSync('/tmp/stage6-package-ui.json','utf8'));
+          const terminalDeliveryLifecycle=JSON.parse(fs.readFileSync('/tmp/terminal-delivery-lifecycle.json','utf8'));
+          const deploymentNegative=JSON.parse(fs.readFileSync('/tmp/deployment-negative.json','utf8'));
+          const releaseWorkflow=JSON.parse(fs.readFileSync('/tmp/release-workflow.json','utf8'));
+          const staticBuild=JSON.parse(fs.readFileSync('/tmp/static-build.json','utf8'));
+          const deploymentManifest=JSON.parse(fs.readFileSync('/tmp/deployment-manifest.json','utf8'));
+          const live=JSON.parse(fs.readFileSync('/tmp/live.json','utf8'));
+          const deployedResourceGraph=JSON.parse(fs.readFileSync('/tmp/deployed-resource-graph.json','utf8'));
+          const cachedDeploymentProfile=JSON.parse(fs.readFileSync('/tmp/cached-deployment-profile.json','utf8'));
+          const manifest=JSON.parse(fs.readFileSync('_site/deployment-manifest.json','utf8'));
+          const retainedVerifiedArtifactArchiveSha256=fs.readFileSync('/tmp/closed-loop-verified-site/closed-loop-verified-site.tar.sha256','utf8').trim().split(/\s+/)[0];
+          if(!/^[a-f0-9]{64}$/.test(retainedVerifiedArtifactArchiveSha256))throw new Error('Retained verified site archive digest is malformed.');
           const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
           const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
           const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
@@ -344,12 +402,10 @@ jobs:
           if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
-          if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
-          const finalAcceptancePublication=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
+          if(fullCycle.terminalEvidence?.reportSha256!==fullCycleTerminalEvidence.reportSha256)throw new Error('Full-cycle stdout and exact terminal evidence report are not bound to the same execution result.');
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
-            contractProfileId:'closed-loop-completion-profile/1',
             projectSchema:'closed-loop-project/3',
             responseSchema:'closed-loop-stage-response/3',
             testIrSchema:'closed-loop-test-spec/1',
@@ -357,6 +413,47 @@ jobs:
             stageCount:30,
             ...definition,
             ...v3,
+            ...controllingCompletion,
+            controllingCompletion,
+            fullCycleTerminalEvidence,
+            focusedCompletionProofs:{objectiveAttestation,promptIngestionBoundaries,semanticReviewContract,semanticReviewIngestion,stage6PackageUi,terminalDeliveryLifecycle},
+            deploymentManifestProof:deploymentManifest,
+            deploymentManifestMutationProof:deploymentNegative,
+            releaseWorkflowProof:releaseWorkflow,
+            deployedResourceGraph,
+            cachedDeploymentProfileProof:cachedDeploymentProfile,
+            deploymentManifestSchema:manifest.schema,
+            deploymentManifestDigest:manifest.overallManifestDigest,
+            deploymentBuildIdentity:manifest.buildIdentity,
+            deploymentBuildIdentityDerivation:manifest.buildIdentityDerivation,
+            deploymentGeneratedResources:manifest.deterministicGeneratedResources,
+            contentDerivedBuildIdentity:deploymentManifest.contentDerivedBuildIdentity,
+            buildIdentityChangesWithRuntimeBytes:deploymentNegative.contentChangeChangesBuildIdentity,
+            deploymentSourceCommit:manifest.sourceCommit,
+            deploymentWorkflowRunIdentity:manifest.workflowRunIdentity,
+            deploymentRuntimeResources:manifest.runtimeResources.map(resource=>({path:resource.path,mediaType:resource.mediaType,byteSize:resource.byteSize,hashAlgorithm:resource.hashAlgorithm,digest:resource.digest,buildIdentity:resource.buildIdentity})),
+            deploymentRuntimeResourceIdentityCoverage:deploymentManifest.runtimeResourceIdentityCoverage,
+            retainedVerifiedArtifactArchiveSha256,
+            deploymentWorkerSha256:deployedResourceGraph.workerDigest,
+            executedWorkerSha256:deployedResourceGraph.returnedWorkerDigest,
+            deploymentWorkerProtocolVersion:deployedResourceGraph.workerProtocolVersion,
+            cleanProfileCurrentBuild:deployedResourceGraph.cleanProfileCurrentBuild,
+            previouslyCachedProfileCurrentBuild:deployedResourceGraph.previouslyCachedProfileCurrentBuild,
+            cachedProfileCacheHitObserved:cachedDeploymentProfile.cacheHitObserved,
+            priorBuildIdentityMismatchBlocked:cachedDeploymentProfile.priorBuildIdentityMismatchBlocked,
+            priorBuildIdentityBlockVisible:cachedDeploymentProfile.priorBuildIdentityBlockVisible,
+            postMismatchCurrentBuildRecovered:cachedDeploymentProfile.currentBuildRecovered,
+            staleBuildExecuted:false,
+            controllingServiceWorker:live.controllingServiceWorker,
+            exactVerifiedArtifactDeployment:releaseWorkflow.exactVerifiedArtifactDeployment&&live.liveSourceIdentity&&deployedResourceGraph.deployedResourceGraph==='PASS'&&cachedDeploymentProfile.cachedDeploymentProfile==='PASS',
+            sourceToBuildProvenance:releaseWorkflow.sourceToBuildProvenance&&deploymentManifest.exactArtifactProvenance,
+            deploymentRebuildPermitted:false,
+            secondCleanBuildReproducibility:staticBuild.reproducibilityStatus==='CHECKED_BY_SECOND_CLEAN_MANIFEST_BUILD'&&deploymentManifest.reproducibilityStatus==='CHECKED_BY_SECOND_CLEAN_MANIFEST_BUILD',
+            immutableReleaseActionPins:releaseWorkflow.immutableActionPins,
+            releaseNodeToolchainVersion:releaseWorkflow.nodeToolchainVersion,
+            deploymentBuildEnvironment:manifest.buildEnvironmentIdentity,
+            deploymentSupplyChainLimitations:manifest.buildEnvironmentIdentity.supplyChainLimitations,
+            supplyChainEvidenceLevel:'APPLICATION_OBSERVED_WORKFLOW_PINS_AND_DEPLOYED_BYTE_MATCH; HOSTED_PLATFORM_COMPROMISE_NOT_RULED_OUT',
             dataRouteClosure:dataRoute.dataRouteClosure,
             infrastructureRouteClosure:infrastructureRoute.infrastructureRouteClosure,
             routeOperationsChecked:dataRoute.operationsChecked,
@@ -407,20 +504,14 @@ jobs:
             stage04ObligationAccounting,
             stagesCompleted:Number(fullCycle.stagesCompleted||0),
             negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
-            deployedByteIdentity:process.env.LIVE_RESULT==='success',
-            deploymentManifestSchema:'closed-loop-deployment-manifest/1',
-            finalDeploymentResourceIdentityCoverage:process.env.LIVE_RESULT==='success'?1:0,
+            deployedByteIdentity:live.liveSourceIdentity===true,
             localChromiumAcceptance:process.env.TEST_RESULT==='success',
-            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
+            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success'&&deployedResourceGraph.deployedResourceGraph==='PASS'&&cachedDeploymentProfile.cachedDeploymentProfile==='PASS',
             testedBrowserWidths:[320,393,'desktop'],
-            mobileReleaseTagGovernanceCoverage:Number(mobileGovernance.mobileReleaseGovernance==='PASS'),
-            ...mobileAcceptance,
-            finalAcceptancePublication,
-            releaseTagEligible:finalAcceptancePublication,
+            actualAndroidChromeAcceptance:false,
             realThirtyStageProjectAcceptance:false,
             fullProductionMaturity:false,
-            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobileAcceptance.physicalIPhoneJobResult},
-            nextProofStep:finalAcceptancePublication?'Create the release tag for this exact accepted commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
+            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT},
             proofSources:{
               ownership:'verify.mjs',
               canonicalDataRoutes:'verify-data-route-closure.mjs',
@@ -434,52 +525,43 @@ jobs:
               ingestion:'verify-ingestion.mjs',
               workflow:'verify-complete.mjs',
               fullCycle:'verify-full-cycle.mjs',
+              fullCycleTerminalEvidence:'full-cycle-terminal-evidence.mjs consumed by verify-controlling-completion.mjs',
               prompts:'verify-prompt-semantics.mjs',
               localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              deployedIdentity:'verify-live.mjs or evaluate-mobile-acceptance-submission.mjs exact deployed manifest/resource verification',
-              deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
-              deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
-              physicalIPhoneAcceptance:finalAcceptancePublication?`${mobileAcceptance.mobileAcceptanceEvidenceId} (${mobileAcceptance.mobileAcceptanceEvidenceBasis})`:'BLOCKED_ENVIRONMENT or BLOCKED: current physical-device evidence did not satisfy the gate'
+              deployedIdentity:'verify-live.mjs',
+              deployedBrowser:'verify-browser.mjs, verify-browser-extra.mjs, verify-amendment-ui-browser.mjs, verify-deployed-resource-graph.mjs, and verify-cached-deployment-profile.mjs',
+              cachedDeploymentProfile:'verify-cached-deployment-profile.mjs',
+              controllingCompletion:'verify-controlling-completion.mjs',
+              objectiveAttestation:'verify-objective-attestation.mjs',
+              promptIngestionBoundaries:'verify-prompt-ingestion-boundaries.mjs',
+              semanticReviewContract:'verify-semantic-review-contract.mjs and verify-semantic-review-ingestion.mjs',
+              stage6PackageUi:'verify-stage6-package-ui.mjs',
+              terminalDeliveryLifecycle:'verify-terminal-delivery-lifecycle.mjs',
+              deploymentManifest:'verify-deployment-manifest.mjs and verify-deployment-manifest-negative.mjs',
+              releaseWorkflow:'verify-release-workflow.mjs'
             }
           };
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
-          if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
-          fs.appendFileSync(process.env.GITHUB_OUTPUT,[
-            `actual_iphone=${report.actualIPhoneSafariAcceptance}`,
-            `final_acceptance=${report.finalAcceptancePublication}`,
-            ''
-          ].join('\n'));
           NODE
+          sha256sum closed-loop-acceptance.json > closed-loop-acceptance.json.sha256
       - name: Upload acceptance report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: closed-loop-acceptance-${{ github.sha }}-${{ github.run_id }}
-          path: closed-loop-acceptance.json
-      - name: Record blocked actual-iPhone acceptance
-        if: steps.acceptance.outputs.final_acceptance != 'true'
-        run: |
-          set -euo pipefail
-          echo "::notice title=Release tag blocked::Actual-iPhone Safari acceptance is not proven for ${GITHUB_SHA}; no release tag was created."
-          test "${{ steps.acceptance.outputs.actual_iphone }}" = false
-      - name: Create release tag only after deployed and actual-iPhone proof
-        if: steps.acceptance.outputs.final_acceptance == 'true'
+          name: closed-loop-acceptance-${{ github.sha }}
+          path: |
+            closed-loop-acceptance.json
+            closed-loop-acceptance.json.sha256
+            full-cycle-terminal-evidence.json
+      - name: Create release tag only after deployed proof
         run: |
           set -euo pipefail
           TAG="acceptance-${GITHUB_SHA::12}"
-          CHALLENGE="$(node -e "const r=require('./closed-loop-acceptance.json');const c=String(r.mobileAcceptanceChallenge||'').toLowerCase();if(!/^[0-9a-f]{32,}$/.test(c))process.exit(2);process.stdout.write(c);")"
-          CHALLENGE_TAG="mobile-acceptance-challenge-$CHALLENGE"
           git config user.name closed-loop-release
           git config user.email closed-loop-release@users.noreply.github.com
-          test -z "$(git ls-remote --tags origin "refs/tags/$CHALLENGE_TAG" | awk '{print $1}')"
           EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
           if [ -n "$EXISTING" ]; then
             test "$EXISTING" = "$GITHUB_SHA"
-          fi
-          git tag "$CHALLENGE_TAG" "$GITHUB_SHA"
-          if [ -z "$EXISTING" ]; then
-            git tag "$TAG" "$GITHUB_SHA"
-            git push origin "refs/tags/$CHALLENGE_TAG" "refs/tags/$TAG"
           else
-            git push origin "refs/tags/$CHALLENGE_TAG"
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
           fi
