@@ -3,7 +3,16 @@ import assert from 'node:assert/strict';
 export const MOBILE_ACCEPTANCE_ORIGIN='https://sjonesjones917.github.io';
 export const MOBILE_ACCEPTANCE_BASE_PATH='/closed-loop-tracker/';
 export const ACCEPTABLE_PHYSICAL_EVIDENCE_BASES=Object.freeze(['HUMAN_OBSERVATION','VERIFIED_EXTERNAL']);
+export const REQUIRED_MOBILE_CAPABILITIES=Object.freeze([
+  'FILE_EXPORT_OR_SHARE',
+  'RESPONSE_FILE_SELECTION',
+  'RETURNED_FILE_SLOT_SELECTION',
+  'PERSISTENT_STORAGE_REQUEST',
+  'LOGICAL_PACKAGE_EXPORT',
+  'BACKUP_EXPORT_AND_RESTORE'
+]);
 export const REQUIRED_MOBILE_RECEIPT_KINDS=Object.freeze([
+  'MOBILE_CAPABILITY_PROBE_COMPLETED',
   'PROJECT_CREATED',
   'RAW_FILE_INTAKE',
   'PROMPT_FILE_EXPORTED_OR_SHARED',
@@ -26,8 +35,9 @@ const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
 const HEX_128_OR_MORE=value=>typeof value==='string'&&/^[0-9a-fA-F]{32,}$/.test(value);
 const SHA256=value=>typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);
 const COMMIT_SHA=value=>typeof value==='string'&&/^[0-9a-f]{40}$/.test(value);
-const RFC3339=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
+const RFC3339_INSTANT=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value;
 const finite=value=>typeof value==='number'&&Number.isFinite(value);
+const IOS_SAFARI_UA=value=>NONEMPTY(value)&&/(iPhone|iPod)/.test(value)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(value)&&/Safari\//.test(value);
 
 function issue(errors,code,message){errors.push({code,message});}
 function same(actual,expected){return actual===expected;}
@@ -41,12 +51,14 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
 
   if(!NONEMPTY(target.mobileAcceptanceTargetId))issue(errors,'TARGET_ID_REQUIRED','mobileAcceptanceTargetId is required.');
   if(target.physicalDeviceRequired!==true)issue(errors,'PHYSICAL_DEVICE_REQUIRED','The target must require a physical device.');
+  if(target.mobileCapabilityProbeRequired!==true)issue(errors,'CAPABILITY_PROBE_REQUIRED','The pinned target must require the recorded mobile capability probe.');
   if(!HEX_128_OR_MORE(target.challenge))issue(errors,'CHALLENGE_INVALID','Challenge must contain at least 128 bits encoded as hexadecimal.');
-  if(!RFC3339(target.challengeIssuedAt)||!RFC3339(target.challengeExpiresAt))issue(errors,'CHALLENGE_TIME_INVALID','Challenge issue and expiry times must be RFC 3339 values.');
-  if(RFC3339(target.challengeIssuedAt)&&RFC3339(target.challengeExpiresAt)&&Date.parse(target.challengeExpiresAt)<=Date.parse(target.challengeIssuedAt))issue(errors,'CHALLENGE_WINDOW_INVALID','Challenge expiry must be later than challenge issue time.');
+  if(!RFC3339_INSTANT(target.challengeIssuedAt)||!RFC3339_INSTANT(target.challengeExpiresAt))issue(errors,'CHALLENGE_TIME_INVALID','Challenge issue and expiry times must be RFC 3339 UTC instants with exactly three fractional-second digits.');
+  if(RFC3339_INSTANT(target.challengeIssuedAt)&&RFC3339_INSTANT(target.challengeExpiresAt)&&Date.parse(target.challengeExpiresAt)<=Date.parse(target.challengeIssuedAt))issue(errors,'CHALLENGE_WINDOW_INVALID','Challenge expiry must be later than challenge issue time.');
   if(used.has(target.challenge))issue(errors,'CHALLENGE_REUSED','The mobile acceptance challenge was already accepted.');
   const verificationTime=expected.verificationTime||new Date().toISOString();
-  if(RFC3339(target.challengeExpiresAt)&&Date.parse(verificationTime)>Date.parse(target.challengeExpiresAt))issue(errors,'CHALLENGE_EXPIRED','The mobile acceptance challenge is expired.');
+  if(!RFC3339_INSTANT(verificationTime))issue(errors,'VERIFICATION_TIME_INVALID','Verification time must be an RFC 3339 UTC instant with exactly three fractional-second digits.');
+  if(RFC3339_INSTANT(target.challengeExpiresAt)&&RFC3339_INSTANT(verificationTime)&&Date.parse(verificationTime)>Date.parse(target.challengeExpiresAt))issue(errors,'CHALLENGE_EXPIRED','The mobile acceptance challenge is expired.');
 
   if(!COMMIT_SHA(target.sourceCommit))issue(errors,'TARGET_COMMIT_INVALID','Target sourceCommit must be an exact 40-character commit SHA.');
   if(!SHA256(target.deploymentManifestDigest))issue(errors,'TARGET_MANIFEST_DIGEST_INVALID','Target deploymentManifestDigest must be a SHA-256 digest.');
@@ -54,6 +66,10 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(target.basePath!==MOBILE_ACCEPTANCE_BASE_PATH)issue(errors,'TARGET_BASE_PATH_INVALID','Target base path must be the canonical deployment base path.');
   if(!NONEMPTY(target.testProjectId))issue(errors,'TARGET_TEST_PROJECT_REQUIRED','Target testProjectId is required.');
   if(!NONEMPTY(target.procedureVersion))issue(errors,'TARGET_PROCEDURE_REQUIRED','Target procedureVersion is required.');
+  if(!NONEMPTY(target.performer))issue(errors,'TARGET_PERFORMER_REQUIRED','The pinned target must identify the authorized physical-device performer.');
+  if(!NONEMPTY(target.identityAssurance))issue(errors,'TARGET_IDENTITY_ASSURANCE_REQUIRED','The pinned target must record performer identity assurance.');
+  if(!NONEMPTY(target.iosVersion))issue(errors,'TARGET_IOS_VERSION_REQUIRED','The pinned target must record the reported iOS version.');
+  if(!IOS_SAFARI_UA(target.safariUserAgent))issue(errors,'TARGET_SAFARI_USER_AGENT_INVALID','The pinned target must record an observed iPhone Safari user-agent string.');
   if(!target.viewport||!finite(target.viewport.width)||!finite(target.viewport.height)||!finite(target.viewport.devicePixelRatio)||target.viewport.width<=0||target.viewport.height<=0||target.viewport.devicePixelRatio<=0)issue(errors,'TARGET_VIEWPORT_INVALID','Target viewport dimensions and device-pixel ratio are required.');
 
   if(expected.sourceCommit&&!same(target.sourceCommit,expected.sourceCommit))issue(errors,'TARGET_COMMIT_MISMATCH','Target commit does not match the exact deployed commit.');
@@ -69,7 +85,11 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     ['origin','EVIDENCE_ORIGIN_MISMATCH'],
     ['basePath','EVIDENCE_BASE_PATH_MISMATCH'],
     ['testProjectId','EVIDENCE_TEST_PROJECT_MISMATCH'],
-    ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH']
+    ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH'],
+    ['performer','EVIDENCE_PERFORMER_MISMATCH'],
+    ['identityAssurance','EVIDENCE_IDENTITY_ASSURANCE_MISMATCH'],
+    ['iosVersion','EVIDENCE_IOS_VERSION_MISMATCH'],
+    ['safariUserAgent','EVIDENCE_SAFARI_USER_AGENT_MISMATCH']
   ];
   for(const [field,code] of bindings){if(!same(evidence[field],target[field]))issue(errors,code,`Evidence ${field} does not match the pinned target.`);}
   if(!NONEMPTY(evidence.mobileAcceptanceEvidenceId))issue(errors,'EVIDENCE_ID_REQUIRED','mobileAcceptanceEvidenceId is required.');
@@ -78,8 +98,19 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(evidence.performer))issue(errors,'PERFORMER_REQUIRED','Evidence performer identity is required.');
   if(!NONEMPTY(evidence.identityAssurance))issue(errors,'IDENTITY_ASSURANCE_REQUIRED','Evidence performer identity assurance is required.');
   if(!NONEMPTY(evidence.iosVersion))issue(errors,'IOS_VERSION_REQUIRED','Reported iOS version is required.');
-  if(!NONEMPTY(evidence.safariUserAgent)||!/(iPhone|iPod)/.test(evidence.safariUserAgent)||!/Safari\//.test(evidence.safariUserAgent)||/(CriOS|FxiOS|EdgiOS|OPiOS)/.test(evidence.safariUserAgent))issue(errors,'SAFARI_USER_AGENT_INVALID','Evidence must identify Safari on the pinned iPhone target and reject substitute browsers.');
+  if(!IOS_SAFARI_UA(evidence.safariUserAgent))issue(errors,'SAFARI_USER_AGENT_INVALID','Evidence must identify Safari on the pinned iPhone target and reject substitute browsers.');
   if(!evidence.viewport||!same(evidence.viewport.width,target.viewport.width)||!same(evidence.viewport.height,target.viewport.height)||!same(evidence.viewport.devicePixelRatio,target.viewport.devicePixelRatio))issue(errors,'VIEWPORT_MISMATCH','Evidence viewport must match the pinned target exactly.');
+
+  const probe=evidence.mobileCapabilityProbe;
+  if(!probe||typeof probe!=='object'||Array.isArray(probe))issue(errors,'MOBILE_CAPABILITY_PROBE_REQUIRED','A recorded MOBILE_CAPABILITY_PROBE is required before the physical acceptance run.');
+  else{
+    if(!NONEMPTY(probe.probeId))issue(errors,'MOBILE_CAPABILITY_PROBE_ID_REQUIRED','The mobile capability probe must have an identity.');
+    if(probe.result!=='PASS')issue(errors,'MOBILE_CAPABILITY_PROBE_FAILED','The mobile capability probe must pass before acceptance.');
+    const capabilities=probe.capabilities&&typeof probe.capabilities==='object'&&!Array.isArray(probe.capabilities)?probe.capabilities:{};
+    for(const capability of REQUIRED_MOBILE_CAPABILITIES){
+      if(capabilities[capability]!=='SUPPORTED')issue(errors,'MOBILE_CAPABILITY_UNAVAILABLE',`Required pinned-target capability ${capability} is unavailable or unknown.`);
+    }
+  }
 
   const receipts=Array.isArray(evidence.operationReceipts)?evidence.operationReceipts:[];
   const kinds=new Set();

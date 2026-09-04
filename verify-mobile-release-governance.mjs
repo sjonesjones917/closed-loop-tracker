@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
+import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS,REQUIRED_MOBILE_CAPABILITIES} from './verify-mobile-acceptance-evidence.mjs';
 import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
 
 const WORKFLOW_PATH=new URL('./.github/workflows/pages.yml',import.meta.url);
@@ -79,9 +79,11 @@ assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptance
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceOrigin:'https://example.invalid'}),false,'A different origin cannot satisfy the canonical deployment identity.');
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,actualAndroidChromeAcceptance:true,actualIPhoneSafariAcceptance:false}),false,'Android acceptance cannot satisfy the iPhone requirement.');
 
+const safariUserAgent='Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1';
 const target={
   mobileAcceptanceTargetId:'MOBILE-TARGET-001',
   physicalDeviceRequired:true,
+  mobileCapabilityProbeRequired:true,
   challenge:'0123456789abcdef0123456789abcdef',
   challengeIssuedAt:'2026-09-02T20:00:00.000Z',
   challengeExpiresAt:'2026-09-03T20:00:00.000Z',
@@ -91,6 +93,10 @@ const target={
   basePath:'/closed-loop-tracker/',
   testProjectId:'JOB-MOBILE-001',
   procedureVersion:'actual-iphone-safari/1',
+  performer:'authorized-operator',
+  identityAssurance:'SELF_ASSERTED',
+  iosVersion:'19.0',
+  safariUserAgent,
   viewport:{width:393,height:852,devicePixelRatio:3}
 };
 const evidence={
@@ -105,11 +111,12 @@ const evidence={
   procedureVersion:target.procedureVersion,
   physicalDeviceAssertion:true,
   evidenceBasis:'HUMAN_OBSERVATION',
-  performer:'authorized-operator',
-  identityAssurance:'SELF_ASSERTED',
-  iosVersion:'19.0',
-  safariUserAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1',
+  performer:target.performer,
+  identityAssurance:target.identityAssurance,
+  iosVersion:target.iosVersion,
+  safariUserAgent:target.safariUserAgent,
   viewport:{...target.viewport},
+  mobileCapabilityProbe:{probeId:'MOBILE-PROBE-001',result:'PASS',capabilities:Object.fromEntries(REQUIRED_MOBILE_CAPABILITIES.map(capability=>[capability,'SUPPORTED']))},
   operationReceipts:REQUIRED_MOBILE_RECEIPT_KINDS.map((kind,index)=>({kind,receiptId:`MR-${String(index+1).padStart(3,'0')}`,result:'PASS'})),
   runtimeFindings:{runtimeExceptions:0,unhandledRejections:0},
   measurements:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44},
@@ -118,6 +125,14 @@ const evidence={
 };
 const expected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T00:00:00.000Z'};
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true,'Complete pinned mobile evidence must validate.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,challengeIssuedAt:'2026-09-02T20:00:00Z'},evidence:{...evidence},expected}).accepted,false,'A challenge time without exactly three fractional-second digits must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,challengeExpiresAt:'2026-09-03T15:00:00.000-05:00'},evidence:{...evidence},expected}).accepted,false,'An offset-bearing mobile challenge instant must not satisfy the canonical UTC-Z contract.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected:{...expected,verificationTime:'2026-09-03T00:00:00Z'}}).accepted,false,'A noncanonical verification time must be rejected before freshness evaluation.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,performer:'different-operator'},evidence,expected}).accepted,false,'Physical evidence must be bound to the exact pinned performer.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,iosVersion:'19.1'},evidence,expected}).accepted,false,'Physical evidence must be bound to the exact pinned iOS version.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,safariUserAgent:target.safariUserAgent.replace('19.0','19.1')},evidence,expected}).accepted,false,'Physical evidence must be bound to the exact pinned Safari user-agent string.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,mobileCapabilityProbe:{...evidence.mobileCapabilityProbe,capabilities:{...evidence.mobileCapabilityProbe.capabilities,FILE_EXPORT_OR_SHARE:'UNKNOWN'}}},expected}).accepted,false,'An unknown required pinned-target capability must block mobile acceptance.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,mobileCapabilityProbe:null},expected}).accepted,false,'Missing MOBILE_CAPABILITY_PROBE must block mobile acceptance.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challenge:'f'.repeat(32)},expected}).accepted,false,'Mismatched challenge must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Safari/604.1','CriOS/140.0.0.0 Mobile/15E148 Safari/604.1')},expected}).accepted,false,'A substitute iOS browser must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operationReceipts:evidence.operationReceipts.slice(1)},expected}).accepted,false,'Missing required physical operator-path evidence must be rejected.');
@@ -157,6 +172,10 @@ console.log(JSON.stringify({
   exactTargetBindingVerified:true,
   singleUseChallengeVerified:true,
   expiredChallengeRejected:true,
+  exactRfc3339UtcTimeContractVerified:true,
+  pinnedPerformerAndEnvironmentBindingVerified:true,
+  mobileCapabilityProbeRequired:true,
+  unknownCapabilityBlocks:true,
   substituteIosBrowserRejected:true,
   requiredOperatorPathReceiptCoverage:true,
   authenticatedEvidenceBridgeAcceptsValidProof:true,
