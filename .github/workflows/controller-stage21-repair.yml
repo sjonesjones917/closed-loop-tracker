@@ -20,7 +20,7 @@ jobs:
         run: |
           python verification/controller-stage21-repair.py
           set +e
-          : > verification/controller-stage21-run.log
+          : > verification/controller-stage21-run.txt
           for cmd in \
             "node verify-convergence.mjs" \
             "node verify-complete.mjs" \
@@ -29,16 +29,16 @@ jobs:
             "node verify-definition-of-done.mjs" \
             "node verify-v3-definition-of-done.mjs"
           do
-            echo "COMMAND: $cmd" | tee -a verification/controller-stage21-run.log
-            bash -lc "$cmd" >> verification/controller-stage21-run.log 2>&1
+            echo "COMMAND: $cmd" | tee -a verification/controller-stage21-run.txt
+            bash -lc "$cmd" >> verification/controller-stage21-run.txt 2>&1
             code=$?
-            echo "EXIT: $code" | tee -a verification/controller-stage21-run.log
+            echo "EXIT: $code" | tee -a verification/controller-stage21-run.txt
           done
-          cat verification/controller-stage21-run.log
+          cat verification/controller-stage21-run.txt
       - name: Commit repaired branch implementation
         run: |
           git config user.name "closed-loop-controller"
           git config user.email "actions@users.noreply.github.com"
-          git add workflow-schema.js workflow-engine.js app-core.js verify-full-cycle.mjs verify-convergence.mjs .github/workflows/pages.yml verification/controller-stage21-run.log
+          git add workflow-schema.js workflow-engine.js app-core.js verify-full-cycle.mjs verify-convergence.mjs .github/workflows/pages.yml verification/controller-stage21-run.txt
           git commit -m "Stage 21: make convergence application-owned and non-vacuous [skip ci]"
           git push origin HEAD:controller-v2/stage21-convergence-20260904-3
