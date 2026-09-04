@@ -1,0 +1,33 @@
+name: Stage 17 deterministic materialization
+on:
+  push:
+    branches:
+      - controller/stage17-cross-run-current-394844
+permissions:
+  contents: write
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, '[stage17-materialized]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Materialize Stage 17 repair
+        run: node .stage17-materialize.mjs
+      - name: Verify targeted Stage 17 behavior
+        run: |
+          node verify-cross-run-expected-variance.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node verify-spec-residual-closure.mjs
+      - name: Commit permanent implementation and remove temporary materializer
+        run: |
+          git config user.name "closed-loop-controller"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .stage17-materialize.mjs .github/workflows/stage17-materialize.yml
+          git add workflow-schema.js workflow-engine.js response-ingestion.js verify-cross-run-expected-variance.mjs verify-spec-grounded-route-oracle.mjs verify-spec-residual-closure.mjs
+          git commit -m "Implement Stage 13 frozen expected-variance comparison [stage17-materialized]"
+          git push origin HEAD:${{ github.ref_name }}
