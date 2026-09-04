@@ -182,7 +182,8 @@ if(
             const staged=execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim();
             if(staged){
               execFileSync('git',['commit','-m',`Controller Stage ${earliest}: commit canonical proof record`]);
-              execFileSync('git',['push','origin','HEAD:main'],{stdio:['ignore','pipe','pipe']});
+              const proofBranch=`controller/stage${earliest}-proof-${String(process.env.GITHUB_SHA||'').slice(0,12)}`;
+              execFileSync('git',['push','--force','origin',`HEAD:refs/heads/${proofBranch}`],{stdio:['ignore','pipe','pipe']});
             }
           }
         }
