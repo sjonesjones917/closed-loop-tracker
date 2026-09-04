@@ -1,0 +1,19 @@
+name: Temporary source capture
+on:
+  pull_request:
+    branches: [temp-base4024-capture-base-20260904]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Capture source
+        run: tar --exclude=.git -czf /tmp/source.tar.gz .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: base-source-${{ github.sha }}
+          path: /tmp/source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
