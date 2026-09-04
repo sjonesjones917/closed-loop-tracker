@@ -28,6 +28,7 @@ function baseFixture(){
     CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001'
   });
   engine.ensureShape(p);
+  const scope=engine.currentScope(p);
   for(let stage=1;stage<=13;stage++){
     p.stages[stage].status='COMPLETE';
     p.stages[stage].gate={complete:true,blocked:false,reasons:[]};
@@ -39,7 +40,7 @@ function baseFixture(){
     EXPECTED_CONDITION:'The controlled output satisfies the governing requirement.',
     EVIDENCE:'Preserved failing observation.',
     PROPOSITION_ID:'PROPOSITION-STAGE18'
-  },'DEFECT-STAGE18');
+  },'DEFECT-STAGE18',scope);
   p.projectData.defects.push(defect);
   const rca=record('rootCauses',14,{
     DEFECT_ID:'DEFECT-STAGE18',
@@ -48,13 +49,14 @@ function baseFixture(){
     ROOT_CAUSE:'The production instruction omitted the governing constraint.',
     DOWNSTREAM_INVALIDATION:'Invalidate the candidate and all later run, verification, convergence, and release evidence.',
     EVIDENCE:'The preserved failure and instruction trace establish the earliest defective layer.'
-  },'RCA-STAGE18');
+  },'RCA-STAGE18',scope);
   p.projectData.rootCauses.push(rca);
-  p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE18-RCA',stage:14,status:'COMMITTED',responseType:'DATA_PROPOSAL',scope:{}});
-  return {p,defect,rca};
+  p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE18-RCA',stage:14,status:'COMMITTED',responseType:'DATA_PROPOSAL',scope:{...scope}});
+  return {p,defect,rca,scope};
 }
 
 function addRegression(p,{result='VIOLATED',withExecution=true,withEvidence=true}={}){
+  const scope=engine.currentScope(p);
   const regression=record('regressions',15,{
     DEFECT_ID:'DEFECT-STAGE18',
     FIXTURE:'Preserved exact failing fixture for DEFECT-STAGE18.',
@@ -65,7 +67,7 @@ function addRegression(p,{result='VIOLATED',withExecution=true,withEvidence=true
     APPLICABILITY:'ACTIVE until legitimately retired under the registered retirement contract.',
     ACTIVE_RETIRED_STATE:'ACTIVE',
     STATUS:'ACTIVE'
-  },'REG-STAGE18');
+  },'REG-STAGE18',scope);
   p.projectData.regressions.push(regression);
   if(withExecution){
     const execution=record('regressionExecutions',15,{
@@ -76,7 +78,7 @@ function addRegression(p,{result='VIOLATED',withExecution=true,withEvidence=true
       EXPECTED:'VIOLATED',
       ACTUAL:result,
       STATUS:'COMPLETED'
-    },'REG-EXEC-STAGE18-PRE');
+    },'REG-EXEC-STAGE18-PRE',scope);
     if(withEvidence){
       const evidence=record('evidenceRecords',15,{
         KIND:'EXECUTION_LOG',
@@ -84,13 +86,13 @@ function addRegression(p,{result='VIOLATED',withExecution=true,withEvidence=true
         DESCRIPTION:'Preserved pre-correction regression execution evidence.',
         CONTENT:`The actual pre-correction result was ${result}.`,
         STATUS:'PRESERVED'
-      },'EVIDENCE-STAGE18-PRE');
+      },'EVIDENCE-STAGE18-PRE',scope);
       p.projectData.evidenceRecords.push(evidence);
       execution.evidenceRefs=[evidence.id];
     }
     p.projectData.regressionExecutions.push(execution);
   }
-  p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE18-REGRESSION',stage:15,status:'COMMITTED',responseType:'DATA_PROPOSAL',scope:{}});
+  p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE18-REGRESSION',stage:15,status:'COMMITTED',responseType:'DATA_PROPOSAL',scope:{...scope}});
   return regression;
 }
 
@@ -133,7 +135,7 @@ function addRegression(p,{result='VIOLATED',withExecution=true,withEvidence=true
   const {p}=baseFixture();
   p.stages[14].status='COMPLETE';
   p.stages[14].gate={complete:true,blocked:false,reasons:[]};
-  p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE18-REGRESSION-EMPTY',stage:15,status:'COMMITTED',responseType:'DATA_PROPOSAL',scope:{}});
+  p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE18-REGRESSION-EMPTY',stage:15,status:'COMMITTED',responseType:'DATA_PROPOSAL',scope:{...engine.currentScope(p)}});
   const gate=engine.gate(15,p);
   assert(!gate.complete&&gate.reasons.some(reason=>reason.includes('Permanent regression definitions are missing')),'A confirmed defect without a permanent regression definition did not fail Stage 15.');
 }
@@ -191,5 +193,6 @@ console.log(JSON.stringify({
   preCorrectionSatisfiedDoesNotProveFailure:true,
   insufficientEvidenceRejected:true,
   actualPreCorrectionViolationWithEvidenceProvesReproduction:true,
-  isolatedDisposableProject:true
+  isolatedDisposableProject:true,
+  currentScopeBound:true
 }));
