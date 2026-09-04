@@ -1,0 +1,93 @@
+name: Stage 19 root-cause correction materializer
+
+on:
+  push:
+    branches:
+      - controller-v2/stage19-root-cause-correction-20260904
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: controller-v2/stage19-root-cause-correction-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove the intentional invalid fixture fails before repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node verify-root-cause-correction.mjs; then
+            echo 'Stage 19 mutation verifier unexpectedly passed before the runtime gate repair.' >&2
+            exit 1
+          fi
+          echo 'Expected pre-repair failure observed.'
+      - name: Apply the minimal responsible-layer gate repair
+        shell: python
+        run: |
+          from pathlib import Path
+
+          engine_path=Path('workflow-engine.js')
+          engine=engine_path.read_text(encoding='utf-8')
+          old="case 16:requireAccepted();if(confirmedDefects(project).length&&!collection('changes').length)reasons.push('A responsible-layer changeset or blocker is required for confirmed defects.');break;"
+          new="""case 16:{
+            requireAccepted();
+            const defects=confirmedDefects(project),stageChanges=collection('changes'),coveredDefects=new Set();
+            for(const change of stageChanges){
+              const changeId=recordId(change,'changes')||'UNKNOWN',trace=validateChangeTrace(change,project);
+              if(!trace.valid)reasons.push('Changeset '+changeId+' is not a valid responsible-layer correction: '+trace.reasons.join(' '));
+              const oldVersion=String(recordValue(change,'OLD_ARTIFACT_VERSION')||'').trim(),newVersion=String(recordValue(change,'NEW_ARTIFACT_VERSION')||'').trim();
+              if(oldVersion&&newVersion&&oldVersion===newVersion)reasons.push('Changeset '+changeId+' must create a new controlled version; old and new version identities are identical.');
+              const instructionChange=upper(recordValue(change,'INSTRUCTION_CHANGE_DETERMINATION')),preflight=upper(recordValue(change,'REQUIRED_REPEATED_PREFLIGHT')),instructionChanged=Boolean(instructionChange)&&!['UNCHANGED','UNCHANGED FOR FIXTURE','NO','FALSE','NOT CHANGED','NOT APPLICABLE'].includes(instructionChange),layer=upper(recordValue(change,'RESPONSIBLE_LAYER'));
+              if(instructionChanged&&['','NONE','NOT REQUIRED','NO','FALSE','NOT APPLICABLE'].includes(preflight))reasons.push('Changeset '+changeId+' changes the production instruction but does not require repeated independent preflight.');
+              if(layer.includes('EXECUTION')&&instructionChanged)reasons.push('Changeset '+changeId+' treats an execution-only root cause as an instruction change; execution-only defects must preserve the correct instruction and rerun in a fresh execution.');
+              for(const defectId of trace.triggerIds)coveredDefects.add(String(defectId));
+            }
+            const missing=defects.map(defect=>recordId(defect,'defects')).filter(Boolean).filter(defectId=>!coveredDefects.has(defectId));
+            if(missing.length)reasons.push('Controlled root-cause correction is missing for confirmed defect(s): '+missing.join(', ')+'.');
+            break;
+          }"""
+          if old not in engine:
+            raise SystemExit('Expected Stage 16 legacy gate anchor was not found; refusing ambiguous repair.')
+          engine=engine.replace(old,new,1)
+          if old in engine:
+            raise SystemExit('Legacy Stage 16 gate remained after repair.')
+          engine_path.write_text(engine,encoding='utf-8')
+
+          residual_path=Path('verify-spec-residual-closure.mjs')
+          residual=residual_path.read_text(encoding='utf-8')
+          import_line="await import('./verify-root-cause-correction.mjs');"
+          if import_line not in residual:
+            anchor="await import('./verify-root-cause-regressions.mjs');"
+            if anchor not in residual:
+              raise SystemExit('Residual-closure import anchor missing.')
+            residual=residual.replace(anchor,anchor+'\n'+import_line,1)
+            residual_path.write_text(residual,encoding='utf-8')
+      - name: Prove repaired Stage 19 behavior and affected regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workflow-engine.js
+          node --check verify-root-cause-correction.mjs
+          node verify-root-cause-correction.mjs
+          node verify-root-cause-regressions.mjs
+          node verify-semantic-invariant.mjs
+          node verify-full-cycle.mjs
+          node verify-complete.mjs
+      - name: Commit materialized runtime repair to the controller branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-materializer
+          git config user.email actions@users.noreply.github.com
+          git add workflow-engine.js verify-spec-residual-closure.mjs verify-root-cause-correction.mjs
+          git diff --cached --check
+          git commit -m 'Controller Stage 19: enforce responsible-layer correction closure'
+          git push origin HEAD:controller-v2/stage19-root-cause-correction-20260904
