@@ -21,6 +21,7 @@ jobs:
       - name: Apply candidate-freeze repair and verify focused behavior
         run: |
           set -euo pipefail
+          test -f .repair-stage14.mjs
           node .repair-stage14.mjs
           node --check workflow-schema.js
           node --check workflow-engine.js
@@ -28,13 +29,12 @@ jobs:
           node --check verify-candidate-freeze.mjs
           node verify-semantic-operation-boundaries.mjs
           node verify-candidate-freeze.mjs
-      - name: Remove one-time scaffold and restore canonical Pages workflow
+      - name: Commit integrated source
         run: |
           set -euo pipefail
-          git show HEAD^:.github/workflows/pages.yml > .github/workflows/pages.yml
           rm .repair-stage14.mjs
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-schema.js workflow-engine.js app-core.js verify-full-cycle.mjs verify-complete.mjs verify-definition-of-done.mjs verify-candidate-freeze.mjs .github/workflows/pages.yml .repair-stage14.mjs
+          git add workflow-schema.js workflow-engine.js app-core.js verify-full-cycle.mjs verify-complete.mjs verify-definition-of-done.mjs verify-candidate-freeze.mjs .repair-stage14.mjs
           git commit -m "Require explicit human component selection before candidate freeze"
           git push origin HEAD:controller-stage14-candidate-freeze-20260904
