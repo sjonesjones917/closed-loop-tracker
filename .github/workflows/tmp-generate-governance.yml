@@ -5,13 +5,16 @@ on:
     branches: [controller-v2-stage01-generate]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller-v2-stage01-generate
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
@@ -22,10 +25,18 @@ jobs:
           set -euo pipefail
           node generate-specification-governance.mjs
           node verify-specification-governance.mjs
+      - name: Commit generated governance files to temporary branch
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-governance
+          git config user.email closed-loop-governance@users.noreply.github.com
+          git add specification/closed-loop-specification-manifest.json specification/closed-loop-normative-requirements.json
+          git commit -m 'Temporary: materialize generated Stage 01 governance files'
+          git push origin HEAD:controller-v2-stage01-generate
       - name: Upload generated governance
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: stage01-governance-b71e828461c8
+          name: stage01-governance-b71e828461c8-write
           path: |
             specification/closed-loop-specification-manifest.json
             specification/closed-loop-normative-requirements.json
