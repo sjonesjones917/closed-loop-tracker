@@ -290,8 +290,6 @@ When the user supplies this information, the application MUST:
 7. preserve source locations where mechanically available;
 8. retain the files for later authorized use.
 
-Store-once refers to physical byte storage: identical bytes may share one stored blob. Canonical artifact identity is per supplied occurrence and role — the same bytes supplied again, or under a different filename or role, remain distinct ARTIFACT_ID records referencing shared storage. Deduplication never merges canonical artifact records.
-
 The application MUST NOT pretend it semantically understands arbitrary file contents before an agent or supported deterministic parser has inspected them.
 There is no hidden pre-Stage-01 semantic intake agent.
 
@@ -406,10 +404,6 @@ Stage 01 completion MUST be rejected when:
 - a required human-only issue was neither asked nor explicitly deferred;
 - the agent performed later-stage work instead of intake;
 - the final response claims completion while accessible material remains unexamined.
-
-Before accepted semantic intake, every user-supplied file is presumptively required for Stage 01 inspection unless it is mechanically empty, a byte-identical duplicate of an included file, or explicitly excluded by the human through SAVE_HUMAN_INPUT; after accepted intake, later transfer requirements follow Section 29.15 materiality.
-
-File-inspection status is the closed set INCLUDED_IN_HANDOFF, which the application establishes; EXTERNAL_INSPECTION_CLAIMED, which is agent-asserted; INSPECTION_SUPPORTED, which is the claim plus complete consistent per-unit dispositions and source locations; and INSPECTION_ESTABLISHED_TO_REQUIRED_BASIS, which is the minimum basis the file's contract requires. Stage 01 completion requires INCLUDED_IN_HANDOFF as an application fact and at least INSPECTION_SUPPORTED for every required file; the word inspected always means at the recorded basis and is never represented as an application-proven semantic fact. A required artifact whose semantic content is INACCESSIBLE_OR_BLOCKED and not proven immaterial leaves Stage 01 BLOCKED unless human authority removes it from project scope through a new input version.
 
 6.5A Raw-unitization contract
 
@@ -606,8 +600,6 @@ Stage 03 must be exhaustive with respect to the accepted current source set and 
 Stage 02 MUST create one current SOURCE_SEARCH_CONTRACT defining the project and subject scope, jurisdiction or system scope where applicable, source classes considered, locations and repositories searched, queries or strategies, date or version cutoff, exclusions, access limitations, search performer and capability, execution evidence, unresolved discovery risk, and adequacy rationale. The initial search universe derives from the Stage 01 objective, known authorities, jurisdiction or system scope, a versioned source-class checklist, and every supplied reference.
 
 DESIRED_SOURCE_COUNT is advisory only and MUST NOT cap or exclude a controlling source. Narrowing a release-bearing search universe requires explicit reasoning and an independent search-adequacy review. NO_APPLICABLE_EXTERNAL_SOURCE is permitted only after the bounded search was executed, every discovered candidate source received a disposition, the independent adequacy review accepted the procedure, and no material unresolved discovery risk remains.
-
-The versioned source-class checklist derives from the closed generic class set — governing law and regulation; standards and specifications; controlling contracts and prior agreements; authoritative technical documentation; official registries and databases; scholarly and measurement literature; and project-supplied references — filtered by the Stage 01 objective and declared jurisdiction or system scope. Omitting an entire applicable class requires explicit reasoning and is challenged by the SEARCH_ADEQUACY_REVIEW. The contract also declares explicit stopping criteria: every registered location searched; query saturation, meaning no new candidate source in the final registered query round; authority-chain closure, meaning every authority cited by an accepted controlling source received a disposition; the declared date or version cutoff; a disposition for every inaccessible location; and the residual-risk statement. Search completion without every declared criterion is invalid.
 
 8.4 Stage 03 omission challenge
 
@@ -1059,20 +1051,6 @@ workflow-schema.js MUST expose one closed FIELD_REGISTRY covering every job fiel
 
 An unregistered field, multiply classified field, ambiguous producer, undeclared default, or operation writing outside its declared set is invalid.
 
-Registry completeness is specification-controlled, not implementation-chosen. Every field named anywhere in this specification receives its complete FIELD_REGISTRY contract either from an explicit statement of this specification or from these closed default rules, applied in order:
-1. a field defined in Section 15 uses its Section 15 row and the Section 15 value contracts;
-2. STAGE_DECISION, DECISION_EVIDENCE, and every *_DETERMINATION, CONTROLLING_REASON, CONTROLLING_EVIDENCE, and FINAL_* field is an APPLICATION-derived gate summary;
-3. every count, coverage, or completeness field — including TOTAL_*, *_COVERAGE, ALL_*, EXPECTED_*, ACTUAL_*, MISSING_*, EXECUTED, SATISFIED, VIOLATED, UNDETERMINED, and RUNS — is an APPLICATION-derived summary under Sections 14.1 and 16.2;
-4. every *_RECORDS field is a Section 14.8 projection of its owning Section 38 family, and substantive ownership follows that family's declared partitions;
-5. every *_VERSION and *_ID field is an APPLICATION-allocated identity under Section 34.2 or its owning version registry;
-6. fields assigned by Sections 14.2, 14.3, and 14.6 follow those assignments;
-7. every remaining stage field is an APPLICATION-recomputed summary or immutable reference under Section 14.8; substantive agent or human content never exists as a bare stage field and lives only in its owning family.
-A field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice.
-
-The same closure governs STAGE_OPERATION_REGISTRY. For every operation: executor class, response permissions, and writable-family constraints come from Section 14.6; required scope from Section 14.7; acceptance mode from Section 17.12; writable families are exactly the Section 38 families whose records the operation's Section 37 description and Section 14.6 contract create or complete, and the Stage 17 and Stage 19 iteration operations reuse the families of their corresponding Stage 10-16 and Stage 15 operations under the new iteration scope; the completion predicate is the owning stage's Section 37 Completion clause; retry behavior is Section 35.6 for exact retries and replacement-prompt regeneration otherwise; independence requirements are exactly those Sections 26.1-26.6 impose on the operation's role. A stage-operation property neither fixed by this specification nor uniquely derivable from these rules is UNDEFINED_OPERATION_CONTRACT and blocks acceptance.
-
-The generated FIELD_REGISTRY, STAGE_OPERATION_REGISTRY, and normalizer and derivation registries are reviewed under the Section 2.2 omission-challenge discipline, and their digests are pinned in the Section 46.2 acceptance artifact.
-
 14.6 Closed stage-operation registry
 
 The exact stage-operation set is:
@@ -1114,7 +1092,7 @@ Operation execution and response permissions are closed:
 
 - External-agent operations are COMPLETE at Stages 01-09, 15, 21, 23, 24, 25, and 26; SEMANTIC_CHALLENGE; RECONCILE_INTAKE; SEARCH_ADEQUACY_REVIEW; RECONCILE_SOURCE_SEARCH; RECONCILE_RESEARCH; DISPOSITION_CHALLENGE; ATOMICITY_CHALLENGE; RECONCILE_REQUIREMENTS; SEMANTIC_REVIEW; RECONCILE_REQUIREMENT_SET; PROOF_REVIEW; RECONCILE_VERIFICATION_SUITE; EXECUTE_RUN; VERIFY; COMPARE; ROOT_CAUSE; REGRESSION; CORRECT; RECONCILE at Stage 26; ADVISORY_REVIEW at Stage 27; EXECUTE_EXTERNAL_TEST; INVESTIGATE_MISSING_EVIDENCE; and EXECUTE_FAILURE_TEST, EXECUTE_REGRESSION, and REGRESSION_VERIFY when externally routed. They require an operation reservation and file-first package. Their responseType is exactly DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as permitted by the operation's field contract. ADVISORY_REVIEW at Stage 27 is optional and non-gating: it writes releaseGateReviews records only and cannot modify, delay, or substitute for any CALCULATE_RELEASE input, calculation, or state.
 - Application commands are EXECUTE_FAILURE_TEST when natively routed, EXECUTE_REGRESSION when natively routed, REGRESSION_VERIFY when natively routed, FREEZE, CONFIRM_FREEZE, COMPLETE at Stage 18, CONFIRM at Stage 19, FREEZE_BASELINE, RUN_NATIVE_TESTS, RUN_NATIVE_ATTACKS, FREEZE_DELIVERY_CANDIDATE, VERIFY_IDENTITY, CALCULATE_RELEASE, CALCULATE_EVIDENCE_CHAINS, and CALCULATE_TERMINAL. They accept no external response envelope and commit only application-owned results through the universal command path. COMPLETE at Stage 18 and CONFIRM at Stage 19 are application-calculated convergence and confirmation determinations; agents contribute only the separately declared explanatory fields of the owning record families. FREEZE, CONFIRM_FREEZE, FREEZE_BASELINE, and FREEZE_DELIVERY_CANDIDATE consume and reference the required current humanDecisions records; they never create human authority.
-- HUMAN_DECISION commands are CAPTURE_DELIVERY_INTENT; application confirmation of a newly reported human-origin answer; and RECORD_HUMAN_DECISION, one global application-validated command bound to exactly one registered purpose and target per invocation. The closed RECORD_HUMAN_DECISION purpose enum is INTENT_CONFIRMATION, CANDIDATE_COMPONENT_SELECTION, BASELINE_AUTHORIZATION, DISCLOSURE_AUTHORIZATION, EXTERNAL_ACTION_RISK_AUTHORIZATION, CONTROLLED_EXCEPTION, REGRESSION_RETIREMENT_AUTHORIZATION, BACKUP_POLICY_SELECTION, TRADEOFF_OR_SCOPE_DECISION, VISUAL_BASELINE_AUTHORIZATION, and HUMAN_AUTHORITY_CORRECTION. Each purpose writes only the humanDecisions record and the human-decision-owned fields FIELD_REGISTRY declares for that purpose and target. HUMAN commands are SAVE_HUMAN_INPUT, which creates and edits User Job Input and saves Section 18 fallback answers with their declared consequences, and RECORD_HUMAN_OBSERVATION, which records human-owned observation and evidence records for human-inspection routes. These commands write only their declared HUMAN or HUMAN_DECISION fields and records, accept no agent-owned canonical fields, and accept no external response envelope.
+- HUMAN_DECISION commands are CAPTURE_DELIVERY_INTENT; application confirmation of a newly reported human-origin answer; and RECORD_HUMAN_DECISION, one global application-validated command bound to exactly one registered purpose and target per invocation. The closed RECORD_HUMAN_DECISION purpose enum is INTENT_CONFIRMATION, CANDIDATE_COMPONENT_SELECTION, BASELINE_AUTHORIZATION, DISCLOSURE_AUTHORIZATION, EXTERNAL_ACTION_RISK_AUTHORIZATION, CONTROLLED_EXCEPTION, REGRESSION_RETIREMENT_AUTHORIZATION, BACKUP_POLICY_SELECTION, TRADEOFF_OR_SCOPE_DECISION, and HUMAN_AUTHORITY_CORRECTION. Each purpose writes only the humanDecisions record and the human-decision-owned fields FIELD_REGISTRY declares for that purpose and target. HUMAN commands are SAVE_HUMAN_INPUT, which creates and edits User Job Input and saves Section 18 fallback answers with their declared consequences, and RECORD_HUMAN_OBSERVATION, which records human-owned observation and evidence records for human-inspection routes. These commands write only their declared HUMAN or HUMAN_DECISION fields and records, accept no agent-owned canonical fields, and accept no external response envelope.
 - EXPORT_PROMPT_FILE, EXPORT_EXECUTION_PACKAGE, SELECT_RESPONSE_JSON_FILE, SELECT_RETURNED_FILES, EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS, and RECORD_DELIVERY_EVIDENCE are operator actions. They create only the application receipts and human or external evidence explicitly declared by their contracts.
 
 For every operation, TARGET_SLOT = SHA-256(closed-loop-canonical-json/1 of contractProfileId, jobId, stage, operation, and all operation-specific target identities required by Section 14.7). The target slot excludes projectRevision so an exact retry retains its slot; expectedRevision and scopeHash remain separate mandatory preconditions. No operation can write a family or field not listed in its FIELD_REGISTRY entry.
@@ -1636,8 +1614,6 @@ The canonical manifest contains packageManifestSha256 computed from closed-loop-
 
 An optional archive is only a transport representation of the same logical container. It must use the registered deterministic archive profile and pass the archive safety rules. The current profile is closed-loop-archive-profile/1: a ZIP archive containing only STORE (uncompressed) entries, entries ordered by canonical-path unsigned byte order, the UTF-8 filename flag set, every timestamp fixed to 1980-01-01T00:00:00, no directory entries, no symlinks or special entries, no archive comment, no encryption, and no extra fields except a Zip64 field exactly where an entry or archive size requires it. The manifest is always at `manifest.json`; the authoritative prompt is at `instruction.txt`; an inbound response is at `response.json`. Directory entries, timestamps, permissions, compression method, compression level, and path normalization are fixed by the registered archive profile. An archive mismatch does not alter the logical package identity; it rejects the transport representation.
 
-The deterministic profile governs application-produced archives only. An inbound archive from an external actor is a nonauthoritative convenience container: it must pass the Section 19.9 safety rules, is exploded into named attachment slots with per-member byte verification, and its original bytes are preserved as evidence. External actors are never required to produce the deterministic profile; the authoritative inbound representation remains response.json plus attachment-slot files.
-
 rawFilename records the device-selected transport name. canonicalPath and ATTACHMENT_SLOT_ID control package membership. An operating system or external service may apply a duplicate-name suffix to a transport filename; that rename is accepted only when the slot, embedded response binding, actual bytes, media contract, and expected digest where available establish the exact member. Transport-name tolerance never authorizes a delivery-artifact rename.
 
 19.8 Disclosure and package allowlist
@@ -2126,8 +2102,6 @@ A mandatory external-system test remains blocked at Stage 06 when its only valid
 Human inspection can be a valid Stage 06 route. Actual human evidence is required during execution.
 Independent review can be generally routable at Stage 06. Actual context independence is established when the review is reserved and performed.
 
-Required capability availability is the closed conjunction CAPABILITY_READY: the capability is identified and current; authorized for the exact target and purpose; holds the required permissions and access; the required inputs are transferable within declared limits; the execution route is usable; and the required evidence class is obtainable. Any conjunct UNKNOWN makes the capability UNKNOWN, and required routing is BLOCKED.
-
 23.3 External-action risk contract
 
 Every external, human, tool, system, physical, publication, filing, purchase, security, or production action is classified before package generation as one or more of:
@@ -2357,15 +2331,13 @@ Every release-bearing semantic review records:
 - result: ACCEPTED, REJECTED, PARTIAL, UNKNOWN, or DISAGREED;
 - reconciliation requirement and status.
 
-The author and reviewer cannot share the same raw response, context reservation, operation reservation, or accepted review identity. A reviewer cannot approve a semantic value it authored. Search adequacy, Stage 03 extraction challenge, Stage 04 disposition and atomicity, Stage 05 classification/applicability/equivalence, Stage 06 proof-expression, evidence-basis, and native-versus-external representability review, and Stage 26 semantic reconciliation use this contract.
+The author and reviewer cannot share the same raw response, context reservation, operation reservation, or accepted review identity. A reviewer cannot approve a semantic value it authored. Search adequacy, Stage 03 extraction challenge, Stage 04 disposition and atomicity, Stage 05 classification/applicability/equivalence, Stage 06 proof-expression/evidence-basis review, and Stage 26 semantic reconciliation use this contract.
 
 When author and reviewer disagree materially, neither output is promoted. A distinct reconciliation operation is required, and a distinct reconciler receives both completed outputs and the governing evidence. The reconciler differs from both contexts unless a genuine human-authority decision is required. A third reviewer is required when the reconciliation contract designates the dispute as technical semantic judgment and neither prior view can be rejected from objective evidence. A human may decide only an actual human authority, policy, scope, risk, disclosure, or tradeoff question. Every unresolved disagreement remains UNKNOWN or BLOCKED and is never automatically promoted.
 
 26.6 Dimensioned independence
 
 Independence is recorded separately for APPLICATION_SESSION_DISTINCTNESS, APPLICATION_INPUT_ISOLATION, USER_TRANSFER_CONFORMITY, EXTERNAL_CONTEXT_IDENTIFIER_DISTINCTNESS, PROVIDER_CONTEXT_INDEPENDENCE, EXECUTOR_OR_REVIEWER_ROLE_SEPARATION, and ENVIRONMENT_INDEPENDENCE where required. APPLICATION_ESTABLISHED means only that application-observable dimensions required by the contract are satisfied. Distinct IDs do not prove hidden provider-state independence. A required UNKNOWN dimension blocks or leaves the result undetermined.
-
-Every external operation contract declares MINIMUM_INPUT_BINDING_BASIS from APPLICATION_OBSERVED, VERIFIED_EXTERNAL, EXTERNALLY_SUPPORTED, and SELF_ASSERTED. An echoed manifest identity and per-member digests establish at most EXTERNALLY_SUPPORTED. SELF_ASSERTED or UNKNOWN cannot satisfy an operation whose contract requires byte-exact input possession, and gates derive admissibility from the recorded basis.
 
 ⸻
 
@@ -2571,8 +2543,6 @@ The closed proof-expression language permits LEAF, ALL_OF, ANY_OF, and AT_LEAST_
 
 Every current applicable release-bearing proposition has exactly one current PROOF_OBLIGATION_ID identifying its proof expression, required leaves, evidence classes, allowed epistemic bases, artifacts, dependencies, freshness, independence, verification timing, current satisfaction, blockers, and scope hash. Optional, advisory, stale, historical, or unregistered results cannot satisfy it.
 
-EQUIVALENT applies only to proposition-to-proposition sameness. The relation between a test and a proof leaf, and between a proof expression and its proposition, is sufficiency, established by the accepted Stage 06 PROOF_REVIEW. A LEAF references exactly one of: a canonical test with its required disposition, an observation-backed proposition, an applicability or activation condition, or a prerequisite proof obligation; each leaf declares its truth extraction, required evidence classes, and scope binding, and no other leaf target is valid in version 1. An ANY_OF expression is accepted only when the review establishes that each branch alone suffices to establish the parent proposition; an AT_LEAST_K expression is accepted only when every permitted K-combination suffices or an explicitly reviewed combinatorial sufficiency contract covers it. A branch that weakens proof strength is rejected at Stage 06.
-
 29.14 Observation, entailment, origin, and freshness
 
 Every release-bearing evidence path is EVIDENCE_RECORD → OBSERVATION_RECORD → proposition or proof leaf. An observation identifies exact subject, location or measurement point, finding, method/tool, inputs and outputs, hashes, origin, submitting actor, epistemic basis, time/freshness fields, source evidence, scope, and raw-response or native-execution provenance.
@@ -2580,8 +2550,6 @@ Every release-bearing evidence path is EVIDENCE_RECORD → OBSERVATION_RECORD �
 Every observation has an accepted relation ESTABLISHES, REFUTES, SUPPORTS_ONLY, CONTEXT_ONLY, DOES_NOT_ADDRESS, or UNKNOWN. Only ESTABLISHES provides affirmative proof; REFUTES provides failure evidence; SUPPORTS_ONLY and CONTEXT_ONLY cannot independently satisfy a proof obligation. Normalization never elevates an external claim.
 
 Time-sensitive evidence records observedAt, its DEVICE_REPORTED, SOURCE_ASSERTED, or VERIFIED_EXTERNAL basis, validFrom, validUntil, supersession, freshness requirement, status, and reason. Required freshness that cannot be established is UNKNOWN. Current justificatory evidence is acyclic.
-
-VERIFIED_EXTERNAL is achieved only under a registered attestation-verification contract fixing the evidence type, the attesting tool or system identity, the verification method, the bound inputs including the operation challengeNonce or reservation, the freshness rule, and the failure semantics. Absent such a registered contract, the basis remains EXTERNALLY_SUPPORTED or weaker.
 
 29.15 Normative classification, controlled exceptions, severity, and materiality
 
@@ -2591,7 +2559,7 @@ A controlled exception never converts a violated proposition into SATISFIED. It 
 
 Defect severity is CRITICAL, MAJOR, MINOR, or UNKNOWN. Severity is semantic and provenance-bound, but no severity label can override proposition truth. Sufficient refutation of an applicable mandatory proposition blocks release regardless of severity. UNKNOWN severity blocks severity-dependent routing.
 
-Materiality is MATERIAL, NONMATERIAL, or UNKNOWN. MATERIAL means the item could change the truth value, applicability, proof admissibility, evidence sufficiency, identity, due state, dependency closure, gate result, authorization, or delivery status of at least one current release-bearing proposition or action. NONMATERIAL requires affirmative reasoning that the item cannot alter any current proposition, proof obligation, artifact identity, dependency, gate, release eligibility, delivery scope, or delivery state. UNKNOWN is treated as MATERIAL for exclusion and blocking. Every materiality determination that excludes content, reduces required work, or downgrades an obligation is recorded as a materialityReviews record; where it reduces a possible obligation it requires independent review under Section 26.5.
+Materiality is MATERIAL, NONMATERIAL, or UNKNOWN. NONMATERIAL requires affirmative reasoning that the item cannot alter any current proposition, proof obligation, artifact identity, dependency, gate, release eligibility, delivery scope, or delivery state. UNKNOWN is treated as MATERIAL for exclusion and blocking.
 
 ⸻
 
@@ -2657,8 +2625,6 @@ Examples:
 - Incompatible current evidence that prevents valid determination → BLOCKED
 
 The application applies this distinction.
-
-A contradiction that contains sufficient refutation of an applicable mandatory proposition does not prevent REJECTED under Section 36.4 rule 1; contradiction produces BLOCKED only where no sufficient mandatory refutation already controls.
 
 30.8 Gate integration
 
@@ -2879,8 +2845,6 @@ All canonical semantic hashes use closed-loop-canonical-json/1. Its implementati
 
 NFC normalization and default case folding use Unicode 15.1.0 data. Confusable detection uses the Unicode Technical Standard #39 confusables data published for Unicode 15.1.0. These exact data identities and table digests are recorded in the runtime registry and deployment manifest. A host Unicode implementation may be used only when startup and CI conformance fixtures establish the pinned results for every supported code-point class; otherwise the application uses bundled pinned tables. An unknown host/table mismatch blocks canonical filename normalization and package activation. Runtime upgrades do not silently change canonical identities; runtime or browser Unicode behavior may not silently redefine canonical identity. Every set-valued array has one named versioned normalizer. Every contentSha256, recordSha256, project hash, package hash, proof hash, scope hash, and terminal hash has a closed JSON-pointer inclusion and omission set registered in workflow-schema.js. No implementation selects preimage fields implicitly.
 
-For every registered hash kind, the preimage inclusion set is exactly the canonical fields of the subject record or manifest, excluding only the digest field itself and every field whose value depends on that digest, fields declared audit-only or derived-summary, and fields the owning schema explicitly excludes with a registered reason. The scope-hash preimage is exactly the Section 14.7 dimensions of the operation, and the terminal-hash preimage is exactly the records enumerated in Section 36.9. An unregistered hash kind or pointer set is UNDEFINED_HASH_PREIMAGE and blocks the computation and every dependent gate. Default array semantics are ordered and order-significant; an array is set-valued only when its JSON pointer is explicitly registered with an element-identity key, a duplicate rule that rejects duplicates, and a sort rule of canonical byte order over the element identity. An unregistered pointer treated as a set is UNDEFINED_SET_SEMANTICS and blocks.
-
 34.2 Canonical ID allocation
 
 All canonical IDs use closed-loop-id/1. Agents and humans never choose canonical IDs. For each family, FIELD_REGISTRY supplies an exact uppercase ASCII family prefix. The application reserves an allocationSequence and collisionCounter in the same transaction and computes:
@@ -2905,8 +2869,6 @@ The application begins collisionCounter at 0 and increments it only when the gen
 34.3 Registered normalizers and derivations
 
 Every normalizer and application derivation has an immutable registry ID, version, implementation-owner file, canonical input contract, output contract, hash or build identity, and invalidation consequences. Every derived value records the exact derivation ID and source-record hashes. A changed normalizer or derivation invalidates affected current values and results unless an explicit compatibility migration proves byte- and semantic-equivalent output.
-
-Every release-bearing derivation and normalizer is completely defined by this specification or by an explicitly named versioned normative algorithm. The semantics defined in Sections 14.6, 15, 16.1, 26, 29, 30, 31, 34.1, 34.2, and 36 control their registry entries, and an entry cannot deviate from them. A release-bearing derivation or normalizer whose semantics are not so defined is UNDEFINED_DERIVATION and blocks acceptance.
 
 ⸻
 
@@ -3189,8 +3151,6 @@ Stage 30 uses one idempotent CALCULATE_TERMINAL command. In one transaction it:
 
 A BLOCKED delivery record is a terminal determination record, not an authorization. The command's own committed revision is part of the record and does not invalidate it. Only a later revision that changes a dependency in the recorded terminal dependency closure can supersede, block, or withdraw it. Registry incompleteness blocks Stage 30; it does not mutate Stage 27 into a dependency cycle. A registry finding that objectively refutes an earlier premise invalidates that premise through the responsible-stage map and requires recalculation in order.
 
-RESPONSIBLE_STAGE_MAP is mechanically derived: every canonical family maps to its Section 38 declared stage, and every global family maps to the earliest stage whose gate consumes it; a mutation in a family invalidates from that stage under Section 36.1. Registry findings are classified TERMINAL_ONLY_DEFECT, which blocks Stage 30 only, or PREMISE_REFUTING_DEFECT, which invalidates from the mapped responsible stage. A defect in the release-calculation semantics themselves is an implementation defect handled through the Sections 40-44 regression discipline, never by silently recalculating Stage 27.
-
 The terminal evidence hash is computed from the exact Stage 27 release record, Stage 28 identity record and human intent, Stage 29 evidence-chain set and hash, Stage 30 registry calculation, pre-delivery checkpoint, delivery scope, and authorized artifact identities. It is never computed from a summary standing in place of those records.
 
 36.10 Destination-bound delivery authorization
@@ -3208,8 +3168,6 @@ Human delivery intent and the DELIVERY_RECORD bind:
 - pre-delivery checkpoint ID.
 
 Authorization for one recipient, purpose, destination, or channel is not authorization for another. UNKNOWN destination or disclosure authority blocks authorization where the material requires it.
-
-An authorization with a real-time validity condition declares its permitted time basis under closed-loop-trusted-time/1. Where only DEVICE_REPORTED time exists, validity is UNKNOWN and every dependent action, including a Section 23.3 external action, is BLOCKED; device-reported time may annotate but cannot establish current validity.
 
 36.11 Authorized export, delivery attempt, and delivery evidence
 
@@ -3236,7 +3194,7 @@ The prompt must perform complete human-authority intake as specified in Sections
 It must inspect the full request and every accessible supplied artifact.
 It must ask only genuine human-authority questions.
 It must not conduct external source research, atomize requirements, design tests, or produce the final deliverable.
-Completion: Current input version exists; every required file reached its required inspection basis; every raw unit is accounted for; all blocking questions are resolved; every ask-now human issue was answered or explicitly deferred; required agent fields exist; the current proposal is accepted; any intent confirmation references the current input version and accepted change.
+Completion: Current input version exists; required files were inspected; every raw unit is accounted for; all blocking questions are resolved; every ask-now human issue was answered or explicitly deferred; required agent fields exist; the current proposal is accepted; any intent confirmation references the current input version and accepted change.
 Fields:
 JOB_ID, JOB_TITLE, DATE_OPENED, JOB_OWNER, EXACT_USER_OBJECTIVE_VERBATIM, EXACT_DELIVERABLE_REQUESTED, SUPPLIED_MATERIALS_INVENTORY, REQUIRED_OUTPUT_FORMAT, DEADLINE_OR_TEMPORAL_SCOPE, DESIRED_SOURCE_COUNT, KNOWN_AUTHORITATIVE_SOURCES, AVAILABLE_TOOLS, PROHIBITED_ACTIONS, EXPLICIT_USER_REQUIREMENTS, ASSUMPTIONS, UNKNOWN_INFORMATION, INPUT_SET_VERSION, INPUT_SET_CONTENTS, INPUT_SET_HASH_OR_MANIFEST, JOB_RECORD_STATUS, STATUS_EVIDENCE, SEMANTIC_CHALLENGE_STATUS, HUMAN_CONFIRMATION_RECEIPTS.
 
@@ -3806,7 +3764,7 @@ humanDecisions
 - ID: HUMAN_DECISION_ID
 - Policy: APPEND_SCOPED
 - HUMAN_DECISION owns the asserted or confirmed choice; APPLICATION owns identity, scope, target relationships, validity, receipt, and lifecycle.
-- Covers intent confirmations, tradeoffs, scope changes, disclosure authorizations, risk authorizations, baseline authorization, visual-baseline authorization, delivery intent, and corrections to human-authority facts.
+- Covers intent confirmations, tradeoffs, scope changes, disclosure authorizations, risk authorizations, baseline authorization, delivery intent, and corrections to human-authority facts.
 - Created only through the HUMAN_DECISION commands declared in Section 14.6.
 
 sourceSearchContracts
@@ -4171,8 +4129,6 @@ Until authentication exists:
 - store identityAssurance = SELF_ASSERTED;
 - do not imply authentication.
 
-Every HUMAN_DECISION purpose and CAPTURE_DELIVERY_INTENT declares its minimum identityAssurance in FIELD_REGISTRY. Until authentication exists, SELF_ASSERTED is the only available level and is explicitly accepted for every current purpose; every recorded decision carries its actual assurance. A purpose whose declared minimum exceeds the available assurance is BLOCKED.
-
 39.14 Canonical-action restrictions
 
 Browser prompt() cannot be used for canonical actions.
@@ -4226,8 +4182,6 @@ Navigable external URLs use a closed scheme allowlist of `https:` and, only wher
 Before implementation changes, repository governance freezes one VISUAL_BASELINE_ID containing the exact source commit, deployment-resource hashes, supported viewports, prompt-box width and height behavior, relevant computed-style values, reference screenshots, and explicitly allowed change regions. A visual comparison may ignore only the registered dynamic regions.
 
 An intentional visual deviation requires a specific normative UI requirement and a new human-authorized baseline record. Repository history is evidence for locating a candidate baseline but does not substitute for the frozen identity; if the baseline was not previously explicit, repository and deployment history identify the last user-approved state before the unrequested visual change and the resulting baseline is frozen before repair acceptance. Nonvisual work must produce zero unapproved visual diffs.
-
-If exactly one qualifying predecessor state is mechanically identifiable, it is the proposed baseline. Otherwise, or when historical approval cannot be established, baseline selection is recorded through RECORD_HUMAN_DECISION with purpose VISUAL_BASELINE_AUTHORIZATION, and visual acceptance is BLOCKED until that decision exists.
 
 ⸻
 
@@ -4561,7 +4515,7 @@ Integrated closure tests
 219. RFC 3339 and date-only values obey the closed date/time contract; leap seconds and ambiguous forms are rejected.
 220. Release precedence produces REJECTED for a sufficient mandatory refutation, otherwise BLOCKED for unresolved requirements, otherwise ACCEPTED.
 221. Native and derived application commands commit directly without artificial human proposal approval.
-222. A candidate-selection, baseline, disclosure, risk, controlled-exception, regression-retirement, backup-policy, tradeoff, visual-baseline, or human-correction decision commits only through RECORD_HUMAN_DECISION with the exact registered purpose and target.
+222. A candidate-selection, baseline, disclosure, risk, controlled-exception, regression-retirement, backup-policy, tradeoff, or human-correction decision commits only through RECORD_HUMAN_DECISION with the exact registered purpose and target.
 223. FREEZE, CONFIRM_FREEZE, FREEZE_BASELINE, and FREEZE_DELIVERY_CANDIDATE reference the required current humanDecisions records and cannot synthesize human authority.
 224. Stage 15 COMPLETE executes as an external-agent operation with reservation and file-first package.
 225. A CURRENT_* pointer is null before its owning stage creates its target and non-null afterward; premature non-null values and post-creation nulls are rejected.
@@ -4575,20 +4529,6 @@ Integrated closure tests
 233. The normative-requirement manifest carries current omission-challenge and reconciliation evidence; an uncovered specification section blocks acceptance.
 234. The recorded MOBILE_CAPABILITY_PROBE identifies any missing required capability and yields BLOCKED.
 235. Per-member sequential export satisfies logical package export when a combined multi-file share is unavailable.
-236. A field, stage-operation property, hash preimage, set pointer, derivation, or normalizer that is neither explicitly specified nor uniquely derivable by the closed default rules fails acceptance as its UNDEFINED_* disposition.
-237. The generated FIELD_REGISTRY, STAGE_OPERATION_REGISTRY, and derivation and normalizer registries are Section 2.2-reviewed and digest-pinned in the acceptance artifact.
-238. An inbound external archive is exploded into named attachment slots with per-member verification; the deterministic archive profile is never demanded from an external actor.
-239. An external operation requiring byte-exact input possession rejects SELF_ASSERTED or UNKNOWN input-binding basis.
-240. VERIFIED_EXTERNAL is granted only under a registered attestation-verification contract; otherwise the basis remains EXTERNALLY_SUPPORTED or weaker.
-241. ANY_OF branches and every permitted AT_LEAST_K combination carry accepted sufficiency review before any branch result can satisfy the proposition.
-242. A contradiction containing sufficient mandatory refutation yields REJECTED, not BLOCKED.
-243. A time-limited authorization without its permitted trusted-time basis is UNKNOWN and blocks dependent actions.
-244. A MOBILE_ACCEPTANCE_CHALLENGE is single-use; reused, mismatched, or expired evidence is rejected.
-245. Ambiguous or unestablished visual-baseline history blocks visual acceptance until VISUAL_BASELINE_AUTHORIZATION is recorded.
-246. A required Stage 01 artifact with inaccessible semantic content blocks completion unless human authority removes it from scope through a new input version.
-247. Identical bytes supplied twice or under different roles remain distinct canonical artifacts sharing physical storage.
-248. CAPABILITY_READY requires its full closed conjunction; any UNKNOWN conjunct blocks required routing.
-249. A HUMAN_DECISION purpose whose declared minimum identityAssurance exceeds the available level is BLOCKED.
 
 ⸻
 
@@ -4890,8 +4830,6 @@ Before final acceptance, repository governance creates one MOBILE_ACCEPTANCE_TAR
 
 The required mobile acceptance executes on an actual iPhone in Safari. Simulator, desktop responsive mode, and another browser are supplementary only and cannot satisfy the physical-device requirement. "Current" is frozen by the target record; a material iOS, Safari/WebKit, application build, origin, storage behavior, or target-device change before final delivery invalidates the affected mobile result and requires revalidation.
 
-The minimum required target-identity tuple is: the physical-device human observation; reported iOS version; observed Safari user-agent string; viewport dimensions and device-pixel ratio; exact deployed commit and deployment-manifest digest; origin; and test-project identity. WebKit build identity and exact hardware model may remain UNKNOWN without blocking; every other tuple member is required.
-
 The actual-iPhone path must prove:
 - initial project creation and raw file intake;
 - prompt-file export or share without clipboard dependence;
@@ -4918,8 +4856,6 @@ Because the canonical handoff container is logical under Section 19.7, per-membe
 Before the device run, CI or the authorized acceptance controller creates a cryptographically random MOBILE_ACCEPTANCE_CHALLENGE of at least 128 bits bound to the exact commit, deployment manifest, origin, target ID, procedure version, and test project. The actual iPhone loads that deployed build and the application records the challenge in its acceptance-mode receipts.
 
 At completion, the application exports `mobile-acceptance-evidence.json` containing the target ID, challenge, build identity, origin, test-project identity, operation receipts, console/runtime findings available to the application, screenshots or recording references, exported project digest, performer identity assurance, physical-device assertion, and evidence basis. CI verifies every mechanically verifiable binding before accepting the record. The physical-device fact remains HUMAN_OBSERVATION or stronger external attestation according to the actual evidence and is never mislabeled application-proven.
-
-The evidence file reaches CI through the repository as a committed file or authenticated workflow input from a submitter recorded in the acceptance artifact. Each MOBILE_ACCEPTANCE_CHALLENGE is single-use: CI accepts at most one evidence file per challenge and rejects reused, unknown, or expired challenges and any evidence bound to a different commit, manifest, origin, target, or test project; a superseding run requires a new challenge. The gate minimum for the physical-device fact is HUMAN_OBSERVATION by the recorded performer at the recorded identity assurance; that basis is explicitly sufficient and is never relabeled application-proven.
 
 ⸻
 
