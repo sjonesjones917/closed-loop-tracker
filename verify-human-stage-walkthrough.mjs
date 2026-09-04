@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import http from 'node:http';
+import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
@@ -16,24 +17,29 @@ const server=http.createServer((req,res)=>{
   res.end(fs.readFileSync(absolute));
 });
 await new Promise((resolve,reject)=>server.listen(serverPort,'127.0.0.1',resolve).once('error',reject));
+const reserveLoopbackPort=()=>new Promise((resolve,reject)=>{
+  const probe=net.createServer();
+  probe.once('error',reject);
+  probe.listen(0,'127.0.0.1',()=>{
+    const address=probe.address();
+    const port=address&&typeof address==='object'?address.port:0;
+    probe.close(error=>error?reject(error):port?resolve(port):reject(new Error('Unable to reserve a loopback DevTools port.')));
+  });
+});
+const remotePort=await reserveLoopbackPort();
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-human-stage-'));
 let browserStderr='';
-const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
+const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-address=127.0.0.1',`--remote-debugging-port=${remotePort}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
 child.stderr?.on('data',chunk=>{browserStderr=(browserStderr+String(chunk)).slice(-16000);});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function poll(fn,timeout=30000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
 async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
-let ws,remotePort;
+let ws;
 try{
-  const devToolsPortFile=path.join(profile,'DevToolsActivePort');
-  remotePort=await poll(async()=>{
+  await poll(async()=>{
     if(child.exitCode!==null)throw new Error(`Chrome exited before opening DevTools (exit ${child.exitCode}). ${browserStderr}`);
-    if(!fs.existsSync(devToolsPortFile))throw new Error('Chrome has not written DevToolsActivePort yet.');
-    const [rawPort]=fs.readFileSync(devToolsPortFile,'utf8').split(/\r?\n/);
-    const port=Number(rawPort);
-    if(!Number.isInteger(port)||port<1||port>65535)throw new Error(`Chrome wrote an invalid DevTools port: ${rawPort}`);
-    await getJson(`http://127.0.0.1:${port}/json/version`);
-    return port;
+    await getJson(`http://127.0.0.1:${remotePort}/json/version`);
+    return true;
   });
   const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(`http://127.0.0.1:${serverPort}/?walkthrough=${Date.now()}`)}`,{method:'PUT'});
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
