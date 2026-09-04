@@ -12,18 +12,25 @@ jobs:
         with:
           ref: controller3-prompt-byte-identity-rerun-20260904
           fetch-depth: 0
-      - name: Reconcile and commit
+      - name: Fetch implementation refs
+        run: git fetch origin +refs/heads/controller3-runtime-current-main-replay-20260904:refs/remotes/origin/runtime +refs/heads/controller3-prompt-byte-identity-20260904:refs/remotes/origin/prompt
+      - name: Copy disjoint implementation files
         shell: bash
         run: |
-          set -euxo pipefail
-          git fetch origin +refs/heads/controller3-runtime-current-main-replay-20260904:refs/remotes/origin/runtime +refs/heads/controller3-prompt-byte-identity-20260904:refs/remotes/origin/prompt
-          BASE=6206234856cdcaf7e83de6943540db09cfe3c4e2
+          set -euo pipefail
           for f in workflow-engine.js workflow-schema.js verify-complete.mjs verify-contract-closure.mjs verify-stage01-intake-closure.mjs verify-capability-readiness.mjs; do git show "origin/runtime:$f" > "$f"; done
           for f in build-test-project.mjs verify-browser.mjs verify-file-first-response.mjs verify-prompt-semantics.mjs verify.mjs; do git show "origin/prompt:$f" > "$f"; done
+      - name: Merge prompt authority corrections
+        shell: bash
+        run: |
+          set -euo pipefail
           git show origin/runtime:prompt-engine.js >/tmp/a
-          git show "$BASE":prompt-engine.js >/tmp/b
+          git show 6206234856cdcaf7e83de6943540db09cfe3c4e2:prompt-engine.js >/tmp/b
           git show origin/prompt:prompt-engine.js >/tmp/c
           git merge-file -p /tmp/a /tmp/b /tmp/c > prompt-engine.js
+      - name: Align affected fixed-oracle fixtures
+        shell: bash
+        run: |
           python3 - <<'PY'
           from pathlib import Path
           replacements={
@@ -36,6 +43,10 @@ jobs:
               if new not in s: raise SystemExit(f'unresolved verifier anchor: {path}')
               p.write_text(s)
           PY
+      - name: Commit final one-workflow tree
+        shell: bash
+        run: |
+          set -euo pipefail
           rm .github/workflows/controller3-integrate.yml
           git diff --check
           git config user.name github-actions[bot]
