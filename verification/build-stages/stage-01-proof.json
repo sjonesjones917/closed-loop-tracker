@@ -3,7 +3,7 @@
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "01",
   "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "b71e828461c86184e9a08f738453443e6b579aab",
+  "startingMainCommit": "d18cd91e112b8c9737bec126e3e79b5fe1539631",
   "endingMainCommit": "4506407ca6238eba083485c7d29aacab3c35dba6",
   "implementationCommitIds": [
     "903ef54d5eeb2cd80cde76deac049530ddc734af",
@@ -16,13 +16,13 @@
     "specification/closed-loop-normative-requirements.json"
   ],
   "normativeRequirementChanges": [
-    {"normativeRequirementId":"NREQ-0a7d4eee5cf603d62944a5034ac4801f","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-43f37c9b4342e21da2877c4e811ee872","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-f0a1ca7147b50755050079e8792f130c","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-4bb9a61adb2c0abfa59b847fec2f54cd","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-86fbf81ae24502beba9e86ee3098f3b7","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-fb5cf46d306cb1cba5734b88aa9880de","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"},
-    {"normativeRequirementId":"NREQ-2713787ffb8a8b83bd4086899e340cf0","oldDisposition":"IMPLEMENTED_UNPROVEN","newDisposition":"CONFORMANT_PROVEN"}
+    {"normativeRequirementId":"NREQ-0a7d4eee5cf603d62944a5034ac4801f","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-43f37c9b4342e21da2877c4e811ee872","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-f0a1ca7147b50755050079e8792f130c","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-4bb9a61adb2c0abfa59b847fec2f54cd","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-86fbf81ae24502beba9e86ee3098f3b7","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-fb5cf46d306cb1cba5734b88aa9880de","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"},
+    {"normativeRequirementId":"NREQ-2713787ffb8a8b83bd4086899e340cf0","oldDisposition":"MISSING","newDisposition":"CONFORMANT_PROVEN"}
   ],
   "proofCommands": [
     {"command":"node verify-specification-governance.mjs (SOURCE_COMMIT=b71e828461c86184e9a08f738453443e6b579aab)","exitCode":0},
