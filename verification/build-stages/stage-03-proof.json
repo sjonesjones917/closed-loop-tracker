@@ -2,82 +2,134 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "03",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "175d1fae392514d6e31296602d3dfa9541cd1160",
-  "endingMainCommit": "175d1fae392514d6e31296602d3dfa9541cd1160",
-  "implementationCommitIds": [
-    "175d1fae392514d6e31296602d3dfa9541cd1160"
-  ],
+  "stageName": "FILE-FIRST HANDOFF",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "b2533a13da6b2d0539ea8474ddcb28532ce2aa8a",
+  "endingMainCommit": "b2533a13da6b2d0539ea8474ddcb28532ce2aa8a",
+  "currentMainTreeSha": "c7e5a8dd71789c019df1672c4615d1ebae711d38",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "specificationSections": ["3", "4.3", "5", "24", "24.1", "24.2", "25", "49", "52"],
+  "implementationFiles": [
+    "app-core.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "project-store.js",
+    "index.html"
+  ],
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-ingestion.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33845345190, test job 100935895316, step 15 (Raw-first ingestion and negative cases), exact main b2533a13da6b2d0539ea8474ddcb28532ce2aa8a, completed success. verify-ingestion.mjs permanently imports and executes verify-file-first-response.mjs and verify-file-first-operator.mjs."
     },
     {
-      "command": "node verify-contract-closure.mjs",
-      "exitCode": 0
+      "command": "node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33845345190, test job 100935895316, step 18 (Prompt semantics and leakage), exact main b2533a13da6b2d0539ea8474ddcb28532ce2aa8a, completed success; prompt semantics also executes the file-first operator regression."
     },
     {
-      "command": "node verify-v3-contract.mjs",
-      "exitCode": 0
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33845345190, test job 100935895316, step 19 (Local Chromium operator path), exact main b2533a13da6b2d0539ea8474ddcb28532ce2aa8a, completed success. The browser verifiers select an actual authoritative response JSON file through #response-json-file."
     },
     {
-      "command": "node verify-data-route-closure.mjs",
-      "exitCode": 0
+      "command": "node verify-live.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33845345190, verify-live job 100936720785, step 5 (Exact deployed-byte verification), exact deployed main b2533a13da6b2d0539ea8474ddcb28532ce2aa8a, completed success."
     },
     {
-      "command": "GitHub Actions run 33827236458 test job 100883065889",
-      "exitCode": 0
-    },
-    {
-      "command": "GitHub Actions run 33827236458 verify-live job 100883722187",
-      "exitCode": 0
+      "command": "node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33845345190, verify-live job 100936720785, step 6 (Deployed Chromium operator path), exact deployed main b2533a13da6b2d0539ea8474ddcb28532ce2aa8a, completed success."
     }
   ],
   "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564"
-    }
-  ],
-  "intentionalInvalidFixtures": [
-    "unknown-field",
-    "duplicate-producer",
-    "missing-operation-property",
-    "unknown-stage-operation",
-    "scope-dimension-mismatch",
-    "unregistered-durable-object",
-    "undefined-derivation-normalizer",
-    "identity-assurance-below-minimum"
+    {"path":"specification/closed-loop-reliability-controlling-implementation-specification.txt","sha256":"6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"},
+    {"path":"verify-file-first-operator.mjs","gitBlobSha1":"85ea04449c32b37596e9741a864ce81799bc8f88"},
+    {"path":"verify-file-first-response.mjs","gitBlobSha1":"b0f0b1118aaac4831d8c253e135cb17a47b374cf"},
+    {"path":"verify-ingestion.mjs","gitBlobSha1":"cd73d0ba5dfae82645b11d9c35230316875ce1a8"}
   ],
   "earlierStageProofsReplayed": [
     {
       "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
+      "proofPath": "verification/build-stages/stage-01-proof.json",
+      "gitBlobSha1": "ecbae1f5d9a4c18f5d29347504659b4eb671f8c7",
       "status": "PASS"
     },
     {
       "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
+      "proofPath": "verification/build-stages/stage-02-proof.json",
+      "gitBlobSha1": "d9ca1c6a1dbf036f6b21273a7788fa892562d74d",
       "status": "PASS"
     }
   ],
-  "browserProofs": [],
+  "historicalProofPreservation": {
+    "sourcePath": "verification/build-stages/stage-03-proof.json",
+    "sourceGitBlobSha1": "f0ab8452b835777815b5ab11270ae76d6ad24e27",
+    "archivedPath": "verification/build-stages/historical/stage-03-proof-spec-3336446403ea.json",
+    "status": "PRESERVED_BEFORE_REPLACEMENT"
+  },
+  "intentionalInvalidFixtures": [
+    "Mutation replacing the authoritative response JSON file input with a text input is rejected",
+    "Mutation removing declared response-file selection state is rejected",
+    "Mutation removing staged-byte read-back mismatch enforcement is rejected",
+    "Mutation restoring paste as the primary workflow action is rejected",
+    "Mutation erasing AUTHORITATIVE_RESPONSE_FILE transport provenance is rejected",
+    "Mutation bypassing the common response-file staging path for text fallback is rejected",
+    "Mutation replacing authoritative instruction-file export with clipboard copy is rejected",
+    "Mutation erasing returned-file external-agent origin guidance is rejected",
+    "Mutation removing the file-first response regression from required ingestion proof is rejected"
+  ],
+  "repairedStateProofs": [
+    "The normal external handoff exposes authoritative instruction-file export rather than requiring clipboard transport",
+    "The primary external response path is an authoritative JSON file selector, not pasted JSON",
+    "Selected response bytes are staged before parsing, read back, rehashed, and fail closed on mismatch",
+    "Authoritative response bytes use strict UTF-8 decoding and remain bound to staged-byte identity",
+    "Text entry is explicitly nonauthoritative fallback and is materialized through the same response-file staging path",
+    "Raw-response provenance retains the authoritative response-file transport basis",
+    "Local and deployed Chromium verification exercise actual file selection through the authoritative response-file input"
+  ],
+  "browserProofs": [
+    {
+      "workflowRunId": 33845345190,
+      "jobId": 100935895316,
+      "step": "Local Chromium operator path",
+      "status": "PASS",
+      "commit": "b2533a13da6b2d0539ea8474ddcb28532ce2aa8a"
+    },
+    {
+      "workflowRunId": 33845345190,
+      "jobId": 100936720785,
+      "step": "Deployed Chromium operator path",
+      "status": "PASS",
+      "commit": "b2533a13da6b2d0539ea8474ddcb28532ce2aa8a"
+    }
+  ],
   "deployedProofs": [
     {
-      "proof": "exact deployed-byte and deployed Chromium verification",
+      "workflowRunId": 33845345190,
+      "jobId": 100936640069,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
       "status": "PASS",
-      "basis": "GitHub Actions run 33827236458 verify-live job 100883722187"
+      "commit": "b2533a13da6b2d0539ea8474ddcb28532ce2aa8a"
+    },
+    {
+      "workflowRunId": 33845345190,
+      "jobId": 100936720785,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "b2533a13da6b2d0539ea8474ddcb28532ce2aa8a"
     }
   ],
   "externalActorProofs": [],
+  "physicalDeviceProof": {"required": false, "status": "NOT_REQUIRED_FOR_STAGE_03"},
   "unprovenItems": [],
-  "proofCountBefore": 14,
-  "proofCountAfter": 20,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "04"
+  "directEvidenceReview": "PASS",
+  "nextStage": "04",
+  "notes": "The stale historical Stage 03 proof bound to specification SHA-256 3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564 was archived before replacement and was not reused as current proof. FILE-FIRST HANDOFF is independently re-established from exact-current deterministic mutation tests, actual local Chromium file selection, exact deployment, deployed-byte verification, and deployed Chromium file selection. No physical-iPhone, human-authority, independent-context, external-system, or external-agent execution evidence is claimed for this Stage 03 disposition."
 }
