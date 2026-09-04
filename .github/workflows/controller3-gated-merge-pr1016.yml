@@ -1,0 +1,151 @@
+name: Controller 3 gated exact-tree merge for PR 1016
+
+on:
+  push:
+    branches:
+      - controller3-prompt-byte-identity-rerun-20260904
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  gate-and-merge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: sjonesjones917/closed-loop-tracker
+      BRANCH: controller3-prompt-byte-identity-rerun-20260904
+      PR_NUMBER: '1016'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-prompt-byte-identity-rerun-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Produce the exact one-workflow final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "closed-loop-controller"
+          git config user.email "closed-loop-controller@users.noreply.github.com"
+          git fetch origin main
+          git merge --no-edit origin/main
+
+          if ! grep -Fq 'MOBILE_CAPABILITY_PROBE' verify-mobile-acceptance-evidence.mjs; then
+            git fetch origin controller3-mobile-capability-time-20260904:refs/remotes/origin/controller3-mobile-capability-time-20260904
+            base="$(git merge-base origin/main refs/remotes/origin/controller3-mobile-capability-time-20260904)"
+            git diff --binary "$base" refs/remotes/origin/controller3-mobile-capability-time-20260904 -- . ':(exclude).github/workflows/*' > /tmp/mobile.patch
+            test -s /tmp/mobile.patch
+            git apply --3way /tmp/mobile.patch
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          page = Path('.github/workflows/pages.yml')
+          pages = page.read_text(encoding='utf-8')
+          if 'workflow_dispatch:' not in pages:
+              marker = 'on:\n'
+              if marker not in pages:
+                  raise SystemExit('pages.yml has no block-form on: mapping.')
+              pages = pages.replace(marker, 'on:\n  workflow_dispatch:\n', 1)
+              page.write_text(pages, encoding='utf-8', newline='')
+
+          full = Path('verify-full-cycle.mjs')
+          text = full.read_text(encoding='utf-8')
+          if "node:fs" not in text:
+              text = "import fs from 'node:fs';\n" + text
+          if 'FULL_CYCLE_CANONICAL_CAPABILITY_FIXTURE' not in text:
+              anchor = "engine.ensureShape(p);engine.recalculate(p);"
+              start = text.find("core.createBlankState('JOB-FULL-CYCLE')")
+              pos = text.find(anchor, start)
+              if start < 0 or pos < 0:
+                  raise SystemExit('Could not locate full-cycle initialization.')
+              replacement = r'''engine.ensureShape(p);const FULL_CYCLE_CAPABILITY_TEMPLATE=JSON.parse(fs.readFileSync(new URL('./verification/fixtures/full-cycle-canonical-capability.json',import.meta.url),'utf8'));const FULL_CYCLE_CANONICAL_CAPABILITY_FIXTURE=(()=>{const definitions=schema.RECORD_SCHEMAS?.externalCapabilities?.fieldDefinitions||{};const record={};const enumValues=definition=>definition?.allowedValues||definition?.enumValues||definition?.values||definition?.enum||[];const chooseEnum=(field,definition)=>{const values=enumValues(definition);const upper=String(field).toUpperCase();const priorities=[];if(upper.includes('EPISTEMIC'))priorities.push('APPLICATION_OBSERVED','VERIFIED_EXTERNAL','EXTERNALLY_SUPPORTED');if(upper.includes('FRESH'))priorities.push('CURRENT','NOT_APPLICABLE');if(upper.includes('SCOPE'))priorities.push('CURRENT');if(upper.includes('TRUTH')||upper.includes('READY')||upper.includes('AVAILABLE')||upper.includes('AUTHORIZED')||upper.includes('PERMISSION')||upper.includes('TRANSFER')||upper.includes('USABLE')||upper.includes('OBTAINABLE'))priorities.push('TRUE','READY','AVAILABLE','AUTHORIZED','CURRENT','SATISFIED','COMPLETE','ACCEPTED');if(upper.includes('STATUS'))priorities.push('CURRENT','ACTIVE','AVAILABLE','READY','COMPLETE','ACCEPTED','TRUE','NOT_APPLICABLE');for(const value of priorities)if(values.includes(value))return value;return values[0];};for(const [field,definition] of Object.entries(definitions)){const upper=field.toUpperCase();const type=definition?.valueType||definition?.type||'STRING';if(upper==='CAPABILITY_ID')record[field]='CAPABILITY-FIXTURE-000001';else if(upper.includes('JOB_ID'))record[field]=p.job.JOB_ID;else if(upper.includes('CAPABILITY')&&!upper.endsWith('_IDS')&&!upper.endsWith('_ID'))record[field]='fixture-required_capability';else if(type==='BOOLEAN')record[field]=true;else if(type==='INTEGER'||type==='NUMBER')record[field]=1;else if(type==='STRING_ARRAY'||type==='REFERENCE_ARRAY'||type==='ARRAY')record[field]=[];else if(type==='OBJECT'||type==='STRUCTURED'||type==='STRUCTURED_VALUE')record[field]={};else if(enumValues(definition).length)record[field]=chooseEnum(field,definition);else if(definition?.nullable)record[field]=null;else record[field]=`fixture-${field.toLowerCase()}`;}return Object.assign(record,FULL_CYCLE_CAPABILITY_TEMPLATE);})();p.records.externalCapabilities=[FULL_CYCLE_CANONICAL_CAPABILITY_FIXTURE];engine.recalculate(p);'''
+              text = text[:pos] + replacement + text[pos + len(anchor):]
+              full.write_text(text, encoding='utf-8', newline='')
+          PY
+
+          test -f verification/fixtures/full-cycle-canonical-capability.json
+          rm -f .github/workflows/controller3-fix-known-pr.yml
+          rm -f .github/workflows/controller3-gated-merge-pr1016.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-ingestion.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-mobile-release-governance.mjs
+
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Finalize current-main runtime closure and exact CI gate"
+            git push origin HEAD:"$BRANCH"
+          fi
+          echo "FINAL_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Dispatch and require the canonical Pages test workflow on the exact final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api -X POST "repos/$REPOSITORY/actions/workflows/pages.yml/dispatches" -f ref="$BRANCH"
+          run_id=''
+          for attempt in $(seq 1 120); do
+            runs="$(gh api "repos/$REPOSITORY/actions/workflows/pages.yml/runs?branch=$BRANCH&event=workflow_dispatch&per_page=20")"
+            run_id="$(jq -r --arg sha "$FINAL_SHA" '.workflow_runs[] | select(.head_sha==$sha) | .id' <<<"$runs" | head -n 1)"
+            if [ -n "$run_id" ] && [ "$run_id" != null ]; then
+              status="$(gh api "repos/$REPOSITORY/actions/runs/$run_id" --jq .status)"
+              if [ "$status" = completed ]; then
+                conclusion="$(gh api "repos/$REPOSITORY/actions/runs/$run_id" --jq .conclusion)"
+                test "$conclusion" = success
+                echo "FINAL_TEST_RUN_ID=$run_id" >> "$GITHUB_ENV"
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for exact-final-tree canonical CI." >&2
+          exit 1
+      - name: Merge only the tested exact head
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_pr="$(gh pr list --repo "$REPOSITORY" --head "$BRANCH" --state open --json number --jq '.[0].number')"
+          test "$actual_pr" = "$PR_NUMBER"
+          response="$(gh api -X PUT "repos/$REPOSITORY/pulls/$PR_NUMBER/merge" -f merge_method=merge -f sha="$FINAL_SHA")"
+          test "$(jq -r .merged <<<"$response")" = true
+          merge_sha="$(jq -r .sha <<<"$response")"
+          test -n "$merge_sha"
+          echo "MERGE_SHA=$merge_sha" >> "$GITHUB_ENV"
+      - name: Dispatch canonical main deployment and require deployed verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api -X POST "repos/$REPOSITORY/actions/workflows/pages.yml/dispatches" -f ref=main
+          for attempt in $(seq 1 180); do
+            runs="$(gh api "repos/$REPOSITORY/actions/workflows/pages.yml/runs?branch=main&event=workflow_dispatch&per_page=20")"
+            run_id="$(jq -r --arg sha "$MERGE_SHA" '.workflow_runs[] | select(.head_sha==$sha) | .id' <<<"$runs" | head -n 1)"
+            if [ -n "$run_id" ] && [ "$run_id" != null ]; then
+              status="$(gh api "repos/$REPOSITORY/actions/runs/$run_id" --jq .status)"
+              if [ "$status" = completed ]; then
+                conclusion="$(gh api "repos/$REPOSITORY/actions/runs/$run_id" --jq .conclusion)"
+                test "$conclusion" = success
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for canonical main deployment verification." >&2
+          exit 1
