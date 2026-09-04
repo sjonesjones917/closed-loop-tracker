@@ -33,7 +33,17 @@ function submitStage8(p){
   committed.stages[8].gate=gate;
   return committed;
 }
-function reviewerContext(p,label){return engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});}
+function preserveStage8Completion(p){
+  const gate=engine.gate(8,p);
+  assert(gate.complete,`Stage 08 prerequisite became semantically incomplete: ${JSON.stringify(gate)}`);
+  p.stages[8].status='COMPLETE';
+  p.stages[8].gate=gate;
+}
+function reviewerContext(p,label){
+  const ctx=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});
+  preserveStage8Completion(p);
+  return ctx;
+}
 function preflightRecord(overrides={}){
   const instructionId=engine.recordId(engine.recordsForCurrentScope(globalThis.__stage13Project,'instructions').at(-1),'instructions');
   return recordProposal(schema,'preflightRecords',{tempKey:'preflight',relationships:{INSTRUCTION_ID:{recordId:instructionId}},overrides:{CLAUSE:'Controlled production instruction',MULTIPLE_INTERPRETATIONS:'NONE',UNDEFINED_OBJECTS:'NONE',UNSUPPLIED_DEPENDENCIES:'NONE',INTERNAL_CONFLICTS:'NONE',UNAVAILABLE_CAPABILITIES:'NONE',OBJECTIVELY_VERIFIABLE:'TRUE',RESPONSIBLE_OPERATION_ASSIGNED:'TRUE',ORDER_CLEAR:'TRUE',FAILURE_BEHAVIOR_DEFINED:'TRUE',TRACEABILITY:'REQ-1 -> instruction section 1',DETERMINATION:'SATISFIED',FINDINGS:'No material ambiguity',EVIDENCE:'Independent preflight evidence',...overrides}});
