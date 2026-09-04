@@ -72,7 +72,11 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: stage21-focused-diagnostics
-          path: stage21-focused.log
+          path: |
+            stage21-focused.log
+            workflow-engine.js
+            verify-full-cycle.mjs
+            verify-convergence.mjs
           if-no-files-found: error
       - name: Require focused proof success
         run: |
