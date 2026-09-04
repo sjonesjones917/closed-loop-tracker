@@ -2,143 +2,124 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "17",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f",
-  "endingMainCommit": "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f",
+  "stageName": "CROSS-RUN COMPARISON",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "72bbc9f9a7262584854de6050f4f21d9016ef327",
+  "endingMainCommit": "72bbc9f9a7262584854de6050f4f21d9016ef327",
   "implementationCommitIds": [
-    "315722e7b0210b89cc6f44f9c8b46fe37d4ae00f"
+    "abe6673badb5d11a8cc58d95ffbb001b805e5b44",
+    "c5cfe4f64b953d5238b2909d3fd8ea73cd38780c",
+    "849787c15e5ee51547674a5ab05ee844e1cc6b3e",
+    "a936630050f3d8a245a97ced28c2d58167f7dc14",
+    "eaa902f94cdae292b7d641d76d85a08bd4ee5d24",
+    "72bbc9f9a7262584854de6050f4f21d9016ef327"
   ],
-  "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "changedFiles": [
+    "workflow-stage13-closure.js",
+    "verify-cross-run-comparison.mjs",
+    "verify-spec-residual-closure.mjs"
+  ],
+  "specificationSections": [
+    "37 Stage 13",
+    "38 comparisons",
+    "38 verification",
+    "49"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-stage13-closure.js",
+    "verify-cross-run-comparison.mjs",
+    "verify-spec-residual-closure.mjs",
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "verify-complete.mjs",
+    "verify-definition-of-done.mjs"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_PROVEN_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "Controller Stage 17 maps to application Stage 13 cross-run comparison. The application derives the exact current ten-run verification relation set and requires exactly one current verification row for each due REQ_ID × RUN_ID × TEST_ID tuple before comparison. It binds each comparison to the frozen test-level EXPECTED_VARIANCE_CONTRACT, derives aggregate requirement facts from canonical verification rows and their preserved evidence, fails closed on UNKNOWN variance authorization and UNDETERMINED verification truth, and requires an explicit Stage 14 defect handoff for prohibited or correctness-affecting variance. A verified VIOLATED tuple is preserved and routed forward for root-cause work rather than discarded or incorrectly treated as a Stage 13 completion failure. Permanent negative and repair fixtures exercise missing and duplicate verification tuples, missing variance contracts, unknown authorization, undetermined truth, prohibited variance without defect handoff, repaired defect handoff, and violation routing. Exact canonical main then passed the permanent suite, local Chromium, exact deployment, exact deployed-byte identity, and deployed Chromium operator verification.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33898815801, test job 101107771722, exact canonical main 72bbc9f9a7262584854de6050f4f21d9016ef327. The permanent residual-closure chain executed verify-cross-run-comparison.mjs and emitted controllerStage 17 / applicationStage 13 crossRunComparison PASS with requiredRunCount 10 and requiredTupleCount 10."
     },
     {
-      "command": "node verify-complete.mjs",
-      "exitCode": 0
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33898815801, test job 101107771722, Local Chromium operator path completed success on exact canonical main."
     },
     {
-      "command": "node verify-semantic-invariant.mjs",
-      "exitCode": 0
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33898815801, deploy job 101108619710, exact canonical main deployment completed success."
+    },
+    {
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33898815801, deployment verification job 101108738118, Exact deployed-byte verification and Deployed Chromium operator path completed success for exact canonical main."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "workflow-stage13-closure.js derives the current run identities from the frozen iteration and rejects any current comparison state that does not resolve to exactly ten runs.",
+    "The Stage 13 closure derives the canonical required verification relation set and requires exactly one current verification for every due REQ_ID × RUN_ID × TEST_ID tuple; missing and duplicate tuples fail closed.",
+    "Each required test contributes its frozen EXPECTED_VARIANCE_CONTRACT and the comparison model binds the resulting contract hash set to the derived requirement facts.",
+    "Aggregate comparison truth is application-owned: ALL_TEN_SATISFIED, ANY_VIOLATION, ANY_UNDETERMINED, satisfaction counts, verification IDs, evidence IDs, and expected-variance-contract hashes are derived from canonical current verification records.",
+    "UNKNOWN variance authorization is blocked, and application-derived UNDETERMINED truth is blocked rather than silently reduced to a favorable state.",
+    "Correctness-affecting or prohibited output variance requires an explicit DEFECT_IDS handoff to Stage 14 before Stage 13 can close that comparison record.",
+    "A current VIOLATED verification tuple is retained as ANY_VIOLATION=true and routed forward; the closure explicitly rejects the legacy behavior that blocked every verified violation at Stage 13.",
+    "Comparison evidence is derived across all required current verification records and preserved evidence references; no current run or required verification evidence is discarded.",
+    "verify-cross-run-comparison.mjs is wired into verify-spec-residual-closure.mjs, so the positive, negative, and repaired comparison fixtures execute in the permanent definition-of-done chain.",
+    "The repaired Stage 17 fixture includes the accepted independent applicability semantic review required by the current Stage 05 authority semantics, so Stage 13 proof does not bypass or weaken earlier applicability gates."
   ],
   "intentionalInvalidFixtures": [
-    "self-review",
-    "same-context-review",
-    "unsupported-reduction",
-    "missing-activation-proof",
-    "circular-dependency",
-    "unreconciled-disagreement"
+    "stage13-missing-required-run-verification",
+    "stage13-duplicate-required-run-verification",
+    "stage13-missing-frozen-expected-variance-contract",
+    "stage13-unknown-variance-authorization",
+    "stage13-prohibited-correctness-affecting-variance-without-defect-handoff",
+    "stage13-undetermined-run-truth"
+  ],
+  "repairedStateProofs": [
+    "Exactly ten current run identities and exactly ten due verification relation tuples are derived and compared with one current verification per tuple.",
+    "The frozen expected-variance contract is bound into the application-derived comparison facts.",
+    "Adding an explicit Stage 14 defect handoff repairs prohibited correctness-affecting variance without discarding the variance evidence.",
+    "Changing one current verification tuple to VIOLATED produces ANY_VIOLATION=true and preserves downstream root-cause routing instead of deleting or suppressing the run.",
+    "Adding the current accepted applicability semantic review repairs the Stage 17 disposable fixture under the strengthened earlier-stage authority model without weakening that model.",
+    "Exact current main passed permanent CI, local Chromium, exact deployment, deployed-byte verification, and deployed Chromium."
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "10",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "status": "PASS"
-    },
-    {
-      "stage": "11",
-      "proofDigest": "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-      "status": "PASS"
-    },
-    {
-      "stage": "12",
-      "proofDigest": "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-      "status": "PASS"
-    },
-    {
-      "stage": "13",
-      "proofDigest": "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-      "status": "PASS"
-    },
-    {
-      "stage": "14",
-      "proofDigest": "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-      "status": "PASS"
-    },
-    {
-      "stage": "15",
-      "proofDigest": "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-      "status": "PASS"
-    },
-    {
-      "stage": "16",
-      "proofDigest": "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
-      "status": "PASS"
-    },
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"}
   ],
-  "browserProofs": [],
-  "deployedProofs": [],
-  "externalActorProofs": [
-    {
-      "proof": "independent-context/semantic-review executable fixture",
-      "status": "PASS",
-      "basis": "stage-mapped verifier"
-    }
+  "browserProofs": [
+    {"workflowRunId":33898815801,"jobId":101107771722,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"72bbc9f9a7262584854de6050f4f21d9016ef327"},
+    {"workflowRunId":33898815801,"jobId":101108738118,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"72bbc9f9a7262584854de6050f4f21d9016ef327"}
   ],
+  "deployedProofs": [
+    {"workflowRunId":33898815801,"jobId":101108619710,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"72bbc9f9a7262584854de6050f4f21d9016ef327"},
+    {"workflowRunId":33898815801,"jobId":101108738118,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"72bbc9f9a7262584854de6050f4f21d9016ef327"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 68,
-  "proofCountAfter": 71,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "18"
+  "directEvidenceReview": "PASS",
+  "nextStage": "18",
+  "notes": "This proves controller Stage 17 CROSS-RUN COMPARISON implementation behavior under the current specification using exact-main deterministic, browser, deployment, and deployed-byte evidence. It preserves all current runs, required verification tuples, evidence references, and variance outcomes, and it routes verified defects forward instead of reducing them. It makes no Stage 18+, convergence, release, physical-iPhone, final visual-baseline, terminal-delivery, or Section 49 completion claim."
 }
