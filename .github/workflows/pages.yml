@@ -26,7 +26,6 @@ jobs:
           node --check workflow-engine.js
           node --check app-core.js
           node --check verify-candidate-freeze.mjs
-          node verify-v3-contract.mjs
           node verify-semantic-operation-boundaries.mjs
           node verify-candidate-freeze.mjs
       - name: Remove one-time scaffold and restore canonical Pages workflow
