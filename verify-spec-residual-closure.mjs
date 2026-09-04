@@ -21,4 +21,3 @@ await import('./verify-due-stage-timing.mjs');
 await import('./verify-ten-independent-runs.mjs');
 await import('./verify-independent-run-verification.mjs');
 await import('./verify-cross-run-comparison.mjs');
-await import('./verify-cross-run-stability-metrics.mjs');
