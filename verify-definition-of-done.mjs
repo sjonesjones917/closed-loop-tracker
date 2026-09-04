@@ -17,6 +17,11 @@ const productionInstructionProof=JSON.parse(execFileSync(process.execPath,[new U
 assert.equal(productionInstructionProof.productionInstruction,'PASS','Stage 12 production-instruction regression proof did not pass.');
 assert.equal(productionInstructionProof.isolatedDisposableProjects,true,'Stage 12 production-instruction mutations were not isolated to disposable project state.');
 assert.equal(productionInstructionProof.noMutationBeforeAcceptance,true,'Stage 12 production-instruction verifier did not prove zero canonical mutation before acceptance.');
+const independentPreflightProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-independent-preflight.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+assert.equal(independentPreflightProof.independentPreflight,'PASS','Stage 13 independent-preflight regression proof did not pass.');
+assert.equal(independentPreflightProof.isolatedDisposableProjects,true,'Stage 13 independent-preflight mutations were not isolated to disposable project state.');
+assert.equal(independentPreflightProof.noMutationBeforeAcceptance,true,'Stage 13 independent-preflight verifier did not prove zero canonical mutation before acceptance.');
+assert.equal(independentPreflightProof.independenceEpistemicLimitPreserved,true,'Stage 13 independent-preflight verifier overclaimed unobservable external independence.');
 
 const originalLog=console.log;
 const captured=[];
@@ -182,4 +187,26 @@ report.productionInstructionMutationProof={
 assert.equal(report.productionInstructionCoverage,1,'Stage 12 production-instruction coverage is not complete.');
 assert.equal(report.productionInstructionMutationProof.missingMandatoryInstructionTraceRejected,true,'Stage 12 missing-instruction-trace mutation was not rejected.');
 assert.equal(report.productionInstructionMutationProof.missingRequiredOutputContractRejected,true,'Stage 12 missing-output-contract mutation was not rejected.');
+report.independentPreflightCoverage=Number(
+  independentPreflightProof.independentPreflight==='PASS'&&
+  independentPreflightProof.repairedPathProgressed===true&&
+  independentPreflightProof.independenceEpistemicLimitPreserved===true&&
+  independentPreflightProof.noMutationBeforeAcceptance===true&&
+  independentPreflightProof.promptSemanticsChecked===true&&
+  independentPreflightProof.isolatedDisposableProjects===true
+);
+report.independentPreflightMutationProof={
+  missingIndependentReviewerBlocked:independentPreflightProof.intentionalInvalidFixturesRejected?.includes('missing-independent-reviewer')===true,
+  materialAmbiguityBlocked:independentPreflightProof.intentionalInvalidFixturesRejected?.includes('material-ambiguity-with-favorable-claim')===true,
+  contaminatedReviewerBlocked:independentPreflightProof.intentionalInvalidFixturesRejected?.includes('contaminated-reviewer-context')===true,
+  repairedPathProgressed:independentPreflightProof.repairedPathProgressed===true,
+  independenceEpistemicLimitPreserved:independentPreflightProof.independenceEpistemicLimitPreserved===true,
+  noMutationBeforeAcceptance:independentPreflightProof.noMutationBeforeAcceptance===true,
+  promptSemanticsChecked:independentPreflightProof.promptSemanticsChecked===true,
+  isolatedDisposableProjects:independentPreflightProof.isolatedDisposableProjects===true
+};
+assert.equal(report.independentPreflightCoverage,1,'Stage 13 independent-preflight coverage is not complete.');
+assert.equal(report.independentPreflightMutationProof.missingIndependentReviewerBlocked,true,'Stage 13 missing-reviewer mutation was not rejected.');
+assert.equal(report.independentPreflightMutationProof.materialAmbiguityBlocked,true,'Stage 13 material-ambiguity mutation was not rejected.');
+assert.equal(report.independentPreflightMutationProof.contaminatedReviewerBlocked,true,'Stage 13 contaminated-reviewer mutation was not rejected.');
 originalLog(JSON.stringify(report,null,2));
