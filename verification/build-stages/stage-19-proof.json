@@ -2,152 +2,129 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "19",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "3a6fed9524a572e15b13b6279de43fdc8c075a76",
-  "endingMainCommit": "3a6fed9524a572e15b13b6279de43fdc8c075a76",
+  "stageName": "CORRECT ROOT CAUSE",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "e208461c4e1fbd800290c1190ec7d91c8fb6f184",
+  "endingMainCommit": "e208461c4e1fbd800290c1190ec7d91c8fb6f184",
   "implementationCommitIds": [
-    "3a6fed9524a572e15b13b6279de43fdc8c075a76"
+    "5b4e58c6f3a216451d46f8663cbf101723e3d6f0",
+    "a715f1c8f3aaf0199182a314d8f96ac2293b1afe",
+    "594cf4d05594d9b14c0592fbe0967101006486bf",
+    "e208461c4e1fbd800290c1190ec7d91c8fb6f184"
   ],
-  "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "changedFiles": [
+    "workflow-engine.js",
+    "verify-root-cause-correction.mjs",
+    "verify-spec-residual-closure.mjs"
+  ],
+  "specificationSections": [
+    "33 Stage 16 correction model",
+    "37 Stage 16 — CORRECT THE ROOT CAUSE",
+    "38 changes",
+    "40 Permanent regression obligations",
+    "41 Mandatory deterministic and behavioral tests",
+    "43 Test the tests",
+    "44 Negative test matrix",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "verify-root-cause-correction.mjs",
+    "verify-root-cause-regressions.mjs",
+    "verify-spec-residual-closure.mjs",
+    "verify-semantic-invariant.mjs",
+    "verify-full-cycle.mjs",
+    "verify-complete.mjs"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_REVERIFIED_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "Controller Stage 19 maps to application Stage 16. The pre-repair Stage 16 gate only required the existence of any changes record for confirmed defects. The merged implementation now validates every changeset against the existing responsible-layer trace contract, requires every confirmed defect to be covered, rejects in-place old/new version identity, requires repeated preflight when the production instruction changes, and preserves the instruction for execution-only root causes. The permanent mutation-sensitive verifier exercises each invalid condition and a repaired progression path through the real production gate. Exact canonical main e208461c4e1fbd800290c1190ec7d91c8fb6f184 reran the full repository verification barrier and local Chromium, then deployed the verified bytes and verified exact deployed-byte identity and deployed Chromium operator behavior.",
   "proofCommands": [
     {
-      "command": "node verify-build-stage-ledger.mjs",
-      "exitCode": 0
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33913343151, test job 101154736248, exact canonical main e208461c4e1fbd800290c1190ec7d91c8fb6f184."
     },
     {
-      "command": "node verify-test-runtime-v3.mjs",
-      "exitCode": 0
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33913343151, test job 101154736248. Local Chromium operator path completed success."
     },
     {
-      "command": "node verify-test-runtime-limits.mjs",
-      "exitCode": 0
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33913343151, deploy job 101155679570. Exact canonical main deployment completed success."
     },
     {
-      "command": "node verify-test-runtime.mjs",
-      "exitCode": 0
+      "command": "node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33913343151, deployment verification job 101155785414. Exact deployed-byte verification and deployed Chromium operator path completed success."
+    },
+    {
+      "command": "pull-request verification barrier for Stage 19 implementation repair",
+      "exitCode": 0,
+      "basis": "PR 1123 head 594cf4d05594d9b14c0592fbe0967101006486bf passed workflow run 33912915594 before merge. Its test-of-the-test materialization first required verify-root-cause-correction.mjs to fail against the pre-repair runtime, then pass after the minimal gate repair."
     }
   ],
-  "proofArtifactDigests": [
-    {
-      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-      "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-      "byteLength": 294591
-    },
-    {
-      "path": "specification/closed-loop-normative-requirements.json",
-      "sha256": "1cc2b1f46226258f602d1328c1d553f4135811ad9e38406e148d05906dae4dcf"
-    }
+  "directSourceFindings": [
+    "The Stage 16 production gate consumes validateChangeTrace for every current changeset rather than accepting collection existence as proof.",
+    "Every confirmed defect identity must be included in the valid correction coverage set or Stage 16 remains incomplete.",
+    "A changeset whose old and new controlled version identities are equal is rejected as an in-place modification.",
+    "An instruction change without required repeated independent preflight is rejected.",
+    "An execution-only root cause that changes the production instruction is rejected and must preserve the correct instruction while rerunning execution.",
+    "verify-root-cause-correction.mjs executes the real production gate on isolated disposable project state and includes a repaired fixture that progresses.",
+    "The new verifier is permanently wired into verify-spec-residual-closure.mjs and therefore into the full current-main verification barrier.",
+    "No prior controller proof was overwritten or weakened by the Stage 19 implementation repair."
   ],
   "intentionalInvalidFixtures": [
-    "missing-step-id",
-    "duplicate-step-id",
-    "forward-reference",
-    "cycle",
-    "implicit-operand",
-    "wrong-port",
-    "registry-drift"
+    "confirmed-defect-without-correction",
+    "wrong-responsible-layer-correction",
+    "in-place-version-rewrite",
+    "instruction-change-without-repeated-preflight",
+    "execution-only-root-cause-instruction-change"
+  ],
+  "repairedStateProofs": [
+    "Adding one valid earliest-responsible-layer correction for every confirmed RCA restores complete correction coverage.",
+    "Using distinct old and new controlled version identities satisfies controlled versioning.",
+    "Marking repeated preflight required for an instruction change restores instruction-change admissibility.",
+    "Preserving the instruction for an execution-only root cause and rerunning with a new execution identity restores progression."
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "10",
-      "proofDigest": "a3935cb7b7976b925e21485ca2a80178b6c6d868496d29e72d2a88b295f5772e",
-      "status": "PASS"
-    },
-    {
-      "stage": "11",
-      "proofDigest": "cddab038b5fefeaaadae1e7656d616001f113d710d0da9e7d8b9f2ee17fef4e9",
-      "status": "PASS"
-    },
-    {
-      "stage": "12",
-      "proofDigest": "4f7a48fc38b228d5c5105745850d5256549df364fb85599499128891a9043fbb",
-      "status": "PASS"
-    },
-    {
-      "stage": "13",
-      "proofDigest": "1bd76704e7ea1232d4f98241765458e58c37dbad9b1e4e55e4e3635e8992d2df",
-      "status": "PASS"
-    },
-    {
-      "stage": "14",
-      "proofDigest": "d251effc2a8ef36d995d185dab87d2afa72d1780e045a5b52112a62d11d755bb",
-      "status": "PASS"
-    },
-    {
-      "stage": "15",
-      "proofDigest": "95db45e8db92a55bd33612ad02e3d11ba5b691fb1d4e52fe91b20063c35fa18d",
-      "status": "PASS"
-    },
-    {
-      "stage": "16",
-      "proofDigest": "c37b6ac10a2e83a0cd61c2038edfc5ae37b6bf0709e9f094e9c4edf757b009fe",
-      "status": "PASS"
-    },
-    {
-      "stage": "17",
-      "proofDigest": "1952f2d7902e247d5da6d90b5fbc67774078b84283392e9069d059e84c1949da",
-      "status": "PASS"
-    },
-    {
-      "stage": "18",
-      "proofDigest": "cbc7c2143d22294b2e1ae3a6872dd98f15e0b93763ed5566886cf12e1b8a431d",
-      "status": "PASS"
-    },
-    {
-      "stage": "01",
-      "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofDigest": "60d3cf5961749431469865ee317efdd553932a3dee29caf3d7c4817315d9c881",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofDigest": "a857e387ca7296c6aa2ad67bd4bdfcb47d33aef5b3d08399d1ce8b0cc01fc4f5",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofDigest": "1f296dc7f37284f1c6ecea02c674caf4810e2e78c82921484db1c6145270bbe9",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofDigest": "2e62ce896ea93e2f4925369df0a61f71cb304e297085eb1e47426c672152c37d",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"}
   ],
-  "browserProofs": [],
-  "deployedProofs": [],
+  "browserProofs": [
+    {"workflowRunId":33913343151,"jobId":101154736248,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"e208461c4e1fbd800290c1190ec7d91c8fb6f184"},
+    {"workflowRunId":33913343151,"jobId":101155785414,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"e208461c4e1fbd800290c1190ec7d91c8fb6f184"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33913343151,"jobId":101155679570,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"e208461c4e1fbd800290c1190ec7d91c8fb6f184"},
+    {"workflowRunId":33913343151,"jobId":101155785414,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"e208461c4e1fbd800290c1190ec7d91c8fb6f184"}
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 75,
-  "proofCountAfter": 79,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "20"
+  "directEvidenceReview": "PASS",
+  "nextStage": "20",
+  "notes": "This advances only controller Stage 19 after current direct evidence proves the Stage 16 responsible-layer correction closure. Stage 20 and later remain unproven; physical-iPhone and Section 49 completion are not claimed."
 }
