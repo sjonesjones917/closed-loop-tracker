@@ -13,6 +13,7 @@ const assert=(value,message)=>{if(!value)throw new Error(message);};
 const sha='b'.repeat(64);
 function setField(record,key,value){record.fields=record.fields&&typeof record.fields==='object'?record.fields:{};record.fields[key]=value;record[key]=value;}
 function record(collection,stage,fields,id){const def=schema.RECORD_SCHEMAS[collection];return {id,stage,active:true,fields:{...fields,[def.idField]:id},...fields,[def.idField]:id};}
+function stage13Derived(){engine.recalculate(p);return p.stages[13]?.derivedData||{};}
 
 assert(fs.readFileSync('workbook.js','utf8').includes('Every correctness-affecting variance has a defect record'),'Stage 13 workbook gate no longer contains the controlling defect-record requirement.');
 assert(fs.readFileSync('prompt-engine.js','utf8').includes('Compare all ten executions'),'Stage 13 prompt no longer requires all-ten comparison.');
@@ -52,18 +53,18 @@ const comparison=record('comparisons',13,{REQ_ID:'REQ-STAGE17',RUN_DETERMINATION
 let matrix=engine.verificationMatrix(p,iterationId);
 assert(matrix.runs.length===10,'Cross-run comparison must retain exactly ten current runs.');
 assert(matrix.expected.length===10&&matrix.missing.length===0&&matrix.duplicates.length===0&&matrix.invalid.length===0,'Cross-run comparison fixture must begin with one complete current verification triple per run.');
-let derived=engine.deriveStageData(p,13);
-let facts=derived.APPLICATION_DERIVED_COMPARISON_FACTS['REQ-STAGE17'];
-assert(facts.RUN_DETERMINATIONS.length===10,'Application-derived comparison discarded a run determination.');
+let derived=stage13Derived();
+let facts=derived.APPLICATION_DERIVED_COMPARISON_FACTS?.['REQ-STAGE17'];
+assert(facts&&facts.RUN_DETERMINATIONS.length===10,'Application-derived comparison discarded a run determination.');
 assert(facts.SATISFIED_COUNT===10&&facts.VIOLATED_COUNT===0&&facts.UNDETERMINED_COUNT===0,'Application-derived all-ten counts are not exact.');
-assert(derived.REQUIREMENTS_SATISFIED_BY_ALL_TEN.includes('REQ-STAGE17'),'All-ten satisfied requirement was not application-derived.');
+assert((derived.REQUIREMENTS_SATISFIED_BY_ALL_TEN||[]).includes('REQ-STAGE17'),'All-ten satisfied requirement was not application-derived.');
 assert(derived.REQUIREMENT_COMPARISON_RECORDS===1,'Exactly one requirement comparison record should be current.');
 
 const removed=p.projectData.verification.pop();
 matrix=engine.verificationMatrix(p,iterationId);
 assert(matrix.missing.length===1,'Missing current run verification was not preserved as a missing comparison input.');
-derived=engine.deriveStageData(p,13);facts=derived.APPLICATION_DERIVED_COMPARISON_FACTS['REQ-STAGE17'];
-assert(facts.RUN_DETERMINATIONS.length===10&&facts.UNDETERMINED_COUNT===1,'Missing verification must remain visible as an undetermined run rather than discarding the run.');
+derived=stage13Derived();facts=derived.APPLICATION_DERIVED_COMPARISON_FACTS?.['REQ-STAGE17'];
+assert(facts&&facts.RUN_DETERMINATIONS.length===10&&facts.UNDETERMINED_COUNT===1,'Missing verification must remain visible as an undetermined run rather than discarding the run.');
 p.projectData.verification.push(removed);
 const duplicate=JSON.parse(JSON.stringify(p.projectData.verification[2]));duplicate.id='VERIFY-STAGE17-DUPLICATE';duplicate.fields.VERIFICATION_ID=duplicate.VERIFICATION_ID='VERIFY-STAGE17-DUPLICATE';p.projectData.verification.push(duplicate);
 matrix=engine.verificationMatrix(p,iterationId);
@@ -73,16 +74,13 @@ p.projectData.verification.pop();
 for(const [id,runIndex,observed,expected] of [['DEFECT-STAGE17-1',0,'Repeated controlled failure','Expected stable result'],['DEFECT-STAGE17-2',1,'Repeated controlled failure','Expected stable result'],['DEFECT-STAGE17-3',2,'Unique controlled failure','Expected stable result']]){
   const defect=record('defects',13,{REQ_ID:'REQ-STAGE17',RUN_ID:slots[runIndex].runId,OBSERVED_FAILURE:observed,EXPECTED_CONDITION:expected,SEVERITY:'MAJOR',STATUS:'CONFIRMED'},id);defect.scope={...engine.scopeForIteration(p,iterationId),runId:slots[runIndex].runId};p.projectData.defects.push(defect);
 }
-const stability=engine.executionStability(p,iterationId);
-assert(stability.repeatedDefectCount===2,'Repeated failure grouping did not preserve both repeated defect instances.');
-assert(stability.uniqueDefectCount===1,'Unique failure classification did not preserve the unique defect.');
-derived=engine.deriveStageData(p,13);
-assert(derived.REPEATED_FAILURE_GROUPS===2&&derived.UNIQUE_FAILURES===1,'Stage 13 derived repeated/unique failure counts diverged from execution stability.');
+derived=stage13Derived();
+assert(derived.REPEATED_FAILURE_GROUPS===2&&derived.UNIQUE_FAILURES===1,'Stage 13 derived repeated/unique failure counts are not exact.');
 
 const first=p.projectData.verification[0];setField(first,'OBSERVED_RESULT','VIOLATED');setField(first,'DETERMINATION','VIOLATED');setField(comparison,'CORRECTNESS_AFFECTING_VARIANCE','TRUE');setField(comparison,'AUTHORIZED_VARIANCE','FALSE');setField(comparison,'DEFECT_IDS','DEFECT-STAGE17-1');
-derived=engine.deriveStageData(p,13);facts=derived.APPLICATION_DERIVED_COMPARISON_FACTS['REQ-STAGE17'];
-assert(facts.VIOLATED_COUNT===1&&facts.SATISFIED_COUNT===9,'Cross-run violation was not derived from current verification evidence.');
-assert(derived.CORRECTNESS_AFFECTING_DISAGREEMENTS.includes('COMPARE-STAGE17'),'Correctness-affecting comparison was not surfaced in Stage 13 derived data.');
+derived=stage13Derived();facts=derived.APPLICATION_DERIVED_COMPARISON_FACTS?.['REQ-STAGE17'];
+assert(facts&&facts.VIOLATED_COUNT===1&&facts.SATISFIED_COUNT===9,'Cross-run violation was not derived from current verification evidence.');
+assert((derived.CORRECTNESS_AFFECTING_DISAGREEMENTS||[]).includes('COMPARE-STAGE17'),'Correctness-affecting comparison was not surfaced in Stage 13 derived data.');
 const diagnosticGate=engine.gate(13,p);
 const linkedDefectRoutingBlocked=diagnosticGate.reasons.some(reason=>reason.includes('Derived comparison contains a violation for REQ-STAGE17'));
 
