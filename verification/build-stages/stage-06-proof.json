@@ -2,40 +2,155 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "06",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "faba84ccbf02290460ac93661463bbdde087d60d",
-  "endingMainCommit": "faba84ccbf02290460ac93661463bbdde087d60d",
-  "implementationCommitIds": [
-    "faba84ccbf02290460ac93661463bbdde087d60d"
-  ],
+  "stageName": "SOURCE RESEARCH",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "12d92614730d2950fca2121e9ee6792b367b4f5e",
+  "endingMainCommit": "12d92614730d2950fca2121e9ee6792b367b4f5e",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "specificationSections": [
+    "8.2",
+    "8.4",
+    "8.5",
+    "9.2",
+    "9.3",
+    "37 Stage 03",
+    "38 research",
+    "38 candidateRequirements",
+    "38 semanticChallenges",
+    "38 semanticReviews",
+    "40",
+    "41",
+    "44",
+    "45",
+    "49",
+    "52"
+  ],
+  "implementationFiles": [
+    "workbook.js",
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js"
+  ],
   "proofCommands": [
-    {"command": "node verify-build-stage-ledger.mjs", "exitCode": 0},
-    {"command": "node verify-v3-contract.mjs", "exitCode": 0},
-    {"command": "node verify-ingestion.mjs", "exitCode": 0},
-    {"command": "node verify-data-route-closure.mjs", "exitCode": 0},
-    {"command": "GitHub Actions run 33829865384 test job 100890347229", "exitCode": 0}
+    {
+      "command": "node build-test-project.mjs && node verify.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 9 (Schema, ownership, and single-architecture proof), exact main 12d92614730d2950fca2121e9ee6792b367b4f5e, completed success."
+    },
+    {
+      "command": "node verify-data-route-closure.mjs && node verify-infrastructure-route-closure.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 10, exact main, completed success; Stage 03 research and candidate-requirement families remain on the single canonical route and current-scope chain."
+    },
+    {
+      "command": "node verify-v3-migration.mjs && node verify-v3-contract.mjs && node verify-spec3-contract.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 11, exact main, completed success; current Stage 03 response/schema and scope contracts are enforced."
+    },
+    {
+      "command": "node verify-stage01-intake-closure.mjs && node verify-one-time-intent-intake.mjs && node verify-zero-loss-accounting.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 12, exact main, completed success. Direct source inspection of verify-one-time-intent-intake.mjs confirms Stage 03 receives current project authority, persists current source research and candidate requirements, and Stage 04 consumes the complete current Stage 03 research set without resupply."
+    },
+    {
+      "command": "node verify-all-stage-prompts.mjs && node verify-stage-prompts-complete.mjs && node verify-user-prompt-invariants.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 13, exact main, completed success. Direct source inspection of verify-user-prompt-invariants.mjs confirms an unsaturated Stage 03 state with SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED=FALSE and NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS=TRUE cannot complete."
+    },
+    {
+      "command": "node verify-ingestion.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 15, exact main, completed success; malformed, stale, wrong-scope, ownership, relationship, evidence, and attachment mutations fail before canonical mutation."
+    },
+    {
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 16, exact main, completed success; full workflow execution includes Stage 03 current research and downstream Stage 04 consumption."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, test job 100964486648, step 19, local Chromium operator path on exact main, completed success."
+    },
+    {
+      "command": "node verify-live.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33854476599, verify-live job 100965275640, exact deployed-byte verification and deployed Chromium operator path for exact main, completed success."
+    }
   ],
   "proofArtifactDigests": [
-    {"path": "specification/closed-loop-reliability-controlling-implementation-specification.txt", "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564"}
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"
+    },
+    {
+      "path": "verify-one-time-intent-intake.mjs",
+      "gitBlobSha1": "229d2851bd9f27687abac41b56bd67685401831d"
+    }
   ],
-  "intentionalInvalidFixtures": ["cross-owner-write", "direct-collection-write", "stale-revision", "conflicting-idempotency-payload", "external-native-receipt-fabrication"],
   "earlierStageProofsReplayed": [
-    {"stage": "01", "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea", "status": "PASS"},
-    {"stage": "02", "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015", "status": "PASS"},
-    {"stage": "03", "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade", "status": "PASS"},
-    {"stage": "04", "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd", "status": "PASS"},
-    {"stage": "05", "proofDigest": "8c06fbec530895d2e4673875d688fcaee977efee6b635a5d7c729fa597ba03e8", "status": "PASS"}
+    {"stage": "01", "proofPath": "verification/build-stages/stage-01-proof.json", "status": "PASS"},
+    {"stage": "02", "proofPath": "verification/build-stages/stage-02-proof.json", "status": "PASS"},
+    {"stage": "03", "proofPath": "verification/build-stages/stage-03-proof.json", "status": "PASS"},
+    {"stage": "04", "proofPath": "verification/build-stages/stage-04-proof.json", "status": "PASS"},
+    {"stage": "05", "proofPath": "verification/build-stages/stage-05-proof.json", "status": "PASS"}
   ],
-  "browserProofs": [],
-  "deployedProofs": [],
+  "intentionalInvalidFixtures": [
+    "unsaturated Stage 03 research with second conflict/exception pass incomplete is rejected",
+    "Stage 04 cannot proceed from incomplete or unsaturated Stage 03 research",
+    "stale or wrong-scope Stage 03 response is rejected before proposal creation",
+    "missing or invalid canonical source relationship cannot become current research",
+    "Stage 03 prompt cannot request repeated project-data supply"
+  ],
+  "repairedStateProofs": [
+    "Stage 03 prompt receives the current Stage 02 source identities and current accepted project authority",
+    "current research and candidate-requirement records persist as canonical current-scope families",
+    "Stage 03 completion requires the conflict/exception saturation fields rather than accepting an unsaturated pass",
+    "Stage 04 receives the complete current Stage 03 research and candidate-requirement set automatically",
+    "ingestion remains fail-closed for stale scope, invalid relationships, and malformed external responses",
+    "the source-research operator path is exercised in local Chromium and the exact deployed application"
+  ],
+  "browserProofs": [
+    {
+      "workflowRunId": 33854476599,
+      "jobId": 100964486648,
+      "proof": "local Chromium operator path",
+      "status": "PASS",
+      "commit": "12d92614730d2950fca2121e9ee6792b367b4f5e"
+    },
+    {
+      "workflowRunId": 33854476599,
+      "jobId": 100965275640,
+      "proof": "deployed Chromium operator path on exact deployed bytes",
+      "status": "PASS",
+      "commit": "12d92614730d2950fca2121e9ee6792b367b4f5e"
+    }
+  ],
+  "deployedProofs": [
+    {
+      "workflowRunId": 33854476599,
+      "jobId": 100965197095,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
+      "status": "PASS",
+      "commit": "12d92614730d2950fca2121e9ee6792b367b4f5e"
+    },
+    {
+      "workflowRunId": 33854476599,
+      "jobId": 100965275640,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "12d92614730d2950fca2121e9ee6792b367b4f5e"
+    }
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 29,
-  "proofCountAfter": 34,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "07"
+  "directEvidenceReview": "PASS",
+  "nextStage": "07",
+  "notes": "This is an implementation-stage proof of SOURCE RESEARCH behavior, not a claim that any real project's external sources were semantically researched by an independent reviewer. Exact-current source and execution evidence establish that the application can carry current Stage 03 research, rejects unsaturated/incomplete state, preserves current research for Stage 04, and exercises the local and deployed operator paths. No unavailable human, physical-device, or real external semantic evidence is fabricated."
 }
