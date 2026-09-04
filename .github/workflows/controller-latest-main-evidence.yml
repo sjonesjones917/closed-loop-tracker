@@ -1,0 +1,49 @@
+name: Verify stable latest main and persist exact evidence
+on:
+  push:
+    branches: [controller/c3-live-verification-20260904]
+permissions:
+  contents: write
+jobs:
+  verify:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller/c3-live-verification-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verify latest main until the observed target remains stable
+        shell: bash
+        run: |
+          cp controller-latest-main-evidence.mjs /tmp/controller-latest-main-evidence.mjs
+          while true; do
+            git fetch origin main --no-tags
+            TARGET=$(git rev-parse origin/main)
+            git checkout --detach "$TARGET"
+            set +e
+            TARGET_COMMIT="$TARGET" BROWSER=/usr/bin/google-chrome REPORT_PATH=/tmp/latest-main-evidence.json node /tmp/controller-latest-main-evidence.mjs
+            STATUS=$?
+            set -e
+            git fetch origin main --no-tags
+            FINAL=$(git rev-parse origin/main)
+            if [ "$TARGET" != "$FINAL" ]; then
+              rm -f /tmp/latest-main-evidence.json
+              continue
+            fi
+            git checkout controller/c3-live-verification-20260904
+            mkdir -p .controller-evidence
+            cp /tmp/latest-main-evidence.json .controller-evidence/latest-stable-main-evidence.json
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add .controller-evidence/latest-stable-main-evidence.json
+            if ! git diff --cached --quiet; then
+              git commit -m "Persist stable-main evidence for $TARGET"
+              git push origin HEAD:controller/c3-live-verification-20260904
+            fi
+            exit "$STATUS"
+          done
