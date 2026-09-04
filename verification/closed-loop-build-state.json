@@ -4,218 +4,38 @@
   "specificationSourceCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
   "lastObservedMainCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
   "stages": {
-    "10": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "11": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "12": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "13": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "14": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "15": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "16": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "17": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "18": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "19": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "20": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "21": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "22": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "23": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "24": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "25": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "26": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "27": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "28": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "29": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "30": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "01": {
-      "status": "PROVEN",
-      "provenCommit": "2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e",
-      "proofRecordPath": "verification/build-stages/stage-01-proof.json",
-      "proofDigest": "8e512f9a03a6568aeb842cd9986e94c1e8aff6e36163858ad2faadaa4b3081b9",
-      "prerequisiteStageDigests": []
-    },
-    "02": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "03": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "04": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "05": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "06": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "07": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "08": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    },
-    "09": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
-    }
+    "10": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "11": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "12": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "13": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "14": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "15": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "16": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "17": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "18": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "19": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "20": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "21": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "22": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "23": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "24": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "25": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "26": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "27": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "28": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "29": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "30": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "01": {"status":"PROVEN","provenCommit":"2556aaaf3c4bf762629ab919367a2b5fa6ec2a5e","proofRecordPath":"verification/build-stages/stage-01-proof.json","proofDigest":"8e512f9a03a6568aeb842cd9986e94c1e8aff6e36163858ad2faadaa4b3081b9","prerequisiteStageDigests":[]},
+    "02": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "03": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "04": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "05": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "06": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "07": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "08": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "09": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]}
   },
   "proofCount": 10,
   "conformantRequirementCount": 7,
-  "lastUpdatedByCommandId": "STAGE01B-PR960-SYNCHRONIZE"
+  "lastUpdatedByCommandId": "STAGE01B-PR966-ANCESTRY-SYNCHRONIZE"
 }
