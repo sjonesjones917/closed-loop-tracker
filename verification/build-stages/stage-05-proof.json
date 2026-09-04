@@ -2,40 +2,180 @@
   "schema": "closed-loop-build-stage-proof/1",
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "stage": "05",
-  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
-  "startingMainCommit": "18cc62d3029be23582960d968fcf6b8b646d0ed3",
-  "endingMainCommit": "18cc62d3029be23582960d968fcf6b8b646d0ed3",
-  "implementationCommitIds": [
-    "18cc62d3029be23582960d968fcf6b8b646d0ed3"
-  ],
+  "stageName": "SOURCE INVENTORY",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "10b7ea272214f74673c2e366c8d5226db5e7f118",
+  "endingMainCommit": "10b7ea272214f74673c2e366c8d5226db5e7f118",
   "changedFiles": [],
-  "normativeRequirementChanges": [],
+  "specificationSections": [
+    "8",
+    "8.1",
+    "8.3",
+    "8.5",
+    "49",
+    "52"
+  ],
+  "implementationFiles": [
+    "workbook.js",
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js"
+  ],
   "proofCommands": [
-    {"command": "node verify-build-stage-ledger.mjs", "exitCode": 0},
-    {"command": "node verify-project-lifecycle.mjs", "exitCode": 0},
-    {"command": "node verify-complete.mjs", "exitCode": 0},
-    {"command": "GitHub Actions run 33828895847 test job 100887397272", "exitCode": 0}
+    {
+      "command": "node build-test-project.mjs && node verify.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, test job 100951652454, step 9 (Schema, ownership, and single-architecture proof), exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success. The verifier rejects target-project/repository material as an independent governing source, accepts legitimate independent external-source classification, requires the Stage 02 prompt's independent-external-source boundary, and proves the retained project has no fabricated Stage 02 source set."
+    },
+    {
+      "command": "node verify-data-route-closure.mjs && node verify-infrastructure-route-closure.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, test job 100951652454, step 10 (Complete 30-stage canonical data-route closure), exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success."
+    },
+    {
+      "command": "node verify-v3-migration.mjs && node verify-v3-contract.mjs && node verify-spec3-contract.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, test job 100951652454, step 11 (Migration and v3 contracts), exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success."
+    },
+    {
+      "command": "node verify-all-stage-prompts.mjs && node verify-stage-prompts-complete.mjs && node verify-user-prompt-invariants.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, test job 100951652454, step 13 (Stage 04 obligation accounting and prompt completeness), exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success. The suite generates every registered Stage 02 operation through the explicit Stage 02 procedure with current project authority and no generic fallback."
+    },
+    {
+      "command": "node verify-ingestion.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, test job 100951652454, step 15 (Raw-first ingestion and negative cases), exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success."
+    },
+    {
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, test job 100951652454, step 16 (Workflow, gates, and full cycle), exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success."
+    },
+    {
+      "command": "node verify-project-lifecycle.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, test job 100951652454, step 17 (Project lifecycle and application-owned controls), exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success."
+    },
+    {
+      "command": "node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, test job 100951652454, step 19 (Local Chromium operator path), exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success."
+    },
+    {
+      "command": "node verify-live.mjs && node verify-browser.mjs && node verify-browser-extra.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33850404362, verify-live job 100952537495, exact deployed-byte verification and deployed Chromium operator path, exact main 10b7ea272214f74673c2e366c8d5226db5e7f118, completed success."
+    }
   ],
   "proofArtifactDigests": [
-    {"path": "specification/closed-loop-reliability-controlling-implementation-specification.txt", "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564"}
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"
+    },
+    {
+      "path": "workflow-schema.js",
+      "gitBlobSha1": "f65a2c93ca90de62346dd6fa39fff8f0a191e077"
+    },
+    {
+      "path": "prompt-engine.js",
+      "gitBlobSha1": "e8cb621ae6f377847b937a4fac8b199e325af3f0"
+    },
+    {
+      "path": "verify.mjs",
+      "gitBlobSha1": "d1a73039173ecaf6da40233aa8ba31f1ec131c6b"
+    },
+    {
+      "path": "verify-data-route-closure.mjs",
+      "gitBlobSha1": "555f149744a542a54a6f80c4c5188769904e0c3b"
+    },
+    {
+      "path": "verify-all-stage-prompts.mjs",
+      "gitBlobSha1": "797893e6129dbdfb90848f5e55fa7cd9c9b728ad"
+    },
+    {
+      "path": "verify-v3-definition-of-done.mjs",
+      "gitBlobSha1": "321517757713f227919dd42c96fb6868ab8c9e1b"
+    }
   ],
-  "intentionalInvalidFixtures": ["stale-tab", "project-corruption", "artifact-byte-loss", "import-failure", "durable-boundary-failure"],
   "earlierStageProofsReplayed": [
-    {"stage": "01", "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea", "status": "PASS"},
-    {"stage": "02", "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015", "status": "PASS"},
-    {"stage": "03", "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade", "status": "PASS"},
-    {"stage": "04", "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd", "status": "PASS"}
+    {
+      "stage": "01",
+      "proofPath": "verification/build-stages/stage-01-proof.json",
+      "status": "PASS"
+    },
+    {
+      "stage": "02",
+      "proofPath": "verification/build-stages/stage-02-proof.json",
+      "status": "PASS"
+    },
+    {
+      "stage": "03",
+      "proofPath": "verification/build-stages/stage-03-proof.json",
+      "status": "PASS"
+    },
+    {
+      "stage": "04",
+      "proofPath": "verification/build-stages/stage-04-proof.json",
+      "status": "PASS"
+    }
+  ],
+  "intentionalInvalidFixtures": [
+    "target application/repository artifact is rejected as an independent external governing source",
+    "retained Stage 02 source set must remain NOT APPLICABLE until actual Stage 02 completion rather than being fabricated",
+    "unknown stage-operation and schema members fail closed",
+    "cross-project and stale-scope response mutations are rejected by ingestion",
+    "invalid or stale current-source-set state cannot silently satisfy current workflow gates"
+  ],
+  "repairedStateProofs": [
+    "Stage 02 explicitly inventories independent external sources and does not classify project material as independent authority",
+    "the Stage 02 prompt is stage-specific and is generated through the closed COMPLETE / SEARCH_ADEQUACY_REVIEW / RECONCILE_SOURCE_SEARCH operation contract",
+    "source-search contract data is represented as canonical durable application data rather than an untracked prompt-only assertion",
+    "the current source-set pointer is application-controlled and no source set is fabricated for the retained project before Stage 02 completion",
+    "response ingestion and workflow gates are fail-closed for invalid current-scope/source-set state",
+    "the current implementation exposes the complete Stage 02 path through both local and deployed Chromium verification"
   ],
   "browserProofs": [
-    {"proof": "local Chromium operator path", "status": "PASS", "basis": "GitHub Actions run 33828895847 test job 100887397272 local Chromium operator path"}
+    {
+      "workflowRunId": 33850404362,
+      "jobId": 100951652454,
+      "proof": "local Chromium operator path",
+      "status": "PASS",
+      "commit": "10b7ea272214f74673c2e366c8d5226db5e7f118"
+    },
+    {
+      "workflowRunId": 33850404362,
+      "jobId": 100952537495,
+      "proof": "deployed Chromium operator path on exact deployed bytes",
+      "status": "PASS",
+      "commit": "10b7ea272214f74673c2e366c8d5226db5e7f118"
+    }
   ],
-  "deployedProofs": [],
+  "deployedProofs": [
+    {
+      "workflowRunId": 33850404362,
+      "jobId": 100952422449,
+      "proof": "EXACT_MAIN_DEPLOYMENT",
+      "status": "PASS",
+      "commit": "10b7ea272214f74673c2e366c8d5226db5e7f118"
+    },
+    {
+      "workflowRunId": 33850404362,
+      "jobId": 100952537495,
+      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
+      "status": "PASS",
+      "commit": "10b7ea272214f74673c2e366c8d5226db5e7f118"
+    }
+  ],
   "externalActorProofs": [],
+  "deviceProofs": [],
   "unprovenItems": [],
-  "proofCountBefore": 25,
-  "proofCountAfter": 29,
-  "conformantCountBefore": 7,
-  "conformantCountAfter": 7,
   "stageDisposition": "PROVEN",
-  "nextStage": "06"
+  "directEvidenceReview": "PASS",
+  "nextStage": "06",
+  "notes": "This is an implementation-stage proof of the Stage 02 SOURCE INVENTORY contract. It does not claim that a real project source search was executed, that an independent SEARCH_ADEQUACY_REVIEW occurred in a distinct external context, that any real source is authentic/current/controlling, or that human-authority, physical-iPhone, independent-context, or other unavailable external-system evidence exists. The stale historical proof previously occupying this path remains preserved by Git history and is not relied upon for current-spec completion."
 }
