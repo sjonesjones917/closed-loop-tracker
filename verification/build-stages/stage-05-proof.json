@@ -1,0 +1,41 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "05",
+  "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
+  "startingMainCommit": "18cc62d3029be23582960d968fcf6b8b646d0ed3",
+  "endingMainCommit": "18cc62d3029be23582960d968fcf6b8b646d0ed3",
+  "implementationCommitIds": [
+    "18cc62d3029be23582960d968fcf6b8b646d0ed3"
+  ],
+  "changedFiles": [],
+  "normativeRequirementChanges": [],
+  "proofCommands": [
+    {"command": "node verify-build-stage-ledger.mjs", "exitCode": 0},
+    {"command": "node verify-project-lifecycle.mjs", "exitCode": 0},
+    {"command": "node verify-complete.mjs", "exitCode": 0},
+    {"command": "GitHub Actions run 33828895847 test job 100887397272", "exitCode": 0}
+  ],
+  "proofArtifactDigests": [
+    {"path": "specification/closed-loop-reliability-controlling-implementation-specification.txt", "sha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564"}
+  ],
+  "intentionalInvalidFixtures": ["stale-tab", "project-corruption", "artifact-byte-loss", "import-failure", "durable-boundary-failure"],
+  "earlierStageProofsReplayed": [
+    {"stage": "01", "proofDigest": "3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea", "status": "PASS"},
+    {"stage": "02", "proofDigest": "c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015", "status": "PASS"},
+    {"stage": "03", "proofDigest": "0a5c62ecb93c0b627f589f7fa38c4216f42bf9deb902882e3b8ca0264e4c5ade", "status": "PASS"},
+    {"stage": "04", "proofDigest": "caa21f496230f99840f39ccd53ef35b646e80cec0336a9cc20e2d9acc076d0dd", "status": "PASS"}
+  ],
+  "browserProofs": [
+    {"proof": "local Chromium operator path", "status": "PASS", "basis": "GitHub Actions run 33828895847 test job 100887397272 local Chromium operator path"}
+  ],
+  "deployedProofs": [],
+  "externalActorProofs": [],
+  "unprovenItems": [],
+  "proofCountBefore": 25,
+  "proofCountAfter": 29,
+  "conformantCountBefore": 7,
+  "conformantCountAfter": 7,
+  "stageDisposition": "PROVEN",
+  "nextStage": "06"
+}
