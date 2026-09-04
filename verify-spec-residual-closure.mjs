@@ -18,3 +18,4 @@ assert(!schema.STAGE_FIELDS[15].POST_CORRECTION_SUCCESSES_PROVEN,'Obsolete Stage
 console.log(JSON.stringify({specResidualClosure:'PASS',testIrOperations:controllingOps.length}));
 
 await import('./verify-due-stage-timing.mjs');
+await import('./verify-ten-independent-runs.mjs');
