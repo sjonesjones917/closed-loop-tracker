@@ -1,0 +1,46 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "17",
+  "stageName": "CROSS-RUN COMPARISON",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "394844ffab2ff9ebd8c5788577bb1c5233baeff4",
+  "endingMainCommit": "72bbc9f9a7262584854de6050f4f21d9016ef327",
+  "implementationCommitIds": ["eaa902f94cdae292b7d641d76d85a08bd4ee5d24","72bbc9f9a7262584854de6050f4f21d9016ef327"],
+  "changedFiles": ["workflow-stage13-closure.js","verify-cross-run-comparison.mjs","verify-spec-residual-closure.mjs"],
+  "specificationSections": ["31 Ten-run stability and reliability metrics","36.2 Shared repeated-iteration evaluator","37 Stage 13 — COMPARE THE TEN EXECUTIONS","38 comparisons","41 mandatory Stability tests 37-42 and full-cycle tests 89-91","43 Test the tests","44 Negative test matrix","49 Definition of done"],
+  "implementationFilesReviewed": ["workflow-stage13-closure.js","verify-cross-run-comparison.mjs","verify-spec-residual-closure.mjs","workflow-engine.js","workflow-schema.js","verify-complete.mjs","verify-definition-of-done.mjs","verify-v3-definition-of-done.mjs"],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_PROVEN_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "Controller Stage 17 now closes application Stage 13 cross-run comparison through one application-owned evaluator over the exact current ten-run verification relation set. The permanent verifier creates an isolated disposable project with one mandatory proposition, one due per-run test, exactly ten current runs, ten current verification records, preserved evidence, one current comparison record, and a frozen expected-variance contract. It proves the application derives the exact required tuple count, all-ten/violation/undetermined facts and prohibited-variance consequences; rejects missing or duplicate run verification, missing variance contracts, UNKNOWN variance authorization, prohibited correctness-affecting variance without a Stage 14 defect handoff, and UNDETERMINED truth; and proves a current VIOLATED run is preserved and routed onward rather than falsely blocked as comparison incompleteness. The corrected implementation was merged through PR 1106 and exact canonical main 72bbc9f9a7262584854de6050f4f21d9016ef327 passed the full repository test barrier, local Chromium, deployment, exact deployed-byte verification, and deployed Chromium.",
+  "proofCommands": [
+    {"command":"node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs","exitCode":0,"basis":"GitHub Actions run 33898815801, test job 101107771722, exact canonical main 72bbc9f9a7262584854de6050f4f21d9016ef327. Workflow, gates, and full cycle completed success; verify-cross-run-comparison.mjs is wired through verify-spec-residual-closure.mjs on the permanent proof path."},
+    {"command":"node verify-human-stage-walkthrough.mjs && node verify-mobile-stage-action.mjs && node verify-browser.mjs && node verify-browser-extra.mjs","exitCode":0,"basis":"GitHub Actions run 33898815801, test job 101107771722. Local Chromium operator path completed success on exact canonical main."},
+    {"command":"deploy exact verified bytes","exitCode":0,"basis":"GitHub Actions run 33898815801, deploy job 101108619710. Exact canonical main deployment completed success."},
+    {"command":"node verify-live.mjs; node verify-browser.mjs; node verify-browser-extra.mjs","exitCode":0,"basis":"GitHub Actions run 33898815801, deployment verification job 101108738118. Exact deployed-byte verification and deployed Chromium operator path completed success for exact canonical main."}
+  ],
+  "directSourceFindings": [
+    "verify-cross-run-comparison.mjs loads the production workbook, hash, schema, runtime, workflow engine, and Stage 13 closure layer and executes the real Stage 13 evaluator and gate on an isolated disposable project.",
+    "The positive fixture reserves exactly ten current runs and creates exactly ten current REQ_ID × RUN_ID × TEST_ID verification records for the one due per-run mandatory test.",
+    "evaluateCrossRunComparison derives requiredTupleCount = 10 and ALL_TEN_SATISFIED with SATISFIED_COUNT = 10 from canonical verification evidence rather than agent comparison prose.",
+    "The comparison model binds the frozen expected-variance contract hash and rejects a missing or malformed EXPECTED_VARIANCE_CONTRACT.",
+    "Removing one required verification tuple is rejected; adding a duplicate current verification tuple is rejected.",
+    "UNKNOWN variance authorization blocks Stage 13 instead of being silently treated as permitted variance.",
+    "Correctness-affecting prohibited output variance requires an explicit defect handoff; once the defect handoff exists the comparison can close while the prohibited variance remains visible in derived Stage 13 data.",
+    "A current VIOLATED run sets the application-derived ANY_VIOLATION fact and is not reclassified as Stage 13 comparison incompleteness, preserving forward routing to defect/root-cause handling.",
+    "A current UNDETERMINED run blocks Stage 13 under the fail-closed comparison contract.",
+    "The Stage 17 verifier is wired into verify-spec-residual-closure.mjs and therefore ran in exact-main CI before deployment.",
+    "No synthetic context, human-authority, external-system, or physical-device fixture is represented as real external evidence by this proof."
+  ],
+  "intentionalInvalidFixtures": ["missing-required-run-verification","duplicate-required-run-verification","missing-frozen-expected-variance-contract","unknown-variance-authorization","prohibited-correctness-affecting-variance-without-defect-handoff","undetermined-run-truth"],
+  "repairedStateProofs": ["Restoring the missing current run verification returns exact ten-tuple coverage.","Removing the duplicate current verification returns one exact tuple per required run.","Restoring the frozen expected-variance contract restores comparison admissibility.","Replacing UNKNOWN variance authorization with an explicit current disposition restores deterministic comparison handling.","Adding the explicit Stage 14 defect handoff closes prohibited variance accounting without erasing the variance finding.","The positive ten-run fixture closes Stage 13 with exact derived counts and no discarded run or evidence."],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},{"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},{"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},{"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},{"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},{"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},{"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},{"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},{"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},{"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},{"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},{"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},{"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},{"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},{"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},{"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [{"workflowRunId":33898815801,"jobId":101107771722,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"72bbc9f9a7262584854de6050f4f21d9016ef327"},{"workflowRunId":33898815801,"jobId":101108738118,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"72bbc9f9a7262584854de6050f4f21d9016ef327"}],
+  "deployedProofs": [{"workflowRunId":33898815801,"jobId":101108619710,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"72bbc9f9a7262584854de6050f4f21d9016ef327"},{"workflowRunId":33898815801,"jobId":101108738118,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"72bbc9f9a7262584854de6050f4f21d9016ef327"}],
+  "externalActorProofs": [],"deviceProofs": [],"unprovenItems": [],"stageDisposition":"PROVEN","directEvidenceReview":"PASS","nextStage":"18",
+  "notes":"Archived current-spec proof for exact main 72bbc9f9a7262584854de6050f4f21d9016ef327 before Stage 17 stability semantics changed on later main."
+}
