@@ -1,1 +1,2 @@
 temporary source capture for comparing the unmerged comprehensive implementation line
+trigger=2
