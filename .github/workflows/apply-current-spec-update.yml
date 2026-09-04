@@ -1,0 +1,33 @@
+name: Apply current controlling specification
+
+on:
+  push:
+    branches:
+      - controller/spec-20260904-stage01a
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller/spec-20260904-stage01a
+          fetch-depth: 0
+      - name: Apply exact prompt-supplied specification delta
+        run: python3 .controller/apply-current-spec-update.py
+      - name: Commit source-only Stage 01A result
+        run: |
+          set -euo pipefail
+          test "$(sha256sum specification/closed-loop-reliability-controlling-implementation-specification.txt | awk '{print $1}')" = "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"
+          test "$(wc -c < specification/closed-loop-reliability-controlling-implementation-specification.txt)" = "309472"
+          rm -f .controller/apply-current-spec-update.py .github/workflows/apply-current-spec-update.yml
+          rmdir .controller 2>/dev/null || true
+          git config user.name closed-loop-controller
+          git config user.email closed-loop-controller@users.noreply.github.com
+          git add specification/closed-loop-reliability-controlling-implementation-specification.txt .controller .github/workflows/apply-current-spec-update.yml
+          git commit -m "Stage 01A: materialize current controlling specification"
+          git push origin HEAD:controller/spec-20260904-stage01a
