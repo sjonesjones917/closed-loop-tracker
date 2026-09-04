@@ -83,7 +83,9 @@ const fixtureByStage={
   '28':['dom-injection','url-injection','filename-injection','viewport-overflow','touch-target','focus-live-region','visual-diff'],
   '29':['invalid-gate-state','storage-boundary-failure','worker-timeout','two-tab-conflict','full-30-stage-lifecycle','visual-baseline-mutation']
 };
-const earliest=Object.keys(stageCommands).find(stage=>state.stages?.[stage]?.status!=='PROVEN');
+const orderedStages=Array.from({length:28},(_,index)=>String(index+2).padStart(2,'0'));
+assert(Object.keys(stageCommands).length===orderedStages.length&&orderedStages.every(stage=>Object.hasOwn(stageCommands,stage)),'Stage proof command registry is not exactly contiguous 02 through 29.');
+const earliest=orderedStages.find(stage=>state.stages?.[stage]?.status!=='PROVEN');
 assert(earliest,'Stages 02-29 are already proven.');
 const priorNumber=Number(earliest)-1,priorKey=String(priorNumber).padStart(2,'0');
 assert(priorNumber===1||state.stages?.[priorKey]?.status==='PROVEN',`Prior Stage ${priorKey} is not PROVEN.`);
