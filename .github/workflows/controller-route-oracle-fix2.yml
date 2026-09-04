@@ -1,0 +1,40 @@
+name: Controller route oracle fix2
+on:
+  push:
+    branches: [controller3-stage09-runtime-current-main-20260904]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-stage09-runtime-current-main-20260904
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-spec-grounded-route-oracle.mjs')
+          s=p.read_text()
+          needle="    let rec;try{rec=prompts.buildPromptRecord(stage,state,{operation,scope:lane});}"
+          repl="    const registeredOp=schema.STAGE_OPERATION_REGISTRY?.[`${stage}:${operation}`];assert(registeredOp,`Stage ${stage}/${operation} missing authoritative operation registry entry.`);if(!(registeredOp.executorClass==='EXTERNAL_AGENT'&&registeredOp.acceptsExternalResponse===true)){assert(registeredOp.acceptsExternalResponse===false,`Stage ${stage}/${operation} non-external operation unexpectedly accepts an external response.`);continue;}\n    let rec;try{rec=prompts.buildPromptRecord(stage,state,{operation,scope:lane});}"
+          if s.count(needle)!=1: raise SystemExit(f'prompt boundary occurrences={s.count(needle)}')
+          s=s.replace(needle,repl,1)
+          marker="const state=core.createBlankState('JOB-SPEC-ROUTE-ORACLE');"
+          fixture="const promptLaneFor=op=>op?.executorClass==='EXTERNAL_AGENT'&&op?.acceptsExternalResponse===true;\nassert(promptLaneFor(schema.STAGE_OPERATION_REGISTRY['1:COMPLETE'])===true,'Stage 01 COMPLETE must remain an external-agent prompt operation.');\nassert(promptLaneFor(schema.STAGE_OPERATION_REGISTRY['30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS'])===false,'Stage 30 export/share operator action must not enter the external prompt lane.');\nassert(promptLaneFor(schema.STAGE_OPERATION_REGISTRY['30:RECORD_DELIVERY_EVIDENCE'])===false,'Stage 30 delivery-evidence operator action must not enter the external prompt lane.');\nassert(promptLaneFor(schema.STAGE_OPERATION_REGISTRY['30:CALCULATE_TERMINAL'])===false,'Stage 30 terminal calculation must not enter the external prompt lane.');\n\n"
+          if s.count(marker)!=1: raise SystemExit(f'state marker occurrences={s.count(marker)}')
+          p.write_text(s.replace(marker,fixture+marker,1))
+          PY
+          node --check verify-spec-grounded-route-oracle.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node build-test-project.mjs
+          rm .github/workflows/controller-route-oracle-fix2.yml
+          node verify-definition-of-done.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-spec-grounded-route-oracle.mjs .github/workflows/controller-route-oracle-fix2.yml
+          git commit -m "Restrict route oracle to external prompt operations"
+          git push origin HEAD:controller3-stage09-runtime-current-main-20260904
