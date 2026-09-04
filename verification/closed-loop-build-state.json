@@ -2,7 +2,7 @@
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
   "specificationSourceCommit": "c47f605bc684cc1f31ae67a053dc2be52a37106a",
-  "lastObservedMainCommit": "c47f605bc684cc1f31ae67a053dc2be52a37106a",
+  "lastObservedMainCommit": "d38ca59aa58d718320623aea9aadb4f2ecddcc0f",
   "stages": {
     "10": {
       "status": "NOT_STARTED",
@@ -159,11 +159,13 @@
       "prerequisiteStageDigests": []
     },
     "02": {
-      "status": "NOT_STARTED",
-      "provenCommit": null,
-      "proofRecordPath": null,
-      "proofDigest": null,
-      "prerequisiteStageDigests": []
+      "status": "PROVEN",
+      "provenCommit": "d38ca59aa58d718320623aea9aadb4f2ecddcc0f",
+      "proofRecordPath": "verification/build-stages/stage-02-proof.json",
+      "proofDigest": "2095b73d926cfd68cdfda5727206b1f8b53ba1ba8628dfe719828b0be5e95edb",
+      "prerequisiteStageDigests": [
+        "756a728e2bcde92063261568b6c9a1e29ebd674b4bf91df287b8a6e1339cd82a"
+      ]
     },
     "03": {
       "status": "NOT_STARTED",
@@ -215,7 +217,7 @@
       "prerequisiteStageDigests": []
     }
   },
-  "proofCount": 11,
+  "proofCount": 14,
   "conformantRequirementCount": 7,
-  "lastUpdatedByCommandId": "STAGE01B-33839043572"
+  "lastUpdatedByCommandId": "CI-33839323283-STAGE02"
 }
