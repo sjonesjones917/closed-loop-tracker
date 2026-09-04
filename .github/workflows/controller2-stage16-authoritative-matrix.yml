@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -20,51 +20,14 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Repair Stage 12 authoritative verification matrix and bind Stage 16 proof
-        shell: bash
+      - name: Apply one-time Stage 16 repair
         run: |
           set -euo pipefail
-          git config user.name "closed-loop-controller"
-          git config user.email "closed-loop-controller@users.noreply.github.com"
+          git config user.name closed-loop-controller
+          git config user.email closed-loop-controller@users.noreply.github.com
           git fetch origin main
           git merge --no-edit origin/main
-
-          python3 - <<'PY'
-          from pathlib import Path
-
-          engine_path = Path('workflow-engine.js')
-          source = engine_path.read_text(encoding='utf-8')
-          old = "evaluation.reasons.some(reason=>reason.includes('independence is not application-established'))"
-          new = r"evaluation.reasons.some(reason=>/\bindependence\b/i.test(reason))"
-          count = source.count(old)
-          if count != 1:
-              raise SystemExit(f'Expected exactly one Stage 12 independence ratchet target; found {count}.')
-          source = source.replace(old, new)
-          engine_path.write_text(source, encoding='utf-8', newline='')
-
-          verifier_path = Path('verify-independent-run-verification.mjs')
-          verifier = verifier_path.read_text(encoding='utf-8')
-          marker = "console.log(JSON.stringify({controllerStage:'16',applicationStage:'12',independentVerification:'PASS'"
-          if verifier.count(marker) != 1:
-              raise SystemExit('Could not locate the unique Stage 16 verifier completion marker.')
-          authoritative = r'''setField(first,'VERIFIER_CONTEXT_ID',generatorContextId);matrix=engine.verificationMatrix(p,iterationId);assert(matrix.invalid.some(r=>engine.recordId(r,'verification')===first.id),'Authoritative Stage 12 matrix accepted generator/verifier context reuse.');setField(first,'VERIFIER_CONTEXT_ID','CONTEXT-STAGE16-VERIFY-1');matrix=engine.verificationMatrix(p,iterationId);assert(matrix.invalid.length===0,'Authoritative Stage 12 matrix did not recover after generator/verifier reuse repair.');setField(v2,'AUTHORIZED_PROJECT_INPUTS',['target run','other verifier determination','Stage 13 comparison','root cause','proposed correction']);matrix=engine.verificationMatrix(p,iterationId);assert(matrix.invalid.some(r=>engine.recordId(r,'verification')===second.id),'Authoritative Stage 12 matrix accepted prohibited verifier-context leakage.');setField(v2,'AUTHORIZED_PROJECT_INPUTS',['target run','target requirement','target test']);matrix=engine.verificationMatrix(p,iterationId);assert(matrix.invalid.length===0&&matrix.coverage===1,'Authoritative Stage 12 matrix did not recover after prohibited-context repair.');
-'''
-          verifier = verifier.replace(marker, authoritative + marker, 1)
-          verifier_path.write_text(verifier, encoding='utf-8', newline='')
-
-          residual_path = Path('verify-spec-residual-closure.mjs')
-          residual = residual_path.read_text(encoding='utf-8')
-          binding = "await import('./verify-independent-run-verification.mjs');"
-          if binding not in residual:
-              anchor = "await import('./verify-ten-independent-runs.mjs');"
-              if residual.count(anchor) != 1:
-                  raise SystemExit('Could not locate the Stage 15 proof-chain anchor exactly once.')
-              residual = residual.replace(anchor, anchor + '\n' + binding, 1)
-              residual_path.write_text(residual, encoding='utf-8', newline='')
-          PY
-
-          rm -f .github/workflows/controller2-stage16-authoritative-matrix.yml
-
+          node repair-controller-stage16.mjs
           node --check workflow-engine.js
           node --check verify-independent-run-verification.mjs
           node verify-independent-run-verification.mjs
@@ -72,11 +35,10 @@ jobs:
           node verify-full-cycle.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
-
           test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
           test -f .github/workflows/pages.yml
-          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test ! -f repair-controller-stage16.mjs
           git add -A
-          git diff --cached --quiet && { echo 'No Stage 16 repair remained to commit.'; exit 1; }
+          git diff --cached --quiet && exit 1
           git commit -m "Reject non-independent Stage 12 verification tuples"
           git push origin HEAD:controller2-stage16-authoritative-matrix-20260904
