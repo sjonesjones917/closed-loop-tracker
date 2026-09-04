@@ -127,10 +127,9 @@ export function assertAcceptedMobileEvidence(args){
   return result;
 }
 
-// Repository-only controller progression hook. It executes only from the acceptance
-// submission process invoked directly by the GitHub Actions shell after exact-main
-// source/local-browser and deployed-byte/deployed-browser jobs have succeeded. A
-// nested evaluator spawned by another Node verifier is deliberately non-mutating.
+// Repository-only controller progression hook. Only the workflow's authoritative
+// acceptance-submission command writes stdout to /tmp/mobile-acceptance.json.
+// Nested evaluator executions use pipes and therefore remain strictly read-only.
 if(
   process.argv[1]?.endsWith('evaluate-mobile-acceptance-submission.mjs')&&
   process.env.TEST_RESULT==='success'&&
@@ -139,18 +138,17 @@ if(
   process.env.CONTROLLER_STAGE_BUNDLE_ACTIVE!=='1'
 ){
   const fs=(await import('node:fs')).default;
-  let directShellInvocation=false;
+  let authoritativeAcceptanceInvocation=false;
   try{
-    const parentCommand=fs.readFileSync(`/proc/${process.ppid}/cmdline`,'utf8').replace(/\0/g,' ').trim();
-    directShellInvocation=parentCommand.length>0&&!/(^|[\/\s])node(?:[\s\0]|$)/i.test(parentCommand);
+    const stdoutTarget=fs.readlinkSync('/proc/self/fd/1');
+    authoritativeAcceptanceInvocation=stdoutTarget==='/tmp/mobile-acceptance.json'||stdoutTarget.endsWith('/tmp/mobile-acceptance.json');
   }catch{
-    directShellInvocation=false;
+    authoritativeAcceptanceInvocation=false;
   }
-  if(directShellInvocation){
+  if(authoritativeAcceptanceInvocation){
     const {execFileSync}=await import('node:child_process');
     const statePath='verification/closed-loop-build-state.json';
     if(fs.existsSync(statePath)){
-      execFileSync('git',['restore','--source=HEAD','--',statePath,'verification/build-stages'],{stdio:['ignore','pipe','pipe']});
       const state=JSON.parse(fs.readFileSync(statePath,'utf8'));
       if(state?.controllerId==='closed-loop-monotonic-build-controller/2'){
         const stageNumbers=Array.from({length:28},(_,index)=>String(index+2).padStart(2,'0'));
