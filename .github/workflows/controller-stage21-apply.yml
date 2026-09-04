@@ -53,6 +53,9 @@ jobs:
         run: |
           set +e
           : > stage21-focused.log
+          python3 -m http.server 4173 >/tmp/closed-loop-stage21-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           {
             node --check workflow-schema.js &&
             node --check workflow-engine.js &&
@@ -65,6 +68,9 @@ jobs:
             node verify-full-cycle.mjs
           } >> stage21-focused.log 2>&1
           status=$?
+          kill "$SERVER_PID" 2>/dev/null || true
+          wait "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
           echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
       - name: Upload focused proof diagnostics
