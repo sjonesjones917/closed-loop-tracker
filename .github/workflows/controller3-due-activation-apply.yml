@@ -1,0 +1,53 @@
+name: Apply due-stage and activation-proof closure
+on:
+  push:
+    branches: [controller3-due-activation-closure-20260904]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-due-activation-closure-20260904
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply earliest-responsible-layer correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          replacements=[
+          ("const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId)),expected=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='DETERMINISTIC'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY')));",
+           "const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId)),candidateTests=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='DETERMINISTIC'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY'))),timingStates=candidateTests.map(test=>({test,state:testDueState(project,test,22)}));for(const item of timingStates)if(!item.state.valid)reasons.push('Deterministic test '+recordId(item.test,'tests')+' has invalid verification timing: '+item.state.reasons.join(' '));else if(item.state.phase==='FINAL_PRODUCT_DETERMINISTIC'&&item.state.blocking)reasons.push('Deterministic test '+recordId(item.test,'tests')+' is due but its final-product target availability is UNKNOWN.');const expected=timingStates.filter(item=>item.state.valid&&item.state.phase==='FINAL_PRODUCT_DETERMINISTIC'&&item.state.dueNow).map(item=>item.test);"),
+          ("const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId)),expected=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='MEANING'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY'))),expectedById=",
+           "const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId)),candidateTests=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='MEANING'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY'))),timingStates=candidateTests.map(test=>({test,state:testDueState(project,test,23)}));for(const item of timingStates)if(!item.state.valid)reasons.push('Meaning test '+recordId(item.test,'tests')+' has invalid verification timing: '+item.state.reasons.join(' '));else if(item.state.phase==='FINAL_PRODUCT_MEANING'&&item.state.blocking)reasons.push('Meaning test '+recordId(item.test,'tests')+' is due but its final-product target availability is UNKNOWN.');const expected=timingStates.filter(item=>item.state.valid&&item.state.phase==='FINAL_PRODUCT_MEANING'&&item.state.dueNow).map(item=>item.test),expectedById="),
+          ("const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId)),expectedTests=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='ADVERSARIAL'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY'))),expectedTestIds=",
+           "const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId)),candidateTests=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='ADVERSARIAL'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY'))),timingStates=candidateTests.map(test=>({test,state:testDueState(project,test,24)}));for(const item of timingStates)if(!item.state.valid)reasons.push('Adversarial test '+recordId(item.test,'tests')+' has invalid verification timing: '+item.state.reasons.join(' '));else if(item.state.phase==='FINAL_PRODUCT_ADVERSARIAL'&&item.state.blocking)reasons.push('Adversarial test '+recordId(item.test,'tests')+' is due but its final-product target availability is UNKNOWN.');const expectedTests=timingStates.filter(item=>item.state.valid&&item.state.phase==='FINAL_PRODUCT_ADVERSARIAL'&&item.state.dueNow).map(item=>item.test),expectedTestIds=")]
+          for old,new in replacements:
+              if old not in s: raise SystemExit('Expected workflow-engine target not found')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          p=Path('verify-complete.mjs'); s=p.read_text()
+          old="Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE'});"
+          new="Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE',CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});"
+          if old not in s: raise SystemExit('Expected Stage 22 fixture target not found')
+          s=s.replace(old,new,1)
+          old="REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC'"
+          new="REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{product:true},EXECUTION_MODE:'APPLICATION_DETERMINISTIC'"
+          if old not in s: raise SystemExit('Expected native test fixture target not found')
+          s=s.replace(old,new,1)
+          s += '''\n\n// Conditional applicability is fail-closed until a current activation proof obligation is satisfied.\n{\n  const p=project('JOB-ACTIVATION-PROOF'),scope=engine.currentScope(p);\n  const req=record('requirements',4,{OBLIGATION:'Apply only when activation is proven.',MANDATORY_OPTIONAL_STATUS:'CONDITIONAL',STATUS:'ACTIVE'},'REQ-ACTIVATION');\n  const proposition=record('propositions',4,{REQUIREMENT_ID:'REQ-ACTIVATION',PROPOSITION_TEXT:'Conditional behavior is required when activated.',STATUS:'UNDETERMINED'},'PROP-ACTIVATION');\n  const applicability=record('applicabilityRecords',5,{SUBJECT_ID:'PROP-ACTIVATION',PROPOSED_APPLICABILITY:'APPLICABLE',ACTIVATION_PROOF_OBLIGATION_ID:'PROOF-ACTIVATION',REASONING:'The external author proposes activation.'},'APPLICABILITY-ACTIVATION');\n  for(const item of [req,proposition,applicability])item.scope=scope;\n  p.projectData.requirements.push(req);p.projectData.propositions.push(proposition);p.projectData.applicabilityRecords.push(applicability);\n  engine.recalculate(p);\n  assert(engine.evaluateApplicability(p,'PROP-ACTIVATION')==='UNKNOWN','An agent applicability proposal activated a conditional requirement without a satisfied activation proof obligation.');\n  const proof=p.projectData.proofObligations.find(item=>String(engine.recordValue(item,'PROPOSITION_ID')||'')==='PROP-ACTIVATION');\n  assert(proof,'The application did not derive a proof obligation for the conditional proposition.');\n  const activationId=engine.recordId(proof,'proofObligations');applicability.fields.ACTIVATION_PROOF_OBLIGATION_ID=activationId;applicability.ACTIVATION_PROOF_OBLIGATION_ID=activationId;proof.fields.SATISFACTION_STATE='SATISFIED';proof.SATISFACTION_STATE='SATISFIED';\n  assert(engine.evaluateApplicability(p,'PROP-ACTIVATION')==='APPLICABLE','A current satisfied activation proof obligation did not permit the conditional applicability determination to progress.');\n}\nconsole.log(JSON.stringify({activationProofFailClosed:true,activationProofProgression:true}));\n'''
+          p.write_text(s)
+          PY
+          rm .github/workflows/controller3-due-activation-apply.yml
+          node --check workflow-engine.js
+          node --check verify-complete.mjs
+          node verify-complete.mjs
+          git config user.name 'closed-loop-controller'
+          git config user.email 'actions@users.noreply.github.com'
+          git add workflow-engine.js verify-complete.mjs .github/workflows/controller3-due-activation-apply.yml
+          git commit -m 'Enforce due-stage final verification and activation proof'
+          git push origin HEAD:controller3-due-activation-closure-20260904
