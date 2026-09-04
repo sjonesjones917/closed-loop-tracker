@@ -1,0 +1,49 @@
+name: Apply Section 49 executable closure
+
+on:
+  push:
+    branches: [controller-v3-section49-executable-closure-20260904]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller-v3-section49-executable-closure-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply implementation corrections
+        run: |
+          set -euo pipefail
+          test -f .controller-section49-repair.mjs || exit 0
+          node .controller-section49-repair.mjs
+      - name: Execute focused and broad regressions
+        run: |
+          set -euo pipefail
+          test -f .controller-section49-repair.mjs || exit 0
+          node verify.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-byte-identity.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-full-cycle.mjs
+          node verify-v3-definition-of-done.mjs
+      - name: Commit corrected implementation
+        run: |
+          set -euo pipefail
+          test -f .controller-section49-repair.mjs || exit 0
+          rm .controller-section49-repair.mjs
+          git config user.name closed-loop-controller
+          git config user.email closed-loop-controller@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && { echo 'No implementation change produced'; exit 1; }
+          git commit -m 'Implement executable Section 49 closure'
+          git push origin HEAD:controller-v3-section49-executable-closure-20260904
