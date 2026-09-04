@@ -1,0 +1,32 @@
+name: Independent normative omission challenge
+on:
+  push:
+    branches: [controller/c3-live-verification-20260904]
+permissions:
+  contents: read
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: |
+          cp controller-independent-reconciliation.mjs /tmp/controller-independent-reconciliation.mjs
+          git fetch origin main --no-tags
+          TARGET=$(git merge-base HEAD origin/main)
+          echo "TARGET_COMMIT=$TARGET" >> "$GITHUB_ENV"
+          git checkout --detach "$TARGET"
+      - name: Run independent extraction and omission challenge
+        continue-on-error: true
+        env:
+          RECONCILIATION_REPORT: /tmp/controller-independent-reconciliation.json
+        run: node /tmp/controller-independent-reconciliation.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: controller-independent-reconciliation-${{ env.TARGET_COMMIT }}
+          path: /tmp/controller-independent-reconciliation.json
+          if-no-files-found: error
