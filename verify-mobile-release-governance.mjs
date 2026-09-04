@@ -118,6 +118,9 @@ const evidence={
 };
 const expected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T00:00:00.000Z'};
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true,'Complete pinned mobile evidence must validate.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,challengeIssuedAt:'2026-09-02T20:00:00Z'},evidence:{...evidence},expected}).accepted,false,'A challenge time without exactly three fractional-second digits must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,challengeExpiresAt:'2026-09-03T15:00:00.000-05:00'},evidence:{...evidence},expected}).accepted,false,'An offset-bearing mobile challenge instant must not satisfy the canonical UTC-Z contract.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected:{...expected,verificationTime:'2026-09-03T00:00:00Z'}}).accepted,false,'A noncanonical verification time must be rejected before freshness evaluation.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challenge:'f'.repeat(32)},expected}).accepted,false,'Mismatched challenge must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Safari/604.1','CriOS/140.0.0.0 Mobile/15E148 Safari/604.1')},expected}).accepted,false,'A substitute iOS browser must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operationReceipts:evidence.operationReceipts.slice(1)},expected}).accepted,false,'Missing required physical operator-path evidence must be rejected.');
@@ -157,6 +160,7 @@ console.log(JSON.stringify({
   exactTargetBindingVerified:true,
   singleUseChallengeVerified:true,
   expiredChallengeRejected:true,
+  exactRfc3339UtcTimeContractVerified:true,
   substituteIosBrowserRejected:true,
   requiredOperatorPathReceiptCoverage:true,
   authenticatedEvidenceBridgeAcceptsValidProof:true,
