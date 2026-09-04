@@ -150,6 +150,7 @@ if(
     const {execFileSync}=await import('node:child_process');
     const statePath='verification/closed-loop-build-state.json';
     if(fs.existsSync(statePath)){
+      execFileSync('git',['restore','--source=HEAD','--',statePath,'verification/build-stages'],{stdio:['ignore','pipe','pipe']});
       const state=JSON.parse(fs.readFileSync(statePath,'utf8'));
       if(state?.controllerId==='closed-loop-monotonic-build-controller/2'){
         const stageNumbers=Array.from({length:28},(_,index)=>String(index+2).padStart(2,'0'));
