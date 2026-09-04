@@ -3,6 +3,9 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 
+const exactSourceCommit=process.env.GITHUB_SHA||execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+if(!/^[0-9a-f]{40}$/.test(exactSourceCommit))throw new Error('Exact current source commit is unavailable.');
+process.env.SOURCE_COMMIT=exactSourceCommit;
 await import('./verify-specification-governance.mjs');
 await import('./verify-build-stage-ledger.mjs');
 await import('./hash.js');
@@ -11,6 +14,18 @@ if(!hashAuthority||hashAuthority.canonicalizationVersion!=='closed-loop-canonica
 const canonical=value=>hashAuthority.stableStringify(value);
 
 const root=process.cwd();
+const specificationPath=path.join(root,'specification/closed-loop-reliability-controlling-implementation-specification.txt');
+const specificationManifestPath=path.join(root,'specification/closed-loop-specification-manifest.json');
+const specificationBytes=fs.readFileSync(specificationPath);
+const nodeSpecificationSha256=crypto.createHash('sha256').update(specificationBytes).digest('hex');
+const independentSpecificationSha256=execFileSync('sha256sum',[specificationPath],{encoding:'utf8'}).trim().split(/\s+/)[0];
+const independentSpecificationByteLength=Number(execFileSync('wc',['-c',specificationPath],{encoding:'utf8'}).trim().split(/\s+/)[0]);
+if(nodeSpecificationSha256!==independentSpecificationSha256)throw new Error('Independent specification SHA-256 calculation disagrees with Node crypto.');
+if(specificationBytes.length!==independentSpecificationByteLength)throw new Error('Independent specification byte-length calculation disagrees with Node byte custody.');
+const generatedSpecificationManifest=JSON.parse(fs.readFileSync(specificationManifestPath,'utf8'));
+if(generatedSpecificationManifest.sourceCommit!==exactSourceCommit)throw new Error('Generated specification manifest is not bound to the exact current source commit.');
+if(generatedSpecificationManifest.sha256!==nodeSpecificationSha256||generatedSpecificationManifest.byteLength!==specificationBytes.length)throw new Error('Generated specification manifest is not bound to the independently verified exact specification bytes.');
+
 const first=path.join(root,'.verify-deployment-a');
 const second=path.join(root,'.verify-deployment-b');
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -93,7 +108,7 @@ try{
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
   if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build and worker-byte identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true,repositoryGovernanceExcludedFromRuntime:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true,repositoryGovernanceExcludedFromRuntime:true,exactSourceCommitBound:true,specificationByteLength:specificationBytes.length,specificationSha256:nodeSpecificationSha256,independentSpecificationSha256,independentSpecificationByteLength},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }
