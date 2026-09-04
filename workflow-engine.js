@@ -436,7 +436,23 @@ function gate(stage,project){
       break;
     }
     case 15:{requireAccepted();const defects=confirmedDefects(project),regs=records(project,'regressions'),covered=new Map(regs.map(r=>[String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''),r]));const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression definitions are missing for: '+missing.join(', ')+'.');const executions=records(project,'regressionExecutions');for(const reg of regs){const id=recordId(reg,'regressions');if(!executions.some(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id&&upper(recordValue(e,'PHASE'))==='PRE_CORRECTION'&&effectiveRegressionDetermination(project,e).determination==='SATISFIED'))reasons.push('Regression '+id+' lacks an actual sufficiently evidenced pre-correction failing execution.');}break;}
-    case 16:requireAccepted();if(confirmedDefects(project).length&&!collection('changes').length)reasons.push('A responsible-layer changeset or blocker is required for confirmed defects.');break;
+    case 16:{
+  requireAccepted();
+  const defects=confirmedDefects(project),stageChanges=collection('changes'),coveredDefects=new Set();
+  for(const change of stageChanges){
+    const changeId=recordId(change,'changes')||'UNKNOWN',trace=validateChangeTrace(change,project);
+    if(!trace.valid)reasons.push('Changeset '+changeId+' is not a valid responsible-layer correction: '+trace.reasons.join(' '));
+    const oldVersion=String(recordValue(change,'OLD_ARTIFACT_VERSION')||'').trim(),newVersion=String(recordValue(change,'NEW_ARTIFACT_VERSION')||'').trim();
+    if(oldVersion&&newVersion&&oldVersion===newVersion)reasons.push('Changeset '+changeId+' must create a new controlled version; old and new version identities are identical.');
+    const instructionChange=upper(recordValue(change,'INSTRUCTION_CHANGE_DETERMINATION')),preflight=upper(recordValue(change,'REQUIRED_REPEATED_PREFLIGHT')),instructionChanged=Boolean(instructionChange)&&!['UNCHANGED','UNCHANGED FOR FIXTURE','NO','FALSE','NOT CHANGED','NOT APPLICABLE'].includes(instructionChange),layer=upper(recordValue(change,'RESPONSIBLE_LAYER'));
+    if(instructionChanged&&['','NONE','NOT REQUIRED','NO','FALSE','NOT APPLICABLE'].includes(preflight))reasons.push('Changeset '+changeId+' changes the production instruction but does not require repeated independent preflight.');
+    if(layer.includes('EXECUTION')&&instructionChanged)reasons.push('Changeset '+changeId+' treats an execution-only root cause as an instruction change; execution-only defects must preserve the correct instruction and rerun in a fresh execution.');
+    for(const defectId of trace.triggerIds)coveredDefects.add(String(defectId));
+  }
+  const missing=defects.map(defect=>recordId(defect,'defects')).filter(Boolean).filter(defectId=>!coveredDefects.has(defectId));
+  if(missing.length)reasons.push('Controlled root-cause correction is missing for confirmed defect(s): '+missing.join(', ')+'.');
+  break;
+}
     case 17:{requireAccepted();const iteration=latestIteration(project,[17]);const ev=evaluateIteration(project,recordId(iteration,'iterations'),'CORRECTED');if(!ev.complete)reasons.push(...ev.reasons);break;}
     case 18:{
       requireAccepted();const metrics=convergenceMetrics(project);

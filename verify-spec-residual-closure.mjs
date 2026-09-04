@@ -22,3 +22,4 @@ await import('./verify-ten-independent-runs.mjs');
 await import('./verify-independent-run-verification.mjs');
 await import('./verify-cross-run-comparison.mjs');
 await import('./verify-root-cause-regressions.mjs');
+await import('./verify-root-cause-correction.mjs');
