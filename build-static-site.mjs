@@ -94,3 +94,9 @@ const manifestWithoutDigest={...manifest};delete manifestWithoutDigest.manifestD
 manifest.manifestDigest={hashAlgorithm,digest:hashAuthority.sha256Value(manifestWithoutDigest)};
 fs.writeFileSync(path.join(outDir,'closed-loop-deployment-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 console.log(JSON.stringify({schema:manifest.schema,sourceCommit,workflowRunIdentity,buildIdentity,resources:runtimeResources.length,manifestDigest:manifest.manifestDigest.digest,outDir},null,2));
+
+if(process.env.GITHUB_ACTIONS==='true'&&process.env.GITHUB_JOB==='deploy'&&process.env.GITHUB_REF==='refs/heads/main'){
+  const {spawnSync}=await import('node:child_process');
+  const proof=spawnSync(process.execPath,['generate-controller-stage-proofs.mjs'],{stdio:'inherit',env:process.env});
+  if(proof.status!==0)throw new Error(`Controller Stage 01-29 proof generation failed with exit ${proof.status}.`);
+}
