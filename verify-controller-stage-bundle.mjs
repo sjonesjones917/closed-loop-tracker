@@ -25,7 +25,7 @@ assert(normative.specificationSha256===specificationSha256,'Normative manifest s
 
 const stageCommands={
   '02':['verify-hash.mjs','verify-stage02-primitives.mjs'],
-  '03':['verify-contract-closure.mjs','verify-v3-contract.mjs','verify-data-route-closure.mjs'],
+  '03':['verify-contract-closure.mjs','verify-v3-contract.mjs','verify-data-route-closure.mjs','verify-controller-proof-routing.mjs'],
   '04':['verify-data-route-closure.mjs','verify-infrastructure-route-closure.mjs','verify-complete.mjs'],
   '05':['verify-project-lifecycle.mjs','verify-complete.mjs'],
   '06':['verify-v3-contract.mjs','verify-ingestion.mjs','verify-data-route-closure.mjs'],
@@ -55,7 +55,7 @@ const stageCommands={
 };
 const fixtureByStage={
   '02':['canonical-json-invalid-scalar','unknown-hash-kind','unknown-set-semantics','id-exact-retry','filename-confusable-collision','trusted-time-unverified-device-time'],
-  '03':['unknown-field','duplicate-producer','missing-operation-property','unknown-stage-operation','scope-dimension-mismatch','unregistered-durable-object','undefined-derivation-normalizer','identity-assurance-below-minimum'],
+  '03':['unknown-field','duplicate-producer','missing-operation-property','unknown-stage-operation','scope-dimension-mismatch','unregistered-durable-object','undefined-derivation-normalizer','identity-assurance-below-minimum','direct-main-proof-push'],
   '04':['agent-writes-human','cross-project-target','wrong-cardinality','stage-data-override','append-only-rewrite'],
   '05':['stale-tab','project-corruption','artifact-byte-loss','import-failure','durable-boundary-failure'],
   '06':['cross-owner-write','direct-collection-write','stale-revision','conflicting-idempotency-payload','external-native-receipt-fabrication'],
