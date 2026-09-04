@@ -12,22 +12,20 @@ jobs:
         with:
           ref: controller3-prompt-byte-identity-rerun-20260904
           fetch-depth: 0
-      - name: Fetch implementation refs
-        run: git fetch origin +refs/heads/controller3-runtime-current-main-replay-20260904:refs/remotes/origin/runtime +refs/heads/controller3-prompt-byte-identity-20260904:refs/remotes/origin/prompt
-      - name: Copy disjoint implementation files
+      - name: Copy disjoint immutable implementation files
         shell: bash
         run: |
           set -euo pipefail
-          for f in workflow-engine.js workflow-schema.js verify-complete.mjs verify-contract-closure.mjs verify-stage01-intake-closure.mjs verify-capability-readiness.mjs; do git show "origin/runtime:$f" > "$f"; done
-          for f in build-test-project.mjs verify-browser.mjs verify-file-first-response.mjs verify-prompt-semantics.mjs verify.mjs; do git show "origin/prompt:$f" > "$f"; done
+          RUNTIME=3f00e59967d88bd8b379fd636a35e349e866fb0a
+          PROMPT=554a09bf84281e5cdd9e68dc9ab4f75bba640737
+          raw="https://raw.githubusercontent.com/sjonesjones917/closed-loop-tracker"
+          for f in workflow-engine.js workflow-schema.js verify-complete.mjs verify-contract-closure.mjs verify-stage01-intake-closure.mjs verify-capability-readiness.mjs; do curl -fsSL "$raw/$RUNTIME/$f" -o "$f"; done
+          for f in build-test-project.mjs verify-browser.mjs verify-file-first-response.mjs verify-prompt-semantics.mjs verify.mjs; do curl -fsSL "$raw/$PROMPT/$f" -o "$f"; done
+          curl -fsSL "$raw/$RUNTIME/prompt-engine.js" -o /tmp/a
+          curl -fsSL "$raw/6206234856cdcaf7e83de6943540db09cfe3c4e2/prompt-engine.js" -o /tmp/b
+          curl -fsSL "$raw/$PROMPT/prompt-engine.js" -o /tmp/c
       - name: Merge prompt authority corrections
-        shell: bash
-        run: |
-          set -euo pipefail
-          git show origin/runtime:prompt-engine.js >/tmp/a
-          git show 6206234856cdcaf7e83de6943540db09cfe3c4e2:prompt-engine.js >/tmp/b
-          git show origin/prompt:prompt-engine.js >/tmp/c
-          git merge-file -p /tmp/a /tmp/b /tmp/c > prompt-engine.js
+        run: git merge-file -p /tmp/a /tmp/b /tmp/c > prompt-engine.js
       - name: Align affected fixed-oracle fixtures
         shell: bash
         run: |
