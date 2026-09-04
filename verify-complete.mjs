@@ -319,9 +319,9 @@ assert(!schema.TEST_IR.operations.some(op=>/JAVASCRIPT|PYTHON|SHELL/i.test(op)),
 assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),'Stage 19 operation contract is incomplete.');
 {
   const p=project('JOB-NATIVE-STAGE22-NO-AGENT');
-  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE'});
+  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE',CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});
   const scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Native deterministic proposition',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-NATIVE-22');
-  const native=record('tests',6,{REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'},'TEST-NATIVE-22');
+  const native=record('tests',6,{REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{product:true},EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'},'TEST-NATIVE-22');
   req.scope=scope;native.scope=scope;p.projectData.requirements.push(req);p.projectData.tests.push(native);
   const nativeGate=engine.gate(22,p);
   assert(!nativeGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Native-only Stage 22 still requires an external accepted response.');
@@ -406,3 +406,21 @@ console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperation
 await import('./verify-spec-residual-closure.mjs');
 
 await import('./verify-operation-scope-classification.mjs');
+
+
+// Conditional applicability is fail-closed until a current activation proof obligation is satisfied.
+{
+  const p=project('JOB-ACTIVATION-PROOF'),scope=engine.currentScope(p);
+  const req=record('requirements',4,{OBLIGATION:'Apply only when activation is proven.',MANDATORY_OPTIONAL_STATUS:'CONDITIONAL',STATUS:'ACTIVE'},'REQ-ACTIVATION');
+  const proposition=record('propositions',4,{REQUIREMENT_ID:'REQ-ACTIVATION',PROPOSITION_TEXT:'Conditional behavior is required when activated.',STATUS:'UNDETERMINED'},'PROP-ACTIVATION');
+  const applicability=record('applicabilityRecords',5,{SUBJECT_ID:'PROP-ACTIVATION',PROPOSED_APPLICABILITY:'APPLICABLE',ACTIVATION_PROOF_OBLIGATION_ID:'PROOF-ACTIVATION',REASONING:'The external author proposes activation.'},'APPLICABILITY-ACTIVATION');
+  for(const item of [req,proposition,applicability])item.scope=scope;
+  p.projectData.requirements.push(req);p.projectData.propositions.push(proposition);p.projectData.applicabilityRecords.push(applicability);
+  engine.recalculate(p);
+  assert(engine.evaluateApplicability(p,'PROP-ACTIVATION')==='UNKNOWN','An agent applicability proposal activated a conditional requirement without a satisfied activation proof obligation.');
+  const proof=p.projectData.proofObligations.find(item=>String(engine.recordValue(item,'PROPOSITION_ID')||'')==='PROP-ACTIVATION');
+  assert(proof,'The application did not derive a proof obligation for the conditional proposition.');
+  const activationId=engine.recordId(proof,'proofObligations');applicability.fields.ACTIVATION_PROOF_OBLIGATION_ID=activationId;applicability.ACTIVATION_PROOF_OBLIGATION_ID=activationId;proof.fields.SATISFACTION_STATE='SATISFIED';proof.SATISFACTION_STATE='SATISFIED';
+  assert(engine.evaluateApplicability(p,'PROP-ACTIVATION')==='APPLICABLE','A current satisfied activation proof obligation did not permit the conditional applicability determination to progress.');
+}
+console.log(JSON.stringify({activationProofFailClosed:true,activationProofProgression:true}));
