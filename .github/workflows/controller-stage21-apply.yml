@@ -48,21 +48,40 @@ jobs:
           cat stage21-apply.log
           test "${{ steps.applicator.outputs.status }}" = "0"
       - name: Focused Stage 21 proof
+        id: focused
+        shell: bash
         run: |
-          set -euo pipefail
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check app-core.js
-          node verify-convergence.mjs
-          node verify-due-stage-timing.mjs
-          node verify-definition-of-done.mjs
-          node verify-complete.mjs
-          node verify-browser.mjs
-          node verify-full-cycle.mjs
+          set +e
+          : > stage21-focused.log
+          {
+            node --check workflow-schema.js &&
+            node --check workflow-engine.js &&
+            node --check app-core.js &&
+            node verify-convergence.mjs &&
+            node verify-due-stage-timing.mjs &&
+            node verify-definition-of-done.mjs &&
+            node verify-complete.mjs &&
+            node verify-browser.mjs &&
+            node verify-full-cycle.mjs
+          } >> stage21-focused.log 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload focused proof diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage21-focused-diagnostics
+          path: stage21-focused.log
+          if-no-files-found: error
+      - name: Require focused proof success
+        run: |
+          cat stage21-focused.log
+          test "${{ steps.focused.outputs.status }}" = "0"
       - name: Commit actual Stage 21 implementation
         run: |
           set -euo pipefail
-          rm -f stage21-apply.log
+          rm -f stage21-apply.log stage21-focused.log
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
