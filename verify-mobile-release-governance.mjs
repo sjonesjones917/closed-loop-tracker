@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS,REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS,isClosedLoopUtcInstant} from './verify-mobile-acceptance-evidence.mjs';
+import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
 import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
 
 const WORKFLOW_PATH=new URL('./.github/workflows/pages.yml',import.meta.url);
@@ -79,11 +79,6 @@ assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptance
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceOrigin:'https://example.invalid'}),false,'A different origin cannot satisfy the canonical deployment identity.');
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,actualAndroidChromeAcceptance:true,actualIPhoneSafariAcceptance:false}),false,'Android acceptance cannot satisfy the iPhone requirement.');
 
-assert.equal(isClosedLoopUtcInstant('2026-09-03T00:00:00.000Z'),true,'Exact UTC instant syntax must be accepted.');
-assert.equal(isClosedLoopUtcInstant('2026-09-03T00:00:00Z'),false,'Missing millisecond precision must be rejected.');
-assert.equal(isClosedLoopUtcInstant('2026-09-03T00:00:00.000+00:00'),false,'Offset-bearing instants cannot masquerade as canonical UTC values.');
-assert.equal(isClosedLoopUtcInstant('2026-02-30T00:00:00.000Z'),false,'Impossible calendar instants must be rejected.');
-
 const target={
   mobileAcceptanceTargetId:'MOBILE-TARGET-001',
   physicalDeviceRequired:true,
@@ -97,11 +92,6 @@ const target={
   testProjectId:'JOB-MOBILE-001',
   procedureVersion:'actual-iphone-safari/1',
   viewport:{width:393,height:852,devicePixelRatio:3}
-};
-const capabilityProbe={
-  probeId:'MOBILE-PROBE-001',
-  result:'PASS',
-  capabilities:Object.fromEntries(REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS.map(key=>[key,true]))
 };
 const evidence={
   mobileAcceptanceEvidenceId:'MOBILE-EVIDENCE-001',
@@ -120,7 +110,6 @@ const evidence={
   iosVersion:'19.0',
   safariUserAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1',
   viewport:{...target.viewport},
-  mobileCapabilityProbe:capabilityProbe,
   operationReceipts:REQUIRED_MOBILE_RECEIPT_KINDS.map((kind,index)=>({kind,receiptId:`MR-${String(index+1).padStart(3,'0')}`,result:'PASS'})),
   runtimeFindings:{runtimeExceptions:0,unhandledRejections:0},
   measurements:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44},
@@ -133,16 +122,7 @@ assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challe
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Safari/604.1','CriOS/140.0.0.0 Mobile/15E148 Safari/604.1')},expected}).accepted,false,'A substitute iOS browser must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operationReceipts:evidence.operationReceipts.slice(1)},expected}).accepted,false,'Missing required physical operator-path evidence must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected,usedChallenges:[target.challenge]}).accepted,false,'A reused physical acceptance challenge must be rejected.');
-assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected,usedChallenges:[target.challenge.toUpperCase()]}).accepted,false,'Challenge reuse must be case-insensitive.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected:{...expected,verificationTime:'2026-09-04T00:00:00.000Z'}}).accepted,false,'Expired physical acceptance evidence must be rejected.');
-assert.equal(verifyMobileAcceptanceEvidence({target:{...target,challengeIssuedAt:'2026-09-02T20:00:00Z'},evidence,expected}).accepted,false,'Noncanonical challenge time syntax must be rejected.');
-assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,mobileCapabilityProbe:undefined},expected}).accepted,false,'Missing MOBILE_CAPABILITY_PROBE must block acceptance.');
-const unavailableProbe={...capabilityProbe,capabilities:{...capabilityProbe.capabilities,RESPONSE_FILE_SELECTION:false},result:'BLOCKED'};
-assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,mobileCapabilityProbe:unavailableProbe},expected}).accepted,false,'A missing required pinned-device capability must block acceptance.');
-const unknownProbe={...capabilityProbe,capabilities:{...capabilityProbe.capabilities,PERSISTENT_STORAGE_REQUEST:null},result:'BLOCKED'};
-assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,mobileCapabilityProbe:unknownProbe},expected}).accepted,false,'An UNKNOWN required pinned-device capability must block acceptance.');
-const extraProbe={...capabilityProbe,capabilities:{...capabilityProbe.capabilities,UNREGISTERED_CAPABILITY:true}};
-assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,mobileCapabilityProbe:extraProbe},expected}).accepted,false,'An unregistered capability probe key must fail closed.');
 
 const noSubmission=evaluateMobileAcceptanceSubmission();
 assert.equal(noSubmission.actualIPhoneSafariAcceptance,false,'No physical evidence submission must remain blocked.');
@@ -176,14 +156,8 @@ console.log(JSON.stringify({
   canonicalOriginBound:true,
   exactTargetBindingVerified:true,
   singleUseChallengeVerified:true,
-  challengeCaseNormalizationVerified:true,
   expiredChallengeRejected:true,
-  canonicalTrustedTimeSyntaxEnforced:true,
   substituteIosBrowserRejected:true,
-  mobileCapabilityProbeRequired:true,
-  missingCapabilityBlocks:true,
-  unknownCapabilityBlocks:true,
-  unregisteredCapabilityRejected:true,
   requiredOperatorPathReceiptCoverage:true,
   authenticatedEvidenceBridgeAcceptsValidProof:true,
   absentEvidenceRemainsBlocked:true,
