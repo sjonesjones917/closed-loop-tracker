@@ -1,0 +1,45 @@
+name: Temporary atomic governance regeneration
+
+on:
+  push:
+    branches: [controller3-rfc3339-mobile-gate]
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-rfc3339-mobile-gate
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Regenerate atomic governance manifests and remove this repair workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('generate-specification-governance.mjs')
+          s=p.read_text()
+          s=s.replace("GV='closed-loop-governance-generator/2'","GV='closed-loop-governance-generator/3'")
+          old="'verify-specification-governance.mjs#duplicate-id','verify-specification-governance.mjs#missing-test-trace'"
+          new="'verify-specification-governance.mjs#duplicate-id','verify-specification-governance.mjs#missing-compound-atom','verify-specification-governance.mjs#missing-test-trace'"
+          if old not in s and new not in s:
+              raise SystemExit('Expected governance mutation registry not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          SOURCE_COMMIT="$(git rev-parse HEAD)" node generate-specification-governance.mjs
+          SOURCE_COMMIT="$(git rev-parse HEAD)" GITHUB_ACTIONS=false node specification-governance-core.mjs
+          rm .github/workflows/governance-regenerate.yml
+          git config user.name closed-loop-governance
+          git config user.email closed-loop-governance@users.noreply.github.com
+          git add generate-specification-governance.mjs specification-governance-core.mjs specification/closed-loop-specification-manifest.json specification/closed-loop-normative-requirements.json .github/workflows/governance-regenerate.yml
+          git diff --cached --check
+          git commit -m "Regenerate atomic normative requirement manifests"
+          git push origin HEAD:controller3-rfc3339-mobile-gate
