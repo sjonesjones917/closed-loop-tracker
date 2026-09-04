@@ -1,0 +1,27 @@
+name: Publish fixed aliases for temporary controller evidence
+on:
+  push:
+    branches: [controller/c3-live-verification-20260904]
+permissions:
+  contents: write
+jobs:
+  alias:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller/c3-live-verification-20260904
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          mkdir -p .controller-evidence
+          FULL=$(find .controller-evidence -maxdepth 1 -type f -name 'full-evidence-*.json' | sort | tail -1)
+          LIVE=$(find .controller-evidence -maxdepth 1 -type f -name 'live-evidence-*.json' | sort | tail -1)
+          [ -n "$FULL" ] && cp "$FULL" .controller-evidence/latest-full-evidence.json || true
+          [ -n "$LIVE" ] && cp "$LIVE" .controller-evidence/latest-live-evidence.json || true
+          if git diff --quiet -- .controller-evidence && git diff --cached --quiet; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .controller-evidence
+          git commit -m 'Update temporary controller evidence aliases'
+          git push origin HEAD:controller/c3-live-verification-20260904
