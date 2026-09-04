@@ -16,13 +16,13 @@ jobs:
         with:
           node-version: '22'
       - run: python controller-repair-v3.py
+      - run: rm controller-repair-v3.py .github/workflows/controller-repair-v3.yml .controller-source-snapshot-v3-r2
       - run: |
           node --check prompt-engine.js
           node verify-prompt-semantics.mjs
           node verify-file-first-response.mjs
           node build-test-project.mjs
       - run: |
-          rm controller-repair-v3.py .github/workflows/controller-repair-v3.yml .controller-source-snapshot-v3-r2
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
