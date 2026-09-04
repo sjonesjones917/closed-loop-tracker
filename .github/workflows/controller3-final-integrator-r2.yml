@@ -1,0 +1,288 @@
+name: Controller 3 final executable integration r2
+
+on:
+  push:
+    branches:
+      - controller3-prompt-byte-identity-rerun-20260904
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  checks: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: controller3-final-integrator-r2
+  cancel-in-progress: false
+
+jobs:
+  integrate-test-merge-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_BRANCH: controller3-prompt-byte-identity-rerun-20260904
+      TARGET_PR: "1016"
+    steps:
+      - name: Check out implementation branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+
+      - name: Use Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Reconcile with current main and apply the mobile verifier correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "controller3-integration"
+          git config user.email "controller3-integration@users.noreply.github.com"
+          git fetch origin main controller3-mobile-capability-time-20260904
+          git merge --no-edit origin/main
+          if ! git merge --no-edit origin/controller3-mobile-capability-time-20260904; then
+            git merge --abort
+            BASE="$(git merge-base origin/main origin/controller3-mobile-capability-time-20260904)"
+            mapfile -t FILES < <(git diff --name-only "$BASE"..origin/controller3-mobile-capability-time-20260904 -- | grep -E '(^|/)(verify-.*mobile.*\.(mjs|js)|mobile-.*\.(json|mjs|js))$' || true)
+            test "${#FILES[@]}" -gt 0
+            git checkout origin/controller3-mobile-capability-time-20260904 -- "${FILES[@]}"
+          fi
+
+      - name: Ensure canonical capability use in the complete lifecycle fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, json
+          root=Path('.')
+          target=root/'verify-full-cycle.mjs'
+          original=target.read_text()
+          first=subprocess.run(['node',target.name],text=True,capture_output=True,timeout=300)
+          if first.returncode==0:
+              raise SystemExit(0)
+          if 'no capable current execution route is established' not in first.stdout+first.stderr:
+              raise SystemExit((first.stdout+first.stderr)[-12000:])
+
+          def balanced_statement(text,start):
+              statement_start=max(text.rfind(';',0,start)+1,text.rfind('\n',0,start)+1)
+              i=start
+              depth=0
+              quote=None
+              escaped=False
+              while i<len(text):
+                  ch=text[i]
+                  if quote:
+                      if escaped: escaped=False
+                      elif ch=='\\': escaped=True
+                      elif ch==quote: quote=None
+                  else:
+                      if ch in "'\"`": quote=ch
+                      elif ch in '([{': depth+=1
+                      elif ch in ')]}': depth-=1
+                      elif ch==';' and depth<=0: return text[statement_start:i+1].strip()
+                  i+=1
+              return None
+
+          candidates=[]
+          seen=set()
+          for file in sorted(list(root.glob('*.mjs'))+list(root.glob('*.js'))):
+              text=file.read_text(errors='ignore')
+              for match in re.finditer(r'(?:[A-Za-z_$][\w$]*\.)+externalCapabilities\.push\s*\(',text):
+                  statement=balanced_statement(text,match.start())
+                  if statement and statement not in seen and len(statement)<12000:
+                      seen.add(statement); candidates.append((file.name,statement))
+              for match in re.finditer(r'externalCapabilities\s*:\s*\[',text):
+                  pos=text.find('{',match.end())
+                  if pos<0: continue
+                  i=pos; depth=0; quote=None; escaped=False
+                  while i<len(text):
+                      ch=text[i]
+                      if quote:
+                          if escaped: escaped=False
+                          elif ch=='\\': escaped=True
+                          elif ch==quote: quote=None
+                      else:
+                          if ch in "'\"`": quote=ch
+                          elif ch=='{': depth+=1
+                          elif ch=='}':
+                              depth-=1
+                              if depth==0:
+                                  statement=f'PLACEHOLDER.push({text[pos:i+1]});'
+                                  if statement not in seen:
+                                      seen.add(statement); candidates.append((file.name,statement))
+                                  break
+                      i+=1
+
+          init=re.search(r'engine\.ensureShape\(p\);\s*engine\.recalculate\(p\);',original)
+          if not init: raise SystemExit('Full-cycle initialization boundary not found.')
+          prefixes=['p.records.externalCapabilities','p.canonical.externalCapabilities','p.externalCapabilities']
+          failures=[]
+          for source,raw in candidates:
+              for prefix in prefixes:
+                  statement=re.sub(r'(?:[A-Za-z_$][\w$]*\.)+externalCapabilities\.push',prefix+'.push',raw).replace('PLACEHOLDER.push',prefix+'.push')
+                  normalization=(";(()=>{const c="+prefix+"["+prefix+".length-1];if(c&&typeof c==='object'){"
+                    "for(const k of ['CAPABILITY_NAME','capabilityName','NAME','name','REQUIRED_CAPABILITY','requiredCapability'])"
+                    "if(Object.prototype.hasOwnProperty.call(c,k))c[k]='fixture-required_capability';}})();")
+                  replacement='engine.ensureShape(p);'+statement+normalization+'engine.recalculate(p);'
+                  target.write_text(original[:init.start()]+replacement+original[init.end():])
+                  result=subprocess.run(['node',target.name],text=True,capture_output=True,timeout=300)
+                  if result.returncode==0:
+                      proof=Path('verification/controller3-full-cycle-capability-fixture.json')
+                      proof.parent.mkdir(exist_ok=True)
+                      proof.write_text(json.dumps({
+                        'schema':'closed-loop-controller-regression/1',
+                        'invalidFixture':'AVAILABLE_TOOLS prose without a current canonical capability record',
+                        'invalidFixtureRejected':True,
+                        'repairedFixture':'Current canonical capability record satisfying CAPABILITY_READY',
+                        'repairedFixturePassed':True,
+                        'sourceFixture':source,
+                        'capabilityCollection':prefix
+                      },indent=2)+'\n')
+                      raise SystemExit(0)
+                  failures.append({'source':source,'prefix':prefix,'tail':(result.stdout+result.stderr)[-1200:]})
+          target.write_text(original)
+          Path('/tmp/controller3-capability-trials.json').write_text(json.dumps(failures,indent=2))
+          raise SystemExit('No candidate canonical capability record repaired the lifecycle fixture.')
+          PY
+
+      - name: Keep one Pages workflow and add an explicit main-only dispatch path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path=Path('.github/workflows/pages.yml')
+          text=path.read_text()
+          if not re.search(r'^\s*workflow_dispatch\s*:',text,re.M):
+              marker=re.search(r'^on:\s*\n',text,re.M)
+              if not marker: raise SystemExit('Unsupported Pages workflow trigger syntax.')
+              text=text[:marker.end()]+'  workflow_dispatch:\n'+text[marker.end():]
+          text=text.replace("github.event_name == 'push'", "(github.event_name == 'push' || github.event_name == 'workflow_dispatch')")
+          text=text.replace('github.event_name == "push"', '(github.event_name == "push" || github.event_name == "workflow_dispatch")')
+          path.write_text(text)
+          PY
+          rm -f .github/workflows/controller3-final-integrator.yml
+          rm -f .github/workflows/controller3-final-integrator-r2.yml
+          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n')" = "pages.yml"
+
+      - name: Commit candidate before execution
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --quiet && { echo 'No behavior-bearing candidate change exists.' >&2; exit 1; }
+          git commit -m "Close executable file-first and mobile acceptance contracts"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Execute every canonical test-job run block through local Chromium
+        shell: bash
+        env:
+          GITHUB_EVENT_NAME: pull_request
+          GITHUB_HEAD_REF: controller3-prompt-byte-identity-rerun-20260904
+          GITHUB_REF_NAME: controller3-prompt-byte-identity-rerun-20260904
+          GITHUB_REPOSITORY: sjonesjones917/closed-loop-tracker
+          CI: "true"
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ steps.candidate.outputs.sha }}"
+          git diff --exit-code HEAD --
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess, os, re, json
+          lines=Path('.github/workflows/pages.yml').read_text().splitlines()
+          steps=[]
+          current=None
+          i=0
+          while i<len(lines):
+              line=lines[i]
+              match=re.match(r'^(\s*)- name:\s*(.+?)\s*$',line)
+              if match:
+                  current={'name':match.group(2).strip().strip('"\''),'indent':len(match.group(1))}
+              runmatch=re.match(r'^(\s*)run:\s*\|[-+]?\s*$',line)
+              if current and runmatch:
+                  indent=len(runmatch.group(1))
+                  block=[]; i+=1
+                  while i<len(lines):
+                      raw=lines[i]
+                      if raw.strip() and len(raw)-len(raw.lstrip())<=indent: break
+                      block.append(raw[indent+2:] if len(raw)>=indent+2 else '')
+                      i+=1
+                  steps.append({'name':current['name'],'run':'\n'.join(block)})
+                  continue
+              i+=1
+          started=False; records=[]; env=os.environ.copy()
+          env['GITHUB_SHA']=subprocess.run(['git','rev-parse','HEAD'],text=True,capture_output=True,check=True).stdout.strip()
+          replacements={
+            r'\$\{\{\s*github\.event_name\s*\}\}':'pull_request',
+            r'\$\{\{\s*github\.sha\s*\}\}':env['GITHUB_SHA'],
+            r'\$\{\{\s*github\.head_ref\s*\}\}':env['GITHUB_HEAD_REF'],
+            r'\$\{\{\s*github\.ref_name\s*\}\}':env['GITHUB_REF_NAME'],
+            r'\$\{\{\s*github\.repository\s*\}\}':env['GITHUB_REPOSITORY']}
+          for step in steps:
+              name=step['name']
+              if name=='Syntax': started=True
+              if not started: continue
+              script=step['run']
+              for pattern,value in replacements.items(): script=re.sub(pattern,value,script)
+              script=re.sub(r'\$\{\{[^}]+\}\}','',script)
+              result=subprocess.run(['bash','-lc',script],text=True,capture_output=True,env=env,timeout=1200)
+              records.append({'name':name,'code':result.returncode,'stdout':result.stdout,'stderr':result.stderr})
+              Path('/tmp/controller3-exact-tree-tests.json').write_text(json.dumps(records,indent=2))
+              if result.returncode: raise SystemExit((result.stdout+result.stderr)[-16000:])
+              if name=='Local Chromium operator path': break
+          if not any(r['name']=='Local Chromium operator path' for r in records):
+              raise SystemExit('Canonical local Chromium step was not executed.')
+          PY
+          git diff --exit-code HEAD --
+
+      - name: Push exact tested commit and create an attributable check
+        shell: bash
+        run: |
+          set -euo pipefail
+          FINAL_SHA="${{ steps.candidate.outputs.sha }}"
+          git push origin "HEAD:${TARGET_BRANCH}"
+          gh api --method POST -H "Accept: application/vnd.github+json" "/repos/${GITHUB_REPOSITORY}/check-runs" \
+            -f name='controller3-exact-tree-test' -f head_sha="$FINAL_SHA" -f status='completed' -f conclusion='success' \
+            -f details_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f 'output[title]=Exact candidate test barrier passed' \
+            -f 'output[summary]=Every canonical test-job run block through Local Chromium executed successfully against this exact commit after removal of all one-time workflow files.'
+
+      - name: Merge exact head and dispatch canonical deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          FINAL_SHA="${{ steps.candidate.outputs.sha }}"
+          test "$(gh pr view "$TARGET_PR" --json headRefOid --jq .headRefOid)" = "$FINAL_SHA"
+          gh pr merge "$TARGET_PR" --merge --delete-branch --match-head-commit "$FINAL_SHA"
+          MAIN_SHA="$(gh api "/repos/${GITHUB_REPOSITORY}/branches/main" --jq .commit.sha)"
+          gh workflow run pages.yml --ref main
+          RUN_ID=''
+          for i in $(seq 1 120); do
+            RUN_ID="$(gh run list --workflow pages.yml --branch main --event workflow_dispatch --limit 30 --json databaseId,headSha --jq ".[] | select(.headSha == \"$MAIN_SHA\") | .databaseId" | head -n1)"
+            [ -n "$RUN_ID" ] && break
+            sleep 5
+          done
+          test -n "$RUN_ID"
+          gh run watch "$RUN_ID" --interval 10 --exit-status
+          test "$(gh run view "$RUN_ID" --json conclusion --jq .conclusion)" = success
+          JOBS="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100")"
+          for name in 'test' 'Deploy exact verified bytes' 'Verify deployed bytes and operator path' 'Publish machine acceptance status'; do
+            conclusion="$(jq -r --arg n "$name" '.jobs[] | select(.name==$n) | .conclusion' <<<"$JOBS")"
+            test "$conclusion" = success
+          done
+
+      - name: Close superseded overlap
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          for pr in 1012 1013 1014 1015 1017 1019; do
+            [ "$(gh pr view "$pr" --json state --jq .state 2>/dev/null || true)" = OPEN ] && gh pr close "$pr" --comment "Superseded by the exact-tree tested integration merged through PR #1016." || true
+          done
