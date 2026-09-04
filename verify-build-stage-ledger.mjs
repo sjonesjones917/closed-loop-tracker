@@ -14,6 +14,25 @@ const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 const stageKey=n=>String(n).padStart(2,'0');
 let historyPrepared=false;
 
+function repositoryFiles(){
+  const out=[];
+  const walk=dir=>{
+    for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
+      if(entry.name==='.git'||entry.name==='node_modules')continue;
+      const path=dir==='.'?entry.name:`${dir}/${entry.name}`;
+      if(entry.isDirectory())walk(path);
+      else out.push(path);
+    }
+  };
+  walk('.');
+  return out;
+}
+
+function validateControllerLedgerUniqueness(paths){
+  const ledgers=paths.filter(path=>/(^|\/)closed-loop-build-state\.json$/.test(path));
+  assert(ledgers.length===1&&ledgers[0]===STATE_PATH,`Exactly one controller ledger is permitted at ${STATE_PATH}; found: ${ledgers.join(', ')||'NONE'}.`);
+}
+
 function proveAncestor(commit){
   if(process.env.GITHUB_ACTIONS!=='true')return true;
   if(!historyPrepared){
@@ -81,6 +100,12 @@ function validateLedger(state,{mutateProofDigest=false,mutateSkip=false,mutateCo
   return {provenStages:priorDigests.length,proofCount:latestProofCount,conformantCount:latestConformantCount,manifestConformant};
 }
 
+const files=repositoryFiles();
+validateControllerLedgerUniqueness(files);
+let duplicateLedgerRejected=false;
+try{validateControllerLedgerUniqueness([...files,'implementation/closed-loop-build-state.json']);}catch{duplicateLedgerRejected=true;}
+assert(duplicateLedgerRejected,'Intentional invalid fixture duplicate-controller-ledger was not rejected.');
+
 const state=readJson(STATE_PATH);
 const result=validateLedger(state);
 for(const [fixture,mutation] of [
@@ -93,4 +118,4 @@ for(const [fixture,mutation] of [
   try{validateLedger(state,mutation);}catch{rejected=true;}
   assert(rejected,`Intentional invalid fixture ${fixture} was not rejected.`);
 }
-console.log(JSON.stringify({...result,ledgerVerified:true,intentionalInvalidFixturesRejected:4}));
+console.log(JSON.stringify({...result,ledgerVerified:true,intentionalInvalidFixturesRejected:5}));
