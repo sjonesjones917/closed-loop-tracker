@@ -4,7 +4,7 @@
   "specificationSourceCommit": "b71e828461c86184e9a08f738453443e6b579aab",
   "lastObservedMainCommit": "4506407ca6238eba083485c7d29aacab3c35dba6",
   "stages": {
-    "01": {"status":"PROVEN","provenCommit":"4506407ca6238eba083485c7d29aacab3c35dba6","proofRecordPath":"verification/build-stages/stage-01-proof.json","proofDigest":"7393e0790269d0bdffe99215d8d99481955b5cad05ac149ac0540438ec67bc8c","prerequisiteStageDigests":[]},
+    "01": {"status":"PROVEN","provenCommit":"4506407ca6238eba083485c7d29aacab3c35dba6","proofRecordPath":"verification/build-stages/stage-01-proof.json","proofDigest":"1b4dfd5596467a66a721a5e7cc5e2bf1926f0e090d0417b130882f09d81d579d","prerequisiteStageDigests":[]},
     "02": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
     "03": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
     "04": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
