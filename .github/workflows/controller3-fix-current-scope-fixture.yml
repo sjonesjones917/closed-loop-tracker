@@ -1,0 +1,41 @@
+name: Controller 3 current-scope fixture repair
+on:
+  push:
+    branches: [controller3-runtime-closure-20260904]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[controller3-current-scope-fixed]') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-runtime-closure-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Bind the positive capability fixture to the complete current scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-semantic-invariant.mjs')
+          s=p.read_text()
+          old="scope:{inputVersion:q.job.CURRENT_INPUT_VERSION},fields:{CAPABILITY_ID:'CAPABILITY-SOLIDWORKS'"
+          new="scope:s,fields:{CAPABILITY_ID:'CAPABILITY-SOLIDWORKS'"
+          if old not in s:
+              raise SystemExit('current-scope capability fixture target not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node verify-semantic-invariant.mjs
+          node verify-capability-readiness.mjs
+          node verify-prompt-semantics.mjs
+          rm .github/workflows/controller3-fix-current-scope-fixture.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-semantic-invariant.mjs .github/workflows/controller3-fix-current-scope-fixture.yml
+          git commit -m 'Bind capability fixture to current scope [controller3-current-scope-fixed]'
+          git push origin HEAD:controller3-runtime-closure-20260904
