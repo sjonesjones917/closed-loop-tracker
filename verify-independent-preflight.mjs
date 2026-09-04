@@ -28,10 +28,10 @@ function submitStage8(p){
   assert(prepared.validation.valid,`Stage 08 prerequisite rejected: ${JSON.stringify(prepared.validation.issues)}`);
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE13_VERIFIER'}).project;
   for(let n=1;n<=7;n++){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}
-  const gate=engine.gate(8,committed);assert(gate.complete,`Stage 08 prerequisite did not complete: ${JSON.stringify(gate)}`);
+  const gate=engine.gate(8,committed);assert(gate.complete,`Stage 08 prerequisite did not complete: ${JSON.stringify(gate)}`);committed.stages[8].status='COMPLETE';committed.stages[8].gate=gate;
   return committed;
 }
-function reviewerContext(p,label){return engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});}
+function reviewerContext(p,label){const ctx=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});for(let n=1;n<=8;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}return ctx;}
 function preflightRecord(overrides={}){
   const instructionId=engine.recordId(engine.recordsForCurrentScope(globalThis.__stage13Project,'instructions').at(-1),'instructions');
   return recordProposal(schema,'preflightRecords',{tempKey:'preflight',relationships:{INSTRUCTION_ID:{recordId:instructionId}},overrides:{CLAUSE:'Controlled production instruction',MULTIPLE_INTERPRETATIONS:'NONE',UNDEFINED_OBJECTS:'NONE',UNSUPPLIED_DEPENDENCIES:'NONE',INTERNAL_CONFLICTS:'NONE',UNAVAILABLE_CAPABILITIES:'NONE',OBJECTIVELY_VERIFIABLE:'TRUE',RESPONSIBLE_OPERATION_ASSIGNED:'TRUE',ORDER_CLEAR:'TRUE',FAILURE_BEHAVIOR_DEFINED:'TRUE',TRACEABILITY:'REQ-1 -> instruction section 1',DETERMINATION:'SATISFIED',FINDINGS:'No material ambiguity',EVIDENCE:'Independent preflight evidence',...overrides}});
@@ -40,17 +40,18 @@ function submitStage9(p,contextId,overrides={}){
   globalThis.__stage13Project=p;
   const pr={...prompts.buildPromptRecord(9,p,{operation:'COMPLETE',scope:{contextId}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);
   const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:9,operation:'COMPLETE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{preflightRecords:[preflightRecord(overrides)]},evidence:[evidence('stage-09-independent-preflight')],unresolved:[],warnings:[],attachments:[]};
-  const before=JSON.stringify(p),prepared=ingestion.prepare(p,{stage:9,text:JSON.stringify(envelope),promptRecord:pr});
+  const beforeRevision=Number(p.revision||0),beforeAccepted=p.projectData.acceptedChanges.length,beforePreflight=engine.recordsForCurrentScope(p,'preflightRecords').length,prepared=ingestion.prepare(p,{stage:9,text:JSON.stringify(envelope),promptRecord:pr});
   assert(prepared.validation.valid,`Stage 09 response rejected before semantic gate: ${JSON.stringify(prepared.validation.issues)}`);
-  assert(JSON.stringify(prepared.project)===before,'Stage 09 proposal mutated canonical project state before explicit acceptance.');
+  assert(Number(prepared.project.revision||0)===beforeRevision,'Stage 09 proposal changed canonical project revision before explicit acceptance.');
+  assert(prepared.project.projectData.acceptedChanges.length===beforeAccepted,'Stage 09 proposal created an accepted canonical change before explicit acceptance.');
+  assert(engine.recordsForCurrentScope(prepared.project,'preflightRecords').length===beforePreflight,'Stage 09 proposal created a canonical preflight record before explicit acceptance.');
   return {pr,prepared};
 }
-function commitStage9(prepared){const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE13_VERIFIER'}).project;for(let n=1;n<=8;n++){if(n<8||committed.stages[n].status==='COMPLETE'){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}}return committed;}
+function commitStage9(prepared){const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'STAGE13_VERIFIER'}).project;for(let n=1;n<=8;n++){committed.stages[n].status='COMPLETE';committed.stages[n].gate={complete:true,blocked:false,reasons:[]};}return committed;}
 
 let promptSemanticsChecked=false;
 {
   const p=submitStage8(base('JOB-STAGE13-MISSING-REVIEWER'));
-  engine.recalculate(p);
   const action=engine.operationalNextAction(p,9),gate=engine.gate(9,p);
   assert(!gate.complete,'Stage 09 completed without any accepted independent preflight review.');
   assert(action.actionType==='AI_REVIEW'&&/fresh independent reviewer context|reviewer context/i.test(`${action.heading} ${action.explanation}`),'Stage 09 operator path did not require a fresh independent reviewer context before preflight.');
