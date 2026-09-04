@@ -137,43 +137,64 @@ if(
   process.env.CONTROLLER_STAGE_BUNDLE_ACTIVE!=='1'
 ){
   const fs=(await import('node:fs')).default;
+  const path=(await import('node:path')).default;
+  const os=(await import('node:os')).default;
   const {execFileSync}=await import('node:child_process');
-  const statePath='verification/closed-loop-build-state.json';
-  if(fs.existsSync(statePath)){
-    const state=JSON.parse(fs.readFileSync(statePath,'utf8'));
-    if(state?.controllerId==='closed-loop-monotonic-build-controller/2'){
-      const stageNumbers=Array.from({length:28},(_,index)=>String(index+2).padStart(2,'0'));
-      const earliest=stageNumbers.find(stage=>state.stages?.[stage]?.status!=='PROVEN');
-      if(earliest){
-        const prior=Number(earliest)-1;
-        if(prior===1||state.stages?.[String(prior).padStart(2,'0')]?.status==='PROVEN'){
-          const outDir='verification/controller-ci-proof';
-          execFileSync(process.execPath,['verify-controller-stage-bundle.mjs'],{
-            env:{...process.env,CONTROLLER_PRIOR_SUITE_PASSED:'1',CONTROLLER_STAGE_BUNDLE_ACTIVE:'1',CONTROLLER_PROOF_OUT_DIR:outDir},
-            stdio:['ignore','pipe','pipe'],maxBuffer:256*1024*1024
-          });
-          const generated=JSON.parse(fs.readFileSync(`${outDir}/stage-${earliest}-proof.json`,'utf8'));
-          generated.startingMainCommit=process.env.GITHUB_SHA;
-          generated.endingMainCommit=process.env.GITHUB_SHA;
-          generated.implementationCommitIds=[process.env.GITHUB_SHA];
-          generated.nextStage=earliest==='29'?'30':String(Number(earliest)+1).padStart(2,'0');
-          const proofPath=`verification/build-stages/stage-${earliest}-proof.json`;
-          fs.writeFileSync(proofPath,JSON.stringify(generated,null,2)+'\n');
-          const proofDigest=(await import('node:crypto')).createHash('sha256').update(fs.readFileSync(proofPath)).digest('hex');
-          state.lastObservedMainCommit=process.env.GITHUB_SHA;
-          state.stages[earliest]={status:'PROVEN',provenCommit:process.env.GITHUB_SHA,proofRecordPath:proofPath,proofDigest,prerequisiteStageDigests:Object.entries(state.stages).filter(([stage,value])=>Number(stage)<Number(earliest)&&value?.status==='PROVEN').map(([,value])=>value.proofDigest).filter(Boolean)};
-          state.proofCount=Math.max(Number(state.proofCount||0),Number(generated.proofCountAfter||0));
-          state.conformantRequirementCount=Math.max(Number(state.conformantRequirementCount||0),Number(generated.conformantCountAfter||0));
-          state.lastUpdatedByCommandId=`CI-${process.env.GITHUB_RUN_ID||'UNKNOWN'}-STAGE${earliest}`;
-          fs.writeFileSync(statePath,JSON.stringify(state,null,2)+'\n');
-          fs.rmSync(outDir,{recursive:true,force:true});
-          execFileSync('git',['config','user.name','closed-loop-controller']);
-          execFileSync('git',['config','user.email','closed-loop-controller@users.noreply.github.com']);
-          execFileSync('git',['add',proofPath,statePath]);
-          const staged=execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim();
-          if(staged){
-            execFileSync('git',['commit','-m',`Controller Stage ${earliest}: commit canonical proof record`]);
-            execFileSync('git',['push','origin','HEAD:main'],{stdio:['ignore','pipe','pipe']});
+  const acquireExclusiveLock=lockPath=>{
+    try{
+      const fd=fs.openSync(lockPath,'wx',0o600);
+      fs.writeFileSync(fd,`${process.pid}\n`);
+      fs.closeSync(fd);
+      return true;
+    }catch(error){
+      if(error?.code==='EEXIST')return false;
+      throw error;
+    }
+  };
+  const lockFixture=path.join(os.tmpdir(),`closed-loop-controller-lock-fixture-${process.pid}-${Date.now()}`);
+  assert.equal(acquireExclusiveLock(lockFixture),true,'The controller advancement lock must permit the first acquisition.');
+  assert.equal(acquireExclusiveLock(lockFixture),false,'The controller advancement lock must reject duplicate acquisition.');
+  fs.rmSync(lockFixture,{force:true});
+  const runIdentity=String(process.env.GITHUB_RUN_ID||'local').replace(/[^0-9A-Za-z._-]/g,'_');
+  const lockPath=path.join(process.env.RUNNER_TEMP||os.tmpdir(),`closed-loop-controller-stage-advance-${runIdentity}.lock`);
+  if(acquireExclusiveLock(lockPath)){
+    const statePath='verification/closed-loop-build-state.json';
+    if(fs.existsSync(statePath)){
+      const state=JSON.parse(fs.readFileSync(statePath,'utf8'));
+      if(state?.controllerId==='closed-loop-monotonic-build-controller/2'){
+        const stageNumbers=Array.from({length:28},(_,index)=>String(index+2).padStart(2,'0'));
+        const earliest=stageNumbers.find(stage=>state.stages?.[stage]?.status!=='PROVEN');
+        if(earliest){
+          const prior=Number(earliest)-1;
+          if(prior===1||state.stages?.[String(prior).padStart(2,'0')]?.status==='PROVEN'){
+            const outDir='verification/controller-ci-proof';
+            execFileSync(process.execPath,['verify-controller-stage-bundle.mjs'],{
+              env:{...process.env,CONTROLLER_PRIOR_SUITE_PASSED:'1',CONTROLLER_STAGE_BUNDLE_ACTIVE:'1',CONTROLLER_PROOF_OUT_DIR:outDir},
+              stdio:['ignore','pipe','pipe'],maxBuffer:256*1024*1024
+            });
+            const generated=JSON.parse(fs.readFileSync(`${outDir}/stage-${earliest}-proof.json`,'utf8'));
+            generated.startingMainCommit=process.env.GITHUB_SHA;
+            generated.endingMainCommit=process.env.GITHUB_SHA;
+            generated.implementationCommitIds=[process.env.GITHUB_SHA];
+            generated.nextStage=earliest==='29'?'30':String(Number(earliest)+1).padStart(2,'0');
+            const proofPath=`verification/build-stages/stage-${earliest}-proof.json`;
+            fs.writeFileSync(proofPath,JSON.stringify(generated,null,2)+'\n');
+            const proofDigest=(await import('node:crypto')).createHash('sha256').update(fs.readFileSync(proofPath)).digest('hex');
+            state.lastObservedMainCommit=process.env.GITHUB_SHA;
+            state.stages[earliest]={status:'PROVEN',provenCommit:process.env.GITHUB_SHA,proofRecordPath:proofPath,proofDigest,prerequisiteStageDigests:Object.entries(state.stages).filter(([stage,value])=>Number(stage)<Number(earliest)&&value?.status==='PROVEN').map(([,value])=>value.proofDigest).filter(Boolean)};
+            state.proofCount=Math.max(Number(state.proofCount||0),Number(generated.proofCountAfter||0));
+            state.conformantRequirementCount=Math.max(Number(state.conformantRequirementCount||0),Number(generated.conformantCountAfter||0));
+            state.lastUpdatedByCommandId=`CI-${process.env.GITHUB_RUN_ID||'UNKNOWN'}-STAGE${earliest}`;
+            fs.writeFileSync(statePath,JSON.stringify(state,null,2)+'\n');
+            fs.rmSync(outDir,{recursive:true,force:true});
+            execFileSync('git',['config','user.name','closed-loop-controller']);
+            execFileSync('git',['config','user.email','closed-loop-controller@users.noreply.github.com']);
+            execFileSync('git',['add',proofPath,statePath]);
+            const staged=execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim();
+            if(staged){
+              execFileSync('git',['commit','-m',`Controller Stage ${earliest}: commit canonical proof record`]);
+              execFileSync('git',['push','origin','HEAD:main'],{stdio:['ignore','pipe','pipe']});
+            }
           }
         }
       }
