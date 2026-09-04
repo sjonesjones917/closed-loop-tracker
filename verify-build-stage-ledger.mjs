@@ -13,6 +13,15 @@ const readJson=path=>JSON.parse(fs.readFileSync(path,'utf8'));
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 const stageKey=n=>String(n).padStart(2,'0');
 
+function proveAncestor(commit){
+  if(process.env.GITHUB_ACTIONS!=='true')return true;
+  if(cp.spawnSync('git',['cat-file','-e',`${commit}^{commit}`],{stdio:'ignore'}).status!==0){
+    const fetch=cp.spawnSync('git',['fetch','--no-tags','--depth=64','origin',commit],{stdio:'ignore'});
+    assert(fetch.status===0,`Unable to fetch proven commit ${commit} for ancestry verification.`);
+  }
+  return cp.spawnSync('git',['merge-base','--is-ancestor',commit,'HEAD'],{stdio:'ignore'}).status===0;
+}
+
 function validateLedger(state,{mutateProofDigest=false,mutateSkip=false,mutateCounts=false,mutateSpec=false}={}){
   const specManifest=readJson(SPEC_MANIFEST_PATH);
   const normative=readJson(NORMATIVE_PATH);
@@ -55,10 +64,7 @@ function validateLedger(state,{mutateProofDigest=false,mutateSkip=false,mutateCo
       for(const digest of entry.prerequisiteStageDigests)assert(priorDigests.includes(digest),`Stage ${key} references an unknown prerequisite proof digest.`);
       assert(entry.provenCommit===proof.endingMainCommit,`Stage ${key} proven commit differs from proof ending commit.`);
       assert(/^[0-9a-f]{40}$/.test(entry.provenCommit),`Stage ${key} proven commit is invalid.`);
-      if(process.env.GITHUB_ACTIONS==='true'){
-        const ok=cp.spawnSync('git',['merge-base','--is-ancestor',entry.provenCommit,'HEAD'],{stdio:'ignore'}).status===0;
-        assert(ok,`Stage ${key} proven commit is not reachable from current HEAD.`);
-      }
+      assert(proveAncestor(entry.provenCommit),`Stage ${key} proven commit is not reachable from current HEAD.`);
       priorDigests.push(actualDigest);
       latestProofCount=proof.proofCountAfter;
       latestConformantCount=proof.conformantCountAfter;
