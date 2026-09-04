@@ -1,0 +1,19 @@
+name: Controller 3 source capture
+on:
+  pull_request:
+    branches: [ main ]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive exact merge workspace
+        run: |
+          tar --exclude=.git -C "$GITHUB_WORKSPACE" -czf "$RUNNER_TEMP/source.tar.gz" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: controller3-exact-source-${{ github.sha }}
+          path: ${{ runner.temp }}/source.tar.gz
+          retention-days: 1
