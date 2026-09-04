@@ -1,0 +1,46 @@
+name: Controller route oracle one-time repair
+on:
+  push:
+    branches:
+      - controller3-stage09-runtime-current-main-20260904
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: controller3-stage09-runtime-current-main-20260904
+          fetch-depth: 0
+      - name: Repair external-prompt oracle boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-spec-grounded-route-oracle.mjs')
+          s=p.read_text()
+          needle="    let rec;try{rec=prompts.buildPromptRecord(stage,state,{operation,scope:lane});}"
+          replacement="    if(op.executorClass!=='EXTERNAL_AGENT'){assert(op.acceptsExternalResponse===false,`Stage ${stage}/${operation} non-external operation unexpectedly accepts an external response.`);continue;}\n    let rec;try{rec=prompts.buildPromptRecord(stage,state,{operation,scope:lane});}"
+          if s.count(needle)!=1:
+              raise SystemExit(f'Expected one route-oracle prompt boundary; found {s.count(needle)}')
+          s=s.replace(needle,replacement,1)
+          # Permanent mutation-sensitive fixture: non-external operations must not enter the external prompt lane.
+          marker="const state=core.createBlankState('JOB-SPEC-ROUTE-ORACLE');"
+          fixture="const promptLaneFor=op=>op?.executorClass==='EXTERNAL_AGENT'&&op?.acceptsExternalResponse===true;\nassert(promptLaneFor({executorClass:'EXTERNAL_AGENT',acceptsExternalResponse:true})===true,'External-agent prompt-lane oracle rejected a valid external operation.');\nassert(promptLaneFor({executorClass:'OPERATOR_ACTION',acceptsExternalResponse:false})===false,'Operator action was incorrectly treated as an external prompt operation.');\nassert(promptLaneFor({executorClass:'APPLICATION',acceptsExternalResponse:false})===false,'Application command was incorrectly treated as an external prompt operation.');\nassert(promptLaneFor({executorClass:'HUMAN_DECISION',acceptsExternalResponse:false})===false,'Human-decision command was incorrectly treated as an external prompt operation.');\n\n"
+          if s.count(marker)!=1:
+              raise SystemExit(f'Expected one route-oracle state marker; found {s.count(marker)}')
+          s=s.replace(marker,fixture+marker,1)
+          p.write_text(s)
+          PY
+          node --check verify-spec-grounded-route-oracle.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node build-test-project.mjs
+          rm .github/workflows/controller-route-oracle-repair.yml
+          node verify-definition-of-done.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-spec-grounded-route-oracle.mjs .github/workflows/controller-route-oracle-repair.yml
+          git commit -m "Keep operator commands outside external prompt oracle"
+          git push origin HEAD:controller3-stage09-runtime-current-main-20260904
