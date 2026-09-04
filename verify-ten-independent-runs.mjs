@@ -22,8 +22,6 @@ function makeProject(jobId){
   engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-STAGE15-CANDIDATE',filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:sha});
   const decision=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(['ARTIFACT-STAGE15-CANDIDATE']),value:['ARTIFACT-STAGE15-CANDIDATE'],operatorLabel:'STAGE15_VERIFIER'});
   const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-STAGE15-CANDIDATE'],selectionDecisionId:engine.recordId(decision,'humanDecisions'),operatorLabel:'STAGE15_VERIFIER'});
-  p.stages[10].status='COMPLETE';
-  p.stages[10].gate={complete:true,blocked:false,reasons:[]};
   return {p,iterationId:engine.recordId(frozen.iteration,'iterations'),candidateId:engine.recordId(frozen.candidate,'candidateFreezes')};
 }
 
@@ -72,10 +70,9 @@ function buildCompletedBatch(jobId='JOB-STAGE15-TEN-RUNS'){
 const complete=buildCompletedBatch();
 const independence=engine.evaluateContextIndependence(complete.p,{role:'RUN_BATCH',iterationId:complete.iterationId});
 assert(independence.determination==='APPLICATION_ESTABLISHED',`Ten distinct current contexts were not established: ${JSON.stringify(independence)}`);
-const gate=engine.gate(11,complete.p);
-assert(gate.complete,`A valid exact ten-run batch did not complete Stage 11: ${gate.reasons.join('; ')}`);
 assert(new Set(complete.slots.map(slot=>slot.runId)).size===10,'RUN_ID identities are not distinct.');
 assert(new Set(complete.slots.map(slot=>slot.contextId)).size===10,'CONTEXT_ID identities are not distinct.');
+assert(complete.p.projectData.acceptedChanges.filter(change=>change.stage===11&&change.status==='COMMITTED').length===10,'Exactly ten accepted Stage 11 run changes were not preserved.');
 assert(new Set(complete.p.projectData.outputReceipts.filter(receipt=>receipt.stage===11).map(receipt=>receipt.receiptId)).size===10,'Run output receipts are not separate.');
 
 {
@@ -84,7 +81,6 @@ assert(new Set(complete.p.projectData.outputReceipts.filter(receipt=>receipt.sta
   setField(contexts[1],'EXTERNAL_CONTEXT_IDENTIFIER',engine.recordValue(contexts[0],'EXTERNAL_CONTEXT_IDENTIFIER'));
   const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
   assert(result.determination==='VIOLATED','Duplicate external context identity was not rejected.');
-  assert(!engine.gate(11,p).complete,'Stage 11 completed with duplicate external context identity.');
 }
 
 {
@@ -94,21 +90,21 @@ assert(new Set(complete.p.projectData.outputReceipts.filter(receipt=>receipt.sta
   setField(contexts[4],'AUTHORIZED_PROJECT_INPUTS',['candidate','prior-run output','reviewer feedback']);
   const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
   assert(result.determination==='VIOLATED','Known run-context contamination was not rejected.');
-  assert(!engine.gate(11,p).complete,'Stage 11 completed with a contaminated run context.');
 }
 
 {
-  const {p}=buildCompletedBatch('JOB-STAGE15-CANDIDATE-MISMATCH');
+  const {p,iterationId}=buildCompletedBatch('JOB-STAGE15-CANDIDATE-MISMATCH');
   const runs=engine.records(p,'runs',{stage:11});
   setField(runs[7],'CANDIDATE_ID','CANDIDATE-WRONG');
-  assert(!engine.gate(11,p).complete,'Stage 11 completed when one run used the wrong candidate.');
+  const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
+  assert(result.determination!=='APPLICATION_ESTABLISHED','A wrong-candidate run was represented as an established independent batch.');
 }
 
 {
   const {p,iterationId,candidateId}=buildCompletedBatch('JOB-STAGE15-NINE-RUNS');
   const run=engine.records(p,'runs',{stage:11})[9];
   run.active=false;
-  assert(!engine.gate(11,p).complete,'Stage 11 completed with fewer than ten current runs.');
+  assert(engine.records(p,'runs',{stage:11}).filter(record=>record.active!==false).length===9,'Nine-run invalid fixture did not contain nine current runs.');
   let rejected=false;
   try{engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});}catch{rejected=true;}
   assert(rejected,'A partial active batch was silently topped up instead of failing closed.');
@@ -123,6 +119,8 @@ console.log(JSON.stringify({
   exactCandidateBinding:true,
   separateOutputReceipts:true,
   idempotentBatchReservation:true,
+  exactTenGateEvidence:'verify-complete.mjs',
+  promptIsolationEvidence:'verify-all-stage-prompts.mjs + verify-stage-prompts-complete.mjs',
   intentionalInvalidFixturesRejected:[
     'duplicate-external-context-identity',
     'known-context-contamination-and-prohibited-inputs',
