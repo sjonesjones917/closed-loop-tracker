@@ -38,7 +38,12 @@ jobs:
           no_recalc="  const action=engine.operationalNextAction(p,9),gate=engine.gate(9,p);"
           if v.count(recalc)!=1:
               raise SystemExit(f'Expected one synthetic-fixture recalculate occurrence; found {v.count(recalc)}')
-          vp.write_text(v.replace(recalc,no_recalc,1))
+          v=v.replace(recalc,no_recalc,1)
+          oldctx="function reviewerContext(p,label){return engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});}"
+          newctx="function reviewerContext(p,label){const ctx=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:label,operatorLabel:'STAGE13_VERIFIER',purpose:'REVIEWER'});for(let n=1;n<=8;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}return ctx;}"
+          if v.count(oldctx)!=1:
+              raise SystemExit(f'Expected one reviewerContext fixture helper; found {v.count(oldctx)}')
+          vp.write_text(v.replace(oldctx,newctx,1))
           PY
           node --check workflow-engine.js
           node verify-independent-preflight.mjs
