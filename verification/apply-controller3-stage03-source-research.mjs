@@ -22,7 +22,7 @@ fs.writeFileSync('verify-stage03-source-research.mjs',verifier);
 const workflowPath='.github/workflows/pages.yml';
 let workflow=fs.readFileSync(workflowPath,'utf8');
 if(!workflow.includes('node verify-stage03-source-research.mjs')){
-  const anchor='node verify-stage-operation-registry.mjs';
+  const anchor='node verify-data-route-closure.mjs';
   if(!workflow.includes(anchor))throw new Error('Pages verification anchor not found.');
   workflow=workflow.replace(anchor,`${anchor}\n          node verify-stage03-source-research.mjs`);
   fs.writeFileSync(workflowPath,workflow);
