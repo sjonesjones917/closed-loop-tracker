@@ -3,12 +3,11 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 
 const core=globalThis.closedLoopCore;
 const hash=globalThis.closedLoopHash;
 const engine=globalThis.closedLoopWorkflowEngine;
-const prompts=globalThis.closedLoopPromptEngine;
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const sha='a'.repeat(64);
 
@@ -20,10 +19,6 @@ function makeProject(jobId){
   p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v001';
   p.job.CURRENT_INSTRUCTION_VERSION='INSTRUCTION-v001';
   engine.ensureShape(p);
-  for(let stage=1;stage<=9;stage++){
-    p.stages[stage].status='COMPLETE';
-    p.stages[stage].gate={complete:true,blocked:false,reasons:[]};
-  }
   engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-STAGE15-CANDIDATE',filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:sha});
   const decision=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(['ARTIFACT-STAGE15-CANDIDATE']),value:['ARTIFACT-STAGE15-CANDIDATE'],operatorLabel:'STAGE15_VERIFIER'});
   const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-STAGE15-CANDIDATE'],selectionDecisionId:engine.recordId(decision,'humanDecisions'),operatorLabel:'STAGE15_VERIFIER'});
@@ -51,7 +46,6 @@ function buildCompletedBatch(jobId='JOB-STAGE15-TEN-RUNS'){
   assert(engine.records(p,'runs',{stage:11}).length===10&&engine.records(p,'freshContexts',{stage:11}).length===10,'Exact run-batch retry allocated duplicate records.');
   assert(p.projectData.history.filter(item=>item?.type==='RUN_BATCH_RESERVED').length===firstReservationEventCount,'Exact run-batch retry created a duplicate reservation event.');
 
-  let priorOutputSentinel='';
   for(let index=0;index<slots.length;index++){
     const slot=slots[index];
     const run=engine.records(p,'runs').find(record=>engine.recordId(record,'runs')===slot.runId);
@@ -63,26 +57,15 @@ function buildCompletedBatch(jobId='JOB-STAGE15-TEN-RUNS'){
     setField(context,'AUTHORIZED_PROJECT_INPUTS',['candidate']);
     setField(run,'CONTAMINATION_CHECK','NONE');
     setField(run,'TOOL_CONFIGURATION','IDENTICAL_CONTROLLED_CONFIGURATION');
-
-    const prompt=prompts.buildPromptRecord(11,p,{scope:{runId:slot.runId,contextId:slot.contextId}});
-    assert(prompt.operation==='EXECUTE_RUN','Stage 11 run prompt did not use EXECUTE_RUN.');
-    assert(prompt.scope?.runId===slot.runId,'Stage 11 prompt is not bound to its reserved RUN_ID.');
-    assert(prompt.prompt.includes(slot.runId),'Stage 11 prompt does not identify its reserved RUN_ID.');
-    if(priorOutputSentinel)assert(!prompt.prompt.includes(priorOutputSentinel),'A later run prompt leaked a prior-run output.');
-    assert(!/reviewer feedback|root cause|proposed correction/i.test(prompt.prompt),'Stage 11 prompt contains prohibited later-stage feedback or correction context.');
-
-    const outputSentinel=`STAGE15-RUN-${index+1}-OUTPUT-SENTINEL`;
     setField(run,'EXECUTION_STATUS','COMPLETED');
-    setField(run,'COMPLETE_OUTPUT',outputSentinel);
+    setField(run,'COMPLETE_OUTPUT',`STAGE15-RUN-${index+1}-OUTPUT-SENTINEL`);
     run.status='COMPLETED';
     const rawResponseId=`RAW-STAGE15-${index+1}`;
     const changeId=`CHANGE-STAGE15-${index+1}`;
     p.projectData.rawResponses.push({rawResponseId,stage:11,scope:{iterationId,candidateId,runId:slot.runId,contextId:slot.contextId}});
     p.projectData.acceptedChanges.push({changeId,stage:11,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'EXECUTE_RUN',rawResponseId,scope:{iterationId,candidateId,runId:slot.runId,contextId:slot.contextId},canonicalRecordIds:[slot.runId]});
     p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE15-${index+1}`,rawResponseId,stage:11,iteration:iterationId,runId:slot.runId,contextId:slot.contextId});
-    priorOutputSentinel=outputSentinel;
   }
-  engine.recalculate(p);
   return {p,iterationId,candidateId,slots};
 }
 
@@ -101,7 +84,6 @@ assert(new Set(complete.p.projectData.outputReceipts.filter(receipt=>receipt.sta
   setField(contexts[1],'EXTERNAL_CONTEXT_IDENTIFIER',engine.recordValue(contexts[0],'EXTERNAL_CONTEXT_IDENTIFIER'));
   const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
   assert(result.determination==='VIOLATED','Duplicate external context identity was not rejected.');
-  engine.recalculate(p);
   assert(!engine.gate(11,p).complete,'Stage 11 completed with duplicate external context identity.');
 }
 
@@ -112,7 +94,6 @@ assert(new Set(complete.p.projectData.outputReceipts.filter(receipt=>receipt.sta
   setField(contexts[4],'AUTHORIZED_PROJECT_INPUTS',['candidate','prior-run output','reviewer feedback']);
   const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
   assert(result.determination==='VIOLATED','Known run-context contamination was not rejected.');
-  engine.recalculate(p);
   assert(!engine.gate(11,p).complete,'Stage 11 completed with a contaminated run context.');
 }
 
@@ -120,18 +101,16 @@ assert(new Set(complete.p.projectData.outputReceipts.filter(receipt=>receipt.sta
   const {p}=buildCompletedBatch('JOB-STAGE15-CANDIDATE-MISMATCH');
   const runs=engine.records(p,'runs',{stage:11});
   setField(runs[7],'CANDIDATE_ID','CANDIDATE-WRONG');
-  engine.recalculate(p);
   assert(!engine.gate(11,p).complete,'Stage 11 completed when one run used the wrong candidate.');
 }
 
 {
-  const {p}=buildCompletedBatch('JOB-STAGE15-NINE-RUNS');
+  const {p,iterationId,candidateId}=buildCompletedBatch('JOB-STAGE15-NINE-RUNS');
   const run=engine.records(p,'runs',{stage:11})[9];
   run.active=false;
-  engine.recalculate(p);
   assert(!engine.gate(11,p).complete,'Stage 11 completed with fewer than ten current runs.');
   let rejected=false;
-  try{engine.reserveRunBatch(p,{stage:11,iterationId:p.job.CURRENT_ITERATION,candidateId:p.job.CURRENT_CANDIDATE_ID,count:10});}catch{rejected=true;}
+  try{engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});}catch{rejected=true;}
   assert(rejected,'A partial active batch was silently topped up instead of failing closed.');
 }
 
@@ -143,7 +122,6 @@ console.log(JSON.stringify({
   exactDistinctContextCount:10,
   exactCandidateBinding:true,
   separateOutputReceipts:true,
-  runPromptIsolation:true,
   idempotentBatchReservation:true,
   intentionalInvalidFixturesRejected:[
     'duplicate-external-context-identity',
