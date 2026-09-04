@@ -2,11 +2,11 @@
   "controllerId": "closed-loop-monotonic-build-controller/2",
   "specificationSha256": "3336446403ea39391e05f0b0b4d2f2189817cf48962e05df1950df552f2f8564",
   "specificationSourceCommit": "b71e828461c86184e9a08f738453443e6b579aab",
-  "lastObservedMainCommit": "3da813c1aa3a9bbba3640f71b46c370d3c94dbc3",
+  "lastObservedMainCommit": "0e673110d5353b3943f1843fd5a90250eda546b6",
   "stages": {
     "01": {"status":"PROVEN","provenCommit":"4506407ca6238eba083485c7d29aacab3c35dba6","proofRecordPath":"verification/build-stages/stage-01-proof.json","proofDigest":"3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","prerequisiteStageDigests":[]},
     "02": {"status":"PROVEN","provenCommit":"3da813c1aa3a9bbba3640f71b46c370d3c94dbc3","proofRecordPath":"verification/build-stages/stage-02-proof.json","proofDigest":"c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea"]},
-    "03": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
+    "03": {"status":"PROVEN","provenCommit":"0e673110d5353b3943f1843fd5a90250eda546b6","proofRecordPath":"verification/build-stages/stage-03-proof.json","proofDigest":"a152ce20efded8d390b18a6885b932a1bf99782b74945e7dd6e315a4a705fa24","prerequisiteStageDigests":["3758a2f6b1a2b0c3927effd468a6acbb101ee282ce748612f31ed7086db955ea","c3412eae7c0885b79ad0e1374ec0ccc5c1b7073722003e5dc4eaf178f0eec015"]},
     "04": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
     "05": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
     "06": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
@@ -35,7 +35,7 @@
     "29": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]},
     "30": {"status":"NOT_STARTED","provenCommit":null,"proofRecordPath":null,"proofDigest":null,"prerequisiteStageDigests":[]}
   },
-  "proofCount": 14,
+  "proofCount": 18,
   "conformantRequirementCount": 7,
-  "lastUpdatedByCommandId": "CI-33822947107-STAGE02"
+  "lastUpdatedByCommandId": "CI-33823570080-STAGE03"
 }
