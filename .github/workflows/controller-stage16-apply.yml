@@ -1,0 +1,95 @@
+name: Apply Controller Stage 16 verification repair
+
+'on':
+  push:
+    branches:
+      - fix/stage16-independent-verification-gate-20260904
+
+permissions:
+  contents: write
+
+concurrency:
+  group: controller-stage16-apply-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/stage16-independent-verification-gate-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Reproduce the current Stage 12 fail-open defect
+        shell: bash
+        run: |
+          set +e
+          node verify-independent-run-verification.mjs > /tmp/stage16-before.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -F 'Generator/verifier context reuse was not rejected.' /tmp/stage16-before.log
+      - name: Apply the earliest-responsible-layer correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .controller-stage16/part*.b64 | base64 --decode > verify-independent-run-verification.mjs
+          node <<'NODE'
+          const fs=require('node:fs');
+          const enginePath='workflow-engine.js';
+          let engine=fs.readFileSync(enginePath,'utf8');
+          const oldNeedle="||evaluation.reasons.some(reason=>reason.includes('independence is not application-established'))";
+          const newNeedle='||evaluation.reasons.length>0';
+          const oldCount=engine.split(oldNeedle).length-1;
+          if(oldCount===1) engine=engine.replace(oldNeedle,newNeedle);
+          else if(oldCount!==0||!engine.includes(newNeedle)) throw new Error(`Unexpected Stage 12 matrix predicate state: oldCount=${oldCount}`);
+          fs.writeFileSync(enginePath,engine);
+
+          const definitionPath='verify-definition-of-done.mjs';
+          let definition=fs.readFileSync(definitionPath,'utf8');
+          const insertion=`const independentRunVerificationProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-independent-run-verification.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+          assert.equal(independentRunVerificationProof.independentVerification,'PASS','Stage 16 per-run independent-verification regression proof did not pass.');
+          assert.equal(independentRunVerificationProof.requiredTupleCount,10,'Stage 16 verifier did not prove the exact ten-tuple relation set.');
+          assert.equal(independentRunVerificationProof.independentVerifierContexts,10,'Stage 16 verifier did not establish ten distinct current verifier contexts.');
+          assert.equal(independentRunVerificationProof.nondueTupleCount,0,'Stage 16 verifier manufactured a nondue Stage 12 matrix cell.');
+          assert.equal(independentRunVerificationProof.actualStageGateExercised,true,'Stage 16 verifier did not execute the actual Stage 12 gate.');
+          assert.equal(independentRunVerificationProof.repairedPathProgressed,true,'Stage 16 verifier did not prove repaired-path progression.');
+          assert.equal(independentRunVerificationProof.isolatedDisposableProject,true,'Stage 16 mutations were not isolated to a disposable project.');
+          `;
+          const marker="assert.equal(candidateFreezeProof.isolatedDisposableProjects,true,'Stage 14 candidate-freeze mutations were not isolated.');\n";
+          if(!definition.includes('const independentRunVerificationProof=')){
+            const count=definition.split(marker).length-1;
+            if(count!==1) throw new Error(`Stage 16 definition-of-done insertion marker count was ${count}.`);
+            definition=definition.replace(marker,marker+insertion);
+          }
+          fs.writeFileSync(definitionPath,definition);
+          NODE
+          test "$(sha256sum verify-independent-run-verification.mjs | cut -d' ' -f1)" = '49dbb2492c377997915ca5a9a7788008554c8861a414808be0aa5d937fe7196e'
+          git diff --check
+          grep -F 'evaluation.reasons.length>0' workflow-engine.js
+          grep -F 'actualStageGateExercised' verify-independent-run-verification.mjs
+          grep -F 'const independentRunVerificationProof=' verify-definition-of-done.mjs
+      - name: Execute invalid fixtures, repaired path, and downstream barriers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-independent-run-verification.mjs
+          node verify-definition-of-done.mjs > /tmp/definition-of-done.json
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-v3-definition-of-done.mjs
+      - name: Commit the verified behavior and remove the one-time applicator
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .controller-stage16 .github/workflows/controller-stage16-apply.yml
+          git add workflow-engine.js verify-independent-run-verification.mjs verify-definition-of-done.mjs .controller-stage16 .github/workflows/controller-stage16-apply.yml
+          git diff --cached --check
+          git config user.name 'controller-stage16-automation'
+          git config user.email 'controller-stage16-automation@users.noreply.github.com'
+          git commit -m 'Fix Stage 12 fail-open independence validation' -m 'Reject every verification result whose consistency evaluator reports an epistemic, evidence, or independence defect; preserve executable invalid fixtures and repaired Stage 12 gate progression in the permanent definition-of-done chain.'
+          git push origin HEAD:fix/stage16-independent-verification-gate-20260904
