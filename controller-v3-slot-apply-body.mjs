@@ -44,7 +44,7 @@ rw('response-ingestion.js',s=>{
 
 rw('app-core.js',s=>{
   s=once(s,"const operationSelection={},runSelection={},responseFileSelection={};","const operationSelection={},runSelection={},responseFileSelection={},returnedFileSlotSelection={};",'selection state');
-  const fnStart=s.indexOf('function artifactControlMarkup(){');if(fnStart<0)throw new Error('artifactControlMarkup missing');const fnEnd=s.indexOf('\nfunction ',fnStart+10);if(fnEnd<0)throw new Error('artifactControlMarkup end missing');let fn=s.slice(fnStart,fnEnd);
+  const fnStart=s.indexOf('function artifactControlMarkup(n,locked){');if(fnStart<0)throw new Error('artifactControlMarkup missing');const fnEnd=s.indexOf('\nfunction ',fnStart+10);if(fnEnd<0)throw new Error('artifactControlMarkup end missing');let fn=s.slice(fnStart,fnEnd);
   const retMarker='  return `<div class="panel">';if(!fn.includes(retMarker))throw new Error('artifact return missing');
   const insert="  const slotControls=requiredReturns.filter(slot=>slot.attachmentSlotId).map(slot=>{const id=String(slot.attachmentSlotId),selected=safe(current.stages[n].authorizedFiles).filter(file=>String(file.attachmentSlotId||'')===id);return `<div class=\"field full returned-slot\"><label>${esc(slot.role||slot.kind||'Returned file')} · ${esc(id)}</label><input type=\"file\" data-return-slot=\"${esc(id)}\"${fileLocked?' disabled':''}><span class=\"help\">Required: ${slot.required!==false?'YES':'NO'} · Filename rule: ${esc(slot.filenameRule||slot.filenameOrPattern||'*')} · Selected: ${selected.length?esc(selected[0].name||selected[0].filename||'1 file'):'NONE'}. Mapping is by ATTACHMENT_SLOT_ID, never picker order or filename alone.</span></div>`;}).join('');\n";
   fn=fn.replace(retMarker,insert+retMarker);
