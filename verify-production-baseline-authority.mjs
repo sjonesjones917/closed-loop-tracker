@@ -35,7 +35,7 @@ function decision(p,overrides={}){return engine.recordRegisteredHumanDecision(p,
 // Permanent regression: an exact valid decision cannot substitute for the exact unchanged-confirmed artifact set.
 {const p=project('JOB-STAGE23-WRONG-ARTIFACTS');const d=decision(p);const bb=p.projectData.baselines.length;let rejected=false;try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-OTHER'],authorizationDecisionId:engine.recordId(d,'humanDecisions'),operatorLabel:'STAGE23_VERIFIER'});}catch(e){rejected=/exact artifact set/i.test(String(e.message));}assert(rejected,'Freeze with the wrong artifact set was accepted.');assert(p.projectData.baselines.length===bb,'Rejected freeze partially mutated baseline state.');}
 
-// Permanent regression: a decision recorded at a different stage cannot authorize the Stage 20 baseline freeze.
+// Permanent regression: a decision from a different stage cannot authorize the Stage 20 baseline freeze.
 {const p=project('JOB-STAGE23-WRONG-STAGE');const wrongStage=decision(p,{stage:19});const bb=p.projectData.baselines.length;let rejected=false;try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-CONFIRMED'],authorizationDecisionId:engine.recordId(wrongStage,'humanDecisions'),operatorLabel:'STAGE23_VERIFIER'});}catch(e){rejected=/does not exist in the current stage scope/i.test(String(e.message));}assert(rejected,'Freeze with a wrong-stage decision was accepted.');assert(p.projectData.baselines.length===bb,'Rejected freeze partially mutated baseline state.');}
 
 // Repaired path: a current, correctly-targeted, AUTHORIZED human decision freezes the exact candidate and Stage 20 requires zero accepted external responses.
