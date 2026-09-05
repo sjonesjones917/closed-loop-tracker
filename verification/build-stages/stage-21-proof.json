@@ -1,0 +1,48 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "21",
+  "stageName": "CONVERGENCE",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "4a030dc813f1d424f198c164f603f13c2f00bca2",
+  "endingMainCommit": "4a030dc813f1d424f198c164f603f13c2f00bca2",
+  "implementationCommitIds": ["4a030dc813f1d424f198c164f603f13c2f00bca2"],
+  "changedFiles": [],
+  "specificationSections": ["16.1 Verification phase and due-stage model","31 Ten-run stability and reliability metrics","36.2 Shared repeated-iteration evaluator","37 Stage 18 — CONTINUE UNTIL CONVERGENCE","38 convergenceRecords","41 Stability tests 37-42 and full-cycle tests 90-91","43 Test the tests","44 Negative test matrix","49 Definition of done"],
+  "implementationFilesReviewed": ["workflow-engine.js","workflow-schema.js","verify-complete.mjs","verify-full-cycle.mjs","verify-due-stage-timing.mjs","verify-definition-of-done-invariants.mjs","verify-semantic-invariant.mjs",".github/workflows/pages.yml"],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_REVERIFIED_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "Controller Stage 21 maps to application Stage 18 convergence. Exact canonical main already implements application-derived convergence through the shared repeated-iteration evaluator and current-scope gate logic. The current CI run directly re-executed the complete gate/full-cycle/Definition-of-Done suites, current due-stage timing checks, contradiction detection, and local Chromium operator path; then deployed the exact verified artifact and passed exact deployed-byte and deployed Chromium verification. No behavior repair was required for this controller stage, so earlier implementation proofs are preserved and only the monotonic Stage 21 proof/ledger advancement is added.",
+  "proofCommands": [
+    {"command":"node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs","exitCode":0,"basis":"GitHub Actions main run 33932190883, test job 101212903583, exact canonical main 4a030dc813f1d424f198c164f603f13c2f00bca2."},
+    {"command":"node verify-due-stage-timing.mjs && node verify-definition-of-done-invariants.mjs && node verify-semantic-invariant.mjs","exitCode":0,"basis":"GitHub Actions main run 33932190883, test job 101212903583. These current CI verifiers ran inside the successful workflow/gates and project-lifecycle proof barrier."},
+    {"command":"local Chromium operator path","exitCode":0,"basis":"GitHub Actions main run 33932190883, test job 101212903583, Local Chromium operator path step completed success."},
+    {"command":"deploy exact verified bytes","exitCode":0,"basis":"GitHub Actions main run 33932190883, deploy job 101213582870 completed success."},
+    {"command":"exact deployed-byte verification and deployed Chromium operator path","exitCode":0,"basis":"GitHub Actions main run 33932190883, deployment verification job 101213639691 completed success."}
+  ],
+  "directSourceFindings": [
+    "workflow-engine.js computes convergence from current mandatory specification/applicability coverage, due per-run verification coverage, applicable current regression success, material defect counts, unresolved mandatory unknowns, current contradictions, correctness-affecting ambiguities, and unexplained variance.",
+    "The Stage 18 gate does not accept run-count or empty-state evidence as convergence; verify-complete.mjs executes the production convergence evaluator and proves an incomplete state remains non-converged.",
+    "Current contradiction detection is executable and is exercised by verify-complete.mjs/verify-semantic-invariant.mjs; current contradictory evidence cannot silently disappear into aggregate counts.",
+    "verify-due-stage-timing.mjs proves final-product obligations are not made due during preproduct convergence before their target exists.",
+    "verify-definition-of-done-invariants.mjs rejects a coverage metric with an empty or invalid denominator unless an independently accepted evidence-supported EMPTY_UNIVERSE determination exists.",
+    "verify-full-cycle.mjs executes the current 30-stage synthetic lifecycle, including progression through the Stage 18 convergence boundary, on the exact current runtime contracts.",
+    "No earlier controller proof file is modified or weakened by this Stage 21 advancement."
+  ],
+  "intentionalInvalidFixtures": ["empty-or-incomplete-state-falsely-converged","missing-ten-run-or-verification-coverage","current-contradiction-hidden-by-aggregation","final-product-obligation-prematurely-due-at-convergence","vacuous-empty-denominator-coverage"],
+  "repairedStateProofs": ["A complete current repeated-iteration state with all due PREPRODUCT_ITERATION requirements satisfied can progress through the application Stage 18 convergence gate in the full-cycle execution.","The due-stage verifier preserves later final-product obligations as future work rather than falsely blocking Stage 18.","The current Definition-of-Done metric verifier requires a nonempty closed universe or independently supported EMPTY_UNIVERSE basis and therefore cannot create vacuous convergence support."],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},{"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},{"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},{"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},{"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},{"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},{"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},{"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},{"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},{"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},{"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},{"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},{"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},{"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},{"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},{"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},{"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},{"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},{"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"},{"stage":"20","proofPath":"verification/build-stages/stage-20-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [{"workflowRunId":33932190883,"jobId":101212903583,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"4a030dc813f1d424f198c164f603f13c2f00bca2"},{"workflowRunId":33932190883,"jobId":101213639691,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"4a030dc813f1d424f198c164f603f13c2f00bca2"}],
+  "deployedProofs": [{"workflowRunId":33932190883,"jobId":101213582870,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"4a030dc813f1d424f198c164f603f13c2f00bca2"},{"workflowRunId":33932190883,"jobId":101213639691,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"4a030dc813f1d424f198c164f603f13c2f00bca2"}],
+  "externalActorProofs": [],
+  "deviceProofs": [],
+  "unprovenItems": [],
+  "stageDisposition": "PROVEN",
+  "directEvidenceReview": "PASS",
+  "nextStage": "22",
+  "notes": "This advances only controller Stage 21 after exact-current-main direct evidence proves application Stage 18 convergence closure. Controller Stage 22 and later remain unproven; physical-iPhone and Section 49 completion are not claimed."
+}
