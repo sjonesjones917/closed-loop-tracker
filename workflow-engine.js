@@ -337,7 +337,41 @@ function deriveVerificationMatrix(project){const iteration=latestIteration(proje
 function deriveConvergence(project){return {value:convergenceMetrics(project),inputReferences:[recordId(latestIteration(project,[17]),'iterations')],calculationVersion:'1'};}
 function deriveRelease(project){const value=releaseMetrics(project);return {value,inputReferences:value.inputReferences||[],calculationVersion:'1'};}
 function deriveArtifactIdentity(project){const current=records(project,'artifactIdentities');return {value:{authorized:current.length>0&&current.every(r=>upper(recordValue(r,'AUTHORIZATION'))==='AUTHORIZED'),count:current.length},inputReferences:current.map(r=>recordId(r,'artifactIdentities')),calculationVersion:'1'};}
-function deriveEvidenceChains(project){const current=records(project,'evidenceChains');return {value:{complete:current.length>0&&current.every(r=>upper(recordValue(r,'STATUS'))==='COMPLETE'),count:current.length},inputReferences:current.map(r=>recordId(r,'evidenceChains')),calculationVersion:'1'};}
+function deriveEvidenceChains(project){
+  ensureShape(project);
+  const currentSet=currentEvidenceChainSet(project);
+  const all=records(project,'evidenceChains').filter(r=>isActiveRecord(r)&&!r.invalidatedBy);
+  const requirementIds=mandatoryRequirements(project,currentScope(project)).map(requirementId);
+  const completeIds=requirementIds.filter(id=>(!currentSet.missing.includes(id)&&!currentSet.unknown.includes(id)));
+  const incompleteIds=requirementIds.filter(id=>currentSet.missing.includes(id));
+  const unknownIds=requirementIds.filter(id=>currentSet.unknown.includes(id));
+  const product=recordsForCurrentScope(project,'products').at(-1) || null;
+  const baseline=recordsForCurrentScope(project,'baselines').at(-1) || null;
+  const release=recordsForCurrentScope(project,'releaseRecords').at(-1) || null;
+  const summary={
+    EVIDENCE_CHAIN_VERSION:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION || currentSet.version || '').trim(),
+    JOB_ID:String(project.job?.JOB_ID || '').trim(),
+    PRODUCT_ID:String(project.job?.CURRENT_PRODUCT_ID || (product?recordId(product,'products'):'')).trim(),
+    PRODUCT_VERSION:String(project.job?.CURRENT_PRODUCT_VERSION || (product?String(recordValue(product,'PRODUCT_VERSION')||''):'')).trim(),
+    BASELINE_ID:String(project.job?.CURRENT_BASELINE_ID || (baseline?recordId(baseline,'baselines'):'')).trim(),
+    RELEASE_GATE_ID:String(project.job?.CURRENT_RELEASE_ID || (release?recordId(release,'releaseRecords'):'')).trim(),
+    HASH_REVIEW_ID:String(project.job?.CURRENT_HASH_REVIEW_ID || '').trim(),
+    MANDATORY_REQUIREMENT_EVIDENCE_CHAIN_RECORDS:all.map(r=>recordId(r,'evidenceChains')).filter(Boolean),
+    TOTAL_MANDATORY_REQUIREMENTS:requirementIds.length,
+    TOTAL_MANDATORY_REQUIREMENTS_WITH_COMPLETE_CHAINS:completeIds.length,
+    TOTAL_MANDATORY_REQUIREMENTS_WITH_INCOMPLETE_CHAINS:incompleteIds.length,
+    TOTAL_MANDATORY_REQUIREMENTS_WITH_UNKNOWN_CHAIN_LINKS:unknownIds.length,
+    MANDATORY_EVIDENCE_CHAIN_COVERAGE:requirementIds.length?completeIds.length/requirementIds.length:0,
+    ALL_MANDATORY_EVIDENCE_CHAINS_COMPLETE:Boolean(currentSet.complete),
+    INCOMPLETE_CHAIN_REQ_IDS:[...incompleteIds],
+    UNKNOWN_CHAIN_REQ_IDS:[...unknownIds],
+    EVIDENCE_REPOSITORY_LOCATION:'Canonical project',
+    REPRODUCTION_INSTRUCTIONS:'Recompute the authoritative current evidence-chain set with CALCULATE_EVIDENCE_CHAINS using the exact current release, product, baseline, hash review, and artifact identities.',
+    FINAL_EVIDENCE_CHAIN_DETERMINATION:currentSet.complete?'CURRENT':(unknownIds.length?'STALE':'INCOMPLETE'),
+    CONTROLLING_EVIDENCE:all.filter(r=>upper(recordValue(r,'STATUS')||'')==='COMPLETE').map(r=>recordId(r,'evidenceChains'))
+  };
+  return {value:{complete:currentSet.complete,count:all.length,requirementCount:requirementIds.length},inputReferences:all.map(r=>recordId(r,'evidenceChains')),calculationVersion:'stage29-evidence-chain/2',summary,currentSet};
+}
 const DERIVATIONS=Object.freeze({'stage06.mandatoryTestCoverage':deriveMandatoryTestCoverage,'stage12.verificationMatrix':deriveVerificationMatrix,'stage18.convergence':deriveConvergence,'stage27.release':deriveRelease,'stage28.artifactIdentity':deriveArtifactIdentity,'stage29.evidenceChains':deriveEvidenceChains});
 
 function coverageMetrics(project,iterationIdOverride=null){const iterationId=iterationIdOverride||recordId(latestIteration(project,[10,17,19]),'iterations')||project.job.CURRENT_ITERATION||'',scope=iterationId?scopeForIteration(project,iterationId):currentScope(project),requirements=mandatoryRequirements(project,scope),tests=iterationId?recordsForScope(project,'tests',scope):recordsForCurrentScope(project,'tests'),covered=new Set(tests.map(testRequirementId).filter(Boolean)),requirementCoverage=requirements.length?requirements.filter(req=>covered.has(requirementId(req))).length/requirements.length:0,matrix=verificationMatrix(project,iterationId),regressions=records(project,'regressions').filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED'),executions=currentRegressionExecutions(project,iterationId),successful=new Set(executions.filter(r=>upper(recordValue(r,'PHASE'))!=='PRE_CORRECTION'&&effectiveRegressionDetermination(project,r).determination==='SATISFIED').map(r=>String(recordValue(r,'REG_ID')||r.relationships?.REG_ID||'')));return {mandatoryRequirementCount:requirements.length,requirementsWithTests:requirements.filter(req=>covered.has(requirementId(req))).length,requirementCoverage,iterationRunCount:matrix.runs.length,expectedVerificationCount:matrix.expected.length,actualVerificationPairCount:matrix.expected.filter(key=>matrix.counts.get(key)===1).length,actualVerificationTripleCount:matrix.expected.filter(key=>matrix.counts.get(key)===1).length,verificationCoverage:matrix.coverage,missingVerificationTriples:matrix.missing,duplicateVerificationTriples:matrix.duplicates,activeRegressionCount:regressions.length,successfulRegressionCount:regressions.filter(r=>successful.has(recordId(r,'regressions'))).length,regressionSuccess:regressions.length?regressions.filter(r=>successful.has(recordId(r,'regressions'))).length/regressions.length:1};}
