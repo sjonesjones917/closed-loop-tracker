@@ -83,11 +83,11 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
 }
 
 // ADVISORY_REVIEW is optional and non-gating. Stage 27 must route to application-owned release
-// calculation when no advisory response exists.
+// calculation when no advisory response exists. Pass the exact stage to the real structured-action API.
 {
   const p=fixture('JOB-STAGE27-NO-ADVISORY');
   p.projectData.acceptedChanges.length=0;
-  const next=engine.operationalNextAction(p);
+  const next=engine.operationalNextAction(p,27);
   assert.equal(next.actionType,'CALCULATE_RELEASE','Optional Stage 27 advisory review incorrectly gates application release calculation.');
   const calculated=engine.recordReleaseDetermination(p);
   assert.equal(calculated.DETERMINATION,'BLOCKED');
