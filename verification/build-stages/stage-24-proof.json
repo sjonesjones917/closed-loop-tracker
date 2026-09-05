@@ -1,0 +1,125 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "24",
+  "stageName": "FINISHED PRODUCT",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "29c10e31e892e1d6d42b3dc9995c08fbc55c62f8",
+  "endingMainCommit": "29c10e31e892e1d6d42b3dc9995c08fbc55c62f8",
+  "implementationCommitIds": [
+    "29c10e31e892e1d6d42b3dc9995c08fbc55c62f8"
+  ],
+  "changedFiles": [],
+  "specificationSections": [
+    "19 Artifact and evidence rules",
+    "28 Prompt context isolation",
+    "35.3 Artifact bytes",
+    "36.1 Conservative invalidation",
+    "37 Stage 21 — GENERATE THE FINISHED PRODUCT",
+    "38 products",
+    "41 Full cycle and integrated closure tests",
+    "43 Test the tests",
+    "44 Negative test matrix",
+    "45 Browser acceptance",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "response-ingestion.js",
+    "project-store.js",
+    "app-core.js",
+    "verify-full-cycle.mjs",
+    "verify-complete.mjs",
+    "verify-browser.mjs",
+    "verify-browser-extra.mjs",
+    ".github/workflows/pages.yml"
+  ],
+  "implementationDisposition": "ZERO_CODE_CHANGE_DIRECT_CURRENT_EVIDENCE",
+  "implementationDispositionReason": "Controller Stage 24 maps to application Stage 21 finished-product generation. Direct inspection of exact canonical main 29c10e31e892e1d6d42b3dc9995c08fbc55c62f8 found the current implementation already reserves one application-owned product execution against the current approved baseline and a dedicated fresh Stage 21 production context, rejects reuse of that production context, accepts only the reserved product target through the shared response-ingestion path, binds finished-product artifacts to the application-owned PRODUCT_ID, requires actual IndexedDB-backed bytes with application-computed SHA-256 and byte size, derives the exact generated-artifact inventory, and gates Stage 21 only when product identity, baseline lineage, fresh context, completed execution, verified bytes, and inventory all agree. Exact-current-main GitHub Actions run 33941463259 directly re-executed the full synthetic 30-stage lifecycle including this Stage 21 path, all broader deterministic barriers, local Chromium, deployment, exact deployed-byte verification, and deployed Chromium. No runtime repair was necessary, so this stage records zero-code-change completion from direct current evidence rather than treating the proof file itself as evidence.",
+  "proofCommands": [
+    {
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-production-baseline-authority.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33941463259, test job 101239606312, exact canonical main 29c10e31e892e1d6d42b3dc9995c08fbc55c62f8, Workflow/gates/full-cycle barrier completed success."
+    },
+    {
+      "command": "local Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33941463259, test job 101239606312, Local Chromium operator path completed success on exact canonical main."
+    },
+    {
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33941463259, deploy job 101240274083 completed success for exact canonical main."
+    },
+    {
+      "command": "exact deployed-byte verification and deployed Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33941463259, deployment verification job 101240325067 completed success for exact canonical main."
+    }
+  ],
+  "directSourceFindings": [
+    "workflow-engine.js Stage 21 gate requires exactly one current product execution identity, exact current baseline lineage, a dedicated active Stage 21 production context, completed product state, at least one current finished-product artifact, verified IndexedDB-backed bytes, valid SHA-256 and byte size, and an application-derived product artifact inventory that exactly matches the verified current product artifacts.",
+    "verify-full-cycle.mjs exercises the real Stage 21 path after a genuine Stage 20 baseline freeze: it registers a fresh production context, reserves the application-owned product execution, proves the same context cannot be reused for a second active product execution, accepts the Stage 21 product proposal against the reserved product target, registers actual finished-product bytes, and continues through downstream verification and release stages.",
+    "workflow-schema.js keeps PRODUCT_ID, PRODUCT_VERSION, BASELINE_ID, EXECUTION_ID, PRODUCTION_CONTEXT_ID, INSTRUCTION_VERSION, GENERATED_ARTIFACT_INVENTORY, and STATUS application-owned while the external Stage 21 actor owns only production observations.",
+    "response-ingestion.js uses the shared current-profile reservation/scope/ownership validation path for Stage 21 and cannot let the external response allocate or override application-owned product identity or lineage.",
+    "project-store.js remains the sole IndexedDB byte authority; product artifact readiness depends on persisted and read-back-verifiable bytes rather than filename or prose claims.",
+    "No parallel product store, product engine, prompt authority, or ingestion path was introduced for Stage 21.",
+    "The exact current main workflow completed all local and deployed Chromium barriers and exact deployed-byte verification after the Stage 23 proof merge, so Stage 24 evidence is bound to the current canonical main rather than an earlier branch-only commit."
+  ],
+  "intentionalInvalidFixtures": [
+    "reused-production-context-rejected-before-second-product-execution",
+    "product-without-current-baseline-lineage-remains-incomplete-by-stage21-gate",
+    "product-without-verified-finished-product-bytes-remains-incomplete-by-stage21-gate",
+    "product-artifact-inventory-mismatch-remains-incomplete-by-stage21-gate"
+  ],
+  "repairedStateProofs": [
+    "The current full-cycle fixture reaches Stage 21 only after the exact approved baseline exists, reserves one product identity in a fresh production context, persists actual finished-product bytes, and completes the Stage 21 gate.",
+    "The accepted product record preserves application-owned baseline/product/execution/context identity while external Stage 21 response content remains limited to agent-owned production observations.",
+    "The full synthetic lifecycle continues from the exact product bytes into deterministic, meaning, adversarial, representation, reconciliation, release, identity, evidence-chain, and terminal logic without replacing the Stage 21 product identity."
+  ],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},
+    {"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"},
+    {"stage":"20","proofPath":"verification/build-stages/stage-20-proof.json","status":"PASS"},
+    {"stage":"21","proofPath":"verification/build-stages/stage-21-proof.json","status":"PASS"},
+    {"stage":"22","proofPath":"verification/build-stages/stage-22-proof.json","status":"PASS"},
+    {"stage":"23","proofPath":"verification/build-stages/stage-23-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [
+    {"workflowRunId":33941463259,"jobId":101239606312,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"29c10e31e892e1d6d42b3dc9995c08fbc55c62f8"},
+    {"workflowRunId":33941463259,"jobId":101240325067,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"29c10e31e892e1d6d42b3dc9995c08fbc55c62f8"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33941463259,"jobId":101240274083,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"29c10e31e892e1d6d42b3dc9995c08fbc55c62f8"},
+    {"workflowRunId":33941463259,"jobId":101240325067,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"29c10e31e892e1d6d42b3dc9995c08fbc55c62f8"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
+  "unprovenItems": [],
+  "stageDisposition": "PROVEN",
+  "directEvidenceReview": "PASS",
+  "nextStage": "25",
+  "notes": "This advances only Controller Stage 24 after direct current-main implementation inspection plus exact-main deterministic, local-browser, deployment-byte, and deployed-browser execution prove the finished-product contract. Controller Stage 25 and later remain unproven; physical-iPhone and SPEC Section 49 completion are not claimed."
+}
