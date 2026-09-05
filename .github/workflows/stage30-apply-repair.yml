@@ -21,7 +21,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .stage30-patch/part-* | base64 --decode | gzip --decompress > /tmp/stage30-production.patch
+          cat .stage30-patch/part-* > /tmp/stage30-production.patch.gz.b64
+          base64 --decode /tmp/stage30-production.patch.gz.b64 > /tmp/stage30-production.patch.gz
+          echo 'c48e910ba86709666c111fbeef0d692f7b8d6e8d0c0310dcfa52f22d8b8dc158  /tmp/stage30-production.patch.gz' | sha256sum --check --strict
+          gzip --decompress --stdout /tmp/stage30-production.patch.gz > /tmp/stage30-production.patch
           git apply --check /tmp/stage30-production.patch
           git apply /tmp/stage30-production.patch
           node --check workflow-engine.js
@@ -32,6 +35,6 @@ jobs:
           rm .github/workflows/stage30-apply-repair.yml
           git config user.name 'closed-loop-controller'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add workflow-engine.js app-core.js .stage30-patch .github/workflows/stage30-apply-repair.yml
+          git add -A
           git commit -m 'Stage 30: implement atomic terminal delivery boundary'
           git push origin HEAD:${GITHUB_REF_NAME}
