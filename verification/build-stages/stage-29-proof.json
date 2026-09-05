@@ -1,0 +1,160 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "29",
+  "stageName": "EVIDENCE CHAINS AND PRE-DELIVERY CHECKPOINT",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "b2f3a282fa9e5e09f606271c6a3b9022754eae23",
+  "endingMainCommit": "324eaac3e98e7d9b75046e6702af7fdfa4f2cebe",
+  "implementationCommitIds": [
+    "e7fcd18e01f51a947c3cf6506a8f7c1de1b21b77",
+    "324eaac3e98e7d9b75046e6702af7fdfa4f2cebe"
+  ],
+  "changedFiles": [
+    "app-core.js",
+    "project-store.js",
+    "verify-spec-residual-closure.mjs",
+    "verify-stage29-evidence-chain-checkpoint.mjs",
+    "workflow-engine.js",
+    "workflow-schema.js"
+  ],
+  "specificationSections": [
+    "29 Evidence sufficiency",
+    "35.9 Backup custody states",
+    "36.6 Evidence graph",
+    "36.9 Atomic Stage 30 terminal command",
+    "36.12 Derived-command self-validity",
+    "37 Stage 29 — PRESERVE THE COMPLETE EVIDENCE CHAIN",
+    "38.1 backupCheckpoints",
+    "38 evidenceChains",
+    "40 Permanent regression obligations",
+    "41 Mandatory deterministic and behavioral tests",
+    "43 Test the tests",
+    "44 Negative test matrix",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "app-core.js",
+    "project-store.js",
+    "verify-spec-residual-closure.mjs",
+    "verify-stage29-evidence-chain-checkpoint.mjs",
+    "workflow-engine.js",
+    "workflow-schema.js"
+  ],
+  "implementationDisposition": "DIRECT_CURRENT_IMPLEMENTATION_AND_EXECUTION_EVIDENCE",
+  "implementationDispositionReason": "Controller Stage 29 maps to application-owned evidence-chain closure plus an evidence-bound pre-delivery checkpoint. PR #1178 changed only the focused Stage 29 implementation and permanent regression files, with head e7fcd18e01f51a947c3cf6506a8f7c1de1b21b77 merged as exact canonical main 324eaac3e98e7d9b75046e6702af7fdfa4f2cebe. Direct source inspection and executable fixtures establish that CALCULATE_EVIDENCE_CHAINS is application-owned and idempotent, weak/stale/fabricated evidence cannot complete a chain, investigation cannot fabricate evidence, and only a checkpoint backed by an actual qualifying backup-export receipt and bound to the current release, hash review, evidence-chain version, delivery-candidate set, and exact artifact identities can satisfy the pre-delivery prerequisite.",
+  "normativeRequirementChanges": [],
+  "proofCommands": [
+    {
+      "command": "node verify-stage29-evidence-chain-checkpoint.mjs",
+      "exitCode": 0,
+      "basis": "Direct exact-source execution on the merged Stage 29 implementation produced PASS for the Stage 29 application-command contract, evidence-chain current-set validation, idempotent retry, pre-delivery checkpoint export custody, stale/weak evidence rejection, nonexistent and generic export-evidence rejection, fabricated-checkpoint rejection, and terminal rejection of a fabricated checkpoint."
+    },
+    {
+      "command": "node verify-stage29-evidence-chain-checkpoint.mjs via PR verification",
+      "exitCode": 0,
+      "basis": "GitHub Actions PR workflow 33983777414, test job 101353526898, passed the permanent Stage 29 verifier and the required workflow/full-cycle barrier before merge."
+    },
+    {
+      "command": "exact-main full verification and Local Chromium",
+      "exitCode": 0,
+      "basis": "GitHub Actions exact-main workflow 33984131604, test job 101354460693, passed all required test steps including Workflow, gates, and full cycle and Local Chromium on exact canonical main 324eaac3e98e7d9b75046e6702af7fdfa4f2cebe."
+    },
+    {
+      "command": "deploy exact verified main build",
+      "exitCode": 0,
+      "basis": "GitHub Actions exact-main workflow 33984131604, deployment job 101355333070 completed successfully for exact canonical main 324eaac3e98e7d9b75046e6702af7fdfa4f2cebe."
+    },
+    {
+      "command": "verify exact deployed bytes and deployed Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions exact-main workflow 33984131604, job 101355470550, passed exact deployed-byte verification and the deployed Chromium operator path for 324eaac3e98e7d9b75046e6702af7fdfa4f2cebe."
+    }
+  ],
+  "directSourceFindings": [
+    "The Stage 29 verifier exercises the real workflow-engine evidence-chain calculation and project-store checkpoint mechanisms rather than using proof JSON as the behavioral oracle.",
+    "CALCULATE_EVIDENCE_CHAINS is an application command with no external response envelope; exact idempotent retry returns the existing calculated result rather than creating duplicate canonical state.",
+    "Chain completion requires structural completeness, sufficient current evidence, current release linkage, and current artifact identity; stale or weak evidence leaves the chain incomplete.",
+    "INVESTIGATE_MISSING_EVIDENCE may diagnose missing evidence but cannot manufacture canonical evidence or substitute a nonexistent backup-export event.",
+    "A generated-only or same-origin backup does not satisfy pre-delivery custody. The repaired checkpoint requires BACKUP_EXPORT_ACTION_COMPLETED evidence and exact current release/hash-review/evidence-chain/delivery-candidate/artifact binding.",
+    "Two repaired valid release fixtures complete all mandatory evidence chains and create a qualifying pre-delivery checkpoint; the same mechanisms reject the twelve targeted invalid states."
+  ],
+  "intentionalInvalidFixtures": [
+    "stage-29-structurally-incomplete-chain-rejected",
+    "stage-29-insufficient-evidence-chain-rejected",
+    "stage-29-stale-release-linkage-rejected",
+    "stage-29-stale-or-mismatched-artifact-identity-rejected",
+    "stage-29-fabricated-investigative-evidence-rejected",
+    "stage-29-nonexistent-backup-export-evidence-rejected",
+    "stage-29-generated-only-or-same-origin-backup-rejected",
+    "stage-29-unbound-or-generic-export-evidence-rejected",
+    "stage-29-stale-release-checkpoint-binding-rejected",
+    "stage-29-stale-hash-review-checkpoint-binding-rejected",
+    "stage-29-stale-evidence-chain-checkpoint-binding-rejected",
+    "stage-29-incomplete-or-fabricated-checkpoint-rejected"
+  ],
+  "repairedStateProofs": [
+    "Two independently constructed repaired Stage 29 fixtures complete all mandatory evidence chains with structuralCoverage=1 and evidenceSufficiencyCoverage=1.",
+    "The repaired checkpoint is CHECKPOINT-001 with custodyState BACKUP_EXPORT_ACTION_COMPLETED and exact covered delivery artifact ARTIFACT-DELIVERY-A.",
+    "The terminal prerequisite path accepts only the repaired evidence-bound checkpoint and continues to reserve final authorization for Controller Stage 30."
+  ],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},
+    {"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"},
+    {"stage":"20","proofPath":"verification/build-stages/stage-20-proof.json","status":"PASS"},
+    {"stage":"21","proofPath":"verification/build-stages/stage-21-proof.json","status":"PASS"},
+    {"stage":"22","proofPath":"verification/build-stages/stage-22-proof.json","status":"PASS"},
+    {"stage":"23","proofPath":"verification/build-stages/stage-23-proof.json","status":"PASS"},
+    {"stage":"24","proofPath":"verification/build-stages/stage-24-proof.json","status":"PASS"},
+    {"stage":"25","proofPath":"verification/build-stages/stage-25-proof.json","status":"PASS"},
+    {"stage":"26","proofPath":"verification/build-stages/stage-26-proof.json","status":"PASS"},
+    {"stage":"27","proofPath":"verification/build-stages/stage-27-proof.json","status":"PASS"},
+    {"stage":"28","proofPath":"verification/build-stages/stage-28-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [
+    {"workflowRunId":33984131604,"jobId":101354460693,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"324eaac3e98e7d9b75046e6702af7fdfa4f2cebe"},
+    {"workflowRunId":33984131604,"jobId":101355470550,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"324eaac3e98e7d9b75046e6702af7fdfa4f2cebe"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33984131604,"jobId":101355333070,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"324eaac3e98e7d9b75046e6702af7fdfa4f2cebe"},
+    {"workflowRunId":33984131604,"jobId":101355470550,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"324eaac3e98e7d9b75046e6702af7fdfa4f2cebe"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
+  "unprovenItems": [
+    "Controller Stage 30",
+    "actual physical-iPhone Safari acceptance",
+    "final SPEC Section 49 closure",
+    "release tagging",
+    "production maturity",
+    "visual-baseline authority unless independently proven"
+  ],
+  "proofCountBefore": 44,
+  "proofCountAfter": 45,
+  "conformantCountBefore": 1185,
+  "conformantCountAfter": 1185,
+  "stageDisposition": "PROVEN",
+  "directEvidenceReview": "PASS",
+  "nextStage": "30",
+  "notes": "This advances only Controller Stage 29 after direct implementation, falsification, exact canonical-main execution, local Chromium, exact deployment-byte, and deployed Chromium evidence. Controller Stage 30 remains unproven. Physical-iPhone acceptance, final SPEC Section 49 closure, release tagging, production maturity, and visual-baseline authority are not claimed."
+}
