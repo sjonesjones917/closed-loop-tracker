@@ -9,11 +9,19 @@ globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']) vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const {closedLoopWorkflowEngine:engine}=globalThis;
-const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-stage28-'));
+const tmp=fs.mkdtempSync(path.join(process.cwd(),'.stage28-fixture-'));
 const snapshotPath=path.join(tmp,'stage27-ready.json');
-const fixtureOutput=execFileSync(process.execPath,['verify-full-cycle.mjs'],{encoding:'utf8',env:{...process.env,CLOSED_LOOP_STAGE28_FIXTURE_OUT:snapshotPath,CLOSED_LOOP_STAGE28_FIXTURE_ONLY:'1'},maxBuffer:64*1024*1024});
+const instrumentedPath=path.join(process.cwd(),`.stage28-full-cycle-${process.pid}.mjs`);
+const fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
+const stage28Boundary="engine.verifyArtifactIdentity(p,[{artifactId:'ARTIFACT-PRODUCT'";
+const boundaryIndex=fullCycleSource.indexOf(stage28Boundary);
+assert.ok(boundaryIndex>0,'The full-cycle Stage 28 boundary could not be located for isolated fixture instrumentation.');
+const instrumented=fullCycleSource.slice(0,boundaryIndex)+`fs.writeFileSync(${JSON.stringify(snapshotPath)},JSON.stringify(p));console.log('STAGE28_READY_FIXTURE');process.exit(0);\n`+fullCycleSource.slice(boundaryIndex);
+fs.writeFileSync(instrumentedPath,instrumented);
+let fixtureOutput='';
+try{fixtureOutput=execFileSync(process.execPath,[instrumentedPath],{encoding:'utf8',maxBuffer:64*1024*1024});}finally{fs.rmSync(instrumentedPath,{force:true});}
 assert.match(fixtureOutput,/STAGE28_READY_FIXTURE/,'The full-cycle production mechanism did not reach the exact Stage 27-ready fixture.');
-assert.ok(fs.existsSync(snapshotPath),'The full-cycle production mechanism did not preserve its Stage 27-ready fixture.');
+assert.ok(fs.existsSync(snapshotPath),'The instrumented full-cycle production mechanism did not preserve its Stage 27-ready fixture.');
 const source=JSON.parse(fs.readFileSync(snapshotPath,'utf8'));
 fs.rmSync(tmp,{recursive:true,force:true});
 
