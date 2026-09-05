@@ -141,6 +141,7 @@ jobs:
           set -euo pipefail
           node verify-complete.mjs
           node verify-full-cycle.mjs
+          node verify-production-baseline-authority.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
 

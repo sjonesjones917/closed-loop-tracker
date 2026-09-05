@@ -45,7 +45,7 @@ const stageCommands={
   '20':['verify-test-runtime-v3.mjs','verify-test-runtime-limits.mjs','verify-test-runtime.mjs'],
   '21':['verify-complete.mjs','verify-full-cycle.mjs','verify-all-stage-prompts.mjs'],
   '22':['verify-complete.mjs','verify-full-cycle.mjs','verify-data-route-closure.mjs'],
-  '23':['verify-full-cycle.mjs','verify-definition-of-done.mjs'],
+  '23':['verify-production-baseline-authority.mjs','verify-full-cycle.mjs','verify-definition-of-done.mjs'],
   '24':['verify-full-cycle.mjs','verify-definition-of-done.mjs'],
   '25':['verify-test-runtime-v3.mjs','verify-full-cycle.mjs','verify-definition-of-done.mjs'],
   '26':['verify-full-cycle.mjs','verify-definition-of-done.mjs','verify-v3-definition-of-done.mjs'],

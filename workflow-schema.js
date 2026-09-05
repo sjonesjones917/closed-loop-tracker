@@ -570,9 +570,7 @@ const RECORD_OWNERSHIP=Object.freeze({
   },
   "baselines": {
     "human": [],
-    "humanDecision": [
-      "HUMAN_AUTHORIZATION"
-    ],
+    "humanDecision": [],
     "agent": [],
     "application": [
       "BASELINE_ID",
@@ -582,6 +580,7 @@ const RECORD_OWNERSHIP=Object.freeze({
       "IMMUTABLE_ARTIFACT_RECORDS",
       "AUTHORIZED_RECIPIENT_ROLES",
       "CONTROLLED_STORAGE",
+      "HUMAN_AUTHORIZATION",
       "STATUS",
       "EVIDENCE"
     ]
@@ -1010,6 +1009,9 @@ const ADDITIONAL_RECORD_FIELD_TYPES=Object.freeze({
   CANDIDATE:Object.freeze({
     COMPONENT_SELECTION_DECISION_ID:Object.freeze({valueType:'REFERENCE',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null})
   }),
+  BASELINE:Object.freeze({
+    HUMAN_AUTHORIZATION:Object.freeze({valueType:'REFERENCE',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null})
+  }),
   TEST:Object.freeze({
     EXECUTABLE_KIND:Object.freeze({valueType:'STRING',enumValues:TEST_IR.executableKinds,nullable:true,normalizerKey:null,closedProperties:null}),
     EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
@@ -1134,7 +1136,7 @@ const RECORD_SCHEMAS=Object.freeze({
   ],required:['ZERO_MATERIAL_CHANGES','VERSION_HASH_COMPARISON','TEN_NEW_CONTEXTS','COMPLETE_TEST_RESULTS','REGRESSION_RESULTS','COMPARISON_RESULTS','NEW_DEFECTS','NEW_REQUIREMENTS','NEW_FAILURE_CASES','NEW_VARIANCE','DETERMINATION','EVIDENCE'],relationships:{SOURCE_ITERATION_ID:'iterations',CONFIRMATION_ITERATION_ID:'iterations'}}),
   baselines:recordSchema({ownership:RECORD_OWNERSHIP.baselines,commitPolicy:COLLECTION_POLICIES.APPLICATION_DERIVED,title:'Production baselines',idField:'BASELINE_ID',prefix:'BASELINE',stage:20,fields:[
     'BASELINE_ID','SUPPORTING_CONFIRMATION_ID','APPROVED_VERSIONS','HASHES','IMMUTABLE_ARTIFACT_RECORDS','AUTHORIZED_RECIPIENT_ROLES','CONTROLLED_STORAGE','HUMAN_AUTHORIZATION','STATUS','EVIDENCE'
-  ],required:['APPROVED_VERSIONS','IMMUTABLE_ARTIFACT_RECORDS','AUTHORIZED_RECIPIENT_ROLES','CONTROLLED_STORAGE','HUMAN_AUTHORIZATION','STATUS','EVIDENCE'],relationships:{SUPPORTING_CONFIRMATION_ID:'confirmationRecords'}}),
+  ],required:['APPROVED_VERSIONS','IMMUTABLE_ARTIFACT_RECORDS','AUTHORIZED_RECIPIENT_ROLES','CONTROLLED_STORAGE','HUMAN_AUTHORIZATION','STATUS','EVIDENCE'],relationships:{SUPPORTING_CONFIRMATION_ID:'confirmationRecords',HUMAN_AUTHORIZATION:'humanDecisions'}}),
   products:recordSchema({ownership:RECORD_OWNERSHIP.products,commitPolicy:COLLECTION_POLICIES.UPDATE_RESERVED,title:'Finished products',idField:'PRODUCT_ID',prefix:'PRODUCT',stage:21,fields:[
     'PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','EXECUTION_ID','PRODUCTION_CONTEXT_ID','BASELINE_MATERIALS','EXECUTION_TIMESTAMPS','INSTRUCTION_VERSION','TOOL_CONFIGURATION','DEVIATIONS','FAILURES','GENERATED_ARTIFACT_INVENTORY','STATUS'
   ],required:['PRODUCTION_CONTEXT_ID','BASELINE_MATERIALS','EXECUTION_TIMESTAMPS','TOOL_CONFIGURATION','DEVIATIONS','FAILURES','GENERATED_ARTIFACT_INVENTORY','STATUS'],relationships:{BASELINE_ID:'baselines',PRODUCTION_CONTEXT_ID:'freshContexts'}}),
