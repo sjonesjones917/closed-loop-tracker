@@ -35,11 +35,11 @@ assert.equal(target.basePath,MOBILE_ACCEPTANCE_BASE_PATH);
 // perform every mutation probe against disposable in-memory clones.
 const fixturePath=path.join(process.cwd(),`.stage30-fixture-${process.pid}.json`);
 const fixtureMarker='STAGE30_READY_FIXTURE';
-const fixtureAnchor='engine.recalculate(reloaded);';
+const fixtureAnchor='engine.recordDeliveryAttempt(p';
 const fixtureIndex=fullCycleSource.indexOf(fixtureAnchor);
 assert.ok(fixtureIndex>0,'The full-cycle production mechanism did not expose its terminal-ready boundary.');
 const instrumentedPath=path.join(process.cwd(),`.stage30-full-cycle-${process.pid}.mjs`);
-fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex+fixtureAnchor.length)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify(reloaded));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex+fixtureAnchor.length));
+fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify(p));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex));
 let fixtureOutput='';
 try{fixtureOutput=execFileSync(process.execPath,[instrumentedPath],{encoding:'utf8',maxBuffer:64*1024*1024});}
 finally{fs.rmSync(instrumentedPath,{force:true});}
@@ -53,7 +53,7 @@ const terminalRecord=p=>engine.records(p,'deliveryRecords').at(-1);
 const terminalHash=p=>engine.recordValue(terminalRecord(p,'deliveryRecords'),'DELIVERY_RECORD_HASH');
 const hashInput=p=>Object.fromEntries(Object.entries(terminalRecord(p,'deliveryRecords').fields).filter(([key])=>key!=='DELIVERY_RECORD_HASH'));
 assert.equal(engine.recordValue(terminalRecord(sourceProject),'DELIVERY_STATE'),'AUTHORIZED','The fixture must reach application-owned authorization.');
-assert.equal(engine.records(sourceProject,'deliveryAttempts').length,1,'The fixture must contain a distinct delivery attempt.');
+assert.equal(engine.records(sourceProject,'deliveryAttempts').length,0,'The terminal-ready fixture must not pre-record an operational attempt.');
 
 // The mobile validators are independent oracles: malformed target/evidence classes
 // must remain blocked by both the evidence validator and authenticated submission.
@@ -131,22 +131,22 @@ for(const [name,mutate] of [
 // Dependency mutation invalidates authorization; an operational attempt mutation
 // does not rewrite the terminal authorization or collapse attempt into delivery.
 {
-  const p=fresh(),authorized=terminalRecord(p),attempt=engine.records(p,'deliveryAttempts')[0];
+  const p=fresh(),authorized=terminalRecord(p);
   assert.equal(engine.recordValue(authorized,'DELIVERY_STATE'),'AUTHORIZED');
-  assert.equal(engine.recordValue(attempt,'STATUS'),'ATTEMPTED');
-  assert.equal(engine.operationalNextAction(p,30).actionType,'RECORD_DELIVERY_EVIDENCE');
-  attempt.fields.RESULT='FAILED';attempt.RESULT='FAILED';
-  assert.equal(engine.recordValue(engine.calculateTerminal(p),'DELIVERY_STATE'),'AUTHORIZED','Operational retry must not withdraw a still-valid terminal authorization.');
-  assert.throws(()=>engine.recordDeliveryEvidence(p,{attemptId:engine.recordId(attempt,'deliveryAttempts'),evidenceIds:['EVIDENCE-NONE']}),/unsuccessful delivery attempt/,'Failed attempts must not become delivered.');
+  assert.equal(engine.records(p,'deliveryAttempts').length,0,'Authorization must remain distinct from an operational delivery attempt.');
+  assert.equal(engine.recordValue(engine.calculateTerminal(p),'DELIVERY_STATE'),'AUTHORIZED','An operational retry must not withdraw a still-valid terminal authorization.');
+  assert.throws(()=>engine.recordDeliveryEvidence(p,{attemptId:'DELIVERY-ATTEMPT-NONE',evidenceIds:['EVIDENCE-NONE']}),/delivery-attempt record/,'Delivery evidence must not represent an attempt that was never recorded.');
 }
 
 // A current human intent is part of the terminal precondition; changing its
 // destination or artifact set must block rather than silently authorize.
 for(const [name,mutate] of [
-  ['intent-destination-mismatch',value=>{value.fields.DESTINATION='UNAUTHORIZED-DESTINATION';value.DESTINATION='UNAUTHORIZED-DESTINATION';value.fields.VALUE={...(value.fields.VALUE||{}),destination:'UNAUTHORIZED-DESTINATION'};value.VALUE=value.fields.VALUE;}],
-  ['intent-artifact-set-mismatch',value=>{value.fields.ARTIFACT_IDS=[];value.ARTIFACT_IDS=[];value.fields.VALUE={...(value.fields.VALUE||{}),artifactIds:[]};value.VALUE=value.fields.VALUE;}]
+  ['intent-release-mismatch',value=>{value.releaseId='WRONG-RELEASE';}],
+  ['intent-artifact-set-mismatch',value=>{value.artifactIds=['WRONG-ARTIFACT'];}]
 ]){
-  const p=fresh(),intent=engine.recordsForCurrentScope(p,'humanDecisions').at(-1);mutate(intent);refresh(p,'humanDecisions',intent);
+  const p=fresh(),intent=engine.records(p,'humanDecisions').find(r=>engine.recordValue(r,'PURPOSE')==='DELIVERY_INTENT'&&engine.recordValue(r,'VALUE')?.authorized===true);
+  assert.ok(intent,`${name} fixture lacks the current delivery intent.`);
+  const value={...engine.recordValue(intent,'VALUE')};mutate(value);intent.fields.VALUE=value;intent.VALUE=value;refresh(p,'humanDecisions',intent);
   assert.equal(engine.terminalPrerequisites(p).complete,false,`${name} did not block terminal authorization.`);
   assert.equal(engine.recordValue(engine.calculateTerminal(p),'DELIVERY_STATE'),'BLOCKED',`${name} did not record BLOCKED.`);
   mutationRejected.push(name);
@@ -155,9 +155,14 @@ for(const [name,mutate] of [
 // Revalidate the exact stored bytes immediately before export; metadata-only
 // changes and byte-hash changes cannot be exported under an old authorization.
 {
-  const p=fresh(),artifact=engine.recordsForCurrentScope(p,'artifacts')[0];
-  artifact.fields.SHA256='0'.repeat(64);artifact.SHA256='0'.repeat(64);refresh(p,'artifacts',artifact);
-  assert.throws(()=>engine.recordDeliveryAttempt(p,{deliveryId:engine.recordId(terminalRecord(p),'deliveryRecords')}),/reverified immediately before export|Authorized artifact bytes/,'Changed stored-byte identity was not revalidated before export.');
+  const p=fresh(),authorizedId=engine.recordValue(terminalRecord(p),'AUTHORIZED_ARTIFACT_IDS')[0],artifact=engine.recordsForCurrentScope(p,'artifacts').find(r=>engine.recordId(r,'artifacts')===authorizedId);
+  artifact.fields.AVAILABILITY='BYTES_MISSING';artifact.AVAILABILITY='BYTES_MISSING';refresh(p,'artifacts',artifact);
+  assert.throws(()=>engine.recordDeliveryAttempt(p,{deliveryId:engine.recordId(terminalRecord(p),'deliveryRecords')}),/reverified immediately before export|Authorized artifact bytes|terminal dependency is no longer satisfied/,'Changed stored-byte identity was not revalidated before export.');
+}
+
+{
+  const p=fresh(),deliveryId=engine.recordId(terminalRecord(p),'deliveryRecords');
+  for(const [field,value] of [['recipient','WRONG-RECIPIENT'],['destination','WRONG-DESTINATION'],['purpose','WRONG-PURPOSE'],['channel','WRONG-CHANNEL'],['disclosureClassification','WRONG-DISCLOSURE'],['permittedTransferCount',999]])assert.throws(()=>engine.recordDeliveryAttempt(p,{deliveryId,[field]:value}),new RegExp(`delivery attempt ${field}`,'i'),`Delivery-attempt ${field} mismatch was accepted.`);
 }
 
 // Terminal self-validity, retry idempotence, and distinct authorization/attempt/
@@ -170,12 +175,8 @@ for(const [name,mutate] of [
   assert.equal(engine.recordId(retry,'deliveryRecords'),engine.recordId(first,'deliveryRecords'),'Authorized terminal retry was not idempotent.');
   assert.equal(engine.records(p,'deliveryRecords').length,before,'Authorized terminal retry duplicated the terminal record.');
   assert.equal(engine.recordValue(retry,'DELIVERY_STATE'),'AUTHORIZED');
-  assert.equal(engine.recordValue(engine.records(p,'deliveryAttempts')[0],'STATUS'),'ATTEMPTED');
-  const deliveredEvidence={id:'EVIDENCE-DELIVERED-STAGE30',recordId:'EVIDENCE-DELIVERED-STAGE30',active:true,source:'HUMAN_OBSERVATION',scope:engine.currentScope(p),fields:{EVIDENCE_ID:'EVIDENCE-DELIVERED-STAGE30',EPISTEMIC_BASIS:'HUMAN_OBSERVATION',APPLICATION_EVIDENCE_KIND:'DELIVERY_RECEIPT',STATUS:'CURRENT'},EVIDENCE_ID:'EVIDENCE-DELIVERED-STAGE30',EPISTEMIC_BASIS:'HUMAN_OBSERVATION',APPLICATION_EVIDENCE_KIND:'DELIVERY_RECEIPT',STATUS:'CURRENT'};
-  p.projectData.evidenceRecords.push(deliveredEvidence);
-  const delivered=engine.recordDeliveryEvidence(p,{attemptId:engine.recordId(engine.records(p,'deliveryAttempts')[0],'deliveryAttempts'),evidenceIds:[deliveredEvidence.id]});
-  assert.equal(engine.recordValue(delivered,'STATUS'),'DELIVERED','Delivery evidence did not produce the distinct DELIVERED state.');
-  assert.equal(engine.recordValue(retry,'DELIVERY_STATE'),'AUTHORIZED','Delivery completion must not rewrite terminal authorization.');
+  assert.equal(engine.records(p,'deliveryAttempts').length,0,'A terminal retry must not fabricate an operational attempt.');
+  assert.equal(engine.recordValue(retry,'DELIVERY_STATE'),'AUTHORIZED','Delivery authorization must remain distinct from delivery completion.');
 }
 
 assert.doesNotMatch(engineSource,/if\(e0\.gate\(30,p\)\.complete&&t\.complete\)\{const d=delivery\(p\)/,'Ordinary recalculation must not silently execute CALCULATE_TERMINAL.');
