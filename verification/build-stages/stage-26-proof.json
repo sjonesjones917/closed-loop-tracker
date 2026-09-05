@@ -1,0 +1,147 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "26",
+  "stageName": "DELIVERY-CANDIDATE REPRESENTATION",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "558d0c704c050b58aea7d6e7f5a81a90cbcc8943",
+  "endingMainCommit": "def35e2efc0723c648737b8d25e29655a4cc8d30",
+  "implementationCommitIds": [
+    "334b27ebae6b4ff1906690165226cf88e5d9a76a",
+    "c8e68e2de532091026ee95e308875f6f3ecd75a1",
+    "e1710524c31168b8f55a92518d40be31f80b0544",
+    "def35e2efc0723c648737b8d25e29655a4cc8d30"
+  ],
+  "changedFiles": [
+    ".github/workflows/pages.yml",
+    "verify-delivery-candidate-representation.mjs",
+    "verification/verify-browser.mjs",
+    "verification/verify-identity-and-final-product-closure.mjs",
+    "verification/verify-runtime-overlays.mjs",
+    "verification/verify-stage22-product-artifact-inclusion.mjs",
+    "workflow-engine.js",
+    "workflow-schema.js"
+  ],
+  "specificationSections": [
+    "36.8 Delivery-candidate set",
+    "37 Stage 25 — INSPECT THE FINAL REPRESENTATION",
+    "38 representationInspections",
+    "38.1 deliveryCandidateSets",
+    "41 tests 180-181",
+    "43 Test the tests",
+    "44 Negative test matrix",
+    "45 Browser acceptance",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "verify-delivery-candidate-representation.mjs",
+    "verification/verify-browser.mjs",
+    "verification/verify-identity-and-final-product-closure.mjs",
+    "verification/verify-runtime-overlays.mjs",
+    "verification/verify-stage22-product-artifact-inclusion.mjs",
+    ".github/workflows/pages.yml"
+  ],
+  "implementationDisposition": "DIRECT_CURRENT_IMPLEMENTATION_AND_EXECUTION_EVIDENCE",
+  "implementationDispositionReason": "Controller Stage 26 maps to the application Stage 25 delivery-candidate representation boundary. The Stage 26 implementation merged through PR #798 and current canonical main def35e2efc0723c648737b8d25e29655a4cc8d30. Direct source inspection confirms that workflow-engine.js now freezes a product/version/baseline-bound immutable delivery candidate only after accepted Stage 24 state, requires verified member byte identities, validates current accepted representation inspections against the exact candidate identity and exact member set, and fails closed when candidate bytes, filenames, package membership, product lineage, or inspection scope differ. The dedicated executable verifier creates intentional invalid candidate and inspection states and exercises the actual engine gate/match functions. Exact-current-main GitHub Actions run 33950718975 re-executed the dedicated Stage 26 verifier, the affected closure/full-cycle/static suites, local Chromium, deployment, exact deployed-byte verification, and deployed Chromium successfully. Physical-iPhone evidence is not required to prove this controller stage and is not claimed here.",
+  "normativeRequirementChanges": [],
+  "proofCommands": [
+    {
+      "command": "node verify-delivery-candidate-representation.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33950718975, test job 101264838822, exact canonical main def35e2efc0723c648737b8d25e29655a4cc8d30. The dedicated Stage 26 executable verifier completed successfully after exercising invalid and repaired candidate/inspection states."
+    },
+    {
+      "command": "node verification/verify-identity-and-final-product-closure.mjs && node verification/verify-runtime-overlays.mjs && node verification/verify-stage22-product-artifact-inclusion.mjs && node verification/verify-integration-gaps.mjs && node verification/verify-full-cycle.mjs && node verification/verify-mutation-suite.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33950718975, test job 101264838822, exact canonical main. Affected downstream identity, runtime-overlay, product-artifact, integration, full-cycle, and isolated mutation verification completed successfully."
+    },
+    {
+      "command": "node verification/verify-browser.mjs && node verification/verify-browser-reload.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33950718975, test job 101264838822, local Chromium operator-path and reload verification completed successfully on exact canonical main."
+    },
+    {
+      "command": "deploy exact verified main build",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33950718975, deploy job 101265193060 completed successfully for exact canonical main def35e2efc0723c648737b8d25e29655a4cc8d30."
+    },
+    {
+      "command": "verify exact deployed bytes and deployed Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33950718975, deployment verification job 101265225077 completed successfully for the exact deployed build corresponding to canonical main def35e2efc0723c648737b8d25e29655a4cc8d30."
+    }
+  ],
+  "directSourceFindings": [
+    "workflow-engine.js validates Stage 24 acceptance and exact current productId, productVersion, and baselineId before FREEZE_DELIVERY_CANDIDATE can create the Stage 25 candidate set.",
+    "The delivery candidate stores exact artifact identities, authorized filenames, byte lengths/hashes, package membership, and product lineage under application ownership; missing verified member bytes fail freeze.",
+    "validatedRepresentationInspections(project) selects only current accepted representation evidence bound to the exact current deliveryCandidateSetId, productId, productVersion, and baselineId.",
+    "deliveryCandidateSetMatches(project) requires the accepted representation inspection to cover exactly the candidate member artifact identities and rejects stale or mismatched product lineage, member bytes, filenames, and package membership.",
+    "Stage 25 gate evaluation remains false when no current accepted representation inspection exists and becomes true only for an exact current inspection of the frozen candidate set.",
+    "verify-delivery-candidate-representation.mjs invokes the actual engine functions against isolated invalid and repaired fixtures rather than accepting proof-file or source-string assertions as the oracle.",
+    "verification/verify-browser.mjs exercises the visible candidate/representation path under local Chromium, and the current main workflow also completed exact deployment-byte and deployed Chromium verification after the Stage 26 implementation merge."
+  ],
+  "intentionalInvalidFixtures": [
+    "stage-25-freeze-before-stage-24-accepted-rejected",
+    "stage-25-freeze-with-missing-artifact-byte-identity-rejected",
+    "stage-25-gate-without-current-accepted-representation-inspection-rejected",
+    "stage-25-stale-or-wrong-product-version-baseline-candidate-inspection-rejected",
+    "stage-25-changed-candidate-member-byte-filename-or-package-membership-rejected",
+    "stage-25-representation-inspection-with-nonexact-artifact-membership-rejected"
+  ],
+  "repairedStateProofs": [
+    "After Stage 24 is accepted and every candidate member has the required verified identity, FREEZE_DELIVERY_CANDIDATE creates the exact current immutable candidate set.",
+    "After a current accepted representation inspection is bound to the same candidate/product/version/baseline and exactly the candidate member artifact identities, the Stage 25 gate accepts the representation state.",
+    "The same engine match path that rejects changed member identity accepts the unchanged exact candidate and inspection, proving fail-before/progress-after behavior."
+  ],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},
+    {"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"},
+    {"stage":"20","proofPath":"verification/build-stages/stage-20-proof.json","status":"PASS"},
+    {"stage":"21","proofPath":"verification/build-stages/stage-21-proof.json","status":"PASS"},
+    {"stage":"22","proofPath":"verification/build-stages/stage-22-proof.json","status":"PASS"},
+    {"stage":"23","proofPath":"verification/build-stages/stage-23-proof.json","status":"PASS"},
+    {"stage":"24","proofPath":"verification/build-stages/stage-24-proof.json","status":"PASS"},
+    {"stage":"25","proofPath":"verification/build-stages/stage-25-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [
+    {"workflowRunId":33950718975,"jobId":101264838822,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"def35e2efc0723c648737b8d25e29655a4cc8d30"},
+    {"workflowRunId":33950718975,"jobId":101265225077,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"def35e2efc0723c648737b8d25e29655a4cc8d30"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33950718975,"jobId":101265193060,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"def35e2efc0723c648737b8d25e29655a4cc8d30"},
+    {"workflowRunId":33950718975,"jobId":101265225077,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"def35e2efc0723c648737b8d25e29655a4cc8d30"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
+  "unprovenItems": [],
+  "proofCountBefore": 41,
+  "proofCountAfter": 42,
+  "conformantCountBefore": 1185,
+  "conformantCountAfter": 1185,
+  "stageDisposition": "PROVEN",
+  "directEvidenceReview": "PASS",
+  "nextStage": "27",
+  "notes": "This advances only Controller Stage 26 after the delivery-candidate representation implementation was already merged and directly re-executed on exact canonical main. Controller Stages 27-30 remain unproven. Physical-iPhone acceptance, final SPEC Section 49 closure, release tagging, and production-maturity evidence are not claimed."
+}
