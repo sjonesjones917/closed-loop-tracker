@@ -1,0 +1,37 @@
+name: Stage 30 apply production repair
+
+on:
+  push:
+    branches:
+      - controller-v2/stage30-terminal-boundary-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  apply-repair:
+    if: contains(github.event.head_commit.message, 'activate Stage 30 production repair')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Apply and verify Stage 30 repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .stage30-patch/part-* | base64 --decode | gzip --decompress > /tmp/stage30-production.patch
+          git apply --check /tmp/stage30-production.patch
+          git apply /tmp/stage30-production.patch
+          node --check workflow-engine.js
+          node --check app-core.js
+          node verify-stage30-terminal-mobile-boundary.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          rm -rf .stage30-patch
+          rm .github/workflows/stage30-apply-repair.yml
+          git config user.name 'closed-loop-controller'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workflow-engine.js app-core.js .stage30-patch .github/workflows/stage30-apply-repair.yml
+          git commit -m 'Stage 30: implement atomic terminal delivery boundary'
+          git push origin HEAD:${GITHUB_REF_NAME}
