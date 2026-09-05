@@ -27,14 +27,17 @@
   ],
   "specificationSections": [
     "14.6 Closed stage-operation registry",
+    "17.11 Date and time contract",
     "29 Evidence sufficiency",
     "30 Contradiction detection",
+    "36.5 Artifact identity",
     "36.8 Delivery-candidate set",
-    "36.9 Terminal delivery",
+    "36.9 Atomic Stage 30 terminal command",
+    "36.10 Destination-bound delivery authorization",
     "37 Stage 28 — VERIFY ARTIFACT IDENTITY BEFORE RELEASE",
     "38 artifactIdentities",
-    "38 humanDecisions",
-    "41 tests 180-181",
+    "38.1 humanDecisions",
+    "41 tests 180-181, 209-210, 243",
     "43 Test the tests",
     "44 Negative test matrix",
     "45 Browser acceptance",
@@ -86,7 +89,7 @@
     "The Stage 28 verifier drives the real artifact identity and delivery-intent mechanisms rather than treating proof-file or source-string assertions as the oracle.",
     "Invalid byte fixtures cannot mutate the canonical identity; application byte rehashing and current candidate mapping are required before authorization.",
     "Metadata-only claims, missing or duplicate members, unauthorized rename, modified bytes, semantic candidate drift, release-scope drift, and incomplete, wrong, untrusted, or duplicate current delivery intent are rejected.",
-    "Canonical artifact matching is order-independent and requires exact identity, destination, purpose, channel, disclosure, and validity binding.",
+    "Canonical artifact matching is order-independent and requires exact identity; Stage 28 completion separately requires destination, purpose, channel, disclosure, and validity-bound human delivery intent.",
     "The repaired exact-identity plus destination-bound DELIVERY_INTENT path completes Stage 28 while project.release.authorization remains NOT AUTHORIZED for later Stage 30 terminal authority."
   ],
   "intentionalInvalidFixtures": [
@@ -107,173 +110,41 @@
     "Stage 28 completion does not grant project.release.authorization; terminal authority remains reserved for Stage 30."
   ],
   "earlierStageProofsReplayed": [
-    {
-      "stage": "01",
-      "proofPath": "verification/build-stages/stage-01-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "02",
-      "proofPath": "verification/build-stages/stage-02-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "03",
-      "proofPath": "verification/build-stages/stage-03-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "04",
-      "proofPath": "verification/build-stages/stage-04-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "05",
-      "proofPath": "verification/build-stages/stage-05-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "06",
-      "proofPath": "verification/build-stages/stage-06-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "07",
-      "proofPath": "verification/build-stages/stage-07-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "08",
-      "proofPath": "verification/build-stages/stage-08-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "09",
-      "proofPath": "verification/build-stages/stage-09-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "10",
-      "proofPath": "verification/build-stages/stage-10-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "11",
-      "proofPath": "verification/build-stages/stage-11-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "12",
-      "proofPath": "verification/build-stages/stage-12-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "13",
-      "proofPath": "verification/build-stages/stage-13-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "14",
-      "proofPath": "verification/build-stages/stage-14-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "15",
-      "proofPath": "verification/build-stages/stage-15-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "16",
-      "proofPath": "verification/build-stages/stage-16-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "17",
-      "proofPath": "verification/build-stages/stage-17-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "18",
-      "proofPath": "verification/build-stages/stage-18-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "19",
-      "proofPath": "verification/build-stages/stage-19-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "20",
-      "proofPath": "verification/build-stages/stage-20-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "21",
-      "proofPath": "verification/build-stages/stage-21-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "22",
-      "proofPath": "verification/build-stages/stage-22-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "23",
-      "proofPath": "verification/build-stages/stage-23-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "24",
-      "proofPath": "verification/build-stages/stage-24-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "25",
-      "proofPath": "verification/build-stages/stage-25-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "26",
-      "proofPath": "verification/build-stages/stage-26-proof.json",
-      "status": "PASS"
-    },
-    {
-      "stage": "27",
-      "proofPath": "verification/build-stages/stage-27-proof.json",
-      "status": "PASS"
-    }
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},
+    {"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"},
+    {"stage":"20","proofPath":"verification/build-stages/stage-20-proof.json","status":"PASS"},
+    {"stage":"21","proofPath":"verification/build-stages/stage-21-proof.json","status":"PASS"},
+    {"stage":"22","proofPath":"verification/build-stages/stage-22-proof.json","status":"PASS"},
+    {"stage":"23","proofPath":"verification/build-stages/stage-23-proof.json","status":"PASS"},
+    {"stage":"24","proofPath":"verification/build-stages/stage-24-proof.json","status":"PASS"},
+    {"stage":"25","proofPath":"verification/build-stages/stage-25-proof.json","status":"PASS"},
+    {"stage":"26","proofPath":"verification/build-stages/stage-26-proof.json","status":"PASS"},
+    {"stage":"27","proofPath":"verification/build-stages/stage-27-proof.json","status":"PASS"}
   ],
   "browserProofs": [
-    {
-      "workflowRunId": 33964620109,
-      "jobId": 101302431914,
-      "proof": "LOCAL_CHROMIUM_OPERATOR_PATH",
-      "status": "PASS",
-      "commit": "0db97e512eaaf86afd97e8ce20df54d31ce7f036"
-    },
-    {
-      "workflowRunId": 33964620109,
-      "jobId": 101303217444,
-      "proof": "DEPLOYED_CHROMIUM_OPERATOR_PATH",
-      "status": "PASS",
-      "commit": "0db97e512eaaf86afd97e8ce20df54d31ce7f036"
-    }
+    {"workflowRunId":33964620109,"jobId":101302431914,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"0db97e512eaaf86afd97e8ce20df54d31ce7f036"},
+    {"workflowRunId":33964620109,"jobId":101303217444,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"0db97e512eaaf86afd97e8ce20df54d31ce7f036"}
   ],
   "deployedProofs": [
-    {
-      "workflowRunId": 33964620109,
-      "jobId": 101303169740,
-      "proof": "EXACT_MAIN_DEPLOYMENT",
-      "status": "PASS",
-      "commit": "0db97e512eaaf86afd97e8ce20df54d31ce7f036"
-    },
-    {
-      "workflowRunId": 33964620109,
-      "jobId": 101303217444,
-      "proof": "EXACT_DEPLOYED_BYTE_IDENTITY",
-      "status": "PASS",
-      "commit": "0db97e512eaaf86afd97e8ce20df54d31ce7f036"
-    }
+    {"workflowRunId":33964620109,"jobId":101303169740,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"0db97e512eaaf86afd97e8ce20df54d31ce7f036"},
+    {"workflowRunId":33964620109,"jobId":101303217444,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"0db97e512eaaf86afd97e8ce20df54d31ce7f036"}
   ],
   "externalActorProofs": [],
   "deviceProofs": [],
