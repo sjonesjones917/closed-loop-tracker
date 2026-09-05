@@ -109,7 +109,7 @@ const artifactIdentityProofs=[
   ['application-byte-rehash-required',engineSource.includes('Artifact identity requires an application-owned byte rehash receipt, not caller metadata.')],
   ['candidate-filenames-exact',engineSource.includes('Delivery filenames do not match the authorized candidate filenames.')],
   ['order-independent-normalization',engineSource.includes("sort((x,y)=>x.artifactId.localeCompare(y.artifactId))")],
-  ['permanent-stage28-invalid-fixture',stage28TestSource.includes('metadataOnlyRejected:true')&&stage28TestSource.includes('genericPurposeRejected:true')],
+  ['permanent-stage28-invalid-fixture',stage28TestSource.includes("metadata-only-byte-claim")&&stage28TestSource.includes("generic-purpose-substitution")&&stage28TestSource.includes('repairedPathProgressed:true')],
   ['stage28-current-batch',completeTestSource.includes('stage28CurrentBatch:true')],
   ['full-cycle-identity-and-intent',fullCycleSource.includes('engine.verifyArtifactIdentity(p')&&fullCycleSource.includes('engine.captureDeliveryIntent(p')]
 ];
