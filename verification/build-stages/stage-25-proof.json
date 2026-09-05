@@ -1,0 +1,135 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "25",
+  "stageName": "FINAL PRODUCT VERIFICATION",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "c7fa3500dab92fe36fefd1ec544d82f831855e9c",
+  "endingMainCommit": "c7fa3500dab92fe36fefd1ec544d82f831855e9c",
+  "implementationCommitIds": [
+    "c7fa3500dab92fe36fefd1ec544d82f831855e9c"
+  ],
+  "changedFiles": [],
+  "specificationSections": [
+    "21 Closed Loop Test IR",
+    "22 Deterministic runtime and worker",
+    "23 Single execution-routing authority",
+    "29 Evidence sufficiency",
+    "37 Stage 22 — RUN DETERMINISTIC VERIFICATION ON THE FINISHED PRODUCT",
+    "38 deterministicResults",
+    "41 Mandatory deterministic and behavioral tests",
+    "42 Additional mandatory Test IR tests",
+    "43 Test the tests",
+    "44 Negative test matrix",
+    "45 Browser acceptance",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "test-runtime.js",
+    "test-worker.js",
+    "response-ingestion.js",
+    "app-core.js",
+    "verify-test-runtime-v3.mjs",
+    "verify-result-ingestion.mjs",
+    "verify-complete.mjs",
+    "verify-definition-of-done.mjs",
+    "verify-full-cycle.mjs",
+    ".github/workflows/pages.yml"
+  ],
+  "implementationDisposition": "ZERO_CODE_CHANGE_DIRECT_CURRENT_EVIDENCE",
+  "implementationDispositionReason": "Controller Stage 25 maps to application Stage 22 finished-product deterministic verification. Direct inspection of exact canonical main c7fa3500dab92fe36fefd1ec544d82f831855e9c found the current implementation already uses test-runtime.js as the single native Test IR authority, validates the explicit typed DAG and bound artifact inputs before execution, runs native execution in test-worker.js under hard limits, records application-owned deterministic results and native receipts with current Test IR, operation-registry, worker, runtime-build, input-artifact, input-hash, and normalized-DAG identities, blocks unsupported native tests instead of pretending execution, and consumes only current sufficient deterministic results in the Stage 22 gate. The permanent verification suite directly exercises unsupported Test IR, wrong dataflow/port contracts, worker timeout with no partial deterministic result, external attempts to fabricate application-owned native results, weak prose/metadata evidence for byte propositions, repaired verified-byte evidence, product/test invalidation, and the complete Stage 22 path in the synthetic 30-stage lifecycle. Exact-current-main GitHub Actions run 33943198246 re-executed those verifiers, local Chromium, exact deployment, exact deployed-byte verification, and deployed Chromium successfully. No runtime repair was necessary, so this stage records zero-code-change completion from direct current evidence rather than treating this proof file as behavioral evidence.",
+  "proofCommands": [
+    {
+      "command": "node verify-test-runtime-v3.mjs && node verify-result-ingestion.mjs && node verify-complete.mjs && node verify-definition-of-done.mjs && node verify-full-cycle.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33943198246, test job 101244420058, exact canonical main c7fa3500dab92fe36fefd1ec544d82f831855e9c. The Test IR/runtime, raw-first ingestion/negative-case, workflow/full-cycle, and Definition-of-Done barriers completed successfully."
+    },
+    {
+      "command": "local Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33943198246, test job 101244420058, Local Chromium operator path completed successfully on exact canonical main."
+    },
+    {
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33943198246, deploy job 101245053454 completed successfully for exact canonical main."
+    },
+    {
+      "command": "exact deployed-byte verification and deployed Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33943198246, deployment verification job 101245100266 completed successfully for exact canonical main."
+    }
+  ],
+  "directSourceFindings": [
+    "test-runtime.js is the single native Test IR authority and exposes the current Test IR language/operation-registry identities, explicit DAG validation, supported-operation capability checks, deterministic execution normalization, runtime limits, and current result identity metadata.",
+    "test-worker.js is the isolated execution entry and receives only normalized declarative Test IR and explicit bound inputs; timeout is externally terminable and a timed-out execution cannot create a partial canonical deterministic result.",
+    "workflow-engine.js routes APPLICATION_DETERMINISTIC work through the native runtime, requires actual verified artifact readiness, blocks unsupported native operations or missing required bytes, and evaluates Stage 22 completion from current applicable mandatory deterministic tests and current sufficient results rather than declarations.",
+    "workflow-schema.js keeps gate-consumed deterministicResults fields application-owned and defines RUN_NATIVE_TESTS as an application command rather than an external response operation.",
+    "response-ingestion.js rejects external override or fabrication of application-owned native deterministic results and preserves raw-first/no-partial-mutation behavior for externally routed deterministic observations.",
+    "app-core.js exposes the Stage 22 native run action from the engine-derived next action rather than asking an external actor to impersonate application-native execution.",
+    "verify-test-runtime-v3.mjs exercises explicit step IDs, named ports, forward/cycle/implicit-operand rejection, unsupported operations/selectors/regex constructs, multi-artifact and BYTE_COMPARE execution, predecessor-error propagation, worker timeout, exact runtime/worker/registry identities, application-owned native receipts, and invalidation after semantic test/product changes.",
+    "verify-complete.mjs exercises weak-byte-proof rejection and repaired objective byte evidence, evidence-sufficiency fail-closed behavior, deterministic-result gating, contradiction behavior, and the required Stage 22 artifact handoff contract.",
+    "verify-full-cycle.mjs executes the Stage 22 native deterministic path against the finished product and proceeds through later product-review/release stages only after the current deterministic verification state is accepted.",
+    "The exact current main workflow completed the applicable deterministic, ingestion, full-cycle, local-browser, deployment-byte, and deployed-browser barriers after the Stage 24 proof merge, so Stage 25 evidence is current to canonical main c7fa3500dab92fe36fefd1ec544d82f831855e9c."
+  ],
+  "intentionalInvalidFixtures": [
+    "unsupported-test-ir-operation-rejected-or-blocked-before-native-execution",
+    "invalid-test-ir-dataflow-port-or-forward-reference-rejected-before-execution",
+    "worker-timeout-terminates-execution-with-no-partial-deterministic-result",
+    "external-native-result-or-receipt-fabrication-rejected",
+    "prose-or-metadata-only-byte-evidence-insufficient-for-byte-proposition",
+    "stale-product-or-test-spec-invalidates-prior-native-result"
+  ],
+  "repairedStateProofs": [
+    "Replacing an unsupported or invalid Test IR fixture with a current registered explicit DAG permits native execution through the same test-runtime/test-worker mechanism and produces an application-owned normalized result.",
+    "The bounded non-timeout worker fixture completes and records the expected deterministic result identities, while the timeout fixture creates no partial canonical result.",
+    "Replacing prose or metadata-only byte evidence with the current canonical artifact identity plus application-verified stored bytes and SHA-256 satisfies the byte-readiness/evidence basis consumed by deterministic verification.",
+    "The full synthetic lifecycle executes current Stage 22 verification against the exact finished-product bytes and proceeds only after mandatory deterministic results are current and acceptable."
+  ],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},
+    {"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"},
+    {"stage":"20","proofPath":"verification/build-stages/stage-20-proof.json","status":"PASS"},
+    {"stage":"21","proofPath":"verification/build-stages/stage-21-proof.json","status":"PASS"},
+    {"stage":"22","proofPath":"verification/build-stages/stage-22-proof.json","status":"PASS"},
+    {"stage":"23","proofPath":"verification/build-stages/stage-23-proof.json","status":"PASS"},
+    {"stage":"24","proofPath":"verification/build-stages/stage-24-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [
+    {"workflowRunId":33943198246,"jobId":101244420058,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"c7fa3500dab92fe36fefd1ec544d82f831855e9c"},
+    {"workflowRunId":33943198246,"jobId":101245100266,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"c7fa3500dab92fe36fefd1ec544d82f831855e9c"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33943198246,"jobId":101245053454,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"c7fa3500dab92fe36fefd1ec544d82f831855e9c"},
+    {"workflowRunId":33943198246,"jobId":101245100266,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"c7fa3500dab92fe36fefd1ec544d82f831855e9c"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
+  "unprovenItems": [],
+  "stageDisposition": "PROVEN",
+  "directEvidenceReview": "PASS",
+  "nextStage": "26",
+  "notes": "This advances only Controller Stage 25 after direct current-main implementation inspection plus exact-main deterministic, mutation, local-browser, deployment-byte, and deployed-browser execution prove finished-product deterministic verification. Controller Stages 26-30 remain unproven; objective visual-baseline authority, physical-iPhone acceptance, final SPEC Section 49 closure, release tagging, and production-maturity evidence are not claimed."
+}
