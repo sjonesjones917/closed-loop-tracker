@@ -1,0 +1,146 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "27",
+  "stageName": "PROCESS PRODUCT RECONCILIATION AND RELEASE",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "228fd857db779aa2ee4d207bbcf08b0f1a230855",
+  "endingMainCommit": "a373661f5d3651c3e849cb4f0e32965ef253f09c",
+  "implementationCommitIds": [
+    "ee84c6f55f1a9231fce57e54bb57ce94eace715e",
+    "a373661f5d3651c3e849cb4f0e32965ef253f09c"
+  ],
+  "changedFiles": [
+    "app-core.js",
+    "verify-stage27-release-binding.mjs",
+    "verify-v3-contract.mjs",
+    "workflow-engine.js"
+  ],
+  "specificationSections": [
+    "30 Contradiction detection",
+    "36.4 Release",
+    "37 Stage 26 — RECONCILE PROCESS AND PRODUCT EVIDENCE",
+    "37 Stage 27 — APPLY THE RELEASE GATE",
+    "38 processAudits, productAudits, releaseGateReviews, releaseRecords",
+    "41 Mandatory deterministic and behavioral tests — release and full-cycle cases",
+    "43 Test the tests",
+    "44 Negative test matrix — inconsistent process/product audit and false release",
+    "45 Browser acceptance — contradiction warning and release-state visibility",
+    "49 Definition of done — release-critical evidence and contradiction closure"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "app-core.js",
+    "verify-stage27-release-binding.mjs",
+    "verify-v3-contract.mjs",
+    "verify-full-cycle.mjs",
+    ".github/workflows/pages.yml"
+  ],
+  "implementationDisposition": "DIRECT_CURRENT_IMPLEMENTATION_AND_EXECUTION_EVIDENCE",
+  "implementationDispositionReason": "Controller Stage 27 maps to the application Stage 26 process/product reconciliation and Stage 27 release gate. Current source and the retained full-cycle execution exercise accepted processAudits and productAudits before release. The remaining Stage 27 defect was that a syntactically valid favorable release record could survive after its release-evidence dependencies changed or could contradict the application's current release calculation. PR #1160 repaired the earliest responsible release-binding layer: workflow-engine.js derives one canonical current release binding from releaseMetrics(project), product/baseline identity, and a canonical SHA-256 evidence digest; Stage 27 accepts only exactly one current application-derived release record matching that binding; changed evidence makes the old release stale; exact retries remain idempotent; missing current evidence fails closed; and release precedence remains REJECTED for sufficient mandatory refutation, otherwise BLOCKED for unresolved blocking conditions, otherwise ACCEPTED. ADVISORY_REVIEW remains optional and non-gating. Exact-current-main workflow run 33955743464 re-executed the dedicated Stage 27 invalid/repaired verifier, v3 contracts, the full lifecycle/reconciliation/release path, local Chromium, exact deployment, exact deployed-byte verification, deployed Chromium, and machine-acceptance artifact construction successfully. The acceptance job explicitly recorded actual-iPhone acceptance as blocked rather than fabricating physical-device proof, so no Stage 30 or Section 49 claim is made here.",
+  "normativeRequirementChanges": [],
+  "proofCommands": [
+    {
+      "command": "node verify-stage27-release-binding.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33955743464, test job 101278654625, exact canonical main a373661f5d3651c3e849cb4f0e32965ef253f09c. The permanent verifier executed the real releaseBinding, recordReleaseDetermination, gate, operationalNextAction, and release-precedence mechanisms against intentional invalid and repaired states."
+    },
+    {
+      "command": "node verify-v3-contract.mjs && node verify-full-cycle.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33955743464, test job 101278654625, exact canonical main. The v3 contract path includes the Stage 27 regression, and the full-cycle path creates current Stage 26 process/product audit records, reconciles them, calculates Stage 27 release, and completes the downstream lifecycle."
+    },
+    {
+      "command": "local Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33955743464, test job 101278654625, Local Chromium operator path completed successfully on exact canonical main."
+    },
+    {
+      "command": "deploy exact verified main build",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33955743464, deploy job 101279319616 completed successfully for exact canonical main a373661f5d3651c3e849cb4f0e32965ef253f09c."
+    },
+    {
+      "command": "verify exact deployed bytes and deployed Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33955743464, deployment verification job 101279366776 completed exact deployed-byte verification and the deployed Chromium operator path successfully for canonical main a373661f5d3651c3e849cb4f0e32965ef253f09c."
+    },
+    {
+      "command": "build current machine acceptance artifact",
+      "exitCode": 0,
+      "basis": "GitHub Actions run 33955743464, acceptance job 101279599317 completed successfully. It built and uploaded the current machine acceptance artifact and truthfully recorded actual-iPhone acceptance as blocked; release tagging remained skipped."
+    }
+  ],
+  "directSourceFindings": [
+    "The current full-cycle path creates both processAudits and productAudits at application Stage 26 and requires current accepted reconciliation before release progression.",
+    "workflow-engine.js releaseBinding(project) derives the current release determination and canonical evidence digest from application-calculated release metrics and current product/baseline identities.",
+    "Stage 27 release acceptance requires a current release record produced by APPLICATION_DERIVATION with derivationKey stage27.release whose determination, product, baseline, and evidence digest exactly match the current release binding.",
+    "A later mutation to a release-evidence dependency changes the binding digest; the prior release record fails the Stage 27 gate until the same application mechanism recalculates release.",
+    "recordReleaseDetermination is idempotent for an exact retry but creates a distinct current release identity after the evidence binding changes.",
+    "Missing current product evidence is normalized to a blocking condition instead of causing a hash or exception path.",
+    "selectReleaseDisposition preserves the controlling precedence: mandatory refutation yields REJECTED even when blockers also exist; absent refutation, blockers yield BLOCKED; only zero refutations and zero blockers yield ACCEPTED.",
+    "ADVISORY_REVIEW is optional and non-gating; operationalNextAction routes directly to application-owned CALCULATE_RELEASE when no advisory response exists and states that ownership truthfully.",
+    "The structured next-action derivation is non-mutating; constructing a later action does not mutate canonical proof obligations.",
+    "verify-stage27-release-binding.mjs invokes actual engine mechanisms against isolated invalid and repaired fixtures rather than treating proof JSON or source declarations as the behavioral oracle."
+  ],
+  "intentionalInvalidFixtures": [
+    "stage-27-fabricated-favorable-release-contradicting-current-application-calculation-rejected",
+    "stage-27-stale-release-after-release-evidence-dependency-mutation-rejected"
+  ],
+  "repairedStateProofs": [
+    "Replacing the fabricated favorable release with recordReleaseDetermination produces the application-owned current BLOCKED result bound to the exact current evidence digest instead of falsely accepting incomplete evidence.",
+    "After release evidence changes, recalculating through recordReleaseDetermination creates a new current release identity bound to the changed digest; the same Stage 27 gate then progresses.",
+    "An exact unchanged recalculation returns the existing release identity, proving command idempotency rather than duplicate release creation.",
+    "With no advisory review present, operationalNextAction returns CALCULATE_RELEASE and the application-owned calculation proceeds, proving the optional advisory cannot delay or substitute for release."
+  ],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},
+    {"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"},
+    {"stage":"20","proofPath":"verification/build-stages/stage-20-proof.json","status":"PASS"},
+    {"stage":"21","proofPath":"verification/build-stages/stage-21-proof.json","status":"PASS"},
+    {"stage":"22","proofPath":"verification/build-stages/stage-22-proof.json","status":"PASS"},
+    {"stage":"23","proofPath":"verification/build-stages/stage-23-proof.json","status":"PASS"},
+    {"stage":"24","proofPath":"verification/build-stages/stage-24-proof.json","status":"PASS"},
+    {"stage":"25","proofPath":"verification/build-stages/stage-25-proof.json","status":"PASS"},
+    {"stage":"26","proofPath":"verification/build-stages/stage-26-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [
+    {"workflowRunId":33955743464,"jobId":101278654625,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"a373661f5d3651c3e849cb4f0e32965ef253f09c"},
+    {"workflowRunId":33955743464,"jobId":101279366776,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"a373661f5d3651c3e849cb4f0e32965ef253f09c"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33955743464,"jobId":101279319616,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"a373661f5d3651c3e849cb4f0e32965ef253f09c"},
+    {"workflowRunId":33955743464,"jobId":101279366776,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"a373661f5d3651c3e849cb4f0e32965ef253f09c"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
+  "unprovenItems": [],
+  "proofCountBefore": 42,
+  "proofCountAfter": 43,
+  "conformantCountBefore": 1185,
+  "conformantCountAfter": 1185,
+  "stageDisposition": "PROVEN",
+  "directEvidenceReview": "PASS",
+  "nextStage": "28",
+  "notes": "This advances only Controller Stage 27 after the process/product reconciliation path and repaired release binding were directly re-executed on exact canonical main. Controller Stages 28-30 remain unproven. Physical-iPhone acceptance, final SPEC Section 49 closure, release tagging, and production-maturity evidence are not claimed."
+}
