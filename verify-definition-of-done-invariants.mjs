@@ -79,7 +79,7 @@ const browserExtraSource=fs.readFileSync('verify-browser-extra.mjs','utf8');
 for(const token of ['evaluateEvidenceContract','evaluateResultConsistency','effectiveDetermination','validateTraceIntegrity','detectCurrentContradictions','releaseMetrics','testExecutionPlan','executionHandoff'])assert(engineSource.includes(token),`Central reliability authority missing ${token}.`);
 
 const scopeKeys=[...new Set(Object.values(schema.SCOPE_REQUIREMENTS||{}).flat())];
-const scopeKeyProofs=scopeKeys.map(key=>ingestionTestSource.includes(`'${key}'`)||ingestionTestSource.includes(`\"${key}\"`));
+const scopeKeyProofs=scopeKeys.map(key=>ingestionTestSource.includes(`'${key}'`)||ingestionTestSource.includes(`"${key}"`));
 assert(ingestionTestSource.includes('scopeNegative')&&ingestionTestSource.includes("code==='STALE_SCOPE'"),'Stale-scope mutation matrix is not executable.');
 const currentScopeSelectorMetric=coverageMetric('CURRENT_SCOPE_SELECTOR_COVERAGE',scopeKeyProofs.filter(Boolean).length,scopeKeyProofs.length,scopeKeys);
 const currentScopeSelectorCoverage=currentScopeSelectorMetric.value;
@@ -100,7 +100,7 @@ const mandatoryEvidenceChainMetric=coverageMetric('MANDATORY_EVIDENCE_CHAIN_STRU
 const mandatoryEvidenceChainCoverage=mandatoryEvidenceChainMetric.value;
 assert(mandatoryEvidenceChainCoverage===1,'Mandatory evidence-chain coverage proof is incomplete.');
 
-const artifactIdentityProofs=[
+const artifactIdentityProofsFor=(stage28Source=stage28TestSource)=>[
   ['current-stage27-release-bound',engineSource.includes('Artifact identity verification requires the current bound Stage 27 ACCEPTED release.')],
   ['current-stage25-candidate-bound',engineSource.includes('Artifact identity verification requires the exact current Stage 25 delivery candidate set.')],
   ['duplicate-identity-rejected',engineSource.includes('Duplicate artifact identity or filename is prohibited.')],
@@ -109,10 +109,13 @@ const artifactIdentityProofs=[
   ['application-byte-rehash-required',engineSource.includes('Artifact identity requires an application-owned byte rehash receipt, not caller metadata.')],
   ['candidate-filenames-exact',engineSource.includes('Delivery filenames do not match the authorized candidate filenames.')],
   ['order-independent-normalization',engineSource.includes("sort((x,y)=>x.artifactId.localeCompare(y.artifactId))")],
-  ['permanent-stage28-invalid-fixture',stage28TestSource.includes("metadata-only-byte-claim")&&stage28TestSource.includes("generic-purpose-substitution")&&stage28TestSource.includes('repairedPathProgressed:true')],
+  ['permanent-stage28-invalid-fixture',stage28Source.includes("rejected.push('metadata-only-byte-claim')")&&stage28Source.includes("rejected.push('generic-purpose-substitution')")&&stage28Source.includes('repairedPathProgressed:true')],
   ['stage28-current-batch',completeTestSource.includes('stage28CurrentBatch:true')],
   ['full-cycle-identity-and-intent',fullCycleSource.includes('engine.verifyArtifactIdentity(p')&&fullCycleSource.includes('engine.captureDeliveryIntent(p')]
 ];
+const artifactIdentityProofs=artifactIdentityProofsFor();
+const stage28FixtureMutation=stage28TestSource.replace("rejected.push('metadata-only-byte-claim')","rejected.push('metadata-only-byte-claim-removed')");
+assert(artifactIdentityProofsFor(stage28FixtureMutation).some(([id,ok])=>id==='permanent-stage28-invalid-fixture'&&!ok),'The release-artifact identity metric did not detect intentional removal of a required Stage 28 invalid fixture.');
 const releaseArtifactIdentityMetric=coverageMetric('RELEASE_ARTIFACT_IDENTITY_COVERAGE',artifactIdentityProofs.filter(([,ok])=>ok).length,artifactIdentityProofs.length,artifactIdentityProofs.map(([id])=>id));
 const releaseArtifactIdentityCoverage=releaseArtifactIdentityMetric.value;
 assert(releaseArtifactIdentityCoverage===1,'Release artifact identity coverage proof is incomplete.');
