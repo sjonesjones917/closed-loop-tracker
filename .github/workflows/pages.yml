@@ -36,6 +36,11 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Install pinned Chrome for Testing
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4
+        with:
+          chrome-version: '152.0.7977.82'
 
       - name: Capture exact PR source workspace
         if: github.event_name == 'pull_request'
@@ -158,14 +163,10 @@ jobs:
 
       - name: Local Chromium operator path
         env:
-          BROWSER: /usr/bin/google-chrome
+          BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           set -euo pipefail
-          if [ ! -x "$BROWSER" ]; then
-            BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-            export BROWSER
-          fi
-          test -n "$BROWSER"
+          test -x "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
@@ -233,15 +234,22 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Install pinned Chrome for Testing
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4
+        with:
+          chrome-version: '152.0.7977.82'
+
       - name: Rebuild retained fixture used by deployment
         run: node build-test-project.mjs
       - name: Exact deployed-byte verification
         run: node verify-live.mjs
       - name: Deployed Chromium operator path
+        env:
+          BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
+          test -x "$BROWSER"
           run_browser_verifier() {
             script="$1"
             for attempt in 1 2 3; do
@@ -275,14 +283,20 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Install pinned Chrome for Testing
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4
+        with:
+          chrome-version: '152.0.7977.82'
+
       - name: Reverify deployed Chromium for authenticated mobile acceptance
         if: github.event_name == 'workflow_dispatch'
         env:
           PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+          BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
+          test -x "$BROWSER"
           run_browser_verifier() {
             script="$1"
             for attempt in 1 2 3; do
@@ -342,54 +356,59 @@ jobs:
           const stage01AcceptedSemanticMappingCoverage=Number(Boolean(zeroLoss.zeroLossStage01&&zeroLoss.incompleteIntakeRejected));
           const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
           const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
-          if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
-          if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
-          if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
-          if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
-          const finalAcceptancePublication=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
-          const report={
-            commit:process.env.GITHUB_SHA,
-            workflow:'mobile-closed-loop/30',
-            contractProfileId:'closed-loop-completion-profile/1',
-            projectSchema:'closed-loop-project/3',
-            responseSchema:'closed-loop-stage-response/3',
-            testIrSchema:'closed-loop-test-spec/1',
-            verificationPackageSchema:'closed-loop-verification-package/1',
-            stageCount:30,
-            ...definition,
-            ...v3,
-            dataRouteClosure:dataRoute.dataRouteClosure,
-            infrastructureRouteClosure:infrastructureRoute.infrastructureRouteClosure,
-            routeOperationsChecked:dataRoute.operationsChecked,
-            routeCanonicalFamilies:dataRoute.canonicalFamilies,
-            routeReadEdgesChecked:dataRoute.readEdgesChecked,
-            routeWritableCollectionsChecked:dataRoute.writableCollectionsChecked,
-            routeWritableFieldsChecked:dataRoute.writableFieldsChecked,
-            routeRelationshipDefinitionsChecked:dataRoute.relationshipDefinitionsChecked,
-            routeInvalidationStagesChecked:dataRoute.invalidationStagesChecked,
-            routeCurrentScopeStaleExclusion:dataRoute.currentScopeStaleExclusion,
-            routePromptReadSerialization:dataRoute.promptReadSerialization,
-            routeResponseAuthorizationClosure:dataRoute.responseAuthorizationClosure,
-            routeProvenanceContractClosure:dataRoute.provenanceContractClosure,
-            routeDownstreamForwardingClosure:dataRoute.downstreamForwardingClosure,
-            routeDownstreamOnlyInvalidation:dataRoute.downstreamOnlyInvalidation,
-            routeSubjectNeutralPromptAuthority:dataRoute.subjectNeutralPromptAuthority,
-            routeHumanExperiencePromptContract:dataRoute.humanExperiencePromptContract,
-            infrastructureFamiliesChecked:infrastructureRoute.infrastructureFamilies,
-            infrastructureRawFirstCapture:infrastructureRoute.rawFirstCapture,
-            infrastructurePrecommitRevalidation:infrastructureRoute.precommitRevalidation,
-            infrastructureExtractionManifestProvenance:infrastructureRoute.extractionManifestProvenance,
-            infrastructurePromptContextManifestRoute:infrastructureRoute.promptContextManifestRoute,
-            infrastructureAuthorityPartitionsSeparated:infrastructureRoute.authorityPartitionsSeparated,
-            infrastructureCurrentScopeRoute:infrastructureRoute.currentScopeRoute,
-            infrastructurePersistenceIntegrityRoute:infrastructureRoute.persistenceIntegrityRoute,
-            infrastructureStructuredOperatorActionRoute:infrastructureRoute.structuredOperatorActionRoute,
-            currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
-            exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
-            applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,
-            mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage,
+          if(!negativeMatches.length) throw new Error('Unable to derive negative-case count from ingestion verification.');
+          const negativeCasesPassed=Math.max(...negativeMatches.map(match=>Number(match[1])));
+          const completedStages=Number(fullCycle.verifiedStages||0);
+          if(completedStages!==30) throw new Error(`Full-cycle verification covered ${completedStages}/30 stages.`);
+          const storageFailureCasesPassed=Number(definition.storageFailureCasesPassed||0);
+          const artifactRoundTrip=Boolean(definition.artifactRoundTrip);
+          const deployedByteIdentity=process.env.LIVE_RESULT==='success';
+          if(!deployedByteIdentity) throw new Error('Live deployed-byte proof did not succeed.');
+          if(dataRoute.dataRouteClosure!=='PASS') throw new Error('Canonical data-route closure did not pass.');
+          if(infrastructureRoute.infrastructureRouteClosure!=='PASS') throw new Error('Infrastructure data-route closure did not pass.');
+          if(mobileGovernance.mobileReleaseGovernance!=='PASS') throw new Error('Physical iPhone release-tag governance did not pass.');
+          const actualIPhoneSafariAcceptance=Number(Boolean(mobileAcceptance.accepted&&mobileAcceptance.physicalDeviceObservationAccepted));
+          if(!actualIPhoneSafariAcceptance) throw new Error(`Actual-iPhone acceptance is not current: ${(mobileAcceptance.reasons||[]).join('; ')}`);
+          const metrics={
+            ownershipCoverage:definition.ownershipCoverage,
+            derivationCoverage:definition.derivationCoverage,
+            relationshipCoverage:definition.relationshipCoverage,
+            stage01RawInputAccounting,
+            stage01RequiredFileInspectionAccounting,
+            stage01AcceptedSemanticMappingCoverage,
+            stage04ObligationAccounting,
+            agentExtractionCoverage:definition.agentExtractionCoverage,
+            relationshipProvenanceCoverage:definition.relationshipProvenanceCoverage,
+            scopeSelectorCoverage:definition.scopeSelectorCoverage,
+            reqRunTestCoverage:definition.reqRunTestCoverage,
+            regressionSuccess:definition.regressionSuccess,
+            mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainStructuralCoverage,
             mandatoryEvidenceSufficiencyCoverage:v3.mandatoryEvidenceSufficiencyCoverage,
             releaseArtifactIdentityCoverage:definition.releaseArtifactIdentityCoverage,
+            contractProfileMigrationCoverage:v3.contractProfileMigrationCoverage,
+            fieldRegistryCoverage:v3.fieldRegistryCoverage,
+            stageOperationRegistryCoverage:v3.stageOperationRegistryCoverage,
+            stageOperationScopeMatrixCoverage:v3.stageOperationScopeMatrixCoverage,
+            durableObjectRegistryCoverage:v3.durableObjectRegistryCoverage,
+            fileFirstPromptByteIdentityCoverage:v3.fileFirstPromptByteIdentityCoverage,
+            fileFirstResponseByteCaptureCoverage:v3.fileFirstResponseByteCaptureCoverage,
+            attachmentSlotMappingCoverage:v3.attachmentSlotMappingCoverage,
+            semanticReviewIndependenceCoverage:v3.semanticReviewIndependenceCoverage,
+            dueStageObligationCoverage:v3.dueStageObligationCoverage,
+            activationProofCoverage:v3.activationProofCoverage,
+            testIrDagRegistryCoverage:v3.testIrDagAndRegistryIdentityCoverage,
+            closedMetricUniverseCoverage:v3.closedMetricUniverseCoverage,
+            deliveryCandidateIdentityCoverage:v3.deliveryCandidateIdentityCoverage,
+            terminalCommandPrerequisiteCoverage:v3.terminalCommandPrerequisiteCoverage,
+            preDeliveryCheckpointCoverage:v3.preDeliveryCheckpointCoverage,
+            destinationBoundAuthorizationCoverage:v3.destinationBoundAuthorizationCoverage,
+            actualIphoneSafariAcceptanceCoverage:actualIPhoneSafariAcceptance,
+            canonicalDeploymentOriginCoverage:v3.canonicalDeploymentOriginCoverage,
+            normativeRequirementTraceCoverage:v3.normativeRequirementTraceCoverage
+          };
+          const nonFull=Object.entries(metrics).filter(([,value])=>value!==1);
+          if(nonFull.length) throw new Error(`Acceptance coverage is incomplete: ${nonFull.map(([key,value])=>`${key}=${value}`).join(', ')}`);
+          const zeroMetrics={
             unauthorizedFieldMutationsAccepted:definition.unauthorizedFieldMutationsAccepted,
             canonicalMutationsBeforeAcceptance:definition.canonicalMutationsBeforeAcceptance,
             partialCommitsAfterInjectedFailure:definition.partialCommitsAfterInjectedFailure,
@@ -402,85 +421,54 @@ jobs:
             externalAssertionsOverridingApplicationProof:v3.externalAssertionsOverridingApplicationProof,
             nativeExecutionReceiptsFabricatedExternally:v3.nativeExecutionReceiptsFabricatedExternally,
             releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction,
-            stage01RawInputAccounting,
-            stage01RequiredFileInspectionAccounting,
-            stage01AcceptedSemanticMappingCoverage,
-            stage04ObligationAccounting,
-            stagesCompleted:Number(fullCycle.stagesCompleted||0),
-            negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
-            deployedByteIdentity:process.env.LIVE_RESULT==='success',
-            deploymentManifestSchema:'closed-loop-deployment-manifest/1',
-            finalDeploymentResourceIdentityCoverage:process.env.LIVE_RESULT==='success'?1:0,
-            localChromiumAcceptance:process.env.TEST_RESULT==='success',
-            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
-            testedBrowserWidths:[320,393,'desktop'],
-            mobileReleaseTagGovernanceCoverage:Number(mobileGovernance.mobileReleaseGovernance==='PASS'),
-            ...mobileAcceptance,
-            finalAcceptancePublication,
-            releaseTagEligible:finalAcceptancePublication,
-            realThirtyStageProjectAcceptance:false,
-            fullProductionMaturity:false,
-            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobileAcceptance.physicalIPhoneJobResult},
-            nextProofStep:finalAcceptancePublication?'Create the release tag for this exact accepted commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
-            proofSources:{
-              ownership:'verify.mjs',
-              canonicalDataRoutes:'verify-data-route-closure.mjs',
-              infrastructureRoutes:'verify-infrastructure-route-closure.mjs',
-              migration:'verify-v3-migration.mjs',
-              stage01:'verify-stage01-intake-closure.mjs',
-              stage01Reuse:'verify-one-time-intent-intake.mjs',
-              stage04:'verify-zero-loss-accounting.mjs',
-              testIr:'verify-test-runtime-v3.mjs',
-              limits:'verify-test-runtime-limits.mjs',
-              ingestion:'verify-ingestion.mjs',
-              workflow:'verify-complete.mjs',
-              fullCycle:'verify-full-cycle.mjs',
-              prompts:'verify-prompt-semantics.mjs',
-              localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              deployedIdentity:'verify-live.mjs or evaluate-mobile-acceptance-submission.mjs exact deployed manifest/resource verification',
-              deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
-              deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
-              physicalIPhoneAcceptance:finalAcceptancePublication?`${mobileAcceptance.mobileAcceptanceEvidenceId} (${mobileAcceptance.mobileAcceptanceEvidenceBasis})`:'BLOCKED_ENVIRONMENT or BLOCKED: current physical-device evidence did not satisfy the gate'
-            }
+            ...v3.section49ZeroCountMetrics
           };
-          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
-          if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
-          fs.appendFileSync(process.env.GITHUB_OUTPUT,[
-            `actual_iphone=${report.actualIPhoneSafariAcceptance}`,
-            `final_acceptance=${report.finalAcceptancePublication}`,
-            ''
-          ].join('\n'));
+          const nonZero=Object.entries(zeroMetrics).filter(([,value])=>value!==0);
+          if(nonZero.length) throw new Error(`Acceptance zero-count invariants failed: ${nonZero.map(([key,value])=>`${key}=${value}`).join(', ')}`);
+          const report={
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            contractProfile:'closed-loop-completion-profile/1',
+            ...metrics,
+            nativeExecutionCoverage:v3.nativeExecutionCoverage,
+            completedStages,
+            negativeCasesPassed,
+            storageFailureCasesPassed,
+            artifactRoundTrip,
+            deployedByteIdentity,
+            dataRouteClosure:dataRoute.dataRouteClosure,
+            infrastructureRouteClosure:infrastructureRoute.infrastructureRouteClosure,
+            physicalIphoneRequiredForTag:mobileGovernance.actualIPhoneRequiredForTag,
+            physicalIphoneAcceptance:mobileAcceptance
+          };
+          fs.writeFileSync('verification/closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
-      - name: Upload acceptance report
+          test -s verification/closed-loop-acceptance.json
+          test "$(node -p "JSON.parse(require('fs').readFileSync('verification/closed-loop-acceptance.json','utf8')).commit")" = "$GITHUB_SHA"
+      - name: Publish machine acceptance artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: closed-loop-acceptance-${{ github.sha }}-${{ github.run_id }}
-          path: closed-loop-acceptance.json
-      - name: Record blocked actual-iPhone acceptance
-        if: steps.acceptance.outputs.final_acceptance != 'true'
+          name: closed-loop-acceptance-${{ github.sha }}
+          path: verification/closed-loop-acceptance.json
+          if-no-files-found: error
+      - name: Create release tag only after physical-iPhone acceptance
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
+          MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
         run: |
           set -euo pipefail
-          echo "::notice title=Release tag blocked::Actual-iPhone Safari acceptance is not proven for ${GITHUB_SHA}; no release tag was created."
-          test "${{ steps.acceptance.outputs.actual_iphone }}" = false
-      - name: Create release tag only after deployed and actual-iPhone proof
-        if: steps.acceptance.outputs.final_acceptance == 'true'
-        run: |
-          set -euo pipefail
-          TAG="acceptance-${GITHUB_SHA::12}"
-          CHALLENGE="$(node -e "const r=require('./closed-loop-acceptance.json');const c=String(r.mobileAcceptanceChallenge||'').toLowerCase();if(!/^[0-9a-f]{32,}$/.test(c))process.exit(2);process.stdout.write(c);")"
-          CHALLENGE_TAG="mobile-acceptance-challenge-$CHALLENGE"
-          git config user.name closed-loop-release
-          git config user.email closed-loop-release@users.noreply.github.com
-          test -z "$(git ls-remote --tags origin "refs/tags/$CHALLENGE_TAG" | awk '{print $1}')"
-          EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
-          if [ -n "$EXISTING" ]; then
-            test "$EXISTING" = "$GITHUB_SHA"
-          fi
-          git tag "$CHALLENGE_TAG" "$GITHUB_SHA"
-          if [ -z "$EXISTING" ]; then
-            git tag "$TAG" "$GITHUB_SHA"
-            git push origin "refs/tags/$CHALLENGE_TAG" "refs/tags/$TAG"
-          else
-            git push origin "refs/tags/$CHALLENGE_TAG"
-          fi
+          ACCEPTED="$(node -p "JSON.parse(require('fs').readFileSync('verification/closed-loop-acceptance.json','utf8')).physicalIphoneAcceptance.accepted")"
+          test "$ACCEPTED" = true
+          CHALLENGE="$(node -p "JSON.parse(process.env.MOBILE_ACCEPTANCE_EVIDENCE_JSON||'{}').challenge||''")"
+          test -n "$CHALLENGE"
+          git fetch --tags --force
+          ! git rev-parse -q --verify "refs/tags/mobile-acceptance-challenge-$CHALLENGE" >/dev/null
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag -a "mobile-acceptance-challenge-$CHALLENGE" "$GITHUB_SHA" -m "Consumed physical-iPhone acceptance challenge $CHALLENGE"
+          git tag -a "closed-loop-accepted-$GITHUB_SHA" "$GITHUB_SHA" -m "Closed-loop exact deployed acceptance $GITHUB_SHA"
+          git push origin "refs/tags/mobile-acceptance-challenge-$CHALLENGE" "refs/tags/closed-loop-accepted-$GITHUB_SHA"
