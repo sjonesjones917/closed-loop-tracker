@@ -28,6 +28,7 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   const product=record('products',{PRODUCT_ID:productId,PRODUCT_VERSION:'1.0.0',BASELINE_ID:baselineId,EXECUTION_ID:'EXEC-1',STATUS:'COMPLETED'},'PROD-1',scope);
   const release=record('releaseRecords',{RELEASE_ID:releaseId,PRODUCT_ID:productId,BASELINE_ID:baselineId,HASH_REVIEW_ID:hashReviewId,DETERMINATION:'ACCEPTED',CONTROLLING_EVIDENCE:'EVIDENCE-REL-1'},'REL-1',scope);
   const evidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'TEST_OUTPUT',APPLICATION_EVIDENCE_CONTENT:'Evidence for requirement REQ-1 is complete and bound to the current release/product/baseline.',SHA256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',STATUS:'CURRENT'},'EVID-1',scope);
+  evidence.source='APPLICATION_TEST_RUNTIME';
   const instruction=record('instructions',{INSTRUCTION_ID:'INSTR-1',STATUS:'CURRENT',INSTRUCTION_TEXT:'Execute the Stage 29 requirement evidence validation.'},'INSTR-1',scope);
   const trace=record('instructionTraces',{TRACE_ID:'TRACE-1',REQ_ID:'REQ-1',INSTRUCTION_ID:'INSTR-1',INSTRUCTION_LOCATION:'stage-29.evidence-chain',IMPLEMENTED_BEHAVIOR:'Required evidence-chain validation',EVIDENCE_ID:'EVID-1',STATUS:'CURRENT'},'TRACE-1',scope);
   const test=record('tests',{REQ_ID:'REQ-1',TEST_ID:'TEST-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',STATUS:'READY'},'TEST-1',scope);
@@ -71,12 +72,37 @@ const weakSet=engine.currentEvidenceChainSet(weakProject);
 assert.equal(weakSet.complete,false,'Weak or missing evidence links must leave the chain incomplete.');
 assert.ok(weakSet.unknown.includes('REQ-1')||weakSet.missing.includes('REQ-1'),'Weak evidence must be rejected as incomplete.');
 
+// Invalid checkpoint evidence must be rejected through the real production transition.
+const nonexistentEvidenceProject=makeProject();
+engine.calculateEvidenceChains(nonexistentEvidenceProject);
+const nonexistentCheckpoint=engine.createPreDeliveryCheckpoint(nonexistentEvidenceProject,{packageId:'PKG-NONE',packageSha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',artifactManifestSha256:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'});
+const nonexistentCount=nonexistentEvidenceProject.projectData.backupCheckpoints.length;
+assert.throws(()=>engine.recordPreDeliveryCheckpointExport(nonexistentEvidenceProject,{checkpointId:nonexistentCheckpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-NOT-EXIST']}),/evidence|export|custody/i,'A nonexistent evidence ID must not manufacture BACKUP_EXPORT_ACTION_COMPLETED.');
+assert.equal(nonexistentEvidenceProject.projectData.backupCheckpoints.length,nonexistentCount,'Rejected export evidence must not mutate checkpoint state.');
+
+const genericEvidenceProject=makeProject();
+engine.calculateEvidenceChains(genericEvidenceProject);
+const genericCheckpoint=engine.createPreDeliveryCheckpoint(genericEvidenceProject,{packageId:'PKG-GENERIC',packageSha256:'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',artifactManifestSha256:'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'});
+const genericCount=genericEvidenceProject.projectData.backupCheckpoints.length;
+assert.throws(()=>engine.recordPreDeliveryCheckpointExport(genericEvidenceProject,{checkpointId:genericCheckpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-1']}),/evidence|export|custody/i,'Generic application test-output evidence must not prove a backup export action.');
+assert.equal(genericEvidenceProject.projectData.backupCheckpoints.length,genericCount,'Rejected generic evidence must not mutate checkpoint state.');
+
+const fabricatedProject=makeProject();
+engine.calculateEvidenceChains(fabricatedProject);
+fabricatedProject.projectData.backupCheckpoints.push(record('backupCheckpoints',{CHECKPOINT_ID:'CHECK-FAB',PACKAGE_ID:'PKG-FAB',PACKAGE_SHA256:'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:['EVID-1'],STATUS:'CURRENT'},'CHECK-FAB',{}));
+assert.equal(engine.currentPreDeliveryCheckpoint(fabricatedProject),null,'A manually fabricated exported checkpoint with missing current scope bindings must not satisfy the terminal prerequisite.');
+
 const checkpointProject=makeProject();
-const checkpoint=engine.createPreDeliveryCheckpoint(checkpointProject,{packageId:'PKG-1',packageSha256:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',artifactManifestSha256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',scope});
+const calculated=engine.calculateEvidenceChains(checkpointProject);
+assert.equal(calculated.complete,true,'Checkpoint proof requires the exact current evidence-chain calculation first.');
+const checkpoint=engine.createPreDeliveryCheckpoint(checkpointProject,{packageId:'PKG-1',packageSha256:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',artifactManifestSha256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'});
 assert.equal(checkpoint.CUSTODY_STATE,'BACKUP_PACKAGE_GENERATED','The real checkpoint creation path must begin as generated package custody.');
 assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject),null,'Generated-only backup custody must not satisfy the terminal pre-delivery gate.');
-const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-1']});
-assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through the export-custody action.');
-assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only the export-custody state can satisfy the terminal gate.');
+const exportEvidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'9999999999999999999999999999999999999999999999999999999999999999',STATUS:'CURRENT'},'EVID-EXPORT-1',{...scope,releaseId:'REL-1',hashReviewId:'HASH-1',evidenceChainVersion:checkpointProject.job.CURRENT_EVIDENCE_CHAIN_VERSION});
+exportEvidence.source='OPERATOR_ACTION';
+checkpointProject.projectData.evidenceRecords.push(exportEvidence);
+const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-EXPORT-1']});
+assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound actual export-custody action.');
+assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
 
-console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true}));
+console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true}));
