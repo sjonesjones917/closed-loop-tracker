@@ -50,6 +50,10 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   injectRelease(p,{determination:'ACCEPTED',releaseEvidenceSha256:'0'.repeat(64)});
   const gate=engine.gate(27,p);
   assert.equal(gate.complete,false,'Stage 27 accepted a release record that contradicts the current application calculation.');
+  p.projectData.releaseRecords.length=0;
+  const calculated=engine.recordReleaseDetermination(p);
+  assert.equal(calculated.DETERMINATION,'BLOCKED','CALCULATE_RELEASE must fail closed as BLOCKED instead of throwing on incomplete release evidence.');
+  assert.equal(engine.currentReleaseBinding(p).current,true,'Application-calculated BLOCKED release is not current-bound.');
 }
 
 // Invalid fixture 2: even a previously application-calculated release becomes stale after a
@@ -58,11 +62,13 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   const p=fixture('JOB-STAGE27-STALE');
   const first=engine.recordReleaseDetermination(p);
   const beforeHash=first.releaseEvidenceSha256;
-  p.projectData.blockers.push({
-    id:'BLOCKER-RELEASE-CHANGE',stage:27,active:true,scope:engine.currentScope(p),
-    fields:{BLOCKER_ID:'BLOCKER-RELEASE-CHANGE',STATUS:'OPEN',WHY_WORK_CANNOT_CONTINUE:'New current release blocker.'},
-    BLOCKER_ID:'BLOCKER-RELEASE-CHANGE',STATUS:'OPEN',WHY_WORK_CANNOT_CONTINUE:'New current release blocker.'
-  });
+  const audit={
+    id:'PROCESS-AUDIT-RELEASE-CHANGE',stage:26,active:true,scope:engine.currentScope(p),
+    fields:{PROCESS_AUDIT_ID:'PROCESS-AUDIT-RELEASE-CHANGE',PROCESS_DETERMINATION:'UNDETERMINED'},
+    PROCESS_AUDIT_ID:'PROCESS-AUDIT-RELEASE-CHANGE',PROCESS_DETERMINATION:'UNDETERMINED'
+  };
+  engine.refreshRecordHashes(audit,'processAudits');
+  p.projectData.processAudits.push(audit);
   const currentMetrics=engine.releaseMetrics(p);
   const currentHash=hash.sha256Value({metrics:currentMetrics,inputReferences:currentMetrics.inputReferences});
   assert.notEqual(currentHash,beforeHash,'The mutation fixture did not change release evidence.');
@@ -71,7 +77,9 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   const repaired=engine.recordReleaseDetermination(p);
   assert.notEqual(repaired.releaseEvidenceSha256,beforeHash,'Release recalculation did not supersede stale evidence.');
   assert.equal(repaired.DETERMINATION,currentMetrics.determination,'Repaired release record does not match the application calculation.');
-  assert.equal(engine.gate(27,p).complete,true,'The same Stage 27 gate did not progress after exact release recalculation.');
+  assert.equal(engine.currentReleaseBinding(p).current,true,'Release recalculation did not restore the current release binding.');
+  p.stages[26].status='COMPLETE';p.stages[26].gate={complete:true,blocked:false,reasons:[]};
+  assert.equal(engine.gate(27,p).complete,true,'The same Stage 27 gate did not progress after exact release recalculation with its isolated Stage 26 prerequisite restored.');
   assert.equal(engine.recordReleaseDetermination(p).id,repaired.id,'Exact release recalculation retry is not idempotent.');
 }
 
