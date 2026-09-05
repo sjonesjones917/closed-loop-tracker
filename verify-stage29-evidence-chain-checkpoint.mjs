@@ -10,6 +10,8 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
+const storeSource=fs.readFileSync('project-store.js','utf8');
+const appSource=fs.readFileSync('app-core.js','utf8');
 assert(core&&schema&&engine,'Stage 29 verifier requires production runtime modules.');
 assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.executorClass,'APPLICATION','Stage 29 calculation must remain application-owned.');
 assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.retryRule,'IDEMPOTENT_COMMAND','Stage 29 calculation must use the closed idempotent command contract.');
@@ -18,6 +20,8 @@ assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.acceptanc
 assert.equal(typeof engine.calculateEvidenceChains,'function','Production runtime must expose the Stage 29 CALCULATE_EVIDENCE_CHAINS application command rather than direct collection mutation.');
 assert.equal(typeof engine.createPreDeliveryCheckpoint,'function','Production runtime must expose a real pre-delivery checkpoint creation path.');
 assert.equal(typeof engine.recordPreDeliveryCheckpointExport,'function','Production runtime must record the real backup export custody transition instead of accepting manually fabricated checkpoint records.');
+assert.equal(typeof engine.recordPreDeliveryCheckpointExportEvidence,'function','Production runtime must create operator export evidence through an application command.');
+assert(storeSource.includes('exportPackageWithReceipt')&&appSource.includes('exportPackageWithReceipt')&&appSource.includes('recordPreDeliveryCheckpointExport'),'The visible backup path must use the verified receipt and production custody commands.');
 
 const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-v001',requirementsVersion:'REQ-v001',testSuiteVersion:'TEST-v001',instructionVersion:'INSTR-v001',iterationId:'ITER-1',candidateId:'CAND-1',baselineId:'BASE-1',productId:'PROD-1',productVersion:'1.0.0',deliveryCandidateSetId:'SET-1'};
 const record=(family,fields,id,sc=scope)=>{const def=schema.RECORD_SCHEMAS[family]; return {id,active:true,fields:{...fields,[def.idField]:id},...fields,[def.idField]:id,scope:sc};};
@@ -54,8 +58,7 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
 const validProject=makeProject();
 const validSet=engine.currentEvidenceChainSet(validProject);
 assert.equal(validSet.requirementIds.includes('REQ-1'),true,'A mandatory requirement must be present in the current scope.');
-validProject.job.CURRENT_EVIDENCE_CHAIN_VERSION=validSet.expectedVersion;
-assert.equal(engine.currentEvidenceChainSet(validProject).complete,true,'The exact current product, release, baseline, and hash-review binding should complete the Stage 29 set.');
+assert.equal(validProject.job.CURRENT_EVIDENCE_CHAIN_VERSION,null,'The verifier must begin without a pre-seeded current evidence-chain version.');
 const validResult=engine.calculateEvidenceChains(validProject);
 assert.equal(validResult.complete,true,'The application command must compute a complete current evidence-chain set.');
 assert.equal(validResult.version,validProject.job.CURRENT_EVIDENCE_CHAIN_VERSION,'The current version must match the authoritative calculated set.');
@@ -106,8 +109,16 @@ assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject),null,'Genera
 const exportEvidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'9999999999999999999999999999999999999999999999999999999999999999',STATUS:'CURRENT'},'EVID-EXPORT-1',{...scope,releaseId:'REL-1',hashReviewId:'HASH-1',evidenceChainVersion:checkpointProject.job.CURRENT_EVIDENCE_CHAIN_VERSION});
 exportEvidence.source='OPERATOR_ACTION';
 checkpointProject.projectData.evidenceRecords.push(exportEvidence);
-const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-EXPORT-1']});
+const receipt={packageId:'PACKAGE-1',packageSha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',projectSha256:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',artifactManifestSha256:'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',artifactIdentities:[],generatedAt:new Date().toISOString()};
+const receiptCheckpointProject=makeProject();
+engine.calculateEvidenceChains(receiptCheckpointProject);
+const receiptCheckpoint=engine.createPreDeliveryCheckpoint(receiptCheckpointProject,{packageId:receipt.packageId,packageSha256:receipt.packageSha256,artifactManifestSha256:receipt.artifactManifestSha256,packageReceipt:receipt,artifactIdentities:receipt.artifactIdentities,evidenceChainSetHash:engine.currentEvidenceChainSet(receiptCheckpointProject).setHash});
+const receiptEvidence=engine.recordPreDeliveryCheckpointExportEvidence(receiptCheckpointProject,{checkpointId:receiptCheckpoint.CHECKPOINT_ID,packageReceipt:receipt,scope:scope});
+const exported=engine.recordPreDeliveryCheckpointExport(receiptCheckpointProject,{checkpointId:receiptCheckpoint.CHECKPOINT_ID,exportEvidenceIds:[receiptEvidence.id||receiptEvidence.EVIDENCE_ID],scope:scope});
 assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound actual export-custody action.');
-assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
+assert.equal(engine.currentPreDeliveryCheckpoint(receiptCheckpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
+const retry=engine.recordPreDeliveryCheckpointExport(receiptCheckpointProject,{checkpointId:receiptCheckpoint.CHECKPOINT_ID,exportEvidenceIds:[receiptEvidence.id||receiptEvidence.EVIDENCE_ID],scope:scope});
+assert.equal(retry.id,exported.id,'An exact export retry must return the same append-only successor.');
+assert.equal(receiptCheckpointProject.projectData.backupCheckpoints.filter(r=>r.active!==false&&r.CUSTODY_STATE==='BACKUP_EXPORT_ACTION_COMPLETED').length,1,'An exact export retry must not duplicate the successor checkpoint.');
 
 console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true}));

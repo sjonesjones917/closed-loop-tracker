@@ -900,7 +900,7 @@ function calculateEvidenceChains(project){
   }});
 }
 
-function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactManifestSha256=null,scope=currentScope(project),projectRevision=Number(project.revision||0),exportEvidenceIds=[],status='CURRENT',custodyState='BACKUP_PACKAGE_GENERATED'}={}){
+function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactManifestSha256=null,packageReceipt=null,artifactIdentities=[],evidenceChainSetHash='',scope=currentScope(project),projectRevision=Number(project.revision||0),exportEvidenceIds=[],status='CURRENT',custodyState='BACKUP_PACKAGE_GENERATED'}={}){
   ensureShape(project);
   const safePackageId=String(packageId||'').trim();
   const safePackageSha256=String(packageSha256||'').trim();
@@ -911,7 +911,7 @@ function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactMa
   if(!/^[a-fA-F0-9]{64}$/.test(safePackageSha256))throw new Error('A valid SHA-256 package digest is required for the current pre-delivery checkpoint.');
   if(safeManifestSha256 && !/^[a-fA-F0-9]{64}$/.test(safeManifestSha256))throw new Error('The artifact manifest digest must be a valid SHA-256 value when supplied.');
   if(upper(String(custodyState||''))!=='BACKUP_PACKAGE_GENERATED')throw new Error('Pre-delivery checkpoint creation must always begin in BACKUP_PACKAGE_GENERATED custody.');
-  const payload={packageId:safePackageId,packageSha256:safePackageSha256,artifactManifestSha256:safeManifestSha256,projectRevision:Number(projectRevision||0),scope,exportEvidenceIds:safe(exportEvidenceIds).map(String),custodyState:'BACKUP_PACKAGE_GENERATED',status:'CURRENT'};
+  const payload={packageId:safePackageId,packageSha256:safePackageSha256,artifactManifestSha256:safeManifestSha256,packageReceipt:packageReceipt?clone(packageReceipt):null,artifactIdentities:clone(artifactIdentities),evidenceChainSetHash:String(evidenceChainSetHash||''),projectRevision:Number(projectRevision||0),scope,exportEvidenceIds:safe(exportEvidenceIds).map(String),custodyState:'BACKUP_PACKAGE_GENERATED',status:'CURRENT'};
   return commandIdempotentReceipt(project,{commandType:'CREATE_PRE_DELIVERY_CHECKPOINT',target:'backupCheckpoints',expectedRevision:Number(project.revision||0),payload,execute:()=>{
     const existing=safe(project.projectData.backupCheckpoints).find(r=>String(recordValue(r,'PACKAGE_ID')||'')===String(payload.packageId)&&String(recordValue(r,'PACKAGE_SHA256')||'')===String(payload.packageSha256)&&upper(recordValue(r,'STATUS')||'CURRENT')!=='SUPERSEDED'&&upper(recordValue(r,'CUSTODY_STATE')||'')===upper(payload.custodyState));
     if(existing)return existing;
@@ -920,7 +920,7 @@ function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactMa
     const baseline=recordsForCurrentScope(project,'baselines').at(-1) || null;
     const checkpointScope={...(scope||currentScope(project)),releaseId:release?recordId(release,'releaseRecords'):String(scope?.releaseId||''),productId:product?recordId(product,'products'):String(scope?.productId||''),baselineId:baseline?recordId(baseline,'baselines'):String(scope?.baselineId||''),hashReviewId:String(project.job?.CURRENT_HASH_REVIEW_ID||scope?.hashReviewId||''),evidenceChainVersion:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||scope?.evidenceChainVersion||''),projectRevision:Number(projectRevision||project.revision||0)};
     const id=allocateId(project,'backupCheckpoints');
-    const record={id,stage:29,createdAt:now(),updatedAt:now(),active:true,source:'APPLICATION_DERIVATION',scope:checkpointScope,fields:{CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'},CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'};
+    const record={id,stage:29,createdAt:now(),updatedAt:now(),active:true,source:'APPLICATION_DERIVATION',scope:checkpointScope,fields:{CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(payload.packageReceipt?.projectSha256||project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||payload.packageReceipt?.artifactManifestSha256||''),PACKAGE_RECEIPT:payload.packageReceipt,ARTIFACT_IDENTITIES:payload.artifactIdentities,EVIDENCE_CHAIN_SET_SHA256:payload.evidenceChainSetHash,CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'},CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(payload.packageReceipt?.projectSha256||project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||payload.packageReceipt?.artifactManifestSha256||''),PACKAGE_RECEIPT:payload.packageReceipt,ARTIFACT_IDENTITIES:payload.artifactIdentities,EVIDENCE_CHAIN_SET_SHA256:payload.evidenceChainSetHash,CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'};
     refreshRecordHashes(record,'backupCheckpoints');
     project.projectData.backupCheckpoints.push(record);
     return record;
@@ -946,7 +946,7 @@ function recordPreDeliveryCheckpointExport(project,{checkpointId,exportEvidenceI
     const kind=upper(String(recordValue(evidence,'APPLICATION_EVIDENCE_KIND')||''));
     const content=String(recordValue(evidence,'APPLICATION_EVIDENCE_CONTENT')||'');
     const source=String(evidence.source||'');
-    const matchesCheckpoint=content.includes(logicalCheckpointId)||content.includes(String(recordValue(checkpoint,'PACKAGE_ID')||''))||content.includes(String(recordValue(checkpoint,'PACKAGE_SHA256')||''));
+    const matchesCheckpoint=content.includes(logicalCheckpointId)&&content.includes(String(recordValue(checkpoint,'PACKAGE_ID')||''))&&content.includes(String(recordValue(checkpoint,'PACKAGE_SHA256')||''));
     if(kind!=='BACKUP_EXPORT_ACTION_COMPLETED'||source!=='OPERATOR_ACTION'||!matchesCheckpoint)throw new Error('Export custody requires a real BACKUP_EXPORT_ACTION_COMPLETED operator-evidence record bound to the exact created checkpoint.');
   }
   if(String(project.job?.CURRENT_RELEASE_ID||'')&&String(emitScope.releaseId||'')&&String(project.job?.CURRENT_RELEASE_ID||'')!==String(emitScope.releaseId||''))throw new Error('Export custody must remain bound to the exact current release.');
@@ -997,6 +997,19 @@ function recordPreDeliveryCheckpointExport(project,{checkpointId,exportEvidenceI
   }});
 }
 
+function recordPreDeliveryCheckpointExportEvidence(project,{checkpointId,packageReceipt,scope=currentScope(project)}={}){
+  ensureShape(project);
+  const checkpointIdValue=String(checkpointId||'').trim(),receipt=packageReceipt&&typeof packageReceipt==='object'?clone(packageReceipt):null;
+  if(!checkpointIdValue||!receipt?.packageSha256)throw new Error('Export evidence requires the exact generated package receipt and checkpoint.');
+  const checkpoint=safe(project.projectData.backupCheckpoints).find(r=>recordId(r,'backupCheckpoints')===checkpointIdValue);
+  if(!checkpoint||String(recordValue(checkpoint,'PACKAGE_ID')||'')!==String(receipt.packageId||'')||String(recordValue(checkpoint,'PACKAGE_SHA256')||'')!==String(receipt.packageSha256||''))throw new Error('Export evidence must match the exact generated package checkpoint.');
+  const payload={checkpointId:checkpointIdValue,packageReceipt:receipt,scope};
+  return commandIdempotentReceipt(project,{commandType:'RECORD_PRE_DELIVERY_CHECKPOINT_EXPORT_EVIDENCE',target:'evidenceRecords',expectedRevision:Number(project.revision||0),payload,execute:()=>{
+    const content=JSON.stringify({checkpointId:checkpointIdValue,packageId:String(receipt.packageId||''),packageSha256:String(receipt.packageSha256)});
+    return commandRecord(project,'evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_DESCRIPTION:'Operator action initiated the visible backup download for the exact generated package.',APPLICATION_EVIDENCE_CONTENT:content,KIND:'BACKUP_EXPORT_ACTION_COMPLETED',DESCRIPTION:'Operator action initiated the visible backup download for the exact generated package.',LOCATION:'VISIBLE_BACKUP_DOWNLOAD',CONTENT:content,SHA256:hash.sha256Value(content),STATUS:'CURRENT'},{stage:29,source:'OPERATOR_ACTION',scope});
+  }});
+}
+
 function currentPreDeliveryCheckpoint(project){
   ensureShape(project);
   const rank={BACKUP_PACKAGE_GENERATED:0,BACKUP_EXPORT_ACTION_COMPLETED:1,EXTERNAL_COPY_CONFIRMED:2,RESTORE_TESTED_FROM_EXPORTED_COPY:3};
@@ -1025,7 +1038,7 @@ function currentPreDeliveryCheckpoint(project){
   for(const key of requiredScopeKeys){
     const jobValue=String(project.job?.[key==='releaseId'?'CURRENT_RELEASE_ID':key==='productId'?'CURRENT_PRODUCT_ID':key==='baselineId'?'CURRENT_BASELINE_ID':key==='candidateId'?'CURRENT_CANDIDATE_ID':key==='hashReviewId'?'CURRENT_HASH_REVIEW_ID':'CURRENT_EVIDENCE_CHAIN_VERSION']||'');
     const scopeValue=String(scopeRecord[key]||'');
-    if(jobValue && (!scopeValue || scopeValue!==jobValue))return null;
+    if(!scopeValue || (jobValue && scopeValue!==jobValue))return null;
   }
   return checkpoint;
 }
@@ -1409,7 +1422,7 @@ globalThis.closedLoopWorkflowEngine=Object.freeze({recordMigratedAcceptedChange,
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
   unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,confirmedDefects,unresolvedMaterialDefects,
   currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationPhaseTargetAvailability,testDueState,verificationMatrix,evaluateCorrectedIterationLineage,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,selectReleaseDisposition,  releaseMetrics,releaseBinding,releaseRecordMatchesBinding,deliveryIntentValidation,applicationTestCapabilities,evaluateCapabilityReadiness,capabilityAffirmativelyAvailable,canonicalTestBindingCatalog,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,intakeCoverageManifest,parseCapturedInputSet,evaluateIntakeAccounting,obligationManifest,evaluateObligationAccounting,representationInspectionCoverage,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
-  recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,currentEvidenceChainSet,calculateEvidenceChains,createPreDeliveryCheckpoint,currentPreDeliveryCheckpoint,recordPreDeliveryCheckpointExport,verifyArtifactIdentity,captureDeliveryIntent
+  recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,  constructEvidenceChains,currentEvidenceChainSet,calculateEvidenceChains,createPreDeliveryCheckpoint,currentPreDeliveryCheckpoint,recordPreDeliveryCheckpointExport,recordPreDeliveryCheckpointExportEvidence,verifyArtifactIdentity,captureDeliveryIntent
 });
 })();
 /* INTEGRATED CONTROLLING COMPLETION 53-70 */
