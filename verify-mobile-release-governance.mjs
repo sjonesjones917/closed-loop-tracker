@@ -21,6 +21,9 @@ export function releaseTagEligibility(status){
     status.mobileAcceptanceBasePath==='/closed-loop-tracker/'&&
     NONEMPTY(status.mobileAcceptanceTestProjectId)&&
     NONEMPTY(status.mobileAcceptancePerformer)&&
+    NONEMPTY(status.mobileAcceptanceSubmitter)&&
+    NONEMPTY(status.mobileAcceptanceIosVersion)&&
+    NONEMPTY(status.mobileAcceptanceSafariUserAgent)&&
     status.mobileAcceptancePhysicalDeviceAssertion===true
   );
 }
@@ -56,6 +59,7 @@ export function assertWorkflowGovernance(workflow){
   return true;
 }
 
+const safariUserAgent='Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1';
 const completePhysicalEvidence={
   actualIPhoneSafariAcceptance:true,
   mobileAcceptanceResult:'ACCEPTED',
@@ -68,6 +72,9 @@ const completePhysicalEvidence={
   mobileAcceptanceBasePath:'/closed-loop-tracker/',
   mobileAcceptanceTestProjectId:'JOB-MOBILE-001',
   mobileAcceptancePerformer:'authorized-operator',
+  mobileAcceptanceSubmitter:'acceptance-controller',
+  mobileAcceptanceIosVersion:'19.0',
+  mobileAcceptanceSafariUserAgent:safariUserAgent,
   mobileAcceptancePhysicalDeviceAssertion:true
 };
 
@@ -77,6 +84,9 @@ assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptance
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceEvidenceId:null}),false,'Missing physical evidence must block tagging.');
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceEvidenceBasis:'SELF_ASSERTED'}),false,'Self-asserted evidence cannot satisfy the pinned physical-device gate.');
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceOrigin:'https://example.invalid'}),false,'A different origin cannot satisfy the canonical deployment identity.');
+assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceSubmitter:null}),false,'Missing authenticated submitter identity must block tagging.');
+assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceIosVersion:null}),false,'Missing pinned iOS identity must block tagging.');
+assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceSafariUserAgent:null}),false,'Missing pinned Safari identity must block tagging.');
 assert.equal(releaseTagEligibility({...completePhysicalEvidence,actualAndroidChromeAcceptance:true,actualIPhoneSafariAcceptance:false}),false,'Android acceptance cannot satisfy the iPhone requirement.');
 
 assert.equal(isClosedLoopUtcInstant('2026-09-03T00:00:00.000Z'),true,'Exact UTC instant syntax must be accepted.');
@@ -96,6 +106,8 @@ const target={
   basePath:'/closed-loop-tracker/',
   testProjectId:'JOB-MOBILE-001',
   procedureVersion:'actual-iphone-safari/1',
+  iosVersion:'19.0',
+  safariUserAgent,
   viewport:{width:393,height:852,devicePixelRatio:3}
 };
 const capabilityProbe={
@@ -117,8 +129,8 @@ const evidence={
   evidenceBasis:'HUMAN_OBSERVATION',
   performer:'authorized-operator',
   identityAssurance:'SELF_ASSERTED',
-  iosVersion:'19.0',
-  safariUserAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1',
+  iosVersion:target.iosVersion,
+  safariUserAgent:target.safariUserAgent,
   viewport:{...target.viewport},
   mobileCapabilityProbe:capabilityProbe,
   operationReceipts:REQUIRED_MOBILE_RECEIPT_KINDS.map((kind,index)=>({kind,receiptId:`MR-${String(index+1).padStart(3,'0')}`,result:'PASS'})),
@@ -129,6 +141,10 @@ const evidence={
 };
 const expected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T00:00:00.000Z'};
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true,'Complete pinned mobile evidence must validate.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,iosVersion:''},evidence,expected}).accepted,false,'Target without a pinned iOS version must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target:{...target,safariUserAgent:''},evidence,expected}).accepted,false,'Target without a pinned Safari identity must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,iosVersion:'18.7'},expected}).accepted,false,'Evidence from a different iOS version must be rejected.');
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Version/19.0','Version/18.6')},expected}).accepted,false,'Evidence from a different Safari identity must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challenge:'f'.repeat(32)},expected}).accepted,false,'Mismatched challenge must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Safari/604.1','CriOS/140.0.0.0 Mobile/15E148 Safari/604.1')},expected}).accepted,false,'A substitute iOS browser must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operationReceipts:evidence.operationReceipts.slice(1)},expected}).accepted,false,'Missing required physical operator-path evidence must be rejected.');
@@ -147,14 +163,19 @@ assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,mobile
 const noSubmission=evaluateMobileAcceptanceSubmission();
 assert.equal(noSubmission.actualIPhoneSafariAcceptance,false,'No physical evidence submission must remain blocked.');
 assert.equal(noSubmission.mobileAcceptanceResult,'BLOCKED_ENVIRONMENT','No physical evidence submission must report an environment blocker.');
+const unauthenticatedSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(evidence),expected});
+assert.equal(unauthenticatedSubmission.actualIPhoneSafariAcceptance,false,'Physical evidence without authenticated submitter identity must not satisfy acceptance.');
+assert.equal(unauthenticatedSubmission.mobileAcceptanceResult,'BLOCKED','Missing authenticated submitter must fail closed.');
 const acceptedSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(evidence),expected,submitter:'acceptance-controller'});
 assert.equal(acceptedSubmission.actualIPhoneSafariAcceptance,true,'Valid authenticated physical evidence must be capable of satisfying the acceptance bridge.');
 assert.equal(acceptedSubmission.mobileAcceptanceResult,'ACCEPTED','Valid authenticated physical evidence must publish ACCEPTED.');
 assert.equal(acceptedSubmission.mobileAcceptanceSubmitter,'acceptance-controller','The authenticated submitter must be retained.');
-const reusedSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(evidence),expected,usedChallenges:[target.challenge.toUpperCase()]});
+assert.equal(acceptedSubmission.mobileAcceptanceIosVersion,target.iosVersion,'The accepted result must retain the pinned iOS identity.');
+assert.equal(acceptedSubmission.mobileAcceptanceSafariUserAgent,target.safariUserAgent,'The accepted result must retain the pinned Safari identity.');
+const reusedSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(evidence),expected,usedChallenges:[target.challenge.toUpperCase()],submitter:'acceptance-controller'});
 assert.equal(reusedSubmission.actualIPhoneSafariAcceptance,false,'A previously used challenge must not satisfy acceptance.');
 assert.equal(reusedSubmission.mobileAcceptanceResult,'BLOCKED','Challenge reuse must fail closed.');
-const partialSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:''});
+const partialSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:'',submitter:'acceptance-controller'});
 assert.equal(partialSubmission.mobileAcceptanceResult,'BLOCKED','Target and evidence must be submitted together.');
 
 const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
@@ -175,6 +196,8 @@ console.log(JSON.stringify({
   selfAssertionRejected:true,
   canonicalOriginBound:true,
   exactTargetBindingVerified:true,
+  pinnedIosAndSafariIdentityVerified:true,
+  authenticatedSubmitterRequired:true,
   singleUseChallengeVerified:true,
   challengeCaseNormalizationVerified:true,
   expiredChallengeRejected:true,

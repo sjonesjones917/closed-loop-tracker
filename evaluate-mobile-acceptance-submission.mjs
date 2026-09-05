@@ -17,7 +17,10 @@ const blocked=(disposition,requiredAction,actor,details=[])=>({
   mobileAcceptanceBasePath:MOBILE_ACCEPTANCE_BASE_PATH,
   mobileAcceptanceTestProjectId:null,
   mobileAcceptancePerformer:null,
+  mobileAcceptanceIdentityAssurance:null,
   mobileAcceptancePhysicalDeviceAssertion:false,
+  mobileAcceptanceIosVersion:null,
+  mobileAcceptanceSafariUserAgent:null,
   mobileAcceptanceChallenge:null,
   mobileAcceptanceSubmitter:null,
   mobileAcceptanceBlockers:[{disposition,requiredAction,actor,controllingClauses:['45.1','45.2','46','49'],details}],
@@ -53,6 +56,14 @@ export function evaluateMobileAcceptanceSubmission({targetJson='',evidenceJson='
       ['TARGET_AND_EVIDENCE_MUST_BE_PAIRED']
     );
   }
+  if(!NONEMPTY(submitter)){
+    return blocked(
+      'BLOCKED',
+      'Submit physical-device evidence through an authenticated workflow context that records the submitter identity.',
+      'Repository acceptance controller',
+      ['AUTHENTICATED_SUBMITTER_REQUIRED']
+    );
+  }
 
   let target;
   let evidence;
@@ -80,10 +91,13 @@ export function evaluateMobileAcceptanceSubmission({targetJson='',evidenceJson='
       mobileAcceptanceSourceCommit:evidence.sourceCommit||target.sourceCommit||null,
       mobileAcceptanceDeploymentManifestDigest:evidence.deploymentManifestDigest||target.deploymentManifestDigest||null,
       mobileAcceptanceTestProjectId:evidence.testProjectId||target.testProjectId||null,
-      mobileAcceptancePerformer:evidence.performer||null,
+      mobileAcceptancePerformer:target.performer||evidence.performer||null,
+      mobileAcceptanceIdentityAssurance:target.identityAssurance||evidence.identityAssurance||null,
       mobileAcceptancePhysicalDeviceAssertion:evidence.physicalDeviceAssertion===true,
+      mobileAcceptanceIosVersion:target.iosVersion||evidence.iosVersion||null,
+      mobileAcceptanceSafariUserAgent:target.safariUserAgent||evidence.safariUserAgent||null,
       mobileAcceptanceChallenge:target.challenge||null,
-      mobileAcceptanceSubmitter:submitter||null
+      mobileAcceptanceSubmitter:submitter
     };
   }
 
@@ -98,10 +112,13 @@ export function evaluateMobileAcceptanceSubmission({targetJson='',evidenceJson='
     mobileAcceptanceOrigin:evidence.origin,
     mobileAcceptanceBasePath:evidence.basePath,
     mobileAcceptanceTestProjectId:evidence.testProjectId,
-    mobileAcceptancePerformer:evidence.performer,
+    mobileAcceptancePerformer:verification.performer,
+    mobileAcceptanceIdentityAssurance:verification.identityAssurance,
     mobileAcceptancePhysicalDeviceAssertion:true,
+    mobileAcceptanceIosVersion:verification.iosVersion,
+    mobileAcceptanceSafariUserAgent:verification.safariUserAgent,
     mobileAcceptanceChallenge:target.challenge,
-    mobileAcceptanceSubmitter:submitter||null,
+    mobileAcceptanceSubmitter:submitter,
     mobileAcceptanceBlockers:[],
     physicalIPhoneJobResult:'success'
   };
