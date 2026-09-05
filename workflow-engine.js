@@ -920,7 +920,7 @@ function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactMa
     const baseline=recordsForCurrentScope(project,'baselines').at(-1) || null;
     const checkpointScope={...(scope||currentScope(project)),releaseId:release?recordId(release,'releaseRecords'):String(scope?.releaseId||''),productId:product?recordId(product,'products'):String(scope?.productId||''),baselineId:baseline?recordId(baseline,'baselines'):String(scope?.baselineId||''),hashReviewId:String(project.job?.CURRENT_HASH_REVIEW_ID||scope?.hashReviewId||''),evidenceChainVersion:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||scope?.evidenceChainVersion||''),projectRevision:Number(projectRevision||project.revision||0)};
     const id=allocateId(project,'backupCheckpoints');
-    const record={id,stage:29,createdAt:now(),updatedAt:now(),active:true,source:'APPLICATION_DERIVATION',scope:checkpointScope,fields:{CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(payload.packageReceipt?.projectSha256||project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||payload.packageReceipt?.artifactManifestSha256||''),PACKAGE_RECEIPT:payload.packageReceipt,ARTIFACT_IDENTITIES:payload.artifactIdentities,EVIDENCE_CHAIN_SET_SHA256:payload.evidenceChainSetHash,CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'},CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(payload.packageReceipt?.projectSha256||project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||payload.packageReceipt?.artifactManifestSha256||''),PACKAGE_RECEIPT:payload.packageReceipt,ARTIFACT_IDENTITIES:payload.artifactIdentities,EVIDENCE_CHAIN_SET_SHA256:payload.evidenceChainSetHash,CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'};
+    const record={id,stage:29,createdAt:now(),updatedAt:now(),active:true,source:'APPLICATION_DERIVATION',scope:checkpointScope,fields:{CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:String(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(payload.packageReceipt?.projectSha256||project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||payload.packageReceipt?.artifactManifestSha256||''),PACKAGE_RECEIPT:payload.packageReceipt,ARTIFACT_IDENTITIES:payload.artifactIdentities,EVIDENCE_CHAIN_SET_SHA256:payload.evidenceChainSetHash,CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'},CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:String(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(payload.packageReceipt?.projectSha256||project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||payload.packageReceipt?.artifactManifestSha256||''),PACKAGE_RECEIPT:payload.packageReceipt,ARTIFACT_IDENTITIES:payload.artifactIdentities,EVIDENCE_CHAIN_SET_SHA256:payload.evidenceChainSetHash,CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'};
     refreshRecordHashes(record,'backupCheckpoints');
     project.projectData.backupCheckpoints.push(record);
     return record;
@@ -968,19 +968,20 @@ function recordPreDeliveryCheckpointExport(project,{checkpointId,exportEvidenceI
     checkpointRecord.STATUS='SUPERSEDED';
     checkpointRecord.updatedAt=now();
     refreshRecordHashes(checkpointRecord,'backupCheckpoints');
+    const exportId=allocateId(project,'backupCheckpoints');
     const exportRecord={
-      id:allocateId(project,'backupCheckpoints'),
+      id:exportId,
       stage:29,
       createdAt:now(),
       updatedAt:now(),
       active:true,
       source:'APPLICATION_DERIVATION',
       scope:emitScope,
-      fields:{CHECKPOINT_ID:logicalCheckpointId,PACKAGE_ID:String(recordValue(checkpointRecord,'PACKAGE_ID')||String(checkpointId||'')),PACKAGE_SHA256:String(recordValue(checkpointRecord,'PACKAGE_SHA256')||''),PROJECT_REVISION:Number(recordValue(checkpointRecord,'PROJECT_REVISION')||project.revision||0),PROJECT_SHA256:String(recordValue(checkpointRecord,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpointRecord,'ARTIFACT_MANIFEST_SHA256')||''),CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:evidenceIds,RESTORE_EVIDENCE_IDS:[],SCOPE:emitScope,STATUS:'CURRENT',EXPORT_EVENT_ID:exportEventId,PREVIOUS_CHECKPOINT_ID:logicalCheckpointId},
-      CHECKPOINT_ID:logicalCheckpointId,
+      fields:{CHECKPOINT_ID:exportId,PACKAGE_ID:String(recordValue(checkpointRecord,'PACKAGE_ID')||String(checkpointId||'')),PACKAGE_SHA256:String(recordValue(checkpointRecord,'PACKAGE_SHA256')||''),PROJECT_REVISION:String(recordValue(checkpointRecord,'PROJECT_REVISION')||project.revision||0),PROJECT_SHA256:String(recordValue(checkpointRecord,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpointRecord,'ARTIFACT_MANIFEST_SHA256')||''),CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:evidenceIds,RESTORE_EVIDENCE_IDS:[],SCOPE:emitScope,STATUS:'CURRENT',EXPORT_EVENT_ID:exportEventId,PREVIOUS_CHECKPOINT_ID:logicalCheckpointId},
+      CHECKPOINT_ID:exportId,
       PACKAGE_ID:String(recordValue(checkpointRecord,'PACKAGE_ID')||String(checkpointId||'')),
       PACKAGE_SHA256:String(recordValue(checkpointRecord,'PACKAGE_SHA256')||''),
-      PROJECT_REVISION:Number(recordValue(checkpointRecord,'PROJECT_REVISION')||project.revision||0),
+      PROJECT_REVISION:String(recordValue(checkpointRecord,'PROJECT_REVISION')||project.revision||0),
       PROJECT_SHA256:String(recordValue(checkpointRecord,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),
       ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpointRecord,'ARTIFACT_MANIFEST_SHA256')||''),
       CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',
