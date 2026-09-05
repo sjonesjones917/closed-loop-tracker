@@ -638,7 +638,7 @@ function gate(stage,project){
         if(missing.length)reasons.push(`Complete evidence chains are missing or stale for: ${missing.join(', ')}.`);
         else reasons.push('The current evidence-chain set is not current and complete.');
       }
-      if(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION && !set.complete){project.job.CURRENT_EVIDENCE_CHAIN_VERSION=null;project.job.CURRENT_EVIDENCE_CHAIN_SET_DETERMINATION='STALE';}
+      if(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION && !set.complete){project.job.CURRENT_EVIDENCE_CHAIN_VERSION=null;}
       break;
     }
     case 30:{requireAccepted();const defects=confirmedDefects(project,{allScopes:true}),regs=records(project,'regressions'),covered=new Set(regs.map(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''))),executions=recordsForCurrentScope(project,'regressionExecutions');const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression information is missing for: '+missing.join(', ')+'.');for(const reg of regs.filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED')){const id=recordId(reg,'regressions');const latest=executions.filter(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id).at(-1);if(!latest||effectiveRegressionDetermination(project,latest).determination!=='SATISFIED')reasons.push('Latest applicable regression execution is not successful for '+id+'.');}break;}
@@ -882,22 +882,27 @@ function calculateEvidenceChains(project){
     const versionSet=chains.filter(r=>upper(recordValue(r,'STATUS'))==='COMPLETE');
     const setHash=versionSet.length?hash.sha256Value(versionSet.map(r=>({reqId:String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||''),chainId:recordId(r,'evidenceChains'),status:String(recordValue(r,'STATUS')||''),releaseId:String(recordValue(r,'RELEASE_DECISION_ID')||''),productId:String(recordValue(r,'PRODUCT_ELEMENT')||''),baselineId:String(recordValue(r,'BASELINE_ID')||''),hashReviewId:String(recordValue(r,'HASH_REVIEW_ID')||'')}))).slice(0,32):null;
     const expectedVersion=versionSet.length===payload.requirementIds.length&&setHash?`EVIDENCE-CHAIN-${setHash.toUpperCase()}`:null;
-    project.job.CURRENT_EVIDENCE_CHAIN_SET_HASH=setHash;
     project.job.CURRENT_EVIDENCE_CHAIN_VERSION=(expectedVersion&&versionSet.length===payload.requirementIds.length)?expectedVersion:null;
-    project.job.CURRENT_EVIDENCE_CHAIN_SET_DETERMINATION=(expectedVersion&&versionSet.length===payload.requirementIds.length)?'CURRENT':'STALE';
     for(const chain of project.projectData.evidenceChains.filter(r=>isActiveRecord(r)&&!r.invalidatedBy)){chain.fields=chain.fields||{};chain.fields.EVIDENCE_CHAIN_VERSION=(project.job.CURRENT_EVIDENCE_CHAIN_VERSION||'')||'';chain.EVIDENCE_CHAIN_VERSION=(project.job.CURRENT_EVIDENCE_CHAIN_VERSION||'')||'';}
     const set=currentEvidenceChainSet(project);
     if(project.stages?.[29]){const summary=deriveEvidenceChains(project).summary||{};project.stages[29].derivedData={...(project.stages[29].derivedData||{}),...summary,ALL_MANDATORY_EVIDENCE_CHAINS_COMPLETE:Boolean(set.complete),EVIDENCE_CHAIN_VERSION:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||''),CURRENT_EVIDENCE_CHAIN_VERSION:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||''),JOB_ID:String(project.job?.JOB_ID||''),TOTAL_MANDATORY_REQUIREMENTS:payload.requirementIds.length};}
     recalculate(project);
     const finalSet=currentEvidenceChainSet(project);
-    const result={complete:finalSet.complete,version:project.job.CURRENT_EVIDENCE_CHAIN_VERSION||null,setHash:project.job.CURRENT_EVIDENCE_CHAIN_SET_HASH||null,chainIds:chains.map(r=>recordId(r,'evidenceChains')),missing:finalSet.missing,unknown:finalSet.unknown};
+    const result={complete:finalSet.complete,version:project.job.CURRENT_EVIDENCE_CHAIN_VERSION||null,setHash:finalSet.setHash||setHash||null,chainIds:chains.map(r=>recordId(r,'evidenceChains')),missing:finalSet.missing,unknown:finalSet.unknown};
     return result;
   }});
 }
 
 function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactManifestSha256=null,scope=currentScope(project),projectRevision=Number(project.revision||0),exportEvidenceIds=[],status='CURRENT',custodyState='BACKUP_PACKAGE_GENERATED'}={}){
   ensureShape(project);
-  const payload={packageId:String(packageId||''),packageSha256:String(packageSha256||''),artifactManifestSha256:String(artifactManifestSha256||''),projectRevision:Number(projectRevision||0),scope,custodyState};
+  const safePackageId=String(packageId||'').trim();
+  const safePackageSha256=String(packageSha256||'').trim();
+  const safeManifestSha256=artifactManifestSha256===null||artifactManifestSha256===undefined?'' : String(artifactManifestSha256||'').trim();
+  if(!safePackageId)throw new Error('A packageId is required to create a pre-delivery checkpoint.');
+  if(!/^[a-fA-F0-9]{64}$/.test(safePackageSha256))throw new Error('A valid SHA-256 package digest is required for the current pre-delivery checkpoint.');
+  if(safeManifestSha256 && !/^[a-fA-F0-9]{64}$/.test(safeManifestSha256))throw new Error('The artifact manifest digest must be a valid SHA-256 value when supplied.');
+  if(upper(String(custodyState||''))!=='BACKUP_PACKAGE_GENERATED')throw new Error('Pre-delivery checkpoint creation must always begin in BACKUP_PACKAGE_GENERATED custody.');
+  const payload={packageId:safePackageId,packageSha256:safePackageSha256,artifactManifestSha256:safeManifestSha256,projectRevision:Number(projectRevision||0),scope,custodyState:'BACKUP_PACKAGE_GENERATED'};
   return commandIdempotentReceipt(project,{commandType:'CREATE_PRE_DELIVERY_CHECKPOINT',target:'backupCheckpoints',expectedRevision:Number(project.revision||0),payload,execute:()=>{
     const existing=safe(project.projectData.backupCheckpoints).find(r=>String(recordValue(r,'PACKAGE_ID')||'')===String(payload.packageId)&&String(recordValue(r,'PACKAGE_SHA256')||'')===String(payload.packageSha256)&&upper(recordValue(r,'STATUS')||'CURRENT')!=='SUPERSEDED'&&upper(recordValue(r,'CUSTODY_STATE')||'')===upper(payload.custodyState));
     if(existing)return existing;
@@ -906,7 +911,7 @@ function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactMa
     const baseline=recordsForCurrentScope(project,'baselines').at(-1) || null;
     const checkpointScope={...(scope||currentScope(project)),releaseId:release?recordId(release,'releaseRecords'):String(scope?.releaseId||''),productId:product?recordId(product,'products'):String(scope?.productId||''),baselineId:baseline?recordId(baseline,'baselines'):String(scope?.baselineId||''),hashReviewId:String(project.job?.CURRENT_HASH_REVIEW_ID||scope?.hashReviewId||''),evidenceChainVersion:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||scope?.evidenceChainVersion||''),projectRevision:Number(projectRevision||project.revision||0)};
     const id=allocateId(project,'backupCheckpoints');
-    const record={id,stage:29,createdAt:now(),updatedAt:now(),active:true,source:'APPLICATION_DERIVATION',scope:checkpointScope,fields:{CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:payload.custodyState,EXTERNAL_EVIDENCE_IDS:safe(exportEvidenceIds),RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:status},CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:payload.custodyState,EXTERNAL_EVIDENCE_IDS:safe(exportEvidenceIds),RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:status};
+    const record={id,stage:29,createdAt:now(),updatedAt:now(),active:true,source:'APPLICATION_DERIVATION',scope:checkpointScope,fields:{CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:payload.custodyState,EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:status},CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:payload.custodyState,EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:status};
     refreshRecordHashes(record,'backupCheckpoints');
     project.projectData.backupCheckpoints.push(record);
     return record;
@@ -915,6 +920,8 @@ function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactMa
 
 function recordPreDeliveryCheckpointExport(project,{checkpointId,exportEvidenceIds=[],scope=currentScope(project)}={}){
   ensureShape(project);
+  const evidenceIds=[...new Set(safe(exportEvidenceIds).map(String).filter(Boolean))];
+  if(!evidenceIds.length)throw new Error('Export custody requires at least one real external-evidence identifier.');
   const checkpoint=safe(project.projectData.backupCheckpoints).find(r=>recordId(r,'backupCheckpoints')===String(checkpointId)||String(recordValue(r,'PACKAGE_ID')||'')===String(checkpointId));
   if(!checkpoint)throw new Error(`No current backup checkpoint record matches ${checkpointId}.`);
   const emitScope={...(scope||currentScope(project)),releaseId:String(project.job?.CURRENT_RELEASE_ID||scope?.releaseId||''),productId:String(project.job?.CURRENT_PRODUCT_ID||scope?.productId||''),baselineId:String(project.job?.CURRENT_BASELINE_ID||scope?.baselineId||''),hashReviewId:String(project.job?.CURRENT_HASH_REVIEW_ID||scope?.hashReviewId||''),evidenceChainVersion:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||scope?.evidenceChainVersion||'')};
@@ -928,7 +935,7 @@ function recordPreDeliveryCheckpointExport(project,{checkpointId,exportEvidenceI
     active:true,
     source:'APPLICATION_DERIVATION',
     scope:emitScope,
-    fields:{CHECKPOINT_ID:logicalCheckpointId,PACKAGE_ID:String(recordValue(checkpoint,'PACKAGE_ID')||String(checkpointId||'')),PACKAGE_SHA256:String(recordValue(checkpoint,'PACKAGE_SHA256')||''),PROJECT_REVISION:Number(recordValue(checkpoint,'PROJECT_REVISION')||project.revision||0),PROJECT_SHA256:String(recordValue(checkpoint,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpoint,'ARTIFACT_MANIFEST_SHA256')||''),CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:safe(exportEvidenceIds),RESTORE_EVIDENCE_IDS:[],SCOPE:emitScope,STATUS:'CURRENT',EXPORT_EVENT_ID:exportEventId,PREVIOUS_CHECKPOINT_ID:logicalCheckpointId},
+    fields:{CHECKPOINT_ID:logicalCheckpointId,PACKAGE_ID:String(recordValue(checkpoint,'PACKAGE_ID')||String(checkpointId||'')),PACKAGE_SHA256:String(recordValue(checkpoint,'PACKAGE_SHA256')||''),PROJECT_REVISION:Number(recordValue(checkpoint,'PROJECT_REVISION')||project.revision||0),PROJECT_SHA256:String(recordValue(checkpoint,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpoint,'ARTIFACT_MANIFEST_SHA256')||''),CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:evidenceIds,RESTORE_EVIDENCE_IDS:[],SCOPE:emitScope,STATUS:'CURRENT',EXPORT_EVENT_ID:exportEventId,PREVIOUS_CHECKPOINT_ID:logicalCheckpointId},
     CHECKPOINT_ID:logicalCheckpointId,
     PACKAGE_ID:String(recordValue(checkpoint,'PACKAGE_ID')||String(checkpointId||'')),
     PACKAGE_SHA256:String(recordValue(checkpoint,'PACKAGE_SHA256')||''),
@@ -936,7 +943,7 @@ function recordPreDeliveryCheckpointExport(project,{checkpointId,exportEvidenceI
     PROJECT_SHA256:String(recordValue(checkpoint,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),
     ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpoint,'ARTIFACT_MANIFEST_SHA256')||''),
     CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',
-    EXTERNAL_EVIDENCE_IDS:safe(exportEvidenceIds),
+    EXTERNAL_EVIDENCE_IDS:evidenceIds,
     RESTORE_EVIDENCE_IDS:[],
     SCOPE:emitScope,
     STATUS:'CURRENT',
@@ -950,7 +957,7 @@ function recordPreDeliveryCheckpointExport(project,{checkpointId,exportEvidenceI
   exportRecord.fields.PROJECT_SHA256=exportRecord.PROJECT_SHA256;
   exportRecord.fields.ARTIFACT_MANIFEST_SHA256=exportRecord.ARTIFACT_MANIFEST_SHA256;
   exportRecord.fields.CUSTODY_STATE='BACKUP_EXPORT_ACTION_COMPLETED';
-  exportRecord.fields.EXTERNAL_EVIDENCE_IDS=safe(exportEvidenceIds);
+  exportRecord.fields.EXTERNAL_EVIDENCE_IDS=evidenceIds;
   exportRecord.fields.RESTORE_EVIDENCE_IDS=[];
   exportRecord.fields.SCOPE=emitScope;
   exportRecord.fields.STATUS='CURRENT';
