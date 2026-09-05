@@ -1,0 +1,22 @@
+name: Temporary exact source export
+on:
+  push:
+    branches: [repair/conformance-20260903-main]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Package exact branch source
+        run: tar --exclude=.git -czf "$RUNNER_TEMP/closed-loop-source.tar.gz" .
+      - name: Upload exact branch source
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-loop-source-${{ github.sha }}
+          path: ${{ runner.temp }}/closed-loop-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
