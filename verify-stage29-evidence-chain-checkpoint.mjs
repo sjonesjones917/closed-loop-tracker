@@ -10,8 +10,6 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
-const storeSource=fs.readFileSync('project-store.js','utf8');
-const appSource=fs.readFileSync('app-core.js','utf8');
 assert(core&&schema&&engine,'Stage 29 verifier requires production runtime modules.');
 assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.executorClass,'APPLICATION','Stage 29 calculation must remain application-owned.');
 assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.retryRule,'IDEMPOTENT_COMMAND','Stage 29 calculation must use the closed idempotent command contract.');
@@ -21,7 +19,6 @@ assert.equal(typeof engine.calculateEvidenceChains,'function','Production runtim
 assert.equal(typeof engine.createPreDeliveryCheckpoint,'function','Production runtime must expose a real pre-delivery checkpoint creation path.');
 assert.equal(typeof engine.recordPreDeliveryCheckpointExport,'function','Production runtime must record the real backup export custody transition instead of accepting manually fabricated checkpoint records.');
 assert.equal(typeof engine.recordPreDeliveryCheckpointExportEvidence,'function','Production runtime must create operator export evidence through an application command.');
-assert(storeSource.includes('exportPackageWithReceipt')&&appSource.includes('exportPackageWithReceipt')&&appSource.includes('recordPreDeliveryCheckpointExport'),'The visible backup path must use the verified receipt and production custody commands.');
 
 const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-v001',requirementsVersion:'REQ-v001',testSuiteVersion:'TEST-v001',instructionVersion:'INSTR-v001',iterationId:'ITER-1',candidateId:'CAND-1',baselineId:'BASE-1',productId:'PROD-1',productVersion:'1.0.0',deliveryCandidateSetId:'SET-1'};
 const record=(family,fields,id,sc=scope)=>{const def=schema.RECORD_SCHEMAS[family]; return {id,active:true,fields:{...fields,[def.idField]:id},...fields,[def.idField]:id,scope:sc};};
@@ -62,10 +59,15 @@ assert.equal(validProject.job.CURRENT_EVIDENCE_CHAIN_VERSION,null,'The verifier 
 const validResult=engine.calculateEvidenceChains(validProject);
 assert.equal(validResult.complete,true,'The application command must compute a complete current evidence-chain set.');
 assert.equal(validResult.version,validProject.job.CURRENT_EVIDENCE_CHAIN_VERSION,'The current version must match the authoritative calculated set.');
+assert.equal(validProject.projectData.evidenceChains.filter(record=>record.active!==false&&String(record.fields?.REQ_ID||record.REQ_ID)==='REQ-1').length,1,'The first calculation must leave exactly one active current chain per mandatory requirement.');
 assert.equal(validProject.projectData.commandReceipts.length,1,'The command must be logged as a single idempotent receipt.');
 const idempotentRetry=engine.calculateEvidenceChains(validProject);
 assert.equal(idempotentRetry.version,validResult.version,'Idempotent retry must return the same current evidence-chain version.');
 assert.equal(validProject.projectData.commandReceipts.length,1,'An idempotent retry must not duplicate the authoritative evidence-chain receipt.');
+assert.equal(validProject.projectData.evidenceChains.filter(record=>record.active!==false&&String(record.fields?.REQ_ID||record.REQ_ID)==='REQ-1').length,1,'An idempotent retry must preserve exactly one active current chain per mandatory requirement.');
+const duplicateProject=makeProject();
+duplicateProject.projectData.evidenceChains.push({...duplicateProject.projectData.evidenceChains[0],id:'CHAIN-DUPLICATE',fields:{...duplicateProject.projectData.evidenceChains[0].fields,CHAIN_ID:'CHAIN-DUPLICATE'},CHAIN_ID:'CHAIN-DUPLICATE'});
+assert.throws(()=>engine.calculateEvidenceChains(duplicateProject),/duplicate active chains/i,'Pre-existing duplicate current chains must be rejected rather than silently deduplicated.');
 
 const staleProject=makeProject({releaseId:'REL-2',chainReleaseId:'REL-1'});
 const staleSet=engine.currentEvidenceChainSet(staleProject);

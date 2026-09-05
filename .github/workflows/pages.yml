@@ -190,6 +190,7 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-stage29-browser.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
@@ -261,6 +262,7 @@ jobs:
           }
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-stage29-browser.mjs
 
   publish-status:
     name: Publish machine acceptance status
@@ -302,6 +304,7 @@ jobs:
           }
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-stage29-browser.mjs
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:
