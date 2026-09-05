@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {createMobileAcceptanceTarget,MOBILE_ACCEPTANCE_ORIGIN,MOBILE_ACCEPTANCE_BASE_PATH} from './generate-mobile-acceptance-target.mjs';
 
 const context={console,TextEncoder,TextDecoder,URL,URLSearchParams,crypto:webcrypto,dispatchEvent(){},Event:class Event{constructor(type){this.type=type}}};
 context.globalThis=context;
@@ -14,6 +15,17 @@ const engine=context.closedLoopWorkflowEngine;
 const schema=context.closedLoopWorkflowSchema;
 const engineSource=fs.readFileSync('workflow-engine.js','utf8');
 const appSource=fs.readFileSync('app-core.js','utf8');
+const target=createMobileAcceptanceTarget({
+  sourceCommit:'f'.repeat(40),deploymentManifestDigest:'a'.repeat(64),
+  origin:MOBILE_ACCEPTANCE_ORIGIN,basePath:MOBILE_ACCEPTANCE_BASE_PATH,
+  testProjectId:'STAGE30-MOBILE',procedureVersion:'actual-iphone-safari/1',
+  viewport:{width:393,height:852,devicePixelRatio:3},deviceModel:'iPhone 15',
+  iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1',
+  issuedAt:'2026-09-03T00:00:00.000Z',challengeLifetimeSeconds:3600
+});
+assert.match(target.challenge,/^[0-9a-f]{64}$/,'Stage 30 target must use a CSPRNG challenge.');
+assert.equal(target.origin,MOBILE_ACCEPTANCE_ORIGIN);
+assert.equal(target.basePath,MOBILE_ACCEPTANCE_BASE_PATH);
 
 assert.equal(schema.operationContract(30,'CALCULATE_TERMINAL')?.executorClass,'APPLICATION','Stage 30 terminal calculation must remain application-owned.');
 assert.equal(schema.operationContract(30,'CALCULATE_TERMINAL')?.acceptsExternalResponse,false,'CALCULATE_TERMINAL must not accept an external response envelope.');
@@ -43,6 +55,7 @@ assert.doesNotMatch(engineSource,/if\(e0\.gate\(30,p\)\.complete&&t\.complete\)\
 for(const token of ['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE','calculateTerminal','recordDeliveryAttempt','recordDeliveryEvidence'])assert.match(engineSource,new RegExp(token),`Stage 30 engine contract missing ${token}.`);
 for(const token of ['calculate-stage30-terminal','export-authorized-artifacts','record-delivery-evidence','exportAuthorizedArtifacts','recordCurrentDeliveryEvidence'])assert.match(appSource,new RegExp(token),`Stage 30 visible operator path missing ${token}.`);
 assert.match(appSource,/downloadCanonicalArtifact\(artifactId\)/,'Authorized export/share must reuse exact canonical stored-byte verification before transfer.');
+for(const token of ['mobile-acceptance-panel','mobile-acceptance-target-json','mobile-acceptance-evidence-json','run-mobile-capability-probe','export-mobile-acceptance-evidence','mobileAcceptanceReceipts','acceptanceModeReceipt'])assert.match(appSource,new RegExp(token),`Stage 30 mobile actor path missing ${token}.`);
 
 console.log(JSON.stringify({
   stage30TerminalMobileBoundary:'PASS',
@@ -50,7 +63,8 @@ console.log(JSON.stringify({
     'external-response-fallthrough',
     'blocked-terminal-authorizes-export',
     'delivery-evidence-without-attempt',
-    'automatic-terminal-side-effect'
+    'automatic-terminal-side-effect',
+    'mobile-target-csprng-and-explicit-physical-facts'
   ],
   blockedTerminalRecorded:true,
   terminalRetryIdempotent:true,
@@ -58,5 +72,7 @@ console.log(JSON.stringify({
   authorizedExportOperatorAction:true,
   deliveryAttemptDistinct:true,
   deliveryEvidenceDistinct:true,
-  visibleOperatorPathWired:true
+  visibleOperatorPathWired:true,
+  mobileActorHandoffPathWired:true,
+  mobileTargetChallengeBound:true
 },null,2));
