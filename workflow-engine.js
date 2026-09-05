@@ -1003,31 +1003,50 @@ function currentPreDeliveryCheckpoint(project){
   const checkpoints=safe(project.projectData.backupCheckpoints)
     .filter(r=>isActiveRecord(r)&&!r.invalidatedBy&&upper(recordValue(r,'STATUS')||'CURRENT')!=='SUPERSEDED');
   if(!checkpoints.length)return null;
-  const checkpoint=checkpoints
-    .sort((a,b)=>{
-      const stateA=upper(recordValue(a,'CUSTODY_STATE')||'');
-      const stateB=upper(recordValue(b,'CUSTODY_STATE')||'');
-      const custodyDelta=(rank[stateB]??-1)-(rank[stateA]??-1);
-      if(custodyDelta!==0)return custodyDelta;
-      return Number(recordValue(b,'PROJECT_REVISION')||b.projectRevision||0)-Number(recordValue(a,'PROJECT_REVISION')||a.projectRevision||0) || new Date(recordValue(b,'updatedAt')||b.updatedAt||0).getTime()-new Date(recordValue(a,'updatedAt')||a.updatedAt||0).getTime();
-    })[0]||null;
-  if(!checkpoint)return null;
-  const state=upper(recordValue(checkpoint,'CUSTODY_STATE')||'');
-  if((rank[state]??-1)<1)return null;
-  const scopeRecord=recordValue(checkpoint,'SCOPE')||checkpoint.scope||{};
-  const releaseId=String(project.job?.CURRENT_RELEASE_ID||'');
-  const productId=String(project.job?.CURRENT_PRODUCT_ID||'');
-  const baselineId=String(project.job?.CURRENT_BASELINE_ID||'');
-  const candidateId=String(project.job?.CURRENT_CANDIDATE_ID||'');
-  const hashReviewId=String(project.job?.CURRENT_HASH_REVIEW_ID||'');
-  const evidenceChainVersion=String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||'');
-  const requiredScopeKeys=['releaseId','productId','baselineId','candidateId','hashReviewId','evidenceChainVersion'];
-  for(const key of requiredScopeKeys){
-    const jobValue=String(project.job?.[key==='releaseId'?'CURRENT_RELEASE_ID':key==='productId'?'CURRENT_PRODUCT_ID':key==='baselineId'?'CURRENT_BASELINE_ID':key==='candidateId'?'CURRENT_CANDIDATE_ID':key==='hashReviewId'?'CURRENT_HASH_REVIEW_ID':'CURRENT_EVIDENCE_CHAIN_VERSION']||'');
-    const scopeValue=String(scopeRecord[key]||'');
-    if(jobValue && (!scopeValue || scopeValue!==jobValue))return null;
+  const valid=[];
+  for(const checkpoint of checkpoints){
+    const state=upper(recordValue(checkpoint,'CUSTODY_STATE')||'');
+    if((rank[state]??-1)<1)continue;
+    const checkpointId=String(recordId(checkpoint,'backupCheckpoints')||recordValue(checkpoint,'CHECKPOINT_ID')||checkpoint.CHECKPOINT_ID||'');
+    const packageId=String(recordValue(checkpoint,'PACKAGE_ID')||checkpoint.PACKAGE_ID||'');
+    const packageSha256=String(recordValue(checkpoint,'PACKAGE_SHA256')||checkpoint.PACKAGE_SHA256||'');
+    const scopeRecord=recordValue(checkpoint,'SCOPE')||checkpoint.scope||{};
+    const evidenceIds=safe(recordValue(checkpoint,'EXTERNAL_EVIDENCE_IDS')||checkpoint.EXTERNAL_EVIDENCE_IDS||[]).map(String).filter(Boolean);
+    if(!checkpointId||!packageId||!/^[a-fA-F0-9]{64}$/.test(packageSha256)||!evidenceIds.length)continue;
+    const requiredScopeKeys=['releaseId','productId','baselineId','candidateId','hashReviewId','evidenceChainVersion'];
+    let scopeOk=true;
+    for(const key of requiredScopeKeys){
+      const jobKey=key==='releaseId'?'CURRENT_RELEASE_ID':key==='productId'?'CURRENT_PRODUCT_ID':key==='baselineId'?'CURRENT_BASELINE_ID':key==='candidateId'?'CURRENT_CANDIDATE_ID':key==='hashReviewId'?'CURRENT_HASH_REVIEW_ID':'CURRENT_EVIDENCE_CHAIN_VERSION';
+      const jobValue=String(project.job?.[jobKey]||'');
+      const scopeValue=String(scopeRecord[key]||'');
+      if(jobValue && (!scopeValue || scopeValue!==jobValue)){scopeOk=false;break;}
+    }
+    if(!scopeOk)continue;
+    let evidenceOk=true;
+    for(const evidenceId of evidenceIds){
+      const evidence=records(project,'evidenceRecords').find(r=>recordId(r,'evidenceRecords')===String(evidenceId));
+      if(!evidence){evidenceOk=false;break;}
+      const kind=upper(String(recordValue(evidence,'APPLICATION_EVIDENCE_KIND')||''));
+      const source=upper(String(evidence.source||''));
+      const content=String(recordValue(evidence,'APPLICATION_EVIDENCE_CONTENT')||'');
+      if(kind!=='BACKUP_EXPORT_ACTION_COMPLETED'||source!=='OPERATOR_ACTION'){
+        evidenceOk=false;break;
+      }
+      if(!content.includes(checkpointId)&&!content.includes(packageId)&&!content.includes(packageSha256)){
+        evidenceOk=false;break;
+      }
+    }
+    if(!evidenceOk)continue;
+    valid.push(checkpoint);
   }
-  return checkpoint;
+  if(!valid.length)return null;
+  return valid.sort((a,b)=>{
+    const stateA=upper(recordValue(a,'CUSTODY_STATE')||'');
+    const stateB=upper(recordValue(b,'CUSTODY_STATE')||'');
+    const custodyDelta=(rank[stateB]??-1)-(rank[stateA]??-1);
+    if(custodyDelta!==0)return custodyDelta;
+    return Number(recordValue(b,'PROJECT_REVISION')||b.projectRevision||0)-Number(recordValue(a,'PROJECT_REVISION')||a.projectRevision||0) || new Date(recordValue(b,'updatedAt')||b.updatedAt||0).getTime()-new Date(recordValue(a,'updatedAt')||a.updatedAt||0).getTime();
+  })[0]||null;
 }
 
 function verifyArtifactIdentity(project,audited,delivery){
