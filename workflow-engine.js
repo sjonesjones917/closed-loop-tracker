@@ -221,7 +221,7 @@ const SCOPE_KEYS=Object.freeze(['inputVersion','sourceSetVersion','requirementsV
 const scopeValue=value=>{const text=String(value??'').trim();return !text||['NONE','NOT APPLICABLE','UNKNOWN','PENDING','UNASSIGNED'].includes(text.toUpperCase())?null:value;};
 function currentScope(project){const product=records(project,'products').at(-1);return {inputVersion:scopeValue(project.job.CURRENT_INPUT_VERSION),sourceSetVersion:scopeValue(project.job.CURRENT_SOURCE_SET_VERSION),requirementsVersion:scopeValue(project.job.CURRENT_REQUIREMENTS_VERSION),testSuiteVersion:scopeValue(project.job.CURRENT_TEST_SUITE_VERSION),instructionVersion:scopeValue(project.job.CURRENT_INSTRUCTION_VERSION),iterationId:scopeValue(recordId(latestIteration(project,[10,17,19]),'iterations')||project.job.CURRENT_ITERATION),candidateId:scopeValue(recordId(records(project,'candidateFreezes').at(-1),'candidateFreezes')||project.job.CURRENT_CANDIDATE_ID),baselineId:scopeValue(recordId(records(project,'baselines').at(-1),'baselines')||project.job.CURRENT_BASELINE_ID),productId:scopeValue(recordId(product,'products')||project.job.CURRENT_PRODUCT_ID),productVersion:scopeValue(recordValue(product,'PRODUCT_VERSION')||project.job.CURRENT_PRODUCT_VERSION),deliveryCandidateSetId:scopeValue(project.job.CURRENT_DELIVERY_CANDIDATE_SET_ID),releaseId:scopeValue(project.job.CURRENT_RELEASE_ID),hashReviewId:scopeValue(project.job.CURRENT_HASH_REVIEW_ID),evidenceChainVersion:scopeValue(project.job.CURRENT_EVIDENCE_CHAIN_VERSION)};}
 function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('inputVersion','sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}
-function scopeMatches(record,scopeRule={},requiredKeys=[]){const rs=record?.scope||{};for(const key of requiredKeys){const expected=scopeRule[key];if(expected===undefined||expected===null)continue;if(!Object.prototype.hasOwnProperty.call(rs,key)||rs[key]===undefined||rs[key]===null||rs[key]!==expected)return false;}for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;if(Object.prototype.hasOwnProperty.call(scopeRule,key)&&(scopeRule[key]??null)!==value)return false;}return true;}
+function scopeMatches(record,scopeRule={},requiredKeys=[]){const rs=record?.scope||{};for(const key of requiredKeys){const expected=scopeRule[key];if(expected===undefined||expected===null)continue;if(!Object.prototype.hasOwnProperty.call(rs,key)||rs[key]===undefined||rs[key]===null||rs[key]!==expected)return false;}for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;const expected=scopeRule[key];if(expected!==undefined&&expected!==null&&String(expected)!==String(value))return false;}return true;}
 function recordsForScope(project,collection,scopeRule={}){const applicable=Object.fromEntries(Object.entries(scopeRule||{}).filter(([,v])=>v!==undefined&&v!==null)),required=requiredVersionScopeKeys(collection).filter(key=>Object.prototype.hasOwnProperty.call(applicable,key));return records(project,collection).filter(record=>record.scope&&Object.keys(record.scope).length>0&&scopeMatches(record,applicable,required));}
 function recordsForCurrentScope(project,collection,scopeRule={}){return recordsForScope(project,collection,{...currentScope(project),...scopeRule});}
 function scopeForIteration(project,iterationId){const id=String(iterationId||''),iteration=records(project,'iterations').find(r=>recordId(r,'iterations')===id);if(!iteration)return {iterationId:id||null};const candidateId=String(recordValue(iteration,'CANDIDATE_ID')||iteration.relationships?.CANDIDATE_ID||iteration.scope?.candidateId||'');return {...clone(iteration.scope||{}),iterationId:id,candidateId:candidateId||null};}
@@ -838,7 +838,7 @@ function recordStageConfirmation(project,stage,confirmed,statement,operatorLabel
   project.projectData.stageConfirmations.push(record);recalculate(project);return record;
 }
 
-function recordReleaseDetermination(project){ensureShape(project);const binding=releaseBinding(project),existing=records(project,'releaseRecords').find(r=>releaseRecordMatchesBinding(r,binding));if(existing)return existing;if(records(project,'releaseRecords').length)invalidateDownstream(project,27,'RELEASE-EVIDENCE-CHANGED','Current Stage 27 release evidence changed.');for(const prior of records(project,'releaseRecords',{active:false}))if(!prior.invalidatedBy){prior.active=false;prior.validity='SUPERSEDED';prior.invalidatedBy='RELEASE-EVIDENCE-CHANGED';refreshRecordHashes(prior,'releaseRecords');}project.release.authorization='NOT AUTHORIZED';project.release.authorizedArtifactIds=[];const id=allocateId(project,'releaseRecords');const hashReviewId=String(project.job?.CURRENT_HASH_REVIEW_ID||'').trim();const metrics=binding.metrics,fields={RELEASE_ID:id,PRODUCT_ID:binding.productId,BASELINE_ID:binding.baselineId,HASH_REVIEW_ID:hashReviewId,DETERMINATION:metrics.determination,MANDATORY_REQUIREMENT_COUNTS:metrics.mandatoryRequirementCount,AFFIRMATIVE_EVIDENCE_COUNTS:metrics.satisfied,VIOLATED_COUNTS:metrics.violated,UNDETERMINED_COUNTS:metrics.undetermined,VALIDATOR_COUNTS:metrics.validatorCount,FAILED_VALIDATORS:metrics.failedValidatorIds,UNKNOWN_VALIDATORS:metrics.unknownValidatorIds,CRITICAL_DEFECTS:metrics.criticalDefects,MAJOR_DEFECTS:metrics.majorDefects,BLOCKING_REQUIREMENTS:metrics.blockingRequirements,VIOLATIONS:metrics.violatedRequirements,BLOCKERS:metrics.blockerIds,CONTROLLING_EVIDENCE:binding.evidenceDigest};const recordScope={...currentScope(project),releaseId:id,productId:binding.productId,baselineId:binding.baselineId};if(hashReviewId)recordScope.hashReviewId=hashReviewId;const record={id,stage:27,createdAt:now(),active:true,fields,...fields,releaseEvidenceSha256:binding.evidenceDigest,scope:recordScope,source:'APPLICATION_DERIVATION',derivationKey:'stage27.release'};refreshRecordHashes(record,'releaseRecords');project.projectData.releaseRecords.push(record);project.job.CURRENT_RELEASE_ID=id;project.job.CURRENT_HASH_REVIEW_ID=hashReviewId||project.job.CURRENT_HASH_REVIEW_ID||'';project.release.gateState=metrics.determination;addHistory(project,'RELEASE_DETERMINATION_CALCULATED',{recordId:id,determination:metrics.determination,releaseEvidenceSha256:binding.evidenceDigest,hashReviewId:hashReviewId});recalculate(project);return record;}
+function recordReleaseDetermination(project){ensureShape(project);const binding=releaseBinding(project),existing=records(project,'releaseRecords').find(r=>releaseRecordMatchesBinding(r,binding));if(existing)return existing;if(records(project,'releaseRecords').length)invalidateDownstream(project,27,'RELEASE-EVIDENCE-CHANGED','Current Stage 27 release evidence changed.');for(const prior of records(project,'releaseRecords',{active:false}))if(!prior.invalidatedBy){prior.active=false;prior.validity='SUPERSEDED';prior.invalidatedBy='RELEASE-EVIDENCE-CHANGED';refreshRecordHashes(prior,'releaseRecords');}project.release.authorization='NOT AUTHORIZED';project.release.authorizedArtifactIds=[];const id=allocateId(project,'releaseRecords');const metrics=binding.metrics,fields={RELEASE_ID:id,PRODUCT_ID:binding.productId,BASELINE_ID:binding.baselineId,DETERMINATION:metrics.determination,MANDATORY_REQUIREMENT_COUNTS:metrics.mandatoryRequirementCount,AFFIRMATIVE_EVIDENCE_COUNTS:metrics.satisfied,VIOLATED_COUNTS:metrics.violated,UNDETERMINED_COUNTS:metrics.undetermined,VALIDATOR_COUNTS:metrics.validatorCount,FAILED_VALIDATORS:metrics.failedValidatorIds,UNKNOWN_VALIDATORS:metrics.unknownValidatorIds,CRITICAL_DEFECTS:metrics.criticalDefects,MAJOR_DEFECTS:metrics.majorDefects,BLOCKING_REQUIREMENTS:metrics.blockingRequirements,VIOLATIONS:metrics.violatedRequirements,BLOCKERS:metrics.blockerIds,CONTROLLING_EVIDENCE:binding.evidenceDigest};const recordScope={...currentScope(project),releaseId:id,productId:binding.productId,baselineId:binding.baselineId};const record={id,stage:27,createdAt:now(),active:true,fields,...fields,releaseEvidenceSha256:binding.evidenceDigest,scope:recordScope,source:'APPLICATION_DERIVATION',derivationKey:'stage27.release'};refreshRecordHashes(record,'releaseRecords');project.projectData.releaseRecords.push(record);project.job.CURRENT_RELEASE_ID=id;project.release.gateState=metrics.determination;addHistory(project,'RELEASE_DETERMINATION_CALCULATED',{recordId:id,determination:metrics.determination,releaseEvidenceSha256:binding.evidenceDigest});recalculate(project);return record;}
 
 function constructEvidenceChains(project){ensureShape(project);const requirements=mandatoryRequirements(project,currentScope(project)),instructions=recordsForCurrentScope(project,'instructions'),product=recordsForCurrentScope(project,'products').at(-1),productId=recordId(product,'products'),executionId=String(recordValue(product,'EXECUTION_ID')||'').trim(),release=recordsForCurrentScope(project,'releaseRecords').at(-1),identities=recordsForCurrentScope(project,'artifactIdentities'),traces=recordsForCurrentScope(project,'instructionTraces'),created=[];const currentReleaseId=String(project.job?.CURRENT_RELEASE_ID||'').trim(),currentHashReviewId=String(project.job?.CURRENT_HASH_REVIEW_ID||'').trim(),currentProductId=String(project.job?.CURRENT_PRODUCT_ID||productId||'').trim(),latestBaseline=recordsForCurrentScope(project,'baselines').at(-1),currentBaselineId=String(project.job?.CURRENT_BASELINE_ID || (latestBaseline ? recordId(latestBaseline,'baselines') : '')).trim();
   for(const requirement of requirements){const reqId=requirementId(requirement),sourceId=String(recordValue(requirement,'SOURCE_ID')||requirement.relationships?.SOURCE_ID||recordValue(requirement,'USER_INPUT_RELATIONSHIP')||''),trace=traces.find(r=>String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')===reqId),instructionId=String(recordValue(trace,'INSTRUCTION_ID')||trace?.relationships?.INSTRUCTION_ID||'').trim(),instruction=instructionId?instructions.find(r=>recordId(r,'instructions')===instructionId):null,tests=applicableTests(project,requirement),results=[...recordsForCurrentScope(project,'verification'),...recordsForCurrentScope(project,'deterministicResults'),...recordsForCurrentScope(project,'meaningResults'),...recordsForCurrentScope(project,'adversarialResults')].filter(r=>resultRequirementId(project,r)===reqId),evidenceIds=new Set(),missing=[];
@@ -904,11 +904,13 @@ function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactMa
   const safePackageId=String(packageId||'').trim();
   const safePackageSha256=String(packageSha256||'').trim();
   const safeManifestSha256=artifactManifestSha256===null||artifactManifestSha256===undefined?'' : String(artifactManifestSha256||'').trim();
+  const currentSet=currentEvidenceChainSet(project);
+  if(currentSet.requirementIds.length && !currentSet.complete)throw new Error('The current evidence-chain set must be complete before creating a pre-delivery checkpoint.');
   if(!safePackageId)throw new Error('A packageId is required to create a pre-delivery checkpoint.');
   if(!/^[a-fA-F0-9]{64}$/.test(safePackageSha256))throw new Error('A valid SHA-256 package digest is required for the current pre-delivery checkpoint.');
   if(safeManifestSha256 && !/^[a-fA-F0-9]{64}$/.test(safeManifestSha256))throw new Error('The artifact manifest digest must be a valid SHA-256 value when supplied.');
   if(upper(String(custodyState||''))!=='BACKUP_PACKAGE_GENERATED')throw new Error('Pre-delivery checkpoint creation must always begin in BACKUP_PACKAGE_GENERATED custody.');
-  const payload={packageId:safePackageId,packageSha256:safePackageSha256,artifactManifestSha256:safeManifestSha256,projectRevision:Number(projectRevision||0),scope,custodyState:'BACKUP_PACKAGE_GENERATED'};
+  const payload={packageId:safePackageId,packageSha256:safePackageSha256,artifactManifestSha256:safeManifestSha256,projectRevision:Number(projectRevision||0),scope,exportEvidenceIds:safe(exportEvidenceIds).map(String),custodyState:'BACKUP_PACKAGE_GENERATED',status:'CURRENT'};
   return commandIdempotentReceipt(project,{commandType:'CREATE_PRE_DELIVERY_CHECKPOINT',target:'backupCheckpoints',expectedRevision:Number(project.revision||0),payload,execute:()=>{
     const existing=safe(project.projectData.backupCheckpoints).find(r=>String(recordValue(r,'PACKAGE_ID')||'')===String(payload.packageId)&&String(recordValue(r,'PACKAGE_SHA256')||'')===String(payload.packageSha256)&&upper(recordValue(r,'STATUS')||'CURRENT')!=='SUPERSEDED'&&upper(recordValue(r,'CUSTODY_STATE')||'')===upper(payload.custodyState));
     if(existing)return existing;
@@ -917,7 +919,7 @@ function createPreDeliveryCheckpoint(project,{packageId,packageSha256,artifactMa
     const baseline=recordsForCurrentScope(project,'baselines').at(-1) || null;
     const checkpointScope={...(scope||currentScope(project)),releaseId:release?recordId(release,'releaseRecords'):String(scope?.releaseId||''),productId:product?recordId(product,'products'):String(scope?.productId||''),baselineId:baseline?recordId(baseline,'baselines'):String(scope?.baselineId||''),hashReviewId:String(project.job?.CURRENT_HASH_REVIEW_ID||scope?.hashReviewId||''),evidenceChainVersion:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||scope?.evidenceChainVersion||''),projectRevision:Number(projectRevision||project.revision||0)};
     const id=allocateId(project,'backupCheckpoints');
-    const record={id,stage:29,createdAt:now(),updatedAt:now(),active:true,source:'APPLICATION_DERIVATION',scope:checkpointScope,fields:{CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:payload.custodyState,EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:status},CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:payload.custodyState,EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:status};
+    const record={id,stage:29,createdAt:now(),updatedAt:now(),active:true,source:'APPLICATION_DERIVATION',scope:checkpointScope,fields:{CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'},CHECKPOINT_ID:id,PACKAGE_ID:payload.packageId,PACKAGE_SHA256:payload.packageSha256,PROJECT_REVISION:Number(payload.projectRevision||project.revision||0),PROJECT_SHA256:String(project.job?.INPUT_SET_HASH_OR_MANIFEST||project.job?.CURRENT_INPUT_VERSION||''),ARTIFACT_MANIFEST_SHA256:String(payload.artifactManifestSha256||''),CUSTODY_STATE:'BACKUP_PACKAGE_GENERATED',EXTERNAL_EVIDENCE_IDS:[],RESTORE_EVIDENCE_IDS:[],SCOPE:checkpointScope,STATUS:'CURRENT'};
     refreshRecordHashes(record,'backupCheckpoints');
     project.projectData.backupCheckpoints.push(record);
     return record;
@@ -930,46 +932,68 @@ function recordPreDeliveryCheckpointExport(project,{checkpointId,exportEvidenceI
   if(!evidenceIds.length)throw new Error('Export custody requires at least one real external-evidence identifier.');
   const checkpoint=safe(project.projectData.backupCheckpoints).find(r=>recordId(r,'backupCheckpoints')===String(checkpointId)||String(recordValue(r,'PACKAGE_ID')||'')===String(checkpointId));
   if(!checkpoint)throw new Error(`No current backup checkpoint record matches ${checkpointId}.`);
+  const currentState=upper(recordValue(checkpoint,'CUSTODY_STATE')||'');
+  if(currentState==='BACKUP_EXPORT_ACTION_COMPLETED'){
+    const existing=safe(project.projectData.backupCheckpoints).find(r=>isActiveRecord(r)&&String(recordValue(r,'PREVIOUS_CHECKPOINT_ID')||'')===String(recordId(checkpoint,'backupCheckpoints'))&&upper(recordValue(r,'CUSTODY_STATE')||'')==='BACKUP_EXPORT_ACTION_COMPLETED');
+    if(existing)return existing;
+  }
   const emitScope={...(scope||currentScope(project)),releaseId:String(project.job?.CURRENT_RELEASE_ID||scope?.releaseId||''),productId:String(project.job?.CURRENT_PRODUCT_ID||scope?.productId||''),baselineId:String(project.job?.CURRENT_BASELINE_ID||scope?.baselineId||''),hashReviewId:String(project.job?.CURRENT_HASH_REVIEW_ID||scope?.hashReviewId||''),evidenceChainVersion:String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||scope?.evidenceChainVersion||'')};
   const logicalCheckpointId=String(recordId(checkpoint,'backupCheckpoints')||String(checkpointId||'CHECKPOINT-UNKNOWN'));
-  const exportEventId=`EXPORT-${Date.now()}-${Math.random().toString(16).slice(2,8)}`;
-  const exportRecord={
-    id:allocateId(project,'backupCheckpoints'),
-    stage:29,
-    createdAt:now(),
-    updatedAt:now(),
-    active:true,
-    source:'APPLICATION_DERIVATION',
-    scope:emitScope,
-    fields:{CHECKPOINT_ID:logicalCheckpointId,PACKAGE_ID:String(recordValue(checkpoint,'PACKAGE_ID')||String(checkpointId||'')),PACKAGE_SHA256:String(recordValue(checkpoint,'PACKAGE_SHA256')||''),PROJECT_REVISION:Number(recordValue(checkpoint,'PROJECT_REVISION')||project.revision||0),PROJECT_SHA256:String(recordValue(checkpoint,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpoint,'ARTIFACT_MANIFEST_SHA256')||''),CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:evidenceIds,RESTORE_EVIDENCE_IDS:[],SCOPE:emitScope,STATUS:'CURRENT',EXPORT_EVENT_ID:exportEventId,PREVIOUS_CHECKPOINT_ID:logicalCheckpointId},
-    CHECKPOINT_ID:logicalCheckpointId,
-    PACKAGE_ID:String(recordValue(checkpoint,'PACKAGE_ID')||String(checkpointId||'')),
-    PACKAGE_SHA256:String(recordValue(checkpoint,'PACKAGE_SHA256')||''),
-    PROJECT_REVISION:Number(recordValue(checkpoint,'PROJECT_REVISION')||project.revision||0),
-    PROJECT_SHA256:String(recordValue(checkpoint,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),
-    ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpoint,'ARTIFACT_MANIFEST_SHA256')||''),
-    CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',
-    EXTERNAL_EVIDENCE_IDS:evidenceIds,
-    RESTORE_EVIDENCE_IDS:[],
-    SCOPE:emitScope,
-    STATUS:'CURRENT',
-    EXPORT_EVENT_ID:exportEventId,
-    PREVIOUS_CHECKPOINT_ID:logicalCheckpointId
-  };
-  exportRecord.fields.CHECKPOINT_ID=exportRecord.CHECKPOINT_ID;
-  exportRecord.fields.PACKAGE_ID=exportRecord.PACKAGE_ID;
-  exportRecord.fields.PACKAGE_SHA256=exportRecord.PACKAGE_SHA256;
-  exportRecord.fields.PROJECT_REVISION=exportRecord.PROJECT_REVISION;
-  exportRecord.fields.PROJECT_SHA256=exportRecord.PROJECT_SHA256;
-  exportRecord.fields.ARTIFACT_MANIFEST_SHA256=exportRecord.ARTIFACT_MANIFEST_SHA256;
-  exportRecord.fields.CUSTODY_STATE='BACKUP_EXPORT_ACTION_COMPLETED';
-  exportRecord.fields.EXTERNAL_EVIDENCE_IDS=evidenceIds;
-  exportRecord.fields.RESTORE_EVIDENCE_IDS=[];
-  exportRecord.fields.SCOPE=emitScope;
-  exportRecord.fields.STATUS='CURRENT';
-  refreshRecordHashes(exportRecord,'backupCheckpoints');
-  project.projectData.backupCheckpoints.push(exportRecord);
-  return exportRecord;
+  const evidenceRecords=evidenceIds.map(id=>records(project,'evidenceRecords').find(r=>recordId(r,'evidenceRecords')===id)).filter(Boolean);
+  if(evidenceRecords.length!==evidenceIds.length)throw new Error('Export custody requires evidence records that exist in the current project state.');
+  for(const evidence of evidenceRecords){
+    const kind=upper(String(recordValue(evidence,'APPLICATION_EVIDENCE_KIND')||''));
+    const content=String(recordValue(evidence,'APPLICATION_EVIDENCE_CONTENT')||'');
+    const source=String(evidence.source||'');
+    const matchesCheckpoint=content.includes(logicalCheckpointId)||content.includes(String(recordValue(checkpoint,'PACKAGE_ID')||''))||content.includes(String(recordValue(checkpoint,'PACKAGE_SHA256')||''));
+    if(kind!=='BACKUP_EXPORT_ACTION_COMPLETED'||source!=='OPERATOR_ACTION'||!matchesCheckpoint)throw new Error('Export custody requires a real BACKUP_EXPORT_ACTION_COMPLETED operator-evidence record bound to the exact created checkpoint.');
+  }
+  if(String(project.job?.CURRENT_RELEASE_ID||'')&&String(emitScope.releaseId||'')&&String(project.job?.CURRENT_RELEASE_ID||'')!==String(emitScope.releaseId||''))throw new Error('Export custody must remain bound to the exact current release.');
+  if(String(project.job?.CURRENT_PRODUCT_ID||'')&&String(emitScope.productId||'')&&String(project.job?.CURRENT_PRODUCT_ID||'')!==String(emitScope.productId||''))throw new Error('Export custody must remain bound to the exact current product.');
+  if(String(project.job?.CURRENT_BASELINE_ID||'')&&String(emitScope.baselineId||'')&&String(project.job?.CURRENT_BASELINE_ID||'')!==String(emitScope.baselineId||''))throw new Error('Export custody must remain bound to the exact current baseline.');
+  if(String(project.job?.CURRENT_HASH_REVIEW_ID||'')&&String(emitScope.hashReviewId||'')&&String(project.job?.CURRENT_HASH_REVIEW_ID||'')!==String(emitScope.hashReviewId||''))throw new Error('Export custody must remain bound to the exact current hash review.');
+  if(String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||'')&&String(emitScope.evidenceChainVersion||'')&&String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||'')!==String(emitScope.evidenceChainVersion||''))throw new Error('Export custody must remain bound to the exact current evidence-chain version.');
+  const exportKey=hash.sha256Value({checkpointId:logicalCheckpointId,packageId:String(recordValue(checkpoint,'PACKAGE_ID')||''),packageSha256:String(recordValue(checkpoint,'PACKAGE_SHA256')||''),scope:emitScope,evidenceIds:[...evidenceIds].sort()});
+  const exportEventId=`EXPORT-${String(exportKey).slice(0,20).toUpperCase()}`;
+  return commandIdempotentReceipt(project,{commandType:'RECORD_PRE_DELIVERY_CHECKPOINT_EXPORT',target:'backupCheckpoints',expectedRevision:Number(project.revision||0),payload:{checkpointId:logicalCheckpointId,exportEvidenceIds:[...evidenceIds].sort(),scope:emitScope},execute:()=>{
+    const existing=safe(project.projectData.backupCheckpoints).find(r=>isActiveRecord(r)&&String(recordValue(r,'PREVIOUS_CHECKPOINT_ID')||'')===logicalCheckpointId&&upper(recordValue(r,'CUSTODY_STATE')||'')==='BACKUP_EXPORT_ACTION_COMPLETED'&&String(recordValue(r,'EXPORT_EVENT_ID')||'')===String(exportEventId));
+    if(existing)return existing;
+    const checkpointRecord=checkpoint;
+    checkpointRecord.active=false;
+    checkpointRecord.validity='SUPERSEDED';
+    checkpointRecord.invalidatedBy=`EXPORT-${exportEventId}`;
+    checkpointRecord.fields=checkpointRecord.fields||{};
+    checkpointRecord.fields.STATUS='SUPERSEDED';
+    checkpointRecord.STATUS='SUPERSEDED';
+    checkpointRecord.updatedAt=now();
+    refreshRecordHashes(checkpointRecord,'backupCheckpoints');
+    const exportRecord={
+      id:allocateId(project,'backupCheckpoints'),
+      stage:29,
+      createdAt:now(),
+      updatedAt:now(),
+      active:true,
+      source:'APPLICATION_DERIVATION',
+      scope:emitScope,
+      fields:{CHECKPOINT_ID:logicalCheckpointId,PACKAGE_ID:String(recordValue(checkpointRecord,'PACKAGE_ID')||String(checkpointId||'')),PACKAGE_SHA256:String(recordValue(checkpointRecord,'PACKAGE_SHA256')||''),PROJECT_REVISION:Number(recordValue(checkpointRecord,'PROJECT_REVISION')||project.revision||0),PROJECT_SHA256:String(recordValue(checkpointRecord,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpointRecord,'ARTIFACT_MANIFEST_SHA256')||''),CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:evidenceIds,RESTORE_EVIDENCE_IDS:[],SCOPE:emitScope,STATUS:'CURRENT',EXPORT_EVENT_ID:exportEventId,PREVIOUS_CHECKPOINT_ID:logicalCheckpointId},
+      CHECKPOINT_ID:logicalCheckpointId,
+      PACKAGE_ID:String(recordValue(checkpointRecord,'PACKAGE_ID')||String(checkpointId||'')),
+      PACKAGE_SHA256:String(recordValue(checkpointRecord,'PACKAGE_SHA256')||''),
+      PROJECT_REVISION:Number(recordValue(checkpointRecord,'PROJECT_REVISION')||project.revision||0),
+      PROJECT_SHA256:String(recordValue(checkpointRecord,'PROJECT_SHA256')||project.job?.INPUT_SET_HASH_OR_MANIFEST||''),
+      ARTIFACT_MANIFEST_SHA256:String(recordValue(checkpointRecord,'ARTIFACT_MANIFEST_SHA256')||''),
+      CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',
+      EXTERNAL_EVIDENCE_IDS:evidenceIds,
+      RESTORE_EVIDENCE_IDS:[],
+      SCOPE:emitScope,
+      STATUS:'CURRENT',
+      EXPORT_EVENT_ID:exportEventId,
+      PREVIOUS_CHECKPOINT_ID:logicalCheckpointId
+    };
+    refreshRecordHashes(exportRecord,'backupCheckpoints');
+    project.projectData.backupCheckpoints.push(exportRecord);
+    return exportRecord;
+  }});
 }
 
 function currentPreDeliveryCheckpoint(project){
@@ -996,12 +1020,12 @@ function currentPreDeliveryCheckpoint(project){
   const candidateId=String(project.job?.CURRENT_CANDIDATE_ID||'');
   const hashReviewId=String(project.job?.CURRENT_HASH_REVIEW_ID||'');
   const evidenceChainVersion=String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||'');
-  if(releaseId&&String(scopeRecord.releaseId||'')&&releaseId!==String(scopeRecord.releaseId||''))return null;
-  if(productId&&String(scopeRecord.productId||'')&&productId!==String(scopeRecord.productId||''))return null;
-  if(baselineId&&String(scopeRecord.baselineId||'')&&baselineId!==String(scopeRecord.baselineId||''))return null;
-  if(candidateId&&String(scopeRecord.candidateId||'')&&candidateId!==String(scopeRecord.candidateId||''))return null;
-  if(hashReviewId&&String(scopeRecord.hashReviewId||'')&&hashReviewId!==String(scopeRecord.hashReviewId||''))return null;
-  if(evidenceChainVersion&&String(scopeRecord.evidenceChainVersion||'')&&evidenceChainVersion!==String(scopeRecord.evidenceChainVersion||''))return null;
+  const requiredScopeKeys=['releaseId','productId','baselineId','candidateId','hashReviewId','evidenceChainVersion'];
+  for(const key of requiredScopeKeys){
+    const jobValue=String(project.job?.[key==='releaseId'?'CURRENT_RELEASE_ID':key==='productId'?'CURRENT_PRODUCT_ID':key==='baselineId'?'CURRENT_BASELINE_ID':key==='candidateId'?'CURRENT_CANDIDATE_ID':key==='hashReviewId'?'CURRENT_HASH_REVIEW_ID':'CURRENT_EVIDENCE_CHAIN_VERSION']||'');
+    const scopeValue=String(scopeRecord[key]||'');
+    if(jobValue && (!scopeValue || scopeValue!==jobValue))return null;
+  }
   return checkpoint;
 }
 
