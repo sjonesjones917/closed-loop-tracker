@@ -29,6 +29,8 @@ jobs:
           node --check response-ingestion.js
           node --check verify-stage26-27-reconciliation-release.mjs
           node --check verify-full-cycle.mjs
+      - name: Remove patch-only workflow before repository invariants
+        run: rm .github/workflows/controller-stage27-patch.yml
       - name: Focused Stage 26/27 proofs
         run: |
           set -euo pipefail
@@ -38,10 +40,10 @@ jobs:
           node verify-full-cycle.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
-      - name: Commit implementation and remove patch-only workflow
+      - name: Commit implementation
         run: |
           set -euo pipefail
-          rm .controller-stage27-patch.mjs .controller-stage27-fix1.mjs .controller-stage27-fix2.mjs .controller-stage27-fix3.mjs .github/workflows/controller-stage27-patch.yml
+          rm .controller-stage27-patch.mjs .controller-stage27-fix1.mjs .controller-stage27-fix2.mjs .controller-stage27-fix3.mjs
           git config user.name 'closed-loop-controller'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
