@@ -1,0 +1,144 @@
+{
+  "schema": "closed-loop-build-stage-proof/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": "23",
+  "stageName": "PRODUCTION BASELINE",
+  "status": "PROVEN",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "specificationByteLength": 309472,
+  "startingMainCommit": "d3457175dd3baeb82c4bc4529aa9af4ac2f7f66c",
+  "endingMainCommit": "79d996e0a964e50d50b870a4ca9e055f4c6af633",
+  "implementationCommitIds": [
+    "577715e59d1d0b1d1d2b813a1644b79eb03ffb3b",
+    "79d996e0a964e50d50b870a4ca9e055f4c6af633"
+  ],
+  "changedFiles": [
+    ".github/workflows/pages.yml",
+    "app-core.js",
+    "stage19-fixture.mjs",
+    "verify-complete.mjs",
+    "verify-controller-stage-bundle.mjs",
+    "verify-definition-of-done.mjs",
+    "verify-full-cycle.mjs",
+    "verify-production-baseline-authority.mjs",
+    "workflow-engine.js",
+    "workflow-schema.js"
+  ],
+  "specificationSections": [
+    "14.3 Human-decision authority",
+    "14.6 Closed stage-operation registry",
+    "16.1 Verification phase and due-stage model",
+    "36.1 Conservative invalidation",
+    "37 Stage 20 — FREEZE THE PRODUCTION BASELINE",
+    "38 baselines",
+    "38.1 humanDecisions",
+    "41 Integrated closure tests 222-223",
+    "43 Test the tests",
+    "44 Negative test matrix",
+    "49 Definition of done"
+  ],
+  "implementationFilesReviewed": [
+    "workflow-engine.js",
+    "workflow-schema.js",
+    "app-core.js",
+    "verify-production-baseline-authority.mjs",
+    "verify-full-cycle.mjs",
+    "verify-complete.mjs",
+    "verify-definition-of-done.mjs",
+    ".github/workflows/pages.yml"
+  ],
+  "implementationDisposition": "IMPLEMENTED_AND_DIRECTLY_REVERIFIED_ON_EXACT_CANONICAL_MAIN",
+  "implementationDispositionReason": "Controller Stage 23 maps to application Stage 20 production-baseline freeze. The merged implementation requires a current registered BASELINE_AUTHORIZATION human decision bound to the exact unchanged-confirmed candidate; rejects missing, wrong-purpose, wrong-target, wrong-value, wrong-stage, inactive, and wrong-artifact-set authority without partial baseline mutation; freezes the exact confirmed candidate identity and iteration; and permits the application-owned Stage 20 gate to complete without any accepted external-response envelope. The implementation branch passed the authorized pull-request workflow before merge. Exact canonical main 79d996e0a964e50d50b870a4ca9e055f4c6af633 then reran the full repository barrier and local Chromium, deployed the verified bytes, passed exact deployed-byte verification and deployed Chromium, and completed the main workflow successfully. Physical-iPhone acceptance remains a later Stage 30 requirement and is not claimed here.",
+  "proofCommands": [
+    {
+      "command": "node verify-production-baseline-authority.mjs",
+      "exitCode": 0,
+      "basis": "Authorized pull-request workflow run 33939999877 completed success for implementation head 577715e59d1d0b1d1d2b813a1644b79eb03ffb3b; exact-main workflow run 33940487596 test job 101236808484 also executed this verifier in the workflow/gates barrier."
+    },
+    {
+      "command": "node verify-complete.mjs && node verify-full-cycle.mjs && node verify-definition-of-done.mjs && node verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33940487596, test job 101236808484, exact canonical main 79d996e0a964e50d50b870a4ca9e055f4c6af633."
+    },
+    {
+      "command": "local Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33940487596, test job 101236808484, Local Chromium operator path completed success."
+    },
+    {
+      "command": "deploy exact verified bytes",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33940487596, deploy job 101237487761 completed success."
+    },
+    {
+      "command": "exact deployed-byte verification and deployed Chromium operator path",
+      "exitCode": 0,
+      "basis": "GitHub Actions main run 33940487596, deployment verification job 101237534448 completed success."
+    }
+  ],
+  "directSourceFindings": [
+    "verify-production-baseline-authority.mjs exercises the real workflow engine and creates every invalid fixture in isolated disposable project state.",
+    "freezeBaseline rejects a missing current BASELINE_AUTHORIZATION decision before creating a baseline.",
+    "A wrong-purpose, wrong-target, wrong-value, wrong-stage, or inactive historical human decision cannot authorize the baseline.",
+    "A valid authorization cannot substitute for the exact unchanged-confirmed artifact set; wrong artifacts are rejected with zero baseline mutation.",
+    "The repaired path creates a current baseline whose HUMAN_AUTHORIZATION field is the exact registered humanDecision identity and whose approved candidate/iteration are the exact unchanged-confirmed identities.",
+    "The repaired Stage 20 gate completes with zero accepted Stage 20 external responses, preserving application-owned FREEZE_BASELINE authority.",
+    "app-core.js records BASELINE_AUTHORIZATION against candidateFreezes and passes the resulting humanDecision identity to the application freeze command.",
+    "The main workflow executes verify-production-baseline-authority.mjs in the permanent verification barrier.",
+    "No earlier controller proof file was modified or weakened by the Stage 23 implementation."
+  ],
+  "intentionalInvalidFixtures": [
+    "missing-human-authorization-decision",
+    "wrong-decision-purpose",
+    "wrong-decision-target",
+    "wrong-decision-value",
+    "wrong-decision-stage",
+    "inactive-historical-decision",
+    "wrong-artifact-set"
+  ],
+  "repairedStateProofs": [
+    "A current correctly-targeted AUTHORIZED BASELINE_AUTHORIZATION human decision freezes the exact unchanged-confirmed candidate and baseline artifact set.",
+    "The resulting baseline preserves the exact human-decision identity, candidate identity, and unchanged-confirmation iteration identity.",
+    "The application Stage 20 gate completes without an external response envelope and the full synthetic lifecycle continues through downstream stages."
+  ],
+  "earlierStageProofsReplayed": [
+    {"stage":"01","proofPath":"verification/build-stages/stage-01-proof.json","status":"PASS"},
+    {"stage":"02","proofPath":"verification/build-stages/stage-02-proof.json","status":"PASS"},
+    {"stage":"03","proofPath":"verification/build-stages/stage-03-proof.json","status":"PASS"},
+    {"stage":"04","proofPath":"verification/build-stages/stage-04-proof.json","status":"PASS"},
+    {"stage":"05","proofPath":"verification/build-stages/stage-05-proof.json","status":"PASS"},
+    {"stage":"06","proofPath":"verification/build-stages/stage-06-proof.json","status":"PASS"},
+    {"stage":"07","proofPath":"verification/build-stages/stage-07-proof.json","status":"PASS"},
+    {"stage":"08","proofPath":"verification/build-stages/stage-08-proof.json","status":"PASS"},
+    {"stage":"09","proofPath":"verification/build-stages/stage-09-proof.json","status":"PASS"},
+    {"stage":"10","proofPath":"verification/build-stages/stage-10-proof.json","status":"PASS"},
+    {"stage":"11","proofPath":"verification/build-stages/stage-11-proof.json","status":"PASS"},
+    {"stage":"12","proofPath":"verification/build-stages/stage-12-proof.json","status":"PASS"},
+    {"stage":"13","proofPath":"verification/build-stages/stage-13-proof.json","status":"PASS"},
+    {"stage":"14","proofPath":"verification/build-stages/stage-14-proof.json","status":"PASS"},
+    {"stage":"15","proofPath":"verification/build-stages/stage-15-proof.json","status":"PASS"},
+    {"stage":"16","proofPath":"verification/build-stages/stage-16-proof.json","status":"PASS"},
+    {"stage":"17","proofPath":"verification/build-stages/stage-17-proof.json","status":"PASS"},
+    {"stage":"18","proofPath":"verification/build-stages/stage-18-proof.json","status":"PASS"},
+    {"stage":"19","proofPath":"verification/build-stages/stage-19-proof.json","status":"PASS"},
+    {"stage":"20","proofPath":"verification/build-stages/stage-20-proof.json","status":"PASS"},
+    {"stage":"21","proofPath":"verification/build-stages/stage-21-proof.json","status":"PASS"},
+    {"stage":"22","proofPath":"verification/build-stages/stage-22-proof.json","status":"PASS"}
+  ],
+  "browserProofs": [
+    {"workflowRunId":33940487596,"jobId":101236808484,"proof":"LOCAL_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"79d996e0a964e50d50b870a4ca9e055f4c6af633"},
+    {"workflowRunId":33940487596,"jobId":101237534448,"proof":"DEPLOYED_CHROMIUM_OPERATOR_PATH","status":"PASS","commit":"79d996e0a964e50d50b870a4ca9e055f4c6af633"}
+  ],
+  "deployedProofs": [
+    {"workflowRunId":33940487596,"jobId":101237487761,"proof":"EXACT_MAIN_DEPLOYMENT","status":"PASS","commit":"79d996e0a964e50d50b870a4ca9e055f4c6af633"},
+    {"workflowRunId":33940487596,"jobId":101237534448,"proof":"EXACT_DEPLOYED_BYTE_IDENTITY","status":"PASS","commit":"79d996e0a964e50d50b870a4ca9e055f4c6af633"}
+  ],
+  "externalActorProofs": [],
+  "deviceProofs": [],
+  "unprovenItems": [],
+  "stageDisposition": "PROVEN",
+  "directEvidenceReview": "PASS",
+  "nextStage": "24",
+  "notes": "This advances only controller Stage 23 after exact-current-main direct evidence proves production-baseline authority and exact unchanged-confirmed baseline freeze. Controller Stage 24 and later remain unproven; physical-iPhone and Section 49 completion are not claimed."
+}
