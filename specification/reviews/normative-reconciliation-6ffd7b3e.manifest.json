@@ -334,7 +334,2286 @@
     "allSectionsCovered": true,
     "namedSections40to44Present": true,
     "section49Present": true,
-    "section52Present": true
+    "section52Present": true,
+    "sectionResults": [
+      {
+        "sectionId": "0",
+        "title": "Controlling execution instruction",
+        "startLine": 24,
+        "endLine": 63,
+        "ledgerRecordCount": 33,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "0.1",
+        "title": "Implementation-instruction boundary",
+        "startLine": 64,
+        "endLine": 69,
+        "ledgerRecordCount": 3,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "1",
+        "title": "Controlling acceptance disposition",
+        "startLine": 70,
+        "endLine": 73,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "1.1",
+        "title": "Any current sufficient refutation of an applicable mandatory proposition -> REJECTED.",
+        "startLine": 74,
+        "endLine": 75,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "1.2",
+        "title": "Otherwise any required unknown, insufficiency, contradiction, stale state, unresolved blocker, or unavailable mandatory capability -> BLOCKED.",
+        "startLine": 76,
+        "endLine": 77,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "1.3",
+        "title": "Otherwise every applicable mandatory proposition satisfied -> ACCEPTED.",
+        "startLine": 78,
+        "endLine": 79,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "1.4",
+        "title": "All blockers and contradictions remain recorded even when REJECTED controls the disposition.",
+        "startLine": 80,
+        "endLine": 91,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "2",
+        "title": "Normative source and governance manifests",
+        "startLine": 92,
+        "endLine": 93,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "2.1",
+        "title": "Normative-source and runtime boundary",
+        "startLine": 94,
+        "endLine": 101,
+        "ledgerRecordCount": 15,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "2.2",
+        "title": "Normative-requirement manifest",
+        "startLine": 102,
+        "endLine": 111,
+        "ledgerRecordCount": 17,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "3",
+        "title": "File-first and iPhone operating outcome",
+        "startLine": 112,
+        "endLine": 119,
+        "ledgerRecordCount": 9,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "4",
+        "title": "What the application may and may not guarantee",
+        "startLine": 120,
+        "endLine": 121,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "4.1",
+        "title": "Required deterministic guarantees",
+        "startLine": 122,
+        "endLine": 154,
+        "ledgerRecordCount": 51,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "4.2",
+        "title": "Prohibited false guarantees",
+        "startLine": 155,
+        "endLine": 170,
+        "ledgerRecordCount": 18,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "4.3",
+        "title": "Additional deterministic guarantees",
+        "startLine": 171,
+        "endLine": 185,
+        "ledgerRecordCount": 18,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "5",
+        "title": "Product lifecycle",
+        "startLine": 186,
+        "endLine": 269,
+        "ledgerRecordCount": 89,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6",
+        "title": "Exact Stage 01 information flow",
+        "startLine": 270,
+        "endLine": 273,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.1",
+        "title": "Before Stage 01",
+        "startLine": 274,
+        "endLine": 297,
+        "ledgerRecordCount": 29,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.2",
+        "title": "The Stage 01 agent is the first semantic reader",
+        "startLine": 298,
+        "endLine": 318,
+        "ledgerRecordCount": 27,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.3",
+        "title": "File transfer into the Stage 01 agent context",
+        "startLine": 319,
+        "endLine": 342,
+        "ledgerRecordCount": 26,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.3A",
+        "title": "Authoritative Stage 01 handoff",
+        "startLine": 343,
+        "endLine": 346,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.4",
+        "title": "One-time semantic intake",
+        "startLine": 347,
+        "endLine": 360,
+        "ledgerRecordCount": 14,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.4A",
+        "title": "External-conversation human-answer capture",
+        "startLine": 361,
+        "endLine": 364,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.5",
+        "title": "Stage 01 coverage accounting",
+        "startLine": 365,
+        "endLine": 413,
+        "ledgerRecordCount": 63,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.5A",
+        "title": "Raw-unitization contract",
+        "startLine": 414,
+        "endLine": 419,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "6.6",
+        "title": "Mandatory two-pass Stage 01 procedure",
+        "startLine": 420,
+        "endLine": 449,
+        "ledgerRecordCount": 33,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "7",
+        "title": "Stage 01 purpose, boundaries, and questions",
+        "startLine": 450,
+        "endLine": 451,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "7.1",
+        "title": "Purpose",
+        "startLine": 452,
+        "endLine": 468,
+        "ledgerRecordCount": 21,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "7.2",
+        "title": "Required extraction",
+        "startLine": 469,
+        "endLine": 489,
+        "ledgerRecordCount": 35,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "7.3",
+        "title": "Question classes",
+        "startLine": 490,
+        "endLine": 518,
+        "ledgerRecordCount": 18,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "7.4",
+        "title": "Human conversation",
+        "startLine": 519,
+        "endLine": 535,
+        "ledgerRecordCount": 20,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "7.4A",
+        "title": "Human-authority provenance",
+        "startLine": 536,
+        "endLine": 539,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "7.5",
+        "title": "Subject neutrality",
+        "startLine": 540,
+        "endLine": 550,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "7.6",
+        "title": "Stage 01 completion",
+        "startLine": 551,
+        "endLine": 569,
+        "ledgerRecordCount": 21,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "8",
+        "title": "Stage 02 and Stage 03 boundaries",
+        "startLine": 570,
+        "endLine": 571,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "8.1",
+        "title": "Stage 02",
+        "startLine": 572,
+        "endLine": 583,
+        "ledgerRecordCount": 6,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "8.2",
+        "title": "Stage 03",
+        "startLine": 584,
+        "endLine": 603,
+        "ledgerRecordCount": 26,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "8.3",
+        "title": "Bounded source-search contract",
+        "startLine": 604,
+        "endLine": 611,
+        "ledgerRecordCount": 23,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "8.4",
+        "title": "Stage 03 omission challenge",
+        "startLine": 612,
+        "endLine": 615,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "8.5",
+        "title": "Source byte identity, authenticity, and freshness",
+        "startLine": 616,
+        "endLine": 621,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "9",
+        "title": "Exact Stage 04 information flow",
+        "startLine": 622,
+        "endLine": 623,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "9.1",
+        "title": "Stage 04 must not ask the user to resupply intent",
+        "startLine": 624,
+        "endLine": 636,
+        "ledgerRecordCount": 15,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "9.2",
+        "title": "Required Stage 04 input union",
+        "startLine": 637,
+        "endLine": 652,
+        "ledgerRecordCount": 21,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "9.3",
+        "title": "Obligation manifest",
+        "startLine": 653,
+        "endLine": 670,
+        "ledgerRecordCount": 17,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "9.4",
+        "title": "Stage 04 closure rule",
+        "startLine": 671,
+        "endLine": 686,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "9.5",
+        "title": "Responsibility division",
+        "startLine": 687,
+        "endLine": 713,
+        "ledgerRecordCount": 40,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "9.6",
+        "title": "Stage 04 semantic challenge",
+        "startLine": 714,
+        "endLine": 719,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "10",
+        "title": "Prompt system requirements for all 30 stages",
+        "startLine": 720,
+        "endLine": 758,
+        "ledgerRecordCount": 62,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "10.1",
+        "title": "Authoritative prompt-file identity",
+        "startLine": 759,
+        "endLine": 766,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "10.2",
+        "title": "Authoritative response-file contract",
+        "startLine": 767,
+        "endLine": 770,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "10.3",
+        "title": "External chat launcher",
+        "startLine": 771,
+        "endLine": 780,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "11",
+        "title": "Fixed product boundaries",
+        "startLine": 781,
+        "endLine": 824,
+        "ledgerRecordCount": 70,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "12",
+        "title": "Target architecture and responsible files",
+        "startLine": 825,
+        "endLine": 840,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "12.1",
+        "title": "Runtime script order",
+        "startLine": 841,
+        "endLine": 859,
+        "ledgerRecordCount": 14,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "12.2",
+        "title": "CSP",
+        "startLine": 860,
+        "endLine": 871,
+        "ledgerRecordCount": 14,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "12.3",
+        "title": "Additional responsibility boundaries",
+        "startLine": 872,
+        "endLine": 887,
+        "ledgerRecordCount": 7,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "13",
+        "title": "Versioning and migration",
+        "startLine": 888,
+        "endLine": 929,
+        "ledgerRecordCount": 40,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "13.1",
+        "title": "Contract-profile migration",
+        "startLine": 930,
+        "endLine": 935,
+        "ledgerRecordCount": 9,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "13.2",
+        "title": "Registry-version migration",
+        "startLine": 936,
+        "endLine": 941,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14",
+        "title": "Authority and ownership",
+        "startLine": 942,
+        "endLine": 971,
+        "ledgerRecordCount": 33,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.1",
+        "title": "Application authority",
+        "startLine": 972,
+        "endLine": 1003,
+        "ledgerRecordCount": 55,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.2",
+        "title": "Human authority",
+        "startLine": 1004,
+        "endLine": 1014,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.3",
+        "title": "Human-decision authority",
+        "startLine": 1015,
+        "endLine": 1025,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.4",
+        "title": "Agent authority",
+        "startLine": 1026,
+        "endLine": 1042,
+        "ledgerRecordCount": 23,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.5",
+        "title": "Authoritative field registry",
+        "startLine": 1043,
+        "endLine": 1075,
+        "ledgerRecordCount": 58,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.6",
+        "title": "Closed stage-operation registry",
+        "startLine": 1076,
+        "endLine": 1121,
+        "ledgerRecordCount": 102,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.7",
+        "title": "Stage-operation scope matrix",
+        "startLine": 1122,
+        "endLine": 1150,
+        "ledgerRecordCount": 52,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.8",
+        "title": "Canonical authority and stage-data projections",
+        "startLine": 1151,
+        "endLine": 1161,
+        "ledgerRecordCount": 14,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.9",
+        "title": "Durable-object registry",
+        "startLine": 1162,
+        "endLine": 1165,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "14.10",
+        "title": "Human-origin facts first supplied during an external conversation",
+        "startLine": 1166,
+        "endLine": 1173,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "15",
+        "title": "Canonical Job fields",
+        "startLine": 1174,
+        "endLine": 1233,
+        "ledgerRecordCount": 337,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "16",
+        "title": "Stage-data separation and current scope",
+        "startLine": 1234,
+        "endLine": 1264,
+        "ledgerRecordCount": 42,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "16.1",
+        "title": "Verification phase and due-stage model",
+        "startLine": 1265,
+        "endLine": 1282,
+        "ledgerRecordCount": 25,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "16.2",
+        "title": "Canonical-family sole-authority rule",
+        "startLine": 1283,
+        "endLine": 1288,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17",
+        "title": "Response contract",
+        "startLine": 1289,
+        "endLine": 1290,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.1",
+        "title": "Envelope",
+        "startLine": 1291,
+        "endLine": 1318,
+        "ledgerRecordCount": 45,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.2",
+        "title": "Prompt identity",
+        "startLine": 1319,
+        "endLine": 1327,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.3",
+        "title": "Response types",
+        "startLine": 1328,
+        "endLine": 1338,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.4",
+        "title": "Record identity",
+        "startLine": 1339,
+        "endLine": 1354,
+        "ledgerRecordCount": 17,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.5",
+        "title": "Closed-schema rejection",
+        "startLine": 1355,
+        "endLine": 1417,
+        "ledgerRecordCount": 114,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.6",
+        "title": "Raw-first durable file processing",
+        "startLine": 1418,
+        "endLine": 1446,
+        "ledgerRecordCount": 37,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.7",
+        "title": "Proposal preconditions",
+        "startLine": 1447,
+        "endLine": 1463,
+        "ledgerRecordCount": 22,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.8",
+        "title": "Extraction manifest",
+        "startLine": 1464,
+        "endLine": 1490,
+        "ledgerRecordCount": 42,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.9",
+        "title": "File-first response ingestion",
+        "startLine": 1491,
+        "endLine": 1494,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.10",
+        "title": "Attachment-slot contract",
+        "startLine": 1495,
+        "endLine": 1500,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.11",
+        "title": "Date and time contract",
+        "startLine": 1501,
+        "endLine": 1508,
+        "ledgerRecordCount": 15,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "17.12",
+        "title": "Proposal-acceptance modes",
+        "startLine": 1509,
+        "endLine": 1518,
+        "ledgerRecordCount": 11,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "18",
+        "title": "Human clarification",
+        "startLine": 1519,
+        "endLine": 1552,
+        "ledgerRecordCount": 33,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "18.1",
+        "title": "External-conversation human-answer capture",
+        "startLine": 1553,
+        "endLine": 1558,
+        "ledgerRecordCount": 11,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19",
+        "title": "Artifact and evidence rules",
+        "startLine": 1559,
+        "endLine": 1560,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.1",
+        "title": "Byte authority",
+        "startLine": 1561,
+        "endLine": 1572,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.2",
+        "title": "Custody honesty",
+        "startLine": 1573,
+        "endLine": 1584,
+        "ledgerRecordCount": 12,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.3",
+        "title": "No repeated human resupply",
+        "startLine": 1585,
+        "endLine": 1593,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.4",
+        "title": "Large multi-file work",
+        "startLine": 1594,
+        "endLine": 1600,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.5",
+        "title": "Evidence distinction",
+        "startLine": 1601,
+        "endLine": 1616,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.6",
+        "title": "File-first external handoff",
+        "startLine": 1617,
+        "endLine": 1630,
+        "ledgerRecordCount": 12,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.7",
+        "title": "closed-loop-handoff-container/1",
+        "startLine": 1631,
+        "endLine": 1642,
+        "ledgerRecordCount": 26,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.8",
+        "title": "Disclosure and package allowlist",
+        "startLine": 1643,
+        "endLine": 1646,
+        "ledgerRecordCount": 7,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "19.9",
+        "title": "Filename, format, and archive safety",
+        "startLine": 1647,
+        "endLine": 1656,
+        "ledgerRecordCount": 12,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "20",
+        "title": "Verification execution modes",
+        "startLine": 1657,
+        "endLine": 1673,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21",
+        "title": "Closed Loop Test IR",
+        "startLine": 1674,
+        "endLine": 1675,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.1",
+        "title": "Purpose",
+        "startLine": 1676,
+        "endLine": 1682,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.2",
+        "title": "Canonical test additions",
+        "startLine": 1683,
+        "endLine": 1709,
+        "ledgerRecordCount": 14,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.3",
+        "title": "Canonical structure and dataflow",
+        "startLine": 1710,
+        "endLine": 1777,
+        "ledgerRecordCount": 18,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.4",
+        "title": "Required primitives",
+        "startLine": 1778,
+        "endLine": 1810,
+        "ledgerRecordCount": 29,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.5",
+        "title": "Prohibited runtime behavior",
+        "startLine": 1811,
+        "endLine": 1827,
+        "ledgerRecordCount": 23,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.6",
+        "title": "Restricted selectors",
+        "startLine": 1828,
+        "endLine": 1835,
+        "ledgerRecordCount": 15,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.7",
+        "title": "CSV contract",
+        "startLine": 1836,
+        "endLine": 1848,
+        "ledgerRecordCount": 11,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.8",
+        "title": "Text encoding",
+        "startLine": 1849,
+        "endLine": 1853,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.9",
+        "title": "Regex",
+        "startLine": 1854,
+        "endLine": 1860,
+        "ledgerRecordCount": 14,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.10",
+        "title": "Numeric semantics",
+        "startLine": 1861,
+        "endLine": 1868,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.11",
+        "title": "Inputs",
+        "startLine": 1869,
+        "endLine": 1880,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.12",
+        "title": "Format adapters",
+        "startLine": 1881,
+        "endLine": 1886,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.13",
+        "title": "JSON Schema",
+        "startLine": 1887,
+        "endLine": 1891,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.14",
+        "title": "Resource limits",
+        "startLine": 1892,
+        "endLine": 1908,
+        "ledgerRecordCount": 21,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.15",
+        "title": "Execution dispositions",
+        "startLine": 1909,
+        "endLine": 1916,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.16",
+        "title": "Test IR language and registry identity",
+        "startLine": 1917,
+        "endLine": 1929,
+        "ledgerRecordCount": 19,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "21.17",
+        "title": "Verification timing fields",
+        "startLine": 1930,
+        "endLine": 1935,
+        "ledgerRecordCount": 3,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "22",
+        "title": "Deterministic runtime and worker",
+        "startLine": 1936,
+        "endLine": 1937,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "22.1",
+        "title": "test-runtime.js",
+        "startLine": 1938,
+        "endLine": 1950,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "22.2",
+        "title": "test-worker.js",
+        "startLine": 1951,
+        "endLine": 1965,
+        "ledgerRecordCount": 19,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "22.3",
+        "title": "Runtime result",
+        "startLine": 1966,
+        "endLine": 1984,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "22.4",
+        "title": "Native-result authority",
+        "startLine": 1985,
+        "endLine": 2005,
+        "ledgerRecordCount": 24,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "22.5",
+        "title": "External deterministic results",
+        "startLine": 2006,
+        "endLine": 2018,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "22.6",
+        "title": "Runtime identity and deterministic dataflow evidence",
+        "startLine": 2019,
+        "endLine": 2026,
+        "ledgerRecordCount": 7,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "23",
+        "title": "Single execution-routing authority",
+        "startLine": 2027,
+        "endLine": 2076,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "23.1",
+        "title": "Required routing",
+        "startLine": 2077,
+        "endLine": 2111,
+        "ledgerRecordCount": 11,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "23.2",
+        "title": "Stage 06 readiness",
+        "startLine": 2112,
+        "endLine": 2130,
+        "ledgerRecordCount": 30,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "23.3",
+        "title": "External-action risk contract",
+        "startLine": 2131,
+        "endLine": 2141,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "24",
+        "title": "Deterministic artifact handoff",
+        "startLine": 2142,
+        "endLine": 2189,
+        "ledgerRecordCount": 38,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "24.1",
+        "title": "File-first handoff fields",
+        "startLine": 2190,
+        "endLine": 2207,
+        "ledgerRecordCount": 27,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "24.2",
+        "title": "Returned attachment slots",
+        "startLine": 2208,
+        "endLine": 2213,
+        "ledgerRecordCount": 6,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "25",
+        "title": "Verification packages and artifact retrieval",
+        "startLine": 2214,
+        "endLine": 2258,
+        "ledgerRecordCount": 52,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "25.1",
+        "title": "Handoff-container contract binding",
+        "startLine": 2259,
+        "endLine": 2262,
+        "ledgerRecordCount": 3,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "25.2",
+        "title": "Reservation and package transaction order",
+        "startLine": 2263,
+        "endLine": 2272,
+        "ledgerRecordCount": 7,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "26",
+        "title": "Independence evaluation",
+        "startLine": 2273,
+        "endLine": 2295,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "26.1",
+        "title": "Stage 11",
+        "startLine": 2296,
+        "endLine": 2312,
+        "ledgerRecordCount": 25,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "26.2",
+        "title": "Stage 12",
+        "startLine": 2313,
+        "endLine": 2324,
+        "ledgerRecordCount": 15,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "26.3",
+        "title": "Stages 23 and 24",
+        "startLine": 2325,
+        "endLine": 2333,
+        "ledgerRecordCount": 9,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "26.4",
+        "title": "Gate consequence",
+        "startLine": 2334,
+        "endLine": 2347,
+        "ledgerRecordCount": 11,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "26.5",
+        "title": "Independent semantic-review contract",
+        "startLine": 2348,
+        "endLine": 2363,
+        "ledgerRecordCount": 27,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "26.6",
+        "title": "Dimensioned independence",
+        "startLine": 2364,
+        "endLine": 2371,
+        "ledgerRecordCount": 9,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "27",
+        "title": "Blind verification",
+        "startLine": 2372,
+        "endLine": 2399,
+        "ledgerRecordCount": 27,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "28",
+        "title": "Prompt context isolation",
+        "startLine": 2400,
+        "endLine": 2460,
+        "ledgerRecordCount": 70,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29",
+        "title": "Evidence sufficiency",
+        "startLine": 2461,
+        "endLine": 2477,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.1",
+        "title": "Byte identity",
+        "startLine": 2478,
+        "endLine": 2487,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.2",
+        "title": "Programmatic test",
+        "startLine": 2488,
+        "endLine": 2497,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.3",
+        "title": "Meaning review",
+        "startLine": 2498,
+        "endLine": 2508,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.4",
+        "title": "Human inspection",
+        "startLine": 2509,
+        "endLine": 2513,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.5",
+        "title": "External system",
+        "startLine": 2514,
+        "endLine": 2518,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.6",
+        "title": "Unavailable capability",
+        "startLine": 2519,
+        "endLine": 2522,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.7",
+        "title": "Artifact evidence",
+        "startLine": 2523,
+        "endLine": 2527,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.8",
+        "title": "Later artifact loss",
+        "startLine": 2528,
+        "endLine": 2532,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.9",
+        "title": "Gate integration",
+        "startLine": 2533,
+        "endLine": 2549,
+        "ledgerRecordCount": 23,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.10",
+        "title": "Activation-proposition proof",
+        "startLine": 2550,
+        "endLine": 2555,
+        "ledgerRecordCount": 7,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.11",
+        "title": "Due-stage evidence evaluation",
+        "startLine": 2556,
+        "endLine": 2559,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.12",
+        "title": "Universal proposition state and three-valued logic",
+        "startLine": 2560,
+        "endLine": 2565,
+        "ledgerRecordCount": 15,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.13",
+        "title": "Proposition and proof-expression contract",
+        "startLine": 2566,
+        "endLine": 2575,
+        "ledgerRecordCount": 22,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.14",
+        "title": "Observation, entailment, origin, and freshness",
+        "startLine": 2576,
+        "endLine": 2585,
+        "ledgerRecordCount": 18,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "29.15",
+        "title": "Normative classification, controlled exceptions, severity, and materiality",
+        "startLine": 2586,
+        "endLine": 2597,
+        "ledgerRecordCount": 22,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30",
+        "title": "Contradiction detection",
+        "startLine": 2598,
+        "endLine": 2608,
+        "ledgerRecordCount": 3,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30.1",
+        "title": "Verification contradictions",
+        "startLine": 2609,
+        "endLine": 2617,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30.2",
+        "title": "Same-proposition contradictions",
+        "startLine": 2618,
+        "endLine": 2623,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30.3",
+        "title": "Product contradictions",
+        "startLine": 2624,
+        "endLine": 2631,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30.4",
+        "title": "Artifact contradictions",
+        "startLine": 2632,
+        "endLine": 2641,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30.5",
+        "title": "Baseline/product contradictions",
+        "startLine": 2642,
+        "endLine": 2645,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30.6",
+        "title": "Release contradictions",
+        "startLine": 2646,
+        "endLine": 2653,
+        "ledgerRecordCount": 7,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30.7",
+        "title": "Release disposition",
+        "startLine": 2654,
+        "endLine": 2662,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "30.8",
+        "title": "Gate integration",
+        "startLine": 2663,
+        "endLine": 2675,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "31",
+        "title": "Ten-run stability and reliability metrics",
+        "startLine": 2676,
+        "endLine": 2736,
+        "ledgerRecordCount": 47,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "31.1",
+        "title": "Closed metric universes",
+        "startLine": 2737,
+        "endLine": 2753,
+        "ledgerRecordCount": 23,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "32",
+        "title": "Failure-test and regression semantics",
+        "startLine": 2754,
+        "endLine": 2755,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "32.1",
+        "title": "Stage 06 false-positive analysis",
+        "startLine": 2756,
+        "endLine": 2769,
+        "ledgerRecordCount": 16,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "32.2",
+        "title": "Stage 07 completion",
+        "startLine": 2770,
+        "endLine": 2783,
+        "ledgerRecordCount": 16,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "32.3",
+        "title": "Stage 15 regression",
+        "startLine": 2784,
+        "endLine": 2801,
+        "ledgerRecordCount": 25,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "32.4",
+        "title": "Due-stage and isolation rule",
+        "startLine": 2802,
+        "endLine": 2807,
+        "ledgerRecordCount": 9,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "32.5",
+        "title": "Regression retirement",
+        "startLine": 2808,
+        "endLine": 2813,
+        "ledgerRecordCount": 12,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "33",
+        "title": "Stage 16 correction model",
+        "startLine": 2814,
+        "endLine": 2851,
+        "ledgerRecordCount": 35,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "34",
+        "title": "Collection commit semantics",
+        "startLine": 2852,
+        "endLine": 2866,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "34.1",
+        "title": "Canonical serialization portability",
+        "startLine": 2867,
+        "endLine": 2883,
+        "ledgerRecordCount": 36,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "34.2",
+        "title": "Canonical ID allocation",
+        "startLine": 2884,
+        "endLine": 2904,
+        "ledgerRecordCount": 14,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "34.3",
+        "title": "Registered normalizers and derivations",
+        "startLine": 2905,
+        "endLine": 2912,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35",
+        "title": "Persistence, integrity, concurrency, and backup",
+        "startLine": 2913,
+        "endLine": 2918,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.1",
+        "title": "Compare-and-swap",
+        "startLine": 2919,
+        "endLine": 2933,
+        "ledgerRecordCount": 3,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.2",
+        "title": "Integrity",
+        "startLine": 2934,
+        "endLine": 2940,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.3",
+        "title": "Artifact bytes",
+        "startLine": 2941,
+        "endLine": 2951,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.4",
+        "title": "Storage status",
+        "startLine": 2952,
+        "endLine": 2957,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.5",
+        "title": "Complete export and import",
+        "startLine": 2958,
+        "endLine": 2981,
+        "ledgerRecordCount": 34,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.6",
+        "title": "Reservation and idempotency state machine",
+        "startLine": 2982,
+        "endLine": 2997,
+        "ledgerRecordCount": 28,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.7",
+        "title": "Deletion and clone idempotency receipts",
+        "startLine": 2998,
+        "endLine": 3003,
+        "ledgerRecordCount": 9,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.8",
+        "title": "Quarantined-project recovery",
+        "startLine": 3004,
+        "endLine": 3014,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.9",
+        "title": "Backup custody states",
+        "startLine": 3015,
+        "endLine": 3028,
+        "ledgerRecordCount": 26,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.10",
+        "title": "Unknown extension data",
+        "startLine": 3029,
+        "endLine": 3032,
+        "ledgerRecordCount": 6,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.11",
+        "title": "File-first staging recovery",
+        "startLine": 3033,
+        "endLine": 3036,
+        "ledgerRecordCount": 6,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "35.12",
+        "title": "Integrity and authentication boundary",
+        "startLine": 3037,
+        "endLine": 3044,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36",
+        "title": "Invalidation, convergence, release, and evidence graph",
+        "startLine": 3045,
+        "endLine": 3046,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.1",
+        "title": "Conservative invalidation",
+        "startLine": 3047,
+        "endLine": 3062,
+        "ledgerRecordCount": 20,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.2",
+        "title": "Shared repeated-iteration evaluator",
+        "startLine": 3063,
+        "endLine": 3087,
+        "ledgerRecordCount": 40,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.3",
+        "title": "Exact verification matrix",
+        "startLine": 3088,
+        "endLine": 3100,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.4",
+        "title": "Release",
+        "startLine": 3101,
+        "endLine": 3111,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.5",
+        "title": "Artifact identity",
+        "startLine": 3112,
+        "endLine": 3130,
+        "ledgerRecordCount": 23,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.6",
+        "title": "Evidence graph",
+        "startLine": 3131,
+        "endLine": 3151,
+        "ledgerRecordCount": 16,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.7",
+        "title": "Belief explanation",
+        "startLine": 3152,
+        "endLine": 3170,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.8",
+        "title": "Delivery-candidate set",
+        "startLine": 3171,
+        "endLine": 3176,
+        "ledgerRecordCount": 6,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.9",
+        "title": "Atomic Stage 30 terminal command",
+        "startLine": 3177,
+        "endLine": 3195,
+        "ledgerRecordCount": 32,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.10",
+        "title": "Destination-bound delivery authorization",
+        "startLine": 3196,
+        "endLine": 3213,
+        "ledgerRecordCount": 26,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.11",
+        "title": "Authorized export, delivery attempt, and delivery evidence",
+        "startLine": 3214,
+        "endLine": 3219,
+        "ledgerRecordCount": 11,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "36.12",
+        "title": "Derived-command self-validity",
+        "startLine": 3220,
+        "endLine": 3225,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "37",
+        "title": "Exact 30-stage workflow and prompt obligations",
+        "startLine": 3226,
+        "endLine": 3227,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "37.0",
+        "title": "Closed stage-operation registry",
+        "startLine": 3228,
+        "endLine": 3511,
+        "ledgerRecordCount": 208,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "38",
+        "title": "Canonical record families and target ownership",
+        "startLine": 3512,
+        "endLine": 3802,
+        "ledgerRecordCount": 208,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "38.1",
+        "title": "Additional required canonical families",
+        "startLine": 3803,
+        "endLine": 3947,
+        "ledgerRecordCount": 130,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "38.2",
+        "title": "Durable-object completeness checklist",
+        "startLine": 3948,
+        "endLine": 3971,
+        "ledgerRecordCount": 33,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39",
+        "title": "Operator interface",
+        "startLine": 3972,
+        "endLine": 3973,
+        "ledgerRecordCount": 1,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.1",
+        "title": "Questions every screen answers",
+        "startLine": 3974,
+        "endLine": 3990,
+        "ledgerRecordCount": 14,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.2",
+        "title": "Structured primary action",
+        "startLine": 3991,
+        "endLine": 4028,
+        "ledgerRecordCount": 29,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.3",
+        "title": "Primary experiences",
+        "startLine": 4029,
+        "endLine": 4045,
+        "ledgerRecordCount": 5,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.4",
+        "title": "Advanced details",
+        "startLine": 4046,
+        "endLine": 4059,
+        "ledgerRecordCount": 19,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.5",
+        "title": "Conversation versus final JSON",
+        "startLine": 4060,
+        "endLine": 4069,
+        "ledgerRecordCount": 6,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.6",
+        "title": "Canonical-change certainty",
+        "startLine": 4070,
+        "endLine": 4080,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.7",
+        "title": "Proposal review",
+        "startLine": 4081,
+        "endLine": 4096,
+        "ledgerRecordCount": 18,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.8",
+        "title": "Provenance navigation",
+        "startLine": 4097,
+        "endLine": 4108,
+        "ledgerRecordCount": 3,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.9",
+        "title": "Regression display",
+        "startLine": 4109,
+        "endLine": 4119,
+        "ledgerRecordCount": 3,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.10",
+        "title": "Stability display",
+        "startLine": 4120,
+        "endLine": 4130,
+        "ledgerRecordCount": 0,
+        "status": "NONNORMATIVE_OR_NO_ATOM_IN_INPUT",
+        "nonnormativeReason": "Neither independently supplied extraction emitted a source atom for this section; the section remains explicitly represented in the controlling section inventory and is not treated as proof."
+      },
+      {
+        "sectionId": "39.11",
+        "title": "State/action adjacency",
+        "startLine": 4131,
+        "endLine": 4135,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.12",
+        "title": "Mobile and accessibility",
+        "startLine": 4136,
+        "endLine": 4166,
+        "ledgerRecordCount": 39,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.13",
+        "title": "Identity assurance",
+        "startLine": 4167,
+        "endLine": 4175,
+        "ledgerRecordCount": 10,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.14",
+        "title": "Canonical-action restrictions",
+        "startLine": 4176,
+        "endLine": 4188,
+        "ledgerRecordCount": 12,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.15",
+        "title": "Visual preservation",
+        "startLine": 4189,
+        "endLine": 4203,
+        "ledgerRecordCount": 16,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.16",
+        "title": "File-first operator flow",
+        "startLine": 4204,
+        "endLine": 4217,
+        "ledgerRecordCount": 6,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.17",
+        "title": "Safe rendering and navigation",
+        "startLine": 4218,
+        "endLine": 4223,
+        "ledgerRecordCount": 9,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "39.18",
+        "title": "Objective visual baseline",
+        "startLine": 4224,
+        "endLine": 4233,
+        "ledgerRecordCount": 11,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "40",
+        "title": "Permanent regression obligations",
+        "startLine": 4234,
+        "endLine": 4313,
+        "ledgerRecordCount": 107,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "41",
+        "title": "Mandatory deterministic and behavioral tests",
+        "startLine": 4314,
+        "endLine": 4594,
+        "ledgerRecordCount": 291,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "42",
+        "title": "Additional mandatory Test IR tests",
+        "startLine": 4595,
+        "endLine": 4662,
+        "ledgerRecordCount": 122,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "43",
+        "title": "Test the tests",
+        "startLine": 4663,
+        "endLine": 4698,
+        "ledgerRecordCount": 54,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "44",
+        "title": "Negative test matrix",
+        "startLine": 4699,
+        "endLine": 4825,
+        "ledgerRecordCount": 237,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "45",
+        "title": "Browser acceptance",
+        "startLine": 4826,
+        "endLine": 4873,
+        "ledgerRecordCount": 89,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "45.1",
+        "title": "Actual-iPhone Safari acceptance",
+        "startLine": 4874,
+        "endLine": 4915,
+        "ledgerRecordCount": 80,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "45.2",
+        "title": "Physical-device evidence binding",
+        "startLine": 4916,
+        "endLine": 4925,
+        "ledgerRecordCount": 13,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "46",
+        "title": "CI, deployment, and governance",
+        "startLine": 4926,
+        "endLine": 4989,
+        "ledgerRecordCount": 69,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "46.1",
+        "title": "Deployment origin identity",
+        "startLine": 4990,
+        "endLine": 4993,
+        "ledgerRecordCount": 4,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "46.2",
+        "title": "Specification, requirement-trace, and mobile evidence",
+        "startLine": 4994,
+        "endLine": 5012,
+        "ledgerRecordCount": 30,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "46.3",
+        "title": "Deployment resource, cache, worker, and supply-chain proof",
+        "startLine": 5013,
+        "endLine": 5024,
+        "ledgerRecordCount": 22,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "47",
+        "title": "Required implementation changes by file",
+        "startLine": 5025,
+        "endLine": 5224,
+        "ledgerRecordCount": 289,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "48",
+        "title": "Required implementation order",
+        "startLine": 5225,
+        "endLine": 5318,
+        "ledgerRecordCount": 81,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "49",
+        "title": "Definition of done",
+        "startLine": 5319,
+        "endLine": 5506,
+        "ledgerRecordCount": 224,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "50",
+        "title": "Production maturity",
+        "startLine": 5507,
+        "endLine": 5543,
+        "ledgerRecordCount": 54,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "50.1",
+        "title": "Final physical delivery action",
+        "startLine": 5544,
+        "endLine": 5549,
+        "ledgerRecordCount": 8,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "50.2",
+        "title": "Delivery destination binding",
+        "startLine": 5550,
+        "endLine": 5553,
+        "ledgerRecordCount": 2,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "50.3",
+        "title": "Terminal backup ordering",
+        "startLine": 5554,
+        "endLine": 5559,
+        "ledgerRecordCount": 6,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "51",
+        "title": "Supplied-unverified historical evidence",
+        "startLine": 5560,
+        "endLine": 5612,
+        "ledgerRecordCount": 25,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      },
+      {
+        "sectionId": "52",
+        "title": "Final controlling rule",
+        "startLine": 5613,
+        "endLine": 5656,
+        "ledgerRecordCount": 61,
+        "status": "COVERED",
+        "nonnormativeReason": null
+      }
+    ]
   },
   "statePolicy": {
     "currentStateDefault": "UNINSPECTED",
@@ -360,7 +2639,7 @@
       "uniqueRequirementIds": "PASS",
       "AReferenceClosure": "PASS",
       "BReferenceClosure": "PASS",
-      "section0To52Coverage": "PASS"
+      "section0To52Coverage": "PASS (all 53 top-level sections represented; zero-atom subsection 39.10 explicitly classified)"
     },
     "verifiedAtUtc": "2026-09-05T00:36:42Z"
   }
