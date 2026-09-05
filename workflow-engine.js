@@ -1022,10 +1022,11 @@ function currentPreDeliveryCheckpoint(project){
   const hashReviewId=String(project.job?.CURRENT_HASH_REVIEW_ID||'');
   const evidenceChainVersion=String(project.job?.CURRENT_EVIDENCE_CHAIN_VERSION||'');
   const requiredScopeKeys=['releaseId','productId','baselineId','candidateId','hashReviewId','evidenceChainVersion'];
+  if(requiredScopeKeys.every(key=>!String(project.job?.[key==='releaseId'?'CURRENT_RELEASE_ID':key==='productId'?'CURRENT_PRODUCT_ID':key==='baselineId'?'CURRENT_BASELINE_ID':key==='candidateId'?'CURRENT_CANDIDATE_ID':key==='hashReviewId'?'CURRENT_HASH_REVIEW_ID':'CURRENT_EVIDENCE_CHAIN_VERSION']||''))&&requiredScopeKeys.every(key=>!String(scopeRecord[key]||'')))return null;
   for(const key of requiredScopeKeys){
     const jobValue=String(project.job?.[key==='releaseId'?'CURRENT_RELEASE_ID':key==='productId'?'CURRENT_PRODUCT_ID':key==='baselineId'?'CURRENT_BASELINE_ID':key==='candidateId'?'CURRENT_CANDIDATE_ID':key==='hashReviewId'?'CURRENT_HASH_REVIEW_ID':'CURRENT_EVIDENCE_CHAIN_VERSION']||'');
     const scopeValue=String(scopeRecord[key]||'');
-    if(jobValue && (!scopeValue || scopeValue!==jobValue))return null;
+    if(jobValue&&(!scopeValue||scopeValue!==jobValue))return null;
   }
   return checkpoint;
 }
