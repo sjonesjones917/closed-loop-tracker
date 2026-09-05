@@ -98,9 +98,22 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   assert.equal(calculated.releaseEvidenceSha256,engine.releaseBinding(p).evidenceDigest);
 }
 
+// The structured next-action path is derived UI state. Passing a later stage through the shared
+// wrapper must not mutate canonical proof obligations merely to construct a label.
+{
+  const p=fixture('JOB-STAGE27-NEXT-ACTION-PURITY');
+  p.projectData.proofObligations.push({
+    id:'PROOF-ACTION-PURITY',stage:6,active:true,validity:'CURRENT',scope:engine.currentScope(p),
+    fields:{PROOF_OBLIGATION_ID:'PROOF-ACTION-PURITY'}
+  });
+  const before=hash.stableStringify(p.projectData.proofObligations);
+  engine.operationalNextAction(p,30);
+  assert.equal(hash.stableStringify(p.projectData.proofObligations),before,'Structured next-action derivation mutated canonical proof obligations.');
+}
+
 // Release precedence is exact: sufficient mandatory refutation controls over simultaneous blockers.
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:1,blockingConditionCount:9}),'REJECTED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:1}),'BLOCKED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:0}),'ACCEPTED');
 
-console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',digest:hash.sha256Value('stage27-release-binding-v4')}));
+console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',digest:hash.sha256Value('stage27-release-binding-v5')}));
