@@ -19,6 +19,13 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const engineSource=fs.readFileSync('workflow-engine.js','utf8');
 const appSource=fs.readFileSync('app-core.js','utf8');
 const fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
+assert.doesNotMatch(appSource,/projectData\.mobileAcceptance(?:Target|Probe|Receipts|Measurements)/,'Acceptance-session state must not be persisted as unregistered projectData.');
+assert.match(appSource,/stage30MobileAcceptance\.v1:/,'Acceptance-session state must use the versioned metadata key.');
+assert.doesNotMatch(appSource,/mobile-acceptance-receipt-kind|mobile-runtime-exceptions|mobile-horizontal-overflow/,'Application-observable acceptance values must not be manually declared by the operator.');
+assert.match(appSource,/function measureMobileAcceptance\(\)/,'Acceptance measurements must be calculated from browser-observable state.');
+assert.match(appSource,/mobileAcceptanceEvidenceId/,'The application must generate and bind an acceptance evidence ID.');
+assert.match(appSource,/indexedDB\.open/,'The capability probe must exercise backup storage rather than check API presence only.');
+assert.doesNotMatch(appSource,/viewport:actorEvidence\.viewport/,'Actor evidence must not override the pinned viewport.');
 const target=createMobileAcceptanceTarget({
   sourceCommit:'f'.repeat(40),deploymentManifestDigest:'a'.repeat(64),
   origin:MOBILE_ACCEPTANCE_ORIGIN,basePath:MOBILE_ACCEPTANCE_BASE_PATH,
@@ -183,7 +190,7 @@ assert.doesNotMatch(engineSource,/if\(e0\.gate\(30,p\)\.complete&&t\.complete\)\
 for(const token of ['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE','calculateTerminal','recordDeliveryAttempt','recordDeliveryEvidence'])assert.match(engineSource,new RegExp(token),`Stage 30 engine contract missing ${token}.`);
 for(const token of ['calculate-stage30-terminal','export-authorized-artifacts','record-delivery-evidence','exportAuthorizedArtifacts','recordCurrentDeliveryEvidence'])assert.match(appSource,new RegExp(token),`Stage 30 visible operator path missing ${token}.`);
 assert.match(appSource,/downloadCanonicalArtifact\(artifactId\)/,'Authorized export/share must reuse exact canonical stored-byte verification before transfer.');
-for(const token of ['mobile-acceptance-panel','mobile-acceptance-target-json','mobile-acceptance-evidence-json','run-mobile-capability-probe','export-mobile-acceptance-evidence','mobileAcceptanceReceipts','acceptanceModeReceipt'])assert.match(appSource,new RegExp(token),`Stage 30 mobile actor path missing ${token}.`);
+for(const token of ['mobile-acceptance-panel','mobile-acceptance-target-json','mobile-acceptance-evidence-json','run-mobile-capability-probe','export-mobile-acceptance-evidence','acceptanceSession','acceptanceModeReceipt','receipts'])assert.match(appSource,new RegExp(token),`Stage 30 mobile actor path missing ${token}.`);
 
 console.log(JSON.stringify({
   stage30TerminalMobileBoundary:'PASS',
