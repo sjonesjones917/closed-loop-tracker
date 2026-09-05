@@ -19,6 +19,7 @@ jobs:
         run: |
           node .controller-stage27-patch.mjs
           node .controller-stage27-fix1.mjs
+          node .controller-stage27-fix2.mjs
       - name: Syntax
         run: |
           node --check workflow-schema.js
@@ -39,7 +40,7 @@ jobs:
       - name: Commit implementation and remove patch-only workflow
         run: |
           set -euo pipefail
-          rm .controller-stage27-patch.mjs .controller-stage27-fix1.mjs .github/workflows/controller-stage27-patch.yml
+          rm .controller-stage27-patch.mjs .controller-stage27-fix1.mjs .controller-stage27-fix2.mjs .github/workflows/controller-stage27-patch.yml
           git config user.name 'closed-loop-controller'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
