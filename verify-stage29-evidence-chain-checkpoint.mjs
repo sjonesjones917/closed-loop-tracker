@@ -13,6 +13,8 @@ const engine=globalThis.closedLoopWorkflowEngine;
 assert(core&&schema&&engine,'Stage 29 verifier requires production runtime modules.');
 assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.executorClass,'APPLICATION','Stage 29 calculation must remain application-owned.');
 assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.retryRule,'IDEMPOTENT_COMMAND','Stage 29 calculation must use the closed idempotent command contract.');
+assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.acceptsExternalResponse,false,'Stage 29 application calculation must reject external response envelopes.');
+assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.acceptanceMode,'DIRECT_COMMAND','Stage 29 application calculation must commit directly without proposal approval.');
 assert.equal(typeof engine.calculateEvidenceChains,'function','Production runtime must expose the Stage 29 CALCULATE_EVIDENCE_CHAINS application command rather than direct collection mutation.');
 assert.equal(typeof engine.createPreDeliveryCheckpoint,'function','Production runtime must expose a real pre-delivery checkpoint creation path.');
 assert.equal(typeof engine.recordPreDeliveryCheckpointExport,'function','Production runtime must record the real backup export custody transition instead of accepting manually fabricated checkpoint records.');
