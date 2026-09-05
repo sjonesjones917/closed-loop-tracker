@@ -93,7 +93,9 @@ const fabricatedProject=makeProject();
 engine.calculateEvidenceChains(fabricatedProject);
 fabricatedProject.projectData.backupCheckpoints.push(record('backupCheckpoints',{CHECKPOINT_ID:'CHECK-FAB',PACKAGE_ID:'PKG-FAB',PACKAGE_SHA256:'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:['EVID-1'],STATUS:'CURRENT'},'CHECK-FAB',{}));
 assert.equal(engine.currentPreDeliveryCheckpoint(fabricatedProject),null,'A manually fabricated exported checkpoint with missing current scope bindings must not satisfy the terminal prerequisite.');
-assert.ok(engine.terminalPrerequisites(fabricatedProject).reasons.some(reason=>reason.includes('BACKUP_EXPORT_ACTION_COMPLETED')),'Terminal prerequisites must preserve the pre-delivery checkpoint blocker when exported custody is fabricated.');
+const fabricatedTerminal=engine.terminalPrerequisites(fabricatedProject);
+assert.equal(fabricatedTerminal.preDeliveryCheckpoint,null,'Terminal prerequisites must not expose a manually fabricated exported checkpoint as current.');
+assert.ok(fabricatedTerminal.reasons.some(reason=>reason.includes('BACKUP_EXPORT_ACTION_COMPLETED')),'Terminal prerequisites must preserve the pre-delivery checkpoint blocker when exported custody is fabricated.');
 
 const checkpointProject=makeProject();
 const calculated=engine.calculateEvidenceChains(checkpointProject);
