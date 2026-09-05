@@ -3,9 +3,9 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 
-globalThis.crypto=globalThis.crypto||webcrypto;
-globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
-globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+if(!globalThis.crypto)Object.defineProperty(globalThis,'crypto',{value:webcrypto,configurable:true});
+if(!globalThis.Event)globalThis.Event=class Event{constructor(type){this.type=type;}};
+if(!globalThis.dispatchEvent)globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 
 const core=globalThis.closedLoopCore;
