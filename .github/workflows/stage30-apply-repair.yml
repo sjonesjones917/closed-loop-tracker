@@ -21,7 +21,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .stage30-patch/part-* > /tmp/stage30-production.patch.gz.b64
+          python - <<'PY'
+          from pathlib import Path
+          parts = sorted(Path('.stage30-patch').glob('part-*'))
+          if not parts:
+              raise SystemExit('missing Stage 30 patch parts')
+          encoded = ''.join(part.read_text(encoding='ascii') for part in parts)
+          encoded = ''.join(encoded.split())
+          Path('/tmp/stage30-production.patch.gz.b64').write_text(encoded, encoding='ascii')
+          print(f'patch base64 characters: {len(encoded)}')
+          PY
           base64 --decode /tmp/stage30-production.patch.gz.b64 > /tmp/stage30-production.patch.gz
           echo 'c48e910ba86709666c111fbeef0d692f7b8d6e8d0c0310dcfa52f22d8b8dc158  /tmp/stage30-production.patch.gz' | sha256sum --check --strict
           gzip --decompress --stdout /tmp/stage30-production.patch.gz > /tmp/stage30-production.patch
