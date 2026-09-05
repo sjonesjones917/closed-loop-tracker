@@ -64,6 +64,7 @@ jobs:
       - name: Physical iPhone release-tag governance
         run: |
           set -euo pipefail
+          node verify-mobile-acceptance-target.mjs
           node verify-mobile-release-governance.mjs
 
       - name: Schema, ownership, and single-architecture proof
