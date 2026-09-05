@@ -44,9 +44,10 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');
 if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-response/3')throw new Error('Runtime response schema is wrong.');
 
-// Run the independent specification-side route ruler in a clean process so production declarations cannot serve as their own oracle.
+// Run independent fixed-oracle regressions in clean processes so production declarations cannot serve as their own oracle.
 execFileSync(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'});
 execFileSync(process.execPath,['verify-stage03-source-research.mjs'],{stdio:'inherit'});
 execFileSync(process.execPath,['verify-semantic-operation-boundaries.mjs'],{stdio:'inherit'});
+execFileSync(process.execPath,['verify-stage30-terminal-mobile-boundary.mjs'],{stdio:'inherit'});
 
-console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true},null,2));
+console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true,stage30TerminalBoundary:true},null,2));
