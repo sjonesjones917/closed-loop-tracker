@@ -140,6 +140,7 @@ jobs:
         run: |
           set -euo pipefail
           node verify-complete.mjs
+          node verify-production-baseline.mjs
           node verify-full-cycle.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
