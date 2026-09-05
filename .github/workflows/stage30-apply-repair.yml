@@ -31,10 +31,8 @@ jobs:
           node --check app-core.js
           node verify-stage30-terminal-mobile-boundary.mjs
           node verify-spec-grounded-route-oracle.mjs
-          rm -rf .stage30-patch
-          rm .github/workflows/stage30-apply-repair.yml
           git config user.name 'closed-loop-controller'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
+          git add workflow-engine.js app-core.js
           git commit -m 'Stage 30: implement atomic terminal delivery boundary'
           git push origin HEAD:${GITHUB_REF_NAME}
