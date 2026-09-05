@@ -28,6 +28,12 @@ assert.equal(candidateFreezeProof.noPartialMutationOnRejectedFreeze,true,'Stage 
 assert.equal(candidateFreezeProof.exactHumanSelectionReferenced,true,'Stage 14 frozen candidate did not bind the exact registered human component-selection decision.');
 assert.equal(candidateFreezeProof.frozenManifestImmutable,true,'Stage 14 frozen candidate manifest was not immutable.');
 assert.equal(candidateFreezeProof.isolatedDisposableProjects,true,'Stage 14 candidate-freeze mutations were not isolated.');
+const productionBaselineAuthorityProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-production-baseline-authority.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+assert.equal(productionBaselineAuthorityProof.productionBaselineAuthority,'PASS','Stage 23 production-baseline-authority regression proof did not pass.');
+assert.equal(productionBaselineAuthorityProof.noPartialMutationOnRejectedFreeze,true,'Stage 23 rejected baseline freeze partially mutated application state.');
+assert.equal(productionBaselineAuthorityProof.exactHumanAuthorizationReferenced,true,'Stage 23 frozen baseline did not bind the exact registered BASELINE_AUTHORIZATION human decision.');
+assert.equal(productionBaselineAuthorityProof.zeroAcceptedStage20ExternalResponses,true,'Stage 23 baseline freeze required an accepted Stage 20 external response envelope.');
+assert.equal(productionBaselineAuthorityProof.isolatedDisposableProjects,true,'Stage 23 production-baseline-authority mutations were not isolated.');
 
 const originalLog=console.log;
 const captured=[];
