@@ -83,9 +83,21 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   assert.equal(engine.recordReleaseDetermination(p).id,repaired.id,'Exact release recalculation retry is not idempotent.');
 }
 
+// Invalid fixture 3: ADVISORY_REVIEW is optional and non-gating. The integrated engine must route
+// Stage 27 to application-owned CALCULATE_RELEASE even when no advisory response was accepted.
+{
+  const p=fixture('JOB-STAGE27-NO-ADVISORY');
+  p.projectData.acceptedChanges.length=0;
+  const next=engine.operationalNextAction(p);
+  assert.equal(next.actionType,'CALCULATE_RELEASE','Optional Stage 27 advisory review incorrectly gates application-owned release calculation.');
+  const calculated=engine.recordReleaseDetermination(p);
+  assert.equal(calculated.DETERMINATION,'BLOCKED','Release calculation without advisory review must still fail closed from current evidence.');
+  assert.equal(engine.currentReleaseBinding(p).current,true,'Release calculation without advisory review is not current-bound.');
+}
+
 // Precedence is fixed: sufficient mandatory refutation controls over simultaneous blockers.
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:1,blockingConditionCount:4}),'REJECTED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:1}),'BLOCKED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:0}),'ACCEPTED');
 
-console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:1,releasePrecedence:'PASS',idempotency:'PASS'}));
+console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:3,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS'}));
