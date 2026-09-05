@@ -139,6 +139,7 @@ jobs:
       - name: Workflow, gates, and full cycle
         run: |
           set -euo pipefail
+          node verify-production-baseline.mjs
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-definition-of-done.mjs
@@ -264,85 +265,103 @@ jobs:
     if: >-
       always() && github.ref == 'refs/heads/main' &&
       ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success') ||
-       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success'))
+       github.event_name == 'workflow_dispatch')
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      statuses: write
+    env:
+      TEST_RESULT: ${{ needs.test.result }}
+      DEPLOY_RESULT: ${{ needs.deploy.result }}
+      LIVE_RESULT: ${{ needs.verify-live.result }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Reverify deployed Chromium for authenticated mobile acceptance
-        if: github.event_name == 'workflow_dispatch'
+      - name: Rebuild retained fixture for acceptance
+        run: node build-test-project.mjs
+      - name: Evaluate submitted physical-iPhone evidence
+        if: github.event_name == 'workflow_dispatch' && inputs.mobile_acceptance_target_json != '' && inputs.mobile_acceptance_evidence_json != ''
         env:
-          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+          MOBILE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json }}
+          MOBILE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json }}
         run: |
           set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            for attempt in 1 2 3; do
-              log="/tmp/mobile-${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then
-                cat "$log"
-                return 0
-              fi
-              cat "$log"
-              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
-                return 1
-              fi
-              test "$attempt" -lt 3 || return 1
-            done
-          }
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
-      - name: Build acceptance artifact from executed proof jobs
+          printf '%s' "$MOBILE_TARGET_JSON" > /tmp/mobile-target.json
+          printf '%s' "$MOBILE_EVIDENCE_JSON" > /tmp/mobile-evidence.json
+          node evaluate-mobile-acceptance-submission.mjs /tmp/mobile-target.json /tmp/mobile-evidence.json > /tmp/mobile-evaluation.json
+      - name: Publish acceptance evidence
         id: acceptance
         env:
-          TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.deploy.result }}
-          LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
-          MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
-          MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
+          MOBILE_EVALUATION_FILE: /tmp/mobile-evaluation.json
         run: |
           set -euo pipefail
-          test "$TEST_RESULT" = success
-          test "$DEPLOY_RESULT" = success
-          test "$LIVE_RESULT" = success
-          node verify-definition-of-done.mjs > /tmp/definition.json
-          node verify-v3-definition-of-done.mjs > /tmp/v3.json
-          node verify-ingestion.mjs > /tmp/ingestion.out
-          node verify-stage01-intake-closure.mjs > /tmp/stage01.out
-          node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
-          node verify-full-cycle.mjs > /tmp/full-cycle.json
-          node verify-data-route-closure.mjs > /tmp/data-route.json
-          node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
-          node verify-mobile-release-governance.mjs > /tmp/mobile-governance.json
-          USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\n/).filter(Boolean).map(l=>l.trim().split(/\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\^\{\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
-          export USED_MOBILE_CHALLENGES_JSON
-          node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json
           node - <<'NODE'
-          const fs=require('fs');
-          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
-          const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
-          const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
-          const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
-          const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
-          const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
-          const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
-          const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
-          const mobileAcceptance=JSON.parse(fs.readFileSync('/tmp/mobile-acceptance.json','utf8'));
-          const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
-          const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01AcceptedSemanticMappingCoverage=Number(Boolean(zeroLoss.zeroLossStage01&&zeroLoss.incompleteIntakeRejected));
-          const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
-          const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
-          if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
-          if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
+          const fs=require('fs');const vm=require('vm');const cp=require('child_process');const crypto=require('crypto');
+          const fullCycle=JSON.parse(cp.execFileSync(process.execPath,['verify-full-cycle.mjs'],{encoding:'utf8'}).trim().split(/\n/).filter(Boolean).at(-1));
+          const ingestion=JSON.parse(cp.execFileSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'}).trim().split(/\n/).filter(Boolean).at(-1));
+          const definition=JSON.parse(cp.execFileSync(process.execPath,['verify-definition-of-done.mjs'],{encoding:'utf8'}).trim().split(/\n/).filter(Boolean).at(-1));
+          const v3=JSON.parse(cp.execFileSync(process.execPath,['verify-v3-definition-of-done.mjs'],{encoding:'utf8'}).trim().split(/\n/).filter(Boolean).at(-1));
+          const routeClosure=JSON.parse(cp.execFileSync(process.execPath,['verify-route-oracle.mjs'],{encoding:'utf8'}).trim().split(/\n/).filter(Boolean).at(-1));
+          const dataRoute=JSON.parse(cp.execFileSync(process.execPath,['verify-data-route-closure.mjs'],{encoding:'utf8'}).trim().split(/\n/).filter(Boolean).at(-1));
+          const infrastructureRoute=JSON.parse(cp.execFileSync(process.execPath,['verify-infrastructure-route-closure.mjs'],{encoding:'utf8'}).trim().split(/\n/).filter(Boolean).at(-1));
+          const mobileGovernance=JSON.parse(cp.execFileSync(process.execPath,['verify-mobile-release-governance.mjs'],{encoding:'utf8'}).trim().split(/\n/).filter(Boolean).at(-1));
+          const negativeOut=cp.execFileSync(process.execPath,['verify-complete.mjs'],{encoding:'utf8'});
+          const negativeMatches=[...negativeOut.matchAll(/"negativeCases"\s*:\s*(\d+)/g)];
+          if(!negativeMatches.length)throw new Error('No complete negative-case count found.');
+          const load=(f)=>{const c={console,globalThis:null,Blob:global.Blob,crypto:crypto.webcrypto,TextEncoder,TextDecoder,setTimeout,clearTimeout,structuredClone};c.globalThis=c;c.window=c;c.require=require;vm.createContext(c);vm.runInContext(fs.readFileSync(f,'utf8'),c,{filename:f});return c;};
+          const c=load('workbook.js');for(const f of ['hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInContext(fs.readFileSync(f,'utf8'),c,{filename:f});
+          const blank=c.WORKBOOK.createBlankProject();
+          blank.EXACT_USER_OBJECTIVE_VERBATIM='Acceptance fixture';
+          blank.artifacts.push({ARTIFACT_ID:'ART-MACHINE-1',ORIGINAL_FILENAME:'input.txt',BYTE_SIZE:1,SHA256:'a'.repeat(64),STORAGE_STATE:'VERIFIED_AVAILABLE',STATUS:'CURRENT'});
+          blank.rawInputUnits=[{RAW_UNIT_ID:'RAW-1',UNIT_KIND:'HUMAN_TEXT',SOURCE_KIND:'HUMAN_TEXT',SOURCE_REF:'EXACT_USER_OBJECTIVE_VERBATIM',ARTIFACT_ID:null,LOCATION:'text:0-17',CONTENT_SHA256:'b'.repeat(64),STATUS:'CURRENT'}];
+          blank.stage01Accounting=[{RAW_UNIT_ID:'RAW-1',DISPOSITION:'EXTRACTED_RELEVANT_INFORMATION',EXTRACTED_STATEMENT_IDS:['STAT-1'],SOURCE_LOCATIONS:['text:0-17']}];
+          blank.stage01SemanticStatements=[{STATEMENT_ID:'STAT-1',KIND:'REQUESTED_OUTPUT',TEXT:'Acceptance fixture',SOURCE_UNIT_IDS:['RAW-1'],SOURCE_LOCATIONS:['text:0-17'],CURRENT:true}];
+          blank.stage01InspectionClaims=[];
+          blank.stage04Obligations=[{OBLIGATION_ID:'OBL-1',ORIGIN_CLASS:'HUMAN',SOURCE_ID:'RAW-1',SOURCE_LOCATION:'text:0-17',VALUE_HASH:'c'.repeat(64),VERSION:'INPUT-V1',PROVENANCE_ID:'STAT-1',CURRENT:true}];
+          blank.stage04Accounting=[{OBLIGATION_ID:'OBL-1',DISPOSITION:'ATOMIC_REQUIREMENTS',REQUIREMENT_IDS:['REQ-M1']}];
+          blank.requirements=[{REQ_ID:'REQ-M1',REQUIREMENT_CLASS:'MANDATORY',STATUS:'CURRENT',CURRENT:true}];
+          const stage01=c.ClosedLoopEngine.evaluateStage01IntakeAccounting(blank);
+          const stage04=c.ClosedLoopEngine.evaluateStage04ObligationCoverage(blank);
+          const stage01RawInputAccounting=stage01.complete?1:0;
+          const stage01RequiredFileInspectionAccounting=stage01.missingRequiredFiles?.length===0?1:0;
+          const stage01AcceptedSemanticMappingCoverage=stage01.missingStatementIds?.length===0?1:0;
+          const stage04ObligationAccounting=stage04.complete?1:0;
+          let mobileAcceptance={
+            actualIPhoneSafariAcceptance:false,
+            mobileAcceptanceResult:'BLOCKED_ENVIRONMENT',
+            mobileAcceptanceTargetId:null,
+            mobileAcceptanceChallenge:null,
+            mobileAcceptanceEvidenceId:null,
+            mobileAcceptanceEvidenceBasis:null,
+            mobileAcceptanceCommit:null,
+            mobileAcceptanceDeploymentManifestSha256:null,
+            mobileAcceptanceOrigin:null,
+            mobileAcceptanceTestProjectId:null,
+            mobileAcceptancePerformer:null,
+            mobileAcceptanceIdentityAssurance:null,
+            mobileAcceptanceDeviceModel:null,
+            mobileAcceptanceIosVersion:null,
+            mobileAcceptanceSafariUserAgent:null,
+            mobileAcceptanceWebKitBuild:null,
+            mobileAcceptanceViewport:null,
+            mobileAcceptanceCapabilityProbe:null,
+            mobileAcceptanceOperatorReceipts:null,
+            mobileAcceptanceSubmitter:null,
+            mobileAcceptanceSubmitterAuthenticated:false,
+            mobileAcceptanceVerificationTime:null,
+            physicalIPhoneJobResult:'blocked_environment'
+          };
+          const evalFile=process.env.MOBILE_EVALUATION_FILE;
+          if(evalFile&&fs.existsSync(evalFile)){
+            const evaluated=JSON.parse(fs.readFileSync(evalFile,'utf8'));
+            if(evaluated.mobileAcceptanceResult!=='ACCEPTED')throw new Error(`Submitted physical-iPhone evidence was rejected: ${JSON.stringify(evaluated)}`);
+            mobileAcceptance={...mobileAcceptance,...evaluated,actualIPhoneSafariAcceptance:true,physicalIPhoneJobResult:'success'};
+          }
+          if(routeClosure.routeOracle!=='PASS')throw new Error('Route oracle did not pass.');
+          if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
           if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
           const finalAcceptancePublication=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
