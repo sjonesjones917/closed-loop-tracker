@@ -40,7 +40,7 @@ assert(schema.RECORD_SCHEMAS.baselines.fieldDefinitions.HUMAN_AUTHORIZATION?.pro
   assert(engine.recordValue(baseline,'HUMAN_AUTHORIZATION')==='AUTHORIZED','Application did not derive the baseline authorization summary from the accepted decision.');
   assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId==='CANDIDATE-CONFIRMED','Frozen baseline lost exact candidate identity.');
   assert(JSON.stringify(engine.recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'))===JSON.stringify(['ARTIFACT-CONFIRMED']),'Frozen baseline changed the exact candidate artifact set.');
-  decision.active=false;let staleRejected=false;try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-CONFIRMED'],authorizationDecisionId:decisionId,operatorLabel:'BASELINE-VERIFY'});}catch(error){staleRejected=/does not exist in the current Stage 20 authority set/i.test(String(error.message));}
+  decision.active=false;let staleRejected=false;try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-CONFIRMED'],authorizationDecisionId:decisionId,operatorLabel:'BASELINE-VERIFY'});}catch(error){staleRejected=/BASELINE_AUTHORIZATION human decision/i.test(String(error.message));}
   assert(staleRejected,'An inactive baseline authorization decision remained usable for another baseline freeze.');
 }
 
