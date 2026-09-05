@@ -93,6 +93,7 @@ const fabricatedProject=makeProject();
 engine.calculateEvidenceChains(fabricatedProject);
 fabricatedProject.projectData.backupCheckpoints.push(record('backupCheckpoints',{CHECKPOINT_ID:'CHECK-FAB',PACKAGE_ID:'PKG-FAB',PACKAGE_SHA256:'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:['EVID-1'],STATUS:'CURRENT'},'CHECK-FAB',{}));
 assert.equal(engine.currentPreDeliveryCheckpoint(fabricatedProject),null,'A manually fabricated exported checkpoint with missing current scope bindings must not satisfy the terminal prerequisite.');
+assert.ok(engine.terminalPrerequisites(fabricatedProject).reasons.some(reason=>reason.includes('BACKUP_EXPORT_ACTION_COMPLETED')),'Terminal prerequisites must preserve the pre-delivery checkpoint blocker when exported custody is fabricated.');
 
 const checkpointProject=makeProject();
 const calculated=engine.calculateEvidenceChains(checkpointProject);
@@ -107,4 +108,4 @@ const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{check
 assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound actual export-custody action.');
 assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
 
-console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true}));
+console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true}));
