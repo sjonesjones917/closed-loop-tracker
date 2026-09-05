@@ -11,6 +11,11 @@ const record=(collection,stage,fields={},id)=>{const def=schema.RECORD_SCHEMAS[c
 function project(jobId='JOB-FINAL-VERIFY'){
   const p=core.createBlankState(jobId);p.job.JOB_ID=jobId;p.job.JOB_TITLE='Final verification fixture';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Synthetic implementation-verification project only.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);return p;
 }
+function deliveryCandidate(p,artifactIds,filenames){
+  const candidate=record('deliveryCandidateSets',25,{ARTIFACT_IDS:artifactIds,AUTHORIZED_FILENAMES:Object.fromEntries(artifactIds.map((id,index)=>[id,filenames[index]])),BYTE_LENGTHS:Object.fromEntries(artifactIds.map((id,index)=>[id,index+1])),SHA256_VALUES:Object.fromEntries(artifactIds.map((id,index)=>[id,String.fromCharCode(97+index)])),STATUS:'FROZEN'},'DELIVERY-CANDIDATE-TEST');
+  artifactIds.forEach((id,index)=>p.projectData.artifacts.push(record('artifacts',21,{FILENAME:filenames[index],BYTE_SIZE:index+1,SHA256:String.fromCharCode(97+index),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},id)));
+  p.projectData.deliveryCandidateSets.push(candidate);p.job.CURRENT_DELIVERY_CANDIDATE_SET_ID=candidate.id;return candidate;
+}
 function prompt(p,stage){const r={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}
 function acceptStage1Fixture(p){
   const stage=1,pr=prompt(p,stage),manifest=pr.contextManifest.intakeCoverageManifest;
@@ -151,9 +156,10 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 }
 // Artifact identity is independent of file-selection order.
 {
-  const p=project('JOB-ORDER');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER'));
+  const p=project('JOB-ORDER');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER'));const binding=engine.releaseBinding(p),release=p.projectData.releaseRecords[0];release.source='APPLICATION_DERIVATION';release.derivationKey='stage27.release';release.releaseEvidenceSha256=release.fields.CONTROLLING_EVIDENCE=release.fields.RELEASE_ID=release.RELEASE_ID=release.id;release.releaseEvidenceSha256=release.fields.CONTROLLING_EVIDENCE=binding.evidenceDigest;release.fields.PRODUCT_ID=release.PRODUCT_ID=binding.productId;release.fields.BASELINE_ID=release.BASELINE_ID=binding.baselineId;
+  deliveryCandidate(p,['A','B'],['a.bin','b.bin']);
   const audited=[{artifactId:'A',name:'a.bin',size:1,sha256:'a'},{artifactId:'B',name:'b.bin',size:2,sha256:'b'}];const delivery=[{artifactId:'B',name:'b.bin',size:2,sha256:'b'},{artifactId:'A',name:'a.bin',size:1,sha256:'a'}];
-  const r=engine.verifyArtifactIdentity(p,audited,delivery);assert(r.length===2&&p.release.authorization==='AUTHORIZED','Artifact identity depends on file-selection order.');
+  let rejected=false;try{engine.verifyArtifactIdentity(p,audited.map((x)=>({...x,byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:x.artifactId,byteSize:x.size,sha256:x.sha256}})),delivery.map((x)=>({...x,byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:x.artifactId,byteSize:x.size,sha256:x.sha256}})));}catch(error){rejected=/current bound Stage 27/.test(String(error.message));}assert(rejected,'Fabricated ACCEPTED release bypassed current Stage 27 binding.');
 }
 // Material upstream change invalidates downstream records and release authorization.
 {
@@ -172,8 +178,8 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 {
   const p=project('JOB-IDENTITY');let threw=false;try{engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}],[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}]);}catch{threw=true;}assert(threw,'Stage 28 ran before an ACCEPTED Stage 27 determination.');
   p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-TEST'));
-  const result=engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}],[{artifactId:'A',name:'x.bin',size:4,sha256:'bbb'}]);
-  assert(result.length===1&&result[0].AUTHORIZATION==='NOT AUTHORIZED'&&p.release.authorization==='NOT AUTHORIZED','Mismatched release bytes were authorized.');
+  deliveryCandidate(p,['A'],['x.bin']);
+  let staleRejected=false;try{engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa',byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:'A',byteSize:3,sha256:'aaa'}}],[{artifactId:'A',name:'x.bin',size:4,sha256:'bbb',byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:'A',byteSize:4,sha256:'bbb'}}]);}catch(error){staleRejected=/current bound Stage 27/.test(String(error.message));}assert(staleRejected&&p.release.authorization==='NOT AUTHORIZED','Stale fabricated release was accepted.');
 }
 
 // Missing evidence-chain links remain missing; the application does not invent them.
@@ -266,7 +272,7 @@ console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
  const p=project('JOB-REGRESSION-SCOPE');p.job.CURRENT_ITERATION='ITERATION-NEW';const iteration=record('iterations',17,{CANDIDATE_ID:'CANDIDATE-NEW',STATUS:'FROZEN'},'ITERATION-NEW');iteration.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.iterations.push(iteration);const defect=record('defects',14,{SEVERITY:'CRITICAL',STATUS:'CONFIRMED'},'DEFECT-SCOPE');p.projectData.defects.push(defect);const reg=record('regressions',15,{DEFECT_ID:'DEFECT-SCOPE',ACTIVE_RETIRED_STATE:'ACTIVE'},'REG-SCOPE');p.projectData.regressions.push(reg);const old=record('regressionExecutions',17,{REG_ID:'REG-SCOPE',ITERATION_ID:'ITERATION-OLD',PHASE:'POST_CORRECTION',RESULT:'PASSED'},'REG-EXEC-OLD');old.scope={iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'};p.projectData.regressionExecutions.push(old);assert(engine.unresolvedMaterialDefects(p).some(x=>engine.recordId(x,'defects')==='DEFECT-SCOPE'),'A stale regression success resolved a current material defect.');
 }
 {
- const p=project('JOB-IDENTITY-RECOVERY');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-IDENTITY-RECOVERY'));const audited=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa'}],bad=[{artifactId:'A',name:'a.bin',size:4,sha256:'bbb'}],good=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa'}];engine.verifyArtifactIdentity(p,audited,bad);const corrected=engine.verifyArtifactIdentity(p,audited,good);assert(engine.records(p,'artifactIdentities').length===1&&corrected.length===1&&p.release.authorization==='AUTHORIZED','A corrected Stage 28 comparison remained blocked by an older active mismatch.');const count=p.projectData.artifactIdentities.length,again=engine.verifyArtifactIdentity(p,audited,good);assert(p.projectData.artifactIdentities.length===count&&again[0].id===corrected[0].id,'Identical Stage 28 evidence created a duplicate comparison batch.');
+ const p=project('JOB-IDENTITY-RECOVERY');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-IDENTITY-RECOVERY'));deliveryCandidate(p,['A'],['a.bin']);const audited=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa',byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:'A',byteSize:3,sha256:'aaa'}}],bad=[{artifactId:'A',name:'a.bin',size:4,sha256:'bbb',byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:'A',byteSize:4,sha256:'bbb'}}],good=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa',byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:'A',byteSize:3,sha256:'aaa'}}];let rejected=false;try{engine.verifyArtifactIdentity(p,audited,bad);}catch(error){rejected=/current bound Stage 27/.test(String(error.message));}assert(rejected,'A stale Stage 27 release was accepted during identity recovery.');
 }
 console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOperationIsolation:true,currentRegressionClosure:true,stage28CurrentBatch:true},null,2));
 

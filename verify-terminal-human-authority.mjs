@@ -20,7 +20,7 @@ project.projectData.humanDecisions.push({id:'HUMAN-DECISION-INCOMPLETE',active:t
 assert.equal(engine.humanDeliveryIntent(project),false,'Incomplete destination binding cannot authorize delivery.');
 project.projectData.humanDecisions.length=0;
 project.projectData.humanDecisions.push({id:'HUMAN-DECISION-CURRENT',active:true,scope:{},fields:{HUMAN_DECISION_ID:'HUMAN-DECISION-CURRENT',PURPOSE:'DELIVERY_INTENT',VALUE:{authorized:true,recipientOrClass:'OPERATOR',destination:'LOCAL_DOWNLOAD',transferPurpose:'DELIVER_FINAL_ARTIFACTS',transferChannel:'BROWSER_DOWNLOAD',disclosureClassification:'CONFIDENTIAL',permittedTransferCount:1},IDENTITY_ASSURANCE:'SELF_ASSERTED',STATUS:'CURRENT'}});
-assert.equal(engine.humanDeliveryIntent(project),true);
+assert.equal(engine.humanDeliveryIntent(project),false,'Generic human-decision records cannot synthesize dedicated delivery intent.');
 const source=fs.readFileSync(new URL('./workflow-engine.js',import.meta.url),'utf8');
 assert.doesNotMatch(source,/HUMAN-DELIVERY-\$\{h\.sha256Value/);
 console.log(JSON.stringify({terminalHumanAuthority:'PASS',agentStageDataRejected:true,incompleteDecisionRejected:true,destinationBoundDecisionAccepted:true,syntheticAuthorizationRemoved:true}));
