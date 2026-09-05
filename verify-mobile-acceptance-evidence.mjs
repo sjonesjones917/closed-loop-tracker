@@ -88,6 +88,7 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(target.basePath!==MOBILE_ACCEPTANCE_BASE_PATH)issue(errors,'TARGET_BASE_PATH_INVALID','Target base path must be the canonical deployment base path.');
   if(!NONEMPTY(target.testProjectId))issue(errors,'TARGET_TEST_PROJECT_REQUIRED','Target testProjectId is required.');
   if(!NONEMPTY(target.procedureVersion))issue(errors,'TARGET_PROCEDURE_REQUIRED','Target procedureVersion is required.');
+  for(const field of ['deviceModel','iosVersion','safariVersion','safariUserAgent'])if(target[field]!==undefined&&!NONEMPTY(target[field]))issue(errors,'TARGET_DEVICE_FACT_INVALID',`Target ${field} must be a non-empty pinned physical-device fact.`);
   if(!target.viewport||!finite(target.viewport.width)||!finite(target.viewport.height)||!finite(target.viewport.devicePixelRatio)||target.viewport.width<=0||target.viewport.height<=0||target.viewport.devicePixelRatio<=0)issue(errors,'TARGET_VIEWPORT_INVALID','Target viewport dimensions and device-pixel ratio are required.');
 
   if(expected.sourceCommit&&!same(target.sourceCommit,expected.sourceCommit))issue(errors,'TARGET_COMMIT_MISMATCH','Target commit does not match the exact deployed commit.');
@@ -106,6 +107,7 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     ['procedureVersion','EVIDENCE_PROCEDURE_MISMATCH']
   ];
   for(const [field,code] of bindings){if(!same(evidence[field],target[field]))issue(errors,code,`Evidence ${field} does not match the pinned target.`);}
+  for(const field of ['deviceModel','iosVersion','safariVersion','safariUserAgent'])if(target[field]!==undefined&&evidence[field]!==target[field])issue(errors,'EVIDENCE_DEVICE_FACT_MISMATCH',`Evidence ${field} does not match the pinned target.`);
   if(!NONEMPTY(evidence.mobileAcceptanceEvidenceId))issue(errors,'EVIDENCE_ID_REQUIRED','mobileAcceptanceEvidenceId is required.');
   if(evidence.physicalDeviceAssertion!==true)issue(errors,'PHYSICAL_DEVICE_ASSERTION_REQUIRED','Evidence must contain the performer physical-device assertion.');
   if(!ACCEPTABLE_PHYSICAL_EVIDENCE_BASES.includes(evidence.evidenceBasis))issue(errors,'EVIDENCE_BASIS_INSUFFICIENT','Physical-device evidence basis must be HUMAN_OBSERVATION or VERIFIED_EXTERNAL.');
