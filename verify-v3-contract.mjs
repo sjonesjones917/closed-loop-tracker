@@ -138,3 +138,4 @@ console.log(JSON.stringify({
   centralizedLimits:requiredLimits.length
 }));
 await import('./verify-stage-contract-closure.mjs');
+await import('./verify-stage27-release-binding.mjs');
