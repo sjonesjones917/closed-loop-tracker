@@ -1,20 +1,24 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {createMobileAcceptanceTarget,MOBILE_ACCEPTANCE_ORIGIN,MOBILE_ACCEPTANCE_BASE_PATH} from './generate-mobile-acceptance-target.mjs';
+import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS,REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS} from './verify-mobile-acceptance-evidence.mjs';
+import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
 
-const context={console,TextEncoder,TextDecoder,URL,URLSearchParams,crypto:webcrypto,dispatchEvent(){},Event:class Event{constructor(type){this.type=type}}};
-context.globalThis=context;
-vm.createContext(context);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']){
-  vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
+  vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 }
-const core=context.closedLoopCore;
-const engine=context.closedLoopWorkflowEngine;
-const schema=context.closedLoopWorkflowSchema;
+const core=globalThis.closedLoopCore;
+const engine=globalThis.closedLoopWorkflowEngine;
+const schema=globalThis.closedLoopWorkflowSchema;
 const engineSource=fs.readFileSync('workflow-engine.js','utf8');
 const appSource=fs.readFileSync('app-core.js','utf8');
+const fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
 const target=createMobileAcceptanceTarget({
   sourceCommit:'f'.repeat(40),deploymentManifestDigest:'a'.repeat(64),
   origin:MOBILE_ACCEPTANCE_ORIGIN,basePath:MOBILE_ACCEPTANCE_BASE_PATH,
@@ -26,6 +30,63 @@ const target=createMobileAcceptanceTarget({
 assert.match(target.challenge,/^[0-9a-f]{64}$/,'Stage 30 target must use a CSPRNG challenge.');
 assert.equal(target.origin,MOBILE_ACCEPTANCE_ORIGIN);
 assert.equal(target.basePath,MOBILE_ACCEPTANCE_BASE_PATH);
+
+// Obtain a complete Stage 30-ready project through the production lifecycle, then
+// perform every mutation probe against disposable in-memory clones.
+const fixturePath=path.join(process.cwd(),`.stage30-fixture-${process.pid}.json`);
+const fixtureMarker='STAGE30_READY_FIXTURE';
+const fixtureAnchor='engine.recalculate(reloaded);';
+const fixtureIndex=fullCycleSource.indexOf(fixtureAnchor);
+assert.ok(fixtureIndex>0,'The full-cycle production mechanism did not expose its terminal-ready boundary.');
+const instrumentedPath=path.join(process.cwd(),`.stage30-full-cycle-${process.pid}.mjs`);
+fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex+fixtureAnchor.length)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify(reloaded));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex+fixtureAnchor.length));
+let fixtureOutput='';
+try{fixtureOutput=execFileSync(process.execPath,[instrumentedPath],{encoding:'utf8',maxBuffer:64*1024*1024});}
+finally{fs.rmSync(instrumentedPath,{force:true});}
+assert.match(fixtureOutput,new RegExp(fixtureMarker));
+assert.ok(fs.existsSync(fixturePath),'The disposable Stage 30 fixture was not captured.');
+const sourceProject=JSON.parse(fs.readFileSync(fixturePath,'utf8'));
+fs.rmSync(fixturePath,{force:true});
+const fresh=()=>{const p=structuredClone(sourceProject);engine.ensureShape(p);return p;};
+const refresh=(p,family,record)=>engine.refreshRecordHashes(record,family);
+const terminalRecord=p=>engine.records(p,'deliveryRecords').at(-1);
+const terminalHash=p=>engine.recordValue(terminalRecord(p,'deliveryRecords'),'DELIVERY_RECORD_HASH');
+const hashInput=p=>Object.fromEntries(Object.entries(terminalRecord(p,'deliveryRecords').fields).filter(([key])=>key!=='DELIVERY_RECORD_HASH'));
+assert.equal(engine.recordValue(terminalRecord(sourceProject),'DELIVERY_STATE'),'AUTHORIZED','The fixture must reach application-owned authorization.');
+assert.equal(engine.records(sourceProject,'deliveryAttempts').length,1,'The fixture must contain a distinct delivery attempt.');
+
+// The mobile validators are independent oracles: malformed target/evidence classes
+// must remain blocked by both the evidence validator and authenticated submission.
+const mobileEvidence={
+  mobileAcceptanceTargetId:target.mobileAcceptanceTargetId,challenge:target.challenge,
+  sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,
+  origin:target.origin,basePath:target.basePath,testProjectId:target.testProjectId,
+  procedureVersion:target.procedureVersion,deviceModel:target.deviceModel,iosVersion:target.iosVersion,
+  safariVersion:target.safariVersion,safariUserAgent:target.safariUserAgent,viewport:target.viewport,
+  mobileAcceptanceEvidenceId:'EVIDENCE-STAGE30-MOBILE',physicalDeviceAssertion:true,
+  evidenceBasis:'HUMAN_OBSERVATION',performer:'STAGE30-IPHONE-OPERATOR',identityAssurance:'SELF_ASSERTED',
+  mobileCapabilityProbe:{probeId:'PROBE-STAGE30',result:'PASS',capabilities:Object.fromEntries(REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS.map(key=>[key,true]))},
+  operationReceipts:REQUIRED_MOBILE_RECEIPT_KINDS.map((kind,index)=>({kind,receiptId:`RECEIPT-${index+1}`,result:'PASS'})),
+  runtimeFindings:{runtimeExceptions:0,unhandledRejections:0},
+  measurements:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44},
+  exportedProjectDigest:'b'.repeat(64),screenshotOrRecordingReferences:['SCREENSHOT-STAGE30']
+};
+const mobileExpected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T01:00:00.000Z'};
+assert.equal(verifyMobileAcceptanceEvidence({target,evidence:mobileEvidence,expected:mobileExpected}).accepted,true,'The valid mobile evidence oracle fixture must be accepted.');
+assert.equal(evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(mobileEvidence),expected:mobileExpected}).actualIPhoneSafariAcceptance,true,'The submission oracle must accept valid mobile evidence.');
+const mobileRejected=[];
+for(const [name,mutate] of [
+  ['mobile-target-commit-mismatch',x=>{x.sourceCommit='0'.repeat(40);}],
+  ['mobile-evidence-challenge-mismatch',x=>{x.challenge='e'.repeat(64);}],
+  ['mobile-capability-missing',x=>{x.mobileCapabilityProbe.capabilities.FILE_EXPORT_OR_SHARE=false;}],
+  ['mobile-required-receipt-missing',x=>{x.operationReceipts=x.operationReceipts.slice(1);}],
+  ['mobile-exact-viewport-mismatch',x=>{x.viewport={...x.viewport,width:394};}]
+]){
+  const bad=structuredClone(mobileEvidence);mutate(bad);
+  assert.equal(verifyMobileAcceptanceEvidence({target,evidence:bad,expected:mobileExpected}).accepted,false,`${name} was accepted by the mobile evidence oracle.`);
+  assert.equal(evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(bad),expected:mobileExpected}).actualIPhoneSafariAcceptance,false,`${name} was accepted by the submission oracle.`);
+  mobileRejected.push(name);
+}
 
 assert.equal(schema.operationContract(30,'CALCULATE_TERMINAL')?.executorClass,'APPLICATION','Stage 30 terminal calculation must remain application-owned.');
 assert.equal(schema.operationContract(30,'CALCULATE_TERMINAL')?.acceptsExternalResponse,false,'CALCULATE_TERMINAL must not accept an external response envelope.');
@@ -51,6 +112,72 @@ assert.equal(engine.records(project,'deliveryRecords').length,1,'Exact terminal 
 assert.throws(()=>engine.recordDeliveryAttempt(project,{deliveryId:engine.recordId(first,'deliveryRecords')}),/AUTHORIZED Stage 30 delivery record/,'A BLOCKED terminal record must never authorize export/share.');
 assert.throws(()=>engine.recordDeliveryEvidence(project,{attemptId:'DELIVERY-ATTEMPT-NONE',evidenceIds:['EVIDENCE-NONE']}),/delivery-attempt record/,'Delivery completion evidence requires a real prior delivery attempt.');
 
+const mutationRejected=[];
+for(const [name,mutate] of [
+  ['checkpoint-custody-mutation',p=>{const r=engine.currentPreDeliveryCheckpoint(p);r.fields.CUSTODY_STATE='BACKUP_PACKAGE_GENERATED';r.CUSTODY_STATE='BACKUP_PACKAGE_GENERATED';refresh(p,'backupCheckpoints',r);}],
+  ['release-determination-mutation',p=>{const r=engine.recordsForCurrentScope(p,'releaseRecords').at(-1);r.fields.DETERMINATION='REJECTED';r.DETERMINATION='REJECTED';refresh(p,'releaseRecords',r);}],
+  ['stage28-identity-mutation',p=>{const r=engine.recordsForCurrentScope(p,'artifactIdentities')[0];r.fields.EXACT_HASH_MATCH=false;r.EXACT_HASH_MATCH=false;refresh(p,'artifactIdentities',r);}],
+  ['stage29-chain-mutation',p=>{const r=engine.recordsForCurrentScope(p,'evidenceChains')[0];r.fields.STATUS='INCOMPLETE';r.STATUS='INCOMPLETE';refresh(p,'evidenceChains',r);}],
+  ['registry-mutation',p=>{const base=engine.records(p,'defects')[0],r=engine.clone(base),id='DEFECT-STAGE30-MUTATION';r.id=id;r.recordId=id;r.scope=engine.currentScope(p);r.fields={...(r.fields||{}),DEFECT_ID:id};r.DEFECT_ID=id;refresh(p,'defects',r);p.projectData.defects.push(r);}]
+]){
+  const p=fresh();mutate(p);
+  assert.equal(engine.terminalPrerequisites(p).complete,false,`${name} did not invalidate terminal prerequisites.`);
+  const blocked=engine.calculateTerminal(p,{expectedRevision:Number(p.revision||0)});
+  assert.equal(engine.recordValue(blocked,'DELIVERY_STATE'),'BLOCKED',`${name} did not create a BLOCKED terminal determination.`);
+  assert.throws(()=>engine.recordDeliveryAttempt(p,{deliveryId:engine.recordId(blocked,'deliveryRecords')}),/AUTHORIZED Stage 30 delivery record/,`${name} allowed export from a blocked terminal determination.`);
+  mutationRejected.push(name);
+}
+
+// Dependency mutation invalidates authorization; an operational attempt mutation
+// does not rewrite the terminal authorization or collapse attempt into delivery.
+{
+  const p=fresh(),authorized=terminalRecord(p),attempt=engine.records(p,'deliveryAttempts')[0];
+  assert.equal(engine.recordValue(authorized,'DELIVERY_STATE'),'AUTHORIZED');
+  assert.equal(engine.recordValue(attempt,'STATUS'),'ATTEMPTED');
+  assert.equal(engine.operationalNextAction(p,30).actionType,'RECORD_DELIVERY_EVIDENCE');
+  attempt.fields.RESULT='FAILED';attempt.RESULT='FAILED';
+  assert.equal(engine.recordValue(engine.calculateTerminal(p),'DELIVERY_STATE'),'AUTHORIZED','Operational retry must not withdraw a still-valid terminal authorization.');
+  assert.throws(()=>engine.recordDeliveryEvidence(p,{attemptId:engine.recordId(attempt,'deliveryAttempts'),evidenceIds:['EVIDENCE-NONE']}),/unsuccessful delivery attempt/,'Failed attempts must not become delivered.');
+}
+
+// A current human intent is part of the terminal precondition; changing its
+// destination or artifact set must block rather than silently authorize.
+for(const [name,mutate] of [
+  ['intent-destination-mismatch',value=>{value.fields.DESTINATION='UNAUTHORIZED-DESTINATION';value.DESTINATION='UNAUTHORIZED-DESTINATION';value.fields.VALUE={...(value.fields.VALUE||{}),destination:'UNAUTHORIZED-DESTINATION'};value.VALUE=value.fields.VALUE;}],
+  ['intent-artifact-set-mismatch',value=>{value.fields.ARTIFACT_IDS=[];value.ARTIFACT_IDS=[];value.fields.VALUE={...(value.fields.VALUE||{}),artifactIds:[]};value.VALUE=value.fields.VALUE;}]
+]){
+  const p=fresh(),intent=engine.recordsForCurrentScope(p,'humanDecisions').at(-1);mutate(intent);refresh(p,'humanDecisions',intent);
+  assert.equal(engine.terminalPrerequisites(p).complete,false,`${name} did not block terminal authorization.`);
+  assert.equal(engine.recordValue(engine.calculateTerminal(p),'DELIVERY_STATE'),'BLOCKED',`${name} did not record BLOCKED.`);
+  mutationRejected.push(name);
+}
+
+// Revalidate the exact stored bytes immediately before export; metadata-only
+// changes and byte-hash changes cannot be exported under an old authorization.
+{
+  const p=fresh(),artifact=engine.recordsForCurrentScope(p,'artifacts')[0];
+  artifact.fields.SHA256='0'.repeat(64);artifact.SHA256='0'.repeat(64);refresh(p,'artifacts',artifact);
+  assert.throws(()=>engine.recordDeliveryAttempt(p,{deliveryId:engine.recordId(terminalRecord(p),'deliveryRecords')}),/reverified immediately before export|Authorized artifact bytes/,'Changed stored-byte identity was not revalidated before export.');
+}
+
+// Terminal self-validity, retry idempotence, and distinct authorization/attempt/
+// delivered states are checked against the production record hash.
+{
+  const p=fresh(),first=terminalRecord(p),before=engine.records(p,'deliveryRecords').length;
+  const expectedHash=globalThis.closedLoopHash.sha256Value(Object.fromEntries(Object.entries(first.fields).filter(([key])=>key!=='DELIVERY_RECORD_HASH')));
+  assert.equal(terminalHash(p),expectedHash,'The terminal record failed its own exact record-hash validity check.');
+  const retry=engine.calculateTerminal(p,{expectedRevision:Number(p.revision||0)});
+  assert.equal(engine.recordId(retry,'deliveryRecords'),engine.recordId(first,'deliveryRecords'),'Authorized terminal retry was not idempotent.');
+  assert.equal(engine.records(p,'deliveryRecords').length,before,'Authorized terminal retry duplicated the terminal record.');
+  assert.equal(engine.recordValue(retry,'DELIVERY_STATE'),'AUTHORIZED');
+  assert.equal(engine.recordValue(engine.records(p,'deliveryAttempts')[0],'STATUS'),'ATTEMPTED');
+  const deliveredEvidence={id:'EVIDENCE-DELIVERED-STAGE30',recordId:'EVIDENCE-DELIVERED-STAGE30',active:true,source:'HUMAN_OBSERVATION',scope:engine.currentScope(p),fields:{EVIDENCE_ID:'EVIDENCE-DELIVERED-STAGE30',EPISTEMIC_BASIS:'HUMAN_OBSERVATION',APPLICATION_EVIDENCE_KIND:'DELIVERY_RECEIPT',STATUS:'CURRENT'},EVIDENCE_ID:'EVIDENCE-DELIVERED-STAGE30',EPISTEMIC_BASIS:'HUMAN_OBSERVATION',APPLICATION_EVIDENCE_KIND:'DELIVERY_RECEIPT',STATUS:'CURRENT'};
+  p.projectData.evidenceRecords.push(deliveredEvidence);
+  const delivered=engine.recordDeliveryEvidence(p,{attemptId:engine.recordId(engine.records(p,'deliveryAttempts')[0],'deliveryAttempts'),evidenceIds:[deliveredEvidence.id]});
+  assert.equal(engine.recordValue(delivered,'STATUS'),'DELIVERED','Delivery evidence did not produce the distinct DELIVERED state.');
+  assert.equal(engine.recordValue(retry,'DELIVERY_STATE'),'AUTHORIZED','Delivery completion must not rewrite terminal authorization.');
+}
+
 assert.doesNotMatch(engineSource,/if\(e0\.gate\(30,p\)\.complete&&t\.complete\)\{const d=delivery\(p\)/,'Ordinary recalculation must not silently execute CALCULATE_TERMINAL.');
 for(const token of ['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE','calculateTerminal','recordDeliveryAttempt','recordDeliveryEvidence'])assert.match(engineSource,new RegExp(token),`Stage 30 engine contract missing ${token}.`);
 for(const token of ['calculate-stage30-terminal','export-authorized-artifacts','record-delivery-evidence','exportAuthorizedArtifacts','recordCurrentDeliveryEvidence'])assert.match(appSource,new RegExp(token),`Stage 30 visible operator path missing ${token}.`);
@@ -63,6 +190,8 @@ console.log(JSON.stringify({
     'external-response-fallthrough',
     'blocked-terminal-authorizes-export',
     'delivery-evidence-without-attempt',
+      ...mutationRejected,
+      ...mobileRejected,
     'automatic-terminal-side-effect',
     'mobile-target-csprng-and-explicit-physical-facts'
   ],
