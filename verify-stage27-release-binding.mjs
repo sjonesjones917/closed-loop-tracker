@@ -89,6 +89,7 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   p.projectData.acceptedChanges.length=0;
   const next=engine.operationalNextAction(p,27);
   assert.equal(next.actionType,'CALCULATE_RELEASE','Optional Stage 27 advisory review incorrectly gates application release calculation.');
+  assert.doesNotMatch(String(next.explanation||''),/advisory[^.]*accepted/i,'Stage 27 operator text falsely claims the optional advisory review was accepted when none exists.');
   const calculated=engine.recordReleaseDetermination(p);
   assert.equal(calculated.DETERMINATION,'BLOCKED');
   assert.equal(calculated.releaseEvidenceSha256,engine.releaseBinding(p).evidenceDigest);
@@ -99,4 +100,4 @@ assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:1,blockingCo
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:1}),'BLOCKED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:0}),'ACCEPTED');
 
-console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',digest:hash.sha256Value('stage27-release-binding-v2')}));
+console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',digest:hash.sha256Value('stage27-release-binding-v3')}));
