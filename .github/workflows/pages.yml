@@ -15,6 +15,10 @@ on:
         description: Physical-iPhone mobile-acceptance-evidence JSON bound to the submitted target
         required: false
         type: string
+      visual_baseline_evidence_json:
+        description: Approved visual baseline and before/after comparison evidence bound to the exact currently deployed main commit
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -66,6 +70,7 @@ jobs:
           set -euo pipefail
           node verify-mobile-acceptance-target.mjs
           node verify-final-acceptance.mjs
+          node verify-visual-baseline-submission.mjs
           node verify-prompt-file-identity.mjs
           node verify-final-product-timing.mjs
           node verify-mobile-release-governance.mjs
@@ -314,6 +319,7 @@ jobs:
           LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
           MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
           MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
+          VISUAL_BASELINE_EVIDENCE_JSON: ${{ inputs.visual_baseline_evidence_json || '' }}
         run: |
           set -euo pipefail
           test "$TEST_RESULT" = success
@@ -334,6 +340,7 @@ jobs:
           node --input-type=module - <<'NODE'
           import fs from 'node:fs';
           import {evaluateFinalAcceptance} from './final-acceptance.mjs';
+          import {resolveVisualBaselineSubmission} from './visual-baseline-submission.mjs';
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
           const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
           const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
@@ -463,7 +470,12 @@ jobs:
           mobileMetric.scopeHash=`commit:${report.commit}:manifest:${mobileAcceptance.mobileAcceptanceDeploymentManifestDigest||'UNPROVEN'}`;
           mobileMetric.evidenceReferences=physicalIPhoneAccepted?[`mobile-evidence:${mobileAcceptance.mobileAcceptanceEvidenceId}`,`submitter:${mobileAcceptance.mobileAcceptanceSubmitter}`]:['evaluate-mobile-acceptance-submission.mjs:physical-proof-unavailable'];
           report.actualIPhoneSafariAcceptanceCoverage=mobileMetric.value;
-          const visualBaseline=JSON.parse(fs.readFileSync('verification/closed-loop-build-state.json','utf8')).visualBaseline;
+          const visualBaseline=resolveVisualBaselineSubmission({
+            inputJson:process.env.VISUAL_BASELINE_EVIDENCE_JSON,
+            ledgerVisualBaseline:JSON.parse(fs.readFileSync('verification/closed-loop-build-state.json','utf8')).visualBaseline,
+            eventName:process.env.GITHUB_EVENT_NAME,ref:process.env.GITHUB_REF,
+            submitter:process.env.GITHUB_ACTOR,commit:report.commit
+          });
           const finalGate=evaluateFinalAcceptance(report,{visualBaseline});
           report.finalAcceptanceGate=finalGate;
           report.finalAcceptancePublication=finalGate.accepted;
