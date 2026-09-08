@@ -5,7 +5,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const testRuntime=globalThis.closedLoopTestRuntime;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/59';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/60';
 if(!core||!schema||!hash||!workflow||!testRuntime)throw new Error('workbook.js, hash.js, workflow-schema.js, test-runtime.js, and workflow-engine.js must load before prompt-engine.js.');
 const UNTRUSTED_DATA_SCHEMA='closed-loop-untrusted-data/1';
 const CONTROLLING_COMPLETION_VERSION='closed-loop-controlling-completion/53-70/2';
@@ -244,16 +244,27 @@ function buildPromptRecord(stageOrDefinition,state,options={}){
   const boundedBody=body(stage,state,operation,scope);
   const aliasedBody=applyBlindReviewAliases(boundedBody,blindAliasMap);
   const bodyText=`${UNTRUSTED_DATA_RULE}\n\n${refreshDataEnvelopes(aliasedBody)}`;
-  const bodySha256=hash.sha256Text(bodyText);
   const descriptor=responseContractDescriptor(stage,operation);
   const contractSha256=hash.sha256Value(descriptor);
-  const same=activeExisting.find(x=>x.contextSignature===contextSignature&&x.bodySha256===bodySha256&&x.contractSha256===contractSha256&&x.operation===operation);
-  const instructionId=same?.instructionId||same?.promptId||`INSTRUCTION-${String(state?.job?.JOB_ID||'UNKNOWN').replace(/[^A-Za-z0-9-]/g,'')}-S${String(stage).padStart(2,'0')}-${String(existing.length+1).padStart(3,'0')}`;
-  const identityBlock=`\n\nPROMPT IDENTITY — ECHO EXACTLY\nINSTRUCTION_ID: ${instructionId}\nBODY_SHA256: ${bodySha256}\nCONTRACT_SHA256: ${contractSha256}\nCONTEXT_SIGNATURE: ${contextSignature}\nOPERATION: ${operation}\nPROJECT_REVISION: ${scope.projectRevision}\n\nSTRICT RESPONSE CONTRACT\n${responseContract(stage,operation,instructionId,bodySha256,contractSha256,contextSignature,publicScope,state?.job?.JOB_ID)}\n\nEND COPY BLOCK — STAGE ${String(stage).padStart(2,'0')}`;
-  const prompt=bodyText+identityBlock;
-  return {instructionId,promptId:instructionId,promptEngineVersion:PROMPT_ENGINE_VERSION,stage,operation,role:definition.role,bodySha256,sha256:bodySha256,contractSha256,contextSignature,contextManifest,scope,scopeSha256:hash.sha256Value(scope),prompt,fullTextSha256:hash.sha256Text(prompt),promptInjectionBoundaryApplied:true,untrustedDataBoundaryVersion:UNTRUSTED_DATA_SCHEMA};
+  const same=activeExisting.find(x=>x.contextSignature===contextSignature&&x.contractSha256===contractSha256&&x.operation===operation);
+  const nextId=`INSTRUCTION-${String(state?.job?.JOB_ID||'UNKNOWN').replace(/[^A-Za-z0-9-]/g,'')}-S${String(stage).padStart(2,'0')}-${String(existing.length+1).padStart(3,'0')}`;
+  const render=instructionId=>{
+    const template=JSON.parse(responseContract(stage,operation,instructionId,null,contractSha256,contextSignature,publicScope,state?.job?.JOB_ID));
+    template.promptIdentity='COPY_THE_EXACT_PROMPT_IDENTITY_OBJECT_FROM_MANIFEST_JSON';
+    return `${bodyText}\n\nPROMPT IDENTITY — ECHO EXACTLY FROM MANIFEST\nRead the accompanying manifest.json. Echo its exact promptIdentity object in response.json. Do not ask the operator to calculate hashes or construct identities. The instruction file does not embed its own hash.\nINSTRUCTION_ID: ${instructionId}\nCONTRACT_SHA256: ${contractSha256}\nCONTEXT_SIGNATURE: ${contextSignature}\nOPERATION: ${operation}\nPROJECT_REVISION: ${scope.projectRevision}\n\nSTRICT RESPONSE CONTRACT\n${JSON.stringify(template,null,2)}\n\nEND COPY BLOCK — STAGE ${String(stage).padStart(2,'0')}\n`.replace(/\r\n?/g,'\n');
+  };
+  let instructionId=same?.instructionId||same?.promptId||nextId;
+  let prompt=render(instructionId);
+  if(same&&hash.sha256Text(prompt)!==same.bodySha256){instructionId=nextId;prompt=render(instructionId);}
+  const bodySha256=hash.sha256Text(prompt);
+  return {instructionId,promptId:instructionId,promptEngineVersion:PROMPT_ENGINE_VERSION,stage,operation,role:definition.role,bodySha256,sha256:bodySha256,contractSha256,contextSignature,contextManifest,scope,scopeSha256:hash.sha256Value(scope),prompt,fullTextSha256:bodySha256,promptInjectionBoundaryApplied:true,untrustedDataBoundaryVersion:UNTRUSTED_DATA_SCHEMA};
+}
+function promptFileManifest(record){
+  const text=String(record?.prompt||'');
+  if(!text.endsWith('\n')||text.includes('\r')||text.startsWith('\uFEFF')||hash.sha256Text(text)!==record?.bodySha256||record?.fullTextSha256!==record?.bodySha256)throw new Error('The instruction file no longer matches its authoritative byte identity. Save the current instruction again.');
+  return {schema:'closed-loop-prompt-file-manifest/1',contractProfileId:schema.CONTRACT_PROFILE_ID,stage:record.stage,operation:record.operation,promptIdentity:{instructionId:record.instructionId,bodySha256:record.bodySha256,contractSha256:record.contractSha256,contextSignature:record.contextSignature},instruction:{path:'instruction.txt',mediaType:'text/plain;charset=utf-8',byteSize:new TextEncoder().encode(text).byteLength,sha256:record.bodySha256},scope:applyBlindReviewAliases(record.scope,safe(record.contextManifest?.blindAliasMap))};
 }
 function build(stageOrDefinition,state,options){return buildPromptRecord(stageOrDefinition,state,options).prompt;}
 core.buildStagePrompt=build;
-globalThis.closedLoopPromptEngine=Object.freeze({version:PROMPT_ENGINE_VERSION,__controllingCompletionAmendmentVersion:CONTROLLING_COMPLETION_VERSION,build,buildPromptRecord,procedures,procedureFor,contextFor,scopeFor,assertRequiredPromptScope,responseContractDescriptor,responseContract,intakeCoverageManifest,obligationManifest,parseCapturedInputSet,dataEnvelope,refreshDataEnvelopes});
+globalThis.closedLoopPromptEngine=Object.freeze({version:PROMPT_ENGINE_VERSION,__controllingCompletionAmendmentVersion:CONTROLLING_COMPLETION_VERSION,build,buildPromptRecord,promptFileManifest,procedures,procedureFor,contextFor,scopeFor,assertRequiredPromptScope,responseContractDescriptor,responseContract,intakeCoverageManifest,obligationManifest,parseCapturedInputSet,dataEnvelope,refreshDataEnvelopes});
 })();

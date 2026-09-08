@@ -242,13 +242,13 @@ negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].res
 {
   const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:48203,sha256:'a'.repeat(64)};
   const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e};};
-  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[exactFile]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
+  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{...exactFile,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
   for(const [name,files,mutate,code] of [
     ['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT'],
     ['wrong attachment filename',[exactFile],e=>{e.attachments[0].filename='other.pdf';},'ATTACHMENT_FILENAME_MISMATCH'],
     ['wrong attachment byte size',[exactFile],e=>{e.attachments[0].byteSize=48204;},'ATTACHMENT_BYTE_SIZE_MISMATCH'],
     ['wrong attachment hash',[exactFile],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']
-  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
+  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:files.map(file=>({...file,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}))});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
 }
 
 // Duplicate response is semantic, not whitespace-sensitive.
@@ -467,7 +467,7 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
   const sha='a'.repeat(64);
   e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
   e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
-  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha}]});
+  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
   if(!prepared.validation.valid)throw new Error('Byte-backed TEST artifact fixture was otherwise invalid: '+JSON.stringify(prepared.validation.issues));
   const proposedTest=prepared.proposal?.canonicalRecords?.tests?.[0],proposedEvidence=prepared.proposal?.evidence?.[0];
@@ -504,4 +504,31 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
 // reliability-v2: external responses remain unable to override application-derived proof authorities.
 {
  const source=fs.readFileSync('workflow-engine.js','utf8');for(const token of ['evaluateContextIndependence','evaluateEvidenceSufficiency','detectCurrentContradictions'])if(!source.includes(token))throw new Error('Missing deterministic reliability authority: '+token);const ingestionSource=fs.readFileSync('response-ingestion.js','utf8');if(/INDEPENDENCE_PROVEN_BY_APPLICATION|EVIDENCE_SUFFICIENT/.test(ingestionSource))throw new Error('Ingestion introduced agent-writable derived reliability authority.');
+}
+
+// Explicit returned-file slot regression. Filename and picker order are not authority.
+{
+  const p=project('JOB-EXPLICIT-ATTACHMENT-SLOTS'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  const contents=['first\n','second\n'],files=contents.map((text,i)=>({artifactId:`RETURNED-ARTIFACT-${i}`,name:`returned-${i}.txt`,type:'text/plain',size:new TextEncoder().encode(text).byteLength,sha256:globalThis.closedLoopHash.sha256Text(text)}));
+  e.attachments=files.map((file,i)=>({temporaryKey:`slot-${i}`,filename:file.name,mediaType:file.type,byteSize:file.size,sha256:file.sha256,required:true}));e.evidence[0].attachmentRef={tempKey:'slot-0'};
+  const slots=ingestion.attachmentSlotPlan(p,e,pr),mapped=files.map((file,i)=>({...file,attachmentSlotId:slots[i].attachmentSlotId}));
+  const check=selected=>ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:selected});
+  for(const [name,selected] of [
+    ['filename-alone',files],['picker-order-without-slots',[...files].reverse()],
+    ['swapped-slots',mapped.map((file,i)=>({...file,attachmentSlotId:slots[1-i].attachmentSlotId}))],
+    ['duplicate-slot',[...mapped,mapped[0]]],['missing-slot',[mapped[0]]],
+    ['wrong-hash',[{...mapped[0],sha256:'0'.repeat(64)},mapped[1]]],
+    ['stale-slot',[{...mapped[0],attachmentSlotId:'ATTACHMENT-SLOT-STALE'},mapped[1]]]
+  ]){const result=check(selected);if(result.validation.valid)throw new Error(`Attachment-slot mutation accepted: ${name}`);if(result.project.projectData.acceptedChanges.length||result.project.projectData.artifacts.length)throw new Error('Rejected returned files mutated canonical records.');negativeCount++;}
+  const valid=check([...mapped].reverse());if(!valid.validation.valid)throw new Error(`Explicit reverse-order slot mapping rejected: ${JSON.stringify(valid.validation.issues)}`);
+  const captured=ingestion.captureRaw(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  const failed=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId});
+  if(failed.validation.valid)throw new Error('Missing returned slots were not rejected.');
+  const rebound=ingestion.bindAttachmentSlots(failed.project,{rawResponseId:captured.rawRecord.rawResponseId,files:mapped});
+  if(rebound.rawRecord.completeRawResponse!==captured.rawRecord.completeRawResponse||rebound.rawRecord.sha256!==captured.rawRecord.sha256||rebound.project.projectData.artifacts.length)throw new Error('Slot mapping altered raw bytes or prematurely promoted artifacts.');
+  const repaired=ingestion.prepareCaptured(rebound.project,{rawResponseId:captured.rawRecord.rawResponseId});if(!repaired.validation.valid)throw new Error(`Slot repair did not progress: ${JSON.stringify(repaired.validation.issues)}`);
+  const committed=ingestion.commit(repaired.project,repaired.proposal.proposalId,{operator:'DISPOSABLE_SLOT_REGRESSION'});
+  if(committed.project.projectData.artifacts.length!==2)throw new Error('Accepted returned-byte metadata was not promoted atomically.');
+  const retried=ingestion.commit(committed.project,repaired.proposal.proposalId);if(!retried.idempotent||retried.project.projectData.artifacts.length!==2)throw new Error('Returned-file acceptance retry duplicated effects.');
+  console.log(JSON.stringify({attachmentSlotMapping:'PASS',explicitSlotsRequired:true,pickerOrderIndependent:true,filenameOnlyRejected:true,staleOrDuplicateSlotsRejected:true,slotMutationsDetected:7,rawBytesPreserved:true,failedResponseRepairedWithoutReselect:true,atomicReturnedArtifactPromotion:true,totalNegativeCases:negativeCount}));
 }

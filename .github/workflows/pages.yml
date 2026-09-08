@@ -15,6 +15,10 @@ on:
         description: Physical-iPhone mobile-acceptance-evidence JSON bound to the submitted target
         required: false
         type: string
+      visual_baseline_evidence_json:
+        description: Approved visual baseline and before/after comparison evidence bound to the exact currently deployed main commit
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -65,6 +69,10 @@ jobs:
         run: |
           set -euo pipefail
           node verify-mobile-acceptance-target.mjs
+          node verify-final-acceptance.mjs
+          node verify-visual-baseline-submission.mjs
+          node verify-prompt-file-identity.mjs
+          node verify-final-product-timing.mjs
           node verify-mobile-release-governance.mjs
 
       - name: Schema, ownership, and single-architecture proof
@@ -311,6 +319,7 @@ jobs:
           LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
           MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
           MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
+          VISUAL_BASELINE_EVIDENCE_JSON: ${{ inputs.visual_baseline_evidence_json || '' }}
         run: |
           set -euo pipefail
           test "$TEST_RESULT" = success
@@ -328,8 +337,10 @@ jobs:
           USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\n/).filter(Boolean).map(l=>l.trim().split(/\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\^\{\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
           export USED_MOBILE_CHALLENGES_JSON
           node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json
-          node - <<'NODE'
-          const fs=require('fs');
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          import {evaluateFinalAcceptance} from './final-acceptance.mjs';
+          import {resolveVisualBaselineSubmission} from './visual-baseline-submission.mjs';
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
           const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
           const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
@@ -349,7 +360,12 @@ jobs:
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
           if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
-          const finalAcceptancePublication=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
+          // A favorable top-level summary must never mask incomplete detailed proof.
+          for(const [key,value] of Object.entries({stage01RawInputAccounting,stage01RequiredFileInspectionAccounting,stage01AcceptedSemanticMappingCoverage,stage04ObligationAccounting})){
+            if(v3.section49CoverageMetrics?.[key]?.value!==value)throw new Error(`Conflicting executed metric evidence: ${key}`);
+          }
+          const physicalIPhoneAccepted=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
+          const finalAcceptancePublication=false;
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
@@ -444,9 +460,28 @@ jobs:
               deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
               deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
               physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
-              physicalIPhoneAcceptance:finalAcceptancePublication?`${mobileAcceptance.mobileAcceptanceEvidenceId} (${mobileAcceptance.mobileAcceptanceEvidenceBasis})`:'BLOCKED_ENVIRONMENT or BLOCKED: current physical-device evidence did not satisfy the gate'
+              physicalIPhoneAcceptance:physicalIPhoneAccepted?`${mobileAcceptance.mobileAcceptanceEvidenceId} (${mobileAcceptance.mobileAcceptanceEvidenceBasis})`:'BLOCKED_ENVIRONMENT or BLOCKED: current physical-device evidence did not satisfy the gate'
             }
           };
+          const mobileMetric=report.section49CoverageMetrics.actualIPhoneSafariAcceptanceCoverage;
+          mobileMetric.numerator=Number(physicalIPhoneAccepted);
+          mobileMetric.value=Number(physicalIPhoneAccepted);
+          mobileMetric.disposition=physicalIPhoneAccepted?'SATISFIED':mobileAcceptance.mobileAcceptanceResult;
+          mobileMetric.scopeHash=`commit:${report.commit}:manifest:${mobileAcceptance.mobileAcceptanceDeploymentManifestDigest||'UNPROVEN'}`;
+          mobileMetric.evidenceReferences=physicalIPhoneAccepted?[`mobile-evidence:${mobileAcceptance.mobileAcceptanceEvidenceId}`,`submitter:${mobileAcceptance.mobileAcceptanceSubmitter}`]:['evaluate-mobile-acceptance-submission.mjs:physical-proof-unavailable'];
+          report.actualIPhoneSafariAcceptanceCoverage=mobileMetric.value;
+          const visualBaseline=resolveVisualBaselineSubmission({
+            inputJson:process.env.VISUAL_BASELINE_EVIDENCE_JSON,
+            ledgerVisualBaseline:JSON.parse(fs.readFileSync('verification/closed-loop-build-state.json','utf8')).visualBaseline,
+            eventName:process.env.GITHUB_EVENT_NAME,ref:process.env.GITHUB_REF,
+            submitter:process.env.GITHUB_ACTOR,commit:report.commit
+          });
+          const finalGate=evaluateFinalAcceptance(report,{visualBaseline});
+          report.finalAcceptanceGate=finalGate;
+          report.finalAcceptancePublication=finalGate.accepted;
+          report.releaseTagEligible=finalGate.accepted;
+          report.visualBaselineEvidence=visualBaseline;
+          report.nextProofStep=finalGate.accepted?'Create the release tag for this exact accepted commit.':finalGate.blockers.map(item=>`${item.requiredActor}: ${item.code} (${item.path})`).join('; ');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
           fs.appendFileSync(process.env.GITHUB_OUTPUT,[
@@ -464,8 +499,8 @@ jobs:
         if: steps.acceptance.outputs.final_acceptance != 'true'
         run: |
           set -euo pipefail
-          echo "::notice title=Release tag blocked::Actual-iPhone Safari acceptance is not proven for ${GITHUB_SHA}; no release tag was created."
-          test "${{ steps.acceptance.outputs.actual_iphone }}" = false
+          echo "::notice title=Release tag blocked::Final Section 49 and actor acceptance is not proven for ${GITHUB_SHA}; see closed-loop-acceptance.json blockers. No release tag was created."
+          test "${{ steps.acceptance.outputs.final_acceptance }}" = false
       - name: Create release tag only after deployed and actual-iPhone proof
         if: steps.acceptance.outputs.final_acceptance == 'true'
         run: |
