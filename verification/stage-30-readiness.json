@@ -1,0 +1,41 @@
+{
+  "schema": "closed-loop-stage30-readiness/1",
+  "controllerId": "closed-loop-monotonic-build-controller/2",
+  "stage": 30,
+  "status": "IN_PROGRESS",
+  "proven": false,
+  "baselineCommit": "771b8548f51409a64f3a387b9f342874acd72c29",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "baselineEvidence": {
+    "workflowRunId": 33999344940,
+    "artifactId": 9979153381,
+    "artifactZipSha256": "391f39d03c8bb68fd30a92b564ca08471e7fd4eb6f4d85b2bb94429faddee6c8",
+    "acceptanceJsonSha256": "f3231f1d022f845c013035e00809079b47eb3d86afd430d941a84f0ed3b27d82",
+    "automatedWorkflowConclusion": "success",
+    "finalAcceptancePublication": false,
+    "incompleteMachineMetrics": {
+      "stage01RawInputAccounting": {"numerator": 1, "denominator": 2, "value": 0.5, "topLevelValue": 1},
+      "fileFirstPromptByteIdentityCoverage": {"numerator": 1, "denominator": 2, "value": 0.5},
+      "attachmentSlotMappingCoverage": {"numerator": 1, "denominator": 2, "value": 0.5},
+      "dueStageObligationCoverage": {"numerator": 1, "denominator": 5, "value": 0.2},
+      "activationProofCoverage": {"numerator": 1, "denominator": 2, "value": 0.5}
+    }
+  },
+  "requiredMachineWork": [
+    "Trace each incomplete metric to executed production-path and invalid/repaired regression evidence; do not replace a missing proof with a literal success value.",
+    "Require all Section 49 metric and zero-invariant evidence before final acceptance publication and release tagging.",
+    "Make summary values agree with their detailed closed-universe metrics.",
+    "Execute the authorized PR test barrier and exact-main deployment/browser verification before binding readiness evidence."
+  ],
+  "requiredActorEvidence": [
+    "Current approved visual-baseline authority.",
+    "Actual physical-iPhone Safari target, capability probe, operator-path receipts, and acceptance evidence bound to the exact deployed build and a fresh single-use challenge."
+  ],
+  "preservation": {
+    "stages01Through29Unchanged": true,
+    "physicalIPhoneAcceptanceClaimed": false,
+    "section49CompletionClaimed": false,
+    "releaseTagCreated": false,
+    "productionMaturityClaimed": false
+  }
+}
