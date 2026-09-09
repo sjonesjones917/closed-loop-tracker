@@ -19,22 +19,61 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Reconstruct and verify audited patch
+      - name: Reconstruct and verify audited delta
         shell: bash
         run: |
           set -euo pipefail
-          cat .controller-transport/chunk-*.b64 | base64 --decode | gzip --decompress > /tmp/prompt-repair.patch
-          echo '843fad08252def31283a0ac65a436654f21eea03d16364fba830321958128231  /tmp/prompt-repair.patch' | sha256sum --check --strict
+          cat .controller-transport/chunk-*.b64 | base64 --decode > /tmp/prompt-repair.patch.zst
+          echo '600af06e00482518de65bd5e55aeed4057828882695c2d0958804c738e6ef37f  /tmp/prompt-repair.patch.zst' | sha256sum --check --strict
 
-      - name: Reset to canonical base and apply exact patch
+      - name: Reset to canonical base and reconstruct exact tested files
         shell: bash
         run: |
           set -euo pipefail
           BASE_SHA=d14d84d580ecb4a328297ccb1eabc626ac99cfee
           test "$(git rev-parse "${BASE_SHA}^{commit}")" = "$BASE_SHA"
           git reset --hard "$BASE_SHA"
-          git apply --check /tmp/prompt-repair.patch
-          git apply /tmp/prompt-repair.patch
+          cat > /tmp/changed-list.txt <<'FILES'
+          .github/workflows/pages.yml
+          app-core.js
+          prompt-engine.js
+          response-ingestion.js
+          stage19-fixture.mjs
+          verify-all-stage-prompts.mjs
+          verify-browser.mjs
+          verify-complete.mjs
+          verify-data-route-closure.mjs
+          verify-file-first-response.mjs
+          verify-full-cycle.mjs
+          verify-human-authority-roundtrip.mjs
+          verify-human-stage-walkthrough.mjs
+          verify-ingestion.mjs
+          verify-one-time-intent-intake.mjs
+          verify-prompt-file-identity.mjs
+          verify-spec-grounded-route-oracle.mjs
+          verify-spec3-contract.mjs
+          verify-stage-operation-registry.mjs
+          verify-stage-prompts-complete.mjs
+          verify-stage01-disposition-contract.mjs
+          verify-stage01-intake-closure.mjs
+          verify-test-runtime.mjs
+          verify-user-prompt-invariants.mjs
+          verify-zero-loss-accounting.mjs
+          verify.mjs
+          workflow-engine.js
+          workflow-schema.js
+          FILES
+          rm -rf /tmp/base-overlay
+          mkdir -p /tmp/base-overlay
+          while IFS= read -r f; do
+            mkdir -p "/tmp/base-overlay/$(dirname "$f")"
+            if [ -e "$f" ]; then cp -p "$f" "/tmp/base-overlay/$f"; else : > "/tmp/base-overlay/$f"; fi
+          done < /tmp/changed-list.txt
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner --format=gnu -C /tmp/base-overlay -cf /tmp/base-changed.tar -T /tmp/changed-list.txt
+          echo 'b62ebb8d3681a27606a3f5817d5e7af112b3903bf75bd7905b95608a74690247  /tmp/base-changed.tar' | sha256sum --check --strict
+          zstd -q -d --patch-from=/tmp/base-changed.tar /tmp/prompt-repair.patch.zst -o /tmp/new-changed.tar
+          echo 'bafeda600f3da9fdbb4a1a9d091242a7b838099022df6f7c5177b5eda08bd6ad  /tmp/new-changed.tar' | sha256sum --check --strict
+          tar -xf /tmp/new-changed.tar -C .
           test ! -e .controller-transport
           test ! -e .github/workflows/controller-source-transport.yml
 
