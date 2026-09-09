@@ -1,5 +1,5 @@
-attempt=3
-purpose=publish-exact-audited-prompt-repair
+attempt=4
+purpose=publish-tested-commit-to-new-clean-branch
 baseCommit=d14d84d580ecb4a328297ccb1eabc626ac99cfee
 baseArchiveSha256=82dd3655b16e9b268b07919b35075dfcf195537dbf83274890ca43ff554bd78c
 newArchiveSha256=7f4336b76705bfd0eb134d5880875a8aa650a41447638fcca8c55bf7f672d07a
