@@ -24,7 +24,18 @@ jobs:
       - name: Apply exact responsible-layer repair
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('repair-stage01-confirmation.mjs')
+          text=path.read_text()
+          old=r"\\${JSON.stringify(confirmationFixture)}"
+          new=r"\${JSON.stringify(confirmationFixture)}"
+          if text.count(old)!=1:
+              raise SystemExit(f'Expected one browser-template escape target, found {text.count(old)}')
+          path.write_text(text.replace(old,new))
+          PY
           node repair-stage01-confirmation.mjs
+          git checkout -- repair-stage01-confirmation.mjs
           node --check workflow-engine.js
           node --check app-core.js
           node --check verify-complete.mjs
