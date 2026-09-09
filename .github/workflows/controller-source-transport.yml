@@ -115,4 +115,4 @@ jobs:
           git diff --cached --check
           test -n "$(git diff --cached --name-only)"
           git commit -m 'Repair all stage prompt contracts and prompt display/export path'
-          git push --force origin HEAD:refs/heads/fix/all-stage-prompt-contracts-20260908
+          git push origin HEAD:refs/heads/fix/all-stage-prompt-contracts-clean-20260908
