@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-      - name: Repair Section 49 prompt byte-identity oracle
+      - name: Repair and verify Section 49 prompt byte-identity oracle
         shell: bash
         run: |
           set -euo pipefail
@@ -35,6 +35,9 @@ jobs:
           PY
           node --check verify-v3-definition-of-done.mjs
           node verify-prompt-file-identity.mjs > /tmp/prompt-identity.json
+          mv .github/workflows/section49-prompt-oracle-fix.yml /tmp/section49-prompt-oracle-fix.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
           node verify-v3-definition-of-done.mjs > /tmp/v3.json
           node --input-type=module - <<'NODE'
           import fs from 'node:fs';
@@ -52,7 +55,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add verify-v3-definition-of-done.mjs
-          git rm .github/workflows/section49-prompt-oracle-fix.yml
+          git add -u .github/workflows/section49-prompt-oracle-fix.yml
           git diff --cached --check
           test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/section49-prompt-oracle-fix.yml verify-v3-definition-of-done.mjs "
           git commit -m 'Repair Section 49 prompt identity oracle'
