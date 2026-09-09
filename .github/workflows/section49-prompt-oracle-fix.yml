@@ -1,0 +1,59 @@
+name: One-shot Section 49 prompt identity oracle repair
+
+on:
+  push:
+    branches: [fix/section49-prompt-byte-identity-oracle-20260909]
+    paths: [.github/workflows/section49-prompt-oracle-fix.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Repair Section 49 prompt byte-identity oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('verify-v3-definition-of-done.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = "  fileFirstPromptByteIdentityCoverage:metric('FILE_FIRST_PROMPT_BYTE_IDENTITY_COVERAGE',[['all-66-operations-exact-file-bytes',actualPromptIdentity.generatedOperations===66&&actualPromptIdentity.exactExportedBytesHashed===true&&actualPromptIdentity.manifestIdentityBound===true],['byte-identity-mutations',actualPromptIdentity.mutationsDetected===396&&actualPromptIdentity.repairedOriginalAccepted===true]],['verify-prompt-file-identity.mjs']),"
+          new = "  fileFirstPromptByteIdentityCoverage:metric('FILE_FIRST_PROMPT_BYTE_IDENTITY_COVERAGE',[['all-66-operations-file-first-boundary',actualPromptIdentity.totalOperations===66&&actualPromptIdentity.generatedOperations===50&&actualPromptIdentity.nonExternalOperations===16&&actualPromptIdentity.exactExportedBytesHashed===true&&actualPromptIdentity.manifestIdentityBound===true],['external-prompt-byte-identity-mutations',actualPromptIdentity.mutationsDetected===300&&actualPromptIdentity.repairedOriginalAccepted===true]],['verify-prompt-file-identity.mjs']),"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one stale prompt identity metric oracle; found {text.count(old)}')
+          path.write_text(text.replace(old,new,1), encoding='utf-8', newline='\n')
+          PY
+          node --check verify-v3-definition-of-done.mjs
+          node verify-prompt-file-identity.mjs > /tmp/prompt-identity.json
+          node verify-v3-definition-of-done.mjs > /tmp/v3.json
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          const prompt=JSON.parse(fs.readFileSync('/tmp/prompt-identity.json','utf8'));
+          const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
+          if(prompt.promptFileIdentity!=='PASS'||prompt.totalOperations!==66||prompt.generatedOperations!==50||prompt.nonExternalOperations!==16||prompt.mutationsDetected!==300) throw new Error('Prompt identity executable evidence did not match the current executor contract.');
+          const metric=v3.section49CoverageMetrics?.fileFirstPromptByteIdentityCoverage;
+          if(metric?.numerator!==2||metric?.denominator!==2||metric?.value!==1||metric?.disposition!=='SATISFIED') throw new Error(`Prompt identity Section 49 metric did not close: ${JSON.stringify(metric)}`);
+          NODE
+          node verify-final-acceptance.mjs
+      - name: Publish repaired clean head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add verify-v3-definition-of-done.mjs
+          git rm .github/workflows/section49-prompt-oracle-fix.yml
+          git diff --cached --check
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/section49-prompt-oracle-fix.yml verify-v3-definition-of-done.mjs "
+          git commit -m 'Repair Section 49 prompt identity oracle'
+          git push origin HEAD:refs/heads/fix/section49-prompt-byte-identity-oracle-20260909
