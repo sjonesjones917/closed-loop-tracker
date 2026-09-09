@@ -11,11 +11,23 @@ engine.ensureShape(p);
 const intake=prompts.intakeCoverageManifest(p);
 p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',extractedStatements:[{statementKey:'S'+i,text:u.rawValueText||u.label,statementClass:'CONTEXT'}]}))});
 p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
-let operations=0,mutations=0;
+let generatedOperations=0,nonExternalOperations=0,mutations=0,totalOperations=0;
 for(let stage=1;stage<=30;stage++){
  if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};}
  for(const operation of schema.STAGE_CONTRACTS[stage].operations){
+  totalOperations++;
+  const registry=schema.STAGE_OPERATION_REGISTRY?.[`${stage}:${operation}`];
+  assert.ok(registry?.executorClass,`Missing executor classification for Stage ${stage} ${operation}.`);
   const scope=Object.fromEntries(schema.operationContract(stage,operation).scopeRequirements.map(k=>[k,k==='projectRevision'?0:k.toUpperCase()+'-IDENTITY']));
+  if(registry.executorClass!=='EXTERNAL_AGENT'){
+   assert.throws(
+    ()=>prompts.buildPromptRecord(stage,p,{operation,scope}),
+    error=>error?.code==='NON_EXTERNAL_OPERATION'&&/has no external-agent controlling prompt/.test(error.message),
+    `Stage ${stage} ${operation} (${registry.executorClass}) must reject external prompt generation.`
+   );
+   nonExternalOperations++;
+   continue;
+  }
   const r=prompts.buildPromptRecord(stage,p,{operation,scope});
   const bytes=Buffer.from(r.prompt,'utf8'),digest=createHash('sha256').update(bytes).digest('hex');
   assert.equal(r.bodySha256,digest,'Recorded body digest must cover the complete exported instruction.');
@@ -36,8 +48,10 @@ for(let stage=1;stage<=30;stage++){
   }
   assert.throws(()=>prompts.promptFileManifest({...r,bodySha256:'0'.repeat(64)}),/authoritative byte identity/);mutations++;
   assert.equal(prompts.promptFileManifest(r).promptIdentity.bodySha256,digest,'The repaired original remains valid.');
-  operations++;
+  generatedOperations++;
  }
 }
-assert.equal(operations,66);
-console.log(JSON.stringify({promptFileIdentity:'PASS',generatedOperations:operations,exactExportedBytesHashed:true,manifestIdentityBound:true,noSelfReferentialHash:true,utf8LfFinalNewline:true,mutationsDetected:mutations,repairedOriginalAccepted:true}));
+assert.equal(totalOperations,66,'Every registered stage operation must be covered.');
+assert.equal(generatedOperations,50,'Only EXTERNAL_AGENT operations may have exported prompt files.');
+assert.equal(nonExternalOperations,16,'Application, human-decision, and operator-action operations must fail closed for prompt generation.');
+console.log(JSON.stringify({promptFileIdentity:'PASS',totalOperations,generatedOperations,nonExternalOperations,exactExportedBytesHashed:true,manifestIdentityBound:true,noSelfReferentialHash:true,utf8LfFinalNewline:true,mutationsDetected:mutations,repairedOriginalAccepted:true}));
