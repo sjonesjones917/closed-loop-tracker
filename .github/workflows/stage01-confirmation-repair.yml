@@ -1,0 +1,70 @@
+name: Stage 01 confirmation deadlock repair
+
+on:
+  push:
+    branches: [fix/stage01-intent-confirmation-deadlock-20260909]
+    paths:
+      - repair-stage01-confirmation.mjs
+      - .github/workflows/stage01-confirmation-repair.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Apply exact responsible-layer repair
+        run: |
+          set -euo pipefail
+          node repair-stage01-confirmation.mjs
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-browser-extra.mjs
+          changed="$(git diff --name-only | sort)"
+          expected=$'app-core.js\nverify-browser-extra.mjs\nverify-complete.mjs\nworkflow-engine.js'
+          test "$changed" = "$expected"
+          git diff --check
+      - name: Run focused state, ingestion, and lifecycle regressions
+        run: |
+          set -euo pipefail
+          node verify-complete.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-human-authority-roundtrip.mjs
+          node verify-ingestion.mjs
+          node verify-full-cycle.mjs
+      - name: Replay the real browser operator path
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-stage01-repair-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          sleep 1
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome)"
+          test -n "$BROWSER"
+          node verify-browser-extra.mjs
+          node verify-browser.mjs
+      - name: Publish clean repair commit and remove one-shot transport
+        run: |
+          set -euo pipefail
+          rm repair-stage01-confirmation.mjs .github/workflows/stage01-confirmation-repair.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          for file in app-core.js workflow-engine.js verify-complete.mjs verify-browser-extra.mjs; do
+            git diff --cached --name-only | grep -Fx "$file"
+          done
+          git diff --cached --name-only | grep -Fx 'repair-stage01-confirmation.mjs'
+          git diff --cached --name-only | grep -Fx '.github/workflows/stage01-confirmation-repair.yml'
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = '6'
+          git commit -m 'Fix Stage 01 human confirmation routing deadlock'
+          git push origin HEAD:refs/heads/fix/stage01-intent-confirmation-deadlock-20260909
