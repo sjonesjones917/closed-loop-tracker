@@ -41,9 +41,9 @@ assert(intake.units.some(unit=>unit.sourceLocation.includes('projectData.userEnt
 assert(intake.units.some(unit=>unit.sourceLocation.includes('projectData.userEntered.acceptance.oneTimeSupply')),'Nested user-entered acceptance data was omitted from the intake manifest.');
 
 const capture={
-  schema:'closed-loop-stage01-capture/1',
+  schema:'closed-loop-stage01-capture/2',
   inputVersion:intake.inputVersion,
-  manifestSha256:intake.manifestSha256,
+  manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},
   units:intake.units.map((unit,index)=>({
     sourceUnitId:unit.unitId,
     sourceRawValueSha256:unit.rawValueSha256,
