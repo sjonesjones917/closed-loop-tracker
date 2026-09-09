@@ -102,9 +102,20 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(engine.unresolvedHumanRequests(p,1).length===0&&p.job.CURRENT_INPUT_VERSION!==before,'Human answer did not resolve question and version User Job Input.');
 }
 
+// A stale Stage 01 confirmation — including on retained/imported projects — must never hide the required confirmation route.
+{
+  let p=acceptStage1Fixture(project('JOB-STAGE01-CONFIRMATION-DEADLOCK'));p.isRetainedTestProject=true;const stale=p.projectData.stageConfirmations.filter(item=>Number(item.stage)===1&&!item.invalidatedBy).at(-1);assert(stale,'Stage 01 confirmation fixture is missing.');stale.inputVersion='INPUT-vSTALE';engine.recalculate(p);const gate=engine.gate(1,p),action=engine.operationalNextAction(p,1);assert(!gate.complete&&gate.reasons.includes('Human confirmation bound to the current accepted change and input version is required.'),'Stale confirmation did not reproduce the Stage 01 confirmation gate.');assert(action.actionType==='CONFIRM_STAGE_ONE_INTENT'&&action.primaryButton==='Confirm represented intent','Stage 01 did not route the confirmation requirement to the human operator.');const latest=engine.acceptedChanges(p,1).at(-1);engine.recordStageConfirmation(p,1,true,'Current intent confirmed.','VERIFY',{acceptedChangeId:latest.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION,operatorLabel:'VERIFY'});assert(engine.gate(1,p).complete&&p.stages[1].status==='COMPLETE','Current bound Stage 01 confirmation did not complete the gate.');
+}
+
 // Human authority changes must invalidate the stage whose accepted result depended on that authority.
 {
   const appSource=fs.readFileSync('app-core.js','utf8');
+  const stageOneConfirmationSource=appSource.slice(appSource.indexOf('function stageConfirmationMarkup'),appSource.indexOf('function acceptedStageMarkup'));
+  assert(stageOneConfirmationSource.includes("displayedStageAction(n).actionType!=='CONFIRM_STAGE_ONE_INTENT'"),'Stage 01 confirmation control is not driven by the canonical next-action state.');
+  assert(!stageOneConfirmationSource.includes('isRetainedTestProject'),'Retained/imported project origin still suppresses a mandatory Stage 01 confirmation control.');
+  assert(appSource.includes("CONFIRM_STAGE_ONE_INTENT:'Human operator'"),'Stage 01 confirmation next action is not assigned to the human operator.');
+  assert(appSource.includes("acceptedChangeId:latest.changeId,inputVersion:next.job.CURRENT_INPUT_VERSION"),'Stage 01 confirmation click is not explicitly bound to the current accepted change and input version.');
+  assert(appSource.includes("nextActionMarkup(displayedStageAction(n).actionType==='CONFIRM_STAGE_ONE_INTENT',n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
   assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage:1,reason:'User Job Input changed after Stage 01 completion.'"),'User Job Input edits do not reopen Stage 01.');
   assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.'"),'Completed human-decision stages are not reopened when their authority changes.');
   assert(!appSource.includes("invalidateDownstream(next,1,id,'User Job Input changed after Stage 01 completion.'"),'User Job Input edits still preserve stale Stage 01 acceptance.');
