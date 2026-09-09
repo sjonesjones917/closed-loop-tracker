@@ -1,0 +1,63 @@
+name: Stage 01 self-staleness repair v3
+
+on:
+  push:
+    branches: [fix/stage01-atomic-intake-self-staleness-20260909]
+    paths:
+      - repair-stage01-self-staleness-v3.mjs
+      - .github/workflows/stage01-self-staleness-repair-v3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Apply production repair and isolated permanent regressions
+        run: |
+          set -euo pipefail
+          node repair-stage01-self-staleness-v3.mjs
+          node --check workflow-engine.js
+          node --check verify-human-authority-roundtrip.mjs
+          node --check verify-stage01-intake-closure.mjs
+          node --check verify-browser-extra.mjs
+          git diff --check
+      - name: Run Stage 01, ingestion, and full-cycle barrier
+        run: |
+          set -euo pipefail
+          node verify-human-authority-roundtrip.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Replay complete Chromium operator path
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-stage01-self-stale-v3-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          sleep 1
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome)"
+          test -n "$BROWSER"
+          node verify-browser-extra.mjs
+          node verify-browser.mjs
+      - name: Publish only permanent non-workflow files
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workflow-engine.js verify-stage01-intake-closure.mjs verify-browser-extra.mjs
+          git diff --cached --check
+          test "$(git diff --cached --name-only | sort)" = $'verify-browser-extra.mjs\nverify-stage01-intake-closure.mjs\nworkflow-engine.js'
+          git commit -m 'Fix Stage 01 atomic intake accounting self-staleness'
+          git push origin HEAD:refs/heads/fix/stage01-atomic-intake-self-staleness-20260909
