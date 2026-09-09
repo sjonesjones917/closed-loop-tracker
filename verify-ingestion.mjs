@@ -19,7 +19,7 @@ if(core.STAGES.length!==30)throw new Error(`Expected 30 stages; found ${core.STA
 
 function prepareStage4Upstream(p){
   const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
-  p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
+  p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
   p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
   p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
   p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};
@@ -38,7 +38,7 @@ function project(jobId='JOB-INGESTION-TEST'){
 function preparePromptPrerequisites(p,stage){
   if(stage<=1)return p;
   const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
-  p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
+  p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
   p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
   if(stage>=3){p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';}
   if(stage>=4){p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};}
@@ -50,7 +50,8 @@ function fixtureBuildPrompt(stage,p,options){
   return prompts.buildPromptRecord(stage,p,options);
 }
 function fixturePromptOperation(stage){
-  return stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0];
+  if(stage===17||stage===19)return 'COMPARE';
+  return schema.STAGE_CONTRACTS[stage].operations.find(operation=>schema.operationContract(stage,operation).executorClass==='EXTERNAL_AGENT')||null;
 }
 function fixturePromptOptions(stage,operation=fixturePromptOperation(stage)){
   const required=schema.operationContract(stage,operation)?.scopeRequirements||[];
@@ -92,7 +93,7 @@ function validEnvelope(p,stage,promptRecord){
   const stageData={};
   const agentStageFields=stageFields.filter(name=>schema.stageFieldDefinition(stage,name).producer===schema.PRODUCER.AGENT);
   if(agentStageFields.length)stageData[agentStageFields[0]]=safeValue(agentStageFields[0]);
-  if(stage===1){const m=promptRecord.contextManifest.intakeCoverageManifest;stageData.EXACT_DELIVERABLE_REQUESTED='Verified deliverable';stageData.ASSUMPTIONS='NONE';stageData.UNKNOWN_INFORMATION='NONE';stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});}
+  if(stage===1){const m=promptRecord.contextManifest.intakeCoverageManifest;stageData.EXACT_DELIVERABLE_REQUESTED='Verified deliverable';stageData.ASSUMPTIONS='NONE';stageData.UNKNOWN_INFORMATION='NONE';stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});}
   const records={};
   if(!Object.keys(stageData).length||stage===4){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
@@ -123,6 +124,8 @@ const allStages=[];
 for(let stage=1;stage<=30;stage++){
   let p=project(`JOB-E2E-${String(stage).padStart(2,'0')}`);
   p.activeStage=stage;
+  const fixtureOperation=fixturePromptOperation(stage);
+  if(!fixtureOperation){preparePromptPrerequisites(p,stage);let blocked=false;try{prompts.buildPromptRecord(stage,p,{operation:schema.STAGE_CONTRACTS[stage].operations[0]});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}if(!blocked)throw new Error(`Stage ${stage} application-only operation generated an external prompt.`);allStages.push({stage,applicationControlled:true});continue;}
   const promptRecord=savePrompt(p,stage);
   const envelope=validEnvelope(p,stage,promptRecord);
   if(!envelope){
@@ -144,7 +147,7 @@ for(let stage=1;stage<=30;stage++){
   if(receipt.acceptedCanonicalChangeId==='NONE'||receipt.extractionManifestId==='NONE')throw new Error(`Stage ${stage} receipt was not linked through canonical acceptance.`);
   const serialized=JSON.stringify(p); const reloaded=JSON.parse(serialized); engine.ensureShape(reloaded);
   if(reloaded.projectData.rawResponses.at(-1)?.completeRawResponse!==JSON.stringify(envelope))throw new Error(`Stage ${stage} raw response did not survive reload.`);
-  if(stage<30){const nextStage=stage+1;preparePromptPrerequisites(reloaded,nextStage);if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=fixturePromptOptions(nextStage),nextPrompt=fixtureBuildPrompt(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}
+  if(stage<30){const nextStage=stage+1;preparePromptPrerequisites(reloaded,nextStage);if(nextStage===4)prepareStage4Upstream(reloaded);const nextOperation=fixturePromptOperation(nextStage);if(nextOperation){const nextOptions=fixturePromptOptions(nextStage,nextOperation),nextPrompt=fixtureBuildPrompt(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}else{let blocked=false;try{prompts.buildPromptRecord(nextStage,reloaded,{operation:schema.STAGE_CONTRACTS[nextStage].operations[0]});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}if(!blocked)throw new Error(`Stage ${nextStage} application-only control unexpectedly exposed an external prompt.`);}}
   allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
 }
 
@@ -201,7 +204,7 @@ negative('stale prompt id',(e)=>{e.promptIdentity.instructionId='INSTRUCTION-STA
 negative('stale prompt hash',(e)=>{e.promptIdentity.bodySha256='0'.repeat(64);},'STALE_PROMPT_HASH');
 negative('stale contract hash',(e)=>{e.promptIdentity.contractSha256='0'.repeat(64);},'STALE_CONTRACT_HASH');
 negative('stale context signature',(e)=>{e.promptIdentity.contextSignature='0'.repeat(64);},'STALE_CONTEXT_SIGNATURE');
-for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',2,'inputVersion'],['source set version',3,'sourceSetVersion'],['requirements version',5,'requirementsVersion'],['test suite version',7,'testSuiteVersion'],['instruction version',9,'instructionVersion'],['iteration',10,'iterationId'],['candidate',10,'candidateId'],['run',11,'runId'],['context',11,'contextId'],['baseline',20,'baselineId'],['product',21,'productId']])scopeNegative(name,stage,key);
+for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',2,'inputVersion'],['source set version',3,'sourceSetVersion'],['requirements version',5,'requirementsVersion'],['test suite version',7,'testSuiteVersion'],['instruction version',9,'instructionVersion'],['iteration',11,'iterationId'],['candidate',11,'candidateId'],['run',11,'runId'],['context',11,'contextId'],['baseline',21,'baselineId'],['product',21,'productId']])scopeNegative(name,stage,key);
 scopeNegative('non-required populated scope identity',2,'baselineId');
 negative('blocked human input uses wrong recovery lane',(e)=>{e.responseType='BLOCKED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'human-needed',kind:'MISSING_HUMAN_INPUT',description:'Human decision required',whyBlocking:'Only the human can supply this authority.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'WRONG_RECOVERY_CHANNEL');
 negative('execution failed without an attempted failure',(e)=>{e.responseType='EXECUTION_FAILED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'capability-missing',kind:'MISSING_CAPABILITY',description:'Required capability is unavailable',whyBlocking:'The operation cannot begin without the capability.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MISSING_EXECUTION_FAILURE_DETAIL');

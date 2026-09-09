@@ -49,4 +49,33 @@ for(let stage=1;stage<=30;stage++){
 }
 for(const [stage,invalid] of [[10,'COMPLETE'],[11,'COMPLETE'],[12,'COMPLETE'],[22,'COMPLETE'],[27,'COMPLETE'],[30,'COMPLETE']])assert.equal(schema.operationContract(stage,invalid),null,`Stage ${stage} illegally accepts ${invalid}.`);
 
-console.log(JSON.stringify({stageOperationRegistry:'PASS',stages:30,operations:Object.values(expected).reduce((n,v)=>n+v.length,0)},null,2));
+// Controlling-spec executor boundary: these operations are application/human/operator actions and must never
+// produce an external-agent prompt. Every other closed operation is external-agent work.
+const nonExternal=Object.freeze({
+  '10:FREEZE':'APPLICATION',
+  '17:FREEZE':'APPLICATION',
+  '18:COMPLETE':'APPLICATION',
+  '19:CONFIRM_FREEZE':'APPLICATION',
+  '19:CONFIRM':'APPLICATION',
+  '20:FREEZE_BASELINE':'APPLICATION',
+  '22:RUN_NATIVE_TESTS':'APPLICATION',
+  '24:RUN_NATIVE_ATTACKS':'APPLICATION',
+  '25:FREEZE_DELIVERY_CANDIDATE':'APPLICATION',
+  '27:CALCULATE_RELEASE':'APPLICATION',
+  '28:VERIFY_IDENTITY':'APPLICATION',
+  '28:CAPTURE_DELIVERY_INTENT':'HUMAN_DECISION',
+  '29:CALCULATE_EVIDENCE_CHAINS':'APPLICATION',
+  '30:CALCULATE_TERMINAL':'APPLICATION',
+  '30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS':'OPERATOR_ACTION',
+  '30:RECORD_DELIVERY_EVIDENCE':'OPERATOR_ACTION'
+});
+let externalOperations=0;
+for(let stage=1;stage<=30;stage++)for(const operation of expected[stage]){
+  const key=`${stage}:${operation}`,registration=schema.STAGE_OPERATION_REGISTRY[key];
+  assert.ok(registration,`Missing executor registration for ${key}.`);
+  const expectedExecutor=nonExternal[key]||'EXTERNAL_AGENT';
+  assert.equal(registration.executorClass,expectedExecutor,`${key} executor drifted from the controlling operation boundary.`);
+  if(expectedExecutor==='EXTERNAL_AGENT')externalOperations++;
+}
+
+console.log(JSON.stringify({stageOperationRegistry:'PASS',stages:30,operations:Object.values(expected).reduce((n,v)=>n+v.length,0),externalOperations,nonExternalOperations:Object.keys(nonExternal).length},null,2));

@@ -525,11 +525,7 @@ const RECORD_OWNERSHIP=Object.freeze({
   "convergenceRecords": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "FAILED_CONDITIONS",
-      "RETURN_STAGES",
-      "EVIDENCE"
-    ],
+    "agent": [],
     "application": [
       "CONVERGENCE_ID",
       "ITERATION_ID",
@@ -542,13 +538,20 @@ const RECORD_OWNERSHIP=Object.freeze({
       "CORRECTNESS_AFFECTING_CONTRADICTION_COUNT",
       "CORRECTNESS_AFFECTING_AMBIGUITY_COUNT",
       "UNEXPLAINED_CORRECTNESS_AFFECTING_VARIANCE_COUNT",
-      "CONVERGED"
+      "CONVERGED",
+      "FAILED_CONDITIONS",
+      "RETURN_STAGES",
+      "EVIDENCE"
     ]
   },
   "confirmationRecords": {
     "human": [],
     "humanDecision": [],
-    "agent": [
+    "agent": [],
+    "application": [
+      "CONFIRMATION_ID",
+      "SOURCE_ITERATION_ID",
+      "CONFIRMATION_ITERATION_ID",
       "ZERO_MATERIAL_CHANGES",
       "VERSION_HASH_COMPARISON",
       "TEN_NEW_CONTEXTS",
@@ -561,11 +564,6 @@ const RECORD_OWNERSHIP=Object.freeze({
       "NEW_VARIANCE",
       "DETERMINATION",
       "EVIDENCE"
-    ],
-    "application": [
-      "CONFIRMATION_ID",
-      "SOURCE_ITERATION_ID",
-      "CONFIRMATION_ITERATION_ID"
     ]
   },
   "baselines": {
@@ -1131,7 +1129,7 @@ const RECORD_SCHEMAS=Object.freeze({
     'MANDATORY_UNRESOLVED_UNKNOWN_COUNT','CORRECTNESS_AFFECTING_CONTRADICTION_COUNT','CORRECTNESS_AFFECTING_AMBIGUITY_COUNT',
     'UNEXPLAINED_CORRECTNESS_AFFECTING_VARIANCE_COUNT','CONVERGED','FAILED_CONDITIONS','RETURN_STAGES','EVIDENCE'
   ],required:['ITERATION_ID','FAILED_CONDITIONS','RETURN_STAGES','EVIDENCE'],relationships:{ITERATION_ID:'iterations'}}),
-  confirmationRecords:recordSchema({ownership:RECORD_OWNERSHIP.confirmationRecords,title:'Unchanged confirmation',idField:'CONFIRMATION_ID',prefix:'CONFIRMATION',stage:19,fields:[
+  confirmationRecords:recordSchema({ownership:RECORD_OWNERSHIP.confirmationRecords,commitPolicy:COLLECTION_POLICIES.APPLICATION_DERIVED,title:'Unchanged confirmation',idField:'CONFIRMATION_ID',prefix:'CONFIRMATION',stage:19,fields:[
     'CONFIRMATION_ID','SOURCE_ITERATION_ID','CONFIRMATION_ITERATION_ID','ZERO_MATERIAL_CHANGES','VERSION_HASH_COMPARISON','TEN_NEW_CONTEXTS','COMPLETE_TEST_RESULTS','REGRESSION_RESULTS','COMPARISON_RESULTS','NEW_DEFECTS','NEW_REQUIREMENTS','NEW_FAILURE_CASES','NEW_VARIANCE','DETERMINATION','EVIDENCE'
   ],required:['ZERO_MATERIAL_CHANGES','VERSION_HASH_COMPARISON','TEN_NEW_CONTEXTS','COMPLETE_TEST_RESULTS','REGRESSION_RESULTS','COMPARISON_RESULTS','NEW_DEFECTS','NEW_REQUIREMENTS','NEW_FAILURE_CASES','NEW_VARIANCE','DETERMINATION','EVIDENCE'],relationships:{SOURCE_ITERATION_ID:'iterations',CONFIRMATION_ITERATION_ID:'iterations'}}),
   baselines:recordSchema({ownership:RECORD_OWNERSHIP.baselines,commitPolicy:COLLECTION_POLICIES.APPLICATION_DERIVED,title:'Production baselines',idField:'BASELINE_ID',prefix:'BASELINE',stage:20,fields:[
@@ -1387,7 +1385,7 @@ const addedAgentCollections=Object.freeze({4:['propositions'],5:['propositionEqu
 const completionReadCollections=Object.freeze(['propositions','propositionEquivalenceReviews','applicabilityRecords','proofExpressions','proofObligations','observationRecords','entailmentReviews','environmentDependencies','semanticReviews']);
 const NARROW_SEMANTIC_OPERATION_KEYS=new Set(['1:SEMANTIC_CHALLENGE','1:RECONCILE_INTAKE','2:COMPLETE','2:SEARCH_ADEQUACY_REVIEW','2:RECONCILE_SOURCE_SEARCH','3:SEMANTIC_CHALLENGE','3:RECONCILE_RESEARCH','4:DISPOSITION_CHALLENGE','4:ATOMICITY_CHALLENGE','4:RECONCILE_REQUIREMENTS','5:SEMANTIC_REVIEW','5:RECONCILE_REQUIREMENT_SET','6:COMPLETE','6:PROOF_REVIEW','6:RECONCILE_VERIFICATION_SUITE']);
 const REVIEW_ONLY_OPERATION_KEYS=new Set(['1:SEMANTIC_CHALLENGE','2:SEARCH_ADEQUACY_REVIEW','3:SEMANTIC_CHALLENGE','4:DISPOSITION_CHALLENGE','4:ATOMICITY_CHALLENGE','5:SEMANTIC_REVIEW','6:PROOF_REVIEW']);
-function amendedOperationContract(stage,operation){const base=s0.operationContract(stage,operation);if(!base)return null;const key=`${stage}:${operation}`,narrow=NARROW_SEMANTIC_OPERATION_KEYS.has(key),addedAgent=narrow?[]:(addedAgentCollections[stage]||[]),addedRead=stage>=5&&!narrow?completionReadCollections:[],addedApplication=stage===30?['operationReservations','proofObligations','deliveryRecords','deploymentManifests']:['operationReservations','proofObligations'],allowedStageData=REVIEW_ONLY_OPERATION_KEYS.has(key)?[]:(CONTRACTS[stage]?.allowedStageData||base.allowedStageData||[]),external=EXTERNAL_OPERATION_KEYS.has(key),humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT',operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation),acceptanceMode=external?((stage===1&&['COMPLETE','RECONCILE_INTAKE'].includes(operation))?'HUMAN_ACCEPTANCE_REQUIRED':'HUMAN_ACCEPTANCE_REQUIRED'):'DIRECT_COMMAND';return Object.freeze({...base,executorClass:external?'EXTERNAL_AGENT':humanDecision?'HUMAN_DECISION':operator?'OPERATOR_ACTION':'APPLICATION',acceptsExternalResponse:external,responseTypes:Object.freeze(external?[...s0.RESPONSE_TYPES]:[]),acceptanceMode,reservationRequired:external,completionPredicate:`STAGE_${String(stage).padStart(2,'0')}_${operation}_COMPLETION`,retryRule:external?'EXACT_RETRY_OR_REPLACEMENT_PROMPT':'IDEMPOTENT_COMMAND',minimumInputBindingBasis:external?'EXTERNALLY_SUPPORTED':'APPLICATION_OBSERVED',readCollections:Object.freeze([...new Set([...(base.readCollections||[]),...addedRead])]),agentWritableCollections:Object.freeze([...new Set([...(base.agentWritableCollections||[]),...addedAgent])]),applicationCollections:Object.freeze([...new Set([...(base.applicationCollections||[]),...addedApplication])]),allowedStageData:Object.freeze([...allowedStageData])});}
+function amendedOperationContract(stage,operation){const base=s0.operationContract(stage,operation);if(!base)return null;const key=`${stage}:${operation}`,narrow=NARROW_SEMANTIC_OPERATION_KEYS.has(key),addedAgent=narrow?[]:(addedAgentCollections[stage]||[]),addedRead=stage>=5&&!narrow?completionReadCollections:[],addedApplication=stage===30?['operationReservations','proofObligations','deliveryRecords','deploymentManifests']:['operationReservations','proofObligations'],allowedStageData=REVIEW_ONLY_OPERATION_KEYS.has(key)?[]:(CONTRACTS[stage]?.allowedStageData||base.allowedStageData||[]),external=EXTERNAL_OPERATION_KEYS.has(key),humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT',operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation),acceptanceMode=external?((stage===1&&['COMPLETE','RECONCILE_INTAKE'].includes(operation))?'HUMAN_ACCEPTANCE_REQUIRED':'HUMAN_ACCEPTANCE_REQUIRED'):'DIRECT_COMMAND';return Object.freeze({...base,executorClass:external?'EXTERNAL_AGENT':humanDecision?'HUMAN_DECISION':operator?'OPERATOR_ACTION':'APPLICATION',acceptsExternalResponse:external,responseTypes:Object.freeze(external?[...s0.RESPONSE_TYPES]:[]),acceptanceMode,reservationRequired:external,completionPredicate:`STAGE_${String(stage).padStart(2,'0')}_${operation}_COMPLETION`,retryRule:external?'EXACT_RETRY_OR_REPLACEMENT_PROMPT':'IDEMPOTENT_COMMAND',minimumInputBindingBasis:external?'EXTERNALLY_SUPPORTED':'APPLICATION_OBSERVED',readCollections:Object.freeze([...new Set([...(base.readCollections||[]),...addedRead])]),agentWritableCollections:Object.freeze(external?[...new Set([...(base.agentWritableCollections||[]),...addedAgent])]:[]),applicationCollections:Object.freeze([...new Set([...(base.applicationCollections||[]),...addedApplication])]),allowedStageData:Object.freeze(external?[...allowedStageData]:[])});}
 
 // Controlling contract closure: the runtime schema exposes the specification-named
 // registries as the single closed authority. Legacy helper tables remain implementation
@@ -1440,7 +1438,7 @@ const TARGET_DIMENSIONS_BY_OPERATION=Object.freeze({
 const STAGE_OPERATION_SCOPE_MATRIX=Object.freeze(Object.fromEntries(Object.entries(s0.STAGE_OPERATIONS).flatMap(([stageText,operations])=>{const stage=Number(stageText);return operations.map(operation=>{const key=`${stage}:${operation}`,targets=new Set(Object.prototype.hasOwnProperty.call(TARGET_DIMENSIONS_BY_OPERATION,key)?TARGET_DIMENSIONS_BY_OPERATION[key]:(TARGET_DIMENSIONS_BY_STAGE[stage]||[]));const dimensions=Object.fromEntries((EXACT_SCOPE_DIMENSIONS[stage]||[]).map(name=>[name,targets.has(name)?'TARGET_RESERVED':'INPUT_CURRENT']));return [key,Object.freeze({stage,operation,requiredDimensions:Object.freeze([...(EXACT_SCOPE_DIMENSIONS[stage]||[])]),dimensions:Object.freeze(dimensions),prohibitedExtraDimensions:true})];});})));
 
 const EXTERNAL_OPERATION_KEYS=new Set();
-for(const [stageText,ops] of Object.entries(s0.STAGE_OPERATIONS)){const stage=Number(stageText);for(const operation of ops){const key=`${stage}:${operation}`;const app=(stage===10&&operation==='FREEZE')||(stage===18&&operation==='COMPLETE')||(stage===19&&['CONFIRM_FREEZE','CONFIRM'].includes(operation))||(stage===20&&operation==='FREEZE_BASELINE')||(stage===22&&operation==='RUN_NATIVE_TESTS')||(stage===24&&operation==='RUN_NATIVE_ATTACKS')||(stage===25&&operation==='FREEZE_DELIVERY_CANDIDATE')||(stage===27&&operation==='CALCULATE_RELEASE')||(stage===28&&operation==='VERIFY_IDENTITY')||(stage===29&&operation==='CALCULATE_EVIDENCE_CHAINS')||(stage===30&&operation==='CALCULATE_TERMINAL');const humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT';const operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation);if(!app&&!humanDecision&&!operator)EXTERNAL_OPERATION_KEYS.add(key);}}
+for(const [stageText,ops] of Object.entries(s0.STAGE_OPERATIONS)){const stage=Number(stageText);for(const operation of ops){const key=`${stage}:${operation}`;const app=(stage===10&&operation==='FREEZE')||(stage===17&&operation==='FREEZE')||(stage===18&&operation==='COMPLETE')||(stage===19&&['CONFIRM_FREEZE','CONFIRM'].includes(operation))||(stage===20&&operation==='FREEZE_BASELINE')||(stage===22&&operation==='RUN_NATIVE_TESTS')||(stage===24&&operation==='RUN_NATIVE_ATTACKS')||(stage===25&&operation==='FREEZE_DELIVERY_CANDIDATE')||(stage===27&&operation==='CALCULATE_RELEASE')||(stage===28&&operation==='VERIFY_IDENTITY')||(stage===29&&operation==='CALCULATE_EVIDENCE_CHAINS')||(stage===30&&operation==='CALCULATE_TERMINAL');const humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT';const operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation);if(!app&&!humanDecision&&!operator)EXTERNAL_OPERATION_KEYS.add(key);}}
 const STAGE_OPERATION_REGISTRY=Object.freeze(Object.fromEntries(Object.entries(s0.STAGE_OPERATIONS).flatMap(([stageText,operations])=>{const stage=Number(stageText);return operations.map(operation=>{const key=`${stage}:${operation}`,external=EXTERNAL_OPERATION_KEYS.has(key),humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT',operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation);const base=amendedOperationContract(stage,operation)||{};const acceptanceMode=external?((stage===1&&['COMPLETE','RECONCILE_INTAKE'].includes(operation))?'HUMAN_ACCEPTANCE_REQUIRED':'HUMAN_ACCEPTANCE_REQUIRED'):'DIRECT_COMMAND';return [key,Object.freeze({stage,operation,executorClass:external?'EXTERNAL_AGENT':humanDecision?'HUMAN_DECISION':operator?'OPERATOR_ACTION':'APPLICATION',acceptsExternalResponse:external,responseTypes:Object.freeze(external?[...s0.RESPONSE_TYPES]:[]),acceptanceMode,reservationRequired:external,scope:STAGE_OPERATION_SCOPE_MATRIX[key],readCollections:Object.freeze([...(base.readCollections||[])]),writableCollections:Object.freeze(external?[...(base.agentWritableCollections||[])]:[]),agentWritableCollections:Object.freeze(external?[...(base.agentWritableCollections||[])]:[]),allowedStageData:Object.freeze([...(base.allowedStageData||[])]),scopeRequirements:Object.freeze([...(STAGE_OPERATION_SCOPE_MATRIX[key]?.requiredDimensions||[])]),applicationCollections:Object.freeze([...(base.applicationCollections||[])]),completionPredicate:`STAGE_${String(stage).padStart(2,'0')}_${operation}_COMPLETION`,retryRule:external?'EXACT_RETRY_OR_REPLACEMENT_PROMPT':'IDEMPOTENT_COMMAND',minimumInputBindingBasis:external?'EXTERNALLY_SUPPORTED':'APPLICATION_OBSERVED'})];});})));
 
 const FIELD_REGISTRY_ENTRIES={};
