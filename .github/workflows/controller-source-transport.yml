@@ -1,0 +1,65 @@
+name: Controller source transport
+
+on:
+  push:
+    branches:
+      - fix/all-stage-prompt-contracts-20260908
+    paths:
+      - .controller-transport/READY
+
+permissions:
+  contents: write
+
+jobs:
+  apply-audited-prompt-repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout transport branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify audited patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .controller-transport/chunk-*.b64 | base64 --decode | gzip --decompress > /tmp/prompt-repair.patch
+          echo '843fad08252def31283a0ac65a436654f21eea03d16364fba830321958128231  /tmp/prompt-repair.patch' | sha256sum --check --strict
+
+      - name: Reset to canonical base and apply exact patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_SHA=d14d84d580ecb4a328297ccb1eabc626ac99cfee
+          test "$(git rev-parse "${BASE_SHA}^{commit}")" = "$BASE_SHA"
+          git reset --hard "$BASE_SHA"
+          git apply --check /tmp/prompt-repair.patch
+          git apply /tmp/prompt-repair.patch
+          test ! -e .controller-transport
+          test ! -e .github/workflows/controller-source-transport.yml
+
+      - name: Verify prompt authority before publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-stage-operation-registry.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-stage01-disposition-contract.mjs
+          node verify-human-authority-roundtrip.mjs
+          node verify-prompt-semantics.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-file-first-response.mjs
+          node verify-ingestion.mjs
+
+      - name: Publish one clean exact repair commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+          git commit -m 'Repair all stage prompt contracts and prompt display/export path'
+          git push --force origin HEAD:refs/heads/fix/all-stage-prompt-contracts-20260908
