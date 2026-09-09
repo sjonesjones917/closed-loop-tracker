@@ -1,0 +1,74 @@
+name: One-shot Stage 04 browser-gate repair
+
+on:
+  push:
+    branches: [fix/all-stage-prompt-contracts-clean-20260908]
+    paths: [.github/workflows/pr1188-stage04-fix.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Repair Stage 04 canonical-input guidance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('prompt-engine.js')
+          text = path.read_text(encoding='utf-8')
+          old_version = "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/62';"
+          new_version = "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/63';"
+          if text.count(old_version) != 1:
+              raise SystemExit(f'Expected exactly one prompt-engine version marker; found {text.count(old_version)}')
+          old = '    COMPLETE:"Stage 04 COMPLETE — compile requirements only from the complete application obligation manifest. Do not ask the user to attach, restate, summarize, retype, or otherwise resupply any project information already captured. Do not attach or resend the original intent file. Process every obligationId exactly once. Convert every normative obligation into one or more atomic independently testable requirements and propositions, or create the exact permitted non-requirement disposition with reason. Preserve every original obligation identity and provenance; merge only materially equivalent obligations without semantic loss. Every requirement must have applicability, dependencies, prohibitions, observable satisfaction, failure condition, verification semantics, severity, and provenance. Do not ask the user to repeat accepted intent or reattach original Stage 01 materials. Do not perform Stage 05 resolution or Stage 06 test design.",'
+          new = '    COMPLETE:"Stage 04 COMPLETE — compile requirements only from the complete application obligation manifest. Use the current User Job Input, accepted Stage 01 job definition and captured human/material obligations, and accepted Stage 03 findings already supplied by the application as the controlling Stage 04 inputs. Do not ask the user to attach, restate, summarize, retype, or otherwise resupply any project information already captured. Do not attach or resend the original intent file. Process every obligationId exactly once. Convert every normative obligation into one or more atomic independently testable requirements and propositions, or create the exact permitted non-requirement disposition with reason. Preserve every original obligation identity and provenance; merge only materially equivalent obligations without semantic loss. Every requirement must have applicability, dependencies, prohibitions, observable satisfaction, failure condition, verification semantics, severity, and provenance. Do not ask the user to repeat accepted intent or reattach original Stage 01 materials. Do not perform Stage 05 resolution or Stage 06 test design.",'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one Stage 04 COMPLETE procedure; found {text.count(old)}')
+          text = text.replace(old_version, new_version, 1).replace(old, new, 1)
+          path.write_text(text, encoding='utf-8', newline='\n')
+          PY
+          node --check prompt-engine.js
+          grep -F "current User Job Input" prompt-engine.js >/dev/null
+          grep -F "accepted Stage 01 job definition" prompt-engine.js >/dev/null
+          grep -F "accepted Stage 03 findings" prompt-engine.js >/dev/null
+          grep -F "Do not attach or resend the original intent file" prompt-engine.js >/dev/null
+          node verify-prompt-semantics.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+      - name: Re-run exact Local Chromium verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          export BROWSER
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Publish repaired clean head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add prompt-engine.js
+          git rm .github/workflows/pr1188-stage04-fix.yml
+          git diff --cached --check
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/pr1188-stage04-fix.yml prompt-engine.js "
+          git commit -m 'Repair Stage 04 canonical-input guidance'
+          git push origin HEAD:refs/heads/fix/all-stage-prompt-contracts-clean-20260908
