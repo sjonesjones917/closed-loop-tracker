@@ -1,0 +1,51 @@
+name: Apply Stage 03 to Stage 04 authority repair
+
+on:
+  push:
+    branches: [fix/stage03-stage04-application-coverage-20260910]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/stage03-stage04-application-coverage-20260910
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Patch earliest responsible production layer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('prompt-engine.js')
+          text=path.read_text()
+          old_version="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/64';"
+          new_version="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/65';"
+          old="const d=three?.agentData||three?.acceptedData||{};if(!['TRUE','YES','COMPLETE','COMPLETED'].includes(upper(d.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED)))fail('Stage 04 cannot be generated until Stage 03 confirms all controlling sources were examined.');if(!['TRUE','YES','COMPLETE','COMPLETED'].includes(upper(d.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED)))"
+          new="const d=three?.agentData||three?.acceptedData||{},derived=workflow.deriveStageData(state,3);if(derived.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED!==true)fail('Stage 04 cannot be generated until Stage 03 confirms all controlling sources were examined.');if(!['TRUE','YES','COMPLETE','COMPLETED'].includes(upper(d.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED)))"
+          if text.count(old_version)!=1:
+              raise SystemExit('Expected exactly one prompt engine /64 identity.')
+          if text.count(old)!=1:
+              raise SystemExit('Expected exactly one defective Stage 04 coverage read.')
+          path.write_text(text.replace(old_version,new_version,1).replace(old,new,1))
+          PY
+          node --check prompt-engine.js
+          node verify-stage03-agent-protocol.mjs
+          node verify-ingestion.mjs
+          node verify-user-prompt-invariants.mjs
+      - name: Commit clean repaired tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-stage03-stage04-fix.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add prompt-engine.js verify-stage03-agent-protocol.mjs .github/workflows/apply-stage03-stage04-fix.yml
+          git commit -m 'Fix Stage 03 to Stage 04 application-owned coverage handoff'
+          git push origin HEAD:fix/stage03-stage04-application-coverage-20260910
