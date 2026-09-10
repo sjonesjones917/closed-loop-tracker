@@ -14,7 +14,8 @@ function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engin
   assert.match(appSource,/stageResponseFile\(/,'The UI must stage selected response bytes before canonical ingestion.');
   assert.match(appSource,/async function savePromptRecord\(n\)[\s\S]*reserveAndBuildPromptRecord\(/,'Saving an external instruction must use the reservation-bound prompt transaction helper in the production path.');
   assert.match(promptSource,/function reserveAndBuildPromptRecord\([\s\S]*reserveOperation\(/,'The reservation-bound prompt transaction helper must establish the application-owned operation reservation before prompt registration.');
-  assert.match(appSource,/stageResponseFile\(\{[\s\S]*promptIdentity[\s\S]*packageId[\s\S]*operationReservationId/,'Response-file staging must retain exact prompt, package, and operation-reservation identity.');
+  assert.match(appSource,/stageResponseFile\(\{[\s\S]*promptIdentity[\s\S]*packageId[\s\S]*operationReservationId[\s\S]*challengeNonce/,'Response-file staging must retain exact prompt, package, operation-reservation, and challenge-nonce identity.');
+  assert.match(storeSource,/stageResponseFile\(\{[\s\S]*promptIdentity=null[\s\S]*packageId=null[\s\S]*operationReservationId=null[\s\S]*challengeNonce=null/,'Durable response-file staging must expose storage for every reservation-bound transport identity.');
   assert.match(appSource,/readStagedResponseFile\(/,'The UI must read back staged bytes before parsing.');
   assert.match(appSource,/Export instruction file/,'The normal external handoff must expose authoritative instruction-file export.');
   assert.match(storeSource,/HASHED_AND_REVERIFIED/,'The store must record staged-byte hash/read-back verification.');
@@ -38,6 +39,7 @@ assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE'
 assert.throws(()=>verify({appSource:app.replace('prepareStageResponseFile(blob,{nonauthoritativeFallback:true})','ingestion.captureRaw(current,{text})')}),/same staging path/);
 assert.throws(()=>verify({appSource:app.replace('reserveAndBuildPromptRecord','buildPromptRecord')}),/reservation-bound prompt transaction helper/);
 assert.throws(()=>verify({promptSource:prompt.replace('workflow.reserveOperation','workflow.__removedReserveOperation')}),/establish the application-owned operation reservation/);
+assert.throws(()=>verify({appSource:app.replace('operationReservationId:expectedPrompt.operationReservationId,challengeNonce:expectedPrompt.challengeNonce','operationReservationId:expectedPrompt.operationReservationId')}),/challenge-nonce identity/);
 assert.throws(()=>verify({appSource:app.replaceAll('Export instruction file','Copy instruction text')}),/instruction-file export/);
 
-console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:9},null,2));
+console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,reservationTransportIdentityComplete:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:10},null,2));
