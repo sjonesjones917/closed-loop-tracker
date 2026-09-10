@@ -127,7 +127,9 @@ assert((handoff.conversationMaterials||[]).length===0,'Stage 04 creates a repeat
 
 const html=fs.readFileSync('index.html','utf8');
 assert(html.includes('height:clamp(260px,45vh,520px)'),'Prompt box height changed.');
-assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Prompt preview/collapse sizing changed.');
+assert(html.includes('.expandable-prompt{max-height:280px}'),'Collapsed prompt preview height changed.');
+assert(!html.includes('.expandable-prompt.expanded{height:auto;max-height:none}'),'Expanded prompt preview must not become an unbounded document-height element on mobile.');
+assert(html.includes('.expandable-prompt.expanded{height:min(72vh,620px);max-height:80vh;overflow:auto;overscroll-behavior:contain}'),'Expanded prompt preview must remain viewport-bounded and internally scrollable.');
 assert(!html.includes('#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}'),'Obsolete 88px prompt-size override returned.');
 
 console.log(JSON.stringify({
@@ -138,6 +140,7 @@ console.log(JSON.stringify({
   oneTimeProjectInput:true,
   stage04NoRepeatHandoff:true,
   visualPromptBaseline:true,
+  boundedExpandedPromptPreview:true,
   exactPromptIdentity:true,
   promptDelimiterEscapePrevented:true,
   shortValueInstructionCorruptionPrevented:true,
