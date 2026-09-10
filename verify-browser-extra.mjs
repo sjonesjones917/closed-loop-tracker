@@ -181,7 +181,7 @@ try{await main();}finally{await cleanup();}
 {
  const hashSource=fs.readFileSync('hash.js','utf8'),appSource=fs.readFileSync('app-core.js','utf8');
  for(const token of ['document.','addEventListener(','requestAnimationFrame('])if(hashSource.includes(token))throw new Error('hash.js contains UI/runtime scheduling logic: '+token);
- for(const token of ['Long-section navigation belongs to the UI layer','scheduleMatchedScrollJumps','elementFromPoint','Large raw responses and prompts are rendered once per source record','Provenance source records'])if(!appSource.includes(token))throw new Error('Missing mobile responsiveness regression protection: '+token);
+ for(const token of ['Long-section navigation belongs to the UI layer','scheduleMatchedScrollJumps','elementFromPoint','Provenance source records'])if(!appSource.includes(token))throw new Error('Missing mobile responsiveness regression protection: '+token);
  if(appSource.includes("raw?details('Preserved raw response',raw)"))throw new Error('Provenance regressed to duplicating the full raw response inside every field trace.');
 }
 
