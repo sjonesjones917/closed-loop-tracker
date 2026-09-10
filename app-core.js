@@ -1,5 +1,6 @@
 (()=>{'use strict';
 const RUNTIME_BUILD_ID=(()=>{try{return document.currentScript?.src?new URL(document.currentScript.src).searchParams.get('v')||'UNMANIFESTED_LOCAL_RUNTIME':'UNMANIFESTED_LOCAL_RUNTIME';}catch{return 'UNMANIFESTED_LOCAL_RUNTIME';}})();
+const TAB_INSTANCE_ID=(()=>{try{return `TAB-${crypto.randomUUID()}`;}catch{const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);return `TAB-${[...bytes].map(value=>value.toString(16).padStart(2,'0')).join('')}`;}})();
 const $=s=>document.querySelector(s),safe=v=>Array.isArray(v)?v:[],clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v)),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const views=['Overview','Project','Workflow','Records','Files','Release'];
 let core,schema,engine,ingestion,projectStore,projects=[],current,acceptanceSession=null,projectUi={},projectStorage={artifactCount:0,byteSize:0,integrity:'NOT CHECKED',lastVerifiedAt:null,lastBackup:null,mismatches:[]};
@@ -227,10 +228,9 @@ async function confirmStageOne(){try{const next=clone(current),operatorLabel=$('
 async function savePromptRecord(n){
   if(!externalAgentOperation(n))throw new Error(`Operation ${selectedOperation(n)} is ${operationExecutorClass(n)} and must be completed in the application; no external prompt exists.`);
   const existing=currentPromptRecord(n);if(existing)return existing;if(Number(n)===5&&selectedOperation(n)==='COMPLETE'&&!currentStage5AuthorContext())throw new Error('Register the external Stage 05 author context before saving the COMPLETE instruction so later semantic review can prove author/reviewer separation.');if(reviewerOperation(n)&&!currentReviewerContext(n))throw new Error('Register a fresh independent reviewer context before saving or copying this reviewer instruction.');
-  const preview=clone(current);preview.revision=Number(current.revision||0)+1;
-  const candidate=globalThis.closedLoopPromptEngine.buildPromptRecord(n,preview,promptOptions(n)),next=clone(current),record={...candidate,generatedAt:new Date().toISOString(),iteration:current.job.CURRENT_ITERATION||'NOT APPLICABLE'};
-  engine.registerGeneratedPrompt(next,record);await persistReplacement(next);
-  const committed=currentPromptRecord(n);if(!committed||committed.instructionId!==record.instructionId)throw new Error('The generated prompt was not committed with its controlling revision.');return committed;
+  const next=clone(current),created=globalThis.closedLoopPromptEngine.reserveAndBuildPromptRecord(next,n,promptOptions(n),{owningTabInstance:TAB_INSTANCE_ID,iteration:current.job.CURRENT_ITERATION||'NOT APPLICABLE'}),record=created.prompt;
+  await persistReplacement(next);
+  const committed=currentPromptRecord(n);if(!committed||committed.instructionId!==record.instructionId||!committed.transportBindingRequired)throw new Error('The generated prompt was not committed with its controlling reservation revision.');return committed;
 }
 function promptTransportFilename(record,stage){const raw=`${current?.job?.JOB_ID||'JOB'}_${String(stage).padStart(2,'0')}_${record?.operation||selectedOperation(stage)||'COMPLETE'}_${record?.instructionId||record?.promptId||'INSTRUCTION'}.txt`;return raw.normalize('NFC').replace(/[^A-Za-z0-9._-]+/g,'_').replace(/^_+|_+$/g,'')||'instruction.txt';}
 async function exportPromptManifest(){try{const record=await savePromptRecord(current.activeStage),manifest=globalThis.closedLoopPromptEngine.promptFileManifest(record),blob=new Blob([JSON.stringify(manifest,null,2)+'\n'],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='manifest.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0);announce('manifest file ready');}catch(error){alert(error.message||error);}}
@@ -239,13 +239,15 @@ function downloadRawRecovery(text,prompt,error,transport=null){const payload={sc
 async function prepareStageResponseFile(file,{nonauthoritativeFallback=false}={}){
   const n=current.activeStage;if(!(file instanceof Blob)){alert('Select the authoritative response JSON file first.');return;}let staged,verified,text,prompt,captured;
   try{
-    staged=await projectStore.stageResponseFile({jobId:current.job.JOB_ID,stage:n,blob:file,rawFilename:file.name||'response.json',mediaType:file.type||'application/json'});
+    const expectedPrompt=currentPromptRecord(n);if(!expectedPrompt?.transportBindingRequired)throw new Error('Save/export the current authoritative instruction before selecting its response. The operation reservation, package identity, and challenge nonce must exist first.');
+    const promptIdentity={instructionId:expectedPrompt.instructionId||expectedPrompt.promptId,bodySha256:expectedPrompt.bodySha256||expectedPrompt.sha256,contractSha256:expectedPrompt.contractSha256,contextSignature:expectedPrompt.contextSignature};
+    staged=await projectStore.stageResponseFile({jobId:current.job.JOB_ID,stage:n,blob:file,rawFilename:file.name||'response.json',mediaType:file.type||'application/json',promptIdentity,packageId:expectedPrompt.packageId,operationReservationId:expectedPrompt.operationReservationId,challengeNonce:expectedPrompt.challengeNonce});
     verified=await projectStore.readStagedResponseFile({jobId:current.job.JOB_ID,stagingId:staged.stagingId});
     const bytes=verified.bytes;if(bytes[0]===0xef&&bytes[1]===0xbb&&bytes[2]===0xbf)throw Object.assign(new Error('The authoritative response JSON file must be UTF-8 without a BOM.'),{code:'RESPONSE_FILE_BOM'});
     text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
     if(globalThis.closedLoopHash.sha256Text(text)!==verified.sha256)throw Object.assign(new Error('Decoded response text does not reproduce the exact selected response-file bytes.'),{code:'RESPONSE_FILE_DECODE_HASH_MISMATCH'});
     prompt=responsePromptRecord(n,text);if(!prompt)throw new Error('No saved instruction matches this response file. Save/export the current instruction, run that exact instruction in the external context, then select its final response JSON file.');
-    const transport={authority:nonauthoritativeFallback?'NONAUTHORITATIVE_TEXT_FALLBACK':'AUTHORITATIVE_RESPONSE_FILE',materializedAsResponseFile:Boolean(nonauthoritativeFallback),stagingId:verified.stagingId,rawFilename:verified.rawFilename,mediaType:verified.mediaType,byteSize:verified.byteSize,sha256:verified.sha256,status:verified.status};
+    const transport={authority:nonauthoritativeFallback?'NONAUTHORITATIVE_TEXT_FALLBACK':'AUTHORITATIVE_RESPONSE_FILE',materializedAsResponseFile:Boolean(nonauthoritativeFallback),stagingId:verified.stagingId,rawFilename:verified.rawFilename,mediaType:verified.mediaType,byteSize:verified.byteSize,sha256:verified.sha256,status:verified.status,promptIdentity:verified.promptIdentity||null,packageId:verified.packageId||null,operationReservationId:verified.operationReservationId||null,challengeNonce:verified.challengeNonce||null};
     captured=ingestion.captureRaw(current,{stage:n,text,promptRecord:prompt,contextId:prompt.scope?.contextId||'UNKNOWN',files:[],transport});
     captured.project.stages[n].responseDraft='';await persistReplacement(captured.project);announce('response file staged and raw bytes preserved');
   }catch(error){console.error(error);announce('response file staging failed');downloadRawRecovery(text||'',prompt,error,staged||verified||null);alert(`Response-file staging failed. Canonical state did not change. Any successfully staged bytes remain recoverable by their recorded filename and digest: ${error.message||error}`);return;}
