@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-      - name: Apply candidate browser-verifier transport binding
+      - name: Apply candidate browser and attachment-recovery repairs
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -29,6 +29,7 @@ jobs:
           old="promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);envelope.promptIdentity={instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature};envelope.scope=promptRecord.scope;"
           new="promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(promptRecord?.transportBindingRequired===true&&promptRecord?.packageId&&promptRecord?.operationReservationId&&promptRecord?.challengeNonce,'Replacement saved prompt is not bound to a fresh operation reservation.');envelope.promptIdentity={instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature};envelope.packageId=promptRecord.packageId;envelope.operationReservationId=promptRecord.operationReservationId;envelope.challengeNonce=promptRecord.challengeNonce;envelope.scope=promptRecord.scope;"
           s=s.replace(old,new,1); p.write_text(s)
+
           p=Path('verify-browser-extra.mjs'); s=p.read_text()
           old="const pr=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(pr?.prompt&&pr?.instructionId&&pr?.sha256,'Stage 02 prompt was not saved after the cached IndexedDB connection was closed.');"
           s=s.replace(old,old+"assert(pr?.transportBindingRequired===true&&pr?.packageId&&pr?.operationReservationId&&pr?.challengeNonce,'Stage 02 saved prompt is not reservation-bound.');",1)
@@ -37,9 +38,16 @@ jobs:
           marker="await click(cdp,'#validate-returned-files');await waitExpr(cdp,`document.querySelector('#validation-report')?.textContent.includes('ATTACHMENT_SHA256_MISMATCH')`);"
           diag="await click(cdp,'#validate-returned-files');await sleep(500);console.log('extra:attachment-mismatch-diagnostic',JSON.stringify(await evalValue(cdp,`(async()=>{const p=(await closedLoopProjectStore.readAll()).find(x=>x.job?.JOB_ID==='JOB-20260823144121');return {report:document.querySelector('#validation-report')?.textContent||'',prompts:(p?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===2).slice(-3).map(x=>({id:x.instructionId,reservation:x.operationReservationId,invalidatedBy:x.invalidatedBy||null})),reservations:(p?.projectData?.operationReservations||[]).slice(-3).map(x=>({id:x.OPERATION_RESERVATION_ID||x.id,status:x.STATUS||x.status})),raw:(p?.projectData?.rawResponses||[]).at(-1)?.transport||null};})()`)));await waitExpr(cdp,`document.querySelector('#validation-report')?.textContent.includes('ATTACHMENT_SHA256_MISMATCH')`);"
           s=s.replace(marker,diag,1); p.write_text(s)
+
+          p=Path('response-ingestion.js'); s=p.read_text()
+          old="if(prompt?.transportBindingRequired){const reservation=advanceReservationToResponseStaged(next,prompt);if(reservation&&!validation.valid)workflow.transitionOperationReservation(reservation,'REJECTED');}"
+          new="if(prompt?.transportBindingRequired){const reservation=advanceReservationToResponseStaged(next,prompt),errors=safe(validation?.issues).filter(item=>upper(item?.severity||'ERROR')!=='WARNING'),retryableCodes=new Set(['MISSING_REQUIRED_ATTACHMENT','ATTACHMENT_SLOT_REQUIRED','DUPLICATE_ATTACHMENT_SLOT','UNKNOWN_ATTACHMENT_SLOT','ATTACHMENT_FILENAME_MISMATCH','ATTACHMENT_MEDIA_TYPE_MISMATCH','ATTACHMENT_BYTE_SIZE_MISMATCH','ATTACHMENT_SHA256_MISMATCH','UNRESOLVED_EVIDENCE_ATTACHMENT']),primaryCodes=new Set(['MISSING_REQUIRED_ATTACHMENT','ATTACHMENT_SLOT_REQUIRED','DUPLICATE_ATTACHMENT_SLOT','UNKNOWN_ATTACHMENT_SLOT','ATTACHMENT_FILENAME_MISMATCH','ATTACHMENT_MEDIA_TYPE_MISMATCH','ATTACHMENT_BYTE_SIZE_MISMATCH','ATTACHMENT_SHA256_MISMATCH']),returnedFileRetry=errors.length>0&&errors.every(item=>retryableCodes.has(item.code))&&errors.some(item=>primaryCodes.has(item.code));if(reservation&&!validation.valid&&!returnedFileRetry)workflow.transitionOperationReservation(reservation,'REJECTED');}"
+          if old not in s: raise SystemExit('candidate reservation transition site not found')
+          s=s.replace(old,new,1); p.write_text(s)
           PY
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
+          node --check response-ingestion.js
       - name: Human stage walkthrough
         run: node verify-human-stage-walkthrough.mjs
       - name: Mobile stage action
