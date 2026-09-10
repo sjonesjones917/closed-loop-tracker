@@ -5,12 +5,16 @@ const app=fs.readFileSync('app-core.js','utf8');
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
 const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
+const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
-function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engineSource=engine}={}){
+function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engineSource=engine,promptSource=prompt}={}){
   assert.match(appSource,/id="response-json-file"[^>]*type="file"[^>]*accept="[^"]*(?:application\/json|\.json)/,'The normal external-response path must expose the authoritative JSON file selector.');
   assert.match(appSource,/const operationSelection=\{\},runSelection=\{\},responseFileSelection=\{\};/,'The file-first UI must retain declared response-file selection state before wiring change and process handlers.');
   assert.match(appSource,/id="process-response-file"/,'The normal path must stage and validate the selected response file.');
   assert.match(appSource,/stageResponseFile\(/,'The UI must stage selected response bytes before canonical ingestion.');
+  assert.match(appSource,/async function savePromptRecord\(n\)[\s\S]*reserveAndBuildPromptRecord\(/,'Saving an external instruction must use the reservation-bound prompt transaction helper in the production path.');
+  assert.match(promptSource,/function reserveAndBuildPromptRecord\([\s\S]*reserveOperation\(/,'The reservation-bound prompt transaction helper must establish the application-owned operation reservation before prompt registration.');
+  assert.match(appSource,/stageResponseFile\(\{[\s\S]*promptIdentity[\s\S]*packageId[\s\S]*operationReservationId/,'Response-file staging must retain exact prompt, package, and operation-reservation identity.');
   assert.match(appSource,/readStagedResponseFile\(/,'The UI must read back staged bytes before parsing.');
   assert.match(appSource,/Export instruction file/,'The normal external handoff must expose authoritative instruction-file export.');
   assert.match(storeSource,/HASHED_AND_REVERIFIED/,'The store must record staged-byte hash/read-back verification.');
@@ -32,6 +36,8 @@ assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MI
 assert.throws(()=>verify({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/);
 assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/marked authoritative/);
 assert.throws(()=>verify({appSource:app.replace('prepareStageResponseFile(blob,{nonauthoritativeFallback:true})','ingestion.captureRaw(current,{text})')}),/same staging path/);
+assert.throws(()=>verify({appSource:app.replace('reserveAndBuildPromptRecord','buildPromptRecord')}),/reservation-bound prompt transaction helper/);
+assert.throws(()=>verify({promptSource:prompt.replace('workflow.reserveOperation','workflow.__removedReserveOperation')}),/establish the application-owned operation reservation/);
 assert.throws(()=>verify({appSource:app.replaceAll('Export instruction file','Copy instruction text')}),/instruction-file export/);
 
-console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:7},null,2));
+console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:9},null,2));
