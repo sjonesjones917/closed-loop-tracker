@@ -1,1 +1,0 @@
-Fixed-oracle: after Run MOBILE_CAPABILITY_PROBE rerenders the application, the exact pinned target must remain recoverable from application-owned acceptance-session state and the visible target control. Subsequent receipt/measurement/export actions must not depend on an ephemeral textarea that render() clears.
