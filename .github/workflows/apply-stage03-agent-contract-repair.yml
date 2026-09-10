@@ -1,0 +1,78 @@
+name: Apply Stage 03 agent contract repair
+
+on:
+  push:
+    branches: [fix/stage03-agent-contract-20260910]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/stage03-agent-contract-20260910
+          fetch-depth: 0
+      - name: Apply production repair
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/63';"
+          assert old in s
+          s=s.replace(old,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/64';",1)
+
+          marker="function recoveryFeedback(state,stage,operation,scope={})"
+          assert marker in s and 'function summarizeValidationIssues(items)' not in s
+          summary="function summarizeValidationIssues(items){const groups=new Map();for(const item of safe(items)){const code=String(item?.code||'UNKNOWN_VALIDATION_ERROR'),message=String(item?.message||''),key=`${code}\\u0000${message}`;if(!groups.has(key))groups.set(key,{code,message,count:0,examplePaths:[],paths:[]});const group=groups.get(key);group.count++;const path=String(item?.path||'');if(path){group.paths.push(path);if(group.examplePaths.length<5&&!group.examplePaths.includes(path))group.examplePaths.push(path);}}return [...groups.values()].map(group=>({code:group.code,message:group.message,count:group.count,examplePaths:group.examplePaths,pathsSha256:hash.sha256Value(group.paths)})).sort((a,b)=>b.count-a.count||a.code.localeCompare(b.code));}\n"
+          s=s.replace(marker,summary+marker,1)
+          old_tail=".slice(-1).map(x=>({validationId:x.validationId,issues:safe(x.issues).map(i=>({code:i.code,path:i.path,message:i.message}))}));return {corrections,acceptedRefinements,validationFailures};}"
+          new_tail=".slice(-1).map(x=>{const normalizedIssues=safe(x.issues).map(i=>({code:i.code,path:i.path,message:i.message}));return {validationId:x.validationId,totalIssues:normalizedIssues.length,issuesSha256:hash.sha256Value(normalizedIssues),issueGroups:summarizeValidationIssues(normalizedIssues)};});return {corrections,acceptedRefinements,validationFailures};}"
+          assert old_tail in s
+          s=s.replace(old_tail,new_tail,1)
+
+          old="}));return {contractVersion:'closed-loop-response-contract/3.0',schema:"
+          semantic=",stageSemanticRules=Number(stage)===3?{SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'Use exactly YES, NO, TRUE, or FALSE. Put explanatory evidence in evidence or narrative fields, not in this gate scalar.',LATEST_PASS_NUMBER:'Use decimal digits only, for example 3. Do not append evidence text or punctuation.',NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'Use exactly YES, NO, TRUE, or FALSE. Put explanatory evidence in evidence or narrative fields, not in this gate scalar.'}:{};return {contractVersion:'closed-loop-response-contract/3.1',schema:"
+          assert old in s
+          s=s.replace(old,"}))"+semantic,1)
+          old="agentWritableCollections:[...writable],stageData,records,resourceLimits:"
+          assert old in s
+          s=s.replace(old,"agentWritableCollections:[...writable],stageData,stageSemanticRules,records,resourceLimits:",1)
+          old="recordIdentityRule:'Exactly one of tempKey or targetId; UPDATE_RESERVED uses targetId and new proposals use tempKey.',recordProvenanceRule:"
+          new="recordIdentityRule:'Exactly one of tempKey or targetId at the RECORD TOP LEVEL; UPDATE_RESERVED uses targetId and new proposals use tempKey. Never use targetId inside relationships, evidence.sourceRef, or evidence.attachmentRef.',relationshipReferenceRule:'Every records.<collection>[].relationships.<name> value is one object containing exactly one key: {\"recordId\":\"CANONICAL-ID\"} for an existing canonical record, or {\"tempKey\":\"response-local-key\"} for a record proposed in this same response. Bare strings and {\"targetId\":...} are invalid.',evidenceSourceReferenceRule:'When evidence[].sourceRef is present, use exactly {\"recordId\":\"CANONICAL-SOURCE-ID\"} for an existing source or {\"tempKey\":\"response-local-source-key\"} for a source proposed in this same response. Bare strings and {\"targetId\":...} are invalid.',evidenceAttachmentReferenceRule:'When evidence[].attachmentRef is present, use exactly {\"recordId\":\"CANONICAL-ARTIFACT-ID\"} for an existing artifact or {\"tempKey\":\"response-local-attachment-key\"} for an attachment declared in this same response. Bare strings and {\"targetId\":...} are invalid.',recordProvenanceRule:"
+          assert old in s
+          s=s.replace(old,new,1)
+          old='RECORD PROVENANCE\\nEvery proposed record containing agent-owned canonical fields requires non-empty evidenceRefs resolving to evidence[].temporaryKey.\\n\\nRESPONSE CONTRACT DEFINITIONS'
+          new='RECORD PROVENANCE\\nEvery proposed record containing agent-owned canonical fields requires non-empty evidenceRefs resolving to evidence[].temporaryKey.\\n\\nREFERENCE SYNTAX — MANDATORY\\n- Record identity and relationship references are different contracts. Use targetId only as the top-level identity of an application-reserved UPDATE_RESERVED record.\\n- Every relationships.<name> value must be exactly {"recordId":"CANONICAL-ID"} for an existing canonical record or {"tempKey":"response-local-key"} for a record proposed in this same response. Never use a bare string or {"targetId":...} as a relationship reference.\\n- evidence[].sourceRef and evidence[].attachmentRef use the same {"recordId":...} or {"tempKey":...} reference shape. Never use a bare string or {"targetId":...} there.\\n${Number(stage)===3?\'- Stage 03 gate scalars are strict: SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED and NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS must be exactly YES, NO, TRUE, or FALSE; LATEST_PASS_NUMBER must contain decimal digits only. Put evidence and explanations in evidence or narrative fields, never append them to these three scalar values.\':\'\'}\\n\\nRESPONSE CONTRACT DEFINITIONS'
+          assert old in s
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('response-ingestion.js')
+          s=p.read_text()
+          marker='function currentScope(project,promptRecord){return clone(promptRecord?.scope||{});}'
+          assert marker in s and 'function validateStageSemanticValue(stage,name,value,path,issues)' not in s
+          helper="function validateStageSemanticValue(stage,name,value,path,issues){if(Number(stage)!==3)return;const text=typeof value==='string'?value.trim():'';if(['SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED','NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS'].includes(name)){if(!/^(?:YES|NO|TRUE|FALSE)$/i.test(text))issues.push(issue('INVALID_STAGE_GATE_SCALAR',path,`${name} must be exactly YES, NO, TRUE, or FALSE; put evidence and explanation in evidence or narrative fields.`));return;}if(name==='LATEST_PASS_NUMBER'&&!/^\\d+$/.test(text))issues.push(issue('INVALID_STAGE_GATE_SCALAR',path,'LATEST_PASS_NUMBER must contain decimal digits only, for example 3; do not append evidence text or punctuation.'));}\n"
+          s=s.replace(marker,helper+marker,1)
+          old="      validateValue(definition,value,path,issues,{maxTextFieldLength:contract?.resourceLimits?.maxTextFieldLength??schema.DEFAULT_RESOURCE_LIMITS.maxTextFieldLength});\n      if(!schema.authorizeMutation"
+          new="      validateValue(definition,value,path,issues,{maxTextFieldLength:contract?.resourceLimits?.maxTextFieldLength??schema.DEFAULT_RESOURCE_LIMITS.maxTextFieldLength});\n      validateStageSemanticValue(stageNumber,name,value,path,issues);\n      if(!schema.authorizeMutation"
+          assert old in s
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+      - name: Remove one-time applicator and commit
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-stage03-agent-contract-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js response-ingestion.js .github/workflows/apply-stage03-agent-contract-repair.yml
+          git commit -m "Repair Stage 03 agent response contract"
+          git push origin HEAD:fix/stage03-agent-contract-20260910
