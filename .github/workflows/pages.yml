@@ -197,6 +197,7 @@ jobs:
           }
           run_browser_verifier verify-human-stage-walkthrough.mjs
           run_browser_verifier verify-mobile-stage-action.mjs
+          run_browser_verifier verify-long-prompt-scroll.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true
@@ -270,6 +271,7 @@ jobs:
           }
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-long-prompt-scroll.mjs
 
   publish-status:
     name: Publish machine acceptance status
@@ -360,7 +362,6 @@ jobs:
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
           if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
-          // A favorable top-level summary must never mask incomplete detailed proof.
           for(const [key,value] of Object.entries({stage01RawInputAccounting,stage01RequiredFileInspectionAccounting,stage01AcceptedSemanticMappingCoverage,stage04ObligationAccounting})){
             if(v3.section49CoverageMetrics?.[key]?.value!==value)throw new Error(`Conflicting executed metric evidence: ${key}`);
           }
