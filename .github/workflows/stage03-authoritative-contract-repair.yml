@@ -1,0 +1,175 @@
+name: Stage 03 authoritative-contract repair
+
+on:
+  push:
+    branches: [fix/stage03-reference-contract-handshake-20260909]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/stage03-reference-contract-handshake-20260909
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+
+      - name: Prove the authoritative-prompt regression is red
+        run: |
+          set -euo pipefail
+          set +e
+          node verify-response-contract-profile.mjs >/tmp/stage03-red.log 2>&1
+          code=$?
+          set -e
+          cat /tmp/stage03-red.log
+          test "$code" -ne 0
+          grep -q 'Stage 03 authoritative prompt omits the exact response-contract descriptor' /tmp/stage03-red.log
+
+      - name: Repair the earliest responsible production layer
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          text=p.read_text()
+          old="PROJECT_REVISION: ${scope.projectRevision}\\n\\nSTRICT RESPONSE CONTRACT\\n${JSON.stringify(template,null,2)}"
+          new="PROJECT_REVISION: ${scope.projectRevision}\\n\\nRESPONSE CONTRACT DESCRIPTOR — AUTHORITATIVE RESPONSE SHAPE AND REFERENCE ENCODING\\n${JSON.stringify(descriptor,null,2)}\\n\\nSTRICT RESPONSE CONTRACT\\n${JSON.stringify(template,null,2)}"
+          if text.count(old)!=1:
+              raise SystemExit(f'prompt-engine.js: expected one authoritative render insertion point, found {text.count(old)}')
+          p.write_text(text.replace(old,new,1))
+          PY
+          git rm .github/workflows/stage03-authoritative-contract-repair.yml
+
+      - name: Focused regression and affected integration proof
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check verify-response-contract-profile.mjs
+          node --check verify-ingestion.mjs
+          node verify-response-contract-profile.mjs
+          node verify-ingestion.mjs
+          node verify-stage03-source-research.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-prompt-file-identity.mjs
+          node verify-file-first-response.mjs
+          node verify-complete.mjs
+
+      - name: Existing CI — syntax
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+
+      - name: Existing CI — deployment manifest and governance
+        run: |
+          set -euo pipefail
+          node verify-deployment-manifest.mjs
+          node verify-mobile-acceptance-target.mjs
+          node verify-final-acceptance.mjs
+          node verify-visual-baseline-submission.mjs
+          node verify-prompt-file-identity.mjs
+          node verify-final-product-timing.mjs
+          node verify-mobile-release-governance.mjs
+
+      - name: Existing CI — schema and architecture
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node verify.mjs
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
+          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
+          const tokens=new Set();
+          expected.forEach((file,index)=>{if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique`);const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');if(!token)throw new Error(`${file} lacks build token`);tokens.add(token);});
+          if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
+          if(!/worker-src\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');
+          NODE
+
+      - name: Existing CI — data routes, migration, Stage 01/04, Test IR, ingestion
+        run: |
+          set -euo pipefail
+          node verify-data-route-closure.mjs
+          node verify-infrastructure-route-closure.mjs
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify-ingestion.mjs
+
+      - name: Existing CI — full cycle, lifecycle, prompt semantics
+        run: |
+          set -euo pipefail
+          node verify-complete.mjs
+          node verify-stage28-artifact-delivery-intent.mjs
+          node verify-full-cycle.mjs
+          node verify-stage29-evidence-chain-checkpoint.mjs
+          node verify-production-baseline-authority.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+
+      - name: Existing CI — local Chromium operator path
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          if [ ! -x "$BROWSER" ]; then BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"; export BROWSER; fi
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-human-stage-walkthrough.mjs
+          run_browser_verifier verify-mobile-stage-action.mjs
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+
+      - name: Commit only the completed production repair
+        run: |
+          set -euo pipefail
+          git status --short
+          git add prompt-engine.js verify-response-contract-profile.mjs response-ingestion.js verify-ingestion.mjs .github/workflows/stage03-authoritative-contract-repair.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git commit -m "Expose the exact response descriptor in authoritative prompts"
+          git push origin HEAD:fix/stage03-reference-contract-handshake-20260909
