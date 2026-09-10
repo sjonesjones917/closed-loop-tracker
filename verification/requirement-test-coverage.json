@@ -1,0 +1,1368 @@
+{
+  "scope": "Confidently identified stage completion, accumulated-data, file transport, rendering and acceptance requirements. Complements the existing normative requirement manifest. No claim that every normative requirement is proven.",
+  "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "startingCommit": "feb1303c837b7d4399930f779b63c8bb0c34a0e4",
+  "ciBackbone": ".github/workflows/pages.yml",
+  "testMappingCaution": "A listed standalone verifier may be called transitively; presence in this matrix does not assert direct CI wiring. Existing full-cycle and ingestion suites are direct CI steps.",
+  "rows": [
+    {
+      "id": "STAGE-01",
+      "stage": 1,
+      "requirement": "Completion: Current input version exists; every required file reached its required inspection basis; every raw unit is accounted for; all blocking questions are resolved; every ask-now human issue was answered or explicitly deferred; required agent fields exist; the current proposal is accepted; any intent confirmation references the current input version and accepted change.",
+      "normativeRequirementIds": [
+        "NREQ-a10b32f05e2c972097d40d0bda5644b8",
+        "NREQ-b1bb4bdb0a9ebbcf9874522b889885ff"
+      ],
+      "sourceLines": [
+        3232,
+        3239
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-stage01-intake-closure.mjs",
+        "verify-one-time-intent-intake.mjs",
+        "verify-human-authority-roundtrip.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-02",
+      "stage": 2,
+      "requirement": "Completion: The current bounded SOURCE_SEARCH_CONTRACT was executed; every supplied or discovered candidate source has a disposition; required search-adequacy review is accepted; material discovery risk and controlling conflicts are resolved or blocked. No universal source-completeness claim is made.",
+      "normativeRequirementIds": [
+        "NREQ-376b157add16bbf7d03cc84ac40a87d3",
+        "NREQ-1106feeb97b9275d11c77c4f7bb00023"
+      ],
+      "sourceLines": [
+        3243,
+        3249
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-stage02-primitives.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-03",
+      "stage": 3,
+      "requirement": "Completion: Every current source and required source unit has current research coverage or Stage 02 validly established no applicable external source; conflict and exception passes and every triggered independent omission challenge and reconciliation are complete.",
+      "normativeRequirementIds": [
+        "NREQ-7fcc71b73f824fd87534ade29b14001f",
+        "NREQ-7966a5734f7ca601aa9422ba07a2000f"
+      ],
+      "sourceLines": [
+        3253,
+        3258
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-stage03-agent-protocol.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-04",
+      "stage": 4,
+      "requirement": "Completion: Every obligation has a valid disposition; every required disposition and atomicity challenge and reconciliation is complete; every resulting requirement and proposition is atomic enough to test, has provenance, and has observable satisfaction and failure conditions.",
+      "normativeRequirementIds": [
+        "NREQ-1dba5e807a93a288f023a7c04d0c1616",
+        "NREQ-f046614d74df88dbd996f6e52295c8b5"
+      ],
+      "sourceLines": [
+        3262,
+        3268
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-zero-loss-accounting.mjs",
+        "verify-user-prompt-invariants.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-05",
+      "stage": 5,
+      "requirement": "Completion: Every defect, proposition-equivalence issue, classification reduction, activation contract, applicability issue, proof-structure gap, and semantic disagreement is independently reviewed and resolved or blocked. Changed requirements receive a new version and invalidate downstream work.",
+      "normativeRequirementIds": [
+        "NREQ-9fc62cc192be6d08a047904761385447",
+        "NREQ-f443ec60f122bfa1b264eef9374e54f5"
+      ],
+      "sourceLines": [
+        3272,
+        3276
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-semantic-invariant.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-06",
+      "stage": 6,
+      "requirement": "Completion: Every current applicable mandatory proposition has exactly one current proof obligation and an accepted proof expression; every due test has complete timing, semantic-coverage, evidence, independence, environment, and variance contracts; native tests use the current supported Test IR language and registry identities; unavailable mandatory capability remains blocked.",
+      "normativeRequirementIds": [
+        "NREQ-db71c631906fb4c5c432bf01ae5b8b0f",
+        "NREQ-be89fc9d4f060f40c26a091b898335c6"
+      ],
+      "sourceLines": [
+        3280,
+        3293
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-test-runtime-v3.mjs",
+        "verify-test-runtime-limits.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-07",
+      "stage": 7,
+      "requirement": "Completion: Every applicable requirement has failure analysis. Every EXECUTABLE_NOW fixture was executed in isolated disposable state; every target-dependent fixture has a valid future trigger and required-by stage; expected and actual rejection agree; accepted invalid fixtures have validator defects.",
+      "normativeRequirementIds": [
+        "NREQ-85798402f2e0261f50449ee75b0c65e1",
+        "NREQ-e2d97fa047ce58206f6b89bdfd5d05d7"
+      ],
+      "sourceLines": [
+        3297,
+        3302
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-test-runtime-limits.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-08",
+      "stage": 8,
+      "requirement": "Completion: One current instruction exists. Every required section exists. Every mandatory requirement has a complete instruction trace.",
+      "normativeRequirementIds": [
+        "NREQ-6e0599f660c3340d29893d8b49f1f98b",
+        "NREQ-7d533b02702822e487d35607c72765c8"
+      ],
+      "sourceLines": [
+        3306,
+        3311
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-production-instruction.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-09",
+      "stage": 9,
+      "requirement": "Completion: Independence exists, all clauses were reviewed, and no material finding remains unresolved.",
+      "normativeRequirementIds": [
+        "NREQ-8b4f33b34198fda737a86a2f91bde046",
+        "NREQ-68b1fdda428da9b5ef8383901bb06507"
+      ],
+      "sourceLines": [
+        3315,
+        3321
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-independent-preflight.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-10",
+      "stage": 10,
+      "requirement": "Completion: All required components are present and every run will receive the exact same frozen package.",
+      "normativeRequirementIds": [
+        "NREQ-0ccf872b15833c51abe7612a05b0a0b3",
+        "NREQ-15010b6d95c41a239e8dae0c04f38f76"
+      ],
+      "sourceLines": [
+        3325,
+        3331
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-candidate-freeze.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-11",
+      "stage": 11,
+      "requirement": "Completion: Exactly ten current reserved runs and contexts exist; all responses are accepted; candidate and hashes match; contexts are distinct; contamination is absent; outputs and receipts are separate.",
+      "normativeRequirementIds": [
+        "NREQ-2f1cd9900320ae32c09a1c5235658525",
+        "NREQ-d5407a1a135da5baeccde94368310850"
+      ],
+      "sourceLines": [
+        3335,
+        3341
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-ten-independent-runs.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-12",
+      "stage": 12,
+      "requirement": "Completion: The complete current required relation set exists for every due PER_RUN_REQUIRED proposition, run, and test. Every verifier satisfies the semantic-review independence contract. Every required tuple has sufficient evidence and exactly one valid determination; no nondue or meaningless Cartesian cell is manufactured.",
+      "normativeRequirementIds": [
+        "NREQ-89f60d88fe0598f2f7fc4a886101d7a6",
+        "NREQ-45728a05a28827de44d6870c7e8c4bae"
+      ],
+      "sourceLines": [
+        3345,
+        3350
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-independent-run-verification.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-13",
+      "stage": 13,
+      "requirement": "Completion: Every due PER_RUN_REQUIRED mandatory proposition has one comparison covering all ten current runs under its frozen expected-variance contract. Allowed variance is recorded; prohibited variance has a defect; UNKNOWN variance remains blocked.",
+      "normativeRequirementIds": [
+        "NREQ-cd484505654befa476c0c4ec7d66aad8",
+        "NREQ-24125a6942b80a51ad27efed3c07e399"
+      ],
+      "sourceLines": [
+        3354,
+        3359
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-cross-run-comparison.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-14",
+      "stage": 14,
+      "requirement": "Completion: Every current material defect has one evidence-supported RCA. Unknown RCA remains blocked.",
+      "normativeRequirementIds": [
+        "NREQ-6c4919aaa922b5e75c8050e06b1461d8",
+        "NREQ-ac0efae2f3767f2d8a26f49f042ff674"
+      ],
+      "sourceLines": [
+        3363,
+        3367
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-root-cause-correction.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-15",
+      "stage": 15,
+      "requirement": "Completion: Every confirmed defect has a permanent definition and actual pre-correction execution proving failure. Later correction success comes from a distinct later execution.",
+      "normativeRequirementIds": [
+        "NREQ-3cb7e0b9702fa8a448eee250bc875332",
+        "NREQ-ce6df4e4c877469eb8170546e42eb1f3"
+      ],
+      "sourceLines": [
+        3371,
+        3375
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-root-cause-regressions.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-16",
+      "stage": 16,
+      "requirement": "Completion: Every confirmed RCA has a controlled correction or blocker; legitimate authorization exists; new versions are created; downstream work is invalidated.",
+      "normativeRequirementIds": [
+        "NREQ-dfffa3cd8098c506018717b29b8ac8e1",
+        "NREQ-56f4d5416702745fd08f6a3825a4c767"
+      ],
+      "sourceLines": [
+        3379,
+        3384
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-root-cause-correction.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-17",
+      "stage": 17,
+      "requirement": "Completion: New iteration and candidate exist. The shared evaluator proves ten new runs, complete verification, comparison, RCA, regression execution, and correction behavior.",
+      "normativeRequirementIds": [
+        "NREQ-a7a3d08e8ad642cf8620e551d2f233da",
+        "NREQ-a058e46e71bbdce4c4efc74aa8a59743"
+      ],
+      "sourceLines": [
+        3388,
+        3392
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-corrected-iteration.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-18",
+      "stage": 18,
+      "requirement": "Completion: Every current applicable PREPRODUCT_ITERATION obligation due by Stage 18 is SATISFIED; required per-run verification and applicable regression coverage equal 1.0; every due blocking defect, mandatory unknown, contradiction, ambiguity, and unexplained variance count is zero simultaneously. Later-phase product, representation, delivery, evidence, registry, and terminal obligations remain scheduled and are not falsely treated as due.",
+      "normativeRequirementIds": [
+        "NREQ-7eebf6d11253517c217c350e4a9f4b7a",
+        "NREQ-97f0d562a87d2061bc82830de5640b9f"
+      ],
+      "sourceLines": [
+        3396,
+        3400
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-19",
+      "stage": 19,
+      "requirement": "Completion: Candidate versions and hashes are unchanged; ten new contexts exist; every due PREPRODUCT_ITERATION verification and regression executed; the independent requirement-discovery challenge is complete; no accepted new requirement candidate, missed due failure, material defect, contradiction, or unexplained variance exists.",
+      "normativeRequirementIds": [
+        "NREQ-ac24e1787d16dd463b905b38acbe32fd",
+        "NREQ-0c2c1a37adc9a60677ac049c4fb928d6"
+      ],
+      "sourceLines": [
+        3404,
+        3409
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-candidate-freeze.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-20",
+      "stage": 20,
+      "requirement": "Completion: Unchanged confirmation succeeded; authorization exists; all components are present and immutable; baseline identity is recorded.",
+      "normativeRequirementIds": [
+        "NREQ-b46925e5e80dad1a33ffd4983b1ceedf",
+        "NREQ-e25a175bc4bacad063e2728f2b84d5a7"
+      ],
+      "sourceLines": [
+        3413,
+        3418
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-production-baseline-authority.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-21",
+      "stage": 21,
+      "requirement": "Completion: Product and execution identities exist; fresh production context was used; actual output bytes, inventory, hashes, and lineage are stored.",
+      "normativeRequirementIds": [
+        "NREQ-ce756f05bd2615da244cbfa27f75441b",
+        "NREQ-4bd999e3fcd52a4137ec759a9af21d21"
+      ],
+      "sourceLines": [
+        3422,
+        3427
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-22",
+      "stage": 22,
+      "requirement": "Completion: Every applicable mandatory deterministic test has exactly one current sufficient result and all mandatory results are satisfied.",
+      "normativeRequirementIds": [
+        "NREQ-afb8a4323eb738bb901cd0bc36c4ba02",
+        "NREQ-5257ad7eb7a53029b771b775a07005d7"
+      ],
+      "sourceLines": [
+        3431,
+        3437
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-test-runtime-v3.mjs",
+        "verify-capability-readiness.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-23",
+      "stage": 23,
+      "requirement": "Completion: Every meaning-review requirement has one independent current review with location, required meaning, observed meaning, comparison, evidence, and determination. No mandatory review is violated or undetermined.",
+      "normativeRequirementIds": [
+        "NREQ-bc5e7d0c195585e710a7ee6c00facaa1",
+        "NREQ-4f86fb29bffd470f8d454e246648d608"
+      ],
+      "sourceLines": [
+        3441,
+        3446
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-24",
+      "stage": 24,
+      "requirement": "Completion: Every applicable attack category and active historical regression pattern was tested. Findings have sufficient evidence. Every unresolved mandatory finding has a defect or blocker.",
+      "normativeRequirementIds": [
+        "NREQ-8bcb235087c2c8be0983ea73915c2c03",
+        "NREQ-53936ac79d554b968cc4f095b84819db"
+      ],
+      "sourceLines": [
+        3450,
+        3454
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-25",
+      "stage": 25,
+      "requirement": "Completion: DELIVERY_CANDIDATE_SET_ID is frozen; every artifact, representation, page, view, transformation, metadata-sensitive property, and packaged file in that exact set is inspected. Objective file facts are application-derived. Irreducible judgments use the proper human or reviewer authority. No mandatory representation unknown remains.",
+      "normativeRequirementIds": [
+        "NREQ-6abf7b61b072c30c39f50f1ffe637b60",
+        "NREQ-3365ebf2d1c997ffe9607b32293c7b75"
+      ],
+      "sourceLines": [
+        3458,
+        3463
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-delivery-candidate-representation.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-26",
+      "stage": 26,
+      "requirement": "Completion: Current process and product audits exist; identities and counts are application-derived; discrepancies and contradictions are reconciled or blocked; both evidence bodies support progression.",
+      "normativeRequirementIds": [
+        "NREQ-b2a8766052753f6c0f0ed7ce8d10e0c3",
+        "NREQ-f57d01bb6fe2d21f7d955ee41559ac5b"
+      ],
+      "sourceLines": [
+        3467,
+        3471
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-contract-closure.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-27",
+      "stage": 27,
+      "requirement": "Completion: Stage 26 is complete. CALCULATE_RELEASE applies the precedence in Section 36.4 and produces exactly one idempotent ACCEPTED, REJECTED, or BLOCKED result from the complete current due release-evidence universe.",
+      "normativeRequirementIds": [
+        "NREQ-0da63be563404ab8daa1630fc944755c",
+        "NREQ-bee05b05ba414a4d4f64e4890fe06494"
+      ],
+      "sourceLines": [
+        3475,
+        3481
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-stage27-release-binding.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-28",
+      "stage": 28,
+      "requirement": "Completion: Stage 27 is ACCEPTED. The exact Stage 25 DELIVERY_CANDIDATE_SET_ID is current. Audited and selected delivery bytes match that set one-to-one independent of order. Nothing is missing, extra, duplicated, unauthorized, renamed outside authorization, transformed, resized, or rehashed differently. Human delivery intent is destination-, purpose-, channel-, disclosure-, and validity-bound.",
+      "normativeRequirementIds": [
+        "NREQ-3ad62d5930c3052365e7a6da1074cb51",
+        "NREQ-27451bf2056ead87a3f2d97d4dd540a8"
+      ],
+      "sourceLines": [
+        3485,
+        3489
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-stage28-artifact-delivery-intent.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-29",
+      "stage": 29,
+      "requirement": "Completion: Every mandatory chain is structurally complete, current-scope, evidence-sufficient, and linked to current artifact identity where applicable.",
+      "normativeRequirementIds": [
+        "NREQ-87b2a2732a3baaa257f70a994564515c",
+        "NREQ-a8ddd183c645e83b6cb153f076b8008d"
+      ],
+      "sourceLines": [
+        3493,
+        3499
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-stage29-evidence-chain-checkpoint.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "STAGE-30",
+      "stage": 30,
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
+      "normativeRequirementIds": [
+        "NREQ-39eba2aba9049ed18beade0c11e0c107",
+        "NREQ-04785265535dbd6ef92f51cd4846752e"
+      ],
+      "sourceLines": [
+        3503,
+        3506
+      ],
+      "productionOwner": [
+        "workbook.js:STAGES",
+        "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
+        "workflow-engine.js:gate/deriveStageData"
+      ],
+      "existingTests": [
+        "verify-full-cycle.mjs",
+        "verify-data-route-closure.mjs",
+        "verify-stage30-terminal-mobile-boundary.mjs",
+        "verify-mobile-acceptance-evidence.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-ingestion.mjs",
+        "verify-definition-of-done.mjs"
+      ],
+      "browserProof": [
+        "verify-human-stage-walkthrough.mjs",
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "PROMPT-TRANSPORT",
+      "requirement": "PROMPT_INLINE_LIMITS/1 fixes the inline-presentation thresholds: referenced artifact or record content may be embedded inline in the prompt body only up to 65,536 bytes per member and 262,144 aggregate embedded bytes per prompt; beyond either threshold the content MUST travel as manifest-bound attached files or one registered execution package. These limits are centralized, versioned, and acceptance-tested and may be lowered but not raised without a new contract-profile identity.",
+      "normativeRequirementIds": [
+        "NREQ-c17f39ea0b55927f2023013872abc971"
+      ],
+      "sourceLines": [
+        757
+      ],
+      "productionOwner": [
+        "prompt-engine.js:transportedBody/dataEnvelope/compactContextManifest"
+      ],
+      "existingTests": [
+        "verify-all-stage-prompts.mjs",
+        "verify-user-prompt-invariants.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-prompt-semantics.mjs",
+        "verify-prompt-file-identity.mjs"
+      ],
+      "browserProof": [
+        "verify-browser.mjs:stage03AccumulatedTransfer"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "FILE-FIRST",
+      "requirement": "- The authoritative external prompt is a file, not clipboard contents or a rendered preview.",
+      "normativeRequirementIds": [
+        "NREQ-9abc92fcf33bb05f35ef68eb01ee6653"
+      ],
+      "sourceLines": [
+        83
+      ],
+      "productionOwner": [
+        "prompt-engine.js:promptFileManifest; project-store.js:persistPromptContextFiles/readPromptContextFile; app-core.js:promptExport"
+      ],
+      "existingTests": [
+        "verify-file-first-operator.mjs",
+        "verify-prompt-file-identity.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-reservation-contract.mjs",
+        "verify-file-first-response.mjs"
+      ],
+      "browserProof": [
+        "verify-browser.mjs:stage03AccumulatedTransfer"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "SAFE-RENDER",
+      "requirement": "Every untrusted filename, source title, URL label, evidence description, response value, imported extension value, and generated text is rendered through text-node or equivalently escaping APIs. Untrusted innerHTML, document.write, event-handler attributes, style injection, and unsanitized HTML insertion are prohibited.",
+      "normativeRequirementIds": [
+        "NREQ-283520fce71327677e6c9451c76e7dba"
+      ],
+      "sourceLines": [
+        4220
+      ],
+      "productionOwner": [
+        "app-core.js:field/details/renderDetail/provenanceContents"
+      ],
+      "existingTests": [
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-browser-extra.mjs"
+      ],
+      "browserProof": [
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "MOBILE-VIEW",
+      "requirement": "- filenames, capability names, hashes, code, and URLs wrap or scroll only inside explicitly bounded detail regions;",
+      "normativeRequirementIds": [
+        "NREQ-bc626ab0dbb07e104c4cdb44d04572a4"
+      ],
+      "sourceLines": [
+        4148
+      ],
+      "productionOwner": [
+        "app-core.js:details; index.html:expandable-prompt/data-text-page"
+      ],
+      "existingTests": [
+        "verify-mobile-stage-action.mjs",
+        "verify-human-stage-walkthrough.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-browser-extra.mjs"
+      ],
+      "browserProof": [
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "COMPLETE-BACKUP",
+      "requirement": "6. a complete backup package exported outside the browser origin and a successful restore from those exported bytes;",
+      "normativeRequirementIds": [
+        "NREQ-57b45791d7658e41b812bf1029332e5d"
+      ],
+      "sourceLines": [
+        5517
+      ],
+      "productionOwner": [
+        "project-store.js:exportPackage/importPackage; app-core.js:downloadProjectPackage"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs",
+        "verify-full-cycle.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-project-lifecycle.mjs:complete export navigation, concurrent preparation and failure recovery",
+        "verify-browser-extra.mjs:package integrity and storage rollback"
+      ],
+      "browserProof": [
+        "verify-mobile-stage-action.mjs:48 MB complete export",
+        "verify-browser.mjs:accumulated-context backup integrity",
+        "verify-browser-extra.mjs:package round trip"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-mobile-stage-action.mjs",
+        "verify-browser.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Automated package generation, byte integrity and round trips do not establish physical external-copy custody. Final acceptance still requires actual export outside the browser origin and restore from those exact exported bytes on the pinned device.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "id": "PHYSICAL-DEVICE",
+      "requirement": "The required mobile acceptance executes on an actual iPhone in Safari. Simulator, desktop responsive mode, and another browser are supplementary only and cannot satisfy the physical-device requirement. \"Current\" is frozen by the target record; a material iOS, Safari/WebKit, application build, origin, storage behavior, or target-device change before final delivery invalidates the affected mobile result and requires revalidation.",
+      "normativeRequirementIds": [
+        "NREQ-94930ef7473d5b6a859183670527907f"
+      ],
+      "sourceLines": [
+        4891
+      ],
+      "productionOwner": [
+        "app-core.js:mobileAcceptanceMarkup; evaluate-mobile-acceptance-submission.mjs"
+      ],
+      "existingTests": [
+        "verify-mobile-acceptance-evidence.mjs",
+        "verify-mobile-release-governance.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-mobile-acceptance-target.mjs"
+      ],
+      "browserProof": [
+        "ACTUAL_PHYSICAL_IPHONE_SAFARI_REQUIRED"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "status": "OPEN_PHYSICAL_OR_VISUAL_AUTHORITY"
+    },
+    {
+      "id": "VISUAL-AUTHORITY",
+      "requirement": "- preserve the user-approved visual system;",
+      "normativeRequirementIds": [
+        "NREQ-8774fd4d06261e5d867ca3c4288a464d"
+      ],
+      "sourceLines": [
+        4194
+      ],
+      "productionOwner": [
+        "visual-baseline-submission.mjs"
+      ],
+      "existingTests": [
+        "verify-visual-baseline-submission.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-final-acceptance.mjs"
+      ],
+      "browserProof": [
+        "APPROVED_VISUAL_BASELINE_REQUIRED"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "status": "OPEN_PHYSICAL_OR_VISUAL_AUTHORITY"
+    }
+  ]
+}

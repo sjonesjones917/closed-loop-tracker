@@ -41,6 +41,35 @@ async function main(){
     assert(state.copy&&state.copy.left>=-1&&state.copy.right<=width+1&&state.copy.height>=44,`Primary copy action is unusable at ${width}px: ${JSON.stringify(state.copy)}`);
     assert(state.prompt&&state.prompt.left>=-1&&state.prompt.right<=width+1,`Prompt box exceeds the viewport at ${width}px: ${JSON.stringify(state.prompt)}`);
   }
+  await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:600},(_,i)=>({rawResponseId:'RAW-PRESSURE-'+i,stage:i%30+1,status:'PRESERVED',rawText:'H'.repeat(80000)+'é🙂TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
+  await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
+  const pressureDom=await evaluate(cdp,`({bytes:document.querySelector('#screen').innerHTML.length,nodes:document.querySelector('#screen').querySelectorAll('*').length})`);
+  assert(pressureDom.bytes<100000&&pressureDom.nodes<1500,`Collapsed accumulated history was eagerly rendered: ${JSON.stringify(pressureDom)}`);
+  await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('summary')].find(node=>node.textContent.includes('Raw agent responses'));node.parentElement.open=true;})()`);
+  await waitFor(cdp,`Boolean(document.querySelector('[data-detail-page]'))`);
+  const pagedDom=await evaluate(cdp,`({bytes:document.querySelector('#screen').innerHTML.length,nodes:document.querySelector('#screen').querySelectorAll('*').length})`);
+  assert(pagedDom.bytes<150000&&pagedDom.nodes<2000,`Opening accumulated history rendered every record: ${JSON.stringify(pagedDom)}`);
+  // Every stage shares these details and prompt controls, including Stage 03.
+  for(let stage=1;stage<=30;stage++){
+    await openStage(cdp,stage);
+    await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');if(node)node.textContent='Long preserved instruction\\n'.repeat(12000);})()`);
+    if(await evaluate(cdp,`Boolean(document.querySelector('#toggle-prompt'))`)){
+      await click(cdp,'#toggle-prompt');
+      const bounds=await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');return {height:node.getBoundingClientRect().height,viewport:innerHeight,scrollable:node.scrollHeight>node.clientHeight,overflow:getComputedStyle(node).overflowY};})()`);
+      assert(bounds.height<=bounds.viewport&&bounds.scrollable&&['auto','scroll'].includes(bounds.overflow),`Stage ${stage}: expanded instruction is unbounded: ${JSON.stringify(bounds)}`);
+      await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');node.scrollTop=node.scrollHeight;})()`);await click(cdp,'#toggle-prompt');
+    }
+  }
+  // The same retained history must also leave through the real complete-export action.
+  await evaluate(cdp,`(()=>{globalThis.__historyExportBlob=null;globalThis.__historyExportError='';globalThis.__historyCreateUrl=URL.createObjectURL;URL.createObjectURL=blob=>{globalThis.__historyExportBlob=blob;return globalThis.__historyCreateUrl(blob);};window.alert=message=>{globalThis.__historyExportError=String(message);};})()`);
+  await click(cdp,'#project-actions-toggle');await click(cdp,'#export-project');
+  await waitFor(cdp,`document.querySelector('#app-live-status')?.textContent==='complete project package exported'||globalThis.__historyExportError`,60000);
+  assert(!(await evaluate(cdp,'globalThis.__historyExportError')),`Accumulated complete export failed: ${await evaluate(cdp,'globalThis.__historyExportError')}`);
+  const historyExport=await evaluate(cdp,`(async()=>{const blob=globalThis.__historyExportBlob,payload=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text()),{packageSha256,...body}=payload,rows=payload.project.projectData.rawResponses;return {jobId:payload.project.job.JOB_ID,records:rows.length,lastRecordComplete:rows.at(-1).rawText.endsWith('é🙂TAIL-599'),rawCharacters:rows.reduce((sum,row)=>sum+row.rawText.length,0),hashVerified:closedLoopHash.sha256Value(body)===packageSha256};})()`);
+  assert(historyExport.jobId==='BROWSER-ACCUMULATED-HISTORY'&&historyExport.records===600&&historyExport.lastRecordComplete&&historyExport.rawCharacters>=48000000&&historyExport.hashVerified,`Complete accumulated export lost bytes or identity: ${JSON.stringify(historyExport)}`);
+  await evaluate(cdp,`(()=>{URL.createObjectURL=globalThis.__historyCreateUrl;delete globalThis.__historyExportBlob;})()`);
+  await evaluate(cdp,`closedLoopProjectStore.removeProject('BROWSER-ACCUMULATED-HISTORY')`);
+  console.log(JSON.stringify({all30StageAccumulatedDataViews:true,historyRecords:600,minimumRawHistoryBytes:48000000,collapsedDom:pressureDom,pagedDom,historyExport}));
   const mobileTarget=await evaluate(cdp,`(()=>{const now=Date.now(),challenge=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');return {physicalDeviceRequired:true,mobileAcceptanceTargetId:'MOBILE-TARGET-BROWSER',challenge,challengeIssuedAt:new Date(now).toISOString(),challengeExpiresAt:new Date(now+3600000).toISOString(),sourceCommit:'${'f'.repeat(40)}',deploymentManifestDigest:'${'a'.repeat(64)}',origin:location.origin,basePath:'/closed-loop-tracker/',testProjectId:'BROWSER-MOBILE-STAGE30',procedureVersion:'actual-iphone-safari/1',viewport:{width:393,height:852,devicePixelRatio:3},deviceModel:'iPhone 15',iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1'};})()`);
   const browserProject=await evaluate(cdp,`(()=>globalThis.closedLoopCore.createBlankState('BROWSER-STAGE30'))()`);browserProject.activeStage=30;await evaluate(cdp,`closedLoopProjectStore.writeAll(${JSON.stringify([browserProject])}).then(()=>closedLoopProjectStore.metaPut('selectedProject','BROWSER-STAGE30'))`);await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`);await click(cdp,'[data-view="Workflow"]');await waitFor(cdp,`Boolean(document.querySelector('#mobile-acceptance-panel'))`);
   const sessionKey='stage30MobileAcceptance.v1:BROWSER-STAGE30';
