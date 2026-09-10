@@ -46,4 +46,17 @@ assert(custody.release.authorization==='NOT AUTHORIZED'&&custody.release.authori
 for(const [collection,id] of staleRecords){const record=engine.records(custody,collection,{active:false}).find(item=>engine.recordId(item,collection)===id);assert(record&&record.active===false&&record.validity==='INVALIDATED',`${collection} was resurrected after custody repair.`);}
 assert(custody.projectData.history.some(event=>event.type==='APPLICATION_ARTIFACT_CUSTODY_BLOCKED')&&custody.projectData.history.some(event=>event.type==='APPLICATION_ARTIFACT_CUSTODY_RESTORED'),'Custody failure/recovery history is incomplete.');
 
-console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,unsafeOverrides:0}));
+// Execute the production export coordinator with a slow persistence boundary.
+// Rapid requests for different handoff files must all complete without overlap.
+const delivered=[],exportErrors=[];let activeSaves=0,maxActiveSaves=0;
+const exportRuntime=vm.createContext({current:{activeStage:3,job:{JOB_ID:'EXPORT-QUEUE'}},setTimeout,announce:()=>{},alert:message=>exportErrors.push(String(message)),savePromptRecord:async stage=>{activeSaves++;maxActiveSaves=Math.max(maxActiveSaves,activeSaves);await new Promise(resolve=>setTimeout(resolve,10));activeSaves--;return {stage,instructionId:'SAME-CONTROLLING-INSTRUCTION'};}});
+vm.runInContext(app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext()'))+'\nglobalThis.exportRequest=promptExport;',exportRuntime);
+await Promise.all(['manifest','instruction','context'].map(name=>exportRuntime.exportRequest(record=>{delivered.push({name,instructionId:record.instructionId});})));
+assert(delivered.map(x=>x.name).join(',')==='manifest,instruction,context',`Rapid handoff requests were lost or reordered: ${JSON.stringify(delivered)}`);
+assert(maxActiveSaves===1&&exportErrors.length===0,'Handoff exports overlapped persistence or raised an unexpected error.');
+const blocked=exportRuntime.exportRequest(()=>delivered.push({name:'wrong-stage'}));
+exportRuntime.current.activeStage=4;await blocked;
+assert(delivered.length===3&&exportErrors.length===1,'Changing stage during export downloaded a file for the wrong selection.');
+await exportRuntime.exportRequest(()=>delivered.push({name:'after-navigation'}));
+assert(delivered.at(-1).name==='after-navigation','An interrupted export left subsequent handoff requests stuck.');
+console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,unsafeOverrides:0}));
