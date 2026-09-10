@@ -941,6 +941,7 @@ const RECORD_FIELD_TYPE_OVERRIDES=Object.freeze({
 const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
   '1':Object.freeze({DESIRED_SOURCE_COUNT:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null})}),
   '2':Object.freeze({SOURCE_APPLICABILITY_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['APPLICABLE_SOURCES_ESTABLISHED','NO_APPLICABLE_EXTERNAL_SOURCE','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})}),
+  '3':Object.freeze({SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:Object.freeze({valueType:'BOOLEAN',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),LATEST_PASS_NUMBER:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:Object.freeze({valueType:'BOOLEAN',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})}),
   '10':Object.freeze({ALL_FROZEN_COMPONENT_BYTES_HASHED:Object.freeze({valueType:'BOOLEAN',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})}),
   '25':Object.freeze({DELIVERY_CANDIDATE_SET_ID:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})}),
   '28':Object.freeze({DELIVERY_CANDIDATE_SET_ID:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})}),

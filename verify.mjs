@@ -76,6 +76,7 @@ store.writeAll(migrated,storage);if(JSON.parse(storage.getItem(store.STORE_KEY))
 const prior=storage.getItem(store.STORE_KEY);globalThis.__closedLoopStorageFault='after-final-write';let failed=false;try{store.writeAll([{job:{JOB_ID:'JOB-OTHER'}}],storage);}catch{failed=true;}finally{delete globalThis.__closedLoopStorageFault;}if(!failed||storage.getItem(store.STORE_KEY)!==prior)throw new Error('Transactional storage failure did not roll back exactly.');
 const replaced=store.replaceProject(migrated,{...oldProject,job:{...oldProject.job,JOB_TITLE:'Updated'}},storage);if(replaced.length!==1||replaced[0].job.JOB_TITLE!=='Updated')throw new Error('Stable JOB_ID reconciliation duplicated a project.');
 
+const stage03ProtocolRun=spawnSync(process.execPath,['verify-stage03-agent-protocol.mjs'],{encoding:'utf8'});if(stage03ProtocolRun.status!==0)throw new Error(`verify-stage03-agent-protocol.mjs failed:\n${stage03ProtocolRun.stdout}\n${stage03ProtocolRun.stderr}`);
 const ingestionRun=spawnSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'});if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
 const appSourceForStatus=fs.readFileSync('app-core.js','utf8');
 const prepareSource=appSourceForStatus.match(/async function prepareStageResponseFile\(file,[\s\S]*?\n\}/)?.[0]||'';
