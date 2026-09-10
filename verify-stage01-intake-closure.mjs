@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {execFileSync} from 'node:child_process';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -48,4 +49,6 @@ assert(validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'
 let valid=envelope(capture);validation=ingestion.validateEnvelope(p,valid,{stage:1,promptRecord:prompt,rawSha256:hash.sha256Value(valid),files:[]});
 assert(!validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'),`Stage 01 ingestion rejected repaired intake accounting: ${JSON.stringify(validation.issues)}`);
 
-console.log(JSON.stringify({stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,legacyCaptureRejected:true,missingPassOneRejected:true,missingPassTwoRejected:true,incompleteChallengeCategoriesRejected:true}));
+const humanAuthorityRoundTrip=JSON.parse(execFileSync(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'}));
+assert(humanAuthorityRoundTrip.humanAuthorityRoundTrip==='PASS'&&humanAuthorityRoundTrip.atomicCoAcceptanceStable===true&&humanAuthorityRoundTrip.unrelatedMutationFailsClosed===true&&humanAuthorityRoundTrip.returnedAttachmentNotRawInput===true,'Integrated Stage 01 human-authority regression did not report every repaired-path proof.');
+console.log(JSON.stringify({stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,legacyCaptureRejected:true,missingPassOneRejected:true,missingPassTwoRejected:true,incompleteChallengeCategoriesRejected:true,humanAuthorityRoundTripIntegrated:true}));

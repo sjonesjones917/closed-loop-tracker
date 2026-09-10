@@ -18,17 +18,41 @@ function fixture(jobId){
   const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage:1,operation:'COMPLETE',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[{temporaryKey:'human-answer-1',label:'Intended audience',value:'Field technicians',authorityClass:'HUMAN',claimedConversationBasis:'The human answered this question in the Stage 01 external conversation.',externalResponsePointer:'conversation-message-7',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[]}],stageData:{EXACT_DELIVERABLE_REQUESTED:'One-page checklist for field technicians',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'evidence-1',kind:'INTAKE',description:'Stage 01 semantic intake',authorityType:'AGENT_CLAIM',location:'response.json',content:'Complete intake including the reported human audience answer.'}],unresolved:[],warnings:[],attachments:[]};
   const prepared=ingestion.prepare(project,{stage:1,text:JSON.stringify(envelope),promptRecord:prompt});
   assert(prepared.validation.valid,`Fixture response rejected: ${JSON.stringify(prepared.validation.issues)}`);
-  return {project:prepared.project,proposal:prepared.proposal};
+  return {project:prepared.project,proposal:prepared.proposal,prompt,capture};
 }
 
 {
-  const {project,proposal}=fixture('JOB-HUMAN-AUTHORITY-CONFIRM');
+  const {project,proposal,prompt}=fixture('JOB-HUMAN-AUTHORITY-CONFIRM');
   let code='';try{ingestion.commit(project,proposal.proposalId,{operator:'TEST'});}catch(error){code=error?.code||'';}
   assert(code==='HUMAN_AUTHORITY_CONFIRMATION_REQUIRED','Human answer was accepted without direct confirmation.');
   const committed=ingestion.commit(project,proposal.proposalId,{operator:'TEST',humanAuthorityConfirmations:{'human-answer-1':'Field technicians'}});
   assert(committed.project.projectData.humanAuthorityConfirmations.length===1,'Exact human-answer confirmation was not preserved.');
   assert(committed.project.projectData.humanInputAnswers.some(answer=>answer.requestId==='EXTERNAL_CONVERSATION'&&answer.answer==='Field technicians'),'Confirmed external-conversation answer was not captured as human input.');
   assert(committed.acceptedChange?.humanAuthorityConfirmationIds?.length===1,'Accepted change is not bound to the human-answer confirmation.');
+  const liveManifest=engine.intakeCoverageManifest(committed.project);
+  assert(liveManifest.units.some(unit=>unit.kind==='HUMAN_ANSWER'),'Regression fixture did not reproduce the post-commit live-manifest delta from the atomically confirmed human answer.');
+  assert(liveManifest.manifestSha256!==prompt.contextManifest.intakeCoverageManifest.manifestSha256,'Regression fixture did not reproduce the post-commit intake-manifest identity change.');
+  const accounting=engine.evaluateIntakeAccounting(committed.project);
+  assert(accounting.complete,`Exact atomic human-answer confirmation made its own accepted Stage 01 capture stale: ${accounting.reasons.join(' | ')}`);
+  const action=engine.operationalNextAction(committed.project,1);
+  assert(action.actionType==='CONFIRM_STAGE_ONE_INTENT','After exact atomic human-answer co-acceptance, Stage 01 must route directly to human intent confirmation rather than another agent round-trip.');
+  engine.recordStageConfirmation(committed.project,1,true,'The represented objective and deliverable match.','TEST',{acceptedChangeId:committed.acceptedChange.changeId,inputVersion:committed.project.job.CURRENT_INPUT_VERSION,operatorLabel:'TEST'});
+  assert(engine.gate(1,committed.project).complete&&committed.project.stages[1].status==='COMPLETE','Current human intent confirmation did not complete Stage 01 after atomic human-answer co-acceptance.');
+
+  const unrelated=structuredClone(committed.project);
+  unrelated.projectData.humanInputAnswers.push({answerId:'HUMAN-INPUT-ANSWER-UNRELATED',requestId:'SYNTHETIC_CORRUPTION',jobId:unrelated.job.JOB_ID,stage:1,answer:'Unrelated authority mutation',inputVersion:unrelated.job.CURRENT_INPUT_VERSION,authority:'User Job Input',answeredAt:new Date().toISOString()});
+  const unrelatedAccounting=engine.evaluateIntakeAccounting(unrelated);
+  assert(!unrelatedAccounting.complete,'Prompt-bound Stage 01 accounting hid an unrelated live human-input mutation that was not atomically co-accepted with the accepted change.');
+}
+
+{
+  const {project,proposal}=fixture('JOB-HUMAN-AUTHORITY-RETURNED-ATTACHMENT');
+  const committed=ingestion.commit(project,proposal.proposalId,{operator:'TEST',humanAuthorityConfirmations:{'human-answer-1':'Field technicians'}});
+  engine.registerArtifactBytes(committed.project,{stage:1,artifactId:'ARTIFACT-RETURNED-STAGE01',filename:'agent-output.txt',mediaType:'text/plain',byteSize:12,sha256:'a'.repeat(64),role:'RETURNED_ATTACHMENT',lineage:{rawResponseId:proposal.rawResponseId,attachmentSlotId:'RETURNED-SLOT-1'}});
+  const liveManifest=engine.intakeCoverageManifest(committed.project);
+  assert(!liveManifest.units.some(unit=>unit.artifactId==='ARTIFACT-RETURNED-STAGE01'),'A Stage 01 agent-returned attachment was retroactively classified as user-supplied raw input.');
+  const accounting=engine.evaluateIntakeAccounting(committed.project);
+  assert(accounting.complete,`A Stage 01 returned attachment made the accepted semantic intake stale: ${accounting.reasons.join(' | ')}`);
 }
 
 {
@@ -42,4 +66,4 @@ function fixture(jobId){
   assert(corrected.project.job.CURRENT_INPUT_VERSION!==project.job.CURRENT_INPUT_VERSION,'Human correction did not advance the input version.');
 }
 
-console.log(JSON.stringify({humanAuthorityRoundTrip:'PASS',exactConfirmationRequired:true,confirmedAnswerCaptured:true,correctionInvalidatesResponse:true,replacementPromptRequired:true}));
+console.log(JSON.stringify({humanAuthorityRoundTrip:'PASS',exactConfirmationRequired:true,confirmedAnswerCaptured:true,atomicCoAcceptanceStable:true,unrelatedMutationFailsClosed:true,returnedAttachmentNotRawInput:true,correctionInvalidatesResponse:true,replacementPromptRequired:true}));
