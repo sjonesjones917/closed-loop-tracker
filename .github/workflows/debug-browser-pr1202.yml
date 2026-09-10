@@ -5,49 +5,78 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   isolate:
     if: github.head_ref == 'fix/external-response-reservation-transport-20260910'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-      - name: Apply candidate browser and attachment-recovery repairs
+      - name: Apply permanent reservation and browser regression repair
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
+          p=Path('response-ingestion.js'); s=p.read_text()
+          anchor="function createReplacementPrompt(project,{stage,operation,scope,priorPromptId}={}){const promptEngine=globalThis.closedLoopPromptEngine;if(!promptEngine?.reserveAndBuildPromptRecord)throw new Error('Reservation-bound replacement prompt generation is unavailable.');const prior=promptRecordFor(project,{instructionId:priorPromptId}),priorReservation=operationReservationForPrompt(project,prior),owningTabInstance=String(workflow.recordValue(priorReservation,'OWNING_TAB_INSTANCE')||'APPLICATION');return promptEngine.reserveAndBuildPromptRecord(project,Number(stage),replacementPromptOptions(project,{stage,operation,scope,priorPromptId}),{owningTabInstance,generatedAt:now()}).prompt;}\n"
+          insert=anchor+"const RETURNED_FILE_RETRYABLE_VALIDATION_CODES=Object.freeze(['MISSING_REQUIRED_ATTACHMENT','ATTACHMENT_SLOT_REQUIRED','DUPLICATE_ATTACHMENT_SLOT','UNKNOWN_ATTACHMENT_SLOT','ATTACHMENT_FILENAME_MISMATCH','ATTACHMENT_MEDIA_TYPE_MISMATCH','ATTACHMENT_BYTE_SIZE_MISMATCH','ATTACHMENT_SHA256_MISMATCH','UNRESOLVED_EVIDENCE_ATTACHMENT']);\nconst RETURNED_FILE_PRIMARY_VALIDATION_CODES=Object.freeze(['MISSING_REQUIRED_ATTACHMENT','ATTACHMENT_SLOT_REQUIRED','DUPLICATE_ATTACHMENT_SLOT','UNKNOWN_ATTACHMENT_SLOT','ATTACHMENT_FILENAME_MISMATCH','ATTACHMENT_MEDIA_TYPE_MISMATCH','ATTACHMENT_BYTE_SIZE_MISMATCH','ATTACHMENT_SHA256_MISMATCH']);\nfunction validationAwaitsReturnedFiles(validation){const errors=safe(validation?.issues).filter(item=>upper(item?.severity||'ERROR')!=='WARNING');return errors.length>0&&errors.every(item=>RETURNED_FILE_RETRYABLE_VALIDATION_CODES.includes(String(item?.code||'')))&&errors.some(item=>RETURNED_FILE_PRIMARY_VALIDATION_CODES.includes(String(item?.code||'')));}\n"
+          if anchor not in s: raise SystemExit('response-ingestion helper anchor not found')
+          s=s.replace(anchor,insert,1)
+          old="if(prompt?.transportBindingRequired){const reservation=advanceReservationToResponseStaged(next,prompt);if(reservation&&!validation.valid)workflow.transitionOperationReservation(reservation,'REJECTED');}"
+          new="if(prompt?.transportBindingRequired){const reservation=advanceReservationToResponseStaged(next,prompt);if(reservation&&!validation.valid&&!validationAwaitsReturnedFiles(validation))workflow.transitionOperationReservation(reservation,'REJECTED');}"
+          if old not in s: raise SystemExit('response-ingestion reservation transition site not found')
+          s=s.replace(old,new,1); p.write_text(s)
+
           p=Path('verify-browser.mjs'); s=p.read_text()
           old="await click(cdp,'#save-prompt');retained=await activeProject(cdp);promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(promptRecord?.instructionId&&promptRecord?.sha256,'Current saved prompt identity missing after stage-state recalculation.');"
+          if old not in s: raise SystemExit('verify-browser saved prompt site not found')
           s=s.replace(old,old+"assert(promptRecord?.transportBindingRequired===true&&promptRecord?.packageId&&promptRecord?.operationReservationId&&promptRecord?.challengeNonce,'Current saved prompt is not bound to an application operation reservation.');",1)
           old="const envelope={schema:'closed-loop-stage-response/3',contractProfileId:retained.job.CONTRACT_PROFILE_ID,jobId:'JOB-20260823144121',stage:2,operation:promptRecord.operation||'COMPLETE',promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL'"
+          if old not in s: raise SystemExit('verify-browser envelope site not found')
           s=s.replace(old,old.replace('},scope:',"},packageId:promptRecord.packageId,operationReservationId:promptRecord.operationReservationId,challengeNonce:promptRecord.challengeNonce,scope:"),1)
           old="promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);envelope.promptIdentity={instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature};envelope.scope=promptRecord.scope;"
           new="promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(promptRecord?.transportBindingRequired===true&&promptRecord?.packageId&&promptRecord?.operationReservationId&&promptRecord?.challengeNonce,'Replacement saved prompt is not bound to a fresh operation reservation.');envelope.promptIdentity={instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature};envelope.packageId=promptRecord.packageId;envelope.operationReservationId=promptRecord.operationReservationId;envelope.challengeNonce=promptRecord.challengeNonce;envelope.scope=promptRecord.scope;"
+          if old not in s: raise SystemExit('verify-browser replacement prompt site not found')
           s=s.replace(old,new,1); p.write_text(s)
 
           p=Path('verify-browser-extra.mjs'); s=p.read_text()
           old="const pr=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(pr?.prompt&&pr?.instructionId&&pr?.sha256,'Stage 02 prompt was not saved after the cached IndexedDB connection was closed.');"
+          if old not in s: raise SystemExit('verify-browser-extra saved prompt site not found')
           s=s.replace(old,old+"assert(pr?.transportBindingRequired===true&&pr?.packageId&&pr?.operationReservationId&&pr?.challengeNonce,'Stage 02 saved prompt is not reservation-bound.');",1)
           old="const envelope={schema:'closed-loop-stage-response/3',contractProfileId:retained.job.CONTRACT_PROFILE_ID,jobId:'JOB-20260823144121',stage:2,operation:pr.operation||'COMPLETE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256||pr.sha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL'"
+          if old not in s: raise SystemExit('verify-browser-extra envelope site not found')
           s=s.replace(old,old.replace('},scope:',"},packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,scope:"),1)
-          marker="await click(cdp,'#validate-returned-files');await waitExpr(cdp,`document.querySelector('#validation-report')?.textContent.includes('ATTACHMENT_SHA256_MISMATCH')`);"
-          diag="await click(cdp,'#validate-returned-files');await sleep(500);console.log('extra:attachment-mismatch-diagnostic',JSON.stringify(await evalValue(cdp,`(async()=>{const p=(await closedLoopProjectStore.readAll()).find(x=>x.job?.JOB_ID==='JOB-20260823144121');return {report:document.querySelector('#validation-report')?.textContent||'',prompts:(p?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===2).slice(-3).map(x=>({id:x.instructionId,reservation:x.operationReservationId,invalidatedBy:x.invalidatedBy||null})),reservations:(p?.projectData?.operationReservations||[]).slice(-3).map(x=>({id:x.OPERATION_RESERVATION_ID||x.id,status:x.STATUS||x.status})),raw:(p?.projectData?.rawResponses||[]).at(-1)?.transport||null};})()`)));await waitExpr(cdp,`document.querySelector('#validation-report')?.textContent.includes('ATTACHMENT_SHA256_MISMATCH')`);"
-          s=s.replace(marker,diag,1); p.write_text(s)
-
-          p=Path('response-ingestion.js'); s=p.read_text()
-          old="if(prompt?.transportBindingRequired){const reservation=advanceReservationToResponseStaged(next,prompt);if(reservation&&!validation.valid)workflow.transitionOperationReservation(reservation,'REJECTED');}"
-          new="if(prompt?.transportBindingRequired){const reservation=advanceReservationToResponseStaged(next,prompt),errors=safe(validation?.issues).filter(item=>upper(item?.severity||'ERROR')!=='WARNING'),retryableCodes=new Set(['MISSING_REQUIRED_ATTACHMENT','ATTACHMENT_SLOT_REQUIRED','DUPLICATE_ATTACHMENT_SLOT','UNKNOWN_ATTACHMENT_SLOT','ATTACHMENT_FILENAME_MISMATCH','ATTACHMENT_MEDIA_TYPE_MISMATCH','ATTACHMENT_BYTE_SIZE_MISMATCH','ATTACHMENT_SHA256_MISMATCH','UNRESOLVED_EVIDENCE_ATTACHMENT']),primaryCodes=new Set(['MISSING_REQUIRED_ATTACHMENT','ATTACHMENT_SLOT_REQUIRED','DUPLICATE_ATTACHMENT_SLOT','UNKNOWN_ATTACHMENT_SLOT','ATTACHMENT_FILENAME_MISMATCH','ATTACHMENT_MEDIA_TYPE_MISMATCH','ATTACHMENT_BYTE_SIZE_MISMATCH','ATTACHMENT_SHA256_MISMATCH']),returnedFileRetry=errors.length>0&&errors.every(item=>retryableCodes.has(item.code))&&errors.some(item=>primaryCodes.has(item.code));if(reservation&&!validation.valid&&!returnedFileRetry)workflow.transitionOperationReservation(reservation,'REJECTED');}"
-          if old not in s: raise SystemExit('candidate reservation transition site not found')
+          old="await click(cdp,'#validate-returned-files');await waitExpr(cdp,`document.querySelector('#validation-report')?.textContent.includes('MISSING_REQUIRED_ATTACHMENT')`);"
+          new=old+"assert(await evalValue(cdp,`closedLoopProjectStore.readAll().then(all=>{const p=all.find(x=>x.job?.JOB_ID==='JOB-20260823144121'),r=(p?.projectData?.operationReservations||[]).find(x=>(x.OPERATION_RESERVATION_ID||x.id)===${JSON.stringify(pr.operationReservationId)});return (r?.STATUS||r?.status)==='RESPONSE_STAGED';})`),'Missing returned-file bytes terminally rejected the still-recoverable response reservation.');"
+          if old not in s: raise SystemExit('verify-browser-extra missing attachment site not found')
+          s=s.replace(old,new,1)
+          old="await selectReturnedSlot(cdp,slotId,returnedContent.replace('Independent','Unsupported'));\n  await click(cdp,'#validate-returned-files');await waitExpr(cdp,`document.querySelector('#validation-report')?.textContent.includes('ATTACHMENT_SHA256_MISMATCH')`);"
+          new=old+"assert(await evalValue(cdp,`closedLoopProjectStore.readAll().then(all=>{const p=all.find(x=>x.job?.JOB_ID==='JOB-20260823144121'),r=(p?.projectData?.operationReservations||[]).find(x=>(x.OPERATION_RESERVATION_ID||x.id)===${JSON.stringify(pr.operationReservationId)});return (r?.STATUS||r?.status)==='RESPONSE_STAGED';})`),'Returned-file SHA mismatch terminally rejected the still-recoverable response reservation.');"
+          if old not in s: raise SystemExit('verify-browser-extra hash mismatch site not found')
+          s=s.replace(old,new,1)
+          old="retained=await activeProject(cdp);assert(retained.projectData.sources.length===1,'Reloaded proposal could not be committed.');"
+          new=old+"const acceptedReservation=retained.projectData.operationReservations.find(x=>(x.OPERATION_RESERVATION_ID||x.id)===pr.operationReservationId);assert((acceptedReservation?.STATUS||acceptedReservation?.status)==='ACCEPTED','Accepted returned-file proposal did not terminally accept its exact operation reservation.');"
+          if old not in s: raise SystemExit('verify-browser-extra accepted reservation site not found')
           s=s.replace(old,new,1); p.write_text(s)
           PY
+          node --check response-ingestion.js
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
-          node --check response-ingestion.js
+      - name: Reservation and ingestion contracts
+        run: |
+          set -euo pipefail
+          node verify-ingestion.mjs
+          node verify-reservation-contract.mjs
+          node verify-file-first-operator.mjs
+          node verify-response-contract-profile.mjs
       - name: Human stage walkthrough
         run: node verify-human-stage-walkthrough.mjs
       - name: Mobile stage action
@@ -65,3 +94,14 @@ jobs:
           set -euo pipefail
           python3 -m http.server 4173 >/tmp/pr1202-browser-http.log 2>&1 & pid=$!; trap 'kill "$pid" 2>/dev/null || true' EXIT
           node verify-browser-extra.mjs
+      - name: Commit proven production repair
+        run: |
+          set -euo pipefail
+          actual="$(git status --porcelain | awk '{print $2}' | sort)"
+          expected="$(printf '%s\n' response-ingestion.js verify-browser-extra.mjs verify-browser.mjs | sort)"
+          test "$actual" = "$expected"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add response-ingestion.js verify-browser.mjs verify-browser-extra.mjs
+          git commit -m 'Preserve reservation during returned-file recovery'
+          git push origin "HEAD:${{ github.head_ref }}"
