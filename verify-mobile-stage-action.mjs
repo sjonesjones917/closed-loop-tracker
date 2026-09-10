@@ -41,8 +41,8 @@ async function main(){
     assert(state.copy&&state.copy.left>=-1&&state.copy.right<=width+1&&state.copy.height>=44,`Primary copy action is unusable at ${width}px: ${JSON.stringify(state.copy)}`);
     assert(state.prompt&&state.prompt.left>=-1&&state.prompt.right<=width+1,`Prompt box exceeds the viewport at ${width}px: ${JSON.stringify(state.prompt)}`);
   }
-  await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:120},(_,i)=>({rawResponseId:'RAW-PRESSURE-'+i,stage:i%30+1,status:'PRESERVED',rawText:'é🙂'.repeat(10000)+'TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
-  await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`);await click(cdp,'[data-view="Records"]');
+  await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:600},(_,i)=>({rawResponseId:'RAW-PRESSURE-'+i,stage:i%30+1,status:'PRESERVED',rawText:'H'.repeat(80000)+'é🙂TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
+  await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
   const pressureDom=await evaluate(cdp,`({bytes:document.querySelector('#screen').innerHTML.length,nodes:document.querySelector('#screen').querySelectorAll('*').length})`);
   assert(pressureDom.bytes<100000&&pressureDom.nodes<1500,`Collapsed accumulated history was eagerly rendered: ${JSON.stringify(pressureDom)}`);
   await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('summary')].find(node=>node.textContent.includes('Raw agent responses'));node.parentElement.open=true;})()`);
@@ -60,6 +60,8 @@ async function main(){
       await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');node.scrollTop=node.scrollHeight;})()`);await click(cdp,'#toggle-prompt');
     }
   }
+  await evaluate(cdp,`closedLoopProjectStore.removeProject('BROWSER-ACCUMULATED-HISTORY')`);
+  console.log(JSON.stringify({all30StageAccumulatedDataViews:true,historyRecords:600,minimumRawHistoryBytes:48000000,collapsedDom:pressureDom,pagedDom}));
   const mobileTarget=await evaluate(cdp,`(()=>{const now=Date.now(),challenge=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');return {physicalDeviceRequired:true,mobileAcceptanceTargetId:'MOBILE-TARGET-BROWSER',challenge,challengeIssuedAt:new Date(now).toISOString(),challengeExpiresAt:new Date(now+3600000).toISOString(),sourceCommit:'${'f'.repeat(40)}',deploymentManifestDigest:'${'a'.repeat(64)}',origin:location.origin,basePath:'/closed-loop-tracker/',testProjectId:'BROWSER-MOBILE-STAGE30',procedureVersion:'actual-iphone-safari/1',viewport:{width:393,height:852,devicePixelRatio:3},deviceModel:'iPhone 15',iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1'};})()`);
   const browserProject=await evaluate(cdp,`(()=>globalThis.closedLoopCore.createBlankState('BROWSER-STAGE30'))()`);browserProject.activeStage=30;await evaluate(cdp,`closedLoopProjectStore.writeAll(${JSON.stringify([browserProject])}).then(()=>closedLoopProjectStore.metaPut('selectedProject','BROWSER-STAGE30'))`);await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`);await click(cdp,'[data-view="Workflow"]');await waitFor(cdp,`Boolean(document.querySelector('#mobile-acceptance-panel'))`);
   const sessionKey='stage30MobileAcceptance.v1:BROWSER-STAGE30';
