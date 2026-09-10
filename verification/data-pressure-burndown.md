@@ -17,6 +17,9 @@ Each row follows reproduction → failing regression → responsible-layer repai
 
 | DP-07 | Production export-coordinator regression lost instruction/context when manifest was requested first in the same turn; only one of three requested files was delivered. | `app-core.js`: queued requests preserve order, serialize persistence, guard project/stage navigation and recover after interruption. | `verify-project-lifecycle.mjs` executes the production coordinator against a delayed persistence boundary: RED then GREEN locally. `verify-browser.mjs` presses the real Stage 03 manifest/instruction controls in the same event turn. | Exact-final CI and deployed browser. |
 
+
+| DP-08 | Changing projects during delayed complete export named project A/B bytes as project C. RED commit 99ba610ebcc240f78f7ca1f4770324432925aa08; production-handler regression recorded both wrong filenames. Concurrent backup/export also allowed overlapping large package assembly. | `app-core.js`: capture requested JOB_ID before awaiting; queue complete export and backup preparation, preserve every request, and recover after a failed export. | `verify-project-lifecycle.mjs` runs the actual handler across project navigation, overlapping requests and injected export failure. RED then GREEN locally. Existing mobile browser proof invokes the real complete-export control with 48 MB history. | Exact-final CI, deployed browser and physical-device acceptance. |
+
 ## Evidence and acceptance boundaries
 
 - CI run 34533237893 passed all software/full-cycle gates, the sequential stage walkthrough, and the 48 MB/600-record all-30-stage browser pressure fixture (collapsed DOM: 466 characters/8 nodes; opened page: 3,881 characters/93 nodes). Its remaining browser failure was the old requirement to eagerly construct more than eight provenance cards while their parent was closed. The updated regression requires zero closed cards and the complete first page after disclosure.
