@@ -34,6 +34,19 @@ assert.equal(stage3Descriptor.envelope.evidenceReferenceContract.attachmentRef,'
 assert.equal(stage3Descriptor.records.research.relationships.SOURCE_ID,'sources');
 assert.equal(stage3Descriptor.records.candidateRequirements.relationships.SOURCE_ID,'sources');
 
+// The descriptor is not merely an internal hash input: the executing Stage 03 agent must
+// receive the exact reference encoding in the authoritative instruction file.
+p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-v001';
+p.stages[1].status='COMPLETE';
+p.stages[1].gate={complete:true,blocked:false,reasons:[]};
+p.stages[2].status='COMPLETE';
+p.stages[2].gate={complete:true,blocked:false,reasons:[]};
+const stage3Prompt=prompts.buildPromptRecord(3,p,{operation:'COMPLETE'}).prompt;
+assert.match(stage3Prompt,/RESPONSE CONTRACT DESCRIPTOR/,'Stage 03 authoritative prompt omits the exact response-contract descriptor.');
+assert.match(stage3Prompt,/"relationshipReferenceContract"/,'Stage 03 authoritative prompt omits the nested relationship-reference encoding.');
+assert.match(stage3Prompt,/"allowedKeys": \[\s*"tempKey",\s*"recordId"/,'Stage 03 authoritative prompt does not tell the agent to use tempKey/recordId inside nested references.');
+assert.match(stage3Prompt,/"prohibitedKeys": \[\s*"targetId"/,'Stage 03 authoritative prompt does not explicitly prohibit targetId inside nested references.');
+
 const rendered=JSON.parse(prompts.responseContract(1,pr.operation,pr.instructionId,pr.bodySha256,pr.contractSha256,pr.contextSignature,pr.scope,p.job.JOB_ID));
 assert.equal(rendered.contractProfileId,schema.CONTRACT_PROFILE_ID);
 const base={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'u-1',kind:'MISSING_CAPABILITY',description:'Controlled blocker.',whyBlocking:'Contract-profile validation fixture.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
@@ -45,4 +58,4 @@ for(const bad of [null,'closed-loop-completion-profile/0']){
   const issues=ingestion.validateEnvelope(p,e,{stage:1,promptRecord:pr,rawSha256:closedLoopHash.sha256Text(JSON.stringify(e)),files:[]});
   assert(issues.issues.some(x=>x.code==='WRONG_CONTRACT_PROFILE'),JSON.stringify(issues.issues));
 }
-console.log(JSON.stringify({responseContractProfileBinding:'PASS',stage03ReferenceEncodingPublished:true}));
+console.log(JSON.stringify({responseContractProfileBinding:'PASS',stage03ReferenceEncodingPublished:true,stage03ReferenceEncodingInAuthoritativePrompt:true}));
