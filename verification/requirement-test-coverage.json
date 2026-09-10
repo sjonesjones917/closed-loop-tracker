@@ -137,26 +137,31 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "project-store.js:validateProjectIntegrity"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-zero-loss-accounting.mjs",
-        "verify-user-prompt-invariants.mjs"
+        "verify-user-prompt-invariants.mjs",
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-ingestion.mjs:pending proof versus empty/dangling proof references"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-browser-extra.mjs:correction instruction export, corrected response acceptance and reload"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
-        "verify-mobile-stage-action.mjs"
+        "verify-mobile-stage-action.mjs",
+        "verify-browser-extra.mjs:correction instruction export, corrected response acceptance and reload"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
@@ -176,12 +181,14 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "project-store.js:validateProjectIntegrity"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-semantic-invariant.mjs"
+        "verify-semantic-invariant.mjs",
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -214,17 +221,20 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "project-store.js:validateProjectIntegrity"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-test-runtime-v3.mjs",
-        "verify-test-runtime-limits.mjs"
+        "verify-test-runtime-limits.mjs",
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-ingestion.mjs:pending proof versus empty/dangling proof references"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -367,12 +377,14 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "project-store.js:validateProjectIntegrity"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-candidate-freeze.mjs"
+        "verify-candidate-freeze.mjs",
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -709,12 +721,14 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "project-store.js:validateProjectIntegrity"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-candidate-freeze.mjs"
+        "verify-candidate-freeze.mjs",
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",

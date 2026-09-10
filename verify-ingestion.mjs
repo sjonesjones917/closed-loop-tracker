@@ -1,3 +1,4 @@
+import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import './verify-file-first-response.mjs';
@@ -6,7 +7,7 @@ import './verify-response-contract-profile.mjs';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
   vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 }
 const core=globalThis.closedLoopCore;
@@ -534,4 +535,24 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   if(committed.project.projectData.artifacts.length!==2)throw new Error('Accepted returned-byte metadata was not promoted atomically.');
   const retried=ingestion.commit(committed.project,repaired.proposal.proposalId);if(!retried.idempotent||retried.project.projectData.artifacts.length!==2)throw new Error('Returned-file acceptance retry duplicated effects.');
   console.log(JSON.stringify({attachmentSlotMapping:'PASS',explicitSlotsRequired:true,pickerOrderIndependent:true,filenameOnlyRejected:true,staleOrDuplicateSlotsRejected:true,slotMutationsDetected:7,rawBytesPreserved:true,failedResponseRepairedWithoutReselect:true,atomicReturnedArtifactPromotion:true,totalNegativeCases:negativeCount}));
+}
+
+// Pending application-owned references must persist without pretending proof exists.
+{
+  const runtime={core,schema,engine,prompts,ingestion},p=stage04AcceptanceFixture(runtime,'JOB-PROOF-PERSISTENCE'),pr=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(pr);
+  const envelope=stage04AcceptanceEnvelope(runtime,p,pr),prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
+  const accepted=ingestion.commit(prepared.project,prepared.proposal.proposalId).project,store=globalThis.closedLoopProjectStore,integrity=store.validateProjectIntegrity(accepted);
+  if(!integrity.valid)throw new Error(`Accepted Stage 04 cannot persist: ${integrity.issues.join(' | ')}`);
+  const obligation=accepted.projectData.proofObligations.find(engine.isActiveRecord);
+  if(!obligation||engine.recordValue(obligation,'PROOF_EXPRESSION_ID')!==null||engine.gate(6,accepted).complete)throw new Error('Pending proof must be stored as absent and cannot satisfy Stage 06.');
+  for(const value of ['', 'PROOF-EXPR-NOT-PRESENT']){
+    const invalid=engine.clone(accepted),record=invalid.projectData.proofObligations.find(engine.isActiveRecord);record.fields.PROOF_EXPRESSION_ID=record.PROOF_EXPRESSION_ID=value;engine.refreshRecordHashes(record,'proofObligations');
+    if(store.validateProjectIntegrity(invalid,{verifyDerived:false}).valid)throw new Error(`Invalid proof reference passed integrity: ${JSON.stringify(value)}`);
+  }
+  const field=schema.RECORD_SCHEMAS.humanDecisions.fieldDefinitions.VALUE;
+  for(const value of ['approved',true,7,['ARTIFACT-1'],{authorized:true,artifactIds:['ARTIFACT-1']},null]){const issues=[];ingestion.validateValue(field,value,'/humanDecisions/VALUE',issues);if(issues.length)throw new Error(`Valid typed human decision rejected: ${JSON.stringify(issues)}`);}
+  const cycle={};cycle.self=cycle;
+  for(const value of [undefined,()=>true,NaN,Infinity,cycle,{value:undefined}]){const issues=[];ingestion.validateValue(field,value,'/humanDecisions/VALUE',issues);if(!issues.length)throw new Error('Non-JSON human decision value was accepted.');}
+  console.log(JSON.stringify({acceptedPropositionPersistence:true,pendingProofCannotComplete:true,invalidProofReferencesRejected:true,typedHumanDecisionsValidated:true}));
 }
