@@ -12,7 +12,7 @@ const mustReject=(name,fn,pattern)=>{
   return true;
 };
 
-assert(h.version==='closed-loop-hash/6','Stage 02 primitive authority version is not current.');
+assert(h.version==='closed-loop-hash/7','Stage 02 primitive authority version is not current.');
 assert(h.filenameVersion==='closed-loop-filename/1','Filename contract identity is missing.');
 assert(h.trustedTimeVersion==='closed-loop-trusted-time/1','Trusted-time contract identity is missing.');
 assert(h.unicodeContract?.version==='15.1.0','Pinned Unicode version is not 15.1.0.');

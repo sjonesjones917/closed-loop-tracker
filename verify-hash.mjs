@@ -1,11 +1,25 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
 const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
 const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){ok=e instanceof TypeError;}assert(ok,`${name} must be rejected.`);};
 assert(h.sha256Text('')==='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855','empty SHA-256 vector failed');
 assert(h.sha256Text('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad','abc SHA-256 vector failed');
+// Project integrity must not allocate a full UTF-8 copy of accumulated history.
+const NativeEncoder=globalThis.TextEncoder;let largestEncoding=0;
+globalThis.TextEncoder=class extends NativeEncoder{encode(text){largestEncoding=Math.max(largestEncoding,String(text).length);return super.encode(text);}};
+try{
+  for(const size of [0,1,55,56,63,64,65,32767,32768,65535,65536,1000000]){
+    const value='é🙂\\\"\n'.repeat(Math.ceil(size/7)).slice(0,size)+'tail';
+    assert(h.sha256Text(value)===createHash('sha256').update(value).digest('hex'),`Streaming SHA-256 differs from node:crypto at ${size}.`);
+  }
+  const accumulated={history:Array.from({length:64},(_,index)=>({index,text:'é🙂'.repeat(10000)}))};
+  const expected=createHash('sha256').update(h.stableStringify(accumulated)).digest('hex');
+  assert(h.sha256Value(accumulated)===expected,'Accumulated project canonical digest changed.');
+  assert(largestEncoding<=65536,`Canonical hashing encoded ${largestEncoding} characters at once; accumulated-data working buffers must be bounded.`);
+}finally{globalThis.TextEncoder=NativeEncoder;}
 assert(h.canonicalizationVersion==='closed-loop-canonical-json/1','canonicalization version is not controlling /1');
 assert(h.idVersion==='closed-loop-id/1','canonical ID version is not controlling /1');
 assert(h.stableStringify({b:1,a:2})===h.stableStringify({a:2,b:1}),'object key ordering is not canonical');
