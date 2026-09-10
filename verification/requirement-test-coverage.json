@@ -1272,6 +1272,40 @@
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
+      "id": "COMPLETE-BACKUP",
+      "requirement": "6. a complete backup package exported outside the browser origin and a successful restore from those exported bytes;",
+      "normativeRequirementIds": [
+        "NREQ-57b45791d7658e41b812bf1029332e5d"
+      ],
+      "sourceLines": [
+        5517
+      ],
+      "productionOwner": [
+        "project-store.js:exportPackage/importPackage; app-core.js:downloadProjectPackage"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs",
+        "verify-full-cycle.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-project-lifecycle.mjs:complete export navigation, concurrent preparation and failure recovery",
+        "verify-browser-extra.mjs:package integrity and storage rollback"
+      ],
+      "browserProof": [
+        "verify-mobile-stage-action.mjs:48 MB complete export",
+        "verify-browser.mjs:accumulated-context backup integrity",
+        "verify-browser-extra.mjs:package round trip"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-mobile-stage-action.mjs",
+        "verify-browser.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Automated package generation, byte integrity and round trips do not establish physical external-copy custody. Final acceptance still requires actual export outside the browser origin and restore from those exact exported bytes on the pinned device.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
       "id": "PHYSICAL-DEVICE",
       "requirement": "The required mobile acceptance executes on an actual iPhone in Safari. Simulator, desktop responsive mode, and another browser are supplementary only and cannot satisfy the physical-device requirement. \"Current\" is frozen by the target record; a material iOS, Safari/WebKit, application build, origin, storage behavior, or target-device change before final delivery invalidates the affected mobile result and requires revalidation.",
       "normativeRequirementIds": [
