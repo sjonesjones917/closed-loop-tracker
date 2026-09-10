@@ -1,0 +1,42 @@
+name: PR1202 browser failure isolation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  isolate:
+    if: github.head_ref == 'fix/external-response-reservation-transport-20260910'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Human stage walkthrough
+        run: node verify-human-stage-walkthrough.mjs
+      - name: Mobile stage action
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/pr1202-browser-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node verify-mobile-stage-action.mjs
+      - name: Browser core
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/pr1202-browser-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+      - name: Browser extra
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/pr1202-browser-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node verify-browser-extra.mjs
