@@ -80,48 +80,46 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   console.log(JSON.stringify({savedAttemptSurvivesUiRevision:true,pendingResponseReselectionIdempotent:true,responseReselectionDialogs:0}));
 }
 
-// Reproduce the reported Stage 05 export through the actual save/export handlers.
-// Operational errors belong in existing inline notices, without replacing forms.
+// Real save/export must prepare its own context. No naming form, popup,
+// or human bookkeeping event may stand between the operator and the files.
 {
-  const dialogs=[],announcements=[];let rendered=0,downloaded=0,focused=0;
-  const notice={textContent:'Existing next action',className:'notice',classList:{add(){}},style:{},isConnected:true,getAttribute:()=>null,setAttribute(){},removeAttribute(){},focus(){},scrollIntoView(){}},disclosure={open:false,parentElement:null};
-  const help={...notice,textContent:'Existing field help',className:'help',style:{},focus(){focused++;}};
-  const input={value:'Unsaved operator text',parentElement:{parentElement:disclosure,querySelector:()=>help},focus(){}};
-  const runtime=vm.createContext({actionFailureNotice:null,current:{activeStage:5,revision:7,job:{JOB_ID:'INLINE-EXPORT'}},setTimeout,queueMicrotask,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',currentPromptRecord:()=>null,currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,$:selector=>selector==='#fresh-context-id'?input:notice,document:{activeElement:input},console:{error(){}},Element:class{}});
-  disclosure.tagName='DETAILS';
+  const dialogs=[],announcements=[];let rendered=0,downloaded=0;
+  const notice={textContent:'Existing next action',className:'notice',classList:{add(){}},focus(){},scrollIntoView(){},setAttribute(){}};
+  const runtime=vm.createContext({setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,URL,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,actionFailureNotice:null,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,clone:structuredClone,TAB_INSTANCE_ID:'TAB-FILE-FIRST', $:selector=>selector==='#fresh-context-id'?null:notice});
+  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
+  runtime.current=runtime.closedLoopCore.createBlankState('JOB-FILE-FIRST-AUTOMATIC-CONTEXT');runtime.current.activeStage=5;runtime.current.revision=7;
+  runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.closedLoopWorkflowEngine.recalculate(runtime.current);runtime.current.stages[4].status='COMPLETE';runtime.current.stages[4].gate={complete:true};
+  runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(p=>Number(p.stage)===Number(n)&&!p.invalidatedBy&&Number(p.scope.projectRevision)===runtime.current.revision).at(-1)||null;
+  runtime.persistReplacement=async next=>{runtime.current=next;};
   const reporterStart=app.indexOf('function reportActionFailure(');
-  if(reporterStart>=0)vm.runInContext(app.slice(reporterStart,app.indexOf('\nfunction ',reporterStart+1)),runtime);
+  vm.runInContext(app.slice(reporterStart,app.indexOf('\nfunction ',reporterStart+1)),runtime);
   vm.runInContext(app.slice(app.indexOf('async function savePromptRecord('),app.indexOf('function promptTransportFilename('))+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
-  await runtime.exportAttempt(()=>downloaded++);
-  assert.equal(dialogs.length,0,`Stage 05 instruction export opened the reported popup: ${dialogs.join(' | ')}`);
-  assert.match(help.textContent,/agent conversation/i,'The context explanation must be visible beside the existing input.');
-  assert.match(help.textContent,/internal IDs automatically/i,'Explain which work the app automates.');
-  assert.match(help.textContent,/cannot see your external chats/i,'Explain why the external conversation needs human identification.');
-  assert.match(help.textContent,/later reviewer/i,'Explain why the author conversation is recorded.');
-  assert.match(help.textContent,/Leave Blocker reason blank/i,'Do not send the user to the unrelated blocker control.');
-  assert.equal(notice.textContent,'Existing next action','Do not duplicate the explanation in another banner.');
-  assert.equal(disclosure.open,true,'The required existing context input remains hidden.');
-  assert.equal(focused,1,'Keep the explanation visible instead of jumping past it to the input.');
-  assert.equal(downloaded,0,'An unbound author instruction was exported.');
-  assert.equal(runtime.current.revision,7);
-  assert.equal(input.value,'Unsaved operator text');
-  assert.equal(rendered,0,'Reporting an operational error must not rerender the form.');
-  vm.runInContext(app.slice(app.indexOf('function announce('),app.indexOf('\nconst recordValue=',app.indexOf('function announce('))),runtime);
-  runtime.announce('context registered');
-  assert.equal(help.textContent,'Existing field help','Restore the existing help after the next action.');
-  assert.equal(help.className,'help','The situational banner must not remain after recovery.');
-  runtime.current.activeStage=9;runtime.reviewerOperation=()=>true;
-  await runtime.exportAttempt(()=>downloaded++);
-  assert.match(help.textContent,/new agent conversation that did not produce the work/,'The same situation must explain the separate reviewer conversation.');
-  assert.match(help.textContent,/internal IDs automatically/);
-  runtime.announce('reviewer registered');
+  let exported;
+  await runtime.exportAttempt(record=>{exported=record;downloaded++;});
+  assert.equal(downloaded,1,`Stage 05 still blocks export on manual bookkeeping: ${notice.textContent}`);
+  assert(exported.contextManifest.semanticReviewBinding.authorContextId,'Export did not bind the application-created context.');
+  assert.equal(runtime.current.revision,8,'Context and prompt reservation must persist in one transaction.');
+  assert.equal(runtime.current.projectData.freshContexts.length,1);
+  assert.equal(runtime.current.projectData.freshContexts[0].EXTERNAL_CONTEXT_IDENTIFIER,'UNKNOWN');
+  await runtime.exportAttempt(record=>{assert.equal(record.instructionId,exported.instructionId);downloaded++;});
+  assert.equal(runtime.current.projectData.freshContexts.length,1,'Manifest/instruction export must not duplicate context records.');
+  assert.equal(runtime.current.revision,8);
+  assert.equal(dialogs.length,0);
+  assert.doesNotMatch(app,/id="fresh-context-id"|id="add-fresh-context"/,'Routine workflow must not ask the human to name/register application contexts.');
+  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
+  const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
+  assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
+  const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportPromptFile=()=>runtime.exportAttempt(()=>downloaded++);
+  const wireStart=app.indexOf('function wire(){')+'function wire(){'.length,wireEnd=app.indexOf("if($('#export-prompt-context'))",wireStart);
+  vm.runInContext(app.slice(wireStart,wireEnd),runtime);await button.onclick();
+  assert.equal(downloaded,3,'The actual next-action handler failed to reach automatic instruction export.');
+  assert.equal(runtime.operationSelection[9],'COMPLETE');assert.equal(runtime.current.projectData.freshContexts.length,1);
   runtime.savePromptRecord=async()=>{throw new Error('The selected file could not be read. Select it again.');};
   for(let stage=1;stage<=30;stage++){
     runtime.current.activeStage=stage;await runtime.exportAttempt(()=>downloaded++);
     assert.match(notice.textContent,/selected file could not be read/);
   }
-  assert.equal(dialogs.length,0,'An all-stage handoff failure opened a native popup.');
-  assert.equal(downloaded,0);
+  assert.equal(downloaded,3);assert.equal(dialogs.length,0);assert.equal(rendered,0);
   assert.doesNotMatch(app,/\b(?:alert|confirm|prompt)\s*\(/,'Application handlers must use existing inline messaging instead of native popups.');
-  console.log(JSON.stringify({stage05ExportFailureInline:true,existingContextControlReachable:true,all30HandoffFailuresInline:true,nativePopups:0,operatorInputPreserved:true}));
+  console.log(JSON.stringify({stage05ContextAutomatic:true,noManualContextForm:true,contextReservationAtomic:true,all30HandoffFailuresInline:true,nativePopups:0}));
 }

@@ -405,6 +405,11 @@ console.log(JSON.stringify({nativeHandoffNoExternalReturn:true,capabilityNegatio
   reviewer.fields.EXTERNAL_CONTEXT_IDENTIFIER=reviewer.EXTERNAL_CONTEXT_IDENTIFIER='meaning-review-session';
   result=engine.evaluateContextIndependence(p,{role:'MEANING_REVIEW',reviewerContextId:'CONTEXT-REVIEWER',productionContextId:'CONTEXT-PRODUCTION'});
   assert(result.determination==='APPLICATION_ESTABLISHED','Distinct canonical production/reviewer contexts were not application-established.');
+  for(const item of [production,reviewer])item.fields.EXTERNAL_CONTEXT_IDENTIFIER=item.EXTERNAL_CONTEXT_IDENTIFIER='UNKNOWN';
+  result=engine.evaluateContextIndependence(p,{role:'MEANING_REVIEW',reviewerContextId:'CONTEXT-REVIEWER',productionContextId:'CONTEXT-PRODUCTION'});
+  assert(result.determination==='APPLICATION_ESTABLISHED','Missing external chat names were mistaken for context reuse.');
+  result=engine.evaluateContextIndependence(p,{role:'MEANING_REVIEW',reviewerContextId:'CONTEXT-PRODUCTION',productionContextId:'CONTEXT-PRODUCTION'});
+  assert(result.determination==='VIOLATED','An unnamed canonical context was allowed to review its own product.');
   reviewer.fields.AUTHORIZED_PROJECT_INPUTS=reviewer.AUTHORIZED_PROJECT_INPUTS=['product','prior reviewer conclusion'];
   result=engine.evaluateContextIndependence(p,{role:'MEANING_REVIEW',reviewerContextId:'CONTEXT-REVIEWER',productionContextId:'CONTEXT-PRODUCTION'});
   assert(result.determination==='VIOLATED','Prohibited prior-review material did not invalidate reviewer independence.');

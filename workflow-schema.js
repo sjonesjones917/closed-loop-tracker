@@ -859,26 +859,10 @@ const RECORD_OWNERSHIP=Object.freeze({
     ]
   },
   "freshContexts": {
-    "human": [],
-    "humanDecision": [
-      "EXTERNAL_CONTEXT_IDENTIFIER",
-      "ROLE",
-      "AUTHORIZED_PROJECT_INPUTS",
-      "AUTHORIZED_EXTERNAL_SOURCE_MATERIAL",
-      "FROZEN_ARTIFACT_VERSIONS",
-      "TOOL_AVAILABILITY",
-      "CONTAMINATION_STATUS",
-      "OUTPUT_IDENTITY",
-      "DEVIATIONS",
-      "EVIDENCE",
-      "USABILITY_DETERMINATION"
-    ],
+    "human": ["EXTERNAL_CONTEXT_IDENTIFIER", "TOOL_AVAILABILITY", "CONTAMINATION_STATUS", "DEVIATIONS", "EVIDENCE"],
+    "humanDecision": [],
     "agent": [],
-    "application": [
-      "CONTEXT_ID",
-      "ITERATION_ID",
-      "RUN_ID"
-    ]
+    "application": ["CONTEXT_ID", "ITERATION_ID", "RUN_ID", "ROLE", "AUTHORIZED_PROJECT_INPUTS", "AUTHORIZED_EXTERNAL_SOURCE_MATERIAL", "FROZEN_ARTIFACT_VERSIONS", "OUTPUT_IDENTITY", "USABILITY_DETERMINATION"]
   },
   "evidenceRecords": {
     "human": [],

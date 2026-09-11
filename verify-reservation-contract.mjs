@@ -27,6 +27,18 @@ const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.rec
     const reviewer=engine.records(p,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===result.prompt.scope.contextId);
     assert(reviewer&&value(reviewer,'EXTERNAL_CONTEXT_IDENTIFIER')==='UNKNOWN','Unobserved provider identity must remain UNKNOWN.');
   }
+  const productProject=core.createBlankState('JOB-AUTOMATIC-PRODUCT-CONTEXT');engine.ensureShape(productProject);
+  productProject.job.CURRENT_BASELINE_ID='BASELINE-AUTOMATIC';
+  productProject.projectData.baselines.push({id:'BASELINE-AUTOMATIC',stage:20,active:true,scope:engine.currentScope(productProject),fields:{BASELINE_ID:'BASELINE-AUTOMATIC',STATUS:'FROZEN',IMMUTABLE_ARTIFACT_RECORDS:[]}});
+  productProject.stages[20].status='COMPLETE';productProject.stages[20].gate={complete:true};
+  const preview=engine.preparePromptContext(productProject,21,{operation:'COMPLETE'},{preview:true});
+  assert(preview.options.scope.productId,'Stage 21 still requires manual product-execution bookkeeping before export.');
+  const product=engine.records(preview.project,'products').find(r=>engine.recordId(r,'products')===preview.options.scope.productId);
+  assert(product&&value(product,'PRODUCTION_CONTEXT_ID'),'Stage 21 must bind its automatically reserved product and context.');
+  assert.equal(productProject.projectData.freshContexts.length,0,'Preview must not mutate canonical context records.');
+  assert.equal(productProject.projectData.products.length,0,'Preview must not reserve canonical products.');
+  assert.equal(Object.keys(productProject.projectData.idCounters).length,0,'Preview must not advance canonical counters.');
+
 }
 assert.deepEqual(schema.CONTROLLING_COMPLETION_ENUMS.reservation,['RESERVED','EXPORTED','ORPHANED','RESUMED','RESPONSE_STAGED','ACCEPTED','REJECTED','CANCELLED','SUPERSEDED','EXPIRED_BY_SCOPE']);
 assert.equal(schema.RECORD_SCHEMAS.operationReservations.fieldDefinitions.RESERVATION_REVISION.valueType,'INTEGER');
