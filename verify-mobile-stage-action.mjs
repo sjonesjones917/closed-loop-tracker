@@ -49,6 +49,17 @@ async function main(){
   await waitFor(cdp,`Boolean(document.querySelector('[data-detail-page]'))`);
   const pagedDom=await evaluate(cdp,`({bytes:document.querySelector('#screen').innerHTML.length,nodes:document.querySelector('#screen').querySelectorAll('*').length})`);
   assert(pagedDom.bytes<150000&&pagedDom.nodes<2000,`Opening accumulated history rendered every record: ${JSON.stringify(pagedDom)}`);
+  // The original section arrows also operate the bounded text inside accumulated history.
+  await evaluate(cdp,`(()=>{const history=[...document.querySelectorAll('summary')].find(n=>n.textContent.startsWith('Raw agent responses')).parentElement;history.querySelector('[data-detail-id]').open=true;})()`);
+  await waitFor(cdp,`[...document.querySelectorAll('summary')].some(n=>/raw.*text/i.test(n.textContent)&&n.closest('[data-detail-id]')?.querySelector('summary')===n)`);
+  await evaluate(cdp,`(()=>{const text=[...document.querySelectorAll('summary')].find(n=>/raw.*text/i.test(n.textContent)&&n.closest('[data-detail-id]')?.querySelector('summary')===n);text.parentElement.open=true;})()`);
+  await waitFor(cdp,`Boolean(document.querySelector('.data-text-page'))`);
+  await evaluate(cdp,`(()=>{const text=document.querySelector('.data-text-page');text.scrollTop=0;text.scrollIntoView({block:'center'});dispatchEvent(new Event('scroll'));})()`);
+  await waitFor(cdp,`document.querySelector('#section-bottom-jump')?.hidden===false`);
+  await click(cdp,'#section-bottom-jump');
+  await waitFor(cdp,`(()=>{const text=document.querySelector('.data-text-page');return text.scrollTop+text.clientHeight>=text.scrollHeight-1;})()`);
+  await waitFor(cdp,`document.querySelector('#section-top-jump')?.hidden===false`);
+  await click(cdp,'#section-top-jump');await waitFor(cdp,`document.querySelector('.data-text-page').scrollTop===0`);
   // Every stage shares these details and prompt controls, including Stage 03.
   for(let stage=1;stage<=30;stage++){
     await openStage(cdp,stage);
@@ -57,7 +68,10 @@ async function main(){
       await click(cdp,'#toggle-prompt');
       const bounds=await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');return {height:node.getBoundingClientRect().height,viewport:innerHeight,scrollable:node.scrollHeight>node.clientHeight,overflow:getComputedStyle(node).overflowY};})()`);
       assert(bounds.height<=bounds.viewport&&bounds.scrollable&&['auto','scroll'].includes(bounds.overflow),`Stage ${stage}: expanded instruction is unbounded: ${JSON.stringify(bounds)}`);
-      await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');node.scrollTop=node.scrollHeight;})()`);await click(cdp,'#toggle-prompt');
+      await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');node.scrollTop=(node.scrollHeight-node.clientHeight)/2;node.scrollIntoView({block:'center'});dispatchEvent(new Event('scroll'));})()`);
+      await waitFor(cdp,`document.querySelector('#prompt-top-jump')?.hidden===false&&document.querySelector('#prompt-bottom-jump')?.hidden===false`);
+      await click(cdp,'#prompt-bottom-jump');await waitFor(cdp,`(()=>{const node=document.querySelector('#generated-prompt');return node.scrollTop+node.clientHeight>=node.scrollHeight-1;})()`);
+      await click(cdp,'#toggle-prompt');
     }
   }
   // The same retained history must also leave through the real complete-export action.

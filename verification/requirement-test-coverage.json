@@ -1204,7 +1204,8 @@
         83
       ],
       "productionOwner": [
-        "prompt-engine.js:promptFileManifest; project-store.js:persistPromptContextFiles/readPromptContextFile; app-core.js:promptExport"
+        "prompt-engine.js:promptFileManifest; project-store.js:persistPromptContextFiles/readPromptContextFile; app-core.js:promptExport",
+        "app-core.js:responseAttemptPrompt/prepareStageResponseFile/validationMarkup"
       ],
       "existingTests": [
         "verify-file-first-operator.mjs",
@@ -1212,15 +1213,18 @@
       ],
       "negativeAdversarialTests": [
         "verify-reservation-contract.mjs",
-        "verify-file-first-response.mjs"
+        "verify-file-first-response.mjs",
+        "verify-file-first-operator.mjs:saved attempt after UI revision, pending reselection and inline storage failure"
       ],
       "browserProof": [
-        "verify-browser.mjs:stage03AccumulatedTransfer"
+        "verify-browser.mjs:stage03AccumulatedTransfer",
+        "verify-browser-extra.mjs:invalid replacement, correction export, inline storage failure, pending reselection, acceptance and reload"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
-        "verify-mobile-stage-action.mjs"
+        "verify-mobile-stage-action.mjs",
+        "verify-browser-extra.mjs"
       ],
       "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
@@ -1265,7 +1269,8 @@
         4148
       ],
       "productionOwner": [
-        "app-core.js:details; index.html:expandable-prompt/data-text-page"
+        "app-core.js:details; index.html:expandable-prompt/data-text-page",
+        "app-core.js:scrollTargetBounds/sectionScroller/syncMatchedScrollJumps"
       ],
       "existingTests": [
         "verify-mobile-stage-action.mjs",
@@ -1275,7 +1280,9 @@
         "verify-browser-extra.mjs"
       ],
       "browserProof": [
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-browser.mjs:original instruction/proposal arrows and page-scroll-at-first-line",
+        "verify-mobile-stage-action.mjs:original arrows on bounded history text and all 30 stages"
       ],
       "deployedProof": [
         "verify-live.mjs",

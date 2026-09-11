@@ -174,6 +174,11 @@ async function main(){
   const invalidProofEnvelope=await proofEnvelope(),originalProofInstruction=invalidProofEnvelope.promptIdentity.instructionId;
   invalidProofEnvelope.records.propositions[0].fields.PROPOSITION_TEXT=123;
   await selectResponseFile(cdp,JSON.stringify(invalidProofEnvelope));await click(cdp,'#process-response-file');await openValidationDetails(cdp,'WRONG_VALUE_TYPE');
+  // An invalid replacement selected before exporting again must reach normal validation and feed the correction instruction.
+  const replacementInvalid=structuredClone(invalidProofEnvelope);replacementInvalid.records.propositions[0].fields.PROPOSITION_TEXT=false;
+  await selectResponseFile(cdp,JSON.stringify(replacementInvalid));await click(cdp,'#process-response-file');
+  await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.rawResponses.some(r=>r.completeRawResponse===${JSON.stringify(JSON.stringify(replacementInvalid))}))`,10000);
+  await openValidationDetails(cdp,'WRONG_VALUE_TYPE');
   const rejectedProof=await activeProject(cdp);
   assert(rejectedProof.projectData.requirements.length===0&&rejectedProof.projectData.propositions.length===0,'Rejected response mutated accepted requirements or propositions.');
   await evalValue(cdp,`(()=>{globalThis.__correctionDownloads=[];const original=URL.createObjectURL;URL.createObjectURL=blob=>{const url=original(blob);globalThis.__correctionDownloads.push({blob,url});return url;};document.querySelector('#export-prompt-manifest').click();document.querySelector('#export-prompt-file').click();})()`);
@@ -188,6 +193,15 @@ async function main(){
   assert(correctedProofEnvelope.promptIdentity.instructionId!==originalProofInstruction,'The rejected response reused its controlling instruction instead of generating a replacement.');
   await selectResponseFile(cdp,JSON.stringify(correctedProofEnvelope));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);
   await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,4);await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);
+  // A failed staging write stays in the existing inline report; it must not open a browser dialog or download the response again.
+  const beforeFailedStage=await activeProject(cdp),downloadCount=await evalValue(cdp,'__correctionDownloads.length');
+  await evalValue(cdp,`(()=>{globalThis.__closedLoopStorageFault='during-project-write';})()`);
+  const storageFailureEnvelope=structuredClone(correctedProofEnvelope);storageFailureEnvelope.records.propositions[0].fields.PROPOSITION_TEXT+=' retry storage proof';
+  await selectResponseFile(cdp,JSON.stringify(storageFailureEnvelope));await click(cdp,'#process-response-file');
+  await waitExpr(cdp,`document.querySelector('#validation-report')?.textContent.includes('The response could not be staged')`);
+  const afterFailedStage=await activeProject(cdp);
+  assert(afterFailedStage.revision===beforeFailedStage.revision&&await evalValue(cdp,'__correctionDownloads.length')===downloadCount,'Failed staging changed the project or downloaded a recovery copy.');
+  await evalValue(cdp,`delete globalThis.__closedLoopStorageFault`);
   const beforeReselect=await activeProject(cdp),pendingBefore=beforeReselect.projectData.responseProposals.filter(p=>p.status==='PENDING_OPERATOR_REVIEW').at(-1);
   await selectResponseFile(cdp,JSON.stringify(correctedProofEnvelope));await click(cdp,'#process-response-file');
   await waitExpr(cdp,`document.querySelector('#app-live-status')?.textContent==='response already staged; proposal ready'`,10000);
@@ -198,7 +212,7 @@ async function main(){
   await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);
   const proofPersistence=await evalValue(cdp,`(async()=>{const p=await closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE'),e=closedLoopWorkflowEngine,obligations=p.projectData.proofObligations.filter(e.isActiveRecord);return {integrity:closedLoopProjectStore.validateProjectIntegrity(p).valid,accepted:p.projectData.acceptedChanges.filter(c=>c.stage===4).length,rawPreserved:p.projectData.rawResponses.some(r=>r.completeRawResponse===${JSON.stringify(JSON.stringify(correctedProofEnvelope))}),pendingExpression:obligations.length>0&&obligations.every(o=>e.recordValue(o,'PROOF_EXPRESSION_ID')===null),futureProofBlocked:!e.gate(6,p).complete};})()`);
   assert(proofPersistence.integrity&&proofPersistence.accepted===1&&proofPersistence.rawPreserved&&proofPersistence.pendingExpression&&proofPersistence.futureProofBlocked,`Corrected response did not survive canonical acceptance/reload: ${JSON.stringify(proofPersistence)}`);
-  console.log(JSON.stringify({correctionInstructionRegenerated:true,correctionManifestVerified:true,correctionContextVerified:true,correctedResponsePersistence:proofPersistence}));
+  console.log(JSON.stringify({responseRetriesInline:true,pendingReselectionPreserved:true,correctionInstructionRegenerated:true,correctionManifestVerified:true,correctionContextVerified:true,correctedResponsePersistence:proofPersistence}));
 
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);

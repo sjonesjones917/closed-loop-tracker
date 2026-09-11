@@ -52,12 +52,12 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   const sha=text=>createHash('sha256').update(text).digest('hex'),text=JSON.stringify({promptIdentity:{instructionId:'SAVED-INSTRUCTION'}}),digest=sha(text);
   const saved={stage:4,operation:'COMPLETE',scope:{projectRevision:1},instructionId:'SAVED-INSTRUCTION',bodySha256:'body',contractSha256:'contract',contextSignature:'context',promptEngineVersion:'test-version',transportBindingRequired:true,packageId:'package',operationReservationId:'reservation',challengeNonce:'nonce'};
   const proposal={proposalId:'EXISTING-PROPOSAL',rawResponseId:'EXISTING-RAW',promptId:saved.instructionId,stage:4,status:'PENDING_OPERATOR_REVIEW',preconditions:{projectRevision:3,promptEngineVersion:'test-version'}};
-  const current={job:{JOB_ID:'RESELECT-PENDING'},activeStage:4,revision:3,stages:{4:{}},projectData:{generatedPrompts:[saved],rawResponses:[{rawResponseId:'EXISTING-RAW',sha256:digest,promptInstructionId:saved.instructionId,status:'VALIDATED_PENDING_REVIEW',proposalId:proposal.proposalId}],responseProposals:[proposal]}};
+  const current={job:{JOB_ID:'RESELECT-PENDING'},activeStage:4,revision:3,stages:{4:{}},projectData:{generatedPrompts:[saved],rawResponses:[{rawResponseId:'EXISTING-RAW',sha256:digest,promptInstructionId:saved.instructionId,status:'VALIDATED_PENDING_REVIEW',transport:{authority:'AUTHORITATIVE_RESPONSE_FILE'},proposalId:proposal.proposalId}],responseProposals:[proposal]}};
   const dialogs=[],reports=[];let staged=0,captured=0,downloaded=0;
-  const runtime=vm.createContext({current,Blob,Uint8Array,TextDecoder,queueMicrotask,safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>{},$:()=>({focus(){}}),alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,closedLoopHash:{sha256Text:sha},projectStore:{stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
+  const runtime=vm.createContext({responseActionFailure:null,closedLoopPromptEngine:{version:saved.promptEngineVersion},current,Blob,Uint8Array,TextDecoder,queueMicrotask,safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>{},$:()=>({focus(){}}),alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,closedLoopHash:{sha256Text:sha},projectStore:{stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
   const helpers=app.slice(app.indexOf('function promptMatches'),app.indexOf('function operationMarkup'));
   const handler=app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('));
-  vm.runInContext(helpers+'\n'+handler+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
+  vm.runInContext(helpers+'\n'+app.slice(app.indexOf('function reportResponseFailure'),app.indexOf('function proposalMarkup'))+'\n'+handler+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
   await runtime.selectResponse(new Blob([text],{type:'application/json'}));
   assert.equal(dialogs.length,0,`Response reselection raised a blocking popup instead of preserving the pending proposal: ${dialogs.join(' | ')}`);
   assert.equal(staged,1,'Saved response attempt was rejected before byte staging.');
@@ -65,5 +65,12 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.equal(downloaded,0,'Reselection unexpectedly downloaded a recovery file.');
   assert.equal(current.revision,3,'Reselection made the pending proposal stale.');
   assert.equal(proposal.status,'PENDING_OPERATOR_REVIEW');
+  runtime.projectStore.stageResponseFile=async()=>{throw new Error('storage test failure');};
+  await runtime.selectResponse(new Blob([text],{type:'application/json'}));
+  assert.equal(runtime.responseActionFailure.stage,4);
+  assert.equal(runtime.responseActionFailure.detail,'storage test failure');
+  assert.equal(dialogs.length,0,'A storage failure must use the existing inline validation area.');
+  assert.equal(downloaded,0,'A handled storage failure must not automatically copy/download the accumulated response.');
+  assert.equal(current.revision,3);
   console.log(JSON.stringify({savedAttemptSurvivesUiRevision:true,pendingResponseReselectionIdempotent:true,responseReselectionDialogs:0}));
 }
