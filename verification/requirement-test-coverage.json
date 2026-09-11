@@ -1209,7 +1209,8 @@
       ],
       "productionOwner": [
         "prompt-engine.js:transportedBody/dataEnvelope/compactContextManifest",
-        "prompt-engine.js:recoveryFeedback/contextFor/compactContextManifest"
+        "prompt-engine.js:recoveryFeedback/contextFor/compactContextManifest",
+        "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)"
       ],
       "existingTests": [
         "verify-all-stage-prompts.mjs",
@@ -1219,7 +1220,8 @@
       "negativeAdversarialTests": [
         "verify-prompt-semantics.mjs",
         "verify-prompt-file-identity.mjs",
-        "verify-ingestion.mjs:invalid timing rejects before canonical mutation and appears in replacement instruction"
+        "verify-ingestion.mjs:invalid timing rejects before canonical mutation and appears in replacement instruction",
+        "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer"
@@ -1448,7 +1450,8 @@
         "prompt-engine.js:reserveAndBuildPromptRecord",
         "app-core.js:savePromptRecord/currentStagePrompt/controls",
         "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
-        "workflow-engine.js:recalculate/deriveStageData/operationalNextAction"
+        "workflow-engine.js:recalculate/deriveStageData/operationalNextAction",
+        "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)"
       ],
       "existingTests": [
         "verify-reservation-contract.mjs:automatic author/reviewer/product context preparation and one reservation revision",
@@ -1462,7 +1465,8 @@
         "verify-full-cycle.mjs:preview state is unchanged and duplicate product reservation rejected",
         "verify-reservation-contract.mjs:terminal reservation retry correction and scope identity checks",
         "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade",
-        "verify-file-first-operator.mjs:all30 current-response modes"
+        "verify-file-first-operator.mjs:all30 current-response modes",
+        "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:real Stage04 acceptance to Stage05 automatic export without manual context form",
