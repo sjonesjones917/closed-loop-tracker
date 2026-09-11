@@ -33,6 +33,22 @@ function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engin
 }
 
 verify();
+
+// The old failed attempt remains audit history after a newer response is
+// accepted. Exercise the production selector in every stage view.
+{
+  const runtime=vm.createContext({safe:x=>Array.isArray(x)?x:[],operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE'});
+  const selectionSource=(app.match(/^function (?:latestResponseAttempt|pendingReturnedResponse)\([^\n]+/gm)||[]).join('\n');
+  vm.runInContext(selectionSource+'\nglobalThis.pending=pendingReturnedResponse;',runtime);
+  for(let stage=1;stage<=30;stage++){
+    const old={rawResponseId:'OLD',stage,status:'VALIDATION_FAILED',promptInstructionId:'OLD-PROMPT',files:[{name:'old-design.md'}]},latest={rawResponseId:'NEW',stage,status:'ACCEPTED_DATA_CHANGE',promptInstructionId:'NEW-PROMPT',files:[]};
+    runtime.current={activeStage:stage,projectData:{rawResponses:[old,latest],generatedPrompts:[{instructionId:'OLD-PROMPT',stage,operation:'COMPLETE',scope:{}},{instructionId:'NEW-PROMPT',stage,operation:'COMPLETE',scope:{}}]}};
+    assert.equal(runtime.pending(),null,`Stage ${stage} resurrected a failed response's files after a newer response was accepted.`);
+    latest.status='PRESERVED';assert.equal(runtime.pending()?.rawResponseId,'NEW',`Stage ${stage} lost its current pending file attempt.`);
+    latest.status='ACCEPTED_DATA_CHANGE';runtime.current.projectData.rawResponses.push({...old,rawResponseId:'OTHER-OP',promptInstructionId:'OTHER-PROMPT'});runtime.current.projectData.generatedPrompts.push({instructionId:'OTHER-PROMPT',stage,operation:'OTHER',scope:{}});
+    assert.equal(runtime.pending(),null,`Stage ${stage} mixed an unrelated operation's pending response into the accepted operation.`);
+  }
+}
 assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
 assert.throws(()=>verify({appSource:app.replace('const operationSelection={},runSelection={},responseFileSelection={};','const operationSelection={},runSelection={};')}),/declared response-file selection state/);
 assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/read-back mismatch/);

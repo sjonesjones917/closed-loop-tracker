@@ -81,6 +81,43 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   p.projectData.artifacts[0].fields.AVAILABILITY='BYTES_PERSISTED_AND_VERIFIED';plan=engine.testExecutionPlan(p);assert(!plan.missingArtifactTestIds.includes('TEST-ART-1')&&plan.items[0].artifactIds.includes('ARTIFACT-ART-1'),'Verified current artifact bytes did not satisfy TEST custody.');
 }
 
+// Inline evidence has no file identity. Historical sentinels must not become
+// phantom artifacts; the real-reference negative cases above remain required.
+{
+  const p=project('JOB-INLINE-EVIDENCE');
+  Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_REQUIREMENTS_VERSION:'REQS-1',CURRENT_TEST_SUITE_VERSION:'TESTS-1'});
+  p.activeStage=6;const scope=engine.currentScope(p);
+  p.projectData.requirements.push({...record('requirements',4,{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-INLINE'),scope});
+  const t={...record('tests',6,{REQ_ID:'REQ-INLINE',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'The future generated output',STATUS:'READY',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}},'TEST-INLINE'),scope,evidenceRefs:['EVIDENCE-INLINE']};
+  p.projectData.tests.push(t);
+  const ev={...record('evidenceRecords',6,{ATTACHMENT_ID:'UNKNOWN',CONTENT:'Design reasoning preserved inline.',STATUS:'PRESERVED'},'EVIDENCE-INLINE'),scope};p.projectData.evidenceRecords.push(ev);
+  for(const missing of ['UNKNOWN','NONE','NOT APPLICABLE','PENDING','UNASSIGNED','',null]){
+    ev.fields.ATTACHMENT_ID=ev.ATTACHMENT_ID=missing;
+    const item=engine.testExecutionPlan(p).items[0];
+    assert(item.artifactIds.length===0,`Optional attachment sentinel ${missing} became a file identity.`);
+    assert(!engine.gate(6,p).reasons.some(x=>x.includes('exact artifact bytes')),'Future input requirements incorrectly blocked test design.');
+  }
+  t.fields.STATUS=t.STATUS='BLOCKED';
+  assert(engine.coverageMetrics(p).requirementsWithTests===0,'A non-ready test counted as ready requirement coverage.');
+  t.fields.STATUS=t.STATUS='READY';
+  assert(engine.coverageMetrics(p).requirementsWithTests===1,'A ready test disappeared from requirement coverage.');
+}
+
+// A per-run handoff must not request a future product test's files or reports.
+{
+  const p=project('JOB-HANDOFF-PHASE-SELECTION');
+  Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_REQUIREMENTS_VERSION:'REQS-1',CURRENT_TEST_SUITE_VERSION:'TESTS-1',CURRENT_ITERATION:'ITERATION-1',CURRENT_CANDIDATE_ID:'CANDIDATE-1'});
+  const scope=engine.currentScope(p);
+  for(const [id,phase,stage] of [['RUN','PREPRODUCT_ITERATION',12],['FINAL','FINAL_PRODUCT_MEANING',23]]){
+    p.projectData.tests.push({...record('tests',6,{REQ_ID:'REQ-1',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:id+'-REPORT',STATUS:'READY',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,PER_RUN_REQUIRED:id==='RUN',FINAL_PRODUCT_REQUIRED:id==='FINAL',DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}},'TEST-'+id),scope});
+  }
+  for(const [stage,operation] of [[12,'COMPLETE'],[17,'VERIFY'],[19,'VERIFY']]){
+    const handoff=engine.executionHandoff(p,{stage,operation});
+    assert(handoff.expectBack.some(x=>x.filenameOrPattern==='RUN-REPORT'),`Stage ${stage} lost the due per-run report.`);
+    assert(!handoff.expectBack.some(x=>x.filenameOrPattern==='FINAL-REPORT'),`Stage ${stage} requested a future product report.`);
+  }
+}
+
 // Invalid canonical relationship is rejected before mutation.
 {
   const p=project('JOB-BAD-REL'),stage=3;p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);
