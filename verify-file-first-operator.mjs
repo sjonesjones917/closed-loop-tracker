@@ -38,12 +38,15 @@ verify();
 // accepted. Exercise the production selector in every stage view.
 {
   const runtime=vm.createContext({safe:x=>Array.isArray(x)?x:[],operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE'});
-  const selectionSource=(app.match(/^function (?:latestResponseAttempt|pendingReturnedResponse)\([^\n]+/gm)||[]).join('\n');
-  vm.runInContext(selectionSource+'\nglobalThis.pending=pendingReturnedResponse;',runtime);
+  const selectionSource=(app.match(/^function (?:latestResponseAttempt|latestResponseValidation|pendingReturnedResponse)\([^\n]+/gm)||[]).join('\n');
+  const validationSource=app.slice(app.indexOf('function validationMarkup('),app.indexOf('function proposalMarkup('));
+  Object.assign(runtime,{responseActionFailure:null,esc:String,details:()=>'',currentPromptRecord:()=>null});
+  vm.runInContext(selectionSource+'\n'+validationSource+'\nglobalThis.pending=pendingReturnedResponse;globalThis.validation=validationMarkup;',runtime);
   for(let stage=1;stage<=30;stage++){
-    const old={rawResponseId:'OLD',stage,status:'VALIDATION_FAILED',promptInstructionId:'OLD-PROMPT',files:[{name:'old-design.md'}]},latest={rawResponseId:'NEW',stage,status:'ACCEPTED_DATA_CHANGE',promptInstructionId:'NEW-PROMPT',files:[]};
-    runtime.current={activeStage:stage,projectData:{rawResponses:[old,latest],generatedPrompts:[{instructionId:'OLD-PROMPT',stage,operation:'COMPLETE',scope:{}},{instructionId:'NEW-PROMPT',stage,operation:'COMPLETE',scope:{}}]}};
+    const old={rawResponseId:'OLD',stage,status:'VALIDATION_FAILED',validationId:'OLD-VALIDATION',promptInstructionId:'OLD-PROMPT',files:[{name:'old-design.md'}]},latest={rawResponseId:'NEW',stage,status:'ACCEPTED_DATA_CHANGE',validationId:'NEW-VALIDATION',promptInstructionId:'NEW-PROMPT',files:[]};
+    runtime.current={activeStage:stage,projectData:{rawResponses:[old,latest],responseValidations:[{stage,validationId:'NEW-VALIDATION',valid:true},{stage,validationId:'OLD-VALIDATION',valid:false,issues:[]}],generatedPrompts:[{instructionId:'OLD-PROMPT',stage,operation:'COMPLETE',scope:{}},{instructionId:'NEW-PROMPT',stage,operation:'COMPLETE',scope:{}}]}};
     assert.equal(runtime.pending(),null,`Stage ${stage} resurrected a failed response's files after a newer response was accepted.`);
+    assert.equal(runtime.validation(stage),'',`Stage ${stage} displayed an obsolete validation report for the accepted attempt.`);
     latest.status='PRESERVED';assert.equal(runtime.pending()?.rawResponseId,'NEW',`Stage ${stage} lost its current pending file attempt.`);
     latest.status='ACCEPTED_DATA_CHANGE';runtime.current.projectData.rawResponses.push({...old,rawResponseId:'OTHER-OP',promptInstructionId:'OTHER-PROMPT'});runtime.current.projectData.generatedPrompts.push({instructionId:'OTHER-PROMPT',stage,operation:'OTHER',scope:{}});
     assert.equal(runtime.pending(),null,`Stage ${stage} mixed an unrelated operation's pending response into the accepted operation.`);
@@ -52,7 +55,7 @@ verify();
 // One current response mode: an older success cannot hide a newer rejection.
 {
  const runtime=vm.createContext({safe:x=>Array.isArray(x)?x:[],esc:String,operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE',currentNextAction:()=>({}),pendingProposal:()=>null,acceptedLaneChanges:()=>[{changeId:'OLD-CHANGE'}],stageLocked:()=>null,canonicalCurrentStage:()=>1,reviewerOperation:()=>false});
- const source=(app.match(/^function (?:latestResponseAttempt|interactionModeMarkup)\([^\n]+/gm)||[]).join('\n');
+ const source=(app.match(/^function (?:latestResponseAttempt|latestResponseValidation|interactionModeMarkup)\([^\n]+/gm)||[]).join('\n');
  vm.runInContext(source+'\nglobalThis.mode=interactionModeMarkup;',runtime);
  for(let stage=1;stage<=30;stage++){
   runtime.current={activeStage:stage,stages:{[stage]:{status:'IN PROGRESS'}},projectData:{generatedPrompts:[{instructionId:'CURRENT',stage,operation:'COMPLETE',scope:{}}],rawResponses:[{rawResponseId:'NEW',stage,status:'VALIDATION_FAILED',promptInstructionId:'CURRENT',validationId:'FAILED'}],responseValidations:[{validationId:'FAILED',stage,valid:false}]}};
