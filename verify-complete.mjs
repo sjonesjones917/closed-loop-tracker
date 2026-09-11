@@ -103,6 +103,21 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(engine.coverageMetrics(p).requirementsWithTests===1,'A ready test disappeared from requirement coverage.');
 }
 
+// Only a current, independently reviewed applicability decision can reduce coverage.
+{
+ const p=project('JOB-APPLICABLE-COVERAGE');Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'S1',CURRENT_REQUIREMENTS_VERSION:'R1',CURRENT_TEST_SUITE_VERSION:'T1'});const scope=engine.currentScope(p);
+ p.projectData.requirements.push({...record('requirements',4,{MANDATORY_OPTIONAL_STATUS:'MANDATORY'},'REQ-NA'),scope});
+ p.projectData.propositions.push({...record('propositions',4,{REQUIREMENT_ID:'REQ-NA'},'PROP-NA'),scope});
+ p.projectData.applicabilityRecords.push({...record('applicabilityRecords',5,{SUBJECT_ID:'PROP-NA',SELECTED_APPLICABILITY:'NOT_APPLICABLE'},'APP-NA'),scope});
+ assert(engine.mandatoryRequirements(p).length===1,'Unreviewed applicability reduced mandatory coverage.');
+ const review={...record('semanticReviews',5,{REVIEWED_RECORD_IDS:['APP-NA'],AUTHOR_CONTEXT_ID:'AUTHOR',REVIEWER_CONTEXT_ID:'REVIEWER',INDEPENDENCE_DETERMINATION:'APPLICATION_ESTABLISHED',RESULT:'ACCEPTED',ACCEPTED_DISPOSITION:'ACCEPTED',RECONCILIATION_STATUS:'COMPLETE'},'REVIEW-NA'),scope};p.projectData.semanticReviews.push(review);
+ assert(engine.mandatoryRequirements(p).length===0,'Reviewed NOT_APPLICABLE requirement still counted as missing test coverage.');
+ review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID='AUTHOR';
+ assert(engine.mandatoryRequirements(p).length===1,'Self-review reduced mandatory coverage.');
+ review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID='REVIEWER';review.scope={...scope,requirementsVersion:'OLD'};
+ assert(engine.mandatoryRequirements(p).length===1,'Stale review reduced current mandatory coverage.');
+}
+
 // A per-run handoff must not request a future product test's files or reports.
 {
   const p=project('JOB-HANDOFF-PHASE-SELECTION');

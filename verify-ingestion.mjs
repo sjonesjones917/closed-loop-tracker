@@ -101,7 +101,7 @@ function validEnvelope(p,stage,promptRecord){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
-    const fields={};
+    const fields=collection==='tests'?{VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}}:{};
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
     records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
@@ -128,13 +128,14 @@ for(const operation of ['COMPLETE','RECONCILE_VERIFICATION_SUITE'])for(const [ph
   const p=project(`JOB-TIMING-${operation}-${phase}`);preparePromptPrerequisites(p,6);
   const pr=prompts.buildPromptRecord(6,p,{operation});p.projectData.generatedPrompts.push(pr);
   const e=validEnvelope(p,6,pr);e.stageData={};
-  const fields={TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'Future declared target',TOOLS:'Review',PROCEDURE:'Inspect the actual target',EXPECTED_RESULT:'Established',FAILURE_CONDITION:'Not established',EVIDENCE_TO_PRESERVE:'Review report',STATUS:'READY',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:due,REQUIRED_BY_STAGE:due,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:true,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}};
+  const fields={TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'Future declared target',TOOLS:'Review',PROCEDURE:'Inspect the actual target',EXPECTED_RESULT:'Established',FAILURE_CONDITION:'Not established',EVIDENCE_TO_PRESERVE:'Review report',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:due,REQUIRED_BY_STAGE:due,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:true,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}};
   e.records={tests:[{tempKey:'timing-test',fields,relationships:{},evidenceRefs:['evidence-1']}]};
   const raw=JSON.stringify(e),result=ingestion.prepare(p,{stage:6,text:raw,promptRecord:pr});
   if(result.validation.valid||!result.validation.issues.some(x=>x.code==='INVALID_TEST_TIMING'))throw new Error(`${operation} accepted contradictory ${phase} timing instead of regenerating a correction.`);
   if(result.project.projectData.tests.length||result.project.projectData.acceptedChanges.length)throw new Error('Invalid test timing changed canonical data.');
   if(result.project.projectData.rawResponses.at(-1).completeRawResponse!==raw)throw new Error('Timing rejection lost the exact response.');
-  const replacement=result.project.projectData.generatedPrompts.at(-1);
+  preparePromptPrerequisites(result.project,6);
+  const replacement=prompts.reserveAndBuildPromptRecord(result.project,6,{operation},{owningTabInstance:'TIMING-REGRESSION'}).prompt;
   if(replacement.instructionId===pr.instructionId||!replacement.prompt.includes('INVALID_TEST_TIMING'))throw new Error('Timing failure was omitted from the replacement instruction.');
 }
 
@@ -478,7 +479,7 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
 {
   const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
   if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
-  const def=schema.RECORD_SCHEMAS.tests,fields={};
+  const def=schema.RECORD_SCHEMAS.tests,fields={VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}};
   for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
   fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='FIXTURE_EXTERNAL_TOOL';fields.EXECUTABLE_KIND='NONE';fields.ARTIFACT_REQUIREMENTS='fixture.js';
   e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
