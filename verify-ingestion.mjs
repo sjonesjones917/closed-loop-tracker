@@ -1,4 +1,4 @@
-import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
+import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import './verify-reservation-contract.mjs';
@@ -137,6 +137,33 @@ for(const operation of ['COMPLETE','RECONCILE_VERIFICATION_SUITE'])for(const [ph
   preparePromptPrerequisites(result.project,6);
   const replacement=prompts.reserveAndBuildPromptRecord(result.project,6,{operation},{owningTabInstance:'TIMING-REGRESSION'}).prompt;
   if(replacement.instructionId===pr.instructionId||!replacement.prompt.includes('INVALID_TEST_TIMING'))throw new Error('Timing failure was omitted from the replacement instruction.');
+}
+
+// Proof definitions use the evaluator's closed grammar at response intake.
+// In particular, a narrative branch object must not be saved as executable proof.
+for(const operation of ['COMPLETE','RECONCILE_VERIFICATION_SUITE'])for(const [label,expression] of [
+  ['narrative-branches',{branches:[{primaryTest:{tempKey:'test-1'}}],composition:'Use the matching branch.'}],
+  ['unknown-operator',{type:'NOT',children:[{type:'LEAF',testId:'TEST-1'}]}],
+  ['empty-operator',{type:'ALL_OF',children:[]}],
+  ['invalid-threshold',{type:'AT_LEAST_K',k:2,children:[{type:'LEAF',testId:'TEST-1'}]}],
+  ['missing-leaf-reference',{type:'LEAF'}],
+  ['ambiguous-leaf',{type:'LEAF',testId:'TEST-1',observationId:'OBS-1'}],
+  ['missing-canonical-reference',{type:'LEAF',testId:'TEST-MISSING'}],
+  ['missing-temporary-reference',{type:'LEAF',testId:{tempKey:'absent-test'}}],
+  ['wrong-reference-collection',{type:'LEAF',testId:{tempKey:'proof-1'}}],
+  ['conflicting-operators',{type:'ALL_OF',op:'ANY_OF',children:[{type:'LEAF',testId:'TEST-1'}]}]
+]){
+  const p=project(`JOB-PROOF-${operation}-${label}`);preparePromptPrerequisites(p,6);
+  const pr=prompts.buildPromptRecord(6,p,{operation});p.projectData.generatedPrompts.push(pr);
+  const e=validEnvelope(p,6,pr);e.stageData={};e.records={proofExpressions:[recordProposal(schema,'proofExpressions',{tempKey:'proof-1',overrides:{PROPOSED_EXPRESSION:expression,SEMANTIC_RATIONALE:'Controlled invalid proof fixture.'}})]};
+  const raw=JSON.stringify(e),result=ingestion.prepare(p,{stage:6,text:raw,promptRecord:pr});
+  if(result.validation.valid||!result.validation.issues.some(x=>x.code==='INVALID_PROOF_EXPRESSION'&&x.path.includes('/PROPOSED_EXPRESSION')))throw new Error(`${operation} accepted unusable ${label} proof instead of regenerating a correction.`);
+  if(result.proposal||result.project.projectData.proofExpressions.length||result.project.projectData.acceptedChanges.length)throw new Error('Invalid proof changed canonical data or produced an acceptable proposal.');
+  if(result.project.projectData.rawResponses.at(-1).completeRawResponse!==raw)throw new Error('Proof rejection lost the exact response.');
+  preparePromptPrerequisites(result.project,6);
+  const replacement=prompts.reserveAndBuildPromptRecord(result.project,6,{operation},{owningTabInstance:'PROOF-REGRESSION'}).prompt;
+  if(replacement.instructionId===pr.instructionId||!replacement.prompt.includes('INVALID_PROOF_EXPRESSION'))throw new Error('Proof failure was omitted from the replacement instruction.');
+  if(!['LEAF','ALL_OF','ANY_OF','AT_LEAST_K','tempKey'].every(x=>replacement.prompt.includes(x)))throw new Error('Stage 06 correction omits the usable proof-expression contract.');
 }
 
 const allStages=[];
