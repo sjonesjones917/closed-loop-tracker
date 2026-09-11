@@ -156,7 +156,7 @@ async function main(){
   const canonicalWrite=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},before=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId),revision=before.revision,candidate=structuredClone(before);candidate.stageCount=29;let code='';try{await store.writeProject(candidate,{expectedProjectRevision:revision});}catch(e){code=e.code||'';}const after=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);return {code,revisionSame:after.revision===revision,stageCount:after.stageCount};})()`);assert(canonicalWrite?.code==='PROJECT_INTEGRITY_FAILED'&&canonicalWrite.revisionSame&&canonicalWrite.stageCount===30,'Normal IndexedDB write accepted structurally invalid canonical state.');
 
   console.log('extra:support-controls');
-  await openStage(cdp,1);await fill(cdp,'#blocker-reason','Controlled missing human input');await click(cdp,'#add-blocker');let support=await activeProject(cdp);assert((support.projectData.blockers||[]).length>=1&&support.job.CURRENT_STATE==='BLOCKED','Universal blocker control did not gate the project.');await openStage(cdp,9);assert(await evalValue(cdp,`Boolean(document.querySelector('#add-fresh-context'))`),'Fresh Context control is not rendered at an applicable stage.');assert(await evalValue(cdp,`document.querySelector('#add-fresh-context').disabled===true`),'Fresh Context control must remain gated while prerequisite stages are incomplete.');
+  await openStage(cdp,1);await fill(cdp,'#blocker-reason','Controlled missing human input');await click(cdp,'#add-blocker');let support=await activeProject(cdp);assert((support.projectData.blockers||[]).length>=1&&support.job.CURRENT_STATE==='BLOCKED','Universal blocker control did not gate the project.');await openStage(cdp,9);assert(await evalValue(cdp,`!document.querySelector('#add-fresh-context')&&!document.querySelector('#fresh-context-id')`),'Stage 09 must not ask for manual context registration.');
 
   console.log('extra:retained-project-delete-suppression');
   await click(cdp,'[data-view=\"Project\"]');
@@ -223,21 +223,9 @@ async function main(){
   await cdp.send('Emulation.setDeviceMetricsOverride',{width:393,height:852,deviceScaleFactor:1,mobile:true});
   await openStage(cdp,5);
   await waitExpr(cdp,`document.querySelector('#export-prompt-file')&&!document.querySelector('#export-prompt-file').disabled`);
-  assert(await evalValue(cdp,`(()=>{const field=document.querySelector('#fresh-context-id').parentElement;globalThis.__contextHelp=field.querySelector('.help');globalThis.__contextFieldChildren=field.children.length;return Boolean(__contextHelp)&&!field.querySelector('.notice');})()`),'Context explanation must not appear before the missing-context failure.');
-  await fill(cdp,'#blocker-reason','Keep this unsaved text while explaining the export error.');
+  assert(await evalValue(cdp,`!document.querySelector('#fresh-context-id')&&!document.querySelector('#add-fresh-context')`),'Stage 05 must not require a manually named conversation.');
   const beforeAuthorExport=await activeProject(cdp);
-  await click(cdp,'#export-prompt-file');
-  await waitExpr(cdp,`document.querySelector('#fresh-context-id')?.parentElement.querySelector('.notice.warn')?.textContent.includes('Which agent chat will do this work?')`);
-  await waitExpr(cdp,`(()=>{const banner=document.querySelector('#fresh-context-id')?.parentElement.querySelector('.notice.warn');if(!banner)return false;const r=banner.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;})()`);
-  const contextBanner=await evalValue(cdp,`(()=>{const input=document.querySelector('#fresh-context-id'),banner=input.parentElement.querySelector('.notice.warn'),r=banner.getBoundingClientRect(),style=getComputedStyle(banner),existing=getComputedStyle(Array.from(document.querySelectorAll('#screen .notice.warn')).find(n=>n!==banner));return {sameElement:banner===__contextHelp,sameChildren:input.parentElement.children.length===__contextFieldChildren,focused:document.activeElement===banner,visible:r.top>=0&&r.bottom<=innerHeight,unobscured:banner.contains(document.elementFromPoint(r.left+r.width/2,r.top+2))&&banner.contains(document.elementFromPoint(r.left+r.width/2,r.bottom-2)),wrapped:banner.scrollWidth<=banner.clientWidth,sameRadius:style.borderRadius===existing.borderRadius,text:banner.textContent};})()`);
-  assert(contextBanner.sameElement&&contextBanner.sameChildren&&contextBanner.focused&&contextBanner.visible&&contextBanner.unobscured&&contextBanner.wrapped&&contextBanner.sameRadius,`Context explanation is not visible in the existing form/banner shape: ${JSON.stringify(contextBanner)}`);
-  for(const text of ['agent conversation','name or link','internal IDs automatically','cannot see your external chats','later reviewer','Leave Blocker reason blank'])assert(contextBanner.text.includes(text),`Context explanation omits ${text}.`);
-  assert(await evalValue(cdp,`document.querySelector('#blocker-reason')?.value==='Keep this unsaved text while explaining the export error.'`),'Export failure lost unsaved operator input.');
-  assert((await activeProject(cdp)).revision===beforeAuthorExport.revision,'Failed instruction export mutated the project.');
-  await fill(cdp,'#fresh-context-id','Stage 05 author conversation — browser acceptance');
-  await click(cdp,'#add-fresh-context');
-  await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.freshContexts.some(r=>r.stage===5))`);
-  await waitExpr(cdp,`Boolean(document.querySelector('#fresh-context-id')?.parentElement.querySelector('.help'))&&!document.querySelector('#fresh-context-id').parentElement.querySelector('.notice')`);
+  assert(!beforeAuthorExport.projectData.freshContexts.some(r=>r.stage===5),'The fixture must exercise first export without a registered author.');
   await evalValue(cdp,`(()=>{globalThis.__stage05Downloads=[];const original=URL.createObjectURL;URL.createObjectURL=blob=>{const url=original(blob);__stage05Downloads.push(blob);return url;};document.querySelector('#export-prompt-manifest').click();document.querySelector('#export-prompt-file').click();})()`);
   await waitExpr(cdp,`__stage05Downloads.length===2`,30000);
   const stage05Transfer=await evalValue(cdp,`Promise.all(__stage05Downloads.map(b=>b.text())).then(([manifest,instruction])=>({manifest:JSON.parse(manifest),instruction}))`);
@@ -250,7 +238,10 @@ async function main(){
   await fill(cdp,'#project-display-name','');await click(cdp,'#rename-project');
   await waitExpr(cdp,`Array.from(document.querySelectorAll('#screen .notice')).some(n=>n.textContent==='Enter a display name.')`);
   assert(cdp.dialogs.length===0,`Application action still opened a native popup: ${cdp.dialogs.join(' | ')}`);
-  console.log(JSON.stringify({stage05ExportRecoveredInline:true,stage05ManifestVerified:true,existingFormPreserved:true,projectAndStageFailuresInline:true,contextExplanationConditional:true,contextExplanationVisibleOnMobile:true,contextExplanationReusesExistingHelp:true,nativePopups:0}));
+  const automaticAuthor=await activeProject(cdp),authorContexts=automaticAuthor.projectData.freshContexts.filter(r=>r.stage===5);
+  assert(authorContexts.length===1&&authorContexts[0].EXTERNAL_CONTEXT_IDENTIFIER==='UNKNOWN','Export must allocate exactly one internal context without inventing an external chat identity.');
+  assert(!automaticAuthor.projectData.history.some(r=>r.type==='FRESH_CONTEXT_REGISTERED'&&r.stage===5),'The app fabricated a human context-registration event.');
+  console.log(JSON.stringify({stage05ExportAutomatic:true,stage05ManifestVerified:true,manualContextControls:0,projectAndStageFailuresInline:true,nativePopups:0}));
 
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);

@@ -189,7 +189,8 @@
         "verify-data-route-closure.mjs",
         "verify-semantic-invariant.mjs",
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
-        "verify-file-first-operator.mjs:Stage 05 actual save/export failure and all-30-stage inline handoff failures"
+        "verify-file-first-operator.mjs:Stage 05 actual save/export failure and all-30-stage inline handoff failures",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -348,7 +349,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-independent-preflight.mjs"
+        "verify-independent-preflight.mjs",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -426,7 +428,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-ten-independent-runs.mjs"
+        "verify-ten-independent-runs.mjs",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -464,7 +467,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-independent-run-verification.mjs"
+        "verify-independent-run-verification.mjs",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -654,7 +658,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-corrected-iteration.mjs"
+        "verify-corrected-iteration.mjs",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -732,7 +737,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-candidate-freeze.mjs",
-        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -807,7 +813,8 @@
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
-        "verify-data-route-closure.mjs"
+        "verify-data-route-closure.mjs",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -883,7 +890,8 @@
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
-        "verify-data-route-closure.mjs"
+        "verify-data-route-closure.mjs",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -920,7 +928,8 @@
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
-        "verify-data-route-closure.mjs"
+        "verify-data-route-closure.mjs",
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1209,25 +1218,26 @@
       ],
       "productionOwner": [
         "prompt-engine.js:promptFileManifest; project-store.js:persistPromptContextFiles/readPromptContextFile; app-core.js:promptExport",
-        "app-core.js:responseAttemptPrompt/prepareStageResponseFile/validationMarkup"
+        "app-core.js:responseAttemptPrompt/prepareStageResponseFile/validationMarkup",
+        "workflow-engine.js:preparePromptContext; prompt-engine.js:reserveAndBuildPromptRecord"
       ],
       "existingTests": [
         "verify-file-first-operator.mjs",
         "verify-prompt-file-identity.mjs",
-        "verify-file-first-operator.mjs:Stage 05 actual save/export failure and all-30-stage inline handoff failures"
+        "verify-reservation-contract.mjs:automatic context/product preparation and atomic revision",
+        "verify-full-cycle.mjs:automatic contexts through all 30 stages and three ten-run batches"
       ],
       "negativeAdversarialTests": [
         "verify-reservation-contract.mjs",
         "verify-file-first-response.mjs",
         "verify-file-first-operator.mjs:saved attempt after UI revision, pending reselection and inline storage failure",
-        "verify-file-first-operator.mjs:no native popups, no export or revision mutation on missing author context, preserved unsaved input",
-        "verify-file-first-operator.mjs:missing author/reviewer context explains external human input versus application IDs; original field help restored after recovery"
+        "verify-complete.mjs:unknown external names are not duplicate identities; actual context reuse and prior-review leakage rejected",
+        "verify-file-first-operator.mjs:no manual context naming, repeat export stable, all-stage failures inline"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer",
         "verify-browser-extra.mjs:invalid replacement, correction export, inline storage failure, pending reselection, acceptance and reload",
-        "verify-browser-extra.mjs:Stage 05 inline failure, existing context control, recovered instruction/manifest export and non-response control errors",
-        "verify-browser-extra.mjs:conditional context explanation reuses existing help and warning style, visible without overlays at 393 px, then clears after registration"
+        "verify-browser-extra.mjs:Stage04 acceptance to Stage05 automatic author allocation, exact instruction/manifest export, no manual context form or popup"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1394,6 +1404,43 @@
       ],
       "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
       "status": "OPEN_PHYSICAL_OR_VISUAL_AUTHORITY"
+    },
+    {
+      "id": "APPLICATION-BOOKKEEPING",
+      "requirement": "Forbidden: make the user manually allocate identifiers, calculate hashes, construct schemas, connect routine relationships, calculate gates, or retype canonical information.",
+      "normativeRequirementIds": [
+        "NREQ-62612bba4d53d7c2bd588f5ca7ee8bc6"
+      ],
+      "sourceLines": [
+        56
+      ],
+      "productionOwner": [
+        "workflow-schema.js:RECORD_OWNERSHIP.freshContexts",
+        "workflow-engine.js:preparePromptContext/reserveRunBatch/reserveProductExecution",
+        "prompt-engine.js:reserveAndBuildPromptRecord",
+        "app-core.js:savePromptRecord/currentStagePrompt/controls"
+      ],
+      "existingTests": [
+        "verify-reservation-contract.mjs:automatic author/reviewer/product context preparation and one reservation revision",
+        "verify-full-cycle.mjs:all-30-stage lifecycle and automatic initial/corrected/confirmation run contexts",
+        "verify-file-first-operator.mjs:Stage05 first export and repeat export"
+      ],
+      "negativeAdversarialTests": [
+        "verify-complete.mjs:canonical/external context reuse and prohibited prior-review material",
+        "verify-full-cycle.mjs:preview state is unchanged and duplicate product reservation rejected",
+        "verify-reservation-contract.mjs:terminal reservation retry correction and scope identity checks"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:real Stage04 acceptance to Stage05 automatic export without manual context form",
+        "verify-mobile-stage-action.mjs:all 30 stages and existing accumulated-data controls"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "evidenceGap": "This mapping proves only the listed application-owned paths after exact-revision CI/browser execution. It does not prove hidden provider context independence, every human-action boundary, an actual external-agent project, physical iPhone acceptance or approved visual authority.",
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     }
   ]
 }
