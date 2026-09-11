@@ -79,3 +79,34 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.equal(current.revision,3);
   console.log(JSON.stringify({savedAttemptSurvivesUiRevision:true,pendingResponseReselectionIdempotent:true,responseReselectionDialogs:0}));
 }
+
+// Reproduce the reported Stage 05 export through the actual save/export handlers.
+// Operational errors belong in existing inline notices, without replacing forms.
+{
+  const dialogs=[],announcements=[];let rendered=0,downloaded=0,focused=0;
+  const notice={textContent:'Existing next action',classList:{add(){}},setAttribute(){},focus(){},scrollIntoView(){}},disclosure={open:false,parentElement:null};
+  const input={value:'Unsaved operator text',parentElement:disclosure,focus(){focused++;}};
+  const runtime=vm.createContext({current:{activeStage:5,revision:7,job:{JOB_ID:'INLINE-EXPORT'}},setTimeout,queueMicrotask,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',currentPromptRecord:()=>null,currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,$:selector=>selector==='#fresh-context-id'?input:notice,document:{activeElement:input},console:{error(){}},Element:class{}});
+  disclosure.tagName='DETAILS';
+  const reporterStart=app.indexOf('function reportActionFailure(');
+  if(reporterStart>=0)vm.runInContext(app.slice(reporterStart,app.indexOf('\nfunction ',reporterStart+1)),runtime);
+  vm.runInContext(app.slice(app.indexOf('async function savePromptRecord('),app.indexOf('function promptTransportFilename('))+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
+  await runtime.exportAttempt(()=>downloaded++);
+  assert.equal(dialogs.length,0,`Stage 05 instruction export opened the reported popup: ${dialogs.join(' | ')}`);
+  assert.match(notice.textContent,/conversation|fresh.context/i,'The existing inline notice must explain the missing conversation identifier.');
+  assert.equal(disclosure.open,true,'The required existing context input remains hidden.');
+  assert.equal(focused,1,'The inline error must point to the existing context input.');
+  assert.equal(downloaded,0,'An unbound author instruction was exported.');
+  assert.equal(runtime.current.revision,7);
+  assert.equal(input.value,'Unsaved operator text');
+  assert.equal(rendered,0,'Reporting an operational error must not rerender the form.');
+  runtime.savePromptRecord=async()=>{throw new Error('The selected file could not be read. Select it again.');};
+  for(let stage=1;stage<=30;stage++){
+    runtime.current.activeStage=stage;await runtime.exportAttempt(()=>downloaded++);
+    assert.match(notice.textContent,/selected file could not be read/);
+  }
+  assert.equal(dialogs.length,0,'An all-stage handoff failure opened a native popup.');
+  assert.equal(downloaded,0);
+  assert.doesNotMatch(app,/\b(?:alert|confirm|prompt)\s*\(/,'Application handlers must use existing inline messaging instead of native popups.');
+  console.log(JSON.stringify({stage05ExportFailureInline:true,existingContextControlReachable:true,all30HandoffFailuresInline:true,nativePopups:0,operatorInputPreserved:true}));
+}
