@@ -28,3 +28,33 @@ export function recordProposal(schema,collection,{tempKey,targetId,relationships
   return {tempKey:targetId?undefined:(tempKey||`${collection}-1`),targetId:targetId||undefined,fields,relationships,evidenceRefs:evidenceRef?[evidenceRef]:[]};
 }
 export function evidence(label='fixture'){return {temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:`${label} evidence`,location:'verify-full-cycle.mjs',content:`controlled ${label} evidence`};}
+
+// Advance through real response acceptance to the first proposition-producing stage.
+export function stage04AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSISTENCE'){
+  const {core,schema,engine,prompts,ingestion}=runtime;
+  let p=core.createBlankState(jobId);
+  Object.assign(p.job,{JOB_TITLE:'Response acceptance persistence',EXACT_USER_OBJECTIVE_VERBATIM:'Produce a verified checklist.',EXPLICIT_USER_REQUIREMENTS:'The checklist must contain the required verified content.',CURRENT_INPUT_VERSION:'INPUT-v001'});
+  engine.ensureShape(p);engine.recalculate(p);
+  function accept(stage,stageData){
+    const pr=prompts.buildPromptRecord(stage,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(pr);
+    const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records:{},evidence:[evidence(`stage-${stage}`)],unresolved:[],warnings:[],attachments:[]};
+    const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord:pr});
+    if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
+    const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'BROWSER_FIXTURE'});p=committed.project;return committed;
+  }
+  const manifest=engine.intakeCoverageManifest(p),capture={schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Preserved for downstream reuse.',extractedStatements:[{statementKey:`s-${i}`,text:u.rawValueText,statementClass:'REQUIREMENT'}]}))};
+  const first=accept(1,{EXACT_DELIVERABLE_REQUESTED:'Verified checklist',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)});
+  engine.recordStageConfirmation(p,1,true,'Intent confirmed','BROWSER_FIXTURE',{acceptedChangeId:first.acceptedChange.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION,instructionId:first.acceptedChange.promptId,contextSignature:first.acceptedChange.contextSignature,operatorLabel:'BROWSER_FIXTURE'});
+  accept(2,{AUTHORITY_HIERARCHY:'No external authority applies.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'Evidence-supported search found no applicable external governing source.'});
+  accept(3,{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:1,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false});
+  for(let n=1;n<=3;n++)if(!engine.gate(n,p).complete)throw new Error(`Fixture prerequisite ${n}: ${engine.gate(n,p).reasons.join(' | ')}`);
+  p.activeStage=4;p.activeView='Workflow';return p;
+}
+
+export function stage04AcceptanceEnvelope(runtime,p,pr){
+  const {schema,engine}=runtime,manifest=engine.obligationManifest(p),target=manifest.items.find(item=>item.text==='The checklist must contain the required verified content.');
+  if(!target)throw new Error('The fixture lost its exact human requirement.');
+  const records={requirements:[recordProposal(schema,'requirements',{tempKey:'req',overrides:{OBLIGATION:target.text,REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:target.obligationId,APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'Required content is present.',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC_AND_INDEPENDENT_CONTENT_REVIEW',EXPECTED_EVIDENCE:'Canonical verification evidence',FAILURE_CONDITION:'Required content absent',SEVERITY:'MAJOR'}})],propositions:[recordProposal(schema,'propositions',{tempKey:'prop',relationships:{REQUIREMENT_ID:{tempKey:'req'}},overrides:{PROPOSITION_TEXT:target.text,SUBJECT_AND_SCOPE_DESCRIPTION:'The current checklist and requirement scope.',SATISFACTION_MEANING:'The required verified content is present.',FAILURE_MEANING:'The required verified content is absent.'}})]};
+  const stageEvidence=[evidence('stage-4'),...manifest.items.filter(item=>item.obligationId!==target.obligationId).map((item,i)=>({temporaryKey:`context-${i}`,kind:'OBLIGATION_DISPOSITION',description:'Preserved fixture context',authorityType:'AGENT_CLAIM',location:'Stage 04 obligation accounting',content:JSON.stringify({obligationId:item.obligationId,disposition:'retained nonnormative context',reason:'Preserved descriptive context for this checklist fixture.'})}))];
+  return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:4,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},...(pr.transportBindingRequired?{packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce}:{}),scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records,evidence:stageEvidence,unresolved:[],warnings:[],attachments:[]};
+}
