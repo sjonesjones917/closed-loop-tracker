@@ -220,18 +220,24 @@ async function main(){
   console.log(JSON.stringify({responseRetriesInline:true,pendingReselectionPreserved:true,correctionInstructionRegenerated:true,correctionManifestVerified:true,correctionContextVerified:true,correctedResponsePersistence:proofPersistence}));
 
   console.log('extra:stage05-export-and-application-failures-inline');
+  await cdp.send('Emulation.setDeviceMetricsOverride',{width:393,height:852,deviceScaleFactor:1,mobile:true});
   await openStage(cdp,5);
   await waitExpr(cdp,`document.querySelector('#export-prompt-file')&&!document.querySelector('#export-prompt-file').disabled`);
+  assert(await evalValue(cdp,`(()=>{const field=document.querySelector('#fresh-context-id').parentElement;globalThis.__contextHelp=field.querySelector('.help');globalThis.__contextFieldChildren=field.children.length;return Boolean(__contextHelp)&&!field.querySelector('.notice');})()`),'Context explanation must not appear before the missing-context failure.');
   await fill(cdp,'#blocker-reason','Keep this unsaved text while explaining the export error.');
   const beforeAuthorExport=await activeProject(cdp);
   await click(cdp,'#export-prompt-file');
-  await waitExpr(cdp,`document.querySelector('#next-required-action > .notice')?.textContent.includes('conversation that will write this response')`);
-  assert(await evalValue(cdp,`document.activeElement?.id==='fresh-context-id'&&document.querySelector('#fresh-context-id').getClientRects().length>0`),'Stage 05 export error did not reveal/focus the existing context field.');
+  await waitExpr(cdp,`document.querySelector('#fresh-context-id')?.parentElement.querySelector('.notice.warn')?.textContent.includes('Which agent chat will do this work?')`);
+  await waitExpr(cdp,`(()=>{const banner=document.querySelector('#fresh-context-id')?.parentElement.querySelector('.notice.warn');if(!banner)return false;const r=banner.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;})()`);
+  const contextBanner=await evalValue(cdp,`(()=>{const input=document.querySelector('#fresh-context-id'),banner=input.parentElement.querySelector('.notice.warn'),r=banner.getBoundingClientRect(),style=getComputedStyle(banner),existing=getComputedStyle(Array.from(document.querySelectorAll('#screen .notice.warn')).find(n=>n!==banner));return {sameElement:banner===__contextHelp,sameChildren:input.parentElement.children.length===__contextFieldChildren,focused:document.activeElement===banner,visible:r.top>=0&&r.bottom<=innerHeight,unobscured:banner.contains(document.elementFromPoint(r.left+r.width/2,r.top+2))&&banner.contains(document.elementFromPoint(r.left+r.width/2,r.bottom-2)),wrapped:banner.scrollWidth<=banner.clientWidth,sameRadius:style.borderRadius===existing.borderRadius,text:banner.textContent};})()`);
+  assert(contextBanner.sameElement&&contextBanner.sameChildren&&contextBanner.focused&&contextBanner.visible&&contextBanner.unobscured&&contextBanner.wrapped&&contextBanner.sameRadius,`Context explanation is not visible in the existing form/banner shape: ${JSON.stringify(contextBanner)}`);
+  for(const text of ['agent conversation','name or link','internal IDs automatically','cannot see your external chats','later reviewer','Leave Blocker reason blank'])assert(contextBanner.text.includes(text),`Context explanation omits ${text}.`);
   assert(await evalValue(cdp,`document.querySelector('#blocker-reason')?.value==='Keep this unsaved text while explaining the export error.'`),'Export failure lost unsaved operator input.');
   assert((await activeProject(cdp)).revision===beforeAuthorExport.revision,'Failed instruction export mutated the project.');
   await fill(cdp,'#fresh-context-id','Stage 05 author conversation — browser acceptance');
   await click(cdp,'#add-fresh-context');
   await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.freshContexts.some(r=>r.stage===5))`);
+  await waitExpr(cdp,`Boolean(document.querySelector('#fresh-context-id')?.parentElement.querySelector('.help'))&&!document.querySelector('#fresh-context-id').parentElement.querySelector('.notice')`);
   await evalValue(cdp,`(()=>{globalThis.__stage05Downloads=[];const original=URL.createObjectURL;URL.createObjectURL=blob=>{const url=original(blob);__stage05Downloads.push(blob);return url;};document.querySelector('#export-prompt-manifest').click();document.querySelector('#export-prompt-file').click();})()`);
   await waitExpr(cdp,`__stage05Downloads.length===2`,30000);
   const stage05Transfer=await evalValue(cdp,`Promise.all(__stage05Downloads.map(b=>b.text())).then(([manifest,instruction])=>({manifest:JSON.parse(manifest),instruction}))`);
@@ -244,7 +250,7 @@ async function main(){
   await fill(cdp,'#project-display-name','');await click(cdp,'#rename-project');
   await waitExpr(cdp,`Array.from(document.querySelectorAll('#screen .notice')).some(n=>n.textContent==='Enter a display name.')`);
   assert(cdp.dialogs.length===0,`Application action still opened a native popup: ${cdp.dialogs.join(' | ')}`);
-  console.log(JSON.stringify({stage05ExportRecoveredInline:true,stage05ManifestVerified:true,existingFormPreserved:true,projectAndStageFailuresInline:true,nativePopups:0}));
+  console.log(JSON.stringify({stage05ExportRecoveredInline:true,stage05ManifestVerified:true,existingFormPreserved:true,projectAndStageFailuresInline:true,contextExplanationConditional:true,contextExplanationVisibleOnMobile:true,contextExplanationReusesExistingHelp:true,nativePopups:0}));
 
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);

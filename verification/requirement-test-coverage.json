@@ -1220,12 +1220,14 @@
         "verify-reservation-contract.mjs",
         "verify-file-first-response.mjs",
         "verify-file-first-operator.mjs:saved attempt after UI revision, pending reselection and inline storage failure",
-        "verify-file-first-operator.mjs:no native popups, no export or revision mutation on missing author context, preserved unsaved input"
+        "verify-file-first-operator.mjs:no native popups, no export or revision mutation on missing author context, preserved unsaved input",
+        "verify-file-first-operator.mjs:missing author/reviewer context explains external human input versus application IDs; original field help restored after recovery"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer",
         "verify-browser-extra.mjs:invalid replacement, correction export, inline storage failure, pending reselection, acceptance and reload",
-        "verify-browser-extra.mjs:Stage 05 inline failure, existing context control, recovered instruction/manifest export and non-response control errors"
+        "verify-browser-extra.mjs:Stage 05 inline failure, existing context control, recovered instruction/manifest export and non-response control errors",
+        "verify-browser-extra.mjs:conditional context explanation reuses existing help and warning style, visible without overlays at 393 px, then clears after registration"
       ],
       "deployedProof": [
         "verify-live.mjs",
