@@ -61,3 +61,30 @@ function prepareAuthoritative(p,pr,envelope){const text=JSON.stringify(envelope)
 }
 
 console.log(JSON.stringify({reservationContract:'PASS',targetSlot:target,reservationRevision:value(r,'RESERVATION_REVISION'),finalState:value(r,'STATUS'),externalResponseTransportBound:true,atomicReservationPromptCommit:true,replacementTransportLifecycle:true}));
+
+// A second response to an already rejected attempt is a normal validation failure,
+// not a second terminal-state transition. Its findings must reach the correction prompt.
+{
+  const p=transportProject('JOB-REJECTED-ATTEMPT-RETRY'),{pr}=reserveAndSave(p),first=blockedEnvelope(p,pr);
+  first.challengeNonce='1'.repeat(32);
+  const rejected=ingestion.prepare(p,{stage:1,text:JSON.stringify(first),promptRecord:pr});
+  assert(!rejected.validation.valid&&rejected.validation.issues.some(x=>x.code==='CHALLENGE_NONCE_MISMATCH'));
+  const second=structuredClone(first);second.challengeNonce='2'.repeat(32);
+  const retried=ingestion.prepare(rejected.project,{stage:1,text:JSON.stringify(second),promptRecord:pr});
+  assert(!retried.validation.valid&&retried.validation.issues.some(x=>x.code==='STALE_OPERATION_RESERVATION')&&retried.validation.issues.some(x=>x.code==='CHALLENGE_NONCE_MISMATCH'));
+  assert.equal(value(retried.project.projectData.operationReservations.find(r=>id(r)===pr.operationReservationId),'STATUS'),'REJECTED');
+  assert.equal(retried.rawRecord.completeRawResponse,JSON.stringify(second));
+  assert.equal(retried.project.projectData.acceptedChanges.length,0);
+  const correction=reserveAndSave(retried.project).pr;
+  assert.notEqual(correction.instructionId,pr.instructionId);
+  assert(correction.prompt.includes('STALE_OPERATION_RESERVATION')&&correction.prompt.includes('CHALLENGE_NONCE_MISMATCH'),'Retry findings did not reach the regenerated correction instruction.');
+  for(const terminal of ['ACCEPTED','CANCELLED','SUPERSEDED','EXPIRED_BY_SCOPE']){
+    const t=transportProject('JOB-TERMINAL-RESPONSE-'+terminal),{pr:tp,res}=reserveAndSave(t);
+    engine.transitionOperationReservation(res,'EXPORTED');engine.transitionOperationReservation(res,'RESPONSE_STAGED');engine.transitionOperationReservation(res,terminal);
+    const result=ingestion.prepare(t,{stage:1,text:JSON.stringify(blockedEnvelope(t,tp)),promptRecord:tp});
+    assert(!result.validation.valid&&result.validation.issues.some(x=>x.code==='STALE_OPERATION_RESERVATION'));
+    assert.equal(value(result.project.projectData.operationReservations.find(r=>id(r)===tp.operationReservationId),'STATUS'),terminal);
+    assert.equal(result.project.projectData.acceptedChanges.length,0);
+  }
+  console.log(JSON.stringify({terminalAttemptRetriesValidated:true,terminalStatePreserved:true,retryCorrectionRegenerated:true}));
+}
