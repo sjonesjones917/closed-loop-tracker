@@ -86,7 +86,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   const dialogs=[],announcements=[];let rendered=0,downloaded=0,focused=0;
   const notice={textContent:'Existing next action',classList:{add(){}},setAttribute(){},focus(){},scrollIntoView(){}},disclosure={open:false,parentElement:null};
   const input={value:'Unsaved operator text',parentElement:disclosure,focus(){focused++;}};
-  const runtime=vm.createContext({current:{activeStage:5,revision:7,job:{JOB_ID:'INLINE-EXPORT'}},setTimeout,queueMicrotask,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',currentPromptRecord:()=>null,currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,$:selector=>selector==='#fresh-context-id'?input:notice,document:{activeElement:input},console:{error(){}},Element:class{}});
+  const runtime=vm.createContext({actionFailureNotice:null,current:{activeStage:5,revision:7,job:{JOB_ID:'INLINE-EXPORT'}},setTimeout,queueMicrotask,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',currentPromptRecord:()=>null,currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,$:selector=>selector==='#fresh-context-id'?input:notice,document:{activeElement:input},console:{error(){}},Element:class{}});
   disclosure.tagName='DETAILS';
   const reporterStart=app.indexOf('function reportActionFailure(');
   if(reporterStart>=0)vm.runInContext(app.slice(reporterStart,app.indexOf('\nfunction ',reporterStart+1)),runtime);
