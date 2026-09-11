@@ -206,6 +206,8 @@ async function main(){
   await selectResponseFile(cdp,JSON.stringify(correctedProofEnvelope));await click(cdp,'#process-response-file');
   await waitExpr(cdp,`document.querySelector('#app-live-status')?.textContent==='response already staged; proposal ready'`,10000);
   const afterReselect=await activeProject(cdp);
+  const originalStagingId=beforeReselect.projectData.rawResponses.find(r=>r.rawResponseId===pendingBefore.rawResponseId).transport.stagingId;
+  assert(await evalValue(cdp,`closedLoopProjectStore.readStagedResponseFile({jobId:'JOB-BROWSER-PROOF-PERSISTENCE',stagingId:${JSON.stringify(originalStagingId)}}).then(row=>row.byteSize>0)`),'Reselection removed the original response evidence.');
   assert(afterReselect.revision===beforeReselect.revision&&afterReselect.projectData.rawResponses.length===beforeReselect.projectData.rawResponses.length&&afterReselect.projectData.responseProposals.find(p=>p.proposalId===pendingBefore.proposalId)?.status==='PENDING_OPERATOR_REVIEW','Reselecting the pending response changed or invalidated its proposal.');
   await click(cdp,'#accept-proposal');
   await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.acceptedChanges.some(c=>c.stage===4))`,30000);
