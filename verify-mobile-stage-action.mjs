@@ -108,7 +108,8 @@ async function main(){
   assert(targetAfterReceipts&&!targetAfterReceipts.parseFailed&&targetAfterReceipts.challenge===mobileTarget.challenge&&targetAfterReceipts.mobileAcceptanceTargetId===mobileTarget.mobileAcceptanceTargetId,`Pinned mobile target was lost after receipt rerender: ${JSON.stringify(targetAfterReceipts)}`);
   const measurementsBeforeMismatch=await evaluate(cdp,`closedLoopProjectStore.metaGet(${JSON.stringify(sessionKey)}).then(session=>session?.measurements?.recordedAt||null)`);
   await evaluate(cdp,"globalThis.__mobileAcceptanceAlert=''");await fill(cdp,'#mobile-acceptance-target-json',JSON.stringify({...mobileTarget,deviceModel:'iPhone 14'}));await click(cdp,'#record-mobile-acceptance-measurements');
-  await waitFor(cdp,`globalThis.__mobileAcceptanceAlert.includes('does not match the persisted acceptance-session target')`);
+  await waitFor(cdp,`document.querySelector('#next-required-action > .notice')?.textContent.includes('does not match the persisted acceptance-session target')`);
+  assert(!(await evaluate(cdp,'globalThis.__mobileAcceptanceAlert')),'A mismatched acceptance target opened a native popup instead of the existing inline notice.');
   const mismatchState=await evaluate(cdp,`closedLoopProjectStore.metaGet(${JSON.stringify(sessionKey)}).then(session=>({target:session?.target,recordedAt:session?.measurements?.recordedAt||null}))`);
   assert(mismatchState.target?.deviceModel===mobileTarget.deviceModel&&mismatchState.target?.challenge===mobileTarget.challenge,`Target mismatch mutated the persisted acceptance target: ${JSON.stringify(mismatchState.target)}`);
   assert(mismatchState.recordedAt===measurementsBeforeMismatch,`Target mismatch mutated persisted measurements: before=${measurementsBeforeMismatch} after=${mismatchState.recordedAt}`);
