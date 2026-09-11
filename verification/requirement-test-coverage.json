@@ -188,20 +188,24 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-semantic-invariant.mjs",
-        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance",
+        "verify-file-first-operator.mjs:Stage 05 actual save/export failure and all-30-stage inline handoff failures"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-file-first-operator.mjs:no native popups, no export or revision mutation on missing author context, preserved unsaved input"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-browser-extra.mjs:Stage 05 inline failure, existing context control, recovered instruction/manifest export and non-response control errors"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
-        "verify-mobile-stage-action.mjs"
+        "verify-mobile-stage-action.mjs",
+        "verify-browser-extra.mjs:Stage 05 and non-response inline recovery"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
@@ -1209,22 +1213,26 @@
       ],
       "existingTests": [
         "verify-file-first-operator.mjs",
-        "verify-prompt-file-identity.mjs"
+        "verify-prompt-file-identity.mjs",
+        "verify-file-first-operator.mjs:Stage 05 actual save/export failure and all-30-stage inline handoff failures"
       ],
       "negativeAdversarialTests": [
         "verify-reservation-contract.mjs",
         "verify-file-first-response.mjs",
-        "verify-file-first-operator.mjs:saved attempt after UI revision, pending reselection and inline storage failure"
+        "verify-file-first-operator.mjs:saved attempt after UI revision, pending reselection and inline storage failure",
+        "verify-file-first-operator.mjs:no native popups, no export or revision mutation on missing author context, preserved unsaved input"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer",
-        "verify-browser-extra.mjs:invalid replacement, correction export, inline storage failure, pending reselection, acceptance and reload"
+        "verify-browser-extra.mjs:invalid replacement, correction export, inline storage failure, pending reselection, acceptance and reload",
+        "verify-browser-extra.mjs:Stage 05 inline failure, existing context control, recovered instruction/manifest export and non-response control errors"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs",
-        "verify-browser-extra.mjs"
+        "verify-browser-extra.mjs",
+        "verify-browser-extra.mjs:Stage 05 and non-response inline recovery"
       ],
       "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"

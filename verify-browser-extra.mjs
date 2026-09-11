@@ -219,6 +219,33 @@ async function main(){
   assert(proofPersistence.integrity&&proofPersistence.accepted===1&&proofPersistence.rawPreserved&&proofPersistence.pendingExpression&&proofPersistence.futureProofBlocked,`Corrected response did not survive canonical acceptance/reload: ${JSON.stringify(proofPersistence)}`);
   console.log(JSON.stringify({responseRetriesInline:true,pendingReselectionPreserved:true,correctionInstructionRegenerated:true,correctionManifestVerified:true,correctionContextVerified:true,correctedResponsePersistence:proofPersistence}));
 
+  console.log('extra:stage05-export-and-application-failures-inline');
+  await openStage(cdp,5);
+  await waitExpr(cdp,`document.querySelector('#export-prompt-file')&&!document.querySelector('#export-prompt-file').disabled`);
+  await fill(cdp,'#blocker-reason','Keep this unsaved text while explaining the export error.');
+  const beforeAuthorExport=await activeProject(cdp);
+  await click(cdp,'#export-prompt-file');
+  await waitExpr(cdp,`document.querySelector('#next-required-action > .notice')?.textContent.includes('conversation that will write this response')`);
+  assert(await evalValue(cdp,`document.activeElement?.id==='fresh-context-id'&&document.querySelector('#fresh-context-id').getClientRects().length>0`),'Stage 05 export error did not reveal/focus the existing context field.');
+  assert(await evalValue(cdp,`document.querySelector('#blocker-reason')?.value==='Keep this unsaved text while explaining the export error.'`),'Export failure lost unsaved operator input.');
+  assert((await activeProject(cdp)).revision===beforeAuthorExport.revision,'Failed instruction export mutated the project.');
+  await fill(cdp,'#fresh-context-id','Stage 05 author conversation — browser acceptance');
+  await click(cdp,'#add-fresh-context');
+  await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.freshContexts.some(r=>r.stage===5))`);
+  await evalValue(cdp,`(()=>{globalThis.__stage05Downloads=[];const original=URL.createObjectURL;URL.createObjectURL=blob=>{const url=original(blob);__stage05Downloads.push(blob);return url;};document.querySelector('#export-prompt-manifest').click();document.querySelector('#export-prompt-file').click();})()`);
+  await waitExpr(cdp,`__stage05Downloads.length===2`,30000);
+  const stage05Transfer=await evalValue(cdp,`Promise.all(__stage05Downloads.map(b=>b.text())).then(([manifest,instruction])=>({manifest:JSON.parse(manifest),instruction}))`);
+  assert(createHash('sha256').update(stage05Transfer.instruction).digest('hex')===stage05Transfer.manifest.instruction.sha256,'Stage 05 export recovery changed manifest/instruction identity.');
+  // Separate non-response controls use the same established inline notice.
+  await fill(cdp,'#blocker-reason','');await click(cdp,'#add-blocker');
+  await waitExpr(cdp,`document.querySelector('#next-required-action > .notice')?.textContent.includes('blocker reason is required')`);
+  await click(cdp,'[data-view="Project"]');
+  await evalValue(cdp,`document.querySelector('#project-management').open=true`);
+  await fill(cdp,'#project-display-name','');await click(cdp,'#rename-project');
+  await waitExpr(cdp,`Array.from(document.querySelectorAll('#screen .notice')).some(n=>n.textContent==='Enter a display name.')`);
+  assert(cdp.dialogs.length===0,`Application action still opened a native popup: ${cdp.dialogs.join(' | ')}`);
+  console.log(JSON.stringify({stage05ExportRecoveredInline:true,stage05ManifestVerified:true,existingFormPreserved:true,projectAndStageFailuresInline:true,nativePopups:0}));
+
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
   console.log(JSON.stringify({browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
