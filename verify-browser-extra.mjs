@@ -188,6 +188,11 @@ async function main(){
   assert(correctedProofEnvelope.promptIdentity.instructionId!==originalProofInstruction,'The rejected response reused its controlling instruction instead of generating a replacement.');
   await selectResponseFile(cdp,JSON.stringify(correctedProofEnvelope));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);
   await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,4);await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);
+  const beforeReselect=await activeProject(cdp),pendingBefore=beforeReselect.projectData.responseProposals.filter(p=>p.status==='PENDING_OPERATOR_REVIEW').at(-1);
+  await selectResponseFile(cdp,JSON.stringify(correctedProofEnvelope));await click(cdp,'#process-response-file');
+  await waitExpr(cdp,`document.querySelector('#app-live-status')?.textContent==='response already staged; proposal ready'`,10000);
+  const afterReselect=await activeProject(cdp);
+  assert(afterReselect.revision===beforeReselect.revision&&afterReselect.projectData.rawResponses.length===beforeReselect.projectData.rawResponses.length&&afterReselect.projectData.responseProposals.find(p=>p.proposalId===pendingBefore.proposalId)?.status==='PENDING_OPERATOR_REVIEW','Reselecting the pending response changed or invalidated its proposal.');
   await click(cdp,'#accept-proposal');
   await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.acceptedChanges.some(c=>c.stage===4))`,30000);
   await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);
