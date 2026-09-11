@@ -345,12 +345,60 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
   if(envelope.responseType==='BLOCKED'){if(safe(envelope.humanAuthorityCandidates).length)issues.push(issue('MIXED_RESPONSE_TYPE','/humanAuthorityCandidates','BLOCKED cannot carry human-authority confirmation candidates.'));if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','BLOCKED must not contain stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length)issues.push(issue('MISSING_BLOCKER_DETAIL','/unresolved','BLOCKED requires structured unresolved detail.'));else if(!safe(envelope.unresolved).some(item=>item.blocking!==false))issues.push(issue('MISSING_BLOCKING_UNRESOLVED','/unresolved','BLOCKED requires at least one actually blocking unresolved item.'));if(safe(envelope.unresolved).some(item=>item.kind==='MISSING_HUMAN_INPUT'))issues.push(issue('WRONG_RECOVERY_CHANNEL','/unresolved','Missing human-authority information must use HUMAN_INPUT_REQUIRED rather than BLOCKED.'));}
   if(envelope.responseType==='EXECUTION_FAILED'){if(safe(envelope.humanAuthorityCandidates).length)issues.push(issue('MIXED_RESPONSE_TYPE','/humanAuthorityCandidates','EXECUTION_FAILED cannot carry human-authority confirmation candidates.'));if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','EXECUTION_FAILED must not contain canonical stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length&&!safe(envelope.warnings).length)issues.push(issue('MISSING_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires failure detail.'));if(!safe(envelope.unresolved).some(item=>['EXECUTION_FAILURE','TOOL_FAILURE'].includes(item.kind)))issues.push(issue('MISSING_EXECUTION_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires an actual execution or tool failure; missing context, authority, evidence, or capability without an attempted failure must use BLOCKED.'));}
 
+  for(const [index,record] of safe(envelope.records?.proofExpressions).entries()){
+    const path=`/records/proofExpressions/${index}/fields/PROPOSED_EXPRESSION`;
+    const checked=validateProposedProof(project,record,envelope,responseRecordIndex);
+    if(!checked.valid)issues.push(issue('INVALID_PROOF_EXPRESSION',path+(checked.path||''),checked.reason));
+  }
   const canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);
   const priorCanonicalEnvelope=safe(project.projectData.rawResponses).find(record=>record.rawResponseId!==rawResponseId&&record.canonicalEnvelopeSha256===canonicalEnvelopeSha256&&Number(record.stage)===stageNumber&&(record.promptInstructionId||'')===(promptRecord?.instructionId||promptRecord?.promptId||''));if(priorCanonicalEnvelope)issues.push(issue('DUPLICATE_RESPONSE','/',`This canonical envelope already exists as ${priorCanonicalEnvelope.rawResponseId}.`));
   const priorDuplicate=safe(project.projectData.rawResponses).find(record=>record.rawResponseId!==rawResponseId&&record.status!=='PRESERVED'&&record.sha256===rawSha256&&Number(record.stage)===stageNumber&&(record.promptInstructionId||'')===(promptRecord?.instructionId||promptRecord?.promptId||''));
   if(priorDuplicate)issues.push(issue('DUPLICATE_RESPONSE','/',`This exact response was already preserved as ${priorDuplicate.rawResponseId}.`));
 
   return {valid:issues.every(item=>item.severity!=='ERROR'),issues,errorCount:issues.filter(item=>item.severity==='ERROR').length,warningCount:issues.filter(item=>item.severity==='WARNING').length,checkedAt:now(),responseSchema:envelope.schema,responseType:envelope.responseType,temporaryRecordIndex:responseRecordIndex,temporaryEvidenceIndex:evidenceIndex,temporaryAttachmentIndex:attachmentIndex,canonicalEnvelopeSha256};
+}
+
+function resolveProofReference(project,reference,collection,envelope,temporaryRecords,canonicalIds){
+  let id=reference,tempKey=null;
+  if(object(reference)){
+    if(Object.keys(reference).some(key=>!['tempKey','recordId'].includes(key))||Number(Boolean(reference.tempKey))+Number(Boolean(reference.recordId))!==1)return{valid:false,reason:'A proof reference requires exactly one tempKey or recordId.'};
+    tempKey=reference.tempKey;id=reference.recordId;
+  }
+  if(tempKey){
+    const target=temporaryRecords?.get(String(tempKey))||canonicalIds?.[String(tempKey)];
+    if(!target||target.collection!==collection)return{valid:false,reason:`Proof tempKey ${tempKey} must identify a ${collection} record in this response.`};
+    return{valid:true,id:canonicalIds?.[tempKey]?.id,record:target.record};
+  }
+  if(typeof id!=='string'||!id.trim())return{valid:false,reason:'A proof leaf requires a non-empty recordId or response-local tempKey.'};
+  const record=workflow.recordsForCurrentScope(project,collection).find(item=>workflow.recordId(item,collection)===id);
+  if(!record)return{valid:false,reason:`Proof reference ${id} is missing or outside the current ${collection} scope.`};
+  if(Object.hasOwn(envelope.records||{},collection)&&Number(record.stage)===Number(envelope.stage)&&schema.RECORD_SCHEMAS[collection]?.commitPolicy==='REPLACE_CURRENT_STAGE_SET')return{valid:false,reason:`Proof reference ${id} is being replaced by this response. Use the replacement record's tempKey.`};
+  return{valid:true,id,record};
+}
+function validateProposedProof(project,record,envelope,temporaryRecords){
+  const target=record?.relationships?.TARGET_PROPOSITION_ID;
+  const proposition=target?resolveProofReference(project,target,'propositions',envelope,temporaryRecords):null;
+  const checked=workflow.validateProofExpression(record?.fields?.PROPOSED_EXPRESSION,{resolveReference:(reference,collection)=>{
+    const resolved=resolveProofReference(project,reference,collection,envelope,temporaryRecords);
+    if(resolved.valid&&collection==='tests'&&proposition?.valid){
+      const test=resolved.record,requirement=workflow.recordValue(proposition.record,'REQUIREMENT_ID')||proposition.record.relationships?.REQUIREMENT_ID;
+      const testRequirement=workflow.recordValue(test,'REQ_ID')||test.relationships?.REQ_ID?.recordId||test.relationships?.REQ_ID;
+      if(String(testRequirement)!==String(requirement))return{valid:false,reason:'The proof test does not target this expression\'s proposition.'};
+    }
+    return resolved;
+  }});
+  if(!checked.valid)return checked;
+  return proposition?.valid?checked:{valid:false,reason:'Proof expressions require a current TARGET_PROPOSITION_ID relationship.',path:''};
+}
+function normalizeProposedProof(project,record,envelope,temporaryRecords,canonicalIds){
+  const node=clone(record.fields.PROPOSED_EXPRESSION),pending=[node];
+  while(pending.length){const current=pending.pop();if(upper(current.type||current.op)==='LEAF'){
+    const key=Object.keys(workflow.proofReferenceCollections).find(name=>Object.hasOwn(current,name));
+    const resolved=resolveProofReference(project,current[key],workflow.proofReferenceCollections[key],envelope,temporaryRecords,canonicalIds);
+    if(!resolved.valid||!resolved.id)throw new Error('Validated proof reference failed canonical resolution.');
+    current[key]=resolved.id;
+  }else for(const child of current.children)pending.push(child);}
+  return node;
 }
 
 function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,expectedProjectRevision=Number(project.revision||0)}){
@@ -398,7 +446,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
     test.RELEASE_BEARING=test.fields.RELEASE_BEARING;
   }
   for(const expression of safe(canonicalRecords.proofExpressions)){
-    expression.fields.NORMALIZED_EXPRESSION=clone(expression.fields.PROPOSED_EXPRESSION);
+    expression.fields.NORMALIZED_EXPRESSION=normalizeProposedProof(project,{fields:expression.fields},envelope,null,tempToCanonical);
     expression.NORMALIZED_EXPRESSION=expression.fields.NORMALIZED_EXPRESSION;
     expression.fields.SEMANTIC_EQUIVALENCE_DISPOSITION='EQUIVALENT';
     expression.SEMANTIC_EQUIVALENCE_DISPOSITION='EQUIVALENT';

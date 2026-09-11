@@ -5,7 +5,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const testRuntime=globalThis.closedLoopTestRuntime;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/68';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/69';
 const PROMPT_INLINE_LIMITS=Object.freeze({version:'PROMPT_INLINE_LIMITS/1',maxMemberBytes:65536,maxAggregateBytes:262144});
 const promptContextFiles=new WeakMap();
 let contextTransport=null;
@@ -410,7 +410,13 @@ DELIVERY_IDENTITY: Stage 28. EVIDENCE_CLOSURE: Stage 29. REGISTRY_CLOSURE and TE
 Use the stage appropriate to the actual target and proof route. These stages are not evidence that a test has run. Keep target-dependent work deferred until its declared target exists; define TARGET_AVAILABILITY_CONDITION from the actual required artifacts/events. A future target or execution is not missing Stage 06 design context. Preserve unresolved human-only project facts as such; never invent them.
 
 `:'';
-  const bodyText=`${UNTRUSTED_DATA_RULE}\n\n${schedule}${refreshDataEnvelopes(aliasedBody)}`;
+  const proofContract=stage===6&&schema.operationContract(stage,operation)?.agentWritableCollections.includes('proofExpressions')?`APPLICATION PROOF EXPRESSION FORMAT
+PROPOSED_EXPRESSION must use the closed operators LEAF, ALL_OF, ANY_OF, or AT_LEAST_K. Composite operators have a non-empty children array. AT_LEAST_K also has an integer k from 1 through its child count. A LEAF has exactly one reference and no child operators.
+For a test proposed in this same response, use {"type":"LEAF","testId":{"tempKey":"test-1"}} with that test's exact tempKey. For an existing current test that this response does not replace, use its exact canonical ID in testId or {"recordId":"the exact current test ID"}. The application resolves response-local references and assigns canonical IDs; never predict the next TEST ID or ask the human to assign one. The referenced test must target the expression's proposition.
+Each proofExpressions record must link TARGET_PROPOSITION_ID through its relationships object. Put explanatory prose in SEMANTIC_RATIONALE. A narrative branches/composition object, an unresolved reference, or an empty operator is not an executable proof expression and will be returned for correction.
+
+`:'';
+  const bodyText=`${UNTRUSTED_DATA_RULE}\n\n${schedule}${proofContract}${refreshDataEnvelopes(aliasedBody)}`;
   const descriptor=responseContractDescriptor(stage,operation);
   const contractSha256=hash.sha256Value(descriptor);
   const same=activeExisting.find(x=>x.contextSignature===contextSignature&&x.contractSha256===contractSha256&&x.operation===operation);

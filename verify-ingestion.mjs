@@ -151,14 +151,21 @@ for(const operation of ['COMPLETE','RECONCILE_VERIFICATION_SUITE'])for(const [la
   ['missing-canonical-reference',{type:'LEAF',testId:'TEST-MISSING'}],
   ['missing-temporary-reference',{type:'LEAF',testId:{tempKey:'absent-test'}}],
   ['wrong-reference-collection',{type:'LEAF',testId:{tempKey:'proof-1'}}],
+  ['replaced-canonical-reference',{type:'LEAF',testId:{recordId:'TEST-1'}}],
+  ['wrong-proposition-reference',{type:'LEAF',testId:'TEST-OTHER'}],
   ['conflicting-operators',{type:'ALL_OF',op:'ANY_OF',children:[{type:'LEAF',testId:'TEST-1'}]}]
 ]){
   const p=project(`JOB-PROOF-${operation}-${label}`);preparePromptPrerequisites(p,6);
+  const scope=engine.currentScope(p);
+  p.projectData.propositions.push({id:'PROP-1',stage:4,active:true,scope,fields:{PROPOSITION_ID:'PROP-1',REQUIREMENT_ID:'REQ-1'}});
+  for(const [id,requirementId] of [['TEST-1','REQ-1'],['TEST-OTHER','REQ-OTHER']])p.projectData.tests.push({id,stage:6,active:true,scope,fields:{TEST_ID:id,REQ_ID:requirementId}});
+  engine.recalculate(p);preparePromptPrerequisites(p,6);
   const pr=prompts.buildPromptRecord(6,p,{operation});p.projectData.generatedPrompts.push(pr);
-  const e=validEnvelope(p,6,pr);e.stageData={};e.records={proofExpressions:[recordProposal(schema,'proofExpressions',{tempKey:'proof-1',overrides:{PROPOSED_EXPRESSION:expression,SEMANTIC_RATIONALE:'Controlled invalid proof fixture.'}})]};
+  const e=validEnvelope(p,6,pr);e.stageData={};e.records={proofExpressions:[recordProposal(schema,'proofExpressions',{tempKey:'proof-1',relationships:{TARGET_PROPOSITION_ID:{recordId:'PROP-1'}},overrides:{PROPOSED_EXPRESSION:expression,SEMANTIC_RATIONALE:'Controlled invalid proof fixture.'}})]};
+  if(label==='replaced-canonical-reference')e.records.tests=[];
   const raw=JSON.stringify(e),result=ingestion.prepare(p,{stage:6,text:raw,promptRecord:pr});
   if(result.validation.valid||!result.validation.issues.some(x=>x.code==='INVALID_PROOF_EXPRESSION'&&x.path.includes('/PROPOSED_EXPRESSION')))throw new Error(`${operation} accepted unusable ${label} proof instead of regenerating a correction.`);
-  if(result.proposal||result.project.projectData.proofExpressions.length||result.project.projectData.acceptedChanges.length)throw new Error('Invalid proof changed canonical data or produced an acceptable proposal.');
+  if(result.proposal||result.project.projectData.proofExpressions.length||result.project.projectData.acceptedChanges.length||JSON.stringify(result.project.projectData.tests)!==JSON.stringify(p.projectData.tests))throw new Error('Invalid proof changed canonical data or produced an acceptable proposal.');
   if(result.project.projectData.rawResponses.at(-1).completeRawResponse!==raw)throw new Error('Proof rejection lost the exact response.');
   preparePromptPrerequisites(result.project,6);
   const replacement=prompts.reserveAndBuildPromptRecord(result.project,6,{operation},{owningTabInstance:'PROOF-REGRESSION'}).prompt;

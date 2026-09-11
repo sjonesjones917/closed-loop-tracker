@@ -232,7 +232,8 @@
         "workflow-engine.js:gate/deriveStageData",
         "project-store.js:validateProjectIntegrity",
         "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
-        "response-ingestion.js:validateEnvelope; workflow-engine.js:stageCompletionFeedback/stageTestExecutionPlan/mandatoryRequirements"
+        "response-ingestion.js:validateEnvelope; workflow-engine.js:stageCompletionFeedback/stageTestExecutionPlan/mandatoryRequirements",
+        "response-ingestion.js:validateProposedProof/resolveProofReference/normalizeProposedProof; workflow-engine.js:validateProofExpression/proofExpressionValidation/obligations; prompt-engine.js:Stage06 proof contract"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -241,14 +242,17 @@
         "verify-test-runtime-limits.mjs",
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
         "verify-final-product-timing.mjs:Stage06 controlling application schedule",
-        "verify-ingestion.mjs:cross-field verification timing; verify-complete.mjs:optional attachment sentinels and ready coverage"
+        "verify-ingestion.mjs:cross-field verification timing; verify-complete.mjs:optional attachment sentinels and ready coverage",
+        "verify-full-cycle.mjs:response-local proof test identity, upstream re-review and replacement suite, downstream release and reload"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
         "verify-ingestion.mjs:pending proof versus empty/dangling proof references",
         "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade",
-        "verify-full-cycle.mjs:legacy contradictory schedule correction package; verify-complete.mjs:reviewed applicability and per-run/final handoff isolation"
+        "verify-full-cycle.mjs:legacy contradictory schedule correction package; verify-complete.mjs:reviewed applicability and per-run/final handoff isolation",
+        "verify-ingestion.mjs:closed proof grammar and typed current references through both Stage06 writer operations; exact raw preservation and replacement instruction",
+        "verify-full-cycle.mjs:unusable saved expression blocks Stage06 and is named in reconciliation context"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -260,7 +264,7 @@
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation. OPEN DP-36: independent Stage06 PROOF_REVIEW sufficiency and full version-1 leaf contracts are not proven or repaired by grammar/reference validation. Author raw-response attribution is not independent review.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -287,7 +291,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -325,7 +330,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -364,7 +370,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -404,7 +411,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -443,7 +451,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -484,7 +493,8 @@
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -522,7 +532,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -560,7 +571,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -598,7 +610,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -636,7 +649,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -677,7 +691,8 @@
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -715,7 +730,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -758,7 +774,8 @@
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -796,7 +813,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -834,7 +852,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -875,7 +894,8 @@
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -915,7 +935,8 @@
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -955,7 +976,8 @@
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -993,7 +1015,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -1031,7 +1054,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -1069,7 +1093,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -1107,7 +1132,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -1145,7 +1171,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -1184,7 +1211,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:upstream unusable proof blocks Stage06; corrected canonical test references survive the complete downstream lifecycle"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -1452,14 +1480,16 @@
         "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
         "workflow-engine.js:recalculate/deriveStageData/operationalNextAction",
         "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)",
-        "app-core.js:wire next-instruction action targets canonicalCurrentStage"
+        "app-core.js:wire next-instruction action targets canonicalCurrentStage",
+        "response-ingestion.js:normalizeProposedProof resolves nested response-local test references to application-assigned canonical IDs"
       ],
       "existingTests": [
         "verify-reservation-contract.mjs:automatic author/reviewer/product context preparation and one reservation revision",
         "verify-full-cycle.mjs:all-30-stage lifecycle and automatic initial/corrected/confirmation run contexts",
         "verify-file-first-operator.mjs:Stage05 first export and repeat export",
         "verify-final-product-timing.mjs:Stage06 controlling application schedule",
-        "verify-full-cycle.mjs:consistent gates and deterministic reload"
+        "verify-full-cycle.mjs:consistent gates and deterministic reload",
+        "verify-full-cycle.mjs:accepted proof leaf resolves its test tempKey without user-assigned IDs"
       ],
       "negativeAdversarialTests": [
         "verify-complete.mjs:canonical/external context reuse and prohibited prior-review material",
