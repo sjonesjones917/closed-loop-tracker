@@ -84,8 +84,9 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 // Operational errors belong in existing inline notices, without replacing forms.
 {
   const dialogs=[],announcements=[];let rendered=0,downloaded=0,focused=0;
-  const notice={textContent:'Existing next action',classList:{add(){}},setAttribute(){},focus(){},scrollIntoView(){}},disclosure={open:false,parentElement:null};
-  const input={value:'Unsaved operator text',parentElement:disclosure,focus(){focused++;}};
+  const notice={textContent:'Existing next action',className:'notice',classList:{add(){}},style:{},isConnected:true,getAttribute:()=>null,setAttribute(){},removeAttribute(){},focus(){},scrollIntoView(){}},disclosure={open:false,parentElement:null};
+  const help={...notice,textContent:'Existing field help',className:'help',style:{},focus(){focused++;}};
+  const input={value:'Unsaved operator text',parentElement:{parentElement:disclosure,querySelector:()=>help},focus(){}};
   const runtime=vm.createContext({actionFailureNotice:null,current:{activeStage:5,revision:7,job:{JOB_ID:'INLINE-EXPORT'}},setTimeout,queueMicrotask,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',currentPromptRecord:()=>null,currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,$:selector=>selector==='#fresh-context-id'?input:notice,document:{activeElement:input},console:{error(){}},Element:class{}});
   disclosure.tagName='DETAILS';
   const reporterStart=app.indexOf('function reportActionFailure(');
@@ -93,9 +94,14 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   vm.runInContext(app.slice(app.indexOf('async function savePromptRecord('),app.indexOf('function promptTransportFilename('))+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
   await runtime.exportAttempt(()=>downloaded++);
   assert.equal(dialogs.length,0,`Stage 05 instruction export opened the reported popup: ${dialogs.join(' | ')}`);
-  assert.match(notice.textContent,/conversation|fresh.context/i,'The existing inline notice must explain the missing conversation identifier.');
+  assert.match(help.textContent,/agent conversation/i,'The context explanation must be visible beside the existing input.');
+  assert.match(help.textContent,/internal IDs automatically/i,'Explain which work the app automates.');
+  assert.match(help.textContent,/cannot see your external chats/i,'Explain why the external conversation needs human identification.');
+  assert.match(help.textContent,/later reviewer/i,'Explain why the author conversation is recorded.');
+  assert.match(help.textContent,/Leave Blocker reason blank/i,'Do not send the user to the unrelated blocker control.');
+  assert.equal(notice.textContent,'Existing next action','Do not duplicate the explanation in another banner.');
   assert.equal(disclosure.open,true,'The required existing context input remains hidden.');
-  assert.equal(focused,1,'The inline error must point to the existing context input.');
+  assert.equal(focused,1,'Keep the explanation visible instead of jumping past it to the input.');
   assert.equal(downloaded,0,'An unbound author instruction was exported.');
   assert.equal(runtime.current.revision,7);
   assert.equal(input.value,'Unsaved operator text');
