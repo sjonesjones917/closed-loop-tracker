@@ -194,13 +194,16 @@ async function main(){
   await selectResponseFile(cdp,JSON.stringify(correctedProofEnvelope));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);
   await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,4);await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);
   // A failed staging write stays in the existing inline report; it must not open a browser dialog or download the response again.
-  const beforeFailedStage=await activeProject(cdp),downloadCount=await evalValue(cdp,'__correctionDownloads.length');
+  const beforeFailedStage=await activeProject(cdp);
+  await evalValue(cdp,`(()=>{globalThis.__retryDownloads=0;const original=URL.createObjectURL;URL.createObjectURL=blob=>{globalThis.__retryDownloads++;return original(blob);};})()`);
+  await fill(cdp,'#correction-reason','Preserve this unsaved operator correction across a storage failure.');
   await evalValue(cdp,`(()=>{globalThis.__closedLoopStorageFault='during-project-write';})()`);
   const storageFailureEnvelope=structuredClone(correctedProofEnvelope);storageFailureEnvelope.records.propositions[0].fields.PROPOSITION_TEXT+=' retry storage proof';
   await selectResponseFile(cdp,JSON.stringify(storageFailureEnvelope));await click(cdp,'#process-response-file');
   await waitExpr(cdp,`document.querySelector('#validation-report')?.textContent.includes('The response could not be staged')`);
   const afterFailedStage=await activeProject(cdp);
-  assert(afterFailedStage.revision===beforeFailedStage.revision&&await evalValue(cdp,'__correctionDownloads.length')===downloadCount,'Failed staging changed the project or downloaded a recovery copy.');
+  assert(await evalValue(cdp,`document.querySelector('#correction-reason')?.value==='Preserve this unsaved operator correction across a storage failure.'`),'Inline failure discarded the existing operator correction text.');
+  assert(afterFailedStage.revision===beforeFailedStage.revision&&await evalValue(cdp,'__retryDownloads')===0,'Failed staging changed the project or downloaded a recovery copy.');
   await evalValue(cdp,`delete globalThis.__closedLoopStorageFault`);
   const beforeReselect=await activeProject(cdp),pendingBefore=beforeReselect.projectData.responseProposals.filter(p=>p.status==='PENDING_OPERATOR_REVIEW').at(-1);
   await selectResponseFile(cdp,JSON.stringify(correctedProofEnvelope));await click(cdp,'#process-response-file');
