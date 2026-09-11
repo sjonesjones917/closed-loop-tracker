@@ -7,6 +7,27 @@ globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,hash=globalThis.closedLoopHash;
 const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.recordId(record,'operationReservations');
+// Export must allocate application-owned context identity without asking the
+// operator to name a chat. External-provider facts must remain unclaimed.
+{
+  const project=core.createBlankState('JOB-AUTOMATIC-AUTHOR-CONTEXT');
+  engine.ensureShape(project);engine.recalculate(project);project.stages[4].status='COMPLETE';project.stages[4].gate={complete:true};
+  const before=Number(project.revision||0),created=prompts.reserveAndBuildPromptRecord(project,5,{operation:'COMPLETE'},{owningTabInstance:'TAB-AUTOMATIC-CONTEXT'});
+  const contextId=created.prompt.contextManifest.semanticReviewBinding?.authorContextId;
+  assert(contextId,'Stage 05 export still requires the operator to allocate/register an author context.');
+  const context=engine.records(project,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===contextId);
+  assert(context,'The automatically bound context must be a canonical application record.');
+  assert.equal(value(context,'EXTERNAL_CONTEXT_IDENTIFIER'),'UNKNOWN','Application context allocation must not invent an external chat identity.');
+  assert.equal(project.revision,before+1,'Context, prompt and operation reservation must commit together.');
+  assert(!project.projectData.history.some(r=>r.type==='FRESH_CONTEXT_REGISTERED'),'Automatic allocation must not fabricate a human registration action.');
+  for(const [stage,operation] of [[9,'COMPLETE'],[12,'VERIFY'],[17,'VERIFY'],[19,'VERIFY'],[23,'COMPLETE'],[24,'COMPLETE']]){
+    const p=core.createBlankState('JOB-AUTOMATIC-REVIEWER-'+stage);engine.ensureShape(p);engine.recalculate(p);p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};
+    const result=prompts.reserveAndBuildPromptRecord(p,stage,{operation},{owningTabInstance:'TAB-AUTOMATIC-CONTEXT'});
+    assert(result.prompt.scope.contextId,`Stage ${stage} still requires manual reviewer-context bookkeeping.`);
+    const reviewer=engine.records(p,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===result.prompt.scope.contextId);
+    assert(reviewer&&value(reviewer,'EXTERNAL_CONTEXT_IDENTIFIER')==='UNKNOWN','Unobserved provider identity must remain UNKNOWN.');
+  }
+}
 assert.deepEqual(schema.CONTROLLING_COMPLETION_ENUMS.reservation,['RESERVED','EXPORTED','ORPHANED','RESUMED','RESPONSE_STAGED','ACCEPTED','REJECTED','CANCELLED','SUPERSEDED','EXPIRED_BY_SCOPE']);
 assert.equal(schema.RECORD_SCHEMAS.operationReservations.fieldDefinitions.RESERVATION_REVISION.valueType,'INTEGER');
 const p={revision:7,activeStage:1,job:{JOB_ID:'JOB-RESERVATION-TEST',CONTRACT_PROFILE_ID:'closed-loop-completion-profile/1'},projectData:{},stages:{}};engine.ensureShape(p);
