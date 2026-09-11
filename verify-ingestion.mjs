@@ -1,6 +1,7 @@
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import './verify-reservation-contract.mjs';
 import './verify-file-first-response.mjs';
 import './verify-file-first-operator.mjs';
 import './verify-response-contract-profile.mjs';
