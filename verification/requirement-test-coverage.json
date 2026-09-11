@@ -227,23 +227,27 @@
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
-        "project-store.js:validateProjectIntegrity"
+        "project-store.js:validateProjectIntegrity",
+        "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-test-runtime-v3.mjs",
         "verify-test-runtime-limits.mjs",
-        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance",
+        "verify-final-product-timing.mjs:Stage06 controlling application schedule"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-ingestion.mjs:pending proof versus empty/dangling proof references"
+        "verify-ingestion.mjs:pending proof versus empty/dangling proof references",
+        "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-browser-extra.mjs:retained returned-file validation after independent IndexedDB revision and exact open-attempt manifest export"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1418,21 +1422,25 @@
         "workflow-schema.js:RECORD_OWNERSHIP.freshContexts",
         "workflow-engine.js:preparePromptContext/reserveRunBatch/reserveProductExecution",
         "prompt-engine.js:reserveAndBuildPromptRecord",
-        "app-core.js:savePromptRecord/currentStagePrompt/controls"
+        "app-core.js:savePromptRecord/currentStagePrompt/controls",
+        "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule"
       ],
       "existingTests": [
         "verify-reservation-contract.mjs:automatic author/reviewer/product context preparation and one reservation revision",
         "verify-full-cycle.mjs:all-30-stage lifecycle and automatic initial/corrected/confirmation run contexts",
-        "verify-file-first-operator.mjs:Stage05 first export and repeat export"
+        "verify-file-first-operator.mjs:Stage05 first export and repeat export",
+        "verify-final-product-timing.mjs:Stage06 controlling application schedule"
       ],
       "negativeAdversarialTests": [
         "verify-complete.mjs:canonical/external context reuse and prohibited prior-review material",
         "verify-full-cycle.mjs:preview state is unchanged and duplicate product reservation rejected",
-        "verify-reservation-contract.mjs:terminal reservation retry correction and scope identity checks"
+        "verify-reservation-contract.mjs:terminal reservation retry correction and scope identity checks",
+        "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:real Stage04 acceptance to Stage05 automatic export without manual context form",
-        "verify-mobile-stage-action.mjs:all 30 stages and existing accumulated-data controls"
+        "verify-mobile-stage-action.mjs:all 30 stages and existing accumulated-data controls",
+        "verify-browser-extra.mjs:retained returned-file validation after independent IndexedDB revision and exact open-attempt manifest export"
       ],
       "deployedProof": [
         "verify-live.mjs",
