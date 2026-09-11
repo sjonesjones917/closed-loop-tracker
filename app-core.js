@@ -79,7 +79,22 @@ async function refreshProjectStorage({verify=false}={}){
 }
 function stageLocked(n){if(n<=1)return '';for(let i=1;i<n;i++)if(current.stages[i].status!=='COMPLETE')return `Stage ${String(i).padStart(2,'0')} must be COMPLETE before this stage can progress.`;return '';}
 async function persistAll(nextProjects){projects=await projectStore.writeAll(nextProjects);return projects;}
-async function persistReplacement(next){const committed=await projectStore.replaceProject(next,{expectedProjectRevision:Number(current?.revision||0)});projects=projects.map(p=>p===current||p.job?.JOB_ID===committed.job?.JOB_ID?committed:p);if(!projects.some(p=>p.job?.JOB_ID===committed.job?.JOB_ID))projects.unshift(committed);current=committed;return committed;}
+async function persistReplacement(next){
+ const selected=current,jobId=String(selected?.job?.JOB_ID||''),expectedProjectRevision=Number(selected?.revision||0);
+ let committed;
+ try{committed=await projectStore.replaceProject(next,{expectedProjectRevision});}
+ catch(error){
+  // Keep the compare-and-swap guard. Discard this candidate and refresh the
+  // selected project so a retry can recompute from current canonical state.
+  if(error?.code==='STALE_PROJECT_REVISION'&&String(current?.job?.JOB_ID||'')===jobId){
+   const latest=await projectStore.readProject(jobId);
+   if(latest&&String(current?.job?.JOB_ID||'')===jobId){latest.activeView=current.activeView;latest.activeStage=current.activeStage;projects=projects.map(p=>String(p.job?.JOB_ID||'')===jobId?latest:p);current=latest;}
+  }
+  throw error;
+ }
+ projects=projects.map(p=>p.job?.JOB_ID===committed.job?.JOB_ID?committed:p);if(!projects.some(p=>p.job?.JOB_ID===committed.job?.JOB_ID))projects.unshift(committed);
+ if(String(current?.job?.JOB_ID||'')===jobId){committed.activeView=current.activeView;committed.activeStage=current.activeStage;current=committed;}return committed;
+}
 async function save(){try{projects=await projectStore.writeAll(projects);current=projects.find(p=>p.job?.JOB_ID===current?.job?.JOB_ID)||current;announce('saved');return true;}catch(error){console.error(error);announce('storage failed');reportActionFailure(`Save failed without replacing the prior persisted project state: ${error.message||error}`);return false;}}
 function blankStage(n){const d=core.STAGES[n-1];return {number:n,status:'NOT STARTED',draftRecord:core.stageTemplate(d),responseDraft:'',authorizedFiles:[],acceptedData:{},humanData:{},acceptedResponseIds:[],gate:{reasons:[]},revisions:[]};}
 function ensureState(p){p=p&&typeof p==='object'?p:core.createBlankState();p.schema=core.SCHEMA;p.stages=p.stages&&typeof p.stages==='object'?p.stages:{};for(let n=1;n<=30;n++){const s=p.stages[n]||p.stages[String(n)]||blankStage(n);p.stages[n]={...blankStage(n),...s,number:n,authorizedFiles:safe(s.authorizedFiles),acceptedData:s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{},humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{},acceptedResponseIds:safe(s.acceptedResponseIds),revisions:safe(s.revisions)};}p.activeView=views.includes(p.activeView)?p.activeView:'Overview';p.activeStage=Math.max(1,Math.min(30,Number(p.activeStage||String(p.job?.CURRENT_STAGE||'').match(/\d+/)?.[0]||1)));p.release={gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[],...(p.release||{})};engine.ensureShape(p);engine.recalculate(p);return p;}
@@ -130,7 +145,16 @@ function promptMatches(record,n,options,requireCurrentRevision=true){if(Number(r
 function currentPromptEngineVersion(){return globalThis.closedLoopPromptEngine?.version||null;}
 function promptVersionCurrent(record){return Boolean(record)&&record.promptEngineVersion===currentPromptEngineVersion();}
 function proposalVersionCurrent(proposal){return Boolean(proposal)&&proposal.preconditions?.promptEngineVersion===currentPromptEngineVersion();}
-function currentPromptRecord(n){const options=promptOptions(n);return safe(current.projectData.generatedPrompts).filter(x=>promptMatches(x,n,options)&&promptVersionCurrent(x)).at(-1)||null;}
+function currentPromptRecord(n){
+ const options=promptOptions(n),prompts=safe(current.projectData.generatedPrompts).filter(x=>promptMatches(x,n,options,false)&&promptVersionCurrent(x));
+ return prompts.filter(record=>{
+  if(Number(record.scope?.projectRevision)===Number(current.revision||0))return true;
+  if(!record.transportBindingRequired||!operatorLaneMatches(record,n))return false;
+  const scope=currentOperatorScope(n);if(operatorScopeKeys.some(key=>String(record.scope?.[key]??'')!==String(scope[key]??'')))return false;
+  const reservation=safe(current.projectData.operationReservations).find(r=>engine.recordId(r,'operationReservations')===record.operationReservationId);
+  return reservation&&!reservation.invalidatedBy&&reservation.active!==false&&['RESERVED','EXPORTED','ORPHANED','RESUMED','RESPONSE_STAGED'].includes(String(engine.recordValue(reservation,'STATUS')||'').toUpperCase());
+ }).at(-1)||null;
+}
 // Response selection must use the saved attempt even after raw capture/review advanced the UI revision. Validation still checks the full attempt identity.
 function responseAttemptPrompt(n){const options=promptOptions(n);return safe(current.projectData.generatedPrompts).filter(x=>x.transportBindingRequired&&promptMatches(x,n,options,false)).at(-1)||null;}
 function responsePromptRecord(n,text){let envelope=null;try{envelope=ingestion.strictParse(text);}catch{}const instructionId=String(envelope?.promptIdentity?.instructionId||'').trim();if(instructionId){const referenced=safe(current.projectData.generatedPrompts).find(x=>Number(x.stage)===Number(n)&&(x.instructionId||x.promptId)===instructionId);if(referenced)return referenced;}return responseAttemptPrompt(n);}
@@ -288,11 +312,13 @@ async function saveJob(){const sourceCountInput=document.querySelector('[data-jo
 async function saveHumanStageFields(){const next=clone(current),stage=next.activeStage,changed=[];for(const x of document.querySelectorAll('[data-human-stage-field]')){const field=x.dataset.humanStageField,value=x.value;if(next.stages[stage].humanData[field]!==value){engine.recordHumanDecision(next,{stage,field,value,operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});changed.push(field);}}if(changed.length){engine.recordHumanInputVersion(next,changed.map(x=>`STAGE_${stage}:${x}`),'HUMAN_OPERATOR');if(current.stages[stage].status==='COMPLETE')engine.invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.',operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);}render();}
 async function saveHumanAnswers(){const requests=new Map(safe(current.projectData.humanInputRequests).map(q=>[q.requestId,q]));const answers=Object.fromEntries([...document.querySelectorAll('[data-human-answer]')].map(x=>{const q=requests.get(x.dataset.humanAnswer);let value;if(x.multiple)value=[...x.selectedOptions].map(o=>o.value);else if(q?.answerType==='BOOLEAN')value=x.value===''?'':x.value==='true';else if(x.type==='number')value=x.value===''?'':Number(x.value);else value=x.value;return [x.dataset.humanAnswer,value];}));try{const result=ingestion.answerHumanInput(current,answers,{operator:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(result.project);announce('human answers saved');render();}catch(error){const target=error?.requestId?document.querySelector(`[data-human-answer="${CSS.escape(error.requestId)}"]`):null;target?.focus();reportActionFailure(error);}}
 async function confirmStageOne(){try{const next=clone(current),operatorLabel=$('#operator-label')?.value.trim()||'HUMAN_OPERATOR',latest=engine.acceptedChanges(next,1).at(-1);if(!latest)throw new Error('Stage 01 confirmation requires a current accepted response.');engine.recordStageConfirmation(next,1,true,'The represented objective and deliverable match the human operator intent.',operatorLabel,{acceptedChangeId:latest.changeId,inputVersion:next.job.CURRENT_INPUT_VERSION,operatorLabel});await persistReplacement(next);announce('intent confirmation saved');render();}catch(error){announce('intent confirmation blocked');reportActionFailure(error);}}
-async function savePromptRecord(n){
+async function savePromptRecord(n,retry=true){
   if(!externalAgentOperation(n))throw new Error(`Operation ${selectedOperation(n)} is ${operationExecutorClass(n)} and must be completed in the application; no external prompt exists.`);
-  const existing=currentPromptRecord(n);if(existing)return existing;
-  const next=clone(current),created=globalThis.closedLoopPromptEngine.reserveAndBuildPromptRecord(next,n,promptOptions(n),{owningTabInstance:TAB_INSTANCE_ID,iteration:current.job.CURRENT_ITERATION||'NOT APPLICABLE'}),record=created.prompt;
-  await persistReplacement(next);
+  const jobId=current.job.JOB_ID,existing=currentPromptRecord(n),needsSchedule=Number(n)===6&&existing&&existing.contextManifest?.verificationScheduleVersion!=='closed-loop-verification-schedule/1';if(existing&&!needsSchedule)return existing;
+  const next=clone(current);
+  if(needsSchedule){const reservation=safe(next.projectData.operationReservations).find(r=>engine.recordId(r,'operationReservations')===existing.operationReservationId);if(reservation)engine.transitionOperationReservation(reservation,'SUPERSEDED');}
+  const created=globalThis.closedLoopPromptEngine.reserveAndBuildPromptRecord(next,n,promptOptions(n),{owningTabInstance:TAB_INSTANCE_ID,iteration:current.job.CURRENT_ITERATION||'NOT APPLICABLE'}),record=created.prompt;
+  try{await persistReplacement(next);}catch(error){if(retry&&error?.code==='STALE_PROJECT_REVISION'&&current.job.JOB_ID===jobId&&current.activeStage===n)return savePromptRecord(n,false);throw error;}
   const committed=currentPromptRecord(n);if(!committed||committed.instructionId!==record.instructionId||!committed.transportBindingRequired)throw new Error('The generated prompt was not committed with its controlling reservation revision.');return committed;
 }
 function promptTransportFilename(record,stage){const raw=`${current?.job?.JOB_ID||'JOB'}_${String(stage).padStart(2,'0')}_${record?.operation||selectedOperation(stage)||'COMPLETE'}_${record?.instructionId||record?.promptId||'INSTRUCTION'}.txt`;return raw.normalize('NFC').replace(/[^A-Za-z0-9._-]+/g,'_').replace(/^_+|_+$/g,'')||'instruction.txt';}
@@ -348,10 +374,10 @@ async function selectReturnedSlotFile(slotId,file){
 async function reverifyReturnedFiles(raw){
   for(const file of safe(raw?.files).filter(item=>item.attachmentSlotId)){const row=await projectStore.getArtifact(file.artifactId);if(!row||String(row.jobId)!==String(current.job.JOB_ID)||row.filename!==file.name||row.mediaType!==file.type||row.blob.size!==Number(file.size)||await globalThis.closedLoopHash.sha256Bytes(await row.blob.arrayBuffer())!==file.sha256)throw new Error(`Returned file ${file.name} is missing or changed. Select the original bytes in its named slot.`);}
 }
-async function validateReturnedResponse(){
+async function validateReturnedResponse(retry=true,rawResponseId=null){
   responseActionFailure=null;
-  const raw=pendingReturnedResponse();if(!raw)return;const jobId=current.job.JOB_ID,revision=current.revision;
-  try{await reverifyReturnedFiles(raw);if(current.job.JOB_ID!==jobId||current.revision!==revision)throw new Error('Project changed while returned-file bytes were being verified.');const prepared=ingestion.prepareCaptured(current,{rawResponseId:raw.rawResponseId,expectedCommittedRevision:Number(current.revision||0)+1});await persistReplacement(prepared.project);announce(prepared.validation?.valid?'proposal ready':'validation failed');render();queueMicrotask(()=>$(prepared.validation?.valid?'#proposal-heading':'#validation-report')?.focus());}catch(error){reportResponseFailure('The returned files could not be validated. Your accepted work is unchanged.',error);}
+  const raw=rawResponseId?ingestion.findRaw(current,rawResponseId):pendingReturnedResponse();if(!raw)return;if(rawResponseId&&!['PRESERVED','VALIDATION_FAILED'].includes(raw.status)){render();return;}const jobId=current.job.JOB_ID,revision=current.revision;
+  try{await reverifyReturnedFiles(raw);if(current.job.JOB_ID!==jobId||current.revision!==revision)throw new Error('Project changed while returned-file bytes were being verified.');const prepared=ingestion.prepareCaptured(current,{rawResponseId:raw.rawResponseId,expectedCommittedRevision:Number(current.revision||0)+1});await persistReplacement(prepared.project);announce(prepared.validation?.valid?'proposal ready':'validation failed');render();queueMicrotask(()=>$(prepared.validation?.valid?'#proposal-heading':'#validation-report')?.focus());}catch(error){if(retry&&error?.code==='STALE_PROJECT_REVISION'&&current.job.JOB_ID===jobId)return validateReturnedResponse(false,raw.rawResponseId);reportResponseFailure('The returned files could not be validated. Your accepted work is unchanged.',error);}
 }
 function pendingProposal(){return safe(current.projectData.responseProposals).filter(x=>x.status==='PENDING_OPERATOR_REVIEW'&&operatorLaneMatches(x,current.activeStage)).at(-1);}
 async function acceptPendingProposal(){responseActionFailure=null;const p=pendingProposal();if(!p)return;try{const jobId=current.job.JOB_ID,revision=current.revision;await reverifyReturnedFiles(ingestion.findRaw(current,p.rawResponseId));if(current.job.JOB_ID!==jobId||current.revision!==revision)throw new Error('Project changed while returned bytes were being verified.');const authorityConfirmations={};for(const node of document.querySelectorAll('[data-human-authority-confirmation]')){let value;try{value=JSON.parse(node.value);}catch{value=node.value;}authorityConfirmations[node.dataset.humanAuthorityConfirmation]=value;}const operator=$('#operator-label')?.value.trim()||'HUMAN_OPERATOR';try{const result=ingestion.commit(current,p.proposalId,{operator,reviewNote:'Operator accepted the complete validated structured response.',humanAuthorityConfirmations:authorityConfirmations});await persistReplacement(result.project);announce('response accepted');render();}catch(error){if(error?.code==='HUMAN_AUTHORITY_CORRECTION_REQUIRES_REPLACEMENT'){const corrected=ingestion.correctHumanAuthorityCandidates(current,p.proposalId,authorityConfirmations,{operator});await persistReplacement(corrected.project);announce('human correction saved; replacement prompt required');render();return;}throw error;}}catch(error){reportResponseFailure('The response could not be accepted. Your existing proposal and accepted work are unchanged.',error);}}

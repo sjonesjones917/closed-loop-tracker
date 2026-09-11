@@ -376,6 +376,7 @@ function buildPromptRecord(stageOrDefinition,state,options={}){
   const semanticReviewBinding=stage===5?stage5SemanticReviewBinding(state,operation,options):null;
   const contextManifest={
     stage,operation,scope,
+    ...(stage===6?{verificationScheduleVersion:'closed-loop-verification-schedule/1'}:{}),
     semanticReviewBinding,
     promptEngineVersion:PROMPT_ENGINE_VERSION,
     untrustedDataBoundary:{schema:UNTRUSTED_DATA_SCHEMA,applied:true,controllingCompletionVersion:CONTROLLING_COMPLETION_VERSION},
@@ -398,7 +399,16 @@ function buildPromptRecord(stageOrDefinition,state,options={}){
   const publicScope=applyBlindReviewAliases(scope,blindAliasMap);
   const boundedBody=transported.text;
   const aliasedBody=applyBlindReviewAliases(boundedBody,blindAliasMap);
-  const bodyText=`${UNTRUSTED_DATA_RULE}\n\n${refreshDataEnvelopes(aliasedBody)}`;
+  const schedule=stage===6?`APPLICATION VERIFICATION SCHEDULE
+The application supplies these stage definitions so you can set VERIFICATION_PHASE, EARLIEST_EXECUTABLE_STAGE, and REQUIRED_BY_STAGE. Do not ask the human to supply stage numbers or invent a later-stage schedule. This is scheduling context only; perform Stage 06 design work now and do not execute later stages.
+${core.STAGES.map(item=>`Stage ${String(item.number).padStart(2,'0')}: ${item.title}`).join('\n')}
+PREPRODUCT_ITERATION: generated-run targets are produced at Stage 11 and verified at Stage 12; corrected and unchanged iterations repeat execution and verification at Stages 17 and 19. Declare per-run obligations for this route.
+FINAL_PRODUCT_DETERMINISTIC: Stage 22. FINAL_PRODUCT_MEANING: Stage 23. FINAL_PRODUCT_ADVERSARIAL: Stage 24. FINAL_REPRESENTATION: Stage 25.
+DELIVERY_IDENTITY: Stage 28. EVIDENCE_CLOSURE: Stage 29. REGISTRY_CLOSURE and TERMINAL_DELIVERY: Stage 30.
+Use the stage appropriate to the actual target and proof route. These stages are not evidence that a test has run. Keep target-dependent work deferred until its declared target exists; define TARGET_AVAILABILITY_CONDITION from the actual required artifacts/events. A future target or execution is not missing Stage 06 design context. Preserve unresolved human-only project facts as such; never invent them.
+
+`:'';
+  const bodyText=`${UNTRUSTED_DATA_RULE}\n\n${schedule}${refreshDataEnvelopes(aliasedBody)}`;
   const descriptor=responseContractDescriptor(stage,operation);
   const contractSha256=hash.sha256Value(descriptor);
   const same=activeExisting.find(x=>x.contextSignature===contextSignature&&x.contractSha256===contractSha256&&x.operation===operation);
