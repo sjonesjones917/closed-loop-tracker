@@ -182,7 +182,8 @@
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
-        "project-store.js:validateProjectIntegrity"
+        "project-store.js:validateProjectIntegrity",
+        "workflow-engine.js:gate/recalculate/operationalNextAction; app-core.js:selectedOperation"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -190,12 +191,14 @@
         "verify-semantic-invariant.mjs",
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
         "verify-file-first-operator.mjs:Stage 05 actual save/export failure and all-30-stage inline handoff failures",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:independent review required in both gate and saved status; automatic next review operation"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-file-first-operator.mjs:no native popups, no export or revision mutation on missing author context, preserved unsaved input"
+        "verify-file-first-operator.mjs:no native popups, no export or revision mutation on missing author context, preserved unsaved input",
+        "verify-complete.mjs:unreviewed, self-reviewed and stale applicability cannot reduce mandatory coverage"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -228,7 +231,8 @@
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
         "project-store.js:validateProjectIntegrity",
-        "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule"
+        "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
+        "response-ingestion.js:validateEnvelope; workflow-engine.js:stageCompletionFeedback/stageTestExecutionPlan/mandatoryRequirements"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -236,13 +240,15 @@
         "verify-test-runtime-v3.mjs",
         "verify-test-runtime-limits.mjs",
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
-        "verify-final-product-timing.mjs:Stage06 controlling application schedule"
+        "verify-final-product-timing.mjs:Stage06 controlling application schedule",
+        "verify-ingestion.mjs:cross-field verification timing; verify-complete.mjs:optional attachment sentinels and ready coverage"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
         "verify-ingestion.mjs:pending proof versus empty/dangling proof references",
-        "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade"
+        "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade",
+        "verify-full-cycle.mjs:legacy contradictory schedule correction package; verify-complete.mjs:reviewed applicability and per-run/final handoff isolation"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -466,7 +472,8 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "workflow-engine.js:stageTestExecutionPlan/executionHandoff"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -476,7 +483,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -657,7 +665,8 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "workflow-engine.js:stageTestExecutionPlan/executionHandoff"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -667,7 +676,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -735,7 +745,8 @@
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
-        "project-store.js:validateProjectIntegrity"
+        "project-store.js:validateProjectIntegrity",
+        "workflow-engine.js:stageTestExecutionPlan/executionHandoff"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -746,7 +757,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -851,7 +863,8 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "workflow-engine.js:stageTestExecutionPlan/executionHandoff"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -861,7 +874,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -890,7 +904,8 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "workflow-engine.js:stageTestExecutionPlan/executionHandoff"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -899,7 +914,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -928,7 +944,8 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "workflow-engine.js:stageTestExecutionPlan/executionHandoff"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -937,7 +954,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -1190,15 +1208,20 @@
         757
       ],
       "productionOwner": [
-        "prompt-engine.js:transportedBody/dataEnvelope/compactContextManifest"
+        "prompt-engine.js:transportedBody/dataEnvelope/compactContextManifest",
+        "prompt-engine.js:recoveryFeedback/contextFor/compactContextManifest",
+        "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)"
       ],
       "existingTests": [
         "verify-all-stage-prompts.mjs",
-        "verify-user-prompt-invariants.mjs"
+        "verify-user-prompt-invariants.mjs",
+        "verify-full-cycle.mjs:record-specific completion findings in reconciliation instruction"
       ],
       "negativeAdversarialTests": [
         "verify-prompt-semantics.mjs",
-        "verify-prompt-file-identity.mjs"
+        "verify-prompt-file-identity.mjs",
+        "verify-ingestion.mjs:invalid timing rejects before canonical mutation and appears in replacement instruction",
+        "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer"
@@ -1223,20 +1246,23 @@
       "productionOwner": [
         "prompt-engine.js:promptFileManifest; project-store.js:persistPromptContextFiles/readPromptContextFile; app-core.js:promptExport",
         "app-core.js:responseAttemptPrompt/prepareStageResponseFile/validationMarkup",
-        "workflow-engine.js:preparePromptContext; prompt-engine.js:reserveAndBuildPromptRecord"
+        "workflow-engine.js:preparePromptContext; prompt-engine.js:reserveAndBuildPromptRecord",
+        "app-core.js:latestResponseAttempt/pendingReturnedResponse/interactionModeMarkup"
       ],
       "existingTests": [
         "verify-file-first-operator.mjs",
         "verify-prompt-file-identity.mjs",
         "verify-reservation-contract.mjs:automatic context/product preparation and atomic revision",
-        "verify-full-cycle.mjs:automatic contexts through all 30 stages and three ten-run batches"
+        "verify-full-cycle.mjs:automatic contexts through all 30 stages and three ten-run batches",
+        "verify-file-first-operator.mjs:latest relevant response and status precedence across all 30 stages"
       ],
       "negativeAdversarialTests": [
         "verify-reservation-contract.mjs",
         "verify-file-first-response.mjs",
         "verify-file-first-operator.mjs:saved attempt after UI revision, pending reselection and inline storage failure",
         "verify-complete.mjs:unknown external names are not duplicate identities; actual context reuse and prior-review leakage rejected",
-        "verify-file-first-operator.mjs:no manual context naming, repeat export stable, all-stage failures inline"
+        "verify-file-first-operator.mjs:no manual context naming, repeat export stable, all-stage failures inline",
+        "verify-file-first-operator.mjs:old file slot, unrelated operation and prior success cannot override current attempt"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer",
@@ -1423,19 +1449,26 @@
         "workflow-engine.js:preparePromptContext/reserveRunBatch/reserveProductExecution",
         "prompt-engine.js:reserveAndBuildPromptRecord",
         "app-core.js:savePromptRecord/currentStagePrompt/controls",
-        "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule"
+        "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
+        "workflow-engine.js:recalculate/deriveStageData/operationalNextAction",
+        "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)",
+        "app-core.js:wire next-instruction action targets canonicalCurrentStage"
       ],
       "existingTests": [
         "verify-reservation-contract.mjs:automatic author/reviewer/product context preparation and one reservation revision",
         "verify-full-cycle.mjs:all-30-stage lifecycle and automatic initial/corrected/confirmation run contexts",
         "verify-file-first-operator.mjs:Stage05 first export and repeat export",
-        "verify-final-product-timing.mjs:Stage06 controlling application schedule"
+        "verify-final-product-timing.mjs:Stage06 controlling application schedule",
+        "verify-full-cycle.mjs:consistent gates and deterministic reload"
       ],
       "negativeAdversarialTests": [
         "verify-complete.mjs:canonical/external context reuse and prohibited prior-review material",
         "verify-full-cycle.mjs:preview state is unchanged and duplicate product reservation rejected",
         "verify-reservation-contract.mjs:terminal reservation retry correction and scope identity checks",
-        "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade"
+        "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade",
+        "verify-file-first-operator.mjs:all30 current-response modes",
+        "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild",
+        "verify-file-first-operator.mjs:historical-view next action exports the current owning stage for review/reconciliation/run/verification/product operations"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:real Stage04 acceptance to Stage05 automatic export without manual context form",

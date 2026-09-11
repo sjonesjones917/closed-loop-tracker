@@ -33,6 +33,48 @@ function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engin
 }
 
 verify();
+
+// The old failed attempt remains audit history after a newer response is
+// accepted. Exercise the production selector in every stage view.
+{
+  const runtime=vm.createContext({safe:x=>Array.isArray(x)?x:[],operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE'});
+  const selectionSource=(app.match(/^function (?:latestResponseAttempt|latestResponseValidation|pendingReturnedResponse)\([^\n]+/gm)||[]).join('\n');
+  const validationSource=app.slice(app.indexOf('function validationMarkup('),app.indexOf('function proposalMarkup('));
+  Object.assign(runtime,{responseActionFailure:null,esc:String,details:()=>'',currentPromptRecord:()=>null});
+  vm.runInContext(selectionSource+'\n'+validationSource+'\nglobalThis.pending=pendingReturnedResponse;globalThis.validation=validationMarkup;',runtime);
+  for(let stage=1;stage<=30;stage++){
+    const old={rawResponseId:'OLD',stage,status:'VALIDATION_FAILED',validationId:'OLD-VALIDATION',promptInstructionId:'OLD-PROMPT',files:[{name:'old-design.md'}]},latest={rawResponseId:'NEW',stage,status:'ACCEPTED_DATA_CHANGE',validationId:'NEW-VALIDATION',promptInstructionId:'NEW-PROMPT',files:[]};
+    runtime.current={activeStage:stage,projectData:{rawResponses:[old,latest],responseValidations:[{stage,validationId:'NEW-VALIDATION',valid:true},{stage,validationId:'OLD-VALIDATION',valid:false,issues:[]}],generatedPrompts:[{instructionId:'OLD-PROMPT',stage,operation:'COMPLETE',scope:{}},{instructionId:'NEW-PROMPT',stage,operation:'COMPLETE',scope:{}}]}};
+    assert.equal(runtime.pending(),null,`Stage ${stage} resurrected a failed response's files after a newer response was accepted.`);
+    assert.equal(runtime.validation(stage),'',`Stage ${stage} displayed an obsolete validation report for the accepted attempt.`);
+    latest.status='PRESERVED';assert.equal(runtime.pending()?.rawResponseId,'NEW',`Stage ${stage} lost its current pending file attempt.`);
+    latest.status='ACCEPTED_DATA_CHANGE';runtime.current.projectData.rawResponses.push({...old,rawResponseId:'OTHER-OP',promptInstructionId:'OTHER-PROMPT'});runtime.current.projectData.generatedPrompts.push({instructionId:'OTHER-PROMPT',stage,operation:'OTHER',scope:{}});
+    assert.equal(runtime.pending(),null,`Stage ${stage} mixed an unrelated operation's pending response into the accepted operation.`);
+  }
+}
+// One current response mode: an older success cannot hide a newer rejection.
+{
+ const runtime=vm.createContext({safe:x=>Array.isArray(x)?x:[],esc:String,operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE',currentNextAction:()=>({}),pendingProposal:()=>null,acceptedLaneChanges:()=>[{changeId:'OLD-CHANGE'}],stageLocked:()=>null,canonicalCurrentStage:()=>1,reviewerOperation:()=>false});
+ const source=(app.match(/^function (?:latestResponseAttempt|latestResponseValidation|interactionModeMarkup)\([^\n]+/gm)||[]).join('\n');
+ vm.runInContext(source+'\nglobalThis.mode=interactionModeMarkup;',runtime);
+ for(let stage=1;stage<=30;stage++){
+  runtime.current={activeStage:stage,stages:{[stage]:{status:'IN PROGRESS'}},projectData:{generatedPrompts:[{instructionId:'CURRENT',stage,operation:'COMPLETE',scope:{}}],rawResponses:[{rawResponseId:'NEW',stage,status:'VALIDATION_FAILED',promptInstructionId:'CURRENT',validationId:'FAILED'}],responseValidations:[{validationId:'FAILED',stage,valid:false}]}};
+  assert.match(runtime.mode(stage),/Return a corrected final JSON/,'An old acceptance hid the current rejection at stage '+stage);
+  runtime.current.projectData.rawResponses[0].status='ACCEPTED_DATA_CHANGE';runtime.current.projectData.responseValidations[0].valid=true;
+  assert.match(runtime.mode(stage),/The application accepted this response/,'The current accepted response lost its receipt at stage '+stage);
+ }
+}
+// The next action displayed on a historical view belongs to the current stage.
+{
+ const wireStart=app.indexOf("if($('#next-export-prompt-file'))"),wireEnd=app.indexOf("if($('#export-prompt-context'))",wireStart),source=app.slice(wireStart,wireEnd);
+ assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
+ for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
+  const button={dataset:{operation}},current={activeStage:stage-1},operationSelection={};let exported;
+  const runtime=vm.createContext({$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage,exportPromptFile:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
+  vm.runInContext(source,runtime);await button.onclick();
+  assert.deepEqual(exported,{stage,operation},'The next action exported from the inspected historical stage instead of its owning current stage.');
+ }
+}
 assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
 assert.throws(()=>verify({appSource:app.replace('const operationSelection={},runSelection={},responseFileSelection={};','const operationSelection={},runSelection={};')}),/declared response-file selection state/);
 assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/read-back mismatch/);
@@ -106,12 +148,12 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.equal(runtime.current.revision,8);
   assert.equal(dialogs.length,0);
   assert.doesNotMatch(app,/id="fresh-context-id"|id="add-fresh-context"/,'Routine workflow must not ask the human to name/register application contexts.');
-  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
+  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
   assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
   const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportPromptFile=()=>runtime.exportAttempt(()=>downloaded++);
   const wireStart=app.indexOf('function wire(){')+'function wire(){'.length,wireEnd=app.indexOf("if($('#export-prompt-context'))",wireStart);
-  vm.runInContext(app.slice(wireStart,wireEnd),runtime);await button.onclick();
+  vm.runInContext(app.match(/^function canonicalCurrentStage\([^\n]+/m)[0]+'\n'+app.slice(wireStart,wireEnd),runtime);await button.onclick();
   assert.equal(downloaded,3,'The actual next-action handler failed to reach automatic instruction export.');
   assert.equal(runtime.operationSelection[9],'COMPLETE');assert.equal(runtime.current.projectData.freshContexts.length,1);
   runtime.savePromptRecord=async()=>{throw new Error('The selected file could not be read. Select it again.');};
@@ -142,7 +184,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.projectStore={readProject:async()=>structuredClone(stored),replaceProject:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+1;return structuredClone(stored);}};
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(x=>Number(x.stage)===n&&!x.invalidatedBy&&Number(x.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
-  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','persistReplacement','pendingReturnedResponse','validateReturnedResponse','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
   assert.equal(vm.runInContext('currentPromptRecord(6)?.instructionId',runtime),saved.instructionId,'Raw capture incorrectly stales the still-open instruction and blocks manifest re-export.');
   const priorInput=runtime.current.job.CURRENT_INPUT_VERSION;runtime.current.job.CURRENT_INPUT_VERSION='CHANGED-AUTHORITY';
   assert.equal(vm.runInContext('currentPromptRecord(6)',runtime),null,'A changed authority scope must not reuse an older instruction.');runtime.current.job.CURRENT_INPUT_VERSION=priorInput;
