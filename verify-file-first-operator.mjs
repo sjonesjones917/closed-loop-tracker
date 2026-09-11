@@ -106,6 +106,15 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.equal(runtime.current.revision,7);
   assert.equal(input.value,'Unsaved operator text');
   assert.equal(rendered,0,'Reporting an operational error must not rerender the form.');
+  vm.runInContext(app.slice(app.indexOf('function announce('),app.indexOf('\nconst recordValue=',app.indexOf('function announce('))),runtime);
+  runtime.announce('context registered');
+  assert.equal(help.textContent,'Existing field help','Restore the existing help after the next action.');
+  assert.equal(help.className,'help','The situational banner must not remain after recovery.');
+  runtime.current.activeStage=9;runtime.reviewerOperation=()=>true;
+  await runtime.exportAttempt(()=>downloaded++);
+  assert.match(help.textContent,/new agent conversation that did not produce the work/,'The same situation must explain the separate reviewer conversation.');
+  assert.match(help.textContent,/internal IDs automatically/);
+  runtime.announce('reviewer registered');
   runtime.savePromptRecord=async()=>{throw new Error('The selected file could not be read. Select it again.');};
   for(let stage=1;stage<=30;stage++){
     runtime.current.activeStage=stage;await runtime.exportAttempt(()=>downloaded++);
