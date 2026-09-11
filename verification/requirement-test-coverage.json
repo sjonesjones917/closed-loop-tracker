@@ -1451,7 +1451,8 @@
         "app-core.js:savePromptRecord/currentStagePrompt/controls",
         "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
         "workflow-engine.js:recalculate/deriveStageData/operationalNextAction",
-        "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)"
+        "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)",
+        "app-core.js:wire next-instruction action targets canonicalCurrentStage"
       ],
       "existingTests": [
         "verify-reservation-contract.mjs:automatic author/reviewer/product context preparation and one reservation revision",
@@ -1466,7 +1467,8 @@
         "verify-reservation-contract.mjs:terminal reservation retry correction and scope identity checks",
         "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade",
         "verify-file-first-operator.mjs:all30 current-response modes",
-        "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild"
+        "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild",
+        "verify-file-first-operator.mjs:historical-view next action exports the current owning stage for review/reconciliation/run/verification/product operations"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:real Stage04 acceptance to Stage05 automatic export without manual context form",

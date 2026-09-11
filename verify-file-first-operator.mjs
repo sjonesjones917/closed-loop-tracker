@@ -64,6 +64,17 @@ verify();
   assert.match(runtime.mode(stage),/The application accepted this response/,'The current accepted response lost its receipt at stage '+stage);
  }
 }
+// The next action displayed on a historical view belongs to the current stage.
+{
+ const wireStart=app.indexOf("if($('#next-export-prompt-file'))"),wireEnd=app.indexOf("if($('#export-prompt-context'))",wireStart),source=app.slice(wireStart,wireEnd);
+ assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
+ for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
+  const button={dataset:{operation}},current={activeStage:stage-1},operationSelection={};let exported;
+  const runtime=vm.createContext({$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage,exportPromptFile:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
+  vm.runInContext(source,runtime);await button.onclick();
+  assert.deepEqual(exported,{stage,operation},'The next action exported from the inspected historical stage instead of its owning current stage.');
+ }
+}
 assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
 assert.throws(()=>verify({appSource:app.replace('const operationSelection={},runSelection={},responseFileSelection={};','const operationSelection={},runSelection={};')}),/declared response-file selection state/);
 assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/read-back mismatch/);
@@ -137,12 +148,12 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.equal(runtime.current.revision,8);
   assert.equal(dialogs.length,0);
   assert.doesNotMatch(app,/id="fresh-context-id"|id="add-fresh-context"/,'Routine workflow must not ask the human to name/register application contexts.');
-  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
+  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
   assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
   const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportPromptFile=()=>runtime.exportAttempt(()=>downloaded++);
   const wireStart=app.indexOf('function wire(){')+'function wire(){'.length,wireEnd=app.indexOf("if($('#export-prompt-context'))",wireStart);
-  vm.runInContext(app.slice(wireStart,wireEnd),runtime);await button.onclick();
+  vm.runInContext(app.match(/^function canonicalCurrentStage\([^\n]+/m)[0]+'\n'+app.slice(wireStart,wireEnd),runtime);await button.onclick();
   assert.equal(downloaded,3,'The actual next-action handler failed to reach automatic instruction export.');
   assert.equal(runtime.operationSelection[9],'COMPLETE');assert.equal(runtime.current.projectData.freshContexts.length,1);
   runtime.savePromptRecord=async()=>{throw new Error('The selected file could not be read. Select it again.');};
