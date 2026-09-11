@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
 for(const token of ['renameCurrentProject','duplicateCurrentProject','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
@@ -72,4 +73,55 @@ assert(packageDownloads.map(x=>x.href).join(',')==='blob:PACKAGE-A,blob:PACKAGE-
 assert(maxActivePackages===1,'Large complete export and backup packages were assembled concurrently.');
 rejectNextPackage=true;const failedPackage=packageRuntime.exportCompletePackage().then(()=>false,error=>error.message==='CONTROLLED_PACKAGE_EXPORT_FAILURE'),recoveredPackage=packageRuntime.exportCompletePackage('backup');assert(await failedPackage,'Controlled export failure was lost.');await recoveredPackage;
 assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz','Failed complete export left later backup requests stuck.');
+// Exercise the complete production package encoder with only the storage
+// boundary replaced. The browser suite supplies real IndexedDB coverage.
+const filePackageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
+vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>fixtureProject;listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
+const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
+for(let i=0;i<artifactSizes.length;i++){
+  const bytes=Uint8Array.from({length:artifactSizes[i]},(_,j)=>(j*137+i)%256),sha256=createHash('sha256').update(bytes).digest('hex');
+  filePackageRuntime.fixtureBlob=new Blob([bytes]);
+  vm.runInContext(`fixtureArtifacts.push({artifactId:'FILE-${i}',jobId:'FILE-PRESSURE',filename:'file-${i}.bin',mediaType:'application/octet-stream',byteSize:${bytes.length},sha256:'${sha256}',lineage:{},createdAt:'2026-09-11T00:00:00.000Z',blob:fixtureBlob});`,filePackageRuntime);
+}
+let maxPackageRead=0,maxBase64Input=0;
+const nativeBlobRead=Blob.prototype.arrayBuffer;
+filePackageRuntime.btoa=text=>{maxBase64Input=Math.max(maxBase64Input,text.length);return btoa(text);};
+let exportedFiles;
+try{
+  Blob.prototype.arrayBuffer=function(){maxPackageRead=Math.max(maxPackageRead,this.size);return nativeBlobRead.call(this);};
+  exportedFiles=await filePackageRuntime.closedLoopProjectStore.exportPackage('FILE-PRESSURE');
+}finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
+assert(maxPackageRead<=65536,`Complete export allocated a ${maxPackageRead}-byte artifact buffer.`);
+assert(maxBase64Input<=65536,`Complete export encoded ${maxBase64Input} bytes as one base64 string.`);
+const exportedPayload=JSON.parse(await new Response(exportedFiles.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+const {packageSha256:filePackageSha256,...filePackageBody}=exportedPayload;
+assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(filePackageBody)).digest('hex')===filePackageSha256,'Streamed package digest differs from the independent crypto oracle.');
+assert(exportedPayload.artifacts.length===artifactSizes.length,'Complete export dropped artifact members.');
+for(let i=0;i<artifactSizes.length;i++){
+  const row=exportedPayload.artifacts[i],bytes=Buffer.from(row.base64,'base64');
+  assert(bytes.length===artifactSizes[i]&&bytes.every((value,j)=>value===(j*137+i)%256),`Complete export changed file ${i}, including its tail.`);
+}
+vm.runInContext(`fixtureArtifacts[0].sha256='0'.repeat(64)`,filePackageRuntime);
+let damagedFileRejected=false;try{await filePackageRuntime.closedLoopProjectStore.exportPackage('FILE-PRESSURE');}catch(error){damagedFileRejected=error.code==='ARTIFACT_INTEGRITY_MISMATCH';}
+assert(damagedFileRejected,'Bounded file export accepted corrupted stored bytes.');
+// The real Files view and proposal view must not eagerly build all accumulated
+// download controls or resolve every diff row before a detail page is opened.
+const viewRuntime=vm.createContext({engine,current:core.createBlankState('VIEW-PRESSURE'),safe:value=>Array.isArray(value)?value:[],esc:value=>String(value??''),label:value=>String(value),proposalVersionCurrent:()=>true});
+vm.runInContext(app.slice(app.indexOf('const detailViews='),app.indexOf('function completion(')),viewRuntime);
+vm.runInContext(app.slice(app.indexOf('function files(){'),app.indexOf('function release(){')),viewRuntime);
+vm.runInContext(`for(let i=0;i<600;i++)current.projectData.artifacts.push({id:'FILE-'+i,active:true,fields:{ARTIFACT_ID:'FILE-'+i,FILENAME:'file-'+i+'.bin',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',SHA256:'a'.repeat(64)}});globalThis.fileView=files();`,viewRuntime);
+assert((viewRuntime.fileView.match(/data-download-artifact=/g)||[]).length<=20,'The Files view rendered every accumulated artifact download control.');
+vm.runInContext(`globalThis.filePages=[...detailViews.values()].filter(entry=>entry.kind==='markup'&&entry.title==='Stored files');`,viewRuntime);
+assert(viewRuntime.filePages.length===1,'Large file lists need a paged download surface.');
+const fileIds=[];
+for(let offset=0;offset<600;offset+=20){const html=viewRuntime.filePages[0].value(offset);fileIds.push(...[...html.matchAll(/data-download-artifact="([^"]+)"/g)].map(match=>match[1]));}
+assert(fileIds.length===600&&new Set(fileIds).size===600&&fileIds.at(-1)==='FILE-599','File pagination lost or duplicated a downloadable artifact.');
+let diffLookups=0;
+viewRuntime.engine={...engine,records:(...args)=>{diffLookups++;return engine.records(...args);}};
+vm.runInContext(`globalThis.pendingProposal=()=>({changes:Array.from({length:600},(_,i)=>({canonicalCollection:'requirements',canonicalRecordId:'REQ-'+i,canonicalField:'OBLIGATION',normalizedValue:'proposal-'+i})),envelope:{stageData:{}},humanAuthorityCandidates:[]});`,viewRuntime);
+vm.runInContext(app.slice(app.indexOf('function proposalMarkup('),app.indexOf('function stageConfirmationMarkup(')),viewRuntime);
+vm.runInContext('proposalMarkup(4)',viewRuntime);
+assert(diffLookups<=20,`Closed proposal details resolved ${diffLookups} records before disclosure.`);
 console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,completeExportIdentityAfterNavigation:true,serializedCompletePackages:true,completeExportFailureRecovery:true,unsafeOverrides:0}));
