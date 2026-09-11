@@ -29,3 +29,14 @@ for(const [stage,type,phase] of [[22,'DETERMINISTIC','FINAL_PRODUCT_DETERMINISTI
  assert.equal(e.finalProductTestSelection(p,stage).tests.length,1);checks+=7;
 }
 console.log(JSON.stringify({finalProductTiming:'PASS',stagesChecked:[22,23,24],perRunTestsExcluded:true,futureTestsNotPremature:true,propositionDeferralWithoutFalseSatisfaction:true,missingTimingBlocks:true,missingTargetBlocks:true,repairedPathProgressed:true,checks}));
+
+
+// Stage 06 cannot design numeric timing from phase names alone. Publish the
+// application stage purposes in the controlling prompt, before untrusted data.
+vm.runInContext(fs.readFileSync('prompt-engine.js','utf8'),c,{filename:'prompt-engine.js'});
+const scheduleProject=c.closedLoopCore.createBlankState('JOB-SCHEDULE-CONTEXT');e.ensureShape(scheduleProject);scheduleProject.stages[5].status='COMPLETE';scheduleProject.stages[5].gate={complete:true};
+const instruction=c.closedLoopPromptEngine.buildPromptRecord(6,scheduleProject,{operation:'COMPLETE'}).prompt;
+assert.match(instruction,/APPLICATION VERIFICATION SCHEDULE/,'Stage 06 omits the application scheduling context required by its test fields.');
+for(const stage of [12,17,19,22,23,24,26,28,29,30])assert(instruction.includes(`Stage ${String(stage).padStart(2,'0')}: ${c.closedLoopCore.STAGES[stage-1].title}`),`Stage ${stage} is absent from the controlling schedule.`);
+assert.match(instruction,/Do not ask the human to supply stage numbers/);
+console.log(JSON.stringify({stage06SchedulingContextPublished:true}));

@@ -123,3 +123,43 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.doesNotMatch(app,/\b(?:alert|confirm|prompt)\s*\(/,'Application handlers must use existing inline messaging instead of native popups.');
   console.log(JSON.stringify({stage05ContextAutomatic:true,noManualContextForm:true,contextReservationAtomic:true,all30HandoffFailuresInline:true,nativePopups:0}));
 }
+
+
+// A durable write from another operation/tab must not strand the UI at its old
+// revision. Retry validation from the stored raw response and retained files;
+// never overwrite the newer project with the failed candidate.
+{
+  const failures=[],downloads=[];
+  const runtime=vm.createContext({setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,safe:v=>Array.isArray(v)?v:[],clone:structuredClone,TAB_INSTANCE_ID:'TAB-REVISION-RECOVERY',responseActionFailure:null,announce(){},render(){},$:()=>({focus(){}}),reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),reportActionFailure:error=>failures.push(String(error.message||error)),externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),operatorLaneMatches:()=>true,reverifyReturnedFiles:async()=>{}});
+  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
+  const engine=runtime.closedLoopWorkflowEngine,ingestion=runtime.closedLoopResponseIngestion,prompts=runtime.closedLoopPromptEngine;
+  let p=runtime.closedLoopCore.createBlankState('JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;engine.ensureShape(p);p.stages[5].status='COMPLETE';p.stages[5].gate={complete:true};
+  const saved=prompts.reserveAndBuildPromptRecord(p,6,{operation:'COMPLETE'}).prompt;
+  p=ingestion.captureRaw(p,{stage:6,text:'{"broken":true}',promptRecord:saved,files:[{attachmentSlotId:'DESIGN',artifactId:'DESIGN-BYTES',name:'design.md',sha256:'retained-digest'}]}).project;p.revision=84;
+  runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;
+  let stored=structuredClone(p);stored.revision=85;stored.projectData.userEntered.concurrentMarker='PRESERVE NEWER WORK';let staleWrites=0;
+  runtime.projectStore={readProject:async()=>structuredClone(stored),replaceProject:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+1;return structuredClone(stored);}};
+  runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(x=>Number(x.stage)===n&&!x.invalidatedBy&&Number(x.scope.projectRevision)===runtime.current.revision).at(-1)||null;
+  function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
+  vm.runInContext(['persistReplacement','pendingReturnedResponse','validateReturnedResponse','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  await runtime.validate();
+  assert.equal(failures.length,0,`Returned-file validation stranded the operator: ${failures.join(' | ')}`);
+  assert.equal(staleWrites,1,'The fixture did not exercise the durable revision conflict.');
+  assert.equal(stored.projectData.userEntered.concurrentMarker,'PRESERVE NEWER WORK');
+  assert.equal(stored.projectData.rawResponses[0].files[0].artifactId,'DESIGN-BYTES');
+  assert.equal(stored.projectData.responseValidations.length,1,'Recovery must validate the retained response once.');
+  assert.equal(stored.projectData.responseValidations[0].valid,false);
+  // A second stale revision must also recover on the actual manifest exporter.
+  stored.revision++;stored.projectData.userEntered.secondMarker='KEEP THIS TOO';
+  await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
+  assert.equal(failures.length,0,`Correction manifest export failed: ${failures.join(' | ')}`);
+  assert.equal(downloads.length,1,'The correction manifest was not exported.');
+  assert.notEqual(downloads[0].promptIdentity.instructionId,saved.instructionId);
+  assert.equal(stored.projectData.userEntered.secondMarker,'KEEP THIS TOO');
+  assert(stored.projectData.generatedPrompts.at(-1).contextManifest.latestValidationFailure.length,'Correction instruction must carry the recorded validation failure.');
+  const count=stored.projectData.generatedPrompts.length;
+  await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
+  assert.equal(stored.projectData.generatedPrompts.length,count,'Repeated manifest export created another attempt.');
+  assert.equal(downloads[1].promptIdentity.instructionId,downloads[0].promptIdentity.instructionId);
+  console.log(JSON.stringify({returnedFileRevisionRecovery:true,retainedBytesPreserved:true,newerWorkPreserved:true,correctionManifestExported:true}));
+}
