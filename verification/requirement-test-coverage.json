@@ -184,7 +184,8 @@
         "workflow-engine.js:gate/deriveStageData",
         "project-store.js:validateProjectIntegrity",
         "workflow-engine.js:gate/recalculate/operationalNextAction; app-core.js:selectedOperation",
-        "response-ingestion.js:application reviewer-context classification shared with Stage 06"
+        "response-ingestion.js:application reviewer-context classification shared with Stage 06",
+        "workflow-engine.js:operationalNextAction pending-proposal operation binding"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -194,7 +195,8 @@
         "verify-file-first-operator.mjs:Stage 05 actual save/export failure and all-30-stage inline handoff failures",
         "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
         "verify-full-cycle.mjs:independent review required in both gate and saved status; automatic next review operation",
-        "verify-full-cycle.mjs:automatic Stage 05 reviewer acceptance without manual context registration"
+        "verify-full-cycle.mjs:automatic Stage 05 reviewer acceptance without manual context registration",
+        "verify-full-cycle.mjs:every real data proposal retains its operation while pending acceptance"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -206,7 +208,8 @@
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-browser-extra.mjs:Stage 05 automatic instruction/manifest export and review acceptance; non-response control errors remain inline",
-        "verify-browser-extra.mjs:stage05AutomaticReviewAccepted"
+        "verify-browser-extra.mjs:stage05AutomaticReviewAccepted",
+        "verify-browser-extra.mjs:automatic Stage05/06 review remains selected and its proposal visible after file validation"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -241,7 +244,8 @@
         "project-store.js:validateProjectIntegrity",
         "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
         "response-ingestion.js:validateEnvelope; workflow-engine.js:stageCompletionFeedback/stageTestExecutionPlan/mandatoryRequirements",
-        "workflow-engine.js:validateProofExpression/acceptedProofReviews/deriveCurrentObligations; response-ingestion.js:closed proof intake and current review binding; prompt-engine.js:buildSemanticReviewBinding/PROOF_EXPRESSION_CONTRACT"
+        "workflow-engine.js:validateProofExpression/acceptedProofReviews/deriveCurrentObligations; response-ingestion.js:closed proof intake and current review binding; prompt-engine.js:buildSemanticReviewBinding/PROOF_EXPRESSION_CONTRACT",
+        "workflow-engine.js:operationalNextAction pending-proposal operation binding"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -253,7 +257,8 @@
         "verify-ingestion.mjs:cross-field verification timing; verify-complete.mjs:optional attachment sentinels and ready coverage",
         "verify-full-cycle.mjs:author intake -> independent sufficiency review -> 30-stage completion and reload",
         "verify-semantic-invariant.mjs:closed proof truth tables and allowed evidence basis",
-        "verify-file-first-operator.mjs:existing Stage 06 instruction upgrades to the closed proof contract"
+        "verify-file-first-operator.mjs:existing Stage 06 instruction upgrades to the closed proof contract",
+        "verify-full-cycle.mjs:every real data proposal retains its operation while pending acceptance"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -269,7 +274,8 @@
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-browser-extra.mjs:retained returned-file validation after independent IndexedDB revision and exact open-attempt manifest export",
-        "verify-browser-extra.mjs:stage06AuthorCannotPass/stage06AutomaticProofReview/stage06ReviewedReloadPassed"
+        "verify-browser-extra.mjs:stage06AuthorCannotPass/stage06AutomaticProofReview/stage06ReviewedReloadPassed",
+        "verify-browser-extra.mjs:automatic Stage05/06 review remains selected and its proposal visible after file validation"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -638,7 +644,7 @@
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1202,13 +1208,13 @@
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -1284,7 +1290,7 @@
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1335,7 +1341,7 @@
         "verify-browser-extra.mjs",
         "verify-browser-extra.mjs:Stage 05 and non-response inline recovery"
       ],
-      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1368,7 +1374,7 @@
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1404,7 +1410,7 @@
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1444,7 +1450,7 @@
         "verify-browser.mjs",
         "verify-browser-extra.mjs"
       ],
-      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1523,14 +1529,16 @@
         "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
         "workflow-engine.js:recalculate/deriveStageData/operationalNextAction",
         "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)",
-        "app-core.js:wire next-instruction action targets canonicalCurrentStage"
+        "app-core.js:wire next-instruction action targets canonicalCurrentStage",
+        "workflow-engine.js:operationalNextAction pending-proposal operation binding"
       ],
       "existingTests": [
         "verify-reservation-contract.mjs:automatic author/reviewer/product context preparation and one reservation revision",
         "verify-full-cycle.mjs:all-30-stage lifecycle and automatic initial/corrected/confirmation run contexts",
         "verify-file-first-operator.mjs:Stage05 first export and repeat export",
         "verify-final-product-timing.mjs:Stage06 controlling application schedule",
-        "verify-full-cycle.mjs:consistent gates and deterministic reload"
+        "verify-full-cycle.mjs:consistent gates and deterministic reload",
+        "verify-full-cycle.mjs:every real data proposal retains its operation while pending acceptance"
       ],
       "negativeAdversarialTests": [
         "verify-complete.mjs:canonical/external context reuse and prohibited prior-review material",
@@ -1544,7 +1552,8 @@
       "browserProof": [
         "verify-browser-extra.mjs:real Stage04 acceptance to Stage05 automatic export without manual context form",
         "verify-mobile-stage-action.mjs:all 30 stages and existing accumulated-data controls",
-        "verify-browser-extra.mjs:retained returned-file validation after independent IndexedDB revision and exact open-attempt manifest export"
+        "verify-browser-extra.mjs:retained returned-file validation after independent IndexedDB revision and exact open-attempt manifest export",
+        "verify-browser-extra.mjs:automatic Stage05/06 review remains selected and its proposal visible after file validation"
       ],
       "deployedProof": [
         "verify-live.mjs",
