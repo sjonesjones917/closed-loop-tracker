@@ -1214,7 +1214,7 @@
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -1417,15 +1417,22 @@
       "id": "COMPLETE-BACKUP",
       "requirement": "6. a complete backup package exported outside the browser origin and a successful restore from those exported bytes;",
       "normativeRequirementIds": [
-        "NREQ-57b45791d7658e41b812bf1029332e5d"
+        "NREQ-57b45791d7658e41b812bf1029332e5d",
+        "NREQ-d8364b451e9bacebe247eb7156b4cca1"
       ],
       "sourceLines": [
-        5517
+        5517,
+        2958,
+        2974,
+        2979,
+        2980
       ],
       "productionOwner": [
         "project-store.js:exportPackage/importPackage; app-core.js:downloadProjectPackage",
         "hash.js:sha256Bytes/sha256Chunks",
-        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging"
+        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging",
+        "project-store.js:requiredProjectArtifactBytes/assertPackageArtifactCustody/verifyProjectArtifacts",
+        "app-core.js:#import-file commit and refresh boundary"
       ],
       "existingTests": [
         "verify-project-lifecycle.mjs",
@@ -1436,13 +1443,16 @@
       "negativeAdversarialTests": [
         "verify-project-lifecycle.mjs:complete export navigation, concurrent preparation and failure recovery",
         "verify-browser-extra.mjs:package integrity and storage rollback",
-        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters"
+        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters",
+        "verify-project-lifecycle.mjs:missing canonical bytes, missing saved prompt context, unchanged prior backup checkpoint, post-commit refresh failure",
+        "verify-browser-extra.mjs:real IndexedDB missing-byte export rejection and post-import refresh failure"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:48 MB complete export",
         "verify-browser.mjs:accumulated-context backup integrity",
         "verify-browser-extra.mjs:package round trip",
-        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards"
+        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards",
+        "verify-browser-extra.mjs:storageReliabilityBrowser; committed import exact bytes and reload"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1450,7 +1460,7 @@
         "verify-browser.mjs",
         "verify-browser-extra.mjs"
       ],
-      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "DP-45 through DP-52 require the final follow-up revision CI and deployed browser run. Earlier green revisions do not prove later changes. Actual physical-iPhone Safari, approved visual authority, and actual external project acceptance remain open.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1562,6 +1572,138 @@
       ],
       "evidenceGap": "This mapping proves only the listed application-owned paths after exact-revision CI/browser execution. It does not prove hidden provider context independence, every human-action boundary, an actual external-agent project, physical iPhone acceptance or approved visual authority.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+    },
+    {
+      "stageScope": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Local production-path regressions pass. Require exact final source CI, deployed byte identity, and deployed Chromium. No physical-iPhone or final visual approval is inferred.",
+      "id": "PERSISTENCE-CAS",
+      "requirement": "Section 35.1: compare the caller expected revision and commit canonical mutations atomically; a stale tab cannot overwrite newer work.",
+      "normativeRequirementIds": [
+        "NREQ-0c554afaaaaebb938aad54162261ba7e",
+        "NREQ-f37769b9aa8211853353d5ecfc62c5d7",
+        "NREQ-5003532a6cda7a68c13be508fbf4d723"
+      ],
+      "sourceLines": [
+        2921,
+        2923,
+        2929,
+        2931
+      ],
+      "productionOwner": [
+        "project-store.js:writeProjectRow/writeProject/writeAllIndexed",
+        "app-core.js:persistNewProject/persistReplacement/save/addNew/duplicateCurrentProject/archiveCurrentProject/load/deleteCurrentProject"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs",
+        "verify.mjs",
+        "verify-v3-migration.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-project-lifecycle.mjs:three stale lifecycle handlers, stale bulk atomic rollback, existing revision-zero identity, concurrent startup fetch",
+        "verify-browser-extra.mjs:two-tab CAS, transaction fault, real stale New project and bulk rollback"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:storageReliabilityBrowser"
+      ]
+    },
+    {
+      "stageScope": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Local production-path regressions pass. Require exact final source CI, deployed byte identity, and deployed Chromium. No physical-iPhone or final visual approval is inferred.",
+      "id": "IMPORT-ACTIVATION",
+      "requirement": "Section 35.5: import validates identities and bytes before activation; failed import leaves existing projects unchanged. A later view-refresh failure must retain and accurately describe a successful commit.",
+      "normativeRequirementIds": [],
+      "sourceLines": [
+        2979,
+        2980
+      ],
+      "productionOwner": [
+        "project-store.js:importPackage/assertPackageArtifactCustody",
+        "app-core.js:#import-file handler/refreshProjectStorage/normalize"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs",
+        "verify-browser-extra.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-project-lifecycle.mjs:pre-commit rejection preserves selected project/list; post-commit refresh failure retains committed revision and performs no all-project reload",
+        "verify-browser-extra.mjs:post-commit readonly transaction fault, accurate notice, exact restored bytes, reload"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:storageReliabilityBrowser/importSurvivedReload"
+      ]
     }
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca"
