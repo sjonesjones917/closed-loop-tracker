@@ -589,12 +589,14 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-root-cause-regressions.mjs"
+        "verify-root-cause-regressions.mjs",
+        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -602,14 +604,15 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1136,12 +1139,14 @@
       "productionOwner": [
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
-        "workflow-engine.js:gate/deriveStageData"
+        "workflow-engine.js:gate/deriveStageData",
+        "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-stage29-evidence-chain-checkpoint.mjs"
+        "verify-stage29-evidence-chain-checkpoint.mjs",
+        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1149,14 +1154,15 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1210,28 +1216,34 @@
       "productionOwner": [
         "prompt-engine.js:transportedBody/dataEnvelope/compactContextManifest",
         "prompt-engine.js:recoveryFeedback/contextFor/compactContextManifest",
-        "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)"
+        "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)",
+        "hash.js:sha256Bytes/sha256Chunks",
+        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging"
       ],
       "existingTests": [
         "verify-all-stage-prompts.mjs",
         "verify-user-prompt-invariants.mjs",
-        "verify-full-cycle.mjs:record-specific completion findings in reconciliation instruction"
+        "verify-full-cycle.mjs:record-specific completion findings in reconciliation instruction",
+        "verify-hash.mjs:bounded Blob reads and independent crypto oracle",
+        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle"
       ],
       "negativeAdversarialTests": [
         "verify-prompt-semantics.mjs",
         "verify-prompt-file-identity.mjs",
         "verify-ingestion.mjs:invalid timing rejects before canonical mutation and appears in replacement instruction",
-        "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild"
+        "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild",
+        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters"
       ],
       "browserProof": [
-        "verify-browser.mjs:stage03AccumulatedTransfer"
+        "verify-browser.mjs:stage03AccumulatedTransfer",
+        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1247,14 +1259,18 @@
         "prompt-engine.js:promptFileManifest; project-store.js:persistPromptContextFiles/readPromptContextFile; app-core.js:promptExport",
         "app-core.js:responseAttemptPrompt/prepareStageResponseFile/validationMarkup",
         "workflow-engine.js:preparePromptContext; prompt-engine.js:reserveAndBuildPromptRecord",
-        "app-core.js:latestResponseAttempt/pendingReturnedResponse/interactionModeMarkup"
+        "app-core.js:latestResponseAttempt/pendingReturnedResponse/interactionModeMarkup",
+        "hash.js:sha256Bytes/sha256Chunks",
+        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging"
       ],
       "existingTests": [
         "verify-file-first-operator.mjs",
         "verify-prompt-file-identity.mjs",
         "verify-reservation-contract.mjs:automatic context/product preparation and atomic revision",
         "verify-full-cycle.mjs:automatic contexts through all 30 stages and three ten-run batches",
-        "verify-file-first-operator.mjs:latest relevant response and status precedence across all 30 stages"
+        "verify-file-first-operator.mjs:latest relevant response and status precedence across all 30 stages",
+        "verify-hash.mjs:bounded Blob reads and independent crypto oracle",
+        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle"
       ],
       "negativeAdversarialTests": [
         "verify-reservation-contract.mjs",
@@ -1262,12 +1278,14 @@
         "verify-file-first-operator.mjs:saved attempt after UI revision, pending reselection and inline storage failure",
         "verify-complete.mjs:unknown external names are not duplicate identities; actual context reuse and prior-review leakage rejected",
         "verify-file-first-operator.mjs:no manual context naming, repeat export stable, all-stage failures inline",
-        "verify-file-first-operator.mjs:old file slot, unrelated operation and prior success cannot override current attempt"
+        "verify-file-first-operator.mjs:old file slot, unrelated operation and prior success cannot override current attempt",
+        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer",
         "verify-browser-extra.mjs:invalid replacement, correction export, inline storage failure, pending reselection, acceptance and reload",
-        "verify-browser-extra.mjs:Stage04 acceptance to Stage05 automatic author allocation, exact instruction/manifest export, no manual context form or popup"
+        "verify-browser-extra.mjs:Stage04 acceptance to Stage05 automatic author allocation, exact instruction/manifest export, no manual context form or popup",
+        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1276,7 +1294,7 @@
         "verify-browser-extra.mjs",
         "verify-browser-extra.mjs:Stage 05 and non-response inline recovery"
       ],
-      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1289,24 +1307,27 @@
         4220
       ],
       "productionOwner": [
-        "app-core.js:field/details/renderDetail/provenanceContents"
+        "app-core.js:field/details/renderDetail/provenanceContents",
+        "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup"
       ],
       "existingTests": [
         "verify-browser.mjs",
-        "verify-mobile-stage-action.mjs"
+        "verify-mobile-stage-action.mjs",
+        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts"
       ],
       "negativeAdversarialTests": [
         "verify-browser-extra.mjs"
       ],
       "browserProof": [
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1320,11 +1341,13 @@
       ],
       "productionOwner": [
         "app-core.js:details; index.html:expandable-prompt/data-text-page",
-        "app-core.js:scrollTargetBounds/sectionScroller/syncMatchedScrollJumps"
+        "app-core.js:scrollTargetBounds/sectionScroller/syncMatchedScrollJumps",
+        "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup"
       ],
       "existingTests": [
         "verify-mobile-stage-action.mjs",
-        "verify-human-stage-walkthrough.mjs"
+        "verify-human-stage-walkthrough.mjs",
+        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts"
       ],
       "negativeAdversarialTests": [
         "verify-browser-extra.mjs"
@@ -1332,14 +1355,15 @@
       "browserProof": [
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-browser.mjs:original instruction/proposal arrows and page-scroll-at-first-line",
-        "verify-mobile-stage-action.mjs:original arrows on bounded history text and all 30 stages"
+        "verify-mobile-stage-action.mjs:original arrows on bounded history text and all 30 stages",
+        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "Final exact-revision evidence remains required; listed tests are mappings, not a blanket conformance claim.",
+      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1352,20 +1376,26 @@
         5517
       ],
       "productionOwner": [
-        "project-store.js:exportPackage/importPackage; app-core.js:downloadProjectPackage"
+        "project-store.js:exportPackage/importPackage; app-core.js:downloadProjectPackage",
+        "hash.js:sha256Bytes/sha256Chunks",
+        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging"
       ],
       "existingTests": [
         "verify-project-lifecycle.mjs",
-        "verify-full-cycle.mjs"
+        "verify-full-cycle.mjs",
+        "verify-hash.mjs:bounded Blob reads and independent crypto oracle",
+        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle"
       ],
       "negativeAdversarialTests": [
         "verify-project-lifecycle.mjs:complete export navigation, concurrent preparation and failure recovery",
-        "verify-browser-extra.mjs:package integrity and storage rollback"
+        "verify-browser-extra.mjs:package integrity and storage rollback",
+        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:48 MB complete export",
         "verify-browser.mjs:accumulated-context backup integrity",
-        "verify-browser-extra.mjs:package round trip"
+        "verify-browser-extra.mjs:package round trip",
+        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1373,7 +1403,7 @@
         "verify-browser.mjs",
         "verify-browser-extra.mjs"
       ],
-      "evidenceGap": "Automated package generation, byte integrity and round trips do not establish physical external-copy custody. Final acceptance still requires actual export outside the browser origin and restore from those exact exported bytes on the pinned device.",
+      "evidenceGap": "PR #1218 requires exact-revision full CI and deployed Chromium. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1483,5 +1513,6 @@
       "evidenceGap": "This mapping proves only the listed application-owned paths after exact-revision CI/browser execution. It does not prove hidden provider context independence, every human-action boundary, an actual external-agent project, physical iPhone acceptance or approved visual authority.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     }
-  ]
+  ],
+  "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca"
 }

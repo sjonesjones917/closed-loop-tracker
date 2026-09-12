@@ -106,6 +106,40 @@ for(let i=0;i<artifactSizes.length;i++){
 vm.runInContext(`fixtureArtifacts[0].sha256='0'.repeat(64)`,filePackageRuntime);
 let damagedFileRejected=false;try{await filePackageRuntime.closedLoopProjectStore.exportPackage('FILE-PRESSURE');}catch(error){damagedFileRejected=error.code==='ARTIFACT_INTEGRITY_MISMATCH';}
 assert(damagedFileRejected,'Bounded file export accepted corrupted stored bytes.');
+// Exercise the other production package schema, including streamed UTF-8 JSON
+// strings with multi-byte characters and escapes spanning file-read boundaries.
+filePackageRuntime.fixtureContextBlob=new Blob(['é🙂\\\n\t"'.repeat(20000),'CONTEXT-FINAL-TAIL']);
+filePackageRuntime.fixtureContextSha=await globalThis.closedLoopHash.sha256Bytes(filePackageRuntime.fixtureContextBlob);
+vm.runInContext(`
+  const hash=closedLoopHash,contextIdentity={path:'context.json',filename:'context.json',mediaType:'application/json',byteSize:fixtureContextBlob.size,sha256:fixtureContextSha};
+  const prompt={stage:4,operation:'COMPLETE',promptEngineVersion:'FIXTURE',instructionId:'PROMPT-FILES',prompt:'instruction\\n',scope:{},contextManifest:{promptContext:{attachments:[contextIdentity]}}};
+  prompt.bodySha256=prompt.fullTextSha256=hash.sha256Text(prompt.prompt);prompt.contractSha256=hash.sha256Value({});fixtureProject.projectData.generatedPrompts=[prompt];
+  globalThis.fixtureContextRow={artifactId:'PROMPT-CONTEXT-'+hash.sha256Value({jobId:'FILE-PRESSURE',sha256:fixtureContextSha}),jobId:'FILE-PRESSURE',blob:fixtureContextBlob,sha256:fixtureContextSha,byteSize:fixtureContextBlob.size};
+  globalThis.closedLoopPromptEngine={version:'FIXTURE',responseContractDescriptor:()=>({}),promptFileManifest:()=>({contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
+  globalThis.closedLoopWorkflowEngine={executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
+`,filePackageRuntime);
+// Re-evaluate the same store with only its I/O substituted for immutable rows.
+filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
+maxPackageRead=0;maxBase64Input=0;
+let executionPackage;
+try{
+  Blob.prototype.arrayBuffer=function(){maxPackageRead=Math.max(maxPackageRead,this.size);return nativeBlobRead.call(this);};
+  executionPackage=await vm.runInContext("closedLoopProjectStore.createExecutionPackage({project:fixtureProject,stage:4,operation:'COMPLETE'})",filePackageRuntime);
+}finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
+assert(maxPackageRead<=65536&&maxBase64Input<=65536,'Execution-package export buffered a complete artifact/context file.');
+const executionPayload=JSON.parse(await new Response(executionPackage.blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+const {packageSha256:executionSha,...executionBody}=executionPayload;
+assert(executionPayload.contextFiles[0].text===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
+assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(executionBody)).digest('hex')===executionSha,'Execution-package digest changed.');
+assert(executionPayload.artifacts[0].base64===exportedPayload.artifacts[6].base64,'Execution package changed artifact bytes.');
+const decoderRuntime=vm.createContext({Blob,Uint8Array,atob});
+vm.runInContext(store.slice(store.indexOf('const base64ToBytes='),store.indexOf('async function compressBytes('))+'\nglobalThis.decodeFile=base64ToBlob;',decoderRuntime);
+for(const row of exportedPayload.artifacts){
+  const wrapped=row.base64.replace(/.{73}/g,'$&\n\t '),decoded=await decoderRuntime.decodeFile(wrapped).arrayBuffer();
+  assert(Buffer.from(decoded).equals(Buffer.from(row.base64,'base64')),'Bounded restore changed base64 whitespace or final padding semantics.');
+}
+for(const invalid of ['Zg==YQ==','!AAA','A','AA=A']){let rejected=false;try{decoderRuntime.decodeFile(invalid);}catch{rejected=true;}assert(rejected,`Invalid artifact base64 was accepted: ${invalid}`);}
 // The real Files view and proposal view must not eagerly build all accumulated
 // download controls or resolve every diff row before a detail page is opened.
 const viewRuntime=vm.createContext({engine,current:core.createBlankState('VIEW-PRESSURE'),safe:value=>Array.isArray(value)?value:[],esc:value=>String(value??''),label:value=>String(value),proposalVersionCurrent:()=>true});
@@ -124,4 +158,11 @@ vm.runInContext(`globalThis.pendingProposal=()=>({changes:Array.from({length:600
 vm.runInContext(app.slice(app.indexOf('function proposalMarkup('),app.indexOf('function stageConfirmationMarkup(')),viewRuntime);
 vm.runInContext('proposalMarkup(4)',viewRuntime);
 assert(diffLookups<=20,`Closed proposal details resolved ${diffLookups} records before disclosure.`);
+let evidenceLookups=0,regressionLookups=0;
+const accumulatedViewRows=Array.from({length:600},(_,i)=>({id:'VIEW-'+i}));
+viewRuntime.engine={...engine,records:(_p,family)=>{if(family==='regressionExecutions'){regressionLookups++;return [];}return accumulatedViewRows;},evidenceChainExplanation:(_p,chain)=>{evidenceLookups++;return {id:chain.id};}};
+vm.runInContext(app.slice(app.indexOf('function evidenceExplanationMarkup('),app.indexOf('function rootCauseCorrectionMarkup(')),viewRuntime);
+vm.runInContext(app.slice(app.indexOf('function regressionLifecycleMarkup('),app.indexOf('function contradictionMarkup(')),viewRuntime);
+vm.runInContext('evidenceExplanationMarkup(29);regressionLifecycleMarkup(15)',viewRuntime);
+assert(evidenceLookups<=20&&regressionLookups<=20,`Deferred stage views eagerly computed ${evidenceLookups} evidence explanations and ${regressionLookups} regression histories.`);
 console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,completeExportIdentityAfterNavigation:true,serializedCompletePackages:true,completeExportFailureRecovery:true,unsafeOverrides:0}));
