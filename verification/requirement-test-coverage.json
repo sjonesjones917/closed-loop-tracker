@@ -1214,7 +1214,7 @@
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -2263,6 +2263,69 @@
       ],
       "evidenceGap": "Calculation counts are deterministic production-path observations with storage I/O substituted. Exact-revision CI and real IndexedDB Chromium remain required. Physical-iPhone latency/headroom and approved visual authority are separate.",
       "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
+    },
+    {
+      "id": "NONBLOCKING-STORAGE-DIAGNOSTICS",
+      "requirement": "Diagnosis finding 16: optional browser storage diagnostics must not delay a verified project becoming usable or a completed package export; late readings must preserve live forms and canonical state.",
+      "requirementOrigin": "User performance/reliability diagnosis and appearance/behavior preservation constraint. No new specification requirement ID or latency budget is invented.",
+      "normativeRequirementIds": [],
+      "sourceLines": [],
+      "productionOwner": [
+        "app-core.js:load/downloadProjectPackage/refreshStorageHealth",
+        "app-core.js:paintStorageHealth/storageHealthField"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:diagnostics:complete-exports-do-not-wait-for-health",
+        "verify-project-lifecycle.mjs:diagnostics:startup-slow-health-does-not-block",
+        "verify-project-lifecycle.mjs:diagnostics:startup-failed-health-does-not-block"
+      ],
+      "negativeAdversarialTests": [
+        "browser persistence call remains unresolved",
+        "diagnostic metadata read throws after selected project loads",
+        "two package requests remain serialized and complete before health settles",
+        "late health success/failure preserves form DOM, draft, focus, selection and project digest"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:nonblocking-storage-diagnostics"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs:nonblocking-storage-diagnostics on final deployed revision"
+      ],
+      "stageScope": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "evidenceGap": "Local RED\u2192GREEN covers the shared production handlers. Exact CI/merge/deployment evidence is recorded on the repair PR. Physical-iPhone Safari and approved visual authority remain required; no device timing or headroom claim.",
+      "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
     }
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",
