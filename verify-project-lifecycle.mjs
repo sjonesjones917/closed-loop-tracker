@@ -200,7 +200,12 @@ storageRuntime.openStorageTransaction=async(names,mode)=>{
   storageAccess.push({kind:'transaction',names:selected,mode});
   return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({openKeyCursor:()=>{storageAccess.push({kind:'indexKeys',name,indexName});const keys=[...pending.get(name).values()].map(row=>row[indexName]).filter(Boolean).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));const req={};let i=0;const advance=()=>{req.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;req.onsuccess?.();};queueMicrotask(advance);return req;},getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
 };
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),storageRuntime,{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
+  let source=fs.readFileSync(file,'utf8');
+  // Observe the existing calculation owner without replacing its rules.
+  if(file==='workflow-engine.js')source=source.replace('function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction}={}){','function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction}={}){globalThis.registrationRecalculations=(globalThis.registrationRecalculations||0)+1;');
+  vm.runInContext(source,storageRuntime,{filename:file});
+}
 const storageSource=store.replace('globalThis.closedLoopProjectStore=','globalThis.decodePackageForTest=readPackageJson;globalThis.packageChunksForTest=packageJsonChunks;globalThis.closedLoopProjectStore=')
   .replace(/const request=req=>[^\n]+/, 'const request=req=>Promise.resolve(req.result);')
   .replace(/const complete=tx=>[^\n]+/, 'const complete=async tx=>tx.commit();')
@@ -290,6 +295,34 @@ await storageRegression('prompt-context:historical-eligibility-and-backup-custod
 // through every asynchronous boundary. Only the database I/O is substituted.
 vm.runInContext(app.match(/^const artifactIdFor=.*$/m)[0],storageRuntime);
 for(const name of ['logicalFilePath','storeArtifactFile','registerStageFiles'])vm.runInContext(appFunction(name),storageRuntime);
+for(const count of [1,64,65,129])await storageRegression(`file-intake:bounded-registration:${count}`,async()=>{
+  await vm.runInContext(`(async()=>{
+    current=await makeStored('INTAKE-BATCH-'+${count});projects=[current];failures=[];
+    globalThis.batchFiles=Array.from({length:${count}},(_,i)=>{const file=new Blob(['Exact file '+i+' é🙂'],{type:'text/plain'});Object.defineProperty(file,'name',{value:'file-'+i+'.txt'});return file;});
+  })()`,storageRuntime);
+  const persist=storageRuntime.persistReplacement;let preparations;
+  storageRuntime.persistReplacement=async(...args)=>{preparations=storageRuntime.registrationRecalculations;return persist(...args);};
+  storageRuntime.registrationRecalculations=0;
+  try{await vm.runInContext('registerStageFiles(batchFiles)',storageRuntime);}finally{storageRuntime.persistReplacement=persist;}
+  const saved=await storageRuntime.projectStore.readProject('INTAKE-BATCH-'+count),rows=await storageRuntime.projectStore.listArtifacts(saved.job.JOB_ID);
+  assert(storageRuntime.failures.length===0,'Batch intake failed: '+storageRuntime.failures.join(' | '));
+  assert(rows.length===count&&saved.projectData.artifacts.length===count&&saved.stages[1].authorizedFiles.length===count,'Batch intake lost file bytes, canonical metadata or handoff selection.');
+  const events=saved.projectData.history.filter(e=>e.type==='ARTIFACT_BYTES_REGISTERED');
+  assert(events.length===count&&events.every((e,i)=>e.artifactId===saved.projectData.artifacts[i].id),'Batch intake changed registration history or order.');
+  for(const row of rows)assert(saved.projectData.userEntered.suppliedArtifactText[row.artifactId].text===await row.blob.text(),'Batch intake changed exact supplied text.');
+  console.log(JSON.stringify({artifactRegistrationPressure:{files:count,preCommitRecalculations:preparations}}));
+  assert(preparations>0&&preparations<=Math.ceil(count/64),`${count} files recalculated the workflow ${preparations} times before commit; budget ${Math.ceil(count/64)} preparations.`);
+});
+for(const invalid of ['identity','product'])await storageRegression(`file-intake:batch-member-rejection:${invalid}`,async()=>{
+  await vm.runInContext(`(async()=>{current=await makeStored('INTAKE-INVALID-'+${JSON.stringify(invalid)});projects=[current];failures=[];})()`,storageRuntime);
+  const before=storageRuntime.current.projectSha256,storeBefore=storageRuntime.projectStore;let member=0;
+  storageRuntime.projectStore={...storeBefore,putArtifact:async options=>{const row=await storeBefore.putArtifact(options);return ++member===65?{...row,...(invalid==='identity'?{sha256:'INVALID'}:{lineage:{productId:'MISSING-PRODUCT'}})}:row;}};
+  try{await vm.runInContext('registerStageFiles(batchFiles.slice(0,65))',storageRuntime);}finally{storageRuntime.projectStore=storeBefore;}
+  const saved=await storeBefore.readProject('INTAKE-INVALID-'+invalid);
+  assert(saved.projectSha256===before&&saved.projectData.artifacts.length===0,'A rejected late batch member partially committed canonical metadata.');
+  assert((await storeBefore.listArtifacts(saved.job.JOB_ID)).length===0,'A rejected late batch member left uncommitted bytes behind.');
+  assert(storageRuntime.failures.some(message=>message.includes(invalid==='identity'?'Verified artifact identity is incomplete':'missing or inactive product')),'Batch registration lost the original identity/lineage rejection.');
+});
 for(const boundary of ['first-file','second-file','first-text','second-text'])for(const change of ['project','stage','revision','second-file-failure'])await storageRegression(`file-intake:${boundary}:${change}`,async()=>{
   let reached,release;const entered=new Promise(resolve=>reached=resolve),held=new Promise(resolve=>release=resolve);
   storageRuntime.intakeBoundary=async name=>{if(name===boundary){reached();await held;}};
