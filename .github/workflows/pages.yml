@@ -184,11 +184,9 @@ jobs:
             script="$1"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then
-                cat "$log"
+              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
-              cat "$log"
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
                 return 1
               fi
@@ -257,11 +255,9 @@ jobs:
             script="$1"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then
-                cat "$log"
+              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
-              cat "$log"
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
                 return 1
               fi
@@ -299,11 +295,9 @@ jobs:
             script="$1"
             for attempt in 1 2 3; do
               log="/tmp/mobile-${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then
-                cat "$log"
+              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
-              cat "$log"
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
                 return 1
               fi
