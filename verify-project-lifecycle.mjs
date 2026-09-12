@@ -3,6 +3,29 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
+// Replay the real database-open owner while an older tab keeps the upgrade
+// pending. A second caller must receive the known blocked error, not queue an
+// open request that cannot report its own blocked event until the first ends.
+{
+  const requests=[];let closed=0;
+  const runtime=vm.createContext({indexedDB:{open(){const request={};requests.push(request);return request;}}});
+  vm.runInContext("const DB_NAME='closed-loop-reliability',DB_VERSION=2;"+store.slice(store.indexOf('let databasePromise=null;'),store.indexOf('function parseLegacy('))+';globalThis.open=openDatabase;',runtime);
+  const first=runtime.open().catch(error=>error);requests[0].onblocked();assert((await first).code==='INDEXEDDB_BLOCKED','Blocked upgrade did not report its cause.');
+  const retry=runtime.open().catch(error=>error);assert(requests.length===1,'Blocked upgrade queued another open request and left startup waiting behind the original lock.');
+  assert((await retry).code==='INDEXEDDB_BLOCKED','Subsequent startup work lost the known blocked-upgrade error.');
+  requests[0].result={close(){closed++;}};requests[0].onsuccess();
+  const resumed=runtime.open();assert(requests.length===2&&closed===1,'Closing the old tab did not release the rejected upgrade connection for a fresh open.');
+  const available={close(){closed++;}};requests[1].result=available;requests[1].onsuccess();assert(await resumed===available,'Database could not reopen after the blocked request completed.');
+  console.log(JSON.stringify({storageRegression:'database:blocked-upgrade-does-not-queue-startup',passed:true}));
+}
+{
+  const status={textContent:'Storage status loading…'},announcements=[];
+  const runtime=vm.createContext({closedLoopCore:{},load:async()=>{throw Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'});},console:{error(){}},announce:message=>announcements.push(message),$:selector=>selector==='#storage-status'?status:null});
+  vm.runInContext(app.slice(app.indexOf('globalThis.closedLoopAppReady=false;'),app.indexOf('// Long-section navigation belongs'))+';globalThis.start=startClosedLoopApp;',runtime);
+  await runtime.start();assert(runtime.closedLoopAppReady===false&&/blocked/i.test(runtime.closedLoopAppError),'Blocked startup was incorrectly marked ready.');
+  assert(/close.*tabs.*reload/i.test(status.textContent)&&announcements.includes(status.textContent),'Blocked startup did not show an actionable recovery message in the existing status area.');
+  console.log(JSON.stringify({storageRegression:'database:blocked-upgrade-visible-recovery',passed:true}));
+}
 for(const token of ['renameCurrentProject','duplicateCurrentProject','materializeProject','unloadInactiveProjects','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
 for(const token of ['project-management','project-danger-zone','Start from copy','Create backup now','Verify stored files now','View exact evidence / provenance','Clear unsaved response','Discard pending attempt','Prepare replacement attempt'])assert(app.includes(token),`Missing lifecycle UI ${token}.`);
 assert(!app.includes('dismissedProposalIds')&&ingestion.includes('function abandon(project,proposalId')&&ingestion.includes("'ABANDONED_RESPONSE'")&&app.includes('canonical accepted work changed: NO'),'Discarded pending attempts must be auditable without changing accepted canonical work.');

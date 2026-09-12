@@ -554,7 +554,7 @@ $('#project-picker').onchange=e=>selectProject(projects[Number(e.target.value)])
   }finally{e.target.value='';}
 };
 
-globalThis.closedLoopAppReady=false;globalThis.closedLoopAppError=null;const startClosedLoopApp=()=>load().then(()=>{globalThis.closedLoopAppReady=true;}).catch(error=>{globalThis.closedLoopAppError=String(error?.stack||error);console.error(error);announce('storage failed');});if(globalThis.closedLoopCore)startClosedLoopApp();else addEventListener('closed-loop-core-ready',startClosedLoopApp,{once:true});
+globalThis.closedLoopAppReady=false;globalThis.closedLoopAppError=null;const startClosedLoopApp=()=>load().then(()=>{globalThis.closedLoopAppReady=true;}).catch(error=>{globalThis.closedLoopAppError=String(error?.stack||error);console.error(error);const message=error?.code==='INDEXEDDB_BLOCKED'?'Storage upgrade blocked. Close other Closed-Loop Tracker tabs, then reload.':`Storage failed: ${error?.message||error}`;const node=$('#storage-status');if(node)node.textContent=message;announce(message);});if(globalThis.closedLoopCore)startClosedLoopApp();else addEventListener('closed-loop-core-ready',startClosedLoopApp,{once:true});
 // Long-section navigation belongs to the UI layer. It is frame-coalesced and samples only viewport-intersecting sections to avoid synchronous whole-document layout scans on mobile.
 if(typeof document!=='undefined'){
   const jumpId='prompt-bottom-jump';

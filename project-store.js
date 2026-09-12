@@ -87,9 +87,11 @@ function openDatabase(){
   const opening=new Promise((resolve,reject)=>{
     const req=indexedDB.open(DB_NAME,DB_VERSION);let blocked=false;
     req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(PROJECTS))db.createObjectStore(PROJECTS,{keyPath:'jobId'});if(!db.objectStoreNames.contains(ARTIFACTS))db.createObjectStore(ARTIFACTS,{keyPath:'artifactId'});if(!db.objectStoreNames.contains(META))db.createObjectStore(META,{keyPath:'key'});const artifacts=req.transaction.objectStore(ARTIFACTS);if(!artifacts.indexNames.contains('jobId'))artifacts.createIndex('jobId','jobId',{unique:false});const projects=req.transaction.objectStore(PROJECTS);if(!projects.indexNames.contains('picker')){projects.createIndex('picker','picker',{unique:true});const scan=projects.openCursor();scan.onsuccess=()=>{const cursor=scan.result;if(!cursor)return;const row=cursor.value;row.picker=projectPickerKey(row.project,row.revision,String(row.jobId));cursor.update(row);cursor.continue();};}};
-    req.onsuccess=()=>{const db=req.result;if(blocked){db.close();return;}databaseHandle=db;db.onclose=()=>resetDatabaseConnection(db);db.onversionchange=()=>{resetDatabaseConnection(db);try{db.close();}catch{}};resolve(db);};
+    req.onsuccess=()=>{const db=req.result;if(blocked){db.close();resetDatabaseConnection();return;}databaseHandle=db;db.onclose=()=>resetDatabaseConnection(db);db.onversionchange=()=>{resetDatabaseConnection(db);try{db.close();}catch{}};resolve(db);};
     req.onerror=()=>{resetDatabaseConnection();reject(req.error||new Error('IndexedDB open failed.'));};
-    req.onblocked=()=>{blocked=true;resetDatabaseConnection();reject(Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'}));};
+    // Keep the rejected promise until this pending request finishes. Another
+    // open would queue behind it and could leave startup waiting indefinitely.
+    req.onblocked=()=>{blocked=true;reject(Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'}));};
   });
   databasePromise=opening;
   return opening;
