@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
-for(const token of ['renameCurrentProject','duplicateCurrentProject','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
+for(const token of ['renameCurrentProject','duplicateCurrentProject','materializeProject','unloadInactiveProjects','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
 for(const token of ['project-management','project-danger-zone','Start from copy','Create backup now','Verify stored files now','View exact evidence / provenance','Clear unsaved response','Discard pending attempt','Prepare replacement attempt'])assert(app.includes(token),`Missing lifecycle UI ${token}.`);
 assert(!app.includes('dismissedProposalIds')&&ingestion.includes('function abandon(project,proposalId')&&ingestion.includes("'ABANDONED_RESPONSE'")&&app.includes('canonical accepted work changed: NO'),'Discarded pending attempts must be auditable without changing accepted canonical work.');
 assert(store.includes('verifyProjectArtifacts')&&store.includes('MISSING_STORED_BLOB')&&store.includes('CANONICAL_BLOB_IDENTITY_MISMATCH'),'Stored-file verification must reconcile canonical artifact identities to actual Blob custody.');
@@ -174,10 +174,10 @@ const parseStorageJson=vm.runInContext('(text)=>JSON.parse(text)',storageRuntime
 const storageRead=(value,parseJson=parseStorageJson)=>{if(value===undefined)return undefined;const blobs=[],copy=parseJson(JSON.stringify(value,(_key,item)=>item instanceof Blob?{__storageBlob:blobs.push(item)-1}:item));const restore=item=>{if(item&&typeof item==='object'){if(Object.keys(item).length===1&&Number.isInteger(item.__storageBlob))return blobs[item.__storageBlob];for(const key of Object.keys(item))item[key]=restore(item[key]);}return item;};return restore(copy);};
 storageRuntime.openStorageTransaction=async(names,mode)=>{
   const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map(storageRows.get(name)||[])]));
-  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
+  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({openKeyCursor:()=>{storageAccess.push({kind:'indexKeys',name,indexName});const keys=[...pending.get(name).values()].map(row=>row[indexName]).filter(Boolean).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));const req={};let i=0;const advance=()=>{req.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;req.onsuccess?.();};queueMicrotask(advance);return req;},getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
 };
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),storageRuntime,{filename:file});
-const storageSource=store
+const storageSource=store.replace('globalThis.closedLoopProjectStore=','globalThis.decodePackageForTest=readPackageJson;globalThis.packageChunksForTest=packageJsonChunks;globalThis.closedLoopProjectStore=')
   .replace(/const request=req=>[^\n]+/, 'const request=req=>Promise.resolve(req.result);')
   .replace(/const complete=tx=>[^\n]+/, 'const complete=async tx=>tx.commit();')
   .replace(/async function openTransaction\([\s\S]*?\n}\n/, 'async function openTransaction(stores,mode="readonly"){return openStorageTransaction(stores,mode);}\n');
@@ -188,7 +188,7 @@ const appFunction=name=>{
   const start=match.index,rest=app.slice(start),next=/\n(?:async )?function \w+\(/.exec(rest);
   return next?rest.slice(0,next.index):rest.slice(0,rest.indexOf('\n'));
 };
-for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectUi','persistAll','persistNewProject','persistReplacement','save','createUniqueJobId','addNew','duplicateCurrentProject','archiveCurrentProject']){const source=appFunction(name);if(source)vm.runInContext(source,storageRuntime);}
+for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectUi','persistAll','persistNewProject','persistReplacement','save','createUniqueJobId','addNew','duplicateCurrentProject','materializeProject','unloadInactiveProjects','archiveCurrentProject']){const source=appFunction(name);if(source)vm.runInContext(source,storageRuntime);}
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
@@ -244,7 +244,7 @@ await storageRegression('storage-refresh:navigation-cannot-replace-totals',async
   assert(storageRuntime.projectStorage.artifactCount===72,'A completed refresh replaced another project\'s displayed file totals.');
   storageRuntime.refreshProjectStorage=async()=>{};
 });
-for(const action of ['addNew','duplicateCurrentProject','archiveCurrentProject'])await storageRegression(`${action}:preserve-newer-project`,async()=>{
+for(const action of ['addNew','duplicateCurrentProject','materializeProject','unloadInactiveProjects','archiveCurrentProject'])await storageRegression(`${action}:preserve-newer-project`,async()=>{
   await vm.runInContext(`(async()=>{projects=[await makeStored('STALE-${action}')];current=projects[0];const newer=clone(current);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});})()`,storageRuntime);
   storageAccess.length=0;await vm.runInContext(`${action}()`,storageRuntime);
   const unrelated=storageAccess.filter(x=>x.name==='projects'&&x.key===`STALE-${action}`);
@@ -283,6 +283,26 @@ await storageRegression('response-size:reject-before-full-read-preserve-raw',asy
   assert(largestRead<=65536,`Oversized response allocated a ${largestRead}-byte read buffer.`);
   const kept=await storageRuntime.projectStore.metaGet(staged.storageKey);
   assert(kept.blob.size===1048577&&kept.sha256===staged.sha256&&kept.rejection?.code==='OVERSIZED_RESPONSE','Oversize rejection lost original bytes, ownership or its failure receipt.');
+});
+await storageRegression('import:incremental-package-decoding',async()=>{
+  const originalText=Response.prototype.text;let fullTextReads=0,error;
+  try{Response.prototype.text=function(){fullTextReads++;return originalText.call(this);};storageRuntime.__closedLoopStorageFault='before-import-transaction';await storageRuntime.projectStore.importPackage(storageRuntime.goodBackup);}catch(e){error=e;}finally{Response.prototype.text=originalText;delete storageRuntime.__closedLoopStorageFault;}
+  assert(error?.code==='INJECTED_STORAGE_FAILURE','Incremental import did not finish the real package/project/artifact verification path.');
+  assert(fullTextReads===0,'Import materialized the entire decompressed package text.');
+});
+await storageRegression('import:json-semantics-and-adversarial-streams',async()=>{
+  const compress=text=>new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
+  const documents=[JSON.stringify({project:{text:('x'.repeat(16377)+'é🙂"\\\n').repeat(8)},artifacts:[{base64:'YWJj\n'.repeat(16384)}]}),' {"__proto__":{"keep":"data"},"project":{"x":1,"x":2},"artifacts":[{"base64":"bad","base64":"YWJj\\n"}]} ', '{"artifacts":[{"base64":"YWJj","base64":null}],"extra":-0,"n":1.2e3}', '[null,true,false,0,-1,"escape\\uD83D\\uDE42","slashes\\\\\\/end"]'];
+  for(const text of documents){const {payload,fileContents}=await storageRuntime.decodePackageForTest(await compress(text));for(const row of payload?.artifacts||[]){const source=fileContents.get(row);if(source)row.base64=await source.blob.text();}assert(JSON.stringify(payload)===JSON.stringify(JSON.parse(text)),'Incremental package JSON changed string, duplicate-key, number, or object semantics.');}
+  const canonicalText='{"artifacts":[{"base64":"Y\\u0057Jj\\n"}],"project":{"raw":"preserve é🙂\\n\\t\\\\\\\""}}',decoded=await storageRuntime.decodePackageForTest(await compress(canonicalText));
+  const chunks=[];for await(const chunk of storageRuntime.packageChunksForTest(decoded.payload,decoded.fileContents))chunks.push(chunk);
+  assert(createHash('sha256').update(chunks.join('')).digest('hex')===createHash('sha256').update(globalThis.closedLoopHash.stableStringify(JSON.parse(canonicalText))).digest('hex'),'Spooling changed the canonical package hash preimage.');
+  for(const text of ['','{','[1,]','{"a":1,}','{"a" 1}','{"a":01}','{"a":tru}','{"a":"bad\\q"}','{"a":"bad\\u12Z4"}','{"a":"raw\nnewline"}','{}{}','[1 2]','[1}\n','{"a":1}\u000b']){let rejected=false;try{await storageRuntime.decodePackageForTest(await compress(text));}catch{rejected=true;}assert(rejected,'Malformed incremental JSON was accepted: '+JSON.stringify(text));}
+  const valid=JSON.parse(await new Response(storageRuntime.goodBackup.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  for(const mutate of [p=>p.packageSha256='0'.repeat(64),p=>{p.artifacts[0].base64+='=';},p=>{p.artifacts[0].base64='AA==AAAA';}]){
+    const candidate=structuredClone(valid);mutate(candidate);if(candidate.packageSha256!=='0'.repeat(64)){const {packageSha256,...body}=candidate;candidate.packageSha256=globalThis.closedLoopHash.sha256Value(body);}
+    const before=await storageRuntime.projectStore.readProject(valid.project.job.JOB_ID);let rejected=false;try{await storageRuntime.projectStore.importPackage(await compress(JSON.stringify(candidate)));}catch{rejected=true;}const after=await storageRuntime.projectStore.readProject(before.job.JOB_ID);assert(rejected&&after.projectSha256===before.projectSha256,'Late hash/padding failure changed an existing project.');
+  }
 });
 await storageRegression('artifact-queries:project-local-without-store-scan',async()=>{
   storageAccess.length=0;await storageRuntime.projectStore.listArtifacts('BACKUP-CLOSURE');
@@ -326,6 +346,23 @@ await storageRegression('startup:retained-refresh-keeps-snapshot-revision',async
   await vm.runInContext('load()',storageRuntime);
   const after=await storageRuntime.projectStore.readProject('RETAINED-CONCURRENT');
   assert(after.newerWork==='PRESERVE DURING FETCH','Startup read a fresh revision and used it to overwrite intervening retained-project work.');
+});
+
+await storageRegression('startup:picker-projection-and-selected-only',async()=>{
+  for(const count of [1,10,50]){
+    for(let i=0;i<count;i++)if(!storageRows.get('projects')?.has('PICKER-'+i))await vm.runInContext(`makeStored('PICKER-${i}')`,storageRuntime);
+    await vm.runInContext(`projectStore.metaPut('retainedProjectSuppressed',true)`,storageRuntime);
+    await vm.runInContext(`projectStore.metaPut('selectedProject','PICKER-0')`,storageRuntime);
+    const unrelated=storageRows.get('projects').get('PICKER-'+(count-1));if(count>1)unrelated.project.projectData.rawResponses.push({rawText:'unrelated archived history '.repeat(10000)});
+    storageAccess.length=0;
+    await vm.runInContext('load()',storageRuntime);
+    assert(!storageAccess.some(row=>row.name==='projects'&&row.kind==='getAll'),'Startup loaded every canonical project row.');
+    assert(storageAccess.filter(row=>row.name==='projects'&&row.kind==='get').every(row=>row.key==='PICKER-0'),'Startup opened an unrelated project before the selected view.');
+    assert(storageRuntime.current.job.JOB_ID==='PICKER-0'&&storageRuntime.current.stages[1],'Startup failed to open the selected verified project.');
+  }
+  let error;try{await storageRuntime.projectStore.readProject('PICKER-49');}catch(e){error=e;}
+  assert(error?.code==='PROJECT_HASH_MISMATCH','Opening a corrupt unloaded project bypassed integrity verification.');
+  assert(!storageRows.get('projects').has('PICKER-49')&&[...storageRows.get('meta').keys()].some(key=>key.startsWith('quarantine:PICKER-49:')),'Opening a corrupt unloaded project did not preserve it in quarantine.');
 });
 
 // Execute both contexts of the same production owner and simulate a lost worker
