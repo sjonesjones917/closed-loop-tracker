@@ -29,6 +29,29 @@ async function main(){
   const filename='MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN_2_WITH_A_DELIBERATELY_LONG_UNBROKEN_MOBILE_FILENAME_1234567890.pdf';
   await fill(cdp,'[data-job="SUPPLIED_MATERIALS_INVENTORY"]',JSON.stringify([{type:'FILE',exactNameOrReference:filename}]));await click(cdp,'#save-job');
   await openStage(cdp,4);
+
+  // Regression for the production Stage 04 iPhone failure: expanding a very long
+  // instruction must keep the prompt in a bounded, independently scrollable
+  // surface. Making the entire prompt part of document layout can exhaust mobile
+  // Safari while the operator scrolls toward the bottom.
+  await setWidth(cdp,393,852);
+  const longPromptLine=`STAGE-04-LONG-PROMPT-MOBILE-REGRESSION ${'X'.repeat(88)}\n`,longPromptLineCount=1800;
+  const beforeLongPrompt=await evaluate(cdp,`(()=>({bodyScrollHeight:document.body.scrollHeight,documentScrollHeight:document.documentElement.scrollHeight,ready:globalThis.closedLoopAppReady,error:globalThis.closedLoopAppError}))()`);
+  assert(await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');if(!node)return false;node.textContent+=${JSON.stringify(longPromptLine)}.repeat(${longPromptLineCount});return node.textContent.length>200000;})()`),'Could not construct the long Stage 04 production-surface fixture.');
+  await click(cdp,'#toggle-prompt');
+  const expandedLongPrompt=await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt'),rect=node?.getBoundingClientRect();if(!node||!rect)return null;return {expanded:node.classList.contains('expanded'),clientHeight:node.clientHeight,scrollHeight:node.scrollHeight,rectHeight:rect.height,viewportHeight:innerHeight,bodyScrollHeight:document.body.scrollHeight,documentScrollHeight:document.documentElement.scrollHeight,ready:globalThis.closedLoopAppReady,error:globalThis.closedLoopAppError};})()`);
+  assert(expandedLongPrompt?.expanded,'Long Stage 04 prompt did not enter expanded preview mode.');
+  assert(expandedLongPrompt.rectHeight<=expandedLongPrompt.viewportHeight*.75+4,`Expanded long Stage 04 prompt escaped the mobile viewport instead of staying in a bounded scroll surface: ${JSON.stringify(expandedLongPrompt)}`);
+  assert(expandedLongPrompt.scrollHeight>expandedLongPrompt.clientHeight+100,`Expanded long Stage 04 prompt is not internally scrollable: ${JSON.stringify(expandedLongPrompt)}`);
+  assert(expandedLongPrompt.bodyScrollHeight<=beforeLongPrompt.bodyScrollHeight+expandedLongPrompt.viewportHeight+100&&expandedLongPrompt.documentScrollHeight<=beforeLongPrompt.documentScrollHeight+expandedLongPrompt.viewportHeight+100,`Expanding a long Stage 04 prompt inflated the whole document instead of the prompt scroll surface: before=${JSON.stringify(beforeLongPrompt)} after=${JSON.stringify(expandedLongPrompt)}`);
+  const longPromptBottom=await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');if(!node)return null;node.scrollTop=node.scrollHeight;node.dispatchEvent(new Event('scroll',{bubbles:true}));return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve({scrollTop:node.scrollTop,scrollHeight:node.scrollHeight,clientHeight:node.clientHeight,ready:globalThis.closedLoopAppReady,error:globalThis.closedLoopAppError,togglePresent:Boolean(document.querySelector('#toggle-prompt'))}))));})()`);
+  assert(longPromptBottom&&longPromptBottom.scrollTop+longPromptBottom.clientHeight>=longPromptBottom.scrollHeight-3,`Long Stage 04 prompt could not scroll smoothly to its own bottom: ${JSON.stringify(longPromptBottom)}`);
+  assert(longPromptBottom.ready===true&&!longPromptBottom.error&&longPromptBottom.togglePresent,`Application became unavailable after long Stage 04 prompt scrolling: ${JSON.stringify(longPromptBottom)}`);
+  await click(cdp,'#toggle-prompt');
+  const collapsedLongPrompt=await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt'),rect=node?.getBoundingClientRect();return node&&rect?{expanded:node.classList.contains('expanded'),height:rect.height,ready:globalThis.closedLoopAppReady,error:globalThis.closedLoopAppError}:null;})()`);
+  assert(collapsedLongPrompt&&!collapsedLongPrompt.expanded&&collapsedLongPrompt.height<=282&&collapsedLongPrompt.ready===true&&!collapsedLongPrompt.error,`Long Stage 04 prompt did not collapse back to the stable preview surface: ${JSON.stringify(collapsedLongPrompt)}`);
+  await openStage(cdp,4);
+
   await evaluate(cdp,`(()=>{const next=document.querySelector('.stage-hero>.stage-action-strip>span:last-child');if(!next)return false;next.textContent='Send the Stage 04 instruction with '+${JSON.stringify(filename)}+'. The prompt does not include those materials.';return true})()`);
   for(const width of [320,393]){
     await setWidth(cdp,width);
@@ -153,7 +176,7 @@ async function main(){
   assert(mismatchState.recordedAt===measurementsBeforeMismatch,`Target mismatch mutated persisted measurements: before=${measurementsBeforeMismatch} after=${mismatchState.recordedAt}`);
   await fill(cdp,'#mobile-acceptance-target-json',JSON.stringify(mobileTarget));
   const storageState=await evaluate(cdp,`(async()=>{const all=await closedLoopProjectStore.readAll(),project=all.find(x=>x.job?.JOB_ID==='BROWSER-STAGE30'),keys=Object.keys(project?.projectData||{}).filter(key=>['mobileAcceptanceTarget','mobileCapabilityProbe','mobileAcceptanceReceipts','mobileAcceptanceMeasurements'].includes(key));return {keys,manualReceipt:Boolean(document.querySelector('#mobile-acceptance-receipt-kind')),manualMeasurements:['#mobile-runtime-exceptions','#mobile-unhandled-rejections','#mobile-horizontal-overflow','#mobile-primary-text','#mobile-secondary-text','#mobile-touch-target'].filter(selector=>document.querySelector(selector)).length};})()`);assert(storageState.keys.length===0,`Acceptance-session data leaked into unregistered projectData keys: ${JSON.stringify(storageState.keys)}`);assert(!storageState.manualReceipt,'APPLICATION_OBSERVED mobile receipts must not be created by an operator-selected receipt-kind declaration.');assert(storageState.manualMeasurements===0,'APPLICATION_OBSERVED mobile runtime/layout measurements must be mechanically captured, not manually typed.');
-  console.log(JSON.stringify({mobileStageActionRegression:true,widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false,pinnedTargetSurvivesProbeRender:true,pinnedTargetSurvivesReload:true,postProbeStoredTargetIndependentOfEphemeralTextarea:true,postProbeMeasurementsRecorded:true,postProbeReceiptsRecorded:true,pinnedTargetSurvivesPostProbeRenders:true,targetMismatchRejectedWithoutMutation:true}));
+  console.log(JSON.stringify({mobileStageActionRegression:true,widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false,longStage04PromptBoundedScroll:true,longStage04PromptBottomReachable:true,longStage04PromptCollapseStable:true,pinnedTargetSurvivesProbeRender:true,pinnedTargetSurvivesReload:true,postProbeStoredTargetIndependentOfEphemeralTextarea:true,postProbeMeasurementsRecorded:true,postProbeReceiptsRecorded:true,pinnedTargetSurvivesPostProbeRenders:true,targetMismatchRejectedWithoutMutation:true}));
   cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(resolve=>proc.once('exit',resolve)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
