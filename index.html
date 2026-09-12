@@ -115,6 +115,8 @@ body{font-size:16px}
 @media(max-width:420px){.app .stage-picker-display{font-size:16px!important}}
 
 .data-text-page{max-height:60vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit} [data-detail-page],[data-detail-download]{min-height:44px;min-width:44px}
+#storage-status[aria-busy="true"]{position:relative;color:transparent}
+#storage-status[aria-busy="true"]::after{content:attr(data-operation);position:absolute;inset:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 </style>
 </head>
 <body>

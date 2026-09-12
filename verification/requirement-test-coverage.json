@@ -4,7 +4,7 @@
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
   "startingCommit": "feb1303c837b7d4399930f779b63c8bb0c34a0e4",
   "ciBackbone": ".github/workflows/pages.yml",
-  "testMappingCaution": "A listed standalone verifier may be called transitively; presence in this matrix does not assert direct CI wiring. Existing full-cycle and ingestion suites are direct CI steps.",
+  "testMappingCaution": "Mappings identify owners and executable evidence. They do not assert complete specification conformance. User-requested performance behaviors without a direct normative clause have no invented NREQ ID. Exact run/deployment evidence is recorded on PR #1221; physical Safari and approved visual authority remain separate.",
   "rows": [
     {
       "id": "STAGE-01",
@@ -1214,7 +1214,7 @@
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -1432,7 +1432,8 @@
         "hash.js:sha256Bytes/sha256Chunks",
         "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging",
         "project-store.js:requiredProjectArtifactBytes/assertPackageArtifactCustody/verifyProjectArtifacts",
-        "app-core.js:#import-file commit and refresh boundary"
+        "app-core.js:#import-file commit and refresh boundary",
+        "project-store.js:readPackageJson/base64BlobToBlob; original package format with streamed decoded strings"
       ],
       "existingTests": [
         "verify-project-lifecycle.mjs",
@@ -1962,7 +1963,8 @@
         "atomic import/delete fault boundaries"
       ],
       "browserProof": [
-        "verify-browser-extra.mjs:blob persistence and package custody"
+        "verify-browser-extra.mjs:blob persistence and package custody",
+        "verify-browser-extra.mjs:version-one-upgrade-and-blocked-tab-recovery"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -2025,6 +2027,170 @@
       ],
       "evidenceGap": "Await exact-revision CI/deployed proof. Timing is not physical-iPhone acceptance; section links supply context, not proof of every clause in those sections.",
       "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
+    },
+    {
+      "id": "PROJECT-PICKER-PROJECTION",
+      "requirement": "Startup must open only the selected verified project; summaries must remain derived from canonical rows and corrupted rows must remain blocked and recoverable.",
+      "requirementSource": "12 September 2026 performance/reliability repair brief; specification constrains identity, custody and behavior.",
+      "specificationSections": [
+        "35.1",
+        "35.11"
+      ],
+      "normativeRequirementIds": [],
+      "sourceLines": [],
+      "productionOwner": [
+        "project-store.js:projectPickerKey/listProjectSummaries/openDatabase/readProject",
+        "app-core.js:materializeProject/selectProject/load/deleteCurrentProject"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:startup:picker-projection-and-selected-only",
+        "verify-project-lifecycle.mjs:delete:verified-selection-before-async-refresh"
+      ],
+      "negativeAdversarialTests": [
+        "1/10/50 project cases; corrupt unloaded history",
+        "navigation after delete commit",
+        "version-one upgrade and blocked older tab recovery"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:project-picker-startup-and-quarantine",
+        "verify-browser-extra.mjs:version-one-upgrade-and-blocked-tab-recovery"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Current CI and deployment links are on PR #1221. This mapping does not establish physical-device capacity, approved visual authority, or all clauses of the cited sections.",
+      "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
+    },
+    {
+      "id": "INCREMENTAL-PACKAGE-IMPORT",
+      "requirement": "Preserve the current package JSON semantics and canonical preimage while avoiding full expanded package text and full artifact base64 strings in JavaScript.",
+      "requirementSource": "12 September 2026 performance/reliability repair brief; specification constrains identity, custody and behavior.",
+      "specificationSections": [
+        "35.3",
+        "35.5"
+      ],
+      "normativeRequirementIds": [],
+      "sourceLines": [],
+      "productionOwner": [
+        "project-store.js:readPackageJson/base64BlobToBlob/packageJsonChunks/importPackage"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:import:incremental-package-decoding",
+        "verify-project-lifecycle.mjs:import:json-semantics-and-adversarial-streams"
+      ],
+      "negativeAdversarialTests": [
+        "duplicate keys, data __proto__ key, escaped Unicode, split strings, numbers",
+        "malformed JSON, invalid base64 padding, late package hash mismatch",
+        "existing import quota/fault/rollback checks"
+      ],
+      "browserProof": [
+        "verify-mobile-stage-action.mjs:600-response and artifact round trips",
+        "verify-browser-extra.mjs:package integrity and import refresh failures"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Current CI and deployment links are on PR #1221. This mapping does not establish physical-device capacity, approved visual authority, or all clauses of the cited sections.",
+      "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
+    },
+    {
+      "id": "NATIVE-INPUT-PREPARATION",
+      "requirement": "Apply existing Test IR input limits before full Blob reads, retain the original project snapshot, deduplicate immutable bindings and transfer only buffers owned by this execution.",
+      "requirementSource": "12 September 2026 performance/reliability repair brief; specification constrains identity, custody and behavior.",
+      "specificationSections": [
+        "35.3",
+        "39.18"
+      ],
+      "normativeRequirementIds": [],
+      "sourceLines": [],
+      "productionOwner": [
+        "app-core.js:nativeTestInputs/resolveNativeBinding/runNativeStage22Tests",
+        "test-runtime.js:executeTest"
+      ],
+      "existingTests": [
+        "verify-test-runtime.mjs:native input limit/owner/deduplication/transfer",
+        "verify-test-runtime-v3.mjs",
+        "verify-test-runtime-limits.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "over 32 MiB rejects before full allocation",
+        "project navigation during byte preparation",
+        "default caller buffer ownership preserved; fresh worker per execution"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:native-worker-owned-inputs"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Current CI and deployment links are on PR #1221. This mapping does not establish physical-device capacity, approved visual authority, or all clauses of the cited sections.",
+      "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
+    },
+    {
+      "id": "BUILD-BOUND-RETAINED-STARTUP",
+      "requirement": "Reuse the retained project for an unchanged resource build while preserving specification refresh and original caller revision checks.",
+      "requirementSource": "12 September 2026 performance/reliability repair brief; specification constrains identity, custody and behavior.",
+      "specificationSections": [
+        "35.1",
+        "46.3"
+      ],
+      "normativeRequirementIds": [],
+      "sourceLines": [],
+      "productionOwner": [
+        "app-core.js:retainedProjectForBuild/load"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:startup:unchanged-build-reuses-retained-project",
+        "verify-project-lifecycle.mjs:startup:retained-refresh-keeps-snapshot-revision"
+      ],
+      "negativeAdversarialTests": [
+        "build identity change refetches",
+        "retained specification change",
+        "intervening save during fetch survives"
+      ],
+      "browserProof": [
+        "existing retained-project lifecycle/reload/suppression browser tests"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Current CI and deployment links are on PR #1221. This mapping does not establish physical-device capacity, approved visual authority, or all clauses of the cited sections.",
+      "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
+    },
+    {
+      "id": "DELAYED-STORAGE-ACTIVITY",
+      "requirement": "Show the actual pending operation after 180 ms in the existing status area, without changing its dimensions or inventing a percentage.",
+      "requirementSource": "12 September 2026 performance/reliability repair brief; specification constrains identity, custody and behavior.",
+      "specificationSections": [
+        "39.18",
+        "45.1"
+      ],
+      "normativeRequirementIds": [],
+      "sourceLines": [],
+      "productionOwner": [
+        "app-core.js:withStorageActivity/paintStorageActivity",
+        "index.html:storage-status busy pseudo-element"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:existing serialized exports and commit/refresh truthfulness"
+      ],
+      "negativeAdversarialTests": [
+        "pre-commit rejection and lost worker reply",
+        "queued requests remain distinct; activity clears on completion"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:delayed-import-activity-preserves-layout"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Current CI and deployment links are on PR #1221. This mapping does not establish physical-device capacity, approved visual authority, or all clauses of the cited sections.",
+      "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
     }
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",

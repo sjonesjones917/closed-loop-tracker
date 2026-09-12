@@ -583,7 +583,7 @@ function executeTest(test,artifacts,canonicalBindings,options={}){
     const timer=setTimeout(()=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_TIMEOUT',`Test IR worker exceeded ${LIMITS.workerTimeoutMs} ms.`))),Number(options.timeoutMs||LIMITS.workerTimeoutMs));
     worker.onmessage=event=>{const message=event?.data||{};if(message.requestId!==requestId)return;if(message.ok){finish({...message.result,startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString()});}else finish(executionFailure(test,startedAtDeviceTime,new RuntimeError(message.error?.code||'WORKER_EXECUTION_FAILED',message.error?.message||'Worker execution failed.',message.error?.disposition||STATUS.EXECUTION_FAILED)));};
     worker.onerror=event=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_ERROR',event?.message||'Test IR worker failed.')));
-    try{worker.postMessage({type:'EXECUTE_TEST_IR',requestId,spec:normalizeSpec(spec),bindings,artifacts:artifacts||{},canonicalBindings:canonicalBindings||{},metadata:{testId:field(test,'TEST_ID')||test?.testId||null,bindings}});}catch(error){finish(executionFailure(test,startedAtDeviceTime,error));}
+    try{const transfers=options.transferInputBuffers?[...new Set(Object.values(artifacts||{}).map(artifact=>bytesFrom(artifact)?.buffer).filter(buffer=>buffer instanceof ArrayBuffer))]:[];worker.postMessage({type:'EXECUTE_TEST_IR',requestId,spec:normalizeSpec(spec),bindings,artifacts:artifacts||{},canonicalBindings:canonicalBindings||{},metadata:{testId:field(test,'TEST_ID')||test?.testId||null,bindings}},transfers);}catch(error){finish(executionFailure(test,startedAtDeviceTime,error));}
   });
 }
 

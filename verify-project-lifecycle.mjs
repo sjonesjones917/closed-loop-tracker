@@ -63,7 +63,7 @@ assert(delivered.at(-1).name==='after-navigation','An interrupted export left su
 // Run the actual complete-export/backup handler against delayed storage. Navigation
 // must not rename another project's bytes; large package assemblies must serialize.
 const packageDownloads=[],packageRequests=[];let activePackages=0,maxActivePackages=0,rejectNextPackage=false;
-const packageRuntime=vm.createContext({current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},document:{createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
+const packageRuntime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},document:{createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
 const packageStart=app.indexOf('let projectPackageExportInFlight=')>=0?app.indexOf('let projectPackageExportInFlight='):app.indexOf('async function downloadProjectPackage(');
 vm.runInContext(app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+'\nglobalThis.exportCompletePackage=downloadProjectPackage;',packageRuntime);
 const originalExport=packageRuntime.exportCompletePackage();packageRuntime.current={job:{JOB_ID:'PACKAGE-B'}};const otherBackup=packageRuntime.exportCompletePackage('backup');packageRuntime.current={job:{JOB_ID:'PACKAGE-C'}};
@@ -182,7 +182,7 @@ const storageSource=store.replace('globalThis.closedLoopProjectStore=','globalTh
   .replace(/const complete=tx=>[^\n]+/, 'const complete=async tx=>tx.commit();')
   .replace(/async function openTransaction\([\s\S]*?\n}\n/, 'async function openTransaction(stores,mode="readonly"){return openStorageTransaction(stores,mode);}\n');
 vm.runInContext(storageSource,storageRuntime);
-vm.runInContext(`globalThis.core=closedLoopCore;globalThis.engine=closedLoopWorkflowEngine;globalThis.schema=closedLoopWorkflowSchema;globalThis.projectStore=closedLoopProjectStore;globalThis.clone=value=>JSON.parse(JSON.stringify(value));globalThis.safe=value=>Array.isArray(value)?value:[];globalThis.views=['Overview','Project','Workflow'];globalThis.projects=[];globalThis.current=null;globalThis.projectUi={};globalThis.jobFields=[['JOB_TITLE'],['EXACT_USER_OBJECTIVE_VERBATIM']];globalThis.announce=()=>{};globalThis.render=()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.failures=[];globalThis.reportActionFailure=message=>failures.push(String(message));globalThis.elements={};globalThis.$=selector=>elements[selector]??=( {click(){}} );`,storageRuntime);
+vm.runInContext(`globalThis.core=closedLoopCore;globalThis.engine=closedLoopWorkflowEngine;globalThis.schema=closedLoopWorkflowSchema;globalThis.projectStore=closedLoopProjectStore;globalThis.withStorageActivity=async(_label,operation)=>operation();globalThis.clone=value=>JSON.parse(JSON.stringify(value));globalThis.safe=value=>Array.isArray(value)?value:[];globalThis.views=['Overview','Project','Workflow'];globalThis.projects=[];globalThis.current=null;globalThis.projectUi={};globalThis.jobFields=[['JOB_TITLE'],['EXACT_USER_OBJECTIVE_VERBATIM']];globalThis.announce=()=>{};globalThis.render=()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.failures=[];globalThis.reportActionFailure=message=>failures.push(String(message));globalThis.elements={};globalThis.$=selector=>elements[selector]??=( {click(){}} );`,storageRuntime);
 const appFunction=name=>{
   const match=new RegExp(`(?:async )?function ${name}\\(`).exec(app);if(!match)return '';
   const start=match.index,rest=app.slice(start),next=/\n(?:async )?function \w+\(/.exec(rest);
@@ -339,8 +339,18 @@ await storageRegression('import:pre-commit-failure-preserves-state',async()=>{
   assert(storageRuntime.current===before&&storageRuntime.projects===ids,'Rejected import replaced existing in-memory projects.');
   assert(storageRuntime.failures.some(x=>/without changing existing projects/i.test(x)),'Pre-commit import failure lost its accurate rejection message.');
 });
+await storageRegression('delete:verified-selection-before-async-refresh',async()=>{
+  vm.runInContext(appFunction('deleteCurrentProject'),storageRuntime);vm.runInContext(appFunction('syncDeleteProjectControl'),storageRuntime);
+  await vm.runInContext(`(async()=>{globalThis.deletingUi=await makeStored('DELETE-UI-A');globalThis.replacementUi=await makeStored('DELETE-UI-B');projects=[deletingUi,replacementUi];current=deletingUi;elements['#delete-project-confirmation']={value:deletingUi.job.JOB_ID};elements['#delete-project']={disabled:false};globalThis.refreshProjectStorage=async()=>{};})()`,storageRuntime);
+  let entered,release;const reached=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve),baseStore=storageRuntime.projectStore;
+  storageRuntime.projectStore={...baseStore,listProjectSummaries:async()=>{entered();await held;return baseStore.listProjectSummaries();}};
+  const deletion=storageRuntime.deleteCurrentProject();await reached;const selectedAfterCommit=storageRuntime.current;
+  vm.runInContext(`current.activeView='Workflow';current.activeStage=2;`,storageRuntime);release();await deletion;storageRuntime.projectStore=baseStore;
+  assert(selectedAfterCommit.job.JOB_ID==='DELETE-UI-B'&&selectedAfterCommit.stages[1],'Deletion exposed an unloaded/deleted project while refreshing its view.');
+  assert(storageRuntime.current.activeView==='Workflow'&&storageRuntime.current.activeStage===2,'Post-delete refresh reset navigation that happened after commit.');
+});
 await storageRegression('startup:retained-refresh-keeps-snapshot-revision',async()=>{
-  vm.runInContext(appFunction('importSeed'),storageRuntime);
+  vm.runInContext(appFunction('importSeed'),storageRuntime);vm.runInContext(appFunction('retainedProjectForBuild'),storageRuntime);
   vm.runInContext(app.split('\n').find(line=>line.startsWith('async function load(){')),storageRuntime);
   await vm.runInContext(`(async()=>{const p=ensureState(core.createBlankState('RETAINED-CONCURRENT'));p.isRetainedTestProject=true;p.retainedSpecRevision='old';await projectStore.writeProject(p,{expectedProjectRevision:0});globalThis.nextRetained=clone(p);nextRetained.retainedSpecRevision='new';globalThis.loadAcceptanceSession=async()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.fetch=async()=>{const newer=await projectStore.readProject(p.job.JOB_ID);newer.newerWork='PRESERVE DURING FETCH';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});return {ok:true,json:async()=>nextRetained};};})()`,storageRuntime);
   await vm.runInContext('load()',storageRuntime);
@@ -348,6 +358,13 @@ await storageRegression('startup:retained-refresh-keeps-snapshot-revision',async
   assert(after.newerWork==='PRESERVE DURING FETCH','Startup read a fresh revision and used it to overwrite intervening retained-project work.');
 });
 
+await storageRegression('startup:unchanged-build-reuses-retained-project',async()=>{
+  await vm.runInContext(`(async()=>{globalThis.RUNTIME_BUILD_ID='BUILD-RETAINED-CACHE';globalThis.retainedFetches=0;const retained=await projectStore.readProject('RETAINED-CONCURRENT');globalThis.fetch=async()=>{retainedFetches++;return {ok:true,json:async()=>retained};};await projectStore.metaPut('retainedProjectSuppressed',false);})()`,storageRuntime);
+  await vm.runInContext('load();',storageRuntime);await vm.runInContext('load();',storageRuntime);
+  assert(storageRuntime.retainedFetches===1,'Unchanged build fetched and rebuilt its bundled project on every startup.');
+  storageRuntime.RUNTIME_BUILD_ID='BUILD-RETAINED-CHANGED';await vm.runInContext('load();',storageRuntime);
+  assert(storageRuntime.retainedFetches===2,'Changed build failed to check the bundled project.');
+});
 await storageRegression('startup:picker-projection-and-selected-only',async()=>{
   for(const count of [1,10,50]){
     for(let i=0;i<count;i++)if(!storageRows.get('projects')?.has('PICKER-'+i))await vm.runInContext(`makeStored('PICKER-${i}')`,storageRuntime);

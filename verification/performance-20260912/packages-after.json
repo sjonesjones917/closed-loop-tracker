@@ -1,0 +1,164 @@
+{
+  "date": "2026-09-12T06:27:45.938Z",
+  "node": "v24.19.0",
+  "note": "Production package CPU/stream code with export storage I/O substituted. Import stops before the real IndexedDB transaction. Synthetic data only. V8 heap snapshots and timer gaps are not physical-iPhone peak memory or frame measurements.",
+  "cases": [
+    {
+      "historyRecords": 25,
+      "projectJsonUtf8Bytes": 2055179,
+      "artifactBytes": 0,
+      "exports": [
+        {
+          "elapsedMs": 265.19257400000004,
+          "maxTimerGapMs": 15.010496000000046,
+          "heapBefore": 21660008,
+          "heapAtReturn": 28607760,
+          "probes": []
+        },
+        {
+          "elapsedMs": 223.35484600000007,
+          "maxTimerGapMs": 16.03270299999997,
+          "heapBefore": 18421440,
+          "heapAtReturn": 19305648,
+          "probes": []
+        },
+        {
+          "elapsedMs": 243.0250920000001,
+          "maxTimerGapMs": 10.26659699999982,
+          "heapBefore": 18463888,
+          "heapAtReturn": 30374072,
+          "probes": []
+        }
+      ],
+      "importsBeforeTransaction": [
+        {
+          "elapsedMs": 261.43846599999995,
+          "maxTimerGapMs": 85.75924699999996,
+          "heapBefore": 18198544,
+          "heapAtReturn": 26096368,
+          "probes": []
+        },
+        {
+          "elapsedMs": 243.563083,
+          "maxTimerGapMs": 90.15143000000012,
+          "heapBefore": 18428128,
+          "heapAtReturn": 37549056,
+          "probes": []
+        },
+        {
+          "elapsedMs": 255.12548399999991,
+          "maxTimerGapMs": 86.54143700000009,
+          "heapBefore": 18487176,
+          "heapAtReturn": 34142760,
+          "probes": []
+        }
+      ],
+      "compressedPackageBytes": 13826
+    },
+    {
+      "historyRecords": 600,
+      "projectJsonUtf8Bytes": 48110058,
+      "artifactBytes": 0,
+      "exports": [
+        {
+          "elapsedMs": 4236.104916,
+          "maxTimerGapMs": 16.263482000000295,
+          "heapBefore": 211024912,
+          "heapAtReturn": 245691328,
+          "probes": []
+        },
+        {
+          "elapsedMs": 4244.488119,
+          "maxTimerGapMs": 35.01941199999965,
+          "heapBefore": 110921752,
+          "heapAtReturn": 160320864,
+          "probes": []
+        },
+        {
+          "elapsedMs": 4383.0162390000005,
+          "maxTimerGapMs": 17.764774999999645,
+          "heapBefore": 109217560,
+          "heapAtReturn": 118906424,
+          "probes": []
+        }
+      ],
+      "importsBeforeTransaction": [
+        {
+          "elapsedMs": 4240.595694000001,
+          "maxTimerGapMs": 1661.303962,
+          "heapBefore": 110930552,
+          "heapAtReturn": 307803776,
+          "probes": []
+        },
+        {
+          "elapsedMs": 4290.9970840000005,
+          "maxTimerGapMs": 1647.7419530000006,
+          "heapBefore": 109184976,
+          "heapAtReturn": 346182744,
+          "probes": []
+        },
+        {
+          "elapsedMs": 4293.382798999999,
+          "maxTimerGapMs": 1667.4202399999995,
+          "heapBefore": 109222208,
+          "heapAtReturn": 365522936,
+          "probes": []
+        }
+      ],
+      "compressedPackageBytes": 100902
+    },
+    {
+      "historyRecords": 25,
+      "projectJsonUtf8Bytes": 2055179,
+      "artifactBytes": 8388608,
+      "exports": [
+        {
+          "elapsedMs": 2104.1910879999996,
+          "maxTimerGapMs": 18.015642999998818,
+          "heapBefore": 117395616,
+          "heapAtReturn": 88479840,
+          "probes": []
+        },
+        {
+          "elapsedMs": 2104.5062240000043,
+          "maxTimerGapMs": 20.263413000000583,
+          "heapBefore": 17143968,
+          "heapAtReturn": 20685696,
+          "probes": []
+        },
+        {
+          "elapsedMs": 2070.499229999994,
+          "maxTimerGapMs": 13.89787300000171,
+          "heapBefore": 17228432,
+          "heapAtReturn": 88608184,
+          "probes": []
+        }
+      ],
+      "importsBeforeTransaction": [
+        {
+          "elapsedMs": 1133.5811700000013,
+          "maxTimerGapMs": 69.48492700000133,
+          "heapBefore": 17127600,
+          "heapAtReturn": 85591952,
+          "probes": []
+        },
+        {
+          "elapsedMs": 1125.7110220000031,
+          "maxTimerGapMs": 77.19429500000115,
+          "heapBefore": 17180528,
+          "heapAtReturn": 77047600,
+          "probes": []
+        },
+        {
+          "elapsedMs": 1140.4734679999965,
+          "maxTimerGapMs": 87.39916200000152,
+          "heapBefore": 17242216,
+          "heapAtReturn": 79199752,
+          "probes": []
+        }
+      ],
+      "compressedPackageBytes": 8438145
+    }
+  ],
+  "maxRssKiB": 632756
+}
