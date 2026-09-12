@@ -97,7 +97,8 @@ assert.deepEqual(scripts,[
   'workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js',
   'prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'
 ],'runtime scripts must use the controlling dependency order');
-const scriptTokens=[...html.matchAll(/<script\s+defer\s+src="[^"]+\?v=([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
+const scriptTokens=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>new URLSearchParams(match[1].split('?')[1]||'').get('v'));
+assert(scriptTokens.length===scripts.length&&scriptTokens.every(Boolean),'every runtime script must declare its build identity');
 assert.equal(new Set(scriptTokens).size,1,'all runtime scripts must share one build identity');
 assert.match(html,/worker-src\s+'self'/,'CSP must permit only the same-origin worker');
 assert.doesNotMatch(html,/worker-src[^;]*(?:\*|https?:|blob:|data:)/,'CSP must not open arbitrary worker sources');
