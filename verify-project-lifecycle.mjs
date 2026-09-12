@@ -3,6 +3,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
+const storageHealthSource=app.includes('function storageHealthValue(')?app.slice(app.indexOf('function storageHealthValue('),app.indexOf('function stageLocked(')):'';
 // Replay the real database-open owner while an older tab keeps the upgrade
 // pending. A second caller must receive the known blocked error, not queue an
 // open request that cannot report its own blocked event until the first ends.
@@ -86,9 +87,9 @@ assert(delivered.at(-1).name==='after-navigation','An interrupted export left su
 // Run the actual complete-export/backup handler against delayed storage. Navigation
 // must not rename another project's bytes; large package assemblies must serialize.
 const packageDownloads=[],packageRequests=[];let activePackages=0,maxActivePackages=0,rejectNextPackage=false;
-const packageRuntime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},document:{createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
+const packageRuntime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>null,document:{querySelectorAll:()=>[],createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
 const packageStart=app.indexOf('let projectPackageExportInFlight=')>=0?app.indexOf('let projectPackageExportInFlight='):app.indexOf('async function downloadProjectPackage(');
-vm.runInContext(app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+'\nglobalThis.exportCompletePackage=downloadProjectPackage;',packageRuntime);
+vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource+app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+'\nglobalThis.exportCompletePackage=downloadProjectPackage;',packageRuntime);
 const originalExport=packageRuntime.exportCompletePackage();packageRuntime.current={job:{JOB_ID:'PACKAGE-B'}};const otherBackup=packageRuntime.exportCompletePackage('backup');packageRuntime.current={job:{JOB_ID:'PACKAGE-C'}};
 await Promise.all([originalExport,otherBackup]);
 assert(packageDownloads.map(x=>x.filename).join(',')==='PACKAGE-A.closed-loop.json.gz,PACKAGE-B.backup.closed-loop.json.gz',`Project navigation renamed exported bytes: ${JSON.stringify(packageDownloads)}`);
@@ -192,7 +193,7 @@ assert(evidenceLookups<=20&&regressionLookups<=20,`Deferred stage views eagerly 
 // Keep the production storage/handlers intact and substitute only transaction
 // I/O. Real IndexedDB versions of these regressions run in browser-extra.
 const storageRows=new Map(),storageAccess=[];
-const storageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true});
+const storageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,document:{querySelectorAll:()=>[]},Event:globalThis.Event,dispatchEvent:()=>true});
 const parseStorageJson=vm.runInContext('(text)=>JSON.parse(text)',storageRuntime);
 const storageRead=(value,parseJson=parseStorageJson)=>{if(value===undefined)return undefined;const blobs=[],copy=parseJson(JSON.stringify(value,(_key,item)=>item instanceof Blob?{__storageBlob:blobs.push(item)-1}:item));const restore=item=>{if(item&&typeof item==='object'){if(Object.keys(item).length===1&&Number.isInteger(item.__storageBlob))return blobs[item.__storageBlob];for(const key of Object.keys(item))item[key]=restore(item[key]);}return item;};return restore(copy);};
 storageRuntime.openStorageTransaction=async(names,mode)=>{
@@ -221,6 +222,19 @@ for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectU
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
+vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource,storageRuntime);
+await storageRegression('diagnostics:complete-exports-do-not-wait-for-health',async()=>{
+  const downloads=[],errors=[],status={textContent:''};let release,entered,healthCalls=0,active=0,maxActive=0;
+  const reached=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve);
+  const runtime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'DIAGNOSTICS-EXPORT'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>status,console:{error:()=>{}},document:{querySelectorAll:()=>[],createElement:()=>({click(){downloads.push(this.download);}})},URL:{createObjectURL:()=> 'blob:verified-package',revokeObjectURL(){}},projectStore:{storageHealth:async()=>{healthCalls++;entered();await held;throw new Error('CONTROLLED_DIAGNOSTICS_FAILURE');},exportPackage:async()=>{active++;maxActive=Math.max(maxActive,active);await new Promise(resolve=>setTimeout(resolve,0));active--;return {};}}});
+  vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource+app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+';globalThis.exportCompletePackage=downloadProjectPackage;',runtime);
+  let completed=0;const first=runtime.exportCompletePackage().then(()=>completed++,e=>errors.push(e)),second=runtime.exportCompletePackage('backup').then(()=>completed++,e=>errors.push(e));
+  await reached;await new Promise(resolve=>setTimeout(resolve,25));const whileHeld={downloads:downloads.length,completed};release();await Promise.all([first,second]);await new Promise(resolve=>setTimeout(resolve,0));
+  assert(whileHeld.downloads===2&&whileHeld.completed===2,`Optional storage diagnostics stalled verified exports: ${JSON.stringify(whileHeld)}.`);
+  assert(errors.length===0&&maxActive===1,'Optional diagnostics reported a verified export as failed, or package assembly overlapped.');
+  assert(healthCalls===1,'Concurrent diagnostic refreshes were not coalesced.');
+  assert(/unavailable/i.test(status.textContent),'Diagnostic failure was not reported in its own status area.');
+});
 // Save real generated instructions whose immutable context bytes are shared.
 // The storage operation, including canonical validation/CAS, stays in production.
 await storageRegression('prompt-context:shared-identities-one-read-snapshot',async()=>{
@@ -507,6 +521,23 @@ await storageRegression('startup:picker-projection-and-selected-only',async()=>{
   let error;try{await storageRuntime.projectStore.readProject('PICKER-49');}catch(e){error=e;}
   assert(error?.code==='PROJECT_HASH_MISMATCH','Opening a corrupt unloaded project bypassed integrity verification.');
   assert(!storageRows.get('projects').has('PICKER-49')&&[...storageRows.get('meta').keys()].some(key=>key.startsWith('quarantine:PICKER-49:')),'Opening a corrupt unloaded project did not preserve it in quarantine.');
+});
+for(const failHealth of [false,true])await storageRegression('diagnostics:startup-'+(failHealth?'failed':'slow')+'-health-does-not-block',async()=>{
+  let release,entered,renders=0;const held=new Promise(resolve=>release=resolve),reached=new Promise(resolve=>entered=resolve);
+  const originalNavigator=storageRuntime.navigator,originalRender=storageRuntime.render,originalOpen=storageRuntime.openStorageTransaction,originalDocument=storageRuntime.document;
+  const fields=['persistent','usage','quota'].map(key=>({dataset:{storageHealth:key},textContent:'UNKNOWN'}));
+  storageRuntime.document={querySelectorAll:()=>fields};storageRuntime.render=()=>{renders++;};
+  storageRuntime.navigator={storage:{persist:async()=>{entered();await held;return true;},estimate:async()=>({usage:123,quota:456})}};
+  storageRuntime.openStorageTransaction=async(...args)=>{const tx=await originalOpen(...args),objectStore=tx.objectStore;tx.objectStore=name=>{const object=objectStore(name),get=object.get;return {...object,get:key=>{if(failHealth&&name==='meta'&&key==='lastCommittedRevision')throw new Error('CONTROLLED_HEALTH_METADATA_FAILURE');return get(key);}};};return tx;};
+  let error,finished=false;const loading=vm.runInContext('load()',storageRuntime).then(()=>{finished=true;},e=>{error=e;});
+  await reached;await new Promise(resolve=>setTimeout(resolve,0));const beforeHealth={renders,finished};
+  const selected=storageRuntime.current;selected.activeView='Workflow';selected.activeStage=4;
+  release();await loading;await new Promise(resolve=>setTimeout(resolve,0));
+  storageRuntime.navigator=originalNavigator;storageRuntime.render=originalRender;storageRuntime.openStorageTransaction=originalOpen;storageRuntime.document=originalDocument;
+  assert(beforeHealth.renders===1&&beforeHealth.finished,`Optional health check blocked startup: ${JSON.stringify(beforeHealth)}.`);
+  assert(!error&&renders===1&&storageRuntime.current===selected&&selected.activeStage===4,'Late health completion failed startup, re-rendered the form, or reset navigation.');
+  if(failHealth)assert(/unavailable/i.test(storageRuntime.elements['#storage-status'].textContent),'Failed diagnostics did not report their unavailable status.');
+  else assert(fields.map(field=>field.textContent).join(',')==='PERSISTENT,123,456','Health completion did not update the existing storage readings.');
 });
 
 // Execute both contexts of the same production owner and simulate a lost worker
