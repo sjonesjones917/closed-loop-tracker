@@ -112,3 +112,8 @@ assert(strengthenedSource.includes("RELEASE_NOT_ACCEPTED"),'Stage 29 does not re
 assert(strengthenedSource.includes("UNAUTHORIZED_ARTIFACT_IDENTITY:"),'Stage 29 explanation does not fail closed on unauthorized delivery identity');
 assert(!strengthenedSource.includes("map(v=>upper(recordValue(v,'DETERMINATION')))"),'Stability diagnostics still consume submitted determinations');
 console.log(JSON.stringify({...proof,affirmativeCapabilityAvailability:true,epistemicEvidenceChains:true,effectiveStability:true}));
+// §29.13: invalid proof syntax must be rejected even when no observation exists.
+for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependencyId:'DEP-1'},{type:'LEAF',testId:'TEST-1',observationId:'OBS-1'},{op:'LEAF',testId:'TEST-1'},{type:'ALL_OF',children:[]}]){
+ const result=engine.evaluateProofExpression(core.createBlankState('JOB-PROOF-SYNTAX'),'PROP-1',node);
+ if(result.reason==='EVALUATED')throw new Error('Out-of-language proof expression reached evaluation: '+JSON.stringify(node));
+}
