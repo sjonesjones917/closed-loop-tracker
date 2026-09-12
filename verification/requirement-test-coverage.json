@@ -2101,7 +2101,8 @@
       "requirementSource": "12 September 2026 performance/reliability repair brief; specification constrains identity, custody and behavior.",
       "specificationSections": [
         "35.3",
-        "39.18"
+        "39.18",
+        "46.3"
       ],
       "normativeRequirementIds": [],
       "sourceLines": [],
@@ -2112,12 +2113,14 @@
       "existingTests": [
         "verify-test-runtime.mjs:native input limit/owner/deduplication/transfer",
         "verify-test-runtime-v3.mjs",
-        "verify-test-runtime-limits.mjs"
+        "verify-test-runtime-limits.mjs",
+        "verify-test-runtime.mjs:asyncWorkerBuildIdentityRetained/workerDigestRetained/mismatchedWorkerResultRejected"
       ],
       "negativeAdversarialTests": [
         "over 32 MiB rejects before full allocation",
         "project navigation during byte preparation",
-        "default caller buffer ownership preserved; fresh worker per execution"
+        "default caller buffer ownership preserved; fresh worker per execution",
+        "document.currentScript null after load; wrong worker build, byte digest or protocol cannot succeed"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:native-worker-owned-inputs"

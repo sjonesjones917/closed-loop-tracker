@@ -3,7 +3,11 @@
 
 const root=globalThis;
 const VERSION='closed-loop-test-runtime/1';
-const RUNTIME_BUILD_ID=(()=>{try{return typeof document!=='undefined'&&document.currentScript?.src?new URL(document.currentScript.src).searchParams.get('v')||'UNMANIFESTED_LOCAL_RUNTIME':'UNMANIFESTED_LOCAL_RUNTIME';}catch{return 'UNMANIFESTED_LOCAL_RUNTIME';}})();
+const RUNTIME_SCRIPT_URL=typeof document!=='undefined'?document.currentScript?.src||null:null;
+const RUNTIME_BUILD_ID=(()=>{try{return RUNTIME_SCRIPT_URL?new URL(RUNTIME_SCRIPT_URL).searchParams.get('v')||'UNMANIFESTED_LOCAL_RUNTIME':'UNMANIFESTED_LOCAL_RUNTIME';}catch{return 'UNMANIFESTED_LOCAL_RUNTIME';}})();
+const EXPECTED_WORKER_SHA256=(()=>{try{const value=RUNTIME_SCRIPT_URL?new URL(RUNTIME_SCRIPT_URL).searchParams.get('workerSha256'):null;return /^[0-9a-f]{64}$/.test(value||'')?value:null;}catch{return null;}})();
+const MANIFESTED_RUNTIME=Boolean(EXPECTED_WORKER_SHA256)||RUNTIME_BUILD_ID.startsWith('build-sha256-');
+const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1';
 const SPEC_VERSION='closed-loop-test-spec/1';
 const EXECUTABLE_KIND='TEST_IR';
 const CAPABILITY='CLOSED_LOOP_TEST_IR';
@@ -568,7 +572,11 @@ async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
 }
 
 function workerUrl(){
-  const source=typeof document!=='undefined'?document.currentScript?.src:null;const base=source||root.location?.href;if(!base)return 'test-worker.js';const url=new URL('test-worker.js',base);if(source)url.search=new URL(source).search;return url.href;
+  const source=RUNTIME_SCRIPT_URL,base=source||root.location?.href;if(!base)return 'test-worker.js';const url=new URL('test-worker.js',base);
+  if(MANIFESTED_RUNTIME&&!EXPECTED_WORKER_SHA256)throw new RuntimeError('WORKER_DIGEST_IDENTITY_MISSING','The deployed runtime lacks its manifest-bound worker digest.');
+  // Raw development HTML has a legacy cache key, not a deployment manifest.
+  // It retains the explicit unmanifested worker mode; deployed URLs keep both identities.
+  if(source&&EXPECTED_WORKER_SHA256)url.search=new URL(source).search;return url.href;
 }
 function executionFailure(test,startedAtDeviceTime,error){
   const disposition=error?.disposition===STATUS.UNDETERMINED?STATUS.UNDETERMINED:STATUS.EXECUTION_FAILED;
@@ -578,10 +586,10 @@ function executeTest(test,artifacts,canonicalBindings,options={}){
   const spec=field(test,'EXECUTABLE_SPEC');const bindings=field(test,'EXECUTABLE_INPUT_BINDINGS');const check=validateSpec(spec,bindings);const startedAtDeviceTime=new Date().toISOString();if(!check.valid)return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('INVALID_TEST_IR',check.issues.join(' '))));
   const WorkerClass=options.Worker||root.Worker;if(typeof WorkerClass!=='function')return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_UNAVAILABLE','The isolated Test IR worker is unavailable.')));
   return new Promise(resolve=>{
-    const requestId=`test-ir-${Date.now()}-${Math.random().toString(36).slice(2)}`;let settled=false;const worker=new WorkerClass(options.workerUrl||workerUrl());
+    const requestId=`test-ir-${Date.now()}-${Math.random().toString(36).slice(2)}`;let settled=false,worker;try{worker=new WorkerClass(options.workerUrl||workerUrl());}catch(error){resolve(executionFailure(test,startedAtDeviceTime,error));return;}
     const finish=result=>{if(settled)return;settled=true;clearTimeout(timer);try{worker.terminate();}catch{}resolve(result);};
     const timer=setTimeout(()=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_TIMEOUT',`Test IR worker exceeded ${LIMITS.workerTimeoutMs} ms.`))),Number(options.timeoutMs||LIMITS.workerTimeoutMs));
-    worker.onmessage=event=>{const message=event?.data||{};if(message.requestId!==requestId)return;if(message.ok){finish({...message.result,startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString()});}else finish(executionFailure(test,startedAtDeviceTime,new RuntimeError(message.error?.code||'WORKER_EXECUTION_FAILED',message.error?.message||'Worker execution failed.',message.error?.disposition||STATUS.EXECUTION_FAILED)));};
+    worker.onmessage=event=>{const message=event?.data||{};if(message.requestId!==requestId)return;if(message.ok){if(MANIFESTED_RUNTIME&&(message.result?.runtimeBuildIdentity!==RUNTIME_BUILD_ID||message.result?.testWorkerSha256!==EXPECTED_WORKER_SHA256||message.result?.workerProtocolVersion!==WORKER_PROTOCOL_VERSION)){finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_RESULT_IDENTITY_MISMATCH','Test IR worker result does not match the loaded runtime build, worker digest and protocol.')));return;}finish({...message.result,startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString()});}else finish(executionFailure(test,startedAtDeviceTime,new RuntimeError(message.error?.code||'WORKER_EXECUTION_FAILED',message.error?.message||'Worker execution failed.',message.error?.disposition||STATUS.EXECUTION_FAILED)));};
     worker.onerror=event=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_ERROR',event?.message||'Test IR worker failed.')));
     try{const transfers=options.transferInputBuffers?[...new Set(Object.values(artifacts||{}).map(artifact=>bytesFrom(artifact)?.buffer).filter(buffer=>buffer instanceof ArrayBuffer))]:[];worker.postMessage({type:'EXECUTE_TEST_IR',requestId,spec:normalizeSpec(spec),bindings,artifacts:artifacts||{},canonicalBindings:canonicalBindings||{},metadata:{testId:field(test,'TEST_ID')||test?.testId||null,bindings}},transfers);}catch(error){finish(executionFailure(test,startedAtDeviceTime,error));}
   });

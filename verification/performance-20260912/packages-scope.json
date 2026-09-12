@@ -15,5 +15,7 @@
   "environment": "Node v24.19.0, Linux x64; CPU model unavailable",
   "scope": "Synthetic preserved-history fixtures. Exact production export and pre-transaction import; export I/O substituted and import deliberately stops before activation. These timings do not execute the browser storage worker.",
   "memory": "V8 heap samples and whole-process maximum RSS include retained fixture/test objects. They are not browser peaks or physical-iPhone capacity.",
-  "interpretation": "Compare before/after distributions as diagnostics, not p95 or a whole-app speedup. Canonical projects and largest scalar strings remain finite-memory objects; no new accepted-input limit was added."
+  "interpretation": "Compare before/after distributions as diagnostics, not p95 or a whole-app speedup. Canonical projects and largest scalar strings remain finite-memory objects; no new accepted-input limit was added.",
+  "afterSourceCommit": "0c582fb780ddd0fc52c7dbcb76728ac0fdc50984",
+  "subsequentChange": "The later native-worker URL/result identity repair does not change the package algorithm. These recorded source hashes identify the measured snapshot, not a physical-device final-acceptance result."
 }
