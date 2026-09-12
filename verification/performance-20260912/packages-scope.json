@@ -1,0 +1,21 @@
+{
+  "baselineCommit": "6f7ccb71413e639887047c5eddad5a60cdb3ee37",
+  "afterSourceSha256": {
+    "workbook.js": "4134a1588e62bc0643bfb1845dd130a39fb66ba52a04d297be00cd895594e257",
+    "hash.js": "6a24352ac79e1d9508fca8f4d7f525fc22be897921b7ba7df360b349252aade2",
+    "workflow-schema.js": "50b515b6ec777d6025b28ffc7bb897139912311cafdd92a9e7bc61af36c85197",
+    "test-runtime.js": "fc616c58693796dec8122795a1efdfb3633cd46afc8aec4df6b448e294511427",
+    "workflow-engine.js": "86fb96b4ec94deb64924ea320d0845b7f5657e8fc9830b3dccd62f29c6c5ebaa",
+    "prompt-engine.js": "cb48f3cc25cd3585835e40cf6562b181dbecc41f41cc7049c606119045e6d7b6",
+    "response-ingestion.js": "fc66ab8f0470536e5b141fe614b67b0b5c243d99db84bed6bba794f42e25cee2",
+    "project-store.js": "3ed7f1f9a3129ded16a4985988b8d2e164ed9c88a1a4b1db0b7caf951491760b"
+  },
+  "benchmarkSha256": "aca45b1ad5a9ff4af5c27d8324de97332265b994bc58534ff21e168f43177e0e",
+  "samplesPerCase": 3,
+  "environment": "Node v24.19.0, Linux x64; CPU model unavailable",
+  "scope": "Synthetic preserved-history fixtures. Exact production export and pre-transaction import; export I/O substituted and import deliberately stops before activation. These timings do not execute the browser storage worker.",
+  "memory": "V8 heap samples and whole-process maximum RSS include retained fixture/test objects. They are not browser peaks or physical-iPhone capacity.",
+  "interpretation": "Compare before/after distributions as diagnostics, not p95 or a whole-app speedup. Canonical projects and largest scalar strings remain finite-memory objects; no new accepted-input limit was added.",
+  "afterSourceCommit": "0c582fb780ddd0fc52c7dbcb76728ac0fdc50984",
+  "subsequentChange": "The later native-worker URL/result identity repair does not change the package algorithm. These recorded source hashes identify the measured snapshot, not a physical-device final-acceptance result."
+}

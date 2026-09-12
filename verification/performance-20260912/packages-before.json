@@ -1,0 +1,281 @@
+{
+  "date": "2026-09-12T06:03:06.236Z",
+  "node": "v24.19.0",
+  "note": "Production package CPU/stream code with export storage I/O substituted. Import stops before the real IndexedDB transaction. Synthetic data only. V8 heap snapshots and timer gaps are not physical-iPhone peak memory or frame measurements.",
+  "cases": [
+    {
+      "historyRecords": 25,
+      "projectJsonUtf8Bytes": 2055179,
+      "artifactBytes": 0,
+      "exports": [
+        {
+          "elapsedMs": 288.134153,
+          "maxTimerGapMs": 13.411122999999975,
+          "heapBefore": 21589048,
+          "heapAtReturn": 26230592,
+          "probes": []
+        },
+        {
+          "elapsedMs": 274.52244399999995,
+          "maxTimerGapMs": 12.714093000000048,
+          "heapBefore": 18312136,
+          "heapAtReturn": 20473856,
+          "probes": []
+        },
+        {
+          "elapsedMs": 241.89884500000016,
+          "maxTimerGapMs": 11.193936000000122,
+          "heapBefore": 18315688,
+          "heapAtReturn": 38811968,
+          "probes": []
+        }
+      ],
+      "importsBeforeTransaction": [
+        {
+          "elapsedMs": 237.02311199999997,
+          "maxTimerGapMs": 97.8972859999999,
+          "heapBefore": 18154440,
+          "heapAtReturn": 28173000,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 2055523,
+              "elapsedMs": 13.216748000000052,
+              "heapAfter": 18740696
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 2055523,
+              "elapsedMs": 4.730495000000019,
+              "heapAfter": 22887536
+            }
+          ]
+        },
+        {
+          "elapsedMs": 256.77853400000004,
+          "maxTimerGapMs": 117.79055399999993,
+          "heapBefore": 18329304,
+          "heapAtReturn": 29167384,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 2055523,
+              "elapsedMs": 15.49086699999998,
+              "heapAfter": 18836664
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 2055523,
+              "elapsedMs": 4.652503000000024,
+              "heapAfter": 22983504
+            }
+          ]
+        },
+        {
+          "elapsedMs": 219.46310900000003,
+          "maxTimerGapMs": 104.602846,
+          "heapBefore": 18376304,
+          "heapAtReturn": 28349960,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 2055523,
+              "elapsedMs": 13.169826000000057,
+              "heapAfter": 18818000
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 2055523,
+              "elapsedMs": 3.940507999999909,
+              "heapAfter": 22965560
+            }
+          ]
+        }
+      ],
+      "compressedPackageBytes": 13823
+    },
+    {
+      "historyRecords": 600,
+      "projectJsonUtf8Bytes": 48110058,
+      "artifactBytes": 0,
+      "exports": [
+        {
+          "elapsedMs": 4352.487056999999,
+          "maxTimerGapMs": 15.261078999999881,
+          "heapBefore": 210884616,
+          "heapAtReturn": 211597680,
+          "probes": []
+        },
+        {
+          "elapsedMs": 4294.827722,
+          "maxTimerGapMs": 16.344945999999254,
+          "heapBefore": 108850712,
+          "heapAtReturn": 110381880,
+          "probes": []
+        },
+        {
+          "elapsedMs": 4279.8531680000015,
+          "maxTimerGapMs": 15.020049999999173,
+          "heapBefore": 108908320,
+          "heapAtReturn": 120577696,
+          "probes": []
+        }
+      ],
+      "importsBeforeTransaction": [
+        {
+          "elapsedMs": 4195.336132,
+          "maxTimerGapMs": 1882.1228740000006,
+          "heapBefore": 110790736,
+          "heapAtReturn": 419174528,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 48108677,
+              "elapsedMs": 367.54785399999946,
+              "heapAfter": 109937928
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 48108677,
+              "elapsedMs": 113.0903359999993,
+              "heapAfter": 204915664
+            }
+          ]
+        },
+        {
+          "elapsedMs": 4159.860673000001,
+          "maxTimerGapMs": 1852.2400409999973,
+          "heapBefore": 108940816,
+          "heapAtReturn": 419713856,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 48108677,
+              "elapsedMs": 425.5850420000006,
+              "heapAfter": 109717896
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 48108677,
+              "elapsedMs": 92.47686100000101,
+              "heapAfter": 204963376
+            }
+          ]
+        },
+        {
+          "elapsedMs": 4847.083451000002,
+          "maxTimerGapMs": 1982.9407109999993,
+          "heapBefore": 108938184,
+          "heapAtReturn": 419261312,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 48108677,
+              "elapsedMs": 411.69306399999914,
+              "heapAfter": 110761440
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 48108677,
+              "elapsedMs": 139.58508200000142,
+              "heapAfter": 205676904
+            }
+          ]
+        }
+      ],
+      "compressedPackageBytes": 100900
+    },
+    {
+      "historyRecords": 25,
+      "projectJsonUtf8Bytes": 2055179,
+      "artifactBytes": 8388608,
+      "exports": [
+        {
+          "elapsedMs": 2341.7397710000005,
+          "maxTimerGapMs": 26.270173000000796,
+          "heapBefore": 117172544,
+          "heapAtReturn": 32675224,
+          "probes": []
+        },
+        {
+          "elapsedMs": 2328.0048419999985,
+          "maxTimerGapMs": 21.3923790000008,
+          "heapBefore": 16889488,
+          "heapAtReturn": 38935192,
+          "probes": []
+        },
+        {
+          "elapsedMs": 2106.6324869999953,
+          "maxTimerGapMs": 19.205724999999802,
+          "heapBefore": 16958328,
+          "heapAtReturn": 82267328,
+          "probes": []
+        }
+      ],
+      "importsBeforeTransaction": [
+        {
+          "elapsedMs": 1432.4259989999991,
+          "maxTimerGapMs": 87.50836100000015,
+          "heapBefore": 16861976,
+          "heapAtReturn": 37180568,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 13240816,
+              "elapsedMs": 149.6326880000015,
+              "heapAfter": 17583568
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 13240816,
+              "elapsedMs": 15.603815999998915,
+              "heapAfter": 32927952
+            }
+          ]
+        },
+        {
+          "elapsedMs": 1080.9337559999985,
+          "maxTimerGapMs": 76.11227099999815,
+          "heapBefore": 16916280,
+          "heapAtReturn": 97727768,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 13240816,
+              "elapsedMs": 170.09171400000196,
+              "heapAfter": 17471360
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 13240816,
+              "elapsedMs": 15.7355349999998,
+              "heapAfter": 32815136
+            }
+          ]
+        },
+        {
+          "elapsedMs": 1054.1606230000034,
+          "maxTimerGapMs": 88.15651599999546,
+          "heapBefore": 16944800,
+          "heapAtReturn": 103267008,
+          "probes": [
+            {
+              "operation": "Response.text",
+              "characters": 13240816,
+              "elapsedMs": 160.29232800000318,
+              "heapAfter": 17457632
+            },
+            {
+              "operation": "JSON.parse",
+              "characters": 13240816,
+              "elapsedMs": 15.644186999998055,
+              "heapAfter": 32801704
+            }
+          ]
+        }
+      ],
+      "compressedPackageBytes": 8438138
+    }
+  ],
+  "maxRssKiB": 905924
+}

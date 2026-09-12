@@ -9,6 +9,21 @@ const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
+// Changing selection while raw bytes are being staged must never make the
+// handler read/capture them through the newly selected project or stage.
+for(const change of ['project','stage','revision']){
+  let release,entered;const held=new Promise(resolve=>release=resolve),started=new Promise(resolve=>entered=resolve),reads=[],captures=[],failures=[];
+  const source={job:{JOB_ID:'RESPONSE-OWNER'},revision:4,activeStage:1},other={job:{JOB_ID:'RESPONSE-OTHER'},revision:4,activeStage:2};
+  const runtime=vm.createContext({current:source,responseActionFailure:null,Blob,TextDecoder,reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),responseAttemptPrompt:()=>({transportBindingRequired:true,instructionId:'PROMPT-OWNER',bodySha256:'hash',contractSha256:'contract',contextSignature:'scope'}),projectStore:{stageResponseFile:async options=>{entered();await held;return {stagingId:'OWNER-STAGED',jobId:options.jobId};},readStagedResponseFile:async options=>{reads.push(options);return {bytes:new Uint8Array([123,125]),sha256:'digest'};}},closedLoopHash:{sha256Text:()=> 'digest'},responsePromptRecord:()=>({scope:{}}),pendingProposal:()=>null,ingestion:{captureRaw:()=>{captures.push(true);throw new Error('CAPTURE_REACHED');}}});
+  vm.runInContext(app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('))+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
+  const pending=runtime.selectResponse(new Blob(['{}'],{type:'application/json'}));await started;
+  if(change==='project')runtime.current=other;else if(change==='stage')source.activeStage=2;else source.revision++;
+  release();await pending;
+  assert(captures.length===0,`Response intake captured raw bytes after a ${change} change.`);
+  assert(reads.every(row=>row.jobId==='RESPONSE-OWNER'),'Response intake read staged bytes under another project.');
+  assert(failures.length===1,'Interrupted response intake must report the preserved staged file.');
+}
+
 function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engineSource=engine,promptSource=prompt}={}){
   assert.match(appSource,/id="response-json-file"[^>]*type="file"[^>]*accept="[^"]*(?:application\/json|\.json)/,'The normal external-response path must expose the authoritative JSON file selector.');
   assert.match(appSource,/const operationSelection=\{\},runSelection=\{\},responseFileSelection=\{\};/,'The file-first UI must retain declared response-file selection state before wiring change and process handlers.');
@@ -179,12 +194,12 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   let p=runtime.closedLoopCore.createBlankState('JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;engine.ensureShape(p);p.stages[5].status='COMPLETE';p.stages[5].gate={complete:true};
   const saved=prompts.reserveAndBuildPromptRecord(p,6,{operation:'COMPLETE'}).prompt;
   p=ingestion.captureRaw(p,{stage:6,text:'{"broken":true}',promptRecord:saved,files:[{attachmentSlotId:'DESIGN',artifactId:'DESIGN-BYTES',name:'design.md',sha256:'retained-digest'}]}).project;p.revision=84;
-  runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=()=>prompts.version;
+  runtime.withStorageActivity=async(_label,operation)=>operation();runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=()=>prompts.version;
   let stored=structuredClone(p);stored.revision=85;stored.projectData.userEntered.concurrentMarker='PRESERVE NEWER WORK';let staleWrites=0;
   runtime.projectStore={readProject:async()=>structuredClone(stored),replaceProject:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+1;return structuredClone(stored);}};
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(x=>Number(x.stage)===n&&!x.invalidatedBy&&Number(x.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
-  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
   assert.equal(vm.runInContext('currentPromptRecord(6)?.instructionId',runtime),saved.instructionId,'Raw capture incorrectly stales the still-open instruction and blocks manifest re-export.');
   const priorInput=runtime.current.job.CURRENT_INPUT_VERSION;runtime.current.job.CURRENT_INPUT_VERSION='CHANGED-AUTHORITY';
   assert.equal(vm.runInContext('currentPromptRecord(6)',runtime),null,'A changed authority scope must not reuse an older instruction.');runtime.current.job.CURRENT_INPUT_VERSION=priorInput;

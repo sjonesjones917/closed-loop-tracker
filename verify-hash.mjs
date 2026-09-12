@@ -20,6 +20,16 @@ try{
   assert(h.sha256Value(accumulated)===expected,'Accumulated project canonical digest changed.');
   assert(largestEncoding<=65536,`Canonical hashing encoded ${largestEncoding} characters at once; accumulated-data working buffers must be bounded.`);
 }finally{globalThis.TextEncoder=NativeEncoder;}
+// Canonical metadata contains many tiny punctuation/key chunks. Hash them in
+// bounded batches instead of allocating a UTF-8 buffer for every fragment.
+let encoderCalls=0,encoderInstances=0;
+globalThis.TextEncoder=class extends NativeEncoder{constructor(){super();encoderInstances++;}encode(text){encoderCalls++;return super.encode(text);}};
+try{
+  const metadata=Array.from({length:100},(_,index)=>({index,filename:`file-${index}-é🙂`,scope:{stage:1,active:true},bytes:65537}));
+  const canonical=h.stableStringify(metadata),expected=createHash('sha256').update(canonical).digest('hex');
+  assert(h.sha256Value(metadata)===expected,'Batched metadata hash changed the exact preimage.');
+  assert(encoderInstances<=1&&encoderCalls<=Math.ceil(canonical.length/8192)+1,`Metadata hashing allocated ${encoderInstances} encoders / ${encoderCalls} buffers for ${canonical.length} characters.`);
+}finally{globalThis.TextEncoder=NativeEncoder;}
 // A file is not a small in-memory buffer. Every file hash must read bounded
 // slices, including a tail that is not aligned with a SHA-256 block.
 const originalBlobRead=Blob.prototype.arrayBuffer;
@@ -98,6 +108,7 @@ scriptSources.forEach((source,index)=>{
  if(sharedBuildIdentity===null)sharedBuildIdentity=token;
  assert(token===sharedBuildIdentity,`${file} cache token ${token} differs from shared runtime identity ${sharedBuildIdentity}.`);
 });
+const workerSourceQuery=scriptSources.find(source=>source.split('?')[0]==='test-runtime.js').split('?')[1];assert(new URLSearchParams(workerSourceQuery).get('workerSha256')===createHash('sha256').update(fs.readFileSync('test-worker.js')).digest('hex'),'Source HTML must bind the exact Test IR worker bytes as well as the shared cache identity.');
 const testRuntime=fs.readFileSync('test-runtime.js','utf8');
 assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test IR worker URL must inherit the exact test-runtime.js build/cache query identity.');
 assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test IR worker must remain the same-origin registered worker entry.');

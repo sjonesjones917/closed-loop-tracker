@@ -3,7 +3,30 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
-for(const token of ['renameCurrentProject','duplicateCurrentProject','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
+// Replay the real database-open owner while an older tab keeps the upgrade
+// pending. A second caller must receive the known blocked error, not queue an
+// open request that cannot report its own blocked event until the first ends.
+{
+  const requests=[];let closed=0;
+  const runtime=vm.createContext({indexedDB:{open(){const request={};requests.push(request);return request;}}});
+  vm.runInContext("const DB_NAME='closed-loop-reliability',DB_VERSION=2;"+store.slice(store.indexOf('let databasePromise=null;'),store.indexOf('function parseLegacy('))+';globalThis.open=openDatabase;',runtime);
+  const first=runtime.open().catch(error=>error);requests[0].onblocked();assert((await first).code==='INDEXEDDB_BLOCKED','Blocked upgrade did not report its cause.');
+  const retry=runtime.open().catch(error=>error);assert(requests.length===1,'Blocked upgrade queued another open request and left startup waiting behind the original lock.');
+  assert((await retry).code==='INDEXEDDB_BLOCKED','Subsequent startup work lost the known blocked-upgrade error.');
+  requests[0].result={close(){closed++;}};requests[0].onsuccess();
+  const resumed=runtime.open();assert(requests.length===2&&closed===1,'Closing the old tab did not release the rejected upgrade connection for a fresh open.');
+  const available={close(){closed++;}};requests[1].result=available;requests[1].onsuccess();assert(await resumed===available,'Database could not reopen after the blocked request completed.');
+  console.log(JSON.stringify({storageRegression:'database:blocked-upgrade-does-not-queue-startup',passed:true}));
+}
+{
+  const status={textContent:'Storage status loading…'},announcements=[];
+  const runtime=vm.createContext({closedLoopCore:{},load:async()=>{throw Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'});},console:{error(){}},announce:message=>announcements.push(message),$:selector=>selector==='#storage-status'?status:null});
+  vm.runInContext(app.slice(app.indexOf('globalThis.closedLoopAppReady=false;'),app.indexOf('// Long-section navigation belongs'))+';globalThis.start=startClosedLoopApp;',runtime);
+  await runtime.start();assert(runtime.closedLoopAppReady===false&&/blocked/i.test(runtime.closedLoopAppError),'Blocked startup was incorrectly marked ready.');
+  assert(/close.*tabs.*reload/i.test(status.textContent)&&announcements.includes(status.textContent),'Blocked startup did not show an actionable recovery message in the existing status area.');
+  console.log(JSON.stringify({storageRegression:'database:blocked-upgrade-visible-recovery',passed:true}));
+}
+for(const token of ['renameCurrentProject','duplicateCurrentProject','materializeProject','unloadInactiveProjects','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
 for(const token of ['project-management','project-danger-zone','Start from copy','Create backup now','Verify stored files now','View exact evidence / provenance','Clear unsaved response','Discard pending attempt','Prepare replacement attempt'])assert(app.includes(token),`Missing lifecycle UI ${token}.`);
 assert(!app.includes('dismissedProposalIds')&&ingestion.includes('function abandon(project,proposalId')&&ingestion.includes("'ABANDONED_RESPONSE'")&&app.includes('canonical accepted work changed: NO'),'Discarded pending attempts must be auditable without changing accepted canonical work.');
 assert(store.includes('verifyProjectArtifacts')&&store.includes('MISSING_STORED_BLOB')&&store.includes('CANONICAL_BLOB_IDENTITY_MISMATCH'),'Stored-file verification must reconcile canonical artifact identities to actual Blob custody.');
@@ -63,7 +86,7 @@ assert(delivered.at(-1).name==='after-navigation','An interrupted export left su
 // Run the actual complete-export/backup handler against delayed storage. Navigation
 // must not rename another project's bytes; large package assemblies must serialize.
 const packageDownloads=[],packageRequests=[];let activePackages=0,maxActivePackages=0,rejectNextPackage=false;
-const packageRuntime=vm.createContext({current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},document:{createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
+const packageRuntime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},document:{createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
 const packageStart=app.indexOf('let projectPackageExportInFlight=')>=0?app.indexOf('let projectPackageExportInFlight='):app.indexOf('async function downloadProjectPackage(');
 vm.runInContext(app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+'\nglobalThis.exportCompletePackage=downloadProjectPackage;',packageRuntime);
 const originalExport=packageRuntime.exportCompletePackage();packageRuntime.current={job:{JOB_ID:'PACKAGE-B'}};const otherBackup=packageRuntime.exportCompletePackage('backup');packageRuntime.current={job:{JOB_ID:'PACKAGE-C'}};
@@ -171,28 +194,80 @@ assert(evidenceLookups<=20&&regressionLookups<=20,`Deferred stage views eagerly 
 const storageRows=new Map(),storageAccess=[];
 const storageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true});
 const parseStorageJson=vm.runInContext('(text)=>JSON.parse(text)',storageRuntime);
-const storageRead=value=>{if(value===undefined)return undefined;const {blob,...fields}=value,copy=parseStorageJson(JSON.stringify(fields));if(blob)copy.blob=blob;return copy;};
+const storageRead=(value,parseJson=parseStorageJson)=>{if(value===undefined)return undefined;const blobs=[],copy=parseJson(JSON.stringify(value,(_key,item)=>item instanceof Blob?{__storageBlob:blobs.push(item)-1}:item));const restore=item=>{if(item&&typeof item==='object'){if(Object.keys(item).length===1&&Number.isInteger(item.__storageBlob))return blobs[item.__storageBlob];for(const key of Object.keys(item))item[key]=restore(item[key]);}return item;};return restore(copy);};
 storageRuntime.openStorageTransaction=async(names,mode)=>{
   const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map(storageRows.get(name)||[])]));
-  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(storageRead)};},count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
+  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({openKeyCursor:()=>{storageAccess.push({kind:'indexKeys',name,indexName});const keys=[...pending.get(name).values()].map(row=>row[indexName]).filter(Boolean).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));const req={};let i=0;const advance=()=>{req.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;req.onsuccess?.();};queueMicrotask(advance);return req;},getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
 };
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),storageRuntime,{filename:file});
-const storageSource=store
+const storageSource=store.replace('globalThis.closedLoopProjectStore=','globalThis.decodePackageForTest=readPackageJson;globalThis.packageChunksForTest=packageJsonChunks;globalThis.closedLoopProjectStore=')
   .replace(/const request=req=>[^\n]+/, 'const request=req=>Promise.resolve(req.result);')
   .replace(/const complete=tx=>[^\n]+/, 'const complete=async tx=>tx.commit();')
   .replace(/async function openTransaction\([\s\S]*?\n}\n/, 'async function openTransaction(stores,mode="readonly"){return openStorageTransaction(stores,mode);}\n');
 vm.runInContext(storageSource,storageRuntime);
-vm.runInContext(`globalThis.core=closedLoopCore;globalThis.engine=closedLoopWorkflowEngine;globalThis.schema=closedLoopWorkflowSchema;globalThis.projectStore=closedLoopProjectStore;globalThis.clone=value=>JSON.parse(JSON.stringify(value));globalThis.safe=value=>Array.isArray(value)?value:[];globalThis.views=['Overview','Project','Workflow'];globalThis.projects=[];globalThis.current=null;globalThis.projectUi={};globalThis.jobFields=[['JOB_TITLE'],['EXACT_USER_OBJECTIVE_VERBATIM']];globalThis.announce=()=>{};globalThis.render=()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.failures=[];globalThis.reportActionFailure=message=>failures.push(String(message));globalThis.elements={};globalThis.$=selector=>elements[selector]??=( {click(){}} );`,storageRuntime);
+vm.runInContext(`globalThis.core=closedLoopCore;globalThis.engine=closedLoopWorkflowEngine;globalThis.schema=closedLoopWorkflowSchema;globalThis.projectStore=closedLoopProjectStore;globalThis.withStorageActivity=async(_label,operation)=>operation();globalThis.clone=value=>JSON.parse(JSON.stringify(value));globalThis.safe=value=>Array.isArray(value)?value:[];globalThis.views=['Overview','Project','Workflow'];globalThis.projects=[];globalThis.current=null;globalThis.projectUi={};globalThis.jobFields=[['JOB_TITLE'],['EXACT_USER_OBJECTIVE_VERBATIM']];globalThis.announce=()=>{};globalThis.render=()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.failures=[];globalThis.reportActionFailure=message=>failures.push(String(message));globalThis.elements={};globalThis.$=selector=>elements[selector]??=( {click(){}} );`,storageRuntime);
 const appFunction=name=>{
   const match=new RegExp(`(?:async )?function ${name}\\(`).exec(app);if(!match)return '';
   const start=match.index,rest=app.slice(start),next=/\n(?:async )?function \w+\(/.exec(rest);
   return next?rest.slice(0,next.index):rest.slice(0,rest.indexOf('\n'));
 };
-for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectUi','persistAll','persistNewProject','persistReplacement','save','createUniqueJobId','addNew','duplicateCurrentProject','archiveCurrentProject']){const source=appFunction(name);if(source)vm.runInContext(source,storageRuntime);}
+for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectUi','persistAll','persistNewProject','persistReplacement','save','createUniqueJobId','addNew','duplicateCurrentProject','materializeProject','unloadInactiveProjects','archiveCurrentProject']){const source=appFunction(name);if(source)vm.runInContext(source,storageRuntime);}
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
-for(const action of ['addNew','duplicateCurrentProject','archiveCurrentProject'])await storageRegression(`${action}:preserve-newer-project`,async()=>{
+// File intake must retain its original project, revision, stage and byte owner
+// through every asynchronous boundary. Only the database I/O is substituted.
+vm.runInContext(app.match(/^const artifactIdFor=.*$/m)[0],storageRuntime);
+for(const name of ['logicalFilePath','storeArtifactFile','registerStageFiles'])vm.runInContext(appFunction(name),storageRuntime);
+for(const boundary of ['first-file','second-file','first-text','second-text'])for(const change of ['project','stage','revision','second-file-failure'])await storageRegression(`file-intake:${boundary}:${change}`,async()=>{
+  let reached,release;const entered=new Promise(resolve=>reached=resolve),held=new Promise(resolve=>release=resolve);
+  storageRuntime.intakeBoundary=async name=>{if(name===boundary){reached();await held;}};
+  storageRuntime.intakeFailure=change==='second-file-failure';
+  await vm.runInContext(`(async()=>{
+    globalThis.intakeA=await makeStored('INTAKE-A-'+${JSON.stringify(boundary+'-'+change)});
+    globalThis.intakeB=await makeStored('INTAKE-B-'+${JSON.stringify(boundary+'-'+change)});
+    projects=[intakeA,intakeB];current=intakeA;failures=[];
+    await projectStore.metaPut('selectedProject',intakeA.job.JOB_ID);
+    globalThis.intakeFiles=['first','second'].map(name=>{const file=new Blob([name+' exact bytes é🙂'],{type:'text/plain'});Object.defineProperty(file,'name',{value:name+'.txt'});file.text=async()=>{await intakeBoundary(name+'-text');if(intakeFailure&&name==='second')throw new Error('CONTROLLED_SECOND_FILE_FAILURE');return Blob.prototype.text.call(file);};return file;});
+    globalThis.originalPutArtifact=projectStore.putArtifact;
+    projectStore={...projectStore,putArtifact:async options=>{await intakeBoundary(options.filename.replace('.txt','')+'-file');return originalPutArtifact(options);}};
+  })()`,storageRuntime);
+  const pending=vm.runInContext('registerStageFiles(intakeFiles)',storageRuntime);await Promise.race([entered,pending.then(()=>{throw new Error('File intake finished before the intended async boundary: '+storageRuntime.failures.join(' | '));})]);
+  await vm.runInContext(change==='revision'?`(async()=>{const newer=clone(intakeA);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});})()`:
+    change==='stage'?`current.activeStage=2;current.activeView='Records';`:
+    `current=intakeB;awaitSelection=projectStore.metaPut('selectedProject',intakeB.job.JOB_ID);`,storageRuntime);
+  if(storageRuntime.awaitSelection)await storageRuntime.awaitSelection;
+  release();await pending;storageRuntime.projectStore.putArtifact=storageRuntime.originalPutArtifact;
+  const a=await storageRuntime.projectStore.readProject(storageRuntime.intakeA.job.JOB_ID),b=await storageRuntime.projectStore.readProject(storageRuntime.intakeB.job.JOB_ID);
+  assert(b.projectData.artifacts.length===0&&b.revision===storageRuntime.intakeB.revision,'File intake changed the other project.');
+  const failed=change==='revision'||change==='second-file-failure';
+  assert(a.projectData.artifacts.length===(failed?0:2),'File intake lost its original owner or partially registered a batch.');
+  const rows=await storageRuntime.projectStore.listArtifacts(a.job.JOB_ID);
+  assert(rows.length===(failed?0:2),'File intake left uncommitted bytes behind or deleted committed bytes.');
+  assert((await storageRuntime.projectStore.listArtifacts(b.job.JOB_ID)).length===0,'File intake stored bytes under the newly selected project.');
+  if(change==='revision')assert(a.newerWork==='PRESERVE','File intake overwrote an intervening revision.');
+  if(change==='project'||change==='second-file-failure'){assert(storageRuntime.current.job.JOB_ID===b.job.JOB_ID,'Completing background file intake replaced the selected project.');assert(await storageRuntime.projectStore.metaGet('selectedProject')===b.job.JOB_ID,'File intake replaced the durable project selection.');}
+  if(change==='stage')assert(storageRuntime.current.activeStage===2&&storageRuntime.current.activeView==='Records','File intake replaced the selected stage/view.');
+  if(!failed)for(const row of rows){const canonical=a.projectData.artifacts.find(item=>item.id===row.artifactId);assert(canonical?.stage===1&&a.stages[1].authorizedFiles.some(item=>item.artifactId===row.artifactId),'File intake lost its original stage.');assert(a.projectData.userEntered.suppliedArtifactText[row.artifactId].text===await row.blob.text(),'File intake changed supplied source text.');}
+});
+await storageRegression('file-intake:post-commit-render-failure-keeps-bytes',async()=>{
+  await vm.runInContext(`(async()=>{current=await makeStored('INTAKE-RENDER');projects=[current];intakeFailure=false;intakeBoundary=async()=>{};render=()=>{throw new Error('CONTROLLED_RENDER_FAILURE');};})()`,storageRuntime);
+  try{await vm.runInContext('registerStageFiles(intakeFiles)',storageRuntime);}catch(error){assert(error.message==='CONTROLLED_RENDER_FAILURE','Unexpected post-commit failure.');}
+  storageRuntime.render=()=>{};
+  const saved=await storageRuntime.projectStore.readProject('INTAKE-RENDER');
+  assert(saved.projectData.artifacts.length===2&&(await storageRuntime.projectStore.listArtifacts('INTAKE-RENDER')).length===2,'A display failure removed committed canonical file bytes.');
+});
+await storageRegression('storage-refresh:navigation-cannot-replace-totals',async()=>{
+  vm.runInContext(appFunction('refreshProjectStorage'),storageRuntime);
+  await vm.runInContext(`(async()=>{globalThis.refreshA=await makeStored('REFRESH-A');globalThis.refreshB=await makeStored('REFRESH-B');current=refreshA;projectStorage={artifactCount:72,byteSize:1200};})()`,storageRuntime);
+  let reached,release;const entered=new Promise(resolve=>reached=resolve),held=new Promise(resolve=>release=resolve),original=storageRuntime.projectStore.listArtifacts;
+  storageRuntime.projectStore.listArtifacts=async id=>{reached();await held;return original(id);};
+  const pending=vm.runInContext('refreshProjectStorage()',storageRuntime);await entered;storageRuntime.current=storageRuntime.refreshB;release();await pending;
+  storageRuntime.projectStore.listArtifacts=original;
+  assert(storageRuntime.projectStorage.artifactCount===72,'A completed refresh replaced another project\'s displayed file totals.');
+  storageRuntime.refreshProjectStorage=async()=>{};
+});
+for(const action of ['addNew','duplicateCurrentProject','materializeProject','unloadInactiveProjects','archiveCurrentProject'])await storageRegression(`${action}:preserve-newer-project`,async()=>{
   await vm.runInContext(`(async()=>{projects=[await makeStored('STALE-${action}')];current=projects[0];const newer=clone(current);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});})()`,storageRuntime);
   storageAccess.length=0;await vm.runInContext(`${action}()`,storageRuntime);
   const unrelated=storageAccess.filter(x=>x.name==='projects'&&x.key===`STALE-${action}`);
@@ -218,6 +293,48 @@ await storageRegression('backup:required-canonical-bytes',async()=>{
   let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CLOSURE');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
   assert(rejected,'A verified export was created despite missing canonical artifact bytes.');
   assert(JSON.stringify(await storageRuntime.projectStore.metaGet('lastVerifiedExport:BACKUP-CLOSURE'))===JSON.stringify(previous),'Failed export replaced the last successful backup evidence.');
+});
+
+await storageRegression('response-size:reject-before-full-read-preserve-raw',async()=>{
+  const originalRead=Blob.prototype.arrayBuffer;let largestRead=0,staged,error;
+  try{
+    Blob.prototype.arrayBuffer=function(){largestRead=Math.max(largestRead,this.size);return originalRead.call(this);};
+    staged=await storageRuntime.projectStore.stageResponseFile({jobId:'OVERSIZE-OWNER',stage:1,blob:new Blob(['x'.repeat(1048577)]),rawFilename:'oversized.json'});
+    try{await storageRuntime.projectStore.readStagedResponseFile({jobId:'OVERSIZE-OWNER',stagingId:staged.stagingId});}catch(e){error=e;}
+  }finally{Blob.prototype.arrayBuffer=originalRead;}
+  assert(error?.code==='OVERSIZED_RESPONSE','Oversized response reached full-file materialization.');
+  assert(largestRead<=65536,`Oversized response allocated a ${largestRead}-byte read buffer.`);
+  const kept=await storageRuntime.projectStore.metaGet(staged.storageKey);
+  assert(kept.blob.size===1048577&&kept.sha256===staged.sha256&&kept.rejection?.code==='OVERSIZED_RESPONSE','Oversize rejection lost original bytes, ownership or its failure receipt.');
+});
+await storageRegression('import:incremental-package-decoding',async()=>{
+  const originalText=Response.prototype.text;let fullTextReads=0,error;
+  try{Response.prototype.text=function(){fullTextReads++;return originalText.call(this);};storageRuntime.__closedLoopStorageFault='before-import-transaction';await storageRuntime.projectStore.importPackage(storageRuntime.goodBackup);}catch(e){error=e;}finally{Response.prototype.text=originalText;delete storageRuntime.__closedLoopStorageFault;}
+  assert(error?.code==='INJECTED_STORAGE_FAILURE','Incremental import did not finish the real package/project/artifact verification path.');
+  assert(fullTextReads===0,'Import materialized the entire decompressed package text.');
+});
+await storageRegression('import:json-semantics-and-adversarial-streams',async()=>{
+  const compress=text=>new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
+  const documents=[JSON.stringify({project:{text:('x'.repeat(16377)+'é🙂"\\\n').repeat(8)},artifacts:[{base64:'YWJj\n'.repeat(16384)}]}),' {"__proto__":{"keep":"data"},"project":{"x":1,"x":2},"artifacts":[{"base64":"bad","base64":"YWJj\\n"}]} ', '{"artifacts":[{"base64":"YWJj","base64":null}],"extra":-0,"n":1.2e3}', '[null,true,false,0,-1,"escape\\uD83D\\uDE42","slashes\\\\\\/end"]'];
+  for(const text of documents){const {payload,fileContents}=await storageRuntime.decodePackageForTest(await compress(text));for(const row of payload?.artifacts||[]){const source=fileContents.get(row);if(source)row.base64=await source.blob.text();}assert(JSON.stringify(payload)===JSON.stringify(JSON.parse(text)),'Incremental package JSON changed string, duplicate-key, number, or object semantics.');}
+  const canonicalText='{"artifacts":[{"base64":"Y\\u0057Jj\\n"}],"project":{"raw":"preserve é🙂\\n\\t\\\\\\\""}}',decoded=await storageRuntime.decodePackageForTest(await compress(canonicalText));
+  const chunks=[];for await(const chunk of storageRuntime.packageChunksForTest(decoded.payload,decoded.fileContents))chunks.push(chunk);
+  assert(createHash('sha256').update(chunks.join('')).digest('hex')===createHash('sha256').update(globalThis.closedLoopHash.stableStringify(JSON.parse(canonicalText))).digest('hex'),'Spooling changed the canonical package hash preimage.');
+  for(const text of ['','{','[1,]','{"a":1,}','{"a" 1}','{"a":01}','{"a":tru}','{"a":"bad\\q"}','{"a":"bad\\u12Z4"}','{"a":"raw\nnewline"}','{}{}','[1 2]','[1}\n','{"a":1}\u000b']){let rejected=false;try{await storageRuntime.decodePackageForTest(await compress(text));}catch{rejected=true;}assert(rejected,'Malformed incremental JSON was accepted: '+JSON.stringify(text));}
+  const valid=JSON.parse(await new Response(storageRuntime.goodBackup.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  for(const mutate of [p=>p.packageSha256='0'.repeat(64),p=>{p.artifacts[0].base64+='=';},p=>{p.artifacts[0].base64='AA==AAAA';}]){
+    const candidate=structuredClone(valid);mutate(candidate);if(candidate.packageSha256!=='0'.repeat(64)){const {packageSha256,...body}=candidate;candidate.packageSha256=globalThis.closedLoopHash.sha256Value(body);}
+    const before=await storageRuntime.projectStore.readProject(valid.project.job.JOB_ID);let rejected=false;try{await storageRuntime.projectStore.importPackage(await compress(JSON.stringify(candidate)));}catch{rejected=true;}const after=await storageRuntime.projectStore.readProject(before.job.JOB_ID);assert(rejected&&after.projectSha256===before.projectSha256,'Late hash/padding failure changed an existing project.');
+  }
+});
+await storageRegression('artifact-queries:project-local-without-store-scan',async()=>{
+  storageAccess.length=0;await storageRuntime.projectStore.listArtifacts('BACKUP-CLOSURE');
+  assert(!storageAccess.some(row=>row.name==='artifacts'&&row.kind==='getAll'),'Project file listing scanned unrelated artifact rows.');
+  storageAccess.length=0;await storageRuntime.projectStore.importPackage(storageRuntime.goodBackup);
+  assert(!storageAccess.some(row=>row.name==='artifacts'&&row.kind==='getAll'),'Package collision/cleanup scanned unrelated artifact rows.');
+  await vm.runInContext(`(async()=>{globalThis.deleteQueryProject=await makeStored('DELETE-QUERY');})()`,storageRuntime);
+  storageAccess.length=0;await storageRuntime.projectStore.removeProject('DELETE-QUERY');
+  assert(!storageAccess.some(row=>row.name==='artifacts'&&row.kind==='getAll'),'Deleting one project scanned unrelated artifact rows.');
 });
 const importStart=app.indexOf("$('#import-file').onchange="),importEnd=app.indexOf('\nglobalThis.closedLoopAppReady',importStart);
 await storageRegression('backup:required-prompt-context',async()=>{
@@ -245,13 +362,85 @@ await storageRegression('import:pre-commit-failure-preserves-state',async()=>{
   assert(storageRuntime.current===before&&storageRuntime.projects===ids,'Rejected import replaced existing in-memory projects.');
   assert(storageRuntime.failures.some(x=>/without changing existing projects/i.test(x)),'Pre-commit import failure lost its accurate rejection message.');
 });
+await storageRegression('delete:verified-selection-before-async-refresh',async()=>{
+  vm.runInContext(appFunction('deleteCurrentProject'),storageRuntime);vm.runInContext(appFunction('syncDeleteProjectControl'),storageRuntime);
+  await vm.runInContext(`(async()=>{globalThis.deletingUi=await makeStored('DELETE-UI-A');globalThis.replacementUi=await makeStored('DELETE-UI-B');projects=[deletingUi,replacementUi];current=deletingUi;elements['#delete-project-confirmation']={value:deletingUi.job.JOB_ID};elements['#delete-project']={disabled:false};globalThis.refreshProjectStorage=async()=>{};})()`,storageRuntime);
+  let entered,release;const reached=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve),baseStore=storageRuntime.projectStore;
+  storageRuntime.projectStore={...baseStore,listProjectSummaries:async()=>{entered();await held;return baseStore.listProjectSummaries();}};
+  const deletion=storageRuntime.deleteCurrentProject();await reached;const selectedAfterCommit=storageRuntime.current;
+  vm.runInContext(`current.activeView='Workflow';current.activeStage=2;`,storageRuntime);release();await deletion;storageRuntime.projectStore=baseStore;
+  assert(selectedAfterCommit.job.JOB_ID==='DELETE-UI-B'&&selectedAfterCommit.stages[1],'Deletion exposed an unloaded/deleted project while refreshing its view.');
+  assert(storageRuntime.current.activeView==='Workflow'&&storageRuntime.current.activeStage===2,'Post-delete refresh reset navigation that happened after commit.');
+});
 await storageRegression('startup:retained-refresh-keeps-snapshot-revision',async()=>{
-  vm.runInContext(appFunction('importSeed'),storageRuntime);
+  vm.runInContext(appFunction('importSeed'),storageRuntime);vm.runInContext(appFunction('retainedProjectForBuild'),storageRuntime);
   vm.runInContext(app.split('\n').find(line=>line.startsWith('async function load(){')),storageRuntime);
   await vm.runInContext(`(async()=>{const p=ensureState(core.createBlankState('RETAINED-CONCURRENT'));p.isRetainedTestProject=true;p.retainedSpecRevision='old';await projectStore.writeProject(p,{expectedProjectRevision:0});globalThis.nextRetained=clone(p);nextRetained.retainedSpecRevision='new';globalThis.loadAcceptanceSession=async()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.fetch=async()=>{const newer=await projectStore.readProject(p.job.JOB_ID);newer.newerWork='PRESERVE DURING FETCH';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});return {ok:true,json:async()=>nextRetained};};})()`,storageRuntime);
   await vm.runInContext('load()',storageRuntime);
   const after=await storageRuntime.projectStore.readProject('RETAINED-CONCURRENT');
   assert(after.newerWork==='PRESERVE DURING FETCH','Startup read a fresh revision and used it to overwrite intervening retained-project work.');
+});
+
+await storageRegression('startup:unchanged-build-reuses-retained-project',async()=>{
+  await vm.runInContext(`(async()=>{globalThis.RUNTIME_BUILD_ID='BUILD-RETAINED-CACHE';globalThis.retainedFetches=0;const retained=await projectStore.readProject('RETAINED-CONCURRENT');globalThis.fetch=async()=>{retainedFetches++;return {ok:true,json:async()=>retained};};await projectStore.metaPut('retainedProjectSuppressed',false);})()`,storageRuntime);
+  await vm.runInContext('load();',storageRuntime);await vm.runInContext('load();',storageRuntime);
+  assert(storageRuntime.retainedFetches===1,'Unchanged build fetched and rebuilt its bundled project on every startup.');
+  storageRuntime.RUNTIME_BUILD_ID='BUILD-RETAINED-CHANGED';await vm.runInContext('load();',storageRuntime);
+  assert(storageRuntime.retainedFetches===2,'Changed build failed to check the bundled project.');
+});
+await storageRegression('startup:picker-projection-and-selected-only',async()=>{
+  for(const count of [1,10,50]){
+    for(let i=0;i<count;i++)if(!storageRows.get('projects')?.has('PICKER-'+i))await vm.runInContext(`makeStored('PICKER-${i}')`,storageRuntime);
+    await vm.runInContext(`projectStore.metaPut('retainedProjectSuppressed',true)`,storageRuntime);
+    await vm.runInContext(`projectStore.metaPut('selectedProject','PICKER-0')`,storageRuntime);
+    const unrelated=storageRows.get('projects').get('PICKER-'+(count-1));if(count>1)unrelated.project.projectData.rawResponses.push({rawText:'unrelated archived history '.repeat(10000)});
+    storageAccess.length=0;
+    await vm.runInContext('load()',storageRuntime);
+    assert(!storageAccess.some(row=>row.name==='projects'&&row.kind==='getAll'),'Startup loaded every canonical project row.');
+    assert(storageAccess.filter(row=>row.name==='projects'&&row.kind==='get').every(row=>row.key==='PICKER-0'),'Startup opened an unrelated project before the selected view.');
+    assert(storageRuntime.current.job.JOB_ID==='PICKER-0'&&storageRuntime.current.stages[1],'Startup failed to open the selected verified project.');
+  }
+  let error;try{await storageRuntime.projectStore.readProject('PICKER-49');}catch(e){error=e;}
+  assert(error?.code==='PROJECT_HASH_MISMATCH','Opening a corrupt unloaded project bypassed integrity verification.');
+  assert(!storageRows.get('projects').has('PICKER-49')&&[...storageRows.get('meta').keys()].some(key=>key.startsWith('quarantine:PICKER-49:')),'Opening a corrupt unloaded project did not preserve it in quarantine.');
+});
+
+// Execute both contexts of the same production owner and simulate a lost worker
+// acknowledgement after its real transaction logic commits to the test database.
+let dropWorkerReply=false,workerExecutions=0;
+class StoreWorkerFixture{
+  constructor(url){
+    this.stopped=false;let listener;
+    const worker=vm.createContext({Blob,Uint8Array,ArrayBuffer,DataView,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,URL,URLSearchParams,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true,location:new URL(url),openStorageTransaction:storageRuntime.openStorageTransaction,addEventListener:(type,callback)=>{if(type==='message')listener=callback;},postMessage:message=>{if(this.stopped)return;if(dropWorkerReply){dropWorkerReply=false;this.onerror?.({message:'CONTROLLED_LOST_COMMITTED_REPLY'});}else this.onmessage?.({data:storageRead(message)});}});
+    const parseWorkerJson=vm.runInContext('text=>JSON.parse(text)',worker);
+    worker.workerRead=value=>storageRead(value,parseWorkerJson);
+    worker.importScripts=(...urls)=>{for(const url of urls){const file=String(url).split('?')[0];vm.runInContext(fs.readFileSync(file,'utf8'),worker,{filename:file});}};
+    vm.runInContext(storageSource.replace('Promise.resolve(req.result)','Promise.resolve(workerRead(req.result))'),worker);
+    this.deliver=message=>listener({data:storageRead(message,parseWorkerJson)});
+  }
+  postMessage(message){workerExecutions++;this.deliver(message);}
+  terminate(){this.stopped=true;}
+}
+storageRuntime.document={currentScript:{src:'https://example.test/project-store.js?v=WORKER-REGRESSION'}};storageRuntime.URL=URL;storageRuntime.URLSearchParams=URLSearchParams;storageRuntime.Worker=StoreWorkerFixture;
+vm.runInContext(storageSource,storageRuntime);storageRuntime.projectStore=storageRuntime.closedLoopProjectStore;
+await storageRegression('storage-worker:same-authorities-and-cas',async()=>{
+  const before=workerExecutions;const p=await vm.runInContext(`makeStored('WORKER-CAS')`,storageRuntime);
+  assert(workerExecutions===before+1,'Canonical save did not dispatch to the same store in its worker context.');
+  const saved=await storageRuntime.projectStore.readProject(p.job.JOB_ID);assert(saved.projectSha256===p.projectSha256&&saved.revision===p.revision,'Worker changed canonical digest or revision.');
+  let error;try{await storageRuntime.projectStore.writeProject(p,{expectedProjectRevision:p.revision-1});}catch(e){error=e;}
+  assert(error?.code==='STALE_PROJECT_REVISION'&&error.existingProjectsUnchanged===true,'Worker lost the revision-conflict rejection.');
+});
+await storageRegression('storage-worker:commit-survives-lost-reply',async()=>{
+  dropWorkerReply=true;const p=await vm.runInContext(`makeStored('WORKER-LOST-REPLY')`,storageRuntime);
+  const saved=await storageRuntime.projectStore.readProject(p.job.JOB_ID);
+  assert(saved.revision===p.revision&&saved.projectSha256===p.projectSha256,'Lost worker reply was treated as rollback or repeated the committed mutation.');
+});
+await storageRegression('storage-worker:atomic-abort-and-import-recovery',async()=>{
+  storageRuntime.__closedLoopStorageFault='before-transaction-commit';let error;
+  try{await vm.runInContext(`makeStored('WORKER-ABORT')`,storageRuntime);}catch(e){error=e;}finally{delete storageRuntime.__closedLoopStorageFault;}
+  assert(error?.code==='INJECTED_STORAGE_FAILURE'&&!(await storageRuntime.projectStore.readProject('WORKER-ABORT')),'Worker acknowledged a partially committed save.');
+  dropWorkerReply=true;const restored=await storageRuntime.projectStore.importPackage(storageRuntime.goodBackup);
+  assert(restored.job.JOB_ID==='BACKUP-CLOSURE'&&(await storageRuntime.projectStore.getArtifact('BACKUP-FILE')),'Worker lost a committed import and its bytes after response failure.');
 });
 assert(lifecycleFailures.length===0,JSON.stringify(lifecycleFailures,null,2));
 console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,completeExportIdentityAfterNavigation:true,serializedCompletePackages:true,completeExportFailureRecovery:true,unsafeOverrides:0}));
