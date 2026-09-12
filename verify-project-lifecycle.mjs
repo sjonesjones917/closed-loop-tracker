@@ -139,7 +139,7 @@ for(const row of exportedPayload.artifacts){
   const wrapped=row.base64.replace(/.{73}/g,'$&\n\t '),decoded=await decoderRuntime.decodeFile(wrapped).arrayBuffer();
   assert(Buffer.from(decoded).equals(Buffer.from(row.base64,'base64')),'Bounded restore changed base64 whitespace or final padding semantics.');
 }
-for(const invalid of ['Zg==YQ==','!AAA','A','AA=A']){let rejected=false;try{decoderRuntime.decodeFile(invalid);}catch{rejected=true;}assert(rejected,`Invalid artifact base64 was accepted: ${invalid}`);}
+for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=false;try{decoderRuntime.decodeFile(invalid);}catch{rejected=true;}assert(rejected,`Invalid artifact base64 was accepted: ${invalid}`);}
 // The real Files view and proposal view must not eagerly build all accumulated
 // download controls or resolve every diff row before a detail page is opened.
 const viewRuntime=vm.createContext({engine,current:core.createBlankState('VIEW-PRESSURE'),safe:value=>Array.isArray(value)?value:[],esc:value=>String(value??''),label:value=>String(value),proposalVersionCurrent:()=>true});

@@ -158,6 +158,7 @@ async function verifyProjectArtifacts(jobId){
 const bytesToBase64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(s);};
 const base64ToBytes=text=>{const s=atob(text),out=new Uint8Array(s.length);for(let i=0;i<s.length;i++)out[i]=s.charCodeAt(i);return out;};
 function base64ToBlob(text,mediaType){
+  if(typeof text!=='string')throw new TypeError('Artifact base64 must be a JSON string.');
   const parts=[];let pending='';
   for(let offset=0;offset<text.length;offset+=65536){
     pending+=text.slice(offset,offset+65536).replace(/[\t\n\f\r ]/g,'');
