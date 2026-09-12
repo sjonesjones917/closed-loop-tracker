@@ -2228,6 +2228,38 @@
       ],
       "evidenceGap": "Local deterministic I/O counts use substituted storage. Exact-revision CI and deployed Chromium are required; physical-iPhone latency/capacity and approved visual authority remain separate.",
       "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
+    },
+    {
+      "id": "BOUNDED-ARTIFACT-REGISTRATION",
+      "requirement": "Diagnosis finding 09: reduce repeated workflow calculation during multi-file intake while preserving exact identities, event order, lineage, scope, downstream authority, original project ownership and atomic canonical commit.",
+      "requirementOrigin": "User performance diagnosis, findings 02 and 09; specification sections 35 and 39.18 constrain the repair. No new normative requirement ID is invented for the performance target.",
+      "normativeRequirementIds": [],
+      "sourceLines": [],
+      "productionOwner": [
+        "workflow-engine.js:appendArtifactBytes/registerArtifactBytes/registerArtifactBytesBatch",
+        "app-core.js:registerStageFiles/persistReplacement",
+        "project-store.js:writeProjectRow"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:file-intake:bounded-registration:1/64/65/129",
+        "verify-full-cycle.mjs:verifyArtifactRegistrationBatch (initial intake, frozen candidate, current product, authorized terminal)",
+        "verify-stage01-intake-closure.mjs",
+        "verify-all-stage-prompts.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-project-lifecycle.mjs:file-intake:batch-member-rejection:identity/product",
+        "verify-project-lifecycle.mjs:file-intake asynchronous project/stage/revision/failure boundaries and post-commit rendering",
+        "verify-full-cycle.mjs:duplicate/empty registration and terminal authority equivalence"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:file-intake-navigation-and-rollback (65-file project navigation and last-file failure in real IndexedDB)"
+      ],
+      "deployedProof": [
+        "verify-live.mjs:exact deployed resource bytes",
+        "verify-browser-extra.mjs:file-intake-navigation-and-rollback"
+      ],
+      "evidenceGap": "Calculation counts are deterministic production-path observations with storage I/O substituted. Exact-revision CI and real IndexedDB Chromium remain required. Physical-iPhone latency/headroom and approved visual authority are separate.",
+      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
     }
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",

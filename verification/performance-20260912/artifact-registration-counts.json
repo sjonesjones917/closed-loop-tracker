@@ -1,0 +1,57 @@
+{
+  "finding": "09",
+  "defectId": "DP-68",
+  "baselineCommit": "d4535763e7d9c678fad18df94da6dd4ed0ca8ba7",
+  "environment": {
+    "runtime": "v24.19.0",
+    "platform": "Linux x64",
+    "storage": "Existing production-path lifecycle verifier; IndexedDB I/O substituted by its transaction fixture"
+  },
+  "measurement": "Number of calls to the unchanged base workflow recalculation owner inside real registerStageFiles, before persistReplacement begins. Canonical write/validation calculations excluded. This is not elapsed time or a whole-app/device speedup.",
+  "productionSources": {
+    "workflow-engine.js": {
+      "beforeSha256": "86fb96b4ec94deb64924ea320d0845b7f5657e8fc9830b3dccd62f29c6c5ebaa",
+      "afterSha256": "c42db7c67c8acc749ea5183809bf8a605b7e23e67646902a88bd2940947133bb"
+    },
+    "app-core.js": {
+      "beforeSha256": "a4baad667bb900bdd32f6ae147f228210f3f58151734e66989c7c7708f91177c",
+      "afterSha256": "2968de32f5faa35ee32ef53b89e5019e521b83128a09ba31d8f7c90064992444"
+    }
+  },
+  "observations": [
+    {
+      "files": 1,
+      "beforeRecalculations": 1,
+      "afterRecalculations": 1
+    },
+    {
+      "files": 64,
+      "beforeRecalculations": 64,
+      "afterRecalculations": 1
+    },
+    {
+      "files": 65,
+      "beforeRecalculations": 65,
+      "afterRecalculations": 2
+    },
+    {
+      "files": 129,
+      "beforeRecalculations": 129,
+      "afterRecalculations": 3
+    }
+  ],
+  "redEvidence": {
+    "verifier": "verify-project-lifecycle.mjs",
+    "regressions": [
+      "file-intake:bounded-registration:64",
+      "file-intake:bounded-registration:65",
+      "file-intake:bounded-registration:129"
+    ],
+    "baselineExitCode": 1
+  },
+  "limits": [
+    "Metadata mutation remains synchronous; the internal 64-member calculation boundary is not a task-duration or file-count support limit.",
+    "No physical-iPhone, p95, headroom, or browser memory claim.",
+    "Exact-revision CI/deployed browser evidence is recorded on the repair PR."
+  ]
+}
