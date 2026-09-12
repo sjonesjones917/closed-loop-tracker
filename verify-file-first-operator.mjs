@@ -9,6 +9,21 @@ const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
+// Changing selection while raw bytes are being staged must never make the
+// handler read/capture them through the newly selected project or stage.
+for(const change of ['project','stage','revision']){
+  let release,entered;const held=new Promise(resolve=>release=resolve),started=new Promise(resolve=>entered=resolve),reads=[],captures=[],failures=[];
+  const source={job:{JOB_ID:'RESPONSE-OWNER'},revision:4,activeStage:1},other={job:{JOB_ID:'RESPONSE-OTHER'},revision:4,activeStage:2};
+  const runtime=vm.createContext({current:source,responseActionFailure:null,Blob,TextDecoder,reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),responseAttemptPrompt:()=>({transportBindingRequired:true,instructionId:'PROMPT-OWNER',bodySha256:'hash',contractSha256:'contract',contextSignature:'scope'}),projectStore:{stageResponseFile:async options=>{entered();await held;return {stagingId:'OWNER-STAGED',jobId:options.jobId};},readStagedResponseFile:async options=>{reads.push(options);return {bytes:new Uint8Array([123,125]),sha256:'digest'};}},closedLoopHash:{sha256Text:()=> 'digest'},responsePromptRecord:()=>({scope:{}}),pendingProposal:()=>null,ingestion:{captureRaw:()=>{captures.push(true);throw new Error('CAPTURE_REACHED');}}});
+  vm.runInContext(app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('))+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
+  const pending=runtime.selectResponse(new Blob(['{}'],{type:'application/json'}));await started;
+  if(change==='project')runtime.current=other;else if(change==='stage')source.activeStage=2;else source.revision++;
+  release();await pending;
+  assert(captures.length===0,`Response intake captured raw bytes after a ${change} change.`);
+  assert(reads.every(row=>row.jobId==='RESPONSE-OWNER'),'Response intake read staged bytes under another project.');
+  assert(failures.length===1,'Interrupted response intake must report the preserved staged file.');
+}
+
 function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engineSource=engine,promptSource=prompt}={}){
   assert.match(appSource,/id="response-json-file"[^>]*type="file"[^>]*accept="[^"]*(?:application\/json|\.json)/,'The normal external-response path must expose the authoritative JSON file selector.');
   assert.match(appSource,/const operationSelection=\{\},runSelection=\{\},responseFileSelection=\{\};/,'The file-first UI must retain declared response-file selection state before wiring change and process handlers.');

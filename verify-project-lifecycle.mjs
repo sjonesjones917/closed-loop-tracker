@@ -171,10 +171,10 @@ assert(evidenceLookups<=20&&regressionLookups<=20,`Deferred stage views eagerly 
 const storageRows=new Map(),storageAccess=[];
 const storageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true});
 const parseStorageJson=vm.runInContext('(text)=>JSON.parse(text)',storageRuntime);
-const storageRead=value=>{if(value===undefined)return undefined;const {blob,...fields}=value,copy=parseStorageJson(JSON.stringify(fields));if(blob)copy.blob=blob;return copy;};
+const storageRead=(value,parseJson=parseStorageJson)=>{if(value===undefined)return undefined;const blobs=[],copy=parseJson(JSON.stringify(value,(_key,item)=>item instanceof Blob?{__storageBlob:blobs.push(item)-1}:item));const restore=item=>{if(item&&typeof item==='object'){if(Object.keys(item).length===1&&Number.isInteger(item.__storageBlob))return blobs[item.__storageBlob];for(const key of Object.keys(item))item[key]=restore(item[key]);}return item;};return restore(copy);};
 storageRuntime.openStorageTransaction=async(names,mode)=>{
   const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map(storageRows.get(name)||[])]));
-  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(storageRead)};},count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
+  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
 };
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),storageRuntime,{filename:file});
 const storageSource=store
@@ -192,6 +192,58 @@ for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectU
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
+// File intake must retain its original project, revision, stage and byte owner
+// through every asynchronous boundary. Only the database I/O is substituted.
+vm.runInContext(app.match(/^const artifactIdFor=.*$/m)[0],storageRuntime);
+for(const name of ['logicalFilePath','storeArtifactFile','registerStageFiles'])vm.runInContext(appFunction(name),storageRuntime);
+for(const boundary of ['first-file','second-file','first-text','second-text'])for(const change of ['project','stage','revision','second-file-failure'])await storageRegression(`file-intake:${boundary}:${change}`,async()=>{
+  let reached,release;const entered=new Promise(resolve=>reached=resolve),held=new Promise(resolve=>release=resolve);
+  storageRuntime.intakeBoundary=async name=>{if(name===boundary){reached();await held;}};
+  storageRuntime.intakeFailure=change==='second-file-failure';
+  await vm.runInContext(`(async()=>{
+    globalThis.intakeA=await makeStored('INTAKE-A-'+${JSON.stringify(boundary+'-'+change)});
+    globalThis.intakeB=await makeStored('INTAKE-B-'+${JSON.stringify(boundary+'-'+change)});
+    projects=[intakeA,intakeB];current=intakeA;failures=[];
+    await projectStore.metaPut('selectedProject',intakeA.job.JOB_ID);
+    globalThis.intakeFiles=['first','second'].map(name=>{const file=new Blob([name+' exact bytes é🙂'],{type:'text/plain'});Object.defineProperty(file,'name',{value:name+'.txt'});file.text=async()=>{await intakeBoundary(name+'-text');if(intakeFailure&&name==='second')throw new Error('CONTROLLED_SECOND_FILE_FAILURE');return Blob.prototype.text.call(file);};return file;});
+    globalThis.originalPutArtifact=projectStore.putArtifact;
+    projectStore={...projectStore,putArtifact:async options=>{await intakeBoundary(options.filename.replace('.txt','')+'-file');return originalPutArtifact(options);}};
+  })()`,storageRuntime);
+  const pending=vm.runInContext('registerStageFiles(intakeFiles)',storageRuntime);await Promise.race([entered,pending.then(()=>{throw new Error('File intake finished before the intended async boundary: '+storageRuntime.failures.join(' | '));})]);
+  await vm.runInContext(change==='revision'?`(async()=>{const newer=clone(intakeA);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});})()`:
+    change==='stage'?`current.activeStage=2;current.activeView='Records';`:
+    `current=intakeB;awaitSelection=projectStore.metaPut('selectedProject',intakeB.job.JOB_ID);`,storageRuntime);
+  if(storageRuntime.awaitSelection)await storageRuntime.awaitSelection;
+  release();await pending;storageRuntime.projectStore.putArtifact=storageRuntime.originalPutArtifact;
+  const a=await storageRuntime.projectStore.readProject(storageRuntime.intakeA.job.JOB_ID),b=await storageRuntime.projectStore.readProject(storageRuntime.intakeB.job.JOB_ID);
+  assert(b.projectData.artifacts.length===0&&b.revision===storageRuntime.intakeB.revision,'File intake changed the other project.');
+  const failed=change==='revision'||change==='second-file-failure';
+  assert(a.projectData.artifacts.length===(failed?0:2),'File intake lost its original owner or partially registered a batch.');
+  const rows=await storageRuntime.projectStore.listArtifacts(a.job.JOB_ID);
+  assert(rows.length===(failed?0:2),'File intake left uncommitted bytes behind or deleted committed bytes.');
+  assert((await storageRuntime.projectStore.listArtifacts(b.job.JOB_ID)).length===0,'File intake stored bytes under the newly selected project.');
+  if(change==='revision')assert(a.newerWork==='PRESERVE','File intake overwrote an intervening revision.');
+  if(change==='project'||change==='second-file-failure'){assert(storageRuntime.current.job.JOB_ID===b.job.JOB_ID,'Completing background file intake replaced the selected project.');assert(await storageRuntime.projectStore.metaGet('selectedProject')===b.job.JOB_ID,'File intake replaced the durable project selection.');}
+  if(change==='stage')assert(storageRuntime.current.activeStage===2&&storageRuntime.current.activeView==='Records','File intake replaced the selected stage/view.');
+  if(!failed)for(const row of rows){const canonical=a.projectData.artifacts.find(item=>item.id===row.artifactId);assert(canonical?.stage===1&&a.stages[1].authorizedFiles.some(item=>item.artifactId===row.artifactId),'File intake lost its original stage.');assert(a.projectData.userEntered.suppliedArtifactText[row.artifactId].text===await row.blob.text(),'File intake changed supplied source text.');}
+});
+await storageRegression('file-intake:post-commit-render-failure-keeps-bytes',async()=>{
+  await vm.runInContext(`(async()=>{current=await makeStored('INTAKE-RENDER');projects=[current];intakeFailure=false;intakeBoundary=async()=>{};render=()=>{throw new Error('CONTROLLED_RENDER_FAILURE');};})()`,storageRuntime);
+  try{await vm.runInContext('registerStageFiles(intakeFiles)',storageRuntime);}catch(error){assert(error.message==='CONTROLLED_RENDER_FAILURE','Unexpected post-commit failure.');}
+  storageRuntime.render=()=>{};
+  const saved=await storageRuntime.projectStore.readProject('INTAKE-RENDER');
+  assert(saved.projectData.artifacts.length===2&&(await storageRuntime.projectStore.listArtifacts('INTAKE-RENDER')).length===2,'A display failure removed committed canonical file bytes.');
+});
+await storageRegression('storage-refresh:navigation-cannot-replace-totals',async()=>{
+  vm.runInContext(appFunction('refreshProjectStorage'),storageRuntime);
+  await vm.runInContext(`(async()=>{globalThis.refreshA=await makeStored('REFRESH-A');globalThis.refreshB=await makeStored('REFRESH-B');current=refreshA;projectStorage={artifactCount:72,byteSize:1200};})()`,storageRuntime);
+  let reached,release;const entered=new Promise(resolve=>reached=resolve),held=new Promise(resolve=>release=resolve),original=storageRuntime.projectStore.listArtifacts;
+  storageRuntime.projectStore.listArtifacts=async id=>{reached();await held;return original(id);};
+  const pending=vm.runInContext('refreshProjectStorage()',storageRuntime);await entered;storageRuntime.current=storageRuntime.refreshB;release();await pending;
+  storageRuntime.projectStore.listArtifacts=original;
+  assert(storageRuntime.projectStorage.artifactCount===72,'A completed refresh replaced another project\'s displayed file totals.');
+  storageRuntime.refreshProjectStorage=async()=>{};
+});
 for(const action of ['addNew','duplicateCurrentProject','archiveCurrentProject'])await storageRegression(`${action}:preserve-newer-project`,async()=>{
   await vm.runInContext(`(async()=>{projects=[await makeStored('STALE-${action}')];current=projects[0];const newer=clone(current);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});})()`,storageRuntime);
   storageAccess.length=0;await vm.runInContext(`${action}()`,storageRuntime);
@@ -218,6 +270,28 @@ await storageRegression('backup:required-canonical-bytes',async()=>{
   let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CLOSURE');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
   assert(rejected,'A verified export was created despite missing canonical artifact bytes.');
   assert(JSON.stringify(await storageRuntime.projectStore.metaGet('lastVerifiedExport:BACKUP-CLOSURE'))===JSON.stringify(previous),'Failed export replaced the last successful backup evidence.');
+});
+
+await storageRegression('response-size:reject-before-full-read-preserve-raw',async()=>{
+  const originalRead=Blob.prototype.arrayBuffer;let largestRead=0,staged,error;
+  try{
+    Blob.prototype.arrayBuffer=function(){largestRead=Math.max(largestRead,this.size);return originalRead.call(this);};
+    staged=await storageRuntime.projectStore.stageResponseFile({jobId:'OVERSIZE-OWNER',stage:1,blob:new Blob(['x'.repeat(1048577)]),rawFilename:'oversized.json'});
+    try{await storageRuntime.projectStore.readStagedResponseFile({jobId:'OVERSIZE-OWNER',stagingId:staged.stagingId});}catch(e){error=e;}
+  }finally{Blob.prototype.arrayBuffer=originalRead;}
+  assert(error?.code==='OVERSIZED_RESPONSE','Oversized response reached full-file materialization.');
+  assert(largestRead<=65536,`Oversized response allocated a ${largestRead}-byte read buffer.`);
+  const kept=await storageRuntime.projectStore.metaGet(staged.storageKey);
+  assert(kept.blob.size===1048577&&kept.sha256===staged.sha256&&kept.rejection?.code==='OVERSIZED_RESPONSE','Oversize rejection lost original bytes, ownership or its failure receipt.');
+});
+await storageRegression('artifact-queries:project-local-without-store-scan',async()=>{
+  storageAccess.length=0;await storageRuntime.projectStore.listArtifacts('BACKUP-CLOSURE');
+  assert(!storageAccess.some(row=>row.name==='artifacts'&&row.kind==='getAll'),'Project file listing scanned unrelated artifact rows.');
+  storageAccess.length=0;await storageRuntime.projectStore.importPackage(storageRuntime.goodBackup);
+  assert(!storageAccess.some(row=>row.name==='artifacts'&&row.kind==='getAll'),'Package collision/cleanup scanned unrelated artifact rows.');
+  await vm.runInContext(`(async()=>{globalThis.deleteQueryProject=await makeStored('DELETE-QUERY');})()`,storageRuntime);
+  storageAccess.length=0;await storageRuntime.projectStore.removeProject('DELETE-QUERY');
+  assert(!storageAccess.some(row=>row.name==='artifacts'&&row.kind==='getAll'),'Deleting one project scanned unrelated artifact rows.');
 });
 const importStart=app.indexOf("$('#import-file').onchange="),importEnd=app.indexOf('\nglobalThis.closedLoopAppReady',importStart);
 await storageRegression('backup:required-prompt-context',async()=>{
@@ -252,6 +326,44 @@ await storageRegression('startup:retained-refresh-keeps-snapshot-revision',async
   await vm.runInContext('load()',storageRuntime);
   const after=await storageRuntime.projectStore.readProject('RETAINED-CONCURRENT');
   assert(after.newerWork==='PRESERVE DURING FETCH','Startup read a fresh revision and used it to overwrite intervening retained-project work.');
+});
+
+// Execute both contexts of the same production owner and simulate a lost worker
+// acknowledgement after its real transaction logic commits to the test database.
+let dropWorkerReply=false,workerExecutions=0;
+class StoreWorkerFixture{
+  constructor(url){
+    this.stopped=false;let listener;
+    const worker=vm.createContext({Blob,Uint8Array,ArrayBuffer,DataView,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,URL,URLSearchParams,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true,location:new URL(url),openStorageTransaction:storageRuntime.openStorageTransaction,addEventListener:(type,callback)=>{if(type==='message')listener=callback;},postMessage:message=>{if(this.stopped)return;if(dropWorkerReply){dropWorkerReply=false;this.onerror?.({message:'CONTROLLED_LOST_COMMITTED_REPLY'});}else this.onmessage?.({data:storageRead(message)});}});
+    const parseWorkerJson=vm.runInContext('text=>JSON.parse(text)',worker);
+    worker.workerRead=value=>storageRead(value,parseWorkerJson);
+    worker.importScripts=(...urls)=>{for(const url of urls){const file=String(url).split('?')[0];vm.runInContext(fs.readFileSync(file,'utf8'),worker,{filename:file});}};
+    vm.runInContext(storageSource.replace('Promise.resolve(req.result)','Promise.resolve(workerRead(req.result))'),worker);
+    this.deliver=message=>listener({data:storageRead(message,parseWorkerJson)});
+  }
+  postMessage(message){workerExecutions++;this.deliver(message);}
+  terminate(){this.stopped=true;}
+}
+storageRuntime.document={currentScript:{src:'https://example.test/project-store.js?v=WORKER-REGRESSION'}};storageRuntime.URL=URL;storageRuntime.URLSearchParams=URLSearchParams;storageRuntime.Worker=StoreWorkerFixture;
+vm.runInContext(storageSource,storageRuntime);storageRuntime.projectStore=storageRuntime.closedLoopProjectStore;
+await storageRegression('storage-worker:same-authorities-and-cas',async()=>{
+  const before=workerExecutions;const p=await vm.runInContext(`makeStored('WORKER-CAS')`,storageRuntime);
+  assert(workerExecutions===before+1,'Canonical save did not dispatch to the same store in its worker context.');
+  const saved=await storageRuntime.projectStore.readProject(p.job.JOB_ID);assert(saved.projectSha256===p.projectSha256&&saved.revision===p.revision,'Worker changed canonical digest or revision.');
+  let error;try{await storageRuntime.projectStore.writeProject(p,{expectedProjectRevision:p.revision-1});}catch(e){error=e;}
+  assert(error?.code==='STALE_PROJECT_REVISION'&&error.existingProjectsUnchanged===true,'Worker lost the revision-conflict rejection.');
+});
+await storageRegression('storage-worker:commit-survives-lost-reply',async()=>{
+  dropWorkerReply=true;const p=await vm.runInContext(`makeStored('WORKER-LOST-REPLY')`,storageRuntime);
+  const saved=await storageRuntime.projectStore.readProject(p.job.JOB_ID);
+  assert(saved.revision===p.revision&&saved.projectSha256===p.projectSha256,'Lost worker reply was treated as rollback or repeated the committed mutation.');
+});
+await storageRegression('storage-worker:atomic-abort-and-import-recovery',async()=>{
+  storageRuntime.__closedLoopStorageFault='before-transaction-commit';let error;
+  try{await vm.runInContext(`makeStored('WORKER-ABORT')`,storageRuntime);}catch(e){error=e;}finally{delete storageRuntime.__closedLoopStorageFault;}
+  assert(error?.code==='INJECTED_STORAGE_FAILURE'&&!(await storageRuntime.projectStore.readProject('WORKER-ABORT')),'Worker acknowledged a partially committed save.');
+  dropWorkerReply=true;const restored=await storageRuntime.projectStore.importPackage(storageRuntime.goodBackup);
+  assert(restored.job.JOB_ID==='BACKUP-CLOSURE'&&(await storageRuntime.projectStore.getArtifact('BACKUP-FILE')),'Worker lost a committed import and its bytes after response failure.');
 });
 assert(lifecycleFailures.length===0,JSON.stringify(lifecycleFailures,null,2));
 console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,completeExportIdentityAfterNavigation:true,serializedCompletePackages:true,completeExportFailureRecovery:true,unsafeOverrides:0}));

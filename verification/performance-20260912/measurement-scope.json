@@ -1,0 +1,7 @@
+{
+  "startingCommit": "6f7ccb71413e639887047c5eddad5a60cdb3ee37",
+  "scope": "Three-run diagnostic Node medians before/after bounded hash batching. Save CPU sequence excludes storage I/O, worker transport and rendering. Not final browser or physical-iPhone timings.",
+  "fixture": "Supplied benchmark-core.mjs; 0/25/100/600 preserved 80000-character responses plus Unicode tails.",
+  "baselineReport": "User-supplied diagnosis at unchanged 6f7ccb7; older 4518783 failures were already repaired by PR 1220.",
+  "benchmarkScriptSha256": "655e8af5f84d076d05606f3221788489e2ba6baeede2b8f111e3f29ff8151b8e"
+}

@@ -1214,7 +1214,7 @@
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -1704,7 +1704,329 @@
       "browserProof": [
         "verify-browser-extra.mjs:storageReliabilityBrowser/importSurvivedReload"
       ]
+    },
+    {
+      "id": "ASYNC-FILE-OWNERSHIP",
+      "requirement": "File intake retains its captured project, stage and revision across storage/text reads; navigation cannot move bytes or metadata between projects. Cleanup cannot delete committed bytes.",
+      "normativeRequirementIds": [
+        "NREQ-2782d9ffebe3a79637b31fc8b6b4ecdb",
+        "NREQ-f2b99356377ab41376516cc4472310fd",
+        "NREQ-0c554afaaaaebb938aad54162261ba7e",
+        "NREQ-b87c1bb411497c28fb9cd62688e62d6e",
+        "NREQ-7fd6468be7c2025464c306ec2169edd7",
+        "NREQ-d3bab570435a34a6b4d2731937043724",
+        "NREQ-eceadfbd3efe6d19867238a79dd05cf2",
+        "NREQ-bd516085422525d408a24dbfff7758c3",
+        "NREQ-f37769b9aa8211853353d5ecfc62c5d7",
+        "NREQ-5003532a6cda7a68c13be508fbf4d723",
+        "NREQ-5a45a634a91dfc5bbbfc6d2880d7aab2",
+        "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
+        "NREQ-d3216139914fb4c3ec1d54819ee18890",
+        "NREQ-949f1919a3c7d66486dd74bbd084b71a",
+        "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+        "NREQ-87e7a29563e2235e49d5eea31da7db0c",
+        "NREQ-09e4b9e81da30fa1aa662044d79fb608",
+        "NREQ-4bd5b261df7ce905df018a6d95770689"
+      ],
+      "sourceLines": [
+        2919,
+        2922,
+        2923,
+        2924,
+        2925,
+        2926,
+        2927,
+        2928,
+        2929,
+        2931,
+        2932,
+        2944,
+        2945,
+        2946,
+        2947,
+        2948,
+        2950,
+        3035
+      ],
+      "productionOwner": [
+        "app-core.js:registerStageFiles/storeArtifactFile/persistReplacement/prepareStageResponseFile/refreshProjectStorage"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:file-intake:*",
+        "verify-file-first-operator.mjs:response ownership"
+      ],
+      "negativeAdversarialTests": [
+        "project/stage/revision changes at four asynchronous boundaries",
+        "second-file read failure",
+        "post-commit render failure",
+        "late storage refresh"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:file-intake-navigation-and-rollback"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Await exact-revision CI/deployed proof. Timing is not physical-iPhone acceptance; section links supply context, not proof of every clause in those sections.",
+      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
+    },
+    {
+      "id": "CANONICAL-STORAGE-WORKER",
+      "requirement": "Normal project writes and complete import execute the existing canonical store transaction in a dedicated worker with the same authoritative modules; acknowledgement loss cannot be treated as rollback.",
+      "normativeRequirementIds": [
+        "NREQ-2782d9ffebe3a79637b31fc8b6b4ecdb",
+        "NREQ-f2b99356377ab41376516cc4472310fd",
+        "NREQ-0c554afaaaaebb938aad54162261ba7e",
+        "NREQ-b87c1bb411497c28fb9cd62688e62d6e",
+        "NREQ-7fd6468be7c2025464c306ec2169edd7",
+        "NREQ-d3bab570435a34a6b4d2731937043724",
+        "NREQ-eceadfbd3efe6d19867238a79dd05cf2",
+        "NREQ-bd516085422525d408a24dbfff7758c3",
+        "NREQ-f37769b9aa8211853353d5ecfc62c5d7",
+        "NREQ-5003532a6cda7a68c13be508fbf4d723",
+        "NREQ-5a45a634a91dfc5bbbfc6d2880d7aab2",
+        "NREQ-3140c1e4ff7ae54bca60fbc69f817271",
+        "NREQ-ac1547d5c66a755d9eee61d9f99a4e76",
+        "NREQ-4eaa9b928e57703f76066a160c6e7161",
+        "NREQ-c926b55ede1b00e6bf9d8b754f232b77",
+        "NREQ-0098ec74cabc7fd7fa10ef32139e912c",
+        "NREQ-3609be6ec4dd158303ff1cd49449d896",
+        "NREQ-5d1a9d3acc2c91c228528273276da7a3",
+        "NREQ-d39082bda80e0c07d36c2fcec4182ab8",
+        "NREQ-0829692ff5cd51950b1df7d7853390b1",
+        "NREQ-4b3c639c54d28770997117cab0f51c9f",
+        "NREQ-b1e19a0a683031e7ec45685110cbf0f9",
+        "NREQ-704ba4ecf868fba0d5cb3b26af18e534",
+        "NREQ-84c2302d90282984272ef96fffe71232",
+        "NREQ-d8364b451e9bacebe247eb7156b4cca1",
+        "NREQ-9d24cb0d2daab9f1168e84c503e311d3",
+        "NREQ-565a4e32ba059a7f2bb12136d5300025",
+        "NREQ-e930db71215117ddfb5e78fefcfac07c"
+      ],
+      "sourceLines": [
+        2919,
+        2922,
+        2923,
+        2924,
+        2925,
+        2926,
+        2927,
+        2928,
+        2929,
+        2931,
+        2932,
+        2961,
+        2962,
+        2963,
+        2964,
+        2965,
+        2966,
+        2967,
+        2968,
+        2969,
+        2970,
+        2971,
+        2972,
+        2973,
+        2974,
+        2975,
+        2976,
+        2977
+      ],
+      "productionOwner": [
+        "project-store.js:requestStoreWorker/writeProjectRow/importPackage/recoverWorkerOperation"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:storage-worker:*"
+      ],
+      "negativeAdversarialTests": [
+        "stale revision",
+        "injected transaction abort",
+        "lost post-commit save/import reply"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:worker-save-heartbeat-and-commit-recovery"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Await exact-revision CI/deployed proof. Timing is not physical-iPhone acceptance; section links supply context, not proof of every clause in those sections.",
+      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
+    },
+    {
+      "id": "RESPONSE-SIZE-PRESERVATION",
+      "requirement": "Enforce the existing maxRawResponseBytes before allocating a full staged response buffer; retain exact staged bytes and a rejection receipt.",
+      "normativeRequirementIds": [
+        "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
+        "NREQ-d3216139914fb4c3ec1d54819ee18890",
+        "NREQ-949f1919a3c7d66486dd74bbd084b71a",
+        "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+        "NREQ-87e7a29563e2235e49d5eea31da7db0c",
+        "NREQ-09e4b9e81da30fa1aa662044d79fb608",
+        "NREQ-4bd5b261df7ce905df018a6d95770689"
+      ],
+      "sourceLines": [
+        2944,
+        2945,
+        2946,
+        2947,
+        2948,
+        2950,
+        3035
+      ],
+      "productionOwner": [
+        "project-store.js:readStagedResponseFile"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:response-size:*",
+        "verify-ingestion.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "1048577-byte file",
+        "read buffer never larger than 65536 bytes",
+        "raw digest and failure receipt retained"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:raw-first response paths"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Await exact-revision CI/deployed proof. Timing is not physical-iPhone acceptance; section links supply context, not proof of every clause in those sections.",
+      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
+    },
+    {
+      "id": "PROJECT-LOCAL-ARTIFACT-QUERIES",
+      "requirement": "Project-local artifact listing, deletion and import cleanup retain exact byte custody and reject cross-project ID collisions without scanning unrelated rows.",
+      "normativeRequirementIds": [
+        "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
+        "NREQ-d3216139914fb4c3ec1d54819ee18890",
+        "NREQ-949f1919a3c7d66486dd74bbd084b71a",
+        "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+        "NREQ-87e7a29563e2235e49d5eea31da7db0c",
+        "NREQ-09e4b9e81da30fa1aa662044d79fb608",
+        "NREQ-3140c1e4ff7ae54bca60fbc69f817271",
+        "NREQ-ac1547d5c66a755d9eee61d9f99a4e76",
+        "NREQ-4eaa9b928e57703f76066a160c6e7161",
+        "NREQ-c926b55ede1b00e6bf9d8b754f232b77",
+        "NREQ-0098ec74cabc7fd7fa10ef32139e912c",
+        "NREQ-3609be6ec4dd158303ff1cd49449d896",
+        "NREQ-5d1a9d3acc2c91c228528273276da7a3",
+        "NREQ-d39082bda80e0c07d36c2fcec4182ab8",
+        "NREQ-0829692ff5cd51950b1df7d7853390b1",
+        "NREQ-4b3c639c54d28770997117cab0f51c9f",
+        "NREQ-b1e19a0a683031e7ec45685110cbf0f9",
+        "NREQ-704ba4ecf868fba0d5cb3b26af18e534",
+        "NREQ-84c2302d90282984272ef96fffe71232",
+        "NREQ-d8364b451e9bacebe247eb7156b4cca1",
+        "NREQ-9d24cb0d2daab9f1168e84c503e311d3",
+        "NREQ-565a4e32ba059a7f2bb12136d5300025",
+        "NREQ-e930db71215117ddfb5e78fefcfac07c"
+      ],
+      "sourceLines": [
+        2944,
+        2945,
+        2946,
+        2947,
+        2948,
+        2950,
+        2961,
+        2962,
+        2963,
+        2964,
+        2965,
+        2966,
+        2967,
+        2968,
+        2969,
+        2970,
+        2971,
+        2972,
+        2973,
+        2974,
+        2975,
+        2976,
+        2977
+      ],
+      "productionOwner": [
+        "project-store.js:openDatabase/listArtifacts/removeProjectIndexed/importPackage"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:artifact-queries:*"
+      ],
+      "negativeAdversarialTests": [
+        "cross-project collision tests in existing lifecycle/complete suite",
+        "atomic import/delete fault boundaries"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:blob persistence and package custody"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Await exact-revision CI/deployed proof. Timing is not physical-iPhone acceptance; section links supply context, not proof of every clause in those sections.",
+      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
+    },
+    {
+      "id": "CANONICAL-HASH-BATCHING",
+      "requirement": "Reduce transient hashing allocations while preserving the exact controlling canonical serialization, scalar key order, numeric restrictions and digest.",
+      "normativeRequirementIds": [
+        "NREQ-2782d9ffebe3a79637b31fc8b6b4ecdb",
+        "NREQ-f2b99356377ab41376516cc4472310fd",
+        "NREQ-0c554afaaaaebb938aad54162261ba7e",
+        "NREQ-b87c1bb411497c28fb9cd62688e62d6e",
+        "NREQ-7fd6468be7c2025464c306ec2169edd7",
+        "NREQ-d3bab570435a34a6b4d2731937043724",
+        "NREQ-eceadfbd3efe6d19867238a79dd05cf2",
+        "NREQ-bd516085422525d408a24dbfff7758c3",
+        "NREQ-f37769b9aa8211853353d5ecfc62c5d7",
+        "NREQ-5003532a6cda7a68c13be508fbf4d723",
+        "NREQ-5a45a634a91dfc5bbbfc6d2880d7aab2",
+        "NREQ-a5be515530a4736a534a4ca3cd843377",
+        "NREQ-7e417b328764aaf6033114c36450ef9c"
+      ],
+      "sourceLines": [
+        2919,
+        2922,
+        2923,
+        2924,
+        2925,
+        2926,
+        2927,
+        2928,
+        2929,
+        2931,
+        2932,
+        2938,
+        2939
+      ],
+      "productionOwner": [
+        "hash.js:compareUnicodeScalarSequence/createSha256/sha256Value"
+      ],
+      "existingTests": [
+        "verify-hash.mjs",
+        "verify-deployment-manifest.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "independent Node crypto comparison",
+        "unsupported values/surrogates/keys rejected",
+        "bounded encoding and encoder allocation count"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:worker digest equality"
+      ],
+      "deployedProof": [
+        "verify-live.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "evidenceGap": "Await exact-revision CI/deployed proof. Timing is not physical-iPhone acceptance; section links supply context, not proof of every clause in those sections.",
+      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
     }
   ],
-  "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca"
+  "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",
+  "performanceRepairStartingCommit": "6f7ccb71413e639887047c5eddad5a60cdb3ee37"
 }
