@@ -165,4 +165,93 @@ vm.runInContext(app.slice(app.indexOf('function evidenceExplanationMarkup('),app
 vm.runInContext(app.slice(app.indexOf('function regressionLifecycleMarkup('),app.indexOf('function contradictionMarkup(')),viewRuntime);
 vm.runInContext('evidenceExplanationMarkup(29);regressionLifecycleMarkup(15)',viewRuntime);
 assert(evidenceLookups<=20&&regressionLookups<=20,`Deferred stage views eagerly computed ${evidenceLookups} evidence explanations and ${regressionLookups} regression histories.`);
+
+// Keep the production storage/handlers intact and substitute only transaction
+// I/O. Real IndexedDB versions of these regressions run in browser-extra.
+const storageRows=new Map(),storageAccess=[];
+const storageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true});
+const parseStorageJson=vm.runInContext('(text)=>JSON.parse(text)',storageRuntime);
+const storageRead=value=>{if(value===undefined)return undefined;const {blob,...fields}=value,copy=parseStorageJson(JSON.stringify(fields));if(blob)copy.blob=blob;return copy;};
+storageRuntime.openStorageTransaction=async(names,mode)=>{
+  const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map(storageRows.get(name)||[])]));
+  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(storageRead)};},count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
+};
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),storageRuntime,{filename:file});
+const storageSource=store
+  .replace(/const request=req=>[^\n]+/, 'const request=req=>Promise.resolve(req.result);')
+  .replace(/const complete=tx=>[^\n]+/, 'const complete=async tx=>tx.commit();')
+  .replace(/async function openTransaction\([\s\S]*?\n}\n/, 'async function openTransaction(stores,mode="readonly"){return openStorageTransaction(stores,mode);}\n');
+vm.runInContext(storageSource,storageRuntime);
+vm.runInContext(`globalThis.core=closedLoopCore;globalThis.engine=closedLoopWorkflowEngine;globalThis.schema=closedLoopWorkflowSchema;globalThis.projectStore=closedLoopProjectStore;globalThis.clone=value=>JSON.parse(JSON.stringify(value));globalThis.safe=value=>Array.isArray(value)?value:[];globalThis.views=['Overview','Project','Workflow'];globalThis.projects=[];globalThis.current=null;globalThis.projectUi={};globalThis.jobFields=[['JOB_TITLE'],['EXACT_USER_OBJECTIVE_VERBATIM']];globalThis.announce=()=>{};globalThis.render=()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.failures=[];globalThis.reportActionFailure=message=>failures.push(String(message));globalThis.elements={};globalThis.$=selector=>elements[selector]??=( {click(){}} );`,storageRuntime);
+const appFunction=name=>{
+  const match=new RegExp(`(?:async )?function ${name}\\(`).exec(app);if(!match)return '';
+  const start=match.index,rest=app.slice(start),next=/\n(?:async )?function \w+\(/.exec(rest);
+  return next?rest.slice(0,next.index):rest.slice(0,rest.indexOf('\n'));
+};
+for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectUi','persistAll','persistNewProject','persistReplacement','save','createUniqueJobId','addNew','duplicateCurrentProject','archiveCurrentProject']){const source=appFunction(name);if(source)vm.runInContext(source,storageRuntime);}
+vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
+const lifecycleFailures=[];
+async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
+for(const action of ['addNew','duplicateCurrentProject','archiveCurrentProject'])await storageRegression(`${action}:preserve-newer-project`,async()=>{
+  await vm.runInContext(`(async()=>{projects=[await makeStored('STALE-${action}')];current=projects[0];const newer=clone(current);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});})()`,storageRuntime);
+  storageAccess.length=0;await vm.runInContext(`${action}()`,storageRuntime);
+  const unrelated=storageAccess.filter(x=>x.name==='projects'&&x.key===`STALE-${action}`);
+  const after=await storageRuntime.projectStore.readProject(`STALE-${action}`);
+  assert(after.newerWork==='PRESERVE',`${action} overwrote newer saved work from its stale project list.`);
+  assert(unrelated.length===0,`${action} read or rewrote an unrelated project ${unrelated.length} times.`);
+});
+await storageRegression('bulk-write:stale-revision-atomic',async()=>{
+  await vm.runInContext(`(async()=>{globalThis.bulkStale=await makeStored('BULK-STALE');const newer=clone(bulkStale);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});globalThis.bulkNew=ensureState(core.createBlankState('BULK-MUST-ROLL-BACK'));})()`,storageRuntime);
+  let rejected=false;try{await vm.runInContext('projectStore.writeAll([bulkNew,bulkStale])',storageRuntime);}catch(error){rejected=error.code==='STALE_PROJECT_REVISION';}
+  assert(rejected,'Bulk persistence replaced the caller revision with the current database revision.');
+  assert(!await storageRuntime.projectStore.readProject('BULK-MUST-ROLL-BACK'),'A rejected bulk write partially committed a preceding project.');
+  assert((await storageRuntime.projectStore.readProject('BULK-STALE')).newerWork==='PRESERVE','Bulk conflict overwrote newer work.');
+});
+await storageRegression('create-only:existing-zero-revision',async()=>{
+  await vm.runInContext(`(async()=>{const p=ensureState(core.createBlankState('CREATE-COLLISION'));p.newerWork='PRESERVE';await projectStore.writeProject(p,{expectedProjectRevision:0,incrementRevision:false});})()`,storageRuntime);
+  let rejected=false;try{await vm.runInContext(`projectStore.writeProject(ensureState(core.createBlankState('CREATE-COLLISION')),{expectedProjectRevision:0,createOnly:true})`,storageRuntime);}catch(error){rejected=error.code==='PROJECT_ALREADY_EXISTS';}
+  assert(rejected&&(await storageRuntime.projectStore.readProject('CREATE-COLLISION')).newerWork==='PRESERVE','Creating a project reused an existing revision-zero identity.');
+});
+await storageRegression('backup:required-canonical-bytes',async()=>{
+  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CLOSURE');const row=await projectStore.putArtifact({artifactId:'BACKUP-FILE',jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});globalThis.backupProject=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});globalThis.goodBackup=await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(row.artifactId,p.job.JOB_ID);})()`,storageRuntime);
+  const previous=await storageRuntime.projectStore.metaGet('lastVerifiedExport:BACKUP-CLOSURE');
+  let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CLOSURE');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
+  assert(rejected,'A verified export was created despite missing canonical artifact bytes.');
+  assert(JSON.stringify(await storageRuntime.projectStore.metaGet('lastVerifiedExport:BACKUP-CLOSURE'))===JSON.stringify(previous),'Failed export replaced the last successful backup evidence.');
+});
+const importStart=app.indexOf("$('#import-file').onchange="),importEnd=app.indexOf('\nglobalThis.closedLoopAppReady',importStart);
+await storageRegression('backup:required-prompt-context',async()=>{
+  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CONTEXT');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Required context content. '.repeat(4000);const prompt=closedLoopPromptEngine.buildPromptRecord(1,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(prompt);p=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});const rows=await projectStore.listArtifacts(p.job.JOB_ID),context=rows.find(row=>row.lineage?.kind==='PROMPT_CONTEXT');if(!context)throw new Error('The real instruction did not materialize its context fixture.');await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(context.artifactId,p.job.JOB_ID);})()`,storageRuntime);
+  let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CONTEXT');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
+  assert(rejected,'Complete export omitted the exact context file required by a saved instruction.');
+  const report=await storageRuntime.projectStore.verifyProjectArtifacts('BACKUP-CONTEXT');
+  assert(!report.verified&&report.artifacts.some(row=>row.issue==='MISSING_STORED_BLOB'),'Stored-file verification ignored missing saved instruction context bytes.');
+});
+assert(importStart>=0&&importEnd>importStart,'Production import handler is missing.');
+vm.runInContext(app.slice(importStart,importEnd),storageRuntime);
+await storageRegression('import:post-commit-refresh-failure',async()=>{
+  await vm.runInContext(`globalThis.projects=[backupProject];globalThis.current=backupProject;globalThis.failures=[];globalThis.refreshProjectStorage=async()=>{throw new Error('CONTROLLED_REFRESH_FAILURE');};`,storageRuntime);
+  storageAccess.length=0;await storageRuntime.elements['#import-file'].onchange({target:{files:[storageRuntime.goodBackup],value:'selected'}});
+  assert(!storageAccess.some(x=>x.name==='projects'&&x.kind==='getAll'),'Import reloaded every unrelated project after committing.');
+  const committed=await storageRuntime.projectStore.readProject('BACKUP-CLOSURE');
+  assert(committed.revision>storageRuntime.backupProject.revision,'The import did not reach its real commit boundary.');
+  assert(storageRuntime.current.revision===committed.revision&&storageRuntime.projects[0].revision===committed.revision,'Refresh failure restored stale in-memory state after a successful import.');
+  assert(storageRuntime.failures.some(x=>/imported|saved/i.test(x)&&/refresh/i.test(x))&&!storageRuntime.failures.some(x=>/unchanged|without changing|rejected/i.test(x)),`Post-commit failure falsely reported a rollback: ${storageRuntime.failures.join(' | ')}`);
+});
+await storageRegression('import:pre-commit-failure-preserves-state',async()=>{
+  const before=storageRuntime.current,ids=storageRuntime.projects;
+  storageRuntime.failures.length=0;
+  await storageRuntime.elements['#import-file'].onchange({target:{files:[new Blob(['invalid package'])],value:'selected'}});
+  assert(storageRuntime.current===before&&storageRuntime.projects===ids,'Rejected import replaced existing in-memory projects.');
+  assert(storageRuntime.failures.some(x=>/without changing existing projects/i.test(x)),'Pre-commit import failure lost its accurate rejection message.');
+});
+await storageRegression('startup:retained-refresh-keeps-snapshot-revision',async()=>{
+  vm.runInContext(appFunction('importSeed'),storageRuntime);
+  vm.runInContext(app.split('\n').find(line=>line.startsWith('async function load(){')),storageRuntime);
+  await vm.runInContext(`(async()=>{const p=ensureState(core.createBlankState('RETAINED-CONCURRENT'));p.isRetainedTestProject=true;p.retainedSpecRevision='old';await projectStore.writeProject(p,{expectedProjectRevision:0});globalThis.nextRetained=clone(p);nextRetained.retainedSpecRevision='new';globalThis.loadAcceptanceSession=async()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.fetch=async()=>{const newer=await projectStore.readProject(p.job.JOB_ID);newer.newerWork='PRESERVE DURING FETCH';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});return {ok:true,json:async()=>nextRetained};};})()`,storageRuntime);
+  await vm.runInContext('load()',storageRuntime);
+  const after=await storageRuntime.projectStore.readProject('RETAINED-CONCURRENT');
+  assert(after.newerWork==='PRESERVE DURING FETCH','Startup read a fresh revision and used it to overwrite intervening retained-project work.');
+});
+assert(lifecycleFailures.length===0,JSON.stringify(lifecycleFailures,null,2));
 console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,completeExportIdentityAfterNavigation:true,serializedCompletePackages:true,completeExportFailureRecovery:true,unsafeOverrides:0}));
