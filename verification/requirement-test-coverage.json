@@ -2244,19 +2244,22 @@
         "verify-project-lifecycle.mjs:file-intake:bounded-registration:1/64/65/129",
         "verify-full-cycle.mjs:verifyArtifactRegistrationBatch (initial intake, frozen candidate, current product, authorized terminal)",
         "verify-stage01-intake-closure.mjs",
-        "verify-all-stage-prompts.mjs"
+        "verify-all-stage-prompts.mjs",
+        ".github/workflows/pages.yml:parse the executed full-cycle stdout as one JSON document before deployment"
       ],
       "negativeAdversarialTests": [
         "verify-project-lifecycle.mjs:file-intake:batch-member-rejection:identity/product",
         "verify-project-lifecycle.mjs:file-intake asynchronous project/stage/revision/failure boundaries and post-commit rendering",
-        "verify-full-cycle.mjs:duplicate/empty registration and terminal authority equivalence"
+        "verify-full-cycle.mjs:duplicate/empty registration and terminal authority equivalence",
+        "DP-69: acceptance publisher rejects multiple stdout JSON records; regression diagnostics must remain in the single report"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:file-intake-navigation-and-rollback (65-file project navigation and last-file failure in real IndexedDB)"
       ],
       "deployedProof": [
         "verify-live.mjs:exact deployed resource bytes",
-        "verify-browser-extra.mjs:file-intake-navigation-and-rollback"
+        "verify-browser-extra.mjs:file-intake-navigation-and-rollback",
+        ".github/workflows/pages.yml:Publish machine acceptance status consumes the same full-cycle JSON contract"
       ],
       "evidenceGap": "Calculation counts are deterministic production-path observations with storage I/O substituted. Exact-revision CI and real IndexedDB Chromium remain required. Physical-iPhone latency/headroom and approved visual authority are separate.",
       "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
