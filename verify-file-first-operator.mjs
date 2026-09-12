@@ -219,5 +219,13 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
   assert.equal(stored.projectData.generatedPrompts.length,count,'Repeated manifest export created another attempt.');
   assert.equal(downloads.at(-1).promptIdentity.instructionId,downloads.at(-2).promptIdentity.instructionId);
+  stored.stages[5].status='COMPLETE';stored.stages[5].gate={complete:true};runtime.current.stages[5].status='COMPLETE';runtime.current.stages[5].gate={complete:true};
+  const priorProofPrompt=downloads.at(-1).promptIdentity.instructionId;
+  delete stored.projectData.generatedPrompts.at(-1).contextManifest.proofExpressionContractVersion;
+  delete runtime.current.projectData.generatedPrompts.at(-1).contextManifest.proofExpressionContractVersion;
+  await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
+  assert.equal(failures.length,0,'Historical proof-contract instruction upgrade failed.');
+  assert.notEqual(downloads.at(-1).promptIdentity.instructionId,priorProofPrompt,'An old Stage 06 instruction still omits the closed proof contract.');
+  assert.equal(stored.projectData.generatedPrompts.at(-1).contextManifest.proofExpressionContractVersion,'closed-loop-proof-expression/1');
   console.log(JSON.stringify({returnedFileRevisionRecovery:true,retainedBytesPreserved:true,newerWorkPreserved:true,correctionManifestExported:true}));
 }

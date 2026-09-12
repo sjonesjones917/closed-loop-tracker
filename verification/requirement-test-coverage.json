@@ -183,7 +183,8 @@
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
         "project-store.js:validateProjectIntegrity",
-        "workflow-engine.js:gate/recalculate/operationalNextAction; app-core.js:selectedOperation"
+        "workflow-engine.js:gate/recalculate/operationalNextAction; app-core.js:selectedOperation",
+        "response-ingestion.js:application reviewer-context classification shared with Stage 06"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -192,7 +193,8 @@
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
         "verify-file-first-operator.mjs:Stage 05 actual save/export failure and all-30-stage inline handoff failures",
         "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
-        "verify-full-cycle.mjs:independent review required in both gate and saved status; automatic next review operation"
+        "verify-full-cycle.mjs:independent review required in both gate and saved status; automatic next review operation",
+        "verify-full-cycle.mjs:automatic Stage 05 reviewer acceptance without manual context registration"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -203,7 +205,8 @@
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
-        "verify-browser-extra.mjs:Stage 05 inline failure, existing context control, recovered instruction/manifest export and non-response control errors"
+        "verify-browser-extra.mjs:Stage 05 inline failure, existing context control, recovered instruction/manifest export and non-response control errors",
+        "verify-browser-extra.mjs:stage05AutomaticReviewAccepted"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -224,7 +227,12 @@
       ],
       "sourceLines": [
         3280,
-        3293
+        3293,
+        2566,
+        2568,
+        2570,
+        2572,
+        2574
       ],
       "productionOwner": [
         "workbook.js:STAGES",
@@ -232,7 +240,8 @@
         "workflow-engine.js:gate/deriveStageData",
         "project-store.js:validateProjectIntegrity",
         "app-core.js:persistReplacement/currentPromptRecord/savePromptRecord/validateReturnedResponse; prompt-engine.js:Stage06 verification schedule",
-        "response-ingestion.js:validateEnvelope; workflow-engine.js:stageCompletionFeedback/stageTestExecutionPlan/mandatoryRequirements"
+        "response-ingestion.js:validateEnvelope; workflow-engine.js:stageCompletionFeedback/stageTestExecutionPlan/mandatoryRequirements",
+        "workflow-engine.js:validateProofExpression/acceptedProofReviews/deriveCurrentObligations; response-ingestion.js:closed proof intake and current review binding; prompt-engine.js:buildSemanticReviewBinding/PROOF_EXPRESSION_CONTRACT"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -241,26 +250,33 @@
         "verify-test-runtime-limits.mjs",
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
         "verify-final-product-timing.mjs:Stage06 controlling application schedule",
-        "verify-ingestion.mjs:cross-field verification timing; verify-complete.mjs:optional attachment sentinels and ready coverage"
+        "verify-ingestion.mjs:cross-field verification timing; verify-complete.mjs:optional attachment sentinels and ready coverage",
+        "verify-full-cycle.mjs:author intake -> independent sufficiency review -> 30-stage completion and reload",
+        "verify-semantic-invariant.mjs:closed proof truth tables and allowed evidence basis",
+        "verify-file-first-operator.mjs:existing Stage 06 instruction upgrades to the closed proof contract"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
         "verify-ingestion.mjs:pending proof versus empty/dangling proof references",
         "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade",
-        "verify-full-cycle.mjs:legacy contradictory schedule correction package; verify-complete.mjs:reviewed applicability and per-run/final handoff isolation"
+        "verify-full-cycle.mjs:legacy contradictory schedule correction package; verify-complete.mjs:reviewed applicability and per-run/final handoff isolation",
+        "verify-full-cycle.mjs:malformed AST, multi-target/coerced/wrong-family/missing references, stale review targets, self/foreign context, author raw ID, missing review",
+        "verify-semantic-invariant.mjs:unsupported leaf targets, cyclic/deep expressions, bare/self-asserted/expired/contradictory observations"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
-        "verify-browser-extra.mjs:retained returned-file validation after independent IndexedDB revision and exact open-attempt manifest export"
+        "verify-browser-extra.mjs:retained returned-file validation after independent IndexedDB revision and exact open-attempt manifest export",
+        "verify-browser-extra.mjs:stage06AuthorCannotPass/stage06AutomaticProofReview/stage06ReviewedReloadPassed"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
-        "verify-mobile-stage-action.mjs"
+        "verify-mobile-stage-action.mjs",
+        "verify-browser-extra.mjs:exact-deployment Stage 05/06 independent review file/accept/reload flow"
       ],
-      "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
+      "evidenceGap": "Physical iPhone, approved visual authority, and independent actual-project execution remain open. An accepted external sufficiency review establishes the observable registered basis; the app cannot prove hidden provider independence or independently verify a semantic claim just from its wording.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -283,7 +299,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-test-runtime-limits.mjs"
+        "verify-test-runtime-limits.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -321,7 +338,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-production-instruction.mjs"
+        "verify-production-instruction.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -360,7 +378,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-independent-preflight.mjs",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -400,7 +419,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-candidate-freeze.mjs",
-        "verify-full-cycle.mjs:production storage integrity after every response acceptance"
+        "verify-full-cycle.mjs:production storage integrity after every response acceptance",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -439,7 +459,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-ten-independent-runs.mjs",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -479,7 +500,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-independent-run-verification.mjs",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -518,7 +540,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-cross-run-comparison.mjs"
+        "verify-cross-run-comparison.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -556,7 +579,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-root-cause-correction.mjs"
+        "verify-root-cause-correction.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -596,7 +620,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-root-cause-regressions.mjs",
-        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts"
+        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -635,7 +660,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-root-cause-correction.mjs"
+        "verify-root-cause-correction.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -675,7 +701,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-corrected-iteration.mjs",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -714,7 +741,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -756,7 +784,8 @@
         "verify-data-route-closure.mjs",
         "verify-candidate-freeze.mjs",
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -795,7 +824,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-production-baseline-authority.mjs"
+        "verify-production-baseline-authority.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -833,7 +863,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -873,7 +904,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-test-runtime-v3.mjs",
-        "verify-capability-readiness.mjs"
+        "verify-capability-readiness.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -913,7 +945,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -953,7 +986,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation"
+        "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -992,7 +1026,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-delivery-candidate-representation.mjs"
+        "verify-delivery-candidate-representation.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1030,7 +1065,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-contract-closure.mjs"
+        "verify-contract-closure.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1068,7 +1104,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-stage27-release-binding.mjs"
+        "verify-stage27-release-binding.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1106,7 +1143,8 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-stage28-artifact-delivery-intent.mjs"
+        "verify-stage28-artifact-delivery-intent.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1146,7 +1184,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-stage29-evidence-chain-checkpoint.mjs",
-        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts"
+        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1186,7 +1225,8 @@
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-stage30-terminal-mobile-boundary.mjs",
-        "verify-mobile-acceptance-evidence.mjs"
+        "verify-mobile-acceptance-evidence.mjs",
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
