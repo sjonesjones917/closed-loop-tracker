@@ -199,13 +199,13 @@
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-file-first-operator.mjs:no native popups, no export or revision mutation on missing author context, preserved unsaved input",
+        "verify-file-first-operator.mjs:no native popups or manual context fields, preserved unsaved input, automatic context reservation",
         "verify-complete.mjs:unreviewed, self-reviewed and stale applicability cannot reduce mandatory coverage"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
-        "verify-browser-extra.mjs:Stage 05 inline failure, existing context control, recovered instruction/manifest export and non-response control errors",
+        "verify-browser-extra.mjs:Stage 05 automatic instruction/manifest export and review acceptance; non-response control errors remain inline",
         "verify-browser-extra.mjs:stage05AutomaticReviewAccepted"
       ],
       "deployedProof": [
@@ -262,7 +262,8 @@
         "verify-file-first-operator.mjs:stored revision conflict, open-attempt manifest, changed authority scope, historical Stage06 upgrade",
         "verify-full-cycle.mjs:legacy contradictory schedule correction package; verify-complete.mjs:reviewed applicability and per-run/final handoff isolation",
         "verify-full-cycle.mjs:malformed AST, multi-target/coerced/wrong-family/missing references, stale review targets, self/foreign context, author raw ID, missing review",
-        "verify-semantic-invariant.mjs:unsupported leaf targets, cyclic/deep expressions, bare/self-asserted/expired/contradictory observations"
+        "verify-semantic-invariant.mjs:unsupported leaf targets, cyclic/deep expressions, bare/self-asserted/expired/contradictory observations",
+        "verify-full-cycle.mjs:known shared external conversation and affirmative reviewer contamination block despite distinct canonical IDs"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",

@@ -32,6 +32,8 @@ data(6,{records:{tests:[recordProposal(schema,'tests',{tempKey:'test-det',relati
  const invalid=[{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependencyId:'DEP-1'}, {type:'LEAF',testId:{tempKey:'test-final-det'}},{...validLeaf,propositionId:propId},{...validLeaf,testId:{tempKey:'proof'}},{...validLeaf,testId:{recordId:'TEST-MISSING'}},{...validLeaf,scopeBinding:'HISTORICAL'},{...validLeaf,truthExtraction:'eval(code)'},{...validLeaf,evidenceClasses:[]},{type:'ANY_OF',children:[]},{type:'AT_LEAST_K',k:'1',children:[validLeaf]},{op:'ALL_OF',children:[validLeaf]}];
  for(const expression of invalid){const envelope=engine.clone(response);envelope.records.proofExpressions[0].fields.PROPOSED_EXPRESSION=expression;const text=JSON.stringify(envelope),result=ingestion.prepare(stage6AuthorInput,{stage:6,text,promptRecord:pr});assert(!result.validation.valid&&result.validation.issues.some(x=>x.code==='INVALID_PROOF_EXPRESSION'),'Malformed proof entered the canonical proposal: '+JSON.stringify(expression));assert(result.project.projectData.rawResponses.at(-1).completeRawResponse===text,'Invalid proof raw bytes were lost.');assert(!result.project.projectData.tests.length,'Invalid proof partially committed the suite.');}
  assert(prompts.responseContractDescriptor(6,'COMPLETE').proofExpressionContract.example.testId.tempKey,'Stage 06 prompt omits the closed proof contract and reference example.');
+ for(const malformedRecords of [[null],[response.records.proofExpressions[0],{...engine.clone(response.records.proofExpressions[0]),tempKey:'second-proof',fields:{...response.records.proofExpressions[0].fields,SEMANTIC_RATIONALE:'A conflicting second expression for the same proposition.'}}]]){const envelope=engine.clone(response);envelope.records.proofExpressions=malformedRecords;const result=ingestion.prepare(stage6AuthorInput,{stage:6,text:JSON.stringify(envelope),promptRecord:pr});assert(!result.validation.valid,'Malformed or duplicate proof records reached proposal planning.');}
+
 }
 assert(!engine.gate(6,p).complete,'Stage 06 passed an author proposal without the required independent PROOF_REVIEW.');
 assert(engine.recordsForCurrentScope(p,'tests').every(t=>engine.recordValue(t,'RELEASE_BEARING')===false),'Author claims acquired release-bearing proof authority before independent review.');
@@ -45,13 +47,15 @@ const proofObligationAtDesign=engine.deriveProofObligations(p).records[0].id;
  assert(engine.recordValue(review,'AUTHOR_CONTEXT_ID')!==engine.recordValue(review,'REVIEWER_CONTEXT_ID'),'Proof review reused its author context.');
  assert(suiteVersion==='TEST-SUITE-v001','Review-only acceptance unnecessarily versioned the authored test suite.');
  assert(engine.recordsForCurrentScope(p,'tests').every(t=>engine.recordValue(t,'SEMANTIC_REVIEW_IDS').includes(engine.recordId(review,'semanticReviews'))),'Test review references are not canonical semantic review IDs.');
- for(const attack of ['changed-test','self-review','foreign-context','raw-author-claim','missing-review']){
+ for(const attack of ['changed-test','self-review','foreign-context','raw-author-claim','missing-review','known-shared-conversation','contaminated-review']){
   const q=engine.clone(original),r=q.projectData.semanticReviews.at(-1);const change=(record,key,value)=>{record.fields[key]=value;record[key]=value;};
   if(attack==='changed-test')change(q.projectData.tests[0],'TEST_PROPOSITION_TEXT','An easier and insufficient condition.');
   if(attack==='self-review')change(r,'REVIEWER_CONTEXT_ID',engine.recordValue(r,'AUTHOR_CONTEXT_ID'));
   if(attack==='foreign-context')change(r,'REVIEWER_CONTEXT_ID','CONTEXT-FOREIGN');
   if(attack==='raw-author-claim'){r.rawResponseId=q.projectData.rawResponses.find(x=>x.stage===6).rawResponseId;}
   if(attack==='missing-review')r.active=false;
+  if(attack==='known-shared-conversation')for(const context of q.projectData.freshContexts.filter(c=>c.stage===6))change(context,'EXTERNAL_CONTEXT_IDENTIFIER','SAME-KNOWN-CONVERSATION');
+  if(attack==='contaminated-review')change(q.projectData.freshContexts.find(c=>c.id===engine.recordValue(r,'REVIEWER_CONTEXT_ID')),'CONTAMINATION_STATUS','CONTAMINATED');
   engine.recalculate(q);assert(!engine.gate(6,q).complete,attack+' supplied proof authority.');assert(!engine.recordsForCurrentScope(q,'tests').some(t=>engine.recordValue(t,'RELEASE_BEARING')),attack+' left a release-bearing test.');
  }
  const reloaded=JSON.parse(JSON.stringify(original));engine.recalculate(reloaded);assert(engine.gate(6,reloaded).complete,'Current independent proof review was lost on reload.');
@@ -59,6 +63,8 @@ const proofObligationAtDesign=engine.deriveProofObligations(p).records[0].id;
  exact.projectData.evidenceRecords.push({id:'EVID-LEAF-SCOPE',active:true,fields:{EVIDENCE_ID:'EVID-LEAF-SCOPE',STATUS:'PRESERVED'}});
  for(const [id,subject,relation]of [['TARGET',node.testId,'SUPPORTS_ONLY'],['OTHER',testId,'ESTABLISHES']]){exact.projectData.observationRecords.push({id:'OBS-'+id,active:true,evidenceRefs:['EVID-LEAF-SCOPE'],fields:{OBSERVATION_ID:'OBS-'+id,SUBJECT_ID:subject,EPISTEMIC_BASIS:'EXTERNALLY_SUPPORTED',FRESHNESS_STATUS:'CURRENT',RAW_OR_NATIVE_PROVENANCE:'CONTROLLED-LEAF-FIXTURE'}});exact.projectData.entailmentReviews.push({id:'ENTAIL-'+id,active:true,fields:{OBSERVATION_ID:'OBS-'+id,TARGET_PROPOSITION_ID:propId,ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:relation}});}
  assert(engine.evaluateProofExpression(exact,propId,node).truthValue==='UNKNOWN','A different test observation supplied the required leaf proof.');
+ const incomplete=engine.clone(original);for(const test of incomplete.projectData.tests){test.fields.STATUS='BLOCKED';test.STATUS='BLOCKED';}engine.recalculate(incomplete);assert(engine.operationalNextAction(incomplete,6).operation==='RECONCILE_VERIFICATION_SUITE','A missing ready-test suite looped into another proof review instead of correction.');
+
 
 }
 
