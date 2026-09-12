@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
 for(const token of ['renameCurrentProject','duplicateCurrentProject','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
@@ -72,4 +73,96 @@ assert(packageDownloads.map(x=>x.href).join(',')==='blob:PACKAGE-A,blob:PACKAGE-
 assert(maxActivePackages===1,'Large complete export and backup packages were assembled concurrently.');
 rejectNextPackage=true;const failedPackage=packageRuntime.exportCompletePackage().then(()=>false,error=>error.message==='CONTROLLED_PACKAGE_EXPORT_FAILURE'),recoveredPackage=packageRuntime.exportCompletePackage('backup');assert(await failedPackage,'Controlled export failure was lost.');await recoveredPackage;
 assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz','Failed complete export left later backup requests stuck.');
+// Exercise the complete production package encoder with only the storage
+// boundary replaced. The browser suite supplies real IndexedDB coverage.
+const filePackageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
+vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>fixtureProject;listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
+const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
+for(let i=0;i<artifactSizes.length;i++){
+  const bytes=Uint8Array.from({length:artifactSizes[i]},(_,j)=>(j*137+i)%256),sha256=createHash('sha256').update(bytes).digest('hex');
+  filePackageRuntime.fixtureBlob=new Blob([bytes]);
+  vm.runInContext(`fixtureArtifacts.push({artifactId:'FILE-${i}',jobId:'FILE-PRESSURE',filename:'file-${i}.bin',mediaType:'application/octet-stream',byteSize:${bytes.length},sha256:'${sha256}',lineage:{},createdAt:'2026-09-11T00:00:00.000Z',blob:fixtureBlob});`,filePackageRuntime);
+}
+let maxPackageRead=0,maxBase64Input=0;
+const nativeBlobRead=Blob.prototype.arrayBuffer;
+filePackageRuntime.btoa=text=>{maxBase64Input=Math.max(maxBase64Input,text.length);return btoa(text);};
+let exportedFiles;
+try{
+  Blob.prototype.arrayBuffer=function(){maxPackageRead=Math.max(maxPackageRead,this.size);return nativeBlobRead.call(this);};
+  exportedFiles=await filePackageRuntime.closedLoopProjectStore.exportPackage('FILE-PRESSURE');
+}finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
+assert(maxPackageRead<=65536,`Complete export allocated a ${maxPackageRead}-byte artifact buffer.`);
+assert(maxBase64Input<=65536,`Complete export encoded ${maxBase64Input} bytes as one base64 string.`);
+const exportedPayload=JSON.parse(await new Response(exportedFiles.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+const {packageSha256:filePackageSha256,...filePackageBody}=exportedPayload;
+assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(filePackageBody)).digest('hex')===filePackageSha256,'Streamed package digest differs from the independent crypto oracle.');
+assert(exportedPayload.artifacts.length===artifactSizes.length,'Complete export dropped artifact members.');
+for(let i=0;i<artifactSizes.length;i++){
+  const row=exportedPayload.artifacts[i],bytes=Buffer.from(row.base64,'base64');
+  assert(bytes.length===artifactSizes[i]&&bytes.every((value,j)=>value===(j*137+i)%256),`Complete export changed file ${i}, including its tail.`);
+}
+vm.runInContext(`fixtureArtifacts[0].sha256='0'.repeat(64)`,filePackageRuntime);
+let damagedFileRejected=false;try{await filePackageRuntime.closedLoopProjectStore.exportPackage('FILE-PRESSURE');}catch(error){damagedFileRejected=error.code==='ARTIFACT_INTEGRITY_MISMATCH';}
+assert(damagedFileRejected,'Bounded file export accepted corrupted stored bytes.');
+// Exercise the other production package schema, including streamed UTF-8 JSON
+// strings with multi-byte characters and escapes spanning file-read boundaries.
+filePackageRuntime.fixtureContextBlob=new Blob(['é🙂\\\n\t"'.repeat(20000),'CONTEXT-FINAL-TAIL']);
+filePackageRuntime.fixtureContextSha=await globalThis.closedLoopHash.sha256Bytes(filePackageRuntime.fixtureContextBlob);
+vm.runInContext(`
+  const hash=closedLoopHash,contextIdentity={path:'context.json',filename:'context.json',mediaType:'application/json',byteSize:fixtureContextBlob.size,sha256:fixtureContextSha};
+  const prompt={stage:4,operation:'COMPLETE',promptEngineVersion:'FIXTURE',instructionId:'PROMPT-FILES',prompt:'instruction\\n',scope:{},contextManifest:{promptContext:{attachments:[contextIdentity]}}};
+  prompt.bodySha256=prompt.fullTextSha256=hash.sha256Text(prompt.prompt);prompt.contractSha256=hash.sha256Value({});fixtureProject.projectData.generatedPrompts=[prompt];
+  globalThis.fixtureContextRow={artifactId:'PROMPT-CONTEXT-'+hash.sha256Value({jobId:'FILE-PRESSURE',sha256:fixtureContextSha}),jobId:'FILE-PRESSURE',blob:fixtureContextBlob,sha256:fixtureContextSha,byteSize:fixtureContextBlob.size};
+  globalThis.closedLoopPromptEngine={version:'FIXTURE',responseContractDescriptor:()=>({}),promptFileManifest:()=>({contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
+  globalThis.closedLoopWorkflowEngine={executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
+`,filePackageRuntime);
+// Re-evaluate the same store with only its I/O substituted for immutable rows.
+filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
+maxPackageRead=0;maxBase64Input=0;
+let executionPackage;
+try{
+  Blob.prototype.arrayBuffer=function(){maxPackageRead=Math.max(maxPackageRead,this.size);return nativeBlobRead.call(this);};
+  executionPackage=await vm.runInContext("closedLoopProjectStore.createExecutionPackage({project:fixtureProject,stage:4,operation:'COMPLETE'})",filePackageRuntime);
+}finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
+assert(maxPackageRead<=65536&&maxBase64Input<=65536,'Execution-package export buffered a complete artifact/context file.');
+const executionPayload=JSON.parse(await new Response(executionPackage.blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+const {packageSha256:executionSha,...executionBody}=executionPayload;
+assert(executionPayload.contextFiles[0].text===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
+assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(executionBody)).digest('hex')===executionSha,'Execution-package digest changed.');
+assert(executionPayload.artifacts[0].base64===exportedPayload.artifacts[6].base64,'Execution package changed artifact bytes.');
+const decoderRuntime=vm.createContext({Blob,Uint8Array,atob});
+vm.runInContext(store.slice(store.indexOf('const base64ToBytes='),store.indexOf('async function compressBytes('))+'\nglobalThis.decodeFile=base64ToBlob;',decoderRuntime);
+for(const row of exportedPayload.artifacts){
+  const wrapped=row.base64.replace(/.{73}/g,'$&\n\t '),decoded=await decoderRuntime.decodeFile(wrapped).arrayBuffer();
+  assert(Buffer.from(decoded).equals(Buffer.from(row.base64,'base64')),'Bounded restore changed base64 whitespace or final padding semantics.');
+}
+for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=false;try{decoderRuntime.decodeFile(invalid);}catch{rejected=true;}assert(rejected,`Invalid artifact base64 was accepted: ${invalid}`);}
+// The real Files view and proposal view must not eagerly build all accumulated
+// download controls or resolve every diff row before a detail page is opened.
+const viewRuntime=vm.createContext({engine,current:core.createBlankState('VIEW-PRESSURE'),safe:value=>Array.isArray(value)?value:[],esc:value=>String(value??''),label:value=>String(value),proposalVersionCurrent:()=>true});
+vm.runInContext(app.slice(app.indexOf('const detailViews='),app.indexOf('function completion(')),viewRuntime);
+vm.runInContext(app.slice(app.indexOf('function files(){'),app.indexOf('function release(){')),viewRuntime);
+vm.runInContext(`for(let i=0;i<600;i++)current.projectData.artifacts.push({id:'FILE-'+i,active:true,fields:{ARTIFACT_ID:'FILE-'+i,FILENAME:'file-'+i+'.bin',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',SHA256:'a'.repeat(64)}});globalThis.fileView=files();`,viewRuntime);
+assert((viewRuntime.fileView.match(/data-download-artifact=/g)||[]).length<=20,'The Files view rendered every accumulated artifact download control.');
+vm.runInContext(`globalThis.filePages=[...detailViews.values()].filter(entry=>entry.kind==='markup'&&entry.title==='Stored files');`,viewRuntime);
+assert(viewRuntime.filePages.length===1,'Large file lists need a paged download surface.');
+const fileIds=[];
+for(let offset=0;offset<600;offset+=20){const html=viewRuntime.filePages[0].value(offset);fileIds.push(...[...html.matchAll(/data-download-artifact="([^"]+)"/g)].map(match=>match[1]));}
+assert(fileIds.length===600&&new Set(fileIds).size===600&&fileIds.at(-1)==='FILE-599','File pagination lost or duplicated a downloadable artifact.');
+let diffLookups=0;
+viewRuntime.engine={...engine,records:(...args)=>{diffLookups++;return engine.records(...args);}};
+vm.runInContext(`globalThis.pendingProposal=()=>({changes:Array.from({length:600},(_,i)=>({canonicalCollection:'requirements',canonicalRecordId:'REQ-'+i,canonicalField:'OBLIGATION',normalizedValue:'proposal-'+i})),envelope:{stageData:{}},humanAuthorityCandidates:[]});`,viewRuntime);
+vm.runInContext(app.slice(app.indexOf('function proposalMarkup('),app.indexOf('function stageConfirmationMarkup(')),viewRuntime);
+vm.runInContext('proposalMarkup(4)',viewRuntime);
+assert(diffLookups<=20,`Closed proposal details resolved ${diffLookups} records before disclosure.`);
+let evidenceLookups=0,regressionLookups=0;
+const accumulatedViewRows=Array.from({length:600},(_,i)=>({id:'VIEW-'+i}));
+viewRuntime.engine={...engine,records:(_p,family)=>{if(family==='regressionExecutions'){regressionLookups++;return [];}return accumulatedViewRows;},evidenceChainExplanation:(_p,chain)=>{evidenceLookups++;return {id:chain.id};}};
+vm.runInContext(app.slice(app.indexOf('function evidenceExplanationMarkup('),app.indexOf('function rootCauseCorrectionMarkup(')),viewRuntime);
+vm.runInContext(app.slice(app.indexOf('function regressionLifecycleMarkup('),app.indexOf('function contradictionMarkup(')),viewRuntime);
+vm.runInContext('evidenceExplanationMarkup(29);regressionLifecycleMarkup(15)',viewRuntime);
+assert(evidenceLookups<=20&&regressionLookups<=20,`Deferred stage views eagerly computed ${evidenceLookups} evidence explanations and ${regressionLookups} regression histories.`);
 console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,completeExportIdentityAfterNavigation:true,serializedCompletePackages:true,completeExportFailureRecovery:true,unsafeOverrides:0}));

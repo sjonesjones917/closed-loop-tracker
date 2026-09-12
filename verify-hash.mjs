@@ -20,6 +20,18 @@ try{
   assert(h.sha256Value(accumulated)===expected,'Accumulated project canonical digest changed.');
   assert(largestEncoding<=65536,`Canonical hashing encoded ${largestEncoding} characters at once; accumulated-data working buffers must be bounded.`);
 }finally{globalThis.TextEncoder=NativeEncoder;}
+// A file is not a small in-memory buffer. Every file hash must read bounded
+// slices, including a tail that is not aligned with a SHA-256 block.
+const originalBlobRead=Blob.prototype.arrayBuffer;
+let largestBlobRead=0;
+try{
+  Blob.prototype.arrayBuffer=function(){largestBlobRead=Math.max(largestBlobRead,this.size);return originalBlobRead.call(this);};
+  for(const size of [0,1,55,56,63,64,65,65535,65536,65537,2097153]){
+    const bytes=Uint8Array.from({length:size},(_,i)=>(i*137+19)%256);
+    assert(await h.sha256Bytes(new Blob([bytes]))===createHash('sha256').update(bytes).digest('hex'),`File SHA-256 differs at ${size} bytes.`);
+  }
+  assert(largestBlobRead<=65536,`File hashing read ${largestBlobRead} bytes at once; accumulated artifacts must use bounded reads.`);
+}finally{Blob.prototype.arrayBuffer=originalBlobRead;}
 assert(h.canonicalizationVersion==='closed-loop-canonical-json/1','canonicalization version is not controlling /1');
 assert(h.idVersion==='closed-loop-id/1','canonical ID version is not controlling /1');
 assert(h.stableStringify({b:1,a:2})===h.stableStringify({a:2,b:1}),'object key ordering is not canonical');

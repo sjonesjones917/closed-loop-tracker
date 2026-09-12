@@ -110,9 +110,22 @@ function createSha256(){
 }
 function sha256Text(text){const digest=createSha256();digest.updateText(text);return digest.digest();}
 function sha256Value(value){const digest=createSha256();for(const chunk of canonicalChunks(value))digest.updateText(chunk);return digest.digest();}
+async function sha256Chunks(chunks){
+  const digest=createSha256();let lastYield=Date.now();
+  for await(const chunk of chunks){digest.updateText(chunk);if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
+  return digest.digest();
+}
 function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');}
 function hexToBytes(hex){const text=String(hex||'').toLowerCase();if(!/^[0-9a-f]+$/.test(text)||text.length%2)throw new TypeError('hexToBytes requires an even-length hexadecimal string.');const out=new Uint8Array(text.length/2);for(let i=0;i<out.length;i++)out[i]=parseInt(text.slice(i*2,i*2+2),16);return out;}
-async function sha256Bytes(bytes){let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else if(bytes instanceof Blob)view=new Uint8Array(await bytes.arrayBuffer());else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',view)));}
+async function sha256Bytes(bytes){
+  if(bytes instanceof Blob){
+    const digest=createSha256();let lastYield=Date.now();
+    for(let offset=0;offset<bytes.size;offset+=65536){digest.update(new Uint8Array(await bytes.slice(offset,offset+65536).arrayBuffer()));if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
+    return digest.digest();
+  }
+  let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');
+  return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',view)));
+}
 function rawResponseSha256(raw){return sha256Text(String(raw??''));}
 function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
 
@@ -206,7 +219,7 @@ function evaluateTrustedTimeEvidence({basis='NONE',attestationContractId=null,at
   return Object.freeze({version:TRUSTED_TIME_VERSION,basis:normalizedBasis,trusted:false,attestationContractId:null,attributableExternalSystem:false});
 }
 
-const api={version:'closed-loop-hash/7',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,unicodeContract:UNICODE_CONTRACT,canonicalChunks,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,assertPinnedUnicodeHost,normalizeFilename,filenameCollisionKeys,normalizeDateTime,evaluateTrustedTimeEvidence,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
+const api={version:'closed-loop-hash/7',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,unicodeContract:UNICODE_CONTRACT,canonicalChunks,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Chunks,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,assertPinnedUnicodeHost,normalizeFilename,filenameCollisionKeys,normalizeDateTime,evaluateTrustedTimeEvidence,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
 globalThis.closedLoopHash=Object.freeze(api);
 
 })();
