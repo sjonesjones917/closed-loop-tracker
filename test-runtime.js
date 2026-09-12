@@ -574,9 +574,7 @@ async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
 function workerUrl(){
   const source=RUNTIME_SCRIPT_URL,base=source||root.location?.href;if(!base)return 'test-worker.js';const url=new URL('test-worker.js',base);
   if(MANIFESTED_RUNTIME&&!EXPECTED_WORKER_SHA256)throw new RuntimeError('WORKER_DIGEST_IDENTITY_MISSING','The deployed runtime lacks its manifest-bound worker digest.');
-  // Raw development HTML has a legacy cache key, not a deployment manifest.
-  // It retains the explicit unmanifested worker mode; deployed URLs keep both identities.
-  if(source&&EXPECTED_WORKER_SHA256)url.search=new URL(source).search;return url.href;
+  if(source)url.search=new URL(source).search;return url.href;
 }
 function executionFailure(test,startedAtDeviceTime,error){
   const disposition=error?.disposition===STATUS.UNDETERMINED?STATUS.UNDETERMINED:STATUS.EXECUTION_FAILED;

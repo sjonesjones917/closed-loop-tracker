@@ -108,6 +108,7 @@ scriptSources.forEach((source,index)=>{
  if(sharedBuildIdentity===null)sharedBuildIdentity=token;
  assert(token===sharedBuildIdentity,`${file} cache token ${token} differs from shared runtime identity ${sharedBuildIdentity}.`);
 });
+const workerSourceQuery=scriptSources.find(source=>source.split('?')[0]==='test-runtime.js').split('?')[1];assert(new URLSearchParams(workerSourceQuery).get('workerSha256')===createHash('sha256').update(fs.readFileSync('test-worker.js')).digest('hex'),'Source HTML must bind the exact Test IR worker bytes as well as the shared cache identity.');
 const testRuntime=fs.readFileSync('test-runtime.js','utf8');
 assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test IR worker URL must inherit the exact test-runtime.js build/cache query identity.');
 assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test IR worker must remain the same-origin registered worker entry.');
