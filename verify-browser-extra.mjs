@@ -357,6 +357,49 @@ async function main(){
   assert(Object.values(workerRecovery).every(Boolean),`Lost worker acknowledgement changed the commit outcome: ${JSON.stringify(workerRecovery)}`);
   console.log(JSON.stringify({storageWorkerBrowser:true,...workerProof,...workerRecovery}));
 
+  console.log('extra:prompt-context-read-snapshot');
+  const contextReadProof=await evalValue(cdp,`(async()=>{
+    const store=closedLoopProjectStore,hash=closedLoopHash,jobId='CONTEXT-BROWSER-READS',files=[];
+    await store.writeProject(closedLoopCore.createBlankState(jobId),{expectedProjectRevision:0,createOnly:true,selectProject:false});
+    const db=await store.openDatabase(),seed=db.transaction('artifacts','readwrite');
+    const seeded=new Promise((resolve,reject)=>{seed.oncomplete=resolve;seed.onabort=seed.onerror=()=>reject(seed.error||new Error('Context fixture staging failed.'));});
+    for(let i=0;i<129;i++){
+      const text='Exact context '+i+' é🙂',blob=new Blob([text]),sha256=hash.sha256Text(text),artifactId='PROMPT-CONTEXT-'+hash.sha256Value({jobId,sha256});
+      const file={path:'context-'+i+'.json',filename:'context-'+i+'.json',mediaType:'application/json',sha256,byteSize:blob.size};files.push(file);
+      seed.objectStore('artifacts').put({artifactId,jobId,blob,...file});
+    }
+    await seeded;
+    const record={contextManifest:{promptContext:{attachments:[...files,...files]}}},project={job:{JOB_ID:jobId}},nativeGet=IDBObjectStore.prototype.get,nativeTransaction=IDBDatabase.prototype.transaction;
+    let reads=0,transactions=0,pending=0,maxPending=0;
+    IDBDatabase.prototype.transaction=function(names,mode,...rest){const tx=nativeTransaction.call(this,names,mode,...rest);if(mode==='readonly'&&tx.objectStoreNames.contains('artifacts'))transactions++;return tx;};
+    IDBObjectStore.prototype.get=function(key){const request=nativeGet.call(this,key);if(this.name==='artifacts'){reads++;maxPending=Math.max(maxPending,++pending);const done=()=>pending--;request.addEventListener('success',done,{once:true});request.addEventListener('error',done,{once:true});}return request;};
+    try{await store.persistPromptContextFiles(record,project);}finally{IDBObjectStore.prototype.get=nativeGet;IDBDatabase.prototype.transaction=nativeTransaction;}
+    // Abort after some requests have been queued. Every rejection must be
+    // handled; the same production preparation must reject before any write.
+    let abortReads=0,aborted=false;
+    IDBObjectStore.prototype.get=function(key){const request=nativeGet.call(this,key);if(this.name==='artifacts'&&++abortReads===17)this.transaction.abort();return request;};
+    try{await store.persistPromptContextFiles(record,project);}catch(error){aborted=true;}finally{IDBObjectStore.prototype.get=nativeGet;}
+    const available=(await store.listArtifacts(jobId)).length;
+    await store.removeProject(jobId);
+    return {references:258,uniqueFiles:129,reads,transactions,maxPending,pending,aborted,available};
+  })()`);
+  assert(contextReadProof.reads===129&&contextReadProof.transactions===1&&contextReadProof.maxPending<=64&&contextReadProof.pending===0&&contextReadProof.aborted&&contextReadProof.available===129,'Prompt context reads lost bounded snapshot/error behavior: '+JSON.stringify(contextReadProof));
+  const contextSaveProof=await evalValue(cdp,`(async()=>{
+    const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,p=closedLoopCore.createBlankState('CONTEXT-BROWSER-SAVE');engine.ensureShape(p);engine.recalculate(p);
+    p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve saved context. '.repeat(4000)+'é🙂 FINAL TAIL';
+    for(let i=0;i<16;i++)p.projectData.generatedPrompts.push(prompts.buildPromptRecord(1,p,{operation:'COMPLETE',scope:{projectRevision:i+1}}));
+    await store.persistPromptContextFiles(p.projectData.generatedPrompts[0],p);
+    const saved=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true,selectProject:false}),actual=await store.readProject(p.job.JOB_ID),rows=await store.listArtifacts(p.job.JOB_ID);
+    const shared=rows.length===1,preserved=JSON.stringify(actual.projectData.generatedPrompts)===JSON.stringify(p.projectData.generatedPrompts),identity=saved.projectSha256===actual.projectSha256;
+    const row=rows[0],db=await store.openDatabase(),damage=db.transaction('artifacts','readwrite'),damaged=new Promise((resolve,reject)=>{damage.oncomplete=resolve;damage.onabort=damage.onerror=()=>reject(damage.error);});damage.objectStore('artifacts').put({...row,byteSize:row.byteSize+1});await damaged;
+    let rejected=false;try{await store.writeProject(actual,{expectedProjectRevision:actual.revision,selectProject:false});}catch(error){rejected=error.code==='PROMPT_CONTEXT_INTEGRITY_FAILED';}
+    const unchanged=(await store.readProject(p.job.JOB_ID)).projectSha256===saved.projectSha256;
+    await store.removeProject(p.job.JOB_ID);
+    return {shared,preserved,identity,rejected,unchanged};
+  })()`);
+  assert(Object.values(contextSaveProof).every(Boolean),'Worker save reused context verification or changed historical bytes: '+JSON.stringify(contextSaveProof));
+  console.log(JSON.stringify({promptContextReadSnapshot:contextReadProof,promptContextWorkerSave:contextSaveProof}));
+
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
   console.log(JSON.stringify({browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();

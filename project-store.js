@@ -135,7 +135,7 @@ async function readProject(jobId){
 }
 function readAll(storage){return storage?readAllLegacy(storage):readAllIndexed();}
 
-async function persistProjectPromptFiles(project){for(const record of project.projectData?.generatedPrompts||[])if(!record.invalidatedBy&&record.promptEngineVersion===globalThis.closedLoopPromptEngine?.version)await persistPromptContextFiles(record,project);}
+async function persistProjectPromptFiles(project){await persistPromptContextRecords((project.projectData?.generatedPrompts||[]).filter(record=>!record.invalidatedBy&&record.promptEngineVersion===globalThis.closedLoopPromptEngine?.version),project);}
 async function writeProjectRow(project,tx,{expectedProjectRevision=null,incrementRevision=true,createOnly=false,skipUnchanged=false,selectProject=true,operationId=null}={}){
   const id=projectIdentity(project);if(!id)throw new Error('A project without a JOB_ID cannot be committed.');
   const store=tx.objectStore(PROJECTS),prior=await request(store.get(id)),currentRevision=Number(prior?.revision||0);
@@ -390,13 +390,42 @@ async function importPackage(blob,{operationId=null}={}){
 }
 
 function promptContextArtifactId(jobId,file){return 'PROMPT-CONTEXT-'+hash.sha256Value({jobId:String(jobId),sha256:file.sha256});}
-async function persistPromptContextFiles(record,project){
-  const identities=record.contextManifest?.promptContext?.attachments||[],jobId=projectIdentity(project);if(!identities.length)return;
-  const missing=[];for(const file of identities){const row=await getArtifact(promptContextArtifactId(jobId,file));if(!row)missing.push(file.path);else if(row.jobId!==jobId||row.sha256!==file.sha256||row.byteSize!==file.byteSize)throw storageError('Saved prompt context identity mismatch.','PROMPT_CONTEXT_INTEGRITY_FAILED');}
-  if(!missing.length)return;
-  const files=globalThis.closedLoopPromptEngine.materializePromptContextFiles(record,project);
-  for(const file of files.filter(file=>missing.includes(file.path)))await putArtifact({artifactId:promptContextArtifactId(jobId,file),jobId,blob:new Blob([file.text],{type:file.mediaType}),filename:file.filename,mediaType:file.mediaType,lineage:{kind:'PROMPT_CONTEXT',sha256:file.sha256}});
+async function persistPromptContextRecords(records,project){
+  const jobId=projectIdentity(project),byDigest=new Map(),groups=[];
+  for(const record of records){
+    const identities=[];
+    for(const file of record.contextManifest?.promptContext?.attachments||[]){
+      let identity=byDigest.get(file.sha256);
+      if(!identity){identity={artifactId:promptContextArtifactId(jobId,file),sha256:file.sha256,byteSize:file.byteSize};byDigest.set(file.sha256,identity);}
+      else if(identity.byteSize!==file.byteSize)throw storageError('Saved prompt context identity mismatch.','PROMPT_CONTEXT_INTEGRITY_FAILED');
+      identities.push(identity);
+    }
+    if(identities.length)groups.push({record,identities});
+  }
+  if(!byDigest.size)return;
+  const tx=await openTransaction(ARTIFACTS,'readonly'),finished=complete(tx),missing=new Set(),identities=[...byDigest.values()];
+  // Handle transaction errors even if a request rejects first. Only IndexedDB
+  // requests are awaited inside this snapshot; materialization/hashing happens
+  // after it completes. Each window releases its rows/Blob handles promptly.
+  finished.catch(()=>{});
+  try{
+    for(let offset=0;offset<identities.length;offset+=64)await Promise.all(identities.slice(offset,offset+64).map(async file=>{
+      const row=await request(tx.objectStore(ARTIFACTS).get(file.artifactId));
+      if(!row)missing.add(file.artifactId);
+      else if(row.jobId!==jobId||row.sha256!==file.sha256||row.byteSize!==file.byteSize)throw storageError('Saved prompt context identity mismatch.','PROMPT_CONTEXT_INTEGRITY_FAILED');
+    }));
+    await finished;
+  }catch(error){try{tx.abort();}catch{}await finished.catch(()=>{});throw error;}
+  // This set belongs only to this preparation. New saves re-read the store.
+  // The existing writer still hashes, stores, reads back and rehashes new bytes.
+  for(const {record,identities:required} of groups){
+    if(!required.some(file=>missing.has(file.artifactId)))continue;
+    const files=globalThis.closedLoopPromptEngine.materializePromptContextFiles(record,project);
+    for(const file of files){const artifactId=promptContextArtifactId(jobId,file);if(!missing.has(artifactId))continue;await putArtifact({artifactId,jobId,blob:new Blob([file.text],{type:file.mediaType}),filename:file.filename,mediaType:file.mediaType,lineage:{kind:'PROMPT_CONTEXT',sha256:file.sha256}});missing.delete(artifactId);}
+  }
+  if(missing.size)throw storageError('Exact saved prompt context bytes are unavailable.','PROMPT_CONTEXT_INTEGRITY_FAILED');
 }
+async function persistPromptContextFiles(record,project){await persistPromptContextRecords([record],project);}
 async function readPromptContextFile(record,jobId,path='context.json'){
   const file=(record.contextManifest?.promptContext?.attachments||[]).find(file=>file.path===path);
   if(!file)throw storageError('The instruction does not authorize this context file.','PROMPT_CONTEXT_NOT_AUTHORIZED');

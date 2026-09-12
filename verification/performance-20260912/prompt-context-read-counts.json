@@ -1,0 +1,37 @@
+{
+  "baselineCommit": "755bd15626d22c6f22e3444f62a1b8f91fbea9f0",
+  "productionFile": "project-store.js",
+  "beforeSha256": "f46dc3c92407adc95daa291e76292b678db23f3f10ce95b368906105dcf8d5d2",
+  "afterSha256": "b3e0f6c86ae6fc2bf7555bcf40018e316d7e9e77d7d2d863527d08425ff80180",
+  "scope": "Deterministic operation counts through the production storage owner with the existing in-memory transaction fixture. No elapsed-time, browser, physical-iPhone or whole-app speedup claim.",
+  "verifier": "node verify-project-lifecycle.mjs",
+  "regressionBefore": "Two new read-count assertions fail on the unchanged production owner.",
+  "cases": [
+    {
+      "path": "writeProject with 64 real generated instructions",
+      "references": 64,
+      "uniqueFiles": 1,
+      "before": {
+        "artifactReads": 64,
+        "readonlyTransactions": 64
+      },
+      "after": {
+        "artifactReads": 1,
+        "readonlyTransactions": 1
+      }
+    },
+    {
+      "path": "persistPromptContextFiles with synthetic immutable identities",
+      "references": 258,
+      "uniqueFiles": 129,
+      "before": {
+        "artifactReads": 258,
+        "readonlyTransactions": 258
+      },
+      "after": {
+        "artifactReads": 129,
+        "readonlyTransactions": 1
+      }
+    }
+  ]
+}

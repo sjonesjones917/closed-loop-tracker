@@ -197,6 +197,7 @@ const parseStorageJson=vm.runInContext('(text)=>JSON.parse(text)',storageRuntime
 const storageRead=(value,parseJson=parseStorageJson)=>{if(value===undefined)return undefined;const blobs=[],copy=parseJson(JSON.stringify(value,(_key,item)=>item instanceof Blob?{__storageBlob:blobs.push(item)-1}:item));const restore=item=>{if(item&&typeof item==='object'){if(Object.keys(item).length===1&&Number.isInteger(item.__storageBlob))return blobs[item.__storageBlob];for(const key of Object.keys(item))item[key]=restore(item[key]);}return item;};return restore(copy);};
 storageRuntime.openStorageTransaction=async(names,mode)=>{
   const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map(storageRows.get(name)||[])]));
+  storageAccess.push({kind:'transaction',names:selected,mode});
   return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({openKeyCursor:()=>{storageAccess.push({kind:'indexKeys',name,indexName});const keys=[...pending.get(name).values()].map(row=>row[indexName]).filter(Boolean).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));const req={};let i=0;const advance=()=>{req.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;req.onsuccess?.();};queueMicrotask(advance);return req;},getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
 };
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),storageRuntime,{filename:file});
@@ -215,6 +216,76 @@ for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectU
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
+// Save real generated instructions whose immutable context bytes are shared.
+// The storage operation, including canonical validation/CAS, stays in production.
+await storageRegression('prompt-context:shared-identities-one-read-snapshot',async()=>{
+  await vm.runInContext(`(async()=>{
+    globalThis.contextProject=await makeStored('CONTEXT-READ-PRESSURE');
+    contextProject.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve every context byte. '.repeat(3000)+'é🙂 FINAL CONTEXT TAIL';
+    for(let index=0;index<64;index++)contextProject.projectData.generatedPrompts.push(closedLoopPromptEngine.buildPromptRecord(1,contextProject,{operation:'COMPLETE',scope:{projectRevision:index+1}}));
+    await projectStore.persistPromptContextFiles(contextProject.projectData.generatedPrompts[0],contextProject);
+  })()`,storageRuntime);
+  const p=storageRuntime.contextProject,identities=p.projectData.generatedPrompts.flatMap(record=>record.contextManifest.promptContext.attachments);
+  assert(identities.length===64&&new Set(identities.map(file=>file.sha256)).size===1,'Real prompt fixture does not share one exact context file.');
+  const before=JSON.stringify(p.projectData.generatedPrompts);storageAccess.length=0;
+  const saved=await storageRuntime.projectStore.writeProject(p,{expectedProjectRevision:p.revision,selectProject:false});
+  const gets=storageAccess.filter(x=>x.kind==='get'&&x.name==='artifacts'),transactions=storageAccess.filter(x=>x.kind==='transaction'&&x.mode==='readonly'&&x.names.includes('artifacts'));
+  console.log(JSON.stringify({promptContextReadPressure:{prompts:64,uniqueFiles:1,artifactReads:gets.length,readonlyTransactions:transactions.length}}));
+  assert(JSON.stringify(saved.projectData.generatedPrompts)===before,'Context read optimization changed preserved instructions or manifests.');
+  assert(gets.length===1&&transactions.length===1,`One shared context file required ${gets.length} reads in ${transactions.length} readonly transactions.`);
+});
+await storageRegression('prompt-context:distinct-identities-bounded-snapshot',async()=>{
+  const hash=globalThis.closedLoopHash,jobId='CONTEXT-DISTINCT-PRESSURE',rows=storageRows.get('artifacts'),identities=[];
+  for(let i=0;i<129;i++){
+    const text='Distinct context '+i+' é🙂',sha256=hash.sha256Text(text),blob=new Blob([text]),artifactId='PROMPT-CONTEXT-'+hash.sha256Value({jobId,sha256});
+    const file={path:'context-'+i+'.json',filename:'context-'+i+'.json',mediaType:'application/json',byteSize:blob.size,sha256};identities.push(file);
+    rows.set(artifactId,{artifactId,jobId,blob,...file});
+  }
+  storageRuntime.distinctContextRecord=storageRead({contextManifest:{promptContext:{attachments:[...identities,...identities]}}});
+  storageAccess.length=0;
+  await storageRuntime.projectStore.persistPromptContextFiles(storageRuntime.distinctContextRecord,{job:{JOB_ID:jobId}});
+  const gets=storageAccess.filter(x=>x.kind==='get'&&x.name==='artifacts'),transactions=storageAccess.filter(x=>x.kind==='transaction'&&x.mode==='readonly'&&x.names.includes('artifacts'));
+  console.log(JSON.stringify({promptContextDistinctPressure:{references:258,uniqueFiles:129,artifactReads:gets.length,readonlyTransactions:transactions.length}}));
+  assert(gets.length===129&&transactions.length===1,`Distinct context verification used ${gets.length} reads and ${transactions.length} transactions.`);
+});
+for(const mismatch of ['owner','digest','size','contradictory-reference'])await storageRegression('prompt-context:fresh-verification-'+mismatch,async()=>{
+  const project=await storageRuntime.projectStore.readProject('CONTEXT-READ-PRESSURE'),before=project.projectSha256,rows=storageRows.get('artifacts');
+  const row=[...rows.values()].find(row=>row.jobId===project.job.JOB_ID),changed={...row};
+  if(mismatch==='owner')changed.jobId='ANOTHER-PROJECT';
+  if(mismatch==='digest')changed.sha256='0'.repeat(64);
+  if(mismatch==='size')changed.byteSize++;
+  if(mismatch==='contradictory-reference')project.projectData.generatedPrompts.at(-1).contextManifest.promptContext.attachments[0].byteSize++;
+  rows.set(row.artifactId,changed);storageAccess.length=0;let error;
+  try{await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});}catch(e){error=e;}finally{rows.set(row.artifactId,row);}
+  assert(error?.code==='PROMPT_CONTEXT_INTEGRITY_FAILED',`A later save reused stale context verification after ${mismatch} changed.`);
+  assert(!storageAccess.some(x=>x.kind==='put'&&x.name==='projects'),'Failed context verification reached a canonical project write.');
+  assert((await storageRuntime.projectStore.readProject(project.job.JOB_ID)).projectSha256===before,'Context mismatch changed the stored project.');
+});
+await storageRegression('prompt-context:materialize-shared-missing-bytes-once',async()=>{
+  const project=await storageRuntime.projectStore.readProject('CONTEXT-READ-PRESSURE'),rows=storageRows.get('artifacts'),row=[...rows.values()].find(row=>row.jobId===project.job.JOB_ID);
+  rows.delete(row.artifactId);let materializations=0;const promptEngine=storageRuntime.closedLoopPromptEngine;
+  storageRuntime.closedLoopPromptEngine={...promptEngine,materializePromptContextFiles(...args){materializations++;return promptEngine.materializePromptContextFiles(...args);}};
+  storageAccess.length=0;
+  try{await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});}finally{storageRuntime.closedLoopPromptEngine=promptEngine;}
+  const reads=storageAccess.filter(x=>x.kind==='get'&&x.name==='artifacts'),writes=storageAccess.filter(x=>x.kind==='put'&&x.name==='artifacts'),restored=await storageRuntime.projectStore.getArtifact(row.artifactId);
+  assert(materializations===1&&writes.length===1&&reads.length===3,`Shared missing context was materialized ${materializations} times, written ${writes.length} times and read ${reads.length} times.`);
+  assert(restored.sha256===row.sha256&&await restored.blob.text()===await row.blob.text(),'Context reconstruction changed exact historical bytes.');
+});
+await storageRegression('prompt-context:missing-history-cannot-use-current-content',async()=>{
+  const project=await storageRuntime.projectStore.readProject('CONTEXT-READ-PRESSURE'),before=project.projectSha256,rows=storageRows.get('artifacts'),row=[...rows.values()].find(row=>row.jobId===project.job.JOB_ID);
+  rows.delete(row.artifactId);project.job.EXACT_USER_OBJECTIVE_VERBATIM='Different current objective. '.repeat(3000);let error;
+  try{await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});}catch(e){error=e;}finally{rows.set(row.artifactId,row);}
+  assert(/Prompt context has changed/.test(error?.message),'Missing historical context was silently replaced with current content.');
+  assert((await storageRuntime.projectStore.readProject(project.job.JOB_ID)).projectSha256===before,'Unrecoverable historical context changed the saved project.');
+});
+await storageRegression('prompt-context:historical-eligibility-and-backup-custody',async()=>{
+  const project=await storageRuntime.makeStored('CONTEXT-HISTORICAL'),source=storageRuntime.contextProject.projectData.generatedPrompts[0];
+  project.projectData.generatedPrompts=storageRead([{...source,invalidatedBy:'LATER-INSTRUCTION'},{...source,instructionId:'PRIOR-ENGINE-INSTRUCTION',promptEngineVersion:'PRIOR-ENGINE'}]);
+  storageAccess.length=0;const saved=await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});
+  assert(!storageAccess.some(x=>x.kind==='get'&&x.name==='artifacts'),'Ordinary save changed which historical prompt records require reconstruction.');
+  let error;try{await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}catch(e){error=e;}
+  assert(error?.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH','Complete backup stopped requiring invalidated/older-engine historical context bytes.');
+});
 // File intake must retain its original project, revision, stage and byte owner
 // through every asynchronous boundary. Only the database I/O is substituted.
 vm.runInContext(app.match(/^const artifactIdFor=.*$/m)[0],storageRuntime);

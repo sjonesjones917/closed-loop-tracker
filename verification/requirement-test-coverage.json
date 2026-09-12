@@ -4,7 +4,7 @@
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
   "startingCommit": "feb1303c837b7d4399930f779b63c8bb0c34a0e4",
   "ciBackbone": ".github/workflows/pages.yml",
-  "testMappingCaution": "Mappings identify owners and executable evidence. They do not assert complete specification conformance. User-requested performance behaviors without a direct normative clause have no invented NREQ ID. Exact run/deployment evidence is recorded on PR #1221; physical Safari and approved visual authority remain separate.",
+  "testMappingCaution": "Mappings identify owners and executable evidence. They do not assert complete specification conformance. User-requested performance behaviors without a direct normative clause have no invented NREQ ID. Exact run/deployment evidence is recorded on the corresponding repair PR (baseline #1221); physical Safari and approved visual authority remain separate.",
   "rows": [
     {
       "id": "STAGE-01",
@@ -1214,7 +1214,7 @@
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -2194,6 +2194,40 @@
       ],
       "evidenceGap": "Current CI and deployment links are on PR #1221. This mapping does not establish physical-device capacity, approved visual authority, or all clauses of the cited sections.",
       "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
+    },
+    {
+      "id": "PROMPT-CONTEXT-READ-SNAPSHOT",
+      "requirement": "Diagnosis finding 19: deduplicate prompt-context identities during each save and verify them in one readonly store snapshot with bounded pending requests; preserve historical byte custody, missing-context detection and the canonical write transaction.",
+      "requirementOrigin": "User performance diagnosis, finding 19; specification sections 35.1, 35.3 and 35.5 constrain the repair. No new normative requirement ID is invented for the performance target.",
+      "normativeRequirementIds": [],
+      "sourceLines": [],
+      "productionOwner": [
+        "project-store.js:persistProjectPromptFiles/persistPromptContextRecords/persistPromptContextFiles",
+        "project-store.js:putArtifact/writeProjectRow/requiredProjectArtifactBytes"
+      ],
+      "existingTests": [
+        "verify-project-lifecycle.mjs:prompt-context:shared-identities-one-read-snapshot",
+        "verify-project-lifecycle.mjs:prompt-context:distinct-identities-bounded-snapshot",
+        "verify-all-stage-prompts.mjs:all external operation context materialization",
+        "verify-full-cycle.mjs"
+      ],
+      "negativeAdversarialTests": [
+        "verify-project-lifecycle.mjs:prompt-context:fresh-verification-*",
+        "verify-project-lifecycle.mjs:prompt-context:materialize-shared-missing-bytes-once",
+        "verify-project-lifecycle.mjs:prompt-context:missing-history-cannot-use-current-content",
+        "verify-project-lifecycle.mjs:prompt-context:historical-eligibility-and-backup-custody",
+        "verify-browser-extra.mjs:aborted context snapshot and subsequent worker-save corruption"
+      ],
+      "browserProof": [
+        "verify-browser-extra.mjs:prompt-context-read-snapshot (real IndexedDB, 129 unique identities / 258 references, maximum 64 pending requests, abort recovery)",
+        "verify-browser-extra.mjs:promptContextWorkerSave (real generated instructions, canonical worker save, no stale verification reuse)"
+      ],
+      "deployedProof": [
+        "verify-live.mjs:exact deployed resource bytes",
+        "verify-browser-extra.mjs:prompt-context-read-snapshot"
+      ],
+      "evidenceGap": "Local deterministic I/O counts use substituted storage. Exact-revision CI and deployed Chromium are required; physical-iPhone latency/capacity and approved visual authority remain separate.",
+      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
     }
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",
