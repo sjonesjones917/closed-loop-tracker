@@ -12,6 +12,7 @@ const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evid
 function prompt(stage,operation,scope={}){const prepared=engine.preparePromptContext(p,stage,{operation,scope});const r={...prompts.buildPromptRecord(stage,p,prepared.options),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}
 
 let stage6AuthorInput=null;
+const artifactBatchEquivalence=[];
 // Compare the new bounded registration owner with the retained serial API on
 // real full-cycle snapshots. A fixed clock permits exact canonical/hash equality;
 // the fixture itself keeps its real event ordering and is never mutated here.
@@ -32,7 +33,7 @@ function verifyArtifactRegistrationBatch(label,stage,lineage={}){
     assert(hash.stableStringify(batched)===unchanged,label+': empty or duplicate-only batch changed history/authority.');
   }finally{globalThis.Date=NativeDate;}
   assert(hash.sha256Value(p)===before,label+': equivalence verification mutated the full-cycle fixture.');
-  console.log(JSON.stringify({artifactBatchEquivalence:label,stage,members:members.length,exactCanonicalEquality:true}));
+  artifactBatchEquivalence.push({snapshot:label,stage,members:members.length,exactCanonicalEquality:true});
 }
 verifyArtifactRegistrationBatch('initial-intake',1);
 function data(stage,{operation,stageData={},records={},scope={}}={}){const pr=prompt(stage,operation,scope);if(!Object.keys(stageData).length&&!Object.keys(records).length){const f=schema.STAGE_CONTRACTS[stage].allowedStageData[0];if(f)stageData[f]=schema.STAGE_FIELDS[stage][f].valueType==='BOOLEAN'?true:`fixture-${f.toLowerCase()}`;}
@@ -151,7 +152,7 @@ engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentSc
 const stage30=engine.terminalPrerequisites(p);const terminal=engine.calculateTerminal(p,{expectedRevision:Number(p.revision||0)});assert(engine.recordValue(terminal,'DELIVERY_STATE')==='AUTHORIZED',`Application-owned Stage 30 terminal calculation did not authorize the complete project: ${stage30.reasons.join(' | ')}`);engine.recordDeliveryAttempt(p,{deliveryId:engine.recordId(terminal,'deliveryRecords'),artifactIds:engine.recordValue(terminal,'AUTHORIZED_ARTIFACT_IDS'),result:'SUCCEEDED',operatorAction:'EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS'});complete(30);
 const serialized=JSON.stringify(p),reloaded=JSON.parse(serialized);engine.ensureShape(reloaded);engine.recalculate(reloaded);assert(Object.values(reloaded.stages).every(s=>s.status==='COMPLETE'),'Reload lost completed stages');assert(reloaded.projectData.rawResponses.length>0&&reloaded.projectData.outputReceipts.length>0&&reloaded.projectData.extractionManifests.length>0,'Traceability records missing');
 verifyArtifactRegistrationBatch('authorized-terminal',21,{productId});
-console.log(JSON.stringify({stagesCompleted:30,clarificationCycles:1,confirmedDefects:1,correctedIterationRuns:10,unchangedConfirmationRuns:10,verificationTripleCoverage:engine.coverageMetrics(reloaded).verificationCoverage,release:engine.releaseMetrics(reloaded).determination,artifactIdentity:true,evidenceChains:engine.gate(29,reloaded).complete,reloadIntegrity:true},null,2));
+console.log(JSON.stringify({stagesCompleted:30,clarificationCycles:1,confirmedDefects:1,correctedIterationRuns:10,unchangedConfirmationRuns:10,verificationTripleCoverage:engine.coverageMetrics(reloaded).verificationCoverage,release:engine.releaseMetrics(reloaded).determination,artifactIdentity:true,evidenceChains:engine.gate(29,reloaded).complete,reloadIntegrity:true,artifactBatchEquivalence},null,2));
 
 // Application-derived record values must conform to their canonical declared types.
 {
