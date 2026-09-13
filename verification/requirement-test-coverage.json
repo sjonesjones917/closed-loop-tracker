@@ -2577,7 +2577,8 @@
         "verify-semantic-review-acceptance.mjs:closed enum, missing fields, mixed ACCEPTED with REJECTED/PARTIAL/UNKNOWN/DISAGREED, old pending invalid review, stale unbound correction prompt, atomic save failure, read-only preview, repeated reload",
         "verify-full-cycle.mjs:self/foreign contexts and stale reviewed targets",
         "verify-semantic-review-acceptance.mjs:Stage 01 confirmation uses current gate; challenge contracts exclude author-only accounting; Stage 06 UNKNOWN; current author-change binding; selected saved instruction after project reopen; immediate controlled refinement with correct CAS revision",
-        "verify-semantic-review-acceptance.mjs:all five Stage 01–04 requested-review operations reopen completed stages; preview remains read-only; an older positive review cannot answer a newly requested review"
+        "verify-semantic-review-acceptance.mjs:all five Stage 01–04 requested-review operations reopen completed stages; preview remains read-only; an older positive review cannot answer a newly requested review",
+        "verify-semantic-review-acceptance.mjs:orphaned historical audit records cannot trigger a live continuation or overwrite an imported saved projection; explicit gate correction requests remain supported"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:automatic-stage05-review-and-stage06-proof-review",

@@ -15,6 +15,16 @@ function prepare(project,stage,operation,content){
   const prepared=ingestion.prepare(project,{stage,promptRecord:prompt,text,transport});if(prepared.validation.valid)assert.equal(engine.operationalNextAction(prepared.project,stage).actionType,'REVIEW_PROPOSAL',`Stage ${stage} replaced a pending proposal with another instruction.`);return {...prepared,text};
 }
 function accept(prepared){assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));return ingestion.commit(prepared.project,prepared.proposal.proposalId).project;}
+// An orphaned historical audit row is not a live saved-instruction attempt.
+// Opening a backup may recalculate its old display without rewriting its audit projection.
+{
+  const p=core.createBlankState('JOB-ORPHAN-RESPONSE-AUDIT');engine.ensureShape(p);engine.recalculate(p);
+  p.projectData.rawResponses.push({rawResponseId:'RAW-OLD-PROJECTION',stage:1,completeRawResponse:'Exact original AUDIT-TAIL'});
+  engine.recalculate(p);const before=hash.sha256Value(p);
+  assert.equal(ingestion.prepareStageContinuation(p,{stage:1,preview:true}),null,'An orphaned audit record requested a new live instruction.');
+  assert.equal(ingestion.prepareStageContinuation(p,{stage:1}),null,'An orphaned audit record changed the saved backup projection.');
+  assert.equal(hash.sha256Value(p),before,'Inspecting historical audit data mutated the project.');
+}
 // A saved operator-requested review must reopen its current authoring stage.
 // Merely previewing that review cannot mutate or reopen accepted work.
 for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[2,'SEARCH_ADEQUACY_REVIEW'],[3,'SEMANTIC_CHALLENGE'],[4,'DISPOSITION_CHALLENGE'],[4,'ATOMICITY_CHALLENGE']]){
@@ -283,4 +293,4 @@ engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.raw
 assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',requestedReviewReopensStage:true,priorReviewCannotAnswerNewRequest:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,reopenedInstructionSelected:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,automaticLegacyRecovery:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',orphanAuditIsNotLiveAttempt:true,requestedReviewReopensStage:true,priorReviewCannotAnswerNewRequest:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,reopenedInstructionSelected:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,automaticLegacyRecovery:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
