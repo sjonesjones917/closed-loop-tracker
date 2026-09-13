@@ -14,6 +14,9 @@ const CASE_FOLDING_BLOB_SHA1='69c5c64b4c6a124f4608722db723a9e32667f190';
 const BASE32HEX_ALPHABET='0123456789abcdefghijklmnopqrstuv';
 
 function assertUnicodeScalars(value,path){
+  // Native scalar validation avoids walking accumulated text in JavaScript.
+  // Keep the same rejection and diagnostic path on older supported engines.
+  if(typeof value.isWellFormed==='function'&&value.isWellFormed())return value;
   for(let i=0;i<value.length;i++){
     const unit=value.charCodeAt(i);
     if(unit>=0xD800&&unit<=0xDBFF){
@@ -31,52 +34,54 @@ function compareUnicodeScalarSequence(a,b){
   return (i<left.length?1:0)-(j<right.length?1:0);
 }
 function* canonicalChunks(value){
-  const seen=new WeakSet();
-  function* stringChunks(input,path){
-    const text=assertUnicodeScalars(String(input),path);yield '"';
-    for(let start=0;start<text.length;){let end=Math.min(start+16384,text.length);if(end<text.length&&text.charCodeAt(end-1)>=0xD800&&text.charCodeAt(end-1)<=0xDBFF)end--;yield JSON.stringify(text.slice(start,end)).slice(1,-1);start=end;}
-    yield '"';
-  }
-  function* serialize(input,path='$'){
-    if(input===null){yield 'null';return;}
-    const type=typeof input;
-    if(type==='string'){yield* stringChunks(input,path);return;}
-    if(type==='boolean'){yield input?'true':'false';return;}
-    if(type==='number'){
-      if(!Number.isFinite(input)||Object.is(input,-0)||!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}.`);
-      yield String(input);return;
-    }
-    if(type!=='object')throw new TypeError(`Cannot canonically hash ${type} at ${path}.`);
-    if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
-    seen.add(input);
-    try{
-      if(Array.isArray(input)){
-        const keys=Object.keys(input);
-        for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
-        if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
-        yield '[';for(let index=0;index<input.length;index++){if(index)yield ',';yield* serialize(input[index],`${path}[${index}]`);}yield ']';return;
-      }
-      const prototype=Object.getPrototypeOf(input);
-      if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
-      if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
-      const keys=Object.keys(input);for(const key of keys)assertUnicodeScalars(key,`${path} object key`);keys.sort(compareUnicodeScalarSequence);
-      yield '{';let index=0;
-      for(const key of keys){
-        const descriptor=Object.getOwnPropertyDescriptor(input,key);
+  // Traverse once and yield only bounded output, rather than suspending a
+  // nested generator for every delimiter at every level of accumulated data.
+  const seen=new WeakSet(),stack=[{kind:'value',value,path:'$'}];let pending='';
+  while(stack.length){
+    const frame=stack.at(-1),input=frame.value,path=frame.path;
+    if(frame.kind==='string'){
+      let end=Math.min(frame.index+16384,input.length);
+      if(end<input.length&&input.charCodeAt(end-1)>=0xD800&&input.charCodeAt(end-1)<=0xDBFF)end--;
+      pending+=JSON.stringify(assertUnicodeScalars(input.slice(frame.index,end),path)).slice(1,-1);frame.index=end;
+      if(end===input.length){pending+='"';stack.pop();}
+    }else if(frame.kind==='colon'){pending+=':';stack.pop();}
+    else if(frame.kind==='array'){
+      if(frame.index===input.length){pending+=']';seen.delete(input);stack.pop();}
+      else{const index=frame.index++;if(index)pending+=',';stack.push({kind:'value',value:input[index],path:`${path}[${index}]`});}
+    }else if(frame.kind==='object'){
+      if(frame.index===frame.keys.length){pending+='}';seen.delete(input);stack.pop();}
+      else{
+        const key=frame.keys[frame.index++],descriptor=Object.getOwnPropertyDescriptor(input,key);
         if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
-        if(index++)yield ',';yield* stringChunks(key,`${path} object key`);yield ':';yield* serialize(descriptor.value,`${path}.${key}`);
+        if(frame.index>1)pending+=',';pending+='"';
+        stack.push({kind:'value',value:descriptor.value,path:`${path}.${key}`},{kind:'colon'},{kind:'string',value:key,index:0,path:`${path} object key`});
       }
-      yield '}';
-    }finally{seen.delete(input);}
-  }
-  // Canonical consumers include asynchronous project reads and package streams.
-  // Emitting every quote, key and delimiter separately makes accumulated records
-  // allocate hundreds of thousands of buffers/promises. Batch at this shared
-  // source so all consumers receive the same exact preimage in bounded pieces.
-  let pending='';
-  for(const chunk of serialize(value)){
-    if(pending.length+chunk.length>16384){if(pending)yield pending;pending='';}
-    if(chunk.length>=16384)yield chunk;else pending+=chunk;
+    }else{
+      stack.pop();
+      if(input===null)pending+='null';
+      else if(typeof input==='string'){pending+='"';stack.push({kind:'string',value:input,index:0,path});}
+      else if(typeof input==='boolean')pending+=input?'true':'false';
+      else if(typeof input==='number'){
+        if(!Number.isFinite(input)||Object.is(input,-0)||!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}.`);
+        pending+=String(input);
+      }else{
+        if(typeof input!=='object')throw new TypeError(`Cannot canonically hash ${typeof input} at ${path}.`);
+        if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
+        seen.add(input);const keys=Object.keys(input);
+        if(Array.isArray(input)){
+          for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
+          if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
+          pending+='[';stack.push({kind:'array',value:input,index:0,path});
+        }else{
+          const prototype=Object.getPrototypeOf(input);
+          if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
+          if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
+          for(const key of keys)assertUnicodeScalars(key,`${path} object key`);keys.sort(compareUnicodeScalarSequence);
+          pending+='{';stack.push({kind:'object',value:input,index:0,keys,path});
+        }
+      }
+    }
+    if(pending.length>=16384){yield pending;pending='';}
   }
   if(pending)yield pending;
 }
@@ -91,7 +96,7 @@ function createSha256(){
   function process(view,offset){
     for(let i=0;i<16;i++)w[i]=view.getUint32(offset+i*4,false);
     for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];const s0=(rightRotate(x,7)^rightRotate(x,18)^(x>>>3))>>>0;const s1=(rightRotate(y,17)^rightRotate(y,19)^(y>>>10))>>>0;w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
-    let [a,b,c,d,e,f,g,hh]=h;
+    let a=h[0],b=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
     for(let i=0;i<64;i++){const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i]+w[i])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
     h[0]=(h[0]+a)>>>0;h[1]=(h[1]+b)>>>0;h[2]=(h[2]+c)>>>0;h[3]=(h[3]+d)>>>0;h[4]=(h[4]+e)>>>0;h[5]=(h[5]+f)>>>0;h[6]=(h[6]+g)>>>0;h[7]=(h[7]+hh)>>>0;
   }
