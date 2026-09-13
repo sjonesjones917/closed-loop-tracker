@@ -819,17 +819,20 @@
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
-        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands"
+        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
+        "workflow-engine.js:correctedIterationProofView/reasons"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-definition-of-done.mjs",
-        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion",
+        "verify-production-baseline-authority.mjs through stage19-fixture.mjs:corrected proof retained across unchanged-confirmation startup"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "stage19-fixture.mjs:empty confirmation cannot pass; missing corrected-iteration observations still block convergence"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -862,7 +865,8 @@
         "workflow-engine.js:gate/deriveStageData",
         "project-store.js:validateProjectIntegrity",
         "workflow-engine.js:stageTestExecutionPlan/executionHandoff",
-        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands"
+        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
+        "workflow-engine.js:correctedIterationProofView/reasons"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -871,13 +875,15 @@
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
         "verify-full-cycle.mjs:application-owned context preparation without manually naming an external conversation",
         "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion",
-        "verify-full-cycle.mjs:automatic saved continuation, next unfinished run and composite operation sequence"
+        "verify-full-cycle.mjs:automatic saved continuation, next unfinished run and composite operation sequence",
+        "verify-production-baseline-authority.mjs through stage19-fixture.mjs:corrected proof retained across unchanged-confirmation startup"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
         "verify-complete.mjs:per-run handoff excludes future final-product reports; verify-final-product-timing.mjs:phase and due-stage boundaries",
-        "verify-full-cycle.mjs:no nonexistent proposal review, no completed-run repetition, unrelated reserved run instruction preserved"
+        "verify-full-cycle.mjs:no nonexistent proposal review, no completed-run repetition, unrelated reserved run instruction preserved",
+        "stage19-fixture.mjs:empty confirmation cannot pass; missing corrected-iteration observations still block convergence"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -908,17 +914,20 @@
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
-        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands"
+        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
+        "workflow-engine.js:correctedIterationProofView/reasons"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-production-baseline-authority.mjs",
-        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion",
+        "verify-production-baseline-authority.mjs through stage19-fixture.mjs:corrected proof retained across unchanged-confirmation startup"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
-        "verify-definition-of-done.mjs"
+        "verify-definition-of-done.mjs",
+        "stage19-fixture.mjs:empty confirmation cannot pass; missing corrected-iteration observations still block convergence"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
@@ -2597,15 +2606,18 @@
       "productionOwner": [
         "workflow-engine.js:operationalNextAction/iterationNextOperation",
         "response-ingestion.js:prepareStageContinuation",
-        "app-core.js:selectStageContinuation"
+        "app-core.js:selectStageContinuation",
+        "workflow-engine.js:correctedIterationProofView/reasons"
       ],
       "existingTests": [
         "verify-full-cycle.mjs:30-stage actual ingestion/commit/command/reload cycle with saved external continuations",
-        "verify-all-stage-prompts.mjs:all 50 external operation contracts"
+        "verify-all-stage-prompts.mjs:all 50 external operation contracts",
+        "verify-production-baseline-authority.mjs through stage19-fixture.mjs:corrected proof retained across unchanged-confirmation startup"
       ],
       "negativeAdversarialTests": [
         "verify-full-cycle.mjs:Stage 16 nonexistent proposal, Stage 17/19 tenth-run handoff, completed-run repetition, unrelated parallel reservation",
-        "verify-ingestion.mjs:scope/operation confusion and application-only operation rejection"
+        "verify-ingestion.mjs:scope/operation confusion and application-only operation rejection",
+        "stage19-fixture.mjs:empty confirmation cannot pass; missing corrected-iteration observations still block convergence"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:shared file/validate/save/continuation/reload controls",
