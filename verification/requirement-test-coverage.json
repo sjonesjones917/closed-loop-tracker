@@ -1683,7 +1683,7 @@
       ],
       "evidenceGap": "Local production-path regressions pass. Require exact final source CI, deployed byte identity, and deployed Chromium. No physical-iPhone or final visual approval is inferred.",
       "id": "IMPORT-ACTIVATION",
-      "requirement": "Section 35.5: import validates identities and bytes before activation; failed import leaves existing projects unchanged. A later view-refresh failure must retain and accurately describe a successful commit.",
+      "requirement": "Section 35.5: import validates identities and bytes before activation; failed import leaves existing projects unchanged. A later view-refresh failure must retain and accurately describe a successful commit. Original valid records and saved stage projections survive restoration; cached completion never substitutes for current application recalculation. Canonical-record and current release determination checks remain enforced.",
       "normativeRequirementIds": [],
       "sourceLines": [
         2979,
@@ -1696,14 +1696,17 @@
       "existingTests": [
         "verify-project-lifecycle.mjs",
         "verify-browser-extra.mjs",
-        "verify-mobile-stage-action.mjs"
+        "verify-mobile-stage-action.mjs",
+        "verify-project-lifecycle.mjs:import:replay-saved-projections-without-fabricating-gates"
       ],
       "negativeAdversarialTests": [
         "verify-project-lifecycle.mjs:pre-commit rejection preserves selected project/list; post-commit refresh failure retains committed revision and performs no all-project reload",
-        "verify-browser-extra.mjs:post-commit readonly transaction fault, accurate notice, exact restored bytes, reload"
+        "verify-browser-extra.mjs:post-commit readonly transaction fault, accurate notice, exact restored bytes, reload",
+        "verify-project-lifecycle.mjs:import:saved-projection-does-not-bypass-record-or-release-checks"
       ],
       "browserProof": [
-        "verify-browser-extra.mjs:storageReliabilityBrowser/importSurvivedReload"
+        "verify-browser-extra.mjs:storageReliabilityBrowser/importSurvivedReload",
+        "verify-browser-extra.mjs:older-derived-projection-ui-restore: preserve original payload, recompute current stage, reject cached completion authority"
       ]
     },
     {
@@ -1975,7 +1978,7 @@
     },
     {
       "id": "CANONICAL-HASH-BATCHING",
-      "requirement": "Reduce transient hashing allocations while preserving the exact controlling canonical serialization, scalar key order, numeric restrictions and digest.",
+      "requirement": "Reduce accumulated-project serialization, hashing and transient work while preserving the exact controlling canonical serialization, scalar key order, numeric restrictions and digest.",
       "normativeRequirementIds": [
         "NREQ-2782d9ffebe3a79637b31fc8b6b4ecdb",
         "NREQ-f2b99356377ab41376516cc4472310fd",
@@ -2013,7 +2016,10 @@
       "existingTests": [
         "verify-hash.mjs",
         "verify-deployment-manifest.mjs",
-        "verify-project-lifecycle.mjs:accumulation:selected-stage4-read-buffers"
+        "verify-project-lifecycle.mjs:accumulation:selected-stage4-read-buffers",
+        "verify-project-lifecycle.mjs:export:verified-snapshot-hash-reused",
+        "verify-project-lifecycle.mjs:export:concurrent-save-keeps-snapshot-identity",
+        "verify-project-lifecycle.mjs:read:revision-metadata-must-match-verified-project"
       ],
       "negativeAdversarialTests": [
         "independent Node crypto comparison",
@@ -2021,17 +2027,22 @@
         "bounded encoding and encoder allocation count",
         "asynchronous canonical buffer allocation regression",
         "independently encoded JSON at 16383/16384/16385-character Unicode/escape boundaries",
-        "100 real Stage 04 failed-response/reservation cycles retain exact raw and instruction history"
+        "100 real Stage 04 failed-response/reservation cycles retain exact raw and instruction history",
+        "first bounded chunk does not scan the complete accumulated text",
+        "native and fallback scalar validation reject malformed tails after earlier chunks",
+        "nested/shared/empty/escaped values match independently encoded JSON and native crypto",
+        "concurrent save cannot replace the export snapshot digest; contradictory stored revision metadata is quarantined"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:worker digest equality",
-        "verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports — selected accumulated project reload, six views, manifest/instruction/complete export and restore"
+        "verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports — selected accumulated project reload, six views, manifest/instruction/complete export and restore",
+        "verify-browser-extra.mjs:large-response-history-handoff-and-ui-restore: 25 real failed responses of 800,000 characters, selected reload, handoff and UI complete-package restoration"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser-extra.mjs"
       ],
-      "evidenceGap": "DP-71 fixes fragment allocation at the shared canonical stream source. Exact CI/deployed evidence belongs to the repair PR. The Chromium 10-second regression ceiling is a test environment guard, not a specification latency requirement or physical-iPhone acceptance. The reported 35-second device startup remains unverified on that device.",
+      "evidenceGap": "DP-72 and DP-73 use the supplied actual backup locally as well as permanent synthetic regressions. Exact CI/deployed evidence belongs to the repair PR. Local production timings use substituted database I/O and are not physical-iPhone evidence or a universal performance bound. Physical Safari and approved visual authority remain required.",
       "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION",
       "stageScope": [
         1,

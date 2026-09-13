@@ -5,6 +5,15 @@ vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
 const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
 const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){ok=e instanceof TypeError;}assert(ok,`${name} must be rejected.`);};
+// A single accumulated response must not be scanned in full before the first
+// bounded canonical chunk can reach the cooperative hashing/export consumer.
+{
+  const text='history '.repeat(250000)+'é🙂 EXACT-TAIL',original=String.prototype.charCodeAt;let inspected=0;
+  String.prototype.charCodeAt=function(index){if(this.length>65536)inspected++;return original.call(this,index);};
+  try{const stream=h.canonicalChunks({raw:text});assert(!stream.next().done,'Canonical response stream was empty.');stream.return();}
+  finally{String.prototype.charCodeAt=original;}
+  assert(inspected<=65536,`The first canonical chunk scanned ${inspected} code units of an accumulated response before yielding.`);
+}
 assert(h.sha256Text('')==='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855','empty SHA-256 vector failed');
 assert(h.sha256Text('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad','abc SHA-256 vector failed');
 // Project integrity must not allocate a full UTF-8 copy of accumulated history.
@@ -42,6 +51,24 @@ for(const size of [16383,16384,16385]){
   assert(await h.sha256Chunks(h.canonicalChunks(value))===digest,`Canonical streaming digest changed at ${size}.`);
   async function* asynchronousSource(){yield* h.canonicalChunks(value);}
   assert(await h.sha256Chunks(asynchronousSource())===digest,`Asynchronous package source digest changed at ${size}.`);
+}
+// The fallback and native validation routes must both reject a malformed tail
+// after earlier chunks were consumed, including split surrogate boundaries.
+{
+  const native=String.prototype.isWellFormed;
+  try{for(const fallback of [false,true]){
+    if(fallback)String.prototype.isWellFormed=undefined;
+    for(const size of [16383,16384,16385,131072]){
+      const valid='x'.repeat(size)+'🙂é';assert(h.sha256Value(valid)===createHash('sha256').update(JSON.stringify(valid)).digest('hex'),'Chunk scalar validation changed exact Unicode bytes.');
+      for(const tail of ['\uD800','\uDC00']){let rejected=false;try{await h.sha256Chunks(h.canonicalChunks(valid+tail));}catch(error){rejected=error instanceof TypeError;}assert(rejected,'An invalid accumulated-text tail produced a successful canonical digest.');}
+    }
+  }}finally{if(native===undefined)delete String.prototype.isWellFormed;else String.prototype.isWellFormed=native;}
+}
+{
+  const shared={a:'é🙂',b:[null,true,17]},value={a:Array.from({length:300},()=>({a:shared,b:{a:[],b:{},c:'\\\"\n'.repeat(25)}})),b:shared};
+  const expected=JSON.stringify(value);assert([...h.canonicalChunks(value)].join('')===expected,'Canonical traversal changed nested, shared, empty or escaped values.');
+  assert(await h.sha256Chunks(h.canonicalChunks(value))===createHash('sha256').update(expected).digest('hex'),'Nested canonical traversal changed the independent digest.');
+  const cycle={a:shared};cycle.b={a:cycle};reject('nested repeated reference cycle',()=>cycle);
 }
 // A file is not a small in-memory buffer. Every file hash must read bounded
 // slices, including a tail that is not aligned with a SHA-256 block.

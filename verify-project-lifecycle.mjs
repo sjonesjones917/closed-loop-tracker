@@ -102,7 +102,7 @@ assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz'
 // boundary replaced. The browser suite supplies real IndexedDB coverage.
 const filePackageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
 vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>fixtureProject;listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
 vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
 const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
 for(let i=0;i<artifactSizes.length;i++){
@@ -204,6 +204,7 @@ storageRuntime.openStorageTransaction=async(names,mode)=>{
 };
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
   let source=fs.readFileSync(file,'utf8');
+  if(file==='hash.js')source=source.replace('function* canonicalChunks(value){','function* canonicalChunks(value){if(value?.projectData)globalThis.projectSerializations=(globalThis.projectSerializations||0)+1;');
   // Observe the existing calculation owner without replacing its rules.
   if(file==='workflow-engine.js')source=source.replace('function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction}={}){','function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction}={}){globalThis.registrationRecalculations=(globalThis.registrationRecalculations||0)+1;');
   vm.runInContext(source,storageRuntime,{filename:file});
@@ -223,6 +224,56 @@ for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectU
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
+await storageRegression('export:verified-snapshot-hash-reused',async()=>{
+  const saved=await storageRuntime.makeStored('SNAPSHOT-EXPORT');storageRuntime.projectSerializations=0;
+  const blob=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID),passes=storageRuntime.projectSerializations;
+  const decoded=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  assert(decoded.packageManifest.projectSha256===saved.projectSha256,'Export lost the exact verified snapshot identity.');
+  assert(passes<=3,`Complete export serialized the entire project ${passes} times; its verified snapshot digest was rebuilt.`);
+});
+await storageRegression('read:revision-metadata-must-match-verified-project',async()=>{
+  const saved=await storageRuntime.makeStored('REVISION-METADATA'),row=storageRows.get('projects').get(saved.job.JOB_ID);
+  storageRows.get('projects').set(saved.job.JOB_ID,{...row,revision:row.revision+1});
+  let error;try{await storageRuntime.projectStore.readProject(saved.job.JOB_ID);}catch(e){error=e;}
+  assert(error?.code==='PROJECT_REVISION_MISMATCH','Reading a row changed its revision after verifying a different canonical hash.');
+});
+await storageRegression('export:concurrent-save-keeps-snapshot-identity',async()=>{
+  const saved=await storageRuntime.makeStored('EXPORT-CONCURRENT'),originalOpen=storageRuntime.openStorageTransaction;let intervened=false;
+  storageRuntime.openStorageTransaction=async(names,mode)=>{
+    if(names==='artifacts'&&mode==='readonly'&&!intervened){intervened=true;const newer=storageRead(saved);newer.newerWork='KEEP';await storageRuntime.projectStore.writeProject(newer,{expectedProjectRevision:saved.revision});}
+    return originalOpen(names,mode);
+  };
+  let backup;try{backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}finally{storageRuntime.openStorageTransaction=originalOpen;}
+  const body=JSON.parse(await new Response(backup.stream().pipeThrough(new DecompressionStream('gzip'))).text()),after=await storageRuntime.projectStore.readProject(saved.job.JOB_ID);
+  assert(intervened&&after.newerWork==='KEEP'&&body.project.newerWork===undefined,'Export lost its selected snapshot or overwrote concurrent work.');
+  assert(body.packageManifest.projectSha256===saved.projectSha256&&body.packageManifest.projectSha256===globalThis.closedLoopHash.sha256Value(body.project),'Export reused the digest of a different saved revision.');
+});
+await storageRegression('import:replay-saved-projections-without-fabricating-gates',async()=>{
+  const saved=await storageRuntime.makeStored('SAVED-PROJECTION'),original=storageRead(saved);delete original.projectSha256;
+  original.job.CURRENT_STAGE='STAGE 30';original.stages[1].status='COMPLETE';original.stages[1].derivedData=storageRead({STAGE_DECISION:'PASS',historicalCalculation:'PRESERVE'});
+  original.projectData.rawResponses.push(storageRead({rawResponseId:'RAW-PROJECTION',completeRawResponse:'Original response é🙂 EXACT-TAIL',stage:1}));
+  const row=storageRows.get('projects').get(saved.job.JOB_ID);
+  storageRows.get('projects').set(saved.job.JOB_ID,{...row,project:original,projectSha256:storageRuntime.projectStore.projectSha256(original)});
+  const backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);
+  const restored=await storageRuntime.projectStore.importPackage(backup),comparison=storageRead(restored);delete comparison.projectSha256;comparison.revision=original.revision;
+  assert(storageRuntime.projectStore.projectSha256(comparison)===storageRuntime.projectStore.projectSha256(original),'Restore rewrote original records or their saved audit projection.');
+  const displayed=storageRuntime.ensureState(restored);
+  assert(displayed.job.CURRENT_STAGE==='STAGE 01'&&displayed.stages[1].status!=='COMPLETE','Restored cached completion fabricated a passed stage.');
+  assert(displayed.projectData.rawResponses.at(-1).completeRawResponse.endsWith('é🙂 EXACT-TAIL'),'Restoring a saved projection lost exact raw history.');
+});
+await storageRegression('import:saved-projection-does-not-bypass-record-or-release-checks',async()=>{
+  const saved=await storageRuntime.makeStored('IMPORT-PROJECTION-NEGATIVES');
+  for(const kind of ['record','release']){
+    const project=storageRead(saved);delete project.projectSha256;project.job.CURRENT_STAGE='STAGE 30';
+    if(kind==='record')project.projectData.requirements.push(storageRead({id:'REQ-INVALID',fields:{REQ_ID:'REQ-INVALID',OBLIGATION:17}}));
+    else project.projectData.releaseRecords.push(storageRead({id:'RELEASE-FORGED',active:true,fields:{RELEASE_ID:'RELEASE-FORGED',DETERMINATION:'ACCEPTED'}}));
+    const body={schema:'closed-loop-project-package/1',projectSchema:project.schema,workflow:project.workflow,responseSchema:'closed-loop-stage-response/3',project,artifacts:[],packageManifest:{jobId:saved.job.JOB_ID,artifactCount:0,artifacts:[],projectSha256:storageRuntime.projectStore.projectSha256(project)},exportedAt:'2026-09-13T00:00:00.000Z'};
+    const packageSha256=globalThis.closedLoopHash.sha256Value(JSON.parse(JSON.stringify(body))),blob=await new Response(new Blob([JSON.stringify({...body,packageSha256})]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
+    let error;try{await storageRuntime.projectStore.importPackage(blob);}catch(e){error=e;}
+    assert(error?.code==='PROJECT_INTEGRITY_FAILED'&&error.issues.some(issue=>issue.includes(kind==='record'?'Expected STRING':'release determination')),'Saved projection compatibility bypassed '+kind+' validation.');
+    assert((await storageRuntime.projectStore.readProject(saved.job.JOB_ID)).projectSha256===saved.projectSha256,'Rejected import changed existing canonical work.');
+  }
+});
 await storageRegression('accumulation:selected-stage4-read-buffers',async()=>{
   await vm.runInContext([evidence,stage04AcceptanceFixture,accumulatedStage04Fixture].map(fn=>fn.toString()).join('\n')+`\n(async()=>{globalThis.accumulatedProject=await accumulatedStage04Fixture({core,schema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion});})()`,storageRuntime);
   const saved=await storageRuntime.projectStore.writeProject(storageRuntime.accumulatedProject,{expectedProjectRevision:0,createOnly:true,selectProject:false});
