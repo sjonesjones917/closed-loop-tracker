@@ -80,6 +80,7 @@ jobs:
           set -euo pipefail
           node build-test-project.mjs
           node verify.mjs
+          node verify-proposal-acceptance-memory.mjs
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f app.js
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"

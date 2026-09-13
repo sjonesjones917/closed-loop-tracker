@@ -34,7 +34,7 @@ for(const token of [
 
 // Proposal acceptance must bind prompt/scope/revision and revalidate before mutation.
 for(const token of ['projectRevision','promptEngineVersion','instructionId','bodySha256','contractSha256','contextSignature','scopeSha256','referencedRecordHashes','STALE_PROPOSAL'])assert(ingestion.includes(token),`Proposal precondition route missing ${token}.`);
-assert(ingestion.includes('validateEnvelope(shadow,proposal.envelope'),`Proposal acceptance does not visibly revalidate the envelope before commit.`);
+assert(ingestion.includes('ensureProposalCurrent(next,proposal)')&&ingestion.includes('validateEnvelope(project,proposal.envelope'),`Proposal acceptance does not visibly revalidate the envelope before commit.`);
 
 // Every accepted agent value/relationship must have an extraction-manifest route.
 for(const token of ['jsonPointer','rawValueHash','canonicalCollection','canonicalRecordId','canonicalField','relationshipTargetId','evidenceIds','temporaryResponseKey'])assert(ingestion.includes(token),`Extraction provenance route missing ${token}.`);
