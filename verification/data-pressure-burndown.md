@@ -430,3 +430,50 @@ PR #1228 was completed and deployed before this repair. The user's next screensh
 | DP-77 | The live original project reproduces the screenshot. The new `verify-project-lifecycle.mjs` production UI regression fails on unchanged c9cd67a3: `Stage 1: completion reasons bypass the collapsed shared details control.` The same renderer serves all 30 stages. A second production UI regression also failed: `Accumulated action explanation bypassed the bounded shared text disclosure.` | Add a list presentation to the existing details owner and route the three diagnostic collections through it. Closed lists retain the original array reference without rendering its contents; opening renders at most 20 numbered, escaped reasons. Long single reasons use the existing bounded text detail. Local regression checks 603 reasons in exact order, all 30 stages, no canonical mutation, analogous storage/executor warnings, success status and Stage 01 human confirmation. Existing mobile Chromium verifies real engine reasons, collapsed defaults at all 30 stages, both arrow destinations, every page, body release and reopening. |
 
 This is a presentation and accumulated-DOM repair. It does not change completion conditions, response validation, canonical records, export bytes, styling rules or the existing arrow implementation. The complete reason list remains available page by page. Interactive human-answer fields and file/action controls are separate from diagnostic collections; this repair does not remove or collapse required operator inputs. The requirement matrix extends the existing MOBILE-VIEW and SAFE-RENDER rows and maps the common gate presentation across the existing 30 stage rows. Full CI, merge, exact deployed bytes and live original-project browser evidence are recorded on the repair PR and #1209. Physical-iPhone Safari acceptance, approved visual-baseline authority and remaining whole-project memory/startup scope stay open.
+
+## Context export on the first preview (DP-78)
+
+The user identified **Export context** as the button that appears only after exporting a manifest or instruction. On `044b907030db0351b58caaca6becfa3e74fdb8f6`, `workflow` passes only `savedPrompt` to `promptContextMarkup`. The initial preview already contains the exact required-attachment metadata, but the UI ignores it. Consequently a required handoff action and its explanation are absent until another action commits the instruction. Export context already uses the same `promptExport` / `savePromptRecord` coordinator as the instruction and manifest; there is no technical need for a different export to happen first.
+
+| Surface / owner | Affected behavior and repair |
+| --- | --- |
+| Workflow, generated instruction: `workflow`, `currentStagePrompt`, `promptContextMarkup` | Show required context from the current saved instruction or the already-built current preview. Do not rebuild, serialize, or persist the project merely to expose the button. |
+| Preview identity: `promptPreviewKey`, `currentPromptPreview` | Share the existing project-reference, revision, stage, operation and scope key. A previous project, revision, stage or lane cannot supply the displayed context requirement. |
+| All three handoff actions: `promptExport`, `savePromptRecord`, `exportPromptContext` | Context can be the first action. The existing coordinator commits one controlling instruction/reservation and reads verified context bytes. Context export now refreshes the saved-instruction display just as the instruction and manifest exports do. Subsequent exports retain that same identity. |
+| Unavailable operations, application/human/operator actions, inline-only prompts | Do not expose a context export from stale preview metadata. No execution gate or context threshold changes. |
+| Overview, Records, Files, Project, Release | No second context-export renderer exists in these views. Their existing shared storage/export paths and record disclosures remain covered by CI. |
+
+The production registry has **50 external operations across 25 stages**. Every one can require the same attached-context transport when current authorized data exceeds the existing inline limits; `verify-all-stage-prompts.mjs` already exercises that condition for every operation. The shared UI repair applies to these exact lanes:
+
+| Stage | External operations |
+| --- | --- |
+| 01 | COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE |
+| 02 | COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH |
+| 03 | COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH |
+| 04 | COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS |
+| 05 | COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET |
+| 06 | COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE |
+| 07 | COMPLETE, EXECUTE_FAILURE_TEST |
+| 08, 09 | COMPLETE |
+| 11 | EXECUTE_RUN |
+| 12 | VERIFY |
+| 13 | COMPARE |
+| 14 | ROOT_CAUSE |
+| 15 | COMPLETE, EXECUTE_REGRESSION |
+| 16 | CORRECT |
+| 17 | EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT |
+| 19 | EXECUTE_RUN, VERIFY, COMPARE, REGRESSION_VERIFY |
+| 21 | COMPLETE |
+| 22 | EXECUTE_EXTERNAL_TEST |
+| 23, 24, 25 | COMPLETE |
+| 26 | COMPLETE, SEMANTIC_REVIEW, RECONCILE |
+| 27 | ADVISORY_REVIEW |
+| 29 | INVESTIGATE_MISSING_EVIDENCE |
+
+Stages 10, 18, 20, 28 and 30 have no external-instruction operation. The other non-external lanes within the listed stages also remain excluded.
+
+| Defect | Failing evidence | Repair and permanent regression |
+| --- | --- | --- |
+| DP-78 | The complete production UI regression fails on unchanged `044b9070`: `Required Export context is missing until another export saves the instruction.` A separate replay of the original supplied backup reproduces Stage 05 / SEMANTIC_REVIEW with one required context file, no saved instruction, and no Export context button. | Reuse the current preview metadata and refresh after context-first export. The same supplied-project replay now shows the button with exactly one preview build and unchanged canonical state. `verify-file-first-operator.mjs` proves first-preview visibility, no commit, cache reuse, all 29 unavailable future stages, revision changes and project changes. The existing Stage 03 accumulated-data browser transfer now exports context first, checks the saved display, one reservation/revision increment, matching instruction/context digests, stable subsequent exports, reload and complete-backup custody. |
+
+The existing PROMPT-TRANSPORT and FILE-FIRST coverage rows map the new evidence gap to these owners and regressions. Local file-first, lifecycle, architecture and all-50-operation prompt-pressure checks pass. Full CI, Chromium, merge and exact deployed proof are recorded on the repair PR and #1209. Physical-iPhone Safari acceptance and approved visual-baseline authority remain open on the exact final deployed revision.
