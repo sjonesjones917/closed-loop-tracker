@@ -16,6 +16,16 @@ const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){
 }
 assert(h.sha256Text('')==='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855','empty SHA-256 vector failed');
 assert(h.sha256Text('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad','abc SHA-256 vector failed');
+// The package compressor and digest consume the same already-encoded bytes.
+// Byte chunks may split a UTF-8 scalar or use a non-zero buffer offset.
+{
+  const bytes=new TextEncoder().encode('é🙂\\\"\n'.repeat(12000)+'EXACT-BYTE-TAIL');
+  for(const step of [1,63,65535]){
+    async function* source(){yield 'prefix:';for(let offset=0;offset<bytes.length;offset+=step)yield bytes.subarray(offset,offset+step);yield new Uint8Array(0);yield ':suffix';}
+    const expected=createHash('sha256').update('prefix:').update(bytes).update(':suffix').digest('hex');
+    assert(await h.sha256Chunks(source())===expected,`Encoded package chunks changed the native SHA-256 preimage at ${step}.`);
+  }
+}
 // Project integrity must not allocate a full UTF-8 copy of accumulated history.
 const NativeEncoder=globalThis.TextEncoder;let largestEncoding=0;
 globalThis.TextEncoder=class extends NativeEncoder{encode(text){largestEncoding=Math.max(largestEncoding,String(text).length);return super.encode(text);}};

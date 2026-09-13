@@ -1433,27 +1433,36 @@
         "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging",
         "project-store.js:requiredProjectArtifactBytes/assertPackageArtifactCustody/verifyProjectArtifacts",
         "app-core.js:#import-file commit and refresh boundary",
-        "project-store.js:readPackageJson/base64BlobToBlob; original package format with streamed decoded strings"
+        "project-store.js:readPackageJson/base64BlobToBlob; original package format with streamed decoded strings",
+        "project-store.js:compressPackage; hash.js:sha256Chunks shared encoded-byte consumption"
       ],
       "existingTests": [
         "verify-project-lifecycle.mjs",
         "verify-full-cycle.mjs",
         "verify-hash.mjs:bounded Blob reads and independent crypto oracle",
-        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle"
+        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle",
+        "verify-project-lifecycle.mjs:export:one-file-pass-after-integrity-verification",
+        "verify-project-lifecycle.mjs:execution-package:one-file-pass-after-integrity-verification",
+        "verify-project-lifecycle.mjs:export:one-project-pass-after-snapshot-verification"
       ],
       "negativeAdversarialTests": [
         "verify-project-lifecycle.mjs:complete export navigation, concurrent preparation and failure recovery",
         "verify-browser-extra.mjs:package integrity and storage rollback",
         "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters",
         "verify-project-lifecycle.mjs:missing canonical bytes, missing saved prompt context, unchanged prior backup checkpoint, post-commit refresh failure",
-        "verify-browser-extra.mjs:real IndexedDB missing-byte export rejection and post-import refresh failure"
+        "verify-browser-extra.mjs:real IndexedDB missing-byte export rejection and post-import refresh failure",
+        "verify-project-lifecycle.mjs:export:compression-backpressure-bounds-source-reads",
+        "verify-project-lifecycle.mjs:export:stream-failure-keeps-verified-checkpoint-and-recovers",
+        "verify-project-lifecycle.mjs:export:late-source-failure-keeps-verified-checkpoint-and-recovers",
+        "verify-hash.mjs:mixed UTF-8 string/byte chunks, non-zero subarray offsets and split scalar bytes match native crypto"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:48 MB complete export",
         "verify-browser.mjs:accumulated-context backup integrity",
         "verify-browser-extra.mjs:package round trip",
         "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards",
-        "verify-browser-extra.mjs:storageReliabilityBrowser; committed import exact bytes and reload"
+        "verify-browser-extra.mjs:storageReliabilityBrowser; committed import exact bytes and reload",
+        "verify-browser-extra.mjs:large-history-execution-package with real IndexedDB, exact context/instruction/package hashes, bounded source reads and unchanged saved project"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1461,7 +1470,7 @@
         "verify-browser.mjs",
         "verify-browser-extra.mjs"
       ],
-      "evidenceGap": "DP-45 through DP-52 require the final follow-up revision CI and deployed browser run. Earlier green revisions do not prove later changes. Actual physical-iPhone Safari, approved visual authority, and actual external project acceptance remain open.",
+      "evidenceGap": "DP-76 combines package hashing and compression while preserving the canonical hash preimage; the digest is emitted last in the unchanged JSON object schema. Exact-revision full CI and deployed browser proof belong to the continuation PR. The actual supplied backup is measured and replayed separately; local substituted-I/O timings do not establish physical-iPhone performance or growth headroom. Physical Safari and approved visual authority remain required.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -2011,7 +2020,8 @@
       ],
       "productionOwner": [
         "hash.js:canonicalChunks/createSha256/sha256Value/sha256Chunks",
-        "project-store.js:readProject/packageJsonChunks/compressJson/exportPackage/importPackage/createExecutionPackage"
+        "project-store.js:readProject/packageJsonChunks/compressPackage/exportPackage/importPackage/createExecutionPackage",
+        "project-store.js:compressPackage; hash.js:sha256Chunks shared encoded-byte consumption"
       ],
       "existingTests": [
         "verify-hash.mjs",
@@ -2019,7 +2029,10 @@
         "verify-project-lifecycle.mjs:accumulation:selected-stage4-read-buffers",
         "verify-project-lifecycle.mjs:export:verified-snapshot-hash-reused",
         "verify-project-lifecycle.mjs:export:concurrent-save-keeps-snapshot-identity",
-        "verify-project-lifecycle.mjs:read:revision-metadata-must-match-verified-project"
+        "verify-project-lifecycle.mjs:read:revision-metadata-must-match-verified-project",
+        "verify-project-lifecycle.mjs:export:one-file-pass-after-integrity-verification",
+        "verify-project-lifecycle.mjs:execution-package:one-file-pass-after-integrity-verification",
+        "verify-project-lifecycle.mjs:export:one-project-pass-after-snapshot-verification"
       ],
       "negativeAdversarialTests": [
         "independent Node crypto comparison",
@@ -2032,18 +2045,23 @@
         "native and fallback scalar validation reject malformed tails after earlier chunks",
         "nested/shared/empty/escaped values match independently encoded JSON and native crypto",
         "concurrent save cannot replace the export snapshot digest; contradictory stored revision metadata is quarantined",
-        "legacy malformed/null rows retain PROJECT_HASH_MISMATCH quarantine behavior before revision metadata reconciliation"
+        "legacy malformed/null rows retain PROJECT_HASH_MISMATCH quarantine behavior before revision metadata reconciliation",
+        "verify-project-lifecycle.mjs:export:compression-backpressure-bounds-source-reads",
+        "verify-project-lifecycle.mjs:export:stream-failure-keeps-verified-checkpoint-and-recovers",
+        "verify-project-lifecycle.mjs:export:late-source-failure-keeps-verified-checkpoint-and-recovers",
+        "verify-hash.mjs:mixed UTF-8 string/byte chunks, non-zero subarray offsets and split scalar bytes match native crypto"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:worker digest equality",
         "verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports — selected accumulated project reload, six views, manifest/instruction/complete export and restore",
-        "verify-browser-extra.mjs:large-response-history-handoff-and-ui-restore: 25 real failed responses of 800,000 characters, selected reload, handoff and UI complete-package restoration"
+        "verify-browser-extra.mjs:large-response-history-handoff-and-ui-restore: 25 real failed responses of 800,000 characters, selected reload, handoff and UI complete-package restoration",
+        "verify-browser-extra.mjs:large-history-execution-package with real IndexedDB, exact context/instruction/package hashes, bounded source reads and unchanged saved project"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser-extra.mjs"
       ],
-      "evidenceGap": "DP-72 and DP-73 use the supplied actual backup locally as well as permanent synthetic regressions. Exact CI/deployed evidence belongs to the repair PR. Local production timings use substituted database I/O and are not physical-iPhone evidence or a universal performance bound. Physical Safari and approved visual authority remain required.",
+      "evidenceGap": "DP-76 combines package hashing and compression while preserving the canonical hash preimage; the digest is emitted last in the unchanged JSON object schema. Exact-revision full CI and deployed browser proof belong to the continuation PR. The actual supplied backup is measured and replayed separately; local substituted-I/O timings do not establish physical-iPhone performance or growth headroom. Physical Safari and approved visual authority remain required.",
       "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION",
       "stageScope": [
         1,
