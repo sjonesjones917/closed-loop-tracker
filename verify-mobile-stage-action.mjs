@@ -61,8 +61,32 @@ async function main(){
   await waitFor(cdp,`document.querySelector('#section-top-jump')?.hidden===false`);
   await click(cdp,'#section-top-jump');await waitFor(cdp,`document.querySelector('.data-text-page').scrollTop===0`);
   // Every stage shares these details and prompt controls, including Stage 03.
+  // The gate reasons come from the real engine on the persisted history project.
+  const expectedDiagnostics=await evaluate(cdp,`(async()=>{const p=await closedLoopProjectStore.readProject('BROWSER-ACCUMULATED-HISTORY');closedLoopWorkflowEngine.recalculate(p);return Object.fromEntries(Object.entries(p.stages).map(([n,s])=>[n,s.gate.reasons]));})()`);
+  let diagnosticArrowProof=false,diagnosticReasonCount=0;
   for(let stage=1;stage<=30;stage++){
     await openStage(cdp,stage);
+    const diagnostic=await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('.notice>details[data-detail-id]')].find(n=>n.querySelector(':scope>summary')?.childNodes[0]?.textContent==='Completion gate is not satisfied.');return node?{id:node.dataset.detailId,open:node.open,children:node.querySelector('.record-body').childElementCount,count:Number(node.querySelector('summary>span').textContent)}:null;})()`);
+    assert(diagnostic&&!diagnostic.open&&diagnostic.children===0&&diagnostic.count===expectedDiagnostics[stage].length,`Stage ${stage}: diagnostic reasons bypass collapsed shared controls: ${JSON.stringify(diagnostic)}`);
+    if(stage===1){
+      const section=`details[data-detail-id="${diagnostic.id}"]`,seen=[];
+      await click(cdp,section+'>summary');await waitFor(cdp,`document.querySelector(${JSON.stringify(section)})?.querySelectorAll('.record-row').length>0`);
+      await evaluate(cdp,`(()=>{document.querySelector(${JSON.stringify(section)}).scrollIntoView({block:'center'});dispatchEvent(new Event('scroll'));})()`);
+      await waitFor(cdp,`document.querySelector('#section-bottom-jump')?.hidden===false&&document.querySelector('#section-top-jump')?.hidden===false`);
+      await click(cdp,'#section-bottom-jump');await waitFor(cdp,`document.querySelector(${JSON.stringify(section)}).getBoundingClientRect().bottom<=innerHeight+2`);
+      await click(cdp,'#section-top-jump');await waitFor(cdp,`document.querySelector(${JSON.stringify(section+'>summary')}).getBoundingClientRect().top>=-1`);
+      diagnosticArrowProof=true;
+      while(true){
+        const page=await evaluate(cdp,`(()=>{const n=document.querySelector(${JSON.stringify(section)});return {rows:[...n.querySelectorAll(':scope>.record-body>.record-rows>.record-row>.record-value')].map(x=>x.textContent),next:!n.querySelector('[data-detail-page="next"]')?.disabled,overflow:document.documentElement.scrollWidth>innerWidth+1};})()`);
+        assert(page.rows.length<=20&&!page.overflow,'Diagnostic page overflowed or rendered more than 20 reasons.');seen.push(...page.rows);
+        if(!page.next)break;await click(cdp,section+' [data-detail-page="next"]');
+      }
+      assert(JSON.stringify(seen)===JSON.stringify(expectedDiagnostics[stage]),'Browser diagnostic paging lost, duplicated, reordered or changed an engine reason.');diagnosticReasonCount=seen.length;
+      await click(cdp,section+'>summary');await waitFor(cdp,`!document.querySelector(${JSON.stringify(section)}).open&&document.querySelector(${JSON.stringify(section+' > .record-body')}).childElementCount===0`);
+      await waitFor(cdp,`document.querySelector('#section-top-jump')?.hidden===true&&document.querySelector('#section-bottom-jump')?.hidden===true`);
+      await click(cdp,section+'>summary');await waitFor(cdp,`document.querySelector(${JSON.stringify(section+' .record-value')})?.textContent===${JSON.stringify(seen[Math.floor((seen.length-1)/20)*20])}`);
+      await click(cdp,section+'>summary');
+    }
     await evaluate(cdp,`(()=>{const node=document.querySelector('#generated-prompt');if(node)node.textContent='Long preserved instruction\\n'.repeat(12000);})()`);
     if(await evaluate(cdp,`Boolean(document.querySelector('#toggle-prompt'))`)){
       await click(cdp,'#toggle-prompt');
@@ -121,7 +145,7 @@ async function main(){
   assert(fileExport.largestRead<=65536&&fileExport.maxBase64Read<=65536&&fileExport.restoredFiles===22&&fileExport.count===22&&fileExport.hashVerified&&fileExport.lastVerified&&fileExport.lastTail&&fileExport.tail.endsWith('FILE-PRESSURE-21-TAIL'),`Paged download/export/restore changed file bytes: ${JSON.stringify(fileExport)}`);
   await evaluate(cdp,`closedLoopProjectStore.removeProject('BROWSER-FILE-PRESSURE')`);
   console.log(JSON.stringify({boundedFileCustodyAndStaging:fileCustody,pagedArtifactDownloadAndCompleteExport:fileExport}));
-  console.log(JSON.stringify({all30StageAccumulatedDataViews:true,historyRecords:600,minimumRawHistoryBytes:48000000,collapsedDom:pressureDom,pagedDom,historyExport}));
+  console.log(JSON.stringify({all30StageCollapsedDiagnostics:true,diagnosticArrowProof,diagnosticReasonCount,all30StageAccumulatedDataViews:true,historyRecords:600,minimumRawHistoryBytes:48000000,collapsedDom:pressureDom,pagedDom,historyExport}));
   const mobileTarget=await evaluate(cdp,`(()=>{const now=Date.now(),challenge=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');return {physicalDeviceRequired:true,mobileAcceptanceTargetId:'MOBILE-TARGET-BROWSER',challenge,challengeIssuedAt:new Date(now).toISOString(),challengeExpiresAt:new Date(now+3600000).toISOString(),sourceCommit:'${'f'.repeat(40)}',deploymentManifestDigest:'${'a'.repeat(64)}',origin:location.origin,basePath:'/closed-loop-tracker/',testProjectId:'BROWSER-MOBILE-STAGE30',procedureVersion:'actual-iphone-safari/1',viewport:{width:393,height:852,devicePixelRatio:3},deviceModel:'iPhone 15',iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1'};})()`);
   const browserProject=await evaluate(cdp,`(()=>globalThis.closedLoopCore.createBlankState('BROWSER-STAGE30'))()`);browserProject.activeStage=30;await evaluate(cdp,`closedLoopProjectStore.writeAll(${JSON.stringify([browserProject])}).then(()=>closedLoopProjectStore.metaPut('selectedProject','BROWSER-STAGE30'))`);await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`);await click(cdp,'[data-view="Workflow"]');await waitFor(cdp,`Boolean(document.querySelector('#mobile-acceptance-panel'))`);
   const sessionKey='stage30MobileAcceptance.v1:BROWSER-STAGE30';

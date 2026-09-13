@@ -36,7 +36,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -74,7 +75,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -112,7 +114,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -155,7 +158,8 @@
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
-        "verify-browser-extra.mjs:correction instruction export, corrected response acceptance and reload"
+        "verify-browser-extra.mjs:correction instruction export, corrected response acceptance and reload",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -209,7 +213,8 @@
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-browser-extra.mjs:Stage 05 automatic instruction/manifest export and review acceptance; non-response control errors remain inline",
         "verify-browser-extra.mjs:stage05AutomaticReviewAccepted",
-        "verify-browser-extra.mjs:automatic Stage05/06 review remains selected and its proposal visible after file validation"
+        "verify-browser-extra.mjs:automatic Stage05/06 review remains selected and its proposal visible after file validation",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -275,7 +280,8 @@
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-browser-extra.mjs:retained returned-file validation after independent IndexedDB revision and exact open-attempt manifest export",
         "verify-browser-extra.mjs:stage06AuthorCannotPass/stage06AutomaticProofReview/stage06ReviewedReloadPassed",
-        "verify-browser-extra.mjs:automatic Stage05/06 review remains selected and its proposal visible after file validation"
+        "verify-browser-extra.mjs:automatic Stage05/06 review remains selected and its proposal visible after file validation",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -315,7 +321,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -354,7 +361,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -394,7 +402,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -435,7 +444,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -475,7 +485,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -517,7 +528,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -556,7 +568,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -595,7 +608,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -637,7 +651,8 @@
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
-        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download"
+        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -676,7 +691,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -718,7 +734,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -757,7 +774,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -801,7 +819,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -840,7 +859,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -879,7 +899,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -921,7 +942,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -962,7 +984,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1003,7 +1026,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1042,7 +1066,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1081,7 +1106,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1120,7 +1146,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1159,7 +1186,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1201,7 +1229,8 @@
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
-        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download"
+        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1214,7 +1243,7 @@
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -1241,7 +1270,8 @@
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
-        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews"
+        "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1355,26 +1385,32 @@
       ],
       "productionOwner": [
         "app-core.js:field/details/renderDetail/provenanceContents",
-        "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup"
+        "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup",
+        "app-core.js:diagnosticList/acceptedStageMarkup/projectManagementMarkup/testExecutionGuidanceMarkup",
+        "app-core.js:noticeText/nextActionMarkup/interactionModeMarkup/testExecutionGuidanceMarkup/rootCauseCorrectionMarkup"
       ],
       "existingTests": [
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs",
-        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts"
+        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 all 30 stage renderers, 603 ordered reasons, storage mismatch and unsupported executor lists"
       ],
       "negativeAdversarialTests": [
-        "verify-browser-extra.mjs"
+        "verify-browser-extra.mjs",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 accumulated current-action explanation retains its exact text behind bounded disclosure"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
-        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download"
+        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics/diagnosticArrowProof \u2014 real engine reasons, both shared arrows, complete paging, collapse, body release and reopening"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "DP-77 reproduces the supplied project with 115 uncollapsible Stage 05 completion reasons and moves diagnostic collections into the existing lazy, paged disclosures. Exact-revision CI and deployed Chromium are required on this repair PR. The supplied project is replayed separately. Actual physical-iPhone Safari performance and approved visual authority remain outstanding; desktop Chromium is supplementary.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1389,28 +1425,34 @@
       "productionOwner": [
         "app-core.js:details; index.html:expandable-prompt/data-text-page",
         "app-core.js:scrollTargetBounds/sectionScroller/syncMatchedScrollJumps",
-        "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup"
+        "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup",
+        "app-core.js:diagnosticList/acceptedStageMarkup/projectManagementMarkup/testExecutionGuidanceMarkup",
+        "app-core.js:noticeText/nextActionMarkup/interactionModeMarkup/testExecutionGuidanceMarkup/rootCauseCorrectionMarkup"
       ],
       "existingTests": [
         "verify-mobile-stage-action.mjs",
         "verify-human-stage-walkthrough.mjs",
-        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts"
+        "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 all 30 stage renderers, 603 ordered reasons, storage mismatch and unsupported executor lists"
       ],
       "negativeAdversarialTests": [
-        "verify-browser-extra.mjs"
+        "verify-browser-extra.mjs",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 accumulated current-action explanation retains its exact text behind bounded disclosure"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-browser.mjs:original instruction/proposal arrows and page-scroll-at-first-line",
         "verify-mobile-stage-action.mjs:original arrows on bounded history text and all 30 stages",
-        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download"
+        "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download",
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics/diagnosticArrowProof \u2014 real engine reasons, both shared arrows, complete paging, collapse, body release and reopening"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "DP-77 reproduces the supplied project with 115 uncollapsible Stage 05 completion reasons and moves diagnostic collections into the existing lazy, paged disclosures. Exact-revision CI and deployed Chromium are required on this repair PR. The supplied project is replayed separately. Actual physical-iPhone Safari performance and approved visual authority remain outstanding; desktop Chromium is supplementary.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -2053,7 +2095,7 @@
       ],
       "browserProof": [
         "verify-browser-extra.mjs:worker digest equality",
-        "verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports — selected accumulated project reload, six views, manifest/instruction/complete export and restore",
+        "verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports \u2014 selected accumulated project reload, six views, manifest/instruction/complete export and restore",
         "verify-browser-extra.mjs:large-response-history-handoff-and-ui-restore: 25 real failed responses of 800,000 characters, selected reload, handoff and UI complete-package restoration",
         "verify-browser-extra.mjs:large-history-execution-package with real IndexedDB, exact context/instruction/package hashes, bounded source reads and unchanged saved project"
       ],
@@ -2392,7 +2434,7 @@
         29,
         30
       ],
-      "evidenceGap": "Local RED→GREEN covers the shared production handlers. Exact CI/merge/deployment evidence is recorded on the repair PR. Physical-iPhone Safari and approved visual authority remain required; no device timing or headroom claim.",
+      "evidenceGap": "Local RED\u2192GREEN covers the shared production handlers. Exact CI/merge/deployment evidence is recorded on the repair PR. Physical-iPhone Safari and approved visual authority remain required; no device timing or headroom claim.",
       "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
     }
   ],
