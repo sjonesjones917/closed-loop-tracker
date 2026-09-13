@@ -29,7 +29,20 @@ try{
   const canonical=h.stableStringify(metadata),expected=createHash('sha256').update(canonical).digest('hex');
   assert(h.sha256Value(metadata)===expected,'Batched metadata hash changed the exact preimage.');
   assert(encoderInstances<=1&&encoderCalls<=Math.ceil(canonical.length/8192)+1,`Metadata hashing allocated ${encoderInstances} encoders / ${encoderCalls} buffers for ${canonical.length} characters.`);
+  encoderCalls=0;encoderInstances=0;
+  assert(await h.sha256Chunks(h.canonicalChunks(metadata))===expected,'Asynchronous metadata hash changed the exact preimage.');
+  assert(encoderCalls<=Math.ceil(canonical.length/8192)+1,`Asynchronous canonical hashing allocated ${encoderCalls} UTF-8 buffers for ${canonical.length} characters.`);
 }finally{globalThis.TextEncoder=NativeEncoder;}
+// Check the canonical bytes independently of the chunk generator. Object keys
+// here are already ordered; escaped text and Unicode straddle batch boundaries.
+for(const size of [16383,16384,16385]){
+  const value={a:'x'.repeat(size)+'é🙂',b:['\\\"\n'.repeat(10000),true,null,0],z:'EXACT-TAIL'};
+  const expected=JSON.stringify(value),digest=createHash('sha256').update(expected).digest('hex');
+  assert([...h.canonicalChunks(value)].join('')===expected,`Canonical batching changed bytes at ${size}.`);
+  assert(await h.sha256Chunks(h.canonicalChunks(value))===digest,`Canonical streaming digest changed at ${size}.`);
+  async function* asynchronousSource(){yield* h.canonicalChunks(value);}
+  assert(await h.sha256Chunks(asynchronousSource())===digest,`Asynchronous package source digest changed at ${size}.`);
+}
 // A file is not a small in-memory buffer. Every file hash must read bounded
 // slices, including a tail that is not aligned with a SHA-256 block.
 const originalBlobRead=Blob.prototype.arrayBuffer;

@@ -69,7 +69,16 @@ function* canonicalChunks(value){
       yield '}';
     }finally{seen.delete(input);}
   }
-  yield* serialize(value);
+  // Canonical consumers include asynchronous project reads and package streams.
+  // Emitting every quote, key and delimiter separately makes accumulated records
+  // allocate hundreds of thousands of buffers/promises. Batch at this shared
+  // source so all consumers receive the same exact preimage in bounded pieces.
+  let pending='';
+  for(const chunk of serialize(value)){
+    if(pending.length+chunk.length>16384){if(pending)yield pending;pending='';}
+    if(chunk.length>=16384)yield chunk;else pending+=chunk;
+  }
+  if(pending)yield pending;
 }
 function stableStringify(value){return Array.from(canonicalChunks(value)).join('');}
 

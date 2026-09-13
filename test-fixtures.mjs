@@ -59,6 +59,23 @@ export function stage04AcceptanceEnvelope(runtime,p,pr){
   return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:4,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},...(pr.transportBindingRequired?{packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce}:{}),scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records,evidence:stageEvidence,unresolved:[],warnings:[],attachments:[]};
 }
 
+// Accumulate real failed-response and replacement-instruction records. The first
+// three stages use production intake/acceptance; no gate is forced complete.
+export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAGE4',attempts=100,responseCharacters=20000}={}){
+  let project=stage04AcceptanceFixture(runtime,jobId);
+  let prompt=runtime.prompts.reserveAndBuildPromptRecord(project,4).prompt;
+  if(runtime.store)await runtime.store.persistPromptContextFiles(prompt,project);
+  for(let index=0;index<attempts;index++){
+    const text=`Invalid response ${index}: ${'X'.repeat(responseCharacters)} é🙂 ACCUMULATION-TAIL-${index}`;
+    const result=runtime.ingestion.prepare(project,{stage:4,text,promptRecord:prompt});
+    if(result.validation.valid||!result.rawRecord||!result.validation.validationId)throw new Error('Accumulation fixture did not preserve a real failed response and validation.');
+    project=result.project;
+    prompt=runtime.prompts.reserveAndBuildPromptRecord(project,4).prompt;
+    if(runtime.store)await runtime.store.persistPromptContextFiles(prompt,project);
+  }
+  project.activeStage=4;project.activeView='Workflow';return project;
+}
+
 // Isolated downstream fixtures supply their authored prerequisites directly.
 // Import the review through production ingestion so those fixtures cannot use
 // a bare author/raw ID as proof authority. The full-cycle test also authors the

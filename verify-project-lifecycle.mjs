@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
 const storageHealthSource=app.includes('function storageHealthValue(')?app.slice(app.indexOf('function storageHealthValue('),app.indexOf('function stageLocked(')):'';
@@ -222,6 +223,17 @@ for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectU
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
+await storageRegression('accumulation:selected-stage4-read-buffers',async()=>{
+  await vm.runInContext([evidence,stage04AcceptanceFixture,accumulatedStage04Fixture].map(fn=>fn.toString()).join('\n')+`\n(async()=>{globalThis.accumulatedProject=await accumulatedStage04Fixture({core,schema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion});})()`,storageRuntime);
+  const saved=await storageRuntime.projectStore.writeProject(storageRuntime.accumulatedProject,{expectedProjectRevision:0,createOnly:true,selectProject:false});
+  let encodes=0,characters=0;const Native=storageRuntime.TextEncoder;
+  storageRuntime.TextEncoder=class extends Native{encode(text){encodes++;characters+=String(text).length;return super.encode(text);}};
+  let loaded;try{loaded=await storageRuntime.projectStore.readProject(saved.job.JOB_ID);}finally{storageRuntime.TextEncoder=Native;}
+  assert(loaded.projectSha256===saved.projectSha256&&loaded.projectData.rawResponses.length===103&&loaded.projectData.generatedPrompts.length===104,'Accumulated startup lost exact response/instruction history.');
+  assert(loaded.projectData.rawResponses.at(-1).completeRawResponse.endsWith('ACCUMULATION-TAIL-99'),'Accumulated startup truncated the preserved raw response.');
+  assert(encodes<=Math.ceil(characters/1024)+1024,`Opening 100 accumulated Stage 04 attempts allocated ${encodes} UTF-8 buffers for ${characters} characters.`);
+  console.log(JSON.stringify({accumulatedStage4Read:{attempts:100,encodes,characters,digest:loaded.projectSha256}}));
+});
 vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource,storageRuntime);
 await storageRegression('diagnostics:complete-exports-do-not-wait-for-health',async()=>{
   const downloads=[],errors=[],status={textContent:''};let release,entered,healthCalls=0,active=0,maxActive=0;

@@ -1,0 +1,54 @@
+{
+  "baselineCommit": "d805601fe3cd6f9acc5b4fca94481e98310a8711",
+  "baselineHashSourceSha256": "6a24352ac79e1d9508fca8f4d7f525fc22be897921b7ba7df360b349252aade2",
+  "repairedHashSourceSha256": "331220506b0f4d19f45123937a7a6a33af5901dc54e0a7e90eececc112d14518",
+  "node": "v24.19.0",
+  "fixture": {
+    "failedStage4Attempts": 100,
+    "schemaValidated": true,
+    "projectBytes": 13561001,
+    "fixtureSha256": "99f32936dbcf0ac395d4145442d56619a97a953366a730af204b9393dc32f952",
+    "construction": "stage04AcceptanceFixture accepts Stages 1\u20133 through production ingestion. Repeat malformed response prepare and reserveAndBuildPromptRecord 100 times; preserve the resulting project and read the same snapshot for both measurements. Permanent accumulatedStage04Fixture includes an additional unique UTF-8 tail sentinel."
+  },
+  "measurement": "Production readProject: structured-clone row delivery, canonical hash and canonical record integrity; IndexedDB transaction I/O substituted. Three successive reads per source. These samples exclude DOM/network/device storage and are not iPhone startup measurements. V8 may warm between samples; no p95 or capacity claim.",
+  "before": [
+    {
+      "elapsedMs": 1240.1595320000001,
+      "encodes": 530922,
+      "chars": 14009626,
+      "longestTimerGapMs": 93.03443300000004
+    },
+    {
+      "elapsedMs": 1373.8546179999998,
+      "encodes": 530922,
+      "chars": 14009626,
+      "longestTimerGapMs": 88.13624900000013
+    },
+    {
+      "elapsedMs": 1283.9684000000002,
+      "encodes": 530922,
+      "chars": 14009626,
+      "longestTimerGapMs": 88.3165910000007
+    }
+  ],
+  "after": [
+    {
+      "elapsedMs": 776.900935,
+      "encodes": 4564,
+      "chars": 14009626,
+      "longestTimerGapMs": 90.48863000000006
+    },
+    {
+      "elapsedMs": 687.1399280000003,
+      "encodes": 4564,
+      "chars": 14009626,
+      "longestTimerGapMs": 74.22534900000028
+    },
+    {
+      "elapsedMs": 694.2663750000002,
+      "encodes": 4564,
+      "chars": 14009626,
+      "longestTimerGapMs": 74.84097799999972
+    }
+  ]
+}

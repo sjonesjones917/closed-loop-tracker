@@ -1214,7 +1214,7 @@
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -2007,26 +2007,64 @@
         2939
       ],
       "productionOwner": [
-        "hash.js:compareUnicodeScalarSequence/createSha256/sha256Value"
+        "hash.js:canonicalChunks/createSha256/sha256Value/sha256Chunks",
+        "project-store.js:readProject/packageJsonChunks/compressJson/exportPackage/importPackage/createExecutionPackage"
       ],
       "existingTests": [
         "verify-hash.mjs",
-        "verify-deployment-manifest.mjs"
+        "verify-deployment-manifest.mjs",
+        "verify-project-lifecycle.mjs:accumulation:selected-stage4-read-buffers"
       ],
       "negativeAdversarialTests": [
         "independent Node crypto comparison",
         "unsupported values/surrogates/keys rejected",
-        "bounded encoding and encoder allocation count"
+        "bounded encoding and encoder allocation count",
+        "asynchronous canonical buffer allocation regression",
+        "independently encoded JSON at 16383/16384/16385-character Unicode/escape boundaries",
+        "100 real Stage 04 failed-response/reservation cycles retain exact raw and instruction history"
       ],
       "browserProof": [
-        "verify-browser-extra.mjs:worker digest equality"
+        "verify-browser-extra.mjs:worker digest equality",
+        "verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports — selected accumulated project reload, six views, manifest/instruction/complete export and restore"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser-extra.mjs"
       ],
-      "evidenceGap": "Await exact-revision CI/deployed proof. Timing is not physical-iPhone acceptance; section links supply context, not proof of every clause in those sections.",
-      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION"
+      "evidenceGap": "DP-71 fixes fragment allocation at the shared canonical stream source. Exact CI/deployed evidence belongs to the repair PR. The Chromium 10-second regression ceiling is a test environment guard, not a specification latency requirement or physical-iPhone acceptance. The reported 35-second device startup remains unverified on that device.",
+      "status": "MAPPED_PENDING_EXACT_REVISION_VALIDATION",
+      "stageScope": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ]
     },
     {
       "id": "PROJECT-PICKER-PROJECTION",
@@ -2324,7 +2362,7 @@
         29,
         30
       ],
-      "evidenceGap": "Local RED\u2192GREEN covers the shared production handlers. Exact CI/merge/deployment evidence is recorded on the repair PR. Physical-iPhone Safari and approved visual authority remain required; no device timing or headroom claim.",
+      "evidenceGap": "Local RED→GREEN covers the shared production handlers. Exact CI/merge/deployment evidence is recorded on the repair PR. Physical-iPhone Safari and approved visual authority remain required; no device timing or headroom claim.",
       "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
     }
   ],
