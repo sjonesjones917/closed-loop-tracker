@@ -276,7 +276,9 @@ async function main(){
   await selectResponseFile(cdp,JSON.stringify(invalidReview));await click(cdp,'#process-response-file');
   await openValidationDetails(cdp,'INVALID_ENUM_VALUE');
   assert(!await evalValue(cdp,`Boolean(document.querySelector('#accept-proposal'))`),'Invalid review result was offered for acceptance.');
+  await click(cdp,'#export-prompt-file');await waitForSavedPrompt(cdp);
   const mixedReview=await proofResponse(5,reviewRecords);
+  assert(mixedReview.promptIdentity.instructionId!==invalidReview.promptIdentity.instructionId,'The corrected review reused the rejected instruction.');
   mixedReview.records.semanticReviews.push({...structuredClone(mixedReview.records.semanticReviews[0]),tempKey:'rejected-finding',fields:{...mixedReview.records.semanticReviews[0].fields,FINDING:'A required condition is unsupported.',RESULT:'REJECTED'}});
   await acceptProofResponse(mixedReview);
   await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.stages[5].status==='BLOCKED'&&p.stages[6].status==='NOT STARTED')`);
