@@ -3,7 +3,7 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {scalarFor,recordProposal,evidence,stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
+import {scalarFor,recordProposal,evidence,stage04AcceptanceFixture,stage04AcceptanceEnvelope,accumulatedStage04Fixture} from './test-fixtures.mjs';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
 const appCoreSource=fs.readFileSync('app-core.js','utf8');
@@ -417,6 +417,23 @@ async function main(){
   })()`);
   assert(Object.values(contextSaveProof).every(Boolean),'Worker save reused context verification or changed historical bytes: '+JSON.stringify(contextSaveProof));
   console.log(JSON.stringify({promptContextReadSnapshot:contextReadProof,promptContextWorkerSave:contextSaveProof}));
+
+  console.log('extra:accumulated-stage04-startup-views-and-exports');
+  const accumulatedIdentity=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${accumulatedStage04Fixture.toString()}\n${runtimeBindings}runtime.store=closedLoopProjectStore;const p=await accumulatedStage04Fixture(runtime,{jobId:'ACCUMULATED-BROWSER-STAGE4'}),saved=await runtime.store.writeProject(p,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});return {sha256:saved.projectSha256,revision:saved.revision};})()`);
+  const accumulationProbe=await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{const Encoder=TextEncoder;let encodes=0,characters=0;globalThis.TextEncoder=class extends Encoder{encode(text){encodes++;characters+=String(text).length;return super.encode(text);}};document.addEventListener('closed-loop-rendered',()=>{globalThis.__accumulationStartup={milliseconds:performance.now(),encodes,characters};globalThis.TextEncoder=Encoder;},{once:true});})();`});
+  await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);
+  const accumulatedStartup=await evalValue(cdp,`({...__accumulationStartup,selected:document.querySelector('#current-project-summary').textContent.startsWith('ACCUMULATED-BROWSER-STAGE4'),stage:Number(document.querySelector('#stage-picker').value),previewCharacters:document.querySelector('#generated-prompt').textContent.length})`);
+  assert(accumulatedStartup.selected&&accumulatedStartup.stage===4,'Cold startup did not open the accumulated selected Stage 04 project.');
+  assert(accumulatedStartup.encodes<=Math.ceil(accumulatedStartup.characters/1024)+1024,'Accumulated browser startup recreated fragment-sized buffers: '+JSON.stringify(accumulatedStartup));
+  assert(accumulatedStartup.milliseconds<10000&&accumulatedStartup.previewCharacters<=65536,'Accumulated Chromium startup exceeded its 10-second regression ceiling or expanded the full instruction into the DOM: '+JSON.stringify(accumulatedStartup));
+  await cdp.send('Page.removeScriptToEvaluateOnNewDocument',{identifier:accumulationProbe.identifier});
+  for(const view of ['Overview','Project','Records','Files','Release','Workflow']){await click(cdp,`#view-tabs [data-view="${view}"]`);assert(await evalValue(cdp,`document.querySelector('#screen').children.length>0`),`Accumulated ${view} view did not render.`);}
+  await evalValue(cdp,`(()=>{globalThis.__accumulationDownloads=[];globalThis.__accumulationCreateUrl=URL.createObjectURL;URL.createObjectURL=blob=>{const url=__accumulationCreateUrl(blob);__accumulationDownloads.push(blob);return url;};})()`);
+  await click(cdp,'#export-prompt-manifest');await click(cdp,'#export-prompt-file');await waitExpr(cdp,`__accumulationDownloads.length===2`,30000);
+  await click(cdp,'#project-actions-toggle');await click(cdp,'#export-project');await waitExpr(cdp,`__accumulationDownloads.length===3`,30000);
+  const accumulatedRoundTrip=await evalValue(cdp,`(async()=>{const [manifestBlob,instructionBlob,packageBlob]=__accumulationDownloads,manifest=JSON.parse(await manifestBlob.text()),instruction=await instructionBlob.text(),stored=await closedLoopProjectStore.readProject('ACCUMULATED-BROWSER-STAGE4'),restored=await closedLoopProjectStore.importPackage(packageBlob);URL.createObjectURL=__accumulationCreateUrl;return {instructionVerified:closedLoopHash.sha256Text(instruction)===manifest.instruction.sha256,canonicalUnchanged:stored.projectSha256===${JSON.stringify(accumulatedIdentity.sha256)},rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length,tailPreserved:restored.projectData.rawResponses.at(-1).completeRawResponse.endsWith('ACCUMULATION-TAIL-99'),restoredDigest:restored.projectSha256===closedLoopProjectStore.projectSha256(restored)};})()`);
+  assert(accumulatedRoundTrip.instructionVerified&&accumulatedRoundTrip.canonicalUnchanged&&accumulatedRoundTrip.rawResponses===103&&accumulatedRoundTrip.generatedPrompts===104&&accumulatedRoundTrip.tailPreserved&&accumulatedRoundTrip.restoredDigest,'Accumulated Stage 04 exports/restore changed exact retained data: '+JSON.stringify(accumulatedRoundTrip));
+  console.log(JSON.stringify({accumulatedStage04:{startup:accumulatedStartup,roundTrip:accumulatedRoundTrip,views:6,failedAttempts:100}}));
 
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);

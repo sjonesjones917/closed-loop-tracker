@@ -340,3 +340,24 @@ Starting main `5f2b8b2b19c3a034b1623eab6730bb243432aae6` has all four jobs green
 Scope: startup into any of the six views at Stages 01–30; Project actions → Export complete project / Create complete backup; Project management → Create backup now. All three complete-package controls share `downloadProjectPackage`. Diagnostic completion can occur while any stage/view is active, so only storage-reading nodes are updated. Prompt, manifest, context and execution-package exports do not call this health path and retain their existing queues and custody gates. `refreshProjectStorage` and explicit Verify stored files remain authoritative for their own state and are still awaited where required.
 
 The three regressions are RED → GREEN locally; final CI, browser, merge and deployed identities must be recorded on the associated PR/issue. This is removal of an unnecessary wait dependency, not a measured p95 or whole-app speedup. No package format, storage schema, hash, workflow rule, canonical history, CSS or visual layout is changed. The transient pending/unavailable diagnostic values do not assert a persistence guarantee. Physical-iPhone Safari, approved visual authority, realistic growth headroom and an independently executed complete real project remain outstanding on the final deployed revision.
+
+## Accumulated selected-project continuation from d805601f
+
+DP-70 did not prove startup with an accumulated selected project. A bundled-project browser reload and a raw-text-only local fixture do not resolve the reported 35-second iPhone startup. This continuation adds actual failed-response, validation, reservation, instruction and history accumulation to the existing lifecycle and Chromium verifiers.
+
+| ID | Production-path RED | Earliest repair | Permanent proof |
+|---|---|---|---|
+| DP-71 | `readProject` on a valid project after 100 real Stage 04 failed-response / replacement-reservation cycles allocates 530,922 UTF-8 buffers. The new lifecycle allocation assertion fails on d805601f. The existing hash verifier's new asynchronous metadata assertion separately fails with 4,001 buffers for 8,581 characters. | `hash.js:canonicalChunks` coalesces tiny canonical fragments into bounded batches before any consumer awaits or encodes them. The canonical order, bytes, restrictions, digests, yield scheduling and integrity gates remain unchanged. | `verify-hash.mjs`: async allocation and independently constructed JSON/Unicode/escape boundaries. `verify-project-lifecycle.mjs:accumulation:selected-stage4-read-buffers`: real Stage 01–03 prerequisites and 100 failed Stage 04 cycles, selected-row read, exact digest and history tails. `verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports`: IndexedDB reload of that selected accumulated project, six views, instruction/manifest/complete exports and package restoration. |
+
+Affected mechanisms and scope:
+
+| Production owner | Application paths | Stages |
+|---|---|---|
+| `canonicalChunks` → `sha256Chunks` → `readProject` | Selected-project startup, project selection, explicit canonical reads, export snapshot reads and worker recovery reads | 01–30 |
+| `canonicalChunks` → `packageJsonChunks` / `compressJson` | Complete export/backup, import hash verification, execution package generation | 01–30 where the operation is applicable |
+| `canonicalChunks` → `stableStringify` / `sha256Value` | Prompt/context serialization, record/project identity and derived-state hashing | 01–30 |
+| Application views | Reload of accumulated selected state into Workflow; Overview, Project, Workflow, Records, Files and Release navigation; instruction and manifest handoff | Shared views; accumulated browser handoff specifically Stage 04 |
+
+The unchanged 13,561,001-byte diagnostic snapshot produced three-run Node read medians of 1.284 seconds before and 0.694 seconds after, with 530,922 versus 4,564 UTF-8 buffers and identical encoded character counts. Raw measurements, source hashes, fixture hash and limitations are in `performance-20260912/accumulated-stage4-read.json`. This is a measured selected-row processing improvement; network/DOM/physical device storage are excluded. The browser verifier now logs complete navigation-to-render time for its accumulated fixture and enforces a 10-second CI regression ceiling. That ceiling is neither a new specification requirement nor an iPhone acceptance claim.
+
+The application change is confined to canonical stream emission. No schema migration, new service, UI/workflow alteration, data deletion or validation bypass is introduced. Exact-revision CI/browser/deployment results must be recorded on the repair PR. The actual iPhone startup duration and approved physical-device/visual acceptance remain open.
