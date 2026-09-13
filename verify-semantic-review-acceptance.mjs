@@ -48,6 +48,7 @@ for(const result of ['REJECTED','PARTIAL','UNKNOWN','DISAGREED']){
   assert.equal(sourceReview.stages[3].status,'NOT STARTED',`Stage 02 ${result} unlocked downstream research.`);
   assert.equal(sourceReview.job.NEXT_REQUIRED_ACTION.operation,'RECONCILE_SOURCE_SEARCH','The blocked source review has no correction route.');
   assert.equal(ingestion.prepareStageContinuation(sourceReview,{stage:2})?.prompt.operation,'RECONCILE_SOURCE_SEARCH','Stage 02 does not save its correction instruction.');
+  assert.match(application(sourceReview,'RECONCILE_SOURCE_SEARCH',{stage:2}).ui.screen(),/New correction instruction generated and saved/);
 }
 for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[3,'SEMANTIC_CHALLENGE'],[4,'DISPOSITION_CHALLENGE'],[4,'ATOMICITY_CHALLENGE']]){
   let p=stage04AcceptanceFixture(runtime,'JOB-CHALLENGE-'+stage+'-'+operation);
@@ -56,6 +57,8 @@ for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[3,'SEMANTIC_CHALLENGE'
   if(stage===1){const change=engine.acceptedChanges(p,1).at(-1);engine.recordStageConfirmation(p,1,true,'The objective is correctly represented; this does not resolve the challenge.','FIXTURE',{acceptedChangeId:change.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION});}
   assert.equal(p.stages[stage].gate.complete,false,`Stage ${stage} ${operation} ignored its rejected challenge.`);
   assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,schema.SEMANTIC_STAGE_OPERATIONS[stage].reconcileOperation,`Stage ${stage} has no challenge correction route.`);
+  const uiProject=structuredClone(p),continuation=ingestion.prepareStageContinuation(uiProject,{stage});
+  assert.match(application(uiProject,continuation.prompt.operation,{stage}).ui.screen(),/New correction instruction generated and saved/);
   const policy=schema.SEMANTIC_STAGE_OPERATIONS[stage],finding={records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'resolved-challenge',overrides:{REVIEW_QUESTION:'Was the challenged condition resolved?',FINDING:'The corrected work resolves the condition.',REASONING:'The governing evidence resolves the challenged decision.',RESULT:'ACCEPTED'}})]}};
   p=accept(prepare(p,stage,policy.reconcileOperation,prompt=>stage===4?stage04AcceptanceEnvelope(runtime,p,prompt):{...finding,...(stage===1?{stageData:structuredClone(p.stages[1].agentData)}:{})}));
   assert.equal(p.stages[stage].gate.complete,false,`Stage ${stage} reconciler approved its own correction.`);
@@ -126,7 +129,7 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;projectStore=closedLoopProjectStore;
     current=selected;projects=[current];operationSelection[stage]=operation;
     withStorageActivity=async(label,work)=>work();render=()=>{};announce=message=>notices.push(message);reportResponseFailure=(message,error)=>{throw error||new Error(message);};reportActionFailure=error=>{throw error;};
-    globalThis.ui={accept:acceptPendingProposal,refine:()=>{const select=document.querySelector;document.querySelector=selector=>['#refine-accepted-response','#accepted-refinement-reason','#operator-label'].includes(selector)?select(selector):null;wire();document.querySelector=select;return document.querySelector('#refine-accepted-response').onclick();},restore:async()=>{current=await materializeProject(current);return current;},current:()=>current,prompt:()=>currentPromptRecord(stage),selectedOperation:()=>selectedOperation(stage),proposal:()=>proposalMarkup(stage)};
+    globalThis.ui={accept:acceptPendingProposal,refine:()=>{const select=document.querySelector;document.querySelector=selector=>['#refine-accepted-response','#accepted-refinement-reason','#operator-label'].includes(selector)?select(selector):null;wire();document.querySelector=select;return document.querySelector('#refine-accepted-response').onclick();},restore:async()=>{current=await materializeProject(current);return current;},current:()=>current,prompt:()=>currentPromptRecord(stage),selectedOperation:()=>selectedOperation(stage),proposal:()=>proposalMarkup(stage),screen:workflow,action:()=>nextActionMarkup(false,stage)};
   })();`,runtime);
   return {ui:runtime.ui,notices,saved:()=>saved};
 }
@@ -146,6 +149,7 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   await assert.rejects(ui.accept(),/CONTROLLED_CONTINUATION_STORAGE_FAILURE/);
   assert.equal(hash.sha256Value(saved()),before,'A failed continuation save partly committed the response.');
   assert.equal(ui.current().projectData.responseProposals.at(-1).status,'PENDING_OPERATOR_REVIEW');
+  assert(!ui.screen().includes('id="instruction-status"'),'A failed save or pending proposal claims a new instruction is ready.');
   assert.equal(notices.length,0,'A failed save announced success.');
 }
 {
@@ -154,6 +158,13 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   assert.equal(ui.selectedOperation(),'SEMANTIC_REVIEW','Acceptance left the old author operation selected.');
   assert.equal(ui.prompt()?.operation,'SEMANTIC_REVIEW','Accepted Stage 5 work did not regenerate and save the next instruction.');
   assert.equal(ui.prompt().contextManifest.semanticReviewBinding.bindingStatus,'BOUND');
+  const notice=ui.screen().match(/<div[^>]+id="instruction-status"[^>]*>([\s\S]*?)<\/div>/)?.[1];
+  assert(notice,'The saved next instruction has no persistent visible status.');
+  assert.match(notice,/New review instruction generated and saved/);
+  assert.match(notice,/independent review/);
+  assert.match(notice,/Export the new instruction file and its matching manifest/);
+  assert.match(ui.action(),/Generated and saved/);
+  assert.match(ui.action(),/New Prompt Required/, 'Required canonical-change certainty must remain visible.');
 }
 
 // The shared handler and saved-project recovery must also work outside Stage 05.
@@ -162,10 +173,44 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   assert.match(ui.proposal(),/Record findings and prepare correction/);await ui.accept();
   assert.equal(ui.prompt()?.operation,'RECONCILE_SOURCE_SEARCH');assert.equal(ui.current().stages[2].gate.complete,false);
   const reopened=application(ui.current(),'SEARCH_ADEQUACY_REVIEW',{stage:2});await reopened.ui.restore();assert.equal(reopened.ui.selectedOperation(),'RECONCILE_SOURCE_SEARCH','Switching projects selected an old operation instead of its already saved continuation.');
+  const stableInstruction=ui.prompt().instructionId,beforeRead=hash.sha256Value(reopened.ui.current());
+  assert.match(reopened.ui.screen(),/New correction instruction generated and saved/);
+  assert.match(reopened.ui.screen(),/recorded review left unresolved findings/);
+  assert.equal(reopened.ui.prompt().instructionId,stableInstruction,'Displaying the saved status regenerated the instruction.');
+  assert.equal(hash.sha256Value(reopened.ui.current()),beforeRead,'Displaying the saved status changed project data.');
   const legacy=accept(prepared),finding=legacy.projectData.semanticReviews.at(-1);finding.fields.RESULT=finding.RESULT='FAIL';engine.refreshRecordHashes(finding,'semanticReviews');engine.recalculate(legacy);
   const raw=legacy.projectData.rawResponses.map(r=>r.completeRawResponse),recovered=application(legacy,'SEARCH_ADEQUACY_REVIEW',{stage:2});await recovered.ui.restore();
   assert.equal(engine.recordsForCurrentScope(recovered.ui.current(),'semanticReviews').length,0);
   assert.equal(recovered.ui.prompt()?.operation,'SEARCH_ADEQUACY_REVIEW');assert.deepEqual(recovered.ui.current().projectData.rawResponses.map(r=>r.completeRawResponse),raw);
+}
+
+// The new guidance also works on records saved before this UI repair.
+{
+  const source=stage04AcceptanceFixture(runtime,'JOB-LEGACY-AUTHOR-GUIDANCE'),prepared=prepare(source,2,'SEARCH_ADEQUACY_REVIEW',()=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'prior-review',overrides:{REVIEW_QUESTION:'Is the search adequate?',FINDING:'Search reviewed.',REASONING:'Governing sources checked.',RESULT:'ACCEPTED'}})]}}));
+  const legacy=accept(prepared),oldAuthor=engine.acceptedChanges(legacy,2).find(c=>c.operation==='COMPLETE');
+  legacy.projectData.generatedPrompts.find(p=>p.instructionId===oldAuthor.promptId).contextManifest.semanticReviewBinding=null;
+  engine.recalculate(legacy);
+  const next=ingestion.prepareStageContinuation(legacy,{stage:2});
+  assert.equal(next.prompt.operation,'COMPLETE');
+  const {ui}=application(legacy,'COMPLETE',{stage:2}),before=hash.sha256Value(legacy);
+  assert.match(ui.screen(),/Instruction regenerated and saved/);
+  assert.match(ui.screen(),/Stage 02 must be revisited/);
+  assert.match(ui.screen(),/replacement includes your saved work and the remaining completion checks/);
+  assert.equal(ui.screen().includes('Use Export context to download context.json'),Boolean(next.prompt.contextManifest.promptContext?.attachments?.length),'Context export guidance must match the saved manifest.');
+  assert.match(ui.action(),/Update the saved work before independent review/);
+  assert.equal(hash.sha256Value(legacy),before,'Legacy status rendering mutated saved records.');
+  await ui.restore();assert.equal(ui.prompt().instructionId,next.prompt.instructionId);
+  assert.match(ui.screen(),/Instruction regenerated and saved/);
+}
+{
+  const first=stage04AcceptanceFixture(runtime,'JOB-FIRST-INSTRUCTION-GUIDANCE');
+  const preview=application(first,'COMPLETE',{stage:4});
+  assert(!preview.ui.screen().includes('id="instruction-status"'),'An unsaved preview claims generation has finished.');
+  prompts.reserveAndBuildPromptRecord(first,4,{operation:'COMPLETE'});
+  const {ui}=application(first,'COMPLETE',{stage:4});
+  assert.match(ui.screen(),/Instruction generated and saved/);
+  assert(!ui.screen().includes('Instruction regenerated and saved'),'A first instruction is called a replacement.');
+  assert(!application(authorPrepared.project).ui.screen().includes('id="instruction-status"'),'A pending proposal tells the user to repeat agent work.');
 }
 
 // Controlled refinement must save its replacement immediately, in the same
@@ -248,6 +293,7 @@ const suite=()=>({records:{tests:[recordProposal(schema,'tests',{tempKey:'proof-
 const proofFinding=result=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'proof-review',overrides:{REVIEW_QUESTION:'Does the suite prove the governing proposition?',FINDING:result==='ACCEPTED'?'The corrected suite preserves the proposition.':'The required proof is unresolved.',REASONING:'Independent comparison of the exact current tests and proof expressions.',RESULT:result}})]}});
 const suitePrepared=prepare(structuredClone(passed),6,'COMPLETE',suite),suiteUi=application(suitePrepared.project,'COMPLETE',{stage:6});await suiteUi.ui.accept();
 assert.equal(suiteUi.ui.prompt()?.operation,'PROOF_REVIEW');
+assert.match(suiteUi.ui.screen(),/New review instruction generated and saved/);
 for(const result of ['REJECTED','PARTIAL','UNKNOWN','DISAGREED']){
   let p=accept(prepare(accept(suitePrepared),6,'PROOF_REVIEW',()=>proofFinding(result)));
   assert.equal(p.stages[6].gate.complete,false,`Stage 06 ${result} passed.`);
@@ -274,6 +320,8 @@ const legacyHash=hash.sha256Value(legacy),legacyRaw=legacy.projectData.rawRespon
 const legacyUi=application(legacy,'SEMANTIC_REVIEW');await legacyUi.ui.restore();
 assert.equal(engine.recordsForCurrentScope(legacyUi.ui.current(),'semanticReviews').length,0,'Opening the saved project did not recover its invalid accepted review.');
 assert.equal(legacyUi.ui.prompt()?.operation,'SEMANTIC_REVIEW','Opening the saved project did not save the correction instruction.');
+assert.match(legacyUi.ui.screen(),/Instruction regenerated and saved/);
+assert.match(legacyUi.ui.screen(),/fresh assessment of the preserved findings/);
 const reloadRevision=legacyUi.ui.current().revision,reloadPrompt=legacyUi.ui.prompt().instructionId;await legacyUi.ui.restore();
 assert.equal(legacyUi.ui.current().revision,reloadRevision,'Opening the recovered project wrote another revision.');
 assert.equal(legacyUi.ui.prompt().instructionId,reloadPrompt,'Opening the recovered project replaced the saved instruction again.');
@@ -293,4 +341,4 @@ engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.raw
 assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',orphanAuditIsNotLiveAttempt:true,requestedReviewReopensStage:true,priorReviewCannotAnswerNewRequest:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,reopenedInstructionSelected:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,automaticLegacyRecovery:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',persistentInstructionGuidance:true,legacyStage2Guidance:true,firstPreviewAndPendingAreNotRegenerated:true,orphanAuditIsNotLiveAttempt:true,requestedReviewReopensStage:true,priorReviewCannotAnswerNewRequest:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,reopenedInstructionSelected:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,automaticLegacyRecovery:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
