@@ -2665,7 +2665,7 @@
         "verify-project-lifecycle.mjs"
       ],
       "negativeAdversarialTests": [
-        "verify-semantic-review-acceptance.mjs:firstPreviewAndPendingAreNotRegenerated; failed-save and historical-stage guards; existing instruction identity and project data unchanged after render/reopen",
+        "verify-semantic-review-acceptance.mjs:firstPreviewAndPendingAreNotRegenerated; failed-save and cross-operation reviewer guards; existing instruction identity and project data unchanged after render/reopen",
         "verify-file-first-operator.mjs:unsaved context and unavailable stages never gain saved authority"
       ],
       "browserProof": [

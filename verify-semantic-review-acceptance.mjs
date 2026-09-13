@@ -210,6 +210,8 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   const {ui}=application(first,'COMPLETE',{stage:4});
   assert.match(ui.screen(),/Instruction generated and saved/);
   assert(!ui.screen().includes('Instruction regenerated and saved'),'A first instruction is called a replacement.');
+  ui.current().job.NEXT_REQUIRED_ACTION={...ui.current().job.NEXT_REQUIRED_ACTION,actionType:'AI_REVIEW',operation:'DISPOSITION_CHALLENGE'};
+  assert(!ui.screen().includes('New review instruction generated and saved'),'Another operation\'s next action relabelled the selected author instruction as a review.');
   assert(!application(authorPrepared.project).ui.screen().includes('id="instruction-status"'),'A pending proposal tells the user to repeat agent work.');
 }
 
