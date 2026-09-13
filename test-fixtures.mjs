@@ -36,7 +36,7 @@ export function stage04AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSIS
   Object.assign(p.job,{JOB_TITLE:'Response acceptance persistence',EXACT_USER_OBJECTIVE_VERBATIM:'Produce a verified checklist.',EXPLICIT_USER_REQUIREMENTS:'The checklist must contain the required verified content.',CURRENT_INPUT_VERSION:'INPUT-v001'});
   engine.ensureShape(p);engine.recalculate(p);
   function accept(stage,stageData){
-    const pr=prompts.buildPromptRecord(stage,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(pr);
+    const preparedContext=engine.preparePromptContext(p,stage,{operation:'COMPLETE'}),pr=prompts.buildPromptRecord(stage,p,preparedContext.options);p.projectData.generatedPrompts.push(pr);
     const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records:{},evidence:[evidence(`stage-${stage}`)],unresolved:[],warnings:[],attachments:[]};
     const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord:pr});
     if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
