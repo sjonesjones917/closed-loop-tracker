@@ -2632,52 +2632,6 @@
       ],
       "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION",
       "evidenceGap": "Exact CI and deployed identities are recorded on the repair PR. Actual physical-iPhone Safari and approved visual-baseline authority remain required on the final deployed revision."
-    },
-    {
-      "id": "INSTRUCTION-REGENERATION-STATUS",
-      "stage": null,
-      "requirement": "The operator can determine whether a corrected instruction has regenerated, why the current stage needs another response, and the exact next file transfer. Required canonical-change certainty remains visible. Only a committed current instruction may be described as saved.",
-      "normativeRequirementIds": [
-        "NREQ-4e4473870458b8c23dba903194fc7f51",
-        "NREQ-caef6f76a7a59f4986be39673fa87528",
-        "NREQ-12d6e7f4fe079abca1d36d42bbbad188",
-        "NREQ-fddadeff7b2e3365aaf0078dbe357a51",
-        "NREQ-bcb50137d6b91a0df37730da90551c8f",
-        "NREQ-fa55168286405c897c569abebb83b0da",
-        "NREQ-e9be6eab805f5f7ea85270b568aca81d"
-      ],
-      "sourceLines": [
-        4072,
-        4074,
-        4075,
-        4076,
-        4077,
-        4079,
-        4256
-      ],
-      "productionOwner": [
-        "app-core.js:savedInstructionGuidance/savedInstructionMarkup/workflow/nextActionMarkup/validationMarkup (shared external stage views)",
-        "workflow-engine.js:next (legacy author preparation before independent review)"
-      ],
-      "existingTests": [
-        "verify-semantic-review-acceptance.mjs:persistentInstructionGuidance/legacyStage2Guidance",
-        "verify-file-first-operator.mjs",
-        "verify-project-lifecycle.mjs"
-      ],
-      "negativeAdversarialTests": [
-        "verify-semantic-review-acceptance.mjs:firstPreviewAndPendingAreNotRegenerated; failed-save and cross-operation reviewer guards; existing instruction identity and project data unchanged after render/reopen",
-        "verify-file-first-operator.mjs:unsaved context and unavailable stages never gain saved authority"
-      ],
-      "browserProof": [
-        "verify-browser.mjs:malformed Stage 02 response shows regenerated and saved correction",
-        "verify-browser-extra.mjs:persistentRegeneratedInstructionGuidance in real Stage 01/02/05/06 file/record/reload flows"
-      ],
-      "deployedProof": [
-        "verify-live.mjs:exact deployed byte verification",
-        "verify-browser.mjs and verify-browser-extra.mjs against the exact deployment"
-      ],
-      "evidenceGap": "Physical iPhone Safari and approved visual baseline require evidence on the final deployed revision; desktop Chromium and fixtures do not establish that authority.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     }
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",

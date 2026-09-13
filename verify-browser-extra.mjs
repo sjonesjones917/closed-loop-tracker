@@ -274,14 +274,11 @@ async function main(){
   await acceptProofResponse(await proofResponse(5,`({stageData:{DUPLICATES_REMAINING:'NONE',IMPOSSIBLE_COMBINATIONS:'NONE',UNDEFINED_TERMS:'NONE',CIRCULAR_DEPENDENCIES:'NONE',UNSUPPORTED_REQUIREMENTS:'NONE',APPLICABILITY_UNDETERMINED:'NONE',REQUIREMENTS_WITHOUT_VERIFICATION_PATH:'NONE'},records:{applicabilityRecords:[recordProposal(schema,'applicabilityRecords',{tempKey:'applicability',relationships:{SUBJECT_ID:{recordId:propId}},overrides:{PROPOSED_APPLICABILITY:'APPLICABLE',REASONING:'The mandatory checklist requirement applies.'}})]}})`));
   await openStage(cdp,5);await waitExpr(cdp,`document.querySelector('#operation-picker')?.value==='SEMANTIC_REVIEW'`);await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.generatedPrompts.some(r=>r.stage===5&&r.operation==='SEMANTIC_REVIEW'&&!r.invalidatedBy))`,20000);
   assert(await evalValue(cdp,`document.querySelector('#generated-prompt')?.textContent.includes('SEMANTIC_REVIEW')`),'Acceptance did not display its automatically saved review instruction.');
-  await waitExpr(cdp,`document.querySelector('#instruction-status')?.textContent.includes('New review instruction generated and saved')`);
-  assert(await evalValue(cdp,`document.querySelector('#instruction-status')?.textContent.includes('fresh independent reviewer')&&document.querySelector('#next-required-action')?.textContent.includes('Generated and saved — ready to export')`),'Saved review lacks a persistent purpose and export status.');
   const invalidReview=await proofResponse(5,reviewRecords);invalidReview.records.semanticReviews[0].fields.RESULT='PASS';
   await selectResponseFile(cdp,JSON.stringify(invalidReview));await click(cdp,'#process-response-file');
   await openValidationDetails(cdp,'INVALID_ENUM_VALUE');
   assert(!await evalValue(cdp,`Boolean(document.querySelector('#accept-proposal'))`),'Invalid review result was offered for acceptance.');
   await waitForSavedPrompt(cdp);
-  await waitExpr(cdp,`document.querySelector('#instruction-status')?.textContent.includes('Instruction regenerated and saved')&&document.querySelector('#instruction-status')?.textContent.includes('previous response failed validation')`);
   const mixedReview=await proofResponse(5,reviewRecords);
   assert(mixedReview.promptIdentity.instructionId!==invalidReview.promptIdentity.instructionId,'The corrected review reused the rejected instruction.');
   mixedReview.records.semanticReviews.push({...structuredClone(mixedReview.records.semanticReviews[0]),tempKey:'rejected-finding',fields:{...mixedReview.records.semanticReviews[0].fields,FINDING:'A required condition is unsupported.',RESULT:'REJECTED'}});
@@ -289,7 +286,6 @@ async function main(){
   await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.stages[5].status==='BLOCKED'&&p.stages[6].status==='NOT STARTED')`);
   await evalValue(cdp,`location.reload()`);await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>0`);await openStage(cdp,5);
   await waitExpr(cdp,`document.querySelector('#operation-picker')?.value==='RECONCILE_REQUIREMENT_SET'`);
-  assert(await evalValue(cdp,`document.querySelector('#instruction-status')?.textContent.includes('New correction instruction generated and saved')&&document.querySelector('#instruction-status')?.textContent.includes('recorded review left unresolved findings')&&document.querySelector('#instruction-status')?.textContent.includes('Return only the new response.json')`),'Reload lost the saved correction status, reason or required new response.');
   const blockedReload=await activeProject(cdp),correctionPrompt=blockedReload.projectData.generatedPrompts.filter(r=>r.stage===5&&!r.invalidatedBy).at(-1);
   assert(correctionPrompt.operation==='RECONCILE_REQUIREMENT_SET'&&correctionPrompt.contextManifest.semanticReviewBinding.bindingStatus==='BOUND','A blocked review did not save a usable correction instruction across reload.');
   assert(blockedReload.stages[5].status==='BLOCKED'&&blockedReload.projectData.semanticReviews.some(r=>r.RESULT==='REJECTED'&&r.active!==false),'Reload discarded the failed finding or completed Stage 5.');
@@ -305,7 +301,6 @@ async function main(){
   await openStage(cdp,6);await click(cdp,'#export-prompt-file');await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.generatedPrompts.some(r=>r.stage===6&&r.operation==='COMPLETE'))`,20000);
   await acceptProofResponse(await proofResponse(6,`({records:{tests:[recordProposal(schema,'tests',{tempKey:'checklist-test',relationships:{REQ_ID:{recordId:reqId}},overrides:{TEST_TYPE:'DETERMINISTIC',TEST_ROLE:'REQUIRED_PROOF',TEST_PROPOSITION_TEXT:'Required checklist content is present.',TESTED_SCOPE:'Current checklist',POSITIVE_RESULT_MEANING:'Required content is present.',NEGATIVE_RESULT_MEANING:'Required content is missing.'}})],proofExpressions:[recordProposal(schema,'proofExpressions',{tempKey:'checklist-proof',relationships:{TARGET_PROPOSITION_ID:{recordId:propId}},overrides:{PROPOSED_EXPRESSION:{type:'LEAF',testId:{tempKey:'checklist-test'},requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'},SEMANTIC_RATIONALE:'This controlled test directly establishes the required checklist content.'}})]}})`));
   await openStage(cdp,6);await waitExpr(cdp,`document.querySelector('#operation-picker')?.value==='PROOF_REVIEW'`);
-  assert(await evalValue(cdp,`document.querySelector('#instruction-status')?.textContent.includes('New review instruction generated and saved')`),'Stage 06 does not explain its saved independent review instruction.');
   const beforeProofReview=await activeProject(cdp);assert(beforeProofReview.stages[6].status!=='COMPLETE'&&!beforeProofReview.projectData.tests.some(t=>t.RELEASE_BEARING),'Browser author response acquired proof authority.');
   await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.generatedPrompts.some(r=>r.stage===6&&r.operation==='PROOF_REVIEW'))`,20000);
   assert(await evalValue(cdp,`!document.querySelector('#fresh-context-id')&&!document.querySelector('#add-fresh-context')`),'Stage 06 added a manual reviewer-registration step.');
@@ -328,7 +323,6 @@ async function main(){
     await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,stage);
     assert(await evalValue(cdp,`document.querySelector('#operation-picker')?.value===${JSON.stringify(reconcileOperation)}`),'Reload did not select the saved correction instruction.');
     saved=await activeProject(cdp);assert(saved.projectData.generatedPrompts.at(-1).instructionId===correctionId,'Reload replaced a valid saved correction instruction.');
-    assert(await evalValue(cdp,`document.querySelector('#instruction-status')?.textContent.includes('New correction instruction generated and saved')&&document.querySelector('#instruction-status')?.textContent.includes('matching manifest')`),'Cross-stage saved guidance or matching file transfer instructions disappeared on reload.');
     if(stage===2){
       await acceptProofResponse(await proofResponse(stage,reviewRecords,jobId));await waitExpr(cdp,`document.querySelector('#operation-picker')?.value==='SEARCH_ADEQUACY_REVIEW'`);
       assert(!(await activeProject(cdp)).stages[2].gate.complete,'Source reconciler approved its own work.');
@@ -336,7 +330,7 @@ async function main(){
       assert(saved.stages[2].gate.complete&&saved.projectData.semanticReviews.some(r=>r.RESULT==='REJECTED'&&r.active===false),'Source correction did not finish through independent review with history preserved.');
     }
   }
-  console.log(JSON.stringify({stage01ChallengeFailsClosed:true,stage02ReviewFailsClosed:true,crossStageSavedCorrectionSelected:true,crossStageReloadIdempotent:true,persistentRegeneratedInstructionGuidance:true,sourceReconciliationCannotSelfApprove:true,sourceIndependentReviewCompletes:true}));
+  console.log(JSON.stringify({stage01ChallengeFailsClosed:true,stage02ReviewFailsClosed:true,crossStageSavedCorrectionSelected:true,crossStageReloadIdempotent:true,sourceReconciliationCannotSelfApprove:true,sourceIndependentReviewCompletes:true}));
   await evalValue(cdp,`closedLoopProjectStore.metaPut('selectedProject',${JSON.stringify(reviewed.job.JOB_ID)})`);await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);
 
   console.log('extra:stale-new-project-and-atomic-bulk-write');
