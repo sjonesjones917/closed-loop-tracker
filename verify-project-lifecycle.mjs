@@ -110,14 +110,15 @@ for(let i=0;i<artifactSizes.length;i++){
   filePackageRuntime.fixtureBlob=new Blob([bytes]);
   vm.runInContext(`fixtureArtifacts.push({artifactId:'FILE-${i}',jobId:'FILE-PRESSURE',filename:'file-${i}.bin',mediaType:'application/octet-stream',byteSize:${bytes.length},sha256:'${sha256}',lineage:{},createdAt:'2026-09-11T00:00:00.000Z',blob:fixtureBlob});`,filePackageRuntime);
 }
-let maxPackageRead=0,maxBase64Input=0;
+let maxPackageRead=0,maxBase64Input=0,totalPackageRead=0;
 const nativeBlobRead=Blob.prototype.arrayBuffer;
 filePackageRuntime.btoa=text=>{maxBase64Input=Math.max(maxBase64Input,text.length);return btoa(text);};
 let exportedFiles;
 try{
-  Blob.prototype.arrayBuffer=function(){maxPackageRead=Math.max(maxPackageRead,this.size);return nativeBlobRead.call(this);};
+  Blob.prototype.arrayBuffer=function(){maxPackageRead=Math.max(maxPackageRead,this.size);totalPackageRead+=this.size;return nativeBlobRead.call(this);};
   exportedFiles=await filePackageRuntime.closedLoopProjectStore.exportPackage('FILE-PRESSURE');
 }finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
+const completePackageReadBytes=totalPackageRead,completePackageSourceBytes=artifactSizes.reduce((sum,size)=>sum+size,0);
 assert(maxPackageRead<=65536,`Complete export allocated a ${maxPackageRead}-byte artifact buffer.`);
 assert(maxBase64Input<=65536,`Complete export encoded ${maxBase64Input} bytes as one base64 string.`);
 const exportedPayload=JSON.parse(await new Response(exportedFiles.stream().pipeThrough(new DecompressionStream('gzip'))).text());
@@ -146,12 +147,13 @@ vm.runInContext(`
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
 filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
 vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
-maxPackageRead=0;maxBase64Input=0;
+maxPackageRead=0;maxBase64Input=0;totalPackageRead=0;
 let executionPackage;
 try{
-  Blob.prototype.arrayBuffer=function(){maxPackageRead=Math.max(maxPackageRead,this.size);return nativeBlobRead.call(this);};
+  Blob.prototype.arrayBuffer=function(){maxPackageRead=Math.max(maxPackageRead,this.size);totalPackageRead+=this.size;return nativeBlobRead.call(this);};
   executionPackage=await vm.runInContext("closedLoopProjectStore.createExecutionPackage({project:fixtureProject,stage:4,operation:'COMPLETE'})",filePackageRuntime);
 }finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
+const executionPackageReadBytes=totalPackageRead,executionPackageSourceBytes=artifactSizes[6]+filePackageRuntime.fixtureContextBlob.size;
 assert(maxPackageRead<=65536&&maxBase64Input<=65536,'Execution-package export buffered a complete artifact/context file.');
 const executionPayload=JSON.parse(await new Response(executionPackage.blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
 const {packageSha256:executionSha,...executionBody}=executionPayload;
@@ -224,6 +226,60 @@ for(const name of ['blankStage','ensureState','projectDisplayName','saveProjectU
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
+console.log(JSON.stringify({packageSourceReads:{complete:{sourceBytes:completePackageSourceBytes,readBytes:completePackageReadBytes},execution:{sourceBytes:executionPackageSourceBytes,readBytes:executionPackageReadBytes}}}));
+await storageRegression('export:one-file-pass-after-integrity-verification',async()=>{
+  assert(completePackageReadBytes<=completePackageSourceBytes*2,`Complete export read ${completePackageReadBytes} file bytes for ${completePackageSourceBytes} source bytes; package hashing and compression reread the same files.`);
+});
+await storageRegression('execution-package:one-file-pass-after-integrity-verification',async()=>{
+  assert(executionPackageReadBytes<=executionPackageSourceBytes*2,`Execution export read ${executionPackageReadBytes} file bytes for ${executionPackageSourceBytes} source bytes; package hashing and compression reread the same files.`);
+});
+await storageRegression('export:one-project-pass-after-snapshot-verification',async()=>{
+  const saved=await storageRuntime.makeStored('SINGLE-PASS-PACKAGE');storageRuntime.projectSerializations=0;
+  const blob=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID),passes=storageRuntime.projectSerializations;
+  const decoded=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  const {packageSha256,...body}=decoded;
+  assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(body)).digest('hex')===packageSha256,'Single-pass export changed its canonical package hash preimage.');
+  assert(passes<=2,`Complete export serialized the project ${passes} times; package hashing and compression traversed it separately.`);
+});
+await storageRegression('export:compression-backpressure-bounds-source-reads',async()=>{
+  const saved=await storageRuntime.makeStored('BACKPRESSURE-EXPORT'),bytes=new Uint8Array(1048577),blob=new Blob([bytes]);
+  await storageRuntime.projectStore.putArtifact({artifactId:'BACKPRESSURE-FILE',jobId:saved.job.JOB_ID,filename:'large.bin',mediaType:'application/octet-stream',blob});
+  const nativeCompression=storageRuntime.CompressionStream,nativeRead=Blob.prototype.arrayBuffer;
+  let release,entered,held=false,readBytes=0;
+  const blocked=new Promise(resolve=>release=resolve),started=new Promise(resolve=>entered=resolve);
+  storageRuntime.CompressionStream=class{constructor(){const compression=new nativeCompression('gzip'),gate=new TransformStream({async transform(chunk,controller){if(!held){held=true;entered();await blocked;}controller.enqueue(chunk);}});return {writable:gate.writable,readable:gate.readable.pipeThrough(compression)};}};
+  Blob.prototype.arrayBuffer=function(){readBytes+=this.size;return nativeRead.call(this);};
+  const exporting=storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);let output;
+  try{
+    await Promise.race([started,exporting]);
+    assert(held,'Export did not reach the controlled compressor.');
+    console.log(JSON.stringify({packageBackpressure:{sourceBytes:blob.size,readBytesBeforeCompressorRelease:readBytes}}));
+    assert(readBytes<=blob.size+196608,`A blocked compressor still caused ${readBytes} source bytes to be read for ${blob.size} stored bytes.`);
+  }finally{release();storageRuntime.CompressionStream=nativeCompression;Blob.prototype.arrayBuffer=nativeRead;output=await exporting;}
+  const decoded=JSON.parse(await new Response(output.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  assert(Buffer.from(decoded.artifacts[0].base64,'base64').equals(Buffer.from(bytes)),'Backpressure changed the completed file bytes.');
+});
+await storageRegression('export:stream-failure-keeps-verified-checkpoint-and-recovers',async()=>{
+  const saved=await storageRuntime.makeStored('FAILED-COMPRESSION');await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);
+  const before=await storageRuntime.projectStore.metaGet('lastVerifiedExport:'+saved.job.JOB_ID),nativeCompression=storageRuntime.CompressionStream;
+  storageRuntime.CompressionStream=class{constructor(){let chunks=0;return new TransformStream({transform(chunk,controller){if(++chunks===2)throw new Error('CONTROLLED_COMPRESSION_FAILURE');controller.enqueue(chunk);}});}};
+  let error;try{await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}catch(e){error=e;}finally{storageRuntime.CompressionStream=nativeCompression;}
+  assert(error?.message==='CONTROLLED_COMPRESSION_FAILURE','Compression failure did not reject complete export.');
+  assert(JSON.stringify(await storageRuntime.projectStore.metaGet('lastVerifiedExport:'+saved.job.JOB_ID))===JSON.stringify(before),'A failed compression advanced the verified-backup checkpoint.');
+  const recovered=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID),decoded=JSON.parse(await new Response(recovered.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  assert(decoded.packageManifest.projectSha256===saved.projectSha256,'Compression failure prevented the next verified export.');
+});
+await storageRegression('export:late-source-failure-keeps-verified-checkpoint-and-recovers',async()=>{
+  const saved=await storageRuntime.makeStored('FAILED-SOURCE'),bytes=new Uint8Array(196607),blob=new Blob([bytes]);
+  await storageRuntime.projectStore.putArtifact({artifactId:'FAILED-SOURCE-FILE',jobId:saved.job.JOB_ID,filename:'source.bin',mediaType:'application/octet-stream',blob});
+  await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);const before=await storageRuntime.projectStore.metaGet('lastVerifiedExport:'+saved.job.JOB_ID),nativeRead=Blob.prototype.arrayBuffer;let readBytes=0,error;
+  Blob.prototype.arrayBuffer=function(){readBytes+=this.size;return readBytes>blob.size+49152?Promise.reject(new Error('CONTROLLED_SOURCE_FAILURE')):nativeRead.call(this);};
+  try{await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}catch(e){error=e;}finally{Blob.prototype.arrayBuffer=nativeRead;}
+  assert(error?.message==='CONTROLLED_SOURCE_FAILURE','A late file read failure did not reject complete export.');
+  assert(JSON.stringify(await storageRuntime.projectStore.metaGet('lastVerifiedExport:'+saved.job.JOB_ID))===JSON.stringify(before),'A failed source stream advanced the verified-backup checkpoint.');
+  const recovered=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID),decoded=JSON.parse(await new Response(recovered.stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  assert(Buffer.from(decoded.artifacts[0].base64,'base64').equals(Buffer.from(bytes)),'Source stream failure damaged the next export.');
+});
 await storageRegression('export:verified-snapshot-hash-reused',async()=>{
   const saved=await storageRuntime.makeStored('SNAPSHOT-EXPORT');storageRuntime.projectSerializations=0;
   const blob=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID),passes=storageRuntime.projectSerializations;

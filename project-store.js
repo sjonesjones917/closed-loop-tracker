@@ -265,14 +265,35 @@ async function* packageJsonChunks(value,fileContents){
   }
   yield '}';
 }
-async function compressJson(value,fileContents=null){
+async function compressPackage(body,fileContents){
   if(typeof CompressionStream!=='function')throw storageError('CompressionStream is required for complete export.','COMPRESSION_STREAM_REQUIRED');
-  const chunks=fileContents?packageJsonChunks(value,fileContents):hash.canonicalChunks(value),encoder=new TextEncoder();let lastYield=Date.now();
-  const stream=new ReadableStream({async pull(controller){
-    try{let text='';while(text.length<32768){const next=await chunks.next();if(next.done){if(text)controller.enqueue(encoder.encode(text));controller.close();return;}text+=next.value;}if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}controller.enqueue(encoder.encode(text));}catch(error){controller.error(error);}
-  },cancel(){return chunks.return?.();}
-  }).pipeThrough(new CompressionStream('gzip'));
-  return new Response(stream).blob();
+  if(Object.hasOwn(body,'packageSha256'))throw storageError('A package digest cannot include itself.','PACKAGE_DIGEST_PREIMAGE_INVALID');
+  const encoder=new TextEncoder(),compression=new CompressionStream('gzip'),writer=compression.writable.getWriter(),compressed=new Response(compression.readable).blob();
+  // Observe reader failure immediately, while preserving its rejection for
+  // the caller. A failed stream must never advance the verified-export marker.
+  void compressed.catch(()=>{});
+  async function* encodedBody(){
+    let text='';for await(const part of packageJsonChunks(body,fileContents)){text+=part;if(text.length>=32768){yield encoder.encode(text);text='';}}
+    if(text)yield encoder.encode(text);
+  }
+  async function* hashAndCompress(){
+    let previous=null;
+    for await(const bytes of encodedBody()){
+      if(previous)await writer.write(previous);
+      yield bytes;previous=bytes;
+    }
+    if(!previous||previous[previous.length-1]!==125)throw storageError('Package body did not end with its object boundary.','PACKAGE_BODY_INVALID');
+    if(previous.length>1)await writer.write(previous.subarray(0,-1));
+  }
+  try{
+    // Hash the unchanged canonical body, including its closing brace, while
+    // compressing those same UTF-8 buffers under stream backpressure. Append
+    // the digest as the last JSON member; it remains outside its own preimage.
+    // Retain only one bounded body chunk to replace the final closing brace.
+    const packageSha256=await hash.sha256Chunks(hashAndCompress());
+    await writer.write(encoder.encode(`${Object.keys(body).length?',':''}"packageSha256":"${packageSha256}"}`));
+    await writer.close();return {blob:await compressed,packageSha256};
+  }catch(error){await writer.abort(error).catch(()=>{});await compressed.catch(()=>{});throw error;}
 }
 function requiredProjectArtifactBytes(project){
   const id=projectIdentity(project),engine=globalThis.closedLoopWorkflowEngine,expected=[];
@@ -298,7 +319,7 @@ async function exportPackage(jobId){
   for(const a of artifacts){const actualSize=a.blob.size,actualSha256=await hash.sha256Bytes(a.blob);if(actualSize!==Number(a.byteSize)||actualSha256!==String(a.sha256))throw storageError(`Stored artifact ${a.artifactId} failed export-time byte verification.`,'ARTIFACT_INTEGRITY_MISMATCH');artifactEntries.push({artifactId:a.artifactId,jobId:a.jobId,filename:a.filename,mediaType:a.mediaType,byteSize:actualSize,sha256:actualSha256,lineage:a.lineage,createdAt:a.createdAt,base64:''});fileContents.set(artifactEntries.at(-1),{property:'base64',encoding:'base64',blob:a.blob});}
   // readProject verified this private snapshot. No operation above mutates it;
   // a concurrent saved revision cannot change either its bytes or its digest.
-  const exportedProject=canonicalProject(project),packageManifest={jobId,projectSha256:project.projectSha256,artifactCount:artifactEntries.length,artifacts:artifactEntries.map(a=>({artifactId:a.artifactId,filename:a.filename,mediaType:a.mediaType,byteSize:a.byteSize,sha256:a.sha256}))},body={schema:'closed-loop-project-package/1',projectSchema:project.schema,workflow:project.workflow,responseSchema:globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA,project:exportedProject,artifacts:artifactEntries,packageManifest,exportedAt:now()};const packageSha256=await hash.sha256Chunks(packageJsonChunks(body,fileContents)),payload={...body,packageSha256};const compressed=await compressJson(payload,fileContents);const exportRecord={jobId,packageSha256,artifactCount:artifactEntries.length,at:now()};await metaPut('lastVerifiedExport',exportRecord);await metaPut('lastVerifiedExport:'+jobId,exportRecord);return new Blob([compressed],{type:'application/gzip'});
+  const exportedProject=canonicalProject(project),packageManifest={jobId,projectSha256:project.projectSha256,artifactCount:artifactEntries.length,artifacts:artifactEntries.map(a=>({artifactId:a.artifactId,filename:a.filename,mediaType:a.mediaType,byteSize:a.byteSize,sha256:a.sha256}))},body={schema:'closed-loop-project-package/1',projectSchema:project.schema,workflow:project.workflow,responseSchema:globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA,project:exportedProject,artifacts:artifactEntries,packageManifest,exportedAt:now()};const {blob:compressed,packageSha256}=await compressPackage(body,fileContents);const exportRecord={jobId,packageSha256,artifactCount:artifactEntries.length,at:now()};await metaPut('lastVerifiedExport',exportRecord);await metaPut('lastVerifiedExport:'+jobId,exportRecord);return new Blob([compressed],{type:'application/gzip'});
 }
 // Decode the unchanged JSON package without retaining its complete expanded
 // text. The project remains a finite-memory object; artifact strings are
@@ -461,7 +482,7 @@ async function createExecutionPackage({project=null,jobId=null,stage,operation=n
   const instruction={instructionId:String(selectedPrompt.instructionId||selectedPrompt.promptId||''),promptEngineVersion:String(selectedPrompt.promptEngineVersion||''),bodySha256:String(selectedPrompt.bodySha256||selectedPrompt.sha256||''),contractSha256:String(selectedPrompt.contractSha256||''),contextSignature:String(selectedPrompt.contextSignature||''),scope:clone(publicScope),fullTextSha256,text:exactPrompt};
   const promptFileManifest=promptEngine.promptFileManifest(selectedPrompt),manifest={promptIdentity:promptFileManifest.promptIdentity,packageId:promptFileManifest.packageId||null,operationReservationId:promptFileManifest.operationReservationId||null,challengeNonce:promptFileManifest.challengeNonce||null,targetSlot:promptFileManifest.targetSlot||null,reservationRevision:promptFileManifest.reservationRevision??null,schema:'closed-loop-verification-package/1',workflow:project.workflow,projectSchema:project.schema,responseSchema:globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA,jobId:canonicalJobId,stage:normalizedStage,operation:normalizedOperation,runId:publicIdentity(normalizedRunId),reviewerAlias,productId:publicIdentity(productId||project.job?.CURRENT_PRODUCT_ID||null),testIds:ids,instructionId:instruction.instructionId,instructionFullTextSha256:fullTextSha256,responseContractSha256:contractSha256,artifacts:artifactEntries.map(({base64,...x})=>x),handoff:clone(plan),createdAt:now()};
   const contextFiles=[];for(const identity of promptFileManifest.contextFiles){const file=await readPromptContextFile(selectedPrompt,canonicalJobId,identity.path);contextFiles.push({...identity,text:''});fileContents.set(contextFiles.at(-1),{property:'text',encoding:'utf8',blob:file.blob});}manifest.contextFiles=promptFileManifest.contextFiles;
-  const body={manifest,instruction,responseContract,tests,artifacts:artifactEntries,contextFiles},packageSha256=await hash.sha256Chunks(packageJsonChunks(body,fileContents)),payload={...body,packageSha256};const compressed=await compressJson(payload,fileContents);return {blob:new Blob([compressed],{type:'application/gzip'}),filename:`VERIFY-${canonicalJobId}-STAGE-${String(normalizedStage).padStart(2,'0')}.clverify.gz`,manifest,packageSha256};
+  const body={manifest,instruction,responseContract,tests,artifacts:artifactEntries,contextFiles},{blob:compressed,packageSha256}=await compressPackage(body,fileContents);return {blob:new Blob([compressed],{type:'application/gzip'}),filename:`VERIFY-${canonicalJobId}-STAGE-${String(normalizedStage).padStart(2,'0')}.clverify.gz`,manifest,packageSha256};
 }
 async function stageResponseFile({jobId,stage,blob,rawFilename='response.json',mediaType='application/json',promptIdentity=null,packageId=null,operationReservationId=null,challengeNonce=null}={}){
   const owner=String(jobId||'').trim(),stageNumber=Number(stage);if(!owner)throw storageError('JOB_ID is required to stage a response file.','RESPONSE_STAGE_JOB_ID_REQUIRED');if(!Number.isInteger(stageNumber)||stageNumber<1||stageNumber>30)throw storageError('A valid stage is required to stage a response file.','RESPONSE_STAGE_INVALID_STAGE');if(!(blob instanceof Blob))throw new TypeError('Response-file bytes must be a Blob.');
