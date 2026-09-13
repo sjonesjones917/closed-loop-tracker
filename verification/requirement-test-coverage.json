@@ -1295,32 +1295,36 @@
         "prompt-engine.js:recoveryFeedback/contextFor/compactContextManifest",
         "prompt-engine.js:scopeFor (version boundaries shared by reservations, ingestion and UI)",
         "hash.js:sha256Bytes/sha256Chunks",
-        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging"
+        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging",
+        "app-core.js:workflow/currentStagePrompt/promptPreviewKey/currentPromptPreview/promptContextMarkup/exportPromptContext"
       ],
       "existingTests": [
         "verify-all-stage-prompts.mjs",
         "verify-user-prompt-invariants.mjs",
         "verify-full-cycle.mjs:record-specific completion findings in reconciliation instruction",
         "verify-hash.mjs:bounded Blob reads and independent crypto oracle",
-        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle"
+        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle",
+        "verify-file-first-operator.mjs:contextFirstPreview \u2014 full production UI, no commit or repeated preview build"
       ],
       "negativeAdversarialTests": [
         "verify-prompt-semantics.mjs",
         "verify-prompt-file-identity.mjs",
         "verify-ingestion.mjs:invalid timing rejects before canonical mutation and appears in replacement instruction",
         "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild",
-        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters"
+        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters",
+        "verify-file-first-operator.mjs:contextFirstPreview \u2014 unavailable stages, changed revision and switched project cannot reuse attachment metadata"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer",
-        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards"
+        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards",
+        "verify-browser.mjs:stage03AccumulatedTransfer \u2014 context first from unsaved preview, one saved reservation, exact matching files, stable subsequent exports, reload and backup"
       ],
       "deployedProof": [
         "verify-live.mjs",
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs"
       ],
-      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "DP-78 reproduces required Export context missing until another export saves the instruction, including the supplied Stage 05 project. The current-preview repair requires its own exact-revision CI and deployed browser proof. Existing all-50-external-operation context-pressure tests are reused. Physical-iPhone Safari and approved visual authority remain open.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {
@@ -1338,7 +1342,8 @@
         "workflow-engine.js:preparePromptContext; prompt-engine.js:reserveAndBuildPromptRecord",
         "app-core.js:latestResponseAttempt/pendingReturnedResponse/interactionModeMarkup",
         "hash.js:sha256Bytes/sha256Chunks",
-        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging"
+        "project-store.js:packageJsonChunks/exportPackage/createExecutionPackage/importPackage/base64ToBlob; Blob-based custody and staging",
+        "app-core.js:workflow/currentStagePrompt/promptPreviewKey/currentPromptPreview/promptContextMarkup/exportPromptContext"
       ],
       "existingTests": [
         "verify-file-first-operator.mjs",
@@ -1347,7 +1352,8 @@
         "verify-full-cycle.mjs:automatic contexts through all 30 stages and three ten-run batches",
         "verify-file-first-operator.mjs:latest relevant response and status precedence across all 30 stages",
         "verify-hash.mjs:bounded Blob reads and independent crypto oracle",
-        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle"
+        "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle",
+        "verify-file-first-operator.mjs:contextFirstPreview \u2014 full production UI, no commit or repeated preview build"
       ],
       "negativeAdversarialTests": [
         "verify-reservation-contract.mjs",
@@ -1356,13 +1362,15 @@
         "verify-complete.mjs:unknown external names are not duplicate identities; actual context reuse and prior-review leakage rejected",
         "verify-file-first-operator.mjs:no manual context naming, repeat export stable, all-stage failures inline",
         "verify-file-first-operator.mjs:old file slot, unrelated operation and prior success cannot override current attempt",
-        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters"
+        "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters",
+        "verify-file-first-operator.mjs:contextFirstPreview \u2014 unavailable stages, changed revision and switched project cannot reuse attachment metadata"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer",
         "verify-browser-extra.mjs:invalid replacement, correction export, inline storage failure, pending reselection, acceptance and reload",
         "verify-browser-extra.mjs:Stage04 acceptance to Stage05 automatic author allocation, exact instruction/manifest export, no manual context form or popup",
-        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards"
+        "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards",
+        "verify-browser.mjs:stage03AccumulatedTransfer \u2014 context first from unsaved preview, one saved reservation, exact matching files, stable subsequent exports, reload and backup"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1371,7 +1379,7 @@
         "verify-browser-extra.mjs",
         "verify-browser-extra.mjs:Stage 05 and non-response inline recovery"
       ],
-      "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
+      "evidenceGap": "DP-78 reproduces required Export context missing until another export saves the instruction, including the supplied Stage 05 project. The current-preview repair requires its own exact-revision CI and deployed browser proof. Existing all-50-external-operation context-pressure tests are reused. Physical-iPhone Safari and approved visual authority remain open.",
       "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
     },
     {

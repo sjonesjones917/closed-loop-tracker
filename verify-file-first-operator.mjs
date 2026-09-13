@@ -9,6 +9,42 @@ const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
+// The complete workflow renderer must advertise required files before the first
+// save/export, using the same preview it already built without reserving work.
+{
+  const runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,
+    Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]}});
+  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
+  vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
+    core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;
+    globalThis.ui={select:p=>{current=p;projects=[p];},workflow:()=>{detailViews.clear();return workflow();}};
+  })();`,runtime);
+  vm.runInContext(`globalThis.previewBuilds=0;const realPromptEngine=closedLoopPromptEngine;
+    closedLoopPromptEngine={...realPromptEngine,buildPromptRecord(...args){previewBuilds++;return realPromptEngine.buildPromptRecord(...args);}};
+    globalThis.previewProject=closedLoopCore.createBlankState('CONTEXT-FIRST-PREVIEW');
+    previewProject.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve the complete source é🙂. '.repeat(4000)+'FIRST-PREVIEW-TAIL';
+    closedLoopWorkflowEngine.recalculate(previewProject);ui.select(previewProject);`,runtime);
+  const p=runtime.previewProject,before=JSON.stringify(p),first=runtime.ui.workflow();
+  assert.match(first,/id="export-prompt-context"/,'Required Export context is missing until another export saves the instruction.');
+  assert.match(first,/This instruction requires context\.json/);
+  assert.equal(JSON.stringify(p),before,'Displaying required context must not reserve an operation or change project data.');
+  assert.equal(runtime.previewBuilds,1,'Displaying required context built the accumulated prompt more than once.');
+  assert.match(runtime.ui.workflow(),/id="export-prompt-context"/);
+  assert.equal(runtime.previewBuilds,1,'Revisiting the same preview rebuilt its context.');
+  for(let stage=2;stage<=30;stage++){
+    p.activeStage=stage;
+    assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,`Stage ${stage} exposed a stale preview's context for an unavailable operation.`);
+  }
+  p.activeStage=1;p.revision++;p.job.EXACT_USER_OBJECTIVE_VERBATIM='Produce a short checklist.';
+  assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,'A new revision with inline context retained the old attachment button.');
+  p.revision++;p.job.EXACT_USER_OBJECTIVE_VERBATIM='Large current project context. '.repeat(4000);
+  assert.match(runtime.ui.workflow(),/id="export-prompt-context"/);
+  const other=runtime.closedLoopCore.createBlankState('CONTEXT-OTHER-PROJECT');other.revision=p.revision;
+  runtime.closedLoopWorkflowEngine.recalculate(other);runtime.ui.select(other);
+  assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,'Switching projects leaked the preceding project\'s required context.');
+  console.log(JSON.stringify({contextFirstPreview:true,previewDoesNotCommit:true,previewBuildsPerRender:1,unavailableStageChecks:29,staleRevisionAndProjectContextRejected:true}));
+}
+
 // Changing selection while raw bytes are being staged must never make the
 // handler read/capture them through the newly selected project or stage.
 for(const change of ['project','stage','revision']){
