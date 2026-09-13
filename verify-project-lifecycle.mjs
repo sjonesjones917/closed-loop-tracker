@@ -167,6 +167,50 @@ for(const row of exportedPayload.artifacts){
   assert(Buffer.from(decoded).equals(Buffer.from(row.base64,'base64')),'Bounded restore changed base64 whitespace or final padding semantics.');
 }
 for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=false;try{decoderRuntime.decodeFile(invalid);}catch{rejected=true;}assert(rejected,`Invalid artifact base64 was accepted: ${invalid}`);}
+// Replay the complete production UI owner, without starting browser storage.
+// Diagnostic lists must use the existing lazy disclosure and page controls.
+{
+  const runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,
+    document:{currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]},closedLoopCore:core,closedLoopWorkflowSchema:globalThis.closedLoopWorkflowSchema,
+    closedLoopWorkflowEngine:engine});
+  vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
+    core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;
+    globalThis.ui={select:p=>{current=p;projects=[p];detailViews.clear();},accepted:acceptedStageMarkup,
+      entries:()=>[...detailViews.entries()],page:(id,offset)=>{const body={innerHTML:'',querySelectorAll:()=>[],querySelector:()=>null,replaceChildren(){this.innerHTML='';}};detailViews.get(id).offset=offset;renderDetail({dataset:{detailId:id},querySelector:()=>body});return body.innerHTML;},
+      storage:mismatches=>{projectStorage.mismatches=mismatches;return projectManagementMarkup();},
+      execution:()=>testExecutionGuidanceMarkup(6)};
+  })();`,runtime);
+  const p=core.createBlankState('DIAGNOSTIC-PRESSURE');engine.ensureShape(p);
+  const reasons=Array.from({length:603},(_,i)=>`Diagnostic ${i+1}: preserve <tag> & exact é🙂 content.`);
+  for(let stage=1;stage<=30;stage++){
+    p.stages[stage].gate={complete:false,reasons};runtime.ui.select(p);
+    const markup=runtime.ui.accepted(stage),entry=runtime.ui.entries().find(([,entry])=>entry.title==='Completion gate is not satisfied.');
+    assert(entry&&markup.includes('<summary>Completion gate is not satisfied.')&&!markup.includes('Diagnostic 1:')&&!/<details[^>]* open/.test(markup),`Stage ${stage}: completion reasons bypass the collapsed shared details control.`);
+    assert(entry[1].value===reasons&&markup.length<3000,`Stage ${stage}: collapsed diagnostics copied or rendered the accumulated list.`);
+  }
+  let [id]=runtime.ui.entries().find(([,entry])=>entry.title==='Completion gate is not satisfied.');
+  const seen=[];
+  for(let offset=0;offset<reasons.length;offset+=20){
+    const page=runtime.ui.page(id,offset);
+    seen.push(...[...page.matchAll(/Diagnostic (\d+): preserve &lt;tag&gt; &amp; exact é🙂 content\./g)].map(match=>Number(match[1])));
+    assert((page.match(/class="record-row"/g)||[]).length<=20&&!page.includes('<tag>'),`Diagnostic page ${offset} is unbounded or unescaped.`);
+  }
+  assert(seen.length===603&&seen.every((number,index)=>number===index+1),'Diagnostic paging omitted, duplicated or reordered reasons.');
+  p.stages[30].gate.reasons=['long diagnostic '+'é🙂'.repeat(10000)+'EXACT-LONG-TAIL'];runtime.ui.select(p);runtime.ui.accepted(30);
+  [id]=runtime.ui.entries().find(([,entry])=>entry.title==='Completion gate is not satisfied.');
+  assert(!runtime.ui.page(id,0).includes('EXACT-LONG-TAIL')&&runtime.ui.entries().some(([,entry])=>entry.kind==='text'&&entry.value.endsWith('EXACT-LONG-TAIL')),'A single long diagnostic bypassed bounded text disclosure or lost its tail.');
+  runtime.ui.select(p);const storage=runtime.ui.storage(reasons);
+  assert(!storage.includes('Diagnostic 1:')&&runtime.ui.entries().some(([,entry])=>entry.title==='Stored byte mismatch'&&entry.value===reasons),'Stored byte mismatches bypass the shared collapsed diagnostic list.');
+  p.activeStage=6;p.projectData.tests=Array.from({length:603},(_,i)=>({id:'UNSUPPORTED-'+i,stage:6,active:true,scope:engine.currentScope(p),fields:{TEST_ID:'UNSUPPORTED-'+i,EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'NO_SUCH_EXECUTOR'}}));runtime.ui.select(p);
+  const execution=runtime.ui.execution(),unsupported=runtime.ui.entries().find(([,entry])=>entry.title==='Unsupported application tests');
+  assert(unsupported&&unsupported[1].value.length===603&&!execution.includes('UNSUPPORTED-602'),'Unsupported executor diagnostics bypass the shared collapsed list.');
+  const snapshot=JSON.stringify(p);runtime.ui.accepted(6);assert(JSON.stringify(p)===snapshot,'Rendering diagnostics changed canonical state.');
+  p.stages[30].gate.reasons=[];runtime.ui.select(p);
+  assert(runtime.ui.accepted(30).includes('Completion gate is satisfied by current canonical evidence.'),'A satisfied gate lost its success notice.');
+  p.stages[1].gate.reasons=['Human confirmation required'];p.job.CURRENT_STAGE='STAGE 01';p.job.NEXT_REQUIRED_ACTION={actionType:'CONFIRM_STAGE_ONE_INTENT'};runtime.ui.select(p);
+  assert(runtime.ui.accepted(1).includes('Stage 01 is waiting for your confirmation.')&&!runtime.ui.entries().some(([,entry])=>entry.title==='Completion gate is not satisfied.'),'Stage 01 confirmation lost its direct human action.');
+  console.log(JSON.stringify({storageRegression:'view:collapsed-diagnostic-lists',passed:true,stages:30,completeReasons:603,longReasonPreserved:true}));
+}
 // The real Files view and proposal view must not eagerly build all accumulated
 // download controls or resolve every diff row before a detail page is opened.
 const viewRuntime=vm.createContext({engine,current:core.createBlankState('VIEW-PRESSURE'),safe:value=>Array.isArray(value)?value:[],esc:value=>String(value??''),label:value=>String(value),proposalVersionCurrent:()=>true});
