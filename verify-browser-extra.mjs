@@ -191,7 +191,7 @@ async function main(){
   await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}const p=stage04AcceptanceFixture(runtime);await closedLoopProjectStore.writeProject(p);})()`);
   await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,4);
   await click(cdp,'#save-prompt');await waitForSavedPrompt(cdp);
-  const proofEnvelope=()=>evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}const p=await closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE'),pr=p.projectData.generatedPrompts.filter(x=>x.stage===4&&!x.invalidatedBy&&Number(x.scope.projectRevision)===p.revision).at(-1);if(!pr)throw new Error('Current Stage 04 instruction is missing.');return stage04AcceptanceEnvelope(runtime,p,pr);})()`);
+  const proofEnvelope=(instructionId=null)=>evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}const p=await closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE'),pr=p.projectData.generatedPrompts.filter(x=>x.stage===4&&!x.invalidatedBy&&(${JSON.stringify(instructionId)}?x.instructionId===${JSON.stringify(instructionId)}:Number(x.scope.projectRevision)===p.revision)).at(-1);if(!pr)throw new Error('Current Stage 04 instruction is missing.');return stage04AcceptanceEnvelope(runtime,p,pr);})()`);
   const invalidProofEnvelope=await proofEnvelope(),originalProofInstruction=invalidProofEnvelope.promptIdentity.instructionId;
   invalidProofEnvelope.records.propositions[0].fields.PROPOSITION_TEXT=123;
   await selectResponseFile(cdp,JSON.stringify(invalidProofEnvelope));await click(cdp,'#process-response-file');await openValidationDetails(cdp,'WRONG_VALUE_TYPE');
@@ -210,7 +210,8 @@ async function main(){
   assert(createHash('sha256').update(correctionTransfer.instruction).digest('hex')===correctionTransfer.manifest.instruction.sha256,'Correction instruction export does not match the manifest.');
   if(correctionTransfer.manifest.contextFiles?.length){const file=correctionTransfer.manifest.contextFiles[0];assert(createHash('sha256').update(correctionTransfer.context).digest('hex')===file.sha256&&Buffer.byteLength(correctionTransfer.context)===file.byteSize,'Correction context export does not match the manifest.');}
   assert((correctionTransfer.instruction+correctionTransfer.context).includes('WRONG_VALUE_TYPE')&&(correctionTransfer.instruction+correctionTransfer.context).includes('/records/propositions/0/fields/PROPOSITION_TEXT'),'Regenerated instruction/context omitted the exact validation failure that the agent must correct.');
-  const correctedProofEnvelope=await proofEnvelope();
+  const correctedProofEnvelope=await proofEnvelope(correctionTransfer.manifest.promptIdentity.instructionId);
+  assert(correctedProofEnvelope.promptIdentity.bodySha256===correctionTransfer.manifest.instruction.sha256&&correctedProofEnvelope.operationReservationId===correctionTransfer.manifest.operationReservationId,'Corrected response does not use the exact exported instruction and reservation.');
   assert(correctedProofEnvelope.promptIdentity.instructionId!==originalProofInstruction,'The rejected response reused its controlling instruction instead of generating a replacement.');
   await selectResponseFile(cdp,JSON.stringify(correctedProofEnvelope));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);
   await cdp.send('Page.reload');await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,4);await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);
