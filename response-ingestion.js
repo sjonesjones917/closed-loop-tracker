@@ -201,7 +201,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
         const allowedFields=new Set(schema.recordAgentFields(collection));
         for(const [name,value] of Object.entries(record.fields)){
           const fieldPath=`${path}/fields/${pointerEscape(name)}`;
-          const fieldDefinition=definition.fieldDefinitions[name];
+          const fieldDefinition=schema.recordResponseFieldDefinition(collection,name);
           if(!fieldDefinition){issues.push(issue('UNKNOWN_RECORD_FIELD',fieldPath,`${collection} has no field ${name}.`));continue;}
           validateValue(fieldDefinition,value,fieldPath,issues,{required:definition.required.includes(name),maxTextFieldLength:contract?.resourceLimits?.maxTextFieldLength??schema.DEFAULT_RESOURCE_LIMITS.maxTextFieldLength});
           if(!allowedFields.has(name)||!schema.authorizeMutation({fieldDefinition:fieldDefinition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',fieldPath,`${name} is owned by ${fieldDefinition.producer}; the agent cannot set it.`));

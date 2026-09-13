@@ -112,7 +112,10 @@ verify();
   runtime.current={activeStage:stage,stages:{[stage]:{status:'IN PROGRESS'}},projectData:{generatedPrompts:[{instructionId:'CURRENT',stage,operation:'COMPLETE',scope:{}}],rawResponses:[{rawResponseId:'NEW',stage,status:'VALIDATION_FAILED',promptInstructionId:'CURRENT',validationId:'FAILED'}],responseValidations:[{validationId:'FAILED',stage,valid:false}]}};
   assert.match(runtime.mode(stage),/Return a corrected final JSON/,'An old acceptance hid the current rejection at stage '+stage);
   runtime.current.projectData.rawResponses[0].status='ACCEPTED_DATA_CHANGE';runtime.current.projectData.responseValidations[0].valid=true;
-  assert.match(runtime.mode(stage),/The application accepted this response/,'The current accepted response lost its receipt at stage '+stage);
+  assert.match(runtime.mode(stage),/Accepted change: OLD-CHANGE/,'The saved response lost its receipt at stage '+stage);
+  assert.match(runtime.mode(stage),/notice warn.*this stage has not passed/,'A saved response appeared to pass an incomplete stage '+stage);
+  runtime.current.stages[stage].gate={complete:true};
+  assert.match(runtime.mode(stage),/notice success.*this stage is complete/,'The satisfied completion gate was not reported at stage '+stage);
  }
 }
 // The next action displayed on a historical view belongs to the current stage.
