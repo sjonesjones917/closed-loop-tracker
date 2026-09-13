@@ -2031,7 +2031,8 @@
         "first bounded chunk does not scan the complete accumulated text",
         "native and fallback scalar validation reject malformed tails after earlier chunks",
         "nested/shared/empty/escaped values match independently encoded JSON and native crypto",
-        "concurrent save cannot replace the export snapshot digest; contradictory stored revision metadata is quarantined"
+        "concurrent save cannot replace the export snapshot digest; contradictory stored revision metadata is quarantined",
+        "legacy malformed/null rows retain PROJECT_HASH_MISMATCH quarantine behavior before revision metadata reconciliation"
       ],
       "browserProof": [
         "verify-browser-extra.mjs:worker digest equality",

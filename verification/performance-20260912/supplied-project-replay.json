@@ -1,5 +1,5 @@
 {
-  "method": "Production modules with only IndexedDB transaction I/O substituted; exact supplied gzip backup. Three fresh sequential Node processes per phase and variant, alternating variants per sample. No CPU profiler. Local Node v24.19.0; not browser navigation, physical iPhone, p95, or a universal project-capacity bound.",
+  "method": "Production modules with only IndexedDB transaction I/O substituted; exact supplied gzip backup. Three fresh sequential Node processes per phase and variant, alternating variants per sample. No CPU profiler. Local Node v24.19.0; not browser navigation, physical iPhone, p95, or a universal project-capacity bound. Current samples were repeated after preserving legacy corruption error precedence; baseline samples were retained from the same unchanged baseline source.",
   "baselineCommit": "2941caae639919a1de6b12731854f67d896058ff",
   "input": {
     "compressedBytes": 14636839,
@@ -20,7 +20,7 @@
     },
     "current": {
       "hash.js": "d0d3c28f46f76538868d7470dec9f3e0981c61555f05c152de6226298d0a3ae0",
-      "project-store.js": "abd562057aba902ddc53fd80c3257cb1835f5896703a665254dc5cc81904913d",
+      "project-store.js": "966a8a6f5f0c68595239a212afdcbf9a7f09d4aca19a770a37571e2d32f8dba0",
       "workflow-engine.js": "c42db7c67c8acc749ea5183809bf8a605b7e23e67646902a88bd2940947133bb",
       "app-core.js": "76da8b9f984ad6dc5d6e148de066eed0f7ad5b1b15ac10206f1dc522fef14bd2"
     }
@@ -34,11 +34,11 @@
       "readNormalizeMarkupMedian": 8225.431428000002
     },
     "current": {
-      "production-read": 3046.104816,
-      "production-normalize": 626.5393099999997,
-      "production-workflow-markup": 20.736907999999858,
-      "production-export": 10413.71816,
-      "readNormalizeMarkupMedian": 3693.3810339999995
+      "production-read": 3240.830538,
+      "production-normalize": 658.9433729999996,
+      "production-workflow-markup": 20.901667999999518,
+      "production-export": 8682.239502,
+      "readNormalizeMarkupMedian": 3920.1345340000003
     }
   },
   "samples": [
@@ -83,46 +83,6 @@
       "characters": 455300591
     },
     {
-      "sample": 1,
-      "variant": "current",
-      "phase": "production-read",
-      "milliseconds": 3276.151905,
-      "longestTimerGap": 822.0055359999997,
-      "projectSerializations": 1,
-      "encodes": 62372,
-      "characters": 108732949
-    },
-    {
-      "sample": 1,
-      "variant": "current",
-      "phase": "production-normalize",
-      "milliseconds": 682.9220799999998,
-      "longestTimerGap": 682.9412280000006,
-      "projectSerializations": 0,
-      "encodes": 6383,
-      "characters": 9978549
-    },
-    {
-      "sample": 1,
-      "variant": "current",
-      "phase": "production-workflow-markup",
-      "milliseconds": 22.290993999999955,
-      "longestTimerGap": 22.32915299999968,
-      "projectSerializations": 0,
-      "encodes": 0,
-      "characters": 0
-    },
-    {
-      "sample": 1,
-      "variant": "current",
-      "phase": "production-export",
-      "milliseconds": 10435.081109,
-      "longestTimerGap": 791.8618099999999,
-      "projectSerializations": 3,
-      "encodes": 78724,
-      "characters": 360927515
-    },
-    {
       "sample": 2,
       "variant": "baseline",
       "phase": "production-read",
@@ -161,46 +121,6 @@
       "projectSerializations": 4,
       "encodes": 79290,
       "characters": 455300591
-    },
-    {
-      "sample": 2,
-      "variant": "current",
-      "phase": "production-read",
-      "milliseconds": 2710.051596,
-      "longestTimerGap": 649.836706,
-      "projectSerializations": 1,
-      "encodes": 62372,
-      "characters": 108732949
-    },
-    {
-      "sample": 2,
-      "variant": "current",
-      "phase": "production-normalize",
-      "milliseconds": 460.22742100000005,
-      "longestTimerGap": 460.24297400000023,
-      "projectSerializations": 0,
-      "encodes": 6383,
-      "characters": 9978549
-    },
-    {
-      "sample": 2,
-      "variant": "current",
-      "phase": "production-workflow-markup",
-      "milliseconds": 19.102626000000328,
-      "longestTimerGap": 19.147554000000127,
-      "projectSerializations": 0,
-      "encodes": 0,
-      "characters": 0
-    },
-    {
-      "sample": 2,
-      "variant": "current",
-      "phase": "production-export",
-      "milliseconds": 10406.519624,
-      "longestTimerGap": 715.7963729999997,
-      "projectSerializations": 3,
-      "encodes": 78724,
-      "characters": 360927515
     },
     {
       "sample": 3,
@@ -243,44 +163,124 @@
       "characters": 455300591
     },
     {
-      "sample": 3,
-      "variant": "current",
       "phase": "production-read",
-      "milliseconds": 3046.104816,
-      "longestTimerGap": 685.0749390000001,
+      "milliseconds": 3475.7657449999997,
+      "longestTimerGap": 809.8777949999994,
       "projectSerializations": 1,
       "encodes": 62372,
-      "characters": 108732949
+      "characters": 108732949,
+      "sample": 1,
+      "variant": "current"
     },
     {
-      "sample": 3,
-      "variant": "current",
       "phase": "production-normalize",
-      "milliseconds": 626.5393099999997,
-      "longestTimerGap": 626.5576369999999,
+      "milliseconds": 766.1059729999997,
+      "longestTimerGap": 766.1267740000003,
       "projectSerializations": 0,
       "encodes": 6383,
-      "characters": 9978549
+      "characters": 9978549,
+      "sample": 1,
+      "variant": "current"
     },
     {
-      "sample": 3,
-      "variant": "current",
       "phase": "production-workflow-markup",
-      "milliseconds": 20.736907999999858,
-      "longestTimerGap": 20.75282200000038,
+      "milliseconds": 20.901667999999518,
+      "longestTimerGap": 20.91772300000048,
       "projectSerializations": 0,
       "encodes": 0,
-      "characters": 0
+      "characters": 0,
+      "sample": 1,
+      "variant": "current"
     },
     {
-      "sample": 3,
-      "variant": "current",
       "phase": "production-export",
-      "milliseconds": 10413.71816,
-      "longestTimerGap": 731.1163970000002,
+      "milliseconds": 10483.915259,
+      "longestTimerGap": 783.2579799999999,
       "projectSerializations": 3,
       "encodes": 78724,
-      "characters": 360927515
+      "characters": 360927515,
+      "sample": 1,
+      "variant": "current"
+    },
+    {
+      "phase": "production-read",
+      "milliseconds": 3240.830538,
+      "longestTimerGap": 796.5494399999998,
+      "projectSerializations": 1,
+      "encodes": 62372,
+      "characters": 108732949,
+      "sample": 2,
+      "variant": "current"
+    },
+    {
+      "phase": "production-normalize",
+      "milliseconds": 658.9433729999996,
+      "longestTimerGap": 658.961131,
+      "projectSerializations": 0,
+      "encodes": 6383,
+      "characters": 9978549,
+      "sample": 2,
+      "variant": "current"
+    },
+    {
+      "phase": "production-workflow-markup",
+      "milliseconds": 20.360623000000487,
+      "longestTimerGap": 20.374603999999636,
+      "projectSerializations": 0,
+      "encodes": 0,
+      "characters": 0,
+      "sample": 2,
+      "variant": "current"
+    },
+    {
+      "phase": "production-export",
+      "milliseconds": 8682.239502,
+      "longestTimerGap": 640.9718079999998,
+      "projectSerializations": 3,
+      "encodes": 78724,
+      "characters": 360927515,
+      "sample": 2,
+      "variant": "current"
+    },
+    {
+      "phase": "production-read",
+      "milliseconds": 2725.406153,
+      "longestTimerGap": 602.9372680000001,
+      "projectSerializations": 1,
+      "encodes": 62372,
+      "characters": 108732949,
+      "sample": 3,
+      "variant": "current"
+    },
+    {
+      "phase": "production-normalize",
+      "milliseconds": 469.3160590000002,
+      "longestTimerGap": 469.33669999999984,
+      "projectSerializations": 0,
+      "encodes": 6383,
+      "characters": 9978549,
+      "sample": 3,
+      "variant": "current"
+    },
+    {
+      "phase": "production-workflow-markup",
+      "milliseconds": 21.514764999999898,
+      "longestTimerGap": 21.52882600000021,
+      "projectSerializations": 0,
+      "encodes": 0,
+      "characters": 0,
+      "sample": 3,
+      "variant": "current"
+    },
+    {
+      "phase": "production-export",
+      "milliseconds": 8515.679248,
+      "longestTimerGap": 622.3343370000002,
+      "projectSerializations": 3,
+      "encodes": 78724,
+      "characters": 360927515,
+      "sample": 3,
+      "variant": "current"
     }
   ],
   "correctness": {

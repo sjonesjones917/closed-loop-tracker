@@ -129,8 +129,8 @@ async function listProjectSummaries(){
 async function readProject(jobId){
   const tx=await openTransaction(PROJECTS,'readonly'),row=await request(tx.objectStore(PROJECTS).get(String(jobId)));await complete(tx);
   if(!row)return null;
-  if(Number(row.revision)!==Number(row.project?.revision)){await quarantine(row,'PROJECT_REVISION_MISMATCH');throw storageError('Stored revision does not match the canonical project. The original row was preserved in quarantine.','PROJECT_REVISION_MISMATCH');}
   if(await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)))!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');throw storageError('Project hash mismatch. The original row was preserved in quarantine.','PROJECT_HASH_MISMATCH');}
+  if(Number(row.revision)!==Number(row.project?.revision)){await quarantine(row,'PROJECT_REVISION_MISMATCH');throw storageError('Stored revision does not match the canonical project. The original row was preserved in quarantine.','PROJECT_REVISION_MISMATCH');}
   try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+error.message);throw error;}
   row.project.revision=Number(row.revision||0);row.project.projectSha256=row.projectSha256;return row.project;
 }

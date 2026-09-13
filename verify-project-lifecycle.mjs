@@ -237,6 +237,12 @@ await storageRegression('read:revision-metadata-must-match-verified-project',asy
   let error;try{await storageRuntime.projectStore.readProject(saved.job.JOB_ID);}catch(e){error=e;}
   assert(error?.code==='PROJECT_REVISION_MISMATCH','Reading a row changed its revision after verifying a different canonical hash.');
 });
+await storageRegression('read:legacy-corruption-keeps-hash-mismatch-recovery',async()=>{
+  storageRows.get('projects').set('LEGACY-NULL-ROW',{jobId:'LEGACY-NULL-ROW',revision:0,project:null,projectSha256:'0'.repeat(64)});
+  let error;try{await storageRuntime.projectStore.readProject('LEGACY-NULL-ROW');}catch(e){error=e;}
+  assert(error?.code==='PROJECT_HASH_MISMATCH','Corrupt legacy bytes were misclassified as a valid project with contradictory revision metadata.');
+  assert(!storageRows.get('projects').has('LEGACY-NULL-ROW'),'Corrupt legacy row was not quarantined.');
+});
 await storageRegression('export:concurrent-save-keeps-snapshot-identity',async()=>{
   const saved=await storageRuntime.makeStored('EXPORT-CONCURRENT'),originalOpen=storageRuntime.openStorageTransaction;let intervened=false;
   storageRuntime.openStorageTransaction=async(names,mode)=>{
