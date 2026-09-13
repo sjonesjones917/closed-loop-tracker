@@ -178,7 +178,7 @@ for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=f
     globalThis.ui={select:p=>{current=p;projects=[p];detailViews.clear();},accepted:acceptedStageMarkup,
       entries:()=>[...detailViews.entries()],page:(id,offset)=>{const body={innerHTML:'',querySelectorAll:()=>[],querySelector:()=>null,replaceChildren(){this.innerHTML='';}};detailViews.get(id).offset=offset;renderDetail({dataset:{detailId:id},querySelector:()=>body});return body.innerHTML;},
       storage:mismatches=>{projectStorage.mismatches=mismatches;return projectManagementMarkup();},
-      execution:()=>testExecutionGuidanceMarkup(6)};
+      execution:()=>testExecutionGuidanceMarkup(6),next:()=>nextActionMarkup(false)};
   })();`,runtime);
   const p=core.createBlankState('DIAGNOSTIC-PRESSURE');engine.ensureShape(p);
   const reasons=Array.from({length:603},(_,i)=>`Diagnostic ${i+1}: preserve <tag> & exact é🙂 content.`);
@@ -209,6 +209,8 @@ for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=f
   assert(runtime.ui.accepted(30).includes('Completion gate is satisfied by current canonical evidence.'),'A satisfied gate lost its success notice.');
   p.stages[1].gate.reasons=['Human confirmation required'];p.job.CURRENT_STAGE='STAGE 01';p.job.NEXT_REQUIRED_ACTION={actionType:'CONFIRM_STAGE_ONE_INTENT'};runtime.ui.select(p);
   assert(runtime.ui.accepted(1).includes('Stage 01 is waiting for your confirmation.')&&!runtime.ui.entries().some(([,entry])=>entry.title==='Completion gate is not satisfied.'),'Stage 01 confirmation lost its direct human action.');
+  const explanation=reasons.join(' ')+'ACTION-EXACT-TAIL';p.job.NEXT_REQUIRED_ACTION={actionType:'BLOCKED',heading:'Verification timing or target is blocked',explanation};runtime.ui.select(p);
+  const next=runtime.ui.next();assert(!next.includes('ACTION-EXACT-TAIL')&&runtime.ui.entries().some(([,entry])=>entry.kind==='text'&&entry.title==='Action details'&&entry.value===explanation),'Accumulated action explanation bypassed the bounded shared text disclosure.');
   console.log(JSON.stringify({storageRegression:'view:collapsed-diagnostic-lists',passed:true,stages:30,completeReasons:603,longReasonPreserved:true}));
 }
 // The real Files view and proposal view must not eagerly build all accumulated

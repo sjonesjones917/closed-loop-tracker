@@ -1386,7 +1386,8 @@
       "productionOwner": [
         "app-core.js:field/details/renderDetail/provenanceContents",
         "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup",
-        "app-core.js:diagnosticList/acceptedStageMarkup/projectManagementMarkup/testExecutionGuidanceMarkup"
+        "app-core.js:diagnosticList/acceptedStageMarkup/projectManagementMarkup/testExecutionGuidanceMarkup",
+        "app-core.js:noticeText/nextActionMarkup/interactionModeMarkup/testExecutionGuidanceMarkup/rootCauseCorrectionMarkup"
       ],
       "existingTests": [
         "verify-browser.mjs",
@@ -1396,7 +1397,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-browser-extra.mjs",
-        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation"
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 accumulated current-action explanation retains its exact text behind bounded disclosure"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
@@ -1424,7 +1426,8 @@
         "app-core.js:details; index.html:expandable-prompt/data-text-page",
         "app-core.js:scrollTargetBounds/sectionScroller/syncMatchedScrollJumps",
         "app-core.js:details/renderDetail/wireDetails/files/proposalMarkup/regressionLifecycleMarkup/evidenceExplanationMarkup",
-        "app-core.js:diagnosticList/acceptedStageMarkup/projectManagementMarkup/testExecutionGuidanceMarkup"
+        "app-core.js:diagnosticList/acceptedStageMarkup/projectManagementMarkup/testExecutionGuidanceMarkup",
+        "app-core.js:noticeText/nextActionMarkup/interactionModeMarkup/testExecutionGuidanceMarkup/rootCauseCorrectionMarkup"
       ],
       "existingTests": [
         "verify-mobile-stage-action.mjs",
@@ -1434,7 +1437,8 @@
       ],
       "negativeAdversarialTests": [
         "verify-browser-extra.mjs",
-        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation"
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 accumulated current-action explanation retains its exact text behind bounded disclosure"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
