@@ -125,7 +125,7 @@ function sha256Text(text){const digest=createSha256();digest.updateText(text);re
 function sha256Value(value){const digest=createSha256();let pending='';for(const chunk of canonicalChunks(value)){if(pending.length+chunk.length>16384){digest.updateText(pending);pending='';}pending+=chunk;}if(pending)digest.updateText(pending);return digest.digest();}
 async function sha256Chunks(chunks){
   const digest=createSha256();let lastYield=Date.now();
-  for await(const chunk of chunks){digest.updateText(chunk);if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
+  for await(const chunk of chunks){if(chunk instanceof Uint8Array)digest.update(chunk);else digest.updateText(chunk);if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
   return digest.digest();
 }
 function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');}

@@ -1,0 +1,242 @@
+{
+  "schema": "closed-loop-local-performance-evidence/1",
+  "repair": "DP-76",
+  "baselineCommit": "e17ab29484626d9220e8e132e266b03ccbdf6864",
+  "baselineSourceSha256": {
+    "hash.js": "d0d3c28f46f76538868d7470dec9f3e0981c61555f05c152de6226298d0a3ae0",
+    "project-store.js": "966a8a6f5f0c68595239a212afdcbf9a7f09d4aca19a770a37571e2d32f8dba0"
+  },
+  "candidateSourceSha256": {
+    "hash.js": "ba6e53ee2e19ae81536210694d0ad3c750e5dde5d8a5f74471dc2a9302b235ef",
+    "project-store.js": "425496bc417c412f7a37701853d8446431e3c0e492ce91b52d1904f7deb75002"
+  },
+  "workload": {
+    "compressedBytes": 14636839,
+    "compressedSha256": "165090e9e4ee6d6e4b7071d2bd270730268169e2a28f223c42fea7da75dfd37c",
+    "expandedPackageBytes": 126139808,
+    "embeddedProjectBytes": 94415941,
+    "revision": 89,
+    "privateDataCommitted": false
+  },
+  "method": {
+    "runtime": "Node.js v24.19.0",
+    "samplesPerVersion": 3,
+    "execution": "Fresh processes, alternating baseline and candidate, real production export; only database transaction I/O substituted.",
+    "source": "The same exact-production-replay.mjs diagnostic used for DP-72 through DP-75; baseline modules are pinned copies.",
+    "timingExclusions": [
+      "physical iPhone/Safari",
+      "real IndexedDB storage latency",
+      "network/download UI",
+      "peak device memory",
+      "p95 or universal capacity"
+    ]
+  },
+  "before": [
+    {
+      "phase": "production-export",
+      "milliseconds": 8841.979438,
+      "longestTimerGap": 641.1015660000003,
+      "projectSerializations": 3,
+      "encodes": 78724,
+      "characters": 360927515,
+      "result": {
+        "bytes": 14226444
+      }
+    },
+    {
+      "phase": "production-export",
+      "milliseconds": 8663.441971,
+      "longestTimerGap": 643.7903310000002,
+      "projectSerializations": 3,
+      "encodes": 78724,
+      "characters": 360927515,
+      "result": {
+        "bytes": 14226428
+      }
+    },
+    {
+      "phase": "production-export",
+      "milliseconds": 10793.006056,
+      "longestTimerGap": 782.94436,
+      "projectSerializations": 3,
+      "encodes": 78724,
+      "characters": 360927515,
+      "result": {
+        "bytes": 14226425
+      }
+    }
+  ],
+  "after": [
+    {
+      "phase": "production-export",
+      "milliseconds": 7187.424041,
+      "longestTimerGap": 623.556822,
+      "projectSerializations": 2,
+      "encodes": 65647,
+      "characters": 234830656,
+      "result": {
+        "bytes": 14226371
+      }
+    },
+    {
+      "phase": "production-export",
+      "milliseconds": 7080.188069,
+      "longestTimerGap": 694.0261559999999,
+      "projectSerializations": 2,
+      "encodes": 65647,
+      "characters": 234830656,
+      "result": {
+        "bytes": 14226365
+      }
+    },
+    {
+      "phase": "production-export",
+      "milliseconds": 8213.876664000001,
+      "longestTimerGap": 717.4065920000003,
+      "projectSerializations": 2,
+      "encodes": 65647,
+      "characters": 234830656,
+      "result": {
+        "bytes": 14226365
+      }
+    }
+  ],
+  "medians": {
+    "beforeMilliseconds": 8841.979438,
+    "afterMilliseconds": 7187.424041
+  },
+  "workCounts": {
+    "projectTraversals": {
+      "before": 3,
+      "after": 2
+    },
+    "encodedCharacters": {
+      "before": 360927515,
+      "after": 234830656
+    },
+    "completeFixtureSourceBytes": 393221,
+    "completeFixtureReadBytes": {
+      "before": 1179663,
+      "after": 786442
+    },
+    "executionFixtureSourceBytes": 265555,
+    "executionFixtureReadBytes": {
+      "before": 796665,
+      "after": 531110
+    },
+    "heldCompressorSourceBytes": 1048577,
+    "readBytesBeforeCompressorRelease": {
+      "before": 2195458,
+      "after": 1146881
+    }
+  },
+  "identityProof": {
+    "sourceCompressedSha256": "165090e9e4ee6d6e4b7071d2bd270730268169e2a28f223c42fea7da75dfd37c",
+    "sourceCompressedBytes": 14636839,
+    "schemaUnchanged": true,
+    "originalRevision": 89,
+    "restoredRevision": 89,
+    "expectedRevisionDelta": 0,
+    "normalRevision": true,
+    "entireOriginalProjectPreserved": true,
+    "projectDigestVerified": true,
+    "packageDigestVerified": true,
+    "manifestCount": true,
+    "fileCount": 8,
+    "fileProof": [
+      {
+        "byteSize": 1688050,
+        "expectedSize": true,
+        "digest": true,
+        "originalBytes": true,
+        "originalMetadata": true,
+        "manifest": true
+      },
+      {
+        "byteSize": 4186409,
+        "expectedSize": true,
+        "digest": true,
+        "originalBytes": true,
+        "originalMetadata": true,
+        "manifest": true
+      },
+      {
+        "byteSize": 3105556,
+        "expectedSize": true,
+        "digest": true,
+        "originalBytes": true,
+        "originalMetadata": true,
+        "manifest": true
+      },
+      {
+        "byteSize": 3105556,
+        "expectedSize": true,
+        "digest": true,
+        "originalBytes": true,
+        "originalMetadata": true,
+        "manifest": true
+      },
+      {
+        "byteSize": 3105556,
+        "expectedSize": true,
+        "digest": true,
+        "originalBytes": true,
+        "originalMetadata": true,
+        "manifest": true
+      },
+      {
+        "byteSize": 2301580,
+        "expectedSize": true,
+        "digest": true,
+        "originalBytes": true,
+        "originalMetadata": true,
+        "manifest": true
+      },
+      {
+        "byteSize": 3993978,
+        "expectedSize": true,
+        "digest": true,
+        "originalBytes": true,
+        "originalMetadata": true,
+        "manifest": true
+      },
+      {
+        "byteSize": 2301580,
+        "expectedSize": true,
+        "digest": true,
+        "originalBytes": true,
+        "originalMetadata": true,
+        "manifest": true
+      }
+    ],
+    "collectionCounts": {
+      "requirements": 91,
+      "tests": 191,
+      "evidenceRecords": 433,
+      "rawResponses": 25,
+      "generatedOutputs": 25,
+      "generatedPrompts": 27,
+      "history": 106,
+      "acceptedChanges": 7,
+      "responseProposals": 7,
+      "extractionManifests": 7
+    },
+    "passed": true,
+    "verificationPath": "Local production export with substituted database I/O; not a browser download.",
+    "outputCompressedBytes": 14226365,
+    "outputCompressedSha256": "28342a075b2cdb52bfeb63cbbfe28ba6e02071ee647964295d3fea302ee87ce7"
+  },
+  "previousReleaseImporter": {
+    "sourceCommit": "e17ab29484626d9220e8e132e266b03ccbdf6864",
+    "candidateExportImported": true,
+    "restoredRevision": 90,
+    "savedProjectionPreserved": "STAGE 06",
+    "normalization": "Existing application normalization recalculates display status; import never grants cached completion authority.",
+    "timingClaim": false
+  },
+  "limitations": [
+    "The full project object and final compressed Blob remain finite-memory residents.",
+    "Longest timer gaps did not consistently improve; no responsiveness or startup improvement is claimed for DP-76.",
+    "Physical-iPhone Safari, approved visual authority and final deployed browser evidence remain separate gates."
+  ]
+}
