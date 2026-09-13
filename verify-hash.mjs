@@ -25,6 +25,10 @@ assert(h.sha256Text('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb4
     const expected=createHash('sha256').update('prefix:').update(bytes).update(':suffix').digest('hex');
     assert(await h.sha256Chunks(source())===expected,`Encoded package chunks changed the native SHA-256 preimage at ${step}.`);
   }
+  const foreign=vm.runInNewContext('new Uint8Array([9,195,169,240,159,153,130,8]).subarray(1,7)');
+  assert(await h.sha256Chunks([foreign])===createHash('sha256').update(Buffer.from(foreign)).digest('hex'),'A byte chunk from another realm was coerced into text.');
+  const view=new DataView(foreign.buffer,foreign.byteOffset,foreign.byteLength);
+  assert(await h.sha256Chunks([view])===createHash('sha256').update(Buffer.from(foreign)).digest('hex'),'A byte view changed its buffer offset or length.');
 }
 // Project integrity must not allocate a full UTF-8 copy of accumulated history.
 const NativeEncoder=globalThis.TextEncoder;let largestEncoding=0;

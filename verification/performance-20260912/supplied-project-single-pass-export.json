@@ -7,7 +7,7 @@
     "project-store.js": "966a8a6f5f0c68595239a212afdcbf9a7f09d4aca19a770a37571e2d32f8dba0"
   },
   "candidateSourceSha256": {
-    "hash.js": "ba6e53ee2e19ae81536210694d0ad3c750e5dde5d8a5f74471dc2a9302b235ef",
+    "hash.js": "0f9bcc55b5aa75922e76205f1e994c009192ab3fda7b0456cbbc83910f08f878",
     "project-store.js": "425496bc417c412f7a37701853d8446431e3c0e492ce91b52d1904f7deb75002"
   },
   "workload": {
@@ -29,81 +29,82 @@
       "network/download UI",
       "peak device memory",
       "p95 or universal capacity"
-    ]
+    ],
+    "candidateVerification": "Remeasured after the cross-realm byte-view regression repair; encoded-byte SHA agrees with the native oracle for local and foreign views."
   },
   "before": [
     {
       "phase": "production-export",
-      "milliseconds": 8841.979438,
-      "longestTimerGap": 641.1015660000003,
+      "milliseconds": 8215.104314,
+      "longestTimerGap": 629.9416189999997,
       "projectSerializations": 3,
       "encodes": 78724,
       "characters": 360927515,
       "result": {
-        "bytes": 14226444
+        "bytes": 14226437
       }
     },
     {
       "phase": "production-export",
-      "milliseconds": 8663.441971,
-      "longestTimerGap": 643.7903310000002,
+      "milliseconds": 10511.488271,
+      "longestTimerGap": 773.8757259999998,
       "projectSerializations": 3,
       "encodes": 78724,
       "characters": 360927515,
       "result": {
-        "bytes": 14226428
+        "bytes": 14226452
       }
     },
     {
       "phase": "production-export",
-      "milliseconds": 10793.006056,
-      "longestTimerGap": 782.94436,
+      "milliseconds": 10219.329576,
+      "longestTimerGap": 762.1071190000002,
       "projectSerializations": 3,
       "encodes": 78724,
       "characters": 360927515,
       "result": {
-        "bytes": 14226425
+        "bytes": 14226457
       }
     }
   ],
   "after": [
     {
       "phase": "production-export",
-      "milliseconds": 7187.424041,
-      "longestTimerGap": 623.556822,
+      "milliseconds": 7634.202003,
+      "longestTimerGap": 669.7016320000002,
       "projectSerializations": 2,
       "encodes": 65647,
       "characters": 234830656,
       "result": {
-        "bytes": 14226371
+        "bytes": 14226366
       }
     },
     {
       "phase": "production-export",
-      "milliseconds": 7080.188069,
-      "longestTimerGap": 694.0261559999999,
+      "milliseconds": 8380.190623999999,
+      "longestTimerGap": 766.9505719999997,
       "projectSerializations": 2,
       "encodes": 65647,
       "characters": 234830656,
       "result": {
-        "bytes": 14226365
+        "bytes": 14226369
       }
     },
     {
       "phase": "production-export",
-      "milliseconds": 8213.876664000001,
-      "longestTimerGap": 717.4065920000003,
+      "milliseconds": 7161.313335999999,
+      "longestTimerGap": 763.63123,
       "projectSerializations": 2,
       "encodes": 65647,
       "characters": 234830656,
       "result": {
-        "bytes": 14226365
+        "bytes": 14226373
       }
     }
   ],
   "medians": {
-    "beforeMilliseconds": 8841.979438,
-    "afterMilliseconds": 7187.424041
+    "beforeMilliseconds": 10219.329576,
+    "afterMilliseconds": 7634.202003
   },
   "workCounts": {
     "projectTraversals": {
@@ -223,8 +224,8 @@
     },
     "passed": true,
     "verificationPath": "Local production export with substituted database I/O; not a browser download.",
-    "outputCompressedBytes": 14226365,
-    "outputCompressedSha256": "28342a075b2cdb52bfeb63cbbfe28ba6e02071ee647964295d3fea302ee87ce7"
+    "outputCompressedBytes": 14226373,
+    "outputCompressedSha256": "ef51510b9542086c050c6646ee5b7f849d1d6a65ce8a83c69c1367ae4b217f71"
   },
   "previousReleaseImporter": {
     "sourceCommit": "e17ab29484626d9220e8e132e266b03ccbdf6864",
