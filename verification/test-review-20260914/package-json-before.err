@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing expected rejection: DUPLICATE_PACKAGE_NAME_ORACLE: root-name was not rejected for its duplicate name
+    at async duplicateOracle (file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-package-json-contract.mjs:24:2)
+    at async file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-package-json-contract.mjs:29:37 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: [Function (anonymous)],
+  operator: 'rejects',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

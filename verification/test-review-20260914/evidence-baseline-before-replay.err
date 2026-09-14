@@ -1,0 +1,9 @@
+Production source revision: 9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb; test: current single-violation regression
+AssertionError [ERR_ASSERTION]: Missing baseline record was accepted as a complete evidence chain.
+
+true !== false
+
+    at file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-stage29-evidence-chain-checkpoint.mjs:78:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async file:///workspace/scratch/32c0fbf1551b/evidence-baseline-before-replay.mjs:6:5

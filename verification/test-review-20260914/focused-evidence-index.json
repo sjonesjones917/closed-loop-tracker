@@ -342,5 +342,165 @@
     "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
     "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
     "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "infrastructure-reviewed.out",
+    "sha256": "663a2172de9cab321fe5745ee614119edf46d8b375b69c1b38d3d21af3d8be0f",
+    "byteSize": 23676,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "verifier-context-before-replay.err",
+    "sha256": "1ca3594d6235f5b86935c23895b57c59d7cb8db3a63858c709f5642ec67c37ff",
+    "byteSize": 721,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "verifier-context-after.out",
+    "sha256": "5899a3283a85e9e0e131432046bbc0191ce806a6ca68c9b3a2adfa05d1ef6850",
+    "byteSize": 711,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "ten-run-before.err",
+    "sha256": "74a1e9f7693294170d063adc86ee45260f13890a5e11db057cdbd15aae15a459",
+    "byteSize": 605,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "ten-run-review.out",
+    "sha256": "1254f34f4081f02cbd6ae8705c819b598368f36ed3ee722b8891489a1c25fbcc",
+    "byteSize": 738,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "candidate-review.out",
+    "sha256": "405daa67d83d3e20350dab89d446d3c2c0a518483f17d6fefa5174b5a4d30e0e",
+    "byteSize": 510,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "delivery-representation-review.out",
+    "sha256": "9ad410f891103f5c02a1dc4cacfb904b43f776b0476acce3e8f57af91fdd0d04",
+    "byteSize": 388,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "test-ir-v3-review.out",
+    "sha256": "9e51892dcd69a29eca58b4218de8eec90139511fc066c605922a644e07b2927e",
+    "byteSize": 2590,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "worker-identity-review.out",
+    "sha256": "f948c4e9bcec9be29929455ccced770aa9a8861802350a8e3acc052d93f6a408",
+    "byteSize": 620,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "deployment-reviewed.out",
+    "sha256": "464d4e961c19f5cd5194d178c818f73bbf87829890a907e91fa0e251d1be938f",
+    "byteSize": 3998,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "prompt-file-reviewed.out",
+    "sha256": "8da1c6de72511ade2d9717bc40a315fa42b2b6b3fb784aef89e8ed7d7e5174e9",
+    "byteSize": 351,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "evidence-baseline-before-replay.err",
+    "sha256": "4ce8342d8d163d7a69943cae621f63e6184726bf7aefc3c47eb16041b7f4ee0d",
+    "byteSize": 556,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "evidence-baseline-after.out",
+    "sha256": "287769dde567f3bf1a194f47154090d6a02a84ede6fdb6c1405ff8ef8a653ae8",
+    "byteSize": 505,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "full-cycle-review-4.err",
+    "sha256": "456aab155df84e4130123eb8a3b49e7a1ceb590ba7e619e0479729e8f36f8209",
+    "byteSize": 1983,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "full-cycle-review-5.out",
+    "sha256": "0d082548c684dac377130e1b0d11e5f7e640df538db5947f22fa5c10530509c1",
+    "byteSize": 18849,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "lifecycle-reviewed-2.out",
+    "sha256": "aa6f7b5b6bae3e31dd3751deb79a94b1e11d63acafaa6ae5bc2629a005b7ee2b",
+    "byteSize": 14273,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "lifecycle-reviewed-2.err",
+    "sha256": "f0fcae378a1d277a3f89d0f384532c43d56ee3bdb0b5364e2b66694bdded2882",
+    "byteSize": 854,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "ingestion-reviewed-2.out",
+    "sha256": "6d4e9e6e331a83b51e35bf4cbd466ddb34d2c8222541b63c26cad540dedf1fde",
+    "byteSize": 38607,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "package-json-before.err",
+    "sha256": "cae9c79ac00a9ec1599215ec1a2d54207543a51f40b7ac4d3e73d35ac7aa9944",
+    "byteSize": 623,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "package-json-after.out",
+    "sha256": "c028082477ea134b458eb84a6ae3b03c3035b4b5024ed4f0c3baed2de40315e1",
+    "byteSize": 1315,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
   }
 ]

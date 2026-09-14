@@ -573,7 +573,7 @@ async function readPackageJson(blob){
   const expectsValue=()=>{const parent=frame();return parent?parent.state==='value'||parent.state==='valueOrEnd':!hasRoot;};
   function value(item,source=null){
     const parent=frame();if(!parent){if(hasRoot)fail();root=item;hasRoot=true;return;}
-    if(parent.type==='object'&&(parent.state==='key'||parent.state==='keyOrEnd')){if(typeof item!=='string')fail();parent.key=item;parent.state='colon';return;}
+    if(parent.type==='object'&&(parent.state==='key'||parent.state==='keyOrEnd')){if(typeof item!=='string')fail();if(Object.hasOwn(parent.value,item))throw Object.assign(new SyntaxError('Duplicate project package JSON member: '+item),{code:'DUPLICATE_JSON_MEMBER'});parent.key=item;parent.state='colon';return;}
     if(!expectsValue())fail();
     if(parent.type==='array')parent.value.push(item);
     else{Object.defineProperty(parent.value,parent.key,{value:item,enumerable:true,writable:true,configurable:true});if(parent.artifact&&parent.key==='base64'){if(source)fileContents.set(parent.value,source);else fileContents.delete(parent.value);}}
@@ -618,7 +618,7 @@ async function readPackageJson(blob){
     }
     if(kind==='string')raw+=text.slice(start);
   }
-  const reader=blob.stream().pipeThrough(new DecompressionStream('gzip')).getReader(),decoder=new TextDecoder();let expandedBytes=0;
+  const reader=blob.stream().pipeThrough(new DecompressionStream('gzip')).getReader(),decoder=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true});let expandedBytes=0;
   try{
     while(true){const {value:bytes,done}=await reader.read();if(done)break;expandedBytes+=bytes.byteLength;for(let offset=0;offset<bytes.length;offset+=65536){parseChunk(decoder.decode(bytes.subarray(offset,offset+65536),{stream:true}));if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}}
     parseChunk(decoder.decode());if(kind==='atom'){value(JSON.parse(atom));kind=null;}if(kind||stack.length||!hasRoot)fail();return {payload:root,fileContents,expandedBytes};

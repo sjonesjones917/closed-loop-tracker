@@ -1,0 +1,65 @@
+{
+  "specificationSourcePresent": true,
+  "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "sourceByteLength": 309472,
+  "sourceSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "topLevelSectionCount": 53,
+  "sectionCount": 253,
+  "normativeRequirementCount": 3825,
+  "dispositionCounts": {
+    "CONFORMANT_PROVEN": 0,
+    "IMPLEMENTED_UNPROVEN": 3825,
+    "MISSING": 0,
+    "CONTRADICTED": 0,
+    "BLOCKED_HUMAN": 0,
+    "BLOCKED_ENVIRONMENT": 0,
+    "UNKNOWN": 0
+  },
+  "independentMechanicalOmissionPass": true,
+  "independentOmissionChallenge": false,
+  "reconciliationComplete": true,
+  "runtimeSpecificationCopies": 0,
+  "runtimeControllerCopies": 0,
+  "mutationCount": 6,
+  "mutations": [
+    "uncovered-section",
+    "missing-requirement",
+    "duplicate-id",
+    "missing-test-trace",
+    "source-conflict",
+    "runtime-copy"
+  ],
+  "intentionalUncoveredSectionMutationRejected": true,
+  "allNormativeRequirementsConformant": false,
+  "specificationTraceIntegrity": "PASS",
+  "sourceCommitReachabilityChecked": false,
+  "committedManifestBytesValidated": true,
+  "independentRegenerationCompared": true,
+  "verifierDidNotRewriteCommittedManifests": true,
+  "committedManifestMutationRejected": true
+}
+{"doneStages":0,"currentStage":"01","specificationSha256":"6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9","specificationSourceCommit":"76bac0c862388623a0b43124153816bd3de1ac64","ledgerStructureValidated":true,"evidenceClass":"LEDGER_METADATA_VALIDATION","applicationCompletion":false,"invalidLedgerCases":[{"id":"specification-digest-mismatch","result":"PASS","actual":"Build-state specification digest mismatch.","corrected":"PASS"},{"id":"invalid-status","result":"PASS","actual":"Stage 01 has invalid status.","corrected":"PASS"},{"id":"skipped-stage","result":"PASS","actual":"Stage 02 is DONE after an earlier incomplete stage.","corrected":"PASS"},{"id":"false-done-open-item","result":"PASS","actual":"Stage 01 is DONE with open acceptance items.","corrected":"PASS"},{"id":"done-without-execution","result":"PASS","actual":"Stage 01 is DONE without directly executed passing evidence.","corrected":"PASS"}],"statusContract":["NOT_STARTED","IN_PROGRESS","BLOCKED","DONE"],"intentionalInvalidFixturesRejected":6,"singleControllerLedger":true}
+{"verifyTestWorkerIsolation":"PASS","boundWorkerCases":["versioned-bootstrap-dependency-order","bound-success-result","missing-url-digest-rejected","mismatched-runtime-result-rejected","caller-supplied-digest-rejected"],"environment":"Node VM worker protocol; not a physical browser worker","faults":[{"caseId":"enabled-eval","detected":true,"restored":"PASS"},{"caseId":"enabled-Function","detected":true,"restored":"PASS"}],"networkDenied":true,"dynamicCodeDenied":true,"bootstrapClosed":true,"declarativeExecution":true,"closedRequestEnvelope":true,"ambientProjectStateRejected":true,"invalidOperationRejected":true}
+{
+  "deploymentManifest": "PASS",
+  "schema": "closed-loop-deployment-manifest/1",
+  "canonicalOrigin": "https://sjonesjones917.github.io",
+  "canonicalBasePath": "/closed-loop-tracker/",
+  "contractProfileId": "closed-loop-completion-profile/1",
+  "testWorkerProtocolVersion": "closed-loop-test-worker-protocol/1",
+  "testWorkerSha256": "e76e168b24b8d89d4f815cb53a78e63fca18558045cb9fac225d65fdbfc88d11",
+  "resources": 13,
+  "buildIdentity": "build-sha256-7ae1a845c54da8d0bd4f3c53a065fe6c48146da4a129b8339db3523cd0739b71",
+  "manifestDigest": "31ac7b40b929323447993439463fd923c9bd8dd9ba3edc3f9f5d015be22e057b",
+  "reproducible": true,
+  "sharedCanonicalHashAuthority": true,
+  "canonicalUnicodeScalarOrdering": true,
+  "integerLikeKeyOrdering": true,
+  "unpairedSurrogateRejected": true,
+  "workerProtocolVmCasesExecuted": true,
+  "actualBrowserWorkerAcceptance": false,
+  "missingWorkerDigestMutationDetected": true,
+  "changedWorkerDigestMutationDetected": true,
+  "noControllingServiceWorker": true,
+  "repositoryGovernanceExcludedFromRuntime": true
+}

@@ -21,8 +21,17 @@ const spec=steps=>({version:'closed-loop-test-spec/1',steps});
 
 assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');
 assert.equal(runtime.EXECUTABLE_KIND,'TEST_IR');
-assert.equal(runtime.supports(test(spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'x'}]))),true);
-assert.equal(runtime.supports({...test(spec([{op:'ASSERT_EQ',value:1}]),{}),EXECUTABLE_KIND:'CUSTOM_PIPELINE'}),false);
+const validTextSpec=spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'x'}]);
+assert.equal(runtime.supports(test(validTextSpec)),true);
+assert.equal(runtime.supports({...test(validTextSpec),EXECUTABLE_KIND:'CUSTOM_PIPELINE'}),false);
+const invalidSpecCases=[];
+function rejectSpec(id,valid,change,reason){
+  assert.equal(runtime.validateSpec(valid).valid,true,id+': repaired baseline is invalid');
+  const invalid=structuredClone(valid);change(invalid);const result=runtime.validateSpec(invalid);
+  assert.equal(result.valid,false,id+': deliberate violation accepted');assert.match(result.issues.join(' '),reason,id+': wrong rejection reason');
+  assert.equal(runtime.validateSpec(valid).valid,true,id+': corrected spec did not validate');
+  invalidSpecCases.push({id,result:'PASS',specificRejection:true,repaired:true});
+}
 
 for(const operation of [
   'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML',
@@ -30,14 +39,10 @@ for(const operation of [
   'ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'
 ])assert.ok(runtime.OPS.includes(operation),`missing operation ${operation}`);
 
-const unknown=runtime.validateSpec(spec([{op:'SHELL',command:'rm -rf /'},{op:'ASSERT_EQ',value:true}]));
-assert.equal(unknown.valid,false);assert.match(unknown.issues.join(' '),/unknown operation/i);
-const unknownProperty=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:true,javascript:'return true'}]));
-assert.equal(unknownProperty.valid,false);assert.match(unknownProperty.issues.join(' '),/unknown property javascript/i);
-const wrongVersion=runtime.validateSpec({version:'closed-loop-test-spec/2',steps:[{op:'ASSERT_EQ',value:true}]});
-assert.equal(wrongVersion.valid,false);
-const noAssertion=runtime.validateSpec(spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'}]));
-assert.equal(noAssertion.valid,false);assert.match(noAssertion.issues.join(' '),/assertion/i);
+rejectSpec('unknown-operation',validTextSpec,value=>{value.steps[0].op='SHELL';},/unknown operation/i);
+rejectSpec('unknown-property',validTextSpec,value=>{value.steps.at(-1).javascript='return true';},/unknown property javascript/i);
+rejectSpec('wrong-version',validTextSpec,value=>{value.version='closed-loop-test-spec/2';},/version/i);
+rejectSpec('missing-assertion',validTextSpec,value=>{value.steps.pop();},/assertion/i);
 
 const jsonSpec=spec([
   {op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},
@@ -53,15 +58,12 @@ assert.equal(jsonResult.inputArtifactIds[0],'ART-PRODUCT');
 assert.match(jsonResult.inputArtifactSha256Values[0],/^[0-9a-f]{64}$/);
 assert.match(jsonResult.testSpecSha256,/^[0-9a-f]{64}$/);
 
-const csvWithoutContract=runtime.validateSpec(spec([
-  {op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_CSV'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}
-]));
-assert.equal(csvWithoutContract.valid,false);assert.match(csvWithoutContract.issues.join(' '),/delimiter/);assert.match(csvWithoutContract.issues.join(' '),/header/);assert.match(csvWithoutContract.issues.join(' '),/newline/);
 const csvSpec=spec([
   {op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},
   {op:'PARSE_CSV',delimiter:';',header:true,quote:'"',newline:'LF',encoding:'UTF-8'},
   {op:'COUNT'},{op:'ASSERT_EQ',value:2}
 ]);
+for(const field of ['delimiter','header','newline'])rejectSpec('csv-missing-'+field,csvSpec,value=>{delete value.steps[3][field];},new RegExp(field));
 const csvResult=await runtime.execute({spec:csvSpec,artifacts:{PRODUCT:artifact('ART-CSV','name;value\na;1\nb;2\n')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-CSV'}}}});
 assert.equal(csvResult.determination,'SATISFIED');
 
@@ -77,7 +79,7 @@ const xmlWildcardSpec=spec([
 ]);
 const xmlWildcardResult=await runtime.execute({spec:xmlWildcardSpec,artifacts:{PRODUCT:artifact('ART-XML-WILDCARD','<root><item>a</item><other>b</other></root>')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-XML-WILDCARD'}}}});
 assert.equal(xmlWildcardResult.determination,'SATISFIED','closed-loop-xml-selector/1 must support the element wildcard *');
-assert.equal(runtime.validateSpec(spec([{op:'PARSE_XML'},{op:'SELECT_XML',path:'//item'},{op:'ASSERT_EQ',value:1}])).valid,false);
+rejectSpec('xml-descendant-selector',xmlSpec,value=>{value.steps[4].path='//item';},/XML selector|absolute path|descendant|unsupported/i);
 
 const byteBindings={LEFT:{kind:'ARTIFACT',artifactId:'ART-L'},RIGHT:{kind:'ARTIFACT',artifactId:'ART-R'}};
 const byteSpec=spec([{op:'LOAD_ARTIFACT',binding:'LEFT'},{op:'READ_BYTES'},{op:'BYTE_COMPARE',binding:'RIGHT'},{op:'ASSERT_EQ',value:true}]);
@@ -86,12 +88,35 @@ assert.equal(equalBytes.determination,'SATISFIED');
 const unequalBytes=await runtime.execute({spec:byteSpec,artifacts:{LEFT:artifact('ART-L','same'),RIGHT:artifact('ART-R','different')},metadata:{bindings:byteBindings}});
 assert.equal(unequalBytes.determination,'VIOLATED');
 
+// Same-length unequal bytes must fail too; a length-only comparator passed the
+// old two-case suite. Buffer.equals supplies a separate byte-equality oracle.
+const byteCases=[];
+async function checkBytes(api,left,right){
+  const expected=Buffer.from(left).equals(Buffer.from(right));
+  const result=await api.execute({spec:byteSpec,artifacts:{LEFT:{artifactId:'ART-L',bytes:left},RIGHT:{artifactId:'ART-R',bytes:right}},metadata:{bindings:byteBindings}});
+  assert.equal(result.determination,expected?'SATISFIED':'VIOLATED','Actual byte equality must determine BYTE_COMPARE');
+  return expected;
+}
+for(const length of [0,1,2,3,8,32,256,4096]){
+  const left=Uint8Array.from({length},(_,index)=>(index*31+17)%256);
+  await checkBytes(runtime,left,left.slice());byteCases.push({length,mutation:null,result:'PASS'});
+  for(const position of [...new Set([0,Math.floor(length/2),length-1])].filter(index=>index>=0&&index<length)){
+    const right=left.slice();right[position]^=1;await checkBytes(runtime,left,right);byteCases.push({length,mutation:position,result:'PASS'});
+  }
+}
+const comparisonGuard='if(left[i]!==right[i])';assert.equal(source.split(comparisonGuard).length,2);
+const lengthOnlyContext=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise});
+vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),lengthOnlyContext);
+vm.runInContext(source.replace(comparisonGuard,'if(false)'),lengthOnlyContext);
+await assert.rejects(()=>checkBytes(lengthOnlyContext.closedLoopTestRuntime,new Uint8Array([0,1]),new Uint8Array([0,2])),/Actual byte equality/);
+await checkBytes(runtime,new Uint8Array([0,1]),new Uint8Array([0,2]));await checkBytes(runtime,new Uint8Array([0,1]),new Uint8Array([0,1]));
+
 const integer=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUES'},{op:'SUM'},{op:'ASSERT_EQ',value:6}]),canonicalBindings:{VALUES:{value:[1,2,3]}},metadata:{bindings:{VALUES:{kind:'CANONICAL_VALUE',canonicalKey:'VALUES'}}}});
 assert.equal(integer.determination,'SATISFIED');
-const unsafeEquality=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:0.1}]));
-assert.equal(unsafeEquality.valid,false);assert.match(unsafeEquality.issues.join(' '),/typed DECIMAL/i);
-const missingTolerance=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:{numberType:'DECIMAL',value:'0.1'},numericMode:'APPROXIMATE'}]));
-assert.equal(missingTolerance.valid,false);assert.match(missingTolerance.issues.join(' '),/tolerance/i);
+const numericControl=spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:1}]);
+rejectSpec('untyped-fractional-number',numericControl,value=>{value.steps[1].value=0.1;},/typed DECIMAL/i);
+const approximateControl=spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:{numberType:'DECIMAL',value:'0.1'},numericMode:'APPROXIMATE',absTol:'0.001'}]);
+rejectSpec('approximate-without-tolerance',approximateControl,value=>{delete value.steps[1].absTol;},/tolerance/i);
 const approximate=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:{numberType:'DECIMAL',value:'0.3'},numericMode:'APPROXIMATE',absTol:'0.000000000001'}]),canonicalBindings:{VALUE:{value:{numberType:'DECIMAL',value:'0.30000000000000004'}}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});
 assert.equal(approximate.determination,'SATISFIED');
 const decimal=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:'1.2300',numericMode:'DECIMAL_STRING'}]),canonicalBindings:{VALUE:{value:'1.23'}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});
@@ -105,10 +130,10 @@ assert.equal(dangerousRegex.valid,false);assert.match(dangerousRegex.issues.join
 assert.equal(runtime.validateRegex('(ab)+').length,0);
 assert.equal(runtime.validateRegex('(?:ab)+').length,0);
 assert.ok(runtime.validateRegex('(?=ab)').length>0);
-const hugeRegex='a'.repeat(runtime.LIMITS.maxRegexPatternBytes+1);
-assert.equal(runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:hugeRegex}])).valid,false);
-const tooManySteps=spec(Array(runtime.LIMITS.maxSteps+1).fill(null).map(()=>({op:'ASSERT_EQ',value:true})));
-assert.equal(runtime.validateSpec(tooManySteps).valid,false);
+const regexControl=spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_MATCH',pattern:'x'}]);
+rejectSpec('regex-byte-limit',regexControl,value=>{value.steps[1].pattern='a'.repeat(runtime.LIMITS.maxRegexPatternBytes+1);},/registered byte limit/i);
+const stepLimitControl=spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},...Array.from({length:runtime.LIMITS.maxSteps-1},()=>({op:'ASSERT_EQ',value:true}))]);
+rejectSpec('step-limit',stepLimitControl,value=>{value.steps.push({op:'ASSERT_EQ',value:true});},/step limit/i);
 
 const normalized=runtime.normalizeSpec(jsonSpec);
 const hashA=await runtime.sha256Canonical(normalized);
@@ -130,7 +155,7 @@ assert.equal(timeoutResult.failure.code,'WORKER_TIMEOUT');
 assert.equal(timeoutResult.observations.length,0,'timeout must produce no partial result');
 
 console.log(JSON.stringify({
-  verifyTestRuntimeV3:'PASS',
+  verifyTestRuntimeV3:'PASS',invalidSpecCases,byteCases,lengthOnlyComparatorFaultDetected:true,
   operations:runtime.OPS.length,
   inputLimit:runtime.LIMITS.maxTotalInputBytes,
   workerTimeoutMs:runtime.LIMITS.workerTimeoutMs,

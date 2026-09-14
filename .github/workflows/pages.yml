@@ -392,7 +392,7 @@ jobs:
           const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
           if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
-          if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
+          if(infrastructureRoute.infrastructureComponentVerification!=='PASS')throw new Error('Infrastructure component verification did not pass.');
           if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
           // A favorable top-level summary must never mask incomplete detailed proof.
           for(const [key,value] of Object.entries({stage01RawInputAccounting,stage01RequiredFileInspectionAccounting,stage01AcceptedSemanticMappingCoverage,stage04ObligationAccounting})){
@@ -428,15 +428,6 @@ jobs:
             routeDownstreamOnlyInvalidation:dataRoute.downstreamOnlyInvalidation,
             routeSubjectNeutralPromptAuthority:dataRoute.subjectNeutralPromptAuthority,
             routeHumanExperiencePromptContract:dataRoute.humanExperiencePromptContract,
-            infrastructureFamiliesChecked:infrastructureRoute.infrastructureFamilies,
-            infrastructureRawFirstCapture:infrastructureRoute.rawFirstCapture,
-            infrastructurePrecommitRevalidation:infrastructureRoute.precommitRevalidation,
-            infrastructureExtractionManifestProvenance:infrastructureRoute.extractionManifestProvenance,
-            infrastructurePromptContextManifestRoute:infrastructureRoute.promptContextManifestRoute,
-            infrastructureAuthorityPartitionsSeparated:infrastructureRoute.authorityPartitionsSeparated,
-            infrastructureCurrentScopeRoute:infrastructureRoute.currentScopeRoute,
-            infrastructurePersistenceIntegrityRoute:infrastructureRoute.persistenceIntegrityRoute,
-            infrastructureStructuredOperatorActionRoute:infrastructureRoute.structuredOperatorActionRoute,
             currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
             exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
             applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,

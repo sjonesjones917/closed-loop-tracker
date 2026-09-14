@@ -57,12 +57,14 @@
     {
       "id": "TEST-05",
       "files": [
-        "verify-complete.mjs"
+        "verify-complete.mjs",
+        "verify-ten-independent-runs.mjs"
       ],
       "defect": "Changing unaccepted run flags to COMPLETED was expected to establish ten materially independent accepted operations.",
       "basis": "Specification section 4.2 permits 3/N only for materially independent accepted operations.",
       "correction": "Count distinct accepted operations with validation, proposal and raw-response acceptance links; test unaccepted flags and duplicate verification rows.",
-      "status": "CORRECTED; INTEGRATED RECHECK PENDING"
+      "status": "CORRECTED; INTEGRATED RECHECK PENDING",
+      "followupReview": "Removed manually inserted raw responses, acceptance changes and output receipts used to claim ten accepted external runs. The component now reports actualAcceptedExternalRunCount: 0 and the actual synthetic checks."
     },
     {
       "id": "TEST-06",
@@ -102,12 +104,15 @@
       "id": "TEST-09",
       "files": [
         "verify-file-first-response.mjs",
-        "verify-file-first-operator.mjs"
+        "verify-file-first-operator.mjs",
+        "verify-prompt-file-identity.mjs",
+        "verify-test-runtime-v3.mjs"
       ],
       "defect": "Renaming an error-code string was reported as detection of bypassed byte-integrity enforcement. Other source mutations were also presented as runtime behavior proof.",
       "basis": "Specification sections 4.3 and 19; user section 8 requires actual bytes and implementation-fault detection.",
       "correction": "Declaration checks labelled as declarations; new production staging suite corrupts same-length stored bytes across all 30 stages, verifies specific rejection and repair, and detects bypassed production comparison.",
-      "status": "CORRECTED; 30 STAGING CASES AND COMPARISON FAULT PASS; STORAGE I/O IS A DOUBLE"
+      "status": "CORRECTED; 30 STAGING CASES AND COMPARISON FAULT PASS; STORAGE I/O IS A DOUBLE",
+      "followupReview": "Generated UTF-8 prompt hashing is now distinguished from an actual file export. Test IR compares equal-sized buffers against Buffer.equals across eight lengths and detects a length-only implementation fault."
     },
     {
       "id": "TEST-10",
@@ -123,24 +128,32 @@
     {
       "id": "TEST-11",
       "files": [
-        "verify-test-runtime-limits.mjs"
+        "verify-test-runtime-limits.mjs",
+        "verify-test-runtime-v3.mjs",
+        "verify-ten-independent-runs.mjs"
       ],
       "defect": "Several invalid Test IR examples had no preceding operand and never demonstrated a valid repaired case. Selector-depth tests covered legacy authoring syntax while the canonical DAG validator accepted over-depth selectors.",
       "basis": "Specification closed Test IR/resource contracts and user section 8.",
       "correction": "Otherwise valid baseline/violation/repair pairs; specific diagnostics; both legacy and canonical selector paths; production canonical selector validation corrected.",
-      "status": "CORRECTED; EXECUTED NEGATIVE/REPAIR PAIRS PASS"
+      "status": "CORRECTED; EXECUTED NEGATIVE/REPAIR PAIRS PASS",
+      "followupReview": "Rebuilt malformed Test IR negatives from valid controls and required specific diagnostics plus repair; separated contaminated-context flags from prohibited prior-run inputs. Combined violations had masked the prior-run hyphen defect."
     },
     {
       "id": "TEST-12",
       "files": [
         "verify-complete.mjs",
         "verify-stage27-release-binding.mjs",
-        "verify-test-runtime.mjs"
+        "verify-test-runtime.mjs",
+        "verify-browser.mjs",
+        "verify-browser-extra.mjs",
+        "verify-delivery-candidate-representation.mjs",
+        "verify-v3-definition-of-done.mjs"
       ],
       "defect": "String(object) converted the next-action result to [object Object], so the negative text assertion could not inspect the actual action. Global helper/text bans also reached beyond the particular filename-only fixture. Stage 27 also required three synonymous phrases (optional, not required, non-gating), making concise correct wording fail.",
       "basis": "Stage-appropriate required context must remain available; no unsupported global prohibition.",
       "correction": "Inspect the actual serialized action; remove unsupported application-wide helper/text bans; retain the scoped filename-only fixture. Inspect structured values rather than String(object). Preserve observable optional-advisory behavior and remove the forced repetition from the test and interface.",
-      "status": "CORRECTED; INTEGRATED RECHECK PENDING"
+      "status": "CORRECTED; INTEGRATED RECHECK PENDING",
+      "followupReview": "Removed an unsupported prohibition on reminding agents not to assume unseen earlier conversations, generic file-help heading bans, mandatory repeated UI prose, unbounded source regex, and source-only checks including the unrelated ban on an Android acceptance field. Required earlier-stage context remains required; subsequent-stage project data remains excluded."
     },
     {
       "id": "TEST-13",
@@ -231,7 +244,8 @@
       "defect": "The common negative-case helper did not first establish a valid baseline or prove repaired acceptance, allowing a second invalidity to mask the intended violation.",
       "basis": "User section 8 requires otherwise valid deliberate violations and successful correction.",
       "correction": "Common helper now validates baseline, checks the exact rejection code and unchanged accepted state, then validates and accepts the original corrected response; reports actual case IDs and codes.",
-      "status": "CORRECTED FOR COMMON HELPER; REMAINING BESPOKE NEGATIVE CASES REQUIRE INDIVIDUAL REVIEW"
+      "status": "CORRECTED FOR COMMON HELPER; REMAINING BESPOKE NEGATIVE CASES REQUIRE INDIVIDUAL REVIEW",
+      "followupReview": "Pair helper now checks a valid starting proposal and repaired acceptance, but the remaining hand-written scope/timing and composite mutation fixtures are still under predicate/fixture review. A restored baseline is not itself proof that every composite mutation contains exactly one independent violation."
     },
     {
       "id": "TEST-21",
@@ -240,12 +254,16 @@
         "verify-stage03-source-research.mjs",
         "verify-stage30-terminal-mobile-boundary.mjs",
         "verify-test-worker-isolation.mjs",
-        "verify-v3-contract.mjs"
+        "verify-v3-contract.mjs",
+        "verify-deployment-manifest.mjs",
+        "verify-project-lifecycle.mjs",
+        "verify-browser-extra.mjs"
       ],
       "defect": "Source declarations and source-token mutations were used as evidence of runtime parser/state/worker behavior. Baseline and Stage 30 checks also called matching function names and UI identifiers evidence of working operator paths. Stage 03 operation declarations were reported as source-research operation closure.",
       "basis": "User section 8 requires executed behavior and relevant implementation faults.",
       "correction": "Execute actual contract, parser, reservation and worker protocol owners; run disposable dynamic-code faults; retain architecture checks with explicit declaration scope. Remove unsupported UI-wiring claims and source-only assertions; exercise terminal recalculation to check that it does not issue a terminal command. Label operation-registry checks as declarations and physical-device evidence as unestablished.",
-      "status": "SOURCE-ONLY CLAIMS CORRECTED; TARGETED COMPONENT EXECUTION AND FULL BROWSER ACCEPTANCE TRACKED SEPARATELY"
+      "status": "SOURCE-ONLY CLAIMS CORRECTED; TARGETED COMPONENT EXECUTION AND FULL BROWSER ACCEPTANCE TRACKED SEPARATELY",
+      "followupReview": "Worker build/digest protocol is now executed in VM cases instead of inferred from source strings. Removed lifecycle and browser source-presence assertions that purported to prove custody, deletion, rendering or UI responsiveness. Actual component/browser cases retain their own stated scope."
     },
     {
       "id": "TEST-22",
@@ -399,12 +417,133 @@
       "id": "TEST-35",
       "files": [
         "verify-semantic-invariant.mjs",
-        "verify-adjudication-input-preservation.mjs"
+        "verify-adjudication-input-preservation.mjs",
+        "verify-browser-extra.mjs",
+        "verify-v3-definition-of-done.mjs"
       ],
       "defect": "The adjudication test prescribed exact source-code forms for shallow copying and cloning. Those text matches neither proved that recorded conclusions were preserved nor measured the required responsiveness; they could reject a different correct implementation.",
       "basis": "The specification preserves original evidence and user requirements call for behavioral test sensitivity. It does not mandate these exact source strings.",
       "correction": "Execute every stage gate with recorded conclusion claims in eleven families, compare the original fields after each call, inject shared mutable records, and require detection of the actual rewrite. Report workload latency separately as unestablished.",
-      "status": "CORRECTED; ALL 30 GATE CALLS PRESERVED THE ORIGINAL CONCLUSIONS, SHARED-RECORD FAULT DETECTED, RESTORED CONTROL PASSED"
+      "status": "CORRECTED; ALL 30 GATE CALLS PRESERVED THE ORIGINAL CONCLUSIONS, SHARED-RECORD FAULT DETECTED, RESTORED CONTROL PASSED",
+      "followupReview": "Removed additional exact cloning/migration source prescriptions. Workload thresholds remain explicitly regression budgets; they do not establish physical-device responsiveness or specification-wide support limits."
+    },
+    {
+      "id": "TEST-36",
+      "files": [
+        "verify-infrastructure-route-closure.mjs",
+        "verify-v3-definition-of-done.mjs",
+        ".github/workflows/pages.yml"
+      ],
+      "defect": "The infrastructure wrapper discarded executed child output, searched production source strings, and emitted a complete route PASS with unconditional flags.",
+      "basis": "User verification requirements; source matches and declared flags do not establish executed behavior.",
+      "correction": "Parse actual child case reports, preserve case IDs/results and output digests, verify required component cases, and report complete route closure UNESTABLISHED.",
+      "status": "COMPONENT REPORT REPAIRED; COMPLETE ROUTE EVIDENCE UNESTABLISHED"
+    },
+    {
+      "id": "TEST-37",
+      "files": [
+        "browser-interactions.mjs",
+        "verify-browser-interactions.mjs",
+        "verify-browser.mjs",
+        "verify-browser-extra.mjs",
+        "verify-mobile-stage-action.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "defect": "Shared browser click helpers invoked DOM .click(), which can activate hidden or covered controls and falsely pass an unusable operator path.",
+      "basis": "User interface and operator-journey requirements: required controls must be visible, reachable and usable.",
+      "correction": "Use visible, enabled, unobstructed controls and actual Chromium pointer events; add disposable visible/hidden/covered/disabled/disclosure cases and an old-driver fault. Value assignment and DevTools file selection remain expressly distinct from physical keyboard/picker evidence.",
+      "status": "IMPLEMENTED; ACTUAL CHROMIUM RECHECK PENDING"
+    },
+    {
+      "id": "TEST-38",
+      "files": [
+        "verify-browser.mjs",
+        "verify-mobile-stage-action.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "defect": "Runtime errors were collected before the final deletion path, or not collected in a driver, while the final report still claimed zero.",
+      "basis": "Runtime failure and complete operator-journey acceptance requirements.",
+      "correction": "Collect runtime exceptions, dialogs and browser error logs through the end of each exercised path and report the observed count.",
+      "status": "IMPLEMENTED; ACTUAL CHROMIUM RECHECK PENDING"
+    },
+    {
+      "id": "TEST-39",
+      "files": [
+        "verify-independent-run-verification.mjs",
+        "verify-ten-independent-runs.mjs",
+        "verify-full-cycle.mjs",
+        "stage19-fixture.mjs",
+        "workflow-engine.js"
+      ],
+      "defect": "Verifier tests missed affirmative contamination and wrong-run binding. A combined run contamination fixture hid failure to recognize prior-run output. The full-cycle fixture reused one run-bound verifier for other runs.",
+      "basis": "Specification 14.7, 26.2, 26.5–26.6 and 28.2 require correct run scope and isolation; opaque distinct IDs do not establish provider independence.",
+      "correction": "Add independent invalid/repair cases, enforce contamination and declared run binding, recognize prohibited input separators, detect two bypassed guards, and consume separate run-bound verifier instructions.",
+      "status": "REPRODUCED AGAINST 9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb; FOCUSED CASES AND SYNTHETIC 30-STAGE CYCLE PASS; COMPLETE DIMENSIONED INDEPENDENCE EVIDENCE OPEN"
+    },
+    {
+      "id": "TEST-40",
+      "files": [
+        "verify-candidate-freeze.mjs"
+      ],
+      "defect": "The positive candidate-freeze control changed an artifact filename after freezing, then required stage completion as though that tampered state were the valid baseline.",
+      "basis": "Frozen candidate metadata and byte identity must remain coherent; user requires an otherwise valid positive control.",
+      "correction": "Check progression before the deliberate metadata change; then check frozen-manifest independence without claiming the tampered candidate passes. State that physical stored-byte verification is outside this component.",
+      "status": "FOCUSED REPAIRED CASE PASS"
+    },
+    {
+      "id": "TEST-41",
+      "files": [
+        "verify-stage29-evidence-chain-checkpoint.mjs",
+        "workflow-engine.js"
+      ],
+      "defect": "The complete evidence-chain positive fixture referenced a baseline ID with no baseline record. The production chain builder and current-set check accepted that missing link.",
+      "basis": "Specification Stage 29 and section 49 require every mandatory chain link to resolve.",
+      "correction": "Give the valid fixture a matching baseline, remove only that baseline for the negative, reject the missing link in both production consumers, and restore the matching baseline for successful recalculation. Other complete-chain authority requirements remain separately open.",
+      "status": "REPRODUCED AGAINST 9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb; MISSING-BASELINE REJECTION AND REPAIR PASS"
+    },
+    {
+      "id": "TEST-42",
+      "files": [
+        "verify-browser.mjs",
+        "verify-browser-extra.mjs",
+        "verify-mobile-stage-action.mjs"
+      ],
+      "defect": "Stage navigation tests looked for a stage name anywhere in document text, including dropdown options, or inspected the select value set by the driver itself. They could succeed before the selected stage rendered.",
+      "basis": "User navigation requirements: open the actual selected stage within the active version.",
+      "correction": "Wait for the selected stage heading in the rendered workflow; perform selection through the visible-control helper.",
+      "status": "CI FAILURE PRESERVED; CORRECTED DRIVER PENDING CHROMIUM RECHECK"
+    },
+    {
+      "id": "TEST-43",
+      "files": [
+        "verify-complete-operator-journey.mjs"
+      ],
+      "defect": "The complete-journey backup assertion checked project ID, acceptance count and completion flags. It did not compare retained versions, original responses or all artifact bytes, and imported over an already equivalent completed project.",
+      "basis": "User whole-version, exact-byte backup and history-restoration requirements.",
+      "correction": "Leave the completed version before import; compare acceptance decisions, raw responses, each retained version/chunk and every exported artifact byte. Inspect the entire agent-facing bundle and decoded artifact members for later-record identities. This identity scan is not a claim of complete semantic provenance analysis.",
+      "status": "IMPLEMENTED; ACTUAL CHROMIUM RECHECK PENDING"
+    },
+    {
+      "id": "TEST-44",
+      "files": [
+        "verify-project-lifecycle.mjs",
+        "verify-package-json-contract.mjs",
+        "project-store.js"
+      ],
+      "defect": "The incremental backup-parser test required JSON.parse last-member-wins behavior for duplicate property names. This prohibited the specification-correct rejection. The decoder also silently replaced malformed UTF-8.",
+      "basis": "Specification 34.1 requires duplicate-name rejection and UTF-8 canonical identity; section 17.5 separately requires duplicate response-member rejection.",
+      "correction": "Reject duplicate decoded names before assignment and malformed UTF-8 before parsing. Test five duplicate forms plus malformed UTF-8 against otherwise valid exported backup bytes, unchanged recoverable state on rejection, repaired import with exact file bytes, and a bypassed-name-check fault.",
+      "status": "PRE-REPAIR FAILURE PRESERVED; SIX NEGATIVE/REPAIR CASES PASS; IMPLEMENTATION FAULT DETECTED; RESTORED CONTROL PASS"
+    },
+    {
+      "id": "TEST-45",
+      "files": [
+        "verify-browser-extra.mjs"
+      ],
+      "defect": "An older browser fixture reset accepted progress through writeProject without confirmation and expected success. The required persistence guard correctly rejected that test setup.",
+      "basis": "User amendment: a change resetting accepted work requires exact impact-bound confirmation.",
+      "correction": "Require the unconfirmed write to fail first, then explicitly create the confirmed disposable fixture. Report synthetic setup authority; do not claim a human confirmed it.",
+      "status": "CI REJECTION PRESERVED; FIXTURE CORRECTION PENDING CHROMIUM RECHECK"
     }
   ],
   "remainingReview": [
@@ -415,5 +554,13 @@
     "Verify Unicode file selection/export/collision behavior in the actual browser and target device; table-level corpus results are not device evidence.",
     "Complete valid conditional activation through actual producers, proof review and required evidence; a rejected success flag is not a valid activation journey.",
     "Complete semantic-review reservation linkage and every required independence dimension; corrected current context/hash bindings are not the whole review specification."
-  ]
+  ],
+  "lastIntegratedCandidate": {
+    "headCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "ciMergeCommit": "d0dd26eb884454b3746e7b6b8edda30d0a0512dc",
+    "runId": 34835548800,
+    "result": "FAIL",
+    "failedStep": "Local Chromium operator path",
+    "deployed": false
+  }
 }

@@ -1,0 +1,44 @@
+{
+  "packageJsonContract": "PASS",
+  "evidenceClass": "EXPORTED_BACKUP_BYTES_AND_PRODUCTION_IMPORT_WITH_TRANSACTION_IO_DOUBLE",
+  "cases": [
+    {
+      "caseId": "package-root-name",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-escaped-root-name",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-nested-name",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-artifact-base64",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-escaped-artifact-base64",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-invalid-utf8",
+      "repairedResult": "IMPORTED",
+      "result": "PASS"
+    }
+  ],
+  "duplicateNameBypassDetected": true,
+  "restoredImplementation": "PASS",
+  "physicalDeviceAcceptance": false
+}

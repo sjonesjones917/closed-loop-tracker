@@ -38,6 +38,7 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   const identity=record('artifactIdentities',{IDENTITY_ID:'ART-1',ARTIFACT_ID:'ART-1',AUDITED_FILENAME:'artifact.bin',RELEASE_FILENAME:'artifact.bin',AUTHORIZATION:'AUTHORIZED',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,RELEASE_BYTE_SIZE:10,AUDITED_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210',PRE_DELIVERY_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'},'ART-1',scope);
   identity.identityEvidenceSha256='7'.repeat(64);identity.scope={...scope,releaseId,deliveryCandidateSetId:'SET-1'};
   p.projectData.deliveryCandidateSets.push(record('deliveryCandidateSets',{STATUS:'FROZEN',ARTIFACT_IDS:['ART-1'],AUTHORIZED_FILENAMES:{'ART-1':'artifact.bin'}},'SET-1',scope));
+  p.projectData.baselines.push(record('baselines',{BASELINE_ID:baselineId,STATUS:'FROZEN'},baselineId,scope));
   p.projectData.sources.push(source);
   p.projectData.requirements.push(requirement);
   p.projectData.instructions.push(instruction);
@@ -70,6 +71,15 @@ for(const dimension of ['inputVersion','requirementsVersion','testSuiteVersion',
  assert.equal(engine.currentEvidenceChainSet(project).complete,false,'Historical '+dimension+' evidence was accepted.');
 }
 
+// A matching string pointer cannot stand in for the referenced baseline.
+{
+ const project=makeProject();project.projectData.baselines=[];
+ const result=engine.calculateEvidenceChains(project);
+ assert.equal(result.complete,false,'Missing baseline record was accepted as a complete evidence chain.');
+ assert(project.projectData.evidenceChains.some(chain=>engine.recordValue(chain,'MISSING_LINKS').includes('BASELINE')),'Missing baseline rejection did not identify the absent link.');
+ project.projectData.baselines.push(record('baselines',{BASELINE_ID:'BASE-1',STATUS:'FROZEN'},'BASE-1',scope));project.revision++;
+ assert.equal(engine.calculateEvidenceChains(project).complete,true,'Restoring the matching baseline did not repair the evidence-chain calculation.');
+}
 const validProject=makeProject();
 const validSet=engine.currentEvidenceChainSet(validProject);
 assert.equal(validSet.requirementIds.includes('REQ-1'),true,'A mandatory requirement must be present in the current scope.');
@@ -126,7 +136,7 @@ const exportEvidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP
 exportEvidence.source='OPERATOR_ACTION';
 checkpointProject.projectData.evidenceRecords.push(exportEvidence);
 const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-EXPORT-1']});
-assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound actual export-custody action.');
+assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound synthetic export-custody record.');
 assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
 
-console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true}));
+console.log(JSON.stringify({evidenceClass:'SYNTHETIC_EVIDENCE_LINK_AND_CUSTODY_COMPONENTS',priorStageApprovalsStipulated:true,actualBackupExport:false,stage29ApplicationCommand:true,missingBaselineRejectedAndRepaired:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true}));
