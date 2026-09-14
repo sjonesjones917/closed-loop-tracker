@@ -1,0 +1,1 @@
+{"consolidatedHandoff":"PASS","members":3,"pythonZipCrcVerification":true,"exactMemberBytesVerified":true,"deterministicProfileVerified":true,"unauthorizedDisclosureRejected":true,"changedMembersRequireAuthorization":true,"credentialPatternRejected":true,"collidingAndUnsafePathsRejected":true,"environment":"Node v24.19.0; Python zipfile; fake-indexeddb 6.2.5; synthetic content"}

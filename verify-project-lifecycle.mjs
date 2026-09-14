@@ -101,9 +101,9 @@ rejectNextPackage=true;const failedPackage=packageRuntime.exportCompletePackage(
 assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz','Failed complete export left later backup requests stuck.');
 // Exercise the complete production package encoder with only the storage
 // boundary replaced. The browser suite supplies real IndexedDB coverage.
-const filePackageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
+const filePackageRuntime=vm.createContext({closedLoopWorkflowSchema:globalThis.closedLoopWorkflowSchema,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
 vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;recoveryExportSnapshot=async()=>({project:await readProject(),artifacts:fixtureArtifacts,recovery:null});metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;recoveryExportSnapshot=async()=>({project:await readProject(),artifacts:fixtureArtifacts,recovery:null,externalActions:{schema:EXTERNAL_ACTION_CONTRACT.schema,jobId:fixtureProject.job.JOB_ID,actions:[]}});metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
 vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',revision:0,job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
 const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
 for(let i=0;i<artifactSizes.length;i++){

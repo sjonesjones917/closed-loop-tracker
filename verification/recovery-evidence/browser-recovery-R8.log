@@ -1,0 +1,10 @@
+{"name":"project-input-advances-to-workflow"}
+{"name":"four-stages-from-interface-and-file-transport","completedStages":[1,2,3,4],"handoffs":4}
+{"name":"replacement-cancellation-preserves-completed-and-pending-work"}
+{"name":"unanswered-confirmation-remains-unaccepted-through-reload"}
+{"name":"replacement-commit-invalidates-completed-and-pending-dependents"}
+{"name":"undo-and-redo-restore-matching-dependent-state"}
+{"name":"application-history-multi-version-restoration"}
+{"name":"repeated-native-back-forward-preserves-version-path"}
+{"name":"session-start-restoration-retains-later-alternatives"}
+{"recoveryBrowser":"PASS","checks":9,"output":"../work-evidence/browser-recovery-R8"}

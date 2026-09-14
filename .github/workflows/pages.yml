@@ -155,7 +155,7 @@ jobs:
           set -euo pipefail
           node verify-complete.mjs
           node verify-stage28-artifact-delivery-intent.mjs
-          node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
+          FULL_CYCLE_SNAPSHOT=/tmp/full-cycle-project.json node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
           node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('/tmp/full-cycle-proof.json','utf8'));"
           node verify-stage29-evidence-chain-checkpoint.mjs
           node verify-production-baseline-authority.mjs
@@ -169,6 +169,7 @@ jobs:
           node verify-recoverable-history.mjs
           node verify-dependency-invalidation.mjs
           node verify-consolidated-handoff.mjs
+          DELIVERY_PROJECT=/tmp/full-cycle-project.json.pre-delivery.json node verify-durable-delivery.mjs
           node verify-recovery-mutations.mjs
 
       - name: Project lifecycle and application-owned controls
@@ -212,6 +213,9 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-recovery-browser.mjs
+          DELIVERY_PROJECT=/tmp/full-cycle-project.json.pre-delivery.json run_browser_verifier verify-delivery-browser.mjs
+          RETENTION_PROJECT=/tmp/full-cycle-project.json run_browser_verifier verify-recovery-retention.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
@@ -282,6 +286,9 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-recovery-browser.mjs
+          DELIVERY_PROJECT=/tmp/full-cycle-project.json.pre-delivery.json run_browser_verifier verify-delivery-browser.mjs
+          RETENTION_PROJECT=/tmp/full-cycle-project.json run_browser_verifier verify-recovery-retention.mjs
 
   publish-status:
     name: Publish machine acceptance status
@@ -322,6 +329,9 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-recovery-browser.mjs
+          DELIVERY_PROJECT=/tmp/full-cycle-project.json.pre-delivery.json run_browser_verifier verify-delivery-browser.mjs
+          RETENTION_PROJECT=/tmp/full-cycle-project.json run_browser_verifier verify-recovery-retention.mjs
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:

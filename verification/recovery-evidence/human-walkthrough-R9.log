@@ -1,0 +1,1 @@
+{"humanStageWalkthrough":true,"stages":30,"prompts":8,"applicationOnlyOperations":16,"first":"1:COMPLETE","last":"29:INVESTIGATE_MISSING_EVIDENCE","uiStagesReached":30,"oneTimeSupply":true,"promptVisualBaseline":true,"operatorDoubleCheckGuide":true,"evidenceClass":"SYNTHETIC_CONTRACT_AND_UI_PROBE","fullOperatorJourney":false,"physicalDevice":false}

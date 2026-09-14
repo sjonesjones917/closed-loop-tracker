@@ -29,7 +29,9 @@ function verify(source){
 
   const requiredFamilies=['humanDecisions','sourceSearchContracts','semanticChallenges','semanticReviews','expectedVarianceContracts','environmentManifests','externalCapabilities','materialityReviews','commandReceipts','backupPolicies','backupCheckpoints','deliveryCandidateSets','deliveryAttempts','mobileAcceptanceRecords'];
   for(const family of requiredFamilies){assert.ok(schema.RECORD_SCHEMAS[family],`${family} must be a canonical family.`);assert.ok(schema.DURABLE_OBJECT_REGISTRY[family],`${family} must be in DURABLE_OBJECT_REGISTRY.`);}
-  assert.deepEqual(Object.keys(schema.RECORD_SCHEMAS).sort(),Object.keys(schema.DURABLE_OBJECT_REGISTRY).sort(),'Every canonical family must have exactly one durable-object contract.');
+  assert.deepEqual(Object.keys(schema.RECORD_SCHEMAS).sort(),Object.entries(schema.DURABLE_OBJECT_REGISTRY).filter(([,contract])=>!contract.parentFamily).map(([family])=>family).sort(),'Every canonical family must have exactly one durable-object contract.');
+
+  for(const [identity,contract] of Object.entries(schema.DURABLE_OBJECT_REGISTRY)){if(!contract.parentFamily)continue;assert(schema.RECORD_SCHEMAS[contract.parentFamily],identity+' must belong to exactly one canonical family.');assert(Array.isArray(contract.closedProperties)&&contract.closedProperties.length,identity+' must be closed and typed.');assert.equal(contract.agentFacing,false,identity+' recovery data must not be exposed to agents.');}
 
   for(const [key,contract] of Object.entries(schema.STAGE_OPERATION_REGISTRY)){
     for(const property of REQUIRED_OPERATION_PROPERTIES)assert.ok(Object.prototype.hasOwnProperty.call(contract,property),`${key} missing operation property ${property}.`);
@@ -50,6 +52,7 @@ function verify(source){
   for(const [key,contract] of Object.entries(schema.FIELD_REGISTRY)){
     for(const property of REQUIRED_FIELD_PROPERTIES)assert.ok(Object.prototype.hasOwnProperty.call(contract,property),`${key} missing field contract property ${property}.`);
     assert.ok(Object.prototype.hasOwnProperty.call(producerSets,contract.producer),`${key} has unknown producer ${contract.producer}.`);
+    assert.ok(schema.VALUE_TYPES.includes(contract.valueType),key+' has an unregistered value type.');
     producerSets[contract.producer]++;
     assert.ok(schema.normalizerRegistry.entries[contract.normalizerIdentity],`${key} references undefined normalizer ${contract.normalizerIdentity}.`);
     assert.ok(schema.derivationRegistry.entries[contract.derivationIdentity],`${key} references undefined derivation ${contract.derivationIdentity}.`);

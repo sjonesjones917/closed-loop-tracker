@@ -1,0 +1,104 @@
+{
+  "status": "IN_PROGRESS_NOT_APPLICATION_ACCEPTANCE",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "sourceCheckpoint": "030c42e15cecbeb05ad03a693b09e03b3b83cd07 plus interim working changes",
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "evidenceScope": "Interim synthetic adapter and Chromium cases. These do not establish exact integrated, deployed, physical-device, real-project, or complete operator acceptance.",
+  "files": [
+    {
+      "path": "retention-chromium-R4.log",
+      "bytes": 1061,
+      "sha256": "006e844d8cfb31fd4bc9429ce328be5d99d60c1a8dac2a6abdb1356f2f25d913"
+    },
+    {
+      "path": "durable-delivery-before.log",
+      "bytes": 676,
+      "sha256": "224806236e209d3c696cee53784345abdf57c9c5006db851c4a3e0322211bcff"
+    },
+    {
+      "path": "durable-delivery-after-R4.log",
+      "bytes": 536,
+      "sha256": "909f84a937bba0671d325b27761354b8e07846be49bcf64c42376a379a6c573c"
+    },
+    {
+      "path": "checkpoint-exact-tuple-before.log",
+      "bytes": 695,
+      "sha256": "3d7a754e074c7fc5bb4cb2823d6cf018b8a8b0fbf9a20f250b5492f40d6cd7e4"
+    },
+    {
+      "path": "checkpoint-exact-tuple-after.log",
+      "bytes": 334,
+      "sha256": "02acb57aa252360e27b15d39f48270f659d5f1d88980a406a805ca850865b733"
+    },
+    {
+      "path": "full-cycle-R6.log",
+      "bytes": 958,
+      "sha256": "124fef8f4744b37d6675cffaa17ec270416fa7d3bd0163ae9c4c5b2f013fcc3a"
+    },
+    {
+      "path": "human-walkthrough-R9.log",
+      "bytes": 351,
+      "sha256": "1ba2492591cb997618e5cda4780273ad9cce73b1b4540a6963cec4b356924798"
+    },
+    {
+      "path": "lifecycle-delivery-R7.log",
+      "bytes": 8393,
+      "sha256": "4d3d59658f975707b8091f8f443d03d10f69254087e467f53dec16a1192ad587"
+    },
+    {
+      "path": "browser-recovery-R8.log",
+      "bytes": 689,
+      "sha256": "c8e5bfcd01b2f3e203e103da61c16b8a67d35ce98f52fb922c7ae61f4cd3cf98"
+    },
+    {
+      "path": "delivery-browser-R5.log",
+      "bytes": 789,
+      "sha256": "f6bbbb0260ffb28c113de7f34c2a29561c8259b9d3957fe3cbbad486fcac2c9e"
+    },
+    {
+      "path": "delivery-completion-before.log",
+      "bytes": 636,
+      "sha256": "c1072f8c0dd663d52ae54c352b44c0db95ba866ddbe84b2db6daf8227489b8ef"
+    },
+    {
+      "path": "recovery-mutations-R3.log",
+      "bytes": 3215,
+      "sha256": "8344e0e4a15bbeed243936b75a6d74bffab679a5b9ac6fac0d1e4fd75bf33849"
+    },
+    {
+      "path": "dependency-invalidation-R2.log",
+      "bytes": 219,
+      "sha256": "27ef9b234e5a6e4793ddc628a14b50a7e672f495d90ebc7f2a7d754a37719aca"
+    },
+    {
+      "path": "consolidated-handoff-R5.log",
+      "bytes": 382,
+      "sha256": "85f2aab7d0d8a60e4073227f846262c9d2fb032ad1da42c838da30b39062e948"
+    },
+    {
+      "path": "recovery-external-facts-R6.log",
+      "bytes": 434,
+      "sha256": "cde5c70e535156d7aba0482d59806d37a148dedb3cbb51eb744373c4db74026f"
+    },
+    {
+      "path": "browser-recovery-report.json",
+      "bytes": 1757,
+      "sha256": "b033248e633e4f973b2a07019a05a4b2f5ade8ba672443f1887412ce4c1bdd89"
+    },
+    {
+      "path": "delivery-browser-report.json",
+      "bytes": 902,
+      "sha256": "6e27b9bc6cc9ea80b03322ccc86569c53cdfccb72b265029c5651d5ff8096240"
+    }
+  ],
+  "remaining": [
+    "Exact scope-contract closure across all operations",
+    "Pre-delivery checkpoint control and encrypted backup",
+    "Pending and legacy external-action reconciliation",
+    "Complete restoration and context-isolation failure coverage",
+    "Generated operation sequences and bounded exploration",
+    "All-stage operator journeys and independent coverage review",
+    "Exact integrated CI and deployed acceptance",
+    "Physical iPhone Safari, approved visual baseline, and real external-project evidence"
+  ]
+}
