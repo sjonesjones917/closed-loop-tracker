@@ -120,10 +120,10 @@
     "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
     "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
   ],
-  "nextAction": "Publish reconciled candidate with both parents, execute complete integrated checks, inspect exact browser CI and continue repairs across all remaining requirements before integration/deployment.",
-  "updatedAt": "2026-09-14T17:00:45.971045+00:00",
+  "nextAction": "Run the complete normal CI against the reconciled candidate and replay all remaining integration checks. Continue actual browser/file journeys and repair every failure before main integration/deployment. No physical-device or complete conformance claim.",
+  "updatedAt": "2026-09-14T17:07:46.042038+00:00",
   "continuationPullRequest": 1242,
-  "publishedHeadBeforeThisChange": "49dca4908fe6851c83976cc9237158a492903f0c",
+  "publishedHeadBeforeThisChange": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
   "baselineVerification": {
     "sourceCommit": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
     "suites": 46,
@@ -161,9 +161,10 @@
   },
   "pendingCI": [
     {
-      "runId": 34868804863,
-      "head": "68d03b28c0d2c00b71c36a7bf68b1923bf542d7d",
-      "lastObservedStatus": "pending"
+      "runId": 34872338962,
+      "head": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
+      "lastObservedStatus": "failure",
+      "cause": "Final-product timing fixture used authoring-preview scope for accepted records; corrected by this change."
     }
   ],
   "reconciliation": {
@@ -178,5 +179,6 @@
       "Keep a 60-minute complete-journey budget and atomic interruption reports; preserve the 60-second accumulated export deadline."
     ],
     "status": "FOCUSED_CHECKS_PASS_FULL_INTEGRATED_CI_PENDING"
-  }
+  },
+  "integrationReplayEvidence": "verification/continuation-integration-replay-20260914.json"
 }

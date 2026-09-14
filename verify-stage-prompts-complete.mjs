@@ -55,7 +55,7 @@ for(let stage=1;stage<=30;stage++){
   for(const operation of contract.operations){
     const op=schema.operationContract(stage,operation);
     for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
-    const scope={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
+    const scope=Object.fromEntries(op.scopeRequirements.map(key=>[key,key.toUpperCase()+'-AUDIT']));
     const reg=schema.STAGE_OPERATION_REGISTRY[`${stage}:${operation}`];
     if(reg?.executorClass!=='EXTERNAL_AGENT'){
       let blocked=false;try{prompts.buildPromptRecord(stage,p,{operation,scope});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}

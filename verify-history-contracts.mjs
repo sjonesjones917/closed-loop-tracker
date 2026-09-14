@@ -39,7 +39,7 @@ function preparationScopeOracle(r){
  }}return operations;
 }
 const preparedOperations=preparationScopeOracle(projectStoreRuntime());note('Every semantic author/reviewer operation prepares its selected-stage scope independently of later execution scopes',{operations:preparedOperations});
-const scopeFault={id:'INHERIT-LATER-EXECUTION-SCOPE',file:'workflow-engine.js',before:'globalThis.closedLoopPromptEngine.scopeFor(number,project,options.scope||{})',after:'currentScope(project)'};assert.throws(()=>preparationScopeOracle(projectStoreRuntime({fault:scopeFault})),/PREPARATION_SCOPE_ORACLE/);preparationScopeOracle(projectStoreRuntime());faults.push({id:scopeFault.id,result:'DETECTED',restored:'PASS'});
+const scopeFault={id:'INHERIT-LATER-EXECUTION-SCOPE',file:'workflow-engine.js',before:'operationScope(target,number,operation,options.scope||{},{reserveTargets:true})',after:'currentScope(project)'};assert.throws(()=>preparationScopeOracle(projectStoreRuntime({fault:scopeFault})),/PREPARATION_SCOPE_ORACLE/);preparationScopeOracle(projectStoreRuntime());faults.push({id:scopeFault.id,result:'DETECTED',restored:'PASS'});
 async function pendingCandidate(r){
  const {store,core,engine,prompts,ingestion,copy}=r,schema=r.runtime.closedLoopWorkflowSchema;
  let p=core.createBlankState('RESTORED-CANDIDATE');engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0});

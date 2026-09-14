@@ -64,14 +64,14 @@ try{
     for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){
       const registration=schema.STAGE_OPERATION_REGISTRY[stage+':'+operation];
       if(registration.executorClass==='EXTERNAL_AGENT')continue;
-      let rejected=false;try{prompts.buildPromptRecord(stage,state,{operation,scope:lane});}catch(error){rejected=error?.code==='NON_EXTERNAL_OPERATION';}
+      let rejected=false;try{prompts.buildPromptRecord(stage,state,{operation,scope:Object.fromEntries(schema.operationContract(stage,operation).scopeRequirements.map(key=>[key,lane[key]||key.toUpperCase()+'-AUDIT']))});}catch(error){rejected=error?.code==='NON_EXTERNAL_OPERATION';}
       if(!rejected)throw new Error('Stage '+stage+' '+operation+' incorrectly generated an external prompt for '+registration.executorClass+'.');
       applicationOnly.push(stage+':'+operation+':'+registration.executorClass);
     }
     for(const [stage,operation] of representativeExternal){
       const registration=schema.STAGE_OPERATION_REGISTRY[stage+':'+operation];
       if(registration?.executorClass!=='EXTERNAL_AGENT')throw new Error('Representative external operation is misregistered: '+stage+':'+operation+'.');
-      const record=prompts.buildPromptRecord(stage,state,{operation,scope:lane}),text=record.prompt;
+      const record=prompts.buildPromptRecord(stage,state,{operation,scope:Object.fromEntries(schema.operationContract(stage,operation).scopeRequirements.map(key=>[key,lane[key]||key.toUpperCase()+'-AUDIT']))}),text=record.prompt;
       if(!text||text.length<200)throw new Error('Stage '+stage+' '+operation+' generated an incomplete prompt.');
       if(!text.includes('PROJECT DATA EXECUTION RULE — MANDATORY'))throw new Error('Stage '+stage+' '+operation+' omitted the one-time project-data rule.');
       if(stage>1&&!text.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error('Stage '+stage+' '+operation+' can request the original intent again.');
