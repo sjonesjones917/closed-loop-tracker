@@ -88,6 +88,6 @@ async function exportedScopeOracle(r){
 await exportedScopeOracle(projectStoreRuntime());note('Consolidated stage export includes the same authoritative response scope and profile as its instruction manifest');
 const promptMetadataFault={id:'INHERIT-GLOBAL-PROMPT-ITERATION',file:'prompt-engine.js',before:"iteration:candidate.scope?.iterationId||'NOT APPLICABLE'",after:"iteration:metadata.iteration??state?.job?.CURRENT_ITERATION??'NOT APPLICABLE'"};await assert.rejects(exportedScopeOracle(projectStoreRuntime({fault:promptMetadataFault})),/PROMPT_METADATA_ORACLE/);await exportedScopeOracle(projectStoreRuntime());faults.push({id:promptMetadataFault.id,result:'DETECTED',restored:'PASS'});
 
-const confirmationFault={id:'SKIP-PERSISTENCE-CONFIRMATION',file:'project-store.js',before:'assertMutationConfirmation(prior,project,options.mutationConfirmation);',after:'/* deliberately bypassed gate */'};
+const confirmationFault={id:'SKIP-PERSISTENCE-CONFIRMATION',file:'project-store.js',before:'assertMutationConfirmation(prior,project,options.mutationConfirmation,next);',after:'/* deliberately bypassed gate */'};
 await assert.rejects(mutationOracle(projectStoreRuntime({fault:confirmationFault})),/CONFIRMATION_ORACLE/);await mutationOracle(projectStoreRuntime());faults.push({id:confirmationFault.id,result:'DETECTED',restored:'PASS'});
 console.log(JSON.stringify({synthetic:true,environment:'Node VM production modules and lifecycle transaction adapter',realIndexedDB:false,cases,implementationFaults:faults},null,2));

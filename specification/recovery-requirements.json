@@ -404,6 +404,10 @@
         {
           "path": "verification/operational-repair-evidence-20260914.json",
           "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        },
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
         }
       ]
     },
@@ -429,6 +433,10 @@
         {
           "path": "verification/file-correction-recovery-evidence-20260914.json",
           "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        },
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
         }
       ]
     },
@@ -519,6 +527,10 @@
         {
           "path": "verification/file-correction-recovery-evidence-20260914.json",
           "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        },
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
         }
       ]
     },
@@ -564,6 +576,10 @@
         {
           "path": "verification/file-correction-recovery-evidence-20260914.json",
           "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        },
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
         }
       ]
     },
@@ -728,7 +744,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-039",
@@ -1351,7 +1372,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-071",
@@ -1453,7 +1479,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-076",

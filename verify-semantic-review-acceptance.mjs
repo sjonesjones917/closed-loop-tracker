@@ -4,7 +4,11 @@ import vm from 'node:vm';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal,evidence} from './test-fixtures.mjs';
 
 globalThis.dispatchEvent=()=>true;
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
+ let source=fs.readFileSync(file,'utf8');
+ if(file==='workflow-engine.js'&&process.argv.includes('--fault=review-request-invalidates')){const anchor='  if(author?.operation===policy.reconcileOperation';assert.ok(source.includes(anchor));source=source.replace(anchor,"  for(const prompt of safe(p.projectData.generatedPrompts).filter(row=>Number(row.stage)===n&&!row.invalidatedBy&&policy.reviewOperations.includes(row.operation)))requested.add(prompt.operation);\n"+anchor);}
+ vm.runInThisContext(source,{filename:file});
+}
 const core=closedLoopCore,schema=closedLoopWorkflowSchema,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
 const runtime={core,schema,engine,prompts,ingestion};
 let author=stage04AcceptanceFixture(runtime,'JOB-SEMANTIC-REVIEW-ACCEPTANCE');
@@ -25,19 +29,19 @@ function accept(prepared){assert.equal(prepared.validation.valid,true,JSON.strin
   assert.equal(ingestion.prepareStageContinuation(p,{stage:1}),null,'An orphaned audit record changed the saved backup projection.');
   assert.equal(hash.sha256Value(p),before,'Inspecting historical audit data mutated the project.');
 }
-// A saved operator-requested review must reopen its current authoring stage.
-// Merely previewing that review cannot mutate or reopen accepted work.
+// Requesting another review preserves accepted progress until its response is
+// validated and accepted; the pending operation remains separately actionable.
 for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[2,'SEARCH_ADEQUACY_REVIEW'],[3,'SEMANTIC_CHALLENGE'],[4,'DISPOSITION_CHALLENGE'],[4,'ATOMICITY_CHALLENGE']]){
   let p=stage04AcceptanceFixture(runtime,'JOB-REQUESTED-REVIEW-'+stage+'-'+operation);
   if(stage===4)p=accept(prepare(p,4,'COMPLETE',prompt=>stage04AcceptanceEnvelope(runtime,p,prompt)));
   assert.equal(p.stages[stage].gate.complete,true);
-  const before=hash.sha256Value(p),preview=engine.preparePromptContext(p,stage,{operation},{preview:true});
+  const completedBefore=Object.values(p.stages).map(row=>row.status),before=hash.sha256Value(p),preview=engine.preparePromptContext(p,stage,{operation},{preview:true});
   prompts.buildPromptRecord(stage,preview.project,preview.options);
   assert.equal(hash.sha256Value(p),before,'Review preview mutated accepted work.');
   const saved=prompts.reserveAndBuildPromptRecord(p,stage,{operation}).prompt;
-  assert.equal(p.stages[stage].gate.complete,false,`Saving the requested Stage ${stage} review left its response controls locked as complete.`);
-  assert.equal(p.stages[stage+1].status,'NOT STARTED','An unanswered requested review left downstream work complete.');
-  assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,operation);
+  assert.equal(p.stages[stage].gate.complete,true,`REVIEW_REQUEST_PROGRESS_ORACLE: requesting a Stage ${stage} review changed accepted completion.`);
+  assert.deepEqual(Object.values(p.stages).map(row=>row.status),completedBefore,'Requesting a review changed existing downstream progress.');
+  assert.equal(engine.operationalNextAction(p,stage).operation,operation);
   assert.equal(ingestion.prepareStageContinuation(p,{stage})?.prompt.instructionId,saved.instructionId,'Recovery replaced the requested review with another instruction.');
 }
 // The same failed-review rule applies to every operation using this canonical
@@ -98,8 +102,8 @@ for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[3,'SEMANTIC_CHALLENGE'
   assert(p.projectData.semanticReviews.some(r=>r.RESULT==='REJECTED'&&r.active===false));
   assert.equal(closedLoopProjectStore.validateProjectIntegrity(p,{verifyDerived:false}).valid,true);
   prompts.reserveAndBuildPromptRecord(p,2,{operation:'SEARCH_ADEQUACY_REVIEW'});
-  assert.equal(p.stages[2].gate.complete,false,'An earlier positive review answered a newly requested independent review.');
-  assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,'SEARCH_ADEQUACY_REVIEW');
+  assert.equal(p.stages[2].gate.complete,true,'REVIEW_REQUEST_PROGRESS_ORACLE: a pending repeated review replaced the accepted approval.');
+  assert.equal(engine.operationalNextAction(p,2).operation,'SEARCH_ADEQUACY_REVIEW');
 }
 author=accept(prepare(author,4,'COMPLETE',prompt=>stage04AcceptanceEnvelope(runtime,author,prompt)));
 const propositionId=engine.recordId(engine.recordsForCurrentScope(author,'propositions')[0],'propositions');
@@ -165,7 +169,7 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   const legacy=accept(prepared),finding=legacy.projectData.semanticReviews.at(-1);finding.fields.RESULT=finding.RESULT='FAIL';engine.refreshRecordHashes(finding,'semanticReviews');engine.recalculate(legacy);
   const raw=legacy.projectData.rawResponses.map(r=>r.completeRawResponse),recovered=application(legacy,'SEARCH_ADEQUACY_REVIEW',{stage:2});await recovered.ui.restore();
   assert.ok(engine.recordsForCurrentScope(recovered.ui.current(),'semanticReviews').length>0,'Ordinary restoration silently rewrote a retained legacy result.');assert.notEqual(recovered.ui.current().stages[2].status,'COMPLETE','Unsupported review value conferred stage completion.');
-  assert.equal(recovered.ui.prompt()?.operation,'SEARCH_ADEQUACY_REVIEW');assert.deepEqual(recovered.ui.current().projectData.rawResponses.map(r=>r.completeRawResponse),raw);
+  assert.equal(recovered.ui.prompt(),null,'Restoration must not expose an accepted terminal reservation as a current handoff.');assert.equal(recovered.ui.selectedOperation(),'SEARCH_ADEQUACY_REVIEW');assert.deepEqual(recovered.ui.current().projectData.rawResponses.map(r=>r.completeRawResponse),raw);
 }
 
 // Controlled refinement must save its replacement immediately, in the same
@@ -273,10 +277,10 @@ assert.equal(legacyReview.fields.RESULT,'FAIL','Legacy evidence was silently nor
 const legacyHash=hash.sha256Value(legacy),legacyRaw=legacy.projectData.rawResponses.map(r=>r.completeRawResponse);
 const legacyUi=application(legacy,'SEMANTIC_REVIEW');await legacyUi.ui.restore();
 assert.ok(engine.recordsForCurrentScope(legacyUi.ui.current(),'semanticReviews').length>0,'Restoration silently discarded the saved review.');assert.deepEqual(legacyUi.ui.current().projectData,legacy.projectData,'Restoration changed working project data.');
-assert.equal(legacyUi.ui.prompt()?.operation,'SEMANTIC_REVIEW','Restoration lost the saved instruction.');
-const reloadRevision=legacyUi.ui.current().revision,reloadPrompt=legacyUi.ui.prompt().instructionId;await legacyUi.ui.restore();
+assert.equal(legacyUi.ui.prompt(),null,'A terminal accepted instruction must remain history rather than a current handoff.');
+const reloadRevision=legacyUi.ui.current().revision,reloadPrompts=structuredClone(legacyUi.ui.current().projectData.generatedPrompts);await legacyUi.ui.restore();
 assert.equal(legacyUi.ui.current().revision,reloadRevision,'Opening the recovered project wrote another revision.');
-assert.equal(legacyUi.ui.prompt().instructionId,reloadPrompt,'Opening the recovered project replaced the saved instruction again.');
+assert.deepEqual(legacyUi.ui.current().projectData.generatedPrompts,reloadPrompts,'Opening the recovered project replaced its retained instructions.');
 const recovered=ingestion.recoverInvalidSemanticReviews(legacy);
 assert.equal(recovered.changed,true,'The legacy accepted review has no automatic recovery.');
 assert.equal(hash.sha256Value(legacy),legacyHash,'Preparing recovery changed the original project.');
@@ -293,4 +297,4 @@ engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.raw
 assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',orphanAuditIsNotLiveAttempt:true,requestedReviewReopensStage:true,priorReviewCannotAnswerNewRequest:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,reopenedInstructionSelected:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));

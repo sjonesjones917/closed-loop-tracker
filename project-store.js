@@ -503,8 +503,10 @@ async function writeProjectRow(project,tx,{expectedProjectRevision=null,incremen
   return {...next,projectSha256:digest};
 }
 function notifyProjectChange(project,details={}){try{const channel=new BroadcastChannel('closed-loop-reliability');channel.postMessage({type:'PROJECT_CHANGED',jobId:projectIdentity(project),revision:project.revision,...details});channel.close();}catch{}}
-function mutationImpact(prior,next){
+function mutationImpact(prior,next,derivedNext=null){
   const engine=globalThis.closedLoopWorkflowEngine,affected=new Map(),replaces=[];
+  const candidate=next;next=derivedNext||clone(candidate);
+  if(!derivedNext){engine.ensureShape(next);engine.recalculate(next);}
   const active=row=>row&&!row.invalidatedBy&&row.active!==false;
   const add=(stage,kind,id)=>{stage=Number(stage);if(!Number.isInteger(stage)||!globalThis.closedLoopWorkflowSchema.STAGE_CONTRACTS[stage])return;if(!affected.has(stage))affected.set(stage,{stage,work:[]});affected.get(stage).work.push({kind,id});};
   if(prior){
@@ -520,6 +522,7 @@ function mutationImpact(prior,next){
     }
     const infrastructure={generatedPrompts:'instructionId',responseProposals:'proposalId',responseValidations:'validationId',humanInputRequests:'requestId',humanInputAnswers:'answerId',executionFailures:'executionFailureId'};
     for(const family of new Set([...Object.keys(globalThis.closedLoopWorkflowSchema.RECORD_SCHEMAS),...Object.keys(infrastructure)])){
+      if(globalThis.closedLoopWorkflowSchema.RECORD_SCHEMAS[family]?.recomputedProjection)continue;
       const identity=row=>engine.recordId(row,family)||String(row?.[infrastructure[family]]||''),after=new Map((next.projectData?.[family]||[]).map(row=>[identity(row),row]));
       for(const row of prior.projectData?.[family]||[]){
         if(!active(row)||!engine.isActiveRecord(row))continue;const id=identity(row);if(!id)continue;const replacement=after.get(id);
@@ -530,11 +533,11 @@ function mutationImpact(prior,next){
       }
     }
   }
-  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),historyActivationId:prior?.historyActivationId||null,candidateSha256:projectSha256(next),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
+  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),historyActivationId:prior?.historyActivationId||null,candidateSha256:projectSha256(candidate),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
   return {...effect,stage:effect.affected[0]?.stage||Number(next.activeStage||1),requiresConfirmation:Boolean(affected.size),confirmationKey:hash.sha256Value(effect)};
 }
-function assertMutationConfirmation(prior,next,confirmation){
-  const impact=mutationImpact(prior,next);
+function assertMutationConfirmation(prior,next,confirmation,derivedNext=null){
+  const impact=mutationImpact(prior,next,derivedNext);
   if(impact.requiresConfirmation&&impact.confirmationKey!==confirmation?.confirmationKey){const error=storageError(confirmation?'The project or proposed correction changed. Review its updated effect.':'Review the correction and affected work before saving.','MUTATION_CONFIRMATION_REQUIRED');error.impact=impact;throw error;}
   return impact;
 }
@@ -543,12 +546,11 @@ async function prepareProjectWrite(project,options={}){
   if(options.expectedProjectRevision!==undefined&&options.expectedProjectRevision!==null&&Number(options.expectedProjectRevision)!==revision)throw storageError('Project changed before its checkpoint could be prepared.','STALE_PROJECT_REVISION');
   if(options.createOnly&&prior)throw storageError('This project already exists.','PROJECT_ALREADY_EXISTS');
   if(options.expectedStateSha256&&options.expectedStateSha256!==prior?.projectSha256)throw storageError('Project or pending response changed before preparation.','STALE_PROJECT_REVISION');
-  assertMutationConfirmation(prior,project,options.mutationConfirmation);
   if(options.skipUnchanged&&prior?.projectSha256===projectSha256(next)){await persistProjectPromptFiles(next);const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView});return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior.projectSha256,preparedHistory}};}
   next.revision=(options.incrementRevision??true)?revision+1:revision;
   const engine=globalThis.closedLoopWorkflowEngine;engine.ensureShape(next);
   engine.reconcileReservationRevisions(next);
-  engine.recalculate(next);assertProjectIntegrity(next);
+  engine.recalculate(next);assertMutationConfirmation(prior,project,options.mutationConfirmation,next);assertProjectIntegrity(next);
   await persistProjectPromptFiles(next);
   const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView});
   return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior?.projectSha256||null,preparedHistory}};

@@ -597,9 +597,11 @@ function commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accept
 
 // Called on an owned transaction candidate, after gate derivation and before
 // persistence. Recording stage work and saving its follow-up are one transaction.
+function coreStagePrerequisiteMissing(project,stage){return globalThis.closedLoopCore.STAGES.some(definition=>definition.number<stage&&!project.stages?.[definition.number]?.gate?.complete);}
 function prepareStageContinuation(project,{stage,owningTabInstance='APPLICATION',preview=false}={}){
-  const number=Number(stage),action=project.job?.NEXT_REQUIRED_ACTION;
-  if(project.stages?.[number]?.gate?.complete||Number(String(project.job?.CURRENT_STAGE||'').match(/\d+/)?.[0])!==number||!['EXTERNAL_AGENT_TOOL','AI_REVIEW','SELECT_RESPONSE_JSON_FILE','CONTINUE_AGENT_CONVERSATION'].includes(action?.actionType)||workflow.unresolvedHumanRequests(project,number).length)return null;
+  const number=Number(stage),action=workflow.operationalNextAction(project,number);
+  if(project.stages?.[number]?.gate?.complete){const prompt=safe(project.projectData.generatedPrompts).filter(record=>Number(record.stage)===number&&!record.invalidatedBy&&globalThis.closedLoopPromptEngine.promptTransportBinding(project,number,record.operation,record.instructionId,record.scope)).at(-1);return prompt?{prompt,created:false}:null;}
+  if(coreStagePrerequisiteMissing(project,number)||!['EXTERNAL_AGENT_TOOL','AI_REVIEW','SELECT_RESPONSE_JSON_FILE','CONTINUE_AGENT_CONVERSATION'].includes(action?.actionType)||workflow.unresolvedHumanRequests(project,number).length)return null;
   const latest=safe(project.projectData.rawResponses).filter(r=>Number(r.stage)===number&&!r.invalidatedBy&&r.promptInstructionId&&safe(project.projectData.generatedPrompts).some(pr=>Number(pr.stage)===number&&(pr.instructionId||pr.promptId)===r.promptInstructionId)).at(-1),operation=String(action.operation||latest?.operation||schema.STAGE_CONTRACTS[number]?.operations[0]||''),promptEngine=globalThis.closedLoopPromptEngine;
   if(schema.STAGE_OPERATION_REGISTRY[`${number}:${operation}`]?.executorClass!=='EXTERNAL_AGENT'||(!action.newPromptRequired&&!latest))return null;
   if(safe(project.projectData.responseProposals).some(p=>Number(p.stage)===number&&p.status==='PENDING_OPERATOR_REVIEW'&&!p.invalidatedBy))return null;
