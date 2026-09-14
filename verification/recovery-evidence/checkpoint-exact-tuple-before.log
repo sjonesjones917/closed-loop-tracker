@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing expected exception: Every export evidence tuple field must match the actual package.
+    at file:///workspace/scratch/75f1cfa519d3/closed-loop-tracker/verify-stage29-evidence-chain-checkpoint.mjs:109:679
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: /exact created checkpoint/i,
+  operator: 'throws',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

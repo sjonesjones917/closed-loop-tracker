@@ -1,0 +1,5 @@
+{"saved":1,"storedCheckpointBytes":14357772}
+{"saved":11,"storedCheckpointBytes":15129746}
+{"saved":21,"storedCheckpointBytes":15901736}
+{"saved":31,"storedCheckpointBytes":16673726}
+{"retention":"PASS","projectBytes":13869906,"meaningfulChanges":40,"retainedCheckpoints":42,"logicalFullCopyBytes":554797262,"actualCheckpointBytes":24514020,"backupBytes":4935632,"fullCycleStageCount":30,"exactVersionRoundTrip":true,"declaredLimits":{"schema":"closed-loop-recovery/1","maxCheckpoints":2048,"maxCheckpointBytes":268435456,"maxArtifactBytes":536870912,"maxHistoryViews":8192,"maxViewBytes":67108864,"retention":"No automatic eviction. A full history blocks the next change; export it before starting a new project."},"sourceCommit":"030c42e15cecbeb05ad03a693b09e03b3b83cd07","sourceDigest":"5d1b20c8d8f9bdf79fa782390809b8335de0afc5301a4588a45dabbab3e6e224","environment":{"browser":"153.0.8010.0","storage":"Native IndexedDB","fixture":"Synthetic completed 30-stage project","operatorActions":"Adapter workload; not an operator journey","physicalDevice":false}}

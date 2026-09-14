@@ -1,0 +1,1 @@
+{"dependencyInvalidation":"PASS","stages":30,"stateClasses":3,"cases":90,"expectation":"Transitive closure of the declared prerequisite graph","evidence":"Synthetic production-mechanism cases; not an operator journey"}

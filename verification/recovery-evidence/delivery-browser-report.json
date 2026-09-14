@@ -1,0 +1,24 @@
+{
+  "deliveryBrowser": "PASS",
+  "sourceFiles": {
+    "workflow-engine.js": "8e4778c00467b53d100514e40c216fb1f055a34c1a17d64bad320e95648ad51c",
+    "workflow-schema.js": "2b31a45865ee13b72af39a23d99c80e1d6afd954bdac76abd46ffcf33ff9c977",
+    "project-store.js": "a7d898306973c038b124f1788df98504e0922e1d0f382461c888ab98b2adbdd0",
+    "app-core.js": "ba5dd9346298856ec0b452222a9b2967eea63ccd03a3bbb250eb076a35102535"
+  },
+  "environment": {
+    "browser": "153.0.8010.0",
+    "storage": "Native IndexedDB",
+    "viewport": {
+      "width": 393,
+      "height": 852
+    },
+    "touchEmulation": true,
+    "physicalDevice": false
+  },
+  "fixture": "Synthetic full-cycle project seeded through the persistence adapter",
+  "operatorActions": "Actual export, repeated click, History restore, reconciliation, and reload controls",
+  "downloads": 1,
+  "exactBytes": true,
+  "completedActionNotReissued": true
+}

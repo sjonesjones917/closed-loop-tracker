@@ -14,7 +14,7 @@ function prepare(project,stage,operation,content){
   const text=JSON.stringify(envelope),transport={authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true,packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,promptIdentity:envelope.promptIdentity};
   const prepared=ingestion.prepare(project,{stage,promptRecord:prompt,text,transport});if(prepared.validation.valid)assert.equal(engine.operationalNextAction(prepared.project,stage).actionType,'REVIEW_PROPOSAL',`Stage ${stage} replaced a pending proposal with another instruction.`);return {...prepared,text};
 }
-function accept(prepared){assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));return ingestion.commit(prepared.project,prepared.proposal.proposalId).project;}
+function accept(prepared){assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));return ingestion.commit(prepared.project,prepared.proposal.proposalId,{confirmationHash:ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId).confirmationHash}).project;}
 // An orphaned historical audit row is not a live saved-instruction attempt.
 // Opening a backup may recalculate its old display without rewriting its audit projection.
 {
@@ -111,10 +111,10 @@ function review(results){return prepare(structuredClone(author),5,'SEMANTIC_REVI
 // IndexedDB behavior remains covered by the existing local/deployed browser suite.
 function application(project,operation='COMPLETE',{storageFailure=false,stage=5}={}){
   let saved=structuredClone(project);saved.activeStage=stage;
-  const refineButton={},notices=[],runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,queueMicrotask,
-    document:{currentScript:null,querySelector:selector=>selector==='#refine-accepted-response'?refineButton:selector==='#accepted-refinement-reason'?{value:'Correct the governing condition.'}:selector==='#operator-label'?{value:'FIXTURE'}:{value:''},querySelectorAll:()=>[]},
+  const refineButton={},notices=[],runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,queueMicrotask,window:{scrollX:0,scrollY:0},addEventListener(){},requestAnimationFrame:callback=>callback(),
+    document:{currentScript:null,addEventListener(){},querySelector:selector=>selector==='#refine-accepted-response'?refineButton:selector==='#accepted-refinement-reason'?{value:'Correct the governing condition.'}:selector==='#operator-label'?{value:'FIXTURE'}:{value:'',focus(){},scrollIntoView(){}},querySelectorAll:()=>[]},
     closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion,
-    closedLoopHash:hash,closedLoopProjectStore:{...closedLoopProjectStore,replaceProject:async(next,{expectedProjectRevision})=>{
+    closedLoopHash:hash,closedLoopProjectStore:{...closedLoopProjectStore,previewProjectChange:async next=>engine.projectMutationImpact(saved,next),replaceProject:async(next,{expectedProjectRevision})=>{
       assert.equal(expectedProjectRevision,saved.revision,'Continuation lost the compare-and-swap revision.');
       if(storageFailure)throw new Error('CONTROLLED_CONTINUATION_STORAGE_FAILURE');
       const candidate=structuredClone(next);candidate.revision=saved.revision+1;
@@ -125,8 +125,8 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;projectStore=closedLoopProjectStore;
     current=selected;projects=[current];operationSelection[stage]=operation;
-    withStorageActivity=async(label,work)=>work();render=()=>{};announce=message=>notices.push(message);reportResponseFailure=(message,error)=>{throw error||new Error(message);};reportActionFailure=error=>{throw error;};
-    globalThis.ui={accept:acceptPendingProposal,refine:()=>{const select=document.querySelector;document.querySelector=selector=>['#refine-accepted-response','#accepted-refinement-reason','#operator-label'].includes(selector)?select(selector):null;wire();document.querySelector=select;return document.querySelector('#refine-accepted-response').onclick();},restore:async()=>{current=await materializeProject(current);return current;},current:()=>current,prompt:()=>currentPromptRecord(stage),selectedOperation:()=>selectedOperation(stage),proposal:()=>proposalMarkup(stage)};
+    captureCurrentHistoryEntry=async()=>{};recordCurrentHistoryEntry=async()=>{};recordHistoryEntry=async()=>{};withStorageActivity=async(label,work)=>work();render=()=>{};announce=message=>notices.push(message);reportResponseFailure=(message,error)=>{throw error||new Error(message);};reportActionFailure=error=>{throw error;};
+    globalThis.ui={accept:async()=>{await acceptPendingProposal();if(pendingReplacement)await acceptPendingProposal(true);},refine:()=>{const select=document.querySelector;document.querySelector=selector=>['#refine-accepted-response','#accepted-refinement-reason','#operator-label'].includes(selector)?select(selector):null;wire();document.querySelector=select;return document.querySelector('#refine-accepted-response').onclick();},restore:async()=>{current=await materializeProject(current);delete operationSelection[stage];return current;},current:()=>current,prompt:()=>currentPromptRecord(stage),selectedOperation:()=>selectedOperation(stage),proposal:()=>proposalMarkup(stage)};
   })();`,runtime);
   return {ui:runtime.ui,notices,saved:()=>saved};
 }
@@ -164,8 +164,8 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   const reopened=application(ui.current(),'SEARCH_ADEQUACY_REVIEW',{stage:2});await reopened.ui.restore();assert.equal(reopened.ui.selectedOperation(),'RECONCILE_SOURCE_SEARCH','Switching projects selected an old operation instead of its already saved continuation.');
   const legacy=accept(prepared),finding=legacy.projectData.semanticReviews.at(-1);finding.fields.RESULT=finding.RESULT='FAIL';engine.refreshRecordHashes(finding,'semanticReviews');engine.recalculate(legacy);
   const raw=legacy.projectData.rawResponses.map(r=>r.completeRawResponse),recovered=application(legacy,'SEARCH_ADEQUACY_REVIEW',{stage:2});await recovered.ui.restore();
-  assert.equal(engine.recordsForCurrentScope(recovered.ui.current(),'semanticReviews').length,0);
-  assert.equal(recovered.ui.prompt()?.operation,'SEARCH_ADEQUACY_REVIEW');assert.deepEqual(recovered.ui.current().projectData.rawResponses.map(r=>r.completeRawResponse),raw);
+  assert.equal(engine.recordsForCurrentScope(recovered.ui.current(),'semanticReviews').length,1,'Opening a retained version must not mutate its saved findings.');
+  assert.equal(recovered.ui.current().stages[2].gate.complete,false,'An incompatible historic review must not satisfy the current gate.');assert.deepEqual(recovered.ui.current().projectData.rawResponses.map(r=>r.completeRawResponse),raw);
 }
 
 // Controlled refinement must save its replacement immediately, in the same
@@ -272,11 +272,11 @@ assert.match(legacy.job.NEXT_REQUIRED_ACTION.explanation,/unrecognized result/i)
 assert.equal(legacyReview.fields.RESULT,'FAIL','Legacy evidence was silently normalized.');
 const legacyHash=hash.sha256Value(legacy),legacyRaw=legacy.projectData.rawResponses.map(r=>r.completeRawResponse);
 const legacyUi=application(legacy,'SEMANTIC_REVIEW');await legacyUi.ui.restore();
-assert.equal(engine.recordsForCurrentScope(legacyUi.ui.current(),'semanticReviews').length,0,'Opening the saved project did not recover its invalid accepted review.');
-assert.equal(legacyUi.ui.prompt()?.operation,'SEMANTIC_REVIEW','Opening the saved project did not save the correction instruction.');
-const reloadRevision=legacyUi.ui.current().revision,reloadPrompt=legacyUi.ui.prompt().instructionId;await legacyUi.ui.restore();
-assert.equal(legacyUi.ui.current().revision,reloadRevision,'Opening the recovered project wrote another revision.');
-assert.equal(legacyUi.ui.prompt().instructionId,reloadPrompt,'Opening the recovered project replaced the saved instruction again.');
+assert.deepEqual(legacyUi.ui.current().projectData.semanticReviews,legacy.projectData.semanticReviews,'Opening a saved version must preserve its recorded findings.');
+assert.equal(legacyUi.ui.current().stages[5].gate.complete,false,'Incompatible historical review must not satisfy the active gate.');
+const reloadRevision=legacyUi.ui.current().revision,reloadPromptIds=legacyUi.ui.current().projectData.generatedPrompts.map(prompt=>prompt.instructionId);await legacyUi.ui.restore();
+assert.equal(legacyUi.ui.current().revision,reloadRevision,'Opening the retained version wrote another revision.');
+assert.deepEqual(legacyUi.ui.current().projectData.generatedPrompts.map(prompt=>prompt.instructionId),reloadPromptIds,'Restoration generated a new instruction.');
 const recovered=ingestion.recoverInvalidSemanticReviews(legacy);
 assert.equal(recovered.changed,true,'The legacy accepted review has no automatic recovery.');
 assert.equal(hash.sha256Value(legacy),legacyHash,'Preparing recovery changed the original project.');

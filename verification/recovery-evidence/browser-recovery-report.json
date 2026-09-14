@@ -1,0 +1,59 @@
+{
+  "sourceCommit": "030c42e15cecbeb05ad03a693b09e03b3b83cd07",
+  "sourceFiles": {
+    "app-core.js": "086a82669e41d308645fe44eaac7a508aa86cd92a0712c9765ede078483337f5",
+    "project-store.js": "a7d898306973c038b124f1788df98504e0922e1d0f382461c888ab98b2adbdd0",
+    "workflow-engine.js": "8e4778c00467b53d100514e40c216fb1f055a34c1a17d64bad320e95648ad51c",
+    "prompt-engine.js": "1a6e8fe3ad5b22d862e7b05b4fe5dc6aecd58f79202451bcad78fe8a03cb068c",
+    "response-ingestion.js": "cb68940a1efcdd3b8b118bd0455ce9fc345c996fdad6ea80dbc314f34606853e",
+    "workflow-schema.js": "2b31a45865ee13b72af39a23d99c80e1d6afd954bdac76abd46ffcf33ff9c977"
+  },
+  "environment": {
+    "browser": "153.0.8010.0",
+    "viewport": {
+      "width": 393,
+      "height": 852
+    },
+    "touchEmulation": true,
+    "node": "v24.19.0",
+    "physicalDevice": false,
+    "externalOutputs": "SYNTHETIC",
+    "operatorActions": "AUTOMATED"
+  },
+  "checks": [
+    {
+      "name": "project-input-advances-to-workflow"
+    },
+    {
+      "name": "four-stages-from-interface-and-file-transport",
+      "completedStages": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "handoffs": 4
+    },
+    {
+      "name": "replacement-cancellation-preserves-completed-and-pending-work"
+    },
+    {
+      "name": "unanswered-confirmation-remains-unaccepted-through-reload"
+    },
+    {
+      "name": "replacement-commit-invalidates-completed-and-pending-dependents"
+    },
+    {
+      "name": "undo-and-redo-restore-matching-dependent-state"
+    },
+    {
+      "name": "application-history-multi-version-restoration"
+    },
+    {
+      "name": "repeated-native-back-forward-preserves-version-path"
+    },
+    {
+      "name": "session-start-restoration-retains-later-alternatives"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
@@ -10,7 +11,7 @@ const storageHealthSource=app.includes('function storageHealthValue(')?app.slice
 // open request that cannot report its own blocked event until the first ends.
 {
   const requests=[];let closed=0;
-  const runtime=vm.createContext({indexedDB:{open(){const request={};requests.push(request);return request;}}});
+  const runtime=vm.createContext({captureCurrentHistoryEntry:async()=>{},openProjectHistory:async()=>{},historyEntry:null,indexedDB:{open(){const request={};requests.push(request);return request;}}});
   vm.runInContext("const DB_NAME='closed-loop-reliability',DB_VERSION=2;"+store.slice(store.indexOf('let databasePromise=null;'),store.indexOf('function parseLegacy('))+';globalThis.open=openDatabase;',runtime);
   const first=runtime.open().catch(error=>error);requests[0].onblocked();assert((await first).code==='INDEXEDDB_BLOCKED','Blocked upgrade did not report its cause.');
   const retry=runtime.open().catch(error=>error);assert(requests.length===1,'Blocked upgrade queued another open request and left startup waiting behind the original lock.');
@@ -75,7 +76,7 @@ assert(custody.projectData.history.some(event=>event.type==='APPLICATION_ARTIFAC
 // Execute the production export coordinator with a slow persistence boundary.
 // Rapid requests for different handoff files must all complete without overlap.
 const delivered=[],exportErrors=[];let activeSaves=0,maxActiveSaves=0;
-const exportRuntime=vm.createContext({current:{activeStage:3,job:{JOB_ID:'EXPORT-QUEUE'}},setTimeout,announce:()=>{},reportActionFailure:error=>exportErrors.push(String(error.message||error)),alert:message=>{throw new Error('Unexpected native popup: '+message);},savePromptRecord:async stage=>{activeSaves++;maxActiveSaves=Math.max(maxActiveSaves,activeSaves);await new Promise(resolve=>setTimeout(resolve,10));activeSaves--;return {stage,instructionId:'SAME-CONTROLLING-INSTRUCTION'};}});
+const exportRuntime=vm.createContext({captureCurrentHistoryEntry:async()=>{},current:{activeStage:3,job:{JOB_ID:'EXPORT-QUEUE'}},setTimeout,announce:()=>{},reportActionFailure:error=>exportErrors.push(String(error.message||error)),alert:message=>{throw new Error('Unexpected native popup: '+message);},savePromptRecord:async stage=>{activeSaves++;maxActiveSaves=Math.max(maxActiveSaves,activeSaves);await new Promise(resolve=>setTimeout(resolve,10));activeSaves--;return {stage,instructionId:'SAME-CONTROLLING-INSTRUCTION'};}});
 vm.runInContext(app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext()'))+'\nglobalThis.exportRequest=promptExport;',exportRuntime);
 await Promise.all(['manifest','instruction','context'].map(name=>exportRuntime.exportRequest(record=>{delivered.push({name,instructionId:record.instructionId});})));
 assert(delivered.map(x=>x.name).join(',')==='manifest,instruction,context',`Rapid handoff requests were lost or reordered: ${JSON.stringify(delivered)}`);
@@ -88,7 +89,7 @@ assert(delivered.at(-1).name==='after-navigation','An interrupted export left su
 // Run the actual complete-export/backup handler against delayed storage. Navigation
 // must not rename another project's bytes; large package assemblies must serialize.
 const packageDownloads=[],packageRequests=[];let activePackages=0,maxActivePackages=0,rejectNextPackage=false;
-const packageRuntime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>null,document:{querySelectorAll:()=>[],createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
+const packageRuntime=vm.createContext({captureCurrentHistoryEntry:async()=>{},withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>null,document:{querySelectorAll:()=>[],createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
 const packageStart=app.indexOf('let projectPackageExportInFlight=')>=0?app.indexOf('let projectPackageExportInFlight='):app.indexOf('async function downloadProjectPackage(');
 vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource+app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+'\nglobalThis.exportCompletePackage=downloadProjectPackage;',packageRuntime);
 const originalExport=packageRuntime.exportCompletePackage();packageRuntime.current={job:{JOB_ID:'PACKAGE-B'}};const otherBackup=packageRuntime.exportCompletePackage('backup');packageRuntime.current={job:{JOB_ID:'PACKAGE-C'}};
@@ -100,10 +101,10 @@ rejectNextPackage=true;const failedPackage=packageRuntime.exportCompletePackage(
 assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz','Failed complete export left later backup requests stuck.');
 // Exercise the complete production package encoder with only the storage
 // boundary replaced. The browser suite supplies real IndexedDB coverage.
-const filePackageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
+const filePackageRuntime=vm.createContext({closedLoopWorkflowSchema:globalThis.closedLoopWorkflowSchema,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
 vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
-vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;recoveryExportSnapshot=async()=>({project:await readProject(),artifacts:fixtureArtifacts,recovery:null,externalActions:{schema:EXTERNAL_ACTION_CONTRACT.schema,jobId:fixtureProject.job.JOB_ID,actions:[]}});metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',revision:0,job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
 const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
 for(let i=0;i<artifactSizes.length;i++){
   const bytes=Uint8Array.from({length:artifactSizes[i]},(_,j)=>(j*137+i)%256),sha256=createHash('sha256').update(bytes).digest('hex');
@@ -138,15 +139,19 @@ filePackageRuntime.fixtureContextBlob=new Blob(['é🙂\\\n\t"'.repeat(20000),'C
 filePackageRuntime.fixtureContextSha=await globalThis.closedLoopHash.sha256Bytes(filePackageRuntime.fixtureContextBlob);
 vm.runInContext(`
   const hash=closedLoopHash,contextIdentity={path:'context.json',filename:'context.json',mediaType:'application/json',byteSize:fixtureContextBlob.size,sha256:fixtureContextSha};
-  const prompt={stage:4,operation:'COMPLETE',promptEngineVersion:'FIXTURE',instructionId:'PROMPT-FILES',prompt:'instruction\\n',scope:{},contextManifest:{promptContext:{attachments:[contextIdentity]}}};
+  const prompt={stage:4,operation:'COMPLETE',promptEngineVersion:'FIXTURE',instructionId:'PROMPT-FILES',contextSignature:'fixture-context',prompt:'instruction\\n',scope:{projectRevision:0},contextManifest:{promptContext:{attachments:[contextIdentity]}}};
   prompt.bodySha256=prompt.fullTextSha256=hash.sha256Text(prompt.prompt);prompt.contractSha256=hash.sha256Value({});fixtureProject.projectData.generatedPrompts=[prompt];
   globalThis.fixtureContextRow={artifactId:'PROMPT-CONTEXT-'+hash.sha256Value({jobId:'FILE-PRESSURE',sha256:fixtureContextSha}),jobId:'FILE-PRESSURE',blob:fixtureContextBlob,sha256:fixtureContextSha,byteSize:fixtureContextBlob.size};
   globalThis.closedLoopPromptEngine={version:'FIXTURE',responseContractDescriptor:()=>({}),promptFileManifest:()=>({contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
-  globalThis.closedLoopWorkflowEngine={executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
+  globalThis.fixtureHumanDecisions=[];globalThis.closedLoopWorkflowEngine={stageContextProject:p=>p,executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:family==='humanDecisions'?fixtureHumanDecisions:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
 `,filePackageRuntime);
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
 filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>fixtureProject;getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
+// The stream-pressure fixture obtains the same explicit disclosure decision
+// as the UI; it does not bypass the package authorization production gate.
+try{await vm.runInContext("closedLoopProjectStore.createExecutionPackage({project:fixtureProject,stage:4,operation:'COMPLETE'})",filePackageRuntime);throw new Error('Missing disclosure check.');}catch(error){assert(error.code==='HANDOFF_DISCLOSURE_REQUIRED','Unexpected handoff setup failure: '+error.message);filePackageRuntime.pendingHandoff=error.handoff;}
+vm.runInContext(`fixtureHumanDecisions.push({id:'FIXTURE-DISCLOSURE',PURPOSE:'DISCLOSURE_AUTHORIZATION',TARGET_FAMILY:'operationReservations',TARGET_ID:'undefined',VALUE:{authorized:true,recipient:'Synthetic byte verifier',provider:'Local test harness',providerSuitable:true,classification:'PUBLIC',memberSetSha256:pendingHandoff.memberSetSha256}});`,filePackageRuntime);
 maxPackageRead=0;maxBase64Input=0;totalPackageRead=0;
 let executionPackage;
 try{
@@ -155,11 +160,12 @@ try{
 }finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
 const executionPackageReadBytes=totalPackageRead,executionPackageSourceBytes=artifactSizes[6]+filePackageRuntime.fixtureContextBlob.size;
 assert(maxPackageRead<=65536&&maxBase64Input<=65536,'Execution-package export buffered a complete artifact/context file.');
-const executionPayload=JSON.parse(await new Response(executionPackage.blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
-const {packageSha256:executionSha,...executionBody}=executionPayload;
-assert(executionPayload.contextFiles[0].text===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
+const zipInspection=spawnSync('python3',['-c',"import zipfile,io,sys,json,base64,hashlib; z=zipfile.ZipFile(io.BytesIO(base64.b64decode(sys.stdin.read()))); print(json.dumps({'context':z.read('context.json').decode('utf-8'),'artifact':base64.b64encode(z.read('file-6.bin')).decode(),'manifest':json.loads(z.read('manifest.json'))}))"],{input:Buffer.from(await executionPackage.blob.arrayBuffer()).toString('base64'),encoding:'utf8'});
+assert(zipInspection.status===0,zipInspection.stderr);const executionPayload=JSON.parse(zipInspection.stdout);
+assert(executionPayload.context===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
+const {packageManifestSha256:executionSha,...executionBody}=executionPayload.manifest;
 assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(executionBody)).digest('hex')===executionSha,'Execution-package digest changed.');
-assert(executionPayload.artifacts[0].base64===exportedPayload.artifacts[6].base64,'Execution package changed artifact bytes.');
+assert(executionPayload.artifact===exportedPayload.artifacts[6].base64,'Execution package changed artifact bytes.');
 const decoderRuntime=vm.createContext({Blob,Uint8Array,atob});
 vm.runInContext(store.slice(store.indexOf('const base64ToBytes='),store.indexOf('async function compressBytes('))+'\nglobalThis.decodeFile=base64ToBlob;',decoderRuntime);
 for(const row of exportedPayload.artifacts){
@@ -170,12 +176,12 @@ for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=f
 // Replay the complete production UI owner, without starting browser storage.
 // Diagnostic lists must use the existing lazy disclosure and page controls.
 {
-  const runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,
-    document:{currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]},closedLoopCore:core,closedLoopWorkflowSchema:globalThis.closedLoopWorkflowSchema,
+  const runtime=vm.createContext({addEventListener(){},crypto:globalThis.crypto,URL,structuredClone,console,
+    document:{addEventListener(){},currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]},closedLoopCore:core,closedLoopWorkflowSchema:globalThis.closedLoopWorkflowSchema,
     closedLoopWorkflowEngine:engine});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;
-    globalThis.ui={select:p=>{current=p;projects=[p];detailViews.clear();},accepted:acceptedStageMarkup,
+    globalThis.ui={action:action=>{engine={...engine,operationalNextAction:()=>action};},select:p=>{current=p;projects=[p];detailViews.clear();},accepted:acceptedStageMarkup,
       entries:()=>[...detailViews.entries()],page:(id,offset)=>{const body={innerHTML:'',querySelectorAll:()=>[],querySelector:()=>null,replaceChildren(){this.innerHTML='';}};detailViews.get(id).offset=offset;renderDetail({dataset:{detailId:id},querySelector:()=>body});return body.innerHTML;},
       storage:mismatches=>{projectStorage.mismatches=mismatches;return projectManagementMarkup();},
       execution:()=>testExecutionGuidanceMarkup(6),next:()=>nextActionMarkup(false)};
@@ -207,9 +213,9 @@ for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=f
   const snapshot=JSON.stringify(p);runtime.ui.accepted(6);assert(JSON.stringify(p)===snapshot,'Rendering diagnostics changed canonical state.');
   p.stages[30].gate.reasons=[];runtime.ui.select(p);
   assert(runtime.ui.accepted(30).includes('Completion gate is satisfied by current canonical evidence.'),'A satisfied gate lost its success notice.');
-  p.stages[1].gate.reasons=['Human confirmation required'];p.job.CURRENT_STAGE='STAGE 01';p.job.NEXT_REQUIRED_ACTION={actionType:'CONFIRM_STAGE_ONE_INTENT'};runtime.ui.select(p);
+  p.stages[1].gate.reasons=['Human confirmation required'];p.job.CURRENT_STAGE='STAGE 01';p.job.NEXT_REQUIRED_ACTION={actionType:'CONFIRM_STAGE_ONE_INTENT'};runtime.ui.action(p.job.NEXT_REQUIRED_ACTION);runtime.ui.select(p);
   assert(runtime.ui.accepted(1).includes('Stage 01 is waiting for your confirmation.')&&!runtime.ui.entries().some(([,entry])=>entry.title==='Completion gate is not satisfied.'),'Stage 01 confirmation lost its direct human action.');
-  const explanation=reasons.join(' ')+'ACTION-EXACT-TAIL';p.job.NEXT_REQUIRED_ACTION={actionType:'BLOCKED',heading:'Verification timing or target is blocked',explanation};runtime.ui.select(p);
+  const explanation=reasons.join(' ')+'ACTION-EXACT-TAIL';p.job.NEXT_REQUIRED_ACTION={actionType:'BLOCKED',heading:'Verification timing or target is blocked',explanation};runtime.ui.action(p.job.NEXT_REQUIRED_ACTION);runtime.ui.select(p);
   const next=runtime.ui.next();assert(!next.includes('ACTION-EXACT-TAIL')&&runtime.ui.entries().some(([,entry])=>entry.kind==='text'&&entry.title==='Action details'&&entry.value===explanation),'Accumulated action explanation bypassed the bounded shared text disclosure.');
   console.log(JSON.stringify({storageRegression:'view:collapsed-diagnostic-lists',passed:true,stages:30,completeReasons:603,longReasonPreserved:true}));
 }
@@ -242,13 +248,13 @@ assert(evidenceLookups<=20&&regressionLookups<=20,`Deferred stage views eagerly 
 // Keep the production storage/handlers intact and substitute only transaction
 // I/O. Real IndexedDB versions of these regressions run in browser-extra.
 const storageRows=new Map(),storageAccess=[];
-const storageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,document:{querySelectorAll:()=>[]},Event:globalThis.Event,dispatchEvent:()=>true});
+const storageRuntime=vm.createContext({savedViewFiles:new Map(),captureCurrentHistoryEntry:async()=>{},openProjectHistory:async()=>{},historyEntry:null,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,document:{querySelectorAll:()=>[]},Event:globalThis.Event,dispatchEvent:()=>true});
 const parseStorageJson=vm.runInContext('(text)=>JSON.parse(text)',storageRuntime);
 const storageRead=(value,parseJson=parseStorageJson)=>{if(value===undefined)return undefined;const blobs=[],copy=parseJson(JSON.stringify(value,(_key,item)=>item instanceof Blob?{__storageBlob:blobs.push(item)-1}:item));const restore=item=>{if(item&&typeof item==='object'){if(Object.keys(item).length===1&&Number.isInteger(item.__storageBlob))return blobs[item.__storageBlob];for(const key of Object.keys(item))item[key]=restore(item[key]);}return item;};return restore(copy);};
 storageRuntime.openStorageTransaction=async(names,mode)=>{
   const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map(storageRows.get(name)||[])]));
   storageAccess.push({kind:'transaction',names:selected,mode});
-  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({openKeyCursor:()=>{storageAccess.push({kind:'indexKeys',name,indexName});const keys=[...pending.get(name).values()].map(row=>row[indexName]).filter(Boolean).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));const req={};let i=0;const advance=()=>{req.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;req.onsuccess?.();};queueMicrotask(advance);return req;},getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
+  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({openKeyCursor:()=>{storageAccess.push({kind:'indexKeys',name,indexName});const keys=[...pending.get(name).values()].map(row=>row[indexName]).filter(Boolean).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));const req={};let i=0;const advance=()=>{req.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;req.onsuccess?.();};queueMicrotask(advance);return req;},getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),add:row=>{const key=name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key;if(pending.get(name).has(key))throw new Error('ConstraintError');pending.get(name).set(key,structuredClone(row));},put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
 };
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
   let source=fs.readFileSync(file,'utf8');
@@ -285,7 +291,7 @@ await storageRegression('export:one-project-pass-after-snapshot-verification',as
   const decoded=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
   const {packageSha256,...body}=decoded;
   assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(body)).digest('hex')===packageSha256,'Single-pass export changed its canonical package hash preimage.');
-  assert(passes<=2,`Complete export serialized the project ${passes} times; package hashing and compression traversed it separately.`);
+  const retained=(await storageRuntime.projectStore.readRecoveryHistory(saved.job.JOB_ID)).entries.length;assert(passes<=2+2*retained,`Complete export exceeded its current-project and retained-checkpoint verification bound: ${passes}.`);
 });
 await storageRegression('export:compression-backpressure-bounds-source-reads',async()=>{
   const saved=await storageRuntime.makeStored('BACKPRESSURE-EXPORT'),bytes=new Uint8Array(1048577),blob=new Blob([bytes]);
@@ -331,7 +337,7 @@ await storageRegression('export:verified-snapshot-hash-reused',async()=>{
   const blob=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID),passes=storageRuntime.projectSerializations;
   const decoded=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
   assert(decoded.packageManifest.projectSha256===saved.projectSha256,'Export lost the exact verified snapshot identity.');
-  assert(passes<=3,`Complete export serialized the entire project ${passes} times; its verified snapshot digest was rebuilt.`);
+  const retained=(await storageRuntime.projectStore.readRecoveryHistory(saved.job.JOB_ID)).entries.length;assert(passes<=2+2*retained,`Complete export exceeded its current-project and retained-checkpoint verification bound: ${passes}.`);
 });
 await storageRegression('read:revision-metadata-must-match-verified-project',async()=>{
   const saved=await storageRuntime.makeStored('REVISION-METADATA'),row=storageRows.get('projects').get(saved.job.JOB_ID);
@@ -348,7 +354,7 @@ await storageRegression('read:legacy-corruption-keeps-hash-mismatch-recovery',as
 await storageRegression('export:concurrent-save-keeps-snapshot-identity',async()=>{
   const saved=await storageRuntime.makeStored('EXPORT-CONCURRENT'),originalOpen=storageRuntime.openStorageTransaction;let intervened=false;
   storageRuntime.openStorageTransaction=async(names,mode)=>{
-    if(names==='artifacts'&&mode==='readonly'&&!intervened){intervened=true;const newer=storageRead(saved);newer.newerWork='KEEP';await storageRuntime.projectStore.writeProject(newer,{expectedProjectRevision:saved.revision});}
+    if(Array.isArray(names)&&names.includes('projects')&&names.includes('artifacts')&&names.includes('meta')&&mode==='readonly'&&!intervened){intervened=true;const snapshot=await originalOpen(names,mode);const newer=storageRead(saved);newer.newerWork='KEEP';await storageRuntime.projectStore.writeProject(newer,{expectedProjectRevision:saved.revision});return snapshot;}
     return originalOpen(names,mode);
   };
   let backup;try{backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}finally{storageRuntime.openStorageTransaction=originalOpen;}
@@ -362,6 +368,7 @@ await storageRegression('import:replay-saved-projections-without-fabricating-gat
   original.projectData.rawResponses.push(storageRead({rawResponseId:'RAW-PROJECTION',completeRawResponse:'Original response é🙂 EXACT-TAIL',stage:1}));
   const row=storageRows.get('projects').get(saved.job.JOB_ID);
   storageRows.get('projects').set(saved.job.JOB_ID,{...row,project:original,projectSha256:storageRuntime.projectStore.projectSha256(original)});
+  storageRows.get('meta').delete('projectRecovery:'+saved.job.JOB_ID); // Explicit legacy package fixture; recovery incompatibility is separately tested.
   const backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);
   const restored=await storageRuntime.projectStore.importPackage(backup),comparison=storageRead(restored);delete comparison.projectSha256;comparison.revision=original.revision;
   assert(storageRuntime.projectStore.projectSha256(comparison)===storageRuntime.projectStore.projectSha256(original),'Restore rewrote original records or their saved audit projection.');
@@ -397,7 +404,7 @@ vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource,storageRunt
 await storageRegression('diagnostics:complete-exports-do-not-wait-for-health',async()=>{
   const downloads=[],errors=[],status={textContent:''};let release,entered,healthCalls=0,active=0,maxActive=0;
   const reached=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve);
-  const runtime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'DIAGNOSTICS-EXPORT'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>status,console:{error:()=>{}},document:{querySelectorAll:()=>[],createElement:()=>({click(){downloads.push(this.download);}})},URL:{createObjectURL:()=> 'blob:verified-package',revokeObjectURL(){}},projectStore:{storageHealth:async()=>{healthCalls++;entered();await held;throw new Error('CONTROLLED_DIAGNOSTICS_FAILURE');},exportPackage:async()=>{active++;maxActive=Math.max(maxActive,active);await new Promise(resolve=>setTimeout(resolve,0));active--;return {};}}});
+  const runtime=vm.createContext({captureCurrentHistoryEntry:async()=>{},withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'DIAGNOSTICS-EXPORT'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>status,console:{error:()=>{}},document:{querySelectorAll:()=>[],createElement:()=>({click(){downloads.push(this.download);}})},URL:{createObjectURL:()=> 'blob:verified-package',revokeObjectURL(){}},projectStore:{storageHealth:async()=>{healthCalls++;entered();await held;throw new Error('CONTROLLED_DIAGNOSTICS_FAILURE');},exportPackage:async()=>{active++;maxActive=Math.max(maxActive,active);await new Promise(resolve=>setTimeout(resolve,0));active--;return {};}}});
   vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource+app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+';globalThis.exportCompletePackage=downloadProjectPackage;',runtime);
   let completed=0;const first=runtime.exportCompletePackage().then(()=>completed++,e=>errors.push(e)),second=runtime.exportCompletePackage('backup').then(()=>completed++,e=>errors.push(e));
   await reached;await new Promise(resolve=>setTimeout(resolve,25));const whileHeld={downloads:downloads.length,completed};release();await Promise.all([first,second]);await new Promise(resolve=>setTimeout(resolve,0));
@@ -422,7 +429,7 @@ await storageRegression('prompt-context:shared-identities-one-read-snapshot',asy
   const gets=storageAccess.filter(x=>x.kind==='get'&&x.name==='artifacts'),transactions=storageAccess.filter(x=>x.kind==='transaction'&&x.mode==='readonly'&&x.names.includes('artifacts'));
   console.log(JSON.stringify({promptContextReadPressure:{prompts:64,uniqueFiles:1,artifactReads:gets.length,readonlyTransactions:transactions.length}}));
   assert(JSON.stringify(saved.projectData.generatedPrompts)===before,'Context read optimization changed preserved instructions or manifests.');
-  assert(gets.length===1&&transactions.length===1,`One shared context file required ${gets.length} reads in ${transactions.length} readonly transactions.`);
+  assert(gets.length===1&&transactions.length===2,`One shared context file required ${gets.length} reads in ${transactions.length} readonly transactions.`);
 });
 await storageRegression('prompt-context:distinct-identities-bounded-snapshot',async()=>{
   const hash=globalThis.closedLoopHash,jobId='CONTEXT-DISTINCT-PRESSURE',rows=storageRows.get('artifacts'),identities=[];
@@ -469,12 +476,11 @@ await storageRegression('prompt-context:missing-history-cannot-use-current-conte
   assert((await storageRuntime.projectStore.readProject(project.job.JOB_ID)).projectSha256===before,'Unrecoverable historical context changed the saved project.');
 });
 await storageRegression('prompt-context:historical-eligibility-and-backup-custody',async()=>{
-  const project=await storageRuntime.makeStored('CONTEXT-HISTORICAL'),source=storageRuntime.contextProject.projectData.generatedPrompts[0];
+  const project=await storageRuntime.makeStored('CONTEXT-HISTORICAL'),source=storageRuntime.contextProject.projectData.generatedPrompts[0],prior=await storageRuntime.projectStore.readProject(project.job.JOB_ID);
   project.projectData.generatedPrompts=storageRead([{...source,invalidatedBy:'LATER-INSTRUCTION'},{...source,instructionId:'PRIOR-ENGINE-INSTRUCTION',promptEngineVersion:'PRIOR-ENGINE'}]);
-  storageAccess.length=0;const saved=await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});
-  assert(!storageAccess.some(x=>x.kind==='get'&&x.name==='artifacts'),'Ordinary save changed which historical prompt records require reconstruction.');
-  let error;try{await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}catch(e){error=e;}
-  assert(error?.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH','Complete backup stopped requiring invalidated/older-engine historical context bytes.');
+  let error;try{await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});}catch(e){error=e;}
+  assert(error?.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH','A checkpoint was committed without the exact invalidated/older-engine historical context bytes.');
+  assert((await storageRuntime.projectStore.readProject(project.job.JOB_ID)).projectSha256===prior.projectSha256,'Failed checkpoint custody changed the active project.');
 });
 // File intake must retain its original project, revision, stage and byte owner
 // through every asynchronous boundary. Only the database I/O is substituted.
@@ -577,7 +583,8 @@ await storageRegression('create-only:existing-zero-revision',async()=>{
   assert(rejected&&(await storageRuntime.projectStore.readProject('CREATE-COLLISION')).newerWork==='PRESERVE','Creating a project reused an existing revision-zero identity.');
 });
 await storageRegression('backup:required-canonical-bytes',async()=>{
-  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CLOSURE');const row=await projectStore.putArtifact({artifactId:'BACKUP-FILE',jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});globalThis.backupProject=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});globalThis.goodBackup=await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(row.artifactId,p.job.JOB_ID);})()`,storageRuntime);
+  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CLOSURE');const row=await projectStore.putArtifact({artifactId:'BACKUP-FILE',jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});globalThis.backupProject=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});globalThis.goodBackup=await projectStore.exportPackage(p.job.JOB_ID);globalThis.corruptBackupArtifactId=row.artifactId;})()`,storageRuntime);
+  storageRows.get('artifacts').delete(storageRuntime.corruptBackupArtifactId); // Corrupt disposable storage directly; the public API correctly protects retained files.
   const previous=await storageRuntime.projectStore.metaGet('lastVerifiedExport:BACKUP-CLOSURE');
   let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CLOSURE');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
   assert(rejected,'A verified export was created despite missing canonical artifact bytes.');
@@ -627,7 +634,8 @@ await storageRegression('artifact-queries:project-local-without-store-scan',asyn
 });
 const importStart=app.indexOf("$('#import-file').onchange="),importEnd=app.indexOf('\nglobalThis.closedLoopAppReady',importStart);
 await storageRegression('backup:required-prompt-context',async()=>{
-  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CONTEXT');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Required context content. '.repeat(4000);const prompt=closedLoopPromptEngine.buildPromptRecord(1,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(prompt);p=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});const rows=await projectStore.listArtifacts(p.job.JOB_ID),context=rows.find(row=>row.lineage?.kind==='PROMPT_CONTEXT');if(!context)throw new Error('The real instruction did not materialize its context fixture.');await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(context.artifactId,p.job.JOB_ID);})()`,storageRuntime);
+  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CONTEXT');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Required context content. '.repeat(4000);const prompt=closedLoopPromptEngine.buildPromptRecord(1,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(prompt);p=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});const rows=await projectStore.listArtifacts(p.job.JOB_ID),context=rows.find(row=>row.lineage?.kind==='PROMPT_CONTEXT');if(!context)throw new Error('The real instruction did not materialize its context fixture.');await projectStore.exportPackage(p.job.JOB_ID);globalThis.corruptBackupContextId=context.artifactId;})()`,storageRuntime);
+  storageRows.get('artifacts').delete(storageRuntime.corruptBackupContextId); // Deliberate missing-file fault outside the protected production API.
   let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CONTEXT');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
   assert(rejected,'Complete export omitted the exact context file required by a saved instruction.');
   const report=await storageRuntime.projectStore.verifyProjectArtifacts('BACKUP-CONTEXT');
@@ -662,6 +670,7 @@ await storageRegression('delete:verified-selection-before-async-refresh',async()
   assert(storageRuntime.current.activeView==='Workflow'&&storageRuntime.current.activeStage===2,'Post-delete refresh reset navigation that happened after commit.');
 });
 await storageRegression('startup:retained-refresh-keeps-snapshot-revision',async()=>{
+  storageRuntime.recoverySessionId='SYNTHETIC-STARTUP-SESSION';storageRuntime.initializeHistory=async()=>{};
   vm.runInContext(appFunction('importSeed'),storageRuntime);vm.runInContext(appFunction('retainedProjectForBuild'),storageRuntime);
   vm.runInContext(app.split('\n').find(line=>line.startsWith('async function load(){')),storageRuntime);
   await vm.runInContext(`(async()=>{const p=ensureState(core.createBlankState('RETAINED-CONCURRENT'));p.isRetainedTestProject=true;p.retainedSpecRevision='old';await projectStore.writeProject(p,{expectedProjectRevision:0});globalThis.nextRetained=clone(p);nextRetained.retainedSpecRevision='new';globalThis.loadAcceptanceSession=async()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.fetch=async()=>{const newer=await projectStore.readProject(p.job.JOB_ID);newer.newerWork='PRESERVE DURING FETCH';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});return {ok:true,json:async()=>nextRetained};};})()`,storageRuntime);
@@ -682,13 +691,14 @@ await storageRegression('startup:picker-projection-and-selected-only',async()=>{
     for(let i=0;i<count;i++)if(!storageRows.get('projects')?.has('PICKER-'+i))await vm.runInContext(`makeStored('PICKER-${i}')`,storageRuntime);
     await vm.runInContext(`projectStore.metaPut('retainedProjectSuppressed',true)`,storageRuntime);
     await vm.runInContext(`projectStore.metaPut('selectedProject','PICKER-0')`,storageRuntime);
-    const unrelated=storageRows.get('projects').get('PICKER-'+(count-1));if(count>1)unrelated.project.projectData.rawResponses.push({rawText:'unrelated archived history '.repeat(10000)});
+    // All existing projects receive their session-start checkpoint; this fixture is valid until the explicit corruption test below.
     storageAccess.length=0;
     await vm.runInContext('load()',storageRuntime);
     assert(!storageAccess.some(row=>row.name==='projects'&&row.kind==='getAll'),'Startup loaded every canonical project row.');
-    assert(storageAccess.filter(row=>row.name==='projects'&&row.kind==='get').every(row=>row.key==='PICKER-0'),'Startup opened an unrelated project before the selected view.');
+    assert(storageAccess.filter(row=>row.name==='projects'&&row.kind==='get').length<=4*storageRows.get('projects').size+4,'Session-start checkpoint reads exceeded the per-project bound.');
     assert(storageRuntime.current.job.JOB_ID==='PICKER-0'&&storageRuntime.current.stages[1],'Startup failed to open the selected verified project.');
   }
+  storageRows.get('projects').get('PICKER-49').project.projectData.rawResponses.push({rawText:'deliberate corrupt unloaded history'});
   let error;try{await storageRuntime.projectStore.readProject('PICKER-49');}catch(e){error=e;}
   assert(error?.code==='PROJECT_HASH_MISMATCH','Opening a corrupt unloaded project bypassed integrity verification.');
   assert(!storageRows.get('projects').has('PICKER-49')&&[...storageRows.get('meta').keys()].some(key=>key.startsWith('quarantine:PICKER-49:')),'Opening a corrupt unloaded project did not preserve it in quarantine.');

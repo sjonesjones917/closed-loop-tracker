@@ -1,3 +1,4 @@
+import {stage06ReadyFixture} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -12,8 +13,8 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
 // The complete workflow renderer must advertise required files before the first
 // save/export, using the same preview it already built without reserving work.
 {
-  const runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,
-    Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]}});
+  const runtime=vm.createContext({addEventListener(){},crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,
+    Event:class Event{},dispatchEvent(){},document:{addEventListener(){},currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]}});
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;
@@ -70,7 +71,7 @@ function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engin
   assert.match(appSource,/const operationSelection=\{\},runSelection=\{\},responseFileSelection=\{\};/,'The file-first UI must retain declared response-file selection state before wiring change and process handlers.');
   assert.match(appSource,/id="process-response-file"/,'The normal path must stage and validate the selected response file.');
   assert.match(appSource,/stageResponseFile\(/,'The UI must stage selected response bytes before canonical ingestion.');
-  assert.match(appSource,/async function savePromptRecord\(n(?:,retry=true)?\)[\s\S]*reserveAndBuildPromptRecord\(/,'Saving an external instruction must use the reservation-bound prompt transaction helper in the production path.');
+  assert.match(appSource,/async function savePromptRecord\(n,retry=true,\{force=false,reason=''\}=\{\}\)[\s\S]*reserveAndBuildPromptRecord\(/,'Saving an external instruction must use the reservation-bound prompt transaction helper in the production path.');
   assert.match(promptSource,/function reserveAndBuildPromptRecord\([\s\S]*reserveOperation\(/,'The reservation-bound prompt transaction helper must establish the application-owned operation reservation before prompt registration.');
   assert.match(appSource,/projectStore\.stageResponseFile\(\{[^}]*promptIdentity[^}]*packageId:expectedPrompt\.packageId[^}]*operationReservationId:expectedPrompt\.operationReservationId[^}]*challengeNonce:expectedPrompt\.challengeNonce[^}]*\}\)/,'Response-file staging must retain exact prompt, package, operation-reservation, and challenge-nonce identity in the production staging call.');
   assert.match(storeSource,/stageResponseFile\(\{[\s\S]*promptIdentity=null[\s\S]*packageId=null[\s\S]*operationReservationId=null[\s\S]*challengeNonce=null/,'Durable response-file staging must expose storage for every reservation-bound transport identity.');
@@ -110,7 +111,7 @@ verify();
 }
 // One current response mode: an older success cannot hide a newer rejection.
 {
- const runtime=vm.createContext({safe:x=>Array.isArray(x)?x:[],esc:String,operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE',currentNextAction:()=>({}),pendingProposal:()=>null,acceptedLaneChanges:()=>[{changeId:'OLD-CHANGE'}],stageLocked:()=>null,canonicalCurrentStage:()=>1,reviewerOperation:()=>false});
+ const runtime=vm.createContext({safe:x=>Array.isArray(x)?x:[],esc:String,operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE',displayedStageAction:()=>({}),currentNextAction:()=>({}),pendingProposal:()=>null,acceptedLaneChanges:()=>[{changeId:'OLD-CHANGE'}],stageLocked:()=>null,canonicalCurrentStage:()=>1,reviewerOperation:()=>false});
  const source=(app.match(/^function (?:latestResponseAttempt|latestResponseValidation|interactionModeMarkup)\([^\n]+/gm)||[]).join('\n');
  vm.runInContext(source+'\nglobalThis.mode=interactionModeMarkup;',runtime);
  for(let stage=1;stage<=30;stage++){
@@ -123,15 +124,15 @@ verify();
   assert.match(runtime.mode(stage),/notice success.*this stage is complete/,'The satisfied completion gate was not reported at stage '+stage);
  }
 }
-// The next action displayed on a historical view belongs to the current stage.
+// An ordinary stage selection stays within the active project version.
 {
  const wireStart=app.indexOf("if($('#next-export-prompt-file'))"),wireEnd=app.indexOf("if($('#export-prompt-context'))",wireStart),source=app.slice(wireStart,wireEnd);
  assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
  for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
-  const button={dataset:{operation}},current={activeStage:stage-1},operationSelection={};let exported;
+  const button={dataset:{operation}},current={activeStage:stage},operationSelection={};let exported;
   const runtime=vm.createContext({$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage,exportPromptFile:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
   vm.runInContext(source,runtime);await button.onclick();
-  assert.deepEqual(exported,{stage,operation},'The next action exported from the inspected historical stage instead of its owning current stage.');
+  assert.deepEqual(exported,{stage,operation},'The action changed the selected stage while exporting its instruction.');
  }
 }
 assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
@@ -186,12 +187,12 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 {
   const dialogs=[],announcements=[];let rendered=0,downloaded=0;
   const notice={textContent:'Existing next action',className:'notice',classList:{add(){}},focus(){},scrollIntoView(){},setAttribute(){}};
-  const runtime=vm.createContext({setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,URL,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,actionFailureNotice:null,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,clone:structuredClone,TAB_INSTANCE_ID:'TAB-FILE-FIRST', $:selector=>selector==='#fresh-context-id'?null:notice});
+  const runtime=vm.createContext({recoveryBusy:false,stageLocked:()=>null,setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,URL,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,actionFailureNotice:null,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,clone:structuredClone,TAB_INSTANCE_ID:'TAB-FILE-FIRST', $:selector=>selector==='#fresh-context-id'?null:notice});
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   runtime.ingestion=runtime.closedLoopResponseIngestion;runtime.stageContinuationErrors=new Map();
   vm.runInContext(app.slice(app.indexOf('async function restoreStageContinuation('),app.indexOf('async function materializeProject(')),runtime);
   runtime.current=runtime.closedLoopCore.createBlankState('JOB-FILE-FIRST-AUTOMATIC-CONTEXT');runtime.current.activeStage=5;runtime.current.revision=7;
-  runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.closedLoopWorkflowEngine.recalculate(runtime.current);runtime.current.stages[4].status='COMPLETE';runtime.current.stages[4].gate={complete:true};
+  runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.closedLoopWorkflowEngine.recalculate(runtime.current);for(const stage of runtime.closedLoopCore.STAGES.filter(stage=>stage.number<5)){runtime.current.stages[stage.number].status='COMPLETE';runtime.current.stages[stage.number].gate={complete:true};}
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(p=>Number(p.stage)===Number(n)&&!p.invalidatedBy&&Number(p.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   runtime.persistReplacement=async next=>{runtime.current=next;};
   const reporterStart=app.indexOf('function reportActionFailure(');
@@ -209,7 +210,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.equal(runtime.current.revision,8);
   assert.equal(dialogs.length,0);
   assert.doesNotMatch(app,/id="fresh-context-id"|id="add-fresh-context"/,'Routine workflow must not ask the human to name/register application contexts.');
-  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
+  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);for(const stage of runtime.closedLoopCore.STAGES.filter(stage=>stage.number<9)){runtime.current.stages[stage.number].status='COMPLETE';runtime.current.stages[stage.number].gate={complete:true};}
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
   assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
   const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportPromptFile=()=>runtime.exportAttempt(()=>downloaded++);
@@ -233,40 +234,42 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 // never overwrite the newer project with the failed candidate.
 {
   const failures=[],downloads=[];
-  const runtime=vm.createContext({setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,safe:v=>Array.isArray(v)?v:[],clone:structuredClone,TAB_INSTANCE_ID:'TAB-REVISION-RECOVERY',responseActionFailure:null,announce(){},render(){},$:()=>({focus(){}}),reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),reportActionFailure:error=>failures.push(String(error.message||error)),externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),operatorLaneMatches:()=>true,reverifyReturnedFiles:async()=>{}});
+  const runtime=vm.createContext({recoveryBusy:false,stageLocked:()=>null,setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,safe:v=>Array.isArray(v)?v:[],clone:structuredClone,TAB_INSTANCE_ID:'TAB-REVISION-RECOVERY',responseActionFailure:null,announce(){},render(){},$:()=>({focus(){}}),reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),reportActionFailure:error=>failures.push(String(error.message||error)),externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),operatorLaneMatches:()=>true,reverifyReturnedFiles:async()=>{}});
+  // Project clones must belong to the same realm as the canonical hash validator.
+  runtime.structuredClone=vm.runInContext('(value)=>JSON.parse(JSON.stringify(value))',runtime);
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   runtime.clone=vm.runInContext('(value)=>JSON.parse(JSON.stringify(value))',runtime);
   const engine=runtime.closedLoopWorkflowEngine,ingestion=runtime.closedLoopResponseIngestion,prompts=runtime.closedLoopPromptEngine;
-  let p=runtime.closedLoopCore.createBlankState('JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;engine.ensureShape(p);p.stages[5].status='COMPLETE';p.stages[5].gate={complete:true};
+  let p=stage06ReadyFixture({core:runtime.closedLoopCore,schema:runtime.closedLoopWorkflowSchema,engine,prompts,ingestion},'JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;
   const saved=prompts.reserveAndBuildPromptRecord(p,6,{operation:'COMPLETE'}).prompt;
   p=ingestion.captureRaw(p,{stage:6,text:'{"broken":true}',promptRecord:saved,files:[{attachmentSlotId:'DESIGN',artifactId:'DESIGN-BYTES',name:'design.md',sha256:'retained-digest'}]}).project;p.revision=84;
-  runtime.withStorageActivity=async(_label,operation)=>operation();runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=()=>prompts.version;
+  runtime.confirmProjectChange=async impact=>{throw new Error('Unexpected replacement confirmation '+JSON.stringify(impact));};runtime.captureCurrentHistoryEntry=async()=>{};runtime.historyEntry=null;runtime.withStorageActivity=async(_label,operation)=>operation();runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=()=>prompts.version;
   runtime.stageContinuationErrors=new Map();runtime.operationSelection={};
-  let stored=structuredClone(p);stored.revision=85;stored.projectData.userEntered.concurrentMarker='PRESERVE NEWER WORK';let staleWrites=0;
-  runtime.projectStore={readProject:async()=>structuredClone(stored),replaceProject:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+1;return structuredClone(stored);}};
+  let stored=structuredClone(p);stored.revision=85;stored.stages[6].draft={concurrentMarker:'PRESERVE NEWER WORK'};let staleWrites=0;
+  runtime.projectStore={previewProjectChange:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error('Preview found a concurrent saved revision.'),{code:'STALE_PROJECT_REVISION'});}return engine.projectMutationImpact(stored,next);},readProject:async()=>structuredClone(stored),replaceProject:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+1;return structuredClone(stored);}};
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(x=>Number(x.stage)===n&&!x.invalidatedBy&&Number(x.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
-  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','restoreStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','restoreStageContinuation','selectStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
   assert.equal(vm.runInContext('currentPromptRecord(6)?.instructionId',runtime),saved.instructionId,'Raw capture incorrectly stales the still-open instruction and blocks manifest re-export.');
   const priorInput=runtime.current.job.CURRENT_INPUT_VERSION;runtime.current.job.CURRENT_INPUT_VERSION='CHANGED-AUTHORITY';
   assert.equal(vm.runInContext('currentPromptRecord(6)',runtime),null,'A changed authority scope must not reuse an older instruction.');runtime.current.job.CURRENT_INPUT_VERSION=priorInput;
   await runtime.validate();
   assert.equal(failures.length,0,`Returned-file validation stranded the operator: ${failures.join(' | ')}`);
   assert.equal(staleWrites,1,'The fixture did not exercise the durable revision conflict.');
-  assert.equal(stored.projectData.userEntered.concurrentMarker,'PRESERVE NEWER WORK');
-  assert.equal(stored.projectData.rawResponses[0].files[0].artifactId,'DESIGN-BYTES');
-  assert.equal(stored.projectData.responseValidations.length,1,'Recovery must validate the retained response once.');
-  assert.equal(stored.projectData.responseValidations[0].valid,false);
+  assert.equal(stored.stages[6].draft.concurrentMarker,'PRESERVE NEWER WORK');
+  assert.equal(stored.projectData.rawResponses.find(raw=>raw.stage===6).files[0].artifactId,'DESIGN-BYTES');
+  assert.equal(stored.projectData.responseValidations.filter(row=>row.stage===6).length,1,'Recovery must validate the retained response once.');
+  assert.equal(stored.projectData.responseValidations.find(row=>row.stage===6).valid,false);
   // A second stale revision must also recover on the actual manifest exporter.
   // This focused fixture represents completed upstream work without constructing
   // the separate Stage 01–05 acceptance fixtures. Restore that prerequisite.
-  stored.stages[5].status='COMPLETE';stored.stages[5].gate={complete:true};runtime.current.stages[5].status='COMPLETE';runtime.current.stages[5].gate={complete:true};
-  stored.revision++;stored.projectData.userEntered.secondMarker='KEEP THIS TOO';
+  for(const project of [stored,runtime.current])for(const stage of runtime.closedLoopCore.STAGES.filter(stage=>stage.number<6)){project.stages[stage.number].status='COMPLETE';project.stages[stage.number].gate={complete:true};}
+  stored.revision++;stored.stages[6].draft.secondMarker='KEEP THIS TOO';
   await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
   assert.equal(failures.length,0,`Correction manifest export failed: ${failures.join(' | ')}`);
   assert.equal(downloads.length,1,'The correction manifest was not exported.');
   assert.notEqual(downloads[0].promptIdentity.instructionId,saved.instructionId);
-  assert.equal(stored.projectData.userEntered.secondMarker,'KEEP THIS TOO');
+  assert.equal(stored.stages[6].draft.secondMarker,'KEEP THIS TOO');
   assert(stored.projectData.generatedPrompts.at(-1).contextManifest.latestValidationFailure.length,'Correction instruction must carry the recorded validation failure.');
   // An already-open Stage 06 attempt created before this repair must receive the
   // missing schedule on export, without invalidating its preserved response.
