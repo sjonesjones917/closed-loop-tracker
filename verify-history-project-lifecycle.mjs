@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 const mutation=process.argv.find(value=>value.startsWith('--fault='))?.slice(8),faults={
  'refuse-removed':{id:'REFUSE-REMOVED-PROJECT-RESTORE',file:'project-store.js',before:'if(!state?.entries.some(entry=>entry.id===checkpointId))',after:'if(!prior||!state?.entries.some(entry=>entry.id===checkpointId))'},
- 'skip-file-inventory':{id:'IGNORE-CHANGED-FILE-INVENTORY',file:'project-store.js',before:'state.activeProjectSha256!==projectSha256(prior)||state.entries.find(entry=>entry.id===state.activeId)?.artifactManifestSha256!==historyArtifactsSha256(files)',after:'state.activeProjectSha256!==projectSha256(prior)'}
+ 'skip-file-inventory':{id:'IGNORE-CHANGED-FILE-INVENTORY',file:'project-store.js',before:'||state.entries.find(entry=>entry.id===state.activeId)?.artifactManifestSha256!==historyArtifactsSha256(files)',after:''}
 };if(mutation&&!faults[mutation])throw new Error('Unknown deliberate mutation');
 const {store,core,engine,copy,rows,runtime}=projectStoreRuntime({fault:faults[mutation]}),cases=[];
 const note=name=>cases.push({name,result:'PASS'});
