@@ -148,5 +148,41 @@
     "beforeEvidence": "checkpoint-before.json",
     "afterEvidence": "checkpoint-after.json",
     "status": "REPAIRED_LOCAL_BROWSER_PENDING"
+  },
+  {
+    "id": "NATIVE_PROOF_CONTINUATION",
+    "sourceCommit": "874e0aa29b9bf52f4d2c4036f9ecf14b763bb240",
+    "inputs": "Otherwise-valid complete lifecycle using a real executed Test IR comparison for the current final product.",
+    "operationSequence": [
+      "author final native test",
+      "accept independent proof review",
+      "execute native byte comparison",
+      "record native result",
+      "evaluate Stage 22 and continue through 30"
+    ],
+    "expected": "Passing native evidence with current accepted equivalent mapping establishes the linked proposition and permits valid progression.",
+    "actual": "Native comparison passed but Stage 22 remained blocked with missing proposition proof.",
+    "regression": "verify-native-proof-journey.mjs",
+    "beforeEvidence": "native-proof-before.json",
+    "afterEvidence": "native-proof-after.json",
+    "status": "REPAIRED_LOCAL_BROWSER_PENDING"
+  },
+  {
+    "id": "RETURNED_PRODUCT_ATTACHMENT_LINEAGE",
+    "sourceCommit": "874e0aa29b9bf52f4d2c4036f9ecf14b763bb240",
+    "inputs": "Otherwise-valid Stage 21 product response plus exactly mapped verified product.bin metadata.",
+    "operationSequence": [
+      "reserve production",
+      "ingest response with attachment",
+      "map exact returned file",
+      "accept proposal",
+      "evaluate Stage 21 and continue through 30"
+    ],
+    "expected": "Accepted returned product bytes enter the exact reserved product inventory and satisfy product byte custody.",
+    "actual": "Accepted file was registered without product lineage and Stage 21 could not complete.",
+    "regression": "verify-product-attachment-journey.mjs",
+    "beforeEvidence": "product-attachment-before.json",
+    "afterEvidence": "product-attachment-after.json",
+    "status": "REPAIRED_LOCAL_BROWSER_PENDING"
   }
 ]

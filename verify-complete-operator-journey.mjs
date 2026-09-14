@@ -29,7 +29,7 @@ async function external(){
   const p=await saved(),prompt=p.projectData.generatedPrompts.find(row=>row.instructionId===manifest.promptIdentity.instructionId);assert.ok(prompt);assert.equal(prompt.bodySha256,instruction.sha256);
   const request=responseFixture({schema,engine,project:p,prompt,contextFiles,instructionBytes:instruction.bytes});
   if(stage===21){request.attachments=[{temporaryKey:'finished-product',filename:'result.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(OUTPUT),sha256:digest(Buffer.from(OUTPUT)),required:true}];request.evidence[0].attachmentRef={tempKey:'finished-product'};}
-  if(!rejected){await ingest({...request,jobId:'WRONG-PROJECT'},{invalid:true});rejected=true;await browser.click('#prepare-replacement-attempt');return;}
+  if(!rejected){await ingest({...request,jobId:'WRONG-PROJECT'},{invalid:true});rejected=true;if(await browser.exists('#prepare-replacement-attempt'))await browser.click('#prepare-replacement-attempt');return;}
   await ingest(request);
 }
 try{

@@ -212,12 +212,14 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-human-stage-walkthrough.mjs
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-mobile-capability-journey.mjs
-          run_browser_verifier verify-complete-operator-journey.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
@@ -290,11 +292,13 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-mobile-capability-journey.mjs
-          run_browser_verifier verify-complete-operator-journey.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
 
   publish-status:
     name: Publish machine acceptance status
@@ -332,11 +336,13 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-mobile-capability-journey.mjs
-          run_browser_verifier verify-complete-operator-journey.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:
