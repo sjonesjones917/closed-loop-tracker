@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
-const r=projectStoreRuntime(),{store,engine,core,runtime,rows,copy}=r;
+const mutation=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),faults={
+ 'mixed-versions':{id:'RESTORE-INCOMPATIBLE-VERSIONS',file:'project-store.js',before:'const next=clone(saved.project);',after:'const next={...clone(saved.project),projectData:clone(prior.projectData)};'},
+ 'mutate-retained':{id:'MUTATE-RETAINED-CHECKPOINT',file:'project-store.js',before:"meta.put({key:historyKey(state.jobId),value:state,updatedAt:now()});fault('during-history-write');",after:"if(state.entries.length>1){const previous=await request(meta.get(snapshotKey(state.jobId,state.entries[0].id)));previous.value.blob=new Blob(['deliberately mutated retained checkpoint']);meta.put(previous);}meta.put({key:historyKey(state.jobId),value:state,updatedAt:now()});fault('during-history-write');"}
+};
+if(mutation&&!faults[mutation])throw new Error('Unknown deliberate mutation.');
+const r=projectStoreRuntime({fault:faults[mutation]}),{store,engine,core,runtime,rows,copy}=r;
 const plain=value=>JSON.parse(JSON.stringify(value));
 const id='SYNTHETIC-RECOVERY-REGRESSION',cases=[];
 const record=(name,details={})=>cases.push({name,...details,result:'PASS'});

@@ -2642,7 +2642,10 @@
     {
       "path": "specification/recovery-requirements.json",
       "amendmentId": "RECOVERY-20260914-1",
-      "requirementCount": 90
+      "requirementCount": 103,
+      "sourceTranscriptionPath": "specification/recovery-user-instruction-20260914.txt",
+      "sourceTranscriptionSha256": "e921bf3acf1153dd0a65f2b577bcd5ecddff25eac441bc863926e402a7c71988",
+      "status": "IMPLEMENTATION_AND_EXACT_DEPLOYED_EVIDENCE_IN_PROGRESS"
     }
   ]
 }

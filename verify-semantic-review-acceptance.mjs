@@ -125,8 +125,8 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;projectStore=closedLoopProjectStore;
     current=selected;projects=[current];operationSelection[stage]=operation;
-    withStorageActivity=async(label,work)=>work();render=()=>{};announce=message=>notices.push(message);reportResponseFailure=(message,error)=>{throw error||new Error(message);};reportActionFailure=error=>{throw error;};
-    globalThis.ui={accept:acceptPendingProposal,refine:()=>{const select=document.querySelector;document.querySelector=selector=>['#refine-accepted-response','#accepted-refinement-reason','#operator-label'].includes(selector)?select(selector):null;wire();document.querySelector=select;return document.querySelector('#refine-accepted-response').onclick();},restore:async()=>{current=await materializeProject(current);return current;},current:()=>current,prompt:()=>currentPromptRecord(stage),selectedOperation:()=>selectedOperation(stage),proposal:()=>proposalMarkup(stage)};
+    captureCurrentView=async()=>{};captureView=()=>null;recordCommittedBoundary=async()=>{};withStorageActivity=async(label,work)=>work();render=()=>{};announce=message=>notices.push(message);reportResponseFailure=(message,error)=>{throw error||new Error(message);};reportActionFailure=error=>{throw error;};
+    globalThis.ui={accept:async()=>{await acceptPendingProposal();if(replacementReview)await acceptPendingProposal(true);},refine:()=>{const select=document.querySelector;document.querySelector=selector=>['#refine-accepted-response','#accepted-refinement-reason','#operator-label'].includes(selector)?select(selector):null;wire();document.querySelector=select;return document.querySelector('#refine-accepted-response').onclick();},restore:async()=>{current=await materializeProject(current);return current;},current:()=>current,prompt:()=>currentPromptRecord(stage),selectedOperation:()=>selectedOperation(stage),proposal:()=>proposalMarkup(stage)};
   })();`,runtime);
   return {ui:runtime.ui,notices,saved:()=>saved};
 }
@@ -161,10 +161,10 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
   const source=stage04AcceptanceFixture(runtime,'JOB-SOURCE-UI-RECOVERY'),prepared=prepare(source,2,'SEARCH_ADEQUACY_REVIEW',()=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'source-ui-finding',overrides:{REVIEW_QUESTION:'Is the search adequate?',FINDING:'The scope remains unresolved.',REASONING:'A required category is missing.',RESULT:'REJECTED'}})]}})),{ui}=application(prepared.project,'SEARCH_ADEQUACY_REVIEW',{stage:2});
   assert.match(ui.proposal(),/Record findings and prepare correction/);await ui.accept();
   assert.equal(ui.prompt()?.operation,'RECONCILE_SOURCE_SEARCH');assert.equal(ui.current().stages[2].gate.complete,false);
-  const reopened=application(ui.current(),'SEARCH_ADEQUACY_REVIEW',{stage:2});await reopened.ui.restore();assert.equal(reopened.ui.selectedOperation(),'RECONCILE_SOURCE_SEARCH','Switching projects selected an old operation instead of its already saved continuation.');
+  const reopened=application(ui.current(),'SEARCH_ADEQUACY_REVIEW',{stage:2});await reopened.ui.restore();assert.equal(reopened.ui.selectedOperation(),'SEARCH_ADEQUACY_REVIEW','Restoration changed the recorded operation selection.');assert.ok(reopened.ui.current().projectData.generatedPrompts.some(prompt=>prompt.operation==='RECONCILE_SOURCE_SEARCH'&&!prompt.invalidatedBy),'The saved continuation was lost.');
   const legacy=accept(prepared),finding=legacy.projectData.semanticReviews.at(-1);finding.fields.RESULT=finding.RESULT='FAIL';engine.refreshRecordHashes(finding,'semanticReviews');engine.recalculate(legacy);
   const raw=legacy.projectData.rawResponses.map(r=>r.completeRawResponse),recovered=application(legacy,'SEARCH_ADEQUACY_REVIEW',{stage:2});await recovered.ui.restore();
-  assert.equal(engine.recordsForCurrentScope(recovered.ui.current(),'semanticReviews').length,0);
+  assert.ok(engine.recordsForCurrentScope(recovered.ui.current(),'semanticReviews').length>0,'Ordinary restoration silently rewrote a retained legacy result.');assert.notEqual(recovered.ui.current().stages[2].status,'COMPLETE','Unsupported review value conferred stage completion.');
   assert.equal(recovered.ui.prompt()?.operation,'SEARCH_ADEQUACY_REVIEW');assert.deepEqual(recovered.ui.current().projectData.rawResponses.map(r=>r.completeRawResponse),raw);
 }
 
@@ -272,8 +272,8 @@ assert.match(legacy.job.NEXT_REQUIRED_ACTION.explanation,/unrecognized result/i)
 assert.equal(legacyReview.fields.RESULT,'FAIL','Legacy evidence was silently normalized.');
 const legacyHash=hash.sha256Value(legacy),legacyRaw=legacy.projectData.rawResponses.map(r=>r.completeRawResponse);
 const legacyUi=application(legacy,'SEMANTIC_REVIEW');await legacyUi.ui.restore();
-assert.equal(engine.recordsForCurrentScope(legacyUi.ui.current(),'semanticReviews').length,0,'Opening the saved project did not recover its invalid accepted review.');
-assert.equal(legacyUi.ui.prompt()?.operation,'SEMANTIC_REVIEW','Opening the saved project did not save the correction instruction.');
+assert.ok(engine.recordsForCurrentScope(legacyUi.ui.current(),'semanticReviews').length>0,'Restoration silently discarded the saved review.');assert.deepEqual(legacyUi.ui.current().projectData,legacy.projectData,'Restoration changed working project data.');
+assert.equal(legacyUi.ui.prompt()?.operation,'SEMANTIC_REVIEW','Restoration lost the saved instruction.');
 const reloadRevision=legacyUi.ui.current().revision,reloadPrompt=legacyUi.ui.prompt().instructionId;await legacyUi.ui.restore();
 assert.equal(legacyUi.ui.current().revision,reloadRevision,'Opening the recovered project wrote another revision.');
 assert.equal(legacyUi.ui.prompt().instructionId,reloadPrompt,'Opening the recovered project replaced the saved instruction again.');
@@ -293,4 +293,4 @@ engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.raw
 assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',orphanAuditIsNotLiveAttempt:true,requestedReviewReopensStage:true,priorReviewCannotAnswerNewRequest:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,reopenedInstructionSelected:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,automaticLegacyRecovery:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',orphanAuditIsNotLiveAttempt:true,requestedReviewReopensStage:true,priorReviewCannotAnswerNewRequest:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,reopenedInstructionSelected:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));

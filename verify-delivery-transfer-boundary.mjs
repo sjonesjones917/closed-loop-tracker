@@ -51,7 +51,7 @@ async function uiCase(name,{priorAttempt=false,failSave=false,failTransfer=false
     const context=vm.createContext({api,console,URL,Blob,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,document:{currentScript:null,querySelector:()=>({focus(){},setAttribute(){},removeAttribute(){},addEventListener(){}})},requestAnimationFrame:fn=>fn()});
     vm.runInContext(appSource.slice(0,appSource.indexOf('globalThis.closedLoopAppReady=false;'))+`
       engine=api.engine;current=api.project;current.activeStage=30;
-      projectStore={readProject:api.read};
+      projectStore={readProject:api.read,assertRecoveryTransfer:async project=>engine.deliveryTransferPrecondition(project)};
       persistReplacement=async p=>{current=await api.persist(p);};
       verifiedCanonicalArtifact=async artifactId=>({blob:new Blob(['synthetic transfer']),filename:artifactId});
       downloadBlob=api.transfer;render=()=>{};announce=()=>{};reportActionFailure=api.error;

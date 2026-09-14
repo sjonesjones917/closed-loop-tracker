@@ -1402,6 +1402,7 @@ function stageContext(project,stage){
   for(const key of ['migrationArchives','recoveredProjects','permanentRegistry','inputVersions'])delete context.projectData[key];
   for(const [family,rows] of Object.entries(context.projectData))if(Array.isArray(rows))context.projectData[family]=rows.filter(record=>permitted(record,family));
   for(const definition of core.STAGES){const state=project.stages?.[definition.number];context.stages[definition.number]=definition.number<=number?{...state}:core.blankStage?core.blankStage(definition):{number:definition.number,status:'NOT STARTED',agentData:{},acceptedData:{},humanData:{},derivedData:{},authorizedFiles:[]};}
+  delete context.restoredCandidates;
   context.release={gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]};
   const input={...project.projectData?.userEntered};input.clarifications=safe(input.clarifications).filter(row=>permitted(row,'humanInputAnswers'));
   const artifactIds=new Set(safe(context.projectData.artifacts).map(row=>recordId(row,'artifacts')));
