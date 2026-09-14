@@ -9,19 +9,26 @@
         "productionOwners": [
           "workflow-schema.js:recordSchema/rec",
           "workflow-engine.js:allocateRecordIdentity/allocateId/allocateInfrastructureId/validateAllocationReceipts",
-          "project-store.js:writeProjectRow/writeOperationalProject"
+          "project-store.js:writeProjectRow/writeOperationalProject",
+          "prompt-engine.js:buildPromptRecord/reserveAndBuildPromptRecord/packageIdForPrompt",
+          "project-store.js:createProject/restoreProjectAllocation",
+          "app-core.js:addNew/persistReplacement/currentPromptRecord"
         ],
         "executedEvidence": [
           {
             "path": "verification/allocation-repair-evidence-20260914.json",
             "scope": "65 canonical record families and registered infrastructure allocator paths, synthetic production runtime and transaction adapter; other identity producers remain open"
+          },
+          {
+            "path": "verification/integrated-repair-evidence-20260914.json",
+            "scope": "Synthetic transactional project creation; instruction/package allocation and receipts; rejection retry through actual UI commit function; exact integrated browser replay pending"
           }
         ],
         "unresolvedRequirements": [
-          "Close remaining project, artifact, prompt/package identity producers and full clone remapping; run exact integrated browser/deployment acceptance."
+          "Close remaining artifact and derived identity producers, clone remapping and project-copy paths; obtain complete integrated browser and exact deployment evidence."
         ],
         "currentDisposition": "IMPLEMENTED_UNPROVEN",
-        "currentDispositionReason": "Shared record/infrastructure allocators have executed synthetic evidence. Remaining identity producers, full clone remapping, complete browser journeys and exact deployment evidence are still open."
+        "currentDispositionReason": "Shared record/infrastructure allocators, new-project allocation and execution instruction/package allocation have focused synthetic evidence. Remaining identity consumers, clone remapping, complete browser journeys and exact deployment evidence remain open."
       }
     },
     {
@@ -31,19 +38,26 @@
         "productionOwners": [
           "workflow-schema.js:recordSchema/rec",
           "workflow-engine.js:allocateRecordIdentity/allocateId/allocateInfrastructureId/validateAllocationReceipts",
-          "project-store.js:writeProjectRow/writeOperationalProject"
+          "project-store.js:writeProjectRow/writeOperationalProject",
+          "prompt-engine.js:buildPromptRecord/reserveAndBuildPromptRecord/packageIdForPrompt",
+          "project-store.js:createProject/restoreProjectAllocation",
+          "app-core.js:addNew/persistReplacement/currentPromptRecord"
         ],
         "executedEvidence": [
           {
             "path": "verification/allocation-repair-evidence-20260914.json",
             "scope": "65 canonical record families and registered infrastructure allocator paths, synthetic production runtime and transaction adapter; other identity producers remain open"
+          },
+          {
+            "path": "verification/integrated-repair-evidence-20260914.json",
+            "scope": "Synthetic transactional project creation; instruction/package allocation and receipts; rejection retry through actual UI commit function; exact integrated browser replay pending"
           }
         ],
         "unresolvedRequirements": [
-          "Close remaining project, artifact, prompt/package identity producers and full clone remapping; run exact integrated browser/deployment acceptance."
+          "Close remaining artifact and derived identity producers, clone remapping and project-copy paths; obtain complete integrated browser and exact deployment evidence."
         ],
         "currentDisposition": "IMPLEMENTED_UNPROVEN",
-        "currentDispositionReason": "Shared record/infrastructure allocators have executed synthetic evidence. Remaining identity producers, full clone remapping, complete browser journeys and exact deployment evidence are still open."
+        "currentDispositionReason": "Shared record/infrastructure allocators, new-project allocation and execution instruction/package allocation have focused synthetic evidence. Remaining identity consumers, clone remapping, complete browser journeys and exact deployment evidence remain open."
       }
     },
     {

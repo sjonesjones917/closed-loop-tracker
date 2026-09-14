@@ -422,10 +422,19 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
 }
 
 async function persistProjectPromptFiles(project){await persistPromptContextRecords((project.projectData?.generatedPrompts||[]).filter(record=>!record.invalidatedBy&&record.promptEngineVersion===globalThis.closedLoopPromptEngine?.version),project);}
-async function writeProjectRow(project,tx,{expectedProjectRevision=null,incrementRevision=true,createOnly=false,skipUnchanged=false,selectProject=true,operationId=null,preparedHistory=null,expectedStateSha256=null}={}){
+async function writeProjectRow(project,tx,{expectedProjectRevision=null,incrementRevision=true,createOnly=false,skipUnchanged=false,selectProject=true,operationId=null,preparedHistory=null,expectedStateSha256=null,projectAllocation=null}={}){
   const id=projectIdentity(project);if(!id)throw new Error('A project without a JOB_ID cannot be committed.');
   const store=tx.objectStore(PROJECTS),prior=await projectRowWithOperations(tx,id),currentRevision=Number(prior?.revision||0);
   if(createOnly&&prior)throw storageError(`Project ${id} already exists and was not replaced.`,'PROJECT_ALREADY_EXISTS');
+  if(projectAllocation){
+    const allocationStore=tx.objectStore(META),stored=(await request(allocationStore.get('canonicalProjectAllocation')))?.value;
+    if(Number(stored?.generation||0)!==projectAllocation.expectedGeneration)throw storageError('Another project was created while this one was being prepared.','PROJECT_ALLOCATION_CONFLICT');
+    const receipt=projectAllocation.state.receipts.at(-1);
+    const previous=stored||{generation:0,sequence:0,receipts:[]},proposed=projectAllocation.state;
+    if(proposed.generation!==previous.generation+1||proposed.sequence!==previous.sequence+1||receipt?.allocationSequence!==proposed.sequence||proposed.receipts.length!==previous.receipts.length+1||previous.receipts.some((row,index)=>hash.sha256Value(row)!==hash.sha256Value(proposed.receipts[index]))||previous.receipts.some(row=>row.commandId===receipt?.commandId))throw storageError('The project creation cannot rewrite retained allocation receipts.','PROJECT_ALLOCATION_INVALID');
+    if(!createOnly||prior||receipt?.resultingId!==id||!project.projectData.allocationReceipts.some(row=>hash.sha256Value(row)===hash.sha256Value(receipt)))throw storageError('The project allocation is not bound to this creation.','PROJECT_ALLOCATION_INVALID');
+    allocationStore.put({key:'canonicalProjectAllocation',value:clone(projectAllocation.state),updatedAt:now()});
+  }
   if(expectedStateSha256&&expectedStateSha256!==prior?.projectSha256)throw storageError('Project or pending response changed before commit.','STALE_PROJECT_REVISION');
   if(expectedProjectRevision!==null&&Number(expectedProjectRevision)!==currentRevision)throw storageError(`Project revision conflict for ${id}: expected ${expectedProjectRevision}, found ${currentRevision}.`,'STALE_PROJECT_REVISION');
   const next=clone(project);delete next.projectSha256;
@@ -484,6 +493,38 @@ async function writeProject(project,options={}){
   if(!projectIdentity(project))throw new Error('A project without a JOB_ID cannot be committed.');
   const prepared=await prepareProjectWrite(project,options);fault('before-project-transaction');const tx=await openTransaction([PROJECTS,META],'readwrite');
   try{const next=await writeProjectRow(prepared.project,tx,prepared.options);fault('before-transaction-commit');await complete(tx);notifyProjectChange(next);return next;}catch(error){try{tx.abort();}catch{}throw error;}
+}
+
+async function createProject({commandId=crypto.randomUUID()}={}){
+  const command=String(commandId||'');if(!command)throw storageError('A project creation command identity is required.','PROJECT_COMMAND_REQUIRED');
+  const engine=globalThis.closedLoopWorkflowEngine,family=engine.INFRA_ID_FAMILIES['projects:JOB'];
+  for(let attempt=0;attempt<8;attempt++){
+    const prior=await metaGet('canonicalProjectAllocation')||{generation:0,sequence:0,receipts:[]};
+    const existing=prior.receipts.find(row=>row.commandId===command);
+    if(existing){const project=await readProject(existing.resultingId);if(project)return project;throw storageError('This creation already completed. Its project is available in History.','CREATED_PROJECT_RETAINED');}
+    const allocationSequence=Number(prior.sequence)+1;
+    if(!Number.isSafeInteger(allocationSequence))throw storageError('The project allocation sequence is exhausted.','ALLOCATION_SEQUENCE_INVALID');
+    const retainedIds=new Set([...(await listProjectSummaries()).map(projectIdentity),...(await listRecoverableProjects()).map(row=>row.jobId)]);
+    const known=new Map(prior.receipts.map(row=>[row.resultingId,row.inputTuple]));
+    const allocation=hash.allocateCanonicalIdWithCollisionCheck({familyPrefix:family.prefix,familyNamespace:family.familyNamespace,jobNamespace:'closed-loop-global/project-metadata',commandId:command,targetSlot:'',parentId:'',allocationSequence},{exists:id=>known.get(id)||(retainedIds.has(id)?true:null)});
+    const receipt={schema:'closed-loop-allocation-receipt/1',algorithmVersion:hash.idVersion,familyPrefix:family.prefix,familyNamespace:family.familyNamespace,jobNamespace:allocation.payload.jobNamespace,collection:'projects',commandId:command,targetSlot:'',parentId:'',inputTuple:allocation.payload,allocationSequence,collisionCounter:allocation.collisionCounter,collisionCheck:'CHECKED_AGAINST_ACTIVE_AND_RETAINED_PROJECT_IDENTITIES',resultingId:allocation.id,projectRevision:0,revisionMeaning:'ALLOCATION_INPUT',retryIdentity:hash.sha256Value({commandId:command,operation:'CREATE_PROJECT'}),payloadSha256:hash.sha256Value({operation:'CREATE_PROJECT'})};
+    const project=globalThis.closedLoopCore.createBlankState(allocation.id);engine.ensureShape(project);project.projectData.allocationReceipts.push(receipt);project.job.DATE_OPENED=now();project.activeView='Project';engine.createNewJobReset(project);
+    const state={generation:prior.generation+1,sequence:allocationSequence,receipts:[...prior.receipts,receipt]};
+    try{return await writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true,projectAllocation:{expectedGeneration:prior.generation,state}});}
+    catch(error){if(!['PROJECT_ALLOCATION_CONFLICT','PROJECT_ALREADY_EXISTS'].includes(error?.code))throw error;}
+  }
+  throw storageError('Project creation could not obtain a current allocation. Retry after the other creation finishes.','PROJECT_ALLOCATION_CONFLICT');
+}
+
+async function restoreProjectAllocation(tx,project){
+  const receipts=(project.projectData?.allocationReceipts||[]).filter(row=>row.collection==='projects');
+  if(!receipts.length)return;
+  if(receipts.length!==1||receipts[0].resultingId!==projectIdentity(project))throw storageError('The saved project contains an incompatible creation identity.','PROJECT_ALLOCATION_INVALID');
+  globalThis.closedLoopWorkflowEngine.validateAllocationReceipts(project);
+  const receipt=receipts[0],meta=tx.objectStore(META),prior=(await request(meta.get('canonicalProjectAllocation')))?.value||{generation:0,sequence:0,receipts:[]};
+  const existing=prior.receipts.find(row=>row.commandId===receipt.commandId||row.resultingId===receipt.resultingId);
+  if(existing){if(hash.sha256Value(existing)!==hash.sha256Value(receipt))throw storageError('The saved creation conflicts with a completed project command.','IDEMPOTENCY_PAYLOAD_CONFLICT');return;}
+  meta.put({key:'canonicalProjectAllocation',value:{generation:prior.generation+1,sequence:Math.max(prior.sequence,receipt.allocationSequence),receipts:[...prior.receipts,clone(receipt)]},updatedAt:now()});
 }
 
 async function writeAllIndexed(projects){
@@ -867,6 +908,7 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
   try{
     const prior=await projectRowWithOperations(tx,id);if(Number(prior?.revision||0)!==Number(observedHeads.get(id)||0)||prior?.projectSha256!==priorProject?.projectSha256)throw storageError('Another tab changed this project during import.','STALE_PROJECT_REVISION');
     const digest=projectSha256(next),existingArtifacts=await request(artifacts.index('jobId').getAll(id));
+    await restoreProjectAllocation(tx,next);
     for(const row of activeArtifacts){const existing=await request(artifacts.get(row.artifactId));if(existing&&String(existing.jobId)!==id)throw storageError('An imported artifact identity belongs to another project.','CROSS_PROJECT_ARTIFACT_ID_COLLISION');}
     for(const [key,receipt] of Object.entries(prepared.state.commandReceipts||{})){const current=await request(meta.get(key));if(current&&hash.sha256Value(current.value)!==hash.sha256Value(receipt))throw storageError('An imported command receipt conflicts with current execution history.','IDEMPOTENCY_PAYLOAD_CONFLICT');meta.put({key,value:receipt,updatedAt:now()});}
     await commitHistory(tx,prepared);
@@ -1000,7 +1042,7 @@ function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(con
 
 const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB)try{await migrateLegacy();globalThis.closedLoopLegacyMigrationError=null;}catch(error){globalThis.closedLoopLegacyMigrationError=String(error?.stack||error);console.error('Legacy migration failed without deleting the preserved legacy payload; application startup will continue.',error);}return true;})();
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;const project=message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId});globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,project});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy});
+globalThis.closedLoopProjectStore=Object.freeze({ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{
 'use strict';

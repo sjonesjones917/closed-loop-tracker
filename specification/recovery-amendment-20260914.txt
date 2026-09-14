@@ -26,7 +26,7 @@ CTX-06 | Enforce the same exclusion for later-stage information incorporated ind
 CTX-07 | Rebuild stale handoffs after changes to project version, stage, scope, or governing revision.
 CTX-08 | Keep complete restoration backups separate from agent-facing handoffs.
 CTX-09 | Enforce context boundaries after Undo, Redo, Back, Forward, saved History restoration, and backup restoration.
-CTX-10 | Executing Stage 9 after Stage 12 must give a valid Stage 9 handoff with no Stage 10–30 information; later work may remain internally stored.
+CTX-10 | For every permitted selected stage and operation, derive the handoff from the active version and exclude all subsequent-stage information regardless of how many later stages exist, their completion state, or their storage in active or retained versions.
 
 3. Replacement acceptance
 ACC-01 | Keep stage selection, execution, validation, committed acceptance, and saved-version restoration distinct.
@@ -56,7 +56,7 @@ HIS-04 | Capture relevant view state and drafts before leaving them; browser mem
 HIS-05 | Associate every application navigation entry with its saved project version and view.
 HIS-06 | Back and Forward activate the corresponding saved working data and restore project, selected stage, view, and position; labels alone are insufficient.
 HIS-07 | Stage selection stays in the active version; browser traversal returns to the recorded version.
-HIS-08 | Restore a version as a consistent whole; Back across Stage 9 replacement restores the original result and matching Stage 10–12 progress, while Forward restores replacement and required rework.
+HIS-08 | Restore every version as a consistent whole. Traversal to an earlier accepted version restores its matching dependent work; traversal to a replacement version restores that replacement and its invalidation and rework requirements. Determine restoration from the destination entry at any available history distance.
 HIS-09 | Never combine old downstream approvals with incompatible newer upstream data.
 HIS-10 | Restore accepted saved work without replaying acceptance commands or requiring completed work again; unaccepted candidates remain unaccepted.
 HIS-11 | Editing after returning to an earlier version preserves a new continuation and the previously saved later versions.
@@ -104,7 +104,7 @@ VER-14 | Check coherent active versions, preserved checkpoints, stage isolation,
 7. Complete acceptance
 JRN-01 | Complete all 30 stages through actual controls and file transport with prerequisite state created by preceding operations.
 JRN-02 | Exercise complete valid progression, rejection/correction, all handoffs, mapping, review, application commands, persistence, recovery, saved history, and delivery.
-JRN-03 | Return at least three stages, validate a replacement, cancel without loss, then confirm replacement and re-complete all affected downstream work.
+JRN-03 | Exercise earlier-stage execution and replacement wherever permitted across the actual stages, dependencies, and transition classes: validate, cancel without loss, confirm, and re-complete all affected work. Do not limit coverage to an example stage or movement distance.
 JRN-04 | Undo restores original matching downstream progress; Forward/Redo restores replacement; repeated traversal and a different continuation preserve alternatives recoverable through History.
 JRN-05 | Return to session start; recover after reload/interruption; restore actual backup bytes including retained history; retrieve and compare final bytes; exercise required workloads and history lengths.
 JRN-06 | Label synthetic evidence accurately; separately obtain required actual external project outputs and claim independence, human actions, and devices only as observed.
