@@ -677,6 +677,7 @@ await storageRegression('import:pre-commit-failure-preserves-state',async()=>{
   assert(storageRuntime.failures.some(x=>/without changing existing projects/i.test(x)),'Pre-commit import failure lost its accurate rejection message.');
 });
 await storageRegression('delete:verified-selection-before-async-refresh',async()=>{
+  vm.runInContext('globalThis.operatorActionInFlight=null;globalThis.restoringHistory=false;globalThis.actionControls=new Map();'+appFunction('setControlDisabled'),storageRuntime);
   vm.runInContext(appFunction('deleteCurrentProject'),storageRuntime);vm.runInContext(appFunction('syncDeleteProjectControl'),storageRuntime);
   await vm.runInContext(`(async()=>{globalThis.deletingUi=await makeStored('DELETE-UI-A');globalThis.replacementUi=await makeStored('DELETE-UI-B');projects=[deletingUi,replacementUi];current=deletingUi;elements['#delete-project-confirmation']={value:deletingUi.job.JOB_ID};elements['#delete-project']={disabled:false};globalThis.refreshProjectStorage=async()=>{};})()`,storageRuntime);
   let entered,release;const reached=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve),baseStore=storageRuntime.projectStore;

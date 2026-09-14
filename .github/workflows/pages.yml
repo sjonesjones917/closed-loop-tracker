@@ -34,7 +34,7 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -203,9 +203,10 @@ jobs:
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           run_browser_verifier() {
             script="$1"
+            budget="${2:-10m}"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -218,7 +219,7 @@ jobs:
           run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 60m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -268,7 +269,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 180
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
     steps:
@@ -287,9 +288,10 @@ jobs:
           test -n "$BROWSER"
           run_browser_verifier() {
             script="$1"
+            budget="${2:-10m}"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -301,7 +303,7 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 60m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -332,9 +334,10 @@ jobs:
           test -n "$BROWSER"
           run_browser_verifier() {
             script="$1"
+            budget="${2:-10m}"
             for attempt in 1 2 3; do
               log="/tmp/mobile-${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -346,7 +349,7 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 60m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1

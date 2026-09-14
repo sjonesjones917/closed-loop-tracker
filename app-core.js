@@ -43,6 +43,12 @@ const storageActivities=new Map();
 let operatorActionInFlight=null;
 let actionFocusTarget=null;
 const actionControls=new Map();
+function setControlDisabled(control,disabled){
+  if(!control)return;
+  disabled=Boolean(disabled);
+  if(operatorActionInFlight||restoringHistory){actionControls.set(control,disabled);control.disabled=true;}
+  else{actionControls.delete(control);control.disabled=disabled;}
+}
 function paintOperatorAction(){
   const status=$('#app-operation-status'),text=$('#operation-label'),app=$('#app');
   if(status)status.hidden=!(operatorActionInFlight||restoringHistory);
@@ -502,7 +508,7 @@ function paintHistory(){
  document.querySelectorAll('[data-quarantine-import]').forEach(button=>bindAction(button,()=>$('#import-file').click(),'Selecting backup'));
  document.querySelectorAll('[data-quarantine-export]').forEach(button=>bindAction(button,()=>exportQuarantineEvidence(button.dataset.quarantineExport),'Exporting recovery evidence'));
  document.querySelectorAll('[data-quarantine-remove]').forEach(button=>bindAction(button,async()=>{await projectStore.removeQuarantinedProject(button.dataset.quarantineRemove);await refreshHistory();announce('Damaged copy removed from recovery evidence.');},'Removing damaged copy'));
- const undo=$('#history-undo');if(undo){undo.hidden=!previous;undo.disabled=!previous;}
+ const undo=$('#history-undo');if(undo){undo.hidden=!previous;setControlDisabled(undo,!previous);}
  bindAction('#history-undo',()=>restoreHistoryVersion(previous,{mode:'UNDO'}),'Restoring previous version');
  bindAction('#history-redo',checkpointId=>restoreHistoryVersion(checkpointId,{mode:'REDO'}),'Restoring next version',{capture:()=>historyState.redo[0]});
  const picker=$('#history-project');if(picker)picker.onchange=()=>runOperatorAction('Loading saved History',async()=>{historyBrowseState=await projectStore.historyList(picker.value);paintHistory();});
@@ -836,13 +842,13 @@ async function reopenHumanBlocker(blockerId){const reason=$('#blocker-reopen-rea
 function syncDeleteProjectControl(){
   const input=$('#delete-project-confirmation'),button=$('#delete-project');
   if(!input||!button)return;
-  button.disabled=input.value.trim()!==String(current?.job?.JOB_ID||'').trim();
+  setControlDisabled(button,input.value.trim()!==String(current?.job?.JOB_ID||'').trim());
 }
 async function deleteCurrentProject(){
   const input=$('#delete-project-confirmation'),button=$('#delete-project'),jobId=String(current?.job?.JOB_ID||'').trim();
   if(!jobId||!input||input.value.trim()!==jobId){input?.focus();syncDeleteProjectControl();return;}
   const deletingProject=current,remaining=projects.filter(project=>String(project?.job?.JOB_ID||'')!==jobId);let replacement=remaining[0]||null,createdReplacement=null;
-  input.disabled=true;if(button)button.disabled=true;
+  setControlDisabled(input,true);setControlDisabled(button,true);
   try{
     if(!replacement){
       createdReplacement=await projectStore.createProject();
@@ -853,7 +859,7 @@ async function deleteCurrentProject(){
     if(!removed)throw new Error('The project no longer exists in browser storage.');
   }catch(error){
     if(createdReplacement&&replacement)try{await projectStore.removeProject(String(replacement.job.JOB_ID),{expectedProjectRevision:Number(replacement.revision||0)});}catch{}
-    input.disabled=false;syncDeleteProjectControl();announce('project deletion failed');reportActionFailure(`Project was not deleted. No project data was intentionally removed: ${error.message||error}`);return;
+    setControlDisabled(input,false);syncDeleteProjectControl();announce('project deletion failed');reportActionFailure(`Project was not deleted. No project data was intentionally removed: ${error.message||error}`);return;
   }
   try{
     // The replacement was verified before deletion. Install it immediately at
