@@ -183,7 +183,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-014",
@@ -204,7 +209,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-015",
@@ -225,7 +235,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-016",
@@ -250,6 +265,10 @@
         {
           "path": "verification/operational-repair-evidence-20260914.json",
           "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        },
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
         }
       ]
     },
@@ -272,7 +291,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-018",
@@ -293,7 +317,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-019",
@@ -314,7 +343,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-020",

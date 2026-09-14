@@ -1467,18 +1467,20 @@ function operationState(project,stage,completeWorkflow=false){
  const pendingProposals=safe(project.projectData.responseProposals).filter(item=>Number(item.stage)===stage&&!item.invalidatedBy&&upper(item.status||item.state)==='PENDING_OPERATOR_REVIEW'),reservations=safe(project.projectData.operationReservations).filter(item=>Number(recordValue(item,'STAGE'))===stage&&!item.invalidatedBy);
  return openBlockers(project).length?'BLOCKED':unresolvedHumanRequests(project,stage).length?'AWAITING_HUMAN_INPUT':pendingProposals.length?'PROPOSAL_PENDING_REVIEW':reservations.some(item=>upper(recordValue(item,'STATUS'))==='RESPONSE_STAGED')?'RESPONSE_STAGED':reservations.some(item=>['RESERVED','EXPORTED','RESUMED'].includes(upper(recordValue(item,'STATUS'))))?'AWAITING_EXTERNAL_RESPONSE':completeWorkflow?'WORKFLOW_COMPLETE':'READY_FOR_NEXT_OPERATION';
 }
+const CONTEXT_INFRA_ID_FIELDS=Object.freeze({inputVersions:'inputVersionId',rawResponses:'rawResponseId',responseProposals:'proposalId',responseValidations:'validationId',acceptedChanges:'changeId',rejectedResponses:'rejectedResponseId',extractionManifests:'manifestId',humanInputRequests:'requestId',humanInputAnswers:'answerId',humanAuthorityConfirmations:'confirmationId',humanDecisions:'decisionId',stageConfirmations:'confirmationId',artifactVersions:'versionId',generatedPrompts:'instructionId',generatedOutputs:'outputId',outputReceipts:'receiptId',history:'eventId',newJobResets:'resetId',reviews:'reviewId',responseDispositions:'dispositionId',executionFailures:'failureId',intakeCoverageManifests:'manifestId',obligationManifests:'manifestId',promptContextManifests:'manifestId',blindAliasMaps:'blindMapId',nativeExecutionEvents:'eventId'});
+const contextRecordId=(record,family)=>recordId(record,family)||record?.[CONTEXT_INFRA_ID_FIELDS[family]]||record?.promptId||'';
 const stageContextProjections=new WeakMap(),stageContextOrigins=new WeakMap();
 function stageContext(project,stage){
   const number=Number(stage);if(!Number.isInteger(number)||!schema.STAGE_CONTRACTS[number])throw new Error('A registered stage is required for context selection.');
   if(stageContextProjections.get(project)===number)return project;
   const owner=(record,family)=>{const value=record?.stage??record?.STAGE??record?.fields?.STAGE??record?.lineage?.stage??schema.RECORD_SCHEMAS[family]?.stage;const parsed=Number(String(value??'').replace(/^STAGE\s+/i,''));return Number.isInteger(parsed)&&parsed>0?parsed:null;};
   const blockedIds=new Set(),all=[];
-  for(const [family,rows] of Object.entries(project.projectData||{}))if(Array.isArray(rows))for(const record of rows){const id=recordId(record,family)||record.instructionId||record.rawResponseId||record.proposalId||record.changeId;all.push({family,record,id});if(owner(record,family)>number&&id)blockedIds.add(String(id));}
+  for(const [family,rows] of Object.entries(project.projectData||{}))if(Array.isArray(rows))for(const record of rows){const id=contextRecordId(record,family);all.push({family,record,id});if(owner(record,family)>number&&id)blockedIds.add(String(id));}
   // A copied record whose declared sources include later work remains later
   // work, regardless of the collection or summary into which it was copied.
   const referencesBlocked=value=>{if(typeof value==='string')return blockedIds.has(value);if(Array.isArray(value))return value.some(referencesBlocked);if(value&&typeof value==='object')return Object.values(value).some(referencesBlocked);return false;};
-  let changed=true;while(changed){changed=false;for(const {record,id} of all)if(id&&!blockedIds.has(String(id))&&referencesBlocked([record.relationships,record.evidenceRefs,record.sourceRecordIds,record.sourceIds,record.lineage,record.scope])){blockedIds.add(String(id));changed=true;}}
-  const permitted=(record,family)=>owner(record,family)<=number&&!blockedIds.has(String(recordId(record,family)||record.instructionId||record.rawResponseId||record.proposalId||record.changeId||''));
+  let changed=true;while(changed){changed=false;for(const {record,id} of all)if(id&&!blockedIds.has(String(id))&&referencesBlocked(record)){blockedIds.add(String(id));changed=true;}}
+  const permitted=(record,family)=>owner(record,family)<=number&&!blockedIds.has(String(contextRecordId(record,family)));
   const context={...project,activeStage:number,job:{...project.job,CURRENT_INPUT_VERSION:inputVersionForStage(project,number)},stages:{},projectData:{...project.projectData}};
   // Do not carry complete backups or imported project copies into handoffs.
   for(const key of ['migrationArchives','recoveredProjects','permanentRegistry','inputVersions','allocationReceipts'])delete context.projectData[key];
@@ -1495,7 +1497,13 @@ function stageContext(project,stage){
   // cannot inherit a later correction/confirmation iteration merely because
   // that iteration is the active project's furthest progress.
   const currentIteration=safe(context.projectData.iterations).filter(isActiveRecord).at(-1),currentProduct=safe(context.projectData.products).filter(isActiveRecord).at(-1),currentBaseline=safe(context.projectData.baselines).filter(isActiveRecord).at(-1);
-  for(const [ownerStage,[key]] of Object.entries(VERSION_BY_STAGE))if(Number(ownerStage)>number)context.job[key]=null;
+  for(const [ownerStage,[key,kind]] of Object.entries(VERSION_BY_STAGE)){
+    if(Number(ownerStage)>number){context.job[key]=null;continue;}
+    if(!context.job[key])continue;
+    const permittedVersion=safe(context.projectData.artifactVersions).filter(row=>row.kind===kind).at(-1);
+    if(permittedVersion)context.job[key]=permittedVersion.version;
+    else if(safe(project.projectData.artifactVersions).some(row=>row.kind===kind&&row.version===context.job[key]))context.job[key]=null;
+  }
   const pointers={CURRENT_CANDIDATE_ID:['candidateFreezes','CANDIDATE_ID'],CURRENT_DELIVERY_CANDIDATE_SET_ID:['deliveryCandidateSets','DELIVERY_CANDIDATE_SET_ID'],CURRENT_PRODUCT_VERSION:['products','PRODUCT_VERSION'],CURRENT_REVIEW_VERSION:['representationInspections','REVIEW_VERSION'],CURRENT_RECONCILED_REVIEW_VERSION:['processAudits','REVIEW_VERSION'],CURRENT_RELEASE_ID:['releaseRecords','RELEASE_ID'],CURRENT_HASH_REVIEW_ID:['artifactIdentities','HASH_REVIEW_ID'],CURRENT_EVIDENCE_CHAIN_VERSION:['evidenceChains','EVIDENCE_CHAIN_VERSION'],CURRENT_DELIVERY_ID:['deliveryRecords','DELIVERY_ID']};
   for(const [key,[family,field]] of Object.entries(pointers)){const row=safe(context.projectData[family]).filter(isActiveRecord).at(-1);context.job[key]=Number(schema.RECORD_SCHEMAS[family]?.stage)>number?null:row?recordValue(row,field)||context.job[key]||null:context.job[key]||null;}
   context.job.CURRENT_STATE=operationState(context,number,Object.values(context.stages).length===schema.STAGE_COUNT&&Object.values(context.stages).every(state=>state.status==='COMPLETE'));
