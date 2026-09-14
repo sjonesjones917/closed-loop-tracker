@@ -114,7 +114,7 @@ try{
     verifierDidNotRewriteCommittedManifests:true,
     committedManifestMutationRejected:true,
     runtimeControllerCopies:0,
-    stage01GovernanceProof:'PASS'
+    specificationTraceIntegrity:'PASS'
   },null,2));
 }finally{
   for(const root of temporaryRoots)fs.rmSync(root,{recursive:true,force:true});

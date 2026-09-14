@@ -34,7 +34,7 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -164,15 +164,31 @@ jobs:
           set -euo pipefail
           node verify-project-lifecycle.mjs
 
+      - name: Shared production faults, bounded sequences, and executed observations
+        run: |
+          set -euo pipefail
+          node verify-conformance-regressions.mjs > /tmp/conformance-regressions.json
+      - name: Preserve executed regression evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: conformance-regressions-${{ github.sha }}
+          path: /tmp/conformance-regressions.json
+          if-no-files-found: warn
+
       - name: Prompt semantics and leakage
         run: |
           set -euo pipefail
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
 
+      - name: Build static application for operator verification
+        run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+
       - name: Local Chromium operator path
         env:
           BROWSER: /usr/bin/google-chrome
+          STATIC_SITE_ROOT: _site
         run: |
           set -euo pipefail
           if [ ! -x "$BROWSER" ]; then
@@ -180,14 +196,16 @@ jobs:
             export BROWSER
           fi
           test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          python3 -m http.server 4173 --directory _site >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           run_browser_verifier() {
             script="$1"
+            verification_timeout=10m
+            if [ "$script" = verify-complete-operator-journey.mjs ]; then verification_timeout=30m; fi
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$verification_timeout" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -196,12 +214,38 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-human-stage-walkthrough.mjs
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
+
+      - name: Preserve complete operator journey evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            recovery-browser-evidence/recovery.json
+            recovery-browser-evidence/stage-*.png
+            recovery-browser-evidence/downloads/
+            operator-evidence/journey.json
+            operator-evidence/stage-*.png
+            operator-evidence/downloads/
+            mobile-capability-evidence/capability.json
+            mobile-capability-evidence/stage-*.png
+            mobile-capability-evidence/downloads/
+      - name: Preserve the exact browser-verified Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: _site
 
   deploy:
     name: Deploy exact verified bytes
@@ -214,20 +258,7 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22'
-      - name: Rebuild retained fixture from verified source
-        run: node build-test-project.mjs
-      - name: Build static application
-        run: |
-          set -euo pipefail
-          node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
-        with:
-          path: _site
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
@@ -237,7 +268,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
     steps:
@@ -256,9 +287,11 @@ jobs:
           test -n "$BROWSER"
           run_browser_verifier() {
             script="$1"
+            verification_timeout=10m
+            if [ "$script" = verify-complete-operator-journey.mjs ]; then verification_timeout=30m; fi
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$verification_timeout" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -267,9 +300,14 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
 
   publish-status:
     name: Publish machine acceptance status
@@ -296,9 +334,11 @@ jobs:
           test -n "$BROWSER"
           run_browser_verifier() {
             script="$1"
+            verification_timeout=10m
+            if [ "$script" = verify-complete-operator-journey.mjs ]; then verification_timeout=30m; fi
             for attempt in 1 2 3; do
               log="/tmp/mobile-${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$verification_timeout" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -307,9 +347,14 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:

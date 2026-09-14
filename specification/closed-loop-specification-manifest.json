@@ -1,8 +1,8 @@
 {
   "schema": "closed-loop-specification-manifest/1",
-  "manifestIdentity": "SPEC-MANIFEST-28754f1fc9853b366cd3ce56ad12464c",
-  "generatorVersion": "closed-loop-governance-generator/2",
-  "sourceCommit": "c47f605bc684cc1f31ae67a053dc2be52a37106a",
+  "manifestIdentity": "SPEC-MANIFEST-7dbc15a5f4d732efa2973c96da01d02b",
+  "generatorVersion": "closed-loop-governance-generator/4",
+  "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "repositoryPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "artifactFilename": "closed-loop-reliability-controlling-implementation-specification.txt",
   "byteLength": 309472,
@@ -6338,14 +6338,14 @@
     }
   ],
   "contractProfileId": "closed-loop-completion-profile/1",
-  "normativeRequirementManifestIdentity": "NRM-28754f1fc9853b366cd3ce56ad12464c",
-  "normativeRequirementManifestSha256": "be4c9e4705522e69adff722b725c706c75e388e26f1fce4e3effb10cca1781cb",
-  "normativeRequirementManifestCanonicalSha256": "1ad90150b378476997b35ee9ea4ca6f91cb29a4caf6a87983d3ff86cabcf05f7",
+  "normativeRequirementManifestIdentity": "NRM-7dbc15a5f4d732efa2973c96da01d02b",
+  "normativeRequirementManifestSha256": "5c2c549854c134b09c27af407f86841ee520431099f2f38d6d0912bddd02bb4a",
+  "normativeRequirementManifestCanonicalSha256": "c79ea999eebf32a0d8d0acce5a72f88bf2f395b9d71ceb2bca9b369c9f534222",
   "normativeRequirementManifestPath": "specification/closed-loop-normative-requirements.json",
   "normativeRequirementCount": 3825,
   "challengeAndReconciliation": {
     "independentReviewerIdentity": "281176bfb12195edbcc5f0801994cb0dbfb200de4c673852a41ddc212f047023",
     "status": "ACCEPTED"
   },
-  "manifestSha256": "fd9387c445d920e109824e161e5644d25fa7eb5b3a2aac8159707aff251bef2c"
+  "manifestSha256": "0b21d74f9a9dcecc0b3ab2c22e84a2d0c98939055834a62e10ac7771e486849a"
 }

@@ -1,0 +1,407 @@
+{
+  "schema": "closed-loop-conformance-start/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "startingTree": "33c51f69928cecf61b63e83a6efcb18527ec2db3",
+  "scope": {
+    "stages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "operations": 66,
+    "allMandatoryRequirements": true,
+    "controllingSections": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52
+    ]
+  },
+  "controllingSpecification": {
+    "uploadedFilename": "CLRT-SPEC(20260914-002522).txt",
+    "uploadedSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+    "uploadedByteSize": 309482,
+    "repositoryPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "repositorySha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+    "repositoryByteSize": 309472,
+    "byteDifference": "Upload prepends The one followed by two LF characters and appends one additional LF. Controlling specification text otherwise matches exactly."
+  },
+  "baselineEnvironment": {
+    "runtime": "Node v24.19.0",
+    "kind": "untouched detached worktree",
+    "temporaryDirectoryRequired": true,
+    "localChromiumAvailable": false
+  },
+  "baselineChecks": [
+    {
+      "script": "verify-deployment-manifest.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 4.627,
+      "logSha256": "3c98b656c1307aebe0a8be711a5c1c70e9a450a3ec122871ca6aae6edec3ba08"
+    },
+    {
+      "script": "verify-mobile-acceptance-target.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.084,
+      "logSha256": "4aedb9c1f51e6ee7b8baae15fbef76c70a3c53fe5db738288e58ccd3b59d0228"
+    },
+    {
+      "script": "verify-final-acceptance.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.16,
+      "logSha256": "dc5085b34e759a4b1ddccd59a1fe1fc36daa62decd00875e6cb64d2296221ac9"
+    },
+    {
+      "script": "verify-visual-baseline-submission.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.069,
+      "logSha256": "fd1339788c3a68ee2e992b5575a324a6984059692eba22125423c41bcd15d5db"
+    },
+    {
+      "script": "verify-prompt-file-identity.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.91,
+      "logSha256": "e3cba9b928f28ec66d7498ce4ad428980f9df24722e929af90052eed16e62f61"
+    },
+    {
+      "script": "verify-final-product-timing.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.514,
+      "logSha256": "4ad88307717e3bdf1e655c6d98f1898bef7443869ebef3914de1ba5979bdd9a9"
+    },
+    {
+      "script": "verify-mobile-release-governance.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.116,
+      "logSha256": "f46c07eabca9aca2221499140725644e27e505b1002ba8b9eca704d07eb3638b"
+    },
+    {
+      "script": "build-test-project.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 86.728,
+      "logSha256": "5258bce021135bb0ab5156f461c4fa35fbbaaffabe882f0d734223dc2b4089fe"
+    },
+    {
+      "script": "verify.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 6.492,
+      "logSha256": "006630ea9c0f50b8701ab29548545b3bc2175e9b073325e9fef1d7932c502035"
+    },
+    {
+      "script": "verify-proposal-acceptance-memory.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 9.66,
+      "logSha256": "d8f22cf31ad024f8373b0de87b8ab54e0a70a26ea88d924410128e6d5f22279f"
+    },
+    {
+      "script": "verify-semantic-review-acceptance.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 7.246,
+      "logSha256": "14c83501a2f425228cc6c62a85d6b7f87e40bce337c5b62ce930dd43aedca96c"
+    },
+    {
+      "script": "verify-data-route-closure.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.674,
+      "logSha256": "9a0cc614a7ec41892c84d9db9b38d6ba6468567b7f2962e25665e5b3956a5cbe"
+    },
+    {
+      "script": "verify-infrastructure-route-closure.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 33.47,
+      "logSha256": "c4b6af4ecfb28859ee093da289b76ff4aec528de7138b8ce8dcc7306ab8d291f"
+    },
+    {
+      "script": "verify-v3-migration.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.164,
+      "logSha256": "b066c59cf5d9db776c802b74adb5d8a55ab63646b4a19163e9dc43492ce78ec9"
+    },
+    {
+      "script": "verify-v3-contract.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 1.07,
+      "logSha256": "129fcadc8e07f19b375317ec49f9db00ba714704c2fcc201192f250a49c9bab7"
+    },
+    {
+      "script": "verify-spec3-contract.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.528,
+      "logSha256": "c0ccc588a6b42a5b156be09f6340faa66955d3d20b3f5a4d210b2c2a1923b4dd"
+    },
+    {
+      "script": "verify-stage01-intake-closure.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 1.221,
+      "logSha256": "a3bd39f76db8cd139fcc2a871eb84c6b1370a177938947f4fd32f6b1017e34f4"
+    },
+    {
+      "script": "verify-one-time-intent-intake.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.26,
+      "logSha256": "d3b4ab493c8d3947f7d12ae110500c6841e3cf7a3751c1b6b3a68ca92a05f08e"
+    },
+    {
+      "script": "verify-zero-loss-accounting.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.595,
+      "logSha256": "020ebe8a583796b02291b62eb318dd88aca0712bf5f6e8cbbdb2a605bb801db8"
+    },
+    {
+      "script": "verify-all-stage-prompts.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 3.84,
+      "logSha256": "b13f35331cd6b8886f8c3a63a7c7938d124accd7be62cb41a79a72f9da4b228e"
+    },
+    {
+      "script": "verify-stage-prompts-complete.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 1,
+      "elapsedSeconds": 0.452,
+      "logSha256": "9e1daddab196cb727fc4533cf486fbba8e53f70c7228dbbc3e0be7e6b03e5eff"
+    },
+    {
+      "script": "verify-user-prompt-invariants.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.26,
+      "logSha256": "d59710fa793c259f167e3d6525516aa041c693d3830aa44142f87109bf816384"
+    },
+    {
+      "script": "verify-test-runtime-v3.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.112,
+      "logSha256": "8cbdd483d9d4f08ae2a648ee5025dcf89cd9eeb8eceef55b84fad9fc66bdc0ae"
+    },
+    {
+      "script": "verify-test-runtime-limits.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.398,
+      "logSha256": "bf5c1ebf86fc0ab415565aa9e275520e34b5f028ff29728f6e53e84981406191"
+    },
+    {
+      "script": "verify-test-runtime.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.806,
+      "logSha256": "7065d6e1dfd3a8596cda24fc91e5e155672acaa64c45a0957941f35303a01e8f"
+    },
+    {
+      "script": "verify-hash.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.693,
+      "logSha256": "e6987e33e1e809eb09f37943b0b799747a6c16e37bb44134e9099da7f8fe19bb"
+    },
+    {
+      "script": "verify-ingestion.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 4.576,
+      "logSha256": "0de3ded5597049eecbb6e042c0c691ff5e1225d5981a09e9cf7f0c667c9944eb"
+    },
+    {
+      "script": "verify-complete.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 90.657,
+      "logSha256": "eea791a78e48b9e277ae05915d4f849a914b127cfc22344d657f786ebbb4f817"
+    },
+    {
+      "script": "verify-stage28-artifact-delivery-intent.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 93.382,
+      "logSha256": "78d854ef31e6e164d325783a2205a9e1623003a748b0d30b93a07ee72a2bbe50"
+    },
+    {
+      "script": "verify-full-cycle.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 100.383,
+      "logSha256": "124fef8f4744b37d6675cffaa17ec270416fa7d3bd0163ae9c4c5b2f013fcc3a"
+    },
+    {
+      "script": "verify-stage29-evidence-chain-checkpoint.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.267,
+      "logSha256": "02acb57aa252360e27b15d39f48270f659d5f1d88980a406a805ca850865b733"
+    },
+    {
+      "script": "verify-production-baseline-authority.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 19.765,
+      "logSha256": "a74c44788db3b895ac0c374c59fbae85c02ce0e5a3a99dbfaf5c342a900e1ccb"
+    },
+    {
+      "script": "verify-definition-of-done.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 23.97,
+      "logSha256": "018f530caff43e852dd330c3db188d9ed94ef9255dc3914d0becfa18b310e39d"
+    },
+    {
+      "script": "verify-v3-definition-of-done.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 66.798,
+      "logSha256": "c8cf7a2704e8de35c08a9b009baabef122fc223058e19caea2739d5bf8ca9f15"
+    },
+    {
+      "script": "verify-project-lifecycle.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 23.538,
+      "logSha256": "b26a586a37fdbee449933643c69f2c53473adf08f8be947ac9e18dd0708276a1"
+    },
+    {
+      "script": "verify-prompt-semantics.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.781,
+      "logSha256": "93dc1b60aa35a6888dfe49f96f941e623a08b402b20421baebffb4cdd1149cc3"
+    },
+    {
+      "script": "verify-semantic-invariant.mjs",
+      "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+      "exitCode": 0,
+      "elapsedSeconds": 0.187,
+      "logSha256": "5ab5f0a06df43b49700287acb9ce703be72f46b6fa57123e36eaa7db095467e6"
+    }
+  ],
+  "existingCI": {
+    "runId": 34792415256,
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "test": "SUCCESS",
+    "deploy": "SUCCESS",
+    "live": "SUCCESS",
+    "physicalIPhoneAcceptance": "NOT_ESTABLISHED",
+    "releaseTagCreated": false
+  },
+  "startingUIObservation": {
+    "origin": "https://sjonesjones917.github.io",
+    "basePath": "/closed-loop-tracker/",
+    "environment": "connected Chromium browser; not a physical iPhone",
+    "disposableProjectId": "JOB-20260914002724573",
+    "operations": [
+      "New project",
+      "Fill project title and verbatim objective",
+      "Save User Job Input",
+      "Open Workflow Stage 01",
+      "Export instruction file",
+      "Export manifest"
+    ],
+    "observed": [
+      "Project created and Stage 01 instruction rendered",
+      "Project fields lacked associated accessible labels",
+      "Storage header showed revision 0 while current reserved instruction used revision 2",
+      "Export actions announced readiness"
+    ],
+    "limits": [
+      "Browser download event was not available; no exported-file byte success claimed",
+      "No external response was submitted",
+      "This is not a complete 30-stage journey"
+    ]
+  },
+  "completion": false
+}

@@ -7,7 +7,7 @@ for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','
 const e=c.closedLoopWorkflowEngine,p=c.closedLoopCore.createBlankState('JOB-FINAL-TIMING');
 e.ensureShape(p);
 Object.assign(p.job,{CURRENT_INPUT_VERSION:'INPUT-1',CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_REQUIREMENTS_VERSION:'REQSET-1',CURRENT_TEST_SUITE_VERSION:'TESTSET-1',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-1',CURRENT_PRODUCT_ID:'PRODUCT-1',CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});
-const scope=e.currentScope(p),record=(id,stage,fields)=>({id,stage,active:true,scope:{...scope},fields:{...fields},...fields});
+const scope=e.currentScope(p),record=(id,stage,fields)=>({id,stage,active:true,scope:c.closedLoopPromptEngine.scopeFor(stage,p),fields:{...fields},...fields});
 p.projectData.requirements.push(e.clone(record('REQ-1',4,{REQ_ID:'REQ-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'})));
 let checks=0;
 for(const [stage,type,phase] of [[22,'DETERMINISTIC','FINAL_PRODUCT_DETERMINISTIC'],[23,'MEANING','FINAL_PRODUCT_MEANING'],[24,'ADVERSARIAL','FINAL_PRODUCT_ADVERSARIAL']]){

@@ -1,0 +1,411 @@
+{
+  "schema": "closed-loop-requirement-evidence-bindings/1",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "requirements": [
+    {
+      "normativeRequirementId": "NREQ-081a506fd55bb12e9c1e6822bed626a3",
+      "sourceLineSha256": "ebac8a6c62fe2e31a283a2fcda233c3b1ef7a81330920b6e23baccbb86c6bb7d",
+      "fields": {
+        "productionOwners": [
+          "workflow-schema.js:recordSchema/rec",
+          "workflow-engine.js:allocateRecordIdentity/allocateId/allocateInfrastructureId/validateAllocationReceipts",
+          "project-store.js:writeProjectRow/writeOperationalProject",
+          "prompt-engine.js:buildPromptRecord/reserveAndBuildPromptRecord/packageIdForPrompt",
+          "project-store.js:createProject/restoreProjectAllocation",
+          "app-core.js:addNew/persistReplacement/currentPromptRecord"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/allocation-repair-evidence-20260914.json",
+            "scope": "65 canonical record families and registered infrastructure allocator paths, synthetic production runtime and transaction adapter; other identity producers remain open"
+          },
+          {
+            "path": "verification/integrated-repair-evidence-20260914.json",
+            "scope": "Synthetic transactional project creation; instruction/package allocation and receipts; rejection retry through actual UI commit function; exact integrated browser replay pending"
+          }
+        ],
+        "unresolvedRequirements": [
+          "Close remaining artifact and derived identity producers, clone remapping and project-copy paths; obtain complete integrated browser and exact deployment evidence."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Shared record/infrastructure allocators, new-project allocation and execution instruction/package allocation have focused synthetic evidence. Remaining identity consumers, clone remapping, complete browser journeys and exact deployment evidence remain open."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-0fc9b83ea9eb5b2014fea8af11d5000e",
+      "sourceLineSha256": "1b89bbb61b574d59308a14c2fff6523bc0795490327df5ad7c0726418cf64981",
+      "fields": {
+        "productionOwners": [
+          "workflow-schema.js:recordSchema/rec",
+          "workflow-engine.js:allocateRecordIdentity/allocateId/allocateInfrastructureId/validateAllocationReceipts",
+          "project-store.js:writeProjectRow/writeOperationalProject",
+          "prompt-engine.js:buildPromptRecord/reserveAndBuildPromptRecord/packageIdForPrompt",
+          "project-store.js:createProject/restoreProjectAllocation",
+          "app-core.js:addNew/persistReplacement/currentPromptRecord"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/allocation-repair-evidence-20260914.json",
+            "scope": "65 canonical record families and registered infrastructure allocator paths, synthetic production runtime and transaction adapter; other identity producers remain open"
+          },
+          {
+            "path": "verification/integrated-repair-evidence-20260914.json",
+            "scope": "Synthetic transactional project creation; instruction/package allocation and receipts; rejection retry through actual UI commit function; exact integrated browser replay pending"
+          }
+        ],
+        "unresolvedRequirements": [
+          "Close remaining artifact and derived identity producers, clone remapping and project-copy paths; obtain complete integrated browser and exact deployment evidence."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Shared record/infrastructure allocators, new-project allocation and execution instruction/package allocation have focused synthetic evidence. Remaining identity consumers, clone remapping, complete browser journeys and exact deployment evidence remain open."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-f254e026ab8f45c6963a38ee35cdd4ba",
+      "sourceLineSha256": "bf1b38a9717f2dc8d71712f8b88aa054e1a14590c8b7521da832b5a00bf3a162",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:encryptedPackage/decryptPackage/exportPackage/importPackage",
+          "app-core.js:downloadProjectPackage/importProjectPackageFile/requestBackupPassword"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/encrypted-backup-evidence-20260914.json",
+            "scope": "Specified cryptography, tamper rejection, known credential prohibition, complete exact-byte recovery and History under the recorded synthetic workload"
+          }
+        ],
+        "unresolvedRequirements": [
+          "Exact integrated browser and deployed operator evidence; physical iPhone Safari; larger encrypted workloads and complete classification-policy coverage"
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production cryptography and recovery evidence exists; required complete operator and device acceptance remain open."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-01764243de7807d20da1c57df07f98a2",
+      "sourceLineSha256": "8cf7bcf332a5ee6afe0b77074b0a79ade7ac871a7c254bd415144aba782ce3c8",
+      "fields": {
+        "productionOwners": [
+          "hash.js:pinnedNFC/defaultCaseFold/confusableSkeleton/normalizeFilenameSet",
+          "workflow-engine.js:appendArtifactBytes",
+          "response-ingestion.js:validateEnvelope",
+          "project-store.js:createExecutionPackage",
+          "app-core.js:logicalFilePath/registerStageFiles"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/unicode-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-cbdfb0c4ac8a74238425d4be1e4b89c4",
+      "sourceLineSha256": "98d695a317286c18a62be82712b6c154c9a3d7f53166af2e8dacee24078047ba",
+      "fields": {
+        "productionOwners": [
+          "hash.js:pinnedNFC/defaultCaseFold/confusableSkeleton/normalizeFilenameSet",
+          "workflow-engine.js:appendArtifactBytes",
+          "response-ingestion.js:validateEnvelope",
+          "project-store.js:createExecutionPackage",
+          "app-core.js:logicalFilePath/registerStageFiles"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/unicode-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a10c0c999e95845c5195f2a2426b6975",
+      "sourceLineSha256": "addfda5423eab25d4cdf9105d69ff59f624ee17ee001b1535457407fd79c291f",
+      "fields": {
+        "productionOwners": [
+          "app-core.js:persistReplacement",
+          "project-store.js:writeProjectRow/writeOperationalProject"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/ui-persistence-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-7e417b328764aaf6033114c36450ef9c",
+      "sourceLineSha256": "3619f23235cc05813afe6cc14e8b3c6bd0c21c2287c1ba55a122940bbb825575",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-44fd18cf9801f02c34f8820d2a3acb34",
+      "sourceLineSha256": "181bd4aea5c7e09f56f867fb7d529d47438355724b31e4bf00bb5c7128e651af",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-664f5c5b72efea7443b8f478ff4973df",
+      "sourceLineSha256": "33d455eee89d7cde335678250c76bf42f19e93c04faa5a3888ccfed3204d7ee2",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-568c874e5bc2e40448edcbe19d2fb8f4",
+      "sourceLineSha256": "095d24ce48579186a655917f2def7d87e403882161ab5f38739cdcaca514b793",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e27f616490036d42b6051729088d2fc7",
+      "sourceLineSha256": "4dbf8a7971fad5fa52cff83fbf9d5e07e499c98631bef6504e80a03c8fe40282",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "sourceLineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-f5b781f739a3864b480e98a609ccede0",
+      "sourceLineSha256": "bc8834174cb46c9c7fe99684f9b2fa6e1292083652b8c00bc1ced0cd7b03c139",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-2974199511a3c8777230c9d07391bb03",
+      "sourceLineSha256": "a9ed390e004b8e816649062f489ed2e90bee25c510634a6f33c07f77d443926d",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5d9437925e6a03826f1baf6c63a9acd4",
+      "sourceLineSha256": "a57c192e13a5105d0a1505fab3e7f3985c8aa7f59a3d621ff69a6fb136585b78",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e81cac1f3702fd9a4ab19e8133d95b6b",
+      "sourceLineSha256": "ee6ba0ee4f31199a2197f64a9c366fc171f81df3420cd49aebeec957219eacdc",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1f0a32e57245fa6656030020008c31dc",
+      "sourceLineSha256": "d9520145740edda4fb5db9431f2ecf029bdc9a757edf1a5979c3fb1466c22f58",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    }
+  ]
+}

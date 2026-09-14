@@ -53,6 +53,12 @@ try{
   if(manifest.testIrSchema!=='closed-loop-test-spec/1'||manifest.verificationPackageSchema!=='closed-loop-verification-package/1')throw new Error('Deployment manifest verification contract identity is wrong.');
   if(manifest.contractProfileId!=='closed-loop-completion-profile/1')throw new Error('Deployment manifest contract profile is missing or wrong.');
   if(manifest.testWorkerProtocolVersion!=='closed-loop-test-worker-protocol/1')throw new Error('Deployment manifest worker protocol identity is missing or wrong.');
+  const verifyUnicodeContract=candidate=>{
+    if(canonical(candidate.unicodeDataContract)!==canonical(hashAuthority.assertPinnedUnicodeHost()))throw new Error('Deployment Unicode data identity does not match its runtime.');
+    for(const file of candidate.unicodeDataContract.dataFiles)if(sha256(fs.readFileSync(path.join('unicode-data/15.1.0',file.path)))!==file.sha256)throw new Error('Deployment Unicode source digest differs from the pinned bytes.');
+  };
+  verifyUnicodeContract(manifest);
+  const alteredUnicode=structuredClone(manifest);alteredUnicode.unicodeDataContract.tableSha256='0'.repeat(64);let unicodeMismatchDetected=false;try{verifyUnicodeContract(alteredUnicode);}catch(error){unicodeMismatchDetected=/Unicode data identity/.test(error.message);}if(!unicodeMismatchDetected)throw new Error('A changed Unicode table identity was accepted.');
   const withoutDigest={...manifest};delete withoutDigest.manifestDigest;
   if(manifest.manifestDigest?.hashAlgorithm!=='SHA-256'||manifest.manifestDigest?.digest!==hashAuthority.sha256Value(withoutDigest))throw new Error('Deployment manifest digest mismatch.');
   if(!Array.isArray(manifest.runtimeResources)||manifest.runtimeResources.length!==13)throw new Error('Deployment resource closure is incomplete.');
