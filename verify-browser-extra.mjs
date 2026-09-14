@@ -24,14 +24,16 @@ async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{cons
 async function waitForSavedPrompt(cdp){
   await waitExpr(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0],stage=Number(document.querySelector('#stage-picker')?.value);if(!id||!stage)return false;const project=await closedLoopProjectStore.readProject(id);return Boolean(project?.projectData.generatedPrompts.some(record=>Number(record.stage)===stage&&!record.invalidatedBy&&record.instructionId&&record.bodySha256&&record.prompt&&record.promptEngineVersion===closedLoopPromptEngine.version&&Number(record.scope?.projectRevision)===Number(project.revision)));})()`);
 }
-async function click(cdp,selector){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(180);}
-async function fill(cdp,selector,value){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);assert(ok,`Missing input ${selector}`);}
+async function waitForIdle(cdp){await waitExpr(cdp,`document.querySelector('#app')?.getAttribute('aria-busy')!=='true'`,60000);}
+async function click(cdp,selector){await waitForIdle(cdp);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled)return false;e.click();return true})()`);assert(ok,`Missing or disabled clickable ${selector}`);await waitForIdle(cdp);}
+async function fill(cdp,selector,value){await waitForIdle(cdp);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);assert(ok,`Missing input ${selector}`);await waitForIdle(cdp);}
 async function openValidationDetails(cdp,expectedCode){
   // Validation persists asynchronously and replaces the report. Open only closed
   // disclosures, and keep following the current report until its error is visible.
   await waitExpr(cdp,`(()=>{const report=document.querySelector('#validation-report');if(!report)return false;const technical=report.querySelector(':scope > details');if(technical&&!technical.open)technical.querySelector(':scope > summary').click();const issues=report.querySelector('[data-detail-id]');if(issues&&!issues.open)issues.querySelector(':scope > summary').click();for(const card of report.querySelectorAll('[data-detail-id] > .record-body > .record-rows > details'))if(!card.open)card.querySelector(':scope > summary').click();return report.innerText.includes(${JSON.stringify(expectedCode)});})()`);
 }
 async function selectResponseFile(cdp,text,filename='response.json'){
+  await waitForIdle(cdp);
   const safeName=String(filename||'response.json').replace(/[^A-Za-z0-9._-]/g,'_'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-response-file-')),filePath=path.join(directory,safeName);
   fs.writeFileSync(filePath,String(text??''),'utf8');
   await cdp.send('DOM.enable');
@@ -39,7 +41,7 @@ async function selectResponseFile(cdp,text,filename='response.json'){
   assert(handle.result?.objectId,'Authoritative response-file input is unavailable.');
   await cdp.send('DOM.setFileInputFiles',{files:[filePath],objectId:handle.result.objectId});
   const selected=await evalValue(cdp,`(()=>{const input=document.querySelector('#response-json-file');if(!input||input.files.length!==1)return false;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));return input.files[0].name===${JSON.stringify(safeName)};})()`);
-  assert(selected,'The browser did not select the authoritative response file.');
+  assert(selected,'The browser did not select the authoritative response file.');await waitForIdle(cdp);
 }
 async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');if(!s)return false;s.value='${n}';s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitExpr(cdp,`document.querySelector('#stage-picker')?.value==='${n}'`);}
 async function projects(cdp){return evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`);}

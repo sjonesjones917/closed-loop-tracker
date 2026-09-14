@@ -105,5 +105,32 @@
     "actualAtStart": "The outer invalidation consumer withdrew the Stage 30 delivery record at its own boundary",
     "responsibleOwner": "workflow-engine.js: controlling invalidation consumer",
     "status": "CORRECTED; TARGETED IMPLEMENTATION-FAULT REPLAY ADDED"
+  },
+  {
+    "id": "DELIVERY-TRANSFER-BOUNDARY",
+    "sourceCommit": "9dc12d19a7a7d8987155ec42a95016309424ecc7",
+    "specificationSections": [
+      "36.11",
+      "36.12",
+      "38"
+    ],
+    "productionOwners": [
+      "workflow-engine.js:recordDeliveryAttempt/recordDeliveryEvidence",
+      "app-core.js:exportAuthorizedArtifacts/recordCurrentDeliveryEvidence",
+      "workflow-schema.js:deliveryAttempts/evidenceRecords"
+    ],
+    "inputs": "Disposable production-lifecycle project with all prerequisites through Stage 30 authorization; one permitted browser transfer.",
+    "sequence": [
+      "Invoke transfer using only its authorization ID",
+      "Repeat with a distinct command identity",
+      "Offer unrelated human evidence",
+      "Exercise failed storage, a concurrent correction, and an interrupted transfer"
+    ],
+    "expected": "Destination and channel derive from current intent; verify scope, bytes, allowance and persist pending identity before external transfer; retries preserve identity; append outcomes; require specifically bound evidence at its actual basis.",
+    "actualBefore": "Default receipt destination/channel were blank; repeated transfers reused a content fingerprint; count checks occurred after export; unrelated HUMAN_OBSERVATION evidence marked an attempt delivered; no direct UI delivery observation entry existed.",
+    "evidenceBefore": "delivery-boundary-before.json",
+    "evidenceAfter": "delivery-boundary-after.json",
+    "verification": "verify-delivery-transfer-boundary.mjs; 16 executed cases. Synthetic lifecycle and VM storage/transfer fault boundaries, not actual browser or physical-device acceptance.",
+    "beforeEvidenceQualification": "The withdrawn-authorization case already rejected correctly; its original diagnostic-message assertion was overly narrow and is retained in the before report. The added UI cases were executed after the engine regressions and repair."
   }
 ]

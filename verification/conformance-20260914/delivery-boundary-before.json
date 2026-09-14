@@ -1,0 +1,61 @@
+{
+  "deliveryTransferBoundary": "FAIL",
+  "basis": "SYNTHETIC_PRODUCTION_LIFECYCLE",
+  "specificationSections": [
+    "36.11",
+    "36.12",
+    "38"
+  ],
+  "cases": [
+    {
+      "name": "default transfer uses the authorized destination and channel",
+      "result": "FAIL",
+      "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ ''\n- 'FULL_CYCLE_DESTINATION'\n"
+    },
+    {
+      "name": "exact command retry is idempotent and a new transfer consumes a new allowance",
+      "result": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "pending transfer consumes its allowance before any export",
+      "result": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "command identity cannot be reused with different input",
+      "result": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "completion appends a receipt and preserves the pending receipt",
+      "result": "FAIL",
+      "message": "engine.completeDeliveryAttempt is not a function"
+    },
+    {
+      "name": "unrelated human observation cannot establish delivery",
+      "result": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "direct human observation binds exact transfer and preserves its actual basis",
+      "result": "FAIL",
+      "message": "Attributable external delivery evidence is required before the application may represent delivery completion."
+    },
+    {
+      "name": "interrupted transfer remains unresolved after reload until an observation is supplied",
+      "result": "FAIL",
+      "message": "engine.deliveryAttemptState is not a function"
+    },
+    {
+      "name": "completion evidence cannot reuse a withdrawn authorization",
+      "result": "FAIL",
+      "message": "The input did not match the regular expression /current.*authoriz|stale|withdrawn/i. Input:\n\n'Error: A current delivery-attempt record is required before delivery evidence can be accepted.'\n"
+    },
+    {
+      "name": "failure outcome cannot be changed by retry",
+      "result": "FAIL",
+      "message": "engine.completeDeliveryAttempt is not a function"
+    }
+  ]
+}
