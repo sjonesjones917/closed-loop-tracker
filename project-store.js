@@ -192,11 +192,61 @@ async function writeOperationalProject(project,options={}){
   }catch(error){try{tx.abort();}catch{}throw error;}
 }
 async function quarantine(row,reason,{operationalSha256}={}){
- const tx=await openTransaction([PROJECTS,META],'readwrite'),projects=tx.objectStore(PROJECTS),meta=tx.objectStore(META);
+ const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),projects=tx.objectStore(PROJECTS),meta=tx.objectStore(META);
  try{const current=await request(projects.get(String(row?.jobId||''))),journal=await request(meta.get(operationalKey(row?.jobId)));
   if(!current||String(current.projectSha256||'')!==String(row?.projectSha256||'')||operationalSha256!==undefined&&journal?.value?.sha256!==operationalSha256){await complete(tx);return false;}
-  const key=`quarantine:${row?.jobId||'UNKNOWN'}:${row.projectSha256||projectSha256(row.project)}`;meta.put({key,value:{reason,row:clone(row),operationalJournal:clone(journal?.value||null)},updatedAt:now()});projects.delete(String(row.jobId));meta.delete(operationalKey(row.jobId));await complete(tx);return true;
+  const artifacts=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(row.jobId))),key=`quarantine:${row?.jobId||'UNKNOWN'}:${crypto.randomUUID()}`,capturedAt=now(),catalog=clone((await request(meta.get('quarantineCatalog')))?.value||{});
+  const entry={key,jobId:String(row.jobId),title:String(row.project?.job?.JOB_TITLE||'Project needing recovery'),reason,capturedAt,artifactCount:artifacts.length,completeSnapshot:true};catalog[key]=entry;
+  fault('during-quarantine-write');meta.put({key,value:{schema:'closed-loop-quarantine/1',reason,row:clone(current),operationalJournal:clone(journal?.value||null),artifacts:clone(artifacts),capturedAt},updatedAt:capturedAt});meta.put({key:'quarantineCatalog',value:catalog,updatedAt:capturedAt});projects.delete(String(row.jobId));meta.delete(operationalKey(row.jobId));await complete(tx);return true;
  }catch(error){try{tx.abort();}catch{}throw error;}
+}
+
+async function listQuarantinedProjects(){
+  const catalog=await metaGet('quarantineCatalog');if(catalog)return Object.values(catalog);
+  // Discover older preserved rows once. Normal startup reads the small catalog.
+  const tx=await openTransaction(META,'readwrite'),store=tx.objectStore(META),current=await request(store.get('quarantineCatalog'));if(current){await complete(tx);return Object.values(current.value);}const keys=store.getAllKeys?await request(store.getAllKeys()):(await request(store.getAll())).map(row=>row.key),result={};
+  for(const key of keys.filter(key=>String(key).startsWith('quarantine:'))){const saved=await request(store.get(key)),value=saved.value;result[key]={key,jobId:String(value.row?.jobId||''),title:String(value.row?.project?.job?.JOB_TITLE||'Project needing recovery'),reason:String(value.reason||'Integrity validation failed'),capturedAt:value.capturedAt||saved.updatedAt,artifactCount:value.artifacts?.length??null,completeSnapshot:Array.isArray(value.artifacts)};}
+  store.put({key:'quarantineCatalog',value:result,updatedAt:now()});await complete(tx);return Object.values(result);
+}
+
+// Structured-clone encoding is confined to recovery evidence. It is
+// never a project import format or agent-facing context. Even values prohibited
+// by canonical JSON, including cycles and lone surrogates, remain inspectable.
+async function quarantineEvidenceGraph(value){
+  const seen=new Map(),nodes=[],files=[];
+  async function encode(item){
+    if(item===null)return {kind:'null'};
+    const type=typeof item;if(type==='string'||type==='boolean')return {kind:type,value:item};
+    if(type==='number')return {kind:type,value:Object.is(item,-0)?'-0':String(item)};
+    if(type==='undefined')return {kind:type};if(type==='bigint')return {kind:type,value:String(item)};
+    if(type!=='object')throw storageError('The preserved row contains a value that cannot be exported losslessly.','QUARANTINE_VALUE_UNSUPPORTED');
+    if(seen.has(item))return {ref:seen.get(item)};const id=nodes.length,node={};seen.set(item,id);nodes.push(node);
+    const tag=Object.prototype.toString.call(item);
+    if(ArrayBuffer.isView(item))Object.assign(node,{kind:tag.slice(8,-1),buffer:await encode(item.buffer),byteOffset:item.byteOffset,byteLength:item.byteLength});
+    else if(item instanceof Blob||tag==='[object ArrayBuffer]'){
+      const blob=item instanceof Blob?item:new Blob([new Uint8Array(item)]),path=`blobs/${files.length}.bin`,sha256=await hash.sha256Bytes(blob);Object.assign(node,{kind:tag==='[object File]'?'File':item instanceof Blob?'Blob':'ArrayBuffer',path,mediaType:item instanceof Blob?item.type:'application/octet-stream',byteSize:blob.size,sha256});if(node.kind==='File')Object.assign(node,{name:item.name,lastModified:item.lastModified});files.push({path,blob,byteSize:blob.size,sha256});
+    }else if(tag==='[object Date]')Object.assign(node,{kind:'Date',value:String(item.getTime())});
+    else if(tag==='[object RegExp]')Object.assign(node,{kind:'RegExp',source:item.source,flags:item.flags,lastIndex:item.lastIndex});
+    else if(tag==='[object Map]'){node.kind='Map';node.entries=[];for(const [key,value] of item)node.entries.push([await encode(key),await encode(value)]);}
+    else if(tag==='[object Set]'){node.kind='Set';node.values=[];for(const value of item)node.values.push(await encode(value));}
+    else if(Array.isArray(item)||tag==='[object Object]'){node.kind=Array.isArray(item)?'Array':'Object';if(node.kind==='Array')node.length=item.length;node.entries=[];for(const key of Object.keys(item))node.entries.push([key,await encode(item[key])]);}
+    else throw storageError('The preserved row contains an unsupported structured value.','QUARANTINE_VALUE_UNSUPPORTED');
+    return {ref:id};
+  }
+  return {graph:{schema:'closed-loop-quarantine-values/1',root:await encode(value),nodes},files};
+}
+async function exportQuarantinedProject(key,{passphrase=null}={}){
+  if(!String(key).startsWith('quarantine:'))throw storageError('Select preserved recovery evidence.','QUARANTINE_NOT_FOUND');const saved=await metaGet(key);if(!saved)throw storageError('The preserved recovery evidence is unavailable.','QUARANTINE_NOT_FOUND');
+  if(!passphrase)throw storageError('Enter a backup password to protect the preserved recovery evidence.','BACKUP_PASSPHRASE_REQUIRED');
+  const {graph,files}=await quarantineEvidenceGraph(saved),raw=new Blob([JSON.stringify(graph)],{type:'application/json'});files.unshift({path:'raw-project.json',blob:raw,byteSize:raw.size,sha256:await hash.sha256Bytes(raw)});
+  const packageManifest={schema:'closed-loop-quarantine-manifest/1',quarantineKey:key,completeSnapshot:Array.isArray(saved.artifacts),activationPermitted:false,members:files.map(({blob,...identity})=>identity)},fileContents=new WeakMap(),members=files.map(file=>{const entry={path:file.path,base64:''};fileContents.set(entry,{property:'base64',encoding:'base64',blob:file.blob});return entry;}),packed=await compressPackage({schema:'closed-loop-quarantine-package/1',packageManifest,artifacts:members},fileContents);
+  return encryptedPackage(packed.blob,hash.sha256Value(packageManifest),passphrase);
+}
+async function removeQuarantinedProject(key,{idempotencyKey=key}={}){
+  if(!String(key).startsWith('quarantine:'))throw storageError('Select preserved recovery evidence.','QUARANTINE_NOT_FOUND');const receiptKey='quarantineDelete:'+hash.sha256Value({idempotencyKey:String(idempotencyKey)}),payloadSha256=hash.sha256Value({key}),tx=await openTransaction(META,'readwrite'),meta=tx.objectStore(META);
+  try{const receipt=(await request(meta.get(receiptKey)))?.value;if(receipt){if(receipt.payloadSha256!==payloadSha256)throw storageError('This deletion was already used for different recovery evidence.','COMMAND_RETRY_CONFLICT');await complete(tx);return receipt;}
+    const existing=await request(meta.get(key)),catalog=clone((await request(meta.get('quarantineCatalog')))?.value||{});if(!existing)throw storageError('The preserved recovery evidence is unavailable.','QUARANTINE_NOT_FOUND');delete catalog[key];const result={quarantineKey:key,payloadSha256,removed:true,at:now()};fault('during-quarantine-delete');meta.delete(key);meta.put({key:'quarantineCatalog',value:catalog,updatedAt:now()});meta.put({key:receiptKey,value:result,updatedAt:now()});await complete(tx);return result;
+  }catch(error){try{tx.abort();}catch{}throw error;}
 }
 
 async function migrateLegacy(){
@@ -218,9 +268,10 @@ async function listProjectSummaries(){
 async function readProject(jobId){
   const tx=await openTransaction([PROJECTS,META],'readonly'),row=await request(tx.objectStore(PROJECTS).get(String(jobId))),journal=await request(tx.objectStore(META).get(operationalKey(jobId)));await complete(tx);
   if(!row)return null;
-  if(await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)))!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');throw storageError('Project hash mismatch. The original row was preserved in quarantine.','PROJECT_HASH_MISMATCH');}
+  let computed;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}catch(error){await quarantine(row,'PROJECT_ENCODING_INVALID: '+error.message);throw storageError('The stored project contains invalid canonical data. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}
+  if(computed!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');throw storageError('Project hash mismatch. The original row was preserved in quarantine.','PROJECT_HASH_MISMATCH');}
   if(Number(row.revision)!==Number(row.project?.revision)){await quarantine(row,'PROJECT_REVISION_MISMATCH');throw storageError('Stored revision does not match the canonical project. The original row was preserved in quarantine.','PROJECT_REVISION_MISMATCH');}
-  try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+error.message);throw error;}
+  try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+error.message);throw storageError('The stored project failed canonical integrity validation. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}
   let active;try{active=applyOperationalJournal(row,journal?.value);assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;return active.project;
 }
 function readAll(storage){return storage?readAllLegacy(storage):readAllIndexed();}
@@ -339,10 +390,10 @@ async function saveCheckpoint(jobId,{expectedProjectRevision,view=null,label='Sa
 async function beginHistorySession(sessionId){
   if(!sessionId)throw new Error('Application session identity is required.');
   const existing=await metaGet('recoverySession:'+sessionId);if(existing)return existing.checkpoints;
-  const summaries=await listProjectSummaries(),checkpoints={},selectedProject=await metaGet('selectedProject');
-  for(const summary of summaries){const id=projectIdentity(summary);await saveCheckpoint(id,{sessionId,label:'Session start'});const state=await metaGet(historyKey(id));checkpoints[id]=state.sessions[sessionId].checkpointId;}
+  const summaries=await listProjectSummaries(),checkpoints={},quarantinedProjects=[],selectedProject=await metaGet('selectedProject');
+  for(const summary of summaries){const id=projectIdentity(summary);try{await saveCheckpoint(id,{sessionId,label:'Session start'});const state=await metaGet(historyKey(id));checkpoints[id]=state.sessions[sessionId].checkpointId;}catch(error){if(!['PROJECT_HASH_MISMATCH','PROJECT_REVISION_MISMATCH','PROJECT_INTEGRITY_FAILED','OPERATIONAL_STATE_INTEGRITY_FAILED'].includes(error.code))throw error;const preserved=(await listQuarantinedProjects()).filter(row=>row.jobId===id&&row.completeSnapshot);if(!preserved.length)throw error;quarantinedProjects.push({jobId:id,quarantineKey:preserved.at(-1).key,reason:error.code});}}
   // The empty initial view is durable too; new projects retain their own start.
-  await metaPut('recoverySession:'+sessionId,{sessionId,startedAt:now(),selectedProject,checkpoints});
+  await metaPut('recoverySession:'+sessionId,{sessionId,startedAt:now(),selectedProject,checkpoints,quarantinedProjects});
   return checkpoints;
 }
 function assertRecoveryCompatibility(project){
@@ -997,6 +1048,9 @@ async function createExecutionPackage({project=null,jobId=null,stage,operation=n
   if(!project&&jobId)project=await readProject(jobId);
   if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');
   const engine=globalThis.closedLoopWorkflowEngine,promptEngine=globalThis.closedLoopPromptEngine,canonicalJobId=projectIdentity(project);if(jobId&&String(jobId)!==canonicalJobId)throw storageError(`Execution-package job ${jobId} does not match canonical project ${canonicalJobId}.`,'EXECUTION_PACKAGE_JOB_MISMATCH');
+  const activeProject=await readProject(canonicalJobId);
+  if(!activeProject||Number(activeProject.revision||0)!==Number(project.revision||0)||(activeProject.historyActivationId||null)!==(project.historyActivationId||null)||project.projectSha256&&activeProject.projectSha256!==project.projectSha256)throw storageError('The project changed before its handoff could be prepared. Open the current version and export again.','EXECUTION_PACKAGE_VERSION_STALE');
+  project=activeProject;
   const normalizedStage=Number(stage),normalizedOperation=String(operation||globalThis.closedLoopWorkflowSchema?.STAGE_CONTRACTS?.[normalizedStage]?.operations?.[0]||'COMPLETE'),normalizedRunId=runId?String(runId):null,ids=[...new Set(testIds.map(String).filter(Boolean))];
   project=engine.stageContext(project,normalizedStage);
   if(!promptEngine?.responseContractDescriptor)throw storageError('The prompt authority is unavailable for execution-package construction.','EXECUTION_PACKAGE_PROMPT_AUTHORITY_UNAVAILABLE');
@@ -1026,6 +1080,7 @@ async function createExecutionPackage({project=null,jobId=null,stage,operation=n
   manifest.packageManifestSha256=hash.sha256Value(manifest);
   const manifestBlob=new Blob([hash.stableStringify(manifest)+'\n'],{type:'application/json'});
   const blob=await handoffArchive([...members,{canonicalPath:'manifest.json',blob:manifestBlob}]),packageSha256=await hash.sha256Bytes(blob);
+  const currentProject=await readProject(canonicalJobId);if(!currentProject||currentProject.projectSha256!==activeProject.projectSha256||Number(currentProject.revision||0)!==Number(activeProject.revision||0)||(currentProject.historyActivationId||null)!==(activeProject.historyActivationId||null))throw storageError('The project changed while its handoff was being assembled. Export the current version again.','EXECUTION_PACKAGE_VERSION_STALE');
   return {blob,filename:`STAGE-${String(normalizedStage).padStart(2,'0')}-files.zip`,manifest,packageSha256};
 }
 async function stageResponseFile({jobId,stage,blob,rawFilename='response.json',mediaType='application/json',promptIdentity=null,packageId=null,operationReservationId=null,challengeNonce=null}={}){
@@ -1042,7 +1097,7 @@ function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(con
 
 const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB)try{await migrateLegacy();globalThis.closedLoopLegacyMigrationError=null;}catch(error){globalThis.closedLoopLegacyMigrationError=String(error?.stack||error);console.error('Legacy migration failed without deleting the preserved legacy payload; application startup will continue.',error);}return true;})();
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;const project=message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId});globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,project});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
+globalThis.closedLoopProjectStore=Object.freeze({listQuarantinedProjects,exportQuarantinedProject,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{
 'use strict';

@@ -149,6 +149,153 @@
           "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
         ]
       }
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-7e417b328764aaf6033114c36450ef9c",
+      "sourceLineSha256": "3619f23235cc05813afe6cc14e8b3c6bd0c21c2287c1ba55a122940bbb825575",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-44fd18cf9801f02c34f8820d2a3acb34",
+      "sourceLineSha256": "181bd4aea5c7e09f56f867fb7d529d47438355724b31e4bf00bb5c7128e651af",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-664f5c5b72efea7443b8f478ff4973df",
+      "sourceLineSha256": "33d455eee89d7cde335678250c76bf42f19e93c04faa5a3888ccfed3204d7ee2",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-568c874e5bc2e40448edcbe19d2fb8f4",
+      "sourceLineSha256": "095d24ce48579186a655917f2def7d87e403882161ab5f38739cdcaca514b793",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e27f616490036d42b6051729088d2fc7",
+      "sourceLineSha256": "4dbf8a7971fad5fa52cff83fbf9d5e07e499c98631bef6504e80a03c8fe40282",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "sourceLineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
     }
   ]
 }
