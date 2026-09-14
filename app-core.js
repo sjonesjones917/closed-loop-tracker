@@ -780,7 +780,10 @@ async function materializeProject(project,{startup=false}={}){
     projects=projects.filter(item=>item.job.JOB_ID!==project.job.JOB_ID);let available=projects.find(item=>!projectIsArchived(item))||projects[0];if(!available){available=await projectStore.createProject();projects.unshift(available);}
     announce('A damaged project was preserved. Open History for recovery.');return materializeProject(available,{startup:true});
   }if(!stored)throw new Error(`Project ${project.job.JOB_ID} is no longer stored.`);
-  const loaded=normalize(stored);if(project.activeView)loaded.activeView=project.activeView;if(project.activeStage)loaded.activeStage=project.activeStage;
+  // readProject already verifies current-schema canonical state. Recalculation here
+  // changes time-bearing gate projections and invalidates saved candidates. The
+  // saved History view, not a picker summary, restores navigation separately.
+  const loaded=stored;
   projects=projects.map(item=>item.job.JOB_ID===loaded.job.JOB_ID?loaded:item);return loaded;
 }
 function unloadInactiveProjects(){projects=projects.map(project=>project===current||project._unloaded?project:{_unloaded:true,job:{JOB_ID:project.job.JOB_ID,JOB_TITLE:project.job.JOB_TITLE},revision:project.revision,isRetainedTestProject:project.isRetainedTestProject,retainedSpecRevision:project.retainedSpecRevision,activeView:project.activeView,activeStage:project.activeStage});}
