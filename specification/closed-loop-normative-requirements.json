@@ -65344,8 +65344,22 @@
       "observableExpectedBehavior": "All canonical IDs use closed-loop-id/1. Agents and humans never choose canonical IDs. For each family, FIELD_REGISTRY supplies an exact uppercase ASCII family prefix. The application reserves an allocationSequence and collisionCounter in the same transaction and computes:",
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-081a506fd55bb12e9c1e6822bed626a3",
-      "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDisposition": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence.",
+      "executedEvidence": [
+        {
+          "path": "verification/allocation-repair-evidence-20260914.json",
+          "scope": "65 canonical record families and registered infrastructure allocator paths, synthetic production runtime and transaction adapter; other identity producers remain open"
+        }
+      ],
+      "productionOwners": [
+        "workflow-schema.js:recordSchema/rec",
+        "workflow-engine.js:allocateRecordIdentity/allocateId/allocateInfrastructureId/validateAllocationReceipts",
+        "project-store.js:writeProjectRow/writeOperationalProject"
+      ],
+      "unresolvedRequirements": [
+        "Close remaining project, artifact, prompt/package identity producers and full clone remapping; run exact integrated browser/deployment acceptance."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
@@ -65461,8 +65475,22 @@
       "observableExpectedBehavior": "The application begins collisionCounter at 0 and increments it only when the generated ID already exists for a different allocation tuple. The collision check and any increment occur inside the same transaction. Exact command retry returns the original ID from the idempotency receipt and does not reserve a new sequence. Content equality alone never collapses separately authorized records. Clone remapping uses the clone JOB_ID namespace and records the complete source-to-clone mapping. Every allocation receipt records the algorithm version, namespace, canonical input tuple, sequence, collision counter, collision check, resulting ID, command identity, and project revision.",
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-0fc9b83ea9eb5b2014fea8af11d5000e",
-      "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDisposition": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence.",
+      "executedEvidence": [
+        {
+          "path": "verification/allocation-repair-evidence-20260914.json",
+          "scope": "65 canonical record families and registered infrastructure allocator paths, synthetic production runtime and transaction adapter; other identity producers remain open"
+        }
+      ],
+      "productionOwners": [
+        "workflow-schema.js:recordSchema/rec",
+        "workflow-engine.js:allocateRecordIdentity/allocateId/allocateInfrastructureId/validateAllocationReceipts",
+        "project-store.js:writeProjectRow/writeOperationalProject"
+      ],
+      "unresolvedRequirements": [
+        "Close remaining project, artifact, prompt/package identity producers and full clone remapping; run exact integrated browser/deployment acceptance."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-eecccd22fbd6aba5a9a4e1c77e8d3a41",

@@ -186,6 +186,7 @@ async function writeOperationalProject(project,options={}){
   try{
     const meta=tx.objectStore(META),base=await request(tx.objectStore(PROJECTS).get(id)),current=await projectRowWithOperations(tx,id);
     if(current?.projectSha256!==prior.projectSha256)throw storageError('Another session changed the pending response.','STALE_PROJECT_REVISION');
+    globalThis.closedLoopWorkflowEngine.validateAllocationReceipts(next,current?.project);
     const existing=(await request(meta.get(operationalKey(id))))?.value,body={schema:'closed-loop-response-operations/1',jobId:id,baseProjectSha256:base.projectSha256,projectRevision:Number(base.revision),sequence:Number(existing?.sequence||0)+1,patches:assertOperationalChange(base.project,next),projectSha256:digest};
     await commitHistory(tx,prepared);meta.put({key:operationalKey(id),value:{...body,sha256:hash.sha256Value(body)},updatedAt:now()});fault('during-operational-write');recordWorkerCommit(tx,options.operationId,next,digest);fault('before-transaction-commit');await complete(tx);notifyProjectChange(next,{operational:true});return {...next,projectSha256:digest};
   }catch(error){try{tx.abort();}catch{}throw error;}
@@ -431,7 +432,7 @@ async function writeProjectRow(project,tx,{expectedProjectRevision=null,incremen
   next.revision=(incrementRevision??Boolean(prior))?currentRevision+1:currentRevision;
   // The private candidate was derived before checkpoint encoding. Recheck its
   // authority here without changing time-bearing cached projections.
-  assertProjectIntegrity(next);
+  assertProjectIntegrity(next);globalThis.closedLoopWorkflowEngine.validateAllocationReceipts(next,prior?.project);
   const digest=projectSha256(next);if(!preparedHistory||preparedHistory.state.activeProjectSha256!==digest)throw storageError('The required checkpoint was not prepared for this exact change.','HISTORY_CHECKPOINT_REQUIRED');await commitHistory(tx,preparedHistory);fault('during-project-write');tx.objectStore(META).delete(operationalKey(id));store.put({jobId:id,revision:next.revision,picker:projectPickerKey(next),project:next,projectSha256:digest,updatedAt:now()});
   if(selectProject)tx.objectStore(META).put({key:'selectedProject',value:id,updatedAt:now()});tx.objectStore(META).put({key:'lastCommittedRevision',value:{jobId:id,revision:next.revision,projectSha256:digest},updatedAt:now()});
   recordWorkerCommit(tx,operationId,next,digest);
