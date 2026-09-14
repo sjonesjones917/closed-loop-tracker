@@ -111,7 +111,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
  p.projectData.applicabilityRecords.push({...record('applicabilityRecords',5,{SUBJECT_ID:'PROP-NA',SELECTED_APPLICABILITY:'NOT_APPLICABLE'},'APP-NA'),scope});
  assert(engine.mandatoryRequirements(p).length===1,'Unreviewed applicability reduced mandatory coverage.');
  const review={...record('semanticReviews',5,{REVIEWED_RECORD_IDS:['APP-NA'],AUTHOR_CONTEXT_ID:'AUTHOR',REVIEWER_CONTEXT_ID:'REVIEWER',INDEPENDENCE_DETERMINATION:'APPLICATION_ESTABLISHED',RESULT:'ACCEPTED',ACCEPTED_DISPOSITION:'ACCEPTED',RECONCILIATION_STATUS:'COMPLETE'},'REVIEW-NA'),scope};p.projectData.semanticReviews.push(review);
- assert(engine.mandatoryRequirements(p).length===0,'Reviewed NOT_APPLICABLE requirement still counted as missing test coverage.');
+ assert(engine.mandatoryRequirements(p).length===1,'Invented ACCEPTED review labels removed a mandatory requirement without actual review authority.');
  review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID='AUTHOR';
  assert(engine.mandatoryRequirements(p).length===1,'Self-review reduced mandatory coverage.');
  review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID='REVIEWER';review.scope={...scope,requirementsVersion:'OLD'};
@@ -229,7 +229,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   const ids=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(ids.includes('REQ-CURRENT')&&!ids.includes('REQ-STALE'),'Historical scope satisfied current selector.');
   const unscoped=record('requirements',4,{OBLIGATION:'unscoped historical',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-UNSCOPED');delete unscoped.scope;p.projectData.requirements.push(unscoped);const partial=record('requirements',4,{OBLIGATION:'partial historical',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-PARTIAL');partial.scope={requirementsVersion:'REQUIREMENTS-v002'};p.projectData.requirements.push(partial);const scopedIds=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(!scopedIds.includes('REQ-UNSCOPED'),'Unscoped historical record satisfied current selector.');assert(!scopedIds.includes('REQ-PARTIAL'),'Partially scoped historical record satisfied current selector.');
 }
-// Artifact identity is independent of file-selection order.
+// A fabricated release cannot authorize identity checking, even with matching file claims.
 {
   const p=project('JOB-ORDER');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER'));const binding=engine.releaseBinding(p),release=p.projectData.releaseRecords[0];release.source='APPLICATION_DERIVATION';release.derivationKey='stage27.release';release.releaseEvidenceSha256=release.fields.CONTROLLING_EVIDENCE=release.fields.RELEASE_ID=release.RELEASE_ID=release.id;release.releaseEvidenceSha256=release.fields.CONTROLLING_EVIDENCE=binding.evidenceDigest;release.fields.PRODUCT_ID=release.PRODUCT_ID=binding.productId;release.fields.BASELINE_ID=release.BASELINE_ID=binding.baselineId;
   deliveryCandidate(p,['A','B'],['a.bin','b.bin']);
@@ -249,7 +249,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(p.release.authorization==='NOT AUTHORIZED'&&p.release.authorizedArtifactIds.length===0,'Upstream invalidation did not revoke release authorization.');
 }
 
-// Release identity is prohibited before ACCEPTED and exact mismatches remain unauthorized.
+// Missing or fabricated release authority blocks identity checking before byte comparison.
 {
   const p=project('JOB-IDENTITY');let threw=false;try{engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}],[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}]);}catch{threw=true;}assert(threw,'Stage 28 ran before an ACCEPTED Stage 27 determination.');
   p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-TEST'));
@@ -285,7 +285,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(engine.records(p,'sources',{stage:2}).length===0,'Invalidated accepted response left same-stage canonical source active.');assert(engine.acceptedChanges(p,2).length===0,'Invalidated accepted change retained current stage authority.');assert(Object.keys(p.stages[2].agentData||{}).length===0&&p.stages[2].acceptedDataChangeIds.length===0&&p.stages[2].acceptedResponseIds.length===0,'Invalidated stage retained accepted agent state.');const replacement=prompts.buildPromptRecord(2,p);assert(replacement.prompt.includes(reason),'Replacement prompt omitted accepted-result refinement reason.');assert(replacement.contextManifest.acceptedResultRefinements?.some(x=>x.reason===reason),'Replacement prompt identity did not bind the refinement reason.');
 }
 
-console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,noStage31:true,invalidRelationshipRejected:true,humanQuestionGate:true,stage8PrerequisiteGate:true,tenRunGate:true,verificationMatrixGate:true,convergenceStrict:true,unchangedConfirmationGate:true,downstreamInvalidation:true,preReleaseIdentityBlocked:true,identityMismatchBlocked:true,evidenceChainNoFabrication:true,acceptedStateStorageRollback:true},null,2));
+console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,noStage31:true,invalidRelationshipRejected:true,humanQuestionGate:true,stage8PrerequisiteGate:true,tenRunGate:true,verificationMatrixGate:true,emptyProjectConvergenceRejected:true,unchangedConfirmationGate:true,downstreamInvalidation:true,preReleaseIdentityBlocked:true,fabricatedReleaseIdentityRejected:true,evidenceChainNoFabrication:true,acceptedStateStorageRollback:true},null,2));
 
 // Refining one accepted run restores only that reservation and preserves unrelated accepted lanes.
 {
@@ -349,7 +349,7 @@ console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
 {
  const p=project('JOB-IDENTITY-RECOVERY');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-IDENTITY-RECOVERY'));deliveryCandidate(p,['A'],['a.bin']);const audited=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa',byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:'A',byteSize:3,sha256:'aaa'}}],bad=[{artifactId:'A',name:'a.bin',size:4,sha256:'bbb',byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:'A',byteSize:4,sha256:'bbb'}}],good=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa',byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:'A',byteSize:3,sha256:'aaa'}}];let rejected=false;try{engine.verifyArtifactIdentity(p,audited,bad);}catch(error){rejected=/current bound Stage 27/.test(String(error.message));}assert(rejected,'A stale Stage 27 release was accepted during identity recovery.');
 }
-console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOperationIsolation:true,currentRegressionClosure:true,stage28CurrentBatch:true},null,2));
+console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOperationIsolation:true,currentRegressionClosure:true,fabricatedReleaseRecoveryRejected:true},null,2));
 
 
 // reliability-v2: derived execution routing, independence, evidence, contradictions, and stability.
@@ -429,11 +429,9 @@ console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidenc
   assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 filename metadata incorrectly became a file-transfer contract.');
   assert(!Object.prototype.hasOwnProperty.call(handoff,'conversationMaterials'),'Stage 04 still exposes the obsolete filename-derived conversation-material handoff.');
   const next=engine.operationalNextAction(p,4);
-  assert(!/design-input\.pdf|attach|provide the original|send the stage 04 instruction with/i.test(next),'Stage 04 next action still re-requests previously supplied material.');
-  const appSource=fs.readFileSync('app-core.js','utf8');
-  assert(!appSource.includes('Send the Stage 04 instruction with the required material.'),'Stage 04 UI still contains the repeated attachment instruction.');
+  assert(!/design-input\.pdf/i.test(JSON.stringify(next)),'Filename-only metadata created an unsupported request for those file bytes.');
 }
-console.log(JSON.stringify({stage04CapturedInputReuse:true}));
+console.log(JSON.stringify({stage04FilenameMetadataDoesNotCreateFileTransfer:true,actualCapturedFileReuseTested:false}));
 {
   const p=project('JOB-EXECUTION-ROUTING-HARDENING');
   Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-ROUTE'});
@@ -493,3 +491,5 @@ console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperation
 await import('./verify-spec-residual-closure.mjs');
 
 await import('./verify-operation-scope-classification.mjs');
+
+await import('./verify-applicability-authority.mjs');

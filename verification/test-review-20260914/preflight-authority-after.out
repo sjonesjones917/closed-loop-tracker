@@ -1,0 +1,15 @@
+{
+  "controllerStage": "13",
+  "applicationStage": "09",
+  "independentPreflight": "PASS",
+  "intentionalInvalidFixturesRejected": [
+    "missing-independent-reviewer",
+    "material-ambiguity-with-favorable-claim",
+    "contaminated-reviewer-context"
+  ],
+  "repairedPathProgressed": true,
+  "independenceEpistemicLimitPreserved": true,
+  "noMutationBeforeAcceptance": true,
+  "promptSemanticsChecked": true,
+  "isolatedDisposableProjects": true
+}

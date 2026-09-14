@@ -1,0 +1,23 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Calculated release record is not bound to current evidence.
++ actual - expected
+
++ 'a3fc3ef4fcb1ac06ba05dcf73142aa48d74b4bb335787e9035ee2e2429a79d08'
+- '380509c59e6ab2dfd7d87d3a1f21160a49069152b625cc0f970a9edb0889ce5e'
+
+    at file:///workspace/scratch/32c0fbf1551b/review-next/verify-stage27-release-binding.mjs:59:10
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'a3fc3ef4fcb1ac06ba05dcf73142aa48d74b4bb335787e9035ee2e2429a79d08',
+  expected: '380509c59e6ab2dfd7d87d3a1f21160a49069152b625cc0f970a9edb0889ce5e',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

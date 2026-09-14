@@ -1,0 +1,1 @@
+{"evidenceClass":"cached synthetic command-prefix component","detectedFaults":["order-dependent-human-intent-mapping","skipped-frozen-candidate-content-validation"],"restoredOrderCase":"PASS","sourceBaseCommit":"827546c843bbac97a9addaed5f56fadab8191d11","actualBrowserJourney":false}

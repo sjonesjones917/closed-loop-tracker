@@ -206,5 +206,141 @@
     "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
     "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
     "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "instruction-authority-after.out",
+    "sha256": "f81245381c72ddb15cbd5f1644ed4559b616436fa82d1073f032b6b4499d5c89",
+    "byteSize": 366,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "preflight-authority-after.out",
+    "sha256": "2b578971102dc53032f4660c7cf9355103c02c01c5cfa2de7db140dad2b8eb33",
+    "byteSize": 449,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "semantic-boundaries-after.out",
+    "sha256": "5f5a1368bd129b4c6086751866d9cd3c783366b527bbb32d27215d44e1a1b224",
+    "byteSize": 906,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "registry-review-after.out",
+    "sha256": "60230f7e37e781c289df24d262381ac08378d857f27c62459ce392338e399537",
+    "byteSize": 188,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "counterpart-fault-review-after.out",
+    "sha256": "b9a7e092c73705740b74d2b1623802e2e7e9cc64bb16a0996648dcf3e0b7313c",
+    "byteSize": 3825,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "stage28-authority-before.err",
+    "sha256": "2838983c9a3ecbf471d4babae0b86968f300b65e42cb969fcf0083372d5a305e",
+    "byteSize": 678,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "stage28-authority-mid.err",
+    "sha256": "4db8dbccf604f229adcd51b62f9020e9373f0bfb48c476bc1dd5f28319db0ea6",
+    "byteSize": 1233,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "delivery-old-authority-probe.out",
+    "sha256": "beeccc56f24969ebb0242de2c534ea162029fd310dea8b57b54f4c2819782559",
+    "byteSize": 350,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "stage28-authority-after.out",
+    "sha256": "4bcfaea0a9a0e950c3b25da887b9f21fc0d1de3592ffa5d01869df6dda49c2ec",
+    "byteSize": 1297,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "release-binding-reviewed.err",
+    "sha256": "467572170158c2abb1085aa83d3987928f641596770239118fcd8b6782ec8924",
+    "byteSize": 903,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "release-binding-reviewed-fixed.out",
+    "sha256": "f79e853c57c8982b8883e31eb5f4a4dd5a364a8fa890044c211e963de2b40ee5",
+    "byteSize": 489,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "root-cause-report-reviewed.out",
+    "sha256": "4081bc2bfed1ccce5099167cecd3cd6fabdf39993a138f7db11d5915456cf6ba",
+    "byteSize": 604,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "stage28-fault-components-fixed.out",
+    "sha256": "20cff9459343b9fc8c7be62e30dcfb5fb93c49eb428975823af09d7c092644dc",
+    "byteSize": 284,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "terminal-boundary-reviewed.out",
+    "sha256": "37f67dee286010977d77b984ddb503370382bd124fac6432e8dbd7b695058a9f",
+    "byteSize": 1271,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "adjudication-preservation-reviewed.out",
+    "sha256": "1bc62adb10286c6957c72170763cd75e76a33ab11f070f415e9d6c437ef0090f",
+    "byteSize": 1988,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "semantic-invariant-reviewed.out",
+    "sha256": "20a0811d96e80171046b1276e520bf7aa828fae9809a1b31b632f25c9e80c729",
+    "byteSize": 5016,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "release-binding-reviewed-final.out",
+    "sha256": "f79e853c57c8982b8883e31eb5f4a4dd5a364a8fa890044c211e963de2b40ee5",
+    "byteSize": 489,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
   }
 ]

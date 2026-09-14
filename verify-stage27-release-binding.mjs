@@ -91,8 +91,8 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   const explanation=String(next.explanation||'');
   assert.equal(next.actionType,'CALCULATE_RELEASE','Optional Stage 27 advisory review incorrectly gates application release calculation.');
   assert.doesNotMatch(explanation,/advisory[^.]*accepted/i,'Stage 27 operator text falsely claims the optional advisory review was accepted when none exists.');
-  assert.match(explanation,/application-owned/i,'Stage 27 operator text must identify application ownership of release calculation.');
-  assert.match(explanation,/optional[^.]*not required[^.]*non-gating/i,'Stage 27 operator text must explicitly preserve optional, not-required, non-gating advisory semantics.');
+  assert.match(explanation,/application calculates/i,'Stage 27 must explain that the application calculates the result.');
+  assert.match(explanation,/advisory review is optional/i,'Stage 27 must explain the optional advisory action without requiring repeated synonyms.');
   const calculated=engine.recordReleaseDetermination(p);
   assert.equal(calculated.DETERMINATION,'BLOCKED');
   assert.equal(calculated.releaseEvidenceSha256,engine.releaseBinding(p).evidenceDigest);

@@ -16,4 +16,4 @@ assert(challenge.readCollections.includes('sources'),'Stage 03 challenge cannot 
 assert(!challenge.readCollections.includes('research')&&!challenge.readCollections.includes('candidateRequirements'),'Stage 03 omission challenger receives the first extraction before completing its independent pass.');
 assert(reconcile.agentWritableCollections.includes('semanticReviews'),'Stage 03 RECONCILE_RESEARCH does not create the durable reconciliation review record.');
 for(const family of ['research','candidateRequirements','semanticChallenges'])assert(reconcile.readCollections.includes(family),`Stage 03 reconciliation omits ${family}.`);
-console.log(JSON.stringify({stage03SourceResearchOperationClosure:true}));
+console.log(JSON.stringify({stage03OperationDeclarationsChecked:true,actualContextIsolationEstablished:false,actualSourceResearchJourneyEstablished:false}));

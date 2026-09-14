@@ -17,15 +17,7 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 const core=globalThis.closedLoopCore;
 const engine=globalThis.closedLoopWorkflowEngine;
 const schema=globalThis.closedLoopWorkflowSchema;
-const engineSource=fs.readFileSync('workflow-engine.js','utf8');
-const appSource=fs.readFileSync('app-core.js','utf8');
 const fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
-assert.doesNotMatch(appSource,/projectData\.mobileAcceptance(?:Target|Probe|Receipts|Measurements)/,'Acceptance-session state must not be persisted as unregistered projectData.');
-assert.match(appSource,/stage30MobileAcceptance\.v1:/,'Acceptance-session state must use the versioned metadata key.');
-assert.doesNotMatch(appSource,/mobile-acceptance-receipt-kind|mobile-runtime-exceptions|mobile-horizontal-overflow/,'Application-observable acceptance values must not be manually declared by the operator.');
-assert.match(appSource,/function measureMobileAcceptance\(\)/,'Acceptance measurements must be calculated from browser-observable state.');
-assert.match(appSource,/mobileAcceptanceEvidenceId/,'The application must generate and bind an acceptance evidence ID.');
-assert.doesNotMatch(appSource,/viewport:actorEvidence\.viewport/,'Actor evidence must not override the pinned viewport.');
 const target=createMobileAcceptanceTarget({
   sourceCommit:'f'.repeat(40),deploymentManifestDigest:'a'.repeat(64),
   origin:MOBILE_ACCEPTANCE_ORIGIN,basePath:MOBILE_ACCEPTANCE_BASE_PATH,
@@ -34,12 +26,12 @@ const target=createMobileAcceptanceTarget({
   iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1',
   issuedAt:'2026-09-03T00:00:00.000Z',challengeLifetimeSeconds:3600
 });
-assert.match(target.challenge,/^[0-9a-f]{64}$/,'Stage 30 target must use a CSPRNG challenge.');
+assert.match(target.challenge,/^[0-9a-f]{64}$/,'Stage 30 challenge must have the specified 256-bit hexadecimal representation.');
 assert.equal(target.origin,MOBILE_ACCEPTANCE_ORIGIN);
 assert.equal(target.basePath,MOBILE_ACCEPTANCE_BASE_PATH);
 
-// Obtain a complete Stage 30-ready project through the production lifecycle, then
-// perform every mutation probe against disposable in-memory clones.
+// Obtain a synthetic command-fixture prefix through the production functions.
+// This does not establish file transport, a human action, or a physical device run.
 const fixturePath=path.join(process.cwd(),`.stage30-fixture-${process.pid}.json`);
 const fixtureMarker='STAGE30_READY_FIXTURE';
 const fixtureAnchor='engine.recordDeliveryAttempt(p';
@@ -62,8 +54,8 @@ const hashInput=p=>Object.fromEntries(Object.entries(terminalRecord(p,'deliveryR
 assert.equal(engine.recordValue(terminalRecord(sourceProject),'DELIVERY_STATE'),'AUTHORIZED','The fixture must reach application-owned authorization.');
 assert.equal(engine.records(sourceProject,'deliveryAttempts').length,0,'The terminal-ready fixture must not pre-record an operational attempt.');
 
-// The mobile validators are independent oracles: malformed target/evidence classes
-// must remain blocked by both the evidence validator and authenticated submission.
+// The submission adapter delegates to the same evidence validator. These are
+// structural component checks with synthetic observations, not independent device evidence.
 const mobileEvidence={
   mobileAcceptanceTargetId:target.mobileAcceptanceTargetId,challenge:target.challenge,
   sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,
@@ -160,8 +152,8 @@ for(const [name,mutate] of [
   mutationRejected.push(name);
 }
 
-// Revalidate the exact stored bytes immediately before export; metadata-only
-// changes and byte-hash changes cannot be exported under an old authorization.
+// A recorded missing-byte state must reject export. This probe changes metadata;
+// it does not exercise reading or comparing the actual stored bytes.
 {
   const p=fresh(),authorizedId=engine.recordValue(terminalRecord(p),'AUTHORIZED_ARTIFACT_IDS')[0],artifact=engine.recordsForCurrentScope(p,'artifacts').find(r=>engine.recordId(r,'artifacts')===authorizedId);
   artifact.fields.AVAILABILITY='BYTES_MISSING';artifact.AVAILABILITY='BYTES_MISSING';refresh(p,'artifacts',artifact);
@@ -187,11 +179,12 @@ for(const [name,mutate] of [
   assert.equal(engine.recordValue(retry,'DELIVERY_STATE'),'AUTHORIZED','Delivery authorization must remain distinct from delivery completion.');
 }
 
-assert.doesNotMatch(engineSource,/if\(e0\.gate\(30,p\)\.complete&&t\.complete\)\{const d=delivery\(p\)/,'Ordinary recalculation must not silently execute CALCULATE_TERMINAL.');
-for(const token of ['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE','calculateTerminal','recordDeliveryAttempt','recordDeliveryEvidence'])assert.match(engineSource,new RegExp(token),`Stage 30 engine contract missing ${token}.`);
-for(const token of ['calculate-stage30-terminal','export-authorized-artifacts','record-delivery-evidence','exportAuthorizedArtifacts','recordCurrentDeliveryEvidence'])assert.match(appSource,new RegExp(token),`Stage 30 visible operator path missing ${token}.`);
-assert.match(appSource,/downloadCanonicalArtifact\(artifactId\)/,'Authorized export/share must reuse exact canonical stored-byte verification before transfer.');
-for(const token of ['mobile-acceptance-panel','mobile-acceptance-target-json','mobile-acceptance-evidence-json','run-mobile-capability-probe','export-mobile-acceptance-evidence','acceptanceSession','acceptanceModeReceipt','receipts'])assert.match(appSource,new RegExp(token),`Stage 30 mobile actor path missing ${token}.`);
+// Recalculation is observational: it cannot create a terminal command record.
+{
+  const p=fresh();p.projectData.deliveryRecords=[];
+  engine.recalculate(p);
+  assert.equal(engine.records(p,'deliveryRecords',{active:false}).length,0,'TERMINAL_SIDE_EFFECT_ORACLE: recalculation executed the terminal command');
+}
 
 console.log(JSON.stringify({
   stage30TerminalMobileBoundary:'PASS',
@@ -201,16 +194,20 @@ console.log(JSON.stringify({
     'delivery-evidence-without-attempt',
       ...mutationRejected,
       ...mobileRejected,
-    'automatic-terminal-side-effect',
-    'mobile-target-csprng-and-explicit-physical-facts'
   ],
+  positiveComponentCases:['ordinary-recalculation-does-not-create-terminal-record','challenge-format'],
   blockedTerminalRecorded:true,
   terminalRetryIdempotent:true,
-  terminalCalculationApplicationOwned:true,
+  terminalCalculationExecuted:true,
+  terminalOperationOwnershipDeclared:true,
   authorizedExportOperatorAction:true,
   deliveryAttemptDistinct:true,
   deliveryEvidenceDistinct:true,
-  visibleOperatorPathWired:true,
-  mobileActorHandoffPathWired:true,
+  evidenceClass:'synthetic command and submission-validation components',
+  actualBrowserJourney:false,
+  actualPhysicalIPhoneSafariAcceptance:false,
+  actualStoredByteComparisonEstablished:false,
+  visibleOperatorPathEstablished:false,
+  mobileActorHandoffPathEstablished:false,
   mobileTargetChallengeBound:true
 },null,2));

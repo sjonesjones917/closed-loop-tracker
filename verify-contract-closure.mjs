@@ -55,7 +55,8 @@ function verify(source){
     assert.ok(schema.derivationRegistry.entries[contract.derivationIdentity],`${key} references undefined derivation ${contract.derivationIdentity}.`);
   }
   assert.equal(Object.values(producerSets).reduce((a,b)=>a+b,0),Object.keys(schema.FIELD_REGISTRY).length,'Producer partitions must be exhaustive.');
-  assert.equal(new Set(Object.keys(schema.FIELD_REGISTRY)).size,Object.keys(schema.FIELD_REGISTRY).length,'Field registry paths must be unique.');
+  const fieldPaths=Object.values(schema.FIELD_REGISTRY).map(contract=>contract.path);
+  assert.equal(new Set(fieldPaths).size,fieldPaths.length,'Different field entries must not share a canonical JSON pointer.');
   assert.equal(schema.FIELD_REGISTRY['RECORD.unknownFamily.UNKNOWN_FIELD'],undefined,'Unknown field must fail closed.');
 
   for(const field of ['VERIFICATION_PHASE','EARLIEST_EXECUTABLE_STAGE','REQUIRED_BY_STAGE','PER_RUN_REQUIRED','FINAL_PRODUCT_REQUIRED','DELIVERY_REQUIRED','TARGET_AVAILABILITY_CONDITION'])assert.ok(schema.RECORD_SCHEMAS.tests.fieldDefinitions[field],`tests.${field} is required.`);
@@ -83,4 +84,5 @@ assert.throws(()=>verify(source.replace("const normalizerId=key=>{if(!key)return
 assert.throws(()=>verify(source.replace("const derivationId=key=>{if(!key)return NO_DERIVATION_ID;","const derivationId=key=>{if(!key)return 'closed-loop-derivation/missing/1';")),/undefined derivation/,'Undefined derivation mutation must fail.');
 assert.throws(()=>verify(source.replace("mappingAuthority:'ATTACHMENT_SLOT_ID'","mappingAuthority:'FILENAME'")),/Expected values to be strictly equal|ATTACHMENT_SLOT_ID/,'Filename-authoritative attachment mapping mutation must fail.');
 assert.throws(()=>verify(source.replace("minimumIdentityAssurance:'SELF_ASSERTED'","minimumIdentityAssurance:'AUTHENTICATED'")),/Current baseline authority must permit/,'Identity-assurance minimum mutation must fail.');
+assert.throws(()=>verify(source.replace('path:`/projectData/${family}/*/${name}`','path:`/projectData/duplicate/*/field`')),/Different field entries must not share a canonical JSON pointer/,'Duplicated canonical field pointers must be detected.');
 console.log(JSON.stringify(result));

@@ -85,7 +85,7 @@ export function reviewProofFixture(runtime,project){
  if(Object.entries(schema.RECORD_SCHEMAS).some(([family,definition])=>(project.projectData[family]||[]).some(row=>Number(row.stage||definition.stage)>6&&row.active!==false)))throw new Error('Build the proof-review prerequisite before downstream canonical records.');
  // Design-time records precede execution products and run contexts, including
  // when a focused downstream fixture is populated after those targets exist.
- for(const [family,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of project.projectData[family]||[]){const origin=Number(record.stage||definition.stage);if(origin>=4&&origin<=6){record.scope=engine.clone(prompts.scopeFor(origin,project));if(record.recordSha256)engine.refreshRecordHashes(record,family);}}
+ for(const [family,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of project.projectData[family]||[]){const origin=Number(record.stage||definition.stage);if(origin>=4&&origin<=6&&!record.rawResponseId){record.scope=engine.clone(prompts.scopeFor(origin,project));if(record.recordSha256)engine.refreshRecordHashes(record,family);}}
  const priorStages=engine.clone(project.stages),author=engine.preparePromptContext(project,6,{operation:'COMPLETE'}),authorPrompt=prompts.buildPromptRecord(6,project,author.options);
  project.projectData.generatedPrompts.push(authorPrompt);
  project.projectData.acceptedChanges.push({changeId:'FIXTURE-AUTHORED-PROOF',stage:6,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPLETE',promptId:authorPrompt.instructionId,scope:authorPrompt.scope,source:'CONTROLLED_DOWNSTREAM_PREREQUISITE_FIXTURE'});
@@ -96,4 +96,32 @@ export function reviewProofFixture(runtime,project){
  Object.assign(project,ingestion.commit(proposal.project,proposal.proposal.proposalId,{operator:'DOWNSTREAM_FIXTURE',replacementConfirmation:impact.requiresConfirmation?impact:null}).project);
  // These focused tests retain their explicit, already-controlled prerequisites.
  project.stages=priorStages;
+}
+
+// Component fixture: the caller supplies the earlier canonical requirements and
+// prerequisite display state. Author and reviewer responses themselves pass the
+// real reserved-instruction, validation, and acceptance mechanisms. This helper
+// does not establish a complete upstream journey or external semantic truth.
+export function reviewApplicabilityFixture(runtime,project){
+ const {engine,prompts,ingestion,schema}=runtime;
+ const priorStages=engine.clone(project.stages),targets=engine.records(project,'applicabilityRecords',{stage:5});
+ if(Object.entries(schema.RECORD_SCHEMAS).some(([family,definition])=>(project.projectData[family]||[]).some(row=>row.active!==false&&Number(row.stage||definition.stage)>5)))throw new Error('Build the applicability review before downstream canonical records.');
+ if(!targets.length)throw new Error('An applicability fixture must contain its authored target.');
+ if(targets.some(row=>row.rawResponseId))throw new Error('The applicability fixture cannot replace previously accepted records.');
+ project.projectData.applicabilityRecords=project.projectData.applicabilityRecords.filter(row=>!targets.includes(row));
+ const authorRecords=targets.map(row=>recordProposal(schema,'applicabilityRecords',{tempKey:engine.recordId(row,'applicabilityRecords'),relationships:{SUBJECT_ID:{recordId:String(engine.recordValue(row,'SUBJECT_ID'))},...(engine.recordValue(row,'ACTIVATION_PROOF_OBLIGATION_ID')?{ACTIVATION_PROOF_OBLIGATION_ID:{recordId:String(engine.recordValue(row,'ACTIVATION_PROOF_OBLIGATION_ID'))}}:{})},overrides:{PROPOSED_APPLICABILITY:engine.recordValue(row,'PROPOSED_APPLICABILITY')||engine.recordValue(row,'SELECTED_APPLICABILITY'),REASONING:engine.recordValue(row,'REASONING')||'The supplied component fixture stipulates the governing scope; the review tests application authority only.'}}));
+ function accept(operation,content){
+  project.stages=engine.clone(priorStages);
+  const pr=prompts.reserveAndBuildPromptRecord(project,5,{operation}).prompt;
+  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage:5,operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,responseType:'DATA_PROPOSAL',stageData:{},records:{},evidence:[evidence('applicability-authority-component')],humanInputRequests:[],unresolved:[],warnings:[],attachments:[],...content};
+  const transport={authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true,packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,promptIdentity:envelope.promptIdentity};
+  const prepared=ingestion.prepare(project,{stage:5,text:JSON.stringify(envelope),promptRecord:pr,transport});
+  if(!prepared.validation.valid)throw new Error('Applicability fixture intake: '+JSON.stringify(prepared.validation.issues));
+  const impact=ingestion.reviewAcceptance(prepared.project,prepared.proposal.proposalId);
+  Object.assign(project,ingestion.commit(prepared.project,prepared.proposal.proposalId,{replacementConfirmation:impact.requiresConfirmation?impact:null}).project);
+ }
+ accept('COMPLETE',{stageData:{DUPLICATES_REMAINING:'NONE',IMPOSSIBLE_COMBINATIONS:'NONE',UNDEFINED_TERMS:'NONE',CIRCULAR_DEPENDENCIES:'NONE',UNSUPPORTED_REQUIREMENTS:'NONE',APPLICABILITY_UNDETERMINED:'NONE',REQUIREMENTS_WITHOUT_VERIFICATION_PATH:'NONE'},records:{applicabilityRecords:authorRecords}});
+ accept('SEMANTIC_REVIEW',{records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'applicability-review',overrides:{REVIEW_QUESTION:'Does the submitted disposition preserve the stipulated governing scope?',FINDING:'The submitted disposition is supported by this component fixture.',REASONING:'This synthetic review tests accepted application context and exact-target binding; no external semantic truth is asserted.',RESULT:'ACCEPTED'}})]}});
+ project.stages=priorStages;
+ return project;
 }

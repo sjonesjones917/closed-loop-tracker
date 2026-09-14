@@ -104,28 +104,16 @@ const nakedVerification=record('verification',{REQ_ID:'REQ-1',RUN_ID:'RUN-X',TES
 // A release reduction over incomplete/contradictory canonical state can never ACCEPT.
 const metrics=engine.releaseMetrics(p);assert(metrics.determination!=='ACCEPTED','Incomplete contradictory project released');
 
-// Static lifetime guard: the release reducer must consume release-grade trust and the central adjudicator, not submitted favorable strings.
-const source=fs.readFileSync('workflow-engine.js','utf8');assert(source.includes('releaseVerificationTrustFailures'),'releaseMetrics is not wired to release-grade verification trust');assert(source.includes('evaluateResultConsistency'),'Central result adjudication is missing');assert(source.includes('effectiveDetermination'),'Effective determination reducer is missing');assert(!source.includes("['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(latest,'RESULT')))"),'Legacy regression success shortcut remains');
-// Gate adjudication must not serialize the entire project on every recalculation stage.
-const adjudicationHotPath=source.slice(source.indexOf('function adjudicatedClone(project){'),source.indexOf('\nfunction validateTraceIntegrity',source.indexOf('function adjudicatedClone(project){')));
-assert(adjudicationHotPath&&!adjudicationHotPath.includes('clone(project)'),'Gate adjudication still deep-clones the entire project');
-assert(adjudicationHotPath.includes('projectData:{...(project?.projectData||{})}'),'Gate adjudication does not use a shallow project-data view');
-assert(adjudicationHotPath.includes('map(record=>clone(record))'),'Gate adjudication does not isolate only conclusion-bearing records before rewriting effective determinations');
-for(const unrelated of ['rawResponses','generatedPrompts','history','responseProposals'])assert(!adjudicationHotPath.includes('copy.projectData['+JSON.stringify(unrelated)+']'),'Gate adjudication clones unrelated large provenance collection '+unrelated);
-
-const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudicationDeclarationChecked:true,contradictionCases,completeOperatorJourney:false,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
+// Input preservation is exercised against the gate functions below.
+// Performance and full release-evidence closure need their own executed cases.
+const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,contradictionCases,completeOperatorJourney:false,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
 
 // Capability names and human prose are claims, not capability readiness. A current canonical capability record repairs routing.
 {
  const q=core.createBlankState('JOB-CAPABILITY-AFFIRMATION');engine.ensureShape(q);q.job.CURRENT_INPUT_VERSION='INPUT-v001';q.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';q.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v001';const s=engine.currentScope(q);q.projectData.requirements.push({id:'REQ-CAP',stage:4,active:true,scope:s,fields:{REQ_ID:'REQ-CAP',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}});q.projectData.tests.push({id:'TEST-CAP',stage:6,active:true,scope:s,fields:{TEST_ID:'TEST-CAP',REQ_ID:'REQ-CAP',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'SOLIDWORKS_IMPORT',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:'import report',STATUS:'READY'},relationships:{REQ_ID:'REQ-CAP'}});let plan=engine.testExecutionPlan(q).items[0];assert(!plan.executableNow&&plan.operatorAction==='BLOCKED','Capability name alone established external tool availability');q.job.AVAILABLE_TOOLS='SOLIDWORKS_IMPORT';plan=engine.testExecutionPlan(q).items[0];assert(!plan.executableNow&&plan.operatorAction==='BLOCKED','Human AVAILABLE_TOOLS prose incorrectly established CAPABILITY_READY');const capabilityFields={CAPABILITY_ID:'CAPABILITY-SOLIDWORKS',CAPABILITY_CLAIM:'SOLIDWORKS_IMPORT',FRESHNESS_STATUS:'CURRENT',STATUS:'CURRENT',AUTHORIZED:true,PERMISSIONS_READY:true,INPUTS_TRANSFERABLE:true,ROUTE_USABLE:true,EVIDENCE_OBTAINABLE:true};q.projectData.externalCapabilities.push({id:'CAPABILITY-SOLIDWORKS',stage:6,active:true,scope:{inputVersion:q.job.CURRENT_INPUT_VERSION},fields:capabilityFields,...capabilityFields});plan=engine.testExecutionPlan(q).items[0];assert(plan.executableNow&&plan.operatorAction==='SEND_TO_TOOL_AGENT','Current canonical capability evidence did not restore routing');
 }
 
-const strengthenedSource=fs.readFileSync('workflow-engine.js','utf8');
-assert(strengthenedSource.includes("NON_SATISFIED_EFFECTIVE_RESULT:"),'Stage 29 does not require effective result satisfaction');
-assert(strengthenedSource.includes("RELEASE_NOT_ACCEPTED"),'Stage 29 does not require an accepted current release');
-assert(strengthenedSource.includes("UNAUTHORIZED_ARTIFACT_IDENTITY:"),'Stage 29 explanation does not fail closed on unauthorized delivery identity');
-assert(!strengthenedSource.includes("map(v=>upper(recordValue(v,'DETERMINATION')))"),'Stability diagnostics still consume submitted determinations');
-console.log(JSON.stringify({...proof,affirmativeCapabilityAvailability:true,epistemicEvidenceComponentCases:true,effectiveStabilitySourceGuardChecked:true}));
+console.log(JSON.stringify({...proof,affirmativeCapabilityAvailability:true,epistemicEvidenceComponentCases:true}));
 // §29.13: invalid proof syntax must be rejected even when no observation exists.
 for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependencyId:'DEP-1'},{type:'LEAF',testId:'TEST-1',observationId:'OBS-1'},{op:'LEAF',testId:'TEST-1'},{type:'ALL_OF',children:[]}]){
  const result=engine.evaluateProofExpression(core.createBlankState('JOB-PROOF-SYNTAX'),'PROP-1',node);
@@ -154,3 +142,5 @@ for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependency
 }
 
 await import('./verify-result-contradictions.mjs');
+
+await import('./verify-adjudication-input-preservation.mjs');
