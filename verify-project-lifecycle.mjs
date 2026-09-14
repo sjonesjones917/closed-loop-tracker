@@ -492,11 +492,29 @@ for(const count of [1,64,65,129])await storageRegression(`file-intake:bounded-re
   const saved=await storageRuntime.projectStore.readProject('INTAKE-BATCH-'+count),rows=await storageRuntime.projectStore.listArtifacts(saved.job.JOB_ID);
   assert(storageRuntime.failures.length===0,'Batch intake failed: '+storageRuntime.failures.join(' | '));
   assert(rows.length===count&&saved.projectData.artifacts.length===count&&saved.stages[1].authorizedFiles.length===count,'Batch intake lost file bytes, canonical metadata or handoff selection.');
+  const supplied=storageRuntime.engine.intakeCoverageManifest(saved).units.filter(unit=>unit.kind==='SUPPLIED_MATERIAL');
+  const sent=storageRuntime.engine.executionHandoff(saved,{stage:1,operation:'COMPLETE'}).send;
+  assert(supplied.length===count&&sent.length===count,'Saved Stage 01 files disappeared from the intake manifest or instruction handoff after input versioning.');
+  for(const row of rows)assert(supplied.some(unit=>unit.artifactId===row.artifactId&&unit.artifactSha256===row.sha256)&&sent.some(item=>item.artifactId===row.artifactId&&item.sha256===row.sha256),'Intake and handoff did not preserve exact selected-file identity.');
   const events=saved.projectData.history.filter(e=>e.type==='ARTIFACT_BYTES_REGISTERED');
   assert(events.length===count&&events.every((e,i)=>e.artifactId===saved.projectData.artifacts[i].id),'Batch intake changed registration history or order.');
   for(const row of rows)assert(saved.projectData.userEntered.suppliedArtifactText[row.artifactId].text===await row.blob.text(),'Batch intake changed exact supplied text.');
   console.log(JSON.stringify({artifactRegistrationPressure:{files:count,preCommitRecalculations:preparations}}));
   assert(preparations>0&&preparations<=Math.ceil(count/64),`${count} files recalculated the workflow ${preparations} times before commit; budget ${Math.ceil(count/64)} preparations.`);
+});
+await storageRegression('file-intake:versioned-input-keeps-supplied-bytes',async()=>{
+  const saved=await storageRuntime.projectStore.readProject('INTAKE-BATCH-1'),engine=storageRuntime.engine;
+  const artifact=saved.projectData.artifacts[0],historical=JSON.stringify(artifact),originalVersion=saved.job.CURRENT_INPUT_VERSION;
+  saved.job.EXACT_USER_OBJECTIVE_VERBATIM='Correct the objective while retaining the supplied file.';
+  engine.recordHumanInputVersion(saved,['EXACT_USER_OBJECTIVE_VERBATIM'],'TEST_OPERATOR');
+  assert(saved.job.CURRENT_INPUT_VERSION!==originalVersion,'The test did not create a new human input version.');
+  engine.registerArtifactBytes(saved,{stage:1,artifactId:'ARTIFACT-RETURNED',filename:'response-copy.txt',mediaType:'text/plain',byteSize:1,sha256:'a'.repeat(64),role:'RETURNED_ATTACHMENT'});
+  engine.registerArtifactBytes(saved,{stage:2,artifactId:'ARTIFACT-RESEARCH',filename:'research.txt',mediaType:'text/plain',byteSize:1,sha256:'b'.repeat(64)});
+  const supplied=engine.intakeCoverageManifest(saved).units.filter(unit=>unit.kind==='SUPPLIED_MATERIAL'),sent=engine.executionHandoff(saved,{stage:1,operation:'COMPLETE'}).send;
+  assert(supplied.length===1&&sent.length===1&&supplied[0].artifactId===artifact.id&&sent[0].artifactId===artifact.id,'Input edits lost the supplied file or promoted returned/research bytes into human input.');
+  assert(JSON.stringify(artifact)===historical,'Input membership rewrote the historical artifact identity.');
+  artifact.active=false;artifact.invalidatedBy='EXPLICITLY_WITHDRAWN_INPUT';
+  assert(!engine.intakeCoverageManifest(saved).units.some(unit=>unit.kind==='SUPPLIED_MATERIAL')&&engine.executionHandoff(saved,{stage:1,operation:'COMPLETE'}).send.length===0,'Withdrawn input was silently restored to the current handoff.');
 });
 for(const invalid of ['identity','product'])await storageRegression(`file-intake:batch-member-rejection:${invalid}`,async()=>{
   await vm.runInContext(`(async()=>{current=await makeStored('INTAKE-INVALID-'+${JSON.stringify(invalid)});projects=[current];failures=[];})()`,storageRuntime);

@@ -9,6 +9,46 @@ const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
+// Use the production response-file button and handler while storage is held.
+// A second click must share the pending action, with feedback before byte work.
+{
+  const nodes=new Map(),failures=[],frames=[];let staged=0,release,inputEnabledAtHandler;
+  const held=new Promise(resolve=>{release=resolve;});
+  for(const id of ['project-picker','new-project','export-project','header-backup-project','import-project','import-file','process-response-file','response-json-file','storage-status','app-live-status']){
+    const attributes=new Map();nodes.set('#'+id,{id,disabled:false,isConnected:true,textContent:id==='process-response-file'?'Stage and validate response file':'',value:'',dataset:{},files:[new Blob(['{"schema":}'],{type:'application/json'})],setAttribute:(key,value)=>attributes.set(key,String(value)),getAttribute:key=>attributes.get(key)??null,removeAttribute:key=>attributes.delete(key)});
+  }
+  const runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,clearTimeout,queueMicrotask,
+    requestAnimationFrame:callback=>{frames.push(callback);return frames.length;},
+    Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:selector=>nodes.get(selector)||null,querySelectorAll:selector=>['button,input,select','input,select,textarea,[data-view],[data-stage],#new-project'].includes(selector)?[...nodes.values()]:[]},
+    stageResponseFile:async()=>{inputEnabledAtHandler=!nodes.get('#response-json-file').disabled;staged++;await held;throw new Error('CONTROLLED_RESPONSE_STORAGE_FAILURE');},failures});
+  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
+  vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
+    core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;
+    current=core.createBlankState('UI-RESPONSE-SINGLE-ACTION');engine.recalculate(current);projects=[current];
+    closedLoopPromptEngine.reserveAndBuildPromptRecord(current,1,{operation:'COMPLETE'});
+    projectStore={stageResponseFile};reportResponseFailure=(message,error)=>failures.push(String(error?.message||message));
+    wire();globalThis.ui={project:()=>current};
+  })();`,runtime);
+  const button=nodes.get('#process-response-file'),before=JSON.stringify(runtime.ui.project());
+  const first=button.onclick(),duplicate=button.onclick();
+  assert.equal(staged,0,'Response byte work started before loading feedback could paint.');
+  assert.equal(button.disabled,true,'A pending response action left its button enabled.');
+  assert.equal(nodes.get('#new-project').disabled,true,'Navigation remained available before the pending action captured its input.');
+  assert.equal(nodes.get('#storage-status').getAttribute('aria-busy'),'true','A pending response action has no loading feedback.');
+  assert.equal(first,duplicate,'Repeated response clicks did not share the pending action.');
+  while(frames.length)frames.shift()(0);
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(staged,1,'Repeated response clicks staged the same file concurrently.');
+  assert.equal(inputEnabledAtHandler,true,'Input capture ran with disabled controls, suppressing native validation and focus.');
+  assert.equal(nodes.get('#new-project').disabled,false,'Navigation remained disabled after the action captured its input.');
+  release();await first;
+  assert.equal(button.disabled,false,'Storage failure left response retry disabled.');
+  assert.equal(nodes.get('#storage-status').getAttribute('aria-busy'),null,'Storage failure left loading feedback stuck.');
+  assert.equal(failures.length,1,'A single response action reported duplicate failures.');
+  assert.equal(JSON.stringify(runtime.ui.project()),before,'Failed byte staging changed canonical project state.');
+  console.log(JSON.stringify({responseButtonSingleAction:true,feedbackBeforeByteWork:true,storageFailureRestoresControls:true}));
+}
+
 // The complete workflow renderer must advertise required files before the first
 // save/export, using the same preview it already built without reserving work.
 {

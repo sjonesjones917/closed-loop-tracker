@@ -24,7 +24,8 @@
         "workflow-engine.js:gate/deriveStageData",
         "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
         "workflow-schema.js:SEMANTIC_STAGE_OPERATIONS/recordResponseRequiredFields",
-        "response-ingestion.js:prepareStageContinuation/recoverInvalidSemanticReviews/supersedeSemanticReconciliation"
+        "response-ingestion.js:prepareStageContinuation/recoverInvalidSemanticReviews/supersedeSemanticReconciliation",
+        "workflow-engine.js:stageOneInputArtifacts/intakeCoverageManifest/executionHandoff"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -32,18 +33,21 @@
         "verify-stage01-intake-closure.mjs",
         "verify-one-time-intent-intake.mjs",
         "verify-human-authority-roundtrip.mjs",
-        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06"
+        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01\u201306",
+        "verify-project-lifecycle.mjs:file-intake:bounded-registration:1/64/65/129 and file-intake:versioned-input-keeps-supplied-bytes"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
         "verify-definition-of-done.mjs",
-        "verify-semantic-review-acceptance.mjs:failed reviews/challenges cannot complete, reconciler cannot self-approve, old review cannot approve a new authored intake, pending proposals retain priority"
+        "verify-semantic-review-acceptance.mjs:failed reviews/challenges cannot complete, reconciler cannot self-approve, old review cannot approve a new authored intake, pending proposals retain priority",
+        "verify-project-lifecycle.mjs:input-version changes retain supplied bytes; returned/research artifacts and withdrawn input stay excluded; historical artifact identity remains unchanged"
       ],
       "browserProof": [
         "verify-human-stage-walkthrough.mjs",
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics",
-        "verify-browser-extra.mjs:cross-stage-review-correction"
+        "verify-browser-extra.mjs:cross-stage-review-correction",
+        "verify-browser.mjs:real Stage 01 file selection, reload, instruction/manifest download, and saved-versus-downloaded instruction byte comparison"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -77,7 +81,7 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06"
+        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01\u201306"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -122,7 +126,7 @@
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06"
+        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01\u201306"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -169,7 +173,7 @@
         "verify-zero-loss-accounting.mjs",
         "verify-user-prompt-invariants.mjs",
         "verify-full-cycle.mjs:production storage integrity after every response acceptance",
-        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06"
+        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01\u201306"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -230,7 +234,7 @@
         "verify-full-cycle.mjs:automatic Stage 05 reviewer acceptance without manual context registration",
         "verify-full-cycle.mjs:every real data proposal retains its operation while pending acceptance",
         "verify-semantic-review-acceptance.mjs:actual UI acceptance, automatic saved instruction, legacy reload recovery, reconciliation then independent review",
-        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06"
+        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01\u201306"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -302,7 +306,7 @@
         "verify-file-first-operator.mjs:existing Stage 06 instruction upgrades to the closed proof contract",
         "verify-full-cycle.mjs:every real data proposal retains its operation while pending acceptance",
         "verify-semantic-review-acceptance.mjs:incomplete Stage 05 cannot unlock Stage 06",
-        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06"
+        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01\u201306"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1324,7 +1328,7 @@
     {
       "id": "STAGE-30",
       "stage": 30,
-      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27↔Stage 30 cycle.",
+      "requirement": "Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
       "normativeRequirementIds": [
         "NREQ-39eba2aba9049ed18beade0c11e0c107",
         "NREQ-04785265535dbd6ef92f51cd4846752e"
@@ -1386,7 +1390,7 @@
         "verify-full-cycle.mjs:record-specific completion findings in reconciliation instruction",
         "verify-hash.mjs:bounded Blob reads and independent crypto oracle",
         "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle",
-        "verify-file-first-operator.mjs:contextFirstPreview — full production UI, no commit or repeated preview build"
+        "verify-file-first-operator.mjs:contextFirstPreview \u2014 full production UI, no commit or repeated preview build"
       ],
       "negativeAdversarialTests": [
         "verify-prompt-semantics.mjs",
@@ -1394,12 +1398,12 @@
         "verify-ingestion.mjs:invalid timing rejects before canonical mutation and appears in replacement instruction",
         "verify-all-stage-prompts.mjs:all external operations exclude downstream version dependencies; verify-full-cycle.mjs:Stage05 re-review after Stage06 and subsequent suite rebuild",
         "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters",
-        "verify-file-first-operator.mjs:contextFirstPreview — unavailable stages, changed revision and switched project cannot reuse attachment metadata"
+        "verify-file-first-operator.mjs:contextFirstPreview \u2014 unavailable stages, changed revision and switched project cannot reuse attachment metadata"
       ],
       "browserProof": [
         "verify-browser.mjs:stage03AccumulatedTransfer",
         "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards",
-        "verify-browser.mjs:stage03AccumulatedTransfer — context first from unsaved preview, one saved reservation, exact matching files, stable subsequent exports, reload and backup"
+        "verify-browser.mjs:stage03AccumulatedTransfer \u2014 context first from unsaved preview, one saved reservation, exact matching files, stable subsequent exports, reload and backup"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1436,7 +1440,7 @@
         "verify-file-first-operator.mjs:latest relevant response and status precedence across all 30 stages",
         "verify-hash.mjs:bounded Blob reads and independent crypto oracle",
         "verify-project-lifecycle.mjs:both production package schemas, UTF-8/base64 boundaries and independent digest oracle",
-        "verify-file-first-operator.mjs:contextFirstPreview — full production UI, no commit or repeated preview build",
+        "verify-file-first-operator.mjs:contextFirstPreview \u2014 full production UI, no commit or repeated preview build",
         "verify-semantic-review-acceptance.mjs:acceptance and load recovery use existing canonical persistence transaction"
       ],
       "negativeAdversarialTests": [
@@ -1447,7 +1451,7 @@
         "verify-file-first-operator.mjs:no manual context naming, repeat export stable, all-stage failures inline",
         "verify-file-first-operator.mjs:old file slot, unrelated operation and prior success cannot override current attempt",
         "verify-project-lifecycle.mjs:damaged stored artifact rejection; invalid base64 padding/characters",
-        "verify-file-first-operator.mjs:contextFirstPreview — unavailable stages, changed revision and switched project cannot reuse attachment metadata",
+        "verify-file-first-operator.mjs:contextFirstPreview \u2014 unavailable stages, changed revision and switched project cannot reuse attachment metadata",
         "verify-semantic-review-acceptance.mjs:failed continuation save preserves pending proposal and emits no success"
       ],
       "browserProof": [
@@ -1455,7 +1459,7 @@
         "verify-browser-extra.mjs:invalid replacement, correction export, inline storage failure, pending reselection, acceptance and reload",
         "verify-browser-extra.mjs:Stage04 acceptance to Stage05 automatic author allocation, exact instruction/manifest export, no manual context form or popup",
         "verify-mobile-stage-action.mjs:real IndexedDB file custody, response staging, paged final artifact download, complete export and restore with bounded read guards",
-        "verify-browser.mjs:stage03AccumulatedTransfer — context first from unsaved preview, one saved reservation, exact matching files, stable subsequent exports, reload and backup",
+        "verify-browser.mjs:stage03AccumulatedTransfer \u2014 context first from unsaved preview, one saved reservation, exact matching files, stable subsequent exports, reload and backup",
         "verify-browser-extra.mjs:invalid semantic review automatically saves replacement instruction before export"
       ],
       "deployedProof": [
@@ -1487,17 +1491,17 @@
         "verify-browser.mjs",
         "verify-mobile-stage-action.mjs",
         "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts",
-        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists — all 30 stage renderers, 603 ordered reasons, storage mismatch and unsupported executor lists"
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 all 30 stage renderers, 603 ordered reasons, storage mismatch and unsupported executor lists"
       ],
       "negativeAdversarialTests": [
         "verify-browser-extra.mjs",
-        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists — escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation",
-        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists — accumulated current-action explanation retains its exact text behind bounded disclosure"
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 accumulated current-action explanation retains its exact text behind bounded disclosure"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download",
-        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics/diagnosticArrowProof — real engine reasons, both shared arrows, complete paging, collapse, body release and reopening"
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics/diagnosticArrowProof \u2014 real engine reasons, both shared arrows, complete paging, collapse, body release and reopening"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -1527,19 +1531,19 @@
         "verify-mobile-stage-action.mjs",
         "verify-human-stage-walkthrough.mjs",
         "verify-project-lifecycle.mjs:600-file page identity, deferred 600-change proposal and Stage15/29 calculation counts",
-        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists — all 30 stage renderers, 603 ordered reasons, storage mismatch and unsupported executor lists"
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 all 30 stage renderers, 603 ordered reasons, storage mismatch and unsupported executor lists"
       ],
       "negativeAdversarialTests": [
         "verify-browser-extra.mjs",
-        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists — escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation",
-        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists — accumulated current-action explanation retains its exact text behind bounded disclosure"
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 escaped markup, oversized single reason, unchanged canonical state, satisfied gate and Stage 01 confirmation",
+        "verify-project-lifecycle.mjs:view:collapsed-diagnostic-lists \u2014 accumulated current-action explanation retains its exact text behind bounded disclosure"
       ],
       "browserProof": [
         "verify-mobile-stage-action.mjs:all30StageAccumulatedDataViews",
         "verify-browser.mjs:original instruction/proposal arrows and page-scroll-at-first-line",
         "verify-mobile-stage-action.mjs:original arrows on bounded history text and all 30 stages",
         "verify-mobile-stage-action.mjs:all-30-stage accumulated views and first/last file page with exact download",
-        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics/diagnosticArrowProof — real engine reasons, both shared arrows, complete paging, collapse, body release and reopening"
+        "verify-mobile-stage-action.mjs:all30StageCollapsedDiagnostics/diagnosticArrowProof \u2014 real engine reasons, both shared arrows, complete paging, collapse, body release and reopening"
       ],
       "deployedProof": [
         "verify-live.mjs",
@@ -2189,7 +2193,7 @@
       ],
       "browserProof": [
         "verify-browser-extra.mjs:worker digest equality",
-        "verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports — selected accumulated project reload, six views, manifest/instruction/complete export and restore",
+        "verify-browser-extra.mjs:accumulated-stage04-startup-views-and-exports \u2014 selected accumulated project reload, six views, manifest/instruction/complete export and restore",
         "verify-browser-extra.mjs:large-response-history-handoff-and-ui-restore: 25 real failed responses of 800,000 characters, selected reload, handoff and UI complete-package restoration",
         "verify-browser-extra.mjs:large-history-execution-package with real IndexedDB, exact context/instruction/package hashes, bounded source reads and unchanged saved project"
       ],
@@ -2370,8 +2374,8 @@
     },
     {
       "id": "DELAYED-STORAGE-ACTIVITY",
-      "requirement": "Show the actual pending operation after 180 ms in the existing status area, without changing its dimensions or inventing a percentage.",
-      "requirementSource": "12 September 2026 performance/reliability repair brief; specification constrains identity, custody and behavior.",
+      "requirement": "Show loading feedback before an asynchronous operator action starts expensive work, keep it visible when the header is offscreen, share repeated clicks on a pending action, and restore controls after success or failure. Preserve existing transaction and file-transport owners.",
+      "requirementSource": "14 September 2026 all-stage conformance request: minimal loading feedback and protection from repeated clicks; supersedes the earlier header-only activity presentation.",
       "specificationSections": [
         "39.18",
         "45.1"
@@ -2380,23 +2384,28 @@
       "sourceLines": [],
       "productionOwner": [
         "app-core.js:withStorageActivity/paintStorageActivity",
-        "index.html:storage-status busy pseudo-element"
+        "index.html:storage-status busy pseudo-element",
+        "app-core.js:wireBusyActions and existing asynchronous control bindings"
       ],
       "existingTests": [
-        "verify-project-lifecycle.mjs:existing serialized exports and commit/refresh truthfulness"
+        "verify-project-lifecycle.mjs:existing serialized exports and commit/refresh truthfulness",
+        "verify-file-first-operator.mjs:responseButtonSingleAction / feedbackBeforeByteWork / storageFailureRestoresControls"
       ],
       "negativeAdversarialTests": [
         "pre-commit rejection and lost worker reply",
-        "queued requests remain distinct; activity clears on completion"
+        "queued requests remain distinct; activity clears on completion",
+        "Production response button clicked twice while staging storage is held; one pending action, one staging attempt, one reported storage failure, unchanged canonical project, and enabled retry afterward."
       ],
       "browserProof": [
-        "verify-browser-extra.mjs:delayed-import-activity-preserves-layout"
+        "verify-browser-extra.mjs:delayed-import-activity-preserves-layout",
+        "verify-browser.mjs:responseActionFeedback, case response-double-click-before-byte-staging"
       ],
       "deployedProof": [
         "verify-live.mjs",
-        "verify-browser-extra.mjs"
+        "verify-browser-extra.mjs",
+        "verify-browser.mjs:responseActionFeedback on the exact deployed resources"
       ],
-      "evidenceGap": "Current CI and deployment links are on PR #1221. This mapping does not establish physical-device capacity, approved visual authority, or all clauses of the cited sections.",
+      "evidenceGap": "The new renderer/handler regression failed on 76bac0c before the repair and passes locally afterward. Full CI and deployed browser evidence for this repair remain pending. Physical-device and approved visual evidence remain separate.",
       "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
     },
     {
@@ -2528,13 +2537,13 @@
         29,
         30
       ],
-      "evidenceGap": "Local RED→GREEN covers the shared production handlers. Exact CI/merge/deployment evidence is recorded on the repair PR. Physical-iPhone Safari and approved visual authority remain required; no device timing or headroom claim.",
+      "evidenceGap": "Local RED\u2192GREEN covers the shared production handlers. Exact CI/merge/deployment evidence is recorded on the repair PR. Physical-iPhone Safari and approved visual authority remain required; no device timing or headroom claim.",
       "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION"
     },
     {
       "id": "SEMANTIC-REVIEW-CONTINUATION",
       "requirement": "Failed or unfinished semantic reviews and challenges cannot satisfy their owning stage or unlock downstream work. Record valid failure evidence separately from completion; automatically save the required correction instruction; preserve history; require independent review of the current authored change after reconciliation. Recover unsupported historical dispositions across every operation that uses these families.",
-      "requirementOrigin": "Specification 17.12, 26.5, identified Stage 01–06 completion clauses, and the user-requested application-wide repair. Automatic instruction saving and legacy recovery are implementation of that repair request.",
+      "requirementOrigin": "Specification 17.12, 26.5, identified Stage 01\u201306 completion clauses, and the user-requested application-wide repair. Automatic instruction saving and legacy recovery are implementation of that repair request.",
       "normativeRequirementIds": [
         "NREQ-703c69d350d3da62011c05675d00efef",
         "NREQ-cd5bf8364f5c40ffe96641607787f17b",
@@ -2577,7 +2586,7 @@
         "verify-semantic-review-acceptance.mjs:closed enum, missing fields, mixed ACCEPTED with REJECTED/PARTIAL/UNKNOWN/DISAGREED, old pending invalid review, stale unbound correction prompt, atomic save failure, read-only preview, repeated reload",
         "verify-full-cycle.mjs:self/foreign contexts and stale reviewed targets",
         "verify-semantic-review-acceptance.mjs:Stage 01 confirmation uses current gate; challenge contracts exclude author-only accounting; Stage 06 UNKNOWN; current author-change binding; selected saved instruction after project reopen; immediate controlled refinement with correct CAS revision",
-        "verify-semantic-review-acceptance.mjs:all five Stage 01–04 requested-review operations reopen completed stages; preview remains read-only; an older positive review cannot answer a newly requested review",
+        "verify-semantic-review-acceptance.mjs:all five Stage 01\u201304 requested-review operations reopen completed stages; preview remains read-only; an older positive review cannot answer a newly requested review",
         "verify-semantic-review-acceptance.mjs:orphaned historical audit records cannot trigger a live continuation or overwrite an imported saved projection; explicit gate correction requests remain supported"
       ],
       "browserProof": [
@@ -2636,5 +2645,12 @@
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",
   "performanceRepairStartingCommit": "6f7ccb71413e639887047c5eddad5a60cdb3ee37",
-  "runtimeContinuationStartingCommit": "563e1d9989cc2e4d21e52fdc84127e9b6ff5efc6"
+  "runtimeContinuationStartingCommit": "563e1d9989cc2e4d21e52fdc84127e9b6ff5efc6",
+  "conformanceRepairStartingPoint": {
+    "workingCommitAtRequest": "8eea0fbed1ca27ec90db6b6550743c8440fdf58c",
+    "deployedCommitAtRequest": "d9b658ebf054033cf2c1e20c315d39a1ab5e7613",
+    "integratedRuntimeRepairCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+    "scope": "All 30 stages and every required operation; existing CI is the verification backbone. Application defects and specification mismatches are blockers; unavailable physical-device and external evidence is recorded separately."
+  }
 }
