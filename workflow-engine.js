@@ -694,9 +694,10 @@ function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersio
 }
 function stageOneInputArtifacts(project){
   const selected=new Set(safe(project.stages?.[1]?.authorizedFiles).map(item=>String(item?.artifactId||item?.id||'')).filter(Boolean));
+  const current=new Set(recordsForCurrentScope(project,'artifacts'));
   // Supplied bytes belong to the current input inventory. Editing that input
   // versions its meaning; it does not remove or re-identify the supplied files.
-  return records(project,'artifacts').filter(record=>(Number(record?.stage||recordValue(record,'STAGE')||record?.lineage?.stage||0)===1||selected.has(recordId(record,'artifacts')))&&upper(recordValue(record,'ROLE'))!=='RETURNED_ATTACHMENT');
+  return records(project,'artifacts').filter(record=>(current.has(record)||selected.has(recordId(record,'artifacts')))&&(Number(record?.stage||recordValue(record,'STAGE')||record?.lineage?.stage||0)===1||selected.has(recordId(record,'artifacts')))&&upper(recordValue(record,'ROLE'))!=='RETURNED_ATTACHMENT');
 }
 function intakeCoverageManifest(project){
   ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',units=[];
