@@ -622,7 +622,8 @@ async function recordInstructionExport(record){
 }
 async function exportStageFiles(){return promptExport(async record=>withStorageActivity('Preparing stage files',async()=>{
   const owner=current,stage=Number(owner.activeStage),revision=Number(owner.revision||0),options=promptOptions(stage),operation=options.operation,scope=options.scope||{},action=displayedStageAction(stage),operatorAction=({AI_REVIEW:'SEND_TO_INDEPENDENT_REVIEWER',EXTERNAL_AGENT_TOOL:'SEND_TO_TOOL_AGENT',EXTERNAL_SYSTEM:'USE_EXTERNAL_SYSTEM',HUMAN_INSPECTION:'HUMAN_INSPECTION'})[action.actionType]||null;
-  const testIds=stagePlanItems(stage,operation).filter(item=>item.executionMode!=='APPLICATION_DETERMINISTIC'&&item.operatorAction!=='NO_ACTION'&&(!operatorAction||item.operatorAction===operatorAction)).map(item=>item.testId);
+  const providedTestIds=new Set((record.contextManifest?.readCollections?.tests||[]).map(item=>String(item.id)));
+  const testIds=stagePlanItems(stage,operation).filter(item=>providedTestIds.has(String(item.testId))&&item.executionMode!=='APPLICATION_DETERMINISTIC'&&item.operatorAction!=='NO_ACTION'&&(!operatorAction||item.operatorAction===operatorAction)).map(item=>item.testId);
   const pkg=await projectStore.createExecutionPackage({project:owner,jobId:owner.job.JOB_ID,stage,operation,testIds,productId:owner.job.CURRENT_PRODUCT_ID,runId:scope.runId||null,instructionId:record.instructionId||record.promptId});
   if(current.job.JOB_ID!==owner.job.JOB_ID||current.activeStage!==stage||Number(current.revision||0)!==revision)throw new Error('The project changed while preparing files. Export the current stage again.');
   downloadBlob(pkg.blob,pkg.filename);await recordInstructionExport(record);announce('Stage files ready. Open the ZIP and send its files to the agent.');render();
