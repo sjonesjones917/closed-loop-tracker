@@ -1,9 +1,12 @@
+import {recoveryManifest,recoveryManifestSha256,recoveryRequirementIds,validateRecoveryManifest} from './recovery-governance.mjs';
+validateRecoveryManifest();
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {evaluateFinalAcceptance,CORE_COVERAGE_KEYS,SECTION49_COVERAGE_KEYS,CORE_ZERO_KEYS,SECTION49_ZERO_KEYS} from './final-acceptance.mjs';
 // Disposable publication fixture. This proves the gate, not a physical-device run.
 const commit='a'.repeat(40),visual={status:'PROVEN',sourceCommit:'b'.repeat(40),comparedCommit:commit,comparisonResult:'PASS',evidenceReferences:['DISPOSABLE-VISUAL-EVIDENCE'],authority:'VISUAL_BASELINE_AUTHORIZATION'};
 const fixture={commit,workflow:'mobile-closed-loop/30',contractProfileId:'closed-loop-completion-profile/1',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',stageCount:30,stagesCompleted:30,coverageMetrics:{},section49CoverageMetrics:{},section49ZeroCountMetrics:{},section49ZeroCountInvariantCount:26,section49ZeroCountInvariantViolations:0,deployedByteIdentity:true,localChromiumAcceptance:true,deployedChromiumAcceptance:true,jobResults:{test:'success',deploy:'success',live:'success'},dataRouteClosure:'PASS',infrastructureRouteClosure:'PASS',actualIPhoneSafariAcceptance:true,mobileAcceptanceResult:'ACCEPTED',physicalIPhoneJobResult:'success',mobileAcceptanceSourceCommit:commit,mobileAcceptanceDeploymentManifestDigest:'c'.repeat(64),mobileAcceptanceOrigin:'https://sjonesjones917.github.io',mobileAcceptanceBasePath:'/closed-loop-tracker/',mobileAcceptanceTargetId:'DISPOSABLE-TARGET',mobileAcceptanceEvidenceId:'DISPOSABLE-EVIDENCE',mobileAcceptanceTestProjectId:'DISPOSABLE-PROJECT',mobileAcceptancePerformer:'DISPOSABLE-PERFORMER',mobileAcceptanceSubmitter:'DISPOSABLE-SUBMITTER',mobileAcceptancePhysicalDeviceAssertion:true,mobileAcceptanceEvidenceBasis:'HUMAN_OBSERVATION',mobileAcceptanceChallenge:'d'.repeat(64)};
+fixture.recoveryAcceptance={amendmentId:recoveryManifest.amendmentId,manifestSha256:recoveryManifestSha256,sourceCommit:commit,semanticCompletenessReview:{result:'PASS',sourceCommit:commit,evidenceReferences:['DISPOSABLE-SEMANTIC-REVIEW']},cases:recoveryRequirementIds.map(requirementId=>({requirementId,result:'PASS',sourceCommit:commit,executedCaseIds:['DISPOSABLE-CASE-'+requirementId],evidenceReferences:['DISPOSABLE-EVIDENCE-'+requirementId]}))};
 assert.equal(CORE_COVERAGE_KEYS.length+SECTION49_COVERAGE_KEYS.length,35);
 assert.equal(CORE_ZERO_KEYS.length+SECTION49_ZERO_KEYS.length,38);
 for(const [group,keys] of [['coverageMetrics',CORE_COVERAGE_KEYS],['section49CoverageMetrics',SECTION49_COVERAGE_KEYS]])for(const key of keys){fixture[key]=1;fixture[group][key]={metricId:key,universeDefinition:'Two fixed disposable assertions',derivationVersion:'gate-fixture/1',scopeHash:commit,numerator:2,denominator:2,includedIds:[key+'-1',key+'-2'],excludedIds:[],evidenceReferences:['DISPOSABLE-EXECUTED-PROOF'],value:1,disposition:'SATISFIED'};}
@@ -14,6 +17,7 @@ function reject(mutate,mutateVisual=null){const r=structuredClone(fixture),v=str
 for(const [group,keys] of [['coverageMetrics',CORE_COVERAGE_KEYS],['section49CoverageMetrics',SECTION49_COVERAGE_KEYS]])for(const key of keys){
   for(const mutation of [r=>delete r[group][key],r=>r[group][key].numerator=1,r=>r[group][key].denominator=0,r=>r[group][key].includedIds=[],r=>r[group][key].includedIds=[key+'-1',key+'-1'],r=>r[group][key].evidenceReferences=[],r=>r[group][key].disposition='BLOCKED',r=>r[key]=0.5,r=>r[group][key].value=0.5,r=>delete r[group][key].derivationVersion])reject(mutation);
 }
+reject(r=>delete r.recoveryAcceptance);reject(r=>r.recoveryAcceptance.sourceCommit='e'.repeat(40));reject(r=>r.recoveryAcceptance.semanticCompletenessReview.result='PENDING');for(const requirementId of recoveryRequirementIds){reject(r=>r.recoveryAcceptance.cases=r.recoveryAcceptance.cases.filter(row=>row.requirementId!==requirementId));reject(r=>r.recoveryAcceptance.cases.find(row=>row.requirementId===requirementId).result='FAIL');reject(r=>r.recoveryAcceptance.cases.find(row=>row.requirementId===requirementId).executedCaseIds=[]);}
 for(const key of CORE_ZERO_KEYS){reject(r=>delete r[key]);reject(r=>r[key]=1);}
 for(const key of SECTION49_ZERO_KEYS){reject(r=>delete r.section49ZeroCountMetrics[key]);reject(r=>r.section49ZeroCountMetrics[key]=1);}
 for(const key of ['deployedByteIdentity','localChromiumAcceptance','deployedChromiumAcceptance','actualIPhoneSafariAcceptance','mobileAcceptancePhysicalDeviceAssertion'])reject(r=>r[key]=false);
@@ -23,7 +27,7 @@ reject(r=>r.mobileAcceptanceSourceCommit='e'.repeat(40));reject(r=>r.mobileAccep
 reject(()=>{},v=>v.status='OPEN');reject(()=>{},v=>v.comparedCommit='e'.repeat(40));reject(()=>{},v=>v.evidenceReferences=[]);
 // The formerly green summary cannot hide 1/2 detailed evidence.
 reject(r=>{r.section49CoverageMetrics.stage01RawInputAccounting.numerator=1;r.section49CoverageMetrics.stage01RawInputAccounting.value=0.5;r.stage01RawInputAccounting=1;});
-console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true}));
+console.log(JSON.stringify({finalAcceptanceGate:'PASS',evidenceClass:'SYNTHETIC_PUBLICATION_VALIDATOR_CASES',physicalDeviceAcceptance:false,applicationCompletion:false,coverageMetrics:35,zeroInvariants:38,invalidInputCasesRejected:mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true}));
 
 const workflow=fs.readFileSync(new URL('./.github/workflows/pages.yml',import.meta.url),'utf8');
 function assertPublicationWiring(source){

@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
-const inactiveMobileAcceptance={focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
+const inactiveMobileAcceptance={initializeApplicationHistory:async()=>{},applicationHistoryReady:false,historyRestoring:false,replacementRequest:null,captureHistoryView:async()=>{},activateHistoryForCurrent:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
 
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
@@ -105,8 +105,8 @@ assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz'
 // boundary replaced. The browser suite supplies real IndexedDB coverage.
 const filePackageRuntime=vm.createContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
 vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
-vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};ensureHistoryCheckpoint=async()=>{};readHistoryBundle=async()=>{const encoded=encodeSavedVersion(fixtureProject,{artifactManifest:fixtureArtifacts});return {index:{versionIds:[encoded.version.versionId]},versions:[encoded.version],views:[]};};globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},stages:{},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
 const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
 for(let i=0;i<artifactSizes.length;i++){
   const bytes=Uint8Array.from({length:artifactSizes[i]},(_,j)=>(j*137+i)%256),sha256=createHash('sha256').update(bytes).digest('hex');
@@ -144,7 +144,7 @@ vm.runInContext(`
   const prompt={stage:4,operation:'COMPLETE',promptEngineVersion:'FIXTURE',instructionId:'PROMPT-FILES',prompt:'instruction\\n',scope:{},contextManifest:{promptContext:{attachments:[contextIdentity]}}};
   prompt.bodySha256=prompt.fullTextSha256=hash.sha256Text(prompt.prompt);prompt.contractSha256=hash.sha256Value({});fixtureProject.projectData.generatedPrompts=[prompt];
   globalThis.fixtureContextRow={artifactId:'PROMPT-CONTEXT-'+hash.sha256Value({jobId:'FILE-PRESSURE',sha256:fixtureContextSha}),jobId:'FILE-PRESSURE',blob:fixtureContextBlob,sha256:fixtureContextSha,byteSize:fixtureContextBlob.size};
-  globalThis.closedLoopPromptEngine={version:'FIXTURE',responseContractDescriptor:()=>({}),promptFileManifest:()=>({contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
+  globalThis.closedLoopPromptEngine={version:'FIXTURE',stageContextProjection:project=>project,responseContractDescriptor:()=>({}),promptFileManifest:()=>({contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
   globalThis.closedLoopWorkflowEngine={executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
 `,filePackageRuntime);
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
@@ -251,11 +251,11 @@ const storageRead=(value,parseJson=parseStorageJson)=>{if(value===undefined)retu
 storageRuntime.openStorageTransaction=async(names,mode)=>{
   const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map(storageRows.get(name)||[])]));
   storageAccess.push({kind:'transaction',names:selected,mode});
-  return {objectStore:name=>({get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({openKeyCursor:()=>{storageAccess.push({kind:'indexKeys',name,indexName});const keys=[...pending.get(name).values()].map(row=>row[indexName]).filter(Boolean).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));const req={};let i=0;const advance=()=>{req.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;req.onsuccess?.();};queueMicrotask(advance);return req;},getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
+  return {objectStore:name=>({getAllKeys:()=>({result:[...pending.get(name).keys()]}),get:key=>{storageAccess.push({kind:'get',name,key});return {result:storageRead(pending.get(name).get(key))};},getAll:()=>{storageAccess.push({kind:'getAll',name});return {result:[...pending.get(name).values()].map(row=>storageRead(row))};},index:indexName=>({openKeyCursor:()=>{storageAccess.push({kind:'indexKeys',name,indexName});const keys=[...pending.get(name).values()].map(row=>row[indexName]).filter(Boolean).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));const req={};let i=0;const advance=()=>{req.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;req.onsuccess?.();};queueMicrotask(advance);return req;},getAll:key=>{storageAccess.push({kind:'indexGetAll',name,indexName,key});return {result:[...pending.get(name).values()].filter(row=>String(row[indexName])===String(key)).map(row=>storageRead(row))};}}),count:()=>({result:pending.get(name).size}),put:row=>{storageAccess.push({kind:'put',name,key:row.jobId||row.key||row.artifactId});pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,structuredClone(row));},delete:key=>pending.get(name).delete(key)}),commit(){if(mode==='readwrite')for(const [name,rows] of pending)storageRows.set(name,rows);},abort(){}};
 };
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
   let source=fs.readFileSync(file,'utf8');
-  if(file==='hash.js')source=source.replace('function* canonicalChunks(value){','function* canonicalChunks(value){if(value?.projectData)globalThis.projectSerializations=(globalThis.projectSerializations||0)+1;');
+  if(file==='hash.js')source=source.replace('function* canonicalChunks(value){','function* canonicalChunks(value){if(value?.projectData&&value?.job?.JOB_ID)globalThis.projectSerializations=(globalThis.projectSerializations||0)+1;');
   // Observe the existing calculation owner without replacing its rules.
   if(file==='workflow-engine.js')source=source.replace('function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction}={}){','function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction}={}){globalThis.registrationRecalculations=(globalThis.registrationRecalculations||0)+1;');
   vm.runInContext(source,storageRuntime,{filename:file});
@@ -366,8 +366,10 @@ await storageRegression('import:replay-saved-projections-without-fabricating-gat
   const row=storageRows.get('projects').get(saved.job.JOB_ID);
   storageRows.get('projects').set(saved.job.JOB_ID,{...row,project:original,projectSha256:storageRuntime.projectStore.projectSha256(original)});
   const backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);
-  const restored=await storageRuntime.projectStore.importPackage(backup),comparison=storageRead(restored);delete comparison.projectSha256;comparison.revision=original.revision;
-  assert(storageRuntime.projectStore.projectSha256(comparison)===storageRuntime.projectStore.projectSha256(original),'Restore rewrote original records or their saved audit projection.');
+  const restored=await storageRuntime.projectStore.importPackage(backup);
+  const originalVersion=await storageRuntime.projectStore.readSavedVersion(saved.job.JOB_ID,'SAVED-'+storageRuntime.projectStore.projectSha256(original));
+  assert(storageRuntime.projectStore.projectSha256(originalVersion.project)===storageRuntime.projectStore.projectSha256(original),'History lost the original saved audit projection.');
+  assert(JSON.stringify(restored.projectData.rawResponses.map(row=>[row.rawResponseId,row.completeRawResponse]))===JSON.stringify(original.projectData.rawResponses.map(row=>[row.rawResponseId,row.completeRawResponse])),'Restore changed exact raw response bytes or identities.');
   const displayed=storageRuntime.ensureState(restored);
   assert(displayed.job.CURRENT_STAGE==='STAGE 01'&&displayed.stages[1].status!=='COMPLETE','Restored cached completion fabricated a passed stage.');
   assert(displayed.projectData.rawResponses.at(-1).completeRawResponse.endsWith('é🙂 EXACT-TAIL'),'Restoring a saved projection lost exact raw history.');
@@ -474,10 +476,9 @@ await storageRegression('prompt-context:missing-history-cannot-use-current-conte
 await storageRegression('prompt-context:historical-eligibility-and-backup-custody',async()=>{
   const project=await storageRuntime.makeStored('CONTEXT-HISTORICAL'),source=storageRuntime.contextProject.projectData.generatedPrompts[0];
   project.projectData.generatedPrompts=storageRead([{...source,invalidatedBy:'LATER-INSTRUCTION'},{...source,instructionId:'PRIOR-ENGINE-INSTRUCTION',promptEngineVersion:'PRIOR-ENGINE'}]);
-  storageAccess.length=0;const saved=await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});
-  assert(!storageAccess.some(x=>x.kind==='get'&&x.name==='artifacts'),'Ordinary save changed which historical prompt records require reconstruction.');
-  let error;try{await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}catch(e){error=e;}
-  assert(error?.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH','Complete backup stopped requiring invalidated/older-engine historical context bytes.');
+  const before=(await storageRuntime.projectStore.readProject(project.job.JOB_ID)).projectSha256;
+  await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision}).then(()=>{throw new Error('A recoverable save accepted missing historical context bytes.');},error=>assert(error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH','Missing historical bytes lost their specific rejection.'));
+  assert((await storageRuntime.projectStore.readProject(project.job.JOB_ID)).projectSha256===before,'A missing checkpoint dependency partially changed the project.');
 });
 // File intake must retain its original project, revision, stage and byte owner
 // through every asynchronous boundary. Only the database I/O is substituted.
@@ -580,8 +581,9 @@ await storageRegression('create-only:existing-zero-revision',async()=>{
   assert(rejected&&(await storageRuntime.projectStore.readProject('CREATE-COLLISION')).newerWork==='PRESERVE','Creating a project reused an existing revision-zero identity.');
 });
 await storageRegression('backup:required-canonical-bytes',async()=>{
-  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CLOSURE');const row=await projectStore.putArtifact({artifactId:'BACKUP-FILE',jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});globalThis.backupProject=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});globalThis.goodBackup=await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(row.artifactId,p.job.JOB_ID);})()`,storageRuntime);
+  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CLOSURE');const row=await projectStore.putArtifact({artifactId:'BACKUP-FILE',jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});globalThis.backupProject=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});globalThis.goodBackup=await projectStore.exportPackage(p.job.JOB_ID);globalThis.corruptArtifactId=row.artifactId;})()`,storageRuntime);
   const previous=await storageRuntime.projectStore.metaGet('lastVerifiedExport:BACKUP-CLOSURE');
+  storageRows.get('artifacts').delete(storageRuntime.corruptArtifactId); // Deliberate storage loss; public deletion correctly protects retained files.
   let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CLOSURE');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
   assert(rejected,'A verified export was created despite missing canonical artifact bytes.');
   assert(JSON.stringify(await storageRuntime.projectStore.metaGet('lastVerifiedExport:BACKUP-CLOSURE'))===JSON.stringify(previous),'Failed export replaced the last successful backup evidence.');
@@ -630,7 +632,8 @@ await storageRegression('artifact-queries:project-local-without-store-scan',asyn
 });
 const importStart=app.indexOf("bindFileAction('#import-file'"),importEnd=app.indexOf('\nglobalThis.closedLoopAppReady',importStart);
 await storageRegression('backup:required-prompt-context',async()=>{
-  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CONTEXT');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Required context content. '.repeat(4000);const prompt=closedLoopPromptEngine.buildPromptRecord(1,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(prompt);p=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});const rows=await projectStore.listArtifacts(p.job.JOB_ID),context=rows.find(row=>row.lineage?.kind==='PROMPT_CONTEXT');if(!context)throw new Error('The real instruction did not materialize its context fixture.');await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(context.artifactId,p.job.JOB_ID);})()`,storageRuntime);
+  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CONTEXT');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Required context content. '.repeat(4000);const prompt=closedLoopPromptEngine.buildPromptRecord(1,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(prompt);p=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});const rows=await projectStore.listArtifacts(p.job.JOB_ID),context=rows.find(row=>row.lineage?.kind==='PROMPT_CONTEXT');if(!context)throw new Error('The real instruction did not materialize its context fixture.');await projectStore.exportPackage(p.job.JOB_ID);globalThis.corruptArtifactId=context.artifactId;})()`,storageRuntime);
+  storageRows.get('artifacts').delete(storageRuntime.corruptArtifactId); // Deliberate storage corruption.
   let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CONTEXT');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
   assert(rejected,'Complete export omitted the exact context file required by a saved instruction.');
   const report=await storageRuntime.projectStore.verifyProjectArtifacts('BACKUP-CONTEXT');

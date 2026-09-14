@@ -5,27 +5,6 @@ import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS,REQUIRED_MO
 import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
 
 const WORKFLOW_PATH=new URL('./.github/workflows/pages.yml',import.meta.url);
-const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
-const ACCEPTABLE_PHYSICAL_BASES=new Set(['HUMAN_OBSERVATION','VERIFIED_EXTERNAL']);
-
-export function releaseTagEligibility(status){
-  return Boolean(
-    status&&
-    status.actualIPhoneSafariAcceptance===true&&
-    status.mobileAcceptanceResult==='ACCEPTED'&&
-    NONEMPTY(status.mobileAcceptanceTargetId)&&
-    NONEMPTY(status.mobileAcceptanceEvidenceId)&&
-    ACCEPTABLE_PHYSICAL_BASES.has(status.mobileAcceptanceEvidenceBasis)&&
-    NONEMPTY(status.mobileAcceptanceSourceCommit)&&
-    NONEMPTY(status.mobileAcceptanceDeploymentManifestDigest)&&
-    status.mobileAcceptanceOrigin==='https://sjonesjones917.github.io'&&
-    status.mobileAcceptanceBasePath==='/closed-loop-tracker/'&&
-    NONEMPTY(status.mobileAcceptanceTestProjectId)&&
-    NONEMPTY(status.mobileAcceptancePerformer)&&
-    status.mobileAcceptancePhysicalDeviceAssertion===true
-  );
-}
-
 export function assertWorkflowGovernance(workflow){
   assert.doesNotMatch(workflow,/actualAndroidChromeAcceptance/,'Android acceptance must not substitute for the pinned actual-iPhone requirement.');
   assert.match(workflow,/actualIPhoneSafariAcceptance/,'The acceptance calculation must consume actual-iPhone Safari status.');
@@ -57,29 +36,8 @@ export function assertWorkflowGovernance(workflow){
   return true;
 }
 
-const completePhysicalEvidence={
-  actualIPhoneSafariAcceptance:true,
-  mobileAcceptanceResult:'ACCEPTED',
-  mobileAcceptanceTargetId:'MOBILE-TARGET-001',
-  mobileAcceptanceEvidenceId:'MOBILE-EVIDENCE-001',
-  mobileAcceptanceEvidenceBasis:'HUMAN_OBSERVATION',
-  mobileAcceptanceSourceCommit:'0123456789abcdef0123456789abcdef01234567',
-  mobileAcceptanceDeploymentManifestDigest:'a'.repeat(64),
-  mobileAcceptanceOrigin:'https://sjonesjones917.github.io',
-  mobileAcceptanceBasePath:'/closed-loop-tracker/',
-  mobileAcceptanceTestProjectId:'JOB-MOBILE-001',
-  mobileAcceptancePerformer:'authorized-operator',
-  mobileAcceptancePhysicalDeviceAssertion:true
-};
-
-assert.equal(releaseTagEligibility(completePhysicalEvidence),true,'Complete pinned physical-iPhone evidence must be eligible.');
-assert.equal(releaseTagEligibility({...completePhysicalEvidence,actualIPhoneSafariAcceptance:false}),false,'A deployed Chromium pass cannot substitute for physical-iPhone acceptance.');
-assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceResult:'BLOCKED'}),false,'A blocked physical-device result cannot authorize a tag.');
-assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceEvidenceId:null}),false,'Missing physical evidence must block tagging.');
-assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceEvidenceBasis:'SELF_ASSERTED'}),false,'Self-asserted evidence cannot satisfy the pinned physical-device gate.');
-assert.equal(releaseTagEligibility({...completePhysicalEvidence,mobileAcceptanceOrigin:'https://example.invalid'}),false,'A different origin cannot satisfy the canonical deployment identity.');
-assert.equal(releaseTagEligibility({...completePhysicalEvidence,actualAndroidChromeAcceptance:true,actualIPhoneSafariAcceptance:false}),false,'Android acceptance cannot satisfy the iPhone requirement.');
-
+// The real mobile submission evaluator below owns acceptance. Do not
+// duplicate release eligibility in a test-only helper that production never uses.
 assert.equal(isClosedLoopUtcInstant('2026-09-03T00:00:00.000Z'),true,'Exact UTC instant syntax must be accepted.');
 assert.equal(isClosedLoopUtcInstant('2026-09-03T00:00:00Z'),false,'Missing millisecond precision must be rejected.');
 assert.equal(isClosedLoopUtcInstant('2026-09-03T00:00:00.000+00:00'),false,'Offset-bearing instants cannot masquerade as canonical UTC values.');
@@ -131,6 +89,20 @@ const evidence={
 Object.assign(evidence,syntheticMobileOperations(target));
 const expected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T00:00:00.000Z'};
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true,'Complete pinned mobile evidence must validate.');
+const mobileValidationCases=[];
+for(const [field,value,code] of [
+ ['mobileAcceptanceEvidenceId',null,'EVIDENCE_ID_REQUIRED'],
+ ['physicalDeviceAssertion',false,'PHYSICAL_DEVICE_ASSERTION_REQUIRED'],
+ ['evidenceBasis','SELF_ASSERTED','EVIDENCE_BASIS_INSUFFICIENT'],
+ ['origin','https://example.invalid','EVIDENCE_ORIGIN_MISMATCH']
+]){
+ const actual=verifyMobileAcceptanceEvidence({target,evidence:{...evidence,[field]:value},expected});
+ assert.equal(actual.accepted,false,'The production evaluator accepted invalid '+field);
+ assert(actual.errors.some(error=>error.code===code),'The production evaluator rejected '+field+' for an unrelated reason');
+ assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true);
+ mobileValidationCases.push({caseId:field,expectedRejection:code,actual,result:'PASS',corrected:'PASS'});
+}
+
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challenge:'f'.repeat(32)},expected}).accepted,false,'Mismatched challenge must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,safariUserAgent:evidence.safariUserAgent.replace('Safari/604.1','CriOS/140.0.0.0 Mobile/15E148 Safari/604.1')},expected}).accepted,false,'A substitute iOS browser must be rejected.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,operationReceipts:evidence.operationReceipts.slice(1)},expected}).accepted,false,'Missing required physical operator-path evidence must be rejected.');
@@ -180,6 +152,9 @@ console.log(JSON.stringify({
   singleUseChallengeVerified:true,
   challengeCaseNormalizationVerified:true,
   expiredChallengeRejected:true,
+  evidenceClass:'SYNTHETIC_ACCEPTANCE_VALIDATOR_CASES_AND_CI_CONFIGURATION',
+  physicalDeviceAcceptanceEstablished:false,
+  mobileValidationCases,
   canonicalTrustedTimeSyntaxEnforced:true,
   substituteIosBrowserRejected:true,
   mobileCapabilityProbeRequired:true,

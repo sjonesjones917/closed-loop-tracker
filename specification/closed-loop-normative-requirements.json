@@ -7,6 +7,16 @@
   "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
   "specificationByteLength": 309472,
+  "userAmendments": [
+    {
+      "amendmentId": "RECOVERY-20260914-2",
+      "path": "specification/recovery-requirements.json",
+      "sha256": "47632af1fe3816ce1f32035725b16d3df5177cd2a750b92cff2065f182c09bd7",
+      "mandatoryRequirementCount": 97,
+      "precedence": "Replaces the earlier restriction that browser history may change only the view. Supplements the entire controlling specification."
+    }
+  ],
+  "completeRequirementUniverseCount": 3922,
   "requirements": [
     {
       "normativeRequirementId": "NREQ-a1d38a6a6f3900c5be55f9c450f6e372",
@@ -203519,5 +203529,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "46a75e5f7785accc8e3bd427275f71de8613d360ef641799648b1946df329831"
+  "manifestSha256": "7247bc53e28add5c32cf5912b7b93e90471fe54dc5e36807b56dde52f33223e3"
 }

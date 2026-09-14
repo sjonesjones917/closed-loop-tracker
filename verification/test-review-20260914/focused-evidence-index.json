@@ -1,0 +1,130 @@
+[
+  {
+    "path": "cross-run-production-defect-before.log",
+    "sha256": "a6a62f6bf6ff7c21b68632728ebefe82db2a813d1896a69be960f67a287a247d",
+    "byteSize": 398,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "cross-run-real-owner-before.err",
+    "sha256": "32ee11486f5c71d532a2b31ab223a6c9ef2c78f8b570e64253f6fb72c8ecbc71",
+    "byteSize": 2439,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "cross-run-behavior-final.json",
+    "sha256": "82c9e87a37f303aa6b406224d9339f774ab7d46b62be64681821a26f61200efb",
+    "byteSize": 4827,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "due-stage-executed.json",
+    "sha256": "1ca1e21c6fea04a41b756decb14bd8b44d65a39722a545995947fcae913661ca",
+    "byteSize": 790,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "trusted-time-mutant.log",
+    "sha256": "592f58def537f3fea05982d427123791def81bef3c7c4accd96c81377c801d75",
+    "byteSize": 849,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "capability-identity-before.log",
+    "sha256": "6a7647683151fe6b73085d715044b878073026a6822e7f3373dbba14ce1e2155",
+    "byteSize": 663,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "capability-identity-after.log",
+    "sha256": "65bf3822948fe1fffec62a85fe7a973f8cb5fcbd753977ed159c98b4bab1dbfc",
+    "byteSize": 252,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "response-byte-behavior.json",
+    "sha256": "1e31b44048ea021ec2d8ec0963e4dc867d712bf1043597c05aea93b1f5867b4b",
+    "byteSize": 10854,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "canonical-selector-before.err",
+    "sha256": "b10b0c6685e9ee326d309c2ae6a50e7b31444bdc325f652b739e0113b41ffb43",
+    "byteSize": 545,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "runtime-limit-negative-pairs.json",
+    "sha256": "0358c595b330e349d3391c3e9eb5ec331d76b4cfe51cece7251f888b193ff2c8",
+    "byteSize": 2178,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "stability-due-before.err",
+    "sha256": "4bc530d4fa5a5f08637c62ca02455a7f4bb71e4d2d5a95e96d70bf603599bbcd",
+    "byteSize": 827,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "cross-run-comparison-reviewed.json",
+    "sha256": "fd53677a25bf8b5580ed05f2241ccea42008f79ed421b32644a3e792b2598ffa",
+    "byteSize": 4454,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "complete-metrics-before.err",
+    "sha256": "e12de663e8371c87599b38cd3f66a5fb3ddff6575d19d66b5cdb47c037106b63",
+    "byteSize": 714,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "mobile-real-validator-review.json",
+    "sha256": "47aff12d22727f1b2a95387aaf48f9db87381ba97f2db71d8bd476a4e09d81b4",
+    "byteSize": 5449,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "route-no-silent-skip.json",
+    "sha256": "e23bc2e683b46d1f1df9f00ac5c06767ec3696de2ffb681f4c3eadf87e48883d",
+    "byteSize": 1638,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "ledger-reviewed.json",
+    "sha256": "6c89681402f33432e6fe938786b5c1b050db8867cfc7461ca47ca0f439c3c8c0",
+    "byteSize": 1068,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  }
+]

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 const cases=[];
 for(const [fault,stage,expected] of [
+  ['skipped-confirmation',1,'CONFIRMATION_ORACLE'],
   ['fractional-stability',12,'must remain persistable after every operation'],
   ['missing-defect-gate',13,'An observed initial violation without an evidence-linked defect must be rejected']
 ]){

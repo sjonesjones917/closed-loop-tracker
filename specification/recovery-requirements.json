@@ -1,9 +1,9 @@
 {
   "schema": "closed-loop-user-amendment-requirements/1",
-  "amendmentId": "RECOVERY-20260914-1",
+  "amendmentId": "RECOVERY-20260914-2",
   "source": "Current conversation: user instruction requiring reversible acceptance and saved project history",
   "sourceTranscriptionPath": "specification/recovery-amendment-20260914.txt",
-  "sourceTranscriptionSha256": "3e1afc7b1f8dbc1c8ea8650e04e83509b963c3050bd1ca0d227629d57cf48e67",
+  "sourceTranscriptionSha256": "ad0ea7c7c0cc7cd5efb6a2248f5bfd9e50a79e62aa825d19c671b4034f89e3a1",
   "originalStartingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "amendmentStartingCommit": "b275123ef57cc56c920027ff85051519c8e7e2f6",
   "baseSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
@@ -247,9 +247,9 @@
     {
       "requirementId": "RECOVERY-CTX-10",
       "sourceLine": 29,
-      "sourceLineSha256": "3148a4a78b35900cda73ed60ecde1b5891d3704958fe76838b1a6db76f0a2374",
+      "sourceLineSha256": "4b2a87c766f8b8902a3324b9984ec19c3ec99533373cc1c45b05468b22d914f8",
       "mandatory": true,
-      "observableExpectedBehavior": "Executing Stage 9 after Stage 12 must give a valid Stage 9 handoff with no Stage 10\u201330 information; later work may remain internally stored.",
+      "observableExpectedBehavior": "Every permitted stage and operation must receive the context appropriate to that stage in the active version, excluding all subsequent-stage information regardless of its completion status or storage in active state or history; later work may remain internally stored.",
       "productionOwners": [
         "prompt-engine.js",
         "workflow-engine.js",
@@ -749,9 +749,9 @@
     {
       "requirementId": "RECOVERY-HIS-08",
       "sourceLine": 59,
-      "sourceLineSha256": "7b7915f78e8f1a05aa048ca446912adbd4480bf76b44e24a35dcb7615aea8c92",
+      "sourceLineSha256": "7da7a21496cd031fc424cb90eb780296ad70920e6dc003cd1dbb6aa3a92a7763",
       "mandatory": true,
-      "observableExpectedBehavior": "Restore a version as a consistent whole; Back across Stage 9 replacement restores the original result and matching Stage 10\u201312 progress, while Forward restores replacement and required rework.",
+      "observableExpectedBehavior": "Restore a version as a consistent whole: traversing any recorded acceptance or correction boundary restores the destination's matching results, decisions, files and dependent progress or rework, at any available history distance.",
       "productionOwners": [
         "project-store.js",
         "app-core.js",
@@ -1549,9 +1549,9 @@
     {
       "requirementId": "RECOVERY-JRN-03",
       "sourceLine": 107,
-      "sourceLineSha256": "234f229af8e3861d746fe2a890c4cf4b67349d888064a22a87bb7950743d18bc",
+      "sourceLineSha256": "94e7606a93714b083efbdd69d09b8d4462e883e22ecf043574b21dd2f82227ec",
       "mandatory": true,
-      "observableExpectedBehavior": "Return at least three stages, validate a replacement, cancel without loss, then confirm replacement and re-complete all affected downstream work.",
+      "observableExpectedBehavior": "Exercise re-execution wherever permitted, validate replacement, cancel without loss, then confirm replacement and re-complete all affected dependent work; select journey coverage from actual stages, dependencies and transitions without a fixed movement distance or demonstration path.",
       "productionOwners": [
         "verify-complete-operator-journey.mjs",
         ".github/workflows/pages.yml"
@@ -1725,6 +1725,161 @@
       ],
       "status": "IMPLEMENTED_UNPROVEN",
       "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-GEN-01",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 119,
+      "sourceLineSha256": "09db3a952069d82d880bb4ac0a39b9f3eedd998d664a5df5fef7d101560a61ca",
+      "observableExpectedBehavior": "Apply requirements generally across all 30 stages and every required operation. Do not hard-code particular stages, stage ranges, movement distances, or example sequences. Determine behavior from the actual project version, selected stage, operation, prerequisites, dependencies, and affected work."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-02",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 120,
+      "sourceLineSha256": "cbb5f269df5fc823860b58898d1b0d416af7f67776a7007c184ff58a8dc720f5",
+      "observableExpectedBehavior": "Maintain coverage of initial execution, repeated execution, earlier-stage execution, replacement acceptance, cancellation, invalidation, restoration, and subsequent continuation wherever each operation applies."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-03",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 121,
+      "sourceLineSha256": "b0e1e9018aa52ee8ce9f1aabf839b715aa854ec09165b94438c2f426551e516e",
+      "observableExpectedBehavior": "Generate replacement impact from authoritative dependencies and actual state; do not assume a fixed number of affected stages or a contiguous range unless the actual dependencies establish one."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-04",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 122,
+      "sourceLineSha256": "cb4ceecbe088a25cda5fb510a57df6beac9c59ae5d7cb28f22c62d8ea204fd79",
+      "observableExpectedBehavior": "Derive restoration from the destination history entry; support repeated navigation and direct jumps while retaining alternative saved continuations and enforcing the destination version's prerequisites."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-05",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 123,
+      "sourceLineSha256": "fb7b8fcb5b166f97012e5e03561db844f6e1de95106b0ddd2a4a4e1d3d0c4d96",
+      "observableExpectedBehavior": "Apply tests across every applicable stage and transition, including first and final stages, repeated execution, movement between stages, no subsequent work, and completed, partially completed, pending or invalidated dependent work."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-06",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 124,
+      "sourceLineSha256": "c428d4d1ff67c0994de7b4b0843f796aed1e5bc3cafe72d0fba32a9466ce26ec",
+      "observableExpectedBehavior": "Generate operation sequences from applicable workflow rules and state combinations, covering all required operations and invariants, without limiting discovery to a fixed demonstration path or movement distance."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-07",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 125,
+      "sourceLineSha256": "19a93839c18a28f4b7490b46e659b123fc448be2ebe2f5b5cb47244b45b252b1",
+      "observableExpectedBehavior": "Select complete operator journey coverage from actual stages, dependencies and state transitions, accounting for all applicable stages and transition classes. Individual examples and selected passing cases do not establish general conformance."
     }
-  ]
+  ],
+  "clarificationStartingCommit": "7fd47513f4f2019841a18961713e21b874c1a1c4"
 }

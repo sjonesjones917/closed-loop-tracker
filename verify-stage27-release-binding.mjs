@@ -116,4 +116,4 @@ assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:1,blockingCo
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:1}),'BLOCKED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:0}),'ACCEPTED');
 
-console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',digest:hash.sha256Value('stage27-release-binding-v5')}));
+console.log(JSON.stringify({stage27ReleaseBinding:'PASS',evidenceClass:'RELEASE_BINDING_COMPONENT_CASES',prerequisitesStipulated:true,productReleaseEligibilityEstablished:false,completeOperatorJourney:false,invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',digest:hash.sha256Value('stage27-release-binding-v5')}));

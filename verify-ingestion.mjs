@@ -144,14 +144,14 @@ for(let stage=1;stage<=30;stage++){
   let p=project(`JOB-E2E-${String(stage).padStart(2,'0')}`);
   p.activeStage=stage;
   const fixtureOperation=fixturePromptOperation(stage);
-  if(!fixtureOperation){preparePromptPrerequisites(p,stage);let blocked=false;try{prompts.buildPromptRecord(stage,p,{operation:schema.STAGE_CONTRACTS[stage].operations[0]});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}if(!blocked)throw new Error(`Stage ${stage} application-only operation generated an external prompt.`);allStages.push({stage,applicationControlled:true});continue;}
+  if(!fixtureOperation){preparePromptPrerequisites(p,stage);let blocked=false;try{prompts.buildPromptRecord(stage,p,{operation:schema.STAGE_CONTRACTS[stage].operations[0]});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}if(!blocked)throw new Error(`Stage ${stage} application-only operation generated an external prompt.`);allStages.push({stage,operation:fixtureOperation||schema.STAGE_CONTRACTS[stage].operations[0],result:'NON_EXTERNAL_PROMPT_REJECTED'});continue;}
   const promptRecord=savePrompt(p,stage);
   const envelope=validEnvelope(p,stage,promptRecord);
   if(!envelope){
     const prohibited={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
     const rejected=ingestion.prepare(p,{stage,text:JSON.stringify(prohibited),promptRecord});
     if(rejected.validation.valid)throw new Error(`Stage ${stage} application-only contract accepted an empty agent DATA_PROPOSAL.`);
-    allStages.push({stage,applicationControlled:true});
+    allStages.push({stage,operation:fixtureOperation||schema.STAGE_CONTRACTS[stage].operations[0],result:'NON_EXTERNAL_PROMPT_REJECTED'});
     continue;
   }
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
@@ -167,19 +167,21 @@ for(let stage=1;stage<=30;stage++){
   const serialized=JSON.stringify(p); const reloaded=JSON.parse(serialized); engine.ensureShape(reloaded);
   if(reloaded.projectData.rawResponses.at(-1)?.completeRawResponse!==JSON.stringify(envelope))throw new Error(`Stage ${stage} raw response did not survive reload.`);
   if(stage<30){const nextStage=stage+1;preparePromptPrerequisites(reloaded,nextStage);if(nextStage===4)prepareStage4Upstream(reloaded);const nextOperation=fixturePromptOperation(nextStage);if(nextOperation){const nextOptions=fixturePromptOptions(nextStage,nextOperation),nextPrompt=fixtureBuildPrompt(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}else{let blocked=false;try{prompts.buildPromptRecord(nextStage,reloaded,{operation:schema.STAGE_CONTRACTS[nextStage].operations[0]});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}if(!blocked)throw new Error(`Stage ${nextStage} application-only control unexpectedly exposed an external prompt.`);}}
-  allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
+  allStages.push({stage,operation:promptRecord.operation,result:'ACCEPTED_SYNTHETIC_PROPOSAL',proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
 }
 
-let negativeCount=0;
+let negativeCount=0;const negativeCaseResults=[];
 function negativeAt(name,stage,mutate,expectedCode){
   const p=project(`JOB-NEG-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),promptRecord=savePrompt(p,stage);
-  let envelope=validEnvelope(p,stage,promptRecord);if(!envelope)throw new Error(`${name}: Stage ${stage} has no agent envelope fixture.`);const mutated=mutate(envelope,p,promptRecord);if(mutated!==undefined)envelope=mutated;
+  let envelope=validEnvelope(p,stage,promptRecord);if(!envelope)throw new Error(`${name}: Stage ${stage} has no agent envelope fixture.`);const baselineText=JSON.stringify(envelope),baselineProject=engine.clone(p);const baseline=ingestion.prepare(baselineProject,{stage,text:baselineText,promptRecord});if(!baseline.validation.valid)throw new Error(`${name}: invalid baseline: ${JSON.stringify(baseline.validation.issues)}`);const mutated=mutate(envelope,p,promptRecord);if(mutated!==undefined)envelope=mutated;
   const text=typeof envelope==='string'?envelope:JSON.stringify(envelope);
   const prepared=ingestion.prepare(p,{stage,text,promptRecord});
   if(prepared.validation.valid)throw new Error(`${name}: invalid response was accepted.`);
   if(expectedCode&&!prepared.validation.issues.some(issue=>issue.code===expectedCode))throw new Error(`${name}: expected ${expectedCode}; got ${prepared.validation.issues.map(x=>x.code).join(', ')}.`);
   if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed on validation failure.`);
   if(!prepared.project.projectData.rawResponses.length||!prepared.project.projectData.responseValidations.length)throw new Error(`${name}: failed raw response/validation was not preserved.`);
+  const repaired=ingestion.prepare(baselineProject,{stage,text:baselineText,promptRecord});if(!repaired.validation.valid)throw new Error(`${name}: corrected response did not validate.`);const accepted=ingestion.commit(repaired.project,repaired.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'});if(!accepted.project.projectData.acceptedChanges.length)throw new Error(`${name}: corrected response did not accept.`);
+  negativeCaseResults.push({id:name,stage,operation:promptRecord.operation,expectedCode,actualCodes:prepared.validation.issues.map(x=>x.code),result:'PASS',corrected:'ACCEPTED_PROPOSAL'});
   negativeCount++;
 }
 function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);e.scope[key]=`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: stale scope mutated canonical state.`);negativeCount++;}
@@ -316,7 +318,7 @@ for(const [name,definition,value,code] of [
   ['empty required array',{valueType:'STRING_ARRAY',enumValues:[],nullable:false},[],'EMPTY_REQUIRED_ARRAY']
 ]){const issues=[];ingestion.validateValue(definition,value,`/${name}`,issues,{required:true});if(!issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}.`);negativeCount++;}
 
-console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:negativeCount,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true,scopeIdentityMatrix:true,verifiedAttachmentBinding:true},null,2));
+console.log(JSON.stringify({stageSampleCases:allStages,evidenceClass:'INDEPENDENT_STAGE_INGESTION_COMPONENT_CASES',prerequisitesStipulated:true,completeOperatorJourney:false,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:negativeCount,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true,scopeIdentityMatrix:true,verifiedAttachmentBinding:true},null,2));
 
 // PR3 transaction/disposition invariants.
 {let p=project('JOB-PR3-IDEMP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);const first=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const accepted=ingestion.commit(first.project,first.proposal.proposalId,{operator:'VERIFY'});const again=ingestion.commit(accepted.project,first.proposal.proposalId,{operator:'VERIFY'});if(!again.idempotent||again.project.projectData.acceptedChanges.length!==accepted.project.projectData.acceptedChanges.length)throw new Error('Repeat acceptance was not idempotent.');const repeated=ingestion.prepare(accepted.project,{stage,text:JSON.stringify(e),promptRecord:pr});if(!repeated.duplicate||repeated.receipt?.receiptId!==accepted.receipt?.receiptId)throw new Error('Repeated canonical envelope did not return existing receipt/disposition.');const manifest=accepted.manifest;if(!manifest.entries.some(x=>/^\/records\/[^/]+\/0\/fields\//.test(x.jsonPointer||''))&&!manifest.entries.some(x=>/^\/stageData\//.test(x.jsonPointer||'')))throw new Error('Extraction manifest does not contain exact response JSON pointers.');}
@@ -574,3 +576,5 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   for(const value of [undefined,()=>true,NaN,Infinity,cycle,{value:undefined}]){const issues=[];ingestion.validateValue(field,value,'/humanDecisions/VALUE',issues);if(!issues.length)throw new Error('Non-JSON human decision value was accepted.');}
   console.log(JSON.stringify({acceptedPropositionPersistence:true,pendingProofCannotComplete:true,invalidProofReferencesRejected:true,typedHumanDecisionsValidated:true}));
 }
+
+console.log(JSON.stringify({ingestionNegativePairCases:negativeCaseResults,evidenceClass:'SPECIFIC_REJECTION_AND_CORRECTED_ACCEPTANCE_CASES',completeOperatorJourney:false},null,2));

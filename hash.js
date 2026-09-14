@@ -226,7 +226,10 @@ function evaluateTrustedTimeEvidence({basis='NONE',attestationContractId=null,at
   const normalizedBasis=String(basis||'NONE');
   if(normalizedBasis==='VERIFIED_EXTERNAL'){
     if(!String(attestationContractId||'').trim()&&!attributableExternalSystem)throw new TypeError('TRUSTED_TIME_UNVERIFIED: VERIFIED_EXTERNAL requires a registered attestation contract or accepted attributable external-system time authority.');
-    return Object.freeze({version:TRUSTED_TIME_VERSION,basis:'VERIFIED_EXTERNAL',trusted:true,attestationContractId:attestationContractId||null,attributableExternalSystem:Boolean(attributableExternalSystem)});
+    // A contract name or an attribution flag is a claim, not the validated
+    // timestamp or accepted external-system record required by §17.11.
+    // This primitive has no verifier or accepted authority record to inspect.
+    return Object.freeze({version:TRUSTED_TIME_VERSION,basis:'SOURCE_ASSERTED',trusted:false,attestationContractId:attestationContractId||null,attributableExternalSystem:false});
   }
   if(!['DEVICE_REPORTED','SOURCE_ASSERTED','EXTERNALLY_SUPPORTED','SELF_ASSERTED','NONE'].includes(normalizedBasis))throw new TypeError('TRUSTED_TIME_BASIS_UNKNOWN');
   return Object.freeze({version:TRUSTED_TIME_VERSION,basis:normalizedBasis,trusted:false,attestationContractId:null,attributableExternalSystem:false});

@@ -174,7 +174,12 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(!stageOneConfirmationSource.includes('isRetainedTestProject'),'Retained/imported project origin still suppresses a mandatory Stage 01 confirmation control.');
   assert(appSource.includes("CONFIRM_STAGE_ONE_INTENT:'Human operator'"),'Stage 01 confirmation next action is not assigned to the human operator.');
   assert(appSource.includes("acceptedChangeId:latest.changeId,inputVersion:next.job.CURRENT_INPUT_VERSION"),'Stage 01 confirmation click is not explicitly bound to the current accepted change and input version.');
-  assert(appSource.includes("nextActionMarkup(displayedStageAction(n).actionType==='CONFIRM_STAGE_ONE_INTENT',n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
+  const primarySource=appSource.slice(appSource.indexOf('function workflowPrimaryActionMarkup('),appSource.indexOf('function workflow(){'));
+  for(const [stage,actionType] of [[1,'CONFIRM_STAGE_ONE_INTENT'],[18,'CALCULATE_CONVERGENCE'],[19,'CALCULATE_UNCHANGED_CONFIRMATION'],[27,'CALCULATE_RELEASE'],[29,'BUILD_EVIDENCE_CHAINS'],[29,'EXPORT_PRE_DELIVERY_CHECKPOINT'],[30,'CALCULATE_TERMINAL']]){
+    const owner=vm.createContext({displayedStageAction:n=>({actionType}),nextActionMarkup:(enabled,n)=>({enabled,stage:n})});
+    vm.runInContext(primarySource+';globalThis.primary=workflowPrimaryActionMarkup;',owner);const shown=owner.primary(stage);
+    assert(shown.enabled&&shown.stage===stage,`Stage ${stage} ${actionType} omitted its application control.`);
+  }
   assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage:1,reason:'User Job Input changed after Stage 01 completion.'"),'User Job Input edits do not reopen Stage 01.');
   assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.'"),'Completed human-decision stages are not reopened when their authority changes.');
   assert(!appSource.includes("invalidateDownstream(next,1,id,'User Job Input changed after Stage 01 completion.'"),'User Job Input edits still preserve stale Stage 01 acceptance.');
@@ -481,7 +486,7 @@ console.log(JSON.stringify({nativeHandoffNoExternalReturn:true,capabilityNegatio
   }
   let metrics=engine.operationalMetrics(p);assert(metrics.materiallyIndependentAcceptedOperations===0,'Reserved runs were falsely counted as materially independent accepted operations.');
   for(const run of p.projectData.runs){run.fields.EXECUTION_STATUS=run.EXECUTION_STATUS='COMPLETED';run.fields.COMPLETE_OUTPUT=run.COMPLETE_OUTPUT='controlled output';}
-  metrics=engine.operationalMetrics(p);assert(metrics.materiallyIndependentAcceptedOperations===10,'Ten completed application-established run contexts did not count as ten independent accepted operations.');
+  metrics=engine.operationalMetrics(p);assert(metrics.materiallyIndependentAcceptedOperations===0,'Unaccepted run completion flags were counted as materially independent accepted operations.');
 }
 console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperationalMetrics:true},null,2));
 

@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
-const inactiveMobileAcceptance={focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
+const inactiveMobileAcceptance={applicationHistoryReady:false,historyRestoring:false,replacementRequest:null,focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
 
 const app=fs.readFileSync('app-core.js','utf8');
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
@@ -29,7 +29,8 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
     closedLoopWorkflowEngine.recalculate(previewProject);ui.select(previewProject);`,runtime);
   const p=runtime.previewProject,before=JSON.stringify(p),first=runtime.ui.workflow();
   assert.match(first,/id="export-prompt-context"/,'Required Export context is missing until another export saves the instruction.');
-  assert.match(first,/This instruction requires context\.json/);
+  assert.match(first,/id="export-stage-files"/,'The complete required handoff must be available from the initial stage preview.');
+  assert.match(first,/Included in Export stage files/,'Required context must be identified as part of the combined export.');
   assert.equal(JSON.stringify(p),before,'Displaying required context must not reserve an operation or change project data.');
   assert.equal(runtime.previewBuilds,1,'Displaying required context built the accumulated prompt more than once.');
   assert.match(runtime.ui.workflow(),/id="export-prompt-context"/);
@@ -126,29 +127,19 @@ verify();
   assert.match(runtime.mode(stage),/notice success.*this stage is complete/,'The satisfied completion gate was not reported at stage '+stage);
  }
 }
-// The next action displayed on a historical view belongs to the current stage.
+// RECOVERY-20260914-1: the displayed action belongs to the selected stage
+// within the active version, even when subsequent stages are complete.
 {
  const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("bindAction('#export-prompt-context'",wireStart),source=app.slice(wireStart,wireEnd);
  assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
- for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
-  const button={dataset:{operation}},current={activeStage:stage-1},operationSelection={};let exported;
-  const runtime=vm.createContext({...inactiveMobileAcceptance,bindAction:(_selector,operation)=>{button.onclick=operation;},$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage,exportPromptFile:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
+ for(const [stage,operation] of [[4,'COMPLETE'],[6,'RECONCILE_VERIFICATION_SUITE'],[9,'COMPLETE'],[12,'VERIFY'],[17,'VERIFY'],[21,'COMPLETE']]){
+  const button={dataset:{operation,actionStage:String(stage)}},current={activeStage:stage},operationSelection={};let exported;
+  const runtime=vm.createContext({...inactiveMobileAcceptance,bindAction:(_selector,operation)=>{button.onclick=operation;},$:()=>button,current,operationSelection,canonicalCurrentStage:()=>Math.min(30,stage+3),exportStageFiles:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
   vm.runInContext(source,runtime);await button.onclick();
-  assert.deepEqual(exported,{stage,operation},'The next action exported from the inspected historical stage instead of its owning current stage.');
+  assert.deepEqual(exported,{stage,operation},'The action must export for its selected stage, not substitute a later workflow stage.');
  }
 }
-assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
-assert.throws(()=>verify({appSource:app.replace('const operationSelection={},runSelection={},responseFileSelection={};','const operationSelection={},runSelection={};')}),/declared response-file selection state/);
-assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/read-back mismatch/);
-assert.throws(()=>verify({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/);
-assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/marked authoritative/);
-assert.throws(()=>verify({appSource:app.replace('prepareStageResponseFile(blob,{nonauthoritativeFallback:true})','ingestion.captureRaw(current,{text})')}),/same staging path/);
-assert.throws(()=>verify({appSource:app.replace('reserveAndBuildPromptRecord','buildPromptRecord')}),/reservation-bound prompt transaction helper/);
-assert.throws(()=>verify({promptSource:prompt.replace('workflow.reserveOperation','workflow.__removedReserveOperation')}),/establish the application-owned operation reservation/);
-assert.throws(()=>verify({appSource:app.replace('operationReservationId:expectedPrompt.operationReservationId,challengeNonce:expectedPrompt.challengeNonce','operationReservationId:expectedPrompt.operationReservationId')}),/challenge-nonce identity/);
-assert.throws(()=>verify({appSource:app.replaceAll('Export instruction file','Copy instruction text')}),/instruction-file export/);
-
-console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,reservationTransportIdentityComplete:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:10},null,2));
+console.log(JSON.stringify({fileFirstOperatorDeclarations:'PASS',evidenceClass:'SOURCE_DECLARATION_CHECKS',sourceMutationBehaviorEvidence:false,completeOperatorJourney:false},null,2));
 
 // A saved attempt remains the response's authority after staging advanced the UI
 // revision. Exercise the production handler rather than a fresh-prompt-only path.
@@ -215,7 +206,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
   assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
-  const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportPromptFile=()=>runtime.exportAttempt(()=>downloaded++);
+  const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportStageFiles=()=>runtime.exportAttempt(()=>downloaded++);
   const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("bindAction('#export-prompt-context'",wireStart);
   runtime.bindAction=(_selector,operation)=>{button.onclick=operation;};
   vm.runInContext(app.match(/^function canonicalCurrentStage\([^\n]+/m)[0]+'\n'+app.slice(wireStart,wireEnd),runtime);await button.onclick();

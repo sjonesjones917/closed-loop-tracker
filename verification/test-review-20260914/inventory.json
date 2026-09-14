@@ -1,0 +1,1093 @@
+{
+  "reviewComplete": false,
+  "initialFiles": 111,
+  "currentAndRemovedFiles": 113,
+  "files": [
+    {
+      "file": "build-test-project-impl.mjs",
+      "currentSha256": "a7ab6ad4cbc793a950d664960a339e9eb28c891bff4d6ec9a9ef2dcf07feb885",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "build-test-project.mjs",
+      "currentSha256": "1787f65c0eff4580ddc748a5d294f41c93e97e0ded57a0a4bc169e7a286974b7",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "mobile-evidence-test-fixture.mjs",
+      "currentSha256": "dc818d255e4c42ae4289e1f0799cd26bf66e37cdbd5551fe29053eb7be188b1c",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "operator-browser-driver.mjs",
+      "currentSha256": "f3095fbfc2411f6bfdb80354ecc91ecd47b87f98b37dd1933e40b5a2ef2b6863",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "operator-journey-fixtures.mjs",
+      "currentSha256": "d29a5588f94e6d4959ea56ef28f331d8ee1f7146f0db237afb452cb02c67939e",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "operator-prefix-fixture.mjs",
+      "currentSha256": "01ee613afd8539397487d5231e7dfb09cdf8e28163ef59b0d7d249160d9ae631",
+      "trackedAtReviewStart": false,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "stage-projection-verification.mjs",
+      "currentSha256": "60804ae86c6a6372029599571bc862c441f4d58f8e97bb8d0633fb057f95b679",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "stage19-fixture.mjs",
+      "currentSha256": "f9b11cf5cf9b5bad26c9e4c00803448973fef8277dad0bcda6b5c1b828c693ba",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "test-fixtures.mjs",
+      "currentSha256": "fecf78aa445d2b94a02415f58c801ae42ac1d500bc17abb5e65535efbbcb6b2a",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [
+        "TEST-10"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "test-store-runtime.mjs",
+      "currentSha256": "d134a7febdffedb8c53dd2a499ed5845e46d17a9dacfeaeed35af8f2e261aeaa",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-all-stage-prompts.mjs",
+      "currentSha256": "b6493c821fd1a1e6c64597d22fd88f957e87eb88588dc0d2358235ae48debd86",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-browser-extra.mjs",
+      "currentSha256": "39f813fa478031173310e31f0728b81fb43a425be4f7abfe99ff39344025c4e3",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-browser.mjs",
+      "currentSha256": "b6fdc45ffe290ea68b538de2f03532f201e2d77363d033c5b72ce19b3b3d6ad8",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-build-stage-ledger.mjs",
+      "currentSha256": "79a9a4b43f3dc826ec46d063c541ab60147d4f0eb0c650532bd5c440d174cf8a",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-22"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-candidate-freeze.mjs",
+      "currentSha256": "4770895c82e8e81c45777df8d8a7066e45ea0304b78ac4087c452328b8bc5b2f",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-capability-readiness.mjs",
+      "currentSha256": "3ffc2a5a916e0d3bf2a21b29103db08b52de7a368e4c518effe52246f57f6750",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-13"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-checkpoint-boundary.mjs",
+      "currentSha256": "e53a5db6746f9ca435e466647ff324eda9d1d7c327f1244d137733f502bed6b5",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-complete-operator-journey.mjs",
+      "currentSha256": "5ae619beda0a7d1dce9d5a225be9e09020123dae813b5c49ebb649abaa67471c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-complete.mjs",
+      "currentSha256": "9a2c2ed8da6630600eff1d95b2a214142e69bba97aff77d49b24b6fb5da1f9b1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-05"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-conformance-regressions.mjs",
+      "currentSha256": "34971be2930d77602935447037b1ecc5d9480f79991ad821b814b944b12b9ce4",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-contract-closure.mjs",
+      "currentSha256": "3120f889d6e46d468f2b12acf570e474b89c2c0bf60262799adec38674dc11e6",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-controller-stage-bundle.mjs",
+      "currentSha256": null,
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-15"
+      ],
+      "reviewStatus": "REMOVED_UNSUPPORTED_PROOF_WRITER",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-controller-v3-gap-closure.mjs",
+      "currentSha256": "c7435ff116a75ef09bd35611e6be32a6c4314aaec909f749f9f0869a3067e5f2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-corrected-iteration.mjs",
+      "currentSha256": "54b58c921cab6d4dcb117cfac156514ea0d9c5d802f18733c6025c4a23402526",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-counterpart-faults.mjs",
+      "currentSha256": "9aac76cef554058f15307051b77936f7392acc6454ee6cf9b612ca01a07c0f85",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-cross-run-comparison.mjs",
+      "currentSha256": "0871578d80ff4a652c77ab7f70624f93fa75ff676e640a109373a311c24ae114",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-02",
+        "TEST-04"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-data-route-closure.mjs",
+      "currentSha256": "633dfca9f01d546cc87710792a26d6a4d839955cbe810b27df5b7d4aae78fac0",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-01"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-definition-of-done-invariants.mjs",
+      "currentSha256": "80e9b55a1cd035099b3d27c4b50d08a00db38c2fde6175586c2b0654f9ad502b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-07"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-definition-of-done.mjs",
+      "currentSha256": "014589c381f07a1d60cda55a9331ece2ac35fd587c005ab521a8f4b7e036a0ee",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-07"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-delivery-candidate-representation.mjs",
+      "currentSha256": "bc870b7d6d2f3bd5e5b7e7d7d48b3d096aad3ae225f0640f84efdd14bdd0ebd1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-delivery-transfer-boundary.mjs",
+      "currentSha256": "c22792afb82bc436f27bbe5c8b430e34cbcaf7034c559fee0a8b518ab397e6be",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-deployment-manifest.mjs",
+      "currentSha256": "0e3eb14885e95d08a15edbbf8326b10966dcad57974285aa5ed6704111bd2f95",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-due-stage-timing.mjs",
+      "currentSha256": "7910d502699ca84400a547ba9e4c2351bcbff5c5e485400179ddfa3b5972f642",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-03"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-file-first-operator.mjs",
+      "currentSha256": "83b8212c3fce4f12045b5df73c8d31f036892347ab537c37d46246672a23aff2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-09"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-file-first-response.mjs",
+      "currentSha256": "f0c45f68526e82a9a041c1c6ff875962e2440b9855b28103f33cd46adf96ae3c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-09"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-final-acceptance.mjs",
+      "currentSha256": "c1495699f7b88ebf332f8f70c70211c0a7c8a400e396bdb301396a435041b80e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-final-product-timing.mjs",
+      "currentSha256": "64977de124a9d3700abdb023f7d5d8419b1232ce115b92239da0339e7a12e59d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-10"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-full-cycle.mjs",
+      "currentSha256": "ccc8c86df7878afd1198d7bae7d1ff28a1ab4199403cbe17e5c73ff5a4632cf1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-general-recovery.mjs",
+      "currentSha256": "549a8c4205a9a7cbe39b52e2f120b01f0eb19b389e48883724b83523d0545604",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-hash.mjs",
+      "currentSha256": "62687cf1000d4ea327a60b4303c019f3d112929e30fd32489046cd682f094dd5",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-history-operation-sequences.mjs",
+      "currentSha256": "a6ca3a79a19c714f97ede32a9e2e1d93199638d1cf2b11d00aaef4e5fee07607",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-human-authority-roundtrip.mjs",
+      "currentSha256": "85d1320e155ca6266f263be23e5ce4fcb397c95354988472158622326d87eec8",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-human-stage-walkthrough.mjs",
+      "currentSha256": "12c2c1f651d576d4970b2466554ef35d897c1cabee39c1a6121181c454752c77",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-independent-preflight.mjs",
+      "currentSha256": "635d634499c25adca34995705e9c458b7359329a6f1bd10193ea35c5a5c7aad8",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-independent-run-verification.mjs",
+      "currentSha256": "2d7e97934a2cea0ee2ab86b1bd99d8f8545b031e26c496c95cb3943523e883f1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-infrastructure-route-closure.mjs",
+      "currentSha256": "332842129df812c9107df84ad110e311246ccf1f8128956af1d058e7db5dfab4",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-ingestion.mjs",
+      "currentSha256": "b71f38112e9805693c71f87584cb3452a820abe133276ab8376848d7db16e806",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-19",
+        "TEST-20"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-live.mjs",
+      "currentSha256": "80c5e22c22e3ac11e4deae8cc951291795015fec74fa1ba8744fb52389cd0111",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-acceptance-evidence.mjs",
+      "currentSha256": "6d3c0e6d81182edd1fa8e56ef4372fc1e39ac852fcaf0f5422da157a327138a9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-acceptance-target.mjs",
+      "currentSha256": "6780215aa1e289a3061db8bf48f939110668dcacf0113a665e29c8ee9f2506b5",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-17"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-capability-journey.mjs",
+      "currentSha256": "88cbc9f1c9a86908e9c0b3bb8189f5978ff351e6bdbce143e26b27c4f7c550d7",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-operation-observations.mjs",
+      "currentSha256": "078ebf2faab2d2fd5100b808f746de2704fa6cc2451422de4046aea53e994022",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-receipt-boundary.mjs",
+      "currentSha256": "1b063312f8e8ede66c1c0a968ff4e2f1bce08ac96155da87d7f4dd86695b453b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-release-governance.mjs",
+      "currentSha256": "db4a38115a2815f70cb793a6655c1dddc1acbd8917c700ef6172ef8e4d7443a2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-16"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-stage-action.mjs",
+      "currentSha256": "b28fb6ebea7aded2ad4ac834fa51a28b3ca9b47aa24b02962c305293aebd04df",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-native-proof-fault.mjs",
+      "currentSha256": "d06d2e9277c4cf9405c6c1c4f4ef5f2380c20a60ce132d8c9bf78f2d77eb1282",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-native-proof-journey.mjs",
+      "currentSha256": "19771d5386df88f93a75b715cab7ba52a3ae31cab7bd0369e9e8e21b16decd1a",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-one-time-intent-intake.mjs",
+      "currentSha256": "029b429884fe668dd023c259faa1a18f4baa7a6a25f2304785021acde29690b1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-operation-scope-classification.mjs",
+      "currentSha256": "527f4d4c15fb7f3e3efacf06740c6818613eaba3d5a645ee263a0fe506ab05d2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-operation-sequences.mjs",
+      "currentSha256": "d61f480987c742d31d4f9bb572e880a8c2ab6f5978adf3f8d32a5644f5169c09",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-operator-action-lifecycle.mjs",
+      "currentSha256": "88042a49463005e37f816624898ea9b8e2f949e9c335ecb89bd697a2bc829a59",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-operator-counterpart.mjs",
+      "currentSha256": "2a2dac916fc7c8b1bfba2cb829a0a6c3ebe44109823b119f7938928427110ca4",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-product-attachment-journey.mjs",
+      "currentSha256": "96dc8375db32bd3b85e65ed3e922acd7d2fa8bde62d7e82465566663bd2d04e3",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-production-baseline-authority.mjs",
+      "currentSha256": "cfeafc01d5f08998422871e1843ce88f4d984533001787da0fc3d23622e8f755",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-production-instruction.mjs",
+      "currentSha256": "c7309ff113cacb4c0b231cdad09a96de7ae4c9e2a23a331b464ed41af7219c06",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-project-lifecycle.mjs",
+      "currentSha256": "d091b79310e8ef551307ec4bc26fbf4c021069e9894a55d3c1e73c332c5bacb0",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-prompt-file-identity.mjs",
+      "currentSha256": "3dcaebfe600688646ace19f2fd5930b447d1ba4431a6f80d73011cd901a8079c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-prompt-semantics.mjs",
+      "currentSha256": "d451b7bcbc687c6557e6e8f20579e954eeac06631921b5126beaa53bac2632f9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-proposal-acceptance-memory.mjs",
+      "currentSha256": "eddd44a5b925ab8bef0b3d2554b398ceb537c9baea24b19ee99798339a78c01e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-reservation-contract.mjs",
+      "currentSha256": "05d0c4245ec8e7a2c75bd4613d8e081027b0db720fe38400331aed90c663dc9d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-response-byte-staging.mjs",
+      "currentSha256": "f170bf622005a1b85e90df1b5226fd7e34d4896964e2620824a57359127b6188",
+      "trackedAtReviewStart": false,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-response-contract-profile.mjs",
+      "currentSha256": "58a64b303e2205f89235ef1ba7bbf9f1c1910b19e795222a2945fedef1939d53",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-retained-candidate.mjs",
+      "currentSha256": "38af1842bc45314ef5f57d81d543098a7b560a71def534ab19136221c251cc04",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-root-cause-correction.mjs",
+      "currentSha256": "1a1bf4c56e634d1c5d89b9df1f577b3bc85a266f23f73fb376af92a453b06f58",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-root-cause-regressions.mjs",
+      "currentSha256": "45c016ab83f20b02a1cf132279a991cce6ff2d891e8ef88f55d94152ac7c2ad7",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-saved-history.mjs",
+      "currentSha256": "971e396319077b54bf03b658d525c708a8fcd561b78dcadfbde6dee54f8db5df",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-saved-version-codec.mjs",
+      "currentSha256": "40bb95ef68962b72c11fe61859a38b6c411abff907296d1f832eeaab55b3d2c1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-semantic-invariant.mjs",
+      "currentSha256": "a887fb5f105080d9375c838d971f9b2a70c1af88113a88cc65b5c9060de2d6cf",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-semantic-operation-boundaries.mjs",
+      "currentSha256": "ef6d5e1432969f19d6ba625cebe3c6102fade833fa43501b555c6b69e2fc664c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-semantic-review-acceptance.mjs",
+      "currentSha256": "923cc1edc4b05fd70b38c9fd054462095dd3b6bb69118825a01ee22ef5c2aebf",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-shared-contract-faults.mjs",
+      "currentSha256": "f96f20d505f8f9b1d6118e656b0053cdc4082f93ffe9a63e48e706251843c634",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-spec-grounded-route-oracle.mjs",
+      "currentSha256": "68b8f07fc983200927a8cca6c666371010cb1584cd95b3952fbc821d77e9af7d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-01",
+        "TEST-08"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-spec-residual-closure.mjs",
+      "currentSha256": "4bfbcc6f69954f647dedfe6775a3eac8ca158f477e3e6aca9fad31752dec8ec0",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-spec3-contract.mjs",
+      "currentSha256": "e41acce192dc7bb3c3bc70c99d1cc7cd49615e6205784a2302d6b37e95cd9eb3",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-specification-governance.mjs",
+      "currentSha256": "2c0506b2d4f3200f55a52272951ba4415fd78d2c619b30ff9f0f0d68c271d6d9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage-contract-closure.mjs",
+      "currentSha256": "53319c245435100bfae03e286818b096b6cec07818785355cbbdb72308102ca0",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage-operation-registry.mjs",
+      "currentSha256": "ffd35c28585c77b4a16dcda791e6ae8cb03e1161f7ceb3a2b5d47b1c898b2d18",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage-prompts-complete.mjs",
+      "currentSha256": "5e6998ea2ea151f7d83cb5dcba4db261270ad1e957598753e6c3c3d659b116a9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage01-disposition-contract.mjs",
+      "currentSha256": "dc03605a3a9425e321ae72326dcf488d69cc2b5151984db84362d7c66fc0f52e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage01-intake-closure.mjs",
+      "currentSha256": "a457deebc71e6ca9985a6974e8aa4a58f6fab393bdcf868836e2efaa210099fd",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage02-primitives.mjs",
+      "currentSha256": "42d714548343c491570c7f36e89bb73d5e99c053df93a2d55942b3e4fe7b962c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-06"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage03-agent-protocol.mjs",
+      "currentSha256": "9ae23732eba1288675c0a6264c8f70e22698c31fb8f9441eff842bb1501c8f73",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage03-source-research.mjs",
+      "currentSha256": "9600d8fee2c200168a7824c81064811c53e1c37ed174e2a3921073b8151f254e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage27-release-binding.mjs",
+      "currentSha256": "9df609ebfb04ee5857ca6ba95ddffd48ad2a640f94847dc4351ab3eb2fb80921",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage28-artifact-delivery-intent.mjs",
+      "currentSha256": "083fd634bfa4420406bf14da4e8846a73509ba2e71d043021922b6f196b088cc",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage29-evidence-chain-checkpoint.mjs",
+      "currentSha256": "41be24c2f0b71db2d8b05c6513ae912154d763e11fb998b21ccaa65e485fd6a6",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage30-terminal-mobile-boundary.mjs",
+      "currentSha256": "8a131d0235fdb5c65e42a22fa65c4e4cd68d86f70a988b2f77ab0c239b35cce7",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-state-release-contract.mjs",
+      "currentSha256": "b12ee026f4939ad90295eeb6333f2dec20ee36a71774430d0b3bdaa0fe92fcde",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-ten-independent-runs.mjs",
+      "currentSha256": "5971f5d5a164f7b7d2e600a3d1362268f73afd64ae7de978ddfe30b2558610a5",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-terminal-human-authority.mjs",
+      "currentSha256": "83158b4a54a607df6f717763b15670d7b9b2b7267cf4bd9ac9244920bb32f40a",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-18"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-test-ir-port-types.mjs",
+      "currentSha256": "d115a60a169092e7f0e753c6e6c7e153145850505e6a59d93cd80d2aea81fc2b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-test-runtime-dag.mjs",
+      "currentSha256": "0cd8eb1b78a598e1adaa5ff61be63acd729b9f5cf13db8568d86a33e557e3884",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-test-runtime-limits.mjs",
+      "currentSha256": "9f7c13dc28154e1dbdc4d045ebe3ee64ecc22e1e65141441d405395ad31f1be9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-11"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-test-runtime-v3.mjs",
+      "currentSha256": "97841068c7f5253782388e7ff8aa839903672c71885f541a00ec57c9d786ff40",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-test-runtime.mjs",
+      "currentSha256": "ccdc93b7dbb86e3d934de98103684e00ba94513c123ba9285071fd1e876bd116",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-12"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-test-worker-isolation.mjs",
+      "currentSha256": "8059a387845cf9ec569f9689e4779b4191be485e6503e633af279c1734b5f33a",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-21"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-user-prompt-invariants.mjs",
+      "currentSha256": "4a3760fabec74683bae13ee757a57b2a9c2ba7c75e70ee23146aaa0260ae484c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-v3-contract.mjs",
+      "currentSha256": "18abe919e1ba483497f8d8eef47daaed52148781e11abeb23b0f8d77867d1178",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-21"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-v3-definition-of-done.mjs",
+      "currentSha256": "220dc32470eac3328baae0fa2d49603843e1e913e419737ef61f5f20d066228b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-07"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-v3-migration.mjs",
+      "currentSha256": "278752fc1815259db3e77391de835415912f0a7a9eef32d7e3bcfec51422886b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-visual-baseline-submission.mjs",
+      "currentSha256": "fd6f84fc2c8061db4dfe308ca718495a351014e13a242b6b7501f9796e37400d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-zero-loss-accounting.mjs",
+      "currentSha256": "5d1a34cc9fb54baf37af023234b31a757f62f25dc92ec3df11402957c88f33af",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify.mjs",
+      "currentSha256": "fb45c9c1ca4ff7257d2459bd2f3a5ad56a89928efd1e3016fd7891eb461c8c1e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-19"
+      ],
+      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    }
+  ]
+}

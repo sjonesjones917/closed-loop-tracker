@@ -82,13 +82,18 @@ export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAG
 // complete suite through production ingestion and checks every prerequisite.
 export function reviewProofFixture(runtime,project){
  const {engine,prompts,ingestion,schema}=runtime;
+ if(Object.entries(schema.RECORD_SCHEMAS).some(([family,definition])=>(project.projectData[family]||[]).some(row=>Number(row.stage||definition.stage)>6&&row.active!==false)))throw new Error('Build the proof-review prerequisite before downstream canonical records.');
+ // Design-time records precede execution products and run contexts, including
+ // when a focused downstream fixture is populated after those targets exist.
+ for(const [family,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of project.projectData[family]||[]){const origin=Number(record.stage||definition.stage);if(origin>=4&&origin<=6){record.scope=engine.clone(prompts.scopeFor(origin,project));if(record.recordSha256)engine.refreshRecordHashes(record,family);}}
  const priorStages=engine.clone(project.stages),author=engine.preparePromptContext(project,6,{operation:'COMPLETE'}),authorPrompt=prompts.buildPromptRecord(6,project,author.options);
  project.projectData.generatedPrompts.push(authorPrompt);
  project.projectData.acceptedChanges.push({changeId:'FIXTURE-AUTHORED-PROOF',stage:6,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPLETE',promptId:authorPrompt.instructionId,scope:authorPrompt.scope,source:'CONTROLLED_DOWNSTREAM_PREREQUISITE_FIXTURE'});
  const prepared=engine.preparePromptContext(project,6,{operation:'PROOF_REVIEW'}),prompt=prompts.buildPromptRecord(6,project,prepared.options);project.projectData.generatedPrompts.push(prompt);
  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage:6,operation:'PROOF_REVIEW',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'fixture-proof-review',overrides:{REVIEW_QUESTION:'Does the controlled prerequisite proof suffice?',FINDING:'The observation-backed proposition requires accepted current evidence of the exact proposition.',REASONING:'Every current required test and expression is included; no alternate weaker branch is permitted.',RESULT:'ACCEPTED'}})]},evidence:[evidence('downstream-fixture-proof-review')],unresolved:[],warnings:[],attachments:[]};
  const proposal=ingestion.prepare(project,{stage:6,text:JSON.stringify(envelope),promptRecord:prompt});if(!proposal.validation.valid)throw new Error('Fixture proof review failed intake: '+JSON.stringify(proposal.validation.issues));
- Object.assign(project,ingestion.commit(proposal.project,proposal.proposal.proposalId,{operator:'DOWNSTREAM_FIXTURE'}).project);
+ const impact=ingestion.reviewAcceptance(proposal.project,proposal.proposal.proposalId);
+ Object.assign(project,ingestion.commit(proposal.project,proposal.proposal.proposalId,{operator:'DOWNSTREAM_FIXTURE',replacementConfirmation:impact.requiresConfirmation?impact:null}).project);
  // These focused tests retain their explicit, already-controlled prerequisites.
  project.stages=priorStages;
 }

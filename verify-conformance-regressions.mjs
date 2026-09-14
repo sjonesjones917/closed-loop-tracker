@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {spawnSync,execFileSync} from 'node:child_process';
-const suites=['verify-operator-action-lifecycle.mjs','verify-shared-contract-faults.mjs','verify-operation-sequences.mjs','verify-mobile-operation-observations.mjs','verify-mobile-receipt-boundary.mjs','verify-delivery-transfer-boundary.mjs','verify-checkpoint-boundary.mjs','verify-native-proof-journey.mjs','verify-native-proof-fault.mjs','verify-product-attachment-journey.mjs','verify-operator-counterpart.mjs','verify-counterpart-faults.mjs'];
-const sources=['app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','verify-mobile-acceptance-evidence.mjs',...suites];
+const suites=['verify-saved-version-codec.mjs','verify-saved-history.mjs','verify-general-recovery.mjs','verify-history-operation-sequences.mjs','verify-operator-action-lifecycle.mjs','verify-shared-contract-faults.mjs','verify-operation-sequences.mjs','verify-mobile-operation-observations.mjs','verify-mobile-receipt-boundary.mjs','verify-delivery-transfer-boundary.mjs','verify-checkpoint-boundary.mjs','verify-native-proof-journey.mjs','verify-native-proof-fault.mjs','verify-product-attachment-journey.mjs','verify-operator-counterpart.mjs','verify-counterpart-faults.mjs'];
+const sources=['app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-store-runtime.mjs','verify-mobile-acceptance-evidence.mjs',...suites];
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const results=[];

@@ -111,10 +111,10 @@ try{
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
     if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
     if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
-    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptVisualBaseline:true,operatorDoubleCheckGuide:true};
+    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptCssDeclarationsChecked:true,visualBaselineAcceptance:false,operatorDoubleCheckGuide:true};
   })()`);
   if(browserDialog)throw new Error(`Browser UI opened an unexpected dialog: ${browserDialog}`);
-  if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<8||result?.applicationOnlyOperations<1||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Synthetic prompt and navigation checks did not pass.');
+  if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<8||result?.applicationOnlyOperations<1||result?.oneTimeSupply!==true||result?.promptCssDeclarationsChecked!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Synthetic prompt and navigation checks did not pass.');
   console.log(JSON.stringify({syntheticPromptAndNavigationChecks:true,completeOperatorJourney:false,humanIndependenceEstablished:false,...result}));
 }finally{
   try{ws?.close();}catch{}

@@ -26,7 +26,7 @@ CTX-06 | Enforce the same exclusion for later-stage information incorporated ind
 CTX-07 | Rebuild stale handoffs after changes to project version, stage, scope, or governing revision.
 CTX-08 | Keep complete restoration backups separate from agent-facing handoffs.
 CTX-09 | Enforce context boundaries after Undo, Redo, Back, Forward, saved History restoration, and backup restoration.
-CTX-10 | Executing Stage 9 after Stage 12 must give a valid Stage 9 handoff with no Stage 10–30 information; later work may remain internally stored.
+CTX-10 | Every permitted stage and operation must receive the context appropriate to that stage in the active version, excluding all subsequent-stage information regardless of its completion status or storage in active state or history; later work may remain internally stored.
 
 3. Replacement acceptance
 ACC-01 | Keep stage selection, execution, validation, committed acceptance, and saved-version restoration distinct.
@@ -56,7 +56,7 @@ HIS-04 | Capture relevant view state and drafts before leaving them; browser mem
 HIS-05 | Associate every application navigation entry with its saved project version and view.
 HIS-06 | Back and Forward activate the corresponding saved working data and restore project, selected stage, view, and position; labels alone are insufficient.
 HIS-07 | Stage selection stays in the active version; browser traversal returns to the recorded version.
-HIS-08 | Restore a version as a consistent whole; Back across Stage 9 replacement restores the original result and matching Stage 10–12 progress, while Forward restores replacement and required rework.
+HIS-08 | Restore a version as a consistent whole: traversing any recorded acceptance or correction boundary restores the destination's matching results, decisions, files and dependent progress or rework, at any available history distance.
 HIS-09 | Never combine old downstream approvals with incompatible newer upstream data.
 HIS-10 | Restore accepted saved work without replaying acceptance commands or requiring completed work again; unaccepted candidates remain unaccepted.
 HIS-11 | Editing after returning to an earlier version preserves a new continuation and the previously saved later versions.
@@ -104,7 +104,7 @@ VER-14 | Check coherent active versions, preserved checkpoints, stage isolation,
 7. Complete acceptance
 JRN-01 | Complete all 30 stages through actual controls and file transport with prerequisite state created by preceding operations.
 JRN-02 | Exercise complete valid progression, rejection/correction, all handoffs, mapping, review, application commands, persistence, recovery, saved history, and delivery.
-JRN-03 | Return at least three stages, validate a replacement, cancel without loss, then confirm replacement and re-complete all affected downstream work.
+JRN-03 | Exercise re-execution wherever permitted, validate replacement, cancel without loss, then confirm replacement and re-complete all affected dependent work; select journey coverage from actual stages, dependencies and transitions without a fixed movement distance or demonstration path.
 JRN-04 | Undo restores original matching downstream progress; Forward/Redo restores replacement; repeated traversal and a different continuation preserve alternatives recoverable through History.
 JRN-05 | Return to session start; recover after reload/interruption; restore actual backup bytes including retained history; retrieve and compare final bytes; exercise required workloads and history lengths.
 JRN-06 | Label synthetic evidence accurately; separately obtain required actual external project outputs and claim independence, human actions, and devices only as observed.
@@ -114,3 +114,12 @@ REL-03 | Obtain physical-iPhone Safari and approved visual-baseline evidence bou
 REL-04 | Claim completion only when all mandatory implementation and evidence requirements and complete deployed journeys pass; separate functional readiness, device acceptance, and production maturity.
 REL-05 | Distinguish product defects from unavailable tools/access/devices/human decisions; finish independent work before seeking necessary assistance and identify exact missing requirements, capabilities, and evidence.
 REL-06 | Return implemented changes, executed verification, exact deployed revision if deployed, remaining defects, limitations, tested environments, and recovery limits; deliver the working application rather than an audit, plan, patch archive, or isolated repair.
+
+8. General application of the requirements (2026-09-14 clarification)
+GEN-01 | Apply requirements generally across all 30 stages and every required operation. Do not hard-code particular stages, stage ranges, movement distances, or example sequences. Determine behavior from the actual project version, selected stage, operation, prerequisites, dependencies, and affected work.
+GEN-02 | Maintain coverage of initial execution, repeated execution, earlier-stage execution, replacement acceptance, cancellation, invalidation, restoration, and subsequent continuation wherever each operation applies.
+GEN-03 | Generate replacement impact from authoritative dependencies and actual state; do not assume a fixed number of affected stages or a contiguous range unless the actual dependencies establish one.
+GEN-04 | Derive restoration from the destination history entry; support repeated navigation and direct jumps while retaining alternative saved continuations and enforcing the destination version's prerequisites.
+GEN-05 | Apply tests across every applicable stage and transition, including first and final stages, repeated execution, movement between stages, no subsequent work, and completed, partially completed, pending or invalidated dependent work.
+GEN-06 | Generate operation sequences from applicable workflow rules and state combinations, covering all required operations and invariants, without limiting discovery to a fixed demonstration path or movement distance.
+GEN-07 | Select complete operator journey coverage from actual stages, dependencies and state transitions, accounting for all applicable stages and transition classes. Individual examples and selected passing cases do not establish general conformance.

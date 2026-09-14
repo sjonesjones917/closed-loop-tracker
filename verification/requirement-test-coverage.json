@@ -2641,8 +2641,14 @@
   "userAmendments": [
     {
       "path": "specification/recovery-requirements.json",
-      "amendmentId": "RECOVERY-20260914-1",
-      "requirementCount": 90
+      "amendmentId": "RECOVERY-20260914-2",
+      "requirementCount": 97
     }
-  ]
+  ],
+  "testReview": {
+    "path": "verification/test-review-20260914/findings.json",
+    "inventory": "verification/test-review-20260914/inventory.json",
+    "complete": false,
+    "acceptance": "Source declarations and component results must not be promoted into full application coverage."
+  }
 }

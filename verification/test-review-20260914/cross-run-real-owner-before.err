@@ -1,0 +1,82 @@
+{
+  "failures": [
+    {
+      "caseId": "missing-current-verification",
+      "actual": {
+        "stage": 13,
+        "complete": true,
+        "blocked": false,
+        "reasons": [],
+        "acceptedResponseCount": 1,
+        "checkedAt": "2026-09-14T08:14:10.921Z",
+        "priorReasonCount": 0
+      },
+      "error": "missing-current-verification: prohibited state was accepted\n\ntrue !== false\n"
+    },
+    {
+      "caseId": "duplicate-current-verification",
+      "actual": {
+        "stage": 13,
+        "complete": true,
+        "blocked": false,
+        "reasons": [],
+        "acceptedResponseCount": 1,
+        "checkedAt": "2026-09-14T08:14:11.035Z",
+        "priorReasonCount": 0
+      },
+      "error": "duplicate-current-verification: prohibited state was accepted\n\ntrue !== false\n"
+    },
+    {
+      "caseId": "missing-frozen-variance-contract",
+      "actual": {
+        "stage": 13,
+        "complete": true,
+        "blocked": false,
+        "reasons": [],
+        "acceptedResponseCount": 1,
+        "checkedAt": "2026-09-14T08:14:11.130Z",
+        "priorReasonCount": 0
+      },
+      "error": "missing-frozen-variance-contract: prohibited state was accepted\n\ntrue !== false\n"
+    },
+    {
+      "caseId": "unknown-variance-authorization",
+      "actual": {
+        "stage": 13,
+        "complete": true,
+        "blocked": false,
+        "reasons": [],
+        "acceptedResponseCount": 1,
+        "checkedAt": "2026-09-14T08:14:11.227Z",
+        "priorReasonCount": 0
+      },
+      "error": "unknown-variance-authorization: prohibited state was accepted\n\ntrue !== false\n"
+    },
+    {
+      "caseId": "prohibited-variance-with-NONE",
+      "actual": {
+        "stage": 13,
+        "complete": true,
+        "blocked": false,
+        "reasons": [],
+        "acceptedResponseCount": 1,
+        "checkedAt": "2026-09-14T08:14:11.322Z",
+        "priorReasonCount": 0
+      },
+      "error": "prohibited-variance-with-NONE: prohibited state was accepted\n\ntrue !== false\n"
+    },
+    {
+      "caseId": "prohibited-variance-with-DOES-NOT-EXIST",
+      "actual": {
+        "stage": 13,
+        "complete": true,
+        "blocked": false,
+        "reasons": [],
+        "acceptedResponseCount": 1,
+        "checkedAt": "2026-09-14T08:14:11.412Z",
+        "priorReasonCount": 0
+      },
+      "error": "prohibited-variance-with-DOES-NOT-EXIST: prohibited state was accepted\n\ntrue !== false\n"
+    }
+  ]
+}

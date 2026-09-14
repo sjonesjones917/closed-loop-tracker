@@ -66,16 +66,27 @@ assert(h.evaluateTrustedTimeEvidence({basis:'DEVICE_REPORTED'}).trusted===false,
 assert(h.evaluateTrustedTimeEvidence({basis:'SOURCE_ASSERTED'}).trusted===false,'Source-asserted time was promoted to trusted external time.');
 mustReject('fabricated VERIFIED_EXTERNAL',()=>h.evaluateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL'}),/VERIFIED_EXTERNAL requires/);
 const verified=h.evaluateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL',attestationContractId:'RFC3161-TEST-CONTRACT'});
-assert(verified.trusted===true&&verified.attestationContractId==='RFC3161-TEST-CONTRACT','Registered trusted-time attestation was not accepted.');
+assert(verified.trusted===false&&verified.basis==='SOURCE_ASSERTED','TRUSTED_TIME_ORACLE: naming an unregistered attestation contract must not establish trusted time.');
 
 // Test-the-tests: prove each gate rejects an intentionally invalid state, then prove the repaired state progresses.
 assert(filenameMutations.length===10&&timeMutations.length===7,'Stage 02 mutation universes changed unexpectedly.');
 assert(h.normalizeFilename('repaired.txt').canonicalPath==='repaired.txt','Filename mutation repair did not progress.');
 assert(h.normalizeDateTime('2026-09-03T12:34:56.000Z').normalized==='2026-09-03T12:34:56.000Z','Time mutation repair did not progress.');
-assert(h.evaluateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL',attributableExternalSystem:true}).trusted===true,'Trusted-time mutation repair did not progress.');
+assert(h.evaluateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL',attributableExternalSystem:true}).trusted===false,'TRUSTED_TIME_ORACLE: a Boolean claim is not an accepted attributable external-system time record.');
 
+function trustedTimeOracle(api){
+ for(const claim of [{basis:'VERIFIED_EXTERNAL',attestationContractId:'UNREGISTERED-CONTRACT'},{basis:'VERIFIED_EXTERNAL',attributableExternalSystem:true}])assert(api.evaluateTrustedTimeEvidence(claim).trusted===false,'TRUSTED_TIME_ORACLE: an unverified claim became verified time');
+}
+const primitiveSource=fs.readFileSync('hash.js','utf8');
+const before="basis:'SOURCE_ASSERTED',trusted:false,attestationContractId:attestationContractId||null,attributableExternalSystem:false";
+assert(primitiveSource.includes(before),'Trusted-time mutation anchor missing');
+const faulty=vm.createContext({TextEncoder,TextDecoder});
+vm.runInContext(primitiveSource.replace(before,"basis:'VERIFIED_EXTERNAL',trusted:true,attestationContractId:attestationContractId||null,attributableExternalSystem:Boolean(attributableExternalSystem)"),faulty);
+trustedTimeOracle(h);
+mustReject('trust-promotion implementation fault',()=>trustedTimeOracle(faulty.closedLoopHash),/TRUSTED_TIME_ORACLE/);
+trustedTimeOracle(h);
 console.log(JSON.stringify({
-  stage02PrimitiveProof:'PASS',
+  stage02PrimitiveProof:'PASS',controllerBuildStage:2,applicationStage:null,evidenceClass:'EXECUTED_PRIMITIVE_CASES',trustedTimePromotionFault:'DETECTED',
   canonicalJsonVersion:h.canonicalizationVersion,
   canonicalIdVersion:h.idVersion,
   filenameVersion:h.filenameVersion,
@@ -86,5 +97,8 @@ console.log(JSON.stringify({
   filenameInvalidFixturesRejected:filenameMutations.length,
   timeInvalidFixturesRejected:timeMutations.length,
   fabricatedTrustedTimeRejected:true,
+  unverifiedContractNameRejected:true,
+  unverifiedExternalSystemClaimRejected:true,
+  verifiedExternalTimePathEstablished:false,
   repairedFixturesProgress:true
 },null,2));

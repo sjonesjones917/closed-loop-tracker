@@ -69,64 +69,21 @@ assert(workflowSource.includes('node verify-semantic-invariant.mjs'),'Semantic f
 assert(workflowSource.includes('verify-browser.mjs')&&workflowSource.includes('verify-browser-extra.mjs'),'Chromium acceptance is not in CI.');
 assert(workflowSource.includes('Exact deployed-byte verification')&&workflowSource.includes('run: node verify-live.mjs'),'Exact deployed-byte verification is not in CI.');
 
-const engineSource=fs.readFileSync('workflow-engine.js','utf8');
-const ingestionTestSource=fs.readFileSync('verify-ingestion.mjs','utf8');
-const completeTestSource=fs.readFileSync('verify-complete.mjs','utf8');
-const fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
-const stage28TestSource=fs.readFileSync('verify-stage28-artifact-delivery-intent.mjs','utf8');
-const semanticTestSource=fs.readFileSync('verify-semantic-invariant.mjs','utf8');
-const browserExtraSource=fs.readFileSync('verify-browser-extra.mjs','utf8');
-for(const token of ['evaluateEvidenceContract','evaluateResultConsistency','effectiveDetermination','validateTraceIntegrity','detectCurrentContradictions','releaseMetrics','testExecutionPlan','executionHandoff'])assert(engineSource.includes(token),`Central reliability authority missing ${token}.`);
-
-const scopeKeys=[...new Set(Object.values(schema.SCOPE_REQUIREMENTS||{}).flat())];
-const scopeKeyProofs=scopeKeys.map(key=>ingestionTestSource.includes(`'${key}'`)||ingestionTestSource.includes(`"${key}"`));
-assert(ingestionTestSource.includes('scopeNegative')&&ingestionTestSource.includes("code==='STALE_SCOPE'"),'Stale-scope mutation matrix is not executable.');
-const currentScopeSelectorMetric=coverageMetric('CURRENT_SCOPE_SELECTOR_COVERAGE',scopeKeyProofs.filter(Boolean).length,scopeKeyProofs.length,scopeKeys);
-const currentScopeSelectorCoverage=currentScopeSelectorMetric.value;
-assert(currentScopeSelectorCoverage===1,'Current-scope selector coverage is not 100%.');
-
-const verificationMatrixProofs=[['verification-key',engineSource.includes('verificationKey(record)')],['expected-count',engineSource.includes('expectedVerificationCount:matrix.expected.length')],['matrix-coverage',engineSource.includes('verificationCoverage:matrix.coverage')],['stage12-nonempty-regression',completeTestSource.includes('Stage 12 completed without verification triples.')],['full-cycle-triple-coverage',fullCycleSource.includes('verificationTripleCoverage:engine.coverageMetrics(reloaded).verificationCoverage')]];
-const exactReqRunTestMetric=coverageMetric('REQ_RUN_TEST_COVERAGE',verificationMatrixProofs.filter(([,ok])=>ok).length,verificationMatrixProofs.length,verificationMatrixProofs.map(([id])=>id));
-const exactReqRunTestCoverage=exactReqRunTestMetric.value;
-assert(exactReqRunTestCoverage===1,'Exact REQ × RUN × TEST coverage proof is incomplete.');
-
-const regressionProofs=[['effective-regression-satisfied',engineSource.includes("effectiveRegressionDetermination(project,r).determination==='SATISFIED'")],['stale-regression-rejected',completeTestSource.includes('A stale regression success resolved a current material defect.')],['current-regression-closure',completeTestSource.includes('currentRegressionClosure:true')],['post-correction-full-cycle',fullCycleSource.includes("PHASE:'POST_CORRECTION',RESULT:'SATISFIED'")],['unchanged-confirmation-full-cycle',fullCycleSource.includes("PHASE:'UNCHANGED_CONFIRMATION',RESULT:'SATISFIED'")]];
-const applicableCurrentRegressionMetric=coverageMetric('APPLICABLE_CURRENT_REGRESSION_SUCCESS',regressionProofs.filter(([,ok])=>ok).length,regressionProofs.length,regressionProofs.map(([id])=>id));
-const applicableCurrentRegressionSuccess=applicableCurrentRegressionMetric.value;
-assert(applicableCurrentRegressionSuccess===1,'Applicable current regression-success proof is incomplete.');
-
-const evidenceChainProofs=[['construct-evidence-chains',engineSource.includes('function constructEvidenceChains(project)')],['effective-determination',engineSource.includes('effective=effectiveDetermination(collection,result,test,project)')],['evidence-contract',engineSource.includes('contract=evaluateEvidenceContract(test,result,null,project)')],['nonsatisfied-result-missing',engineSource.includes("if(effective!=='SATISFIED')missing.push('NON_SATISFIED_EFFECTIVE_RESULT:'+tid)")],['evidence-sufficiency',engineSource.includes('sufficiency=evaluateEvidenceSufficiency(project,{requirement,test,result})')],['insufficient-evidence-missing',engineSource.includes("if(!contract.sufficient||!sufficiency.sufficient)missing.push('INSUFFICIENT_EVIDENCE:'+tid)")],['full-cycle-construction',fullCycleSource.includes('engine.constructEvidenceChains(p)')],['full-cycle-stage29-gate',fullCycleSource.includes("evidenceChains:engine.gate(29,reloaded).complete")],['missing-links-not-invented',completeTestSource.includes('Missing evidence-chain links remain missing; the application does not invent them.')],['missing-links-fabrication-regression',completeTestSource.includes('Missing evidence links were fabricated as complete.')]];
-const mandatoryEvidenceChainMetric=coverageMetric('MANDATORY_EVIDENCE_CHAIN_STRUCTURAL_COVERAGE',evidenceChainProofs.filter(([,ok])=>ok).length,evidenceChainProofs.length,evidenceChainProofs.map(([id])=>id));
-const mandatoryEvidenceChainCoverage=mandatoryEvidenceChainMetric.value;
-assert(mandatoryEvidenceChainCoverage===1,'Mandatory evidence-chain coverage proof is incomplete.');
-
-const artifactIdentityProofsFor=(stage28Source=stage28TestSource)=>[
-  ['current-stage27-release-bound',engineSource.includes('Artifact identity verification requires the current bound Stage 27 ACCEPTED release.')],
-  ['current-stage25-candidate-bound',engineSource.includes('Artifact identity verification requires the exact current Stage 25 delivery candidate set.')],
-  ['duplicate-identity-rejected',engineSource.includes('Duplicate artifact identity or filename is prohibited.')],
-  ['candidate-count-equality',engineSource.includes('Audited and delivery artifact counts differ from the current delivery candidate.')],
-  ['artifact-filename-mapping-exact',engineSource.includes('Artifact identity is not the exact candidate artifact-to-filename mapping.')],
-  ['application-byte-rehash-required',engineSource.includes('Artifact identity requires an application-owned byte rehash receipt, not caller metadata.')],
-  ['candidate-filenames-exact',engineSource.includes('Delivery filenames do not match the authorized candidate filenames.')],
-  ['order-independent-normalization',engineSource.includes("sort((x,y)=>x.artifactId.localeCompare(y.artifactId))")],
-  ['permanent-stage28-invalid-fixture',stage28Source.includes("rejected.push('metadata-only-byte-claim')")&&stage28Source.includes("rejected.push('generic-purpose-substitution')")&&stage28Source.includes('repairedPathProgressed:true')],
-  ['stage28-current-batch',completeTestSource.includes('stage28CurrentBatch:true')],
-  ['full-cycle-identity-and-intent',fullCycleSource.includes('engine.verifyArtifactIdentity(p')&&fullCycleSource.includes('engine.captureDeliveryIntent(p')]
-];
-const artifactIdentityProofs=artifactIdentityProofsFor();
-const stage28FixtureMutation=stage28TestSource.replace("rejected.push('metadata-only-byte-claim')","rejected.push('metadata-only-byte-claim-removed')");
-assert(artifactIdentityProofsFor(stage28FixtureMutation).some(([id,ok])=>id==='permanent-stage28-invalid-fixture'&&!ok),'The release-artifact identity metric did not detect intentional removal of a required Stage 28 invalid fixture.');
-const releaseArtifactIdentityMetric=coverageMetric('RELEASE_ARTIFACT_IDENTITY_COVERAGE',artifactIdentityProofs.filter(([,ok])=>ok).length,artifactIdentityProofs.length,artifactIdentityProofs.map(([id])=>id));
-const releaseArtifactIdentityCoverage=releaseArtifactIdentityMetric.value;
-assert(releaseArtifactIdentityCoverage===1,'Release artifact identity coverage proof is incomplete.');
-
-const appendOnlyCollections=Object.entries(schema.RECORD_SCHEMAS).filter(([,def])=>def.commitPolicy===schema.COLLECTION_POLICIES.APPEND_ONLY).map(([name])=>name);
-assert(appendOnlyCollections.length>0,'No append-only canonical collections were discovered.');
-const zeroProofs={unauthorizedFieldMutationsAccepted:ingestionTestSource.includes("negative('agent application field'")&&ingestionTestSource.includes('FIELD_OWNERSHIP_VIOLATION'),canonicalMutationsBeforeAcceptance:ingestionTestSource.includes('mutated canonical state before operator acceptance')&&fullCycleSource.includes('mutated before acceptance'),partialCommitsAfterInjectedFailure:completeTestSource.includes('Storage failure during accepted-state persistence did not roll back exact prior state.')&&browserExtraSource.includes('Injected IndexedDB project-write failure produced a partial commit.'),staleProposalsAccepted:ingestionTestSource.includes('Proposal stale after project revision change was accepted.')&&ingestionTestSource.includes("error.code==='STALE_PROPOSAL'"),crossProjectRelationshipsAccepted:ingestionTestSource.includes("negative('cross-project response'")&&ingestionTestSource.includes("negativeAt('unresolved relationship'")&&ingestionTestSource.includes('UNRESOLVED_RELATIONSHIP'),historicalScopeSatisfyingCurrentGates:completeTestSource.includes('Historical scope satisfied current selector.')&&completeTestSource.includes('Unscoped historical record satisfied current selector.')&&completeTestSource.includes('Partially scoped historical record satisfied current selector.'),unmatchedDeliveryFilesAuthorized:engineSource.includes('Audited and delivery artifact counts differ from the current delivery candidate.')&&engineSource.includes('Artifact identity is not the exact candidate artifact-to-filename mapping.')&&engineSource.includes('Delivery filenames do not match the authorized candidate filenames.'),appendOnlyHistoryRewritesAccepted:appendOnlyCollections.every(name=>schema.RECORD_SCHEMAS[name].appendOnly!==false)&&ingestionTestSource.includes('Non-reserved collection accepted targetId update semantics.'),favorableAgentVerdictsOverridingContradictoryObservations:semanticTestSource.includes('contradictory/missing evidence state was accepted')&&semanticTestSource.includes('semanticFalseAcceptanceInvariant:true'),structurallyInsufficientEvidenceProducingMandatorySatisfaction:completeTestSource.includes('Prose satisfied a byte test.')&&semanticTestSource.includes('semanticFalseAcceptanceInvariant:true'),externallySupportedUnestablishedIndependenceTreatedAsProven:semanticTestSource.includes('Self-asserted verifier identity became release-grade evidence')&&semanticTestSource.includes('releaseGradeIndependence:true')};
-const zeroAcceptanceCounters=Object.fromEntries(Object.entries(zeroProofs).map(([name,proved])=>[name,proved?0:1]));
-for(const [name,count] of Object.entries(zeroAcceptanceCounters))assert(count===0,`${name} is not proven to be zero.`);
-
-const coverageMetrics={fieldOwnershipCoverage:fieldOwnershipMetric,applicationDerivationCoverage:applicationDerivationMetric,typedRelationshipCoverage:typedRelationshipMetric,acceptedAgentValueExtractionCoverage:acceptedAgentValueExtractionMetric,acceptedRelationshipProvenanceCoverage:acceptedRelationshipProvenanceMetric,currentScopeSelectorCoverage:currentScopeSelectorMetric,exactReqRunTestCoverage:exactReqRunTestMetric,applicableCurrentRegressionSuccess:applicableCurrentRegressionMetric,mandatoryEvidenceChainCoverage:mandatoryEvidenceChainMetric,releaseArtifactIdentityCoverage:releaseArtifactIdentityMetric};
-assert(Object.values(coverageMetrics).every(metric=>metric.denominator>0),'No coverage metric may publish 100% from an empty denominator.');
-
-console.log(JSON.stringify({fieldOwnershipCoverage,applicationDerivationCoverage,typedRelationshipCoverage,acceptedAgentValueExtractionCoverage,acceptedRelationshipProvenanceCoverage,currentScopeSelectorCoverage,exactReqRunTestCoverage,applicableCurrentRegressionSuccess,mandatoryEvidenceChainCoverage,releaseArtifactIdentityCoverage,coverageMetrics,...zeroAcceptanceCounters,canonicalFieldCount:fieldRows.length,applicationFieldCount:applicationRows.length,agentFieldCount:agentRows.length,typedRelationshipCount:relationshipRows.length,currentScopeIdentityCount:scopeKeys.length,appendOnlyCollectionCount:appendOnlyCollections.length,stageCount:core.STAGE_COUNT,singlePagesWorkflow:true,applicationTestExecutorCount:engine.applicationTestCapabilities().length,centralAdjudication:true},null,2));
+// Registry declarations and CI wiring are useful checks, but they do not
+// measure behavior, accepted records, or the full specification universe.
+const declarationChecks={
+ producerLabels:{declared:fieldRows.length,present:ownershipPassed},
+ derivationIdentifiers:{declared:applicationRows.length,present:derivationPassed},
+ relationshipTypes:{declared:relationshipRows.length,present:relationshipPassed},
+ agentProvenanceDescriptors:{declared:agentRows.length,present:extractionPassed},
+ relationshipOwnerLabels:{declared:relationshipRows.length,present:relationshipProvenancePassed}
+};
+const unmeasuredCoverage=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'];
+const unmeasuredCounters=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven'];
+console.log(JSON.stringify({
+ schemaDeclarationChecks:'PASS',evidenceClass:'REGISTRY_DECLARATIONS_AND_CI_CONFIGURATION',
+ declarationChecks,stageCount:core.STAGE_COUNT,singlePagesWorkflow:true,
+ applicationCompletion:false,mandatoryBehavioralUniverseEstablished:false,
+ ...Object.fromEntries([...unmeasuredCoverage,...unmeasuredCounters].map(name=>[name,null])),
+ coverageMetrics:Object.fromEntries(unmeasuredCoverage.map(name=>[name,{metricId:name,value:null,disposition:'UNKNOWN',universeDefinition:'The full mandatory behavioral case universe has not been established by declaration checks.',numerator:null,denominator:null,includedIds:[],excludedIds:[],evidenceReferences:[]}]))
+},null,2));

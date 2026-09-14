@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {execFileSync} from 'node:child_process';
 
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
@@ -69,8 +70,8 @@ for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
 }
 
 const forbiddenReads={
-  '11:COMPLETE':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
-  '12:COMPLETE':['comparisons','rootCauses','changes'],
+  '11:EXECUTE_RUN':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
+  '12:VERIFY':['comparisons','rootCauses','changes'],
   '23:COMPLETE':['deterministicResults','adversarialResults'],
   '24:COMPLETE':['deterministicResults','meaningResults']
 };
@@ -104,24 +105,9 @@ for(let stage=1;stage<=30;stage++){
 
     const scope={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,contextId:collectionSentinels.freshContexts.currentId,baselineId:'BASE-ROUTE-v1',productId:'PROD-ROUTE-v1'};
     for(const key of op.scopeRequirements)assert(scope[key]!==undefined,`Fixture missing required scope ${key} for Stage ${stage}/${operation}.`);
-    let record;
-    try{record=prompts.buildPromptRecord(stage,state,{operation,scope});}catch{record=null;}
-    if(record){
-      const manifest=record.contextManifest?.readCollections||{};
-      for(const collection of op.readCollections){
-        const ids=(manifest[collection]||[]).map(item=>item.id);
-        const sent=collectionSentinels[collection];
-        assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
-        assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
-        assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
-        assert(!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} prompt body leaked stale ${collection}.`);
-      }
-      for(const collection of op.agentWritableCollections){
-        assert(record.prompt.includes(collection),`Stage ${stage}/${operation} prompt omits writable collection ${collection}.`);
-        for(const field of schema.recordAgentFields(collection))assert(record.prompt.includes(field),`Stage ${stage}/${operation} prompt omits legitimate return field ${collection}.${field}.`);
-      }
-      for(const field of op.allowedStageData)assert(record.prompt.includes(field),`Stage ${stage}/${operation} prompt omits writable stageData ${field}.`);
-    }
+    // Serialization is executed below using the independent route oracle's
+    // complete projection fixture. A failed builder must never be skipped.
+
   }
 }
 
@@ -166,6 +152,10 @@ assert(uiSource.includes('Double-check before you continue')&&uiSource.includes(
 for(let stage=1;stage<=30;stage++){const probe=core.createBlankState(`JOB-OPERATOR-CHECK-${stage}`);engine.ensureShape(probe);probe.activeStage=stage;probe.job.CURRENT_STAGE=`STAGE ${String(stage).padStart(2,'0')}`;engine.recalculate(probe);const action=engine.operationalNextAction(probe,stage);assert(Array.isArray(action.operatorChecks)&&action.operatorChecks.length>0,`Stage ${stage} structured action lacks operator double-check guidance.`);}
 assert(!/agent must |agent should |the agent should/i.test(uiSource),`External-agent behavioral instruction leaked outside prompt-engine.js.`);
 
+const routeOutput=execFileSync(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{encoding:'utf8'});
+const route=JSON.parse(routeOutput);
+assert(route.specGroundedRouteOracle==='PASS'&&route.operations===operationsChecked,'The independent executed route oracle did not cover every registered operation.');
+assert(route.promptsBuilt===50&&route.nonExternalPromptRejections===16,'Prompt generation or executor rejection was skipped.');
 console.log(JSON.stringify({
   dataRouteClosure:'PASS',
   stages:30,
@@ -178,9 +168,12 @@ console.log(JSON.stringify({
   invalidationStagesChecked,
   currentScopeStaleExclusion:true,
   promptReadSerialization:true,
-  responseAuthorizationClosure:true,
-  provenanceContractClosure:true,
-  downstreamForwardingClosure:true,
+  executedPromptRoute:{file:'verify-spec-grounded-route-oracle.mjs',stdoutSha256:globalThis.closedLoopHash.sha256Text(routeOutput),actual:route},
+  evidenceClass:'DECLARATIONS_COMPONENT_SELECTORS_AND_EXECUTED_PROMPT_PROJECTIONS',
+  completeOperatorJourney:false,
+  responseAuthorizationDeclarations:true,
+  provenanceContractDeclarations:true,
+  declaredDownstreamConsumerEdges:true,
   downstreamOnlyInvalidation:true,
   subjectNeutralPromptAuthority:true,
   humanExperiencePromptContract:true

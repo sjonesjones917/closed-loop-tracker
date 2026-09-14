@@ -1,0 +1,12 @@
+file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-complete.mjs:9
+const assert=(value,message)=>{if(!value)throw new Error(message);};
+                                               ^
+
+Error: Unaccepted run completion flags were counted as materially independent accepted operations.
+    at assert (file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-complete.mjs:9:48)
+    at file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-complete.mjs:489:40
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.19.0

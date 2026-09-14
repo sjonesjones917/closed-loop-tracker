@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import './verify-response-byte-staging.mjs';
 
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const app=read('./app-core.js');
@@ -11,6 +12,7 @@ const store=read('./project-store.js');
 const html=read('./index.html');
 const ingestionProof=read('./verify-ingestion.mjs');
 
+// These are declaration and wording checks, not runtime enforcement evidence.
 export function assertFileFirstResponseContract({appSource=app,promptSource=prompt,engineSource=engine,ingestionSource=ingestion,storeSource=store,htmlSource=html,ingestionProofSource=ingestionProof}={}){
   assertResponseFileInstruction(promptSource);
   assert.doesNotMatch(engineSource,/PASTE_FINAL_JSON/,'Paste must not remain a primary workflow action.');
@@ -57,49 +59,20 @@ workflow.ensureShape(state);
 const manifest=prompts.intakeCoverageManifest(state);
 state.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',extractedStatements:[{statementKey:'S'+index,text:unit.rawValueText||unit.label,statementClass:'CONTEXT'}]}))});
 state.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
-let generatedOperations=0;
+let generatedOperations=0;const generatedCases=[],nonExternalCases=[];
 for(let stage=1;stage<=schema.STAGE_COUNT;stage++){
   if(stage>1){state.stages[stage-1].status='COMPLETE';state.stages[stage-1].gate={complete:true};}
   for(const operation of schema.STAGE_CONTRACTS[stage].operations){
     const contract=schema.operationContract(stage,operation),scope=Object.fromEntries(contract.scopeRequirements.map(key=>[key,key==='projectRevision'?0:key.toUpperCase()+'-FILE-TEST']));
-    if(contract.executorClass!=='EXTERNAL_AGENT'){let blocked=false;try{prompts.buildPromptRecord(stage,state,{operation,scope});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}assert(blocked,`Stage ${stage} ${operation} must not generate an external response-file prompt.`);continue;}
+    if(contract.executorClass!=='EXTERNAL_AGENT'){let blocked=false;try{prompts.buildPromptRecord(stage,state,{operation,scope});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}assert(blocked,`Stage ${stage} ${operation} must not generate an external response-file prompt.`);nonExternalCases.push({stage,operation,result:'NON_EXTERNAL_OPERATION'});continue;}
     const record=prompts.buildPromptRecord(stage,state,{operation,scope});
     assertResponseFileInstruction(record.prompt);
-    generatedOperations++;
+    generatedOperations++;generatedCases.push({stage,operation,result:'PASS'});
   }
 }
-assert(generatedOperations>=30,'Every stage must be exercised.');
-
+// Count against the registered operation universe; a prompt count does not prove a journey.
+const registered=[];for(let stage=1;stage<=schema.STAGE_COUNT;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations)registered.push(schema.operationContract(stage,operation));
+assert.equal(generatedOperations,registered.filter(c=>c.executorClass==='EXTERNAL_AGENT').length);
+assert.equal(nonExternalCases.length,registered.filter(c=>c.executorClass!=='EXTERNAL_AGENT').length);
 assertFileFirstResponseContract();
-assert.throws(()=>assertFileFirstResponseContract({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/,'Mutation restoring paste as the workflow action must fail.');
-assert.throws(()=>assertFileFirstResponseContract({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/file input/,'Mutation replacing the primary file selector must fail.');
-assert.throws(()=>assertFileFirstResponseContract({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/Read-back byte mismatch/,'Mutation removing staged-byte mismatch enforcement must fail.');
-assert.throws(()=>assertFileFirstResponseContract({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/authoritative response-file transport/,'Mutation erasing authoritative transport provenance must fail.');
-assert.throws(()=>assertFileFirstResponseContract({htmlSource:html.replace('returned by the agent','from an unspecified source')}),/external-agent origin/,'Mutation erasing the returned-file origin must fail.');
-assert.throws(()=>assertFileFirstResponseContract({ingestionProofSource:ingestionProof.replace("import './verify-file-first-response.mjs';",'')}),/permanently execute this file-first regression/,'Mutation removing the regression from the required ingestion proof must fail.');
-
-assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('create exactly one authoritative UTF-8 JSON file named response.json','return exactly one complete strict JSON object and no surrounding prose')}),/response.json file/,'Mutation restoring inline-only output must fail.');
-assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('Return one authoritative UTF-8 JSON file named response.json only when ready for machine ingestion','Return one final strict JSON object only when ready for machine ingestion')}),/response.json file transport/,'Mutation restoring inline mandatory response rules must fail.');
-assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('Return every required output artifact as a separate file','Describe output artifacts in chat')}),/separate files/,'Mutation dropping required artifact files must fail.');
-assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('final chat message must contain only links or attachments to the actual returned files','final chat message may describe unavailable files')}),/accessible to the operator/,'Mutation removing actual file delivery must fail.');
-
-console.log(JSON.stringify({
-  fileFirstResponseContract:'PASS',
-  generatedStages:schema.STAGE_COUNT,
-  generatedOperations,
-  promptOutputMutationsDetected:4,
-  primaryResponseFileSelection:true,
-  durableByteStaging:true,
-  stagedReadBackRehash:true,
-  strictUtf8:true,
-  textFallbackNonauthoritative:true,
-  promptFileExportExposed:true,
-  responseFileOriginBound:true,
-  requiredIngestionProofInvocation:true,
-  pastePrimaryMutationDetected:true,
-  fileSelectorMutationDetected:true,
-  stagedRehashMutationDetected:true,
-  provenanceMutationDetected:true,
-  responseOriginMutationDetected:true,
-  ciInvocationMutationDetected:true
-},null,2));
+console.log(JSON.stringify({fileFirstResponseContract:'PASS',evidenceClass:'GENERATED_INSTRUCTION_AND_SOURCE_DECLARATION_CHECKS',generatedOperations,generatedCases,nonExternalCases,sourceDeclarationsChecked:true,byteStagingSuite:'verify-response-byte-staging.mjs',completeOperatorJourney:false,physicalDeviceAcceptance:false},null,2));

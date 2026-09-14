@@ -52,7 +52,7 @@ const metric=(metricId,checks,evidenceReferences,dispositionOverride=null)=>{
   assert(new Set(includedIds).size===includedIds.length,`${metricId} contains duplicate universe IDs.`);
   const executed=executedMetricIds.has(metricId),numerator=executed?normalized.filter(([,ok])=>ok).length:0,denominator=normalized.length;
   const value=executed?numerator/denominator:null;
-  return Object.freeze({metricId,derivationVersion:'closed-loop-section49-metrics/1',evidenceBasis:executed?'EXECUTED_SYNTHETIC_CASES':'STATIC_INSPECTION_ONLY',applicationConformanceEstablished:false,universeDefinition:`Verifier assertions only; complete specification coverage is tracked separately for ${metricId}`,numerator,denominator,includedIds,excludedIds:[],scopeHash:`source:${metricId}:${includedIds.join('|')}`,evidenceReferences:[...new Set(evidenceReferences.map(String))],value,disposition:dispositionOverride||(!executed?'UNKNOWN':numerator===denominator?'SATISFIED':'BLOCKED')});
+  return Object.freeze({metricId,derivationVersion:'closed-loop-section49-metrics/1',evidenceBasis:executed?'EXECUTED_SYNTHETIC_CASES':'STATIC_INSPECTION_ONLY',applicationConformanceEstablished:false,universeDefinition:`Verifier assertions only; complete specification coverage is tracked separately for ${metricId}`,numerator,denominator,includedIds,excludedIds:[],scopeHash:`source:${metricId}:${includedIds.join('|')}`,evidenceReferences:[...new Set(evidenceReferences.map(String))],value:null,executedAssertionRatio:value,disposition:dispositionOverride||'UNKNOWN'});
 };
 const has=(source,token)=>source.includes(token);
 const normativeManifest=JSON.parse(read('./specification/closed-loop-normative-requirements.json'));

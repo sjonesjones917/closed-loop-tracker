@@ -356,7 +356,10 @@ function validateStep(step,index){
   const issues=[];if(!step||typeof step!=='object'||Array.isArray(step))return [`Step ${index} must be an object.`];const definition=OP_DEFINITIONS[step.op];if(!definition)return [`Step ${index} uses unknown operation ${String(step.op)}.`];
   const allowed=new Set(['op',...definition.required,...definition.optional]);for(const key of Object.keys(step))if(!allowed.has(key))issues.push(`Step ${index} operation ${step.op} contains unknown property ${key}.`);
   for(const key of definition.required)if(!hasOwn(step,key))issues.push(`Step ${index} operation ${step.op} is missing required property ${key}.`);
-  for(const [key,type] of Object.entries(definition.types||{}))if(hasOwn(step,key)&&!validateType(step[key],type))issues.push(`Step ${index} operation ${step.op} has invalid ${key}.`);
+  for(const [key,type] of Object.entries(definition.types||{}))if(hasOwn(step,key)&&!validateType(step[key],type)){
+    let detail='';if(type==='jsonSelector'||type==='xmlSelector')try{(type==='jsonSelector'?parseJsonSelector:parseXmlSelector)(step[key]);}catch(error){detail=` ${error.code}: ${error.message}`;}
+    issues.push(`Step ${index} operation ${step.op} has invalid ${key}.${detail}`);
+  }
   for(const alternatives of definition.oneOf||[]){/* evaluated together below */}
   if(definition.oneOf){const present=definition.oneOf.filter(group=>group.every(key=>hasOwn(step,key)));if(present.length!==1)issues.push(`Step ${index} operation ${step.op} requires exactly one of ${definition.oneOf.map(group=>group.join('+')).join(' or ')}.`);}
   if((step.op==='REGEX'||step.op==='ASSERT_MATCH')&&typeof step.pattern==='string')issues.push(...validateRegex(step.pattern,step.flags).map(message=>`Step ${index}: ${message}`));
@@ -403,6 +406,9 @@ function validateDagSpec(spec,bindings){
         if(!prior.has(ref.stepRef))issues.push(`Step ${index} has a forward, missing, or cyclic reference to ${ref.stepRef}.`);
         else {const priorStep=prior.get(ref.stepRef),priorContract=PORT_CONTRACTS[priorStep.op];if(!priorContract||!hasOwn(priorContract.outputs,ref.output))issues.push(`Step ${index} references unknown output port ${ref.output} on ${ref.stepRef}.`);else {const producedType=priorContract.outputs[ref.output],acceptedTypes=INPUT_PORT_TYPES[step.op]?.[name];if(acceptedTypes&&!acceptedTypes.includes(producedType))issues.push(`Step ${index} input ${name} requires ${acceptedTypes.join(' or ')} but ${ref.stepRef}.${ref.output} produces ${producedType}.`);}}
       }
+    }
+    if((step.op==='SELECT_JSON_PATH'||step.op==='SELECT_XML')&&hasOwn(step.inputs?.path||{},'literal')){
+      try{(step.op==='SELECT_JSON_PATH'?parseJsonSelector:parseXmlSelector)(step.inputs.path.literal);}catch(error){issues.push(`Step ${index} ${error.code}: ${error.message}`);}
     }
     if(step.op==='REGEX'||step.op==='ASSERT_MATCH'){
       const pattern=step.inputs?.pattern?.literal,flags=step.inputs?.flags?.literal;if(typeof pattern==='string')issues.push(...validateRegex(pattern,flags).map(message=>`Step ${index}: ${message}`));

@@ -1,0 +1,22 @@
+{
+  baseline: {
+    stage: 13,
+    complete: true,
+    blocked: false,
+    reasons: [],
+    acceptedResponseCount: 1,
+    checkedAt: '2026-09-14T08:12:19.623Z',
+    priorReasonCount: 0
+  }
+}
+{
+  prohibitedWithFakeDefect: {
+    stage: 13,
+    complete: true,
+    blocked: false,
+    reasons: [],
+    acceptedResponseCount: 1,
+    checkedAt: '2026-09-14T08:12:19.646Z',
+    priorReasonCount: 0
+  }
+}

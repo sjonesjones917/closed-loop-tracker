@@ -146,7 +146,7 @@ async function main(){
   await evaluate(cdp,`closedLoopProjectStore.removeProject('BROWSER-FILE-PRESSURE')`);
   console.log(JSON.stringify({boundedFileCustodyAndStaging:fileCustody,pagedArtifactDownloadAndCompleteExport:fileExport}));
   console.log(JSON.stringify({all30StageCollapsedDiagnostics:true,diagnosticArrowProof,diagnosticReasonCount,all30StageAccumulatedDataViews:true,historyRecords:600,minimumRawHistoryBytes:48000000,collapsedDom:pressureDom,pagedDom,historyExport}));
-  console.log(JSON.stringify({mobileStageActionRegression:true,widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false,mobileCapabilityEvidence:'verify-mobile-capability-journey.mjs performs actual export, selection, and restore'}));
+  console.log(JSON.stringify({mobileStageActionRegression:true,widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptCssDimensionsChecked:true,visualBaselineAcceptance:false,horizontalOverflow:false,mobileCapabilityEvidence:'verify-mobile-capability-journey.mjs performs actual export, selection, and restore'}));
   cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(resolve=>proc.once('exit',resolve)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}

@@ -383,10 +383,12 @@ jobs:
           const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
           const mobileAcceptance=JSON.parse(fs.readFileSync('/tmp/mobile-acceptance.json','utf8'));
           const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
-          const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01AcceptedSemanticMappingCoverage=Number(Boolean(zeroLoss.zeroLossStage01&&zeroLoss.incompleteIntakeRejected));
-          const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
+          // These component suites do not enumerate the complete mandatory universe.
+          // Preserve UNKNOWN from the detailed evidence; booleans are not coverage ratios.
+          const stage01RawInputAccounting=v3.section49CoverageMetrics.stage01RawInputAccounting.value;
+          const stage01RequiredFileInspectionAccounting=v3.section49CoverageMetrics.stage01RequiredFileInspectionAccounting.value;
+          const stage01AcceptedSemanticMappingCoverage=v3.section49CoverageMetrics.stage01AcceptedSemanticMappingCoverage.value;
+          const stage04ObligationAccounting=v3.section49CoverageMetrics.stage04ObligationAccounting.value;
           const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
           if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
@@ -420,9 +422,9 @@ jobs:
             routeInvalidationStagesChecked:dataRoute.invalidationStagesChecked,
             routeCurrentScopeStaleExclusion:dataRoute.currentScopeStaleExclusion,
             routePromptReadSerialization:dataRoute.promptReadSerialization,
-            routeResponseAuthorizationClosure:dataRoute.responseAuthorizationClosure,
-            routeProvenanceContractClosure:dataRoute.provenanceContractClosure,
-            routeDownstreamForwardingClosure:dataRoute.downstreamForwardingClosure,
+            routeResponseAuthorizationDeclarations:dataRoute.responseAuthorizationDeclarations,
+            routeProvenanceContractDeclarations:dataRoute.provenanceContractDeclarations,
+            routeDeclaredDownstreamConsumerEdges:dataRoute.declaredDownstreamConsumerEdges,
             routeDownstreamOnlyInvalidation:dataRoute.downstreamOnlyInvalidation,
             routeSubjectNeutralPromptAuthority:dataRoute.subjectNeutralPromptAuthority,
             routeHumanExperiencePromptContract:dataRoute.humanExperiencePromptContract,
@@ -457,6 +459,7 @@ jobs:
             stage01RequiredFileInspectionAccounting,
             stage01AcceptedSemanticMappingCoverage,
             stage04ObligationAccounting,
+            syntheticComponentReports:{stage01,zeroLoss,dataRoute,infrastructureRoute,mobileGovernance},
             stagesCompleted:Number(fullCycle.stagesCompleted||0),
             negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
             deployedByteIdentity:process.env.LIVE_RESULT==='success',
