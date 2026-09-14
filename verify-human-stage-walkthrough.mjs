@@ -87,7 +87,7 @@ try{
     const operationPicker=document.querySelector('#operation-picker');if(operationPicker){operationPicker.value='COMPLETE';operationPicker.dispatchEvent(new Event('change',{bubbles:true}));await idle();}
     const promptElement=document.querySelector('#generated-prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
     const renderedStage1=promptElement.textContent||'';
-    for(const required of ['first semantic reader','PASS 1 — EXHAUSTIVE EXTRACTION','PASS 2 — OMISSION CHALLENGE','humanAuthorityCandidates'])if(!renderedStage1.includes(required))throw new Error('Rendered Stage 01 COMPLETE prompt omitted required behavior: '+required+'; actual prompt: '+renderedStage1.slice(0,1200));
+    for(const required of ['first semantic reader','PASS 1 — EXHAUSTIVE EXTRACTION','PASS 2 — OMISSION CHALLENGE','humanAuthorityCandidates'])if(!renderedStage1.includes(required))throw new Error('Rendered Stage 01 COMPLETE prompt omitted required behavior: '+required+'; selected stage: '+document.querySelector('#stage-picker')?.value+'; operation: '+document.querySelector('#operation-picker')?.value+'; feedback: '+document.querySelector('#app-live-status')?.textContent+'; notice: '+document.querySelector('#next-required-action > .notice')?.textContent+'; actual prompt: '+renderedStage1.slice(0,1200));
     // Exercise the real application save/export controls and compare the displayed committed instruction
     // to the exact Blob bytes that the export path transfers.
     const stage2Picker=document.querySelector('#stage-picker');stage2Picker.value='2';stage2Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();

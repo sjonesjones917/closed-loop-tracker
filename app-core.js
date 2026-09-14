@@ -519,9 +519,10 @@ async function navigateWithinVersion({activeView=current.activeView,activeStage=
 async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode='HISTORY',view=null,traversal=false}={}){
  if(!checkpointId)throw new Error('No retained version is available in that direction.');
  const sequence=++navigationSequence;historyRestoreController?.abort();const controller=new AbortController();historyRestoreController=controller;
- const preceding=historyRestoreTail;let release;historyRestoreTail=new Promise(resolve=>{release=resolve;});
+ const preceding=historyRestoreTail,pendingUi=traversal?operatorActionInFlight?.promise:null;let release;historyRestoreTail=new Promise(resolve=>{release=resolve;});
+ if(pendingUi){restoringHistory=true;paintOperatorAction();}
  try{
-  await preceding;await capturingViewPromise?.catch(()=>{});if(sequence!==navigationSequence)return;
+  await preceding;await pendingUi?.catch(()=>{});await capturingViewPromise?.catch(()=>{});if(sequence!==navigationSequence)return;
   if(!traversal)await captureCurrentView();restoringHistory=true;replacementReview=null;paintOperatorAction();const label=$('#operation-label');if(label)label.textContent='Restoring project and verifying saved files…';
   const observed=jobId===current.job.JOB_ID?current:projects.find(project=>project.job.JOB_ID===jobId),prior=observed||await projectStore.readProject(jobId);
   const result=await projectStore.restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision:prior?.revision,signal:controller.signal,mode});
