@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const read=file=>fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
@@ -47,7 +48,15 @@ for(const token of ['artifactVersions','CURRENT_INPUT_VERSION','CURRENT_SOURCE_S
 // project object atomically, so it is incorrect to require these nested property names to be repeated in
 // project-store.js. Prove the real model and serialization boundary instead.
 for(const token of ['agentData','humanData','derivedData'])assert(engine.includes(`${token}:{}`)&&engine.includes(`prior.${token}`),`Stage authority partition ${token} is not explicitly preserved by the engine model.`);
-for(const token of ['const next=clone(project)','project:next','project=clone(row.project)','assertProjectIntegrity(next)','engine.recalculate(next)'])assert(store.includes(token),`Whole-project persistence route missing ${token}.`);
+{
+  const runtime=projectStoreRuntime(),project=runtime.core.createBlankState('INFRASTRUCTURE-ROUNDTRIP');
+  runtime.engine.ensureShape(project);project.projectData.userEntered.objective='Preserve complete project data.';
+  for(const [stage,state] of Object.entries(project.stages))state.responseDraft='Unaccepted draft for selected stage '+stage;
+  runtime.engine.recalculate(project);const saved=await runtime.store.writeProject(project,{expectedProjectRevision:0}),expected=JSON.stringify(saved),loaded=await runtime.store.readProject(saved.job.JOB_ID);
+  assert(JSON.stringify(loaded)===expected,'Whole-project read-back changed canonical partitions or drafts.');
+  loaded.projectData.userEntered.objective='Uncommitted edit';loaded.stages[1].responseDraft='Uncommitted draft';
+  assert(JSON.stringify(await runtime.store.readProject(saved.job.JOB_ID))===expected,'Mutating a loaded view changed the stored project.');
+}
 assert(engine.includes('recordsForCurrentScope'),`Current-scope selector is absent.`);
 assert(store.includes('validateProjectIntegrity'),`Persisted state has no canonical integrity validator.`);
 assert(store.includes('NEXT_REQUIRED_ACTION')&&store.includes('derivedData'),`Persisted derived state is not checked against deterministic recalculation.`);
@@ -58,7 +67,9 @@ assert(!/projectData\.[A-Za-z0-9_]+\.push\([^)]*canonical/i.test(app),`UI contai
 
 // Execute the real ingestion and lifecycle suites so static contracts cannot masquerade as route proof.
 execFileSync(process.execPath,[new URL('./verify-ingestion.mjs',import.meta.url).pathname],{stdio:'pipe'});
-execFileSync(process.execPath,[new URL('./verify-project-lifecycle.mjs',import.meta.url).pathname],{stdio:'pipe'});
+const lifecycleOutput=execFileSync(process.execPath,[new URL('./verify-project-lifecycle.mjs',import.meta.url).pathname],{stdio:'pipe',encoding:'utf8'});
+const lifecycleReports=lifecycleOutput.split('\n').flatMap(line=>{try{return [JSON.parse(line)];}catch{return [];}});
+assert(lifecycleReports.some(report=>report.projectLifecycleControls===true)&&lifecycleReports.filter(report=>report.storageRegression).every(report=>report.passed===true),'Lifecycle verification did not reach its complete executed result.');
 
 console.log(JSON.stringify({
   infrastructureRouteClosure:'PASS',
