@@ -391,18 +391,25 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
   return {valid:issues.every(item=>item.severity!=='ERROR'),issues,errorCount:issues.filter(item=>item.severity==='ERROR').length,warningCount:issues.filter(item=>item.severity==='WARNING').length,checkedAt:now(),responseSchema:envelope.schema,responseType:envelope.responseType,temporaryRecordIndex:responseRecordIndex,temporaryEvidenceIndex:evidenceIndex,temporaryAttachmentIndex:attachmentIndex,canonicalEnvelopeSha256};
 }
 
-function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,expectedProjectRevision=Number(project.revision||0)}){
-  const proposalId=workflow.allocateInfrastructureId(project,'PARSED-PROPOSAL','responseProposals');
+function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,expectedProjectRevision=Number(project.revision||0),allocationPlan=null}){
+  const proposalId=allocationPlan?.proposalId||workflow.allocateInfrastructureId(project,'PARSED-PROPOSAL','responseProposals');
+  const allocate=(collection,key,payload)=>{
+    const options={commandId:`VALIDATE_RESPONSE:${validationRecord.validationId}`,targetSlot:String(promptRecord.targetSlot||''),parentId:rawRecord.rawResponseId,payload};
+    if(!allocationPlan)return workflow.allocateId(project,collection,options);
+    const saved=allocationPlan.tempToCanonical?.[key],receipt=safe(project.projectData.allocationReceipts).find(row=>row.resultingId===saved?.id&&row.collection===collection&&row.jobNamespace===String(project.job.JOB_ID)&&row.commandId===options.commandId&&row.targetSlot===options.targetSlot&&row.parentId===options.parentId&&row.payloadSha256===hash.sha256Value(payload));
+    if(saved?.collection!==collection||!receipt)throw Object.assign(new Error('The candidate lost its response-bound application allocation.'),{code:'PROPOSAL_PLAN_MISMATCH'});
+    return saved.id;
+  };
   const tempToCanonical={};
   for(const attachment of safe(envelope.attachments)){const match=safe(rawRecord.files).find(file=>String(file?.name??file?.filename??'')===String(attachment.filename||'')&&String(file?.type??file?.mediaType??'')===String(attachment.mediaType||'')&&Number(file?.size??file?.byteSize)===Number(attachment.byteSize)&&String(file?.sha256||'').toLowerCase()===String(attachment.sha256||'').toLowerCase());if(match&&attachment.temporaryKey)tempToCanonical[attachment.temporaryKey]={collection:'artifacts',id:String(match.artifactId||match.id)};}
   const evidence=[];
   for(const source of safe(envelope.evidence)){
-    const id=workflow.allocateId(project,'evidenceRecords',{commandId:`VALIDATE_RESPONSE:${validationRecord.validationId}`,targetSlot:String(promptRecord.targetSlot||''),parentId:rawRecord.rawResponseId,payload:source});
+    const id=allocate('evidenceRecords',source.temporaryKey,source);
     tempToCanonical[source.temporaryKey]={collection:'evidenceRecords',id};
     const fields={EVIDENCE_ID:id,KIND:source.kind,DESCRIPTION:source.description,AUTHORITY_TYPE:source.authorityType||'EXTERNAL_AGENT_RESPONSE',SOURCE_ID:'UNKNOWN',LOCATION:source.location,CONTENT:source.content,ATTACHMENT_ID:'UNKNOWN',SHA256:'UNKNOWN',STATUS:'PRESERVED'};
     evidence.push({id,stage:Number(envelope.stage),createdAt:now(),active:true,scope:clone(promptRecord.scope||{}),fields,...fields,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId,temporaryKey:source.temporaryKey,sourceReference:clone(source.sourceRef||null),attachmentReference:clone(source.attachmentRef||null)});
   }
-  for(const [collection,list] of Object.entries(envelope.records||{}))for(const proposed of safe(list)){const id=proposed.targetId?String(proposed.targetId):workflow.allocateId(project,collection,{commandId:`VALIDATE_RESPONSE:${validationRecord.validationId}`,targetSlot:String(promptRecord.targetSlot||''),parentId:rawRecord.rawResponseId,payload:proposed});if(proposed.tempKey)tempToCanonical[proposed.tempKey]={collection,id};}
+  for(const [collection,list] of Object.entries(envelope.records||{}))for(const proposed of safe(list)){const id=proposed.targetId?String(proposed.targetId):allocate(collection,proposed.tempKey,proposed);if(proposed.tempKey)tempToCanonical[proposed.tempKey]={collection,id};}
   const canonicalRecords={};
   for(const [collection,list] of Object.entries(envelope.records||{})){
     canonicalRecords[collection]=safe(list).map(proposed=>{
@@ -515,12 +522,25 @@ function findReceipt(project,receiptId){return safe(project?.projectData?.output
 function findRaw(project,rawResponseId){return safe(project?.projectData?.rawResponses).find(item=>item.rawResponseId===rawResponseId);}
 function findValidation(project,validationId){return safe(project?.projectData?.responseValidations).find(item=>item.validationId===validationId);}
 
+function assertProposalPlan(project,proposal,promptRecord,rawRecord){
+  let envelope;
+  try{if(!rawRecord||hash.rawResponseSha256(rawRecord.completeRawResponse)!==rawRecord.sha256)throw new Error('Raw response bytes changed.');envelope=remapBlindAliases(strictParse(rawRecord.completeRawResponse),promptRecord).envelope;}
+  catch(error){throw Object.assign(new Error('The candidate response no longer matches its preserved response file.'),{code:'PROPOSAL_RESPONSE_MISMATCH',cause:error});}
+  if(hash.canonicalEnvelopeSha256(envelope)!==hash.canonicalEnvelopeSha256(proposal.envelope))throw Object.assign(new Error('The candidate envelope changed after its response file was validated.'),{code:'PROPOSAL_RESPONSE_MISMATCH'});
+  const expected=planProposal(project,envelope,{rawRecord,promptRecord,validationRecord:{validationId:proposal.validationId},expectedProjectRevision:proposal.preconditions.projectRevision,allocationPlan:proposal});
+  // Planning timestamps and hash wrappers are regenerated. Compare every field,
+  // relationship, provenance mapping and application-derived value underneath.
+  const records=value=>Object.fromEntries(Object.entries(value||{}).map(([family,items])=>[family,items.map(record=>{const result={...record};for(const key of ['createdAt','updatedAt','sha256','recordSha256','contentSha256'])delete result[key];return result;})]));
+  const content=plan=>({stage:plan.stage,responseType:plan.responseType,scope:plan.scope,stageData:plan.proposedStageData,records:records(plan.canonicalRecords),evidence:records({evidence:plan.evidence}).evidence,changes:plan.changes,identities:plan.tempToCanonical,humanAuthorityCandidates:plan.humanAuthorityCandidates,humanInputRequests:plan.humanInputRequests,unresolved:plan.unresolved,warnings:plan.warnings,attachments:plan.attachments});
+  if(hash.sha256Value(content(proposal))!==hash.sha256Value(content(expected)))throw Object.assign(new Error('The proposed changes no longer reproduce the validated response. Validate the retained response again before acceptance.'),{code:'PROPOSAL_PLAN_MISMATCH'});
+}
+
 function ensureProposalCurrent(project,proposal){
   if(!proposal)throw new Error('Response proposal does not exist.');if(proposal.status==='ACCEPTED'||proposal.status==='QUESTIONS_CREATED'||proposal.status==='BLOCKER_ACCEPTED'||proposal.status==='EXECUTION_FAILURE_ACCEPTED')return {idempotent:true};if(['REJECTED','CORRECTION_REQUESTED'].includes(proposal.status)){const error=new Error(`Response proposal is ${proposal.status} and cannot be accepted.`);error.code='PROPOSAL_NOT_ACCEPTABLE';error.rejectedResponse=safe(project.projectData.rejectedResponses).find(x=>x.proposalId===proposal.proposalId)||null;throw error;}if(proposal.status!=='PENDING_OPERATOR_REVIEW')throw new Error(`Response proposal is ${proposal.status}, not pending review.`);
   const latest=safe(project.projectData.generatedPrompts).find(record=>(record.instructionId||record.promptId)===proposal.promptId&&!record.invalidatedBy);if(!latest)throw new Error('The exact controlling generated instruction no longer exists or was superseded.');const p=proposal.preconditions||{};const restored=restoredCandidateBinding(project,{proposal});const current={projectRevision:restored?restored.sourceRevision:Number(project.revision||0),promptEngineVersion:currentPromptEngineVersion(),instructionId:latest.instructionId||latest.promptId,bodySha256:latest.bodySha256||latest.sha256,contractSha256:latest.contractSha256,contextSignature:latest.contextSignature,scopeSha256:hash.sha256Value(proposal.envelope.scope||{}),referencedRecordHashes:referencedRecordHashes(project,proposal.envelope)};for(const key of ['projectRevision','promptEngineVersion','instructionId','bodySha256','contractSha256','contextSignature','scopeSha256'])if(JSON.stringify(p[key])!==JSON.stringify(current[key])){const e=new Error(`The response proposal is stale: ${key} changed.`);e.code='STALE_PROPOSAL';throw e;}if(hash.sha256Value(p.referencedRecordHashes||{})!==hash.sha256Value(current.referencedRecordHashes||{})){const e=new Error('The response proposal is stale because a referenced record changed.');e.code='STALE_PROPOSAL';throw e;}
   // Revalidate the private commit candidate. The validator already excludes
   // this raw response by ID; duplicating the entire project is unnecessary.
-  const raw=findRaw(project,proposal.rawResponseId);const validation=validateEnvelope(project,proposal.envelope,{stage:proposal.stage,promptRecord:latest,rawSha256:raw?.sha256||hash.rawResponseSha256(JSON.stringify(proposal.envelope)),rawResponseId:proposal.rawResponseId,files:raw?.files||[]});if(!validation.valid){const e=new Error(`Proposal precommit revalidation failed: ${validation.issues.map(x=>x.code).join(', ')}.`);e.code='STALE_PROPOSAL';e.issues=validation.issues;throw e;}return {idempotent:false};
+  const raw=findRaw(project,proposal.rawResponseId);const validation=validateEnvelope(project,proposal.envelope,{stage:proposal.stage,promptRecord:latest,rawSha256:raw?.sha256||hash.rawResponseSha256(JSON.stringify(proposal.envelope)),rawResponseId:proposal.rawResponseId,files:raw?.files||[]});if(!validation.valid){const e=new Error(`Proposal precommit revalidation failed: ${validation.issues.map(x=>x.code).join(', ')}.`);e.code='STALE_PROPOSAL';e.issues=validation.issues;throw e;}assertProposalPlan(project,proposal,latest,raw);return {idempotent:false};
 }
 
 function commitEvidence(project,proposal){const ids=[];for(const evidence of safe(proposal.evidence)){if(project.projectData.evidenceRecords.some(record=>workflow.recordId(record,'evidenceRecords')===evidence.id))throw new Error(`Evidence ID collision: ${evidence.id}.`);project.projectData.evidenceRecords.push(clone(evidence));ids.push(evidence.id);}return ids;}
