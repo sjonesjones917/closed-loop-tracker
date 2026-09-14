@@ -112,7 +112,7 @@ function review(results){return prepare(structuredClone(author),5,'SEMANTIC_REVI
 function application(project,operation='COMPLETE',{storageFailure=false,stage=5}={}){
   let saved=structuredClone(project);saved.activeStage=stage;
   const refineButton={textContent:'Refine accepted result',disabled:false,isConnected:true},notices=[],runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,queueMicrotask,requestAnimationFrame:callback=>queueMicrotask(callback),
-    document:{currentScript:null,querySelector:selector=>selector==='#refine-accepted-response'?refineButton:selector==='#accepted-refinement-reason'?{value:'Correct the governing condition.'}:selector==='#operator-label'?{value:'FIXTURE'}:{value:'',textContent:'',focus(){},setAttribute(){},removeAttribute(){}},querySelectorAll:()=>[]},
+    document:{currentScript:null,querySelector:selector=>selector==='#refine-accepted-response'?refineButton:selector==='#accepted-refinement-reason'?{value:'Correct the governing condition.'}:selector==='#operator-label'?{value:'FIXTURE'}:{value:'',textContent:'',focus(){},scrollIntoView(options){assert.equal(options.block,'start','Replacement confirmation heading must be scrolled into view.');},setAttribute(){},removeAttribute(){}},querySelectorAll:()=>[]},
     closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion,
     closedLoopHash:hash,closedLoopProjectStore:{...closedLoopProjectStore,replaceProject:async(next,{expectedProjectRevision})=>{
       assert.equal(expectedProjectRevision,saved.revision,'Continuation lost the compare-and-swap revision.');
