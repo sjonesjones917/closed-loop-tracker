@@ -1,9 +1,11 @@
+import {readStoreArchive} from './test-zip.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
-const inactiveMobileAcceptance={focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
+// History is exercised by verify-recoverable-history and the browser recovery gate.
+const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
 
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
@@ -105,7 +107,7 @@ assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz'
 // boundary replaced. The browser suite supplies real IndexedDB coverage.
 const filePackageRuntime=vm.createContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
 vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readExportSnapshot=async()=>({project:{...fixtureProject,projectSha256:projectSha256(fixtureProject)},artifacts:fixtureArtifacts,recovery:null});readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};metaGet=async()=>null;globalThis.closedLoopProjectStore='),filePackageRuntime);
 vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
 const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
 for(let i=0;i<artifactSizes.length;i++){
@@ -145,7 +147,7 @@ vm.runInContext(`
   prompt.bodySha256=prompt.fullTextSha256=hash.sha256Text(prompt.prompt);prompt.contractSha256=hash.sha256Value({});fixtureProject.projectData.generatedPrompts=[prompt];
   globalThis.fixtureContextRow={artifactId:'PROMPT-CONTEXT-'+hash.sha256Value({jobId:'FILE-PRESSURE',sha256:fixtureContextSha}),jobId:'FILE-PRESSURE',blob:fixtureContextBlob,sha256:fixtureContextSha,byteSize:fixtureContextBlob.size};
   globalThis.closedLoopPromptEngine={version:'FIXTURE',responseContractDescriptor:()=>({}),promptFileManifest:()=>({contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
-  globalThis.closedLoopWorkflowEngine={executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
+  globalThis.closedLoopWorkflowEngine={stageContext:project=>project,executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
 `,filePackageRuntime);
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
 filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
@@ -158,11 +160,11 @@ try{
 }finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
 const executionPackageReadBytes=totalPackageRead,executionPackageSourceBytes=artifactSizes[6]+filePackageRuntime.fixtureContextBlob.size;
 assert(maxPackageRead<=65536&&maxBase64Input<=65536,'Execution-package export buffered a complete artifact/context file.');
-const executionPayload=JSON.parse(await new Response(executionPackage.blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
-const {packageSha256:executionSha,...executionBody}=executionPayload;
-assert(executionPayload.contextFiles[0].text===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
-assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(executionBody)).digest('hex')===executionSha,'Execution-package digest changed.');
-assert(executionPayload.artifacts[0].base64===exportedPayload.artifacts[6].base64,'Execution package changed artifact bytes.');
+const zipBytes=new Uint8Array(await executionPackage.blob.arrayBuffer()),executionMembers=readStoreArchive(zipBytes),executionManifest=JSON.parse(new TextDecoder().decode(executionMembers.find(row=>row.canonicalPath==='manifest.json').bytes));
+assert(new TextDecoder().decode(executionMembers.find(row=>row.canonicalPath===executionManifest.contextFiles[0].path).bytes)===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
+assert(createHash('sha256').update(zipBytes).digest('hex')===executionPackage.packageSha256,'Execution-package digest changed.');
+const artifactMember=executionMembers.find(row=>row.canonicalPath.startsWith('artifacts/'));
+assert(Buffer.from(artifactMember.bytes).equals(Buffer.from(exportedPayload.artifacts[6].base64,'base64')),'Execution package changed artifact bytes.');
 const decoderRuntime=vm.createContext({...inactiveMobileAcceptance,Blob,Uint8Array,atob});
 vm.runInContext(store.slice(store.indexOf('const base64ToBytes='),store.indexOf('async function compressBytes('))+'\nglobalThis.decodeFile=base64ToBlob;',decoderRuntime);
 for(const row of exportedPayload.artifacts){
@@ -279,8 +281,9 @@ console.log(JSON.stringify({packageSourceReads:{complete:{sourceBytes:completePa
 await storageRegression('export:one-file-pass-after-integrity-verification',async()=>{
   assert(completePackageReadBytes<=completePackageSourceBytes*2,`Complete export read ${completePackageReadBytes} file bytes for ${completePackageSourceBytes} source bytes; package hashing and compression reread the same files.`);
 });
-await storageRegression('execution-package:one-file-pass-after-integrity-verification',async()=>{
-  assert(executionPackageReadBytes<=executionPackageSourceBytes*2,`Execution export read ${executionPackageReadBytes} file bytes for ${executionPackageSourceBytes} source bytes; package hashing and compression reread the same files.`);
+await storageRegression('execution-package:bounded-integrity-crc-and-transport-hash-passes',async()=>{
+  // One integrity pass, one ZIP CRC pass, and one transport-hash pass; small headers/manifest are included in the bound.
+  assert(executionPackageReadBytes<=executionPackageSourceBytes+executionPackage.blob.size*2,`Execution export exceeded its three bounded passes: ${executionPackageReadBytes} bytes.`);
 });
 await storageRegression('export:one-project-pass-after-snapshot-verification',async()=>{
   const saved=await storageRuntime.makeStored('SINGLE-PASS-PACKAGE');storageRuntime.projectSerializations=0;
@@ -351,8 +354,9 @@ await storageRegression('read:legacy-corruption-keeps-hash-mismatch-recovery',as
 await storageRegression('export:concurrent-save-keeps-snapshot-identity',async()=>{
   const saved=await storageRuntime.makeStored('EXPORT-CONCURRENT'),originalOpen=storageRuntime.openStorageTransaction;let intervened=false;
   storageRuntime.openStorageTransaction=async(names,mode)=>{
-    if(names==='artifacts'&&mode==='readonly'&&!intervened){intervened=true;const newer=storageRead(saved);newer.newerWork='KEEP';await storageRuntime.projectStore.writeProject(newer,{expectedProjectRevision:saved.revision});}
-    return originalOpen(names,mode);
+    const tx=await originalOpen(names,mode);
+    if(Array.isArray(names)&&names.includes('artifacts')&&names.includes('projects')&&mode==='readonly'&&!intervened){intervened=true;const commit=tx.commit;tx.commit=async()=>{commit();const newer=storageRead(saved);newer.newerWork='KEEP';await storageRuntime.projectStore.writeProject(newer,{expectedProjectRevision:saved.revision});};}
+    return tx;
   };
   let backup;try{backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}finally{storageRuntime.openStorageTransaction=originalOpen;}
   const body=JSON.parse(await new Response(backup.stream().pipeThrough(new DecompressionStream('gzip'))).text()),after=await storageRuntime.projectStore.readProject(saved.job.JOB_ID);
@@ -365,8 +369,10 @@ await storageRegression('import:replay-saved-projections-without-fabricating-gat
   original.projectData.rawResponses.push(storageRead({rawResponseId:'RAW-PROJECTION',completeRawResponse:'Original response é🙂 EXACT-TAIL',stage:1}));
   const row=storageRows.get('projects').get(saved.job.JOB_ID);
   storageRows.get('projects').set(saved.job.JOB_ID,{...row,project:original,projectSha256:storageRuntime.projectStore.projectSha256(original)});
+  // This fixture represents a legacy saved project from before recovery was introduced.
+  storageRows.get('meta').delete('recovery:'+saved.job.JOB_ID);
   const backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);
-  const restored=await storageRuntime.projectStore.importPackage(backup),comparison=storageRead(restored);delete comparison.projectSha256;comparison.revision=original.revision;
+  const restored=await storageRuntime.projectStore.importPackage(backup),comparison=storageRead(restored);delete comparison.projectSha256;delete comparison.historyActivationId;delete comparison.restoredCandidates;comparison.revision=original.revision;
   assert(storageRuntime.projectStore.projectSha256(comparison)===storageRuntime.projectStore.projectSha256(original),'Restore rewrote original records or their saved audit projection.');
   const displayed=storageRuntime.ensureState(restored);
   assert(displayed.job.CURRENT_STAGE==='STAGE 01'&&displayed.stages[1].status!=='COMPLETE','Restored cached completion fabricated a passed stage.');
@@ -425,7 +431,7 @@ await storageRegression('prompt-context:shared-identities-one-read-snapshot',asy
   const gets=storageAccess.filter(x=>x.kind==='get'&&x.name==='artifacts'),transactions=storageAccess.filter(x=>x.kind==='transaction'&&x.mode==='readonly'&&x.names.includes('artifacts'));
   console.log(JSON.stringify({promptContextReadPressure:{prompts:64,uniqueFiles:1,artifactReads:gets.length,readonlyTransactions:transactions.length}}));
   assert(JSON.stringify(saved.projectData.generatedPrompts)===before,'Context read optimization changed preserved instructions or manifests.');
-  assert(gets.length===1&&transactions.length===1,`One shared context file required ${gets.length} reads in ${transactions.length} readonly transactions.`);
+  assert(gets.length===1&&transactions.length===2,`Prompt-file verification and complete recovery snapshot: one shared context file required ${gets.length} reads in ${transactions.length} readonly transactions.`);
 });
 await storageRegression('prompt-context:distinct-identities-bounded-snapshot',async()=>{
   const hash=globalThis.closedLoopHash,jobId='CONTEXT-DISTINCT-PRESSURE',rows=storageRows.get('artifacts'),identities=[];
@@ -474,10 +480,12 @@ await storageRegression('prompt-context:missing-history-cannot-use-current-conte
 await storageRegression('prompt-context:historical-eligibility-and-backup-custody',async()=>{
   const project=await storageRuntime.makeStored('CONTEXT-HISTORICAL'),source=storageRuntime.contextProject.projectData.generatedPrompts[0];
   project.projectData.generatedPrompts=storageRead([{...source,invalidatedBy:'LATER-INSTRUCTION'},{...source,instructionId:'PRIOR-ENGINE-INSTRUCTION',promptEngineVersion:'PRIOR-ENGINE'}]);
-  storageAccess.length=0;const saved=await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});
-  assert(!storageAccess.some(x=>x.kind==='get'&&x.name==='artifacts'),'Ordinary save changed which historical prompt records require reconstruction.');
-  let error;try{await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);}catch(e){error=e;}
-  assert(error?.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH','Complete backup stopped requiring invalidated/older-engine historical context bytes.');
+  const before=await storageRuntime.projectStore.readProject(project.job.JOB_ID),historyBefore=await storageRuntime.projectStore.historyList(project.job.JOB_ID);
+  let error;try{await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});}catch(e){error=e;}
+  assert(error?.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH','A change requiring an unrecoverable historical file was committed.');
+  assert(JSON.stringify(await storageRuntime.projectStore.readProject(project.job.JOB_ID))===JSON.stringify(before),'Failed checkpoint changed the active project.');
+  assert(JSON.stringify(await storageRuntime.projectStore.historyList(project.job.JOB_ID))===JSON.stringify(historyBefore),'Failed checkpoint changed retained History.');
+  await storageRuntime.projectStore.exportPackage(project.job.JOB_ID);
 });
 // File intake must retain its original project, revision, stage and byte owner
 // through every asynchronous boundary. Only the database I/O is substituted.
@@ -687,13 +695,14 @@ await storageRegression('startup:picker-projection-and-selected-only',async()=>{
     for(let i=0;i<count;i++)if(!storageRows.get('projects')?.has('PICKER-'+i))await vm.runInContext(`makeStored('PICKER-${i}')`,storageRuntime);
     await vm.runInContext(`projectStore.metaPut('retainedProjectSuppressed',true)`,storageRuntime);
     await vm.runInContext(`projectStore.metaPut('selectedProject','PICKER-0')`,storageRuntime);
-    const unrelated=storageRows.get('projects').get('PICKER-'+(count-1));if(count>1)unrelated.project.projectData.rawResponses.push({rawText:'unrelated archived history '.repeat(10000)});
-    storageAccess.length=0;
+
+    storageRuntime.APPLICATION_SESSION_ID='PICKER-SESSION-'+count;storageAccess.length=0;
     await vm.runInContext('load()',storageRuntime);
     assert(!storageAccess.some(row=>row.name==='projects'&&row.kind==='getAll'),'Startup loaded every canonical project row.');
-    assert(storageAccess.filter(row=>row.name==='projects'&&row.kind==='get').every(row=>row.key==='PICKER-0'),'Startup opened an unrelated project before the selected view.');
+    const starts=await storageRuntime.projectStore.metaGet('recoverySession:'+storageRuntime.APPLICATION_SESSION_ID);assert(starts&&Object.keys(starts.checkpoints).length>=count,'Startup omitted an existing project checkpoint.');
     assert(storageRuntime.current.job.JOB_ID==='PICKER-0'&&storageRuntime.current.stages[1],'Startup failed to open the selected verified project.');
   }
+  storageRows.get('projects').get('PICKER-49').project.projectData.rawResponses.push({rawText:'corrupt saved row'});
   let error;try{await storageRuntime.projectStore.readProject('PICKER-49');}catch(e){error=e;}
   assert(error?.code==='PROJECT_HASH_MISMATCH','Opening a corrupt unloaded project bypassed integrity verification.');
   assert(!storageRows.get('projects').has('PICKER-49')&&[...storageRows.get('meta').keys()].some(key=>key.startsWith('quarantine:PICKER-49:')),'Opening a corrupt unloaded project did not preserve it in quarantine.');

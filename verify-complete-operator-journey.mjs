@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import {readStoreArchive} from './test-zip.mjs';
 import {createOperatorBrowser,digest} from './operator-browser-driver.mjs';
 import {responseFixture,OBJECTIVE,OUTPUT,CANDIDATE} from './operator-journey-fixtures.mjs';
 import {verifyCompletedStageProjection} from './stage-projection-verification.mjs';
@@ -19,13 +20,14 @@ async function ingest(request,{invalid=false}={}){
   if(invalid){const after=await saved();assert.equal(after.projectData.acceptedChanges.length,count,'Invalid response changed accepted work');assert.ok(after.projectData.responseValidations.some(row=>row.valid===false),'Invalid response did not preserve its rejection');return;}
   if(request.attachments.length){const slots=await browser.evaluate(`[...document.querySelectorAll('[data-returned-slot]')].map(node=>node.dataset.returnedSlot)`);assert.equal(slots.length,request.attachments.length);for(const slot of slots)await browser.selectFiles(`[data-returned-slot="${slot}"]`,[{filename:'result.txt',bytes:Buffer.from(OUTPUT)}]);await browser.click('#validate-returned-files');}
   if(!(await browser.exists('#accept-proposal')))throw new Error('Valid response did not expose proposal review: '+await browser.evaluate(`document.querySelector('#stage-workflow')?.innerText||document.body.innerText`));
-  await browser.click('#accept-proposal');const after=await saved();assert.equal(after.projectData.acceptedChanges.length,count+1,'Accept did not commit exactly one response');assert.ok(after.projectData.rawResponses.some(row=>row.completeRawResponse===bytes.toString()),'The selected response bytes were not retained exactly');
+  await browser.click('#accept-proposal');if(await browser.exists('#accept-replacement'))await browser.click('#accept-replacement');const after=await saved();assert.equal(after.projectData.acceptedChanges.length,count+1,'Accept did not commit exactly one response');assert.ok(after.projectData.rawResponses.some(row=>row.completeRawResponse===bytes.toString()),'The selected response bytes were not retained exactly');
   report.operations.push({stage,operation:request.operation,responseSha256:digest(bytes),acceptedChangeId:after.projectData.acceptedChanges.at(-1).changeId,revision:after.revision});
 }
 async function external(){
-  const instruction=(await browser.download('#export-prompt-file'))[0],manifestFile=(await browser.download('#export-prompt-manifest'))[0],manifest=JSON.parse(manifestFile.bytes.toString());
-  assert.equal(instruction.sha256,manifest.instruction.sha256);assert.equal(instruction.bytes.length,manifest.instruction.byteSize);
-  const contextFiles=[];if(manifest.contextFiles.length){contextFiles.push(...await browser.download('#export-prompt-context'));for(const required of manifest.contextFiles){const actual=contextFiles.find(file=>file.filename===required.path||file.filename===required.filename);assert.ok(actual,`Missing actual exported context ${required.path||required.filename}`);assert.equal(actual.sha256,required.sha256);assert.equal(actual.bytes.length,required.byteSize);}}
+  const [archive]=await browser.download('#export-stage-files'),members=readStoreArchive(archive.bytes);
+  const manifest=JSON.parse(Buffer.from(members.find(member=>member.canonicalPath==='manifest.json').bytes).toString()),instructionMember=members.find(member=>member.canonicalPath==='instruction.txt'),instruction={bytes:Buffer.from(instructionMember.bytes),sha256:digest(instructionMember.bytes)};
+  assert.equal(instruction.sha256,manifest.instruction.bodySha256);assert.equal(instruction.bytes.length,manifest.members.find(member=>member.canonicalPath==='instruction.txt').byteSize);
+  const contextFiles=manifest.contextFiles.map(required=>{const actual=members.find(member=>member.canonicalPath===required.path);assert.ok(actual,`Missing context ${required.path}`);assert.equal(digest(actual.bytes),required.sha256);assert.equal(actual.bytes.length,required.byteSize);return {filename:required.path,bytes:Buffer.from(actual.bytes),sha256:digest(actual.bytes)};});
   const p=await saved(),prompt=p.projectData.generatedPrompts.find(row=>row.instructionId===manifest.promptIdentity.instructionId);assert.ok(prompt);assert.equal(prompt.bodySha256,instruction.sha256);
   const request=responseFixture({schema,engine,prompt,manifest,contextFiles,instructionBytes:instruction.bytes,omitTerminalLF:stage===11&&!report.operations.some(row=>row.stage===11)});
   if(stage===21){request.attachments=[{temporaryKey:'finished-product',filename:'result.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(OUTPUT),sha256:digest(Buffer.from(OUTPUT)),required:true}];request.evidence[0].attachmentRef={tempKey:'finished-product'};}
@@ -49,7 +51,7 @@ try{
       if(controls[action.actionType]){if(action.actionType==='FREEZE_CANDIDATE'){assert.equal(engine.recordValue(engine.recordsForCurrentScope(p,'instructions').at(-1),'INSTRUCTION_TEXT'),CANDIDATE);await browser.selectFiles('#stage-files',[{filename:'production-instruction.txt',bytes:Buffer.from(CANDIDATE)}]);}await browser.click(controls[action.actionType]);report.operations.push({stage,command:action.actionType});}
       else if(['EXTERNAL_AGENT_TOOL','AI_REVIEW','EXTERNAL_SYSTEM','CONTINUE_AGENT_CONVERSATION','SELECT_RESPONSE_JSON_FILE'].includes(action.actionType))await external();
       else throw new Error(`Stage ${stage} has no progressing operator action: ${JSON.stringify(action)}`);
-      if(stage===5&&!reloaded){const before=await saved();await browser.reload();const after=await saved();assert.equal(hash.sha256Value(after),hash.sha256Value(before));reloaded=true;await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);}
+      if(stage===5&&!reloaded){const before=await saved();await browser.reload();const after=await saved();assert.deepEqual(after.projectData,before.projectData);assert.deepEqual(after.stages,before.stages);reloaded=true;await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);}
     }
     assert.ok(report.stages.some(row=>row.stage===stage),`Stage ${stage} did not finish within 80 actions`);
   }

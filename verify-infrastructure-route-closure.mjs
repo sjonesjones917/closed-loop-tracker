@@ -47,7 +47,7 @@ for(const token of ['artifactVersions','CURRENT_INPUT_VERSION','CURRENT_SOURCE_S
 // project object atomically, so it is incorrect to require these nested property names to be repeated in
 // project-store.js. Prove the real model and serialization boundary instead.
 for(const token of ['agentData','humanData','derivedData'])assert(engine.includes(`${token}:{}`)&&engine.includes(`prior.${token}`),`Stage authority partition ${token} is not explicitly preserved by the engine model.`);
-for(const token of ['const next=clone(project)','project:next','project=clone(row.project)','assertProjectIntegrity(next)','engine?.recalculate?.(next)'])assert(store.includes(token),`Whole-project persistence route missing ${token}.`);
+for(const token of ['const next=clone(project)','project:next','project=clone(row.project)','assertProjectIntegrity(next)','engine.recalculate(next)'])assert(store.includes(token),`Whole-project persistence route missing ${token}.`);
 assert(engine.includes('recordsForCurrentScope'),`Current-scope selector is absent.`);
 assert(store.includes('validateProjectIntegrity'),`Persisted state has no canonical integrity validator.`);
 assert(store.includes('NEXT_REQUIRED_ACTION')&&store.includes('derivedData'),`Persisted derived state is not checked against deterministic recalculation.`);

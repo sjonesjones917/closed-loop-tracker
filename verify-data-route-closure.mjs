@@ -111,6 +111,7 @@ for(let stage=1;stage<=30;stage++){
       for(const collection of op.readCollections){
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
+        if(Number(schema.RECORD_SCHEMAS[collection].stage)>stage){assert(!ids.includes(sent.currentId)&&!record.prompt.includes(sent.currentText),`Stage ${stage}/${operation} leaked subsequent-stage ${collection}.`);continue;}
         assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
         assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);

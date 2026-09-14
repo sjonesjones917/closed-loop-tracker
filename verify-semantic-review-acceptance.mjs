@@ -14,7 +14,7 @@ function prepare(project,stage,operation,content){
   const text=JSON.stringify(envelope),transport={authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true,packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,promptIdentity:envelope.promptIdentity};
   const prepared=ingestion.prepare(project,{stage,promptRecord:prompt,text,transport});if(prepared.validation.valid)assert.equal(engine.operationalNextAction(prepared.project,stage).actionType,'REVIEW_PROPOSAL',`Stage ${stage} replaced a pending proposal with another instruction.`);return {...prepared,text};
 }
-function accept(prepared){assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));return ingestion.commit(prepared.project,prepared.proposal.proposalId).project;}
+function accept(prepared){assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));const impact=ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId);if(impact.requiresConfirmation)assert.throws(()=>ingestion.commit(prepared.project,prepared.proposal.proposalId),error=>error.code==='REPLACEMENT_CONFIRMATION_REQUIRED');return ingestion.commit(prepared.project,prepared.proposal.proposalId,{replacementConfirmation:impact}).project;}
 // An orphaned historical audit row is not a live saved-instruction attempt.
 // Opening a backup may recalculate its old display without rewriting its audit projection.
 {

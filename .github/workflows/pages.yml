@@ -217,6 +217,7 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
           test "$BROWSER_VERIFY_RESULT" = 0
@@ -229,6 +230,9 @@ jobs:
         with:
           name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
           path: |
+            recovery-browser-evidence/recovery.json
+            recovery-browser-evidence/stage-*.png
+            recovery-browser-evidence/downloads/
             operator-evidence/journey.json
             operator-evidence/stage-*.png
             operator-evidence/downloads/
@@ -296,6 +300,7 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
           test "$BROWSER_VERIFY_RESULT" = 0
@@ -340,6 +345,7 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-complete-operator-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
           test "$BROWSER_VERIFY_RESULT" = 0

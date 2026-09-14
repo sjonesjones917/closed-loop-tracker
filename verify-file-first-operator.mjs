@@ -4,13 +4,59 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
-const inactiveMobileAcceptance={focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
+// History is exercised by verify-recoverable-history and the browser recovery gate.
+const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
 
 const app=fs.readFileSync('app-core.js','utf8');
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
 const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
+
+// Exercise the application's one shared pending-action controller.
+await import('./verify-operator-action-lifecycle.mjs');
+
+// User input belongs to the project form; a successful save must lead to the
+// current workflow, including an unchanged save. Repeated clicks share one save.
+{
+  const writes=[],views=[],notices=[];let release;
+  const fields=[{dataset:{job:'EXACT_USER_OBJECTIVE_VERBATIM'},type:'text',value:'Create the requested checklist.'}];
+  const runtime=vm.createContext({...inactiveMobileAcceptance,structuredClone,clone:structuredClone,setTimeout,clearTimeout,
+    current:{activeStage:1,activeView:'Project',job:{JOB_ID:'SAVE-PATH',EXACT_USER_OBJECTIVE_VERBATIM:''},stages:{1:{status:'NOT STARTED'}},projectData:{}},
+    document:{querySelector:()=>null,querySelectorAll:()=>fields},$:()=>null,
+    engine:{recordHumanInputVersion(p){p.job.CURRENT_STAGE='STAGE 01';}},
+    canonicalCurrentStage:()=>1,withStorageActivity:async(_label,work)=>work(),
+    announce:message=>notices.push(message),reportActionFailure:error=>notices.push(error.message),
+    render:()=>views.push(runtime.current.activeView),requestAnimationFrame:fn=>fn(),
+    persistReplacement:async p=>{writes.push(p);await new Promise(resolve=>release=resolve);runtime.current=p;}});
+  const start=app.indexOf('let jobSaveInFlight=')>=0?app.indexOf('let jobSaveInFlight='):app.indexOf('async function saveJob(');
+  vm.runInContext(app.slice(start,app.indexOf('async function saveHumanStageFields(',start))+'\nglobalThis.save=saveJob;',runtime);
+  const first=runtime.save();
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(writes.length,1,'Repeated project-save clicks execute duplicate canonical writes.');
+  release();await first;
+  assert.equal(runtime.current.activeView,'Workflow','Successful project-information save did not open the workflow.');
+  runtime.current.activeView='Project';await runtime.save();
+  assert.equal(runtime.current.activeView,'Workflow','Unchanged project-information save stranded the operator on the form.');
+  assert.equal(writes.length,1,'An unchanged save must not create another canonical revision.');
+  assert(notices.some(message=>/saved/i.test(message)),'Successful save has no completion feedback.');
+}
+
+// Simultaneous export clicks must share the same operation and receipt, not
+// serialize duplicate exports after the first one completes.
+{
+  let saves=0,downloads=0,release;const notices=[];
+  const runtime=vm.createContext({current:{activeStage:1,job:{JOB_ID:'EXPORT-RETRY'}},setTimeout,clearTimeout,
+    announce:message=>notices.push(message),reportActionFailure:error=>notices.push(error.message),
+    withStorageActivity:async(_label,work)=>work(),document:{querySelectorAll:()=>[]},$:()=>null,
+    savePromptRecord:async()=>{saves++;await new Promise(resolve=>release=resolve);return {instructionId:'SAME'};}});
+  vm.runInContext(app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
+  const first=runtime.exportAttempt(()=>downloads++,'stage-files'),duplicate=runtime.exportAttempt(()=>downloads++,'stage-files');
+  await new Promise(resolve=>setTimeout(resolve,5));assert.equal(saves,1);release();
+  await Promise.all([first,duplicate]);
+  assert.equal(saves,1,'Repeated export clicks prepared another instruction after completion.');
+  assert.equal(downloads,1,'Repeated export clicks downloaded the same handoff twice.');
+}
 
 // The complete workflow renderer must advertise required files before the first
 // save/export, using the same preview it already built without reserving work.
@@ -126,15 +172,15 @@ verify();
   assert.match(runtime.mode(stage),/notice success.*this stage is complete/,'The satisfied completion gate was not reported at stage '+stage);
  }
 }
-// The next action displayed on a historical view belongs to the current stage.
+// An action on an inspected stage belongs to that selected stage in the active version.
 {
  const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("bindAction('#export-prompt-context'",wireStart),source=app.slice(wireStart,wireEnd);
  assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
  for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
-  const button={dataset:{operation}},current={activeStage:stage-1},operationSelection={};let exported;
-  const runtime=vm.createContext({...inactiveMobileAcceptance,bindAction:(_selector,operation)=>{button.onclick=operation;},$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage,exportPromptFile:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
+  const button={dataset:{operation}},current={activeStage:stage},operationSelection={};let exported;
+  const runtime=vm.createContext({...inactiveMobileAcceptance,bindAction:(_selector,operation)=>{button.onclick=operation;},$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage===30?1:stage+1,exportStageFiles:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
   vm.runInContext(source,runtime);await button.onclick();
-  assert.deepEqual(exported,{stage,operation},'The next action exported from the inspected historical stage instead of its owning current stage.');
+  assert.deepEqual(exported,{stage,operation},'The action escaped the selected stage.');
  }
 }
 assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
@@ -143,7 +189,7 @@ assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MI
 assert.throws(()=>verify({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/);
 assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/marked authoritative/);
 assert.throws(()=>verify({appSource:app.replace('prepareStageResponseFile(blob,{nonauthoritativeFallback:true})','ingestion.captureRaw(current,{text})')}),/same staging path/);
-assert.throws(()=>verify({appSource:app.replace('reserveAndBuildPromptRecord','buildPromptRecord')}),/reservation-bound prompt transaction helper/);
+assert.throws(()=>verify({appSource:app.replaceAll('reserveAndBuildPromptRecord','buildPromptRecord')}),/reservation-bound prompt transaction helper/);
 assert.throws(()=>verify({promptSource:prompt.replace('workflow.reserveOperation','workflow.__removedReserveOperation')}),/establish the application-owned operation reservation/);
 assert.throws(()=>verify({appSource:app.replace('operationReservationId:expectedPrompt.operationReservationId,challengeNonce:expectedPrompt.challengeNonce','operationReservationId:expectedPrompt.operationReservationId')}),/challenge-nonce identity/);
 assert.throws(()=>verify({appSource:app.replaceAll('Export instruction file','Copy instruction text')}),/instruction-file export/);
@@ -215,7 +261,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
   assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
-  const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportPromptFile=()=>runtime.exportAttempt(()=>downloaded++);
+  const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportStageFiles=()=>runtime.exportAttempt(()=>downloaded++);
   const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("bindAction('#export-prompt-context'",wireStart);
   runtime.bindAction=(_selector,operation)=>{button.onclick=operation;};
   vm.runInContext(app.match(/^function canonicalCurrentStage\([^\n]+/m)[0]+'\n'+app.slice(wireStart,wireEnd),runtime);await button.onclick();
