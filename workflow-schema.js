@@ -1186,7 +1186,7 @@ const STAGE_COLLECTIONS=Object.freeze({
   10:[],
   11:['runs'],
   12:['verification'],
-  13:['comparisons'],
+  13:['comparisons','defects'],
   14:['defects','rootCauses'],
   15:['regressions','regressionExecutions'],
   16:['changes'],

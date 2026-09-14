@@ -1,0 +1,116 @@
+Recovery amendment received from the user on 2026-09-14
+
+Authority: the user's instruction beginning “Bring the existing
+sjonesjones917/closed-loop-tracker application into conformance” and requiring
+reversible acceptance and saved project history. This register transcribes its
+acceptance requirements for implementation tracking; the conversation remains
+the controlling source if a transcription is ambiguous.
+
+Precedence: These requirements replace the earlier restriction that browser
+history may change only the view. They supplement the complete controlling
+specification across all 30 stages and every required operation. Passing a
+subset does not establish application completion.
+
+1. Coverage
+COV-01 | Record the original starting commit, exact controlling specification identity, and the revision at which this amendment was received.
+COV-02 | Include all amendment requirements in the maintained manifest and acceptance criteria; identify production owners, observable outcomes, required evidence, and current status.
+COV-03 | Review the whole specification for omissions, prohibitions, failure handling, recovery, and acceptance; record unresolved requirements explicitly and apply its definitions and defaults.
+
+2. Selected-stage context
+CTX-01 | Permit selection, inspection, and execution of an earlier stage within the active project version without changing to a different saved version.
+CTX-02 | Show instructions, information, files, and actions appropriate to the selected stage and operation; preserve valid prerequisite restrictions.
+CTX-03 | Bind every execution and material to the project, saved version, target stage, operation, attempt, and governing revision.
+CTX-04 | Provide relevant project information, applicable rules, valid prerequisites, and permitted current-stage material.
+CTX-05 | Exclude all information from stages after the executed stage from prompts, instructions, manifests, file lists, attachments, metadata, summaries, cached context, and consolidated agent exports.
+CTX-06 | Enforce the same exclusion for later-stage information incorporated indirectly through files, summaries, or retained history.
+CTX-07 | Rebuild stale handoffs after changes to project version, stage, scope, or governing revision.
+CTX-08 | Keep complete restoration backups separate from agent-facing handoffs.
+CTX-09 | Enforce context boundaries after Undo, Redo, Back, Forward, saved History restoration, and backup restoration.
+CTX-10 | Executing Stage 9 after Stage 12 must give a valid Stage 9 handoff with no Stage 10–30 information; later work may remain internally stored.
+
+3. Replacement acceptance
+ACC-01 | Keep stage selection, execution, validation, committed acceptance, and saved-version restoration distinct.
+ACC-02 | Selecting an earlier stage, generating instructions, or receiving a response must not erase accepted work or reset subsequent progress.
+ACC-03 | Validate a replacement before holding it as an unaccepted candidate; never report final acceptance before confirmation and successful persistence.
+ACC-04 | When acceptance replaces accepted work or invalidates progress, show a concise inline confirmation and scroll it into view; prohibit modal, popup, alert, and browser confirmation dialogs.
+ACC-05 | Calculate actual affected stages and operations before confirmation; explain the replaced result, reset progress, required rework, and availability of the previous version.
+ACC-06 | Offer Accept replacement and Keep current progress; describe only replacement when no later progress is affected; never describe retained work as permanently erased.
+ACC-07 | Cancellation and unanswered confirmation preserve the accepted result and all downstream progress.
+ACC-08 | Navigation, reload, and restoration must never accept an unconfirmed candidate.
+ACC-09 | Confirmation must bind the specific candidate, active version, revision, and affected work shown; recheck all bindings before commit.
+ACC-10 | Stale candidates or concurrently changed impact require updated validation and confirmation.
+ACC-11 | Preserve the prior complete recoverable version before activating replacement; failed checkpoint storage must prevent dependent acceptance.
+ACC-12 | Commit replacement and complete downstream invalidation atomically; failed persistence leaves no partial replacement or partial reset.
+ACC-13 | Update stage results, completion, approvals, accounting, pending operations, generated materials, and delivery readiness consistently.
+ACC-14 | Invalidate every direct and indirect dependent later stage, including completed, in-progress, and awaiting-response work; preserve only specification-established independent work.
+ACC-15 | Superseded responses, approvals, exports, and historical artifacts cannot satisfy the replacement version's requirements; affected work must be performed against its new upstream state.
+ACC-16 | Restoring a coherent earlier version may restore the matching results and approvals valid within that version.
+ACC-17 | After successful acceptance, show the next required operation and a concise Undo action.
+ACC-18 | Duplicate submissions or repeated confirmation of the same committed operation must not accept or reset twice.
+
+4. Saved project history
+HIS-01 | Durably preserve a complete session-start checkpoint containing the project state that exists when the application session opens.
+HIS-02 | Preserve recoverable versions for meaningful changes, including acceptance, correction, downstream reset, and changes after returning to an earlier version.
+HIS-03 | Retain inputs, responses, prerequisites, acceptance decisions, progress, drafts, and exact file bytes required to reconstruct each promised version.
+HIS-04 | Capture relevant view state and drafts before leaving them; browser memory, picker state, temporary URLs, and browser history alone are insufficient persistence.
+HIS-05 | Associate every application navigation entry with its saved project version and view.
+HIS-06 | Back and Forward activate the corresponding saved working data and restore project, selected stage, view, and position; labels alone are insufficient.
+HIS-07 | Stage selection stays in the active version; browser traversal returns to the recorded version.
+HIS-08 | Restore a version as a consistent whole; Back across Stage 9 replacement restores the original result and matching Stage 10–12 progress, while Forward restores replacement and required rework.
+HIS-09 | Never combine old downstream approvals with incompatible newer upstream data.
+HIS-10 | Restore accepted saved work without replaying acceptance commands or requiring completed work again; unaccepted candidates remain unaccepted.
+HIS-11 | Editing after returning to an earlier version preserves a new continuation and the previously saved later versions.
+HIS-12 | Provide compact History access to alternative saved continuations even when native Forward no longer reaches them; use clear descriptions and hide internal identifiers and branching details.
+HIS-13 | Undo, Redo, browser restoration, and History restoration use compatible authoritative mechanisms; recovery remains accessible after transient feedback disappears.
+HIS-14 | Preserve the active version and promised retained history through reload and required backup export/import.
+HIS-15 | Restoration is atomic, including rapid Back/Forward, multi-entry jumps, interrupted loads, missing or corrupt checkpoints, and failed persistence.
+HIS-16 | Report restoration success only after required data is available; retain the existing recoverable state if restoration fails.
+HIS-17 | Keep authorization and concurrency checks active; protect independent work in other tabs and sessions.
+HIS-18 | Preserve execution records and duplicate-operation protections; reject delayed results from an abandoned operation against the restored version.
+HIS-19 | Reconcile pending operations with their actual status; never reissue completed requests or repeat deliveries because of restoration.
+HIS-20 | Do not imply that restoring application data undoes external actions.
+HIS-21 | Retain recovery to the recorded session start within declared, tested support limits; provide History when native entries are unavailable.
+HIS-22 | Do not silently discard promised checkpoints or advertise unlimited retention; report inability to save a required checkpoint before committing a dependent change.
+
+5. Interface and navigation
+UX-01 | Preserve approved visuals and architecture; change layout, wording, and interactions only to fix defects or implement required recovery and reduced effort.
+UX-02 | Use concise language; remove redundant controls and text; keep required decisions, useful status, actionable errors, and recovery access visible while placing internal details behind appropriate disclosure.
+UX-03 | Consolidate every stage's required exports into one user action in the supported file-transport format; enforce isolation before assembly.
+UX-04 | Automate computation, file assembly, and coordination that the application can perform.
+UX-05 | Order information and controls for the current task and scroll normal progression to its next required reading or action with minimal scrolling.
+UX-06 | Scroll upward for explicit return, correction, or retry; successful project-information save opens Workflow or the next required step.
+UX-07 | During restoration, preserve the recorded view and position instead of applying automatic progression.
+UX-08 | Show a small clearly visible pending indicator during actions and restoration; prevent duplicate execution and provide completion, failure, and recovery feedback.
+UX-09 | Integrate meaningful navigation and the initial view with browser history through the existing routing architecture; preserve remaining Back/Forward entries during traversal.
+UX-10 | Support reload, direct links, and supported mobile gestures; a saved-version link resolves that version under current access controls, while ordinary stage links use the active version and its prerequisites.
+UX-11 | Preserve normal browser navigation outside the application; do not create history loops or trap the user.
+
+6. Production repair and verification
+VER-01 | Reproduce actual initial behavior using the existing checks and a clean project in the real interface; preserve inputs, sequence, expected/actual outcome, and revision for failures.
+VER-02 | Check mobile selection, exports, storage, restoration, and browser history early and state the exact observed environment; final physical acceptance belongs to the deployed revision.
+VER-03 | Align prompt generation, context, validation, commands, versions, restoration, and persistence under compatible contracts for ownership, boundaries, transitions, revision, atomicity, retry, and invalidation.
+VER-04 | For every defect, reproduce, preserve a detecting regression, repair the earliest owner and consumers, replay the operator path, and verify affected downstream paths.
+VER-05 | Derive outcomes independently from the specification and this amendment; each gate class needs otherwise-valid single-violation rejection and repaired progression cases.
+VER-06 | Demonstrate tests detect injected ownership, context, confirmation, invalidation, byte-comparison, history-mutation, and incompatible-restoration implementation faults; restore implementation afterward.
+VER-07 | Cover earlier-stage replacement across applicable stages with completed, partial, pending, and invalidated dependent work; test invalid input, confirm, cancel, unanswered, duplicate, stale, concurrent, failed-storage, and interrupted-commit cases.
+VER-08 | Inspect generated content and actual exported bytes for required current/prerequisite material and excluded later-stage material, including after restoration.
+VER-09 | Compare restored data, dependencies, approvals, and artifact bytes with checkpoint records; test Back/Forward across acceptance, Undo/Redo, multi-jumps, branching edits, reload, links, History, and supported gestures.
+VER-10 | Verify coherent recovery and rejection of mixed versions or prerequisite bypass; pending confirmation stays pending and completed external operations are not repeated.
+VER-11 | Test retention limits, missing/corrupt saved files, interrupted restore, concurrency, and delayed abandoned responses.
+VER-12 | Source-text matches, declared flags, screenshots alone, and test-file existence do not establish correctness; report actual executed cases and review omissions across stages, operations, and failure paths.
+VER-13 | Generate bounded operation sequences covering progress, selection, history, replacement, confirmation/cancellation, Undo/Redo, branches, retry, stale input, corrections, reload, files, storage, and concurrent edits.
+VER-14 | Check coherent active versions, preserved checkpoints, stage isolation, valid approvals, downstream state, rejection, and valid progression after each generated operation; publish exploration bounds and assumptions and preserve reduced regressions.
+
+7. Complete acceptance
+JRN-01 | Complete all 30 stages through actual controls and file transport with prerequisite state created by preceding operations.
+JRN-02 | Exercise complete valid progression, rejection/correction, all handoffs, mapping, review, application commands, persistence, recovery, saved history, and delivery.
+JRN-03 | Return at least three stages, validate a replacement, cancel without loss, then confirm replacement and re-complete all affected downstream work.
+JRN-04 | Undo restores original matching downstream progress; Forward/Redo restores replacement; repeated traversal and a different continuation preserve alternatives recoverable through History.
+JRN-05 | Return to session start; recover after reload/interruption; restore actual backup bytes including retained history; retrieve and compare final bytes; exercise required workloads and history lengths.
+JRN-06 | Label synthetic evidence accurately; separately obtain required actual external project outputs and claim independence, human actions, and devices only as observed.
+REL-01 | Use existing CI, integration, and deployment controls; run focused/affected checks and the complete integrated CI suite before merge.
+REL-02 | Verify exact deployed source, resource identities, workers, and runtime; repeat operator acceptance including isolation, confirmation, invalidation, version recovery, and navigation on that deployment.
+REL-03 | Obtain physical-iPhone Safari and approved visual-baseline evidence bound to the final deployed revision; invalidate affected evidence after later changes.
+REL-04 | Claim completion only when all mandatory implementation and evidence requirements and complete deployed journeys pass; separate functional readiness, device acceptance, and production maturity.
+REL-05 | Distinguish product defects from unavailable tools/access/devices/human decisions; finish independent work before seeking necessary assistance and identify exact missing requirements, capabilities, and evidence.
+REL-06 | Return implemented changes, executed verification, exact deployed revision if deployed, remaining defects, limitations, tested environments, and recovery limits; deliver the working application rather than an audit, plan, patch archive, or isolated repair.

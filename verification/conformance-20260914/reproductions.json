@@ -203,5 +203,70 @@
     "regression": "verify-full-cycle.mjs: Stage 9 to Stage 10 action assertion; verify-complete-operator-journey.mjs",
     "beforeFailure": "file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:12\nconst assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='REFERENCE_ARRAY','Evidence-chain evidence identities must remain plural references.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must remain plural.');let p=core.createBlankState('JOB-FULL-CYCLE');Object.assign(p.job,{JOB_TITLE:'Full lifecycle proof',EXACT_USER_OBJECTIVE_VERBATIM:'Prove one complete closed-loop lifecycle.',EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_INPUT_VERSION:'INPUT-v001'});engine.ensureShape(p);engine.recalculate(p);\n                                 ^\n\nError: After Stage 9, Stage 10 must offer its application-owned freeze command without requiring an external response.\n    at assert (file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:12:34)\n    at file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:128:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:643:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n\nNode.js v24.19.0\n",
     "status": "PRODUCTION_CORRECTED; INTEGRATED_BROWSER_REPLAY_PENDING"
+  },
+  {
+    "id": "INITIAL-FAILURE-CANNOT-BE-PERSISTED",
+    "sourceCommit": "b275123ef57cc56c920027ff85051519c8e7e2f6",
+    "specificationSections": [
+      "34.1",
+      "37 Stage 12",
+      "37 Stage 13"
+    ],
+    "inputs": "Nine exact VERIFIED\\n outputs and one VERIFIED output missing its required terminal LF.",
+    "operationSequence": [
+      "Complete Stages 1\u201311 through the interface",
+      "Validate the Stage 12 verification response",
+      "Accept the response"
+    ],
+    "expected": "Persist the ten determinations and continue to comparison and root-cause repair.",
+    "actual": "Canonical serialization rejects floating agreementRate 0.9, leaving acceptance uncommitted.",
+    "browserEvidence": {
+      "workflowRun": 34807669030,
+      "job": 103862609737,
+      "source": "PR source b275123ef57cc56c920027ff85051519c8e7e2f6",
+      "completedStages": 11,
+      "failedStage": 12
+    },
+    "regression": "verify-operator-counterpart.mjs: persistability after each operation; verify-counterpart-faults.mjs: fractional-stability",
+    "status": "REPAIRED_LOCAL; BROWSER_REPLAY_PENDING"
+  },
+  {
+    "id": "INITIAL-COMPARISON-BLOCKS-ROOT-CAUSE",
+    "sourceCommit": "b275123ef57cc56c920027ff85051519c8e7e2f6",
+    "specificationSections": [
+      "32.3",
+      "37 Stages 11\u201317"
+    ],
+    "inputs": "One evidenced failed initial run with correctness-affecting variance.",
+    "operationSequence": [
+      "Complete ten initial executions",
+      "Accept verification",
+      "Record the comparison and evidence-linked defect",
+      "Continue to root-cause analysis"
+    ],
+    "expected": "Keep the executed initial batch complete; require the comparison defect and allow Stage 14.",
+    "actual": "Initial variance retroactively made Stage 11 incomplete and comparison rejected the known violation.",
+    "regression": "verify-operator-counterpart.mjs: initial-violation-defect-rejection-and-correction",
+    "status": "REPAIRED_LOCAL; BROWSER_REPLAY_PENDING"
+  },
+  {
+    "id": "INCOMPLETE-EXPORTED-ITERATION-CONTEXT",
+    "sourceCommit": "b275123ef57cc56c920027ff85051519c8e7e2f6",
+    "specificationSections": [
+      "17",
+      "32.3",
+      "37 Stages 13\u201319"
+    ],
+    "inputs": "An external counterpart using only actual exported prompt/manifest/context, with a permanent regression carried into a corrected and unchanged iteration.",
+    "operationSequence": [
+      "Reserve Stage 13 prompt on a new project",
+      "Export corrected-iteration verification",
+      "Export unchanged-confirmation verification",
+      "Resolve all referenced regressions and candidate identities from the handoff"
+    ],
+    "expected": "Initialize infrastructure and include the applicable permanent regression and reused candidate identities.",
+    "actual": "Missing blindAliasMaps initialization; permanent regressions excluded by their original iteration; confirmation prompt loses the reused candidate.",
+    "regression": "verify-operator-counterpart.mjs; verify-complete-operator-journey.mjs",
+    "status": "REPAIRED_LOCAL; BROWSER_REPLAY_PENDING"
   }
 ]

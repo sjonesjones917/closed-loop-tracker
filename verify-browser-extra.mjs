@@ -204,7 +204,7 @@ async function main(){
   await openValidationDetails(cdp,'WRONG_VALUE_TYPE');
   const rejectedProof=await activeProject(cdp);
   assert(rejectedProof.projectData.requirements.length===0&&rejectedProof.projectData.propositions.length===0,'Rejected response mutated accepted requirements or propositions.');
-  await evalValue(cdp,`(()=>{globalThis.__correctionDownloads=[];const original=URL.createObjectURL;URL.createObjectURL=blob=>{const url=original(blob);globalThis.__correctionDownloads.push({blob,url});return url;};document.querySelector('#export-prompt-manifest').click();document.querySelector('#export-prompt-file').click();})()`);
+  await evalValue(cdp,`(()=>{globalThis.__correctionDownloads=[];const original=URL.createObjectURL;URL.createObjectURL=blob=>{const url=original(blob);globalThis.__correctionDownloads.push({blob,url});return url;};})()`);await click(cdp,'#export-prompt-manifest');await click(cdp,'#export-prompt-file');
   await waitExpr(cdp,`globalThis.__correctionDownloads.length===2`,30000);
   const correctionManifest=await evalValue(cdp,`__correctionDownloads[0].blob.text().then(JSON.parse)`);
   if(correctionManifest.contextFiles?.length){await click(cdp,'#export-prompt-context');await waitExpr(cdp,`__correctionDownloads.length===3`,30000);}
@@ -251,7 +251,7 @@ async function main(){
   assert(await evalValue(cdp,`!document.querySelector('#fresh-context-id')&&!document.querySelector('#add-fresh-context')`),'Stage 05 must not require a manually named conversation.');
   const beforeAuthorExport=await activeProject(cdp);
   assert(!beforeAuthorExport.projectData.freshContexts.some(r=>r.stage===5),'The fixture must exercise first export without a registered author.');
-  await evalValue(cdp,`(()=>{globalThis.__stage05Downloads=[];const original=URL.createObjectURL;URL.createObjectURL=blob=>{const url=original(blob);__stage05Downloads.push(blob);return url;};document.querySelector('#export-prompt-manifest').click();document.querySelector('#export-prompt-file').click();})()`);
+  await evalValue(cdp,`(()=>{globalThis.__stage05Downloads=[];const original=URL.createObjectURL;URL.createObjectURL=blob=>{const url=original(blob);__stage05Downloads.push(blob);return url;};})()`);await click(cdp,'#export-prompt-manifest');await click(cdp,'#export-prompt-file');
   await waitExpr(cdp,`__stage05Downloads.length===2`,30000);
   const stage05Transfer=await evalValue(cdp,`Promise.all(__stage05Downloads.map(b=>b.text())).then(([manifest,instruction])=>({manifest:JSON.parse(manifest),instruction}))`);
   assert(createHash('sha256').update(stage05Transfer.instruction).digest('hex')===stage05Transfer.manifest.instruction.sha256,'Stage 05 export recovery changed manifest/instruction identity.');

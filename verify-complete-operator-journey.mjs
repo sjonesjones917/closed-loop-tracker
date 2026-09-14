@@ -27,7 +27,7 @@ async function external(){
   assert.equal(instruction.sha256,manifest.instruction.sha256);assert.equal(instruction.bytes.length,manifest.instruction.byteSize);
   const contextFiles=[];if(manifest.contextFiles.length){contextFiles.push(...await browser.download('#export-prompt-context'));for(const required of manifest.contextFiles){const actual=contextFiles.find(file=>file.filename===required.path||file.filename===required.filename);assert.ok(actual,`Missing actual exported context ${required.path||required.filename}`);assert.equal(actual.sha256,required.sha256);assert.equal(actual.bytes.length,required.byteSize);}}
   const p=await saved(),prompt=p.projectData.generatedPrompts.find(row=>row.instructionId===manifest.promptIdentity.instructionId);assert.ok(prompt);assert.equal(prompt.bodySha256,instruction.sha256);
-  const request=responseFixture({schema,engine,project:p,prompt,contextFiles,instructionBytes:instruction.bytes});
+  const request=responseFixture({schema,engine,prompt,manifest,contextFiles,instructionBytes:instruction.bytes,omitTerminalLF:stage===11&&!report.operations.some(row=>row.stage===11)});
   if(stage===21){request.attachments=[{temporaryKey:'finished-product',filename:'result.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(OUTPUT),sha256:digest(Buffer.from(OUTPUT)),required:true}];request.evidence[0].attachmentRef={tempKey:'finished-product'};}
   if(!rejected){await ingest({...request,jobId:'WRONG-PROJECT'},{invalid:true});rejected=true;if(await browser.exists('#prepare-replacement-attempt'))await browser.click('#prepare-replacement-attempt');return;}
   await ingest(request);
