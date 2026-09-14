@@ -1,0 +1,8 @@
+{
+  "name": "closed-loop-tracker-verification",
+  "private": true,
+  "devDependencies": {
+    "fake-indexeddb": "6.2.5",
+    "playwright-core": "1.62.1"
+  }
+}

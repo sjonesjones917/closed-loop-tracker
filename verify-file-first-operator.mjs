@@ -1,3 +1,4 @@
+import {stage06ReadyFixture} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -234,39 +235,41 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 {
   const failures=[],downloads=[];
   const runtime=vm.createContext({recoveryBusy:false,stageLocked:()=>null,setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,safe:v=>Array.isArray(v)?v:[],clone:structuredClone,TAB_INSTANCE_ID:'TAB-REVISION-RECOVERY',responseActionFailure:null,announce(){},render(){},$:()=>({focus(){}}),reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),reportActionFailure:error=>failures.push(String(error.message||error)),externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),operatorLaneMatches:()=>true,reverifyReturnedFiles:async()=>{}});
+  // Project clones must belong to the same realm as the canonical hash validator.
+  runtime.structuredClone=vm.runInContext('(value)=>JSON.parse(JSON.stringify(value))',runtime);
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   runtime.clone=vm.runInContext('(value)=>JSON.parse(JSON.stringify(value))',runtime);
   const engine=runtime.closedLoopWorkflowEngine,ingestion=runtime.closedLoopResponseIngestion,prompts=runtime.closedLoopPromptEngine;
-  let p=runtime.closedLoopCore.createBlankState('JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;engine.ensureShape(p);for(const stage of runtime.closedLoopCore.STAGES.filter(stage=>stage.number<6)){p.stages[stage.number].status='COMPLETE';p.stages[stage.number].gate={complete:true};}
+  let p=stage06ReadyFixture({core:runtime.closedLoopCore,schema:runtime.closedLoopWorkflowSchema,engine,prompts,ingestion},'JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;
   const saved=prompts.reserveAndBuildPromptRecord(p,6,{operation:'COMPLETE'}).prompt;
   p=ingestion.captureRaw(p,{stage:6,text:'{"broken":true}',promptRecord:saved,files:[{attachmentSlotId:'DESIGN',artifactId:'DESIGN-BYTES',name:'design.md',sha256:'retained-digest'}]}).project;p.revision=84;
-  runtime.captureCurrentHistoryEntry=async()=>{};runtime.historyEntry=null;runtime.withStorageActivity=async(_label,operation)=>operation();runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=()=>prompts.version;
+  runtime.confirmProjectChange=async impact=>{throw new Error('Unexpected replacement confirmation '+JSON.stringify(impact));};runtime.captureCurrentHistoryEntry=async()=>{};runtime.historyEntry=null;runtime.withStorageActivity=async(_label,operation)=>operation();runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=()=>prompts.version;
   runtime.stageContinuationErrors=new Map();runtime.operationSelection={};
-  let stored=structuredClone(p);stored.revision=85;stored.projectData.userEntered.concurrentMarker='PRESERVE NEWER WORK';let staleWrites=0;
-  runtime.projectStore={readProject:async()=>structuredClone(stored),replaceProject:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+1;return structuredClone(stored);}};
+  let stored=structuredClone(p);stored.revision=85;stored.stages[6].draft={concurrentMarker:'PRESERVE NEWER WORK'};let staleWrites=0;
+  runtime.projectStore={previewProjectChange:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error('Preview found a concurrent saved revision.'),{code:'STALE_PROJECT_REVISION'});}return engine.projectMutationImpact(stored,next);},readProject:async()=>structuredClone(stored),replaceProject:async(next,{expectedProjectRevision})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+1;return structuredClone(stored);}};
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(x=>Number(x.stage)===n&&!x.invalidatedBy&&Number(x.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
-  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','restoreStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','restoreStageContinuation','selectStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
   assert.equal(vm.runInContext('currentPromptRecord(6)?.instructionId',runtime),saved.instructionId,'Raw capture incorrectly stales the still-open instruction and blocks manifest re-export.');
   const priorInput=runtime.current.job.CURRENT_INPUT_VERSION;runtime.current.job.CURRENT_INPUT_VERSION='CHANGED-AUTHORITY';
   assert.equal(vm.runInContext('currentPromptRecord(6)',runtime),null,'A changed authority scope must not reuse an older instruction.');runtime.current.job.CURRENT_INPUT_VERSION=priorInput;
   await runtime.validate();
   assert.equal(failures.length,0,`Returned-file validation stranded the operator: ${failures.join(' | ')}`);
   assert.equal(staleWrites,1,'The fixture did not exercise the durable revision conflict.');
-  assert.equal(stored.projectData.userEntered.concurrentMarker,'PRESERVE NEWER WORK');
-  assert.equal(stored.projectData.rawResponses[0].files[0].artifactId,'DESIGN-BYTES');
-  assert.equal(stored.projectData.responseValidations.length,1,'Recovery must validate the retained response once.');
-  assert.equal(stored.projectData.responseValidations[0].valid,false);
+  assert.equal(stored.stages[6].draft.concurrentMarker,'PRESERVE NEWER WORK');
+  assert.equal(stored.projectData.rawResponses.find(raw=>raw.stage===6).files[0].artifactId,'DESIGN-BYTES');
+  assert.equal(stored.projectData.responseValidations.filter(row=>row.stage===6).length,1,'Recovery must validate the retained response once.');
+  assert.equal(stored.projectData.responseValidations.find(row=>row.stage===6).valid,false);
   // A second stale revision must also recover on the actual manifest exporter.
   // This focused fixture represents completed upstream work without constructing
   // the separate Stage 01–05 acceptance fixtures. Restore that prerequisite.
   for(const project of [stored,runtime.current])for(const stage of runtime.closedLoopCore.STAGES.filter(stage=>stage.number<6)){project.stages[stage.number].status='COMPLETE';project.stages[stage.number].gate={complete:true};}
-  stored.revision++;stored.projectData.userEntered.secondMarker='KEEP THIS TOO';
+  stored.revision++;stored.stages[6].draft.secondMarker='KEEP THIS TOO';
   await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
   assert.equal(failures.length,0,`Correction manifest export failed: ${failures.join(' | ')}`);
   assert.equal(downloads.length,1,'The correction manifest was not exported.');
   assert.notEqual(downloads[0].promptIdentity.instructionId,saved.instructionId);
-  assert.equal(stored.projectData.userEntered.secondMarker,'KEEP THIS TOO');
+  assert.equal(stored.stages[6].draft.secondMarker,'KEEP THIS TOO');
   assert(stored.projectData.generatedPrompts.at(-1).contextManifest.latestValidationFailure.length,'Correction instruction must carry the recorded validation failure.');
   // An already-open Stage 06 attempt created before this repair must receive the
   // missing schedule on export, without invalidating its preserved response.

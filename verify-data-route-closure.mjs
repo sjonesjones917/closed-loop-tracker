@@ -111,9 +111,10 @@ for(let stage=1;stage<=30;stage++){
       for(const collection of op.readCollections){
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
-        assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
+        const origin=Number(schema.RECORD_SCHEMAS[collection].stage||1),permitted=origin<=stage;
+        assert(ids.includes(sent.currentId)===permitted,`Stage ${stage}/${operation} selected ${collection} outside its stage boundary.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
-        assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
+        assert((record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId))===permitted,`Stage ${stage}/${operation} has incorrect ${collection} content at its stage boundary.`);
         assert(!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} prompt body leaked stale ${collection}.`);
       }
       for(const collection of op.agentWritableCollections){

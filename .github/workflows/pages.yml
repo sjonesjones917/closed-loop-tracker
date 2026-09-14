@@ -53,6 +53,9 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      - name: Install verification dependencies
+        run: npm ci --ignore-scripts
+
       - name: Syntax
         run: |
           set -euo pipefail
@@ -158,6 +161,15 @@ jobs:
           node verify-production-baseline-authority.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
+
+      - name: Selected-stage isolation and recoverable project history
+        run: |
+          set -euo pipefail
+          node verify-stage-context-boundary.mjs
+          node verify-recoverable-history.mjs
+          node verify-dependency-invalidation.mjs
+          node verify-consolidated-handoff.mjs
+          node verify-recovery-mutations.mjs
 
       - name: Project lifecycle and application-owned controls
         run: |

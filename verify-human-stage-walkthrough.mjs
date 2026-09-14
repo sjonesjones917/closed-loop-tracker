@@ -82,7 +82,8 @@ try{
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker does not expose all 30 stages in order.');
     picker.value='1';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,120));
     const promptElement=document.querySelector('#generated-prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
-    const renderedStage1=promptElement.textContent||'';
+    await new Promise((resolve,reject)=>{const end=Date.now()+15000;const check=()=>{if((document.querySelector('#generated-prompt')?.textContent||'').includes('first semantic reader'))resolve();else if(Date.now()>end)reject(new Error('Stage 01 navigation did not finish.'));else setTimeout(check,50);};check();});
+    const renderedStage1=document.querySelector('#generated-prompt')?.textContent||'';
     for(const required of ['first semantic reader','PASS 1 — EXHAUSTIVE EXTRACTION','PASS 2 — OMISSION CHALLENGE','humanAuthorityCandidates'])if(!renderedStage1.includes(required))throw new Error('Rendered Stage 01 prompt omitted required behavior: '+required);
     // Exercise the real application save/export controls and compare the displayed committed instruction
     // to the exact Blob bytes that the export path transfers.

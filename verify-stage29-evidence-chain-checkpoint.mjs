@@ -107,6 +107,9 @@ const exportEvidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP
 exportEvidence.source='OPERATOR_ACTION';
 checkpointProject.projectData.evidenceRecords.push(exportEvidence);
 const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-EXPORT-1']});
+assert.equal(exported.id,exported.CHECKPOINT_ID,'Export custody must use its own canonical identity.');
+assert.notEqual(exported.id,checkpoint.id,'Export custody must retain its previous checkpoint as a distinct record.');
+assert.equal(exported.PREVIOUS_CHECKPOINT_ID,checkpoint.id);
 assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound actual export-custody action.');
 assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
 

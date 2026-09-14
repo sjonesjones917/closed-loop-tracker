@@ -92,3 +92,16 @@ export function reviewProofFixture(runtime,project){
  // These focused tests retain their explicit, already-controlled prerequisites.
  project.stages=priorStages;
 }
+
+// Builds the prerequisite state through actual production acceptance. External
+// content is synthetic; this helper makes no claim of browser or human action.
+export function stage06ReadyFixture(runtime,jobId='JOB-STAGE6-READY'){
+  const {core,schema,engine,prompts,ingestion}=runtime;let project=stage04AcceptanceFixture(runtime,jobId);
+  function accept(stage,operation,content){const prompt=prompts.reserveAndBuildPromptRecord(project,stage,{operation}).prompt,envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage,operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[evidence('stage6-prerequisites')],unresolved:[],warnings:[],attachments:[],...content(prompt)};const result=ingestion.prepare(project,{stage,text:JSON.stringify(envelope),promptRecord:prompt,transport:{authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true,packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,promptIdentity:envelope.promptIdentity}});if(!result.validation.valid)throw new Error(JSON.stringify(result.validation.issues));project=ingestion.commit(result.project,result.proposal.proposalId,{confirmationHash:ingestion.acceptanceImpact(result.project,result.proposal.proposalId).confirmationHash}).project;}
+  accept(4,'COMPLETE',prompt=>stage04AcceptanceEnvelope(runtime,project,prompt));
+  const propositionId=engine.recordId(engine.recordsForCurrentScope(project,'propositions')[0],'propositions');
+  accept(5,'COMPLETE',()=>({stageData:{DUPLICATES_REMAINING:'NONE',IMPOSSIBLE_COMBINATIONS:'NONE',UNDEFINED_TERMS:'NONE',CIRCULAR_DEPENDENCIES:'NONE',UNSUPPORTED_REQUIREMENTS:'NONE',APPLICABILITY_UNDETERMINED:'NONE',REQUIREMENTS_WITHOUT_VERIFICATION_PATH:'NONE'},records:{applicabilityRecords:[recordProposal(schema,'applicabilityRecords',{tempKey:'applicability',relationships:{SUBJECT_ID:{recordId:propositionId}},overrides:{PROPOSED_APPLICABILITY:'APPLICABLE',REASONING:'The checklist requirement applies.'}})]}}));
+  accept(5,'SEMANTIC_REVIEW',()=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'review',overrides:{REVIEW_QUESTION:'Does the declared requirement retain its meaning?',FINDING:'The accepted applicability decision retains the requirement.',REASONING:'The complete current obligation remains mandatory with its original truth conditions.',RESULT:'ACCEPTED'}})]}}));
+  for(const stage of engine.prerequisiteStages(6))if(!engine.gate(stage,project).complete)throw new Error('Prerequisite fixture did not complete Stage '+stage);
+  return project;
+}

@@ -12,6 +12,7 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 const store=closedLoopProjectStore,core=closedLoopCore,hash=closedLoopHash;
 await store.ready;
 assert.equal(typeof store.restoreVersion,'function','The production adapter must expose authoritative version restoration.');
+let completeVersionRestores=0;const countedRestore=async options=>{const result=await store.restoreVersion(options);completeVersionRestores++;return result;};
 const jobId='DISPOSABLE-RECOVERY-'+crypto.randomUUID(),view={stage:1,view:'Project',scrollX:0,scrollY:81,forms:[{id:'draft',value:'unaccepted draft'}]};
 let project=await store.writeProject(core.createBlankState(jobId),{createOnly:true});
 const start=await store.beginRecoverySession(jobId,'test-session',view),startId=start.activeId;
@@ -22,7 +23,7 @@ const first=(await store.readRecoveryHistory(jobId)).activeId,firstCheckpoint=aw
 const entry=await store.saveHistoryView({jobId,versionId:first,view});
 project.job.JOB_TITLE='Second continuation';project=await store.writeProject(project,{expectedProjectRevision:project.revision});
 const second=(await store.readRecoveryHistory(jobId)).activeId;
-let restored=await store.restoreVersion({jobId,versionId:first,expectedProjectRevision:project.revision});project=restored.project;
+let restored=await countedRestore({jobId,versionId:first,expectedProjectRevision:project.revision});project=restored.project;
 assert.equal(project.recoveryActivationRevision,project.revision);assert.equal(project.job.JOB_TITLE,'First continuation');assert.equal((await store.readRecoveryHistory(jobId)).activeId,first);
 assert.deepEqual(new Uint8Array(await (await store.getArtifact(artifactId)).blob.arrayBuffer()),bytes);
 await assert.rejects(store.deleteArtifact(artifactId,jobId),{code:'RECOVERY_ARTIFACT_RETAINED'});
@@ -58,6 +59,36 @@ for(const badFile of [{...originalFile,blob:new Blob([damagedBytes])},null]){
  await rawRow('artifacts',artifactId,originalFile);
 }
 await assert.rejects(store.metaPut('projectCheckpoint:'+first,{corrupt:true}),{code:'RECOVERY_METADATA_PROTECTED'});
+// Required checkpoint parts are verified from their bytes, never trusted from
+// a declared digest; a broken component leaves both the active row and pointer.
+const stateParts=(await store.readRecoveryHistory(jobId)).partSizes;
+assert(Object.keys(stateParts).length>0);
+const partDigest=Object.keys(stateParts)[0],partKey='projectCheckpointPart:'+jobId+':'+partDigest,originalPart=await store.metaGet(partKey);
+for(const value of [null,{...originalPart,data:['object',[]]}]){
+ await rawRow('meta',partKey,value===null?null:{key:partKey,value,updatedAt:new Date().toISOString()});
+ await assert.rejects(store.readCheckpoint(startId,jobId),{code:'RECOVERY_CHECKPOINT_CORRUPT'});
+ assert.equal((await store.readProject(jobId)).projectSha256,beforeFault.projectSha256);
+ await rawRow('meta',partKey,{key:partKey,value:originalPart,updatedAt:new Date().toISOString()});
+}
+await assert.rejects(store.metaPut(partKey,originalPart),{code:'RECOVERY_METADATA_PROTECTED'});
+// Unprocessed file-picker drafts have independent durable custody and follow
+// their saved view through reload, version restoration and exported backups.
+const draftId='VIEW-DRAFT-'+crypto.randomUUID(),draftBytes=new Uint8Array([255,254,0,61,10]);
+const draft=await store.putArtifact({artifactId:draftId,jobId,blob:new Blob([draftBytes]),filename:'unprocessed.json',mediaType:'application/json'});
+const fileView={...view,files:[{inputId:'response-json-file',files:[{artifactId:draft.artifactId,filename:draft.filename,mediaType:draft.mediaType,byteSize:draft.byteSize,sha256:draft.sha256}]}]};
+const draftEntry=await store.saveHistoryView({jobId,versionId:first,view:fileView});
+await assert.rejects(store.restoreVersion({jobId,versionId:first,expectedProjectRevision:project.revision,view:{...view,stage:999}}),{code:'RECOVERY_VIEW_INVALID'});
+await rawRow('meta','projectHistoryView:'+draftEntry.entryId,{key:'projectHistoryView:'+draftEntry.entryId,value:{...draftEntry,view:{...fileView,scrollY:999}}});
+await assert.rejects(store.readHistoryView(draftEntry.entryId),{code:'RECOVERY_VIEW_CORRUPT'});
+await rawRow('meta','projectHistoryView:'+draftEntry.entryId,{key:'projectHistoryView:'+draftEntry.entryId,value:draftEntry});
+
+assert.deepEqual(new Uint8Array(await (await store.readHistoryViewFiles(draftEntry.view,jobId))[0].files[0].blob.arrayBuffer()),draftBytes);
+await assert.rejects(store.deleteArtifact(draftId,jobId),{code:'RECOVERY_ARTIFACT_RETAINED'});
+await rawRow('artifacts',draftId,null);
+await assert.rejects(store.restoreVersion({jobId,versionId:first,expectedProjectRevision:project.revision,view:fileView}),{code:'RECOVERY_ARTIFACT_INTEGRITY'});
+assert.equal((await store.readProject(jobId)).projectSha256,beforeFault.projectSha256);
+await rawRow('artifacts',draftId,draft);
+
 const checkpointRow={key:'projectCheckpoint:'+first,value:structuredClone(firstCheckpoint),updatedAt:firstCheckpoint.createdAt};checkpointRow.value.project.job.JOB_TITLE='Corrupt checkpoint';
 await rawRow('meta',checkpointRow.key,checkpointRow);await assert.rejects(store.restoreVersion({jobId,versionId:first,expectedProjectRevision:project.revision}),{code:'RECOVERY_CHECKPOINT_CORRUPT'});
 await rawRow('meta',checkpointRow.key,{...checkpointRow,value:firstCheckpoint});
@@ -73,9 +104,9 @@ project=await store.importPackage(backup);
 assert.deepEqual((await store.readHistoryView(entry.entryId)).view,view);
 for(const destination of [second,startId,alternative,first,second,first,alternative,startId]){
   const snapshot=await store.readCheckpoint(destination,jobId);
-  ({project}=await store.restoreVersion({jobId,versionId:destination,expectedProjectRevision:project.revision}));
+  ({project}=await countedRestore({jobId,versionId:destination,expectedProjectRevision:project.revision}));
   const actual=structuredClone(project),expected=structuredClone(snapshot.project);
-  for(const value of [actual,expected])for(const key of ['revision','projectSha256','recoveryActivationRevision','activeStage','activeView'])delete value[key];
+  for(const value of [actual,expected])for(const key of ['revision','projectSha256','recoveryActivationRevision','recoveryRestoration','activeStage','activeView'])delete value[key];
   assert.deepEqual(actual,expected,'Restored project differs from the recorded complete version.');
 }
 assert.equal((await store.readRecoveryHistory(jobId)).sessionStarts['test-session'],startId);
@@ -95,6 +126,12 @@ accepted=await store.writeProject(proposal.project,{expectedProjectRevision:acce
 const candidateVersion=(await store.readRecoveryHistory(acceptedJobId)).activeId,proposalId=proposal.proposal.proposalId;
 assert.equal(accepted.stages[4].status,'COMPLETE','Staging a replacement changed accepted downstream work.');
 const impact=runtime.ingestion.acceptanceImpact(accepted,proposalId),candidateHash=store.projectSha256(accepted);
+const ownedField=Object.entries(runtime.schema.STAGE_FIELDS[3]).find(([name,definition])=>definition.producer==='APPLICATION'&&definition.valueType==='STRING');assert(ownedField);
+const badOwnership=structuredClone(envelope);badOwnership.stageData[ownedField[0]]='Unauthorized application value';
+const rejectedOwnership=runtime.ingestion.prepare(accepted,{stage:3,text:JSON.stringify(badOwnership),promptRecord:instruction});assert(rejectedOwnership.validation.issues.some(issue=>issue.code==='FIELD_OWNERSHIP_VIOLATION'),'Ownership bypass was not detected.');
+const tamperedPlan=structuredClone(accepted);tamperedPlan.projectData.responseProposals.find(item=>item.proposalId===proposalId).proposedStageData.EXCEPTIONS_AND_EDGE_CONDITIONS='Changed after response validation';
+assert.throws(()=>runtime.ingestion.commit(tamperedPlan,proposalId,{confirmationHash:runtime.ingestion.acceptanceImpact(tamperedPlan,proposalId).confirmationHash}),{code:'PROPOSAL_PLAN_MISMATCH'});
+
 assert(impact.requiresConfirmation);assert(impact.affectedStages.includes(4));
 assert.throws(()=>runtime.ingestion.commit(accepted,proposalId),{code:'REPLACEMENT_CONFIRMATION_REQUIRED'});
 assert.equal(store.projectSha256(accepted),candidateHash,'An unanswered confirmation changed accepted work.');
@@ -102,15 +139,31 @@ const changed=structuredClone(accepted);changed.stages[4].responseDraft='A newly
 assert.throws(()=>runtime.ingestion.commit(changed,proposalId,{confirmationHash:impact.confirmationHash}),{code:'STALE_REPLACEMENT_CONFIRMATION'});
 const committed=runtime.ingestion.commit(accepted,proposalId,{confirmationHash:impact.confirmationHash});
 const duplicate=runtime.ingestion.commit(committed.project,proposalId,{confirmationHash:impact.confirmationHash});assert(duplicate.idempotent);assert.equal(hash.sha256Value(duplicate.project),hash.sha256Value(committed.project));
-accepted=await store.writeProject(committed.project,{expectedProjectRevision:accepted.revision});const replacementVersion=(await store.readRecoveryHistory(acceptedJobId)).activeId;
+const persistImpact=await store.previewProjectChange(committed.project,{expectedProjectRevision:accepted.revision});
+assert(persistImpact.requiresConfirmation);await assert.rejects(store.writeProject(committed.project,{expectedProjectRevision:accepted.revision}),{code:'CHANGE_CONFIRMATION_REQUIRED'});
+assert.equal((await store.readProject(acceptedJobId)).projectSha256,accepted.projectSha256);
+accepted=await store.writeProject(committed.project,{expectedProjectRevision:accepted.revision,confirmationHash:persistImpact.confirmationHash});const replacementVersion=(await store.readRecoveryHistory(acceptedJobId)).activeId;
 assert.notEqual(accepted.stages[4].status,'COMPLETE');assert(accepted.projectData.requirements.every(record=>record.active===false||record.invalidatedBy),'A dependent accepted requirement survived replacement.');
 for(const [version,complete] of [[acceptedVersion,true],[replacementVersion,false],[acceptedVersion,true]]){
- ({project:accepted}=await store.restoreVersion({jobId:acceptedJobId,versionId:version,expectedProjectRevision:accepted.revision}));assert.equal(accepted.stages[4].status==='COMPLETE',complete);
+ ({project:accepted}=await countedRestore({jobId:acceptedJobId,versionId:version,expectedProjectRevision:accepted.revision}));assert.equal(accepted.stages[4].status==='COMPLETE',complete);
  if(complete)assert.deepEqual(accepted.projectData.requirements,acceptedCheckpoint.project.projectData.requirements);
 }
-({project:accepted}=await store.restoreVersion({jobId:acceptedJobId,versionId:candidateVersion,expectedProjectRevision:accepted.revision}));
+({project:accepted}=await countedRestore({jobId:acceptedJobId,versionId:candidateVersion,expectedProjectRevision:accepted.revision}));
 assert.equal(accepted.projectData.responseProposals.find(item=>item.proposalId===proposalId).status,'PENDING_OPERATOR_REVIEW');
-assert.throws(()=>runtime.ingestion.commit(accepted,proposalId,{confirmationHash:impact.confirmationHash}),{code:'STALE_PROPOSAL'});
+assert.throws(()=>runtime.ingestion.commit(accepted,proposalId,{confirmationHash:impact.confirmationHash}),{code:'STALE_REPLACEMENT_CONFIRMATION'});
+const restoredImpact=runtime.ingestion.acceptanceImpact(accepted,proposalId);const restoredAcceptance=runtime.ingestion.commit(accepted,proposalId,{confirmationHash:restoredImpact.confirmationHash});assert.equal(restoredAcceptance.acceptedChange.proposalId,proposalId,'The retained unaccepted response could not be accepted without re-executing the external request.');
+const restoredSaveImpact=await store.previewProjectChange(restoredAcceptance.project,{expectedProjectRevision:accepted.revision});await store.writeProject(restoredAcceptance.project,{expectedProjectRevision:accepted.revision,confirmationHash:restoredSaveImpact.confirmationHash});
+({project:accepted}=await countedRestore({jobId:acceptedJobId,versionId:candidateVersion,expectedProjectRevision:(await store.readProject(acceptedJobId)).revision}));
 const lateEnvelope={...envelope,warnings:['Delayed output arrived after restoration.']};const delayed=runtime.ingestion.prepare(accepted,{stage:3,text:JSON.stringify(lateEnvelope),promptRecord:instruction});assert(delayed.validation.issues.some(issue=>issue.code==='ABANDONED_OPERATION_RESPONSE'),'A delayed pre-restoration response was accepted.');
-console.log(JSON.stringify({environment:'Node '+process.version+'; fake-indexeddb 6.2.5; isolated synthetic adapter cases',checkpoints:(await store.readRecoveryHistory(jobId)).entries.length,completeVersionRestores:13,atomicFailureBoundaries:6,reversibleAcceptance:true,unansweredCandidatePreserved:true,staleConfirmationRejected:true,abandonedResponseRejected:true,immutableBytes:true,retainedAlternatives:true,backupRestoresHistory:true,physicalDeviceAcceptance:false}));
+// Human corrections use the same persisted effect check. An otherwise valid
+// correction cannot skip confirmation just because it did not ingest a response.
+const originalHuman=await store.readProject(acceptedJobId),humanChange=structuredClone(originalHuman);
+humanChange.job.EXACT_USER_OBJECTIVE_VERBATIM+=' Explicit corrected input.';
+runtime.engine.recordHumanInputVersion(humanChange,['EXACT_USER_OBJECTIVE_VERBATIM']);runtime.engine.invalidateStageForAuthorityChange(humanChange,{stage:core.STAGES[0].number});
+const humanImpact=await store.previewProjectChange(humanChange,{expectedProjectRevision:originalHuman.revision});assert(humanImpact.requiresConfirmation&&humanImpact.affectedStages.includes(4));
+await assert.rejects(store.writeProject(humanChange,{expectedProjectRevision:originalHuman.revision}),{code:'CHANGE_CONFIRMATION_REQUIRED'});
+await assert.rejects(store.writeProject(humanChange,{expectedProjectRevision:originalHuman.revision,confirmationHash:'stale-confirmation'}),{code:'STALE_CHANGE_CONFIRMATION'});
+assert.equal((await store.readProject(acceptedJobId)).projectSha256,originalHuman.projectSha256);
+accepted=await store.writeProject(humanChange,{expectedProjectRevision:originalHuman.revision,confirmationHash:humanImpact.confirmationHash});assert.notEqual(accepted.stages[4].status,'COMPLETE');
+console.log(JSON.stringify({humanChangeConfirmation:true,environment:'Node '+process.version+'; fake-indexeddb 6.2.5; isolated synthetic adapter cases',checkpoints:(await store.readRecoveryHistory(jobId)).entries.length,completeVersionRestores,atomicFailureBoundaries:6,reversibleAcceptance:true,unansweredCandidatePreserved:true,staleConfirmationRejected:true,abandonedResponseRejected:true,immutableBytes:true,retainedAlternatives:true,backupRestoresHistory:true,physicalDeviceAcceptance:false}));
 (await store.openDatabase()).close();

@@ -34,7 +34,7 @@ for(const [stage,type,phase] of [[22,'DETERMINISTIC','FINAL_PRODUCT_DETERMINISTI
 // Stage 06 cannot design numeric timing from phase names alone. Publish the
 // application stage purposes in the controlling prompt, before untrusted data.
 
-const scheduleProject=c.closedLoopCore.createBlankState('JOB-SCHEDULE-CONTEXT');e.ensureShape(scheduleProject);scheduleProject.stages[5].status='COMPLETE';scheduleProject.stages[5].gate={complete:true};
+const scheduleProject=c.closedLoopCore.createBlankState('JOB-SCHEDULE-CONTEXT');e.ensureShape(scheduleProject);for(const stage of e.prerequisiteStages(6)){scheduleProject.stages[stage].status='COMPLETE';scheduleProject.stages[stage].gate={complete:true};} // Isolated prompt-content fixture, not a progression journey.
 const instruction=c.closedLoopPromptEngine.buildPromptRecord(6,scheduleProject,{operation:'COMPLETE'}).prompt;
 assert.match(instruction,/APPLICATION VERIFICATION SCHEDULE/,'Stage 06 omits the application scheduling context required by its test fields.');
 for(const stage of [12,17,19,22,23,24,26,28,29,30])assert(instruction.includes(`Stage ${String(stage).padStart(2,'0')}: ${c.closedLoopCore.STAGES[stage-1].title}`),`Stage ${stage} is absent from the controlling schedule.`);
