@@ -1,0 +1,143 @@
+{
+  "mobileReleaseGovernance": "PASS",
+  "actualIPhoneRequiredForTag": true,
+  "deployedChromiumAloneInsufficient": true,
+  "androidSubstitutionRejected": true,
+  "missingEvidenceBlocks": true,
+  "selfAssertionRejected": true,
+  "canonicalOriginBound": true,
+  "exactTargetBindingVerified": true,
+  "singleUseChallengeVerified": true,
+  "challengeCaseNormalizationVerified": true,
+  "expiredChallengeRejected": true,
+  "evidenceClass": "SYNTHETIC_ACCEPTANCE_VALIDATOR_CASES_AND_CI_CONFIGURATION",
+  "physicalDeviceAcceptanceEstablished": false,
+  "mobileValidationCases": [
+    {
+      "caseId": "mobileAcceptanceEvidenceId",
+      "expectedRejection": "EVIDENCE_ID_REQUIRED",
+      "actual": {
+        "accepted": false,
+        "status": "BLOCKED",
+        "errors": [
+          {
+            "code": "EVIDENCE_ID_REQUIRED",
+            "message": "mobileAcceptanceEvidenceId is required."
+          }
+        ],
+        "targetId": "MOBILE-TARGET-001",
+        "evidenceId": null,
+        "challenge": "0123456789abcdef0123456789abcdef",
+        "evidenceBasis": "HUMAN_OBSERVATION",
+        "performer": "authorized-operator",
+        "physicalDeviceAssertion": true,
+        "sourceCommit": "0123456789abcdef0123456789abcdef01234567",
+        "deploymentManifestDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "origin": "https://sjonesjones917.github.io",
+        "basePath": "/closed-loop-tracker/",
+        "testProjectId": "JOB-MOBILE-001",
+        "mobileCapabilityProbeId": "SYNTHETIC-PROBE"
+      },
+      "result": "PASS",
+      "corrected": "PASS"
+    },
+    {
+      "caseId": "physicalDeviceAssertion",
+      "expectedRejection": "PHYSICAL_DEVICE_ASSERTION_REQUIRED",
+      "actual": {
+        "accepted": false,
+        "status": "BLOCKED",
+        "errors": [
+          {
+            "code": "PHYSICAL_DEVICE_ASSERTION_REQUIRED",
+            "message": "Evidence must contain the performer physical-device assertion."
+          }
+        ],
+        "targetId": "MOBILE-TARGET-001",
+        "evidenceId": "MOBILE-EVIDENCE-001",
+        "challenge": "0123456789abcdef0123456789abcdef",
+        "evidenceBasis": "HUMAN_OBSERVATION",
+        "performer": "authorized-operator",
+        "physicalDeviceAssertion": false,
+        "sourceCommit": "0123456789abcdef0123456789abcdef01234567",
+        "deploymentManifestDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "origin": "https://sjonesjones917.github.io",
+        "basePath": "/closed-loop-tracker/",
+        "testProjectId": "JOB-MOBILE-001",
+        "mobileCapabilityProbeId": "SYNTHETIC-PROBE"
+      },
+      "result": "PASS",
+      "corrected": "PASS"
+    },
+    {
+      "caseId": "evidenceBasis",
+      "expectedRejection": "EVIDENCE_BASIS_INSUFFICIENT",
+      "actual": {
+        "accepted": false,
+        "status": "BLOCKED",
+        "errors": [
+          {
+            "code": "EVIDENCE_BASIS_INSUFFICIENT",
+            "message": "Physical-device evidence basis must be HUMAN_OBSERVATION or VERIFIED_EXTERNAL."
+          }
+        ],
+        "targetId": "MOBILE-TARGET-001",
+        "evidenceId": "MOBILE-EVIDENCE-001",
+        "challenge": "0123456789abcdef0123456789abcdef",
+        "evidenceBasis": "SELF_ASSERTED",
+        "performer": "authorized-operator",
+        "physicalDeviceAssertion": true,
+        "sourceCommit": "0123456789abcdef0123456789abcdef01234567",
+        "deploymentManifestDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "origin": "https://sjonesjones917.github.io",
+        "basePath": "/closed-loop-tracker/",
+        "testProjectId": "JOB-MOBILE-001",
+        "mobileCapabilityProbeId": "SYNTHETIC-PROBE"
+      },
+      "result": "PASS",
+      "corrected": "PASS"
+    },
+    {
+      "caseId": "origin",
+      "expectedRejection": "EVIDENCE_ORIGIN_MISMATCH",
+      "actual": {
+        "accepted": false,
+        "status": "BLOCKED",
+        "errors": [
+          {
+            "code": "EVIDENCE_ORIGIN_MISMATCH",
+            "message": "Evidence origin does not match the pinned target."
+          }
+        ],
+        "targetId": "MOBILE-TARGET-001",
+        "evidenceId": "MOBILE-EVIDENCE-001",
+        "challenge": "0123456789abcdef0123456789abcdef",
+        "evidenceBasis": "HUMAN_OBSERVATION",
+        "performer": "authorized-operator",
+        "physicalDeviceAssertion": true,
+        "sourceCommit": "0123456789abcdef0123456789abcdef01234567",
+        "deploymentManifestDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "origin": "https://sjonesjones917.github.io",
+        "basePath": "/closed-loop-tracker/",
+        "testProjectId": "JOB-MOBILE-001",
+        "mobileCapabilityProbeId": "SYNTHETIC-PROBE"
+      },
+      "result": "PASS",
+      "corrected": "PASS"
+    }
+  ],
+  "canonicalTrustedTimeSyntaxEnforced": true,
+  "substituteIosBrowserRejected": true,
+  "mobileCapabilityProbeRequired": true,
+  "missingCapabilityBlocks": true,
+  "unknownCapabilityBlocks": true,
+  "unregisteredCapabilityRejected": true,
+  "requiredOperatorPathReceiptCoverage": true,
+  "authenticatedEvidenceBridgeAcceptsValidProof": true,
+  "absentEvidenceRemainsBlocked": true,
+  "partialSubmissionRejected": true,
+  "usedChallengeRejectedAcrossCaseVariants": true,
+  "workflowExecutesStrictEvidenceEvaluator": true,
+  "unconditionalTagMutationDetected": true,
+  "falseAcceptanceTagRegressionCovered": true
+}

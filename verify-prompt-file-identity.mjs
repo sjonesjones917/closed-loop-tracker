@@ -54,4 +54,4 @@ for(let stage=1;stage<=30;stage++){
 assert.equal(totalOperations,66,'Every registered stage operation must be covered.');
 assert.equal(generatedOperations,50,'Only EXTERNAL_AGENT operations may have exported prompt files.');
 assert.equal(nonExternalOperations,16,'Application, human-decision, and operator-action operations must fail closed for prompt generation.');
-console.log(JSON.stringify({promptFileIdentity:'PASS',totalOperations,generatedOperations,nonExternalOperations,exactExportedBytesHashed:true,manifestIdentityBound:true,noSelfReferentialHash:true,utf8LfFinalNewline:true,mutationsDetected:mutations,repairedOriginalAccepted:true}));
+console.log(JSON.stringify({promptFileIdentity:'PASS',totalOperations,generatedOperations,nonExternalOperations,generatedInstructionUtf8BytesHashed:true,actualFileExportExercised:false,prerequisitesStipulated:true,manifestIdentityBound:true,noSelfReferentialHash:true,utf8LfFinalNewline:true,mutationsDetected:mutations,repairedOriginalAccepted:true}));

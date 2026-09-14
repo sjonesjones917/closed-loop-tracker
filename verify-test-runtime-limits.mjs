@@ -36,13 +36,25 @@ await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODU
 const largeCollection=Array(runtime.LIMITS.maxCollectionItems+1).fill(0);
 await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'COUNT'},{op:'ASSERT_EQ',value:0}]),artifacts:{PRODUCT:binding('ART-PRODUCT',encoder.encode(JSON.stringify(largeCollection)))},metadata:metadata(['PRODUCT'])}),'COLLECTION_LIMIT');
 
+const validationCases=[];
+function invalidOnly(id,good,mutate,reason){
+ const baseline=runtime.validateSpec(good);assert.equal(baseline.valid,true,id+': invalid baseline: '+baseline.issues.join('; '));
+ const bad=structuredClone(good);mutate(bad);const actual=runtime.validateSpec(bad);
+ assert.equal(actual.valid,false,id+': violation accepted');assert(actual.issues.some(issue=>reason.test(issue)),id+': wrong rejection: '+actual.issues.join('; '));
+ assert.equal(runtime.validateSpec(good).valid,true,id+': repaired input did not progress');validationCases.push({id,result:'PASS',actualIssues:actual.issues,corrected:'PASS'});
+}
+const parseSteps=kind=>[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:kind}];
 const tooDeepJsonPath='$.'+Array(runtime.LIMITS.maxSelectorDepth+1).fill('x').join('.');
-assert.equal(runtime.validateSpec(spec([{op:'SELECT_JSON_PATH',path:tooDeepJsonPath},{op:'ASSERT_EQ',value:true}])).valid,false);
+invalidOnly('json-selector-depth',spec([...parseSteps('PARSE_JSON'),{op:'SELECT_JSON_PATH',path:'$.x'},{op:'ASSERT_EQ',value:true}]),s=>s.steps[4].path=tooDeepJsonPath,/JSON selector exceeds.*depth limit/);
 const tooDeepXmlPath='/'+Array(runtime.LIMITS.maxSelectorDepth+1).fill('x').join('/');
-assert.equal(runtime.validateSpec(spec([{op:'SELECT_XML',path:tooDeepXmlPath},{op:'ASSERT_EQ',value:true}])).valid,false);
+invalidOnly('xml-selector-depth',spec([...parseSteps('PARSE_XML'),{op:'SELECT_XML',path:'/root/x'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]),s=>s.steps[4].path=tooDeepXmlPath,/XML selector exceeds.*depth limit/);
 
+for(const [kind,op,path,badPath] of [['PARSE_JSON','SELECT_JSON_PATH','$.x',tooDeepJsonPath],['PARSE_XML','SELECT_XML','/root/x',tooDeepXmlPath]]){
+ const canonical=runtime.normalizeSpec(spec([...parseSteps(kind),{op,path},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]));
+ invalidOnly('canonical-'+op+'-depth',canonical,s=>s.steps[4].inputs.path.literal=badPath,/selector exceeds.*depth limit/);
+}
 const longPattern='a'.repeat(runtime.LIMITS.maxRegexPatternBytes+1);
-assert.equal(runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:longPattern}])).valid,false);
+invalidOnly('regex-pattern-bytes',spec([{op:'LOAD_ARTIFACT',binding:'TEXT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_MATCH',pattern:'a'}]),s=>s.steps[3].pattern=longPattern,/Regex pattern exceeds.*byte limit/);
 const regexInput='a'.repeat(runtime.LIMITS.maxRegexInputBytes+1);
 await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'TEXT'},{op:'ASSERT_MATCH',pattern:'a+'}]),canonicalBindings:{TEXT:{value:regexInput}},metadata:{bindings:{TEXT:{kind:'CANONICAL_VALUE',canonicalKey:'TEXT'}}}}),'REGEX_INPUT_LIMIT');
 
@@ -52,12 +64,9 @@ await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODU
 const xmlText='<root>'+Array(runtime.LIMITS.maxXmlNodes+1).fill('<n/>').join('')+'</root>';
 await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_XML'},{op:'SELECT_XML',path:'/root/n'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]),artifacts:{PRODUCT:binding('ART-XML',encoder.encode(xmlText))},metadata:metadata(['PRODUCT'])}),'XML_NODE_LIMIT');
 
-const forbidden=[
-  {version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:true,javascript:'return true'}]},
-  {version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:true,python:'pass'}]},
-  {version:'closed-loop-test-spec/1',steps:[{op:'SHELL',command:'echo no'},{op:'ASSERT_EQ',value:true}]}
-];
-for(const candidate of forbidden)assert.equal(runtime.validateSpec(candidate).valid,false,'arbitrary executable source must be impossible');
+const literalTest=spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'x'}]);
+for(const field of ['javascript','python'])invalidOnly('forbidden-'+field,literalTest,s=>s.steps[3][field]='executable source',new RegExp('unknown property '+field));
+invalidOnly('forbidden-shell-operation',literalTest,s=>s.steps[3]={op:'SHELL',command:'echo no'},/Unknown|unknown|not registered|Unsupported/);
 
 const bytes=encoder.encode('hash authority');
 const hashResult=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:createHash('sha256').update(bytes).digest('hex')}]),artifacts:{PRODUCT:binding('ART-HASH',bytes)},metadata:metadata(['PRODUCT'])});
@@ -73,4 +82,4 @@ const timeoutTest={TEST_ID:'TEST-TIMEOUT',EXECUTION_MODE:'APPLICATION_DETERMINIS
 const timeout=await runtime.executeTest(timeoutTest,{PRODUCT:binding('ART-TIMEOUT',encoder.encode('x'))},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});
 assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.code,'WORKER_TIMEOUT');assert.equal(Array.isArray(timeout.observations)&&timeout.observations.length===0,true);
 
-console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(runtime.LIMITS).sort(),totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,oneArtifact:true,multiArtifact:true,arbitraryCodeImpossible:true,resourceEnvelopeBoundaries}));
+console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(runtime.LIMITS).sort(),totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,oneArtifact:true,multiArtifact:true,arbitrarySourceExamplesRejected:true,validationCases,resourceEnvelopeBoundaries}));

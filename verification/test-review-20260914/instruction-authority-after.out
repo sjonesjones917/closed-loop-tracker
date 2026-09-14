@@ -1,0 +1,13 @@
+{
+  "controllerStage": "12",
+  "applicationStage": "08",
+  "productionInstruction": "PASS",
+  "intentionalInvalidFixturesRejected": [
+    "missing-mandatory-instruction-trace",
+    "missing-required-output-contract"
+  ],
+  "repairedPathProgressed": true,
+  "noMutationBeforeAcceptance": true,
+  "promptSemanticsChecked": true,
+  "isolatedDisposableProjects": true
+}

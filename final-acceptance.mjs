@@ -1,4 +1,5 @@
 // Repository-only Section 49 publication barrier. Never imported by the application.
+import {evaluateRecoveryAcceptance} from './recovery-governance.mjs';
 export const CORE_COVERAGE_KEYS=Object.freeze(["fieldOwnershipCoverage", "applicationDerivationCoverage", "typedRelationshipCoverage", "acceptedAgentValueExtractionCoverage", "acceptedRelationshipProvenanceCoverage", "currentScopeSelectorCoverage", "exactReqRunTestCoverage", "applicableCurrentRegressionSuccess", "mandatoryEvidenceChainCoverage", "releaseArtifactIdentityCoverage"]);
 export const SECTION49_COVERAGE_KEYS=Object.freeze(["stage01RawInputAccounting", "stage01RequiredFileInspectionAccounting", "stage01AcceptedSemanticMappingCoverage", "stage04ObligationAccounting", "mandatoryEvidenceSufficiencyCoverage", "contractProfileMigrationCoverage", "fieldRegistryCoverage", "stageOperationRegistryCoverage", "stageOperationScopeMatrixCoverage", "durableObjectRegistryCoverage", "fileFirstPromptByteIdentityCoverage", "fileFirstResponseByteCaptureCoverage", "attachmentSlotMappingCoverage", "semanticReviewIndependenceCoverage", "dueStageObligationCoverage", "activationProofCoverage", "testIrDagAndRegistryIdentityCoverage", "closedMetricUniverseCoverage", "deliveryCandidateIdentityCoverage", "terminalCommandPrerequisiteCoverage", "preDeliveryCheckpointCoverage", "destinationBoundAuthorizationCoverage", "actualIPhoneSafariAcceptanceCoverage", "canonicalDeploymentOriginCoverage", "normativeRequirementTraceCoverage"]);
 export const CORE_ZERO_KEYS=Object.freeze(["unauthorizedFieldMutationsAccepted", "canonicalMutationsBeforeAcceptance", "partialCommitsAfterInjectedFailure", "staleProposalsAccepted", "crossProjectRelationshipsAccepted", "historicalScopeSatisfyingCurrentGates", "unmatchedDeliveryFilesAuthorized", "appendOnlyHistoryRewritesAccepted", "unsupportedTestIrTreatedAsExecutable", "externalAssertionsOverridingApplicationProof", "nativeExecutionReceiptsFabricatedExternally", "releaseAcceptedWithContradiction"]);
@@ -14,6 +15,8 @@ export function evaluateFinalAcceptance(report,{visualBaseline=null}={}){
   if(!object(report))return {schema:'closed-loop-final-acceptance-gate/1',accepted:false,automatedChecksReady:false,blockers:[{code:'REPORT_REQUIRED',path:'/',requiredActor:'CONTROLLER'}]};
   for(const [key,expected] of Object.entries({workflow:'mobile-closed-loop/30',contractProfileId:'closed-loop-completion-profile/1',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',stageCount:30,stagesCompleted:30}))if(report[key]!==expected)fail('WRONG_ACCEPTANCE_IDENTITY',key);
   if(!sha.test(report.commit||''))fail('EXACT_COMMIT_REQUIRED','commit');
+  const recovery=evaluateRecoveryAcceptance(report.recoveryAcceptance,report.commit);
+  for(const reason of recovery.reasons)fail(reason,'recoveryAcceptance');
   function coverage(group,keys){
     const metrics=report[group];
     if(!object(metrics)){fail('METRIC_GROUP_REQUIRED',group);return;}

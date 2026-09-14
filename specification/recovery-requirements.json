@@ -1,0 +1,1885 @@
+{
+  "schema": "closed-loop-user-amendment-requirements/1",
+  "amendmentId": "RECOVERY-20260914-2",
+  "source": "Current conversation: user instruction requiring reversible acceptance and saved project history",
+  "sourceTranscriptionPath": "specification/recovery-amendment-20260914.txt",
+  "sourceTranscriptionSha256": "ad0ea7c7c0cc7cd5efb6a2248f5bfd9e50a79e62aa825d19c671b4034f89e3a1",
+  "originalStartingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "amendmentStartingCommit": "b275123ef57cc56c920027ff85051519c8e7e2f6",
+  "baseSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "precedence": "Replaces the earlier restriction that browser history may change only the view. Supplements the entire controlling specification.",
+  "semanticCompletenessReview": "PENDING independent comparison against the complete user instruction",
+  "requirements": [
+    {
+      "requirementId": "RECOVERY-COV-01",
+      "sourceLine": 15,
+      "sourceLineSha256": "653e09cf34a10e47efb36beb36b37786e78dd77825324daf6d5d7cd9ba38e0c1",
+      "mandatory": true,
+      "observableExpectedBehavior": "Record the original starting commit, exact controlling specification identity, and the revision at which this amendment was received.",
+      "productionOwners": [
+        "generate-specification-governance.mjs",
+        "verification/requirement-test-coverage.json"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "UNKNOWN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-COV-02",
+      "sourceLine": 16,
+      "sourceLineSha256": "a175f5240487ecb4d309de880178c1c2a90a42580f55e936359bafc7dd54351c",
+      "mandatory": true,
+      "observableExpectedBehavior": "Include all amendment requirements in the maintained manifest and acceptance criteria; identify production owners, observable outcomes, required evidence, and current status.",
+      "productionOwners": [
+        "generate-specification-governance.mjs",
+        "verification/requirement-test-coverage.json"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "UNKNOWN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-COV-03",
+      "sourceLine": 17,
+      "sourceLineSha256": "c1106597cb8d91287522e65bb11677d97d8f49be324b7b78990a7d0438745a10",
+      "mandatory": true,
+      "observableExpectedBehavior": "Review the whole specification for omissions, prohibitions, failure handling, recovery, and acceptance; record unresolved requirements explicitly and apply its definitions and defaults.",
+      "productionOwners": [
+        "generate-specification-governance.mjs",
+        "verification/requirement-test-coverage.json"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "UNKNOWN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-01",
+      "sourceLine": 20,
+      "sourceLineSha256": "b57ea833ae36d8ac9534da92d02eb0013a536e8e0a737b7adef7336e2d73a564",
+      "mandatory": true,
+      "observableExpectedBehavior": "Permit selection, inspection, and execution of an earlier stage within the active project version without changing to a different saved version.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-02",
+      "sourceLine": 21,
+      "sourceLineSha256": "993f63893106bde8ad74b50b547db2e6559a2f3d403dcb5383222e29e69eebec",
+      "mandatory": true,
+      "observableExpectedBehavior": "Show instructions, information, files, and actions appropriate to the selected stage and operation; preserve valid prerequisite restrictions.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-03",
+      "sourceLine": 22,
+      "sourceLineSha256": "b597528377945a58f06e5bb79d85e788657533fe6c1704862eb5d40eacad186d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Bind every execution and material to the project, saved version, target stage, operation, attempt, and governing revision.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-04",
+      "sourceLine": 23,
+      "sourceLineSha256": "a36328c74de5684d3fee05d006c0874e2332f5e23b1daeb698ed76f0fcdbce59",
+      "mandatory": true,
+      "observableExpectedBehavior": "Provide relevant project information, applicable rules, valid prerequisites, and permitted current-stage material.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-05",
+      "sourceLine": 24,
+      "sourceLineSha256": "7b1601ddfcca898225404b22dcb0d7c045b006e617432c0446f9a8e74f2b9895",
+      "mandatory": true,
+      "observableExpectedBehavior": "Exclude all information from stages after the executed stage from prompts, instructions, manifests, file lists, attachments, metadata, summaries, cached context, and consolidated agent exports.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-06",
+      "sourceLine": 25,
+      "sourceLineSha256": "1c407405a82b45e6cb190f4f88025576bdbe39af82528056b4c9e342ccdbdc9d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Enforce the same exclusion for later-stage information incorporated indirectly through files, summaries, or retained history.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-07",
+      "sourceLine": 26,
+      "sourceLineSha256": "195489831dfc2d78e9ad86deb0fd079f35a7767bf583f8db65b34085ed742691",
+      "mandatory": true,
+      "observableExpectedBehavior": "Rebuild stale handoffs after changes to project version, stage, scope, or governing revision.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-08",
+      "sourceLine": 27,
+      "sourceLineSha256": "d09b7a8711bda57841486b29fae698e02ef066d44bd5f065ad62d3420d45fbc6",
+      "mandatory": true,
+      "observableExpectedBehavior": "Keep complete restoration backups separate from agent-facing handoffs.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-09",
+      "sourceLine": 28,
+      "sourceLineSha256": "a4e83dacfea75e3f00035e66f1b5d844b4d651061af4d2c7b5ce38f29347daa7",
+      "mandatory": true,
+      "observableExpectedBehavior": "Enforce context boundaries after Undo, Redo, Back, Forward, saved History restoration, and backup restoration.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-CTX-10",
+      "sourceLine": 29,
+      "sourceLineSha256": "4b2a87c766f8b8902a3324b9984ec19c3ec99533373cc1c45b05468b22d914f8",
+      "mandatory": true,
+      "observableExpectedBehavior": "Every permitted stage and operation must receive the context appropriate to that stage in the active version, excluding all subsequent-stage information regardless of its completion status or storage in active state or history; later work may remain internally stored.",
+      "productionOwners": [
+        "prompt-engine.js",
+        "workflow-engine.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "CONTRADICTED",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-01",
+      "sourceLine": 32,
+      "sourceLineSha256": "520e3f961f9860510b529da1f392080729ccd257cff7fb6e85f0d5b66fb84794",
+      "mandatory": true,
+      "observableExpectedBehavior": "Keep stage selection, execution, validation, committed acceptance, and saved-version restoration distinct.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-02",
+      "sourceLine": 33,
+      "sourceLineSha256": "e71d8efa0edbe73087f8adf91412c899a89daf44f9676a92ca1553f6ce17dfd0",
+      "mandatory": true,
+      "observableExpectedBehavior": "Selecting an earlier stage, generating instructions, or receiving a response must not erase accepted work or reset subsequent progress.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-03",
+      "sourceLine": 34,
+      "sourceLineSha256": "9dbfb1a1fcacd795383405449519914aa824047db38a2fa751c473011b8bfac5",
+      "mandatory": true,
+      "observableExpectedBehavior": "Validate a replacement before holding it as an unaccepted candidate; never report final acceptance before confirmation and successful persistence.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-04",
+      "sourceLine": 35,
+      "sourceLineSha256": "baa9b8de1e2d41407b437ab6bc5cb609aa3cad63d7a15a5c73f8520821071af4",
+      "mandatory": true,
+      "observableExpectedBehavior": "When acceptance replaces accepted work or invalidates progress, show a concise inline confirmation and scroll it into view; prohibit modal, popup, alert, and browser confirmation dialogs.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-05",
+      "sourceLine": 36,
+      "sourceLineSha256": "ae3656cd578410ebb9ec20ff566775ca10324d6c781901e2e273182e11068803",
+      "mandatory": true,
+      "observableExpectedBehavior": "Calculate actual affected stages and operations before confirmation; explain the replaced result, reset progress, required rework, and availability of the previous version.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-06",
+      "sourceLine": 37,
+      "sourceLineSha256": "c832accdb4b4f6623044ad0ed6b93b56cae6410a7f221bf72c29168058d82e8d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Offer Accept replacement and Keep current progress; describe only replacement when no later progress is affected; never describe retained work as permanently erased.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-07",
+      "sourceLine": 38,
+      "sourceLineSha256": "f8e302e340fe7be58009cc00d32dd3f05025b714dd2a0d886ed8678b49ef6b24",
+      "mandatory": true,
+      "observableExpectedBehavior": "Cancellation and unanswered confirmation preserve the accepted result and all downstream progress.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-08",
+      "sourceLine": 39,
+      "sourceLineSha256": "0342e1c97a659bb0fcce2fd610d5b50fda06c104ee4f882826fe181d08ad84cc",
+      "mandatory": true,
+      "observableExpectedBehavior": "Navigation, reload, and restoration must never accept an unconfirmed candidate.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-09",
+      "sourceLine": 40,
+      "sourceLineSha256": "9a3987ecac04b36688cc1e0e2316a70d219c3d03dc54a2d86b557191b58d8f15",
+      "mandatory": true,
+      "observableExpectedBehavior": "Confirmation must bind the specific candidate, active version, revision, and affected work shown; recheck all bindings before commit.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-10",
+      "sourceLine": 41,
+      "sourceLineSha256": "13b9452161a73c8ece71a495a2cd698c08fc522db9689d0167421fe617f0a084",
+      "mandatory": true,
+      "observableExpectedBehavior": "Stale candidates or concurrently changed impact require updated validation and confirmation.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-11",
+      "sourceLine": 42,
+      "sourceLineSha256": "576bf556aad5663cf0894a60b004312e525ddfb539415ead88edb5edd0ef6444",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve the prior complete recoverable version before activating replacement; failed checkpoint storage must prevent dependent acceptance.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-12",
+      "sourceLine": 43,
+      "sourceLineSha256": "2cc5553e23d3e247e9a08bdc1d96ce94bf71b808683792c3a68dbfb11a799d6f",
+      "mandatory": true,
+      "observableExpectedBehavior": "Commit replacement and complete downstream invalidation atomically; failed persistence leaves no partial replacement or partial reset.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-13",
+      "sourceLine": 44,
+      "sourceLineSha256": "d0424b869a7a4d63757069179dcbfd38f6add1e342dce96feb74aed54bfa11e7",
+      "mandatory": true,
+      "observableExpectedBehavior": "Update stage results, completion, approvals, accounting, pending operations, generated materials, and delivery readiness consistently.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-14",
+      "sourceLine": 45,
+      "sourceLineSha256": "cf7e5a3218689f9b040f2be1a5266117f76fb6423fee11d094fb3597e4c5eca4",
+      "mandatory": true,
+      "observableExpectedBehavior": "Invalidate every direct and indirect dependent later stage, including completed, in-progress, and awaiting-response work; preserve only specification-established independent work.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-15",
+      "sourceLine": 46,
+      "sourceLineSha256": "58be605c8e3bcb4c2e6fa5c54ad55f383330a58c47d80dc7d11f0a4cca503cc4",
+      "mandatory": true,
+      "observableExpectedBehavior": "Superseded responses, approvals, exports, and historical artifacts cannot satisfy the replacement version's requirements; affected work must be performed against its new upstream state.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-16",
+      "sourceLine": 47,
+      "sourceLineSha256": "9b2a85f865097574388b7026a3cbc9b8c051af81a5d6dc325511c349515d3e82",
+      "mandatory": true,
+      "observableExpectedBehavior": "Restoring a coherent earlier version may restore the matching results and approvals valid within that version.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-17",
+      "sourceLine": 48,
+      "sourceLineSha256": "136a30dbf1e121315f6a67cc2b9f9e4c78ff685a95a4c08d96cfac936dfa1b8e",
+      "mandatory": true,
+      "observableExpectedBehavior": "After successful acceptance, show the next required operation and a concise Undo action.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-ACC-18",
+      "sourceLine": 49,
+      "sourceLineSha256": "b230751067bce7d2715a960f5e600ec819fef30c859733ffd2831366e5f999a8",
+      "mandatory": true,
+      "observableExpectedBehavior": "Duplicate submissions or repeated confirmation of the same committed operation must not accept or reset twice.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-01",
+      "sourceLine": 52,
+      "sourceLineSha256": "c51650c2c8ed0e3bab6b16b946ad4e4d0e826825771441b39055261420a6a2ae",
+      "mandatory": true,
+      "observableExpectedBehavior": "Durably preserve a complete session-start checkpoint containing the project state that exists when the application session opens.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-02",
+      "sourceLine": 53,
+      "sourceLineSha256": "d6eb25f9bc6825c480a9dab2276bb86a341eda8f66b3316e34fea625da98ca82",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve recoverable versions for meaningful changes, including acceptance, correction, downstream reset, and changes after returning to an earlier version.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-03",
+      "sourceLine": 54,
+      "sourceLineSha256": "68d51fef33e49deb060fa38835ba436a8d58aa795bef237985a035e733f6cf63",
+      "mandatory": true,
+      "observableExpectedBehavior": "Retain inputs, responses, prerequisites, acceptance decisions, progress, drafts, and exact file bytes required to reconstruct each promised version.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-04",
+      "sourceLine": 55,
+      "sourceLineSha256": "794939e9d43f91fb1b9919522c8cc7d69969c649613054b0f4fa661815156eb4",
+      "mandatory": true,
+      "observableExpectedBehavior": "Capture relevant view state and drafts before leaving them; browser memory, picker state, temporary URLs, and browser history alone are insufficient persistence.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-05",
+      "sourceLine": 56,
+      "sourceLineSha256": "aaca20e4bf303e0fb314c0aaafa32e55c273848869bd012e4a7dfc6d508e2e0d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Associate every application navigation entry with its saved project version and view.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-06",
+      "sourceLine": 57,
+      "sourceLineSha256": "ec963d2f1084799e904340258e4672130c2ab937af2927fb0588854771984d50",
+      "mandatory": true,
+      "observableExpectedBehavior": "Back and Forward activate the corresponding saved working data and restore project, selected stage, view, and position; labels alone are insufficient.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-07",
+      "sourceLine": 58,
+      "sourceLineSha256": "48f8a7899b4fa07d0c455ccf4c858a46f6186c7b24ae6e1d2582e5dfe767879f",
+      "mandatory": true,
+      "observableExpectedBehavior": "Stage selection stays in the active version; browser traversal returns to the recorded version.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-08",
+      "sourceLine": 59,
+      "sourceLineSha256": "7da7a21496cd031fc424cb90eb780296ad70920e6dc003cd1dbb6aa3a92a7763",
+      "mandatory": true,
+      "observableExpectedBehavior": "Restore a version as a consistent whole: traversing any recorded acceptance or correction boundary restores the destination's matching results, decisions, files and dependent progress or rework, at any available history distance.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-09",
+      "sourceLine": 60,
+      "sourceLineSha256": "290ab86d8f8c7d87f092971483f850fed43c1dd63d1a56bd6027d2753736912b",
+      "mandatory": true,
+      "observableExpectedBehavior": "Never combine old downstream approvals with incompatible newer upstream data.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-10",
+      "sourceLine": 61,
+      "sourceLineSha256": "8f8154d50f50aaa1fb28fc6c309e14dbfc532a0fa66a70201665985745ae588a",
+      "mandatory": true,
+      "observableExpectedBehavior": "Restore accepted saved work without replaying acceptance commands or requiring completed work again; unaccepted candidates remain unaccepted.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-11",
+      "sourceLine": 62,
+      "sourceLineSha256": "f6ceafe159335eb39e51c5a38efe63242236189dbec1f564d85e21297253da79",
+      "mandatory": true,
+      "observableExpectedBehavior": "Editing after returning to an earlier version preserves a new continuation and the previously saved later versions.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-12",
+      "sourceLine": 63,
+      "sourceLineSha256": "5bf2d87eb2244919c3c4ac4ba440517e4b401ff644f06b25ee472c2e250a11cb",
+      "mandatory": true,
+      "observableExpectedBehavior": "Provide compact History access to alternative saved continuations even when native Forward no longer reaches them; use clear descriptions and hide internal identifiers and branching details.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-13",
+      "sourceLine": 64,
+      "sourceLineSha256": "e81f05b7c3910a3c077143a27d63fc47f0069ab9f9b76ce2a608f015cb805e90",
+      "mandatory": true,
+      "observableExpectedBehavior": "Undo, Redo, browser restoration, and History restoration use compatible authoritative mechanisms; recovery remains accessible after transient feedback disappears.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-14",
+      "sourceLine": 65,
+      "sourceLineSha256": "380f812d6dee059d9dc62140a2c5fd3fd5ab8d41971d6de84257875e4639b989",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve the active version and promised retained history through reload and required backup export/import.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-15",
+      "sourceLine": 66,
+      "sourceLineSha256": "66aa484fb7033fd092c461742d0cbfe4495da3230116ec9bcb9312eea2c05604",
+      "mandatory": true,
+      "observableExpectedBehavior": "Restoration is atomic, including rapid Back/Forward, multi-entry jumps, interrupted loads, missing or corrupt checkpoints, and failed persistence.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-16",
+      "sourceLine": 67,
+      "sourceLineSha256": "1187cad052725e193ec4baf5a51525072aa432b553b9d80b42d80a5514a67c32",
+      "mandatory": true,
+      "observableExpectedBehavior": "Report restoration success only after required data is available; retain the existing recoverable state if restoration fails.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-17",
+      "sourceLine": 68,
+      "sourceLineSha256": "fc2ca337c4d092bff8b696afd627dc9d3cb812febc7a3ae22ca4efdcbb6257a8",
+      "mandatory": true,
+      "observableExpectedBehavior": "Keep authorization and concurrency checks active; protect independent work in other tabs and sessions.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-18",
+      "sourceLine": 69,
+      "sourceLineSha256": "e84d3b24ad6dfcffbd16e137516ea73fad8e8b774d3b7b1206bdb1236a5609b7",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve execution records and duplicate-operation protections; reject delayed results from an abandoned operation against the restored version.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-19",
+      "sourceLine": 70,
+      "sourceLineSha256": "86addf74d5f0f3d613c3c629b69f0861bd0e005b0ed780a024ab7aa3329ed6bc",
+      "mandatory": true,
+      "observableExpectedBehavior": "Reconcile pending operations with their actual status; never reissue completed requests or repeat deliveries because of restoration.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-20",
+      "sourceLine": 71,
+      "sourceLineSha256": "8a04d3da698bef49bab0385bc4e6a39ccf63cf6141f9adf4674c4215a054fbf5",
+      "mandatory": true,
+      "observableExpectedBehavior": "Do not imply that restoring application data undoes external actions.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-21",
+      "sourceLine": 72,
+      "sourceLineSha256": "b1e703d4cb74c54218474dd13a8b20f3f4c29c5b2dbc395a89857ac6f5fd05fa",
+      "mandatory": true,
+      "observableExpectedBehavior": "Retain recovery to the recorded session start within declared, tested support limits; provide History when native entries are unavailable.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-HIS-22",
+      "sourceLine": 73,
+      "sourceLineSha256": "db15335c0c073bc3dc01e0756f44c825eaf1f9a27caddb95ee24343fe6d7b1a7",
+      "mandatory": true,
+      "observableExpectedBehavior": "Do not silently discard promised checkpoints or advertise unlimited retention; report inability to save a required checkpoint before committing a dependent change.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js",
+        "response-ingestion.js",
+        "workflow-engine.js"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-01",
+      "sourceLine": 76,
+      "sourceLineSha256": "67baf743ea40ca0cdedb40922fc46ae685d4a9ba069796045bc52ff87bfb0e9b",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve approved visuals and architecture; change layout, wording, and interactions only to fix defects or implement required recovery and reduced effort.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-02",
+      "sourceLine": 77,
+      "sourceLineSha256": "579a809ca9dc2850c15d1550b4a20ae1fe1c5a3bf39cd4c174aa65ac328b1535",
+      "mandatory": true,
+      "observableExpectedBehavior": "Use concise language; remove redundant controls and text; keep required decisions, useful status, actionable errors, and recovery access visible while placing internal details behind appropriate disclosure.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-03",
+      "sourceLine": 78,
+      "sourceLineSha256": "3bb214e805f91e788f13af317532e831ed45fbb9312e4426dfbf35310d1e0703",
+      "mandatory": true,
+      "observableExpectedBehavior": "Consolidate every stage's required exports into one user action in the supported file-transport format; enforce isolation before assembly.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-04",
+      "sourceLine": 79,
+      "sourceLineSha256": "03acfdf96178b8e31c5a3a27aa556abff4ae60313d2bb58453be5e3ec502d396",
+      "mandatory": true,
+      "observableExpectedBehavior": "Automate computation, file assembly, and coordination that the application can perform.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-05",
+      "sourceLine": 80,
+      "sourceLineSha256": "78b59e3a9a2417ffe316ee2cfdbd23eea41b2d33c26a2d0ada70102f067b4618",
+      "mandatory": true,
+      "observableExpectedBehavior": "Order information and controls for the current task and scroll normal progression to its next required reading or action with minimal scrolling.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-06",
+      "sourceLine": 81,
+      "sourceLineSha256": "45e163afff1f38b1b5519fec1bbfbeef5de6330f06f9bd3d9b723364b316f468",
+      "mandatory": true,
+      "observableExpectedBehavior": "Scroll upward for explicit return, correction, or retry; successful project-information save opens Workflow or the next required step.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-07",
+      "sourceLine": 82,
+      "sourceLineSha256": "cc3ed616cd9f204b9dc122221e326e1cec002583b13d4aae2a278de6629d8eea",
+      "mandatory": true,
+      "observableExpectedBehavior": "During restoration, preserve the recorded view and position instead of applying automatic progression.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-08",
+      "sourceLine": 83,
+      "sourceLineSha256": "bbd9a7d30ed54ad7f7404f7bea785d1f40028c852638d3c581dbf18af135816b",
+      "mandatory": true,
+      "observableExpectedBehavior": "Show a small clearly visible pending indicator during actions and restoration; prevent duplicate execution and provide completion, failure, and recovery feedback.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-09",
+      "sourceLine": 84,
+      "sourceLineSha256": "4e9f5abbe7cd6f73c74364a07d45fdf892c4e2ed508d30cea368a86381c5ad7e",
+      "mandatory": true,
+      "observableExpectedBehavior": "Integrate meaningful navigation and the initial view with browser history through the existing routing architecture; preserve remaining Back/Forward entries during traversal.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-10",
+      "sourceLine": 85,
+      "sourceLineSha256": "fe21c6cfda9967302b0bd52731ec9bcefc4718f3ec569fc577e98e1d265add3c",
+      "mandatory": true,
+      "observableExpectedBehavior": "Support reload, direct links, and supported mobile gestures; a saved-version link resolves that version under current access controls, while ordinary stage links use the active version and its prerequisites.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-UX-11",
+      "sourceLine": 86,
+      "sourceLineSha256": "7c47ae142020089bc40344780eb2ff0823502517faad5037481b35917c6c314b",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve normal browser navigation outside the application; do not create history loops or trap the user.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-01",
+      "sourceLine": 89,
+      "sourceLineSha256": "dcba797e4e0ed02100b488da84982c4f09bbf48a53b7b09cf9ebd275e989548f",
+      "mandatory": true,
+      "observableExpectedBehavior": "Reproduce actual initial behavior using the existing checks and a clean project in the real interface; preserve inputs, sequence, expected/actual outcome, and revision for failures.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-02",
+      "sourceLine": 90,
+      "sourceLineSha256": "eb45feadc93d91aa3add7e272033b53645961d227880e07f62a052d683df973b",
+      "mandatory": true,
+      "observableExpectedBehavior": "Check mobile selection, exports, storage, restoration, and browser history early and state the exact observed environment; final physical acceptance belongs to the deployed revision.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-03",
+      "sourceLine": 91,
+      "sourceLineSha256": "edc1d98ed697cd2226b3f1293be820cef052c8e19dc6627a84ffb0d765270e22",
+      "mandatory": true,
+      "observableExpectedBehavior": "Align prompt generation, context, validation, commands, versions, restoration, and persistence under compatible contracts for ownership, boundaries, transitions, revision, atomicity, retry, and invalidation.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-04",
+      "sourceLine": 92,
+      "sourceLineSha256": "45412e357c05122a60ca704f0df83da33dfd088fd41627d8a0d7eaf204933e10",
+      "mandatory": true,
+      "observableExpectedBehavior": "For every defect, reproduce, preserve a detecting regression, repair the earliest owner and consumers, replay the operator path, and verify affected downstream paths.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-05",
+      "sourceLine": 93,
+      "sourceLineSha256": "dcc8d2c429ac19496100ecf2e4c71e6ecaaba2526710233c07d01c8d64453701",
+      "mandatory": true,
+      "observableExpectedBehavior": "Derive outcomes independently from the specification and this amendment; each gate class needs otherwise-valid single-violation rejection and repaired progression cases.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-06",
+      "sourceLine": 94,
+      "sourceLineSha256": "63e225184675015e0fc926d4e02ff9088ef57dd0b9e021205a8c8dc12c1ec179",
+      "mandatory": true,
+      "observableExpectedBehavior": "Demonstrate tests detect injected ownership, context, confirmation, invalidation, byte-comparison, history-mutation, and incompatible-restoration implementation faults; restore implementation afterward.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-07",
+      "sourceLine": 95,
+      "sourceLineSha256": "b43ad360f7dd8a3455ccaf228a126e039e8116f689197811fcf1250ce2571ed9",
+      "mandatory": true,
+      "observableExpectedBehavior": "Cover earlier-stage replacement across applicable stages with completed, partial, pending, and invalidated dependent work; test invalid input, confirm, cancel, unanswered, duplicate, stale, concurrent, failed-storage, and interrupted-commit cases.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-08",
+      "sourceLine": 96,
+      "sourceLineSha256": "9a844f37bc262aed2210821895b841f9f0a88a85ea2eb60985b9b66fec2eeb66",
+      "mandatory": true,
+      "observableExpectedBehavior": "Inspect generated content and actual exported bytes for required current/prerequisite material and excluded later-stage material, including after restoration.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-09",
+      "sourceLine": 97,
+      "sourceLineSha256": "6c68de7171f09e3d13286f0f20e1065b80e8e29efd87c092d34ada1969456849",
+      "mandatory": true,
+      "observableExpectedBehavior": "Compare restored data, dependencies, approvals, and artifact bytes with checkpoint records; test Back/Forward across acceptance, Undo/Redo, multi-jumps, branching edits, reload, links, History, and supported gestures.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-10",
+      "sourceLine": 98,
+      "sourceLineSha256": "e17a5a0fd9832871aa5cfa409b0e4c5ea8848295f0c25dca50dc4a1c4b634bee",
+      "mandatory": true,
+      "observableExpectedBehavior": "Verify coherent recovery and rejection of mixed versions or prerequisite bypass; pending confirmation stays pending and completed external operations are not repeated.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-11",
+      "sourceLine": 99,
+      "sourceLineSha256": "05a3017ef43f06f14cbd4f45dd3654caeab14588e1ef454365a7296eefa55dce",
+      "mandatory": true,
+      "observableExpectedBehavior": "Test retention limits, missing/corrupt saved files, interrupted restore, concurrency, and delayed abandoned responses.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-12",
+      "sourceLine": 100,
+      "sourceLineSha256": "2aad59d27df4b190731ade190e1230335c01ad5e8f05d738583ceb166511b74e",
+      "mandatory": true,
+      "observableExpectedBehavior": "Source-text matches, declared flags, screenshots alone, and test-file existence do not establish correctness; report actual executed cases and review omissions across stages, operations, and failure paths.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-13",
+      "sourceLine": 101,
+      "sourceLineSha256": "f1699a3201e37f8fb56445710976845f857d9bd264780eba352d6c921fdad7b4",
+      "mandatory": true,
+      "observableExpectedBehavior": "Generate bounded operation sequences covering progress, selection, history, replacement, confirmation/cancellation, Undo/Redo, branches, retry, stale input, corrections, reload, files, storage, and concurrent edits.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-VER-14",
+      "sourceLine": 102,
+      "sourceLineSha256": "8c12fedc8483b741eba9c5b8e489e39d9147ecccf7609701cc479384b71ad26c",
+      "mandatory": true,
+      "observableExpectedBehavior": "Check coherent active versions, preserved checkpoints, stage isolation, valid approvals, downstream state, rejection, and valid progression after each generated operation; publish exploration bounds and assumptions and preserve reduced regressions.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-conformance-regressions.mjs",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-JRN-01",
+      "sourceLine": 105,
+      "sourceLineSha256": "bebc37e11d29f69bc5e7bf35571309ecc8618974644bfb492d0cd953b91a8b7d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Complete all 30 stages through actual controls and file transport with prerequisite state created by preceding operations.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-JRN-02",
+      "sourceLine": 106,
+      "sourceLineSha256": "a15692c7f99af8b957f29371cee3ea5ec7bb462d96bb0759460cb301b248ce2c",
+      "mandatory": true,
+      "observableExpectedBehavior": "Exercise complete valid progression, rejection/correction, all handoffs, mapping, review, application commands, persistence, recovery, saved history, and delivery.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-JRN-03",
+      "sourceLine": 107,
+      "sourceLineSha256": "94e7606a93714b083efbdd69d09b8d4462e883e22ecf043574b21dd2f82227ec",
+      "mandatory": true,
+      "observableExpectedBehavior": "Exercise re-execution wherever permitted, validate replacement, cancel without loss, then confirm replacement and re-complete all affected dependent work; select journey coverage from actual stages, dependencies and transitions without a fixed movement distance or demonstration path.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-JRN-04",
+      "sourceLine": 108,
+      "sourceLineSha256": "168e1f24fc8f74a35083c52fbed3a544ed3a6c4b60dbfb3633ef4d66b21cb639",
+      "mandatory": true,
+      "observableExpectedBehavior": "Undo restores original matching downstream progress; Forward/Redo restores replacement; repeated traversal and a different continuation preserve alternatives recoverable through History.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-JRN-05",
+      "sourceLine": 109,
+      "sourceLineSha256": "a2a12a044a6496d59dc9e0ea25f7729c8c0cef9516518a642b7f050d9c19be0d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Return to session start; recover after reload/interruption; restore actual backup bytes including retained history; retrieve and compare final bytes; exercise required workloads and history lengths.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-JRN-06",
+      "sourceLine": 110,
+      "sourceLineSha256": "b92d6f46132792e4796134c1b69623ce4bfb2cba280aad9c54f99c62daec77e2",
+      "mandatory": true,
+      "observableExpectedBehavior": "Label synthetic evidence accurately; separately obtain required actual external project outputs and claim independence, human actions, and devices only as observed.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "MISSING",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-REL-01",
+      "sourceLine": 111,
+      "sourceLineSha256": "ee7629cfb8e99cea95df680437ee162d751fd4947985c68fa50bab197a4468ba",
+      "mandatory": true,
+      "observableExpectedBehavior": "Use existing CI, integration, and deployment controls; run focused/affected checks and the complete integrated CI suite before merge.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-REL-02",
+      "sourceLine": 112,
+      "sourceLineSha256": "d4717cd27bef54d1a75fea5d610d350f6f46306e8385fb7b94c79b0dc5571963",
+      "mandatory": true,
+      "observableExpectedBehavior": "Verify exact deployed source, resource identities, workers, and runtime; repeat operator acceptance including isolation, confirmation, invalidation, version recovery, and navigation on that deployment.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-REL-03",
+      "sourceLine": 113,
+      "sourceLineSha256": "c20ac21c07125ea7cc081ae844958c0a5fad377269f498645317d117f4b111eb",
+      "mandatory": true,
+      "observableExpectedBehavior": "Obtain physical-iPhone Safari and approved visual-baseline evidence bound to the final deployed revision; invalidate affected evidence after later changes.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-REL-04",
+      "sourceLine": 114,
+      "sourceLineSha256": "57eae9a90a6a907095470f406b5fc8465fcb95e40f8d1fc0186d6cb84b7fa1eb",
+      "mandatory": true,
+      "observableExpectedBehavior": "Claim completion only when all mandatory implementation and evidence requirements and complete deployed journeys pass; separate functional readiness, device acceptance, and production maturity.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-REL-05",
+      "sourceLine": 115,
+      "sourceLineSha256": "35da0c7ec7c719b37b2c6b5f2c972bf63ec25b193dc0e409f464d1a4b1a6cf4d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Distinguish product defects from unavailable tools/access/devices/human decisions; finish independent work before seeking necessary assistance and identify exact missing requirements, capabilities, and evidence.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-REL-06",
+      "sourceLine": 116,
+      "sourceLineSha256": "520a4d54ba490a768d678afc11a56cdfb0b027b54e978f7828806b25e7f5f23b",
+      "mandatory": true,
+      "observableExpectedBehavior": "Return implemented changes, executed verification, exact deployed revision if deployed, remaining defects, limitations, tested environments, and recovery limits; deliver the working application rather than an audit, plan, patch archive, or isolated repair.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed positive and single-violation cases where applicable",
+        "Actual browser operation and saved data/byte comparisons where applicable",
+        "Exact final deployed revision acceptance"
+      ],
+      "status": "IMPLEMENTED_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "RECOVERY-GEN-01",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 119,
+      "sourceLineSha256": "09db3a952069d82d880bb4ac0a39b9f3eedd998d664a5df5fef7d101560a61ca",
+      "observableExpectedBehavior": "Apply requirements generally across all 30 stages and every required operation. Do not hard-code particular stages, stage ranges, movement distances, or example sequences. Determine behavior from the actual project version, selected stage, operation, prerequisites, dependencies, and affected work."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-02",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 120,
+      "sourceLineSha256": "cbb5f269df5fc823860b58898d1b0d416af7f67776a7007c184ff58a8dc720f5",
+      "observableExpectedBehavior": "Maintain coverage of initial execution, repeated execution, earlier-stage execution, replacement acceptance, cancellation, invalidation, restoration, and subsequent continuation wherever each operation applies."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-03",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 121,
+      "sourceLineSha256": "b0e1e9018aa52ee8ce9f1aabf839b715aa854ec09165b94438c2f426551e516e",
+      "observableExpectedBehavior": "Generate replacement impact from authoritative dependencies and actual state; do not assume a fixed number of affected stages or a contiguous range unless the actual dependencies establish one."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-04",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 122,
+      "sourceLineSha256": "cb4ceecbe088a25cda5fb510a57df6beac9c59ae5d7cb28f22c62d8ea204fd79",
+      "observableExpectedBehavior": "Derive restoration from the destination history entry; support repeated navigation and direct jumps while retaining alternative saved continuations and enforcing the destination version's prerequisites."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-05",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 123,
+      "sourceLineSha256": "fb7b8fcb5b166f97012e5e03561db844f6e1de95106b0ddd2a4a4e1d3d0c4d96",
+      "observableExpectedBehavior": "Apply tests across every applicable stage and transition, including first and final stages, repeated execution, movement between stages, no subsequent work, and completed, partially completed, pending or invalidated dependent work."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-06",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 124,
+      "sourceLineSha256": "c428d4d1ff67c0994de7b4b0843f796aed1e5bc3cafe72d0fba32a9466ce26ec",
+      "observableExpectedBehavior": "Generate operation sequences from applicable workflow rules and state combinations, covering all required operations and invariants, without limiting discovery to a fixed demonstration path or movement distance."
+    },
+    {
+      "requirementId": "RECOVERY-GEN-07",
+      "mandatory": true,
+      "productionOwners": [
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js",
+        "verify-complete-operator-journey.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed cases selected from every applicable stage, operation and transition class",
+        "Generated operation sequences with recorded bounds and checked invariants",
+        "Exact final deployed revision operator acceptance"
+      ],
+      "status": "IMPLEMENTATION_AND_EVIDENCE_INCOMPLETE",
+      "executedEvidence": [],
+      "sourceLine": 125,
+      "sourceLineSha256": "19a93839c18a28f4b7490b46e659b123fc448be2ebe2f5b5cb47244b45b252b1",
+      "observableExpectedBehavior": "Select complete operator journey coverage from actual stages, dependencies and state transitions, accounting for all applicable stages and transition classes. Individual examples and selected passing cases do not establish general conformance."
+    }
+  ],
+  "clarificationStartingCommit": "7fd47513f4f2019841a18961713e21b874c1a1c4"
+}

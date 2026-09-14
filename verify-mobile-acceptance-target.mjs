@@ -23,6 +23,8 @@ assert.throws(()=>createMobileAcceptanceTarget({...input,basePath:'/'}),/canonic
 assert.throws(()=>createMobileAcceptanceTarget({...input,challengeLifetimeSeconds:59}),/between/);
 assert.throws(()=>createMobileAcceptanceTarget({...input,issuedAt:'2026-09-03T00:00:00Z'}),/canonical/);
 assert.throws(()=>createMobileAcceptanceTarget({...input,issuedAt:'2026-02-30T00:00:00.000Z'}),/canonical/);
-const mutated={...target,deploymentManifestDigest:'b'.repeat(64)};
-assert.notEqual(mutated.deploymentManifestDigest,target.deploymentManifestDigest);
-console.log(JSON.stringify({mobileAcceptanceTargetGenerator:'PASS',csprngChallengeShape:true,nonrepeatable:true,requiredInputsRejected:true,canonicalBindingEnforced:true,strictUtcAndExpiry:true,mutationSensitive:true},null,2));
+const rebound=createMobileAcceptanceTarget({...input,deploymentManifestDigest:'b'.repeat(64)});
+assert.equal(rebound.deploymentManifestDigest,'b'.repeat(64));
+assert.equal(rebound.sourceCommit,input.sourceCommit);
+for(const key of ['sourceCommit','deploymentManifestDigest','origin','basePath','testProjectId','procedureVersion','deviceModel','iosVersion','safariVersion','safariUserAgent'])assert.equal(target[key],input[key]);
+console.log(JSON.stringify({mobileAcceptanceTargetGenerator:'PASS',challengeShapeChecked:true,distinctChallengesInTwoCalls:true,requiredInputsRejected:true,canonicalBindingEnforced:true,strictUtcAndExpiry:true,requestedManifestDigestBound:true,evidenceClass:'SYNTHETIC_TARGET_GENERATOR_CASES',physicalDeviceAcceptance:false},null,2));

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
@@ -90,7 +91,7 @@ const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.r
 if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.stringify(retained)))throw new Error('Unauthorized product content remains.');
 
-console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allOperationsVerified:66,externalPromptsVerified:50,nonExternalPromptRejections:16,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true},null,2));
+console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,operationPromptContractsChecked:totalOperations,externalPromptsVerified,nonExternalPromptRejections,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,evidenceClass:'PROMPT_SCHEMA_AND_COMPONENT_CASES',completeOperatorJourney:false,ingestionSuite:{file:'verify-ingestion.mjs',exitCode:ingestionRun.status,stdoutSha256:createHash('sha256').update(ingestionRun.stdout).digest('hex')}},null,2));
 
 // Practical-100 schema/ownership contract.
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};

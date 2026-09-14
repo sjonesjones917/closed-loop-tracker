@@ -1,0 +1,21 @@
+{
+  "stage02PrimitiveProof": "PASS",
+  "controllerBuildStage": 2,
+  "applicationStage": null,
+  "evidenceClass": "EXECUTED_PRIMITIVE_CASES",
+  "trustedTimePromotionFault": "DETECTED",
+  "canonicalJsonVersion": "closed-loop-canonical-json/1",
+  "canonicalIdVersion": "closed-loop-id/1",
+  "filenameVersion": "closed-loop-filename/1",
+  "trustedTimeVersion": "closed-loop-trusted-time/1",
+  "unicodeVersion": "15.1.0",
+  "unicodeSourceCommit": "9595f090650e99e3e752b37a7a3866ac8a91999b",
+  "caseFoldingBlobSha1": "69c5c64b4c6a124f4608722db723a9e32667f190",
+  "filenameInvalidFixturesRejected": 10,
+  "timeInvalidFixturesRejected": 7,
+  "fabricatedTrustedTimeRejected": true,
+  "unverifiedContractNameRejected": true,
+  "unverifiedExternalSystemClaimRejected": true,
+  "verifiedExternalTimePathEstablished": false,
+  "repairedFixturesProgress": true
+}

@@ -137,7 +137,7 @@ console.log(JSON.stringify({
   stage04ClosedObligationAccounting:true,
   oneTimeProjectInput:true,
   stage04NoRepeatHandoff:true,
-  visualPromptBaseline:true,
+  promptCssDeclarationsUnchanged:true,visualBaselineAcceptance:false,
   exactPromptIdentity:true,
   promptDelimiterEscapePrevented:true,
   shortValueInstructionCorruptionPrevented:true,

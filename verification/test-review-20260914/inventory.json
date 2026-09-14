@@ -1,0 +1,1330 @@
+{
+  "reviewComplete": false,
+  "initialFiles": 111,
+  "currentAndRemovedFiles": 120,
+  "files": [
+    {
+      "file": "browser-interactions.mjs",
+      "trackedAtReviewStart": false,
+      "role": "FIXTURE_OR_DRIVER",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "5f234f38a2bcfa943bc83942403a40f5f557dee9c6138a0968f8e557bba73ee1",
+      "identifiedFindings": [
+        "TEST-37"
+      ],
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred",
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS"
+    },
+    {
+      "file": "build-test-project-impl.mjs",
+      "currentSha256": "a7ab6ad4cbc793a950d664960a339e9eb28c891bff4d6ec9a9ef2dcf07feb885",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "build-test-project.mjs",
+      "currentSha256": "1787f65c0eff4580ddc748a5d294f41c93e97e0ded57a0a4bc169e7a286974b7",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "mobile-evidence-test-fixture.mjs",
+      "currentSha256": "dc818d255e4c42ae4289e1f0799cd26bf66e37cdbd5551fe29053eb7be188b1c",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "operator-browser-driver.mjs",
+      "currentSha256": "c00ad7275b86aa16eab001141a6b3c89a250601913137727a911ddbdc96931b5",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [
+        "TEST-37",
+        "TEST-38"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "operator-journey-fixtures.mjs",
+      "currentSha256": "d29a5588f94e6d4959ea56ef28f331d8ee1f7146f0db237afb452cb02c67939e",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [
+        "TEST-34"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "operator-prefix-fixture.mjs",
+      "currentSha256": "01ee613afd8539397487d5231e7dfb09cdf8e28163ef59b0d7d249160d9ae631",
+      "trackedAtReviewStart": false,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "stage-projection-verification.mjs",
+      "currentSha256": "60804ae86c6a6372029599571bc862c441f4d58f8e97bb8d0633fb057f95b679",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "stage19-fixture.mjs",
+      "currentSha256": "f01204fda79a858fea0127c7ffbeb863d5fa1861ebb7b4050c25bad310984f3c",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [
+        "TEST-34",
+        "TEST-39"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "test-fixtures.mjs",
+      "currentSha256": "e9ba633d7b3338906b93e0410022bab96f393e52ca38b90ebb44493811011c69",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [
+        "TEST-10",
+        "TEST-28",
+        "TEST-34"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "test-store-runtime.mjs",
+      "currentSha256": "d134a7febdffedb8c53dd2a499ed5845e46d17a9dacfeaeed35af8f2e261aeaa",
+      "trackedAtReviewStart": true,
+      "role": "FIXTURE_OR_DRIVER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-adjudication-input-preservation.mjs",
+      "trackedAtReviewStart": false,
+      "role": "VERIFIER",
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "051554d7e6d39eaa037193353ee7e6aacb30018feb224d7641b4e3b23018d1f7",
+      "identifiedFindings": [
+        "TEST-35"
+      ]
+    },
+    {
+      "file": "verify-all-stage-prompts.mjs",
+      "currentSha256": "b6493c821fd1a1e6c64597d22fd88f957e87eb88588dc0d2358235ae48debd86",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-applicability-authority.mjs",
+      "trackedAtReviewStart": false,
+      "role": "VERIFIER",
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "0f9c39392144c2cafc79a784c264ea8815fc945ce17145b6865ade98b8517d5e",
+      "identifiedFindings": [
+        "TEST-28"
+      ]
+    },
+    {
+      "file": "verify-browser-extra.mjs",
+      "currentSha256": "593d209cef8b038cc81c20dcb817090aea95a02a6c57a30e8f8a22ae4bc54e15",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-12",
+        "TEST-14",
+        "TEST-21",
+        "TEST-35",
+        "TEST-37",
+        "TEST-42",
+        "TEST-45"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateReview": "All extracted assertions reviewed; large fixture-body review remains open"
+    },
+    {
+      "file": "verify-browser-interactions.mjs",
+      "trackedAtReviewStart": false,
+      "role": "VERIFIER",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "f0c0c9e07b37d1cdcf34f31757c2c6154a21297489219175743c6cc91abb0ac2",
+      "identifiedFindings": [
+        "TEST-37"
+      ],
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred",
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS"
+    },
+    {
+      "file": "verify-browser.mjs",
+      "currentSha256": "64188a532a0eba88e803a86f8459bbfc7bf4ab7f77420fa2fbfb0d5946ae0b81",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-12",
+        "TEST-14",
+        "TEST-37",
+        "TEST-38",
+        "TEST-42"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-build-stage-ledger.mjs",
+      "currentSha256": "79a9a4b43f3dc826ec46d063c541ab60147d4f0eb0c650532bd5c440d174cf8a",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-22"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-candidate-freeze.mjs",
+      "currentSha256": "6f0647516541e93068c0d9d44ff1f52c3c369598f504cc796f708ff1216eb4fa",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-40"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-capability-readiness.mjs",
+      "currentSha256": "3ffc2a5a916e0d3bf2a21b29103db08b52de7a368e4c518effe52246f57f6750",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-13"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-checkpoint-boundary.mjs",
+      "currentSha256": "e53a5db6746f9ca435e466647ff324eda9d1d7c327f1244d137733f502bed6b5",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-complete-operator-journey.mjs",
+      "currentSha256": "3092173be9f3f28fa31e123f5bccfd93a57889e806aa59b659bbe9a6e7a4d65d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-43"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-complete.mjs",
+      "currentSha256": "42bb14a87b621fb42fa9708be42e0db4b7774167bdbed6417d0c8bcca0e05ac2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-05",
+        "TEST-12",
+        "TEST-28"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-conformance-regressions.mjs",
+      "currentSha256": "34971be2930d77602935447037b1ecc5d9480f79991ad821b814b944b12b9ce4",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-contract-closure.mjs",
+      "currentSha256": "51f24633510b31c82f89d3f05c391f3878fac9966363a7f100e2ec8a5097bc5d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-30"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-controller-stage-bundle.mjs",
+      "currentSha256": null,
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-15"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-controller-v3-gap-closure.mjs",
+      "currentSha256": "c64c8b7e25a50aed011da5ab94a1a1912446cfb7a8dc91af75ec0c86742a738c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-28",
+        "TEST-29"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-corrected-iteration.mjs",
+      "currentSha256": "54b58c921cab6d4dcb117cfac156514ea0d9c5d802f18733c6025c4a23402526",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-counterpart-faults.mjs",
+      "currentSha256": "b865ea8f258e7488f19b7c1c2ee07933413d6a1939dec7486719d680bbcc8a3f",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-32"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-cross-run-comparison.mjs",
+      "currentSha256": "75792be74791e5c6a62a42929d2e88d60cf8173672a75a13e7f15432d3368ee1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-02",
+        "TEST-04",
+        "TEST-26"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-data-route-closure.mjs",
+      "currentSha256": "633dfca9f01d546cc87710792a26d6a4d839955cbe810b27df5b7d4aae78fac0",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-01"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-definition-of-done-invariants.mjs",
+      "currentSha256": "80e9b55a1cd035099b3d27c4b50d08a00db38c2fde6175586c2b0654f9ad502b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-07"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-definition-of-done.mjs",
+      "currentSha256": "014589c381f07a1d60cda55a9331ece2ac35fd587c005ab521a8f4b7e036a0ee",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-07"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-delivery-candidate-representation.mjs",
+      "currentSha256": "20a0838ed2e47c7548254e7be7530a9dc25254ebc02095cdcc854b39c301e9ee",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-12"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-delivery-transfer-boundary.mjs",
+      "currentSha256": "c22792afb82bc436f27bbe5c8b430e34cbcaf7034c559fee0a8b518ab397e6be",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-deployment-manifest.mjs",
+      "currentSha256": "ef4a87ef676334c40f08df36f177bc98fcbb075d237f706a2fcbf41887516a54",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-21"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-due-stage-timing.mjs",
+      "currentSha256": "b5ae8ce03cf439d6677a582f492c15c4b6d3552e528eeb7e57d409c441da2c95",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-03",
+        "TEST-04"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-file-first-operator.mjs",
+      "currentSha256": "83b8212c3fce4f12045b5df73c8d31f036892347ab537c37d46246672a23aff2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-09"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-file-first-response.mjs",
+      "currentSha256": "f0c45f68526e82a9a041c1c6ff875962e2440b9855b28103f33cd46adf96ae3c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-09"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-final-acceptance.mjs",
+      "currentSha256": "c1495699f7b88ebf332f8f70c70211c0a7c8a400e396bdb301396a435041b80e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-final-product-timing.mjs",
+      "currentSha256": "64977de124a9d3700abdb023f7d5d8419b1232ce115b92239da0339e7a12e59d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-10"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-full-cycle.mjs",
+      "currentSha256": "06e434055c17630437ae06937b747f4ffb49e029dd440de2db6166e74066c47e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-31",
+        "TEST-34",
+        "TEST-39"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-general-recovery.mjs",
+      "currentSha256": "549a8c4205a9a7cbe39b52e2f120b01f0eb19b389e48883724b83523d0545604",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-hash.mjs",
+      "currentSha256": "62687cf1000d4ea327a60b4303c019f3d112929e30fd32489046cd682f094dd5",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14",
+        "TEST-25"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-history-operation-sequences.mjs",
+      "currentSha256": "a6ca3a79a19c714f97ede32a9e2e1d93199638d1cf2b11d00aaef4e5fee07607",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-human-authority-roundtrip.mjs",
+      "currentSha256": "85d1320e155ca6266f263be23e5ce4fcb397c95354988472158622326d87eec8",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-human-stage-walkthrough.mjs",
+      "currentSha256": "12c2c1f651d576d4970b2466554ef35d897c1cabee39c1a6121181c454752c77",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-independent-preflight.mjs",
+      "currentSha256": "2b146c037af93a7646553686b04f19e35a57beb8108035a6460bf6a7c7e6ca25",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-28"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-independent-run-verification.mjs",
+      "currentSha256": "4695c1856af1e26638ea7ac7b9215ba81e1942b53ce48f925fc08f7323632e4d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-39"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-infrastructure-route-closure.mjs",
+      "currentSha256": "86c4cb4130c615f89faa06dca38c8405f3ae9658ed3fc06ab63bf48329dce783",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-36"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-ingestion.mjs",
+      "currentSha256": "b71f38112e9805693c71f87584cb3452a820abe133276ab8376848d7db16e806",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-19",
+        "TEST-20"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-live.mjs",
+      "currentSha256": "80c5e22c22e3ac11e4deae8cc951291795015fec74fa1ba8744fb52389cd0111",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-mobile-acceptance-evidence.mjs",
+      "currentSha256": "6d3c0e6d81182edd1fa8e56ef4372fc1e39ac852fcaf0f5422da157a327138a9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-mobile-acceptance-target.mjs",
+      "currentSha256": "6780215aa1e289a3061db8bf48f939110668dcacf0113a665e29c8ee9f2506b5",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-17"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-capability-journey.mjs",
+      "currentSha256": "88cbc9f1c9a86908e9c0b3bb8189f5978ff351e6bdbce143e26b27c4f7c550d7",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-mobile-operation-observations.mjs",
+      "currentSha256": "078ebf2faab2d2fd5100b808f746de2704fa6cc2451422de4046aea53e994022",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-mobile-receipt-boundary.mjs",
+      "currentSha256": "1b063312f8e8ede66c1c0a968ff4e2f1bce08ac96155da87d7f4dd86695b453b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-mobile-release-governance.mjs",
+      "currentSha256": "db4a38115a2815f70cb793a6655c1dddc1acbd8917c700ef6172ef8e4d7443a2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-16"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-mobile-stage-action.mjs",
+      "currentSha256": "e1fb04908f02e1d0f710cf53886d49b5adbd9bdcdf9029cd7dadc159a4ee3f2e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14",
+        "TEST-37",
+        "TEST-38",
+        "TEST-42"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-native-proof-fault.mjs",
+      "currentSha256": "d06d2e9277c4cf9405c6c1c4f4ef5f2380c20a60ce132d8c9bf78f2d77eb1282",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-native-proof-journey.mjs",
+      "currentSha256": "19771d5386df88f93a75b715cab7ba52a3ae31cab7bd0369e9e8e21b16decd1a",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-one-time-intent-intake.mjs",
+      "currentSha256": "029b429884fe668dd023c259faa1a18f4baa7a6a25f2304785021acde29690b1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-operation-scope-classification.mjs",
+      "currentSha256": "527f4d4c15fb7f3e3efacf06740c6818613eaba3d5a645ee263a0fe506ab05d2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-operation-sequences.mjs",
+      "currentSha256": "d61f480987c742d31d4f9bb572e880a8c2ab6f5978adf3f8d32a5644f5169c09",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-operator-action-lifecycle.mjs",
+      "currentSha256": "88042a49463005e37f816624898ea9b8e2f949e9c335ecb89bd697a2bc829a59",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-operator-counterpart.mjs",
+      "currentSha256": "8e38467e7750225a7b2df53c4b4dfaffd7e40d903ac1301c932bbaebe5f0ca8d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-26",
+        "TEST-27"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-package-json-contract.mjs",
+      "trackedAtReviewStart": false,
+      "role": "VERIFIER",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "ef98da75289e8b070b1abd05f7c8b6fac4bb842fa8b6751217dbd869dbd7f616",
+      "identifiedFindings": [
+        "TEST-44"
+      ],
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred",
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS"
+    },
+    {
+      "file": "verify-product-attachment-journey.mjs",
+      "currentSha256": "96dc8375db32bd3b85e65ed3e922acd7d2fa8bde62d7e82465566663bd2d04e3",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-production-baseline-authority.mjs",
+      "currentSha256": "2a9fe91769d5cf5b843d8ac6080b6e9fea201eb5bd00e6243243b6bbceb55569",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-21"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-production-instruction.mjs",
+      "currentSha256": "df562c32ff2d7f75cb353a3f43a781461555778301e490a367bbac03f12ced4f",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-28"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-project-lifecycle.mjs",
+      "currentSha256": "0d25a02b5a02f452724af82fa9b6e49d59d152848200f58f3e17256f3ce41420",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-07",
+        "TEST-14",
+        "TEST-21",
+        "TEST-44"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateReview": "All extracted assertions reviewed; large fixture-body review remains open"
+    },
+    {
+      "file": "verify-prompt-file-identity.mjs",
+      "currentSha256": "6c60adadff97e8699908cb67283d44899d139e2d583ad17cd4eb095990cf14bc",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-09"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-prompt-semantics.mjs",
+      "currentSha256": "d451b7bcbc687c6557e6e8f20579e954eeac06631921b5126beaa53bac2632f9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-proposal-acceptance-memory.mjs",
+      "currentSha256": "eddd44a5b925ab8bef0b3d2554b398ceb537c9baea24b19ee99798339a78c01e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-reservation-contract.mjs",
+      "currentSha256": "05d0c4245ec8e7a2c75bd4613d8e081027b0db720fe38400331aed90c663dc9d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-response-byte-staging.mjs",
+      "currentSha256": "f170bf622005a1b85e90df1b5226fd7e34d4896964e2620824a57359127b6188",
+      "trackedAtReviewStart": false,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-response-contract-profile.mjs",
+      "currentSha256": "58a64b303e2205f89235ef1ba7bbf9f1c1910b19e795222a2945fedef1939d53",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-result-contradictions.mjs",
+      "trackedAtReviewStart": false,
+      "role": "BEHAVIORAL_VERIFIER",
+      "identifiedFindings": [
+        "TEST-24"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "65a0843d5699178589fa2951a1e4b2f7358752f771f7b4c26631a17eb521eb8b"
+    },
+    {
+      "file": "verify-retained-candidate.mjs",
+      "currentSha256": "38af1842bc45314ef5f57d81d543098a7b560a71def534ab19136221c251cc04",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-root-cause-correction.mjs",
+      "currentSha256": "1a1bf4c56e634d1c5d89b9df1f577b3bc85a266f23f73fb376af92a453b06f58",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-root-cause-regressions.mjs",
+      "currentSha256": "5cc8e0044e1ad948918e7b8dc5379ac02a7810a45d8453f70fe7140d9f1678d6",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-33"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-saved-history.mjs",
+      "currentSha256": "971e396319077b54bf03b658d525c708a8fcd561b78dcadfbde6dee54f8db5df",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-saved-version-codec.mjs",
+      "currentSha256": "40bb95ef68962b72c11fe61859a38b6c411abff907296d1f832eeaab55b3d2c1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-semantic-invariant.mjs",
+      "currentSha256": "aa00dea75ff19f40ca0312ea7b4a5abcb6881dd40f13a92f6bc4d7797c6b6ca3",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-23",
+        "TEST-24",
+        "TEST-35"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-semantic-operation-boundaries.mjs",
+      "currentSha256": "23ad37dd6959f3c2cb28e0cd43097124971d2ac79a5b7d3391336a6bd1cb5d58",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-28",
+        "TEST-29"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-semantic-review-acceptance.mjs",
+      "currentSha256": "923cc1edc4b05fd70b38c9fd054462095dd3b6bb69118825a01ee22ef5c2aebf",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-shared-contract-faults.mjs",
+      "currentSha256": "f96f20d505f8f9b1d6118e656b0053cdc4082f93ffe9a63e48e706251843c634",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-spec-grounded-route-oracle.mjs",
+      "currentSha256": "68b8f07fc983200927a8cca6c666371010cb1584cd95b3952fbc821d77e9af7d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-01",
+        "TEST-08"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-spec-residual-closure.mjs",
+      "currentSha256": "4bfbcc6f69954f647dedfe6775a3eac8ca158f477e3e6aca9fad31752dec8ec0",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-spec3-contract.mjs",
+      "currentSha256": "e41acce192dc7bb3c3bc70c99d1cc7cd49615e6205784a2302d6b37e95cd9eb3",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-specification-governance.mjs",
+      "currentSha256": "2c0506b2d4f3200f55a52272951ba4415fd78d2c619b30ff9f0f0d68c271d6d9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-stage-contract-closure.mjs",
+      "currentSha256": "53319c245435100bfae03e286818b096b6cec07818785355cbbdb72308102ca0",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage-operation-registry.mjs",
+      "currentSha256": "ffd35c28585c77b4a16dcda791e6ae8cb03e1161f7ceb3a2b5d47b1c898b2d18",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage-prompts-complete.mjs",
+      "currentSha256": "5e6998ea2ea151f7d83cb5dcba4db261270ad1e957598753e6c3c3d659b116a9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage01-disposition-contract.mjs",
+      "currentSha256": "dc03605a3a9425e321ae72326dcf488d69cc2b5151984db84362d7c66fc0f52e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-stage01-intake-closure.mjs",
+      "currentSha256": "a457deebc71e6ca9985a6974e8aa4a58f6fab393bdcf868836e2efaa210099fd",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-stage02-primitives.mjs",
+      "currentSha256": "67187f9aa57e323c144e3d5cb2baeb856566a84dc073d078383cea58ce4aa26b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-06",
+        "TEST-25"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage03-agent-protocol.mjs",
+      "currentSha256": "9ae23732eba1288675c0a6264c8f70e22698c31fb8f9441eff842bb1501c8f73",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-34"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage03-source-research.mjs",
+      "currentSha256": "c6fde113b74e8e441613e5cf3a116c27eaad2e40fb902c97904eae83c39629f7",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-21"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage27-release-binding.mjs",
+      "currentSha256": "ddc1d56c1ed5fedc403866115a02223b43daca9de7e3b1b79b70da849326f398",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-12"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage28-artifact-delivery-intent.mjs",
+      "currentSha256": "6598c4800f22786918c3994f2c5e012b44c5824db32c617ad3dc95577bee93d3",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-31"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-stage29-evidence-chain-checkpoint.mjs",
+      "currentSha256": "bb108051abeab7b18671b350a14fe12ac39a1af5441748de661e80151655fca1",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-41"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-stage30-terminal-mobile-boundary.mjs",
+      "currentSha256": "c6353fd8855180e75502797f699ffd4d733f2644b92e76129ac1c18c37ce3a3f",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-21"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-state-release-contract.mjs",
+      "currentSha256": "b12ee026f4939ad90295eeb6333f2dec20ee36a71774430d0b3bdaa0fe92fcde",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-ten-independent-runs.mjs",
+      "currentSha256": "58839c561cfb0cbaa146390b308cf33532377f1a49890019c975d555c16300df",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-05",
+        "TEST-11",
+        "TEST-39"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-terminal-human-authority.mjs",
+      "currentSha256": "83158b4a54a607df6f717763b15670d7b9b2b7267cf4bd9ac9244920bb32f40a",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-18"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-test-ir-port-types.mjs",
+      "currentSha256": "d115a60a169092e7f0e753c6e6c7e153145850505e6a59d93cd80d2aea81fc2b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-test-runtime-dag.mjs",
+      "currentSha256": "0cd8eb1b78a598e1adaa5ff61be63acd729b9f5cf13db8568d86a33e557e3884",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-test-runtime-limits.mjs",
+      "currentSha256": "9f7c13dc28154e1dbdc4d045ebe3ee64ecc22e1e65141441d405395ad31f1be9",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-11"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-test-runtime-v3.mjs",
+      "currentSha256": "56ff9dac10ead0935c6d5cac35427ec1b944bd9c4d1781d577114a3df4beaf1e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-09",
+        "TEST-11"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-test-runtime.mjs",
+      "currentSha256": "d08cd0f681f4c8f8dc83079e018f74005e2d3e9e5bed9c07b7437f29972e7bb0",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-12"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-test-worker-isolation.mjs",
+      "currentSha256": "7a036b3caca877e2fa8f23ecaf94ebcf947fe5fe9ccaace39ca215445ee83da2",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-21"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-unicode-filenames.mjs",
+      "trackedAtReviewStart": false,
+      "role": "BEHAVIORAL_VERIFIER",
+      "identifiedFindings": [
+        "TEST-25"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "5c47d6f6de1c9448788ee6b0e6ef3fff039c4cc116350341026ed3d1351c6662"
+    },
+    {
+      "file": "verify-user-prompt-invariants.mjs",
+      "currentSha256": "4a3760fabec74683bae13ee757a57b2a9c2ba7c75e70ee23146aaa0260ae484c",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-v3-contract.mjs",
+      "currentSha256": "18abe919e1ba483497f8d8eef47daaed52148781e11abeb23b0f8d77867d1178",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-21"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-v3-definition-of-done.mjs",
+      "currentSha256": "01f3a26b467d4e0cfe3a11f181592814a99f903f6ca00a5dac5890c5a48fc1ac",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-07",
+        "TEST-12",
+        "TEST-29",
+        "TEST-35",
+        "TEST-36"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-v3-migration.mjs",
+      "currentSha256": "278752fc1815259db3e77391de835415912f0a7a9eef32d7e3bcfec51422886b",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-visual-baseline-submission.mjs",
+      "currentSha256": "fd6f84fc2c8061db4dfe308ca718495a351014e13a242b6b7501f9796e37400d",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [],
+      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "predicateAndFixtureReview": "READ; findings and evidence limitations recorded; complete requirement acceptance is not inferred"
+    },
+    {
+      "file": "verify-zero-loss-accounting.mjs",
+      "currentSha256": "5d1a34cc9fb54baf37af023234b31a757f62f25dc92ec3df11402957c88f33af",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify.mjs",
+      "currentSha256": "fb45c9c1ca4ff7257d2459bd2f3a5ad56a89928efd1e3016fd7891eb461c8c1e",
+      "trackedAtReviewStart": true,
+      "role": "VERIFIER",
+      "identifiedFindings": [
+        "TEST-19"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_RECORDED; SEE_PER_FINDING_REPAIR_AND_EXECUTION_STATUS",
+      "passingFileIsNotCompleteRequirementEvidence": true
+    }
+  ]
+}

@@ -1,0 +1,506 @@
+[
+  {
+    "path": "cross-run-production-defect-before.log",
+    "sha256": "a6a62f6bf6ff7c21b68632728ebefe82db2a813d1896a69be960f67a287a247d",
+    "byteSize": 398,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "cross-run-real-owner-before.err",
+    "sha256": "32ee11486f5c71d532a2b31ab223a6c9ef2c78f8b570e64253f6fb72c8ecbc71",
+    "byteSize": 2439,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "cross-run-behavior-final.json",
+    "sha256": "82c9e87a37f303aa6b406224d9339f774ab7d46b62be64681821a26f61200efb",
+    "byteSize": 4827,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "due-stage-executed.json",
+    "sha256": "1ca1e21c6fea04a41b756decb14bd8b44d65a39722a545995947fcae913661ca",
+    "byteSize": 790,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "trusted-time-mutant.log",
+    "sha256": "592f58def537f3fea05982d427123791def81bef3c7c4accd96c81377c801d75",
+    "byteSize": 849,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "capability-identity-before.log",
+    "sha256": "6a7647683151fe6b73085d715044b878073026a6822e7f3373dbba14ce1e2155",
+    "byteSize": 663,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "capability-identity-after.log",
+    "sha256": "65bf3822948fe1fffec62a85fe7a973f8cb5fcbd753977ed159c98b4bab1dbfc",
+    "byteSize": 252,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "response-byte-behavior.json",
+    "sha256": "1e31b44048ea021ec2d8ec0963e4dc867d712bf1043597c05aea93b1f5867b4b",
+    "byteSize": 10854,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "canonical-selector-before.err",
+    "sha256": "b10b0c6685e9ee326d309c2ae6a50e7b31444bdc325f652b739e0113b41ffb43",
+    "byteSize": 545,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "runtime-limit-negative-pairs.json",
+    "sha256": "0358c595b330e349d3391c3e9eb5ec331d76b4cfe51cece7251f888b193ff2c8",
+    "byteSize": 2178,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "stability-due-before.err",
+    "sha256": "4bc530d4fa5a5f08637c62ca02455a7f4bb71e4d2d5a95e96d70bf603599bbcd",
+    "byteSize": 827,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "cross-run-comparison-reviewed.json",
+    "sha256": "fd53677a25bf8b5580ed05f2241ccea42008f79ed421b32644a3e792b2598ffa",
+    "byteSize": 4454,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "complete-metrics-before.err",
+    "sha256": "e12de663e8371c87599b38cd3f66a5fb3ddff6575d19d66b5cdb47c037106b63",
+    "byteSize": 714,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "mobile-real-validator-review.json",
+    "sha256": "47aff12d22727f1b2a95387aaf48f9db87381ba97f2db71d8bd476a4e09d81b4",
+    "byteSize": 5449,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "route-no-silent-skip.json",
+    "sha256": "e23bc2e683b46d1f1df9f00ac5c06767ec3696de2ffb681f4c3eadf87e48883d",
+    "byteSize": 1638,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "ledger-reviewed.json",
+    "sha256": "6c89681402f33432e6fe938786b5c1b050db8867cfc7461ca47ca0f439c3c8c0",
+    "byteSize": 1068,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
+    "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
+    "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "result-contradiction-before.err",
+    "sha256": "f71fe31f5dc8601f0db25c91208f1b5b3170a24696bd71a95d16afce575411ec",
+    "byteSize": 785,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "result-contradiction-after.out",
+    "sha256": "db1f41d164749f9063eb1c09eb46c5320c221786d19aa583a4b010944b8ce97f",
+    "byteSize": 2402,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "unicode-filename-before.err",
+    "sha256": "830517f7595c3e618b0e901468bea45fb03bca55a3d9a4790574af027e27e1e7",
+    "byteSize": 1021,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "unicode-filename-after.out",
+    "sha256": "1e824e09b9de7a827132ef34ea7a8e91834c09944502710bab50af99209a4eb9",
+    "byteSize": 909,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "iteration-evidence-before.err",
+    "sha256": "f1c8ef6aba8a77d7c7850f7bf7d4506d1ba1ed2a7156161591d56d409a2c3f3f",
+    "byteSize": 683,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "cross-run-review-final.out",
+    "sha256": "fcc5d98219e4190585c37c3116de2102a021b27ee8e03b78ad145517c442f7dd",
+    "byteSize": 4569,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "lifecycle-review-final.out",
+    "sha256": "a184d70870eb65f42f0e435a71eb256e9f2c3641d5b144a3ddc788f57d104a4d",
+    "byteSize": 12955,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "counterpart-full-after.out",
+    "sha256": "d93a870497e35047956dddd354f0e1f1baaae53a0d4ce043702592b930a6708e",
+    "byteSize": 4990,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "future-requirement-before.err",
+    "sha256": "184551c687bf4b63060068ba76eeac28be3bb9e605c45d5120b1939f0349daff",
+    "byteSize": 778,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "future-requirement-final.out",
+    "sha256": "328b16275380a31a593d2df5524521a5de400bc4493963c14c906b0f2304780b",
+    "byteSize": 1280,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "instruction-authority-after.out",
+    "sha256": "f81245381c72ddb15cbd5f1644ed4559b616436fa82d1073f032b6b4499d5c89",
+    "byteSize": 366,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "preflight-authority-after.out",
+    "sha256": "2b578971102dc53032f4660c7cf9355103c02c01c5cfa2de7db140dad2b8eb33",
+    "byteSize": 449,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "semantic-boundaries-after.out",
+    "sha256": "5f5a1368bd129b4c6086751866d9cd3c783366b527bbb32d27215d44e1a1b224",
+    "byteSize": 906,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "registry-review-after.out",
+    "sha256": "60230f7e37e781c289df24d262381ac08378d857f27c62459ce392338e399537",
+    "byteSize": 188,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "counterpart-fault-review-after.out",
+    "sha256": "b9a7e092c73705740b74d2b1623802e2e7e9cc64bb16a0996648dcf3e0b7313c",
+    "byteSize": 3825,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "stage28-authority-before.err",
+    "sha256": "2838983c9a3ecbf471d4babae0b86968f300b65e42cb969fcf0083372d5a305e",
+    "byteSize": 678,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "stage28-authority-mid.err",
+    "sha256": "4db8dbccf604f229adcd51b62f9020e9373f0bfb48c476bc1dd5f28319db0ea6",
+    "byteSize": 1233,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "delivery-old-authority-probe.out",
+    "sha256": "beeccc56f24969ebb0242de2c534ea162029fd310dea8b57b54f4c2819782559",
+    "byteSize": 350,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "stage28-authority-after.out",
+    "sha256": "4bcfaea0a9a0e950c3b25da887b9f21fc0d1de3592ffa5d01869df6dda49c2ec",
+    "byteSize": 1297,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "release-binding-reviewed.err",
+    "sha256": "467572170158c2abb1085aa83d3987928f641596770239118fcd8b6782ec8924",
+    "byteSize": 903,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "release-binding-reviewed-fixed.out",
+    "sha256": "f79e853c57c8982b8883e31eb5f4a4dd5a364a8fa890044c211e963de2b40ee5",
+    "byteSize": 489,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "root-cause-report-reviewed.out",
+    "sha256": "4081bc2bfed1ccce5099167cecd3cd6fabdf39993a138f7db11d5915456cf6ba",
+    "byteSize": 604,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Individual runs predate subsequent changes. delivery-old-authority-probe explicitly executes the 827546c workflow engine. The Stage 28 prefix is synthetic and byte receipts are stipulated."
+  },
+  {
+    "path": "stage28-fault-components-fixed.out",
+    "sha256": "20cff9459343b9fc8c7be62e30dcfb5fb93c49eb428975823af09d7c092644dc",
+    "byteSize": 284,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "terminal-boundary-reviewed.out",
+    "sha256": "37f67dee286010977d77b984ddb503370382bd124fac6432e8dbd7b695058a9f",
+    "byteSize": 1271,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "adjudication-preservation-reviewed.out",
+    "sha256": "1bc62adb10286c6957c72170763cd75e76a33ab11f070f415e9d6c437ef0090f",
+    "byteSize": 1988,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "semantic-invariant-reviewed.out",
+    "sha256": "20a0811d96e80171046b1276e520bf7aa828fae9809a1b31b632f25c9e80c729",
+    "byteSize": 5016,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "release-binding-reviewed-final.out",
+    "sha256": "f79e853c57c8982b8883e31eb5f4a4dd5a364a8fa890044c211e963de2b40ee5",
+    "byteSize": 489,
+    "environment": "Node 24.19.0 / Linux; synthetic command/component fixtures",
+    "sourceBaseCommit": "827546c843bbac97a9addaed5f56fadab8191d11",
+    "sourceQualification": "Working-tree repair evidence; not final deployed acceptance. Stage 28 fault components reuse the recorded synthetic two-file command prefix. Terminal output predates reporting-only separation of positive cases from rejections."
+  },
+  {
+    "path": "infrastructure-reviewed.out",
+    "sha256": "663a2172de9cab321fe5745ee614119edf46d8b375b69c1b38d3d21af3d8be0f",
+    "byteSize": 23676,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "verifier-context-before-replay.err",
+    "sha256": "1ca3594d6235f5b86935c23895b57c59d7cb8db3a63858c709f5642ec67c37ff",
+    "byteSize": 721,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "verifier-context-after.out",
+    "sha256": "5899a3283a85e9e0e131432046bbc0191ce806a6ca68c9b3a2adfa05d1ef6850",
+    "byteSize": 711,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "ten-run-before.err",
+    "sha256": "74a1e9f7693294170d063adc86ee45260f13890a5e11db057cdbd15aae15a459",
+    "byteSize": 605,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "ten-run-review.out",
+    "sha256": "1254f34f4081f02cbd6ae8705c819b598368f36ed3ee722b8891489a1c25fbcc",
+    "byteSize": 738,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "candidate-review.out",
+    "sha256": "405daa67d83d3e20350dab89d446d3c2c0a518483f17d6fefa5174b5a4d30e0e",
+    "byteSize": 510,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "delivery-representation-review.out",
+    "sha256": "9ad410f891103f5c02a1dc4cacfb904b43f776b0476acce3e8f57af91fdd0d04",
+    "byteSize": 388,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "test-ir-v3-review.out",
+    "sha256": "9e51892dcd69a29eca58b4218de8eec90139511fc066c605922a644e07b2927e",
+    "byteSize": 2590,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "worker-identity-review.out",
+    "sha256": "f948c4e9bcec9be29929455ccced770aa9a8861802350a8e3acc052d93f6a408",
+    "byteSize": 620,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "deployment-reviewed.out",
+    "sha256": "464d4e961c19f5cd5194d178c818f73bbf87829890a907e91fa0e251d1be938f",
+    "byteSize": 3998,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "prompt-file-reviewed.out",
+    "sha256": "8da1c6de72511ade2d9717bc40a315fa42b2b6b3fb784aef89e8ed7d7e5174e9",
+    "byteSize": 351,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "evidence-baseline-before-replay.err",
+    "sha256": "4ce8342d8d163d7a69943cae621f63e6184726bf7aefc3c47eb16041b7f4ee0d",
+    "byteSize": 556,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "evidence-baseline-after.out",
+    "sha256": "287769dde567f3bf1a194f47154090d6a02a84ede6fdb6c1405ff8ef8a653ae8",
+    "byteSize": 505,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "full-cycle-review-4.err",
+    "sha256": "456aab155df84e4130123eb8a3b49e7a1ceb590ba7e619e0479729e8f36f8209",
+    "byteSize": 1983,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "full-cycle-review-5.out",
+    "sha256": "0d082548c684dac377130e1b0d11e5f7e640df538db5947f22fa5c10530509c1",
+    "byteSize": 18849,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "lifecycle-reviewed-2.out",
+    "sha256": "aa6f7b5b6bae3e31dd3751deb79a94b1e11d63acafaa6ae5bc2629a005b7ee2b",
+    "byteSize": 14273,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "lifecycle-reviewed-2.err",
+    "sha256": "f0fcae378a1d277a3f89d0f384532c43d56ee3bdb0b5364e2b66694bdded2882",
+    "byteSize": 854,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "ingestion-reviewed-2.out",
+    "sha256": "6d4e9e6e331a83b51e35bf4cbd466ddb34d2c8222541b63c26cad540dedf1fde",
+    "byteSize": 38607,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "package-json-before.err",
+    "sha256": "cae9c79ac00a9ec1599215ec1a2d54207543a51f40b7ac4d3e73d35ac7aa9944",
+    "byteSize": 623,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  },
+  {
+    "path": "package-json-after.out",
+    "sha256": "c028082477ea134b458eb84a6ae3b03c3035b4b5024ed4f0c3baed2de40315e1",
+    "byteSize": 1315,
+    "environment": "Node 24.19.0 / Linux; synthetic fixtures; transaction/DOM doubles where specified by the executed test",
+    "sourceBaseCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+    "sourceQualification": "Owner-only before replays explicitly identify the production revision in their stderr. Other files are focused working-tree repair results; not exact deployed-revision acceptance. Chromium-only additions remain unexecuted locally."
+  }
+]

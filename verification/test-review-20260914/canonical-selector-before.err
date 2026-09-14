@@ -1,0 +1,19 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: canonical-SELECT_JSON_PATH-depth: violation accepted
+
+true !== false
+
+    at invalidOnly (file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-test-runtime-limits.mjs:43:9)
+    at file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-test-runtime-limits.mjs:54:2 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

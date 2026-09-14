@@ -2,7 +2,7 @@
   "scope": "Confidently identified requirements across all 30 application stages, shared completion gates, response acceptance and correction, accumulated-data handling, file transport and final acceptance. Complements the normative manifest; mappings are evidence locations, not a claim of complete specification conformance.",
   "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
-  "startingCommit": "feb1303c837b7d4399930f779b63c8bb0c34a0e4",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "ciBackbone": ".github/workflows/pages.yml",
   "testMappingCaution": "Mappings identify owners and executable evidence. They do not assert complete specification conformance. User-requested performance behaviors without a direct normative clause have no invented NREQ ID. Exact run/deployment evidence is recorded on the corresponding repair PR (baseline #1221); physical Safari and approved visual authority remain separate. Application stages differ from implementation-controller stages: verify-stage02-primitives and verify-stage03-agent-protocol are not source-search or research acceptance proof. Those misleading direct mappings have been removed.",
   "rows": [
@@ -72,12 +72,14 @@
         "workflow-engine.js:gate/deriveStageData",
         "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
         "workflow-schema.js:SEMANTIC_STAGE_OPERATIONS/recordResponseRequiredFields",
-        "response-ingestion.js:prepareStageContinuation/recoverInvalidSemanticReviews/supersedeSemanticReconciliation"
+        "response-ingestion.js:prepareStageContinuation/recoverInvalidSemanticReviews/supersedeSemanticReconciliation",
+        "workflow-engine.js:semanticStageReviewState; source-search completion authority remains incomplete"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
-        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06"
+        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06",
+        "operator-journey-fixtures.mjs:bounded-search (abbreviated; not complete acceptance evidence)"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -97,7 +99,8 @@
         "verify-browser-extra.mjs:exact deployed cross-stage file/validate/save/reload/correction path"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "testReviewQualification": "TEST-34: complete checklist, stopping criteria and execution authority are missing from accepted prerequisite fixtures and remain a production repair requirement."
     },
     {
       "id": "STAGE-03",
@@ -217,7 +220,8 @@
         "workflow-engine.js:preparePromptContext; prompt-engine.js:buildSemanticReviewBinding",
         "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
         "workflow-schema.js:SEMANTIC_STAGE_OPERATIONS/recordResponseRequiredFields",
-        "response-ingestion.js:prepareStageContinuation/recoverInvalidSemanticReviews/supersedeSemanticReconciliation"
+        "response-ingestion.js:prepareStageContinuation/recoverInvalidSemanticReviews/supersedeSemanticReconciliation",
+        "workflow-engine.js:acceptedSemanticReview/applicability"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -230,7 +234,8 @@
         "verify-full-cycle.mjs:automatic Stage 05 reviewer acceptance without manual context registration",
         "verify-full-cycle.mjs:every real data proposal retains its operation while pending acceptance",
         "verify-semantic-review-acceptance.mjs:actual UI acceptance, automatic saved instruction, legacy reload recovery, reconciliation then independent review",
-        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06"
+        "verify-semantic-review-acceptance.mjs:real author/review/reconcile/independent-review paths in Stages 01–06",
+        "verify-applicability-authority.mjs"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -257,7 +262,8 @@
         "verify-browser-extra.mjs:the same Stage 05 author/review/reconciliation/review path on exact deployed bytes"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "testReviewQualification": "Current context/commit/prompt/target binding has component evidence. Complete valid activation and all semantic-review independence/reservation dimensions are not established."
     },
     {
       "id": "STAGE-06",
@@ -586,7 +592,8 @@
         "verify-mobile-stage-action.mjs"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "reviewFollowup": "TEST-39: per-run verifier contamination and declared run binding enforced; full semantic review and dimensioned independence evidence remain open."
     },
     {
       "id": "STAGE-13",
@@ -801,7 +808,8 @@
         "verify-mobile-stage-action.mjs"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "reviewFollowup": "TEST-39: per-run verifier contamination and declared run binding enforced; full semantic review and dimensioned independence evidence remain open."
     },
     {
       "id": "STAGE-18",
@@ -896,7 +904,8 @@
         "verify-mobile-stage-action.mjs"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "reviewFollowup": "TEST-39: per-run verifier contamination and declared run binding enforced; full semantic review and dimensioned independence evidence remain open."
     },
     {
       "id": "STAGE-20",
@@ -1129,13 +1138,15 @@
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
-        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands"
+        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
+        "workflow-engine.js:deliveryCandidateClosure/deliveryRepresentationState"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
         "verify-data-route-closure.mjs",
         "verify-delivery-candidate-representation.mjs",
-        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion"
+        "verify-full-cycle.mjs:current independent Stage 06 proof prerequisite remains binding through downstream completion",
+        "verify-stage28-artifact-delivery-intent.mjs"
       ],
       "negativeAdversarialTests": [
         "verify-ingestion.mjs",
@@ -1152,7 +1163,8 @@
         "verify-mobile-stage-action.mjs"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "testReviewQualification": "Synthetic two-file command and candidate mutation cases do not establish actual representation inspection."
     },
     {
       "id": "STAGE-26",
@@ -1211,7 +1223,8 @@
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
-        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands"
+        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
+        "workflow-engine.js:releaseMetrics/releaseBinding/deliveryRepresentationState"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -1234,7 +1247,8 @@
         "verify-mobile-stage-action.mjs"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "testReviewQualification": "Current candidate content and inspection records are release inputs; displayed stage status must not alter the release digest. Complete release evidence and deployed operator acceptance remain required."
     },
     {
       "id": "STAGE-28",
@@ -1252,7 +1266,8 @@
         "workbook.js:STAGES",
         "workflow-schema.js:STAGE_CONTRACTS/STAGE_OPERATION_REGISTRY",
         "workflow-engine.js:gate/deriveStageData",
-        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands"
+        "workflow-engine.js:recalculate uses the installed gate and next-action owners for internal commands",
+        "workflow-engine.js:verifyArtifactIdentity/deliveryIntentValidation"
       ],
       "existingTests": [
         "verify-full-cycle.mjs",
@@ -1275,7 +1290,8 @@
         "verify-mobile-stage-action.mjs"
       ],
       "evidenceGap": "Automated fixture execution is not independent real-project or physical-iPhone acceptance. All external operations additionally use the shared pressure regression; non-external operations must reject external prompt generation.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "testReviewQualification": "Valid two-file order, candidate mutations and two implementation faults executed. Receipts are synthetic; actual stored-byte export, physical device and final deployed acceptance are separate."
     },
     {
       "id": "STAGE-29",
@@ -1319,7 +1335,8 @@
         "verify-mobile-stage-action.mjs"
       ],
       "evidenceGap": "PR #1218 merged as efa160f5f1fffc82e71ae608bf3e0446e5954dfb; all four jobs in run 34662163406 passed, including exact deployed bytes and Chromium. The combined final repair still requires its own exact-revision CI and deployed proof. Physical Safari and approved visual authority remain open. Full JSON parsing and canonical transactions retain finite-memory limits; fixture proof is not an actual-user-project replay.",
-      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE"
+      "status": "MAPPED_REQUIRES_EXACT_REVISION_CI_AND_FINAL_ACCEPTANCE",
+      "reviewFollowup": "TEST-41: missing baseline is rejected by chain creation and current-set selection; full every-link authority evidence remains open."
     },
     {
       "id": "STAGE-30",
@@ -2632,9 +2649,46 @@
       ],
       "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION",
       "evidenceGap": "Exact CI and deployed identities are recorded on the repair PR. Actual physical-iPhone Safari and approved visual-baseline authority remain required on the final deployed revision."
+    },
+    {
+      "id": "BACKUP-JSON-STRICT-NAMES-AND-UTF8",
+      "requirement": "Reject duplicate object names and malformed UTF-8 without changing recoverable state; restore valid exported bytes exactly.",
+      "sourceReference": "Specification 34.1; amendment recovery and backup requirements",
+      "productionOwner": [
+        "project-store.js:readPackageJson/importPackage"
+      ],
+      "existingTests": [
+        "verify-package-json-contract.mjs",
+        "verify-project-lifecycle.mjs"
+      ],
+      "observableExpectedBehavior": "Specific duplicate-name rejection; malformed encoding rejected; prior stored project unchanged; repaired backup imports exact file bytes.",
+      "evidenceStatus": "Six synthetic production import cases and duplicate-check fault passed with transaction I/O double. Actual Chromium and physical-iPhone acceptance remain unestablished."
     }
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",
   "performanceRepairStartingCommit": "6f7ccb71413e639887047c5eddad5a60cdb3ee37",
-  "runtimeContinuationStartingCommit": "563e1d9989cc2e4d21e52fdc84127e9b6ff5efc6"
+  "runtimeContinuationStartingCommit": "563e1d9989cc2e4d21e52fdc84127e9b6ff5efc6",
+  "originalHistoricalStartingCommit": "feb1303c837b7d4399930f779b63c8bb0c34a0e4",
+  "userAmendments": [
+    {
+      "path": "specification/recovery-requirements.json",
+      "amendmentId": "RECOVERY-20260914-2",
+      "requirementCount": 97
+    }
+  ],
+  "testReview": {
+    "inventory": "verification/test-review-20260914/inventory.json",
+    "findings": "verification/test-review-20260914/findings.json",
+    "identifiedFindingCount": 45,
+    "reviewComplete": false,
+    "applicationComplete": false,
+    "lastIntegratedCandidate": {
+      "headCommit": "9712ec70d5cbfdf2b10a9ecf53f27923e10a7adb",
+      "ciMergeCommit": "d0dd26eb884454b3746e7b6b8edda30d0a0512dc",
+      "runId": 34835548800,
+      "result": "FAIL",
+      "failedStep": "Local Chromium operator path",
+      "deployed": false
+    }
+  }
 }

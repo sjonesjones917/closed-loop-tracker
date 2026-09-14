@@ -1,7 +1,9 @@
 import fs from 'node:fs';import vm from 'node:vm';
+import strictAssert from 'node:assert/strict';
+import {reviewApplicabilityFixture} from './test-fixtures.mjs';
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 globalThis.Event=globalThis.Event||class Event{};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
 const s=closedLoopWorkflowSchema,e=closedLoopWorkflowEngine,c=(st,op)=>s.operationContract(st,op),has=(x,n)=>x.includes(n);
 assert(has(c(1,'SEMANTIC_CHALLENGE').agentWritableCollections,'semanticChallenges'),'Stage 1 challenge missing durable challenge family');assert(!c(1,'SEMANTIC_CHALLENGE').allowedStageData.length,'Stage 1 challenge can overwrite intake stageData');assert(has(c(1,'RECONCILE_INTAKE').agentWritableCollections,'semanticReviews'),'Stage 1 reconciliation missing semantic review record');
 assert(has(c(2,'COMPLETE').agentWritableCollections,'sourceSearchContracts'),'Stage 2 COMPLETE cannot create bounded search contract');assert(has(c(2,'SEARCH_ADEQUACY_REVIEW').agentWritableCollections,'semanticReviews'),'Stage 2 adequacy review cannot create independent review');assert(!has(c(2,'SEARCH_ADEQUACY_REVIEW').agentWritableCollections,'sources'),'Stage 2 reviewer can overwrite author source set');for(const n of ['sources','sourceSearchContracts'])assert(has(c(2,'SEARCH_ADEQUACY_REVIEW').readCollections,n),`Stage2 adequacy review omits ${n}`);
@@ -9,19 +11,61 @@ for(const op of ['DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE']){assert(has(c(4,
 assert(has(c(5,'SEMANTIC_REVIEW').agentWritableCollections,'semanticReviews'),'Stage5 semantic review missing review family');assert(!has(c(5,'SEMANTIC_REVIEW').agentWritableCollections,'requirementResolutions'),'Stage5 reviewer can overwrite author result');assert(has(c(5,'RECONCILE_REQUIREMENT_SET').readCollections,'semanticReviews'),'Stage5 reconciliation cannot read review');
 assert(has(c(6,'COMPLETE').agentWritableCollections,'expectedVarianceContracts'),'Stage6 COMPLETE cannot create expected variance contracts');assert(has(c(6,'PROOF_REVIEW').agentWritableCollections,'semanticReviews'),'Stage6 proof review missing semantic review family');assert(!has(c(6,'PROOF_REVIEW').agentWritableCollections,'tests'),'Stage6 proof reviewer can overwrite tests');assert(has(c(6,'RECONCILE_VERIFICATION_SUITE').readCollections,'semanticReviews'),'Stage6 reconciliation cannot read reviews');
 
-const p=closedLoopCore.createBlankState('JOB-STAGE17-SEMANTIC-REVIEW');Object.assign(p.job,{CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001'});e.ensureShape(p);
-const scope=e.currentScope(p);
-function rec(family,id,fields,stage=5){const d=s.RECORD_SCHEMAS[family],all={...fields,[d.idField]:id};return{id,stage,active:true,scope:{...scope},fields:all,...all};}
-function review(id,targetIds,{author='CTX-AUTHOR',reviewer='CTX-REVIEWER',result='ACCEPTED',accepted='ACCEPTED',reconciliation='NOT_REQUIRED'}={}){return rec('semanticReviews',id,{REVIEWED_RECORD_IDS:[...targetIds],REVIEWED_HASHES:[],AUTHOR_CONTEXT_ID:author,REVIEWER_CONTEXT_ID:reviewer,AUTHOR_RESERVATION_ID:'RES-AUTHOR',REVIEWER_RESERVATION_ID:'RES-REVIEWER',INDEPENDENCE_DETERMINATION:author===reviewer?'VIOLATED':'APPLICATION_ESTABLISHED',REVIEW_QUESTION:'Does the proposed applicability/classification preserve the governing obligation?',FINDING:result==='ACCEPTED'?'The reviewed disposition is supported.':'Material disagreement remains.',REASONING:'Independent current-scope semantic review.',RESULT:result,ACCEPTED_DISPOSITION:accepted,RECONCILIATION_STATUS:reconciliation,GATE_EFFECT:result==='ACCEPTED'?'ALLOW_IF_OTHER_GATES_PASS':'BLOCK'});}
-const req=rec('requirements','REQ-STAGE17',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},4),prop=rec('propositions','PROP-STAGE17',{REQUIREMENT_ID:'REQ-STAGE17',PROPOSITION_TEXT:'The mandatory deliverable obligation is satisfied.',STATUS:'CURRENT'},4),app=rec('applicabilityRecords','APP-STAGE17',{SUBJECT_ID:'PROP-STAGE17',PROPOSED_APPLICABILITY:'APPLICABLE',SELECTED_APPLICABILITY:'APPLICABLE',TRUTH_VALUE:'TRUE',EPISTEMIC_BASIS:'EXTERNALLY_SUPPORTED',CURRENT_SCOPE_STATUS:'CURRENT',FRESHNESS_STATUS:'CURRENT',CONTRADICTION_STATUS:'CLEAR'});p.projectData.requirements.push(req);p.projectData.propositions.push(prop);p.projectData.applicabilityRecords.push(app);
-assert(e.evaluateApplicability(p,'PROP-STAGE17')==='UNKNOWN','Stage 05 promoted an agent applicability assertion without an accepted independent semantic review.');
-p.projectData.semanticReviews.push(review('SEM-SELF',['APP-STAGE17'],{reviewer:'CTX-AUTHOR'}));assert(e.evaluateApplicability(p,'PROP-STAGE17')==='UNKNOWN','Stage 05 accepted a self-review/same-context applicability review.');p.projectData.semanticReviews.length=0;
-p.projectData.semanticReviews.push(review('SEM-DISAGREE',['APP-STAGE17'],{result:'DISAGREED',accepted:'UNKNOWN',reconciliation:'REQUIRED'}));assert(e.evaluateApplicability(p,'PROP-STAGE17')==='UNKNOWN','Stage 05 accepted an unreconciled material semantic disagreement.');p.projectData.semanticReviews.length=0;
-p.projectData.semanticReviews.push(review('SEM-ACCEPT',['APP-STAGE17']));assert(e.evaluateApplicability(p,'PROP-STAGE17')==='APPLICABLE','Accepted independent Stage 05 semantic review did not restore applicability progression.');
+// These are authority-component fixtures with stipulated earlier requirements.
+// They do not claim a complete workflow, external semantic truth, or a human review.
+const results=[];
+function component({normative='MANDATORY',disposition='APPLICABLE'}={}){
+ const p=closedLoopCore.createBlankState('SEMANTIC-COMPONENT');Object.assign(p.job,{CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001'});e.ensureShape(p);
+ for(let stage=1;stage<=4;stage++)p.stages[stage]={...p.stages[stage],status:'COMPLETE',gate:{complete:true}};
+ const scope=e.currentScope(p);
+ const rec=(family,id,fields,stage)=>({id,stage,active:true,scope:{...scope},fields:{...fields,[s.RECORD_SCHEMAS[family].idField]:id}});
+ p.projectData.requirements.push(rec('requirements','REQ-SCOPE',{MANDATORY_OPTIONAL_STATUS:normative,OBLIGATION:'The stipulated governing obligation applies within its specified subject scope.',STATUS:'ACTIVE'},4));
+ p.projectData.propositions.push(rec('propositions','PROP-SCOPE',{REQUIREMENT_ID:'REQ-SCOPE',PROPOSITION_TEXT:'The stipulated subject-scope obligation holds.',STATUS:'CURRENT'},4));
+ p.projectData.applicabilityRecords.push(rec('applicabilityRecords','APP-SCOPE',{SUBJECT_ID:'PROP-SCOPE',PROPOSED_APPLICABILITY:disposition,SELECTED_APPLICABILITY:disposition},5));
+ reviewApplicabilityFixture({engine:e,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion,schema:s},p);
+ return p;
+}
+const reviewed=component(),copy=()=>structuredClone(reviewed),currentReview=p=>e.recordsForCurrentScope(p,'semanticReviews').at(-1);
+assert(e.evaluateApplicability(reviewed,'PROP-SCOPE')==='APPLICABLE','Actual accepted application review did not establish the stipulated applicability.');
+for(const [caseId,mutate] of [
+ ['missing-review',p=>{p.projectData.semanticReviews=[];}],
+ ['same-context-review',p=>{const r=currentReview(p);r.fields.REVIEWER_CONTEXT_ID=r.REVIEWER_CONTEXT_ID=e.recordValue(r,'AUTHOR_CONTEXT_ID');e.refreshRecordHashes(r,'semanticReviews');}],
+ ['unreconciled-disagreement',p=>{const r=currentReview(p);r.fields.RESULT=r.RESULT='DISAGREED';r.fields.RECONCILIATION_STATUS=r.RECONCILIATION_STATUS='REQUIRED';e.refreshRecordHashes(r,'semanticReviews');}]
+]){
+ const p=copy();mutate(p);assert(e.evaluateApplicability(p,'PROP-SCOPE')==='UNKNOWN',caseId+' incorrectly established applicability');
+ assert(e.evaluateApplicability(copy(),'PROP-SCOPE')==='APPLICABLE','Restored accepted review did not recover');results.push({caseId,result:'PASS',restored:'APPLICABLE'});
+}
+const outsideScope=component({disposition:'NOT_APPLICABLE'});
+assert(e.evaluateApplicability(outsideScope,'PROP-SCOPE')==='NOT_APPLICABLE','A current accepted out-of-scope determination was prohibited.');
+assert(e.mandatoryRequirements(outsideScope).length===0,'Current accepted NOT_APPLICABLE decision did not update coverage.');
+results.push({caseId:'accepted-not-applicable-component',result:'PASS',externalSemanticTruthEstablished:false});
 
-const creq=rec('requirements','REQ-CONDITIONAL',{MANDATORY_OPTIONAL_STATUS:'CONDITIONAL',STATUS:'ACTIVE'},4),cprop=rec('propositions','PROP-CONDITIONAL',{REQUIREMENT_ID:'REQ-CONDITIONAL',PROPOSITION_TEXT:'Conditional obligation.',STATUS:'CURRENT'},4),capp=rec('applicabilityRecords','APP-CONDITIONAL',{SUBJECT_ID:'PROP-CONDITIONAL',PROPOSED_APPLICABILITY:'APPLICABLE',SELECTED_APPLICABILITY:'APPLICABLE',TRUTH_VALUE:'TRUE',EPISTEMIC_BASIS:'EXTERNALLY_SUPPORTED',CURRENT_SCOPE_STATUS:'CURRENT',FRESHNESS_STATUS:'CURRENT',CONTRADICTION_STATUS:'CLEAR'});p.projectData.requirements.push(creq);p.projectData.propositions.push(cprop);p.projectData.applicabilityRecords.push(capp);p.projectData.semanticReviews.push(review('SEM-CONDITIONAL',['APP-CONDITIONAL']));assert(e.evaluateApplicability(p,'PROP-CONDITIONAL')==='UNKNOWN','Conditional applicability passed without an activation proof obligation.');const activation=rec('proofObligations','PROOF-ACTIVATION',{PROPOSITION_ID:'PROP-CONDITIONAL-ACTIVATION',REQUIREMENT_ID:'REQ-CONDITIONAL',SATISFACTION_STATE:'SATISFIED',BLOCKING_REASONS:[],CURRENT_SCOPE_HASH:'fixture'},6);p.projectData.proofObligations.push(activation);capp.fields.ACTIVATION_PROOF_OBLIGATION_ID=capp.ACTIVATION_PROOF_OBLIGATION_ID='PROOF-ACTIVATION';assert(e.evaluateApplicability(p,'PROP-CONDITIONAL')==='APPLICABLE','Satisfied activation proof obligation did not restore conditional applicability progression.');
+// Application-owned SATISFACTION_STATE cannot replace an actual activation
+// proof. Both controls below have a real accepted applicability review.
+const conditional=component({normative:'CONDITIONAL'});
+assert(e.evaluateApplicability(conditional,'PROP-SCOPE')==='UNKNOWN','Unknown activation passed');
+const activation={id:'UNLINKED-ACTIVATION',stage:6,active:true,scope:e.currentScope(conditional),fields:{PROOF_OBLIGATION_ID:'UNLINKED-ACTIVATION',SATISFACTION_STATE:'SATISFIED'}};conditional.projectData.proofObligations.push(activation);
+assert(e.evaluateApplicability(conditional,'PROP-SCOPE')==='UNKNOWN','ACTIVATION_PROOF_ORACLE: an unlinked success flag supplied missing activation proof');
+results.push({caseId:'unlinked-activation-success',result:'PASS',actual:'UNKNOWN',validActivationJourneyEstablished:false});
+const engineSource=fs.readFileSync('workflow-engine.js','utf8'),start=engineSource.indexOf("if(normative(fv(requirement,'MANDATORY_OPTIONAL_STATUS'))==='CONDITIONAL'){"),end=engineSource.indexOf('}return x;',start);
+assert(start>=0&&end>start,'Missing activation authority mutation target');
+const isolated=vm.createContext({console,TextEncoder,TextDecoder,crypto:globalThis.crypto,dispatchEvent(){},Event:class{}});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js'])vm.runInContext(fs.readFileSync(file,'utf8'),isolated,{filename:file});
+vm.runInContext(engineSource.slice(0,start)+engineSource.slice(end+1),isolated,{filename:'workflow-engine.js'});
+const copied=vm.runInContext('JSON.parse('+JSON.stringify(JSON.stringify(conditional))+')',isolated);
+strictAssert.throws(()=>strictAssert.equal(isolated.closedLoopWorkflowEngine.evaluateApplicability(copied,'PROP-SCOPE'),'UNKNOWN','ACTIVATION_PROOF_ORACLE'),/ACTIVATION_PROOF_ORACLE/);
+results.push({caseId:'bypassed-activation-proof',result:'DETECTED',restored:'UNKNOWN'});
+assert(e.evaluateApplicability(conditional,'PROP-SCOPE')==='UNKNOWN','Production activation guard was not restored');
 
-const ureq=rec('requirements','REQ-UNKNOWN',{MANDATORY_OPTIONAL_STATUS:'UNKNOWN',STATUS:'ACTIVE'},4),uprop=rec('propositions','PROP-UNKNOWN',{REQUIREMENT_ID:'REQ-UNKNOWN',PROPOSITION_TEXT:'Unclassified possible obligation.',STATUS:'CURRENT'},4),uapp=rec('applicabilityRecords','APP-UNKNOWN',{SUBJECT_ID:'PROP-UNKNOWN',PROPOSED_APPLICABILITY:'APPLICABLE',SELECTED_APPLICABILITY:'APPLICABLE',CURRENT_SCOPE_STATUS:'CURRENT',FRESHNESS_STATUS:'CURRENT',CONTRADICTION_STATUS:'CLEAR'});p.projectData.requirements.push(ureq);p.projectData.propositions.push(uprop);p.projectData.applicabilityRecords.push(uapp);p.projectData.semanticReviews.push(review('SEM-UNKNOWN',['APP-UNKNOWN']));const obligations=e.deriveProofObligations(p).records,unknownObligation=obligations.find(x=>e.recordValue(x,'REQUIREMENT_ID')==='REQ-UNKNOWN');assert(unknownObligation&&e.safe(e.recordValue(unknownObligation,'BLOCKING_REASONS')).includes('UNKNOWN_NORMATIVE_CLASS'),'Unknown possible-mandatory classification was silently reduced instead of blocked.');
-
-const cycleA=rec('requirements','REQ-CYCLE-A',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',DEPENDENCIES:'REQ-CYCLE-B'},4),cycleB=rec('requirements','REQ-CYCLE-B',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',DEPENDENCIES:'REQ-CYCLE-A'},4),cyclePropA=rec('propositions','PROP-CYCLE-A',{REQUIREMENT_ID:'REQ-CYCLE-A',PROPOSITION_TEXT:'Cycle A.',STATUS:'CURRENT'},4),cyclePropB=rec('propositions','PROP-CYCLE-B',{REQUIREMENT_ID:'REQ-CYCLE-B',PROPOSITION_TEXT:'Cycle B.',STATUS:'CURRENT'},4),cycleAppA=rec('applicabilityRecords','APP-CYCLE-A',{SUBJECT_ID:'PROP-CYCLE-A',PROPOSED_APPLICABILITY:'APPLICABLE',SELECTED_APPLICABILITY:'APPLICABLE',CURRENT_SCOPE_STATUS:'CURRENT',FRESHNESS_STATUS:'CURRENT',CONTRADICTION_STATUS:'CLEAR'}),cycleAppB=rec('applicabilityRecords','APP-CYCLE-B',{SUBJECT_ID:'PROP-CYCLE-B',PROPOSED_APPLICABILITY:'APPLICABLE',SELECTED_APPLICABILITY:'APPLICABLE',CURRENT_SCOPE_STATUS:'CURRENT',FRESHNESS_STATUS:'CURRENT',CONTRADICTION_STATUS:'CLEAR'});p.projectData.requirements.push(cycleA,cycleB);p.projectData.propositions.push(cyclePropA,cyclePropB);p.projectData.applicabilityRecords.push(cycleAppA,cycleAppB);p.projectData.semanticReviews.push(review('SEM-CYCLE-A',['APP-CYCLE-A']),review('SEM-CYCLE-B',['APP-CYCLE-B']));assert(e.gate(5,p).reasons.some(reason=>/Circular requirement dependency detected/.test(reason)),'Stage 05 did not block a circular requirement dependency.');cycleA.fields.DEPENDENCIES=cycleA.DEPENDENCIES='';cycleB.fields.DEPENDENCIES=cycleB.DEPENDENCIES='';assert(!e.gate(5,p).reasons.some(reason=>/Circular requirement dependency detected/.test(reason)),'Stage 05 remained blocked after the circular dependency fixture was repaired.');
-console.log(JSON.stringify({semanticOperationBoundaries:'PASS',controllerStage:'17',applicationStage:'05',intentionalInvalidFixturesRejected:['missing-independent-applicability-review','self-review','same-context-review','unreconciled-disagreement','missing-activation-proof','unsupported-normative-reduction','circular-dependency'],repairedPathProgressed:true,isolatedDisposableProject:true}));
+const unknown=component({normative:'UNKNOWN'}),obligations=e.deriveProofObligations(unknown).records;
+assert(obligations.some(row=>e.recordValue(row,'REQUIREMENT_ID')==='REQ-SCOPE'&&e.safe(e.recordValue(row,'BLOCKING_REASONS')).includes('UNKNOWN_NORMATIVE_CLASS')),'Unknown normative classification was reduced');
+results.push({caseId:'unknown-normative-class',result:'PASS'});
+// Graph component: this checks the dependency reason, without asserting that
+// all other stage prerequisites become satisfied when the cycle is removed.
+const cycle=copy(),req=e.records(cycle,'requirements')[0],second=structuredClone(req);second.id='REQ-SECOND';second.fields.REQ_ID=second.REQ_ID='REQ-SECOND';cycle.projectData.requirements.push(second);
+req.fields.DEPENDENCIES=req.DEPENDENCIES='REQ-SECOND';second.fields.DEPENDENCIES=second.DEPENDENCIES='REQ-SCOPE';
+assert(e.gate(5,cycle).reasons.some(reason=>/Circular requirement dependency detected/.test(reason)),'Circular dependency was not reported');
+req.fields.DEPENDENCIES=req.DEPENDENCIES='';second.fields.DEPENDENCIES=second.DEPENDENCIES='';
+assert(!e.gate(5,cycle).reasons.some(reason=>/Circular requirement dependency detected/.test(reason)),'Removed cycle remained reported');
+results.push({caseId:'requirement-dependency-cycle',result:'PASS',restored:'cycle absent'});
+console.log(JSON.stringify({semanticOperationBoundaries:'PASS',evidenceClass:'authority and dependency components with stipulated prerequisites',actualBrowserJourney:false,externalSemanticTruthEstablished:false,validActivationJourneyEstablished:false,results}));

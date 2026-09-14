@@ -23,4 +23,4 @@ project.projectData.humanDecisions.push({id:'HUMAN-DECISION-CURRENT',active:true
 assert.equal(engine.humanDeliveryIntent(project),false,'Generic human-decision records cannot synthesize dedicated delivery intent.');
 const source=fs.readFileSync(new URL('./workflow-engine.js',import.meta.url),'utf8');
 assert.doesNotMatch(source,/HUMAN-DELIVERY-\$\{h\.sha256Value/);
-console.log(JSON.stringify({terminalHumanAuthority:'PASS',agentStageDataRejected:true,incompleteDecisionRejected:true,destinationBoundDecisionAccepted:true,syntheticAuthorizationRemoved:true}));
+console.log(JSON.stringify({terminalHumanAuthority:'PASS',evidenceClass:'NEGATIVE_AUTHORITY_COMPONENT_CASES',completeOperatorJourney:false,agentStageDataRejected:true,incompleteDecisionRejected:true,genericDestinationClaimRejected:true,positiveDedicatedIntentCase:false,syntheticAuthorizationRemoved:true}));

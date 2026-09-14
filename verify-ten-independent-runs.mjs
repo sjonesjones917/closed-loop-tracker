@@ -31,7 +31,7 @@ function setField(record,key,value){
   record[key]=value;
 }
 
-function buildCompletedBatch(jobId='JOB-STAGE15-TEN-RUNS'){
+function buildObservedBatch(jobId='JOB-STAGE15-TEN-RUNS'){
   const {p,iterationId,candidateId}=makeProject(jobId);
   const slots=engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});
   assert(slots.length===10,'The application did not reserve exactly ten run targets.');
@@ -55,77 +55,72 @@ function buildCompletedBatch(jobId='JOB-STAGE15-TEN-RUNS'){
     setField(context,'AUTHORIZED_PROJECT_INPUTS',['candidate']);
     setField(run,'CONTAMINATION_CHECK','NONE');
     setField(run,'TOOL_CONFIGURATION','IDENTICAL_CONTROLLED_CONFIGURATION');
-    setField(run,'EXECUTION_STATUS','COMPLETED');
-    setField(run,'COMPLETE_OUTPUT',`STAGE15-RUN-${index+1}-OUTPUT-SENTINEL`);
-    run.status='COMPLETED';
-    const rawResponseId=`RAW-STAGE15-${index+1}`;
-    const changeId=`CHANGE-STAGE15-${index+1}`;
-    p.projectData.rawResponses.push({rawResponseId,stage:11,scope:{iterationId,candidateId,runId:slot.runId,contextId:slot.contextId}});
-    p.projectData.acceptedChanges.push({changeId,stage:11,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'EXECUTE_RUN',rawResponseId,scope:{iterationId,candidateId,runId:slot.runId,contextId:slot.contextId},canonicalRecordIds:[slot.runId]});
-    p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE15-${index+1}`,rawResponseId,stage:11,iteration:iterationId,runId:slot.runId,contextId:slot.contextId});
+
   }
   return {p,iterationId,candidateId,slots};
 }
 
-const complete=buildCompletedBatch();
+const complete=buildObservedBatch();
 const independence=engine.evaluateContextIndependence(complete.p,{role:'RUN_BATCH',iterationId:complete.iterationId});
 assert(independence.determination==='APPLICATION_ESTABLISHED',`Ten distinct current contexts were not established: ${JSON.stringify(independence)}`);
 assert(new Set(complete.slots.map(slot=>slot.runId)).size===10,'RUN_ID identities are not distinct.');
 assert(new Set(complete.slots.map(slot=>slot.contextId)).size===10,'CONTEXT_ID identities are not distinct.');
-assert(complete.p.projectData.acceptedChanges.filter(change=>change.stage===11&&change.status==='COMMITTED').length===10,'Exactly ten accepted Stage 11 run changes were not preserved.');
-assert(new Set(complete.p.projectData.outputReceipts.filter(receipt=>receipt.stage===11).map(receipt=>receipt.receiptId)).size===10,'Run output receipts are not separate.');
 
 {
-  const {p,iterationId}=buildCompletedBatch('JOB-STAGE15-DUPLICATE-CONTEXT');
+  const {p,iterationId}=buildObservedBatch('JOB-STAGE15-DUPLICATE-CONTEXT');
   const contexts=engine.records(p,'freshContexts',{stage:11});
   setField(contexts[1],'EXTERNAL_CONTEXT_IDENTIFIER',engine.recordValue(contexts[0],'EXTERNAL_CONTEXT_IDENTIFIER'));
   const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
-  assert(result.determination==='VIOLATED','Duplicate external context identity was not rejected.');
+  assert(result.determination==='VIOLATED'&&result.reasons.some(reason=>/identifiers are reused/.test(reason)),'Duplicate external context identity was not rejected.');
+  setField(contexts[1],'EXTERNAL_CONTEXT_IDENTIFIER','external-stage15-2');
+  assert(engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId}).determination==='APPLICATION_ESTABLISHED','Distinct identifier repair failed');
+}
+
+for(const [field,invalid,reason] of [['CONTAMINATION_STATUS','CONTAMINATED',/contamination is affirmative/],['AUTHORIZED_PROJECT_INPUTS',['candidate','prior-run output'],/prohibited prior output/]]){
+  const {p,iterationId}=buildObservedBatch('JOB-STAGE15-'+field),context=engine.records(p,'freshContexts',{stage:11})[4],original=engine.recordValue(context,field);
+  setField(context,field,invalid);const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
+  assert(result.determination==='VIOLATED'&&result.reasons.some(value=>reason.test(value)),field+' was not rejected for the intended reason.');
+  setField(context,field,original);assert(engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId}).determination==='APPLICATION_ESTABLISHED',field+' repair failed.');
 }
 
 {
-  const {p,iterationId}=buildCompletedBatch('JOB-STAGE15-CONTAMINATION');
-  const contexts=engine.records(p,'freshContexts',{stage:11});
-  setField(contexts[4],'CONTAMINATION_STATUS','CONTAMINATED');
-  setField(contexts[4],'AUTHORIZED_PROJECT_INPUTS',['candidate','prior-run output','reviewer feedback']);
-  const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
-  assert(result.determination==='VIOLATED','Known run-context contamination was not rejected.');
-}
-
-{
-  const {p,iterationId}=buildCompletedBatch('JOB-STAGE15-CANDIDATE-MISMATCH');
+  const {p,iterationId}=buildObservedBatch('JOB-STAGE15-CANDIDATE-MISMATCH');
   const runs=engine.records(p,'runs',{stage:11});
-  setField(runs[7],'CANDIDATE_ID','CANDIDATE-WRONG');
+  const original=engine.recordValue(runs[7],'CANDIDATE_ID');setField(runs[7],'CANDIDATE_ID','CANDIDATE-WRONG');
   const result=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId});
-  assert(result.determination!=='APPLICATION_ESTABLISHED','A wrong-candidate run was represented as an established independent batch.');
+  assert(result.determination==='VIOLATED'&&result.reasons.some(reason=>/candidate identity/.test(reason)),'A wrong-candidate run was represented as an established independent batch.');
+  setField(runs[7],'CANDIDATE_ID',original);assert(engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId}).determination==='APPLICATION_ESTABLISHED','Candidate repair failed.');
 }
 
 {
-  const {p,iterationId,candidateId}=buildCompletedBatch('JOB-STAGE15-NINE-RUNS');
+  const {p,iterationId,candidateId}=buildObservedBatch('JOB-STAGE15-NINE-RUNS');
   const run=engine.records(p,'runs',{stage:11})[9];
   run.active=false;
   assert(engine.records(p,'runs',{stage:11}).filter(record=>record.active!==false).length===9,'Nine-run invalid fixture did not contain nine current runs.');
   let rejected=false;
-  try{engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});}catch{rejected=true;}
-  assert(rejected,'A partial active batch was silently topped up instead of failing closed.');
+  try{engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});}catch(error){rejected=/9 active run slots; expected exactly 10/.test(error.message);}
+  assert(rejected,'A partial active batch was not rejected for its missing active slot.');
+  run.active=true;assert(engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10}).length===10,'Restored original batch did not progress.');
 }
 
 console.log(JSON.stringify({
   controllerStage:'15',
   applicationStage:'11',
   tenIndependentRuns:'PASS',
-  exactAcceptedRunCount:10,
+  evidenceClass:'SYNTHETIC_RESERVATION_AND_CONTEXT_COMPONENTS',
+  actualAcceptedExternalRunCount:0,
+  applicationObservableIdentityChecksOnly:true,
+  providerIndependenceEstablished:false,
   exactDistinctContextCount:10,
   exactCandidateBinding:true,
-  separateOutputReceipts:true,
   idempotentBatchReservation:true,
   exactTenGateEvidence:'verify-complete.mjs',
   promptIsolationEvidence:'verify-all-stage-prompts.mjs + verify-stage-prompts-complete.mjs',
   intentionalInvalidFixturesRejected:[
     'duplicate-external-context-identity',
-    'known-context-contamination-and-prohibited-inputs',
+    'known-context-contamination',
+    'prohibited-context-inputs',
     'wrong-candidate-run',
-    'fewer-than-ten-current-runs',
     'partial-batch-top-up'
   ],
   repairedPathProgressed:true,

@@ -19,6 +19,10 @@ for(const field of ['AUTHORIZED','PERMISSIONS_READY','INPUTS_TRANSFERABLE','ROUT
 }
 const unknown=structuredClone(p);delete unknown.projectData.externalCapabilities[0].fields.EVIDENCE_OBTAINABLE;
 assert.equal(engine.evaluateCapabilityReadiness(unknown,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null).truthValue,'UNKNOWN','Unknown conjunction input must remain UNKNOWN.');
+for(const claim of ['NOT_CAD_TOOL','CAD_TOOL_WITHOUT_EXPORT','OTHER CAD_TOOL CLAIM']){
+ const wrong=structuredClone(p);wrong.projectData.externalCapabilities[0].fields.CAPABILITY_CLAIM=claim;
+ assert.equal(engine.capabilityAffirmativelyAvailable(wrong,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null),false,'CAPABILITY_IDENTITY_ORACLE: a different capability name must not satisfy CAD_TOOL');
+}
 const stale=structuredClone(p);stale.projectData.externalCapabilities[0].fields.FRESHNESS_STATUS='EXPIRED';
 assert.equal(engine.capabilityAffirmativelyAvailable(stale,'CAD_TOOL','EXTERNAL_AGENT_TOOL',null),false,'Expired capability must block.');
-console.log(JSON.stringify({capabilityReadyClosedConjunction:true,proseCannotEstablishCapability:true,unknownFailsClosed:true}));
+console.log(JSON.stringify({capabilityReadyClosedConjunction:true,exactCapabilityNameChecked:true,evidenceClass:'CANONICAL_CAPABILITY_SELECTION_COMPONENT_CASES',externalCapabilityExecutionEstablished:false,proseCannotEstablishCapability:true,unknownFailsClosed:true}));

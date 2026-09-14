@@ -1,0 +1,1 @@
+{"sourceRevision":"827546c843bbac97a9addaed5f56fadab8191d11","case":"change transformation after candidate inspection and release","expected":{"release":"BLOCKED","createdIdentities":0},"actual":{"release":"ACCEPTED","createdIdentities":2,"identityAuthorizations":["AUTHORIZED","AUTHORIZED"]},"syntheticReceiptFixture":true,"applicationDefect":true}

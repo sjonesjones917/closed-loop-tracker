@@ -22,6 +22,15 @@ const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.rec
   assert(!project.projectData.history.some(r=>r.type==='FRESH_CONTEXT_REGISTERED'),'Automatic allocation must not fabricate a human registration action.');
   for(const [stage,operation] of [[9,'COMPLETE'],[12,'VERIFY'],[17,'VERIFY'],[19,'VERIFY'],[23,'COMPLETE'],[24,'COMPLETE']]){
     const p=core.createBlankState('JOB-AUTOMATIC-REVIEWER-'+stage);engine.ensureShape(p);engine.recalculate(p);p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};
+    if(schema.operationContract(stage,operation).scopeRequirements.includes('runId')){
+      // Context-allocation fixture only: the complete operator suite supplies
+      // all real prerequisite runs through accepted file responses.
+      const iterationId='ITERATION-CONTEXT-'+stage,candidateId='CANDIDATE-CONTEXT-'+stage,runId='RUN-CONTEXT-'+stage;
+      p.job.CURRENT_ITERATION=iterationId;p.job.CURRENT_CANDIDATE_ID=candidateId;
+      const scope={...engine.currentScope(p),iterationId,candidateId};
+      p.projectData.iterations.push({id:iterationId,stage:stage===12?10:stage,active:true,scope,fields:{ITERATION_ID:iterationId,CANDIDATE_ID:candidateId}});
+      p.projectData.runs.push({id:runId,stage:stage===12?11:stage,active:true,scope,fields:{RUN_ID:runId,ITERATION_ID:iterationId,CANDIDATE_ID:candidateId,EXECUTION_STATUS:'COMPLETED'}});
+    }
     const result=prompts.reserveAndBuildPromptRecord(p,stage,{operation},{owningTabInstance:'TAB-AUTOMATIC-CONTEXT'});
     assert(result.prompt.scope.contextId,`Stage ${stage} still requires manual reviewer-context bookkeeping.`);
     const reviewer=engine.records(p,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===result.prompt.scope.contextId);

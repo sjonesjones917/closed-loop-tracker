@@ -136,9 +136,10 @@ assert(duplicateLedgerRejected,'Intentional invalid ledger fixture duplicate-con
 
 const state=readJson(STATE_PATH);
 const result=validateLedger(state);
-for(const fixture of ['specification-digest-mismatch','invalid-status','skipped-stage','false-done-open-item','done-without-execution']){
-  let rejected=false;
-  try{validateLedger(state,fixture);}catch{rejected=true;}
-  assert(rejected,`Intentional invalid ledger fixture ${fixture} was not rejected.`);
+const invalidLedgerCases=[];
+for(const [fixture,reason] of [['specification-digest-mismatch',/specification digest mismatch/],['invalid-status',/invalid status/],['skipped-stage',/DONE after an earlier incomplete stage/],['false-done-open-item',/DONE with open acceptance items/],['done-without-execution',/DONE without directly executed passing evidence/]]){
+  let error;try{validateLedger(state,fixture);}catch(caught){error=caught;}
+  assert(error&&reason.test(error.message),`${fixture}: expected its specific ledger error; got ${error?.message||'accepted'}.`);
+  validateLedger(state);invalidLedgerCases.push({id:fixture,result:'PASS',actual:error.message,corrected:'PASS'});
 }
-console.log(JSON.stringify({...result,ledgerVerified:true,statusContract:[...VALID_STATUS],intentionalInvalidFixturesRejected:6,singleControllerLedger:true}));
+console.log(JSON.stringify({...result,ledgerStructureValidated:true,evidenceClass:'LEDGER_METADATA_VALIDATION',applicationCompletion:false,invalidLedgerCases,statusContract:[...VALID_STATUS],intentionalInvalidFixturesRejected:6,singleControllerLedger:true}));

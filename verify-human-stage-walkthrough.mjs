@@ -8,7 +8,7 @@ const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium'
 if(!browser)throw new Error('Chrome/Chromium was not found.');
 const serverPort=9400+Math.floor(Math.random()*300);
 const remotePort=10400+Math.floor(Math.random()*300);
-const root=process.cwd();
+const root=path.resolve(process.env.STATIC_SITE_ROOT||process.cwd());
 const server=http.createServer((req,res)=>{
   const raw=(req.url||'/').split('?')[0],rel=raw==='/'?'index.html':decodeURIComponent(raw.replace(/^\//,''));
   const absolute=path.resolve(root,rel);
@@ -39,6 +39,9 @@ try{
   await send('Runtime.enable');await send('Page.enable');
   await poll(async()=>{const ready=await evalJs(`document.readyState==='complete'&&globalThis.closedLoopAppReady===true`);if(!ready)throw new Error('app not ready');return true;});
   const result=await evalJs(`(async()=>{
+    const waitFor=async(check,description)=>{const end=Date.now()+15000;while(Date.now()<end){if(check())return;await new Promise(r=>setTimeout(r,25));}throw new Error(description);};
+    const idle=()=>waitFor(()=>document.querySelector('#app')?.getAttribute('aria-busy')!=='true','The operator action did not finish.');
+    await idle();
     const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,schema=globalThis.closedLoopWorkflowSchema;
     if(!core||!engine||!prompts||!schema)throw new Error('Application runtime not loaded.');
     const state=core.createBlankState('JOB-HUMAN-WALKTHROUGH');
@@ -76,29 +79,30 @@ try{
       if(stage===1&&operation==='COMPLETE'&&(!text.includes('first semantic reader')||!text.includes('PASS 1 — EXHAUSTIVE EXTRACTION')||!text.includes('PASS 2 — OMISSION CHALLENGE')||!text.includes('humanAuthorityCandidates')))throw new Error('Stage 01 COMPLETE prompt is missing mandatory semantic-intake behavior.');
       checked.push(stage+':'+operation);
     }
-    const workflowButton=document.querySelector('[data-view="Workflow"]');if(!workflowButton)throw new Error('Workflow navigation is missing.');workflowButton.click();await new Promise(r=>setTimeout(r,100));
+    const workflowButton=document.querySelector('[data-view="Workflow"]');if(!workflowButton)throw new Error('Workflow navigation is missing.');workflowButton.click();await idle();
     const picker=document.querySelector('#stage-picker');if(!picker)throw new Error('Stage picker is missing after opening Workflow.');
     const reached=[...picker.options].map(option=>Number(option.value));
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker does not expose all 30 stages in order.');
-    picker.value='1';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,120));
+    picker.value='1';picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
     const promptElement=document.querySelector('#generated-prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
     const renderedStage1=promptElement.textContent||'';
     for(const required of ['first semantic reader','PASS 1 — EXHAUSTIVE EXTRACTION','PASS 2 — OMISSION CHALLENGE','humanAuthorityCandidates'])if(!renderedStage1.includes(required))throw new Error('Rendered Stage 01 prompt omitted required behavior: '+required);
     // Exercise the real application save/export controls and compare the displayed committed instruction
     // to the exact Blob bytes that the export path transfers.
-    picker.value='2';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,120));
+    const stage2Picker=document.querySelector('#stage-picker');stage2Picker.value='2';stage2Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
     const saveButton=document.getElementById('save-prompt'),exportButton=document.getElementById('export-prompt-file');
     if(!saveButton||saveButton.disabled||!exportButton||exportButton.disabled)throw new Error('Current external-agent prompt controls are not available.');
     await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('Saving the prompt did not rerender the application.')),5000);document.addEventListener('closed-loop-rendered',()=>{clearTimeout(timeout);resolve();},{once:true});saveButton.click();});
+    await idle();
     const committedDisplayed=document.getElementById('generated-prompt')?.textContent||'';
     if(!committedDisplayed.includes('STRICT RESPONSE CONTRACT'))throw new Error('Saved displayed prompt is incomplete.');
     const originalCreateObjectURL=URL.createObjectURL.bind(URL);let exportedBlob=null;
     URL.createObjectURL=blob=>{exportedBlob=blob;return originalCreateObjectURL(blob);};
-    try{document.getElementById('export-prompt-file')?.click();await new Promise(r=>setTimeout(r,150));}finally{URL.createObjectURL=originalCreateObjectURL;}
+    try{document.getElementById('export-prompt-file')?.click();await idle();await waitFor(()=>exportedBlob instanceof Blob,'Prompt export did not create a Blob.');}finally{URL.createObjectURL=originalCreateObjectURL;}
     if(!(exportedBlob instanceof Blob))throw new Error('Prompt export did not create a Blob.');
     const exportedPrompt=await exportedBlob.text();
     if(exportedPrompt!==committedDisplayed)throw new Error('Displayed committed prompt bytes differ from exported instruction-file bytes.');
-    picker.value='18';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,120));
+    const stage18Picker=document.querySelector('#stage-picker');stage18Picker.value='18';stage18Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
     const appOnlyPrompt=document.querySelector('#generated-prompt')?.textContent||'';
     if(!appOnlyPrompt.includes('NO EXTERNAL AGENT INSTRUCTION REQUIRED'))throw new Error('Application-owned Stage 18 is rendered as external-agent work.');
     for(const id of ['save-prompt','export-prompt-file','export-prompt-manifest','copy-prompt'])if(!document.getElementById(id)?.disabled)throw new Error('Application-owned Stage 18 exposes prompt control '+id+'.');
@@ -107,11 +111,11 @@ try{
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
     if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
     if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
-    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptVisualBaseline:true,operatorDoubleCheckGuide:true};
+    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptCssDeclarationsChecked:true,visualBaselineAcceptance:false,operatorDoubleCheckGuide:true};
   })()`);
   if(browserDialog)throw new Error(`Browser UI opened an unexpected dialog: ${browserDialog}`);
-  if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<8||result?.applicationOnlyOperations<1||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Sequential browser walkthrough did not establish the complete operator path.');
-  console.log(JSON.stringify({humanStageWalkthrough:true,...result}));
+  if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<8||result?.applicationOnlyOperations<1||result?.oneTimeSupply!==true||result?.promptCssDeclarationsChecked!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Synthetic prompt and navigation checks did not pass.');
+  console.log(JSON.stringify({syntheticPromptAndNavigationChecks:true,completeOperatorJourney:false,humanIndependenceEstablished:false,...result}));
 }finally{
   try{ws?.close();}catch{}
   const exited=new Promise(resolve=>child.once('exit',resolve));

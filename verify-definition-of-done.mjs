@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 
-// Closed output fields that this executed definition-of-done proof must retain.
-// This is a compatibility contract for downstream acceptance publication, not a substitute for executing the measurements below.
+// Legacy publication keys remain present as UNKNOWN until their full
+// behavioral universes are measured. Executed component cases are separate.
 const EXECUTED_DEFINITION_PROOF_FIELDS=Object.freeze([
   'acceptedAgentValueExtractionCoverage',
   'acceptedRelationshipProvenanceCoverage',
@@ -14,26 +14,26 @@ const EXECUTED_DEFINITION_PROOF_FIELDS=Object.freeze([
 ]);
 
 const productionInstructionProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-production-instruction.mjs',import.meta.url).pathname],{encoding:'utf8'}));
-assert.equal(productionInstructionProof.productionInstruction,'PASS','Stage 12 production-instruction regression proof did not pass.');
-assert.equal(productionInstructionProof.isolatedDisposableProjects,true,'Stage 12 production-instruction mutations were not isolated to disposable project state.');
-assert.equal(productionInstructionProof.noMutationBeforeAcceptance,true,'Stage 12 production-instruction verifier did not prove zero canonical mutation before acceptance.');
+assert.equal(productionInstructionProof.productionInstruction,'PASS','Stage 08 production-instruction regression proof did not pass.');
+assert.equal(productionInstructionProof.isolatedDisposableProjects,true,'Stage 08 production-instruction mutations were not isolated to disposable project state.');
+assert.equal(productionInstructionProof.noMutationBeforeAcceptance,true,'Stage 08 production-instruction verifier did not prove zero canonical mutation before acceptance.');
 const independentPreflightProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-independent-preflight.mjs',import.meta.url).pathname],{encoding:'utf8'}));
-assert.equal(independentPreflightProof.independentPreflight,'PASS','Stage 13 independent-preflight regression proof did not pass.');
-assert.equal(independentPreflightProof.isolatedDisposableProjects,true,'Stage 13 independent-preflight mutations were not isolated to disposable project state.');
-assert.equal(independentPreflightProof.noMutationBeforeAcceptance,true,'Stage 13 independent-preflight verifier did not prove zero canonical mutation before acceptance.');
-assert.equal(independentPreflightProof.independenceEpistemicLimitPreserved,true,'Stage 13 independent-preflight verifier overclaimed unobservable external independence.');
+assert.equal(independentPreflightProof.independentPreflight,'PASS','Stage 09 independent-preflight regression proof did not pass.');
+assert.equal(independentPreflightProof.isolatedDisposableProjects,true,'Stage 09 independent-preflight mutations were not isolated to disposable project state.');
+assert.equal(independentPreflightProof.noMutationBeforeAcceptance,true,'Stage 09 independent-preflight verifier did not prove zero canonical mutation before acceptance.');
+assert.equal(independentPreflightProof.independenceEpistemicLimitPreserved,true,'Stage 09 independent-preflight verifier overclaimed unobservable external independence.');
 const candidateFreezeProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-candidate-freeze.mjs',import.meta.url).pathname],{encoding:'utf8'}));
-assert.equal(candidateFreezeProof.candidateFreeze,'PASS','Stage 14 candidate-freeze regression proof did not pass.');
-assert.equal(candidateFreezeProof.noPartialMutationOnRejectedFreeze,true,'Stage 14 rejected candidate freeze partially mutated application state.');
-assert.equal(candidateFreezeProof.exactHumanSelectionReferenced,true,'Stage 14 frozen candidate did not bind the exact registered human component-selection decision.');
-assert.equal(candidateFreezeProof.frozenManifestImmutable,true,'Stage 14 frozen candidate manifest was not immutable.');
-assert.equal(candidateFreezeProof.isolatedDisposableProjects,true,'Stage 14 candidate-freeze mutations were not isolated.');
+assert.equal(candidateFreezeProof.candidateFreeze,'PASS','Stage 10 candidate-freeze regression proof did not pass.');
+assert.equal(candidateFreezeProof.noPartialMutationOnRejectedFreeze,true,'Stage 10 rejected candidate freeze partially mutated application state.');
+assert.equal(candidateFreezeProof.exactHumanSelectionReferenced,true,'Stage 10 frozen candidate did not bind the exact registered human component-selection decision.');
+assert.equal(candidateFreezeProof.frozenManifestImmutable,true,'Stage 10 frozen candidate manifest was not immutable.');
+assert.equal(candidateFreezeProof.isolatedDisposableProjects,true,'Stage 10 candidate-freeze mutations were not isolated.');
 const productionBaselineAuthorityProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-production-baseline-authority.mjs',import.meta.url).pathname],{encoding:'utf8'}));
-assert.equal(productionBaselineAuthorityProof.productionBaselineAuthority,'PASS','Stage 23 production-baseline-authority regression proof did not pass.');
-assert.equal(productionBaselineAuthorityProof.noPartialMutationOnRejectedFreeze,true,'Stage 23 rejected baseline freeze partially mutated application state.');
-assert.equal(productionBaselineAuthorityProof.exactHumanAuthorizationReferenced,true,'Stage 23 frozen baseline did not bind the exact registered BASELINE_AUTHORIZATION human decision.');
-assert.equal(productionBaselineAuthorityProof.zeroAcceptedStage20ExternalResponses,true,'Stage 23 baseline freeze required an accepted Stage 20 external response envelope.');
-assert.equal(productionBaselineAuthorityProof.isolatedDisposableProjects,true,'Stage 23 production-baseline-authority mutations were not isolated.');
+assert.equal(productionBaselineAuthorityProof.productionBaselineAuthority,'PASS','Stage 20 production-baseline-authority regression proof did not pass.');
+assert.equal(productionBaselineAuthorityProof.noPartialMutationOnRejectedFreeze,true,'Stage 20 rejected baseline freeze partially mutated application state.');
+assert.equal(productionBaselineAuthorityProof.exactHumanAuthorizationReferenced,true,'Stage 20 frozen baseline did not bind the exact registered BASELINE_AUTHORIZATION human decision.');
+assert.equal(productionBaselineAuthorityProof.zeroAcceptedStage20ExternalResponses,true,'Stage 20 baseline freeze required an accepted Stage 20 external response envelope.');
+assert.equal(productionBaselineAuthorityProof.isolatedDisposableProjects,true,'Stage 20 production-baseline-authority mutations were not isolated.');
 
 const originalLog=console.log;
 const captured=[];
@@ -106,34 +106,6 @@ function metricFor(project){
     disposition:included.length===universe.length&&excluded.length===0?'SATISFIED':'VIOLATED'
   });
 }
-function closedMetricFromUniverse({metricId,universe,includedIds,emptyUniverseDetermination=null}){
-  const normalizedUniverse=[...universe].map(String);
-  const normalizedIncluded=[...includedIds].map(String);
-  if(normalizedUniverse.length===0){
-    const acceptedEmpty=emptyUniverseDetermination&&emptyUniverseDetermination.status==='ACCEPTED'&&emptyUniverseDetermination.evidenceSupported===true;
-    return Object.freeze({
-      metricId,
-      numerator:0,
-      denominator:0,
-      includedIds:[],
-      excludedIds:[],
-      value:acceptedEmpty?1:null,
-      disposition:acceptedEmpty?'SATISFIED':'BLOCKED'
-    });
-  }
-  const universeSet=new Set(normalizedUniverse);
-  const validIncluded=[...new Set(normalizedIncluded)].filter(id=>universeSet.has(id));
-  return Object.freeze({
-    metricId,
-    numerator:validIncluded.length,
-    denominator:normalizedUniverse.length,
-    includedIds:validIncluded,
-    excludedIds:normalizedUniverse.filter(id=>!validIncluded.includes(id)),
-    value:validIncluded.length/normalizedUniverse.length,
-    disposition:validIncluded.length===normalizedUniverse.length?'SATISFIED':'BLOCKED'
-  });
-}
-
 const conformantFixture=buildMetricFixture();
 const exactReqRunTestMetric=metricFor(conformantFixture);
 assert.equal(exactReqRunTestMetric.value,1,'Exact REQ × RUN × TEST coverage is not 100%.');
@@ -157,70 +129,30 @@ assert.equal(duplicateMetric.numerator,9,'Duplicating one required verification 
 assert.equal(duplicateMetric.denominator,10,'Duplicate verification illegally changed the closed universe denominator.');
 assert(duplicateMetric.excludedIds.some(item=>item.reason.startsWith('DUPLICATE_CURRENT_REQUIRED_TRIPLE')),'Duplicate-tuple mutation was not recorded explicitly.');
 
-const emptyDenominatorBlocked=closedMetricFromUniverse({metricId:'EMPTY-DENOMINATOR-MUTATION',universe:[],includedIds:[]});
-assert.equal(emptyDenominatorBlocked.denominator,0,'Empty-denominator mutation did not create the intended empty closed universe.');
-assert.equal(emptyDenominatorBlocked.disposition,'BLOCKED','An empty denominator passed without an independently accepted evidence-supported EMPTY_UNIVERSE determination.');
-assert.equal(emptyDenominatorBlocked.value,null,'An unreviewed empty denominator must not produce 100% coverage.');
-const emptyDenominatorAccepted=closedMetricFromUniverse({
-  metricId:'EMPTY-DENOMINATOR-REVIEWED',
-  universe:[],
-  includedIds:[],
-  emptyUniverseDetermination:{status:'ACCEPTED',evidenceSupported:true}
-});
-assert.equal(emptyDenominatorAccepted.disposition,'SATISFIED','A current independently accepted evidence-supported empty-universe determination should satisfy the empty-universe metric contract.');
-assert.equal(emptyDenominatorAccepted.value,1,'A reviewed evidence-supported empty universe should publish 100% only through the explicit empty-universe rule.');
-
+// Do not publish the cardinality of this single synthetic matrix as complete
+// application coverage. It checks tuple counting, not evidence sufficiency.
+report.syntheticMatrixCardinality={
+ evidenceClass:'EXECUTED_COMPONENT_CASES',applicationCompletion:false,
+ cases:[
+  {caseId:'ten-required-tuples',result:'PASS',actual:exactReqRunTestMetric},
+  {caseId:'missing-tuple-keeps-universe',result:'PASS',actual:missingMetric},
+  {caseId:'duplicate-tuple-keeps-universe',result:'PASS',actual:duplicateMetric}
+ ]
+};
 const stage01Proof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-stage01-intake-closure.mjs',import.meta.url).pathname],{encoding:'utf8'}));
 const zeroLossProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-zero-loss-accounting.mjs',import.meta.url).pathname],{encoding:'utf8'}));
-report.stage01IntakeCoverage=Number(Boolean(stage01Proof.stage01IntakeClosure&&stage01Proof.currentManifestBound&&stage01Proof.incompleteAccountingRejected));
-report.stage04ObligationCoverage=Number(Boolean(zeroLossProof.zeroLossStage04&&zeroLossProof.completeStage03ResearchUnion&&zeroLossProof.incompleteObligationRejected));
-assert.equal(report.stage01IntakeCoverage,1,'Measured Stage 01 intake coverage is not complete.');
-assert.equal(report.stage04ObligationCoverage,1,'Measured Stage 04 obligation coverage is not complete.');
-report.exactReqRunTestCoverage=exactReqRunTestMetric.value;
-report.exactReqRunTestMetric=exactReqRunTestMetric;
-report.coverageMetrics={...(report.coverageMetrics||{}),exactReqRunTestCoverage:exactReqRunTestMetric};
-report.section49ReqRunTestMutationProof={missingTupleDetected:true,duplicateTupleDetected:true,closedUniverseStable:true};
-report.section49EmptyDenominatorMutationProof={unreviewedEmptyBlocked:true,reviewedEvidenceSupportedEmptyAccepted:true};
-report.productionInstructionCoverage=Number(
-  productionInstructionProof.productionInstruction==='PASS'&&
-  productionInstructionProof.repairedPathProgressed===true&&
-  productionInstructionProof.noMutationBeforeAcceptance===true&&
-  productionInstructionProof.promptSemanticsChecked===true&&
-  productionInstructionProof.isolatedDisposableProjects===true
-);
-report.productionInstructionMutationProof={
-  missingMandatoryInstructionTraceRejected:productionInstructionProof.intentionalInvalidFixturesRejected?.includes('missing-mandatory-instruction-trace')===true,
-  missingRequiredOutputContractRejected:productionInstructionProof.intentionalInvalidFixturesRejected?.includes('missing-required-output-contract')===true,
-  repairedPathProgressed:productionInstructionProof.repairedPathProgressed===true,
-  noMutationBeforeAcceptance:productionInstructionProof.noMutationBeforeAcceptance===true,
-  promptSemanticsChecked:productionInstructionProof.promptSemanticsChecked===true,
-  isolatedDisposableProjects:productionInstructionProof.isolatedDisposableProjects===true
-};
-assert.equal(report.productionInstructionCoverage,1,'Stage 12 production-instruction coverage is not complete.');
-assert.equal(report.productionInstructionMutationProof.missingMandatoryInstructionTraceRejected,true,'Stage 12 missing-instruction-trace mutation was not rejected.');
-assert.equal(report.productionInstructionMutationProof.missingRequiredOutputContractRejected,true,'Stage 12 missing-output-contract mutation was not rejected.');
-report.independentPreflightCoverage=Number(
-  independentPreflightProof.independentPreflight==='PASS'&&
-  independentPreflightProof.repairedPathProgressed===true&&
-  independentPreflightProof.independenceEpistemicLimitPreserved===true&&
-  independentPreflightProof.noMutationBeforeAcceptance===true&&
-  independentPreflightProof.promptSemanticsChecked===true&&
-  independentPreflightProof.isolatedDisposableProjects===true
-);
-report.independentPreflightMutationProof={
-  missingIndependentReviewerBlocked:independentPreflightProof.intentionalInvalidFixturesRejected?.includes('missing-independent-reviewer')===true,
-  materialAmbiguityBlocked:independentPreflightProof.intentionalInvalidFixturesRejected?.includes('material-ambiguity-with-favorable-claim')===true,
-  contaminatedReviewerBlocked:independentPreflightProof.intentionalInvalidFixturesRejected?.includes('contaminated-reviewer-context')===true,
-  repairedPathProgressed:independentPreflightProof.repairedPathProgressed===true,
-  independenceEpistemicLimitPreserved:independentPreflightProof.independenceEpistemicLimitPreserved===true,
-  noMutationBeforeAcceptance:independentPreflightProof.noMutationBeforeAcceptance===true,
-  promptSemanticsChecked:independentPreflightProof.promptSemanticsChecked===true,
-  isolatedDisposableProjects:independentPreflightProof.isolatedDisposableProjects===true
-};
-assert.equal(report.independentPreflightCoverage,1,'Stage 13 independent-preflight coverage is not complete.');
-assert.equal(report.independentPreflightMutationProof.missingIndependentReviewerBlocked,true,'Stage 13 missing-reviewer mutation was not rejected.');
-assert.equal(report.independentPreflightMutationProof.materialAmbiguityBlocked,true,'Stage 13 material-ambiguity mutation was not rejected.');
-assert.equal(report.independentPreflightMutationProof.contaminatedReviewerBlocked,true,'Stage 13 contaminated-reviewer mutation was not rejected.');
-report.candidateFreezeCoverage=Number(candidateFreezeProof.candidateFreeze==='PASS'&&candidateFreezeProof.repairedPathProgressed===true&&candidateFreezeProof.noPartialMutationOnRejectedFreeze===true&&candidateFreezeProof.exactHumanSelectionReferenced===true&&candidateFreezeProof.frozenManifestImmutable===true&&candidateFreezeProof.isolatedDisposableProjects===true);
-assert.equal(report.candidateFreezeCoverage,1,'Stage 14 candidate-freeze coverage is not complete.');
+assert(stage01Proof.stage01IntakeClosure&&stage01Proof.currentManifestBound&&stage01Proof.incompleteAccountingRejected,'The executed intake cases failed.');
+assert(zeroLossProof.zeroLossStage04&&zeroLossProof.completeStage03ResearchUnion&&zeroLossProof.incompleteObligationRejected,'The executed obligation accounting cases failed.');
+report.executedSuites=[
+ ['verify-production-instruction.mjs',productionInstructionProof],
+ ['verify-independent-preflight.mjs',independentPreflightProof],
+ ['verify-candidate-freeze.mjs',candidateFreezeProof],
+ ['verify-production-baseline-authority.mjs',productionBaselineAuthorityProof],
+ ['verify-stage01-intake-closure.mjs',stage01Proof],
+ ['verify-zero-loss-accounting.mjs',zeroLossProof]
+].map(([file,actual])=>({file,result:'PASS',actual,scope:'Executed synthetic cases in this suite; not every mandatory behavior.'}));
+report.stage01IntakeCoverage=null;report.stage04ObligationCoverage=null;
+report.productionInstructionCoverage=null;report.independentPreflightCoverage=null;report.candidateFreezeCoverage=null;
+report.evidenceClass='DECLARATIONS_AND_EXECUTED_SYNTHETIC_COMPONENT_CASES';
+report.applicationCompletion=false;
 originalLog(JSON.stringify(report,null,2));

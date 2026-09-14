@@ -1,0 +1,11 @@
+Startup support-project persistence failed; continuing without rewriting user projects. Error: Project revision conflict for RETAINED-CONCURRENT: expected 1, found 2.
+    at storageError (evalmachine.<anonymous>:29:50)
+    at writeProjectRow (evalmachine.<anonymous>:369:94)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Object.writeProject (evalmachine.<anonymous>:390:18)
+    at async load (evalmachine.<anonymous>:1:1605)
+    at async file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-project-lifecycle.mjs:667:3
+    at async storageRegression (file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-project-lifecycle.mjs:266:48)
+    at async file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-project-lifecycle.mjs:663:1 {
+  code: 'STALE_PROJECT_REVISION'
+}

@@ -1,0 +1,311 @@
+{
+  "responseByteStaging": "PASS",
+  "evidenceClass": "PRODUCTION_STAGING_WITH_TRANSACTION_IO_DOUBLE",
+  "cases": [
+    {
+      "id": "response-staging-stage-1",
+      "stage": 1,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-2",
+      "stage": 2,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-3",
+      "stage": 3,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-4",
+      "stage": 4,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-5",
+      "stage": 5,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-6",
+      "stage": 6,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-7",
+      "stage": 7,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-8",
+      "stage": 8,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-9",
+      "stage": 9,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-10",
+      "stage": 10,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-11",
+      "stage": 11,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-12",
+      "stage": 12,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-13",
+      "stage": 13,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-14",
+      "stage": 14,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-15",
+      "stage": 15,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-16",
+      "stage": 16,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-17",
+      "stage": 17,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-18",
+      "stage": 18,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-19",
+      "stage": 19,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-20",
+      "stage": 20,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-21",
+      "stage": 21,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-22",
+      "stage": 22,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-23",
+      "stage": 23,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-24",
+      "stage": 24,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-25",
+      "stage": 25,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-26",
+      "stage": 26,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-27",
+      "stage": 27,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-28",
+      "stage": 28,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-29",
+      "stage": 29,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    },
+    {
+      "id": "response-staging-stage-30",
+      "stage": 30,
+      "validBytes": "PASS",
+      "sameLengthCorruption": "RESPONSE_STAGE_REHASH_MISMATCH",
+      "missingBytes": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongProjectKey": "RESPONSE_STAGE_NOT_FOUND",
+      "wrongStoredOwner": "CROSS_PROJECT_RESPONSE_STAGE",
+      "corrected": "PASS"
+    }
+  ],
+  "readBackComparisonFault": "DETECTED",
+  "restoredImplementation": "PASS",
+  "stagingWriteFailureAndRetry": "PASS",
+  "physicalDeviceAcceptance": false,
+  "completeOperatorJourney": false
+}

@@ -80,7 +80,7 @@ for(const [stage,forbidden] of [[11,['verification','comparisons','rootCauses','
   const c=schema.operationContract(stage,schema.STAGE_CONTRACTS[stage].operations[0]);for(const x of forbidden)if(c.readCollections.includes(x))throw new Error(`Stage ${stage} leaks forbidden ${x} through its declared read contract.`);
 }
 const browserWalk=spawnSync(process.execPath,['verify-human-stage-walkthrough.mjs'],{encoding:'utf8',env:process.env});
-if(browserWalk.status!==0)throw new Error(`Sequential browser stage walkthrough failed.\n${browserWalk.stdout||''}\n${browserWalk.stderr||''}`);
+if(browserWalk.status!==0)throw new Error(`Synthetic browser prompt and navigation check failed.\n${browserWalk.stdout||''}\n${browserWalk.stderr||''}`);
 const browserProof=JSON.parse(String(browserWalk.stdout||'{}'));
-if(browserProof.stages!==30||browserProof.oneTimeSupply!==true)throw new Error('Sequential browser stage walkthrough did not establish all 30 stages and one-time project input reuse.');
-console.log(JSON.stringify({promptsChecked,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:true,browserPromptsChecked:browserProof.prompts,promptVisual:browserProof.promptVisual},null,2));
+if(browserProof.stages!==30||browserProof.oneTimeSupply!==true)throw new Error('Synthetic browser prompt and navigation check did not reach all 30 stage views and reuse project input.');
+console.log(JSON.stringify({promptsChecked,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,syntheticBrowserPromptNavigation:true,completeOperatorJourney:false,visualBaselineAcceptance:false,browserPromptsChecked:browserProof.prompts,promptCssDeclarationsChecked:browserProof.promptCssDeclarationsChecked},null,2));

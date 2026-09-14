@@ -1,0 +1,128 @@
+{
+  "packageJsonContract": "PASS",
+  "evidenceClass": "EXPORTED_BACKUP_BYTES_AND_PRODUCTION_IMPORT_WITH_TRANSACTION_IO_DOUBLE",
+  "cases": [
+    {
+      "caseId": "package-root-name",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-escaped-root-name",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-nested-name",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-artifact-base64",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-escaped-artifact-base64",
+      "expectedRejection": "DUPLICATE_JSON_MEMBER",
+      "repairedResult": "IMPORTED_WITH_EXACT_FILE_BYTES",
+      "result": "PASS"
+    },
+    {
+      "caseId": "package-invalid-utf8",
+      "repairedResult": "IMPORTED",
+      "result": "PASS"
+    }
+  ],
+  "duplicateNameBypassDetected": true,
+  "restoredImplementation": "PASS",
+  "physicalDeviceAcceptance": false
+}
+{"storageRegression":"database:blocked-upgrade-does-not-queue-startup","passed":true}
+{"storageRegression":"database:blocked-upgrade-visible-recovery","passed":true}
+{"storageRegression":"view:collapsed-diagnostic-lists","passed":true,"stages":30,"completeReasons":603,"longReasonPreserved":true}
+{"packageSourceReads":{"complete":{"sourceBytes":393221,"readBytes":786442},"execution":{"sourceBytes":265555,"readBytes":531110}}}
+{"storageRegression":"export:one-file-pass-after-integrity-verification","passed":true}
+{"storageRegression":"execution-package:one-file-pass-after-integrity-verification","passed":true}
+{"storageRegression":"export:one-project-pass-after-snapshot-verification","passed":true}
+{"packageBackpressure":{"sourceBytes":1048577,"readBytesBeforeCompressorRelease":1146881}}
+{"storageRegression":"export:compression-backpressure-bounds-source-reads","passed":true}
+{"storageRegression":"export:stream-failure-keeps-verified-checkpoint-and-recovers","passed":true}
+{"storageRegression":"export:late-source-failure-keeps-verified-checkpoint-and-recovers","passed":true}
+{"storageRegression":"export:verified-snapshot-hash-reused","passed":true}
+{"storageRegression":"read:revision-metadata-must-match-verified-project","passed":true}
+{"storageRegression":"read:legacy-corruption-keeps-hash-mismatch-recovery","passed":true}
+{"storageRegression":"export:concurrent-save-keeps-snapshot-identity","passed":true}
+{"storageRegression":"import:replay-saved-projections-without-fabricating-gates","passed":true}
+{"storageRegression":"import:saved-projection-does-not-bypass-record-or-release-checks","passed":true}
+{"accumulatedStage4Read":{"attempts":100,"encodes":7772,"characters":14534349,"digest":"3a5f70b959df64960199f3c6e0fe7a33522b2bce993cf1317e30c93e4085bc01"}}
+{"storageRegression":"accumulation:selected-stage4-read-buffers","passed":true}
+{"storageRegression":"diagnostics:complete-exports-do-not-wait-for-health","passed":true}
+{"promptContextReadPressure":{"prompts":64,"uniqueFiles":1,"artifactReads":1,"readonlyTransactions":1}}
+{"storageRegression":"prompt-context:shared-identities-one-read-snapshot","passed":true}
+{"promptContextDistinctPressure":{"references":258,"uniqueFiles":129,"artifactReads":129,"readonlyTransactions":1}}
+{"storageRegression":"prompt-context:distinct-identities-bounded-snapshot","passed":true}
+{"storageRegression":"prompt-context:fresh-verification-owner","passed":true}
+{"storageRegression":"prompt-context:fresh-verification-digest","passed":true}
+{"storageRegression":"prompt-context:fresh-verification-size","passed":true}
+{"storageRegression":"prompt-context:fresh-verification-contradictory-reference","passed":true}
+{"storageRegression":"prompt-context:materialize-shared-missing-bytes-once","passed":true}
+{"storageRegression":"prompt-context:missing-history-cannot-use-current-content","passed":true}
+{"storageRegression":"prompt-context:historical-eligibility-and-backup-custody","passed":true}
+{"artifactRegistrationPressure":{"files":1,"preCommitRecalculations":1}}
+{"storageRegression":"file-intake:bounded-registration:1","passed":true}
+{"artifactRegistrationPressure":{"files":64,"preCommitRecalculations":1}}
+{"storageRegression":"file-intake:bounded-registration:64","passed":true}
+{"artifactRegistrationPressure":{"files":65,"preCommitRecalculations":2}}
+{"storageRegression":"file-intake:bounded-registration:65","passed":true}
+{"artifactRegistrationPressure":{"files":129,"preCommitRecalculations":3}}
+{"storageRegression":"file-intake:bounded-registration:129","passed":true}
+{"storageRegression":"file-intake:batch-member-rejection:identity","passed":true}
+{"storageRegression":"file-intake:batch-member-rejection:product","passed":true}
+{"storageRegression":"file-intake:first-file:project","passed":true}
+{"storageRegression":"file-intake:first-file:stage","passed":true}
+{"storageRegression":"file-intake:first-file:revision","passed":true}
+{"storageRegression":"file-intake:first-file:second-file-failure","passed":true}
+{"storageRegression":"file-intake:second-file:project","passed":true}
+{"storageRegression":"file-intake:second-file:stage","passed":true}
+{"storageRegression":"file-intake:second-file:revision","passed":true}
+{"storageRegression":"file-intake:second-file:second-file-failure","passed":true}
+{"storageRegression":"file-intake:first-text:project","passed":true}
+{"storageRegression":"file-intake:first-text:stage","passed":true}
+{"storageRegression":"file-intake:first-text:revision","passed":true}
+{"storageRegression":"file-intake:first-text:second-file-failure","passed":true}
+{"storageRegression":"file-intake:second-text:project","passed":true}
+{"storageRegression":"file-intake:second-text:stage","passed":true}
+{"storageRegression":"file-intake:second-text:revision","passed":true}
+{"storageRegression":"file-intake:second-text:second-file-failure","passed":true}
+{"storageRegression":"file-intake:post-commit-render-failure-keeps-bytes","passed":true}
+{"storageRegression":"storage-refresh:navigation-cannot-replace-totals","passed":true}
+{"storageRegression":"addNew:preserve-newer-project","passed":true}
+{"storageRegression":"duplicateCurrentProject:preserve-newer-project","passed":true}
+{"storageRegression":"materializeProject:preserve-newer-project","passed":true}
+{"storageRegression":"unloadInactiveProjects:preserve-newer-project","passed":true}
+{"storageRegression":"archiveCurrentProject:preserve-newer-project","passed":true}
+{"storageRegression":"bulk-write:stale-revision-atomic","passed":true}
+{"storageRegression":"create-only:existing-zero-revision","passed":true}
+{"storageRegression":"backup:required-canonical-bytes","passed":true}
+{"storageRegression":"response-size:reject-before-full-read-preserve-raw","passed":true}
+{"storageRegression":"import:incremental-package-decoding","passed":true}
+{"storageRegression":"import:json-semantics-and-adversarial-streams","passed":true}
+{"storageRegression":"artifact-queries:project-local-without-store-scan","passed":true}
+{"storageRegression":"backup:required-prompt-context","passed":true}
+{"storageRegression":"import:post-commit-refresh-failure","passed":true}
+{"storageRegression":"import:pre-commit-failure-preserves-state","passed":true}
+{"storageRegression":"delete:verified-selection-before-async-refresh","passed":true}
+{"storageRegression":"startup:retained-refresh-keeps-snapshot-revision","passed":true}
+{"storageRegression":"startup:unchanged-build-reuses-retained-project","passed":true}
+{"storageRegression":"startup:picker-projection-and-selected-only","passed":true}
+{"storageRegression":"diagnostics:startup-slow-health-does-not-block","passed":true}
+{"storageRegression":"diagnostics:startup-failed-health-does-not-block","passed":true}
+{"storageRegression":"storage-worker:same-authorities-and-cas","passed":true}
+{"storageRegression":"storage-worker:commit-survives-lost-reply","passed":true}
+{"storageRegression":"storage-worker:atomic-abort-and-import-recovery","passed":true}
+{"lifecycleUiDeclarationsChecked":false,"physicalDeviceAcceptance":false,"visualBaselineAcceptance":false,"completeOperatorJourney":false,"evidenceClass":"PRODUCTION_COMPONENT_CASES_WITH_STORAGE_IO_DOUBLE","lifecycleCases":[{"caseId":"export:one-file-pass-after-integrity-verification","result":"PASS"},{"caseId":"execution-package:one-file-pass-after-integrity-verification","result":"PASS"},{"caseId":"export:one-project-pass-after-snapshot-verification","result":"PASS"},{"caseId":"export:compression-backpressure-bounds-source-reads","result":"PASS"},{"caseId":"export:stream-failure-keeps-verified-checkpoint-and-recovers","result":"PASS"},{"caseId":"export:late-source-failure-keeps-verified-checkpoint-and-recovers","result":"PASS"},{"caseId":"export:verified-snapshot-hash-reused","result":"PASS"},{"caseId":"read:revision-metadata-must-match-verified-project","result":"PASS"},{"caseId":"read:legacy-corruption-keeps-hash-mismatch-recovery","result":"PASS"},{"caseId":"export:concurrent-save-keeps-snapshot-identity","result":"PASS"},{"caseId":"import:replay-saved-projections-without-fabricating-gates","result":"PASS"},{"caseId":"import:saved-projection-does-not-bypass-record-or-release-checks","result":"PASS"},{"caseId":"accumulation:selected-stage4-read-buffers","result":"PASS"},{"caseId":"diagnostics:complete-exports-do-not-wait-for-health","result":"PASS"},{"caseId":"prompt-context:shared-identities-one-read-snapshot","result":"PASS"},{"caseId":"prompt-context:distinct-identities-bounded-snapshot","result":"PASS"},{"caseId":"prompt-context:fresh-verification-owner","result":"PASS"},{"caseId":"prompt-context:fresh-verification-digest","result":"PASS"},{"caseId":"prompt-context:fresh-verification-size","result":"PASS"},{"caseId":"prompt-context:fresh-verification-contradictory-reference","result":"PASS"},{"caseId":"prompt-context:materialize-shared-missing-bytes-once","result":"PASS"},{"caseId":"prompt-context:missing-history-cannot-use-current-content","result":"PASS"},{"caseId":"prompt-context:historical-eligibility-and-backup-custody","result":"PASS"},{"caseId":"file-intake:bounded-registration:1","result":"PASS"},{"caseId":"file-intake:bounded-registration:64","result":"PASS"},{"caseId":"file-intake:bounded-registration:65","result":"PASS"},{"caseId":"file-intake:bounded-registration:129","result":"PASS"},{"caseId":"file-intake:batch-member-rejection:identity","result":"PASS"},{"caseId":"file-intake:batch-member-rejection:product","result":"PASS"},{"caseId":"file-intake:first-file:project","result":"PASS"},{"caseId":"file-intake:first-file:stage","result":"PASS"},{"caseId":"file-intake:first-file:revision","result":"PASS"},{"caseId":"file-intake:first-file:second-file-failure","result":"PASS"},{"caseId":"file-intake:second-file:project","result":"PASS"},{"caseId":"file-intake:second-file:stage","result":"PASS"},{"caseId":"file-intake:second-file:revision","result":"PASS"},{"caseId":"file-intake:second-file:second-file-failure","result":"PASS"},{"caseId":"file-intake:first-text:project","result":"PASS"},{"caseId":"file-intake:first-text:stage","result":"PASS"},{"caseId":"file-intake:first-text:revision","result":"PASS"},{"caseId":"file-intake:first-text:second-file-failure","result":"PASS"},{"caseId":"file-intake:second-text:project","result":"PASS"},{"caseId":"file-intake:second-text:stage","result":"PASS"},{"caseId":"file-intake:second-text:revision","result":"PASS"},{"caseId":"file-intake:second-text:second-file-failure","result":"PASS"},{"caseId":"file-intake:post-commit-render-failure-keeps-bytes","result":"PASS"},{"caseId":"storage-refresh:navigation-cannot-replace-totals","result":"PASS"},{"caseId":"addNew:preserve-newer-project","result":"PASS"},{"caseId":"duplicateCurrentProject:preserve-newer-project","result":"PASS"},{"caseId":"materializeProject:preserve-newer-project","result":"PASS"},{"caseId":"unloadInactiveProjects:preserve-newer-project","result":"PASS"},{"caseId":"archiveCurrentProject:preserve-newer-project","result":"PASS"},{"caseId":"bulk-write:stale-revision-atomic","result":"PASS"},{"caseId":"create-only:existing-zero-revision","result":"PASS"},{"caseId":"backup:required-canonical-bytes","result":"PASS"},{"caseId":"response-size:reject-before-full-read-preserve-raw","result":"PASS"},{"caseId":"import:incremental-package-decoding","result":"PASS"},{"caseId":"import:json-semantics-and-adversarial-streams","result":"PASS"},{"caseId":"artifact-queries:project-local-without-store-scan","result":"PASS"},{"caseId":"backup:required-prompt-context","result":"PASS"},{"caseId":"import:post-commit-refresh-failure","result":"PASS"},{"caseId":"import:pre-commit-failure-preserves-state","result":"PASS"},{"caseId":"delete:verified-selection-before-async-refresh","result":"PASS"},{"caseId":"startup:retained-refresh-keeps-snapshot-revision","result":"PASS"},{"caseId":"startup:unchanged-build-reuses-retained-project","result":"PASS"},{"caseId":"startup:picker-projection-and-selected-only","result":"PASS"},{"caseId":"diagnostics:startup-slow-health-does-not-block","result":"PASS"},{"caseId":"diagnostics:startup-failed-health-does-not-block","result":"PASS"},{"caseId":"storage-worker:same-authorities-and-cas","result":"PASS"},{"caseId":"storage-worker:commit-survives-lost-reply","result":"PASS"},{"caseId":"storage-worker:atomic-abort-and-import-recovery","result":"PASS"}],"transactionalDeleteRetained":true,"lifecycleMetadataDeleteAtomic":true,"attemptAbandonmentDeclarationsChecked":false,"canonicalBlobReverification":true,"applicationCustodyBlocking":true,"custodyFailureRecoveryBehavior":true,"staleDeliveryAuthorizationNotResurrected":true,"perProjectBackupState":null,"acceptanceReportMappingsDeclared":false,"queuedHandoffFilesPreserved":true,"exportNavigationGuard":true,"completeExportIdentityAfterNavigation":true,"serializedCompletePackages":true,"completeExportFailureRecovery":true,"unsafeOverrides":null,"applicationOwnedCustodyBlockerHumanOverrideRejected":true}

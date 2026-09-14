@@ -5,6 +5,7 @@ import {execFileSync} from 'node:child_process';
 
 await import('./verify-specification-governance.mjs');
 await import('./verify-build-stage-ledger.mjs');
+await import('./verify-test-worker-isolation.mjs');
 await import('./hash.js');
 const hashAuthority=globalThis.closedLoopHash;
 if(!hashAuthority||hashAuthority.canonicalizationVersion!=='closed-loop-canonical-json/1'||typeof hashAuthority.stableStringify!=='function'||typeof hashAuthority.sha256Value!=='function')throw new Error('Shared canonical hash authority is unavailable to deployment verification.');
@@ -53,6 +54,7 @@ try{
   if(manifest.testIrSchema!=='closed-loop-test-spec/1'||manifest.verificationPackageSchema!=='closed-loop-verification-package/1')throw new Error('Deployment manifest verification contract identity is wrong.');
   if(manifest.contractProfileId!=='closed-loop-completion-profile/1')throw new Error('Deployment manifest contract profile is missing or wrong.');
   if(manifest.testWorkerProtocolVersion!=='closed-loop-test-worker-protocol/1')throw new Error('Deployment manifest worker protocol identity is missing or wrong.');
+  if(canonical(manifest.unicodeContract)!==canonical(hashAuthority.unicodeContract)||manifest.filenameContractVersion!==hashAuthority.filenameVersion)throw new Error('Deployment manifest does not bind the exact filename and Unicode table contracts.');
   const withoutDigest={...manifest};delete withoutDigest.manifestDigest;
   if(manifest.manifestDigest?.hashAlgorithm!=='SHA-256'||manifest.manifestDigest?.digest!==hashAuthority.sha256Value(withoutDigest))throw new Error('Deployment manifest digest mismatch.');
   if(!Array.isArray(manifest.runtimeResources)||manifest.runtimeResources.length!==13)throw new Error('Deployment resource closure is incomplete.');
@@ -68,18 +70,8 @@ try{
   }
   const workerResource=manifest.runtimeResources.find(resource=>resource.path==='test-worker.js');
   if(!workerResource||manifest.testWorkerSha256!==workerResource.digest)throw new Error('Deployment manifest does not bind testWorkerSha256 to the exact deployed worker bytes.');
-  const workerSource=fs.readFileSync(path.join(first,'test-worker.js'),'utf8');
-  if(!workerSource.includes("const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1'"))throw new Error('Worker source is not bound to the declared worker protocol.');
-  if(!workerSource.includes('workerProtocolVersion:WORKER_PROTOCOL_VERSION'))throw new Error('Worker success/failure results do not expose the worker protocol identity.');
-  if(!workerSource.includes('testWorkerSha256:EXPECTED_WORKER_SHA256'))throw new Error('Worker results do not carry the manifest-bound worker-byte identity.');
-  if(workerSource.includes('message.metadata?.testWorkerSha256'))throw new Error('Worker byte identity must not come from the execution caller.');
-  if(!workerSource.includes('WORKER_DIGEST_IDENTITY_MISSING'))throw new Error('Deployed worker does not fail closed when its manifest-bound digest is missing.');
-  if(!workerSource.includes('runtimeBuildIdentity:WORKER_BUILD_ID'))throw new Error('Worker results do not bind the runtime build identity to the exact worker URL build identity.');
-  if(workerSource.includes('runtimeBuildIdentity:result.runtimeBuildIdentity||WORKER_BUILD_ID'))throw new Error('Worker results may not prefer an unmanifested runtime sentinel over the authoritative worker build identity.');
-  if(!workerSource.includes('RUNTIME_BUILD_IDENTITY_MISMATCH'))throw new Error('Worker does not fail closed when a meaningful runtime build identity disagrees with the worker build identity.');
-  const workerHashIndex=workerSource.indexOf('`hash.js${query}`');
-  const workerRuntimeIndex=workerSource.indexOf('`test-runtime.js${query}`');
-  if(workerHashIndex<0||workerRuntimeIndex<0||workerHashIndex>workerRuntimeIndex)throw new Error('Test IR worker must load hash.js before test-runtime.js so the shared canonical hash authority exists in the worker global.');
+  // Worker result and bootstrap behavior is executed by the protocol cases
+  // imported above; source text alone cannot prove those behaviors.
   const html=fs.readFileSync(path.join(first,'index.html'),'utf8');
   verifyRuntimeUrlBindings(html,manifest);
   if(!html.includes(`<meta name="closed-loop-build-identity" content="${manifest.buildIdentity}">`))throw new Error('Executed build identity meta is missing.');
@@ -92,8 +84,7 @@ try{
   if(!changedWorkerDigestDetected)throw new Error('Mutation proof failed: changing the worker digest in the deployed runtime URL was not detected.');
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
-  if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build and worker-byte identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true,repositoryGovernanceExcludedFromRuntime:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerProtocolVmCasesExecuted:true,actualBrowserWorkerAcceptance:false,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true,repositoryGovernanceExcludedFromRuntime:true},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }
