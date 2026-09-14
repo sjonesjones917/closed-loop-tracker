@@ -4,6 +4,10 @@
 const core=globalThis.closedLoopCore;
 if(!core)throw new Error('workbook.js must load before workflow-schema.js.');
 
+// The controlling workflow requires preceding stages in order. Record that
+// dependency once; consumers traverse it instead of inventing stage ranges.
+const STAGE_PREREQUISITES=Object.freeze(Object.fromEntries(core.STAGES.map((stage,index)=>[stage.number,Object.freeze(index?[core.STAGES[index-1].number]:[])])));
+
 const PRODUCER=Object.freeze({
   HUMAN:'HUMAN',
   APPLICATION:'APPLICATION',
@@ -1260,6 +1264,7 @@ function sourceClassificationIssues(fields={}){
 }
 
 globalThis.closedLoopWorkflowSchema=Object.freeze({
+  STAGE_PREREQUISITES,
   version:'closed-loop-workflow-schema/2',
   PROJECT_SCHEMA,WORKFLOW_ID,CONTRACT_PROFILE_ID,STAGE_COUNT,VALUE_TYPES,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
   PRODUCER,RESPONSE_SCHEMA,RESPONSE_TYPES,CONFLICT_POLICIES,TEST_IR,validateTestIRSpec,validateTestIRBindings,validateTestIRTest,
