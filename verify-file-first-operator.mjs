@@ -42,6 +42,11 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
   const other=runtime.closedLoopCore.createBlankState('CONTEXT-OTHER-PROJECT');other.revision=p.revision;
   runtime.closedLoopWorkflowEngine.recalculate(other);runtime.ui.select(other);
   assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,'Switching projects leaked the preceding project\'s required context.');
+  const saved=runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
+  assert.doesNotMatch(runtime.ui.workflow(),/Regenerated and saved for the remaining work/,'The first saved instruction was mislabeled as regenerated.');
+  runtime.closedLoopWorkflowEngine.transitionOperationReservation(saved.reservation,'SUPERSEDED');
+  runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
+  assert.match(runtime.ui.workflow(),/Regenerated and saved for the remaining work/, 'The existing instruction text does not identify the saved replacement.');
   console.log(JSON.stringify({contextFirstPreview:true,previewDoesNotCommit:true,previewBuildsPerRender:1,unavailableStageChecks:29,staleRevisionAndProjectContextRejected:true}));
 }
 
