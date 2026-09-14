@@ -12,15 +12,15 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
 // Use the production response-file button and handler while storage is held.
 // A second click must share the pending action, with feedback before byte work.
 {
-  const nodes=new Map(),failures=[],frames=[];let staged=0,release;
+  const nodes=new Map(),failures=[],frames=[];let staged=0,release,inputEnabledAtHandler;
   const held=new Promise(resolve=>{release=resolve;});
   for(const id of ['project-picker','new-project','export-project','header-backup-project','import-project','import-file','process-response-file','response-json-file','storage-status','app-live-status']){
     const attributes=new Map();nodes.set('#'+id,{id,disabled:false,isConnected:true,textContent:id==='process-response-file'?'Stage and validate response file':'',value:'',dataset:{},files:[new Blob(['{"schema":}'],{type:'application/json'})],setAttribute:(key,value)=>attributes.set(key,String(value)),getAttribute:key=>attributes.get(key)??null,removeAttribute:key=>attributes.delete(key)});
   }
   const runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,clearTimeout,queueMicrotask,
     requestAnimationFrame:callback=>{frames.push(callback);return frames.length;},
-    Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:selector=>nodes.get(selector)||null,querySelectorAll:selector=>['button,input,select','button,input,select,textarea'].includes(selector)?[...nodes.values()]:[]},
-    stageResponseFile:async()=>{staged++;await held;throw new Error('CONTROLLED_RESPONSE_STORAGE_FAILURE');},failures});
+    Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:selector=>nodes.get(selector)||null,querySelectorAll:selector=>['button,input,select','input,select,textarea,[data-view],[data-stage],#new-project'].includes(selector)?[...nodes.values()]:[]},
+    stageResponseFile:async()=>{inputEnabledAtHandler=!nodes.get('#response-json-file').disabled;staged++;await held;throw new Error('CONTROLLED_RESPONSE_STORAGE_FAILURE');},failures});
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;
@@ -39,6 +39,7 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
   while(frames.length)frames.shift()(0);
   await new Promise(resolve=>setTimeout(resolve,0));
   assert.equal(staged,1,'Repeated response clicks staged the same file concurrently.');
+  assert.equal(inputEnabledAtHandler,true,'Input capture ran with disabled controls, suppressing native validation and focus.');
   assert.equal(nodes.get('#new-project').disabled,false,'Navigation remained disabled after the action captured its input.');
   release();await first;
   assert.equal(button.disabled,false,'Storage failure left response retry disabled.');

@@ -42,6 +42,18 @@ async function withStorageActivity(label,operation,{immediate=false}={}){
   try{return await operation();}finally{clearTimeout(timer);storageActivities.delete(token);paintStorageActivity();}
 }
 const pendingUiActions=new Map();
+let uiPreparation=null;
+function afterUiFeedback(operation){
+  return new Promise((resolve,reject)=>{
+    if(!uiPreparation){
+      const controls=new Map([...document.querySelectorAll('input,select,textarea,[data-view],[data-stage],#new-project')].map(control=>[control,control.disabled]));
+      uiPreparation={controls,actions:[]};for(const control of controls.keys())control.disabled=true;
+      const flush=()=>{const batch=uiPreparation;uiPreparation=null;for(const [control,disabled] of batch.controls)if(control.isConnected)control.disabled=disabled;for(const action of batch.actions)action();};
+      if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>setTimeout(flush,0));else setTimeout(flush,0);
+    }
+    uiPreparation.actions.push(()=>{try{resolve(operation());}catch(error){reject(error);}});
+  });
+}
 function wireBusyActions(){
   for(const node of document.querySelectorAll('button,input,select'))for(const eventName of ['onclick','onchange']){
     const handler=node[eventName];if(handler?.constructor?.name!=='AsyncFunction')continue;
@@ -51,15 +63,11 @@ function wireBusyActions(){
     node[eventName]=function(...args){
       const existing=pendingUiActions.get(key);if(existing)return existing.promise;
       const jobId=current?.job?.JOB_ID,stage=current?.activeStage,operation=operationSelection[stage],run=runSelection[stage],view=current?.activeView,entry={controls:new Map()};pendingUiActions.set(key,entry);lock(entry);
-      const preparing=new Map([...document.querySelectorAll('button,input,select,textarea')].map(control=>[control,control.disabled]));for(const control of preparing.keys())control.disabled=true;
       const label=String(node.type==='file'?'Processing selected files':node.getAttribute('aria-label')||node.selectedOptions?.[0]?.textContent||node.textContent||'Loading').trim()+'…';
-      entry.promise=withStorageActivity(label,async()=>{
-        try{
-          await new Promise(resolve=>typeof requestAnimationFrame==='function'?requestAnimationFrame(()=>setTimeout(resolve,0)):setTimeout(resolve,0));
-          if(current?.job?.JOB_ID!==jobId||current?.activeStage!==stage||operationSelection[stage]!==operation||runSelection[stage]!==run||current?.activeView!==view){announce('Selection changed. Retry the action from the current stage.');return;}
-          return handler.apply(node,args);
-        }finally{for(const [control,disabled] of preparing)if(control.isConnected)control.disabled=disabled;}
-      },{immediate:true}).catch(error=>reportActionFailure(error)).finally(()=>{
+      entry.promise=withStorageActivity(label,()=>afterUiFeedback(()=>{
+        if(current?.job?.JOB_ID!==jobId||current?.activeStage!==stage||operationSelection[stage]!==operation||runSelection[stage]!==run||current?.activeView!==view){announce('Selection changed. Retry the action from the current stage.');return;}
+        return handler.apply(node,args);
+      }),{immediate:true}).catch(error=>reportActionFailure(error)).finally(()=>{
         pendingUiActions.delete(key);for(const [control,disabled] of entry.controls){if(control.isConnected){control.disabled=disabled;control.removeAttribute('aria-busy');}}
       });
       return entry.promise;
