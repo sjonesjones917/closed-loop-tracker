@@ -256,8 +256,9 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
     if(!object(attachment)){issues.push(issue('INVALID_ATTACHMENT',path,'Attachment metadata must be an object.'));return;}
     unknownKeys(attachment,ATTACHMENT_KEYS,path,issues);
     const tempKey=registerTemp(attachment.temporaryKey,`${path}/temporaryKey`,'attachment');
-    const filename=String(attachment.filename||'').trim(),mediaType=String(attachment.mediaType||'').trim(),claimedSize=Number(attachment.byteSize),claimedHash=String(attachment.sha256||'').toLowerCase();
+    const filename=typeof attachment.filename==='string'?attachment.filename:'',mediaType=String(attachment.mediaType||'').trim(),claimedSize=Number(attachment.byteSize),claimedHash=String(attachment.sha256||'').toLowerCase();
     if(!filename)issues.push(issue('MISSING_ATTACHMENT_FILENAME',`${path}/filename`,'filename is required.'));
+    try{if(typeof attachment.filename!=='string')throw new TypeError('filename must be a string.');hash.normalizeFilename(filename,{allowPath:true});}catch(error){issues.push(issue('INVALID_ATTACHMENT_FILENAME',`${path}/filename`,error.message));}
     if(!mediaType)issues.push(issue('MISSING_ATTACHMENT_MEDIA_TYPE',`${path}/mediaType`,'mediaType is required.'));
     if(!Number.isInteger(claimedSize)||claimedSize<0)issues.push(issue('INVALID_ATTACHMENT_BYTE_SIZE',`${path}/byteSize`,'byteSize must be a non-negative integer.'));
     if(!/^[0-9a-f]{64}$/.test(claimedHash))issues.push(issue('INVALID_ATTACHMENT_SHA256',`${path}/sha256`,'sha256 must be a 64-character hexadecimal SHA-256 digest.'));

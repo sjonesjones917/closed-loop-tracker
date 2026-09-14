@@ -1,0 +1,77 @@
+{
+  "schema": "closed-loop-ui-persistence-repair-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "repairBaseCommit": "bfc0cfec9cd375200aab144a4b0dd428e56c03fc",
+  "actualBrowserBefore": {
+    "workflowRunId": 34842805308,
+    "jobId": 103971485998,
+    "headCommit": "bfc0cfec9cd375200aab144a4b0dd428e56c03fc",
+    "runtimeSourceCommit": "ced7e0dd4c22264cffa2cea98627b3609701236c",
+    "sequence": [
+      "Create a project through actual controls",
+      "Export Stage 1 files",
+      "Submit a wrong-project response",
+      "Export the correction instruction",
+      "Submit the valid response"
+    ],
+    "actual": "Validation-save error prevented progression; complete operator journey stopped at Stage 1."
+  },
+  "reproduction": {
+    "method": "Execute actual app persistence function with production store and lifecycle transaction adapter",
+    "expected": "Commit reservation candidate at R+1 using expected source revision R",
+    "actual": "STALE_PROJECT_REVISION because candidate revision R+1 was used as expected stored revision",
+    "failure": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Got unwanted rejection: RESERVATION_UI_COMMIT_ORACLE: the expected stored revision is the source revision, not the candidate revision\nActual message: \"Project changed before its checkpoint could be prepared.\"\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-ui-persistence-preconditions.mjs:10:1 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: Error: Project changed before its checkpoint could be prepared.\n      at storageError (project-store.js:29:50)\n      at prepareProjectWrite (project-store.js:460:148)\n      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n      at async writeProject (project-store.js:478:18)\n      at async Object.persistReplacement (evalmachine.<anonymous>:7:43)\n      at async file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-ui-persistence-preconditions.mjs:10:40\n      at async waitForActual (node:assert:646:5)\n      at async strict.doesNotReject (node:assert:789:33)\n      at async file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-ui-persistence-preconditions.mjs:10:1 {\n    code: 'STALE_PROJECT_REVISION'\n  },\n  expected: undefined,\n  operator: 'doesNotReject',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n"
+  },
+  "after": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "environment": "Actual app persistence function and production store with lifecycle transaction adapter",
+    "cases": [
+      {
+        "name": "The real UI persistence owner commits a revision-advancing reservation against its source revision",
+        "result": "PASS"
+      },
+      {
+        "name": "A stale candidate cannot overwrite independent work even when the UI has loaded the newer revision",
+        "result": "PASS"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "path": "app-core.js",
+      "sha256": "faac902f2e20c8a22d64ffd04173e9a0e539158a22c7e12d345f643ae4b842e5"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "f3678cd65ad95e69002d1742b59836ec78ad8c45f4be3835757ededdf4f839e1"
+    },
+    {
+      "path": "verify-ui-persistence-preconditions.mjs",
+      "sha256": "9ae8c0e96b1d1482ba870a4ee5a99b9e4298fb22e44c3b07507ce5b4e6b157b1"
+    }
+  ],
+  "browserRetest": "PENDING",
+  "applicationComplete": false,
+  "otherBrowserFindings": [
+    {
+      "finding": "Replacement confirmation was not wholly in view or did not show expected impact",
+      "change": "Explicitly scroll its heading to the start of the viewport after focus; expanded assertion reports geometry and text",
+      "status": "BROWSER_RETEST_REQUIRED"
+    },
+    {
+      "finding": "Stage-selection helper read dynamic detail IDs before pending navigation completed",
+      "change": "Existing browser checks now wait for the shared operation to settle before inspecting resulting DOM",
+      "status": "BROWSER_RETEST_REQUIRED"
+    },
+    {
+      "finding": "Legacy browser test expected the replaced Export instruction file wording",
+      "change": "Assert the required consolidated Export stage files action",
+      "status": "BROWSER_RETEST_REQUIRED"
+    },
+    {
+      "finding": "Retained Stage 1 confirmation control assertion failed",
+      "status": "UNRESOLVED_PENDING_NAVIGATION_SETTLE_RETEST"
+    }
+  ]
+}

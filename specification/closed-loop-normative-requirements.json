@@ -41635,7 +41635,23 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-01764243de7807d20da1c57df07f98a2",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+      "productionOwners": [
+        "hash.js:pinnedNFC/defaultCaseFold/confusableSkeleton/normalizeFilenameSet",
+        "workflow-engine.js:appendArtifactBytes",
+        "response-ingestion.js:validateEnvelope",
+        "project-store.js:createExecutionPackage",
+        "app-core.js:logicalFilePath/registerStageFiles"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/unicode-repair-evidence-20260914.json",
+          "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-e42f7e110e7f6798a6a5cb7a44334934",
@@ -65265,7 +65281,23 @@
       ],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-cbdfb0c4ac8a74238425d4be1e4b89c4",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+      "productionOwners": [
+        "hash.js:pinnedNFC/defaultCaseFold/confusableSkeleton/normalizeFilenameSet",
+        "workflow-engine.js:appendArtifactBytes",
+        "response-ingestion.js:validateEnvelope",
+        "project-store.js:createExecutionPackage",
+        "app-core.js:logicalFilePath/registerStageFiles"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/unicode-repair-evidence-20260914.json",
+          "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-fbbdbf6147bdacd44e4b8c4a637ba501",
@@ -67208,7 +67240,20 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-a10c0c999e95845c5195f2a2426b6975",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+      "productionOwners": [
+        "app-core.js:persistReplacement",
+        "project-store.js:writeProjectRow/writeOperationalProject"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/ui-persistence-repair-evidence-20260914.json",
+          "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-8cb17179a8502e7f44be4c4504bf266c",
@@ -203560,5 +203605,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "f915c1336db6a771a102e09f02365e677a057f544b790527e835b18c0819633a"
+  "manifestSha256": "750294082623b4c8c9f02ced3864b53a418299df9bd53c50cda93382726718dd"
 }

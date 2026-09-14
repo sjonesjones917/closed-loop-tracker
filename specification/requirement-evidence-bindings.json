@@ -66,6 +66,75 @@
         "currentDisposition": "IMPLEMENTED_UNPROVEN",
         "currentDispositionReason": "Focused production cryptography and recovery evidence exists; required complete operator and device acceptance remain open."
       }
+    },
+    {
+      "normativeRequirementId": "NREQ-01764243de7807d20da1c57df07f98a2",
+      "sourceLineSha256": "8cf7bcf332a5ee6afe0b77074b0a79ade7ac871a7c254bd415144aba782ce3c8",
+      "fields": {
+        "productionOwners": [
+          "hash.js:pinnedNFC/defaultCaseFold/confusableSkeleton/normalizeFilenameSet",
+          "workflow-engine.js:appendArtifactBytes",
+          "response-ingestion.js:validateEnvelope",
+          "project-store.js:createExecutionPackage",
+          "app-core.js:logicalFilePath/registerStageFiles"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/unicode-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-cbdfb0c4ac8a74238425d4be1e4b89c4",
+      "sourceLineSha256": "98d695a317286c18a62be82712b6c154c9a3d7f53166af2e8dacee24078047ba",
+      "fields": {
+        "productionOwners": [
+          "hash.js:pinnedNFC/defaultCaseFold/confusableSkeleton/normalizeFilenameSet",
+          "workflow-engine.js:appendArtifactBytes",
+          "response-ingestion.js:validateEnvelope",
+          "project-store.js:createExecutionPackage",
+          "app-core.js:logicalFilePath/registerStageFiles"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/unicode-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a10c0c999e95845c5195f2a2426b6975",
+      "sourceLineSha256": "addfda5423eab25d4cdf9105d69ff59f624ee17ee001b1535457407fd79c291f",
+      "fields": {
+        "productionOwners": [
+          "app-core.js:persistReplacement",
+          "project-store.js:writeProjectRow/writeOperationalProject"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/ui-persistence-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
     }
   ]
 }

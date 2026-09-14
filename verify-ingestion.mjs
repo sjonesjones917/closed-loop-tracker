@@ -555,6 +555,29 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   console.log(JSON.stringify({attachmentSlotMapping:'PASS',explicitSlotsRequired:true,pickerOrderIndependent:true,filenameOnlyRejected:true,staleOrDuplicateSlotsRejected:true,slotMutationsDetected:7,rawBytesPreserved:true,failedResponseRepairedWithoutReselect:true,atomicReturnedArtifactPromotion:true,totalNegativeCases:negativeCount}));
 }
 
+// The raw transport name is a claim, never a trim-normalized identity. These
+// otherwise-valid cases isolate the filename gate from slot and byte identity.
+{
+  const checked=[];
+  for(const [declared,selected,expected] of [
+    [' result.txt','result.txt','ATTACHMENT_FILENAME_MISMATCH'],
+    ['result.txt ','result.txt ','INVALID_ATTACHMENT_FILENAME'],
+    ['../result.txt','../result.txt','INVALID_ATTACHMENT_FILENAME'],
+    ['bad\u0085name.txt','bad\u0085name.txt','INVALID_ATTACHMENT_FILENAME'],
+    [42,'42','INVALID_ATTACHMENT_FILENAME'],
+    ['re\u0301sume\u0301.txt','re\u0301sume\u0301.txt',null],
+    ['中文-🙂.txt','中文-🙂.txt',null]
+  ]){
+    const p=project('JOB-FILENAME-GATE'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),text='Exact bytes\n',sha256=globalThis.closedLoopHash.sha256Text(text);
+    e.attachments=[{temporaryKey:'name-check',filename:declared,mediaType:'text/plain',byteSize:new TextEncoder().encode(text).byteLength,sha256,required:true}];e.evidence[0].attachmentRef={tempKey:'name-check'};
+    const slot=ingestion.attachmentSlotPlan(p,e,pr)[0],files=[{artifactId:'FILENAME-FILE',name:selected,type:'text/plain',size:e.attachments[0].byteSize,sha256,attachmentSlotId:slot.attachmentSlotId}],result=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files});
+    if(expected){if(result.validation.valid||!result.validation.issues.some(issue=>issue.code===expected))throw new Error('FILENAME_GATE_ORACLE '+JSON.stringify({declared,expected,issues:result.validation.issues}));negativeCount++;}
+    else {if(!result.validation.valid)throw new Error('FILENAME_VALID_ORACLE '+JSON.stringify(result.validation.issues));const accepted=ingestion.commit(result.project,result.proposal.proposalId),artifact=accepted.project.projectData.artifacts.at(-1);if(artifact.FILENAME!==selected||artifact.rawFilename!==selected||artifact.canonicalPath!==globalThis.closedLoopHash.pinnedNFC(selected))throw new Error('FILENAME_RAW_PRESERVATION_ORACLE');}
+    checked.push({declared,expected,result:'PASS'});
+  }
+  console.log(JSON.stringify({filenameGate:'PASS',synthetic:true,checked}));
+}
+
 // Pending application-owned references must persist without pretending proof exists.
 {
   const runtime={core,schema,engine,prompts,ingestion},p=stage04AcceptanceFixture(runtime,'JOB-PROOF-PERSISTENCE'),pr=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(pr);

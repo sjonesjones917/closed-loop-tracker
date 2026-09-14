@@ -165,6 +165,14 @@ assert(new TextDecoder().decode(executionMembers.find(row=>row.canonicalPath===e
 assert(createHash('sha256').update(zipBytes).digest('hex')===executionPackage.packageSha256,'Execution-package digest changed.');
 const artifactMember=executionMembers.find(row=>row.canonicalPath.startsWith('artifacts/'));
 assert(Buffer.from(artifactMember.bytes).equals(Buffer.from(exportedPayload.artifacts[6].base64,'base64')),'Execution package changed artifact bytes.');
+// The canonical member path uses pinned NFC while the manifest retains the raw
+// device name. Only bytes, not a screenshot or declared success, establish this.
+const originalPackageFilename=filePackageRuntime.fixtureArtifacts[6].filename;
+filePackageRuntime.fixtureArtifacts[6].filename='re\u0301sume\u0301-中文.txt';
+const unicodePackage=await vm.runInContext("closedLoopProjectStore.createExecutionPackage({project:fixtureProject,stage:4,operation:'COMPLETE'})",filePackageRuntime),unicodeMembers=readStoreArchive(new Uint8Array(await unicodePackage.blob.arrayBuffer())),unicodeManifest=JSON.parse(new TextDecoder().decode(unicodeMembers.find(row=>row.canonicalPath==='manifest.json').bytes)),unicodeArtifact=unicodeManifest.members.find(row=>row.artifactId==='FILE-6');
+assert(unicodeArtifact.rawFilename==='re\u0301sume\u0301-中文.txt'&&unicodeArtifact.canonicalPath==='artifacts/FILE-6/résumé-中文.txt','FILENAME_EXPORT_ORACLE: canonical path or original spelling changed.');
+assert(Buffer.from(unicodeMembers.find(row=>row.canonicalPath===unicodeArtifact.canonicalPath).bytes).equals(Buffer.from(artifactMember.bytes)),'FILENAME_EXPORT_BYTES_ORACLE');
+filePackageRuntime.fixtureArtifacts[6].filename=originalPackageFilename;
 const decoderRuntime=vm.createContext({...inactiveMobileAcceptance,Blob,Uint8Array,atob});
 vm.runInContext(store.slice(store.indexOf('const base64ToBytes='),store.indexOf('async function compressBytes('))+'\nglobalThis.decodeFile=base64ToBlob;',decoderRuntime);
 for(const row of exportedPayload.artifacts){

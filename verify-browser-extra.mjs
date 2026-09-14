@@ -44,7 +44,7 @@ async function selectResponseFile(cdp,text,filename='response.json'){
   const selected=await evalValue(cdp,`(()=>{const input=document.querySelector('#response-json-file');if(!input||input.files.length!==1)return false;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));return input.files[0].name===${JSON.stringify(safeName)};})()`);
   assert(selected,'The browser did not select the authoritative response file.');await waitForIdle(cdp);
 }
-async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');if(!s)return false;s.value='${n}';s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitExpr(cdp,`document.querySelector('#stage-picker')?.value==='${n}'`);}
+async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');if(!s)return false;s.value='${n}';s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitExpr(cdp,`document.querySelector('#stage-picker')?.value==='${n}'`);await waitExpr(cdp,`document.querySelector('#app')?.getAttribute('aria-busy')!=='true'`);}
 async function projects(cdp){return evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`);}
 async function activeProject(cdp){return evalValue(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];const all=await globalThis.closedLoopProjectStore.readAll();return all.find(p=>p.job?.JOB_ID===id)||all[0];})()`);}
 
