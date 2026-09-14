@@ -1,0 +1,109 @@
+[
+  {
+    "defectId": "DUPLICATE-OPERATOR-ACTION",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-operator-action-lifecycle.mjs",
+    "operationSequence": [
+      "Hold saveInstruction storage boundary",
+      "Activate the same binding twice before completion"
+    ],
+    "expected": "One operation with conspicuous pending state; controls recover after success or failure",
+    "actualAtStart": "Two operations started",
+    "responsibleOwner": "app-core.js: shared action binding",
+    "status": "PRODUCTION_CORRECTED; INTEGRATED_BROWSER_REPLAY_PENDING"
+  },
+  {
+    "defectId": "EARLIER-DERIVED-AUTHORITY-INVALIDATED",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-shared-contract-faults.mjs",
+    "operationSequence": [
+      "Create independent stage-owner authority sentinels",
+      "Invalidate from Stage 18 or later"
+    ],
+    "expected": "Only records owned by later stages are invalidated",
+    "actualAtStart": "Stage 18 convergence authority was invalidated by a Stage 18 change; release and byte identities were also erased by later changes",
+    "responsibleOwner": "workflow-engine.js: invalidateDownstream",
+    "status": "PRODUCTION_CORRECTED; AFFECTED TERMINAL SUITE PASS"
+  },
+  {
+    "defectId": "STALE-NEW-RESERVATION",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-operation-sequences.mjs",
+    "operationSequence": [
+      "Reserve payload A at revision 0",
+      "Cancel reservation",
+      "Reserve different payload B with expected revision 0"
+    ],
+    "expected": "Reject the stale writer without mutation; accept after revision refresh",
+    "actualAtStart": "Different payload reserved despite stale expected revision",
+    "responsibleOwner": "workflow-engine.js: reserveOperation; prompt-engine.js consumer",
+    "status": "PRODUCTION_CORRECTED; GENERATED REGRESSION PASS"
+  },
+  {
+    "defectId": "FABRICATED-MOBILE-RECEIPTS",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-mobile-operation-observations.mjs",
+    "operationSequence": [
+      "Populate arrays and ready-store values in a disposable VM without executing operations",
+      "Capture mobile acceptance receipts"
+    ],
+    "expected": "Zero executed-operation receipts",
+    "actualAtStart": "16 passing receipts fabricated",
+    "responsibleOwner": "app-core.js: mobile acceptance observers; verify-mobile-acceptance-evidence.mjs: acceptance boundary",
+    "baselineFailureLog": "mobile-receipt-baseline-failure.log",
+    "status": "PRODUCTION_CORRECTED; SYNTHETIC REGRESSION PASS; PHYSICAL RUN NOT PERFORMED"
+  },
+  {
+    "defectId": "UNEXECUTED-ACCEPTANCE-METRICS",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-v3-definition-of-done.mjs",
+    "operationSequence": [
+      "Generate Section 49 acceptance metrics without executing the claimed cases"
+    ],
+    "expected": "No conformance claim from source-text matches, candidate mappings or literal zero values",
+    "actualAtStart": "Source checks produced 100% and 26 zero-count metrics were literal zeros",
+    "responsibleOwner": "verify-v3-definition-of-done.mjs; specification governance generator",
+    "status": "UNSUPPORTED CLAIMS REMOVED; COMPLETE REQUIREMENT EVIDENCE STILL REQUIRED"
+  },
+  {
+    "defectId": "EMPTY-OR-UNBOUND-EVIDENCE-CHAIN-SET",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-stage29-evidence-chain-checkpoint.mjs",
+    "operationSequence": [
+      "Evaluate a project with no established mandatory-requirement universe",
+      "Evaluate a disposable completed chain with each current release/hash-review/product/baseline binding removed or changed"
+    ],
+    "expected": "No complete current evidence-chain set and no 100% coverage from an unreviewed empty universe or missing current binding",
+    "actualAtStart": "Empty set completed with 100%; absent bindings could satisfy the set",
+    "responsibleOwner": "workflow-engine.js: currentEvidenceChainSet, calculateEvidenceChains and deriveEvidenceChains",
+    "status": "CORRECTED; FOCUSED NEGATIVE-AND-REPAIRED CASES PASS"
+  },
+  {
+    "defectId": "MISSING-STAGE-PROJECTIONS-AND-CONTRACT-TYPES",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "stage-projection-verification.mjs; verify-full-cycle.mjs",
+    "operationSequence": [
+      "Enumerate Section 37 required fields independently of workbook.js",
+      "Complete each synthetic workflow stage through its production mechanisms",
+      "Compare every application-owned completion value with its declared contract"
+    ],
+    "expected": "Every mandatory field exists in the shared contract; completed stages expose correctly typed application-owned values and current identities",
+    "actualAtStart": "Missing Stage 01/02 contract fields; missing Stage 10/25/28/29/30 summaries; arrays, counters and flags declared as incompatible strings or integers; Stage 28 did not establish CURRENT_HASH_REVIEW_ID",
+    "responsibleOwner": "workbook.js and workflow-schema.js static declarations; workflow-engine.js deriveStageData, deriveArtifactIdentity and derivation consumers",
+    "status": "CORRECTED; INTEGRATED PROJECTION REPLAY IN PROGRESS; NOT OPERATOR-JOURNEY EVIDENCE"
+  },
+  {
+    "defectId": "TERMINAL-SELF-INVALIDATION",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-shared-contract-faults.mjs#INVALIDATION-FROM-30",
+    "operationSequence": [
+      "Create stage-owner authority sentinels",
+      "Invalidate downstream from Stage 30",
+      "Inspect authority validity and activity as well as invalidatedBy"
+    ],
+    "expected": "No later stage exists; current Stage 30 delivery authority is preserved",
+    "actualAtStart": "The outer invalidation consumer withdrew the Stage 30 delivery record at its own boundary",
+    "responsibleOwner": "workflow-engine.js: controlling invalidation consumer",
+    "status": "CORRECTED; TARGETED IMPLEMENTATION-FAULT REPLAY ADDED"
+  }
+]

@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
+// These focused fixtures exercise ordinary projects outside device acceptance mode.
+const inactiveMobileAcceptance={focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
+
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
 const storageHealthSource=app.includes('function storageHealthValue(')?app.slice(app.indexOf('function storageHealthValue('),app.indexOf('function stageLocked(')):'';
@@ -10,7 +13,7 @@ const storageHealthSource=app.includes('function storageHealthValue(')?app.slice
 // open request that cannot report its own blocked event until the first ends.
 {
   const requests=[];let closed=0;
-  const runtime=vm.createContext({indexedDB:{open(){const request={};requests.push(request);return request;}}});
+  const runtime=vm.createContext({...inactiveMobileAcceptance,indexedDB:{open(){const request={};requests.push(request);return request;}}});
   vm.runInContext("const DB_NAME='closed-loop-reliability',DB_VERSION=2;"+store.slice(store.indexOf('let databasePromise=null;'),store.indexOf('function parseLegacy('))+';globalThis.open=openDatabase;',runtime);
   const first=runtime.open().catch(error=>error);requests[0].onblocked();assert((await first).code==='INDEXEDDB_BLOCKED','Blocked upgrade did not report its cause.');
   const retry=runtime.open().catch(error=>error);assert(requests.length===1,'Blocked upgrade queued another open request and left startup waiting behind the original lock.');
@@ -22,7 +25,7 @@ const storageHealthSource=app.includes('function storageHealthValue(')?app.slice
 }
 {
   const status={textContent:'Storage status loading…'},announcements=[];
-  const runtime=vm.createContext({closedLoopCore:{},load:async()=>{throw Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'});},console:{error(){}},announce:message=>announcements.push(message),$:selector=>selector==='#storage-status'?status:null});
+  const runtime=vm.createContext({...inactiveMobileAcceptance,runOperatorAction:async(_label,operation)=>operation(),closedLoopCore:{},load:async()=>{throw Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'});},console:{error(){}},announce:message=>announcements.push(message),$:selector=>selector==='#storage-status'?status:null});
   vm.runInContext(app.slice(app.indexOf('globalThis.closedLoopAppReady=false;'),app.indexOf('// Long-section navigation belongs'))+';globalThis.start=startClosedLoopApp;',runtime);
   await runtime.start();assert(runtime.closedLoopAppReady===false&&/blocked/i.test(runtime.closedLoopAppError),'Blocked startup was incorrectly marked ready.');
   assert(/close.*tabs.*reload/i.test(status.textContent)&&announcements.includes(status.textContent),'Blocked startup did not show an actionable recovery message in the existing status area.');
@@ -75,7 +78,7 @@ assert(custody.projectData.history.some(event=>event.type==='APPLICATION_ARTIFAC
 // Execute the production export coordinator with a slow persistence boundary.
 // Rapid requests for different handoff files must all complete without overlap.
 const delivered=[],exportErrors=[];let activeSaves=0,maxActiveSaves=0;
-const exportRuntime=vm.createContext({current:{activeStage:3,job:{JOB_ID:'EXPORT-QUEUE'}},setTimeout,announce:()=>{},reportActionFailure:error=>exportErrors.push(String(error.message||error)),alert:message=>{throw new Error('Unexpected native popup: '+message);},savePromptRecord:async stage=>{activeSaves++;maxActiveSaves=Math.max(maxActiveSaves,activeSaves);await new Promise(resolve=>setTimeout(resolve,10));activeSaves--;return {stage,instructionId:'SAME-CONTROLLING-INSTRUCTION'};}});
+const exportRuntime=vm.createContext({...inactiveMobileAcceptance,current:{activeStage:3,job:{JOB_ID:'EXPORT-QUEUE'}},setTimeout,announce:()=>{},reportActionFailure:error=>exportErrors.push(String(error.message||error)),alert:message=>{throw new Error('Unexpected native popup: '+message);},savePromptRecord:async stage=>{activeSaves++;maxActiveSaves=Math.max(maxActiveSaves,activeSaves);await new Promise(resolve=>setTimeout(resolve,10));activeSaves--;return {stage,instructionId:'SAME-CONTROLLING-INSTRUCTION'};}});
 vm.runInContext(app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext()'))+'\nglobalThis.exportRequest=promptExport;',exportRuntime);
 await Promise.all(['manifest','instruction','context'].map(name=>exportRuntime.exportRequest(record=>{delivered.push({name,instructionId:record.instructionId});})));
 assert(delivered.map(x=>x.name).join(',')==='manifest,instruction,context',`Rapid handoff requests were lost or reordered: ${JSON.stringify(delivered)}`);
@@ -88,7 +91,7 @@ assert(delivered.at(-1).name==='after-navigation','An interrupted export left su
 // Run the actual complete-export/backup handler against delayed storage. Navigation
 // must not rename another project's bytes; large package assemblies must serialize.
 const packageDownloads=[],packageRequests=[];let activePackages=0,maxActivePackages=0,rejectNextPackage=false;
-const packageRuntime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>null,document:{querySelectorAll:()=>[],createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
+const packageRuntime=vm.createContext({...inactiveMobileAcceptance,withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>null,document:{querySelectorAll:()=>[],createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
 const packageStart=app.indexOf('let projectPackageExportInFlight=')>=0?app.indexOf('let projectPackageExportInFlight='):app.indexOf('async function downloadProjectPackage(');
 vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource+app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+'\nglobalThis.exportCompletePackage=downloadProjectPackage;',packageRuntime);
 const originalExport=packageRuntime.exportCompletePackage();packageRuntime.current={job:{JOB_ID:'PACKAGE-B'}};const otherBackup=packageRuntime.exportCompletePackage('backup');packageRuntime.current={job:{JOB_ID:'PACKAGE-C'}};
@@ -100,7 +103,7 @@ rejectNextPackage=true;const failedPackage=packageRuntime.exportCompletePackage(
 assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz','Failed complete export left later backup requests stuck.');
 // Exercise the complete production package encoder with only the storage
 // boundary replaced. The browser suite supplies real IndexedDB coverage.
-const filePackageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
+const filePackageRuntime=vm.createContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
 vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
 vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore='),filePackageRuntime);
 vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
@@ -160,7 +163,7 @@ const {packageSha256:executionSha,...executionBody}=executionPayload;
 assert(executionPayload.contextFiles[0].text===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
 assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(executionBody)).digest('hex')===executionSha,'Execution-package digest changed.');
 assert(executionPayload.artifacts[0].base64===exportedPayload.artifacts[6].base64,'Execution package changed artifact bytes.');
-const decoderRuntime=vm.createContext({Blob,Uint8Array,atob});
+const decoderRuntime=vm.createContext({...inactiveMobileAcceptance,Blob,Uint8Array,atob});
 vm.runInContext(store.slice(store.indexOf('const base64ToBytes='),store.indexOf('async function compressBytes('))+'\nglobalThis.decodeFile=base64ToBlob;',decoderRuntime);
 for(const row of exportedPayload.artifacts){
   const wrapped=row.base64.replace(/.{73}/g,'$&\n\t '),decoded=await decoderRuntime.decodeFile(wrapped).arrayBuffer();
@@ -170,7 +173,7 @@ for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=f
 // Replay the complete production UI owner, without starting browser storage.
 // Diagnostic lists must use the existing lazy disclosure and page controls.
 {
-  const runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,
+  const runtime=vm.createContext({...inactiveMobileAcceptance,crypto:globalThis.crypto,URL,structuredClone,console,
     document:{currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]},closedLoopCore:core,closedLoopWorkflowSchema:globalThis.closedLoopWorkflowSchema,
     closedLoopWorkflowEngine:engine});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
@@ -215,7 +218,7 @@ for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=f
 }
 // The real Files view and proposal view must not eagerly build all accumulated
 // download controls or resolve every diff row before a detail page is opened.
-const viewRuntime=vm.createContext({engine,schema:globalThis.closedLoopWorkflowSchema,current:core.createBlankState('VIEW-PRESSURE'),safe:value=>Array.isArray(value)?value:[],esc:value=>String(value??''),label:value=>String(value),proposalVersionCurrent:()=>true});
+const viewRuntime=vm.createContext({...inactiveMobileAcceptance,engine,schema:globalThis.closedLoopWorkflowSchema,current:core.createBlankState('VIEW-PRESSURE'),safe:value=>Array.isArray(value)?value:[],esc:value=>String(value??''),label:value=>String(value),proposalVersionCurrent:()=>true});
 vm.runInContext(app.slice(app.indexOf('const detailViews='),app.indexOf('function completion(')),viewRuntime);
 vm.runInContext(app.slice(app.indexOf('function files(){'),app.indexOf('function release(){')),viewRuntime);
 vm.runInContext(`for(let i=0;i<600;i++)current.projectData.artifacts.push({id:'FILE-'+i,active:true,fields:{ARTIFACT_ID:'FILE-'+i,FILENAME:'file-'+i+'.bin',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',SHA256:'a'.repeat(64)}});globalThis.fileView=files();`,viewRuntime);
@@ -242,7 +245,7 @@ assert(evidenceLookups<=20&&regressionLookups<=20,`Deferred stage views eagerly 
 // Keep the production storage/handlers intact and substitute only transaction
 // I/O. Real IndexedDB versions of these regressions run in browser-extra.
 const storageRows=new Map(),storageAccess=[];
-const storageRuntime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,document:{querySelectorAll:()=>[]},Event:globalThis.Event,dispatchEvent:()=>true});
+const storageRuntime=vm.createContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,document:{querySelectorAll:()=>[]},Event:globalThis.Event,dispatchEvent:()=>true});
 const parseStorageJson=vm.runInContext('(text)=>JSON.parse(text)',storageRuntime);
 const storageRead=(value,parseJson=parseStorageJson)=>{if(value===undefined)return undefined;const blobs=[],copy=parseJson(JSON.stringify(value,(_key,item)=>item instanceof Blob?{__storageBlob:blobs.push(item)-1}:item));const restore=item=>{if(item&&typeof item==='object'){if(Object.keys(item).length===1&&Number.isInteger(item.__storageBlob))return blobs[item.__storageBlob];for(const key of Object.keys(item))item[key]=restore(item[key]);}return item;};return restore(copy);};
 storageRuntime.openStorageTransaction=async(names,mode)=>{
@@ -397,7 +400,7 @@ vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource,storageRunt
 await storageRegression('diagnostics:complete-exports-do-not-wait-for-health',async()=>{
   const downloads=[],errors=[],status={textContent:''};let release,entered,healthCalls=0,active=0,maxActive=0;
   const reached=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve);
-  const runtime=vm.createContext({withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'DIAGNOSTICS-EXPORT'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>status,console:{error:()=>{}},document:{querySelectorAll:()=>[],createElement:()=>({click(){downloads.push(this.download);}})},URL:{createObjectURL:()=> 'blob:verified-package',revokeObjectURL(){}},projectStore:{storageHealth:async()=>{healthCalls++;entered();await held;throw new Error('CONTROLLED_DIAGNOSTICS_FAILURE');},exportPackage:async()=>{active++;maxActive=Math.max(maxActive,active);await new Promise(resolve=>setTimeout(resolve,0));active--;return {};}}});
+  const runtime=vm.createContext({...inactiveMobileAcceptance,withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'DIAGNOSTICS-EXPORT'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>status,console:{error:()=>{}},document:{querySelectorAll:()=>[],createElement:()=>({click(){downloads.push(this.download);}})},URL:{createObjectURL:()=> 'blob:verified-package',revokeObjectURL(){}},projectStore:{storageHealth:async()=>{healthCalls++;entered();await held;throw new Error('CONTROLLED_DIAGNOSTICS_FAILURE');},exportPackage:async()=>{active++;maxActive=Math.max(maxActive,active);await new Promise(resolve=>setTimeout(resolve,0));active--;return {};}}});
   vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource+app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+';globalThis.exportCompletePackage=downloadProjectPackage;',runtime);
   let completed=0;const first=runtime.exportCompletePackage().then(()=>completed++,e=>errors.push(e)),second=runtime.exportCompletePackage('backup').then(()=>completed++,e=>errors.push(e));
   await reached;await new Promise(resolve=>setTimeout(resolve,25));const whileHeld={downloads:downloads.length,completed};release();await Promise.all([first,second]);await new Promise(resolve=>setTimeout(resolve,0));
@@ -625,7 +628,7 @@ await storageRegression('artifact-queries:project-local-without-store-scan',asyn
   storageAccess.length=0;await storageRuntime.projectStore.removeProject('DELETE-QUERY');
   assert(!storageAccess.some(row=>row.name==='artifacts'&&row.kind==='getAll'),'Deleting one project scanned unrelated artifact rows.');
 });
-const importStart=app.indexOf("$('#import-file').onchange="),importEnd=app.indexOf('\nglobalThis.closedLoopAppReady',importStart);
+const importStart=app.indexOf("bindFileAction('#import-file'"),importEnd=app.indexOf('\nglobalThis.closedLoopAppReady',importStart);
 await storageRegression('backup:required-prompt-context',async()=>{
   await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CONTEXT');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Required context content. '.repeat(4000);const prompt=closedLoopPromptEngine.buildPromptRecord(1,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(prompt);p=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});const rows=await projectStore.listArtifacts(p.job.JOB_ID),context=rows.find(row=>row.lineage?.kind==='PROMPT_CONTEXT');if(!context)throw new Error('The real instruction did not materialize its context fixture.');await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(context.artifactId,p.job.JOB_ID);})()`,storageRuntime);
   let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CONTEXT');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
@@ -634,6 +637,8 @@ await storageRegression('backup:required-prompt-context',async()=>{
   assert(!report.verified&&report.artifacts.some(row=>row.issue==='MISSING_STORED_BLOB'),'Stored-file verification ignored missing saved instruction context bytes.');
 });
 assert(importStart>=0&&importEnd>importStart,'Production import handler is missing.');
+storageRuntime.bindFileAction=(selector,operation)=>{storageRuntime.$(selector).onchange=e=>operation(Array.from(e.target.files||[]));};
+storageRuntime.loadAcceptanceSession=async()=>{};
 vm.runInContext(app.slice(importStart,importEnd),storageRuntime);
 await storageRegression('import:post-commit-refresh-failure',async()=>{
   await vm.runInContext(`globalThis.projects=[backupProject];globalThis.current=backupProject;globalThis.failures=[];globalThis.refreshProjectStorage=async()=>{throw new Error('CONTROLLED_REFRESH_FAILURE');};`,storageRuntime);
@@ -717,7 +722,7 @@ let dropWorkerReply=false,workerExecutions=0;
 class StoreWorkerFixture{
   constructor(url){
     this.stopped=false;let listener;
-    const worker=vm.createContext({Blob,Uint8Array,ArrayBuffer,DataView,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,URL,URLSearchParams,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true,location:new URL(url),openStorageTransaction:storageRuntime.openStorageTransaction,addEventListener:(type,callback)=>{if(type==='message')listener=callback;},postMessage:message=>{if(this.stopped)return;if(dropWorkerReply){dropWorkerReply=false;this.onerror?.({message:'CONTROLLED_LOST_COMMITTED_REPLY'});}else this.onmessage?.({data:storageRead(message)});}});
+    const worker=vm.createContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,DataView,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,URL,URLSearchParams,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true,location:new URL(url),openStorageTransaction:storageRuntime.openStorageTransaction,addEventListener:(type,callback)=>{if(type==='message')listener=callback;},postMessage:message=>{if(this.stopped)return;if(dropWorkerReply){dropWorkerReply=false;this.onerror?.({message:'CONTROLLED_LOST_COMMITTED_REPLY'});}else this.onmessage?.({data:storageRead(message)});}});
     const parseWorkerJson=vm.runInContext('text=>JSON.parse(text)',worker);
     worker.workerRead=value=>storageRead(value,parseWorkerJson);
     worker.importScripts=(...urls)=>{for(const url of urls){const file=String(url).split('?')[0];vm.runInContext(fs.readFileSync(file,'utf8'),worker,{filename:file});}};

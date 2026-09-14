@@ -117,10 +117,13 @@ body{font-size:16px}
 .data-text-page{max-height:60vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit} [data-detail-page],[data-detail-download]{min-height:44px;min-width:44px}
 #storage-status[aria-busy="true"]{position:relative;color:transparent}
 #storage-status[aria-busy="true"]::after{content:attr(data-operation);position:absolute;inset:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.operation-status{position:sticky;top:0;z-index:20;padding:14px 16px;background:var(--accent);color:white;font-size:16px;font-weight:700;line-height:1.4;border-bottom:2px solid var(--ink)}
+.operation-status[hidden]{display:none}
 </style>
 </head>
 <body>
 <div id="app-live-status" aria-live="polite" class="sr-only"></div>
+<div id="app-operation-status" class="operation-status" role="status"><span id="operation-label">Loading project</span></div>
 
 <div class="app" id="app">
 <header class="app-header"><div class="header-main"><div class="brand"><div class="brand-kicker">Mobile closed-loop control</div><h1>Closed-Loop Reliability</h1><p id="current-project-summary" aria-live="polite">Loading the current project…</p></div><div class="project-select"><label for="project-picker">Project</label><select id="project-picker"></select></div></div><div class="header-actions"><button class="primary" id="new-project" type="button">New project</button><details class="project-action-menu"><summary id="project-actions-toggle" aria-expanded="false">Project actions</summary><div class="project-action-popover"><button id="header-backup-project" type="button">Create complete backup</button><button id="export-project" type="button">Export complete project</button><button id="import-project" type="button">Import project package</button></div></details><input id="import-file" type="file" hidden accept=".json,.gz,.closed-loop.json.gz,application/json,application/gzip,application/x-gzip"></div><div id="storage-status" class="storage-status" role="status">Storage status loading…</div><div class="progress-line"><strong id="progress-label">0/30 complete</strong><div class="progress-track" aria-hidden="true"><i id="progress-bar"></i></div></div></header>

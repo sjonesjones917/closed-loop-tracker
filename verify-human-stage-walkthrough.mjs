@@ -8,7 +8,7 @@ const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium'
 if(!browser)throw new Error('Chrome/Chromium was not found.');
 const serverPort=9400+Math.floor(Math.random()*300);
 const remotePort=10400+Math.floor(Math.random()*300);
-const root=process.cwd();
+const root=path.resolve(process.env.STATIC_SITE_ROOT||process.cwd());
 const server=http.createServer((req,res)=>{
   const raw=(req.url||'/').split('?')[0],rel=raw==='/'?'index.html':decodeURIComponent(raw.replace(/^\//,''));
   const absolute=path.resolve(root,rel);
@@ -110,8 +110,8 @@ try{
     return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptVisualBaseline:true,operatorDoubleCheckGuide:true};
   })()`);
   if(browserDialog)throw new Error(`Browser UI opened an unexpected dialog: ${browserDialog}`);
-  if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<8||result?.applicationOnlyOperations<1||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Sequential browser walkthrough did not establish the complete operator path.');
-  console.log(JSON.stringify({humanStageWalkthrough:true,...result}));
+  if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<8||result?.applicationOnlyOperations<1||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Synthetic prompt and navigation checks did not pass.');
+  console.log(JSON.stringify({syntheticPromptAndNavigationChecks:true,completeOperatorJourney:false,humanIndependenceEstablished:false,...result}));
 }finally{
   try{ws?.close();}catch{}
   const exited=new Promise(resolve=>child.once('exit',resolve));
