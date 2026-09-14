@@ -38,14 +38,35 @@
       "exitCode": 0,
       "stdoutSha256": "231dcd76259e3f140f9638cbc628f121beb3d18187c80eac7cf3c1d8b3e5d364",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "script": "verify-v3-definition-of-done.mjs",
+      "exitCode": 0,
+      "stdoutSha256": "105a36ca57d61d67aa9a23c1e98b9af6ed7a1b6821aeb077436d02c4b8f44261",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mandatoryZeroCountUnknowns": 26,
+      "completionNotEstablished": true
     }
   ],
   "pending": [
     "Complete conformance suite",
-    "V3 definition-of-done replay",
     "CI operator journeys",
     "Exact deployment verification",
     "Physical-device, approved visuals and real-project mandatory proof"
   ],
-  "completeApplicationAcceptance": false
+  "completeApplicationAcceptance": false,
+  "ciObservations": [
+    {
+      "runId": 34875254035,
+      "sourceRevision": "498035d6fa608d75242fe4112f30784a385c0ee2",
+      "result": "FAIL",
+      "reason": "verify-independent-preflight.mjs Stage08 prerequisite used unreserved instructionVersion",
+      "repairRevision": "5694427abda882d26f71e058d989a26f1a5ee729"
+    },
+    {
+      "runId": 34875607072,
+      "sourceRevision": "5694427abda882d26f71e058d989a26f1a5ee729",
+      "status": "IN_PROGRESS"
+    }
+  ]
 }

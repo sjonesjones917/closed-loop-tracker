@@ -131,6 +131,7 @@ jobs:
         run: |
           set -euo pipefail
           node verify-all-stage-prompts.mjs
+          node verify-stage-context-boundary.mjs
           node verify-stage-prompts-complete.mjs
           node verify-user-prompt-invariants.mjs
 

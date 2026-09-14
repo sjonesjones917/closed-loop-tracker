@@ -295,6 +295,13 @@
         {
           "path": "verification/context-provenance-evidence-20260914.json",
           "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        },
+        {
+          "path": "verification/continuation-scope-fixture-replay-20260914.json",
+          "scope": "verify-data-route-closure.mjs: all 66 operation routes; generated prompts for every external operation reject unexpected generation failure and exclude later-stage/stale sentinels. Synthetic fixture evidence only; byte exports and restoration journeys remain separately required.",
+          "sourceRevision": "498035d6fa608d75242fe4112f30784a385c0ee2",
+          "kind": "SYNTHETIC_PRODUCTION_RUNTIME_REGRESSION",
+          "fullRequirementEstablished": false
         }
       ]
     },
@@ -1252,7 +1259,15 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/continuation-dependent-gates-20260914.json",
+          "scope": "verify-infrastructure-route-closure.mjs and its actual export-handler fixture: automatic scope/context preparation and retry preserve exact instruction identity. Consolidated transport across all operations, mobile behavior and deployed acceptance remain required.",
+          "sourceRevision": "498035d6fa608d75242fe4112f30784a385c0ee2",
+          "kind": "SYNTHETIC_PRODUCTION_RUNTIME_REGRESSION",
+          "fullRequirementEstablished": false
+        }
+      ]
     },
     {
       "requirementId": "USER-062",
@@ -1557,6 +1572,13 @@
         {
           "path": "verification/acceptance-boundary-evidence-20260914.json",
           "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/continuation-scope-fixture-replay-20260914.json",
+          "scope": "verify-shared-contract-faults.mjs: production ownership bypass, skipped invalidation, terminal self-invalidation and length-only byte comparison faults detected, then unmodified implementation passed. Other mandated fault classes and exact deployed journeys require their own evidence.",
+          "sourceRevision": "498035d6fa608d75242fe4112f30784a385c0ee2",
+          "kind": "SYNTHETIC_PRODUCTION_RUNTIME_REGRESSION",
+          "fullRequirementEstablished": false
         }
       ]
     },
