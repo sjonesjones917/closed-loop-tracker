@@ -1,3 +1,4 @@
+import {readStoreArchive} from './test-zip.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
@@ -155,11 +156,24 @@ try{
 }finally{Blob.prototype.arrayBuffer=nativeBlobRead;}
 const executionPackageReadBytes=totalPackageRead,executionPackageSourceBytes=artifactSizes[6]+filePackageRuntime.fixtureContextBlob.size;
 assert(maxPackageRead<=65536&&maxBase64Input<=65536,'Execution-package export buffered a complete artifact/context file.');
-const executionPayload=JSON.parse(await new Response(executionPackage.blob.stream().pipeThrough(new DecompressionStream('gzip'))).text());
-const {packageSha256:executionSha,...executionBody}=executionPayload;
-assert(executionPayload.contextFiles[0].text===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
-assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(executionBody)).digest('hex')===executionSha,'Execution-package digest changed.');
-assert(executionPayload.artifacts[0].base64===exportedPayload.artifacts[6].base64,'Execution package changed artifact bytes.');
+assert(Buffer.from(await executionPackage.blob.slice(0,4).arrayBuffer()).toString('hex')==='504b0304','The stage package is not the registered ZIP transport containing instruction.txt, manifest.json, and exact files.');
+const executionBytes=new Uint8Array(await executionPackage.blob.arrayBuffer()),executionMembers=readStoreArchive(executionBytes),executionFiles=new Map(executionMembers.map(member=>[member.canonicalPath,member.bytes]));
+const executionManifest=JSON.parse(new TextDecoder().decode(executionFiles.get('manifest.json')));
+const {packageManifestSha256,...manifestBody}=executionManifest;
+assert(executionManifest.schema==='closed-loop-handoff-container/1','The archive does not contain the registered logical manifest.');
+assert(createHash('sha256').update(executionBytes).digest('hex')===executionPackage.packageSha256,'ZIP transport digest changed.');
+assert(createHash('sha256').update(globalThis.closedLoopHash.stableStringify(manifestBody)).digest('hex')===packageManifestSha256,'Logical manifest digest changed.');
+assert(executionFiles.size===executionManifest.members.length+1,'The archive contains missing or unmanifested members.');
+for(const member of executionManifest.members){const bytes=executionFiles.get(member.canonicalPath);assert(bytes&&bytes.length===member.byteSize&&createHash('sha256').update(bytes).digest('hex')===member.sha256,'Manifest identity does not match exported bytes: '+member.canonicalPath);}
+assert(new TextDecoder().decode(executionFiles.get('instruction.txt'))==='instruction\n','Export changed authoritative instruction bytes.');
+assert(new TextDecoder().decode(executionFiles.get('context.json'))===await filePackageRuntime.fixtureContextBlob.text(),'Export changed context UTF-8 boundaries or escapes.');
+const exportedArtifact=executionManifest.members.find(member=>member.artifactId==='FILE-6');
+assert(Buffer.from(executionFiles.get(exportedArtifact.canonicalPath)).toString('base64')===exportedPayload.artifacts[6].base64,'Execution package changed artifact bytes.');
+const repeatedPackage=await filePackageRuntime.closedLoopProjectStore.createExecutionPackage({project:filePackageRuntime.fixtureProject,stage:4,operation:'COMPLETE'});
+assert(Buffer.from(await repeatedPackage.blob.arrayBuffer()).equals(Buffer.from(executionBytes)),'Repeated export changed deterministic ZIP bytes.');
+const damagedArchive=executionBytes.slice();damagedArchive[30+new DataView(damagedArchive.buffer).getUint16(26,true)]^=1;
+let damagedArchiveRejected=false;try{readStoreArchive(damagedArchive);}catch(error){damagedArchiveRejected=/member CRC/.test(error.message);}assert(damagedArchiveRejected,'Independent archive decoder accepted changed member bytes.');
+console.log(JSON.stringify({handoffArchive:{schema:executionManifest.schema,members:executionManifest.members.map(member=>member.canonicalPath),crcMutationRejected:damagedArchiveRejected,repeatBytesEqual:true}}));
 const decoderRuntime=vm.createContext({Blob,Uint8Array,atob});
 vm.runInContext(store.slice(store.indexOf('const base64ToBytes='),store.indexOf('async function compressBytes('))+'\nglobalThis.decodeFile=base64ToBlob;',decoderRuntime);
 for(const row of exportedPayload.artifacts){
@@ -276,8 +290,9 @@ console.log(JSON.stringify({packageSourceReads:{complete:{sourceBytes:completePa
 await storageRegression('export:one-file-pass-after-integrity-verification',async()=>{
   assert(completePackageReadBytes<=completePackageSourceBytes*2,`Complete export read ${completePackageReadBytes} file bytes for ${completePackageSourceBytes} source bytes; package hashing and compression reread the same files.`);
 });
-await storageRegression('execution-package:one-file-pass-after-integrity-verification',async()=>{
-  assert(executionPackageReadBytes<=executionPackageSourceBytes*2,`Execution export read ${executionPackageReadBytes} file bytes for ${executionPackageSourceBytes} source bytes; package hashing and compression reread the same files.`);
+await storageRegression('execution-package:bounded-integrity-crc-and-transport-hash-passes',async()=>{
+  // One integrity pass, one ZIP CRC pass, and one transport-hash pass; small headers/manifest are included in the bound.
+  assert(executionPackageReadBytes<=executionPackageSourceBytes+executionPackage.blob.size*2,`Execution export exceeded its three bounded passes: ${executionPackageReadBytes} bytes.`);
 });
 await storageRegression('export:one-project-pass-after-snapshot-verification',async()=>{
   const saved=await storageRuntime.makeStored('SINGLE-PASS-PACKAGE');storageRuntime.projectSerializations=0;
