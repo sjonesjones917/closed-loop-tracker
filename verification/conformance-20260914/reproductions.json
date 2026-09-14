@@ -184,5 +184,24 @@
     "beforeEvidence": "product-attachment-before.json",
     "afterEvidence": "product-attachment-after.json",
     "status": "REPAIRED_LOCAL_BROWSER_PENDING"
+  },
+  {
+    "id": "STAGE10-EXTERNAL-RESPONSE-DEAD-END",
+    "sourceCommit": "dd08fc650b8f082d7ab1a299e35f200ed810b9c7",
+    "specificationSections": [
+      "13",
+      "37 Stage 10"
+    ],
+    "inputs": "Clean synthetic operator project completed through Stage 9 using accepted responses and required reviews. No Stage 10 external response exists.",
+    "operationSequence": [
+      "Complete Stage 9",
+      "Request the next Stage 10 action",
+      "Attempt the offered external-response operation"
+    ],
+    "expected": "Offer the application-owned FREEZE_CANDIDATE command without an external response prerequisite.",
+    "actual": "SELECT_RESPONSE_JSON_FILE; prompt generation fails because COMPLETE is not valid at Stage 10.",
+    "regression": "verify-full-cycle.mjs: Stage 9 to Stage 10 action assertion; verify-complete-operator-journey.mjs",
+    "beforeFailure": "file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:12\nconst assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='REFERENCE_ARRAY','Evidence-chain evidence identities must remain plural references.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must remain plural.');let p=core.createBlankState('JOB-FULL-CYCLE');Object.assign(p.job,{JOB_TITLE:'Full lifecycle proof',EXACT_USER_OBJECTIVE_VERBATIM:'Prove one complete closed-loop lifecycle.',EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_INPUT_VERSION:'INPUT-v001'});engine.ensureShape(p);engine.recalculate(p);\n                                 ^\n\nError: After Stage 9, Stage 10 must offer its application-owned freeze command without requiring an external response.\n    at assert (file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:12:34)\n    at file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:128:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:643:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n\nNode.js v24.19.0\n",
+    "status": "PRODUCTION_CORRECTED; INTEGRATED_BROWSER_REPLAY_PENDING"
   }
 ]
