@@ -117,6 +117,9 @@ body{font-size:16px}
 .data-text-page{max-height:60vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit} [data-detail-page],[data-detail-download]{min-height:44px;min-width:44px}
 #storage-status[aria-busy="true"]{position:relative;color:transparent}
 #storage-status[aria-busy="true"]::after{content:attr(data-operation);position:absolute;inset:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+button[aria-busy="true"]::after{content:"";display:inline-block;width:.8em;height:.8em;margin-left:.55em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pending-spin .8s linear infinite}
+@keyframes pending-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){button[aria-busy="true"]::after{animation:none}}
 </style>
 </head>
 <body>

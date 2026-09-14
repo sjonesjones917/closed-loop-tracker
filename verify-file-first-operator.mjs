@@ -9,6 +9,64 @@ const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
+// Pending state survives a render, suppresses the same control's duplicate
+// action, and clears after failure so the operator can retry.
+{
+  let executions=0,settle,buttons=[];const errors=[];
+  const makeButton=()=>({id:'fixture-action',dataset:{},disabled:false,attributes:{},
+    setAttribute(key,value){this.attributes[key]=value;},getAttribute(key){return this.attributes[key];},removeAttribute(key){delete this.attributes[key];},
+    onclick:()=>{executions++;return new Promise((resolve,reject)=>settle={resolve,reject});}});
+  const runtime=vm.createContext({current:{job:{JOB_ID:'PENDING-FIXTURE'},activeStage:1},document:{querySelectorAll:()=>buttons},reportActionFailure:error=>errors.push(error.message)});
+  vm.runInContext(app.slice(app.indexOf('const pendingControlActions='),app.indexOf('function announce('))+'\nglobalThis.guard=guardPendingActions;',runtime);
+  buttons=[makeButton()];runtime.guard();const first=buttons[0].onclick();assert(buttons[0].disabled);assert.equal(buttons[0].getAttribute('aria-busy'),'true');
+  buttons=[makeButton()];runtime.guard();const duplicate=buttons[0].onclick();assert.equal(executions,1,'A render permitted duplicate execution.');
+  settle.reject(new Error('Controlled operation failure'));await Promise.all([first,duplicate]);
+  assert.equal(buttons[0].disabled,false);assert.equal(buttons[0].getAttribute('aria-busy'),undefined);assert.deepEqual(errors,['Controlled operation failure']);
+  const retry=buttons[0].onclick();settle.resolve();await retry;assert.equal(executions,2,'Failure prevented a valid retry.');
+}
+
+// User input belongs to the project form; a successful save must lead to the
+// current workflow, including an unchanged save. Repeated clicks share one save.
+{
+  const writes=[],views=[],notices=[];let release;
+  const fields=[{dataset:{job:'EXACT_USER_OBJECTIVE_VERBATIM'},type:'text',value:'Create the requested checklist.'}];
+  const runtime=vm.createContext({structuredClone,clone:structuredClone,setTimeout,clearTimeout,
+    current:{activeStage:1,activeView:'Project',job:{JOB_ID:'SAVE-PATH',EXACT_USER_OBJECTIVE_VERBATIM:''},stages:{1:{status:'NOT STARTED'}},projectData:{}},
+    document:{querySelector:()=>null,querySelectorAll:()=>fields},$:()=>null,
+    engine:{recordHumanInputVersion(p){p.job.CURRENT_STAGE='STAGE 01';}},
+    canonicalCurrentStage:()=>1,withStorageActivity:async(_label,work)=>work(),
+    announce:message=>notices.push(message),reportActionFailure:error=>notices.push(error.message),
+    render:()=>views.push(runtime.current.activeView),requestAnimationFrame:fn=>fn(),
+    persistReplacement:async p=>{writes.push(p);await new Promise(resolve=>release=resolve);runtime.current=p;}});
+  const start=app.indexOf('let jobSaveInFlight=')>=0?app.indexOf('let jobSaveInFlight='):app.indexOf('async function saveJob(');
+  vm.runInContext(app.slice(start,app.indexOf('async function saveHumanStageFields(',start))+'\nglobalThis.save=saveJob;',runtime);
+  const first=runtime.save(),duplicate=runtime.save();
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(writes.length,1,'Repeated project-save clicks execute duplicate canonical writes.');
+  release();await Promise.all([first,duplicate]);
+  assert.equal(runtime.current.activeView,'Workflow','Successful project-information save did not open the workflow.');
+  runtime.current.activeView='Project';await runtime.save();
+  assert.equal(runtime.current.activeView,'Workflow','Unchanged project-information save stranded the operator on the form.');
+  assert.equal(writes.length,1,'An unchanged save must not create another canonical revision.');
+  assert(notices.some(message=>/saved/i.test(message)),'Successful save has no completion feedback.');
+}
+
+// Simultaneous export clicks must share the same operation and receipt, not
+// serialize duplicate exports after the first one completes.
+{
+  let saves=0,downloads=0,release;const notices=[];
+  const runtime=vm.createContext({current:{activeStage:1,job:{JOB_ID:'EXPORT-RETRY'}},setTimeout,clearTimeout,
+    announce:message=>notices.push(message),reportActionFailure:error=>notices.push(error.message),
+    withStorageActivity:async(_label,work)=>work(),document:{querySelectorAll:()=>[]},$:()=>null,
+    savePromptRecord:async()=>{saves++;await new Promise(resolve=>release=resolve);return {instructionId:'SAME'};}});
+  vm.runInContext(app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
+  const first=runtime.exportAttempt(()=>downloads++,'stage-files'),duplicate=runtime.exportAttempt(()=>downloads++,'stage-files');
+  await new Promise(resolve=>setTimeout(resolve,5));assert.equal(saves,1);release();
+  await Promise.all([first,duplicate]);
+  assert.equal(saves,1,'Repeated export clicks prepared another instruction after completion.');
+  assert.equal(downloads,1,'Repeated export clicks downloaded the same handoff twice.');
+}
+
 // The complete workflow renderer must advertise required files before the first
 // save/export, using the same preview it already built without reserving work.
 {
@@ -125,11 +183,11 @@ verify();
 }
 // The next action displayed on a historical view belongs to the current stage.
 {
- const wireStart=app.indexOf("if($('#next-export-prompt-file'))"),wireEnd=app.indexOf("if($('#export-prompt-context'))",wireStart),source=app.slice(wireStart,wireEnd);
+ const wireStart=app.indexOf("if($('#next-export-prompt-file'))"),wireEnd=app.indexOf("if($('#export-stage-files'))",wireStart),source=app.slice(wireStart,wireEnd);
  assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
  for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
   const button={dataset:{operation}},current={activeStage:stage-1},operationSelection={};let exported;
-  const runtime=vm.createContext({$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage,exportPromptFile:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
+  const runtime=vm.createContext({$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage,exportStageFiles:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
   vm.runInContext(source,runtime);await button.onclick();
   assert.deepEqual(exported,{stage,operation},'The next action exported from the inspected historical stage instead of its owning current stage.');
  }
@@ -212,8 +270,8 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
   assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
-  const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportPromptFile=()=>runtime.exportAttempt(()=>downloaded++);
-  const wireStart=app.indexOf('function wire(){')+'function wire(){'.length,wireEnd=app.indexOf("if($('#export-prompt-context'))",wireStart);
+  const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportStageFiles=()=>runtime.exportAttempt(()=>downloaded++);
+  const wireStart=app.indexOf('function wire(){')+'function wire(){'.length,wireEnd=app.indexOf("if($('#export-stage-files'))",wireStart);
   vm.runInContext(app.match(/^function canonicalCurrentStage\([^\n]+/m)[0]+'\n'+app.slice(wireStart,wireEnd),runtime);await button.onclick();
   assert.equal(downloaded,3,'The actual next-action handler failed to reach automatic instruction export.');
   assert.equal(runtime.operationSelection[9],'COMPLETE');assert.equal(runtime.current.projectData.freshContexts.length,1);
