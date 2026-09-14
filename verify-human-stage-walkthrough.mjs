@@ -84,9 +84,10 @@ try{
     const reached=[...picker.options].map(option=>Number(option.value));
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker does not expose all 30 stages in order.');
     picker.value='1';picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
+    const operationPicker=document.querySelector('#operation-picker');if(operationPicker){operationPicker.value='COMPLETE';operationPicker.dispatchEvent(new Event('change',{bubbles:true}));await idle();}
     const promptElement=document.querySelector('#generated-prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
     const renderedStage1=promptElement.textContent||'';
-    for(const required of ['first semantic reader','PASS 1 — EXHAUSTIVE EXTRACTION','PASS 2 — OMISSION CHALLENGE','humanAuthorityCandidates'])if(!renderedStage1.includes(required))throw new Error('Rendered Stage 01 prompt omitted required behavior: '+required);
+    for(const required of ['first semantic reader','PASS 1 — EXHAUSTIVE EXTRACTION','PASS 2 — OMISSION CHALLENGE','humanAuthorityCandidates'])if(!renderedStage1.includes(required))throw new Error('Rendered Stage 01 COMPLETE prompt omitted required behavior: '+required+'; actual prompt: '+renderedStage1.slice(0,1200));
     // Exercise the real application save/export controls and compare the displayed committed instruction
     // to the exact Blob bytes that the export path transfers.
     const stage2Picker=document.querySelector('#stage-picker');stage2Picker.value='2';stage2Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();

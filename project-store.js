@@ -665,7 +665,7 @@ async function importPackage(blob,{operationId=null}={}){
     await commitHistory(tx,prepared);
     for(const existing of existingArtifacts)artifacts.delete(existing.artifactId);
     fault('during-import-project-write');projects.put({jobId:id,revision:next.revision,picker:projectPickerKey(next),project:next,projectSha256:digest,updatedAt:now()});
-    for(const a of activeArtifacts){fault('during-import-artifact-write');artifacts.put({...a,jobId:id});}
+    for(const a of activeArtifacts){fault('during-import-artifact-write');artifacts.put({...a,jobId:id});const staged=a.lineage?.stagedResponse;if(staged)meta.put({key:`responseStaging:${id}:${staged.stagingId}`,value:{...clone(staged),blob:a.blob},updatedAt:now()});}
     meta.put({key:'selectedProject',value:id,updatedAt:now()});meta.put({key:'lastCommittedRevision',value:{jobId:id,revision:next.revision,projectSha256:digest},updatedAt:now()});meta.put({key:'lastVerifiedImport',value:{jobId:id,packageSha256,artifactCount:activeArtifacts.length,historyCheckpointCount:prepared.state.entries.length,at:now()},updatedAt:now()});recordWorkerCommit(tx,operationId,next,digest);fault('before-import-commit');await complete(tx);next.projectSha256=digest;notifyProjectChange(next);return next;
   }catch(error){try{tx.abort();}catch{}throw Object.assign(error,{existingProjectsUnchanged:true});}
 }
