@@ -75,9 +75,9 @@ function runOperatorAction(label,operation){
   return pending.promise;
 }
 function focusAfterAction(control){if(!control)return;if(operatorActionInFlight&&control.disabled)actionFocusTarget=control;else{control.focus({preventScroll:true});control.scrollIntoView?.({block:'start',inline:'nearest',behavior:'instant'});}}
-function bindAction(selector,operation,label){
+function bindAction(selector,operation,label,{capture}={}){
   const control=typeof selector==='string'?$(selector):selector;if(!control)return;
-  control.onclick=()=>runOperatorAction(label||`Working: ${control.textContent.trim()||'current action'}`,operation);
+  control.onclick=()=>{const input=capture?.();return runOperatorAction(label||`Working: ${control.textContent.trim()||'current action'}`,()=>operation(input));};
 }
 function bindFileAction(selector,operation,label){
   const control=typeof selector==='string'?$(selector):selector;if(!control)return;
@@ -504,9 +504,9 @@ function paintHistory(){
  document.querySelectorAll('[data-quarantine-remove]').forEach(button=>bindAction(button,async()=>{await projectStore.removeQuarantinedProject(button.dataset.quarantineRemove);await refreshHistory();announce('Damaged copy removed from recovery evidence.');},'Removing damaged copy'));
  const undo=$('#history-undo');if(undo){undo.hidden=!previous;undo.disabled=!previous;}
  bindAction('#history-undo',()=>restoreHistoryVersion(previous,{mode:'UNDO'}),'Restoring previous version');
- bindAction('#history-redo',()=>restoreHistoryVersion(historyState.redo[0],{mode:'REDO'}),'Restoring next version');
+ bindAction('#history-redo',checkpointId=>restoreHistoryVersion(checkpointId,{mode:'REDO'}),'Restoring next version',{capture:()=>historyState.redo[0]});
  const picker=$('#history-project');if(picker)picker.onchange=()=>runOperatorAction('Loading saved History',async()=>{historyBrowseState=await projectStore.historyList(picker.value);paintHistory();});
- bindAction('#history-restore',()=>restoreHistoryVersion($('#history-version').value,{jobId:targetJobId}),'Restoring saved version');
+ bindAction('#history-restore',selection=>restoreHistoryVersion(selection.checkpointId,{jobId:selection.jobId}),'Restoring saved version',{capture:()=>({checkpointId:$('#history-version').value,jobId:targetJobId})});
  bindAction('#history-session-start',async()=>{const session=await projectStore.metaGet('recoverySession:'+APPLICATION_SESSION_ID),jobId=session?.selectedProject||Object.keys(session?.checkpoints||{})[0]||current.job.JOB_ID,id=session?.checkpoints?.[jobId]||historyState.sessions?.[APPLICATION_SESSION_ID]?.checkpointId;if(!id)throw new Error('The session-start checkpoint is unavailable. Your current project is preserved.');await restoreHistoryVersion(id,{jobId});},'Restoring session start');
 }
 async function captureCurrentView(){
