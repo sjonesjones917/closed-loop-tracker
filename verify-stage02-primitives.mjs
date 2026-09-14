@@ -12,7 +12,7 @@ const mustReject=(name,fn,pattern)=>{
   return true;
 };
 
-assert(h.version==='closed-loop-hash/7','Stage 02 primitive authority version is not current.');
+assert(h.version==='closed-loop-hash/8','Stage 02 primitive authority version is not current.');
 assert(h.filenameVersion==='closed-loop-filename/1','Filename contract identity is missing.');
 assert(h.trustedTimeVersion==='closed-loop-trusted-time/1','Trusted-time contract identity is missing.');
 assert(h.unicodeContract?.version==='15.1.0','Pinned Unicode version is not 15.1.0.');
@@ -38,7 +38,7 @@ const filenameMutations=[
   ['control character',()=>h.normalizeFilename('bad\u0000name.txt'),/UNSAFE_FILENAME/],
   ['trailing dot',()=>h.normalizeFilename('bad.'),/UNSAFE_FILENAME/],
   ['trailing space',()=>h.normalizeFilename('bad '),/UNSAFE_FILENAME/],
-  ['unpinned Unicode repertoire',()=>h.normalizeFilename('résumé.txt'),/UNSUPPORTED_UNICODE_FILENAME/]
+  ['unpaired Unicode surrogate',()=>h.normalizeFilename('bad\uD800.txt'),/Unicode scalar|surrogate/]
 ];
 for(const [name,fn,pattern] of filenameMutations)mustReject(name,fn,pattern);
 
@@ -102,3 +102,5 @@ console.log(JSON.stringify({
   verifiedExternalTimePathEstablished:false,
   repairedFixturesProgress:true
 },null,2));
+
+await import('./verify-unicode-filenames.mjs');

@@ -53,6 +53,7 @@ try{
   if(manifest.testIrSchema!=='closed-loop-test-spec/1'||manifest.verificationPackageSchema!=='closed-loop-verification-package/1')throw new Error('Deployment manifest verification contract identity is wrong.');
   if(manifest.contractProfileId!=='closed-loop-completion-profile/1')throw new Error('Deployment manifest contract profile is missing or wrong.');
   if(manifest.testWorkerProtocolVersion!=='closed-loop-test-worker-protocol/1')throw new Error('Deployment manifest worker protocol identity is missing or wrong.');
+  if(canonical(manifest.unicodeContract)!==canonical(hashAuthority.unicodeContract)||manifest.filenameContractVersion!==hashAuthority.filenameVersion)throw new Error('Deployment manifest does not bind the exact filename and Unicode table contracts.');
   const withoutDigest={...manifest};delete withoutDigest.manifestDigest;
   if(manifest.manifestDigest?.hashAlgorithm!=='SHA-256'||manifest.manifestDigest?.digest!==hashAuthority.sha256Value(withoutDigest))throw new Error('Deployment manifest digest mismatch.');
   if(!Array.isArray(manifest.runtimeResources)||manifest.runtimeResources.length!==13)throw new Error('Deployment resource closure is incomplete.');

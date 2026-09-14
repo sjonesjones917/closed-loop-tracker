@@ -11,10 +11,10 @@ const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.j
 function load(fault=null){
   const c=vm.createContext({TextEncoder,TextDecoder,Blob,crypto:globalThis.crypto,Event:class{},dispatchEvent(){}});
   for(const file of runtimeFiles){let source=fs.readFileSync(file,'utf8');if(fault?.file===file){assert(source.includes(fault.before),'Fault anchor missing');source=source.replace(fault.before,fault.after);}vm.runInContext(source,c,{filename:file});}
-  return {engine:c.closedLoopWorkflowEngine,copy:text=>vm.runInContext('JSON.parse('+JSON.stringify(text)+')',c)};
+  return {engine:c.closedLoopWorkflowEngine,hash:c.closedLoopHash,copy:text=>vm.runInContext('JSON.parse('+JSON.stringify(text)+')',c)};
 }
 const serialized=operatorPrefixFixture(13);
-const {engine:e,copy}=load(),base=copy(serialized),cases=[],failures=[];
+const {engine:e,copy,hash}=load(),base=copy(serialized),cases=[],failures=[];
 const iterationId=e.recordId(e.records(base,'iterations').find(row=>row.stage===10),'iterations');
 const comparison=p=>e.recordsForIteration(p,'comparisons',iterationId)[0];
 const set=(row,fields,family)=>{Object.assign(row.fields,fields);Object.assign(row,fields);e.refreshRecordHashes(row,family);};
@@ -53,6 +53,17 @@ for(const [kind,rows] of Object.entries({requirement:failedStability.requirement
 }
 assert.equal(failedStability.requirementsWithDisagreement,1);
 cases.push({caseId:'observed-failure-with-real-defect-progresses',actual:e.gate(13,failedRun),stability:failedStability,result:'PASS'});
+// Starting a later iteration must not detach an earlier comparison from
+// the evidence belonging to its own accepted iteration.
+const continuation=copy(operatorPrefixFixture(16,{initialFailure:true}));
+const selected=['CANDIDATE-FILE'],selection=e.recordRegisteredHumanDecision(continuation,{stage:17,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(selected),value:selected,operatorLabel:'SYNTHETIC'});
+e.freezeCandidate(continuation,{stage:17,artifactIds:selected,selectionDecisionId:e.recordId(selection,'humanDecisions')});
+e.reserveRunBatch(continuation,{stage:17});
+assert.equal(e.gate(13,continuation).complete,true,'ITERATION_EVIDENCE_ORACLE: starting a new iteration invalidated an earlier valid defect-evidence link');
+assert.equal(e.gate(16,continuation).complete,true,'The preserved correction prerequisites cannot continue into the new iteration');
+const wrongScope=load({file:'workflow-engine.js',before:"safe(defect.evidenceRefs).some(id=>recordsForIteration(project,'evidenceRecords',iterationId)",after:"safe(defect.evidenceRefs).some(id=>recordsForCurrentScope(project,'evidenceRecords')"});
+assert.throws(()=>assert.equal(wrongScope.engine.gate(13,wrongScope.copy(JSON.stringify(continuation))).complete,true,'ITERATION_EVIDENCE_ORACLE: earlier evidence was selected through the latest iteration'),/ITERATION_EVIDENCE_ORACLE/);
+cases.push({caseId:'earlier-comparison-keeps-own-iteration-evidence',result:'PASS',wrongIterationScopeFault:'DETECTED'});
 const unknown=copy(serialized),unknownRow=unknown.projectData.verification[0];unknownRow.evidenceRefs=[];
 const unknownStability=e.executionStability(unknown,iterationId),unknownCounts=Object.values(unknownStability.requirementStability)[0];
 assert.equal(unknownCounts.satisfied,9);assert.equal(unknownCounts.violated,0);assert.equal(unknownCounts.undetermined,1);assert.equal(unknownCounts.agreementRate,0.9);

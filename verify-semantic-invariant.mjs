@@ -28,8 +28,10 @@ const cases=[
 ];
 for(const [collection,row] of cases)notSatisfied(collection,row,collection==='products'||collection==='processAudits'||collection==='productAudits'||collection==='confirmationRecords'||collection==='regressionExecutions'||collection==='failureTests'?null:test);
 
-// Claimed success can expose a contradiction, but can never establish success without the application's evidence contract.
-for(const [collection,row] of cases){if(collection==='products'||collection==='regressionExecutions'||collection==='failureTests')continue;const claim=collection==='processAudits'?row.fields.PROCESS_DETERMINATION:collection==='productAudits'?row.fields.PRODUCT_DETERMINATION:row.fields.DETERMINATION;if(String(claim||'').toUpperCase()==='SATISFIED'){const contradictions=engine.detectCurrentContradictions({...p,projectData:{...p.projectData,[collection]:[row]}});assert(Array.isArray(contradictions),`${collection} contradiction scan failed`);}}
+// The malformed multi-field examples above are smoke cases, not isolated
+// contradiction or gate-class proof. The valid/violation/repair case below
+// checks the exact current record returned by the contradiction evaluator.
+const contradictionCases=[];
 
 // Stage 25 uses one strict structured coverage semantics for both aggregate coverage and effective determination.
 {
@@ -42,8 +44,20 @@ for(const [collection,row] of cases){if(collection==='products'||collection==='r
  good.id='INSPECTION-REP-GOOD';good.relationships={ARTIFACT_ID:'ART-REP'};p.projectData.representationInspections.push(good);
  const effective=engine.evaluateResultConsistency('representationInspections',good,null,p);assert(effective.determination==='SATISFIED','Strict Stage 25 coverage JSON was not accepted by effective determination');
  const aggregate=engine.representationInspectionCoverage(p);assert(aggregate.complete,'Strict Stage 25 coverage JSON was not accepted by aggregate coverage');
+ const conflictKey='representationInspections:'+good.id;
+ assert(!engine.detectCurrentContradictions(p).some(item=>item.key===conflictKey),'CONTRADICTION_ORACLE: valid inspection was reported contradictory.');
  good.fields.OBSERVATIONS=JSON.stringify({...JSON.parse(structuredObservation),inspectedPageOrViewIds:[]});
  const broken=engine.evaluateResultConsistency('representationInspections',good,null,p);assert(broken.determination!=='SATISFIED','Incomplete Stage 25 structured coverage was accepted by effective determination');
+ const conflictOracle=(api,state)=>{const conflict=api.detectCurrentContradictions(state).find(item=>item.type==='CLAIMED_FAVORABLE_EFFECTIVE_CONFLICT'&&item.key===conflictKey);assert(conflict&&conflict.details.some(detail=>detail.includes('page/view')),'CONTRADICTION_ORACLE: missing view coverage did not produce its specific contradiction.');};
+ conflictOracle(engine,p);
+ const mutantContext=vm.createContext({TextEncoder,TextDecoder,Blob,crypto:globalThis.crypto,Event:class{},dispatchEvent(){}});
+ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']){let code=fs.readFileSync(file,'utf8');if(file==='workflow-engine.js'){const anchor='function detectCurrentContradictions(project){';assert(code.includes(anchor),'Contradiction fault anchor missing');code=code.replace(anchor,anchor+' return [];');}vm.runInContext(code,mutantContext,{filename:file});}
+ let detected=false;try{conflictOracle(mutantContext.closedLoopWorkflowEngine,JSON.parse(JSON.stringify(p)));}catch(error){detected=/CONTRADICTION_ORACLE/.test(error.message);}assert(detected,'The contradiction oracle did not detect an empty production result');
+
+ good.fields.OBSERVATIONS=structuredObservation;
+ assert(engine.evaluateResultConsistency('representationInspections',good,null,p).determination==='SATISFIED','CONTRADICTION_ORACLE: corrected inspection did not recover.');
+ assert(!engine.detectCurrentContradictions(p).some(item=>item.key===conflictKey),'CONTRADICTION_ORACLE: repaired inspection remained contradictory.');
+ contradictionCases.push({caseId:'current-inspection-missing-view',violation:'page/view coverage',result:'REJECTED_WITH_SPECIFIC_CONTRADICTION',restored:'SATISFIED'});
  p.projectData.representationInspections.pop();p.projectData.evidenceRecords.pop();p.projectData.artifacts.pop();delete p.job.CURRENT_PRODUCT_ID;
 }
 
@@ -99,7 +113,7 @@ assert(adjudicationHotPath.includes('projectData:{...(project?.projectData||{})}
 assert(adjudicationHotPath.includes('map(record=>clone(record))'),'Gate adjudication does not isolate only conclusion-bearing records before rewriting effective determinations');
 for(const unrelated of ['rawResponses','generatedPrompts','history','responseProposals'])assert(!adjudicationHotPath.includes('copy.projectData['+JSON.stringify(unrelated)+']'),'Gate adjudication clones unrelated large provenance collection '+unrelated);
 
-const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
+const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudicationDeclarationChecked:true,contradictionCases,completeOperatorJourney:false,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
 
 // Capability names and human prose are claims, not capability readiness. A current canonical capability record repairs routing.
 {
@@ -111,7 +125,7 @@ assert(strengthenedSource.includes("NON_SATISFIED_EFFECTIVE_RESULT:"),'Stage 29 
 assert(strengthenedSource.includes("RELEASE_NOT_ACCEPTED"),'Stage 29 does not require an accepted current release');
 assert(strengthenedSource.includes("UNAUTHORIZED_ARTIFACT_IDENTITY:"),'Stage 29 explanation does not fail closed on unauthorized delivery identity');
 assert(!strengthenedSource.includes("map(v=>upper(recordValue(v,'DETERMINATION')))"),'Stability diagnostics still consume submitted determinations');
-console.log(JSON.stringify({...proof,affirmativeCapabilityAvailability:true,epistemicEvidenceChains:true,effectiveStability:true}));
+console.log(JSON.stringify({...proof,affirmativeCapabilityAvailability:true,epistemicEvidenceComponentCases:true,effectiveStabilitySourceGuardChecked:true}));
 // §29.13: invalid proof syntax must be rejected even when no observation exists.
 for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependencyId:'DEP-1'},{type:'LEAF',testId:'TEST-1',observationId:'OBS-1'},{op:'LEAF',testId:'TEST-1'},{type:'ALL_OF',children:[]}]){
  const result=engine.evaluateProofExpression(core.createBlankState('JOB-PROOF-SYNTAX'),'PROP-1',node);
@@ -138,3 +152,5 @@ for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependency
  q.projectData.proofObligations.push({id:'OBLIGATION-SELF',active:true,fields:{PROPOSITION_ID:'PARENT'}});const prerequisite={type:'LEAF',proofObligationId:'OBLIGATION-SELF',truthExtraction:'PROOF_OBLIGATION',evidenceClasses:['ACCEPTED_PROOF_REVIEW'],scopeBinding:'CURRENT'};assert(!engine.validateProofExpression(prerequisite,{project:q,targetPropositionId:'PARENT'}).valid,'Circular prerequisite proof was accepted.');
  console.log(JSON.stringify({closedProofTruthTables:true,currentEvidenceRequired:true,proofCyclesAndResourceBounds:true}));
 }
+
+await import('./verify-result-contradictions.mjs');

@@ -26,6 +26,39 @@ function matrixOracle(engineSource){
   return {perRunTestIds:perRun,excludedFinalTestIds:finalTests,expectedTupleIds:matrix.expected};
 }
 cases.push({caseId:'due-matrix-and-proof-relation-boundary',result:'PASS',...matrixOracle(source)});
+// Component fixture: split a future-only obligation from the accepted prefix's
+// shared requirement. Its requirement/test mapping is stipulated here; this is
+// not evidence of a second full authoring or operator journey.
+function futureRequirementOracle(engineSource){
+  const c=load(engineSource),engine=c.closedLoopWorkflowEngine,p=vm.runInContext('JSON.parse('+JSON.stringify(serialized)+')',c);
+  const future=engine.clone(engine.recordsForCurrentScope(p,'requirements')[0]),futureId='REQ-900001';
+  future.id=futureId;future.fields.REQ_ID=futureId;future.REQ_ID=futureId;engine.refreshRecordHashes(future,'requirements');p.projectData.requirements.push(future);
+  const later=engine.recordsForCurrentScope(p,'tests').filter(row=>engine.recordValue(row,'FINAL_PRODUCT_REQUIRED')===true);
+  for(const test of later){test.fields.REQ_ID=futureId;test.REQ_ID=futureId;test.relationships.REQ_ID=futureId;engine.refreshRecordHashes(test,'tests');}
+  const iterationId=engine.recordId(engine.records(p,'iterations').find(row=>row.stage===10),'iterations'),matrix=engine.verificationMatrix(p,iterationId),stability=engine.executionStability(p,iterationId);
+  assert.equal(matrix.expected.length,10);assert.equal(matrix.missing.length,0);
+  assert(!Object.hasOwn(stability.requirementStability,futureId),'FUTURE_REQUIREMENT_ORACLE: a final-product-only requirement was given invented current run outcomes');
+  assert(!engine.gate(13,p).reasons.some(reason=>/comparison/i.test(reason)&&reason.includes(futureId)),'FUTURE_COMPARISON_ORACLE: a future-only obligation was required in the current comparison: '+JSON.stringify(engine.gate(13,p).reasons));
+  assert(engine.mandatoryRequirements(p).some(row=>engine.recordId(row,'requirements')===futureId),'Future mandatory work must remain registered');
+  const test=later[0],saved=engine.clone(test.fields);
+  Object.assign(test.fields,{VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false});Object.assign(test,test.fields);engine.refreshRecordHashes(test,'tests');
+  assert.equal(engine.verificationMatrix(p,iterationId).missing.length,10,'A now-due obligation with no observations must remain missing');
+  assert(engine.gate(13,p).reasons.some(reason=>/comparison/i.test(reason)&&reason.includes(futureId)),'A due obligation must require its actual comparison');
+  test.fields=saved;Object.assign(test,saved);engine.refreshRecordHashes(test,'tests');
+  assert(!Object.hasOwn(engine.executionStability(p,iterationId).requirementStability,futureId),'Restoring the future timing contract did not remove invented outcomes');
+  return {futureRequirementId:futureId,excludedTestIds:later.map(row=>engine.recordId(row,'tests')),dueMissingTriplesWhenTimingChanges:10};
+}
+cases.push({caseId:'future-only-requirement-stability-and-comparison',evidenceClass:'derived-state component with stipulated requirement/test mapping',result:'PASS',...futureRequirementOracle(source)});
+for(const [caseId,before,after,reason] of [
+ ['future-requirements-enter-current-stability','dueRequirements=requirements.filter(req=>dueRequirementIds.has(requirementId(req)))','dueRequirements=requirements',/FUTURE_REQUIREMENT_ORACLE/],
+ ['future-requirements-demand-current-comparison','reqs=verificationMatrix(project,iterationId).dueRequirements,compared=','reqs=mandatoryRequirements(project,scope),compared=',/FUTURE_COMPARISON_ORACLE/]
+]){
+  assert(source.includes(before),'Missing fault anchor');
+  assert.throws(()=>futureRequirementOracle(source.replace(before,after)),reason,'The executed oracle must detect '+caseId);
+  futureRequirementOracle(source);cases.push({caseId,result:'DETECTED',restored:'PASS'});
+}
+
+
 for(const [caseId,before,after,reason] of [
  ['bypassed-matrix-timing','const timing=testDueState(project,test,12,{perRunOnly:true});','const timing={valid:true,blocking:false,dueNow:true};',/DUE_MATRIX_ORACLE/],
  ['bypassed-proof-relation-timing','const timing=e0.testDueState(p,t,12,{perRunOnly:true});','const timing={valid:true,blocking:false,dueNow:true};',/DUE_RELATION_ORACLE/]

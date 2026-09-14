@@ -1,21 +1,25 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {responseFixture,OBJECTIVE,OUTPUT,CANDIDATE} from './operator-journey-fixtures.mjs';
 globalThis.dispatchEvent=()=>true;
+const executedSourceSha256={};
 const injectedFault=process.env.CLRT_COUNTERPART_FAULT||null,fixtureOutput=process.env.CLRT_COUNTERPART_PROJECT_FILE||null,includeInitialFailure=process.env.CLRT_COUNTERPART_INITIAL_FAILURE!=='0';
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){let source=fs.readFileSync(file,'utf8');if(file==='workflow-engine.js'&&injectedFault==='fractional-stability')source=source.replace('const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);','return stability; const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);');if(file==='workflow-engine.js'&&injectedFault==='missing-defect-gate')source=source.replace('if(facts.anyViolation&&!hasDefect)','if(false&&facts.anyViolation&&!hasDefect)').replace("if((prohibited||correctness==='TRUE')&&!hasDefect)","if(false&&(prohibited||correctness==='TRUE')&&!hasDefect)");if(file==='response-ingestion.js'&&injectedFault==='skipped-confirmation')source=source.replace('if(replacement.requiresConfirmation&&replacementConfirmation?.impactSha256!==replacement.impactSha256)','if(false&&replacement.requiresConfirmation&&replacementConfirmation?.impactSha256!==replacement.impactSha256)');vm.runInThisContext(source,{filename:file});}
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){let source=fs.readFileSync(file,'utf8');if(file==='workflow-engine.js'&&injectedFault==='fractional-stability')source=source.replace('const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);','return stability; const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);');if(file==='workflow-engine.js'&&injectedFault==='missing-defect-gate')source=source.replace('if(facts.anyViolation&&!hasDefect)','if(false&&facts.anyViolation&&!hasDefect)').replace("if((prohibited||correctness==='TRUE')&&!hasDefect)","if(false&&(prohibited||correctness==='TRUE')&&!hasDefect)");if(file==='response-ingestion.js'&&injectedFault==='skipped-confirmation')source=source.replace('if(replacement.requiresConfirmation&&replacementConfirmation?.impactSha256!==replacement.impactSha256)','if(false&&replacement.requiresConfirmation&&replacementConfirmation?.impactSha256!==replacement.impactSha256)');executedSourceSha256[file]=createHash('sha256').update(source).digest('hex');vm.runInThisContext(source,{filename:file});}
 const engine=closedLoopWorkflowEngine,schema=closedLoopWorkflowSchema,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
 let p=closedLoopCore.createBlankState('COUNTERPART-CONTRACT-PREFLIGHT');p.job.JOB_TITLE='Complete operator journey';p.job.EXACT_USER_OBJECTIVE_VERBATIM=OBJECTIVE;engine.ensureShape(p);engine.recalculate(p);
-const value=engine.recordValue,id=engine.recordId,latest=family=>engine.recordsForCurrentScope(p,family).at(-1),cases=[];
+const value=engine.recordValue,id=engine.recordId,latest=family=>engine.recordsForCurrentScope(p,family).at(-1),cases=[],executedActions=[],stageGateChecks=[];
 // Fixture preflight only. Actual interface and file transport acceptance remains
 // the separate verify-complete-operator-journey.mjs browser execution.
 const stageLimit=Number(process.env.CLRT_COUNTERPART_STAGE_LIMIT||30);
 assert(Number.isInteger(stageLimit)&&stageLimit>=1&&stageLimit<=30);
 const recoveryFailures=[];
+let lastAttemptedAction=null;
+if(fixtureOutput)process.on('uncaughtExceptionMonitor',error=>{fs.writeFileSync(fixtureOutput+'.failure.json',JSON.stringify({source:'synthetic-production-counterpart',operation:lastAttemptedAction,completedOperations:cases,error:{message:error.message,code:error.code},project:p}));});
 function verifyReplacement(targetStage,operation,completed){
   const contract=schema.operationContract(targetStage,operation),updatesReservedExecution=contract.agentWritableCollections.some(family=>['runs','products'].includes(family)&&schema.RECORD_SCHEMAS[family]?.commitPolicy==='UPDATE_RESERVED');
-  if(updatesReservedExecution){cases.push({stage:targetStage,operation,caseId:'reexecution-requires-new-execution-target',result:'NOT_APPLICABLE_TO_SAME_ACCEPTED_TARGET',basis:'Accepted execution targets are immutable within their iteration or product execution.'});return;}
+  if(updatesReservedExecution){cases.push({stage:targetStage,operation,caseId:'reexecution-requires-new-execution-target',result:'NOT_EXECUTED_NEW_TARGET_REQUIRED',basis:'Accepted execution targets are immutable within their iteration or product execution.'});return;}
   try{
     const earlier=engine.clone(completed),completedStages=Array.from({length:schema.STAGE_COUNT},(_,i)=>i+1).filter(n=>engine.gate(n,earlier).complete),priorIds=completedStages.map(n=>[n,engine.acceptedChanges(earlier,n).map(row=>row.changeId)]);
     const prompt=prompts.reserveAndBuildPromptRecord(earlier,targetStage,{operation}).prompt;
@@ -37,7 +41,7 @@ function verifyReplacement(targetStage,operation,completed){
 }
 for(let stage=1;stage<=stageLimit;stage++){
   for(let step=0;step<80;step++){
-    const action=engine.operationalNextAction(p,stage);if(engine.gate(stage,p).complete&&(stage!==30||action.actionType==='COMPLETE'))break;
+    const action=engine.operationalNextAction(p,stage);lastAttemptedAction={stage,action};if(engine.gate(stage,p).complete&&(stage!==30||action.actionType==='COMPLETE'))break;
     if(process.env.CLRT_COUNTERPART_PROGRESS)console.error(JSON.stringify({counterpartStage:stage,action:action.actionType,operation:action.operation}));
     if(stage===28&&!latest('artifactIdentities')){const row={artifactId:'PRODUCT-FILE',name:'result.txt',size:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT),byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'SYNTHETIC-BYTE-COMPARISON',artifactId:'PRODUCT-FILE',byteSize:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT)}};engine.verifyArtifactIdentity(p,[row],[row]);}
     else if(action.actionType==='CONFIRM_STAGE_ONE_INTENT'){const change=engine.acceptedChanges(p,1).at(-1);engine.recordStageConfirmation(p,1,true,'Synthetic confirmation','SYNTHETIC',{acceptedChangeId:change.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION});}
@@ -64,9 +68,11 @@ for(let stage=1;stage<=stageLimit;stage++){
       const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(request),promptRecord:prompt,files,transport:{packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC'}).project;cases.push({stage,operation:prompt.operation,result:'PASS'});
     }else throw new Error('No progressing fixture command: '+JSON.stringify(action));
     engine.recalculate(p);
-    assert.doesNotThrow(()=>hash.sha256Value(p),`Stage ${stage} ${action.actionType} must remain persistable after every operation`);
+    assert.doesNotThrow(()=>hash.sha256Value(p),`Stage ${stage} ${action.actionType} must remain canonically serializable after every operation`);
+    executedActions.push({stage,actionType:action.actionType,operation:action.operation||null,result:'PASS',canonicalSerialization:'PASS'});
   }
   assert.equal(engine.gate(stage,p).complete,true,JSON.stringify({stage,reasons:engine.gate(stage,p).reasons}));
+  stageGateChecks.push({stage,result:'PASS',actual:engine.gate(stage,p)});
   if(!fixtureOutput&&(!injectedFault||injectedFault==='skipped-confirmation'))for(const operation of [...new Set(engine.acceptedChanges(p,stage).map(change=>change.operation))])verifyReplacement(stage,operation,p);
   if(stage===13&&includeInitialFailure){
     const invalid=engine.clone(p);invalid.projectData.defects=[];
@@ -81,4 +87,4 @@ for(let stage=1;stage<=stageLimit;stage++){
 if(!fixtureOutput&&(!injectedFault||injectedFault==='skipped-confirmation'))for(let targetStage=1;targetStage<stageLimit;targetStage++)for(const operation of [...new Set(engine.acceptedChanges(p,targetStage).map(change=>change.operation))])verifyReplacement(targetStage,operation,p);
 if(fixtureOutput)fs.writeFileSync(fixtureOutput,JSON.stringify(p));
 if(recoveryFailures.length){console.error(JSON.stringify({recoveryFailures},null,2));process.exitCode=1;}
-console.log(JSON.stringify({counterpartContracts:recoveryFailures.length?'FAIL':'PASS',stages:stageLimit,cases,sourceCommit:process.env.GITHUB_SHA||null,injectedFault,actualBrowserJourney:false,externalOutputs:'SYNTHETIC',persistenceCheckedAfterEveryOperation:true,recoveryFailures}));
+console.log(JSON.stringify({counterpartContracts:recoveryFailures.length?'FAIL':'PASS',stages:stageLimit,cases,sourceCommit:process.env.GITHUB_SHA||null,injectedFault,actualBrowserJourney:false,externalOutputs:'SYNTHETIC',executedSourceSha256,executedActions,stageGateChecks,canonicalSerializationCheckedAfterEveryOperation:true,durablePersistenceChecked:false,replacementCasesExecuted:cases.filter(row=>row.caseId==='replacement-boundaries').length,reexecutionCasesRequiringNewTargets:cases.filter(row=>row.result==='NOT_EXECUTED_NEW_TARGET_REQUIRED'),recoveryFailures}));

@@ -1,7 +1,7 @@
 {
   "reviewComplete": false,
   "initialFiles": 111,
-  "currentAndRemovedFiles": 113,
+  "currentAndRemovedFiles": 115,
   "files": [
     {
       "file": "build-test-project-impl.mjs",
@@ -83,7 +83,7 @@
       "identifiedFindings": [
         "TEST-10"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -103,25 +103,29 @@
       "identifiedFindings": [
         "TEST-14"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
       "file": "verify-browser-extra.mjs",
-      "currentSha256": "39f813fa478031173310e31f0728b81fb43a425be4f7abfe99ff39344025c4e3",
+      "currentSha256": "4b3de7a8d332932423c66080f23b803d72efb7844dc6f63009d57ac6ff1475c3",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
-      "identifiedFindings": [],
-      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
       "file": "verify-browser.mjs",
-      "currentSha256": "b6fdc45ffe290ea68b538de2f03532f201e2d77363d033c5b72ce19b3b3d6ad8",
+      "currentSha256": "32509e4a6b5fcb045af3d5b1d5525150cda895ccdd5760584e5c3cd1414f6c68",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
-      "identifiedFindings": [],
-      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "identifiedFindings": [
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -132,7 +136,7 @@
       "identifiedFindings": [
         "TEST-22"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -152,7 +156,7 @@
       "identifiedFindings": [
         "TEST-13"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -179,9 +183,10 @@
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
       "identifiedFindings": [
-        "TEST-05"
+        "TEST-05",
+        "TEST-28"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_DEFECT_REPAIR_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -210,7 +215,7 @@
       "identifiedFindings": [
         "TEST-15"
       ],
-      "reviewStatus": "REMOVED_UNSUPPORTED_PROOF_WRITER",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -242,14 +247,15 @@
     },
     {
       "file": "verify-cross-run-comparison.mjs",
-      "currentSha256": "0871578d80ff4a652c77ab7f70624f93fa75ff676e640a109373a311c24ae114",
+      "currentSha256": "75792be74791e5c6a62a42929d2e88d60cf8173672a75a13e7f15432d3368ee1",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
       "identifiedFindings": [
         "TEST-02",
-        "TEST-04"
+        "TEST-04",
+        "TEST-26"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -260,7 +266,7 @@
       "identifiedFindings": [
         "TEST-01"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -271,7 +277,7 @@
       "identifiedFindings": [
         "TEST-07"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -282,7 +288,7 @@
       "identifiedFindings": [
         "TEST-07"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -305,7 +311,7 @@
     },
     {
       "file": "verify-deployment-manifest.mjs",
-      "currentSha256": "0e3eb14885e95d08a15edbbf8326b10966dcad57974285aa5ed6704111bd2f95",
+      "currentSha256": "c2382390ee3e1d174c3ba3ee0fa1db10e958cc7011691b88549b1d522cfadd36",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
       "identifiedFindings": [],
@@ -314,13 +320,14 @@
     },
     {
       "file": "verify-due-stage-timing.mjs",
-      "currentSha256": "7910d502699ca84400a547ba9e4c2351bcbff5c5e485400179ddfa3b5972f642",
+      "currentSha256": "b5ae8ce03cf439d6677a582f492c15c4b6d3552e528eeb7e57d409c441da2c95",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
       "identifiedFindings": [
-        "TEST-03"
+        "TEST-03",
+        "TEST-04"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -331,7 +338,7 @@
       "identifiedFindings": [
         "TEST-09"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -342,7 +349,7 @@
       "identifiedFindings": [
         "TEST-09"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -362,7 +369,7 @@
       "identifiedFindings": [
         "TEST-10"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -389,9 +396,10 @@
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
       "identifiedFindings": [
-        "TEST-14"
+        "TEST-14",
+        "TEST-25"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -420,7 +428,7 @@
       "identifiedFindings": [
         "TEST-14"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -459,7 +467,7 @@
         "TEST-19",
         "TEST-20"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -488,7 +496,7 @@
       "identifiedFindings": [
         "TEST-17"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -526,7 +534,7 @@
       "identifiedFindings": [
         "TEST-16"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -537,7 +545,7 @@
       "identifiedFindings": [
         "TEST-14"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -596,11 +604,14 @@
     },
     {
       "file": "verify-operator-counterpart.mjs",
-      "currentSha256": "2a2dac916fc7c8b1bfba2cb829a0a6c3ebe44109823b119f7938928427110ca4",
+      "currentSha256": "8e38467e7750225a7b2df53c4b4dfaffd7e40d903ac1301c932bbaebe5f0ca8d",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
-      "identifiedFindings": [],
-      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "identifiedFindings": [
+        "TEST-26",
+        "TEST-27"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -632,11 +643,14 @@
     },
     {
       "file": "verify-project-lifecycle.mjs",
-      "currentSha256": "d091b79310e8ef551307ec4bc26fbf4c021069e9894a55d3c1e73c332c5bacb0",
+      "currentSha256": "6b50da7f1d43791760fede92634d6b01aa3f13ac4bc2ca92b0d08ba19e20d8f6",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
-      "identifiedFindings": [],
-      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "identifiedFindings": [
+        "TEST-07",
+        "TEST-14"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -656,7 +670,7 @@
       "identifiedFindings": [
         "TEST-14"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -694,6 +708,17 @@
       "identifiedFindings": [],
       "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
       "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-result-contradictions.mjs",
+      "trackedAtReviewStart": false,
+      "role": "BEHAVIORAL_VERIFIER",
+      "identifiedFindings": [
+        "TEST-24"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "65a0843d5699178589fa2951a1e4b2f7358752f771f7b4c26631a17eb521eb8b"
     },
     {
       "file": "verify-retained-candidate.mjs",
@@ -742,11 +767,14 @@
     },
     {
       "file": "verify-semantic-invariant.mjs",
-      "currentSha256": "a887fb5f105080d9375c838d971f9b2a70c1af88113a88cc65b5c9060de2d6cf",
+      "currentSha256": "84e3db9764531686e95f46bc0fd89afef29094edd051f6d3c956b6f3c7a25088",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
-      "identifiedFindings": [],
-      "reviewStatus": "INVENTORIED_REVIEW_NOT_YET_CLOSED",
+      "identifiedFindings": [
+        "TEST-23",
+        "TEST-24"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -785,7 +813,7 @@
         "TEST-01",
         "TEST-08"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -805,7 +833,7 @@
       "identifiedFindings": [
         "TEST-14"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -843,7 +871,7 @@
       "identifiedFindings": [
         "TEST-14"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -866,13 +894,14 @@
     },
     {
       "file": "verify-stage02-primitives.mjs",
-      "currentSha256": "42d714548343c491570c7f36e89bb73d5e99c053df93a2d55942b3e4fe7b962c",
+      "currentSha256": "67187f9aa57e323c144e3d5cb2baeb856566a84dc073d078383cea58ce4aa26b",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
       "identifiedFindings": [
-        "TEST-06"
+        "TEST-06",
+        "TEST-25"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -955,7 +984,7 @@
       "identifiedFindings": [
         "TEST-18"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -984,7 +1013,7 @@
       "identifiedFindings": [
         "TEST-11"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -1004,7 +1033,7 @@
       "identifiedFindings": [
         "TEST-12"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -1015,8 +1044,19 @@
       "identifiedFindings": [
         "TEST-21"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
+    },
+    {
+      "file": "verify-unicode-filenames.mjs",
+      "trackedAtReviewStart": false,
+      "role": "BEHAVIORAL_VERIFIER",
+      "identifiedFindings": [
+        "TEST-25"
+      ],
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
+      "passingFileIsNotCompleteRequirementEvidence": true,
+      "currentSha256": "5c47d6f6de1c9448788ee6b0e6ef3fff039c4cc116350341026ed3d1351c6662"
     },
     {
       "file": "verify-user-prompt-invariants.mjs",
@@ -1035,18 +1075,18 @@
       "identifiedFindings": [
         "TEST-21"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
       "file": "verify-v3-definition-of-done.mjs",
-      "currentSha256": "220dc32470eac3328baae0fa2d49603843e1e913e419737ef61f5f20d066228b",
+      "currentSha256": "9743b4a409624be76c70cc8ebd9ae8dc6ec1da034d1eb67e39caa960e5e417ed",
       "trackedAtReviewStart": true,
       "role": "VERIFIER",
       "identifiedFindings": [
         "TEST-07"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -1075,7 +1115,7 @@
       "identifiedFindings": [
         "TEST-14"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     },
     {
@@ -1086,7 +1126,7 @@
       "identifiedFindings": [
         "TEST-19"
       ],
-      "reviewStatus": "CONFIRMED_FINDING_CORRECTED_RECHECK_PENDING",
+      "reviewStatus": "CONFIRMED_FINDINGS_CORRECTED_FULL_RECHECK_PENDING",
       "passingFileIsNotCompleteRequirementEvidence": true
     }
   ]

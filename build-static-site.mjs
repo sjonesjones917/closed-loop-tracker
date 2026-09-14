@@ -79,6 +79,8 @@ const manifest={
   workflowRunIdentity,
   buildIdentity,
   canonicalizationVersion,
+  filenameContractVersion:hashAuthority.filenameVersion,
+  unicodeContract:hashAuthority.unicodeContract,
   runtimeResources,
   nonruntimeExcludedPaths:[{path:'closed-loop-deployment-manifest.json',reason:'Self-describing deployment evidence; its digest is the overall manifest digest with manifestDigest omitted.'}],
   cspExactValue:csp,

@@ -126,5 +126,85 @@
     "environment": "Node 24.19.0 / Linux; synthetic fixtures and specified I/O doubles",
     "sourceBaseCommit": "2399a585a7c3bd5668e5b6df41f7a279576395e2",
     "sourceQualification": "Working tree changed during repair; exact executed case and source anchors are in the corresponding verifier. This is not exact deployed-revision acceptance."
+  },
+  {
+    "path": "result-contradiction-before.err",
+    "sha256": "f71fe31f5dc8601f0db25c91208f1b5b3170a24696bd71a95d16afce575411ec",
+    "byteSize": 785,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "result-contradiction-after.out",
+    "sha256": "db1f41d164749f9063eb1c09eb46c5320c221786d19aa583a4b010944b8ce97f",
+    "byteSize": 2402,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "unicode-filename-before.err",
+    "sha256": "830517f7595c3e618b0e901468bea45fb03bca55a3d9a4790574af027e27e1e7",
+    "byteSize": 1021,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "unicode-filename-after.out",
+    "sha256": "1e824e09b9de7a827132ef34ea7a8e91834c09944502710bab50af99209a4eb9",
+    "byteSize": 909,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "iteration-evidence-before.err",
+    "sha256": "f1c8ef6aba8a77d7c7850f7bf7d4506d1ba1ed2a7156161591d56d409a2c3f3f",
+    "byteSize": 683,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "cross-run-review-final.out",
+    "sha256": "fcc5d98219e4190585c37c3116de2102a021b27ee8e03b78ad145517c442f7dd",
+    "byteSize": 4569,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "lifecycle-review-final.out",
+    "sha256": "a184d70870eb65f42f0e435a71eb256e9f2c3641d5b144a3ddc788f57d104a4d",
+    "byteSize": 12955,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "counterpart-full-after.out",
+    "sha256": "d93a870497e35047956dddd354f0e1f1baaae53a0d4ce043702592b930a6708e",
+    "byteSize": 4990,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "future-requirement-before.err",
+    "sha256": "184551c687bf4b63060068ba76eeac28be3bb9e605c45d5120b1939f0349daff",
+    "byteSize": 778,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
+  },
+  {
+    "path": "future-requirement-final.out",
+    "sha256": "328b16275380a31a593d2df5524521a5de400bc4493963c14c906b0f2304780b",
+    "byteSize": 1280,
+    "environment": "Node 24.19.0 / Linux; synthetic component/command fixtures; storage I/O double where used",
+    "sourceBaseCommit": "50218bfa06ae34407d586dd2c71f4a2ec7cd24cf",
+    "sourceQualification": "Working-tree repair evidence, not final revision or deployed acceptance. Runs preceded later due-requirement changes except future-requirement-final.out. See permanent verifier and explicit mutation anchors. counterpart-full-after.out predates report correction: its persistence flag means canonical serialization only, and replacement cases were not executed."
   }
 ]
