@@ -6339,13 +6339,13 @@
   ],
   "contractProfileId": "closed-loop-completion-profile/1",
   "normativeRequirementManifestIdentity": "NRM-7dbc15a5f4d732efa2973c96da01d02b",
-  "normativeRequirementManifestSha256": "fda0dbf47cec2a407d8c84af4177858a6a8eb48a45eace658f0bf5c343e559dc",
-  "normativeRequirementManifestCanonicalSha256": "750294082623b4c8c9f02ced3864b53a418299df9bd53c50cda93382726718dd",
+  "normativeRequirementManifestSha256": "43ca726d8f4f2c00ab3604e6900ab8eeb0a6dfd653c6ea8e25ae6d80d4f6a4d8",
+  "normativeRequirementManifestCanonicalSha256": "9388e4ac9e92e23a61b10418a083d1653a6617cb1e17edb63a7273c1d4a5e804",
   "normativeRequirementManifestPath": "specification/closed-loop-normative-requirements.json",
   "normativeRequirementCount": 3825,
   "challengeAndReconciliation": {
     "independentReviewerIdentity": "281176bfb12195edbcc5f0801994cb0dbfb200de4c673852a41ddc212f047023",
     "status": "ACCEPTED"
   },
-  "manifestSha256": "37688cd567c14b475d351993edc01072f8b0badec7c2319e331974bba81bada1"
+  "manifestSha256": "e91f9a2106a80f5c55ba6cb3a25dbcb4c84129adcecf172806dec2ad3e2f946d"
 }

@@ -66029,7 +66029,20 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-a5be515530a4736a534a4ca3cd843377",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established.",
+      "productionOwners": [
+        "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+        "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+          "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-7e417b328764aaf6033114c36450ef9c",
@@ -66068,7 +66081,20 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-7e417b328764aaf6033114c36450ef9c",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established.",
+      "productionOwners": [
+        "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+        "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+          "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
@@ -67409,7 +67435,20 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-44fd18cf9801f02c34f8820d2a3acb34",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established.",
+      "productionOwners": [
+        "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+        "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+          "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-664f5c5b72efea7443b8f478ff4973df",
@@ -67448,7 +67487,20 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-664f5c5b72efea7443b8f478ff4973df",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established.",
+      "productionOwners": [
+        "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+        "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+          "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-568c874e5bc2e40448edcbe19d2fb8f4",
@@ -67487,7 +67539,20 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-568c874e5bc2e40448edcbe19d2fb8f4",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established.",
+      "productionOwners": [
+        "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+        "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+          "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-e27f616490036d42b6051729088d2fc7",
@@ -67526,7 +67591,20 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-e27f616490036d42b6051729088d2fc7",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established.",
+      "productionOwners": [
+        "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+        "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+          "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-c66f5606d354d43bfbd3be6980e56365",
@@ -67604,7 +67682,20 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established.",
+      "productionOwners": [
+        "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+        "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+      ],
+      "executedEvidence": [
+        {
+          "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+          "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+        }
+      ],
+      "unresolvedRequirements": [
+        "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-a9af9685ef7fd2384d28804e32d9141c",
@@ -203605,5 +203696,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "750294082623b4c8c9f02ced3864b53a418299df9bd53c50cda93382726718dd"
+  "manifestSha256": "9388e4ac9e92e23a61b10418a083d1653a6617cb1e17edb63a7273c1d4a5e804"
 }

@@ -151,7 +151,7 @@ vm.runInContext(`
 `,filePackageRuntime);
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
 filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>fixtureProject;getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
 maxPackageRead=0;maxBase64Input=0;totalPackageRead=0;
 let executionPackage;
 try{
