@@ -575,7 +575,7 @@ async function initializeHistoryNavigation(){
   const retainedView=await projectStore.readHistoryView?.(current.job.JOB_ID);if(retainedView)selectSavedView(retainedView);
   const stage=Number(url.searchParams.get('stage'));if(stage>=1&&stage<=schema.STAGE_COUNT){if(stage!==current.activeStage&&retainedView)retainedView.drafts={};current.activeStage=stage;current.activeView='Workflow';}
   render();applySavedView(retainedView);
-  await projectStore.saveCheckpoint(current.job.JOB_ID,{expectedProjectRevision:current.revision,sessionId:APPLICATION_SESSION_ID,label:'Session start'});await refreshHistory();writeBrowserEntry(historyState.activeId,captureView(),{replace:true});render();
+  await projectStore.saveCheckpoint(current.job.JOB_ID,{expectedProjectRevision:current.revision,sessionId:APPLICATION_SESSION_ID,label:'Session start'});await refreshHistory();const startupView=captureView();writeBrowserEntry(historyState.activeId,startupView,{replace:true});render();applySavedView(startupView);
  }
  }catch(error){await refreshHistory();writeBrowserEntry(historyState.activeId,captureView(),{replace:true});render();reportActionFailure(new Error('The saved view could not be restored. Your current project is preserved and History is available. '+String(error.message||error)));}
  window.addEventListener('popstate',event=>{const destination=event.state;if(!destination?.closedLoopHistory)return;void restoreHistoryVersion(destination.checkpointId,{jobId:destination.jobId,view:destination.view,traversal:true,pendingAction:operatorActionInFlight?.promise}).catch(()=>{});});

@@ -1,0 +1,255 @@
+{
+  "schema": "closed-loop-source-clause-review/1",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "reviewBasis": "Continuation source review of omitted mandatory prose. Not an independent review and not behavioral conformance evidence.",
+  "clauses": [
+    {
+      "line": 234,
+      "sectionId": "5",
+      "text": "No application-owned calculation is converted into a human-approved semantic proposal merely to fit a single lifecycle pattern.",
+      "sourceLineSha256": "cec0e94d1508137ba61be1f93eba374c7dfd828d05325af75c4fb0c6c284d6a0",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 425,
+      "sectionId": "6.6",
+      "text": "Read the complete request and every accessible supplied artifact from beginning to end. Extract all distinct project-relevant human-origin statements.",
+      "sourceLineSha256": "440b301b2b8c4478315b6fa1a8e819c2c209fc2462e4f6c361a534097c553efb",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 722,
+      "sectionId": "10",
+      "text": "prompt-engine.js is the only prompt authority.",
+      "sourceLineSha256": "e9c77f0379bcf89639df4856050ed85239710f679db1787b4145c62007840d48",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 751,
+      "sectionId": "10",
+      "text": "No runtime wrapper may modify prompt behavior after prompt-engine.js generates the exact string.",
+      "sourceLineSha256": "d00b07b3ad5faaa73738458e48c15977fd8952f53cc18e1ee681c562ecf62f60",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 765,
+      "sectionId": "10.1",
+      "text": "The prompt file does not contain its own bodySha256 or any value whose computation depends on bodySha256. manifest.json carries promptIdentity, including the application-computed bodySha256, and the prompt instructs the external actor to echo the exact manifest promptIdentity. This avoids a self-referential prompt hash.",
+      "sourceLineSha256": "228de203e401650390db52257ac3b98e7506fa174a074506e5178acba230553a",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 854,
+      "sectionId": "12.1",
+      "text": "test-worker.js is loaded only as the same-origin worker entry used by test-runtime.js.",
+      "sourceLineSha256": "b2254689290f96252cc21e0f5b2715ed3fd43b669974abc84e7c9a2f5a2bc997",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 874,
+      "sectionId": "12.3",
+      "text": "workflow-schema.js owns the authoritative field registry, stage-operation registry, scope matrix, durable-object contracts, attachment-slot contract, verification-phase fields, and date/time value schemas.",
+      "sourceLineSha256": "f285fb6986d6fadf42b0f2d34b12996cb33ce1961e360f24166a906952498f2a",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 880,
+      "sectionId": "12.3",
+      "text": "project-store.js owns file-first prompt/response bytes, staging recovery, idempotency and tombstone receipts, backup/export state, logical handoff-container membership, quarantine handling, and exact original-byte preservation.",
+      "sourceLineSha256": "29db3d5699a26d3f571ef447989f1caa26727d1d8d8e9db0c901f616b05b9af0",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 1168,
+      "sectionId": "14.10",
+      "text": "A human-origin fact or decision first supplied inside an external-agent conversation does not become HUMAN or HUMAN_DECISION authority merely because the agent reports it. The response places each such value in humanAuthorityCandidates with its external-response pointer and claimed conversation basis. The application presents the exact extracted value for direct confirm or correct without requiring retyping. Information already present in current raw input or accepted human records is not reconfirmed.",
+      "sourceLineSha256": "8a28e46eb33b66b095c8497a48036be16ca1bf5741ae4a9239af94478c90d037",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 1461,
+      "sectionId": "17.7",
+      "text": "Acceptance recomputes every precondition.",
+      "sourceLineSha256": "dea07a35846859ca0e89dabd515116cacd32e81e3d9602c5ab8976b965b7932a",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 1462,
+      "sectionId": "17.7",
+      "text": "Reaccepting the same canonical envelope and scope returns existing identities and receipts and creates no duplicate state.",
+      "sourceLineSha256": "06449562e380b2ffd5f824f7e134f8246fccdc00ac398b14e2c28fd7d5eb1889",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 1497,
+      "sectionId": "17.10",
+      "text": "Every expected returned file has an application-owned ATTACHMENT_SLOT_ID bound to package, reservation, job, stage, operation, purpose, role, requiredness, allowed media type, filename rule, maximum size, and expected digest when known. The response attachment declaration references the slot ID and supplies claimed filename, media type, byte size, digest, and semantic role.",
+      "sourceLineSha256": "810cfd630e4d0d02020bc283327dd306c252e7cab091e609c50881c177165331",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 1635,
+      "sectionId": "19.7",
+      "text": "The canonical manifest contains packageManifestSha256 computed from closed-loop-canonical-json/1 with packageManifestSha256 omitted. No package digest includes itself.",
+      "sourceLineSha256": "8f930fd780ea2d26eea3eb8c9bdfdffc7e7b17e6cdf8caccb3286d6cb4998a18",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 1776,
+      "sectionId": "21.3",
+      "text": "Every registered operation declares named input ports, output ports, exact types, cardinalities, deterministic error codes, error propagation, and resource-cost category. Each operation declares exact input arity and types and one normalized output type. Multi-artifact branches use explicit step references. BYTE_COMPARE and COMPARE receive explicit left and right inputs. Assertions receive explicit actual and expected inputs. A failed or unknown predecessor prevents dependent execution and propagates the registered terminal disposition without partial canonical result; errors propagate as typed execution failure and no later step may consume a failed output. Intermediate step outputs exist only for the current execution unless explicitly emitted as observations or evidence.",
+      "sourceLineSha256": "131718be957b731da086b38b31ead06f4440d95ec0118dc3d0a946c557f9a3da",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 1932,
+      "sectionId": "21.17",
+      "text": "Every canonical test declares VERIFICATION_PHASE, EARLIEST_EXECUTABLE_STAGE, REQUIRED_BY_STAGE, PER_RUN_REQUIRED, FINAL_PRODUCT_REQUIRED, DELIVERY_REQUIRED, and TARGET_AVAILABILITY_CONDITION. The application validates these values against the test role and proof obligation and derives when execution is due.",
+      "sourceLineSha256": "1db316a71dc2448a80a5abb0ae07393cd982b0bf696721d2dc7eef04e848b671",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 2206,
+      "sectionId": "24.1",
+      "text": "Every filesToSend and expectedReturnFiles entry has a stable application-owned slot or role ID. The UI and prompt use the same identifiers. The application exports the prompt and all send files directly from stored bytes and ingests the response and returned files through the corresponding slots.",
+      "sourceLineSha256": "6d2a63849bd35dd959c0d32c7b9426834d8e221e64d2de3359cd2d5deb50ac62",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 2257,
+      "sectionId": "25",
+      "text": "Returned files are selected into their named attachment slots. The application verifies actual bytes, membership, slot relationships, reservation, package, prompt identity, revision, scope, and response contract before proposal creation.",
+      "sourceLineSha256": "fdf969dceaf22eff413ef02bfc40aac49dfd6848442bbd77be835415de6cfd32",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 2552,
+      "sectionId": "29.10",
+      "text": "Every conditional activation proposition has either its own current PROOF_OBLIGATION_ID or an explicitly identified activation leaf inside the parent applicability proof contract. It uses the same proof-expression, observation, entailment, evidence-class, allowed-epistemic-basis, freshness, contradiction, independence, and semantic-review rules as every other release-bearing proposition.",
+      "sourceLineSha256": "a44fa2a515f24dc1e44b1982db4f8d515c5be64a0b4859faaae23a9134d08d1f",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 2562,
+      "sectionId": "29.12",
+      "text": "Every release-bearing proposition, applicability condition, independence condition, entailment conclusion, source-authenticity conclusion, environment claim, and external-capability claim carries truthValue TRUE, FALSE, or UNKNOWN; epistemicBasis APPLICATION_OBSERVED, VERIFIED_EXTERNAL, EXTERNALLY_SUPPORTED, SELF_ASSERTED, or NONE; currentScopeStatus CURRENT or STALE; freshnessStatus CURRENT, EXPIRED, UNKNOWN, or NOT_APPLICABLE; contradictionStatus CLEAR or CONTRADICTED; reasons; supportingEvidenceIds; and a derivation or accepted semantic-review identity.",
+      "sourceLineSha256": "8a116bdea8fa608e0d0c00954bac16a2b64bf53f144528f5aaed21354d20cf8b",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 2570,
+      "sectionId": "29.13",
+      "text": "The closed proof-expression language permits LEAF, ALL_OF, ANY_OF, and AT_LEAST_K only. It has no arbitrary code, unrestricted negation, implicit coercion, stale references, or empty operators. ALL_OF is TRUE when all children are TRUE, FALSE when any is FALSE, and UNKNOWN otherwise. ANY_OF is TRUE when any is TRUE, FALSE when all are FALSE, and UNKNOWN otherwise. AT_LEAST_K is TRUE when trueCount \u2265 K, FALSE when trueCount + unknownCount < K, and UNKNOWN otherwise.",
+      "sourceLineSha256": "4ee09651801c8b5e92cc7c47ab3429cfa9451c96c3992212d72da63f0b617f05",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 2907,
+      "sectionId": "34.3",
+      "text": "Every normalizer and application derivation has an immutable registry ID, version, implementation-owner file, canonical input contract, output contract, hash or build identity, and invalidation consequences. Every derived value records the exact derivation ID and source-record hashes. A changed normalizer or derivation invalidates affected current values and results unless an explicit compatibility migration proves byte- and semantic-equivalent output.",
+      "sourceLineSha256": "a0b8e3621bccd9ca2ba45e940d33506dd86a8a8e8f0b3bc1023220474d429886",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 2979,
+      "sectionId": "35.5",
+      "text": "Import validates all identities and bytes before activation.",
+      "sourceLineSha256": "20c4e6b697c71a5ccf4cbc2b7167260e5264c8bb7e52f29d24bafceefdc45ed2",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 2980,
+      "sectionId": "35.5",
+      "text": "A failed import leaves existing projects unchanged.",
+      "sourceLineSha256": "1afc86049dc3377510a1b9b579d0a58165199535b98ce70343504de584c9d64e",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 3173,
+      "sectionId": "36.8",
+      "text": "Before Stage 25 inspection, the application executes FREEZE_DELIVERY_CANDIDATE and creates one application-immutable DELIVERY_CANDIDATE_SET_ID containing the exact artifact IDs, versions, authorized candidate filenames, byte lengths, hashes, transformation records, package membership, parser or viewer requirements, and product lineage. Stage 25 inspects that exact set.",
+      "sourceLineSha256": "157e18bc47a1bbea9b36db5bcebd1167855666978fd2927dff500aeaf1868118",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 3216,
+      "sectionId": "36.11",
+      "text": "After an AUTHORIZED delivery record exists, the current Stage 30 operator action is EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS. It is a non-stage-increasing terminal action. Immediately before export or share, the application revalidates the current delivery record, dependency closure, recipient/destination scope, transfer-count rule, and exact artifact bytes.",
+      "sourceLineSha256": "32e3dfe79f5235d632d0edc982c8cdca983a19f816d629b58349376870c3bddf",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 5637,
+      "sectionId": "52",
+      "text": "No implementation may assume that the application already extracted arbitrary user-file meaning before the Stage 01 agent inspected the file.",
+      "sourceLineSha256": "661103de367f60aa817065fd527470ea13968ab06edb678490a35bfe9716807b",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 5638,
+      "sectionId": "52",
+      "text": "After Stage 01 accepts the extracted human-authority information, no later stage may ask the user to supply that information again.",
+      "sourceLineSha256": "751bcb378abbb5c2782e55653ebf75ce9169a9b7c9f9aee2a3c6d7efc85dcb2d",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 5640,
+      "sectionId": "52",
+      "text": "No human or agent assertion may substitute for a fact the application can establish itself.",
+      "sourceLineSha256": "bc01f8652c65df19c74a5765faf48b6ebbbe6a454f4b7904ae1ba23fe5fea438",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 5641,
+      "sectionId": "52",
+      "text": "No test, audit, source review, or deployment result substitutes for using the live application through the exact visible path.",
+      "sourceLineSha256": "4ea97bff95624c0d5c7d6e0be1df993b7b721a4bd7b01efbc3f88eaa44e46a72",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 5649,
+      "sectionId": "52",
+      "text": "Implementation-only instructions, repository audits, specification text, and repository governance manifests are not runtime project content and are not delegated to external stage agents.",
+      "sourceLineSha256": "39bf6478e61f3035f0509a3f1af51949585af7161632753b1b766ca8b00697ed",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    },
+    {
+      "line": 5653,
+      "sectionId": "52",
+      "text": "Final delivery uses the exact Stage 25 delivery-candidate set, Stage 27 release precedence, Stage 28 byte identity and destination-bound human intent, Stage 29 evidence-chain hash, pre-delivery checkpoint, and the atomic Stage 30 terminal command. Authorization, delivery attempt, and completed delivery are distinct.",
+      "sourceLineSha256": "e83e7c31112628af037a2331d5c5036c886bcf75b069d57291fa53f6b3c3aabe",
+      "classification": "MANDATORY",
+      "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    }
+  ]
+}

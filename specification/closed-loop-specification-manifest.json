@@ -1,7 +1,7 @@
 {
   "schema": "closed-loop-specification-manifest/1",
-  "manifestIdentity": "SPEC-MANIFEST-7dbc15a5f4d732efa2973c96da01d02b",
-  "generatorVersion": "closed-loop-governance-generator/4",
+  "manifestIdentity": "SPEC-MANIFEST-26918fc9a9d778c6431636c95bb7654d",
+  "generatorVersion": "closed-loop-governance-generator/5",
   "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "repositoryPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "artifactFilename": "closed-loop-reliability-controlling-implementation-specification.txt",
@@ -297,6 +297,7 @@
         "NREQ-7410a306e25f7a1c1cc077c6add69bce",
         "NREQ-8ce47a75a2444ce366ab55c6b78fef28",
         "NREQ-b627872eea3e9ef24aaf727cdf070d2f",
+        "NREQ-c19a3b568cee918a41f6b128284f20fa",
         "NREQ-175dfea24035e057e3bb035215f6f30b",
         "NREQ-1413601e9576316528eabd8964c850d6",
         "NREQ-02afecad875803a5e4e3c5e1e1bcc823",
@@ -518,6 +519,7 @@
       "endLine": 449,
       "normativeRequirementIds": [
         "NREQ-d72153098f746d8eb6f60b678d7ebbd4",
+        "NREQ-0fe0693c63b640aac77aa7fa2ad3861d",
         "NREQ-57f8fa829a872f35948a81bd58477291",
         "NREQ-ebadc5f449d2029613a3af4b31f78c6f",
         "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
@@ -915,6 +917,7 @@
       "startLine": 720,
       "endLine": 758,
       "normativeRequirementIds": [
+        "NREQ-a29cbaebc9ee366d2540036bf1ec827f",
         "NREQ-c1ee6106eb5fbc7782cac6771598c8c8",
         "NREQ-eb40d81e46a5d201043f62bae2da0579",
         "NREQ-67535c706f11842f03ef60c777f3701e",
@@ -941,6 +944,7 @@
         "NREQ-075b75ea828e84c22e346dd486a3fe84",
         "NREQ-66c6f4a829db1f6c6308976809f0f8b1",
         "NREQ-e56052bbd89b555ffb19557f76062ac4",
+        "NREQ-99ee2535484ba0e95caa2323930a7183",
         "NREQ-1bcd53bc69aea0e619d0675e069a132b",
         "NREQ-7f4b7b8bf925041cae1558ee42544e01",
         "NREQ-7eb73740b3cc4f98ae94c6ae1522bb5b",
@@ -956,7 +960,8 @@
       "endLine": 766,
       "normativeRequirementIds": [
         "NREQ-a52bb653c745eaad17134f8c1e275907",
-        "NREQ-7813fc69e36539de62cfad532d12d010"
+        "NREQ-7813fc69e36539de62cfad532d12d010",
+        "NREQ-e465e59a7d83b4cc5bf681f77c65e75e"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -1066,6 +1071,7 @@
         "NREQ-2ecfc2e17912e2df9fc0681126ee7ff9",
         "NREQ-d00b42fd17a929d900fad5339de87d2d",
         "NREQ-d690a0c2b528e66093337e3757248907",
+        "NREQ-fcc96a37b767b8653f360a3171c1c490",
         "NREQ-9d419789e282f6c098a2e3cc34f5a003",
         "NREQ-81a8587ad89ef9214b5dafc688298d5e",
         "NREQ-1b945183553656b70790d482170631b3",
@@ -1098,9 +1104,12 @@
       "title": "Additional responsibility boundaries",
       "startLine": 872,
       "endLine": 887,
-      "normativeRequirementIds": [],
-      "disposition": "NONNORMATIVE",
-      "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
+      "normativeRequirementIds": [
+        "NREQ-4d7a9222926561b1117ca35109456dd2",
+        "NREQ-03cda2c8fa184270b91e88b672d659aa"
+      ],
+      "disposition": "COVERED",
+      "nonnormativeReason": null
     },
     {
       "sectionId": "13",
@@ -1434,9 +1443,11 @@
       "title": "Human-origin facts first supplied during an external conversation",
       "startLine": 1166,
       "endLine": 1173,
-      "normativeRequirementIds": [],
-      "disposition": "NONNORMATIVE",
-      "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
+      "normativeRequirementIds": [
+        "NREQ-0a5586532096bb03cdac1adbf68b91be"
+      ],
+      "disposition": "COVERED",
+      "nonnormativeReason": null
     },
     {
       "sectionId": "15",
@@ -1762,7 +1773,9 @@
         "NREQ-b2e5de17c6bcaec94e69e93d4caf51de",
         "NREQ-aa69ede64e4ec4dd91561d63d9c4fa52",
         "NREQ-b0bca81e89ab8b247b9d9cffdb60b0ba",
-        "NREQ-a946d4c1b38c7a4d5adbab21563ff2b5"
+        "NREQ-a946d4c1b38c7a4d5adbab21563ff2b5",
+        "NREQ-d0198bbb827a10ee577feb78634e3866",
+        "NREQ-fdd7816da509684a1c111a399187bb62"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -1815,6 +1828,7 @@
       "startLine": 1495,
       "endLine": 1500,
       "normativeRequirementIds": [
+        "NREQ-fc73ddc3ba9934e2d605107adca72254",
         "NREQ-51e872a7a046be9eeb955e757448b228"
       ],
       "disposition": "COVERED",
@@ -2002,6 +2016,7 @@
       "startLine": 1631,
       "endLine": 1642,
       "normativeRequirementIds": [
+        "NREQ-3a4b97bb6d98ee930866832102f1d544",
         "NREQ-5346f0fa42298a807f25886df39b41ca",
         "NREQ-3bd6ddb44410af0ce360674e456fec7a",
         "NREQ-df0939c42dacd8d296ed2fa0847f520e"
@@ -2099,7 +2114,8 @@
       "startLine": 1710,
       "endLine": 1777,
       "normativeRequirementIds": [
-        "NREQ-5d9d976d449de0753c8c4f1692905b62"
+        "NREQ-5d9d976d449de0753c8c4f1692905b62",
+        "NREQ-ac56cc341e3ff24380bef0ff95da8e45"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -2330,9 +2346,11 @@
       "title": "Verification timing fields",
       "startLine": 1930,
       "endLine": 1935,
-      "normativeRequirementIds": [],
-      "disposition": "NONNORMATIVE",
-      "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
+      "normativeRequirementIds": [
+        "NREQ-38cc440932653f635d781450303b4f7f"
+      ],
+      "disposition": "COVERED",
+      "nonnormativeReason": null
     },
     {
       "sectionId": "22",
@@ -2611,7 +2629,8 @@
         "NREQ-ad1e39246573d30e8a01562d159421bc",
         "NREQ-cd2e0b41334c1319830464fdbef08819",
         "NREQ-afc67b9dca7a9d3fadb3c4bfcf6ce8e4",
-        "NREQ-aae33509243b5d9ba8e64aa690ba0193"
+        "NREQ-aae33509243b5d9ba8e64aa690ba0193",
+        "NREQ-0633385d1ac3faa034a49bca2fe34de5"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -2655,7 +2674,8 @@
         "NREQ-ed36036b69448991f17a65932ea99f22",
         "NREQ-38152c7fc91cb2bd1352d15eb664cf3b",
         "NREQ-565340ef17dd5d435a9b60253a2e3680",
-        "NREQ-2dd1db06ef1d50afe2650ffc207183e4"
+        "NREQ-2dd1db06ef1d50afe2650ffc207183e4",
+        "NREQ-53ba467545effc4fc63c93119acaed3c"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -3014,6 +3034,7 @@
       "startLine": 2550,
       "endLine": 2555,
       "normativeRequirementIds": [
+        "NREQ-282ce0f6e3bf215ccb15afd7cdb77fa3",
         "NREQ-0935bdd666f0bb2c7264e51d45ad67ce"
       ],
       "disposition": "COVERED",
@@ -3036,6 +3057,7 @@
       "startLine": 2560,
       "endLine": 2565,
       "normativeRequirementIds": [
+        "NREQ-852539ae8a657244366126b11b538c7b",
         "NREQ-586c7239525fc49657cbea6c505f432c"
       ],
       "disposition": "COVERED",
@@ -3048,6 +3070,7 @@
       "endLine": 2575,
       "normativeRequirementIds": [
         "NREQ-5364b9a933b45e3f9e9d3d825b66631e",
+        "NREQ-17e9fcfc6ae15d210aa3de51b9644377",
         "NREQ-2eb7c4bf653b73a37d70235ed1d7232f",
         "NREQ-19b09d8ac32718e4ba1a28318469f8da"
       ],
@@ -3441,6 +3464,7 @@
       "startLine": 2905,
       "endLine": 2912,
       "normativeRequirementIds": [
+        "NREQ-cde34b8d123be8006aa2d49b8cd1c876",
         "NREQ-eecccd22fbd6aba5a9a4e1c77e8d3a41"
       ],
       "disposition": "COVERED",
@@ -3535,7 +3559,9 @@
         "NREQ-d8364b451e9bacebe247eb7156b4cca1",
         "NREQ-9d24cb0d2daab9f1168e84c503e311d3",
         "NREQ-565a4e32ba059a7f2bb12136d5300025",
-        "NREQ-e930db71215117ddfb5e78fefcfac07c"
+        "NREQ-e930db71215117ddfb5e78fefcfac07c",
+        "NREQ-5fe399cb17e5ef4e71d7789bc46f9694",
+        "NREQ-f3a162780b1c810f1a98f9a34500e0ea"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -3791,6 +3817,7 @@
       "startLine": 3171,
       "endLine": 3176,
       "normativeRequirementIds": [
+        "NREQ-37e0f8a89b27894ec5fa57d70f603f9c",
         "NREQ-5655e60dfb0ae3f47ab84c25a9e1379c"
       ],
       "disposition": "COVERED",
@@ -3846,6 +3873,7 @@
       "startLine": 3214,
       "endLine": 3219,
       "normativeRequirementIds": [
+        "NREQ-4eb953c1661f433106baf5f5081f245f",
         "NREQ-09852d85a8e2de15f8a15fbd663018f4"
       ],
       "disposition": "COVERED",
@@ -6326,11 +6354,17 @@
         "NREQ-512e979db038e854f7a3b1733fe7f1f5",
         "NREQ-172d9d37dd7334f0158047a3807c174a",
         "NREQ-0f97b7286b3ac9f06727eafb20fd4bca",
+        "NREQ-dbcc70e026ce8731fd94b6768404d53d",
+        "NREQ-6c75dff3cf5a501f1950e061b5e273d1",
         "NREQ-92a22bb6c1550996fd6b9e2add3cf528",
+        "NREQ-2b284adcac76e9ba0178ceefdbb50160",
+        "NREQ-a7ebefcf0c844492e250883fdea1468c",
         "NREQ-1eedad80516eb3d3edefe71e4b8ecf38",
         "NREQ-4f26bce92522aa236e602a143c3e8377",
         "NREQ-4e8e9a9619b05bf68319a6e8a7320be7",
+        "NREQ-e5397f1d43e610dedbe314a830c500bc",
         "NREQ-368199b6ecd5367fc3738049b5b28a04",
+        "NREQ-9a6b6e2aea89f11aeacc8aa72fa01dad",
         "NREQ-725495eafbe7298eccb4791da66c07c1"
       ],
       "disposition": "COVERED",
@@ -6338,14 +6372,14 @@
     }
   ],
   "contractProfileId": "closed-loop-completion-profile/1",
-  "normativeRequirementManifestIdentity": "NRM-7dbc15a5f4d732efa2973c96da01d02b",
-  "normativeRequirementManifestSha256": "5c2c549854c134b09c27af407f86841ee520431099f2f38d6d0912bddd02bb4a",
-  "normativeRequirementManifestCanonicalSha256": "c79ea999eebf32a0d8d0acce5a72f88bf2f395b9d71ceb2bca9b369c9f534222",
+  "normativeRequirementManifestIdentity": "NRM-26918fc9a9d778c6431636c95bb7654d",
+  "normativeRequirementManifestSha256": "a1ade1825833ffb0352bb302f3f08e18a2fc3a26b0cb692a057f4a420961b50c",
+  "normativeRequirementManifestCanonicalSha256": "c2b3bc55f6693278eee0b2b912dff31ec1987dd4b5d9b9ede6dde2c65305a69c",
   "normativeRequirementManifestPath": "specification/closed-loop-normative-requirements.json",
-  "normativeRequirementCount": 3825,
+  "normativeRequirementCount": 3856,
   "challengeAndReconciliation": {
     "independentReviewerIdentity": "281176bfb12195edbcc5f0801994cb0dbfb200de4c673852a41ddc212f047023",
     "status": "ACCEPTED"
   },
-  "manifestSha256": "0b21d74f9a9dcecc0b3ab2c22e84a2d0c98939055834a62e10ac7771e486849a"
+  "manifestSha256": "8c0f44dc02a5ae090e9afaa4066539d1544c5145137f6289178b2b8eb8e18b11"
 }

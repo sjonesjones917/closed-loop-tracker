@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 const r=projectStoreRuntime(),{runtime,store,core,engine,copy}=r,jobId='NAVIGATION-CONTROLLER';let project=core.createBlankState(jobId);engine.ensureShape(project);engine.recalculate(project);project=await store.writeProject(project,{expectedProjectRevision:0});await store.beginHistorySession('NAV-SESSION');
@@ -8,10 +9,10 @@ runtime.AbortController=AbortController;runtime.structuredClone=copy;runtime.URL
 runtime.history={get state(){return entries[cursor]?.state||null;},pushState(state,_title,url){entries.splice(cursor+1);entries.push({state:structuredClone(state),url:String(url)});cursor=entries.length-1;runtime.location.href=String(url);},replaceState(state,_title,url){if(cursor<0){entries.push({});cursor=0;}entries[cursor]={state:structuredClone(state),url:String(url)};runtime.location.href=String(url);}};
 runtime.window={scrollX:0,scrollY:0,scrollTo(x,y){positions.push([x,y]);},addEventListener(){}};
 const node={value:'',textContent:'',isConnected:true,focus(){},click(){},setAttribute(){},removeAttribute(){},classList:{add(){},remove(){}}};const nodes=new Map();runtime.document={currentScript:null,querySelector:selector=>{if(!nodes.has(selector))nodes.set(selector,{...node});return nodes.get(selector);},querySelectorAll:()=>[],addEventListener(){},dispatchEvent(){}};runtime.requestAnimationFrame=callback=>queueMicrotask(callback);runtime.selected=project;runtime.navigationErrors=errors;
-const source=fs.readFileSync('app-core.js','utf8');vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
+let source=fs.readFileSync('app-core.js','utf8');if(process.env.CLOSED_LOOP_STARTUP_DRAFT_FAULT==='1'){const anchor='render();applySavedView(startupView);';assert.ok(source.includes(anchor),'Startup draft fault anchor missing');source=source.replace(anchor,'render();');}vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
  core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;projectStore=closedLoopProjectStore;current=selected;projects=[current];
  render=()=>{};announce=()=>{};reportActionFailure=error=>navigationErrors.push(error.code||error.message);loadAcceptanceSession=async()=>{};unloadInactiveProjects=()=>{};withStorageActivity=async(label,work)=>work();
- globalThis.navigationTest={initialize:initializeHistoryNavigation,navigate:navigateWithinVersion,restore:restoreHistoryVersion,save: persistReplacement,capture:captureView,capturePersist:captureCurrentView,saveFiles:saveFileSelection,readFiles:readFileSelection,current:()=>current,run:work=>runOperatorAction('Test operation',work),storeOverride:value=>{projectStore=value;}};
+ globalThis.navigationTest={initialize:initializeHistoryNavigation,navigate:navigateWithinVersion,restore:restoreHistoryVersion,save: persistReplacement,capture:captureView,capturePersist:captureCurrentView,saveFiles:saveFileSelection,readFiles:readFileSelection,current:()=>current,run:work=>runOperatorAction('Test operation',work),storeOverride:value=>{projectStore=value;},renderOverride:value=>{render=value;}};
 })();`,runtime);
 const ui=runtime.navigationTest,cases=[],note=name=>cases.push({name,result:'PASS'});
 const formNodes=[{id:'review-choice',type:'select-one',value:'2',dataset:{}},{id:'response-note',type:'textarea',value:'Unsaved response note',dataset:{}},{id:'approved-check',type:'checkbox',value:'on',checked:false,dataset:{}}];
@@ -43,5 +44,20 @@ const backup=await store.exportPackage(jobId),fresh=projectStoreRuntime();await 
 const priorSelection=copy(ui.capture().fileSelections);runtime.__closedLoopStorageFault='before-history-checkpoint';await assert.rejects(ui.saveFiles('response',[namedFile],1));delete runtime.__closedLoopStorageFault;assert.deepEqual(ui.capture().fileSelections,priorSelection);note('Checkpoint failure preserves the prior selected files and accepted work');
 const beforeBrokenLink=copy(await store.readProject(jobId));entries.push({state:null,url:'https://disposable.test/?project='+jobId+'&version=missing-version'});cursor=entries.length-1;runtime.location.href=entries[cursor].url;await ui.run(()=>ui.initialize());assert.deepEqual(await store.readProject(jobId),beforeBrokenLink);assert.ok(errors.some(message=>message.includes('History is available')));assert.notEqual(runtime.history.state.checkpointId,'missing-version');note('An unavailable saved-version link keeps current data and usable History');
 entries.push({state:null,url:'https://disposable.test/?project='+jobId+'&version='+selectedVersion});cursor=entries.length-1;runtime.location.href=entries[cursor].url;let startupTimeout;try{await Promise.race([ui.run(()=>ui.initialize()),new Promise((_,reject)=>{startupTimeout=setTimeout(()=>reject(new Error('Saved-version startup waited for its own pending action')),5000);})]);}finally{clearTimeout(startupTimeout);}assert.equal((await store.historyList(jobId)).activeId,selectedVersion);note('Saved-version startup completes within its existing loading action without self-wait');
+// Model render replacing controls: a no-op renderer cannot detect startup draft loss.
+for(const form of formNodes)nodes.set('#'+form.id,form);
+const startupView=copy({activeStage:1,activeView:'Workflow',scrollX:0,scrollY:75,drafts:{'#response-note':{value:'Retained unaccepted startup draft'},'#approved-check':{value:'on',checked:true}}});
+await store.saveCheckpoint(jobId,{expectedProjectRevision:ui.current().revision,view:startupView});
+entries.push({state:null,url:'https://disposable.test/?project='+jobId});cursor=entries.length-1;runtime.location.href=entries[cursor].url;
+ui.renderOverride(()=>{formNodes[1].value='';formNodes[2].checked=false;});
+await ui.initialize();
+assert.equal(formNodes[1].value,startupView.drafts['#response-note'].value,'STARTUP_DRAFT_ORACLE: final startup render discarded the retained draft');
+assert.equal(formNodes[2].checked,true,'STARTUP_DRAFT_ORACLE: final startup render discarded the retained checkbox');
+assert.equal(runtime.history.state.view.drafts['#response-note'].value,formNodes[1].value,'Visible and retained startup drafts disagree');
+ui.renderOverride(()=>{});note('Ordinary project-link startup restores drafts after the final control render');
 const stale=copy(ui.current()),external=copy(await store.readProject(jobId));external.job.JOB_TITLE='Independent tab work';await store.writeProject(external,{expectedProjectRevision:external.revision});await assert.rejects(ui.restore(startId,{traversal:true}),error=>error.code==='STALE_PROJECT_REVISION');assert.equal((await store.readProject(jobId)).job.JOB_TITLE,'Independent tab work');assert.equal(ui.current().revision,stale.revision);note('Stale tab cannot restore over independent work');
+if(process.env.CLOSED_LOOP_STARTUP_DRAFT_FAULT!=='1'){
+ const fault=cp.spawnSync(process.execPath,[import.meta.filename],{encoding:'utf8',env:{...process.env,CLOSED_LOOP_STARTUP_DRAFT_FAULT:'1'},maxBuffer:8*1024*1024});
+ assert.notEqual(fault.status,0,'Bypassed final draft restoration was not detected');assert.match(fault.stderr,/STARTUP_DRAFT_ORACLE/,'Fault failed for an unrelated reason');note('Deliberately skipped final draft restoration is detected by the navigation regression');
+}
 console.log(JSON.stringify({synthetic:true,environment:'Real application navigation functions and production persistence with lifecycle adapter; minimal view/history boundary doubles',actualBrowser:false,cases},null,2));
