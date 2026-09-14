@@ -20,6 +20,9 @@ async function fill(cdp,selector,value){assert(await evaluate(cdp,`(()=>{const n
 async function setWidth(cdp,width,height=844){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:true});await sleep(150);}
 async function openStage(cdp,stage){await click(cdp,'[data-view="Workflow"]');await evaluate(cdp,`(()=>{const select=document.querySelector('#stage-picker');if(!select)return false;select.value=${JSON.stringify(String(stage))};select.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitFor(cdp,`document.body.innerText.includes('Stage ${String(stage).padStart(2,'0')}')`);}
 
+// Synthetic setup writes a chosen current state. Navigate by an ordinary
+// project link; a reload of a saved-version URL must restore that saved version.
+async function openStoredFixture(cdp){const url=await evaluate(cdp,`(async()=>{const url=new URL(location.href);url.searchParams.delete('version');url.searchParams.delete('stage');url.searchParams.set('project',await closedLoopProjectStore.metaGet('selectedProject'));return url.href;})()`);await cdp.send('Page.navigate',{url});}
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`));
   const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?mobile-stage-regression=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);
@@ -42,7 +45,7 @@ async function main(){
     assert(state.prompt&&state.prompt.left>=-1&&state.prompt.right<=width+1,`Prompt box exceeds the viewport at ${width}px: ${JSON.stringify(state.prompt)}`);
   }
   await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:600},(_,i)=>({rawResponseId:'RAW-PRESSURE-'+i,stage:i%30+1,status:'PRESERVED',rawText:'H'.repeat(80000)+'é🙂TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
-  await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
+  await openStoredFixture(cdp);await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
   const pressureDom=await evaluate(cdp,`({bytes:document.querySelector('#screen').innerHTML.length,nodes:document.querySelector('#screen').querySelectorAll('*').length})`);
   assert(pressureDom.bytes<100000&&pressureDom.nodes<1500,`Collapsed accumulated history was eagerly rendered: ${JSON.stringify(pressureDom)}`);
   await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('summary')].find(node=>node.textContent.includes('Raw agent responses'));node.parentElement.open=true;})()`);
@@ -128,7 +131,7 @@ async function main(){
     }finally{Blob.prototype.arrayBuffer=read;}
   })()`);
   assert(fileCustody.verified&&fileCustody.count===22&&fileCustody.largestRead<=65536,`File custody/staging used unbounded reads: ${JSON.stringify(fileCustody)}`);
-  await cdp.send('Page.reload');await waitFor(cdp,`closedLoopAppReady===true`);await click(cdp,'[data-view="Files"]');
+  await openStoredFixture(cdp);await waitFor(cdp,`closedLoopAppReady===true`);await click(cdp,'[data-view="Files"]');
   assert(await evaluate(cdp,`document.querySelectorAll('[data-download-artifact]').length===20`),'Files first page must contain exactly 20 download controls.');
   await click(cdp,'[data-detail-offset="20"]');
   assert(await evaluate(cdp,`document.querySelectorAll('[data-download-artifact]').length===2&&Boolean(document.querySelector('[data-download-artifact="BROWSER-FILE-21"]'))`),'Files last page lost its final artifact.');

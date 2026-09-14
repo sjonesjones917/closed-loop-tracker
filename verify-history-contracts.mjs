@@ -19,6 +19,18 @@ function contextOracle(r){
 contextOracle(projectStoreRuntime());note('Every selected stage excludes all subsequent-stage sentinels, including copied records and forged projection marker',{selectedStages:30,comparedStagePairs:900,basis:'Synthetic context-boundary sentinels; not full stage execution'});
 const contextFault={id:'BYPASS-CONTEXT-PROJECTION',file:'workflow-engine.js',before:'function stageContext(project,stage){',after:'function stageContext(project,stage){return project;'};
 assert.throws(()=>contextOracle(projectStoreRuntime({fault:contextFault})),/CONTEXT_ORACLE/);contextOracle(projectStoreRuntime());faults.push({id:contextFault.id,result:'DETECTED',restored:'PASS'});
+function metadataBoundaryOracle(r){
+ const {core,engine,copy}=r,schema=r.runtime.closedLoopWorkflowSchema,prompt=r.runtime.closedLoopPromptEngine;
+ const governed={sources:'CURRENT_SOURCE_SET_VERSION',research:'CURRENT_RESEARCH_VERSION',requirements:'CURRENT_REQUIREMENTS_VERSION',tests:'CURRENT_TEST_SUITE_VERSION',instructions:'CURRENT_INSTRUCTION_VERSION',products:'CURRENT_PRODUCT_VERSION'};
+ for(const selected of Object.keys(schema.STAGE_CONTRACTS).map(Number)){
+  const p=core.createBlankState('METADATA-BOUNDARY');engine.ensureShape(p);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve the selected-stage boundary.';engine.recalculate(p);
+  for(const [family,key] of Object.entries(governed))if(Number(schema.RECORD_SCHEMAS[family].stage)>selected)p.job[key]='PRIVATE_'+family+'_VERSION';
+  p.job.CURRENT_STATE='WORKFLOW_COMPLETE';
+  const context=engine.stageContext(p,selected);assert.equal(JSON.stringify(context.job).includes('PRIVATE_'),false,'METADATA_ORACLE: subsequent-stage version escaped through job metadata');
+  if(selected<schema.STAGE_COUNT)assert.notEqual(context.job.CURRENT_STATE,'WORKFLOW_COMPLETE','METADATA_ORACLE: global downstream completion escaped into selected-stage context');
+ }
+}
+metadataBoundaryOracle(projectStoreRuntime());note('All selected-stage job metadata excludes later version pointers and global completion');
 function preparationScopeOracle(r){
  const {core,engine,copy}=r,schema=r.runtime.closedLoopWorkflowSchema;let operations=0;
  for(const [stageText,semantic] of Object.entries(schema.SEMANTIC_STAGE_OPERATIONS)){const stage=Number(stageText);if(stage===schema.STAGE_COUNT)continue;for(const operation of [...semantic.authorOperations,...semantic.reviewOperations]){
@@ -63,6 +75,17 @@ async function mutationOracle(r){
  const committed=await store.writeProject(next,{expectedProjectRevision:p.revision,mutationConfirmation:impact});assert.equal(committed.projectData.acceptedChanges[0].invalidatedBy,'CORRECTION');
 }
 await mutationOracle(projectStoreRuntime());note('Unconfirmed and stale-confirmation mutations reject; exact confirmed change commits');
+async function pendingCorrectionRecovery(r){
+ const {store,core,engine,copy}=r;let p=core.createBlankState('PENDING-CORRECTION-RECOVERY');engine.ensureShape(p);engine.recalculate(p);p.projectData.acceptedChanges.push(copy({changeId:'ACCEPTED-PRIOR',stage:1,operation:'COMPLETE',active:true}));p=await store.writeProject(p,{expectedProjectRevision:0});
+ const next=copy(p);next.projectData.acceptedChanges[0].invalidatedBy='CORRECTION';const view=copy({activeView:'Workflow',activeStage:1,drafts:{},pendingMutation:{baseProjectSha256:p.projectSha256,next,impact:store.mutationImpact(p,next),expectedProjectRevision:p.revision}}),id=await store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,view});
+ const restored=await store.restoreCheckpoint(p.job.JOB_ID,id,{expectedProjectRevision:p.revision}),rebound=store.rebaseHistoryView(restored.project,restored.view);assert.equal(rebound.pendingMutation.expectedProjectRevision,restored.project.revision);assert.equal(restored.project.projectData.acceptedChanges[0].invalidatedBy,undefined);await assert.rejects(store.writeProject(rebound.pendingMutation.next,{expectedProjectRevision:restored.project.revision}),error=>error.code==='MUTATION_CONFIRMATION_REQUIRED');
+ await store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:restored.project.revision,view:rebound});const exported=await store.exportPackage(p.job.JOB_ID),fresh=projectStoreRuntime(),imported=await fresh.store.importPackage(exported),importedView=await fresh.store.readHistoryView(p.job.JOB_ID);assert.ok(importedView.pendingMutation);assert.equal(imported.projectData.acceptedChanges[0].invalidatedBy,undefined);assert.equal(importedView.pendingMutation.baseProjectSha256,imported.projectSha256);await assert.rejects(fresh.store.writeProject(importedView.pendingMutation.next,{expectedProjectRevision:imported.revision}),error=>error.code==='MUTATION_CONFIRMATION_REQUIRED');const accepted=await fresh.store.writeProject(importedView.pendingMutation.next,{expectedProjectRevision:imported.revision,mutationConfirmation:importedView.pendingMutation.impact});assert.equal(accepted.projectData.acceptedChanges[0].invalidatedBy,'CORRECTION');
+}
+await pendingCorrectionRecovery(projectStoreRuntime());note('Pending correction restores and imports as an unconfirmed exact candidate with a fresh confirmation binding');
+async function exportedScopeOracle(r){
+ const {core,engine,store,copy}=r,promptEngine=r.runtime.closedLoopPromptEngine;let p=core.createBlankState('EXPORTED-SCOPE');engine.ensureShape(p);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Produce an exact text file.';engine.recalculate(p);const prepared=engine.preparePromptContext(p,1,{operation:'COMPLETE'}),prompt=promptEngine.buildPromptRecord(1,prepared.project,prepared.options);p.projectData.generatedPrompts.push(prompt);p=await store.writeProject(p,{expectedProjectRevision:0});const bundle=await store.createExecutionPackage({project:p,stage:1,operation:'COMPLETE'}),manifest=promptEngine.promptFileManifest(prompt);assert.deepEqual(copy(bundle.manifest.scope),copy(manifest.scope),'EXPORT_SCOPE_ORACLE: consolidated manifest omitted the exact response scope');assert.equal(bundle.manifest.contractProfileId,manifest.contractProfileId);
+}
+await exportedScopeOracle(projectStoreRuntime());note('Consolidated stage export includes the same authoritative response scope and profile as its instruction manifest');
 const confirmationFault={id:'SKIP-PERSISTENCE-CONFIRMATION',file:'project-store.js',before:'assertMutationConfirmation(prior,project,options.mutationConfirmation);',after:'/* deliberately bypassed gate */'};
 await assert.rejects(mutationOracle(projectStoreRuntime({fault:confirmationFault})),/CONFIRMATION_ORACLE/);await mutationOracle(projectStoreRuntime());faults.push({id:confirmationFault.id,result:'DETECTED',restored:'PASS'});
 console.log(JSON.stringify({synthetic:true,environment:'Node VM production modules and lifecycle transaction adapter',realIndexedDB:false,cases,implementationFaults:faults},null,2));

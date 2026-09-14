@@ -63,14 +63,14 @@ function runOperatorAction(label,operation){
   // One pending UI action owns the selected project and controls until it ends.
   // Storage still performs its own revision, identity, and transaction checks.
   if(operatorActionInFlight)return operatorActionInFlight.promise;
-  const pending={label,promise:null};operatorActionInFlight=pending;
+  const pending={label,promise:null,activationId:current?.historyActivationId||null};operatorActionInFlight=pending;
   paintOperatorAction();announce(label);
   pending.promise=(async()=>{
     // Give the visible status a paint before hashing, validation, or derivation.
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    try{return await operation();}
+    try{if(globalThis.history?.state?.closedLoopHistory)await captureCurrentView();return await operation();}
     catch(error){reportActionFailure(error);}
-    finally{if(operatorActionInFlight===pending){operatorActionInFlight=null;paintOperatorAction();if(actionFocusTarget?.isConnected)actionFocusTarget.focus();actionFocusTarget=null;}}
+    finally{if(operatorActionInFlight===pending){try{if((current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}catch(error){reportActionFailure(error);}operatorActionInFlight=null;paintOperatorAction();if(actionFocusTarget?.isConnected)actionFocusTarget.focus();actionFocusTarget=null;}}
   })();
   return pending.promise;
 }
@@ -175,7 +175,7 @@ async function persistReplacement(next,{expectedProjectRevision=Number(next?.rev
  if(impact?.requiresConfirmation&&!reviewedAcceptance&&mutationConfirmation?.confirmationKey!==impact.confirmationKey){replacementReview={impact,next:clone(next),expectedProjectRevision};render();const panel=$('#replacement-confirmation');panel?.scrollIntoView({block:'start'});focusAfterAction(panel);throw Object.assign(new Error('Review this change before saving.'),{code:'MUTATION_REVIEW_SHOWN'});}
  if(reviewedAcceptance)mutationConfirmation=impact;
  let committed;
- try{await captureCurrentView();committed=await withStorageActivity('Saving project · '+jobId,()=>projectStore.replaceProject(next,{expectedProjectRevision,selectProject:false,historyView:captureView(),mutationConfirmation}));}
+ try{await captureCurrentView();committed=await withStorageActivity('Saving project · '+jobId,()=>projectStore.replaceProject(next,{expectedProjectRevision,selectProject:false,historyView:{...captureView(),pendingMutation:null},mutationConfirmation}));}
  catch(error){
   // Keep the compare-and-swap guard. Discard this candidate and refresh the
   // selected project so a retry can recompute from current canonical state.
@@ -472,10 +472,10 @@ function captureView(){
   const selector=node.id?'#'+CSS.escape(node.id):['job','humanStageField','humanAnswer','humanAuthorityConfirmation'].find(key=>node.dataset[key])?(function(){const key=['job','humanStageField','humanAnswer','humanAuthorityConfirmation'].find(key=>node.dataset[key]),attribute=key.replace(/[A-Z]/g,letter=>'-'+letter.toLowerCase());return `[data-${attribute}="${CSS.escape(node.dataset[key])}"]`;})():null;
   if(selector){const draft={value:node.multiple?[...node.selectedOptions].map(option=>option.value):String(node.value??'')};if(['checkbox','radio'].includes(node.type))draft.checked=Boolean(node.checked);drafts[selector]=draft;}
  }
- return {fileSelections:Object.fromEntries(Object.entries(fileSelectionDrafts).filter(([,selection])=>selection.jobId===current.job.JOB_ID)),pendingMutation:replacementReview?.next?{next:replacementReview.next,impact:replacementReview.impact,expectedProjectRevision:replacementReview.expectedProjectRevision}:null,activeView:current.activeView,activeStage:current.activeStage,scrollX:String(window.scrollX||0),scrollY:String(window.scrollY||0),drafts,operationSelection:clone(operationSelection),runSelection:clone(runSelection)};
+ return {fileSelections:Object.fromEntries(Object.entries(fileSelectionDrafts).filter(([,selection])=>selection.jobId===current.job.JOB_ID)),pendingMutation:replacementReview?.next?{baseProjectSha256:current.projectSha256,next:replacementReview.next,impact:replacementReview.impact,expectedProjectRevision:replacementReview.expectedProjectRevision}:null,activeView:current.activeView,activeStage:current.activeStage,scrollX:String(window.scrollX||0),scrollY:String(window.scrollY||0),drafts,operationSelection:clone(operationSelection),runSelection:clone(runSelection)};
 }
 function selectSavedView(view){
- if(!view)return;current.activeView=views.includes(view.activeView)?view.activeView:'Workflow';current.activeStage=Math.max(1,Math.min(schema.STAGE_COUNT,Number(view.activeStage)||1));
+ if(!view)return;view=projectStore.rebaseHistoryView(current,view);replacementReview=null;const pending=view.pendingMutation;if(pending)replacementReview={next:pending.next,impact:pending.impact,expectedProjectRevision:pending.expectedProjectRevision};current.activeView=views.includes(view.activeView)?view.activeView:'Workflow';current.activeStage=Math.max(1,Math.min(schema.STAGE_COUNT,Number(view.activeStage)||1));
  for(const key of Object.keys(operationSelection))delete operationSelection[key];Object.assign(operationSelection,view.operationSelection||{});
  for(const key of Object.keys(runSelection))delete runSelection[key];Object.assign(runSelection,view.runSelection||{});
  for(const key of Object.keys(fileSelectionDrafts))delete fileSelectionDrafts[key];Object.assign(fileSelectionDrafts,clone(view.fileSelections||{}));
@@ -494,7 +494,7 @@ function writeBrowserEntry(checkpointId,view,{replace=false}={}){
 }
 async function refreshHistory(){historyState=await projectStore.historyList(current.job.JOB_ID);paintHistory();}
 function paintHistory(){
- const host=$('#project-history');if(!host)return;const entries=historyState?.entries||[],active=entries.find(entry=>entry.id===historyState.activeId),previous=active?.parentId;
+ const host=$('#project-history');if(!host)return;const entries=historyState?.entries||[],active=entries.find(entry=>entry.id===historyState.activeId),previous=historyState?.undoId;
  host.innerHTML=`<div class="button-row"><button id="history-redo" type="button"${historyState?.redo?.length?'':' disabled'}>Redo</button></div><label for="history-version">Saved versions</label><select id="history-version">${entries.slice().reverse().map(entry=>`<option value="${esc(entry.id)}"${entry.id===historyState.activeId?' selected':''}>${esc(entry.label)} · ${esc(new Date(entry.createdAt).toLocaleString())}</option>`).join('')}</select><button id="history-restore" type="button">Restore selected version</button><button id="history-session-start" type="button">Return to session start</button><details><summary>Recovery limits</summary><p>History retains up to ${projectStore.HISTORY_LIMITS.maxCheckpoints} checkpoints, 512 MiB of compressed project snapshots and 1 GiB of retained file bytes per project, subject to available browser storage. A change is blocked if its checkpoint cannot be saved. Complete backups include retained History. Restoring project state does not reverse a transfer outside this application.</p></details>`;
  const undo=$('#history-undo');if(undo){undo.hidden=!previous;undo.disabled=!previous;}
  bindAction('#history-undo',()=>restoreHistoryVersion(previous,{mode:'UNDO'}),'Restoring previous version');
