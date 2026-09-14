@@ -595,6 +595,22 @@ function commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accept
   const manifestId=workflow.allocateInfrastructureId(next,'EXTRACTION-MANIFEST','extractionManifests');const manifest={manifestId,rawResponseId:proposal.rawResponseId,promptIdentity:{instructionId:proposal.promptId,bodySha256:proposal.bodySha256||proposal.promptSha256,contractSha256:proposal.contractSha256,contextSignature:proposal.contextSignature},contextSignature:proposal.contextSignature,jobId:next.job.JOB_ID,stage,responseSchemaVersion:proposal.responseSchemaVersion,acceptedChangeId:changeId,projectRevision:Number(next.revision||0),commitSequence:history.eventSequence,commitTimestamp:history.deviceTimestamp,entries:proposal.changes.map(entry=>({...clone(entry),rawResponseId:proposal.rawResponseId,promptIdentity:{instructionId:proposal.promptId,bodySha256:proposal.bodySha256||proposal.promptSha256,contractSha256:proposal.contractSha256,contextSignature:proposal.contextSignature},contextSignature:proposal.contextSignature,validationRuleIds:['SCHEMA','IDENTITY','OWNERSHIP','STAGE_SCOPE','VALUE_TYPE','RELATIONSHIP','EVIDENCE','DUPLICATE','PRECONDITION'],validationResults:['SATISFIED'],projectRevision:Number(next.revision||0),commitSequence:history.eventSequence,commitTimestamp:history.deviceTimestamp}))};next.projectData.extractionManifests.push(manifest);acceptedChange.extractionManifestId=manifestId;const d=disposition(next,'ACCEPTED_DATA_CHANGE',{stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,validationId:proposal.validationId,proposalId,receiptId:proposal.receiptId,details:{acceptedChangeId:changeId,manifestId}});if(receipt){receipt.acceptedCanonicalChangeId=changeId;receipt.extractionManifestId=manifestId;receipt.completionState='ACCEPTED_DATA_CHANGE';receipt.nextRequiredVerificationStage=`STAGE ${String(stage).padStart(2,'0')} GATE RECALCULATION`;}finishReservation(next,promptRecordFor(next,{instructionId:proposal.promptId}),'ACCEPTED');if(!schema.SEMANTIC_STAGE_OPERATIONS[stage]?.reviewOperations.includes(proposal.envelope.operation))workflow.registerStageVersion(next,stage,changeId);workflow.recalculate(next);return {project:next,acceptedChange,manifest,disposition:d,receipt,idempotent:false};
 }
 
+// Preparing a candidate never changes the active project. Persistence requires
+// confirmation of the complete candidate effect and rechecks the source below.
+function prepareAcceptanceCandidate(project,proposalId,options={}){
+ const proposal=findProposal(project,proposalId),impact=acceptanceImpact(project,proposalId);
+ const result=commit(project,proposalId,{...options,replacementConfirmation:impact});
+ return {...result,acceptance:{proposalId,proposalSha256:hash.sha256Value(proposal),rawResponseId:proposal.rawResponseId,stage:Number(proposal.stage)}};
+}
+function validateAcceptanceCandidate(project,candidate,acceptance){
+ const proposal=findProposal(project,acceptance?.proposalId);
+ if(!proposal||hash.sha256Value(proposal)!==acceptance.proposalSha256)throw Object.assign(new Error('The response changed. Review the current candidate again.'),{code:'STALE_PROPOSAL'});
+ ensureProposalCurrent(project,proposal);
+ const accepted=findProposal(candidate,proposal.proposalId);
+ if(candidate.job?.JOB_ID!==project.job?.JOB_ID||!accepted||!['ACCEPTED','QUESTIONS_CREATED','BLOCKER_ACCEPTED','EXECUTION_FAILURE_ACCEPTED'].includes(accepted.status)||accepted.rawResponseId!==proposal.rawResponseId)throw Object.assign(new Error('The acceptance candidate does not match the current response.'),{code:'STALE_PROPOSAL'});
+ return true;
+}
+
 // Called on an owned transaction candidate, after gate derivation and before
 // persistence. Recording stage work and saving its follow-up are one transaction.
 function coreStagePrerequisiteMissing(project,stage){return globalThis.closedLoopCore.STAGES.some(definition=>definition.number<stage&&!project.stages?.[definition.number]?.gate?.complete);}
@@ -659,7 +675,7 @@ function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
   const generated=createReplacementPrompt(next,target),generatedPromptIds=[generated.instructionId];workflow.addHistory(next,'HUMAN_INPUT_REQUESTS_ANSWERED',{answerCount:changed.length,inputVersion:version.version,requestIds:changed,generatedPromptIds});workflow.recalculate(next);return {project:next,version,answeredCount:changed.length,generatedPromptIds};
 }
 
-globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/6',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,HUMAN_AUTHORITY_CANDIDATE_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,attachmentSlotPlan,bindAttachmentSlots,prepareCaptured,prepare,commit,restoredCandidateBinding,acceptanceImpact,assertAcceptanceConfirmation,prepareStageContinuation,recoverInvalidSemanticReviews,correctHumanAuthorityCandidates,reject,abandon,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
+globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/6',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,HUMAN_AUTHORITY_CANDIDATE_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,attachmentSlotPlan,bindAttachmentSlots,prepareCaptured,prepare,commit,prepareAcceptanceCandidate,validateAcceptanceCandidate,restoredCandidateBinding,acceptanceImpact,assertAcceptanceConfirmation,prepareStageContinuation,recoverInvalidSemanticReviews,correctHumanAuthorityCandidates,reject,abandon,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
 })();
 ;(()=>{
 'use strict';

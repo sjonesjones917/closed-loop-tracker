@@ -173,9 +173,16 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(stageOneConfirmationSource.includes("displayedStageAction(n).actionType!=='CONFIRM_STAGE_ONE_INTENT'"),'Stage 01 confirmation control is not driven by the canonical next-action state.');
   assert(!stageOneConfirmationSource.includes('isRetainedTestProject'),'Retained/imported project origin still suppresses a mandatory Stage 01 confirmation control.');
   assert(appSource.includes("CONFIRM_STAGE_ONE_INTENT:'Human operator'"),'Stage 01 confirmation next action is not assigned to the human operator.');
-  assert(appSource.includes("acceptedChangeId:latest.changeId,inputVersion:next.job.CURRENT_INPUT_VERSION"),'Stage 01 confirmation click is not explicitly bound to the current accepted change and input version.');
+  const seeded=project('JOB-ACTUAL-INTENT-CONTROL');engine.recordHumanInputVersion(seeded,['EXACT_USER_OBJECTIVE_VERBATIM']);const accepted=acceptStage1Fixture(seeded),acceptedInput=accepted.job.CURRENT_INPUT_VERSION;
+  accepted.projectData.userEntered.clarifications.push({stage:core.STAGES[1].number,operation:schema.STAGE_CONTRACTS[core.STAGES[1].number].operations[0],answer:'Scoped later clarification.'});engine.recordHumanInputVersion(accepted,['CLARIFICATION']);engine.recalculate(accepted);
+  const ui={current:accepted,engine,clone:structuredClone,render:()=>{},announce:()=>{},reportActionFailure:error=>{throw error;},$:()=>({value:'SYNTHETIC'}),canonicalCurrentStage:()=>2,focusAfterAction:()=>{},requestAnimationFrame:fn=>fn(),document:{querySelector:()=>null,querySelectorAll:()=>[{dataset:{job:'EXACT_USER_OBJECTIVE_VERBATIM'},type:'text',value:'Changed exact deliverable.'}]}};
+  ui.persistReplacement=async next=>{ui.current=next;};
+  const confirmStart=appSource.indexOf('async function confirmStageOne('),confirmEnd=appSource.indexOf('async function savePromptRecord(',confirmStart);await vm.runInNewContext(appSource.slice(confirmStart,confirmEnd)+'\nconfirmStageOne();',ui);
+  const confirmed=ui.current.projectData.stageConfirmations.at(-1);assert(confirmed.acceptedChangeId===engine.acceptedChanges(ui.current,1).at(-1).changeId&&confirmed.inputVersion===acceptedInput&&engine.gate(1,ui.current).complete,'The actual intent confirmation control did not bind the accepted change and its compatible input version.');
+  const saveStart=appSource.indexOf('async function saveJob('),saveEnd=appSource.indexOf('async function saveHumanStageFields(',saveStart);await vm.runInNewContext(appSource.slice(saveStart,saveEnd)+'\nsaveJob();',ui);
+  assert(!engine.gate(1,ui.current).complete&&engine.acceptedChanges(ui.current,1).length===0,'Saving changed project inputs through the actual UI did not invalidate the prior intake acceptance.');
   assert(appSource.includes("nextActionMarkup(displayedStageAction(n).actionType==='CONFIRM_STAGE_ONE_INTENT',n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
-  assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage:1,reason:'User Job Input changed after Stage 01 completion.'"),'User Job Input edits do not reopen Stage 01.');
+
   assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.'"),'Completed human-decision stages are not reopened when their authority changes.');
   assert(!appSource.includes("invalidateDownstream(next,1,id,'User Job Input changed after Stage 01 completion.'"),'User Job Input edits still preserve stale Stage 01 acceptance.');
   assert(!appSource.includes("invalidateDownstream(next,stage,id,'Human-owned stage input changed after completion.'"),'Human stage edits still preserve stale current-stage acceptance.');

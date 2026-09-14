@@ -440,7 +440,7 @@ function rebaseHistoryView(project,view){
   if(pending.baseProjectSha256!==digest&&pending.baseProjectSha256!==project.restoredCandidates?.sourceProjectSha256)throw storageError('The saved correction belongs to another project version.','HISTORY_VERSION_MISMATCH');
   const candidate=pending.next;candidate.revision=project.revision;candidate.historyActivationId=project.historyActivationId||null;delete candidate.projectSha256;
   if(project.restoredCandidates)candidate.restoredCandidates=clone(project.restoredCandidates);else delete candidate.restoredCandidates;
-  restored.pendingMutation={baseProjectSha256:digest,next:candidate,impact:mutationImpact(project,candidate),expectedProjectRevision:project.revision};
+  restored.pendingMutation={baseProjectSha256:digest,next:candidate,impact:mutationImpact(project,candidate),expectedProjectRevision:project.revision,...(pending.acceptance?{acceptance:pending.acceptance}:{})};
   return restored;
 }
 async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,signal=null,mode='HISTORY',operationId=null}={}){
@@ -533,7 +533,7 @@ function mutationImpact(prior,next,derivedNext=null){
       }
     }
   }
-  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),historyActivationId:prior?.historyActivationId||null,candidateSha256:projectSha256(candidate),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
+  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),priorProjectSha256:prior?(prior.projectSha256||projectSha256(prior)):null,historyActivationId:prior?.historyActivationId||null,candidateSha256:projectSha256(candidate),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
   return {...effect,stage:effect.affected[0]?.stage||Number(next.activeStage||1),requiresConfirmation:Boolean(affected.size),confirmationKey:hash.sha256Value(effect)};
 }
 function assertMutationConfirmation(prior,next,confirmation,derivedNext=null){

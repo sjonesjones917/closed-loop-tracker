@@ -408,6 +408,10 @@
         {
           "path": "verification/acceptance-boundary-evidence-20260914.json",
           "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
         }
       ]
     },
@@ -437,6 +441,10 @@
         {
           "path": "verification/acceptance-boundary-evidence-20260914.json",
           "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
         }
       ]
     },
@@ -458,7 +466,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-026",
@@ -478,7 +491,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-027",
@@ -502,6 +520,10 @@
         {
           "path": "verification/file-correction-recovery-evidence-20260914.json",
           "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
         }
       ]
     },
@@ -531,6 +553,10 @@
         {
           "path": "verification/acceptance-boundary-evidence-20260914.json",
           "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
         }
       ]
     },
@@ -552,7 +578,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-030",
@@ -580,6 +611,10 @@
         {
           "path": "verification/acceptance-boundary-evidence-20260914.json",
           "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
         }
       ]
     },
@@ -601,7 +636,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
     },
     {
       "requirementId": "USER-032",
