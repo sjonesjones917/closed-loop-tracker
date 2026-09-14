@@ -23,10 +23,16 @@
   "repairs": [
     {
       "id": "EXECUTION_REPORT_SELECTION",
-      "responsibleCode": ["verify-v3-definition-of-done.mjs", "execution-report.mjs"],
+      "responsibleCode": [
+        "verify-v3-definition-of-done.mjs",
+        "execution-report.mjs"
+      ],
       "requirement": "Executed evidence must retain the observations it claims to report; static flags or unrelated output cannot establish behavioral coverage.",
       "reproductionRevision": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
-      "sequence": ["Execute verify-ingestion.mjs", "Read attachment-slot coverage using the former final-JSON-object consumer"],
+      "sequence": [
+        "Execute verify-ingestion.mjs",
+        "Read attachment-slot coverage using the former final-JSON-object consumer"
+      ],
       "expected": "Use the unique attachmentSlotMapping report emitted by executed slot checks.",
       "actualBefore": "A later acceptedPropositionPersistence report replaced the earlier slot proof, leaving its fields undefined and reporting zero covered slot assertions.",
       "change": "Select exactly one report by its declared identifying field, independently of output order. Missing, duplicate or malformed reports fail verification.",
@@ -44,18 +50,76 @@
         "formerConsumerFaultDetected": true
       },
       "fullAcceptanceImplication": "This repairs evidence selection only. It does not prove complete attachment coverage or application completion."
+    },
+    {
+      "id": "BACKUP_STRING_SCAN_COST",
+      "responsibleCode": [
+        "project-store.js:readPackageJson"
+      ],
+      "requirement": "Required complete backups and retained-history transport must process representative accumulated workloads without unnecessary per-character application work, preserving exact content and failure handling.",
+      "reproductionRevision": "6ba8e66c5ae53bef04c6e7872c7b2daf240628f0",
+      "relatedBrowserFailure": {
+        "runId": 34859874306,
+        "jobId": 104028949107,
+        "suite": "verify-mobile-stage-action.mjs",
+        "operation": "Export complete 48-million-character project after visiting all 30 stages",
+        "actualBefore": "Generic click helper exceeded its 20-second busy timeout. Final export behavior was not established by that failed run."
+      },
+      "independentReproduction": {
+        "plainTextCharacters": 4194304,
+        "parserSteps": 4604695,
+        "expectedStepBound": 20481,
+        "regression": "verify-backup-json-stream.mjs",
+        "resultBefore": "FAIL: BACKUP_SCAN_COST_ORACLE"
+      },
+      "change": "Scan ordinary JSON string spans with the native regular-expression engine, preserving bounded pieces, escaping, Unicode, syntax rejection, and spooled file contents. The existing browser export now uses its declared 60-second operation wait and records actual elapsed time.",
+      "evidence": [
+        "verification/continuation-backup-parser-20260914.json",
+        "verification/continuation-project-lifecycle-20260914.json"
+      ],
+      "remaining": "Exact candidate browser export and full CI still required."
     }
   ],
   "pendingVerification": [
-    "Full inherited conformance regression run against the immutable continuation starting commit",
-    "Definition-of-done integration with corrected report selection",
     "Latest predecessor browser CI, followed by continuation PR CI",
     "Complete requirement-level evidence closure and independent omission review",
-    "All required actual-control journeys on the final integrated and deployed source"
+    "All required actual-control journeys on the final integrated and deployed source",
+    "Full candidate regression and parser/storage integration after the current production correction"
   ],
   "executionLimitations": [
     "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
     "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
   ],
-  "nextAction": "Resolve remaining production and browser integration failures, execute the full required suite, and integrate only a verified candidate through the existing PR and Pages controls."
+  "nextAction": "Publish this production correction and actual-control fixture repairs to PR #1242; inspect completed predecessor browser CI; resolve remaining behavioral failures and all independent conformance requirements, then execute full integrated CI and exact deployment acceptance.",
+  "updatedAt": "2026-09-14T16:26:59.703373+00:00",
+  "continuationPullRequest": 1242,
+  "publishedHeadBeforeThisChange": "6ba8e66c5ae53bef04c6e7872c7b2daf240628f0",
+  "baselineVerification": {
+    "sourceCommit": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
+    "suites": 46,
+    "passed": 46,
+    "evidence": "verification/continuation-baseline-20260914.json",
+    "browser": false,
+    "physicalDevice": false
+  },
+  "definitionOfDoneRun": {
+    "exitCode": 0,
+    "attachmentSlotMappingCoverage": 1,
+    "section49ZeroCountUnknowns": 26,
+    "normativeRequirementsProven": 0,
+    "normativeRequirementCount": 3825,
+    "note": "A successful verifier command is not application completion. Unproven requirements remain explicitly UNKNOWN."
+  },
+  "browserFixtureCorrections": [
+    {
+      "suite": "verify-browser.mjs",
+      "change": "Select the owning stage before inspecting provenance after acceptance advances to the next required operation. No production navigation behavior is weakened.",
+      "verification": "PENDING_CI"
+    },
+    {
+      "suite": "verify-browser-extra.mjs",
+      "change": "Replace the cross-project receipt copy and forced Stage 02/03 state with actual response-file ingestion, Stage 02 acceptance, one invalid Stage 03 property, duplicate submission, and corrected current-response acceptance in the existing disposable intake project.",
+      "verification": "PENDING_CI"
+    }
+  ]
 }

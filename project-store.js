@@ -850,9 +850,21 @@ async function readPackageJson(blob){
   function flushString(){if(!raw)return;const text=JSON.parse('"'+raw+'"');raw='';if(spooled){if(/[^\x00-\x7f]/.test(text))throw new TypeError('Artifact base64 must contain ASCII characters.');pieces.push(new Blob([text]));}else pieces.push(text);}
   function parseChunk(text){
     let start=kind==='string'?0:-1;
+    const stringBoundary=/["\\\u0000-\u001f]/g;
     for(let i=0;i<text.length;i++){
       const char=text[i];
       if(kind==='string'){
+        // Retained responses can contain megabytes of ordinary string data.
+        // Keep the same bounded pieces and escape validation, but let the
+        // native scanner skip spans which contain no JSON control character.
+        if(!unicode&&!escape){
+          stringBoundary.lastIndex=i;
+          const boundary=stringBoundary.exec(text),end=Math.min(boundary?.index??text.length,start+Math.max(0,16384-raw.length));
+          if(end>i){
+            if(raw.length+end-start>=16384){raw+=text.slice(start,end);flushString();start=end;}
+            i=end-1;continue;
+          }
+        }
         if(unicode){if(!/[0-9a-fA-F]/.test(char))fail();unicode--;}
         else if(escape){if(!'"\\/bfnrtu'.includes(char))fail();if(char==='u')unicode=4;escape=false;}
         else if(char==='\\')escape=true;
