@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import {selectExecutionReport} from './execution-report.mjs';
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const readIf=path=>{try{return read(path);}catch{return '';}};
 const schema=read('./workflow-schema.js'),runtime=read('./test-runtime.js'),worker=read('./test-worker.js'),engine=read('./workflow-engine.js'),prompt=read('./prompt-engine.js'),ingestion=read('./response-ingestion.js'),store=read('./project-store.js'),app=read('./app-core.js');
@@ -35,15 +36,15 @@ const specificationManifest=JSON.parse(read('./specification/closed-loop-specifi
 const specificationGovernanceProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-specification-governance.mjs',import.meta.url).pathname],{encoding:'utf8',maxBuffer:64*1024*1024,env:{...process.env,SOURCE_COMMIT:specificationManifest.sourceCommit}}));
 assert.equal(specificationGovernanceProof.specificationTraceIntegrity,'PASS');assert.equal(specificationGovernanceProof.independentMechanicalOmissionPass,true);assert.equal(specificationGovernanceProof.reconciliationComplete,true);assert.equal(specificationGovernanceProof.runtimeSpecificationCopies,0);assert.equal(specificationGovernanceProof.runtimeControllerCopies,0);assert.equal(specificationGovernanceProof.intentionalUncoveredSectionMutationRejected,true);
 
-const executedProof=file=>{
+const executedProof=(file,marker)=>{
   const text=execFileSync(process.execPath,[new URL('./'+file,import.meta.url).pathname],{encoding:'utf8',maxBuffer:64*1024*1024});
-  return JSON.parse(text.trim().split(/\n(?=\{)/).at(-1));
+  return selectExecutionReport(text,marker);
 };
-const actualStage01=executedProof('verify-stage01-intake-closure.mjs');
-const actualPromptIdentity=executedProof('verify-prompt-file-identity.mjs');
-const actualAttachmentSlots=executedProof('verify-ingestion.mjs');
-const actualDueStage=executedProof('verify-final-product-timing.mjs');
-const actualActivation=executedProof('verify-controller-v3-gap-closure.mjs');
+const actualStage01=executedProof('verify-stage01-intake-closure.mjs','stage01IntakeClosure');
+const actualPromptIdentity=executedProof('verify-prompt-file-identity.mjs','promptFileIdentity');
+const actualAttachmentSlots=executedProof('verify-ingestion.mjs','attachmentSlotMapping');
+const actualDueStage=executedProof('verify-final-product-timing.mjs','finalProductTiming');
+const actualActivation=executedProof('verify-controller-v3-gap-closure.mjs','activationProofFailsClosed');
 const executedMetricIds=new Set(['STAGE_01_RAW_INPUT_ACCOUNTING','FILE_FIRST_PROMPT_BYTE_IDENTITY_COVERAGE','ATTACHMENT_SLOT_MAPPING_COVERAGE','DUE_STAGE_OBLIGATION_COVERAGE','ACTIVATION_PROOF_COVERAGE']);
 const metric=(metricId,checks,evidenceReferences,dispositionOverride=null)=>{
   assert(Array.isArray(checks)&&checks.length>0,`${metricId} must have a nonempty closed universe.`);

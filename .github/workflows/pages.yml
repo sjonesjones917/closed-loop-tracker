@@ -146,6 +146,7 @@ jobs:
         run: |
           set -euo pipefail
           node verify-ingestion.mjs
+          node verify-execution-reports.mjs
 
       - name: Workflow, gates, and full cycle
         run: |

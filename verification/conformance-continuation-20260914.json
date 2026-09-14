@@ -1,0 +1,61 @@
+{
+  "schema": "closed-loop-conformance-continuation/1",
+  "phase": "IMPLEMENTING_AND_VERIFYING",
+  "takeoverAuthority": "User explicitly instructed this chat to proceed after the predecessor conversation became too long.",
+  "originalStartingMainCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "continuationStartingCommit": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
+  "predecessorPullRequest": 1240,
+  "predecessorBranch": "repair/recoverable-conformance-integrated-20260914",
+  "continuationBranch": "repair/complete-conformance-continuation-20260914",
+  "controllingSpecification": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "bytes": 309472,
+    "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+    "completeRead": true
+  },
+  "additionalControllingInstruction": "specification/recovery-user-instruction-20260914.txt",
+  "scope": "The complete specification and all twelve additional instruction sections remain controlling across every applicable operation in all 30 stages. The added recovery requirements supersede the prior view-only browser-history restriction.",
+  "coverageRegisters": [
+    "specification/closed-loop-normative-requirements.json",
+    "specification/recovery-requirements.json"
+  ],
+  "completionClaim": false,
+  "repairs": [
+    {
+      "id": "EXECUTION_REPORT_SELECTION",
+      "responsibleCode": ["verify-v3-definition-of-done.mjs", "execution-report.mjs"],
+      "requirement": "Executed evidence must retain the observations it claims to report; static flags or unrelated output cannot establish behavioral coverage.",
+      "reproductionRevision": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
+      "sequence": ["Execute verify-ingestion.mjs", "Read attachment-slot coverage using the former final-JSON-object consumer"],
+      "expected": "Use the unique attachmentSlotMapping report emitted by executed slot checks.",
+      "actualBefore": "A later acceptedPropositionPersistence report replaced the earlier slot proof, leaving its fields undefined and reporting zero covered slot assertions.",
+      "change": "Select exactly one report by its declared identifying field, independently of output order. Missing, duplicate or malformed reports fail verification.",
+      "regression": "verify-execution-reports.mjs",
+      "executedResult": {
+        "environment": "Node v24.19.0; synthetic producer tests using production modules",
+        "result": "PASS",
+        "producerReports": 17,
+        "attachmentProofPreserved": true,
+        "reportOrderIndependent": true,
+        "missingRejected": true,
+        "duplicateRejected": true,
+        "corruptRejected": true,
+        "failedObservationNotPromoted": true,
+        "formerConsumerFaultDetected": true
+      },
+      "fullAcceptanceImplication": "This repairs evidence selection only. It does not prove complete attachment coverage or application completion."
+    }
+  ],
+  "pendingVerification": [
+    "Full inherited conformance regression run against the immutable continuation starting commit",
+    "Definition-of-done integration with corrected report selection",
+    "Latest predecessor browser CI, followed by continuation PR CI",
+    "Complete requirement-level evidence closure and independent omission review",
+    "All required actual-control journeys on the final integrated and deployed source"
+  ],
+  "executionLimitations": [
+    "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
+    "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
+  ],
+  "nextAction": "Resolve remaining production and browser integration failures, execute the full required suite, and integrate only a verified candidate through the existing PR and Pages controls."
+}
