@@ -46,7 +46,7 @@ function invalidation(c){
       p.projectData.acceptedChanges.push(into(c,{changeId:`ACCEPTED-${stage}`,stage,invalidatedBy:null}));
     }
     const derivedOwners={convergenceRecords:18,releaseRecords:27,artifactIdentities:28,evidenceChains:29,deliveryRecords:30};
-    for(const [family,stage] of Object.entries(derivedOwners))p.projectData[family].push(into(c,{id:`${family}-SENTINEL`,stage,fields:{},active:true,validity:'CURRENT',invalidatedBy:null}));
+    for(const [family,stage] of Object.entries(derivedOwners))p.projectData[family].push(into(c,{id:`${family}-SENTINEL`,stage,fields:{},scope:{...e.currentScope(p)},active:true,validity:'CURRENT',invalidatedBy:null}));
     e.invalidateDownstream(p,upstream,'UPSTREAM-CORRECTION','Disposable correction fixture');
     for(const [family,stage] of Object.entries(derivedOwners)){const record=p.projectData[family].find(x=>x.id===`${family}-SENTINEL`);assert.equal(Boolean(record.invalidatedBy),stage>upstream,`INVALIDATION_ORACLE: ${family} owned at ${stage} changed incorrectly after ${upstream}.`);if(stage<=upstream){assert.equal(record.active,true,`INVALIDATION_ORACLE: ${family} lost activity at its own or a later stage.`);assert.equal(record.validity,'CURRENT',`INVALIDATION_ORACLE: ${family} lost validity at its own or a later stage.`);}}
     for(let stage=1;stage<=30;stage++){

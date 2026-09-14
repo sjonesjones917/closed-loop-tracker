@@ -239,7 +239,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   runtime.ingestion=runtime.closedLoopResponseIngestion;runtime.stageContinuationErrors=new Map();
   vm.runInContext(app.slice(app.indexOf('async function restoreStageContinuation('),app.indexOf('async function materializeProject(')),runtime);
-  runtime.current=runtime.closedLoopCore.createBlankState('JOB-FILE-FIRST-AUTOMATIC-CONTEXT');runtime.current.activeStage=5;runtime.current.revision=7;
+  runtime.current=runtime.closedLoopCore.createBlankState('JOB-FILE-FIRST-AUTOMATIC-CONTEXT');runtime.current.activeStage=5;runtime.current.revision=7;Object.assign(runtime.current.job,{CURRENT_SOURCE_SET_VERSION:'SYNTHETIC-SOURCES',CURRENT_RESEARCH_VERSION:'SYNTHETIC-RESEARCH',CURRENT_REQUIREMENTS_VERSION:'SYNTHETIC-REQUIREMENTS'});
   runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.closedLoopWorkflowEngine.recalculate(runtime.current);runtime.current.stages[4].status='COMPLETE';runtime.current.stages[4].gate={complete:true};
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(p=>Number(p.stage)===Number(n)&&!p.invalidatedBy&&Number(p.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   runtime.persistReplacement=async next=>{runtime.current=next;};
@@ -258,7 +258,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.equal(runtime.current.revision,8);
   assert.equal(dialogs.length,0);
   assert.doesNotMatch(app,/id="fresh-context-id"|id="add-fresh-context"/,'Routine workflow must not ask the human to name/register application contexts.');
-  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
+  runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;Object.assign(runtime.current.job,{CURRENT_SOURCE_SET_VERSION:'SYNTHETIC-SOURCES',CURRENT_RESEARCH_VERSION:'SYNTHETIC-RESEARCH',CURRENT_REQUIREMENTS_VERSION:'SYNTHETIC-REQUIREMENTS',CURRENT_TEST_SUITE_VERSION:'SYNTHETIC-TESTS',CURRENT_INSTRUCTION_VERSION:'SYNTHETIC-INSTRUCTIONS'});runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
   assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
   const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportStageFiles=()=>runtime.exportAttempt(()=>downloaded++);
@@ -287,7 +287,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   runtime.clone=vm.runInContext('(value)=>JSON.parse(JSON.stringify(value))',runtime);
   const engine=runtime.closedLoopWorkflowEngine,ingestion=runtime.closedLoopResponseIngestion,prompts=runtime.closedLoopPromptEngine;
-  let p=runtime.closedLoopCore.createBlankState('JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;engine.ensureShape(p);p.stages[5].status='COMPLETE';p.stages[5].gate={complete:true};
+  let p=runtime.closedLoopCore.createBlankState('JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SYNTHETIC-SOURCES',CURRENT_RESEARCH_VERSION:'SYNTHETIC-RESEARCH',CURRENT_REQUIREMENTS_VERSION:'SYNTHETIC-REQUIREMENTS'});engine.ensureShape(p);p.stages[5].status='COMPLETE';p.stages[5].gate={complete:true};
   const saved=prompts.reserveAndBuildPromptRecord(p,6,{operation:'COMPLETE'}).prompt;
   p=ingestion.captureRaw(p,{stage:6,text:'{"broken":true}',promptRecord:saved,files:[{attachmentSlotId:'DESIGN',artifactId:'DESIGN-BYTES',name:'design.md',sha256:'retained-digest'}]}).project;
   runtime.withStorageActivity=async(_label,operation)=>operation();runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=()=>prompts.version;
@@ -300,8 +300,8 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
   vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','saveRequiredContinuation','restoreStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
   assert.equal(vm.runInContext('currentPromptRecord(6)?.instructionId',runtime),saved.instructionId,'Raw capture incorrectly stales the still-open instruction and blocks manifest re-export.');
-  const priorInput=runtime.current.job.CURRENT_INPUT_VERSION;runtime.current.job.CURRENT_INPUT_VERSION='CHANGED-AUTHORITY';
-  assert.equal(vm.runInContext('currentPromptRecord(6)',runtime),null,'A changed authority scope must not reuse an older instruction.');runtime.current.job.CURRENT_INPUT_VERSION=priorInput;
+  const priorRequirements=runtime.current.job.CURRENT_REQUIREMENTS_VERSION;runtime.current.job.CURRENT_REQUIREMENTS_VERSION='CHANGED-AUTHORITY';
+  assert.equal(vm.runInContext('currentPromptRecord(6)',runtime),null,'A changed authority scope must not reuse an older instruction.');runtime.current.job.CURRENT_REQUIREMENTS_VERSION=priorRequirements;
   await runtime.validate();
   assert.equal(failures.length,0,`Returned-file validation stranded the operator: ${failures.join(' | ')}`);
   assert.equal(staleWrites,1,'The fixture did not exercise the durable revision conflict.');

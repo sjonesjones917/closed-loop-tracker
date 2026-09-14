@@ -1,3 +1,4 @@
+import {reservationScopeFixture} from './test-reservation-scope-fixture.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.rec
 // operator to name a chat. External-provider facts must remain unclaimed.
 {
   const project=core.createBlankState('JOB-AUTOMATIC-AUTHOR-CONTEXT');
-  engine.ensureShape(project);engine.recalculate(project);project.stages[4].status='COMPLETE';project.stages[4].gate={complete:true};
+  Object.assign(project.job,{CURRENT_SOURCE_SET_VERSION:'SYNTHETIC-SOURCES',CURRENT_RESEARCH_VERSION:'SYNTHETIC-RESEARCH',CURRENT_REQUIREMENTS_VERSION:'SYNTHETIC-REQUIREMENTS'});engine.ensureShape(project);engine.recalculate(project);project.stages[4].status='COMPLETE';project.stages[4].gate={complete:true};
   const before=Number(project.revision||0),created=prompts.reserveAndBuildPromptRecord(project,5,{operation:'COMPLETE'},{owningTabInstance:'TAB-AUTOMATIC-CONTEXT'});
   const contextId=created.prompt.contextManifest.semanticReviewBinding?.authorContextId;
   assert(contextId,'Stage 05 export still requires the operator to allocate/register an author context.');
@@ -21,8 +22,8 @@ const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.rec
   assert.equal(project.revision,before+1,'Context, prompt and operation reservation must commit together.');
   assert(!project.projectData.history.some(r=>r.type==='FRESH_CONTEXT_REGISTERED'),'Automatic allocation must not fabricate a human registration action.');
   for(const [stage,operation] of [[9,'COMPLETE'],[12,'VERIFY'],[17,'VERIFY'],[19,'VERIFY'],[23,'COMPLETE'],[24,'COMPLETE']]){
-    const p=core.createBlankState('JOB-AUTOMATIC-REVIEWER-'+stage);engine.ensureShape(p);engine.recalculate(p);p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};
-    const result=prompts.reserveAndBuildPromptRecord(p,stage,{operation},{owningTabInstance:'TAB-AUTOMATIC-CONTEXT'});
+    const fixture=reservationScopeFixture({core,schema,engine},schema.STAGE_OPERATION_REGISTRY[stage+':'+operation],{omitReferences:['contextId']}),p=fixture.project;p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};
+    const result=prompts.reserveAndBuildPromptRecord(p,stage,{operation,scope:fixture.scope},{owningTabInstance:'TAB-AUTOMATIC-CONTEXT'});
     assert(result.prompt.scope.contextId,`Stage ${stage} still requires manual reviewer-context bookkeeping.`);
     const reviewer=engine.records(p,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===result.prompt.scope.contextId);
     assert(reviewer&&value(reviewer,'EXTERNAL_CONTEXT_IDENTIFIER')==='UNKNOWN','Unobserved provider identity must remain UNKNOWN.');
@@ -42,7 +43,7 @@ const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.rec
 }
 assert.deepEqual(schema.CONTROLLING_COMPLETION_ENUMS.reservation,['RESERVED','EXPORTED','ORPHANED','RESUMED','RESPONSE_STAGED','ACCEPTED','REJECTED','CANCELLED','SUPERSEDED','EXPIRED_BY_SCOPE']);
 assert.equal(schema.RECORD_SCHEMAS.operationReservations.fieldDefinitions.RESERVATION_REVISION.valueType,'INTEGER');
-const p={revision:7,activeStage:1,job:{JOB_ID:'JOB-RESERVATION-TEST',CONTRACT_PROFILE_ID:'closed-loop-completion-profile/1'},projectData:{},stages:{}};engine.ensureShape(p);
+const p={revision:7,activeStage:1,job:{JOB_ID:'JOB-RESERVATION-TEST',CURRENT_INPUT_VERSION:'INPUT-v001',CONTRACT_PROFILE_ID:'closed-loop-completion-profile/1'},projectData:{},stages:{}};engine.ensureShape(p);
 const operationScope={projectRevision:7,inputVersion:'INPUT-v001'};
 const target=engine.reservationTargetSlot(p,{stage:1,operation:'COMPLETE',scope:operationScope});
 assert.match(target,/^[a-f0-9]{64}$/);
