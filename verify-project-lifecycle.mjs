@@ -94,7 +94,7 @@ assert(delivered.at(-1).name==='after-navigation','An interrupted export left su
 // must not rename another project's bytes; large package assemblies must serialize.
 const packageDownloads=[],packageRequests=[];let activePackages=0,maxActivePackages=0,rejectNextPackage=false;
 const packageRuntime=vm.createContext({...inactiveMobileAcceptance,withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>null,document:{querySelectorAll:()=>[],createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});
-const packageStart=app.indexOf('let projectPackageExportInFlight=')>=0?app.indexOf('let projectPackageExportInFlight='):app.indexOf('async function downloadProjectPackage(');
+const packageStart=app.indexOf('let pendingBackupAction=');assert(packageStart>=0,'Complete export helpers are unavailable.');
 vm.runInContext('let storageHealthRefresh=null;'+storageHealthSource+app.slice(packageStart,app.indexOf('async function verifyStoredFilesNow()',packageStart))+'\nglobalThis.exportCompletePackage=downloadProjectPackage;',packageRuntime);
 const originalExport=packageRuntime.exportCompletePackage();packageRuntime.current={job:{JOB_ID:'PACKAGE-B'}};const otherBackup=packageRuntime.exportCompletePackage('backup');packageRuntime.current={job:{JOB_ID:'PACKAGE-C'}};
 await Promise.all([originalExport,otherBackup]);
@@ -650,7 +650,8 @@ await storageRegression('backup:required-prompt-context',async()=>{
 assert(importStart>=0&&importEnd>importStart,'Production import handler is missing.');
 storageRuntime.bindFileAction=(selector,operation)=>{storageRuntime.$(selector).onchange=e=>operation(Array.from(e.target.files||[]));};
 storageRuntime.loadAcceptanceSession=async()=>{};
-vm.runInContext(app.slice(importStart,importEnd),storageRuntime);
+storageRuntime.bindAction=()=>{};storageRuntime.saveFileSelection=async()=>{};
+vm.runInContext(app.slice(app.indexOf('async function importProjectPackageFile('),app.indexOf('let projectPackageExportInFlight='))+app.slice(importStart,importEnd),storageRuntime);
 await storageRegression('import:post-commit-refresh-failure',async()=>{
   await vm.runInContext(`globalThis.projects=[backupProject];globalThis.current=backupProject;globalThis.failures=[];globalThis.refreshProjectStorage=async()=>{throw new Error('CONTROLLED_REFRESH_FAILURE');};`,storageRuntime);
   storageAccess.length=0;await storageRuntime.elements['#import-file'].onchange({target:{files:[storageRuntime.goodBackup],value:'selected'}});

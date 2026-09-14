@@ -661,8 +661,47 @@ async function readExportSnapshot(jobId){
   if(digest!==row.projectSha256||Number(row.revision)!==Number(row.project.revision))throw storageError('Project identity failed export verification.','PROJECT_HASH_MISMATCH');
   assertProjectIntegrity(row.project,{verifyDerived:false});return {project:{...row.project,projectSha256:digest},artifacts,recovery:recoveryRow?.value||null};
 }
-async function exportPackage(jobId){
+const ENCRYPTED_EXPORT_PROFILE=Object.freeze({schema:'closed-loop-encrypted-export/1',algorithm:'AES-256-GCM',kdf:'PBKDF2-HMAC-SHA-256',iterations:600000,keyBits:256,saltBytes:16,ivBytes:12,tagBytes:16,plaintextMediaType:'application/gzip'});
+function containsCredentialSecret(value){
+  if(!value||typeof value!=='object')return false;
+  return Object.entries(value).some(([key,item])=>(['DISCLOSURE_CLASSIFICATION','disclosureClassification'].includes(key)&&item==='CREDENTIAL_SECRET')||containsCredentialSecret(item));
+}
+function encryptionCrypto(){if(!globalThis.crypto?.subtle||typeof globalThis.crypto?.getRandomValues!=='function')throw storageError('Password-protected backups require this browser’s secure cryptography support.','BACKUP_CRYPTO_UNAVAILABLE');return globalThis.crypto;}
+const encryptionHex=bytes=>Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('');
+function encryptionBytes(value,length){if(typeof value!=='string'||!new RegExp(`^[a-f0-9]{${length*2}}$`).test(value))throw storageError('Encrypted backup metadata is invalid.','ENCRYPTED_PACKAGE_INVALID');return Uint8Array.from(value.match(/../g),part=>parseInt(part,16));}
+async function backupKey(passphrase,salt,usage){
+  if(typeof passphrase!=='string'||!passphrase.length)throw storageError('Enter the backup password to continue.','BACKUP_PASSPHRASE_REQUIRED');
+  const api=encryptionCrypto(),encoded=new TextEncoder().encode(passphrase);
+  try{const material=await api.subtle.importKey('raw',encoded,'PBKDF2',false,['deriveKey']);return await api.subtle.deriveKey({name:'PBKDF2',salt,iterations:ENCRYPTED_EXPORT_PROFILE.iterations,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,[usage]);}finally{encoded.fill(0);}
+}
+async function encryptedPackage(blob,manifestSha256,passphrase){
+  const api=encryptionCrypto(),salt=api.getRandomValues(new Uint8Array(16)),iv=api.getRandomValues(new Uint8Array(12)),key=await backupKey(passphrase,salt,'encrypt'),aad=encryptionBytes(manifestSha256,32);
+  // Reserve the salt/IV pair before encryption. The ledger contains no key or
+  // passphrase; repeated CSPRNG output fails before any ciphertext is returned.
+  const tx=await openTransaction(META,'readwrite'),nonceKey='encryptedExportNonce:'+encryptionHex(salt)+':'+encryptionHex(iv);
+  try{if(await request(tx.objectStore(META).get(nonceKey)))throw storageError('Secure backup randomness was repeated. Retry with a working cryptography provider.','BACKUP_NONCE_REUSE');fault('during-backup-protection');tx.objectStore(META).put({key:nonceKey,value:{profile:ENCRYPTED_EXPORT_PROFILE.schema,createdAt:now()}});await complete(tx);}catch(error){try{tx.abort();}catch{}throw error;}
+  const bytes=new Uint8Array(await blob.arrayBuffer());let result;
+  try{result=new Uint8Array(await api.subtle.encrypt({name:'AES-GCM',iv,additionalData:aad,tagLength:128},key,bytes));}finally{bytes.fill(0);}
+  const ciphertext=result.subarray(0,result.length-16),tag=result.subarray(result.length-16),container={...ENCRYPTED_EXPORT_PROFILE,salt:encryptionHex(salt),iv:encryptionHex(iv),manifestSha256,ciphertextLength:ciphertext.length,authenticationTag:encryptionHex(tag),ciphertext:bytesToBase64(ciphertext)};
+  return new Blob([JSON.stringify(container)],{type:'application/vnd.closed-loop.encrypted+json'});
+}
+async function isEncryptedPackage(blob){return /^\s*\{\s*"schema"\s*:\s*"closed-loop-encrypted-export\/1"/.test(await blob.slice(0,160).text());}
+async function decryptPackage(blob,passphrase){
+  let container;try{container=JSON.parse(await blob.text());}catch{throw storageError('The encrypted backup is incomplete or invalid.','ENCRYPTED_PACKAGE_INVALID');}
+  const expected=[...Object.keys(ENCRYPTED_EXPORT_PROFILE),'salt','iv','manifestSha256','ciphertextLength','authenticationTag','ciphertext'];
+  if(Object.keys(container).length!==expected.length||Object.keys(container).some(key=>!expected.includes(key))||Object.entries(ENCRYPTED_EXPORT_PROFILE).some(([key,value])=>container[key]!==value))throw storageError('The encrypted backup uses unsupported or modified protection settings.','ENCRYPTED_PACKAGE_INVALID');
+  if(typeof container.ciphertext!=='string'||container.ciphertext.length%4!==0||! /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(container.ciphertext))throw storageError('Encrypted backup ciphertext is invalid.','ENCRYPTED_PACKAGE_INVALID');
+  const salt=encryptionBytes(container.salt,16),iv=encryptionBytes(container.iv,12),tag=encryptionBytes(container.authenticationTag,16),aad=encryptionBytes(container.manifestSha256,32),ciphertext=base64ToBytes(container.ciphertext);
+  if(!Number.isSafeInteger(container.ciphertextLength)||ciphertext.length!==container.ciphertextLength)throw storageError('The encrypted backup has missing or modified bytes.','ENCRYPTED_PACKAGE_INVALID');
+  const key=await backupKey(passphrase,salt,'decrypt'),combined=new Uint8Array(ciphertext.length+tag.length);combined.set(ciphertext);combined.set(tag,ciphertext.length);let plaintext;
+  try{plaintext=await encryptionCrypto().subtle.decrypt({name:'AES-GCM',iv,additionalData:aad,tagLength:128},key,combined);}catch{throw storageError('The backup password is incorrect or the encrypted file has changed. The existing project is unchanged.','BACKUP_AUTHENTICATION_FAILED');}
+  const result=new Blob([plaintext],{type:'application/gzip'}),parsed=await readPackageJson(result);
+  if(hash.sha256Value(parsed.payload.packageManifest)!==container.manifestSha256)throw storageError('The decrypted backup does not match its protected manifest.','BACKUP_AUTHENTICATION_FAILED');
+  new Uint8Array(plaintext).fill(0);return result;
+}
+async function exportPackage(jobId,{passphrase=null}={}){
   const {project,artifacts,recovery}=await readExportSnapshot(jobId),artifactEntries=[],fileContents=new WeakMap();assertPackageArtifactCustody(project,artifacts);
+  let requiresEncryption=containsCredentialSecret(project)||artifacts.some(containsCredentialSecret);
   if(recovery&&recovery.activeProjectSha256!==project.projectSha256)throw storageError('Project changed while assembling its backup. Retry from the current version.','STALE_PROJECT_REVISION');
   async function member(a){
     const actualSize=a.blob.size,actualSha256=await hash.sha256Bytes(a.blob);
@@ -671,13 +710,15 @@ async function exportPackage(jobId){
   }
   for(const a of artifacts)await member(a);
   if(recovery){
-    for(const entry of recovery.entries){const saved=await metaGet(snapshotKey(jobId,entry.id));if(!saved?.blob||saved.sha256!==entry.sha256)throw storageError('A promised checkpoint is missing. Backup export did not complete.','HISTORY_VERSION_UNAVAILABLE');await member({artifactId:'RECOVERY-SNAPSHOT-'+entry.id,jobId,filename:entry.id+'.checkpoint.gz',mediaType:'application/gzip',archiveKind:'RECOVERY_SNAPSHOT',checkpointId:entry.id,byteSize:entry.byteSize,sha256:entry.sha256,blob:saved.blob});}
+    for(const entry of recovery.entries){const saved=await metaGet(snapshotKey(jobId,entry.id));if(!saved?.blob||saved.sha256!==entry.sha256)throw storageError('A promised checkpoint is missing. Backup export did not complete.','HISTORY_VERSION_UNAVAILABLE');await member({artifactId:'RECOVERY-SNAPSHOT-'+entry.id,jobId,filename:entry.id+'.checkpoint.gz',mediaType:'application/gzip',archiveKind:'RECOVERY_SNAPSHOT',checkpointId:entry.id,byteSize:entry.byteSize,sha256:entry.sha256,blob:saved.blob});const {payload:checkpoint}=await readPackageJson(saved.blob);if(checkpoint.schema!==HISTORY_SCHEMA||checkpoint.id!==entry.id||checkpoint.jobId!==String(jobId)||checkpoint.projectSha256!==entry.projectSha256)throw storageError('A saved checkpoint does not match its recorded identity.','HISTORY_VERSION_MISMATCH');requiresEncryption=requiresEncryption||containsCredentialSecret(checkpoint);}
     for(const [sha256,info] of Object.entries(recovery.files)){const file=await metaGet(historyFileKey(jobId,sha256));if(!file?.blob)throw storageError('A retained file is missing. Backup export did not complete.','HISTORY_FILE_INTEGRITY_FAILED');await member({artifactId:'RECOVERY-BYTES-'+sha256,jobId,filename:sha256+'.bin',mediaType:'application/octet-stream',archiveKind:'RECOVERY_BYTES',byteSize:info.byteSize,sha256,blob:file.blob});}
   }
   const exportedProject=canonicalProject(project),packageManifest={jobId,projectSha256:project.projectSha256,artifactCount:artifactEntries.length,artifacts:artifactEntries.map(a=>({artifactId:a.artifactId,filename:a.filename,mediaType:a.mediaType,byteSize:a.byteSize,sha256:a.sha256}))};
+  if(requiresEncryption&&!passphrase)throw storageError('This backup includes credential material in the project or its saved History. Enter a backup password to protect it.','BACKUP_PASSPHRASE_REQUIRED');
   const body={schema:'closed-loop-project-package/1',projectSchema:project.schema,workflow:project.workflow,responseSchema:globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA,project:exportedProject,artifacts:artifactEntries,packageManifest,...(recovery?{recovery}:{}),exportedAt:now()};
   const {blob:compressed,packageSha256}=await compressPackage(body,fileContents),exportRecord={jobId,packageSha256,projectRevision:project.revision,projectSha256:project.projectSha256,artifactManifestSha256:hash.sha256Value(packageManifest.artifacts),artifactCount:artifactEntries.length,historyCheckpointCount:recovery?.entries.length||0,at:now()};
-  await metaPut('lastVerifiedExport',exportRecord);await metaPut('lastVerifiedExport:'+jobId,exportRecord);return new Blob([compressed],{type:'application/gzip'});
+  const result=passphrase?await encryptedPackage(compressed,hash.sha256Value(packageManifest),passphrase):new Blob([compressed],{type:'application/gzip'});exportRecord.protectionProfile=passphrase?ENCRYPTED_EXPORT_PROFILE.schema:'UNENCRYPTED';
+  await metaPut('lastVerifiedExport',exportRecord);await metaPut('lastVerifiedExport:'+jobId,exportRecord);return result;
 }
 // Decode the unchanged JSON package without retaining its complete expanded
 // text. The project remains a finite-memory object; artifact strings are
@@ -745,7 +786,8 @@ async function base64BlobToBlob(blob,mediaType){
   for(let offset=0;offset<blob.size;offset+=65536){pending+=(await blob.slice(offset,offset+65536).text()).replace(/[\t\n\f\r ]/g,'');const end=Math.max(0,Math.floor(pending.length/4)*4-4);if(end){const part=pending.slice(0,end);if(part.includes('='))throw new TypeError('Invalid base64 padding before the end of an artifact.');parts.push(base64ToBytes(part));pending=pending.slice(end);}}
   parts.push(base64ToBytes(pending));return new Blob(parts,{type:mediaType||'application/octet-stream'});
 }
-async function importPackage(blob,{operationId=null}={}){
+async function importPackage(blob,{operationId=null,passphrase=null}={}){
+  if(await isEncryptedPackage(blob))blob=await decryptPackage(blob,passphrase);
   if(useStoreWorker())return requestStoreWorker('IMPORT_PACKAGE',[blob]);
   if(typeof DecompressionStream!=='function')throw storageError('DecompressionStream is required for complete package import.','DECOMPRESSION_STREAM_REQUIRED');
   const observedHeads=new Map((await listProjectSummaries()).map(p=>[projectIdentity(p),Number(p.revision||0)]));
@@ -956,7 +998,7 @@ function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(con
 
 const ready=(async()=>{if(globalThis.indexedDB)try{await migrateLegacy();globalThis.closedLoopLegacyMigrationError=null;}catch(error){globalThis.closedLoopLegacyMigrationError=String(error?.stack||error);console.error('Legacy migration failed without deleting the preserved legacy payload; application startup will continue.',error);}return true;})();
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;const project=message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId});globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,project});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy});
+globalThis.closedLoopProjectStore=Object.freeze({ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy});
 })();
 ;(()=>{
 'use strict';
