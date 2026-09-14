@@ -214,11 +214,25 @@ jobs:
           }
           run_browser_verifier verify-human-stage-walkthrough.mjs
           run_browser_verifier verify-mobile-stage-action.mjs
+          run_browser_verifier verify-mobile-capability-journey.mjs
+          run_browser_verifier verify-complete-operator-journey.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
+      - name: Preserve complete operator journey evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            operator-evidence/journey.json
+            operator-evidence/stage-*.png
+            operator-evidence/downloads/
+            mobile-capability-evidence/capability.json
+            mobile-capability-evidence/stage-*.png
+            mobile-capability-evidence/downloads/
       - name: Preserve the exact browser-verified Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
@@ -277,6 +291,8 @@ jobs:
             done
           }
           run_browser_verifier verify-mobile-stage-action.mjs
+          run_browser_verifier verify-mobile-capability-journey.mjs
+          run_browser_verifier verify-complete-operator-journey.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
 
@@ -317,6 +333,8 @@ jobs:
             done
           }
           run_browser_verifier verify-mobile-stage-action.mjs
+          run_browser_verifier verify-mobile-capability-journey.mjs
+          run_browser_verifier verify-complete-operator-journey.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
       - name: Build acceptance artifact from executed proof jobs

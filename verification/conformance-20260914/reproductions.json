@@ -132,5 +132,21 @@
     "evidenceAfter": "delivery-boundary-after.json",
     "verification": "verify-delivery-transfer-boundary.mjs; 16 executed cases. Synthetic lifecycle and VM storage/transfer fault boundaries, not actual browser or physical-device acceptance.",
     "beforeEvidenceQualification": "The withdrawn-authorization case already rejected correctly; its original diagnostic-message assertion was overly narrow and is retained in the before report. The added UI cases were executed after the engine regressions and repair."
+  },
+  {
+    "id": "PRE_DELIVERY_CHECKPOINT_CUSTODY",
+    "sourceCommit": "33762b653f8c77d344477e088fd35c7d19050cf8",
+    "inputs": "Otherwise-valid complete lifecycle through evidence-chain construction; replace one exported receipt identity at a time.",
+    "operationSequence": [
+      "createPreDeliveryCheckpoint",
+      "recordPreDeliveryCheckpointExport",
+      "operationalNextAction stage 30"
+    ],
+    "expected": "Exact checkpoint/package/hash binding, immutable prior custody receipt, correct exported project digest, and reachable export control.",
+    "actual": "Six of seven cases failed; the existing upstream invalidation case already rejected correctly.",
+    "regression": "verify-checkpoint-boundary.mjs",
+    "beforeEvidence": "checkpoint-before.json",
+    "afterEvidence": "checkpoint-after.json",
+    "status": "REPAIRED_LOCAL_BROWSER_PENDING"
   }
 ]
