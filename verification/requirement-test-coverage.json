@@ -2632,6 +2632,38 @@
       ],
       "status": "REGRESSIONS_REQUIRED_ON_EXACT_REVISION",
       "evidenceGap": "Exact CI and deployed identities are recorded on the repair PR. Actual physical-iPhone Safari and approved visual-baseline authority remain required on the final deployed revision."
+    },
+    {
+      "id": "SCOPE-PROGRESS-RECOVERY-20260914",
+      "requirement": "Exact operation scope, candidate product binding, partial-operation progression, canonical numeric persistence and usable Undo after restoration",
+      "productionOwners": [
+        "app-core.js",
+        "workflow-schema.js",
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "project-store.js",
+        "operator-journey-fixtures.mjs"
+      ],
+      "tests": [
+        "verify-required-operation-scope.mjs",
+        "verify-exact-progress.mjs",
+        "verify-exact-progress-fault.mjs",
+        "verify-operator-counterpart.mjs",
+        "verify-counterpart-faults.mjs",
+        "verify-operator-action-lifecycle.mjs",
+        "verify-recovery-control-fault.mjs"
+      ],
+      "executedEvidence": "verification/scope-progress-recovery-evidence-20260914.json",
+      "status": "PARTIAL",
+      "limitations": [
+        "Complete required scope and negative-case coverage for every application-owned creation operation remains to be established.",
+        "Prior stored versions and old pending reservations need full compatibility review against the strengthened scope contract.",
+        "Full integrated CI and browser operator acceptance have not passed on this source.",
+        "Browser export timings and representative History byte limits remain unqualified.",
+        "All mandatory real-project, physical-iPhone Safari, approved visual-baseline and exact deployment acceptance remain required.",
+        "The requirement manifest remains partial/open; these repairs do not establish application completion."
+      ]
     }
   ],
   "continuationStartingCommit": "5966caba47a43d1b55b88d7db8ddaeabee1392ca",

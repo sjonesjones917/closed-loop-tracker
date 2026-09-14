@@ -53,6 +53,32 @@ const STAGE_OPERATIONS=Object.freeze({
   30:Object.freeze(['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'])
 });
 
+// NUMBER fields use safe JSON integers or reduced, typed rational strings.
+// This keeps partial progress exact under closed-loop-canonical-json/1.
+const EXACT_NUMBER_ENCODING='closed-loop-exact-number/1';
+function canonicalRatio(numerator,denominator){
+  if(!Number.isSafeInteger(numerator)||!Number.isSafeInteger(denominator)||denominator<=0)throw new TypeError('Exact ratios require safe integer counts and a positive denominator.');
+  return reducedNumber(BigInt(numerator),BigInt(denominator));
+}
+function reducedNumber(numerator,denominator){
+  if(!numerator)return 0;
+  let a=numerator<0n?-numerator:numerator,b=denominator;while(b){const remainder=a%b;a=b;b=remainder;}
+  const n=numerator/a,d=denominator/a;
+  return d===1n&&n>=BigInt(Number.MIN_SAFE_INTEGER)&&n<=BigInt(Number.MAX_SAFE_INTEGER)?Number(n):`rational:${n}/${d}`;
+}
+function canonicalDecimal(value){
+  const text=String(value).replace(/^([+-]?)\./,(_,sign)=>sign+'0.'),match=/^([+-]?)([0-9]+)(?:\.([0-9]*))?(?:[eE]([+-]?[0-9]+))?$/.exec(text);
+  if(!match||text.length>4096)throw new TypeError('Enter a number with at most 4096 characters.');
+  const exponent=Number(match[4]||0)-(match[3]||'').length;
+  if(!Number.isSafeInteger(exponent)||Math.abs(exponent)>4096)throw new TypeError('The number exponent must be between -4096 and 4096.');
+  const n=BigInt((match[1]==='-'?'-':'')+match[2]+(match[3]||''));
+  return reducedNumber(exponent>0?n*10n**BigInt(exponent):n,exponent<0?10n**BigInt(-exponent):1n);
+}
+function isCanonicalNumber(value){
+  if(typeof value==='number')return Number.isSafeInteger(value)&&!Object.is(value,-0);
+  if(typeof value!=='string'||!/^rational:-?[1-9][0-9]*\/[1-9][0-9]*$/.test(value))return false;
+  const [n,d]=value.slice(9).split('/').map(BigInt);if(d===1n)return n<BigInt(Number.MIN_SAFE_INTEGER)||n>BigInt(Number.MAX_SAFE_INTEGER);let a=n<0n?-n:n,b=d;while(b){const remainder=a%b;a=b;b=remainder;}return a===1n;
+}
 const titleCase=value=>String(value||'').toLowerCase().replace(/(^|[_\s-])([a-z0-9])/g,(_,a,b)=>`${a?' ':''}${b.toUpperCase()}`).trim();
 const field=(name,producer,options={})=>Object.freeze({
   name,label:options.label||titleCase(name),producer,
@@ -1261,7 +1287,7 @@ function sourceClassificationIssues(fields={}){
 
 globalThis.closedLoopWorkflowSchema=Object.freeze({
   version:'closed-loop-workflow-schema/2',
-  PROJECT_SCHEMA,WORKFLOW_ID,CONTRACT_PROFILE_ID,STAGE_COUNT,VALUE_TYPES,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
+  PROJECT_SCHEMA,WORKFLOW_ID,CONTRACT_PROFILE_ID,STAGE_COUNT,VALUE_TYPES,EXACT_NUMBER_ENCODING,canonicalRatio,canonicalDecimal,isCanonicalNumber,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
   PRODUCER,RESPONSE_SCHEMA,RESPONSE_TYPES,CONFLICT_POLICIES,TEST_IR,validateTestIRSpec,validateTestIRBindings,validateTestIRTest,
   JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS,
   STAGE_FIELDS,STAGE_CONTRACTS,STAGE_COLLECTIONS,SUPPORT_COLLECTIONS,RECORD_SCHEMAS,
@@ -1374,7 +1400,7 @@ const addedAgentCollections=Object.freeze({4:['propositions'],5:['propositionEqu
 const completionReadCollections=Object.freeze(['propositions','propositionEquivalenceReviews','applicabilityRecords','proofExpressions','proofObligations','observationRecords','entailmentReviews','environmentDependencies','semanticReviews']);
 const NARROW_SEMANTIC_OPERATION_KEYS=new Set(['1:SEMANTIC_CHALLENGE','1:RECONCILE_INTAKE','2:COMPLETE','2:SEARCH_ADEQUACY_REVIEW','2:RECONCILE_SOURCE_SEARCH','3:SEMANTIC_CHALLENGE','3:RECONCILE_RESEARCH','4:DISPOSITION_CHALLENGE','4:ATOMICITY_CHALLENGE','4:RECONCILE_REQUIREMENTS','5:SEMANTIC_REVIEW','5:RECONCILE_REQUIREMENT_SET','6:COMPLETE','6:PROOF_REVIEW','6:RECONCILE_VERIFICATION_SUITE']);
 const REVIEW_ONLY_OPERATION_KEYS=new Set(['1:SEMANTIC_CHALLENGE','2:SEARCH_ADEQUACY_REVIEW','3:SEMANTIC_CHALLENGE','4:DISPOSITION_CHALLENGE','4:ATOMICITY_CHALLENGE','5:SEMANTIC_REVIEW','6:PROOF_REVIEW']);
-function amendedOperationContract(stage,operation){const base=s0.operationContract(stage,operation);if(!base)return null;const key=`${stage}:${operation}`,narrow=NARROW_SEMANTIC_OPERATION_KEYS.has(key),addedAgent=narrow?[]:(addedAgentCollections[stage]||[]),addedRead=stage>=5&&!narrow?completionReadCollections:[],addedApplication=stage===22&&operation==='RUN_NATIVE_TESTS'?['operationReservations','proofObligations','deterministicResults','evidenceRecords','observationRecords','entailmentReviews']:stage===30?['operationReservations','proofObligations','deliveryRecords','deliveryAttempts','evidenceRecords','deploymentManifests']:['operationReservations','proofObligations'],allowedStageData=REVIEW_ONLY_OPERATION_KEYS.has(key)?[]:(CONTRACTS[stage]?.allowedStageData||base.allowedStageData||[]),external=EXTERNAL_OPERATION_KEYS.has(key),humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT',operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation),acceptanceMode=external?((stage===1&&['COMPLETE','RECONCILE_INTAKE'].includes(operation))?'HUMAN_ACCEPTANCE_REQUIRED':'HUMAN_ACCEPTANCE_REQUIRED'):'DIRECT_COMMAND';return Object.freeze({...base,executorClass:external?'EXTERNAL_AGENT':humanDecision?'HUMAN_DECISION':operator?'OPERATOR_ACTION':'APPLICATION',acceptsExternalResponse:external,responseTypes:Object.freeze(external?[...s0.RESPONSE_TYPES]:[]),acceptanceMode,reservationRequired:external,completionPredicate:`STAGE_${String(stage).padStart(2,'0')}_${operation}_COMPLETION`,retryRule:external?'EXACT_RETRY_OR_REPLACEMENT_PROMPT':'IDEMPOTENT_COMMAND',minimumInputBindingBasis:external?'EXTERNALLY_SUPPORTED':'APPLICATION_OBSERVED',readCollections:Object.freeze([...new Set([...(base.readCollections||[]),...addedRead])]),agentWritableCollections:Object.freeze(external?[...new Set([...(base.agentWritableCollections||[]),...addedAgent])]:[]),applicationCollections:Object.freeze([...new Set([...(base.applicationCollections||[]),...addedApplication])]),allowedStageData:Object.freeze(external?[...allowedStageData]:[])});}
+function amendedOperationContract(stage,operation){const base=s0.operationContract(stage,operation);if(!base)return null;const key=`${stage}:${operation}`,narrow=NARROW_SEMANTIC_OPERATION_KEYS.has(key),addedAgent=narrow?[]:(addedAgentCollections[stage]||[]),addedRead=stage>=5&&!narrow?completionReadCollections:[],addedApplication=stage===22&&operation==='RUN_NATIVE_TESTS'?['operationReservations','proofObligations','deterministicResults','evidenceRecords','observationRecords','entailmentReviews']:stage===30?['operationReservations','proofObligations','deliveryRecords','deliveryAttempts','evidenceRecords','deploymentManifests']:['operationReservations','proofObligations'],allowedStageData=REVIEW_ONLY_OPERATION_KEYS.has(key)?[]:(CONTRACTS[stage]?.allowedStageData||base.allowedStageData||[]),external=EXTERNAL_OPERATION_KEYS.has(key),humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT',operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation),acceptanceMode=external?((stage===1&&['COMPLETE','RECONCILE_INTAKE'].includes(operation))?'HUMAN_ACCEPTANCE_REQUIRED':'HUMAN_ACCEPTANCE_REQUIRED'):'DIRECT_COMMAND';return Object.freeze({...base,scope:STAGE_OPERATION_SCOPE_MATRIX[key],scopeRequirements:STAGE_OPERATION_SCOPE_MATRIX[key].requiredDimensions,executorClass:external?'EXTERNAL_AGENT':humanDecision?'HUMAN_DECISION':operator?'OPERATOR_ACTION':'APPLICATION',acceptsExternalResponse:external,responseTypes:Object.freeze(external?[...s0.RESPONSE_TYPES]:[]),acceptanceMode,reservationRequired:external,completionPredicate:`STAGE_${String(stage).padStart(2,'0')}_${operation}_COMPLETION`,retryRule:external?'EXACT_RETRY_OR_REPLACEMENT_PROMPT':'IDEMPOTENT_COMMAND',minimumInputBindingBasis:external?'EXTERNALLY_SUPPORTED':'APPLICATION_OBSERVED',readCollections:Object.freeze([...new Set([...(base.readCollections||[]),...addedRead])]),agentWritableCollections:Object.freeze(external?[...new Set([...(base.agentWritableCollections||[]),...addedAgent])]:[]),applicationCollections:Object.freeze([...new Set([...(base.applicationCollections||[]),...addedApplication])]),allowedStageData:Object.freeze(external?[...allowedStageData]:[])});}
 
 // Controlling contract closure: the runtime schema exposes the specification-named
 // registries as the single closed authority. Legacy helper tables remain implementation
@@ -1423,21 +1449,51 @@ RS.evidenceRecords=Object.freeze({...RS.evidenceRecords,relationships:Object.fre
 RO.evidenceRecords=RS.evidenceRecords.ownership;
 addRequiredFamily('mobileAcceptanceRecords',{title:'Mobile acceptance records',idField:'MOBILE_ACCEPTANCE_RECORD_ID',prefix:'MOBILE-ACCEPTANCE',application:['MOBILE_ACCEPTANCE_RECORD_ID','MOBILE_ACCEPTANCE_TARGET_ID','DEPLOYED_COMMIT','DEPLOYMENT_MANIFEST_SHA256','ORIGIN','TEST_PROJECT_ID','VIEWPORT','DEVICE_PIXEL_RATIO','IOS_VERSION','SAFARI_USER_AGENT','PERFORMER','IDENTITY_ASSURANCE','CHALLENGE','EVIDENCE_IDS','RESULT','EPISTEMIC_BASIS','STATUS'],types:{VIEWPORT:{valueType:'OBJECT'},EVIDENCE_IDS:{valueType:'REFERENCE_ARRAY'}},commitPolicy:C.APPEND_ONLY});
 
+const SEMANTIC_STAGE_OPERATIONS=Object.freeze(Object.fromEntries([
+  [1,['SEMANTIC_CHALLENGE'],'RECONCILE_INTAKE'],
+  [2,['SEARCH_ADEQUACY_REVIEW'],'RECONCILE_SOURCE_SEARCH'],
+  [3,['SEMANTIC_CHALLENGE'],'RECONCILE_RESEARCH'],
+  [4,['DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE'],'RECONCILE_REQUIREMENTS'],
+  [5,['SEMANTIC_REVIEW'],'RECONCILE_REQUIREMENT_SET'],
+  [6,['PROOF_REVIEW'],'RECONCILE_VERIFICATION_SUITE']
+].map(([stage,reviews,reconcile])=>[stage,Object.freeze({authorOperations:Object.freeze(['COMPLETE',reconcile]),reviewOperations:Object.freeze(reviews),reconcileOperation:reconcile})])));
 const EXACT_SCOPE_DIMENSIONS=Object.freeze({
   1:['inputVersion'],2:['inputVersion','sourceSetVersion'],3:['inputVersion','sourceSetVersion','researchVersion'],4:['inputVersion','sourceSetVersion','researchVersion','requirementsVersion'],5:['inputVersion','sourceSetVersion','researchVersion','requirementsVersion'],6:['requirementsVersion','testSuiteVersion'],7:['requirementsVersion','testSuiteVersion'],8:['requirementsVersion','testSuiteVersion','instructionVersion'],9:['requirementsVersion','testSuiteVersion','instructionVersion'],10:['requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId'],11:['iterationId','candidateId','runId'],12:['iterationId','candidateId','runId','requirementsVersion','testSuiteVersion'],13:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],14:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],15:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],16:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],17:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],18:['iterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],19:['sourceConvergedIterationId','confirmationIterationId','candidateId','requirementsVersion','testSuiteVersion','instructionVersion'],20:['confirmationIterationId','baselineId'],21:['baselineId','productId'],22:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],23:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],24:['baselineId','productId','productVersion','requirementsVersion','testSuiteVersion'],25:['baselineId','productId','productVersion','deliveryCandidateSetId'],26:['baselineId','productId','productVersion','deliveryCandidateSetId','reviewVersion'],27:['baselineId','productId','productVersion','deliveryCandidateSetId','reconciledReviewVersion'],28:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId'],29:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId'],30:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion']
 });
 const TARGET_DIMENSIONS_BY_STAGE=Object.freeze({2:['sourceSetVersion'],3:['researchVersion'],4:['requirementsVersion'],6:['testSuiteVersion'],8:['instructionVersion'],10:['iterationId','candidateId'],11:['runId'],19:['confirmationIterationId'],20:['baselineId'],21:['productId'],25:['deliveryCandidateSetId'],26:['reviewVersion'],27:['reconciledReviewVersion'],28:['releaseId'],29:['hashReviewId'],30:['evidenceChainVersion']});
 const TARGET_DIMENSIONS_BY_OPERATION=Object.freeze({
+  '17:FREEZE':Object.freeze(['iterationId','candidateId']),
   '19:CONFIRM_FREEZE':Object.freeze(['confirmationIterationId']),
   '19:EXECUTE_RUN':Object.freeze([]),'19:VERIFY':Object.freeze([]),'19:COMPARE':Object.freeze([]),'19:REGRESSION_VERIFY':Object.freeze([]),'19:CONFIRM':Object.freeze([]),
   '25:FREEZE_DELIVERY_CANDIDATE':Object.freeze(['deliveryCandidateSetId']),'25:COMPLETE':Object.freeze([]),
-  '26:COMPLETE':Object.freeze(['reviewVersion']),'26:SEMANTIC_REVIEW':Object.freeze([]),'26:RECONCILE':Object.freeze([]),
+  '26:COMPLETE':Object.freeze(['reviewVersion']),'26:SEMANTIC_REVIEW':Object.freeze([]),'26:RECONCILE':Object.freeze(['reviewVersion']),
   '27:CALCULATE_RELEASE':Object.freeze([]),'27:ADVISORY_REVIEW':Object.freeze([]),
   '28:VERIFY_IDENTITY':Object.freeze([]),'28:CAPTURE_DELIVERY_INTENT':Object.freeze([]),
   '29:CALCULATE_EVIDENCE_CHAINS':Object.freeze([]),'29:INVESTIGATE_MISSING_EVIDENCE':Object.freeze([]),
   '30:CALCULATE_TERMINAL':Object.freeze([]),'30:EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS':Object.freeze([]),'30:RECORD_DELIVERY_EVIDENCE':Object.freeze([])
 });
-const STAGE_OPERATION_SCOPE_MATRIX=Object.freeze(Object.fromEntries(Object.entries(s0.STAGE_OPERATIONS).flatMap(([stageText,operations])=>{const stage=Number(stageText);return operations.map(operation=>{const key=`${stage}:${operation}`,targets=new Set(Object.prototype.hasOwnProperty.call(TARGET_DIMENSIONS_BY_OPERATION,key)?TARGET_DIMENSIONS_BY_OPERATION[key]:(TARGET_DIMENSIONS_BY_STAGE[stage]||[]));const dimensions=Object.fromEntries((EXACT_SCOPE_DIMENSIONS[stage]||[]).map(name=>[name,targets.has(name)?'TARGET_RESERVED':'INPUT_CURRENT']));return [key,Object.freeze({stage,operation,requiredDimensions:Object.freeze([...(EXACT_SCOPE_DIMENSIONS[stage]||[])]),dimensions:Object.freeze(dimensions),prohibitedExtraDimensions:true})];});})));
+const STAGE_OPERATION_SCOPE_MATRIX=Object.freeze(Object.fromEntries(Object.entries(s0.STAGE_OPERATIONS).flatMap(([stageText,operations])=>{
+  const stage=Number(stageText);
+  return operations.map(operation=>{
+    const key=`${stage}:${operation}`,semanticReview=SEMANTIC_STAGE_OPERATIONS[stage]?.reviewOperations.includes(operation),targets=new Set(semanticReview?[]:Object.hasOwn(TARGET_DIMENSIONS_BY_OPERATION,key)?TARGET_DIMENSIONS_BY_OPERATION[key]:(TARGET_DIMENSIONS_BY_STAGE[stage]||[]));
+    const dimensions=Object.fromEntries((EXACT_SCOPE_DIMENSIONS[stage]||[]).map(name=>[name,targets.has(name)?'TARGET_RESERVED':'INPUT_CURRENT']));
+    // Fresh execution/reviewer lanes are immutable references to application
+    // reservations. They are explicit exceptions, never extra version inputs.
+    if(operation==='EXECUTE_RUN'||s0.operationContract(stage,operation)?.scopeRequirements.includes('contextId'))dimensions.contextId='IMMUTABLE_REFERENCE';
+    if(operation==='VERIFY'||operation==='EXECUTE_RUN'&&!Object.hasOwn(dimensions,'runId'))dimensions.runId='IMMUTABLE_REFERENCE';
+    if(stage===19&&operation!=='CONFIRM_FREEZE')dimensions.iterationId='IMMUTABLE_REFERENCE';
+    return [key,Object.freeze({stage,operation,requiredDimensions:Object.freeze(Object.keys(dimensions)),dimensions:Object.freeze(dimensions),prohibitedExtraDimensions:true})];
+  });
+})));
+const SCOPE_REFERENCE_FAMILIES=Object.freeze({runId:'runs',contextId:'freshContexts',iterationId:'iterations',confirmationIterationId:'iterations',sourceConvergedIterationId:'iterations',candidateId:'candidateFreezes',baselineId:'baselines',productId:'products',deliveryCandidateSetId:'deliveryCandidateSets'});
+const SCOPE_VERSION_TARGETS=Object.freeze({
+  sourceSetVersion:Object.freeze({stage:2,jobField:'CURRENT_SOURCE_SET_VERSION',kind:'SOURCE-SET'}),
+  researchVersion:Object.freeze({stage:3,jobField:'CURRENT_RESEARCH_VERSION',kind:'RESEARCH'}),
+  requirementsVersion:Object.freeze({stage:4,jobField:'CURRENT_REQUIREMENTS_VERSION',kind:'REQUIREMENTS'}),
+  testSuiteVersion:Object.freeze({stage:6,jobField:'CURRENT_TEST_SUITE_VERSION',kind:'TEST-SUITE'}),
+  instructionVersion:Object.freeze({stage:8,jobField:'CURRENT_INSTRUCTION_VERSION',kind:'INSTRUCTION'}),
+  reviewVersion:Object.freeze({stage:26,jobField:'CURRENT_REVIEW_VERSION',kind:'REVIEW'})
+});
 
 const EXTERNAL_OPERATION_KEYS=new Set();
 for(const [stageText,ops] of Object.entries(s0.STAGE_OPERATIONS)){const stage=Number(stageText);for(const operation of ops){const key=`${stage}:${operation}`;const app=(stage===10&&operation==='FREEZE')||(stage===17&&operation==='FREEZE')||(stage===18&&operation==='COMPLETE')||(stage===19&&['CONFIRM_FREEZE','CONFIRM'].includes(operation))||(stage===20&&operation==='FREEZE_BASELINE')||(stage===22&&operation==='RUN_NATIVE_TESTS')||(stage===24&&operation==='RUN_NATIVE_ATTACKS')||(stage===25&&operation==='FREEZE_DELIVERY_CANDIDATE')||(stage===27&&operation==='CALCULATE_RELEASE')||(stage===28&&operation==='VERIFY_IDENTITY')||(stage===29&&operation==='CALCULATE_EVIDENCE_CHAINS')||(stage===30&&operation==='CALCULATE_TERMINAL');const humanDecision=stage===28&&operation==='CAPTURE_DELIVERY_INTENT';const operator=stage===30&&['EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'].includes(operation);if(!app&&!humanDecision&&!operator)EXTERNAL_OPERATION_KEYS.add(key);}}
@@ -1456,17 +1512,10 @@ const derivationRegistry=Object.freeze({identity:'closed-loop-derivation-registr
 // obey the closed semantic-review vocabulary in specification section 26.5.
 const SEMANTIC_REVIEW_RESULT_VALUES=Object.freeze(['ACCEPTED','REJECTED','PARTIAL','UNKNOWN','DISAGREED']);
 // One shared role/continuation map for the registered semantic operations.
-const SEMANTIC_STAGE_OPERATIONS=Object.freeze(Object.fromEntries([
-  [1,['SEMANTIC_CHALLENGE'],'RECONCILE_INTAKE'],
-  [2,['SEARCH_ADEQUACY_REVIEW'],'RECONCILE_SOURCE_SEARCH'],
-  [3,['SEMANTIC_CHALLENGE'],'RECONCILE_RESEARCH'],
-  [4,['DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE'],'RECONCILE_REQUIREMENTS'],
-  [5,['SEMANTIC_REVIEW'],'RECONCILE_REQUIREMENT_SET'],
-  [6,['PROOF_REVIEW'],'RECONCILE_VERIFICATION_SUITE']
-].map(([stage,reviews,reconcile])=>[stage,Object.freeze({authorOperations:Object.freeze(['COMPLETE',reconcile]),reviewOperations:Object.freeze(reviews),reconcileOperation:reconcile})])));
+
 function recordResponseRequiredFields(collection){return collection==='semanticChallenges'?['FINDINGS','DISPOSITION','REASONING']:(RS[collection]?.required||[]);}
 function recordResponseFieldDefinition(collection,name){const definition=RS[collection]?.fieldDefinitions?.[name],disposition=collection==='semanticReviews'&&name==='RESULT'||collection==='semanticChallenges'&&name==='DISPOSITION';return definition&&disposition?{...definition,enumValues:SEMANTIC_REVIEW_RESULT_VALUES}:definition;}
-const schema=Object.freeze({...s0,version:'closed-loop-workflow-schema/3',__controllingCompletionAmendmentVersion:VERSION,CONTROLLING_COMPLETION_ENUMS:E,SEMANTIC_REVIEW_RESULT_VALUES,SEMANTIC_STAGE_OPERATIONS,recordResponseRequiredFields,recordResponseFieldDefinition,RECORD_SCHEMAS:Object.freeze(RS),RECORD_OWNERSHIP:Object.freeze(RO),STAGE_COLLECTIONS:SC,READ_COLLECTIONS:RC,APPLICATION_COLLECTIONS:AC,STAGE_CONTRACTS:CONTRACTS,operationContract:amendedOperationContract,FIELD_REGISTRY,STAGE_OPERATION_REGISTRY,STAGE_OPERATION_SCOPE_MATRIX,DURABLE_OBJECT_REGISTRY,normalizerRegistry,derivationRegistry,VERIFICATION_PHASE_VALUES,EXACT_SCOPE_DIMENSIONS,allowedCollections:n=>Object.freeze([...(SC[n]||[])]),recordAgentFields:c=>Object.freeze(Object.values(RS[c]?.fieldDefinitions||{}).filter(d=>d.producer===P.AGENT).map(d=>d.name)),recordHumanFields:c=>Object.freeze(Object.values(RS[c]?.fieldDefinitions||{}).filter(d=>d.producer===P.HUMAN||d.producer===P.HUMAN_DECISION).map(d=>d.name))});globalThis.closedLoopWorkflowSchema=schema;
+const schema=Object.freeze({...s0,version:'closed-loop-workflow-schema/3',__controllingCompletionAmendmentVersion:VERSION,CONTROLLING_COMPLETION_ENUMS:E,SEMANTIC_REVIEW_RESULT_VALUES,SEMANTIC_STAGE_OPERATIONS,recordResponseRequiredFields,recordResponseFieldDefinition,RECORD_SCHEMAS:Object.freeze(RS),RECORD_OWNERSHIP:Object.freeze(RO),STAGE_COLLECTIONS:SC,READ_COLLECTIONS:RC,APPLICATION_COLLECTIONS:AC,STAGE_CONTRACTS:CONTRACTS,operationContract:amendedOperationContract,FIELD_REGISTRY,STAGE_OPERATION_REGISTRY,STAGE_OPERATION_SCOPE_MATRIX,SCOPE_VERSION_TARGETS,SCOPE_REFERENCE_FAMILIES,DURABLE_OBJECT_REGISTRY,normalizerRegistry,derivationRegistry,VERIFICATION_PHASE_VALUES,EXACT_SCOPE_DIMENSIONS,allowedCollections:n=>Object.freeze([...(SC[n]||[])]),recordAgentFields:c=>Object.freeze(Object.values(RS[c]?.fieldDefinitions||{}).filter(d=>d.producer===P.AGENT).map(d=>d.name)),recordHumanFields:c=>Object.freeze(Object.values(RS[c]?.fieldDefinitions||{}).filter(d=>d.producer===P.HUMAN||d.producer===P.HUMAN_DECISION).map(d=>d.name))});globalThis.closedLoopWorkflowSchema=schema;
 const augmented=globalThis.closedLoopWorkflowSchema;
 globalThis.closedLoopWorkflowSchema=Object.freeze({...augmented,TRUTH_VALUES:Object.freeze([...E.truth]),EPISTEMIC_BASES:Object.freeze([...E.basis]),APPLICABILITY_VALUES:Object.freeze([...E.applicability]),ENTAILMENT_VALUES:Object.freeze([...E.entailment]),PROOF_EXPRESSION_OPERATORS:Object.freeze(['LEAF','ALL_OF','ANY_OF','AT_LEAST_K']),NORMATIVE_CLASS_VALUES:Object.freeze([...E.normative]),SEMANTIC_COVERAGE_VALUES:Object.freeze([...E.coverage]),OBSERVATION_ORIGIN_VALUES:Object.freeze([...E.origin]),DELIVERY_STATE_VALUES:Object.freeze([...E.delivery])});
 })();
