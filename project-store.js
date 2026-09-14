@@ -512,7 +512,7 @@ function mutationImpact(prior,next,derivedNext=null){
   if(prior){
     for(const family of ['acceptedChanges','stageConfirmations'])for(const row of prior.projectData?.[family]||[]){
       if(!active(row))continue;
-      if(family==='stageConfirmations'&&(!row.confirmed||row.inputVersion!==prior.job.CURRENT_INPUT_VERSION||!engine.acceptedChanges(prior,row.stage).some(change=>change.changeId===row.acceptedChangeId)))continue;
+      if(family==='stageConfirmations'&&(!row.confirmed||row.inputVersion!==engine.inputVersionForStage(prior,row.stage)||!engine.acceptedChanges(prior,row.stage).some(change=>change.changeId===row.acceptedChangeId)))continue;
       const id=row.changeId||row.confirmationId||engine.recordId(row,family),replacement=(next.projectData?.[family]||[]).find(item=>(item.changeId||item.confirmationId||engine.recordId(item,family))===id);
       if(!active(replacement)){add(row.stage,family,id);replaces.push({kind:family,id});}
     }
