@@ -179,9 +179,17 @@ function validateRecoveryManifest(state){
 function assertHistoryLimits(state){
   if(state.entries.length>HISTORY_LIMITS.maxCheckpoints||state.compressedProjectBytes>HISTORY_LIMITS.maxCompressedProjectBytes||state.retainedFileBytes>HISTORY_LIMITS.maxRetainedFileBytes)throw storageError('History storage limit reached. The current project and every retained version are preserved. Export a complete backup before continuing in a new project.','HISTORY_LIMIT_REACHED');
 }
+function assertRecoveryViewFiles(jobId,view,artifacts){
+ const byId=new Map(artifacts.map(row=>[row.artifactId,row]));
+ for(const selection of Object.values(view?.fileSelections||{})){
+  if(selection.jobId!==String(jobId)||!globalThis.closedLoopWorkflowSchema.STAGE_CONTRACTS[selection.stage]||!Array.isArray(selection.files))throw storageError('Saved file selections belong to an incompatible project view.','HISTORY_VERSION_MISMATCH');
+  for(const file of selection.files){const row=byId.get(file.artifactId);if(!row||row.lineage?.role!=='FILE_SELECTION_RECOVERY'||row.lineage?.selectionKind!==selection.kind||Number(row.lineage?.stage)!==Number(selection.stage)||row.filename!==file.filename||row.mediaType!==file.mediaType||row.byteSize!==file.byteSize||row.sha256!==file.sha256)throw storageError('A saved file selection is missing or incompatible.','HISTORY_FILE_INTEGRITY_FAILED');}
+ }
+}
+async function readHistoryView(jobId,checkpointId=null){const state=await historyList(jobId),id=checkpointId||state.activeId;if(!id)return null;const saved=await decodeCheckpoint(jobId,await metaGet(snapshotKey(jobId,id)));return clone(saved.view);}
 async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),parentId=null,label='Saved project',view=historyView(project)}={}){
   const jobId=projectIdentity(project),canonical=canonicalProject(project),artifacts=artifactRows.map(historyDescriptor);
-  assertProjectIntegrity(canonical,{verifyDerived:false});assertPackageArtifactCustody(canonical,artifactRows);
+  assertProjectIntegrity(canonical,{verifyDerived:false});assertPackageArtifactCustody(canonical,artifactRows);assertRecoveryViewFiles(jobId,view,artifactRows);
   const body={schema:HISTORY_SCHEMA,id,jobId,parentId,label,createdAt:now(),project:canonical,projectSha256:projectSha256(canonical),artifacts,view:clone(view)};
   fault('before-history-checkpoint');const encoded=await compressPackage(body);
   const sha256=await hash.sha256Bytes(encoded.blob);
@@ -252,14 +260,16 @@ async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey
     if(!(file?.blob instanceof Blob)||file.blob.size!==descriptor.byteSize||await hash.sha256Bytes(file.blob)!==descriptor.sha256)throw storageError(`Cannot restore ${descriptor.filename}: its saved bytes are missing or corrupt.`,'HISTORY_FILE_INTEGRITY_FAILED');
     artifacts.push({...descriptor,blob:file.blob});
   }
-  assertPackageArtifactCustody(body.project,artifacts);
+  assertPackageArtifactCustody(body.project,artifacts);assertRecoveryViewFiles(jobId,body.view,artifacts);
   return {...body,artifacts};
 }
-function bindRestoredCandidates(next,saved,checkpointId){
+function bindRestoredCandidates(next,saved,checkpointId,view=null){
   // Only response bytes already present in this complete checkpoint may be
   // revalidated locally. A newly arriving response never acquires this binding.
   const proposals=saved.projectData?.responseProposals||[],raws=saved.projectData?.rawResponses||[];
-  next.restoredCandidates={activationId:next.historyActivationId,activationRevision:next.revision,checkpointId,proposals:{}};
+  next.restoredCandidates={activationId:next.historyActivationId,activationRevision:next.revision,checkpointId,proposals:{},rawResponses:{},selectedFiles:{}};
+  for(const raw of raws){if(!['PRESERVED','VALIDATION_FAILED','VALIDATED_PENDING_REVIEW'].includes(raw.status)||hash.sha256Text(raw.completeRawResponse)!==raw.sha256)continue;next.restoredCandidates.rawResponses[raw.rawResponseId]={rawResponseId:raw.rawResponseId,rawSha256:raw.sha256,promptId:raw.promptInstructionId};}
+  for(const selection of Object.values(view?.fileSelections||{})){if(selection.kind!=='response'||selection.jobId!==projectIdentity(saved)||!selection.promptId)continue;for(const file of selection.files)next.restoredCandidates.selectedFiles[file.artifactId]={rawSha256:file.sha256,promptId:selection.promptId,stage:selection.stage};}
   for(const proposal of proposals){
     if(proposal.status!=='PENDING_OPERATOR_REVIEW'||proposal.invalidatedBy)continue;
     const raw=raws.find(row=>row.rawResponseId===proposal.rawResponseId);
@@ -275,7 +285,7 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
   const entry=await metaGet(snapshotKey(jobId,checkpointId)),saved=await decodeCheckpoint(jobId,entry);
   if(signal?.aborted)throw storageError('A newer navigation replaced this restore.','RESTORE_INTERRUPTED');
   fault('before-history-restore');
-  const next=clone(saved.project);next.revision=Number(prior.revision)+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;bindRestoredCandidates(next,saved.project,checkpointId);
+  const next=clone(saved.project);next.revision=Number(prior.revision)+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;bindRestoredCandidates(next,saved.project,checkpointId,saved.view);
   // The projection belongs to the complete saved version. A current deployment
   // may reject it, but cannot silently rewrite it into a different version.
   assertProjectIntegrity(next,{verifyDerived:false});const digest=projectSha256(next),updated=clone(state);
@@ -629,7 +639,7 @@ async function importPackage(blob,{operationId=null}={}){
   const activeArtifacts=verifiedArtifacts.filter(a=>!a.archiveKind),priorProject=await readProject(id);
   if(Number(priorProject?.revision||0)!==Number(observedHeads.get(id)||0))throw storageError('This project changed while the backup was being verified. Its newer work is preserved.','STALE_PROJECT_REVISION');
   let preparedPrior=priorProject?await prepareHistoryCommit(priorProject,priorProject):null;
-  const localState=preparedPrior?.state||await metaGet(historyKey(id)),merged=clone(localState||{schema:HISTORY_SCHEMA,jobId:id,generation:0,activeId:null,activeProjectSha256:null,entries:[],sessions:{},files:{},compressedProjectBytes:0,retainedFileBytes:0,redo:[]}),importSnapshots=[],importFiles=[];
+  const localState=preparedPrior?.state||await metaGet(historyKey(id)),merged=clone(localState||{schema:HISTORY_SCHEMA,jobId:id,generation:0,activeId:null,activeProjectSha256:null,entries:[],sessions:{},files:{},compressedProjectBytes:0,retainedFileBytes:0,redo:[]}),importSnapshots=[],importFiles=[];let importedView=null;
   if(body.recovery){
     const incoming=body.recovery;
     if(incoming.schema!==HISTORY_SCHEMA||incoming.jobId!==id||!Array.isArray(incoming.entries)||!incoming.entries.some(e=>e.id===incoming.activeId)||new Set(incoming.entries.map(e=>e.id)).size!==incoming.entries.length)throw storageError('Backup History identity is invalid.','HISTORY_VERSION_MISMATCH');
@@ -638,7 +648,7 @@ async function importPackage(blob,{operationId=null}={}){
     for(const entry of incoming.entries){
       const archived=verifiedArtifacts.find(a=>a.archiveKind==='RECOVERY_SNAPSHOT'&&a.checkpointId===entry.id);
       if(!archived||archived.sha256!==entry.sha256||archived.byteSize!==entry.byteSize)throw storageError('A promised checkpoint is missing from the backup.','HISTORY_VERSION_UNAVAILABLE');
-      const snapshot={...entry,blob:archived.blob};await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha));
+      const snapshot={...entry,blob:archived.blob},decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha));if(entry.id===incoming.activeId)importedView=decoded.view;
       const existing=merged.entries.find(item=>item.id===entry.id);
       if(existing&&hash.sha256Value(existing)!==hash.sha256Value(entry))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
       if(!existing){merged.entries.push(clone(entry));merged.compressedProjectBytes+=entry.byteSize;importSnapshots.push(snapshot);}
@@ -653,8 +663,8 @@ async function importPackage(blob,{operationId=null}={}){
     merged.activeId=incoming.activeId;
   }else if(verifiedArtifacts.some(a=>a.archiveKind))throw storageError('Backup archive members have no governing History manifest.','HISTORY_VERSION_MISMATCH');
   const next=clone(project);next.revision=Math.max(Number(priorProject?.revision||0),Number(project.revision||0))+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;
-  bindRestoredCandidates(next,project,body.recovery?.activeId||null);
-  const prepared=await prepareHistoryCommit(next,null,{label:'Restored backup',baseState:merged,artifactRows:activeArtifacts});
+  bindRestoredCandidates(next,project,body.recovery?.activeId||null,importedView);
+  const prepared=await prepareHistoryCommit(next,null,{label:'Restored backup',view:importedView,baseState:merged,artifactRows:activeArtifacts});
   prepared.expectedGeneration=preparedPrior?preparedPrior.expectedGeneration:Number(localState?.generation||0);
   prepared.snapshots=[...(preparedPrior?.snapshots||[]),...importSnapshots,...prepared.snapshots];prepared.newFiles=[...(preparedPrior?.newFiles||[]),...importFiles,...prepared.newFiles];assertHistoryLimits(prepared.state);
   fault('before-import-transaction');const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),projects=tx.objectStore(PROJECTS),artifacts=tx.objectStore(ARTIFACTS),meta=tx.objectStore(META);
@@ -791,7 +801,7 @@ function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(con
 
 const ready=(async()=>{if(globalThis.indexedDB)try{await migrateLegacy();globalThis.closedLoopLegacyMigrationError=null;}catch(error){globalThis.closedLoopLegacyMigrationError=String(error?.stack||error);console.error('Legacy migration failed without deleting the preserved legacy payload; application startup will continue.',error);}return true;})();
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;const project=message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId});globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,project});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({HISTORY_LIMITS,mutationImpact,assertRecoveryTransfer,historyList,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy});
+globalThis.closedLoopProjectStore=Object.freeze({HISTORY_LIMITS,mutationImpact,assertRecoveryTransfer,historyList,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy});
 })();
 ;(()=>{
 'use strict';

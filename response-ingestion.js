@@ -97,7 +97,13 @@ function bindAttachmentSlots(project,{rawResponseId,files=[]}={}){
 
 function restoredCandidateBinding(project,{proposal=null,rawResponseId=null,rawSha256=null,promptRecord=null}={}){
   const recovery=project.restoredCandidates;
-  if(!recovery||recovery.activationId!==project.historyActivationId||Number(recovery.activationRevision)!==Number(project.revision))return null;
+  if(!recovery||recovery.activationId!==project.historyActivationId)return null;
+  if(!proposal&&rawResponseId){
+    const raw=findRaw(project,rawResponseId),binding=recovery.rawResponses?.[rawResponseId]||recovery.selectedFiles?.[raw?.transport?.recoverySelectionArtifactId];
+    const promptId=promptRecord?.instructionId||promptRecord?.promptId||raw?.promptInstructionId,activePrompt=safe(project.projectData.generatedPrompts).find(row=>(row.instructionId||row.promptId)===promptId&&!row.invalidatedBy);
+    if(raw&&binding&&activePrompt&&raw.sha256===binding.rawSha256&&hash.sha256Text(raw.completeRawResponse)===binding.rawSha256&&(!rawSha256||rawSha256===binding.rawSha256)&&promptId===binding.promptId&&(!binding.stage||Number(raw.stage)===Number(binding.stage)))return binding;
+  }
+  if(Number(recovery.activationRevision)!==Number(project.revision))return null;
   const candidate=proposal||safe(project.projectData.responseProposals).find(row=>row.rawResponseId===rawResponseId&&row.status==='PENDING_OPERATOR_REVIEW');
   const binding=candidate&&recovery.proposals?.[candidate.proposalId],raw=candidate&&findRaw(project,candidate.rawResponseId);
   if(!binding||binding.proposalSha256!==hash.sha256Value(candidate)||!raw||raw.sha256!==binding.rawSha256||hash.sha256Text(raw.completeRawResponse)!==binding.rawSha256||binding.rawResponseId!==raw.rawResponseId||(rawSha256&&rawSha256!==binding.rawSha256)||(promptRecord&&(promptRecord.instructionId||promptRecord.promptId)!==binding.promptId))return null;
