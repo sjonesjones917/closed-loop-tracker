@@ -1,0 +1,791 @@
+{
+  "schema": "closed-loop-reconciled-focus/1",
+  "createdAt": "2026-09-14T17:01:11.756045+00:00",
+  "environment": "Node 24.19.0; synthetic production-engine and transaction-adapter cases",
+  "sourceFiles": {
+    "app-core.js": "3b890791a35b08c2728ab79ef49e3f99ee12b0dafa2e29b150fc6a6fd926184c",
+    "workflow-schema.js": "f0e9b696c931ad9be01b2e56e40d3b94ff5a0dd0b16e75cc3ca25451166eb8b9",
+    "workflow-engine.js": "4c0f7866d3e59e4c888983505f54b06fc8dd4e463f4fc167caa69bbc65a9789d",
+    "prompt-engine.js": "bb24a959dd9f5147bd68907bcc278f0fce939c1d75522119326a6938d2c38c9c",
+    "response-ingestion.js": "4679495b90d7f58c431895594d21001b30a96d04c3c4de61e6bf72fbcdab5ed1",
+    "project-store.js": "d39182daaf2721fa3f254346eeea65f7572807497e58d79375df94c0d1223fbd",
+    "verify-operator-action-lifecycle.mjs": "c6bfc694aee769ea8462dcd2eb1b70c91469b544a1e35b3667d035d58c5c3f0c",
+    "verify-operator-control-state-fault.mjs": "51d0be6141d5722a1e97ae62cfbd087854d956cc4f98582ac45de3e98ed305b5",
+    "verify-recovery-control-fault.mjs": "2cdecc6ef90b11902887c922a5768914e9efac32d790457622135b25be3d7413",
+    "verify-history-selection-fault.mjs": "44e2399238038b50745d9921c47b068fd5539b83fde78e3ffbff6a804858b158",
+    "verify-required-operation-scope.mjs": "207f4b491da0fbb88bc48f6ed860a11ab471bf03064ac7e2adc990edfce066c2",
+    "verify-exact-progress.mjs": "25592f3c18336cdc95ae9cd62f972bf17011c7be560158d785aa921fe35fe5b3",
+    "verify-exact-progress-fault.mjs": "0d406306138e73d7c7dd251d4f8362b4a80ef2941652e01da7bfc4c2330b2eae",
+    "verify-reservation-scope-sequences.mjs": "22d4d30457bc51daa88b6452987fc86f58eee1323846f0500a063546c00b7118"
+  },
+  "completeOperatorJourney": false,
+  "physicalDeviceAcceptance": false,
+  "results": [
+    {
+      "suite": "verify-operator-action-lifecycle.mjs",
+      "result": "PASS",
+      "stdoutSha256": "5ba37b63190d8745b3c56b60a05ae7f9802e404e962b2bfb64123573ba463ef0",
+      "report": {
+        "schema": "closed-loop-executed-cases/1",
+        "synthetic": true,
+        "environment": "Node VM with delayed operation and frame boundary",
+        "scope": "Shared action binding only; this is not stage-by-stage or file-transport acceptance.",
+        "cases": [
+          {
+            "caseId": "UI-SHARED-ACTION-DUPLICATE",
+            "fixtureStage": 1,
+            "operation": "SAVE_INSTRUCTION",
+            "repeatedClicks": 2,
+            "executions": 1,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-ACTION-FAILURE-RETRY",
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-HISTORY-CONTROL-STATE",
+            "initiallyAvailable": false,
+            "becomesAvailable": false,
+            "failsAfterUpdate": false,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-HISTORY-CONTROL-STATE",
+            "initiallyAvailable": false,
+            "becomesAvailable": false,
+            "failsAfterUpdate": true,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-HISTORY-CONTROL-STATE",
+            "initiallyAvailable": false,
+            "becomesAvailable": true,
+            "failsAfterUpdate": false,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-HISTORY-CONTROL-STATE",
+            "initiallyAvailable": false,
+            "becomesAvailable": true,
+            "failsAfterUpdate": true,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-HISTORY-CONTROL-STATE",
+            "initiallyAvailable": true,
+            "becomesAvailable": false,
+            "failsAfterUpdate": false,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-HISTORY-CONTROL-STATE",
+            "initiallyAvailable": true,
+            "becomesAvailable": false,
+            "failsAfterUpdate": true,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-HISTORY-CONTROL-STATE",
+            "initiallyAvailable": true,
+            "becomesAvailable": true,
+            "failsAfterUpdate": false,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-HISTORY-CONTROL-STATE",
+            "initiallyAvailable": true,
+            "becomesAvailable": true,
+            "failsAfterUpdate": true,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-RECOVERY-AVAILABILITY-true",
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-RECOVERY-AVAILABILITY-false",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "suite": "verify-operator-control-state-fault.mjs",
+      "result": "PASS",
+      "stdoutSha256": "8848456dc02b398b4b43edbec34ae1f4d358fc315928a6d0f728332f319aa9af",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node VM executes a temporary production UI implementation fault",
+        "cases": [
+          {
+            "name": "Removing the current-state update restores obsolete Undo availability and is detected",
+            "result": "PASS",
+            "mutantExitCode": 1
+          }
+        ]
+      }
+    },
+    {
+      "suite": "verify-recovery-control-fault.mjs",
+      "result": "PASS",
+      "stdoutSha256": "afbf71d1dbfa583a0ab04b99aea5679cd5d868ca8a3c9b22b3aaddfa10d041ab",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "cases": [
+          {
+            "fault": "Restore pre-operation Undo availability after the active history changes",
+            "oracle": "HISTORY_CONTROL_STATE_ORACLE",
+            "result": "DETECTED"
+          }
+        ],
+        "restoredImplementation": "PASS"
+      }
+    },
+    {
+      "suite": "verify-history-selection-fault.mjs",
+      "result": "PASS",
+      "stdoutSha256": "c8a4c990e82948738ab799c2a35af2866179a24fcc32dd28739a5a83cf4acfca",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "cases": [
+          {
+            "fault": "READ_SELECTED_DESTINATION_AFTER_HISTORY_REPAINT",
+            "oracle": "HISTORY_SELECTION_ORACLE",
+            "result": "DETECTED"
+          }
+        ],
+        "restoredImplementation": "PASS"
+      }
+    },
+    {
+      "suite": "verify-required-operation-scope.mjs",
+      "result": "PASS",
+      "stdoutSha256": "44388a3b489504cb24e2e18c775c3c67c77ca648b2e117f688939e708d20d1fd",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "scope": "Executed authoring boundary with actual prerequisite acceptance; this does not claim all 66 operations are verified",
+        "stage": 2,
+        "operation": "COMPLETE",
+        "required": [
+          "inputVersion",
+          "sourceSetVersion"
+        ],
+        "cases": [
+          {
+            "name": "A new external operation reserves every required identity before handoff without accepting its target",
+            "result": "PASS"
+          },
+          {
+            "name": "unregistered dimension rejects for its specific scope violation; removing it passes",
+            "result": "PASS"
+          },
+          {
+            "name": "stale input rejects for its specific scope violation; removing it passes",
+            "result": "PASS"
+          },
+          {
+            "name": "unreserved output rejects for its specific scope violation; removing it passes",
+            "result": "PASS"
+          },
+          {
+            "name": "Accepted targets cannot be reused; repeated authoring allocates a new target and exact retry retains that reservation without replacing accepted work",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "suite": "verify-exact-progress.mjs",
+      "result": "PASS",
+      "stdoutSha256": "77dca57cf98f506c8d90fa2a5b02df2403e320361650aa446a8514c561498d4a",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node production derivation, validation and persistence with transaction adapter",
+        "bounds": {
+          "maxCoverageDenominator": 128,
+          "decimalCharacters": 4096,
+          "decimalExponentMagnitude": 4096
+        },
+        "cases": [
+          {
+            "name": "Every completion count through 128 preserves its exact rational value and canonical JSON identity",
+            "result": "PASS",
+            "ratios": 8384
+          },
+          {
+            "name": "Decimal entry preserves precision; canonical NUMBER validation rejects the violation and accepts exact values",
+            "result": "PASS"
+          },
+          {
+            "name": "Partial canonical work and exact numeric drafts survive durable checkpoint, read and whole-version restoration",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "suite": "verify-exact-progress-fault.mjs",
+      "result": "PASS",
+      "stdoutSha256": "21547e46322653c3c615a20cce7f715ed74b532d786e6b27bd2069a02e53cc9e",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "fault": "Fractional JSON number substituted in the responsible coverage producer",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS",
+        "restoredCases": [
+          {
+            "name": "Every completion count through 128 preserves its exact rational value and canonical JSON identity",
+            "result": "PASS",
+            "ratios": 8384
+          },
+          {
+            "name": "Decimal entry preserves precision; canonical NUMBER validation rejects the violation and accepts exact values",
+            "result": "PASS"
+          },
+          {
+            "name": "Partial canonical work and exact numeric drafts survive durable checkpoint, read and whole-version restoration",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "suite": "verify-reservation-scope-sequences.mjs",
+      "result": "PASS",
+      "stdoutSha256": "03a791960bd39fab6c82f09c1a9e7b343ad74a6b88d9b775c7b0b02254fbce0d",
+      "report": {
+        "schema": "closed-loop-reservation-scope-sequences/1",
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node production reservation engine; isolated metadata-state fixtures",
+        "bounds": {
+          "maxDepth": 5,
+          "alphabet": [
+            "EXPORTED",
+            "ORPHANED",
+            "RESUMED",
+            "RESPONSE_STAGED",
+            "ACCEPTED",
+            "REJECTED",
+            "CANCELLED",
+            "SUPERSEDED",
+            "EXPIRED_BY_SCOPE",
+            "UNKNOWN_STATE",
+            "RETRY",
+            "RELOAD"
+          ],
+          "operationCount": 50,
+          "stages": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            19,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            29
+          ],
+          "equivalence": "Fixed binding per registered operation; reservation status and trace depth",
+          "assumptions": [
+            "Synthetic scope tokens exercise reservation identity; they do not establish workflow prerequisites.",
+            "ACCEPTED here is a reservation metadata state, not a committed response or completed stage.",
+            "Atomic persistence, response acceptance, restoration, external execution and browser behavior require their separate gates."
+          ]
+        },
+        "implementationFaults": [
+          {
+            "fault": "transition",
+            "oracle": "RESERVATION_TERMINAL_ORACLE",
+            "result": "DETECTED"
+          },
+          {
+            "fault": "binding",
+            "oracle": "RESERVATION_BINDING_ORACLE",
+            "result": "DETECTED"
+          },
+          {
+            "fault": "slot",
+            "oracle": "RESERVATION_SLOT_ORACLE",
+            "result": "DETECTED"
+          }
+        ],
+        "operations": [
+          {
+            "stage": 1,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 1,
+            "operation": "SEMANTIC_CHALLENGE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 1,
+            "operation": "RECONCILE_INTAKE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 2,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 2,
+            "operation": "SEARCH_ADEQUACY_REVIEW",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 2,
+            "operation": "RECONCILE_SOURCE_SEARCH",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 3,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 3,
+            "operation": "SEMANTIC_CHALLENGE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 3,
+            "operation": "RECONCILE_RESEARCH",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 4,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 4,
+            "operation": "DISPOSITION_CHALLENGE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 4,
+            "operation": "ATOMICITY_CHALLENGE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 4,
+            "operation": "RECONCILE_REQUIREMENTS",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 5,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 5,
+            "operation": "SEMANTIC_REVIEW",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 5,
+            "operation": "RECONCILE_REQUIREMENT_SET",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 6,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 6,
+            "operation": "PROOF_REVIEW",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 6,
+            "operation": "RECONCILE_VERIFICATION_SUITE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 7,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 7,
+            "operation": "EXECUTE_FAILURE_TEST",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 8,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 9,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 13,
+            "operation": "COMPARE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 14,
+            "operation": "ROOT_CAUSE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 15,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 15,
+            "operation": "EXECUTE_REGRESSION",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 16,
+            "operation": "CORRECT",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 17,
+            "operation": "COMPARE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 17,
+            "operation": "ROOT_CAUSE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 17,
+            "operation": "REGRESSION",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 17,
+            "operation": "CORRECT",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 19,
+            "operation": "COMPARE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 19,
+            "operation": "REGRESSION_VERIFY",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 21,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 22,
+            "operation": "EXECUTE_EXTERNAL_TEST",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 23,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 24,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 25,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 26,
+            "operation": "COMPLETE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 26,
+            "operation": "SEMANTIC_REVIEW",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 26,
+            "operation": "RECONCILE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 27,
+            "operation": "ADVISORY_REVIEW",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          },
+          {
+            "stage": 29,
+            "operation": "INVESTIGATE_MISSING_EVIDENCE",
+            "statesExplored": 35,
+            "transitions": 420,
+            "rejected": 253,
+            "acceptedPaths": 7,
+            "traceSha256": "7bf0035405261e7d662f5b244dd6e88e70b2077595d3bfd1ce59d311a9db5359"
+          }
+        ]
+      }
+    }
+  ]
+}

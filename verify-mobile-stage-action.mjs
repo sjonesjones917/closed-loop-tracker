@@ -103,10 +103,11 @@ async function main(){
   }
   // The same retained history must also leave through the real complete-export action.
   await evaluate(cdp,`(()=>{globalThis.__historyExportBlob=null;globalThis.__historyExportError='';globalThis.__historyCreateUrl=URL.createObjectURL;URL.createObjectURL=blob=>{globalThis.__historyExportBlob=blob;return globalThis.__historyCreateUrl(blob);};window.alert=message=>{globalThis.__historyExportError=String(message);};})()`);
-  await click(cdp,'#project-actions-toggle');const exportStarted=Date.now();await click(cdp,'#export-project',60000);
-  await waitFor(cdp,`document.querySelector('#app-live-status')?.textContent==='complete project package exported'||globalThis.__historyExportError`,60000);
-  console.log(JSON.stringify({browserStageActionPhase:'pressure-export-completed',elapsedMs:Date.now()-exportStarted}));
+  await click(cdp,'#project-actions-toggle');const exportStartedAt=Date.now();await click(cdp,'#export-project',60000);
+  await waitFor(cdp,`document.querySelector('#app-live-status')?.textContent==='complete project package exported'||globalThis.__historyExportError`,Math.max(1,60000-(Date.now()-exportStartedAt)));
+  console.log(JSON.stringify({browserStageActionPhase:'pressure-export-completed',elapsedMs:Date.now()-exportStartedAt}));
   assert(!(await evaluate(cdp,'globalThis.__historyExportError')),`Accumulated complete export failed: ${await evaluate(cdp,'globalThis.__historyExportError')}`);
+  const exportElapsedMs=Date.now()-exportStartedAt;assert(exportElapsedMs<=60000,'Accumulated export exceeded the 60-second verifier deadline');console.log(JSON.stringify({operation:'accumulated-history-export',elapsedMs:exportElapsedMs,verifierDeadlineMs:60000,physicalDevice:false}));
   const historyExport=await evaluate(cdp,`(async()=>{const blob=globalThis.__historyExportBlob,payload=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text()),{packageSha256,...body}=payload,rows=payload.project.projectData.rawResponses;return {jobId:payload.project.job.JOB_ID,records:rows.length,lastRecordComplete:rows.at(-1).rawText.endsWith('é🙂TAIL-599'),rawCharacters:rows.reduce((sum,row)=>sum+row.rawText.length,0),hashVerified:closedLoopHash.sha256Value(body)===packageSha256};})()`);
   assert(historyExport.jobId==='BROWSER-ACCUMULATED-HISTORY'&&historyExport.records===600&&historyExport.lastRecordComplete&&historyExport.rawCharacters>=48000000&&historyExport.hashVerified,`Complete accumulated export lost bytes or identity: ${JSON.stringify(historyExport)}`);
   await evaluate(cdp,`(()=>{URL.createObjectURL=globalThis.__historyCreateUrl;delete globalThis.__historyExportBlob;})()`);

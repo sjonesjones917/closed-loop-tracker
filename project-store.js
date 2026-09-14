@@ -47,7 +47,7 @@ function requestStoreWorker(method,args){
 const useStoreWorker=()=>Boolean(STORE_SCRIPT_URL&&typeof Worker==='function');
 const runSynchronousMutator=(mutator,next,before)=>{const result=mutator(next,before);if(result&&typeof result.then==='function')throw storageError('Project transaction mutators must be synchronous. Complete asynchronous work before opening the canonical IndexedDB transaction.','ASYNC_TRANSACTION_MUTATOR');return result;};
 const PLACEHOLDER_REFERENCES=new Set(['','NONE','NOT APPLICABLE','UNKNOWN','PENDING','UNASSIGNED']);
-const equivalent=(left,right)=>left===undefined||right===undefined?left===right:hash.sha256Value(left)===hash.sha256Value(right);
+const equivalent=(left,right)=>Object.is(left,right)||(!(left===undefined||right===undefined)&&hash.sha256Value(left)===hash.sha256Value(right));
 function validateProjectIntegrity(project,{verifyDerived=true,verifyCachedProjection=true}={}){
   const issues=[],schemaApi=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine;
   if(!project||typeof project!=='object')return {valid:false,issues:['Project is not an object.']};
@@ -272,7 +272,7 @@ async function readProject(jobId){
   if(computed!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');throw storageError('Project hash mismatch. The original row was preserved in quarantine.','PROJECT_HASH_MISMATCH');}
   if(Number(row.revision)!==Number(row.project?.revision)){await quarantine(row,'PROJECT_REVISION_MISMATCH');throw storageError('Stored revision does not match the canonical project. The original row was preserved in quarantine.','PROJECT_REVISION_MISMATCH');}
   try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+error.message);throw storageError('The stored project failed canonical integrity validation. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}
-  let active;try{active=applyOperationalJournal(row,journal?.value);assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;return active.project;
+  let active;try{active=applyOperationalJournal(row,journal?.value);if(active!==row)assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;return active.project;
 }
 function readAll(storage){return storage?readAllLegacy(storage):readAllIndexed();}
 

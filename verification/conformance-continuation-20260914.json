@@ -120,10 +120,10 @@
     "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
     "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
   ],
-  "nextAction": "Publish the shared control-state correction, corrected source-review fixture, and complete-journey execution budget to PR #1242. Continue the current candidate regression, inspect subsequent browser failures, and complete all independent implementation/verification before exact integration and deployment.",
-  "updatedAt": "2026-09-14T16:45:34.159364+00:00",
+  "nextAction": "Publish reconciled candidate with both parents, execute complete integrated checks, inspect exact browser CI and continue repairs across all remaining requirements before integration/deployment.",
+  "updatedAt": "2026-09-14T17:00:45.971045+00:00",
   "continuationPullRequest": 1242,
-  "publishedHeadBeforeThisChange": "68d03b28c0d2c00b71c36a7bf68b1923bf542d7d",
+  "publishedHeadBeforeThisChange": "49dca4908fe6851c83976cc9237158a492903f0c",
   "baselineVerification": {
     "sourceCommit": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
     "suites": 46,
@@ -165,5 +165,18 @@
       "head": "68d03b28c0d2c00b71c36a7bf68b1923bf542d7d",
       "lastObservedStatus": "pending"
     }
-  ]
+  ],
+  "reconciliation": {
+    "predecessorHead": "845be239f197698f30bc83551374fcc8b179ddc9",
+    "continuationHead": "49dca4908fe6851c83976cc9237158a492903f0c",
+    "method": "Preserve both parents; resolve shared fixes in an isolated checkout. No force push or predecessor branch writes.",
+    "decisions": [
+      "Retain source-scope, exact-progress and per-run completion corrections from the predecessor.",
+      "Retain the complete backup parser optimization and multi-report evidence selection.",
+      "Unify current control availability with both sets of fault checks and all eight success/failure availability combinations.",
+      "Use actual prior browser intake for the duplicate-response journey; do not install forced completed prerequisites.",
+      "Keep a 60-minute complete-journey budget and atomic interruption reports; preserve the 60-second accumulated export deadline."
+    ],
+    "status": "FOCUSED_CHECKS_PASS_FULL_INTEGRATED_CI_PENDING"
+  }
 }
