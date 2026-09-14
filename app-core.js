@@ -51,11 +51,14 @@ function wireBusyActions(){
     node[eventName]=function(...args){
       const existing=pendingUiActions.get(key);if(existing)return existing.promise;
       const jobId=current?.job?.JOB_ID,stage=current?.activeStage,operation=operationSelection[stage],run=runSelection[stage],view=current?.activeView,entry={controls:new Map()};pendingUiActions.set(key,entry);lock(entry);
+      const preparing=new Map([...document.querySelectorAll('button,input,select,textarea')].map(control=>[control,control.disabled]));for(const control of preparing.keys())control.disabled=true;
       const label=String(node.type==='file'?'Processing selected files':node.getAttribute('aria-label')||node.selectedOptions?.[0]?.textContent||node.textContent||'Loading').trim()+'…';
       entry.promise=withStorageActivity(label,async()=>{
-        await new Promise(resolve=>typeof requestAnimationFrame==='function'?requestAnimationFrame(()=>setTimeout(resolve,0)):setTimeout(resolve,0));
-        if(current?.job?.JOB_ID!==jobId||current?.activeStage!==stage||operationSelection[stage]!==operation||runSelection[stage]!==run||current?.activeView!==view){announce('Selection changed. Retry the action from the current stage.');return;}
-        return handler.apply(node,args);
+        try{
+          await new Promise(resolve=>typeof requestAnimationFrame==='function'?requestAnimationFrame(()=>setTimeout(resolve,0)):setTimeout(resolve,0));
+          if(current?.job?.JOB_ID!==jobId||current?.activeStage!==stage||operationSelection[stage]!==operation||runSelection[stage]!==run||current?.activeView!==view){announce('Selection changed. Retry the action from the current stage.');return;}
+          return handler.apply(node,args);
+        }finally{for(const [control,disabled] of preparing)if(control.isConnected)control.disabled=disabled;}
       },{immediate:true}).catch(error=>reportActionFailure(error)).finally(()=>{
         pendingUiActions.delete(key);for(const [control,disabled] of entry.controls){if(control.isConnected){control.disabled=disabled;control.removeAttribute('aria-busy');}}
       });

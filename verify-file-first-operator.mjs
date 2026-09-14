@@ -19,7 +19,7 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
   }
   const runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,clearTimeout,queueMicrotask,
     requestAnimationFrame:callback=>{frames.push(callback);return frames.length;},
-    Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:selector=>nodes.get(selector)||null,querySelectorAll:selector=>selector==='button,input,select'?[...nodes.values()]:[]},
+    Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:selector=>nodes.get(selector)||null,querySelectorAll:selector=>['button,input,select','button,input,select,textarea'].includes(selector)?[...nodes.values()]:[]},
     stageResponseFile:async()=>{staged++;await held;throw new Error('CONTROLLED_RESPONSE_STORAGE_FAILURE');},failures});
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
@@ -33,11 +33,13 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
   const first=button.onclick(),duplicate=button.onclick();
   assert.equal(staged,0,'Response byte work started before loading feedback could paint.');
   assert.equal(button.disabled,true,'A pending response action left its button enabled.');
+  assert.equal(nodes.get('#new-project').disabled,true,'Navigation remained available before the pending action captured its input.');
   assert.equal(nodes.get('#storage-status').getAttribute('aria-busy'),'true','A pending response action has no loading feedback.');
   assert.equal(first,duplicate,'Repeated response clicks did not share the pending action.');
   while(frames.length)frames.shift()(0);
   await new Promise(resolve=>setTimeout(resolve,0));
   assert.equal(staged,1,'Repeated response clicks staged the same file concurrently.');
+  assert.equal(nodes.get('#new-project').disabled,false,'Navigation remained disabled after the action captured its input.');
   release();await first;
   assert.equal(button.disabled,false,'Storage failure left response retry disabled.');
   assert.equal(nodes.get('#storage-status').getAttribute('aria-busy'),null,'Storage failure left loading feedback stuck.');
