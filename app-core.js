@@ -470,9 +470,9 @@ function captureView(){
  for(const node of document.querySelectorAll('#screen input,#screen textarea,#screen select')){
   if(node.type==='file'||node.type==='password')continue;
   const selector=node.id?'#'+CSS.escape(node.id):['job','humanStageField','humanAnswer','humanAuthorityConfirmation'].find(key=>node.dataset[key])?(function(){const key=['job','humanStageField','humanAnswer','humanAuthorityConfirmation'].find(key=>node.dataset[key]),attribute=key.replace(/[A-Z]/g,letter=>'-'+letter.toLowerCase());return `[data-${attribute}="${CSS.escape(node.dataset[key])}"]`;})():null;
-  if(selector)drafts[selector]={value:node.multiple?[...node.selectedOptions].map(option=>option.value):node.value,checked:node.checked};
+  if(selector){const draft={value:node.multiple?[...node.selectedOptions].map(option=>option.value):String(node.value??'')};if(['checkbox','radio'].includes(node.type))draft.checked=Boolean(node.checked);drafts[selector]=draft;}
  }
- return {pendingMutation:replacementReview?.next?{next:replacementReview.next,impact:replacementReview.impact,expectedProjectRevision:replacementReview.expectedProjectRevision}:null,activeView:current.activeView,activeStage:current.activeStage,scrollX:window.scrollX,scrollY:window.scrollY,drafts,operationSelection:clone(operationSelection),runSelection:clone(runSelection)};
+ return {pendingMutation:replacementReview?.next?{next:replacementReview.next,impact:replacementReview.impact,expectedProjectRevision:replacementReview.expectedProjectRevision}:null,activeView:current.activeView,activeStage:current.activeStage,scrollX:String(window.scrollX||0),scrollY:String(window.scrollY||0),drafts,operationSelection:clone(operationSelection),runSelection:clone(runSelection)};
 }
 function applySavedView(view,{position=true}={}){
  if(!view)return;
@@ -516,10 +516,10 @@ async function navigateWithinVersion({activeView=current.activeView,activeStage=
  const view={...captureView(),activeView:current.activeView,activeStage:current.activeStage,scrollX:0,scrollY:0,drafts:{}};
  writeBrowserEntry(historyState.activeId,view);render();window.scrollTo(0,0);
 }
-async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode='HISTORY',view=null,traversal=false}={}){
+async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode='HISTORY',view=null,traversal=false,pendingAction=null}={}){
  if(!checkpointId)throw new Error('No retained version is available in that direction.');
  const sequence=++navigationSequence;historyRestoreController?.abort();const controller=new AbortController();historyRestoreController=controller;
- const preceding=historyRestoreTail,pendingUi=traversal?operatorActionInFlight?.promise:null;let release;historyRestoreTail=new Promise(resolve=>{release=resolve;});
+ const preceding=historyRestoreTail,pendingUi=pendingAction;let release;historyRestoreTail=new Promise(resolve=>{release=resolve;});
  if(pendingUi){restoringHistory=true;paintOperatorAction();}
  try{
   await preceding;await pendingUi?.catch(()=>{});await capturingViewPromise?.catch(()=>{});if(sequence!==navigationSequence)return;
@@ -549,7 +549,7 @@ async function initializeHistoryNavigation(){
   const stage=Number(url.searchParams.get('stage'));if(stage>=1&&stage<=schema.STAGE_COUNT){current.activeStage=stage;current.activeView='Workflow';}
   await projectStore.saveCheckpoint(current.job.JOB_ID,{expectedProjectRevision:current.revision,sessionId:APPLICATION_SESSION_ID,label:'Session start'});await refreshHistory();writeBrowserEntry(historyState.activeId,captureView(),{replace:true});render();
  }
- window.addEventListener('popstate',event=>{const destination=event.state;if(!destination?.closedLoopHistory)return;void restoreHistoryVersion(destination.checkpointId,{jobId:destination.jobId,view:destination.view,traversal:true}).catch(()=>{});});
+ window.addEventListener('popstate',event=>{const destination=event.state;if(!destination?.closedLoopHistory)return;void restoreHistoryVersion(destination.checkpointId,{jobId:destination.jobId,view:destination.view,traversal:true,pendingAction:operatorActionInFlight?.promise}).catch(()=>{});});
  // Persist drafts while typing, not only when a navigation button is clicked.
  // Reload and mobile gestures can occur without a final asynchronous unload.
  let draftTimer=null;document.addEventListener('input',event=>{if(!event.target?.closest?.('#screen')||event.target.type==='file')return;clearTimeout(draftTimer);draftTimer=setTimeout(()=>{if(!operatorActionInFlight&&!restoringHistory)void captureCurrentView().catch(reportActionFailure);},400);});
