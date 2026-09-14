@@ -1,0 +1,78 @@
+name: Prepare verified reload repair objects
+on:
+  pull_request:
+    branches: [main]
+    paths: ['verification/reload-publication.json', '.github/workflows/prepare-reload-repair.yml']
+permissions:
+  contents: read
+jobs:
+  prepare:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'repair/complete-conformance-continuation-20260914'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact digest-bound repair without changing any branch
+        run: |
+          cp app-core.js /tmp/app-core.before.js
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          request=json.loads(pathlib.Path('verification/reload-publication.json').read_text())
+          assert {f['path'] for f in request['files']} == {'app-core.js','verify-file-correction-recovery.mjs'}
+          for f in request['files']:
+              p=pathlib.Path(f['path']); original=p.read_bytes()
+              assert hashlib.sha256(original).hexdigest()==f['beforeSha256'], f['path']
+              text=original.decode('utf-8')
+              for change in f['replacements']:
+                  assert text.count(change['old'])==1, f['path']
+                  text=text.replace(change['old'],change['new'],1)
+              updated=text.encode('utf-8')
+              assert hashlib.sha256(updated).hexdigest()==f['afterSha256'], f['path']
+              p.write_bytes(updated)
+          PY
+          node --check app-core.js
+          node --check verify-file-correction-recovery.mjs
+          git diff --check
+          mkdir -p /tmp/reload-repair-results
+          node verify-file-correction-recovery.mjs > /tmp/reload-repair-results/fixed.json
+          if APP_SOURCE=/tmp/app-core.before.js node verify-file-correction-recovery.mjs > /tmp/reload-repair-results/original.out 2> /tmp/reload-repair-results/original.err; then
+            echo 'The regression did not detect the original failure'; exit 1
+          fi
+          grep -q RELOAD_CANONICAL_IDENTITY_ORACLE /tmp/reload-repair-results/original.err
+      - name: Publish verified Git objects only; leave refs and deployment unchanged
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 - <<'PY'
+          import base64,hashlib,json,os,pathlib,urllib.request
+          request=json.loads(pathlib.Path('verification/reload-publication.json').read_text())
+          result={'parent':os.environ['HEAD'],'files':[],'originalRejected':True,'fixedRegressionPassed':True}
+          for f in request['files']:
+              data=pathlib.Path(f['path']).read_bytes()
+              assert hashlib.sha256(data).hexdigest()==f['afterSha256']
+              body=json.dumps({'content':base64.b64encode(data).decode(),'encoding':'base64'}).encode()
+              req=urllib.request.Request('https://api.github.com/repos/'+os.environ['REPO']+'/git/blobs',data=body,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'})
+              with urllib.request.urlopen(req,timeout=60) as response: blob=json.load(response)
+              expected=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              assert blob['sha']==expected
+              result['files'].append({'path':f['path'],'sha':blob['sha'],'sha256':f['afterSha256']})
+          pathlib.Path('/tmp/reload-repair-results/objects.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps(result))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reload-repair-objects-${{ github.event.pull_request.head.sha }}
+          path: /tmp/reload-repair-results/
+          if-no-files-found: error
+          retention-days: 7
