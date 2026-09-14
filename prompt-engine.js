@@ -5,7 +5,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const testRuntime=globalThis.closedLoopTestRuntime;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/69';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/70';
 const PROMPT_INLINE_LIMITS=Object.freeze({version:'PROMPT_INLINE_LIMITS/1',maxMemberBytes:65536,maxAggregateBytes:262144});
 const promptContextFiles=new WeakMap();
 let contextTransport=null;
@@ -435,7 +435,7 @@ Use the stage appropriate to the actual target and proof route. These stages are
 }
 function reserveAndBuildPromptRecord(state,stageOrDefinition,options={},metadata={}){
   const stage=Number(stageOrDefinition?.number||stageOrDefinition);assertPromptPrerequisites(stage,state);options=workflow.preparePromptContext(state,stage,options).options;
-  const preview={...state,revision:Number(state?.revision||0)+1},provisional=buildPromptRecord(stage,preview,options),packageId=packageIdForPrompt(state,stage,provisional.operation,provisional.instructionId,provisional.scope),reservation=workflow.reserveOperation(state,{stage,expectedRevision:Number(state.revision||0),operation:provisional.operation,scope:provisional.scope,promptId:provisional.instructionId,packageId,owningTabInstance:String(metadata.owningTabInstance||'APPLICATION'),payload:{instructionId:provisional.instructionId,packageId}}),candidate=buildPromptRecord(stage,state,options),record={...candidate,generatedAt:metadata.generatedAt||new Date().toISOString(),iteration:metadata.iteration??state?.job?.CURRENT_ITERATION??'NOT APPLICABLE'};
+  const preview={...state,revision:Number(state?.revision||0)+1},provisional=buildPromptRecord(stage,preview,options),packageId=packageIdForPrompt(state,stage,provisional.operation,provisional.instructionId,provisional.scope),reservation=workflow.reserveOperation(state,{stage,expectedRevision:Number(state.revision||0),operation:provisional.operation,scope:provisional.scope,promptId:provisional.instructionId,packageId,owningTabInstance:String(metadata.owningTabInstance||'APPLICATION'),payload:{instructionId:provisional.instructionId,packageId}}),candidate=buildPromptRecord(stage,state,options),record={...candidate,generatedAt:metadata.generatedAt||new Date().toISOString(),iteration:candidate.scope?.iterationId||'NOT APPLICABLE'};
   if(record.instructionId!==provisional.instructionId||!record.transportBindingRequired||record.operationReservationId!==recordId(reservation,'operationReservations')||record.packageId!==packageId||record.challengeNonce!==recordValue(reservation,'CHALLENGE_NONCE')||Number(record.scope?.projectRevision)!==Number(recordValue(reservation,'RESERVATION_REVISION')))throw new Error('The authoritative external instruction was not atomically bound to its application-owned reservation transaction.');
   const registered=workflow.registerGeneratedPrompt(state,record);promptContextFiles.set(registered,promptContextFiles.get(candidate)||[]);return {prompt:registered,reservation};
 }

@@ -643,6 +643,9 @@ await storageRegression('backup:required-prompt-context',async()=>{
   assert(rejected,'Complete export omitted the exact context file required by a saved instruction.');
   const report=await storageRuntime.projectStore.verifyProjectArtifacts('BACKUP-CONTEXT');
   assert(!report.verified&&report.artifacts.some(row=>row.issue==='MISSING_STORED_BLOB'),'Stored-file verification ignored missing saved instruction context bytes.');
+  let blockedStart=false;try{await storageRuntime.projectStore.beginHistorySession('MISSING-CONTEXT-SESSION');}catch(error){blockedStart=['PACKAGE_ARTIFACT_CUSTODY_MISMATCH','HISTORY_FILE_INTEGRITY_FAILED'].includes(error.code);}assert(blockedStart,'Session start accepted an incomplete checkpoint.');
+  const history=await storageRuntime.projectStore.historyList('BACKUP-CONTEXT'),current=await storageRuntime.projectStore.readProject('BACKUP-CONTEXT');await storageRuntime.projectStore.restoreCheckpoint('BACKUP-CONTEXT',history.activeId,{expectedProjectRevision:current.revision});assert((await storageRuntime.projectStore.verifyProjectArtifacts('BACKUP-CONTEXT')).verified,'Removing the missing-context violation did not restore progression.');
+
 });
 assert(importStart>=0&&importEnd>importStart,'Production import handler is missing.');
 storageRuntime.bindFileAction=(selector,operation)=>{storageRuntime.$(selector).onchange=e=>operation(Array.from(e.target.files||[]));};
