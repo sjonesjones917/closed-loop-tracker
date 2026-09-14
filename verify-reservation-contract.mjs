@@ -57,7 +57,9 @@ engine.transitionOperationReservation(r,'EXPORTED');engine.transitionOperationRe
 // response template and ingestion acceptance. This uses the real reservation and
 // real response validator rather than source inspection.
 const q=core.createBlankState('JOB-RESERVATION-TRANSPORT');q.revision=7;q.job.EXACT_USER_OBJECTIVE_VERBATIM='Exercise reservation-bound external response transport.';q.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(q);engine.recalculate(q);
-const preview=structuredClone(q);preview.revision=8;const provisional=prompts.buildPromptRecord(1,preview,{operation:'COMPLETE'}),packageId='PACKAGE-'+hash.sha256Value({jobId:q.job.JOB_ID,stage:1,operation:'COMPLETE',instructionId:provisional.instructionId}).slice(0,32).toUpperCase();
+const preview=structuredClone(q);preview.revision=8;const provisional=prompts.buildPromptRecord(1,preview,{operation:'COMPLETE'});
+assert.equal(engine.allocateInstructionIdentity(q,provisional.identityAllocation),provisional.instructionId,'The transaction must retain the preview allocation before reserving its external operation.');
+const packageId=engine.allocateExecutionPackageIdentity(q,provisional);
 const reservation=engine.reserveOperation(q,{stage:1,operation:'COMPLETE',scope:provisional.scope,promptId:provisional.instructionId,packageId,owningTabInstance:'TAB-TRANSPORT',payload:{instructionId:provisional.instructionId,packageId}});
 const reservedPrompt=prompts.buildPromptRecord(1,q,{operation:'COMPLETE'});
 assert.equal(reservedPrompt.instructionId,provisional.instructionId,'Reservation transaction changed the allocated instruction identity.');

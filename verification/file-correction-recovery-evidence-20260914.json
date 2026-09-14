@@ -1,0 +1,261 @@
+{
+  "schema": "closed-loop-file-correction-recovery-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "baseCommit": "51cb6e68356265179340af911a758e8ef452721d",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "sourceFiles": [
+    {
+      "path": "app-core.js",
+      "sha256": "72fb63a8a464bdb590142429bc1ba491cce088f0958d615b59a3893ac6fda0e2"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "d85df6d6558f5998a12a935169bcfdabb455db5e93c73926830848e30422bcef"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "c1bf4de0faea5f706c3334c6c7158f48a20f0b9c452a6059925712692719bd14"
+    },
+    {
+      "path": "operator-browser-driver.mjs",
+      "sha256": "fa805415c2a963d8f9b67ba09ee6ae47733b50e257f52dc8137d0821d8c993e7"
+    },
+    {
+      "path": "verify-browser-recovery.mjs",
+      "sha256": "1cae3f9e30ebdb546e525ae28fa4eea38667b8216b6db04f04f8500f0d627475"
+    },
+    {
+      "path": "verify-complete-operator-journey.mjs",
+      "sha256": "ec6d7973c0157829a295b7f3dcca9186fc09032ec6d128e2994d3caa90eaefca"
+    },
+    {
+      "path": "verify-mobile-stage-action.mjs",
+      "sha256": "dbc2ce646f33ccd970e20b3d5af307ade707672e5e074db7d05598b7b4fb732f"
+    },
+    {
+      "path": "verify-file-correction-recovery.mjs",
+      "sha256": "ac60d2ca4e61c559c7ce5f7e1a40c7807e640f0b5a0f43fff65dfae414974e68"
+    },
+    {
+      "path": "verify-file-correction-faults.mjs",
+      "sha256": "6aa63a49099c8d75c57c5ed58b71590ab16f0ba43d429513e93703aad7a908be"
+    },
+    {
+      "path": "verify-history-view-cost.mjs",
+      "sha256": "96bd99eac84fabac59356cfe50068dcc20131837c1d0c5cab077b92523609ba4"
+    },
+    {
+      "path": "verify-response-selection-status.mjs",
+      "sha256": "a410c7c99efebde77c8407657ea338da4a6def509be7edb25d8041ea0766e6c8"
+    },
+    {
+      "path": "verify-reservation-contract.mjs",
+      "sha256": "f5d362709edec911e72477aea20b7ce9d6e4f471f9954f0bf758524afdb499cf"
+    },
+    {
+      "path": "verify-file-first-operator.mjs",
+      "sha256": "d88b00aa3972933ef053f636a4b4ea451b9b4b59a735dde78f302fa985618e3a"
+    }
+  ],
+  "environment": {
+    "runtime": "Node 24.19.0",
+    "platform": "Linux",
+    "browserForLocalCases": false,
+    "synthetic": true,
+    "physicalDevice": false
+  },
+  "reproductions": [
+    {
+      "defect": "A new shared input file left accepted input and pending dependent work valid; candidate cleanup could discard the unconfirmed file.",
+      "sequence": [
+        "Complete and confirm the input stage using a synthetic response through production ingestion.",
+        "Reserve the next stage operation.",
+        "Select an additional authoritative input file through registerStageFiles."
+      ],
+      "expected": "Accepted work remains active until explicit confirmation; the candidate describes all affected work, invalidates dependent work on commit and retains exact file bytes across restoration.",
+      "beforeEvidence": {
+        "path": "../file-correction-before.log",
+        "sha256": "bc549b9e8dcf3bad558b73ba2be3c05080082352e52ab410373359bcedd58fce",
+        "failingOracle": "PENDING_DEPENDENCY_IMPACT_ORACLE"
+      },
+      "afterEvidence": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Production workflow, persistence and actual UI file-intake owner with lifecycle transaction adapter",
+        "cases": [
+          {
+            "name": "A current human confirmation repairs an incompatible prior confirmation without a redundant replacement decision",
+            "result": "PASS"
+          },
+          {
+            "name": "A file correction keeps accepted input and pending dependent work unchanged and describes its full impact",
+            "result": "PASS"
+          },
+          {
+            "name": "An unconfirmed file correction retains its exact bytes and candidate in durable History",
+            "result": "PASS"
+          },
+          {
+            "name": "Confirming the file correction commits its bytes and complete invalidation together",
+            "result": "PASS"
+          },
+          {
+            "name": "Earlier and replacement versions restore compatible progress and the exact file correction without implicitly accepting the candidate",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "defect": "Selecting new response bytes continued to display the prior rejection as the current file result.",
+      "browserEvidence": {
+        "run": 34846454377,
+        "job": 103983478828,
+        "sourceMergeCommit": "317ab9c38aeb1c237ca69579035d6108788e86e6",
+        "verifier": "verify-browser.mjs",
+        "result": "FAIL: Replacement file not evaluated was absent"
+      },
+      "afterEvidence": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Actual UI status rendering function with independently specified selection and validation states",
+        "cases": [
+          {
+            "name": "A different saved file is visibly unvalidated while the prior rejection remains preserved",
+            "result": "PASS"
+          },
+          {
+            "name": "The evaluated rejected bytes retain their rejection and successful validation clears that error display",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "defect": "Repairing an incompatible intent confirmation triggered a redundant replacement decision.",
+      "browserEvidence": {
+        "run": 34846454377,
+        "job": 103983478828,
+        "sourceMergeCommit": "317ab9c38aeb1c237ca69579035d6108788e86e6",
+        "verifier": "verify-browser-extra.mjs",
+        "result": "FAIL: visible enabled confirmation action did not complete the input gate"
+      },
+      "afterEvidence": "The production workflow/file-correction suite includes correction of an incompatible confirmation and progression without a second decision."
+    },
+    {
+      "defect": "One unchanged view checkpoint canonically hashed the same large project eight times.",
+      "beforeEvidence": {
+        "path": "../history-view-cost-before.log",
+        "sha256": "5f44bb40d7a41465f5a510ffa489b64f8955684a4d6acf31e706b737ddaf0a12",
+        "observedHashPasses": 8
+      },
+      "afterEvidence": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node production persistence with lifecycle transaction adapter and hash-pass instrumentation",
+        "workload": {
+          "records": 600,
+          "charactersPerRecord": 80000,
+          "rawCharacters": 48000000
+        },
+        "viewCheckpoint": {
+          "projectHashPasses": 1,
+          "elapsedMs": 5016.757848000001
+        },
+        "cases": [
+          {
+            "name": "One scoped digest pass prepares an immutable view checkpoint and restores exact project data",
+            "result": "PASS"
+          },
+          {
+            "name": "Stored-data corruption still rejects checkpoint creation instead of trusting a cached or caller-supplied digest",
+            "result": "PASS"
+          }
+        ]
+      }
+    }
+  ],
+  "ciObservations": [
+    {
+      "run": 34849858095,
+      "job": 103997029116,
+      "headCommit": "51cb6e68356265179340af911a758e8ef452721d",
+      "sourceMergeCommit": "8d4ea799fd9ff567cfb2a6a9ae3e2b5c7752a1f2",
+      "result": "FAIL at schema suite: reservation test used a fabricated package and omitted the instruction allocation receipt. Test now uses the production allocator; focused test passed. Browser checks did not run."
+    },
+    {
+      "run": 34846454377,
+      "job": 103983478828,
+      "headCommit": "8bc9cfae0057c9d72728fa6be22b9e978900a738",
+      "sourceMergeCommit": "317ab9c38aeb1c237ca69579035d6108788e86e6",
+      "result": "Pre-browser checks passed. Synthetic browser stage walkthrough and mobile capability journey passed. Browser recovery, mobile pressure, complete operator and two focused browser paths failed.",
+      "completeOperatorProgress": "Sequential gate assertions completed Stages 01-10; Stage 11 had two accepted run responses before timeout. This is not a complete operator journey.",
+      "pressureWorkload": {
+        "rawResponses": 600,
+        "charactersPerResponse": 80000,
+        "stages": 30,
+        "result": "Timed out after ten minutes."
+      },
+      "browserArtifact": {
+        "id": 10350935645,
+        "byteSize": 1351214610,
+        "sha256": "86acf9f8a752f95bff1683c9a0e856c69bc6cb5a1e00e6cee83e475d6cb6a2a3",
+        "downloaded": false
+      }
+    }
+  ],
+  "verificationConsumerCorrections": [
+    "Reservation fixtures preserve the canonical instruction/package allocation receipts.",
+    "The file-first storage fixture materializes plain objects in the application VM realm, matching IndexedDB.",
+    "Browser confirmation visibility allows one physical pixel of CSS layout rounding while requiring the decision text and controls.",
+    "Complete operator observations read persisted state without repeatedly downloading whole History. Required file exports, backup download and restore from exported bytes remain actual UI operations."
+  ],
+  "recoveryLimits": {
+    "retainedCheckpointsPerProject": 2048,
+    "compressedSnapshotsBytes": 536870912,
+    "retainedFileBytes": 1073741824,
+    "subjectToBrowserQuota": true,
+    "silentEviction": false,
+    "qualification": "Checkpoint-count cap tested separately. Byte caps and combined maximum mobile workload are not qualified by these focused cases."
+  },
+  "openEvidence": [
+    "Full integrated CI replay after these repairs.",
+    "Complete valid and correction/recovery operator journeys across all 30 stages.",
+    "Exact deployment and running resource identities.",
+    "Physical iPhone Safari and approved visual-baseline acceptance on that deployment.",
+    "Required real-project external outputs and human actions.",
+    "Complete requirement-specific semantic coverage review and all operation/failure combinations."
+  ],
+  "completionClaim": false,
+  "targetedFaults": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "cases": [
+      {
+        "fault": "input-invalidation",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      },
+      {
+        "fault": "pending-impact",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      },
+      {
+        "fault": "candidate-files",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      }
+    ]
+  },
+  "localSchemaSuite": {
+    "command": "TMPDIR=/workspace/scratch/ec4ac78ce440/tmp node verify.mjs",
+    "result": "PASS",
+    "outputSha256": "006630ea9c0f50b8701ab29548545b3bc2175e9b073325e9fef1d7932c502035",
+    "fixtureRepairs": [
+      "Production allocation receipts retained",
+      "IndexedDB application-realm object materialization represented accurately"
+    ],
+    "regressionCaughtDuringRepair": "Global intake invalidation initially affected stage-specific clarification. The shared owner now compares saved intake fields/files separately from clarification payload; the all-stage ingestion checks pass."
+  }
+}

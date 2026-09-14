@@ -931,6 +931,11 @@ function recordHumanInputVersion(project,changedFields,operator='HUMAN_OPERATOR'
   const sha256=hash.sha256Value(payload);
   const latest=safe(project.projectData.inputVersions).at(-1);
   if(latest?.sha256===sha256)return latest;
+  const intakeStage=core.STAGES[0].number,intakePayload=value=>Object.fromEntries(Object.entries(value||{}).filter(([key])=>key!=='clarifications'));
+  // A clarification belongs to its recorded stage/operation. Its command owns
+  // that continuation; changing the shared intake fields or files affects the
+  // intake and its dependents. Determine that distinction from the saved data.
+  const hasPriorWork=Boolean(latest)&&hash.sha256Value(intakePayload(latest.payload))!==hash.sha256Value(intakePayload(payload))&&(safe(project.projectData.generatedPrompts).some(row=>!row.invalidatedBy)||core.STAGES.some(stage=>hasStageActivity(project,stage.number)));
   const version=nextVersion(project.job.CURRENT_INPUT_VERSION,'INPUT');
   const record={inputVersionId:allocateInfrastructureId(project,'INPUT-VERSION','inputVersions'),version,sha256,createdAt:now(),operator,changedFields:[...changedFields],payload};
   project.projectData.inputVersions.push(record);
@@ -938,6 +943,7 @@ function recordHumanInputVersion(project,changedFields,operator='HUMAN_OPERATOR'
   project.job.INPUT_SET_HASH_OR_MANIFEST=sha256;
   project.projectData.userEntered={...project.projectData.userEntered,...payload};
   addHistory(project,'USER_JOB_INPUT_VERSIONED',{recordId:record.inputVersionId,version,changedFields:[...changedFields],sha256});
+  if(hasPriorWork)invalidateStageForAuthorityChange(project,{stage:intakeStage,reason:'Authoritative project inputs changed.',operatorLabel:operator});
   return record;
 }
 

@@ -45,7 +45,7 @@ async function main(){
     assert(state.prompt&&state.prompt.left>=-1&&state.prompt.right<=width+1,`Prompt box exceeds the viewport at ${width}px: ${JSON.stringify(state.prompt)}`);
   }
   await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:600},(_,i)=>({rawResponseId:'RAW-PRESSURE-'+i,stage:i%30+1,status:'PRESERVED',rawText:'H'.repeat(80000)+'é🙂TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
-  await openStoredFixture(cdp);await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
+  console.log(JSON.stringify({browserStageActionPhase:'pressure-project-stored',rawRecords:600,charactersPerRecord:80000}));await openStoredFixture(cdp);await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
   const pressureDom=await evaluate(cdp,`({bytes:document.querySelector('#screen').innerHTML.length,nodes:document.querySelector('#screen').querySelectorAll('*').length})`);
   assert(pressureDom.bytes<100000&&pressureDom.nodes<1500,`Collapsed accumulated history was eagerly rendered: ${JSON.stringify(pressureDom)}`);
   await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('summary')].find(node=>node.textContent.includes('Raw agent responses'));node.parentElement.open=true;})()`);
@@ -68,7 +68,7 @@ async function main(){
   const expectedDiagnostics=await evaluate(cdp,`(async()=>{const p=await closedLoopProjectStore.readProject('BROWSER-ACCUMULATED-HISTORY');closedLoopWorkflowEngine.recalculate(p);return Object.fromEntries(Object.entries(p.stages).map(([n,s])=>[n,s.gate.reasons]));})()`);
   let diagnosticArrowProof=false,diagnosticReasonCount=0;
   for(let stage=1;stage<=30;stage++){
-    await openStage(cdp,stage);
+    console.log(JSON.stringify({browserStageActionPhase:'stage-navigation',stage}));await openStage(cdp,stage);
     const diagnostic=await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('.notice>details[data-detail-id]')].find(n=>n.querySelector(':scope>summary')?.childNodes[0]?.textContent==='Completion gate is not satisfied.');return node?{id:node.dataset.detailId,open:node.open,children:node.querySelector('.record-body').childElementCount,count:Number(node.querySelector('summary>span').textContent)}:null;})()`);
     assert(diagnostic&&!diagnostic.open&&diagnostic.children===0&&diagnostic.count===expectedDiagnostics[stage].length,`Stage ${stage}: diagnostic reasons bypass collapsed shared controls: ${JSON.stringify(diagnostic)}`);
     if(stage===1){

@@ -13,7 +13,7 @@ const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWor
 const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory});
 const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,stages:[],operations:[],failures:[],complete:false};
 let snapshot,stage=1,sequence=0,rejected=false,reloaded=false;
-async function saved(){snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
+async function saved({backup=false}={}){if(!backup)return browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
 async function ingest(request,{invalid=false}={}){
   const before=await saved(),count=before.projectData.acceptedChanges.length,bytes=Buffer.from(JSON.stringify(request)+'\n');
   await browser.selectFiles('#response-json-file',[{filename:'response.json',bytes}]);await browser.click('#process-response-file');
@@ -55,7 +55,7 @@ try{
     }
     assert.ok(report.stages.some(row=>row.stage===stage),`Stage ${stage} did not finish within 80 actions`);
   }
-  const before=await saved(),backup=snapshot.file;await browser.selectFiles('#import-file',[{filename:'journey.closed-loop.json.gz',bytes:backup.bytes}]);const restored=await saved();assert.equal(restored.job.JOB_ID,before.job.JOB_ID);assert.equal(restored.projectData.acceptedChanges.length,before.projectData.acceptedChanges.length);assert.ok(Array.from({length:30},(_,i)=>engine.gate(i+1,restored).complete).every(Boolean));report.backupRestore={selectedSha256:backup.sha256,stagesPreserved:30};
+  const before=await saved({backup:true}),backup=snapshot.file;await browser.selectFiles('#import-file',[{filename:'journey.closed-loop.json.gz',bytes:backup.bytes}]);const restored=await saved({backup:true});assert.equal(restored.job.JOB_ID,before.job.JOB_ID);assert.equal(restored.projectData.acceptedChanges.length,before.projectData.acceptedChanges.length);assert.ok(Array.from({length:30},(_,i)=>engine.gate(i+1,restored).complete).every(Boolean));report.backupRestore={selectedSha256:backup.sha256,stagesPreserved:30};
   assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.complete=true;
 }catch(error){report.failures.push({stage,sequence,message:error.stack});console.error(error);process.exitCode=1;try{await browser.inspect(stage);}catch{}}
 finally{report.events=browser.events;fs.writeFileSync(path.join(directory,'journey.json'),JSON.stringify(report,null,2)+'\n');await browser.close();}

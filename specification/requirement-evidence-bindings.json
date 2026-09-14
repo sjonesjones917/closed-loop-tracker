@@ -296,6 +296,116 @@
         "currentDisposition": "IMPLEMENTED_UNPROVEN",
         "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
       }
+    },
+    {
+      "normativeRequirementId": "NREQ-f5b781f739a3864b480e98a609ccede0",
+      "sourceLineSha256": "bc8834174cb46c9c7fe99684f9b2fa6e1292083652b8c00bc1ced0cd7b03c139",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-2974199511a3c8777230c9d07391bb03",
+      "sourceLineSha256": "a9ed390e004b8e816649062f489ed2e90bee25c510634a6f33c07f77d443926d",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5d9437925e6a03826f1baf6c63a9acd4",
+      "sourceLineSha256": "a57c192e13a5105d0a1505fab3e7f3985c8aa7f59a3d621ff69a6fb136585b78",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e81cac1f3702fd9a4ab19e8133d95b6b",
+      "sourceLineSha256": "ee6ba0ee4f31199a2197f64a9c366fc171f81df3420cd49aebeec957219eacdc",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1f0a32e57245fa6656030020008c31dc",
+      "sourceLineSha256": "d9520145740edda4fb5db9431f2ecf029bdc9a757edf1a5979c3fb1466c22f58",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
     }
   ]
 }

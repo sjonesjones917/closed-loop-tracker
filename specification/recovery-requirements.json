@@ -425,7 +425,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        }
+      ]
     },
     {
       "requirementId": "USER-025",
@@ -485,7 +490,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        }
+      ]
     },
     {
       "requirementId": "USER-028",
@@ -505,7 +515,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        }
+      ]
     },
     {
       "requirementId": "USER-029",
@@ -545,7 +560,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        }
+      ]
     },
     {
       "requirementId": "USER-031",
@@ -644,7 +664,12 @@
         "Exact deployed operator verification where applicable"
       ],
       "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
-      "executedEvidence": []
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        }
+      ]
     },
     {
       "requirementId": "USER-036",
