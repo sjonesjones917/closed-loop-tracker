@@ -50,7 +50,7 @@ try{
   for(stage=1;stage<=30;stage++){
     await browser.fill('#stage-picker',stage);const start=report.operations.length;
     for(let steps=0;steps<80;steps++){
-      assert.ok(++sequence<=240,'Bound of 240 operator actions exceeded');const p=await saved(),gate=engine.gate(stage,p),action=engine.operationalNextAction(p,stage);
+      assert.ok(++sequence<=240,'Bound of 240 operator actions exceeded');assert.equal(await browser.visible('#next-required-action'),true,`Stage ${stage}: the next required action was not visible before operator action ${sequence}.`);const p=await saved(),gate=engine.gate(stage,p),action=engine.operationalNextAction(p,stage);
       if(gate.complete&&!(stage===30&&action.actionType!=='COMPLETE')){report.stages.push({stage,result:'PASS',projection:verifyCompletedStageProjection(p,stage,schema),view:await browser.inspect(stage),operations:report.operations.length-start});break;}
       report.currentOperation={stage,sequence,action:action.actionType,operation:action.operation,startedAt:new Date().toISOString()};preserveReport();
       console.log(JSON.stringify({operatorStage:stage,action:action.actionType,operation:action.operation,reasons:gate.reasons}));
