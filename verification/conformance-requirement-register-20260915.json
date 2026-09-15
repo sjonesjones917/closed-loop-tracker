@@ -1,0 +1,116 @@
+{
+  "schema": "closed-loop-conformance-requirement-register/1",
+  "sourceRevision": "c3c03c49ac5bde7e75094daf1f700aded1fa5e47",
+  "controllingSpecification": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"
+  },
+  "composition": {
+    "mandatorySpecificationRows": "specification/closed-loop-normative-requirements.json",
+    "mandatoryRecoveryRows": "specification/recovery-requirements.json",
+    "reviewedBindings": "specification/requirement-evidence-bindings.json",
+    "rule": "Every mandatory row in both source registers is a row in this register. Existing implementation/evidence dispositions do not count as PASS. Every row begins this repair at UNVERIFIED and may become PASS only from executed evidence on the repair revision. Source location, production owner, observable expected behavior, and required proof are inherited from the source registers and reviewed bindings. Owning stage is the exact stage named by the requirement; requirements not confined to one stage are CROSS_CUTTING and apply to every affected stage before that stage can pass."
+  },
+  "defaultStatus": "UNVERIFIED",
+  "allowedStatuses": ["UNVERIFIED", "PASS", "OPERATOR_REQUIRED", "DEFERRED"],
+  "coverageNumeratorRule": "Count only rows at PASS with a named executed case, command, raw output reference, and exact revision.",
+  "coverageDenominatorRule": "All mandatory specification rows, all mandatory recovery rows, and every additional prompt row below. Do not use test count, file count, or attempted-stage count as the denominator.",
+  "additionalPromptRows": [
+    {
+      "requirementId": "UX-001",
+      "sourceLocation": "current operator instruction section 8 UX-001",
+      "productionOwner": "app-core.js:render/paintOperatorAction/focusAfterAction",
+      "observableExpectedBehavior": "After every state change, the next correct action is inside the current phone viewport without operator scrolling.",
+      "requiredEvidence": "Actual-browser viewport geometry assertion before any test-driver scroll or click, for every state transition in the ordered 30-stage journey.",
+      "owningStage": "CROSS_CUTTING_01_30",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "UX-002",
+      "sourceLocation": "current operator instruction section 8 UX-002",
+      "productionOwner": "app-core.js:render/paintOperatorAction/focusAfterAction",
+      "observableExpectedBehavior": "Completing operator work advances to and exposes the next required action without manual scrolling.",
+      "requiredEvidence": "Actual-browser ordered journey checks next-action viewport placement after every successful operation and stage transition.",
+      "owningStage": "CROSS_CUTTING_01_30",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "UX-003",
+      "sourceLocation": "current operator instruction section 8 UX-003",
+      "productionOwner": "app-core.js:reportActionFailure/focusAfterAction/render",
+      "observableExpectedBehavior": "Forward progress never auto-scrolls upward. Upward auto-scroll occurs only for a digression and lands on the exact required corrective control.",
+      "requiredEvidence": "Actual-browser scroll-position and target assertions across success transitions and deliberate rejection/correction paths.",
+      "owningStage": "CROSS_CUTTING_01_30",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "UX-004",
+      "sourceLocation": "current operator instruction section 8 UX-004",
+      "productionOwner": "app-core.js:saveJob/render/focusAfterAction",
+      "observableExpectedBehavior": "Saving project information advances directly to Workflow at the current required stage and exposes the next required action.",
+      "requiredEvidence": "Clean-project actual-browser save path verifies active view, current stage, and next-action viewport before any manual navigation.",
+      "owningStage": "01",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "UX-005",
+      "sourceLocation": "current operator instruction section 8 UX-005",
+      "productionOwner": "app-core.js:runOperatorAction/paintOperatorAction",
+      "observableExpectedBehavior": "Every dispatched operation has a visible active loading state from dispatch through resolution; the UI is never visually idle while work is pending.",
+      "requiredEvidence": "Actual-browser lifecycle assertions sample the painted busy indicator after dispatch and before operation resolution for every operator action class.",
+      "owningStage": "CROSS_CUTTING_01_30",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "UX-006",
+      "sourceLocation": "current operator instruction section 8 UX-006",
+      "productionOwner": "app-core.js:runOperatorAction/setControlDisabled/paintOperatorAction",
+      "observableExpectedBehavior": "Controls remain disabled while an operation is in flight; repeated activation cannot enqueue a duplicate operation or corrupt state.",
+      "requiredEvidence": "Actual-browser duplicate activation plus state/revision assertions for every operator action class, including success and failure restoration.",
+      "owningStage": "CROSS_CUTTING_01_30",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "UX-007",
+      "sourceLocation": "current operator instruction section 8 UX-007",
+      "productionOwner": "app-core.js:nextActionMarkup/workflow/render",
+      "observableExpectedBehavior": "Instruction content is presented once on the primary view; duplicate, decorative, or non-actionable explanatory copies do not occupy the operator path.",
+      "requiredEvidence": "DOM/content assertions across all 30 stage views plus visual operator replay.",
+      "owningStage": "CROSS_CUTTING_01_30",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "UX-008",
+      "sourceLocation": "current operator instruction section 8 UX-008",
+      "productionOwner": "app-core.js:nextActionMarkup/currentNextAction/displayedStageAction",
+      "observableExpectedBehavior": "Primary-path language is concise and imperative and identifies the next action without requiring operator inference.",
+      "requiredEvidence": "All 30 actual stage views inspected against the operational next-action state and no ambiguous primary action text accepted.",
+      "owningStage": "CROSS_CUTTING_01_30",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "UX-009",
+      "sourceLocation": "current operator instruction: consolidate unnecessary per-stage exports",
+      "productionOwner": "app-core.js:nextActionMarkup/downloadExecutionPackage; project-store.js:createExecutionPackage",
+      "observableExpectedBehavior": "When contract identities may travel as one execution package, one primary export action delivers the instruction, manifest, context, and required stage artifacts without requiring separate operator exports; contract-defined member identities and bytes remain distinct inside the package.",
+      "requiredEvidence": "Spec/contract trace proving separation is not a required sequence of operator actions, plus actual-browser package export and byte/hash/member verification across every external stage operation.",
+      "owningStage": "CROSS_CUTTING_EXTERNAL_OPERATIONS_01_30",
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "INV-STAGE2-EXTERNAL-SOURCES",
+      "sourceLocation": "current operator instruction section 9 Stage 2 invariant",
+      "productionOwner": "prompt-engine.js:Stage 02 prompt generation; workflow-engine.js:Stage 02 operation authority",
+      "observableExpectedBehavior": "Stage 02 INVENTORY SOURCES directs the external agent only to published external sources and never directs or permits inventorying internal repository files as sources.",
+      "requiredEvidence": "Generated Stage 02 instruction bytes inspected in the actual operator journey plus semantic negative test rejecting internal-repository-source wording.",
+      "owningStage": "02",
+      "status": "UNVERIFIED"
+    }
+  ],
+  "operatorDecisionRows": [
+    {"requirementId":"D-1","status":"UNVERIFIED","decisionOwner":"OPERATOR"},
+    {"requirementId":"D-2","status":"OPERATOR_REQUIRED","decisionOwner":"OPERATOR"},
+    {"requirementId":"D-3","status":"OPERATOR_REQUIRED","decisionOwner":"OPERATOR"},
+    {"requirementId":"D-4","status":"OPERATOR_REQUIRED","decisionOwner":"OPERATOR"}
+  ]
+}
