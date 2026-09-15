@@ -34,7 +34,8 @@ async function ingest(request,{invalid=false}={}){
   report.operations.push({stage,operation:request.operation,responseSha256:digest(bytes),acceptedChangeId:after.projectData.acceptedChanges.at(-1).changeId,revision:after.revision});
 }
 async function external(){
-  const [archive]=await browser.download('#export-stage-files'),members=readStoreArchive(archive.bytes);
+  assert.equal(await browser.visible('#next-export-prompt-file'),true,`Stage ${stage}: consolidated stage-file export was not the visible next action before transport.`);
+  const [archive]=await browser.download('#next-export-prompt-file'),members=readStoreArchive(archive.bytes);
   const manifest=JSON.parse(Buffer.from(members.find(member=>member.canonicalPath==='manifest.json').bytes).toString()),instructionMember=members.find(member=>member.canonicalPath==='instruction.txt'),instruction={bytes:Buffer.from(instructionMember.bytes),sha256:digest(instructionMember.bytes)};
   assert.equal(instruction.sha256,manifest.instruction.bodySha256);assert.equal(instruction.bytes.length,manifest.members.find(member=>member.canonicalPath==='instruction.txt').byteSize);
   const contextFiles=manifest.contextFiles.map(required=>{const actual=members.find(member=>member.canonicalPath===required.path);assert.ok(actual,`Missing context ${required.path}`);assert.equal(digest(actual.bytes),required.sha256);assert.equal(actual.bytes.length,required.byteSize);return {filename:required.path,bytes:Buffer.from(actual.bytes),sha256:digest(actual.bytes)};});
@@ -45,7 +46,7 @@ async function external(){
   await ingest(request);
 }
 try{
-  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Complete operator journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');await browser.click('[data-view="Workflow"]');await saved();
+  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Complete operator journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');assert.equal(await browser.evaluate(`document.querySelector('[data-view="Workflow"]')?.classList.contains('active')`),true,'Saving project information did not advance to Workflow.');assert.equal(await browser.visible('#next-required-action'),true,'Saving project information did not place the next required action in the viewport.');await saved();
   for(stage=1;stage<=30;stage++){
     await browser.fill('#stage-picker',stage);const start=report.operations.length;
     for(let steps=0;steps<80;steps++){
