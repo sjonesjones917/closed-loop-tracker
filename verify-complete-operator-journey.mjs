@@ -46,7 +46,7 @@ async function external(){
   await ingest(request);
 }
 try{
-  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Complete operator journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');assert.equal(await browser.evaluate(`document.querySelector('[data-view="Workflow"]')?.classList.contains('active')`),true,'Saving project information did not advance to Workflow.');assert.equal(await browser.visible('#next-required-action'),true,'Saving project information did not place the next required action in the viewport.');await saved();
+  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Complete operator journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');assert.equal(await browser.evaluate(`document.querySelector('[data-view="Workflow"]')?.getAttribute('aria-selected')==='true'`),true,'Saving project information did not advance to Workflow.');assert.equal(await browser.visible('#next-required-action'),true,'Saving project information did not place the next required action in the viewport.');await saved();
   for(stage=1;stage<=30;stage++){
     await browser.fill('#stage-picker',stage);const start=report.operations.length;
     for(let steps=0;steps<80;steps++){
