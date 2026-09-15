@@ -280,6 +280,7 @@ function readAll(storage){return storage?readAllLegacy(storage):readAllIndexed()
 // Files are content-addressed here only for recovery; agent exports never read
 // these keys. Reaching a bound fails before the dependent canonical commit.
 const HISTORY_SCHEMA='closed-loop-recovery/1';
+const HISTORY_PROJECT_REFERENCE='closed-loop-recovery-project-reference/1';
 const HISTORY_LIMITS=Object.freeze({maxCheckpoints:2048,maxCompressedProjectBytes:512*1024*1024,maxRetainedFileBytes:1024*1024*1024});
 const historyKey=jobId=>'recovery:'+String(jobId);
 const snapshotKey=(jobId,id)=>historyKey(jobId)+':snapshot:'+id;
@@ -313,6 +314,10 @@ function validateRecoveryManifest(state){
   if(!Array.isArray(state.entries)||!state.files||typeof state.files!=='object')throw storageError('Recovery manifest is incomplete.','HISTORY_VERSION_MISMATCH');
   const byId=new Map(state.entries.map(entry=>[entry.id,entry]));if(byId.size!==state.entries.length||!byId.has(state.activeId))throw storageError('Recovery version identities are inconsistent.','HISTORY_VERSION_MISMATCH');
   for(const entry of state.entries){const seen=new Set();let current=entry;while(current){if(seen.has(current.id))throw storageError('Recovery history contains a cycle.','HISTORY_VERSION_MISMATCH');seen.add(current.id);if(current.parentId&&!byId.has(current.parentId))throw storageError('Recovery history is missing a parent.','HISTORY_VERSION_MISMATCH');current=byId.get(current.parentId);}}
+  for(const entry of state.entries)if(entry.projectReference){
+    const reference=entry.projectReference,base=byId.get(reference.checkpointId);
+    if(reference.schema!==HISTORY_PROJECT_REFERENCE||Object.keys(reference).some(key=>!['schema','checkpointId','snapshotSha256'].includes(key))||!base||base.id===entry.id||base.projectReference||base.sha256!==reference.snapshotSha256||base.projectSha256!==entry.projectSha256)throw storageError('Recovery project references do not identify a retained complete version.','HISTORY_VERSION_MISMATCH');
+  }
   const snapshotBytes=state.entries.reduce((n,entry)=>n+Number(entry.byteSize),0),fileBytes=Object.values(state.files).reduce((n,file)=>n+Number(file.byteSize),0);
   if(!Number.isSafeInteger(snapshotBytes)||!Number.isSafeInteger(fileBytes)||snapshotBytes<0||fileBytes<0||snapshotBytes!==state.compressedProjectBytes||fileBytes!==state.retainedFileBytes)throw storageError('Recovery storage accounting does not match its retained contents.','HISTORY_VERSION_MISMATCH');
 }
@@ -329,14 +334,18 @@ function assertRecoveryViewFiles(jobId,view,artifacts){
   for(const file of selection.files){const row=byId.get(file.artifactId);if(!row||row.lineage?.role!=='FILE_SELECTION_RECOVERY'||row.lineage?.selectionKind!==selection.kind||Number(row.lineage?.stage)!==Number(selection.stage)||row.filename!==file.filename||row.mediaType!==file.mediaType||row.byteSize!==file.byteSize||row.sha256!==file.sha256)throw storageError('A saved file selection is missing or incompatible.','HISTORY_FILE_INTEGRITY_FAILED');}
  }
 }
-async function readHistoryView(jobId,checkpointId=null){const state=await historyList(jobId),id=checkpointId||state.activeId;if(!id)return null;const saved=await decodeCheckpoint(jobId,await metaGet(snapshotKey(jobId,id)));return clone(id===state.activeId&&state.activeViewOverride?state.activeViewOverride:saved.view);}
-async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),parentId=null,label='Saved project',view=historyView(project),workSha256=historyWorkSha256(project),projectDigest=projectSha256(project),artifactManifestSha256=historyArtifactsSha256(artifactRows)}={}){
+async function readHistoryView(jobId,checkpointId=null){const state=await metaGet(historyKey(jobId)),id=checkpointId||state?.activeId;if(!id)return null;const saved=await readRetainedCheckpoint(jobId,id,state);return clone(id===state.activeId&&state.activeViewOverride?state.activeViewOverride:saved.view);}
+async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),parentId=null,label='Saved project',view=historyView(project),workSha256=historyWorkSha256(project),projectDigest=projectSha256(project),artifactManifestSha256=historyArtifactsSha256(artifactRows),projectReference=null}={}){
   const jobId=projectIdentity(project),canonical=canonicalProject(project),artifacts=artifactRows.map(historyDescriptor);
   assertProjectIntegrity(canonical,{verifyDerived:false});assertPackageArtifactCustody(canonical,artifactRows);assertRecoveryViewFiles(jobId,view,artifactRows);if(view?.pendingMutation&&view.pendingMutation.baseProjectSha256!==projectDigest)throw storageError('The draft correction belongs to another project version.','HISTORY_VERSION_MISMATCH');
-  const body={schema:HISTORY_SCHEMA,id,jobId,parentId,label,workSha256,artifactManifestSha256,createdAt:now(),project:canonical,projectSha256:projectDigest,artifacts,view:clone(view)};
+  // A saved view changes its own immutable checkpoint, not its canonical
+  // project bytes. Bind repeated project data to a retained inline checkpoint;
+  // all views, drafts, artifact inventories, parents, and identities stay local
+  // to their own checkpoint. This is a versioned internal storage encoding.
+  const body={schema:HISTORY_SCHEMA,id,jobId,parentId,label,workSha256,artifactManifestSha256,createdAt:now(),...(projectReference?{projectReference:clone(projectReference)}:{project:canonical}),projectSha256:projectDigest,artifacts,view:clone(view)};
   fault('before-history-checkpoint');const encoded=await compressPackage(body);
   const sha256=await hash.sha256Bytes(encoded.blob);
-  return {id,parentId,label,workSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,createdAt:body.createdAt,stage:Number(view.activeStage||project.activeStage||1),projectSha256:body.projectSha256,sha256,byteSize:encoded.blob.size,blob:encoded.blob};
+  return {id,parentId,label,workSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,createdAt:body.createdAt,stage:Number(view.activeStage||project.activeStage||1),projectSha256:body.projectSha256,...(projectReference?{projectReference:clone(projectReference)}:{}),sha256,byteSize:encoded.blob.size,blob:encoded.blob};
 }
 async function prepareHistoryCommit(next,prior,{label=null,view=null,sessionId=null,baseState=null,artifactRows=null}={}){
   // These private objects remain unchanged throughout this preparation. Reuse
@@ -352,7 +361,16 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,sessionId=n
   }
   async function append(project,entryLabel,entryView){
     const priorWork=state.activeProjectSha256===digest(project)?state.entries.find(entry=>entry.id===state.activeId)?.workSha256:null;
-    const snapshot=await encodeCheckpoint(project,files,{parentId:state.activeId,label:entryLabel,view:entryView||historyView(project),projectDigest:digest(project),workSha256:priorWork||historyWorkSha256(project)});
+    const base=state.entries.find(entry=>entry.projectSha256===digest(project)&&!entry.projectReference);
+    let projectReference=null;
+    if(base){
+      const retained=snapshots.find(entry=>entry.id===base.id)||await metaGet(snapshotKey(jobId,base.id));
+      if(!retained?.blob)throw storageError('A retained project body is unavailable. The new checkpoint was not committed.','HISTORY_PROJECT_REFERENCE_UNAVAILABLE');
+      const {blob,...descriptor}=retained;
+      if(hash.sha256Value(descriptor)!==hash.sha256Value(base)||blob.size!==base.byteSize||await hash.sha256Bytes(blob)!==base.sha256)throw storageError('A retained project body failed exact-byte verification. The new checkpoint was not committed.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
+      projectReference={schema:HISTORY_PROJECT_REFERENCE,checkpointId:base.id,snapshotSha256:base.sha256};
+    }
+    const snapshot=await encodeCheckpoint(project,files,{parentId:state.activeId,label:entryLabel,view:entryView||historyView(project),projectDigest:digest(project),workSha256:priorWork||historyWorkSha256(project),projectReference});
     const {blob,...descriptor}=snapshot;state.entries.push(descriptor);snapshots.push(snapshot);state.compressedProjectBytes+=blob.size;state.activeId=snapshot.id;state.activeProjectSha256=digest(project);state.activeViewOverride=null;state.redo=[];
   }
   if(prior&&(state.activeProjectSha256!==digest(prior)||state.entries.find(entry=>entry.id===state.activeId)?.artifactManifestSha256!==historyArtifactsSha256(files)))await append(prior,'Previous project',view||historyView(prior));
@@ -403,15 +421,53 @@ function assertRecoveryCompatibility(project){
   const engine=globalThis.closedLoopWorkflowEngine,checked=clone(project);
   for(const stage of Object.values(checked.stages||{}))if(stage.status==='COMPLETE'&&!engine.gate(Number(stage.number),checked).complete)throw storageError('The saved completion records do not belong to one compatible project version. The current version is preserved.','HISTORY_VERSION_INCOMPATIBLE');
 }
-async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha))){
+async function readRetainedCheckpoint(jobId,checkpointId,state=null){
+  const manifest=state||await metaGet(historyKey(jobId));
+  if(!manifest)throw storageError('That retained project history is unavailable.','HISTORY_VERSION_UNAVAILABLE');
+  validateRecoveryManifest(manifest);
+  const byId=new Map(manifest.entries.map(entry=>[entry.id,entry]));
+  const readSnapshot=async id=>{
+    const expected=byId.get(id);
+    if(!expected)throw storageError('A saved version depends on an unretained project body.','HISTORY_VERSION_MISMATCH');
+    const entry=await metaGet(snapshotKey(jobId,id));if(!entry)return null;
+    const {blob,...descriptor}=entry;
+    if(entry.id!==id||hash.sha256Value(descriptor)!==hash.sha256Value(expected))throw storageError('Stored snapshot identity does not match the selected retained version.','HISTORY_VERSION_MISMATCH');
+    return entry;
+  };
+  return decodeCheckpoint(jobId,await readSnapshot(checkpointId),undefined,readSnapshot);
+}
+async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Map(),inlineOnly=false){
   if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||await hash.sha256Bytes(entry.blob)!==entry.sha256)throw storageError('This saved version is missing or corrupt. The current project is preserved.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
   const {payload,fileContents}=await readPackageJson(entry.blob),{packageSha256,...body}=payload;
-  if(await hash.sha256Chunks(packageJsonChunks(body,fileContents))!==packageSha256||body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||projectIdentity(body.project)!==String(jobId)||body.projectSha256!==projectSha256(body.project)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
+  if(await hash.sha256Chunks(packageJsonChunks(body,fileContents))!==packageSha256||body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage)||!Array.isArray(body.artifacts))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
+  if(hash.sha256Value(body.projectReference||null)!==hash.sha256Value(entry.projectReference||null))throw storageError('Saved project reference does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
+  let project=body.project,verifiedProjectSha256,verifiedWorkSha256;
+  if(body.projectReference){
+    const reference=body.projectReference;
+    if(inlineOnly||Object.hasOwn(body,'project')||reference.schema!==HISTORY_PROJECT_REFERENCE||Object.keys(reference).some(key=>!['schema','checkpointId','snapshotSha256'].includes(key))||typeof reference.checkpointId!=='string'||!reference.checkpointId||reference.checkpointId===entry.id||!/^[a-f0-9]{64}$/.test(reference.snapshotSha256||''))throw storageError('Saved project reference is not a supported inline-body reference.','HISTORY_VERSION_MISMATCH');
+    let base=validatedRoots.get(reference.checkpointId);
+    if(!base){
+      const retained=await readSnapshot(reference.checkpointId);
+      if(!retained)throw storageError('The retained project body required by this checkpoint is unavailable.','HISTORY_PROJECT_REFERENCE_UNAVAILABLE');
+      if(retained.projectReference||retained.id!==reference.checkpointId||retained.sha256!==reference.snapshotSha256||retained.projectSha256!==body.projectSha256)throw storageError('Saved project reference identifies incompatible retained contents.','HISTORY_VERSION_MISMATCH');
+      const decoded=await readCheckpointBody(jobId,retained,readSnapshot,validatedRoots,true);
+      base={snapshotSha256:retained.sha256,project:decoded.project,projectSha256:decoded.projectSha256,workSha256:decoded.workSha256||historyWorkSha256(decoded.project)};validatedRoots.set(reference.checkpointId,base);
+    }
+    if(base.snapshotSha256!==reference.snapshotSha256||base.projectSha256!==body.projectSha256)throw storageError('Saved project reference does not match its verified project body.','HISTORY_VERSION_MISMATCH');
+    project=base.project;verifiedProjectSha256=base.projectSha256;verifiedWorkSha256=base.workSha256;
+  }else{
+    if(projectIdentity(project)!==String(jobId))throw storageError('Saved project belongs to another job.','HISTORY_VERSION_MISMATCH');
+    verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);
+    assertProjectIntegrity(project,{verifyDerived:false});assertRecoveryCompatibility(project);
+  }
+  if(body.projectSha256!==verifiedProjectSha256)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');
   if(entry.viewSha256&&entry.viewSha256!==hash.sha256Value(body.view))throw storageError('Saved view identity does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
-  if(body.workSha256!==entry.workSha256||(body.workSha256&&body.workSha256!==historyWorkSha256(body.project)))throw storageError('Saved work identity does not match its complete project.','HISTORY_VERSION_MISMATCH');
+  if(body.workSha256!==entry.workSha256||(body.workSha256&&body.workSha256!==verifiedWorkSha256))throw storageError('Saved work identity does not match its complete project.','HISTORY_VERSION_MISMATCH');
   if(body.artifactManifestSha256!==entry.artifactManifestSha256||(body.artifactManifestSha256&&body.artifactManifestSha256!==historyArtifactsSha256(body.artifacts)))throw storageError('Saved file inventory does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
-  assertProjectIntegrity(body.project,{verifyDerived:false});assertRecoveryCompatibility(body.project);
-  const artifacts=[],ids=new Set();
+  return {...body,project};
+}
+async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map()){
+  const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots),artifacts=[],ids=new Set();
   for(const descriptor of body.artifacts){
     if(ids.has(descriptor.artifactId)||descriptor.jobId!==String(jobId))throw storageError('Saved file relationships do not belong to one complete project.','HISTORY_VERSION_MISMATCH');ids.add(descriptor.artifactId);
     const file=await readFile(descriptor.sha256);
@@ -452,7 +508,7 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
   if(!state?.entries.some(entry=>entry.id===checkpointId))throw storageError('That saved version is unavailable in this project.','HISTORY_VERSION_UNAVAILABLE');
   const priorRevision=Number(prior?.revision??state.activeRevision??0);
   if(expectedProjectRevision!==undefined&&priorRevision!==Number(expectedProjectRevision))throw storageError('Project changed before restoration. Reload the current version.','STALE_PROJECT_REVISION');
-  const entry=await metaGet(snapshotKey(jobId,checkpointId)),saved=await decodeCheckpoint(jobId,entry);
+  const saved=await readRetainedCheckpoint(jobId,checkpointId,state);
   if(signal?.aborted)throw storageError('A newer navigation replaced this restore.','RESTORE_INTERRUPTED');
   fault('before-history-restore');
   const next=clone(saved.project);next.revision=Math.max(priorRevision,Number(saved.project.revision))+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;bindRestoredCandidates(next,saved.project,checkpointId,saved.view);
@@ -821,6 +877,7 @@ async function exportPackage(jobId,{passphrase=null}={}){
   }
   for(const a of artifacts)await member(a);
   if(recovery){
+    validateRecoveryManifest(recovery);
     for(const entry of recovery.entries){const saved=await metaGet(snapshotKey(jobId,entry.id));if(!saved?.blob||saved.sha256!==entry.sha256)throw storageError('A promised checkpoint is missing. Backup export did not complete.','HISTORY_VERSION_UNAVAILABLE');await member({artifactId:'RECOVERY-SNAPSHOT-'+entry.id,jobId,filename:entry.id+'.checkpoint.gz',mediaType:'application/gzip',archiveKind:'RECOVERY_SNAPSHOT',checkpointId:entry.id,byteSize:entry.byteSize,sha256:entry.sha256,blob:saved.blob});const {payload:checkpoint}=await readPackageJson(saved.blob);if(checkpoint.schema!==HISTORY_SCHEMA||checkpoint.id!==entry.id||checkpoint.jobId!==String(jobId)||checkpoint.projectSha256!==entry.projectSha256)throw storageError('A saved checkpoint does not match its recorded identity.','HISTORY_VERSION_MISMATCH');requiresEncryption=requiresEncryption||containsCredentialSecret(checkpoint);}
     for(const [sha256,info] of Object.entries(recovery.files)){const file=await metaGet(historyFileKey(jobId,sha256));if(!file?.blob)throw storageError('A retained file is missing. Backup export did not complete.','HISTORY_FILE_INTEGRITY_FAILED');await member({artifactId:'RECOVERY-BYTES-'+sha256,jobId,filename:sha256+'.bin',mediaType:'application/octet-stream',archiveKind:'RECOVERY_BYTES',byteSize:info.byteSize,sha256,blob:file.blob});}
   }
@@ -942,7 +999,7 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     // Restoring verified bytes must remain possible when the active file copy
     // is damaged. Use the already-retained matching complete version; never
     // fabricate missing files or combine another version's project records.
-    const retained=await metaGet(historyKey(id)),saved=retained?.activeId?await decodeCheckpoint(id,await metaGet(snapshotKey(id,retained.activeId))):null;
+    const retained=await metaGet(historyKey(id)),saved=retained?.activeId?await readRetainedCheckpoint(id,retained.activeId,retained):null;
     if(!saved||historyWorkSha256(saved.project)!==historyWorkSha256(priorProject))throw error;
     preparedPrior=await prepareHistoryCommit(priorProject,priorProject,{baseState:retained,artifactRows:saved.artifacts});
   }}
@@ -951,11 +1008,12 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     const incoming=body.recovery;
     if(incoming.schema!==HISTORY_SCHEMA||incoming.jobId!==id||!Array.isArray(incoming.entries)||!incoming.entries.some(e=>e.id===incoming.activeId)||new Set(incoming.entries.map(e=>e.id)).size!==incoming.entries.length)throw storageError('Backup History identity is invalid.','HISTORY_VERSION_MISMATCH');
     validateRecoveryManifest(incoming);assertHistoryLimits(incoming);
-    const archiveFiles=new Map(verifiedArtifacts.filter(a=>a.archiveKind==='RECOVERY_BYTES').map(a=>[a.sha256,a]));
+    const archiveFiles=new Map(verifiedArtifacts.filter(a=>a.archiveKind==='RECOVERY_BYTES').map(a=>[a.sha256,a])),archiveSnapshots=new Map(),validatedRoots=new Map();
+    for(const entry of incoming.entries){const archived=verifiedArtifacts.find(a=>a.archiveKind==='RECOVERY_SNAPSHOT'&&a.checkpointId===entry.id);if(archived)archiveSnapshots.set(entry.id,{...entry,blob:archived.blob});}
     for(const entry of incoming.entries){
       const archived=verifiedArtifacts.find(a=>a.archiveKind==='RECOVERY_SNAPSHOT'&&a.checkpointId===entry.id);
       if(!archived||archived.sha256!==entry.sha256||archived.byteSize!==entry.byteSize)throw storageError('A promised checkpoint is missing from the backup.','HISTORY_VERSION_UNAVAILABLE');
-      const snapshot={...entry,blob:archived.blob},decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha));if(entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
+      const snapshot={...entry,blob:archived.blob},decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots);if(entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
       const existing=merged.entries.find(item=>item.id===entry.id);
       if(existing&&hash.sha256Value(existing)!==hash.sha256Value(entry))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
       if(!existing){merged.entries.push(clone(entry));merged.compressedProjectBytes+=entry.byteSize;importSnapshots.push(snapshot);}
