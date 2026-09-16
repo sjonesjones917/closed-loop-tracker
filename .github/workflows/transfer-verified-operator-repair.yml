@@ -1,4 +1,4 @@
-name: Transfer and exercise exact operator repair
+name: Transfer exact integrated repair
 on:
   pull_request:
     branches: [main]
@@ -14,8 +14,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
-    outputs:
-      candidate: ${{ steps.repair.outputs.candidate }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -24,119 +22,26 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Materialize and verify the exact repair
-        id: repair
+      # This pre-existing one-use transfer is removed from the exact candidate.
+      # It creates only an unreferenced commit object. The connected GitHub
+      # write operation must verify and publish that object; the ordinary single
+      # Pages workflow then runs every mandatory browser and conformance check.
+      - name: Materialize and verify the exact integrated repair
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-          EXPECTED_BASE: b5bac1616a4380f45f5a842206d98eb73cb8d6d5
-        run: |
-          python3 - <<'PY'
-          import os,json,hashlib,subprocess,urllib.request,pathlib
-          def git(*args): return subprocess.check_output(['git',*args],text=True).strip()
-          transport={'.github/workflows/transfer-verified-operator-repair.yml','.github/operator-repair.py'}
-          assert set(git('diff','--name-only',os.environ['EXPECTED_BASE'],'HEAD').splitlines())==transport, 'Unexpected product changes; refusing to overwrite another repair'
-          subprocess.run(['python3','.github/operator-repair.py'],check=True)
-          files=['app-core.js','verify-complete-operator-journey.mjs','verify-operator-action-lifecycle.mjs']
-          out={n:pathlib.Path(n).read_text() for n in files}
-          def edit(n,a,b):
-              assert out[n].count(a)==1,(n,a[:100],out[n].count(a))
-              out[n]=out[n].replace(a,b)
-          edit('app-core.js',"(action.primaryButton==='Export instruction file'?", "(action.primaryButton==='Export instruction file'||action.actionType==='CONTINUE_AGENT_CONVERSATION'&&Number(stage)===1&&!engine.unresolvedHumanRequests(current,stage).length?")
-          edit('app-core.js',":['AI_REVIEW','EXTERNAL_AGENT_TOOL','EXTERNAL_SYSTEM'].includes(action.actionType)?`<button class=\"primary\" id=\"download-execution-package\" type=\"button\">${esc(action.primaryButton)}</button>`:", ":action.actionType==='SELECT_RESPONSE_JSON_FILE'?`<button class=\"primary\" id=\"next-select-response-file\" type=\"button\">Select response JSON file</button><button id=\"next-export-prompt-file\" data-operation=\"${esc(action.operation||'COMPLETE')}\" type=\"button\">Export stage files</button>`:action.actionType==='REVIEW_PROPOSAL'?`<button class=\"primary\" id=\"next-review-proposal\" type=\"button\">Review proposal</button>`:action.actionType==='CONTINUE_AGENT_CONVERSATION'?`<button class=\"primary\" id=\"next-answer-human-question\" type=\"button\">${esc(action.primaryButton)}</button>`:['AI_REVIEW','EXTERNAL_AGENT_TOOL','EXTERNAL_SYSTEM'].includes(action.actionType)?`<button class=\"primary\" id=\"download-execution-package\" type=\"button\">${esc(action.primaryButton)}</button><button id=\"next-export-prompt-file\" data-operation=\"${esc(action.operation||'COMPLETE')}\" type=\"button\">Export stage files</button>`:")
-          edit('app-core.js','function wire(){const resume=', '''function wire(){
-           const responsePicker=$('#next-select-response-file');if(responsePicker)responsePicker.onclick=()=>{const input=$('#response-json-file');if(input&&!input.disabled){focusAfterAction($('#response-heading'));input.click();}};
-           const proposalJump=$('#next-review-proposal');if(proposalJump)proposalJump.onclick=()=>{const target=$('#proposal-heading')||$('#accept-proposal')?.closest('.panel');if(target){for(let parent=target.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;focusAfterAction(target);}};
-           const humanJump=$('#next-answer-human-question');if(humanJump)humanJump.onclick=()=>{const target=document.querySelector('[data-human-answer],[data-human-stage-field]');if(target){for(let parent=target.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;focusAfterAction(target);}};
-           const resume=''')
-          edit('verify-operator-action-lifecycle.mjs',"for(const file of ['workbook.js','hash.js','workflow-schema.js'])", "for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])")
-          edit('verify-operator-action-lifecycle.mjs',"schema=globalThis.closedLoopWorkflowSchema;projectStore=", "schema=globalThis.closedLoopWorkflowSchema;engine=globalThis.closedLoopWorkflowEngine;projectStore=")
-          edit('verify-operator-action-lifecycle.mjs',"['CONTINUE_AGENT_CONVERSATION','Export instruction file','next-export-prompt-file',1],", "['CONTINUE_AGENT_CONVERSATION','Continue conversation','next-export-prompt-file',1],\n ['SELECT_RESPONSE_JSON_FILE','Select response JSON file','next-select-response-file',2],\n ['REVIEW_PROPOSAL','Review proposal','next-review-proposal',1],")
-          edit('verify-operator-action-lifecycle.mjs',"for(const [actionType,primaryButton,id,stage]of primaryControls){", '''const fresh=context.closedLoopCore.createBlankState('REAL-INTAKE-ACTION');
-          context.closedLoopWorkflowEngine.ensureShape(fresh);context.closedLoopWorkflowEngine.recalculate(fresh);
-          const intake=context.closedLoopWorkflowEngine.operationalNextAction(fresh,1);
-          assert.equal(intake.actionType,'CONTINUE_AGENT_CONVERSATION');
-          const intakeMarkup=context.ui.markup(intake,1).markup;
-          assert.match(intakeMarkup,/id="next-export-prompt-file"/,'PRIMARY_ACTION_ORACLE: the actual fresh-project action has no working export control');
-          for(const [actionType,primaryButton,id,stage]of primaryControls){''')
-          edit('verify-complete-operator-journey.mjs',"    }finally{await check.close();}", '''    }catch(error){
-                const view=await check.inspect(1);
-                const state=await check.evaluate(`({html:document.querySelector('#next-required-action')?.outerHTML,activeView:document.querySelector('[data-view][aria-selected="true"]')?.dataset.view,liveStatus:document.querySelector('[role="status"]')?.textContent,controls:[...document.querySelectorAll('#next-required-action button')].map(n=>({id:n.id,disabled:n.disabled,rect:n.getBoundingClientRect().toJSON()}))})`);
-                fs.writeFileSync(path.join(check.directory,'failure.json'),JSON.stringify({view,state,message:error.stack},null,2));
-                report.viewportChecks.push({width,height,result:'FAIL',view,state,message:error.message});
-                throw error;
-              }finally{await check.close();}'''.replace('\n      ','\n'))
-          digests={
-              'app-core.js':'0a0c0bb1969bce93a5d3723815475b74ad132f08bcf7faa149143dc1f4d9174a',
-              'verify-complete-operator-journey.mjs':'8d1eb2dea23a932ab562faadcbbda881127df7c16b8cf8995c6a47111bcef077',
-              'verify-operator-action-lifecycle.mjs':'b3f404114f28f2d2ae23a71ce6a4b3ef707b8b878231d22c4981a84e7f8fbea5',
-              'verify-operator-control-state-fault.mjs':'9c623d786897e9713be7562ff247c0b0b6b985b9343111bfd13828e2c7986ad9'}
-          for name,text in out.items():
-              assert hashlib.sha256(text.encode()).hexdigest()==digests[name], 'Output differs from locally tested bytes: '+name
-          for name,text in out.items(): pathlib.Path(name).write_bytes(text.encode())
-          expected=set(digests)
-          for name in sorted(expected): subprocess.run(['node','--check',name],check=True)
-          for name in ['verify-operator-action-lifecycle.mjs','verify-operator-control-state-fault.mjs','verify-ui-acceptance-impact.mjs','verify-ui-persistence-preconditions.mjs','verify-file-first-operator.mjs','verify-data-route-closure.mjs']:
-              subprocess.run(['node',name],check=True)
-          assert set(git('diff','--name-only').splitlines())==expected
-          api='https://api.github.com/repos/'+os.environ['REPOSITORY']
-          def post(route,body):
-              request=urllib.request.Request(api+route,data=json.dumps(body).encode(),method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'})
-              with urllib.request.urlopen(request,timeout=60) as response: return json.load(response)
-          tree=[]
-          for name in sorted(expected):
-              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()==digests[name]
-              blob=post('/git/blobs',{'content':pathlib.Path(name).read_text(),'encoding':'utf-8'})['sha']
-              assert blob==git('hash-object',name)
-              tree.append({'path':name,'mode':'100644','type':'blob','sha':blob})
-          for name in sorted(transport): tree.append({'path':name,'mode':'100644','type':'blob','sha':None})
-          tree_sha=post('/git/trees',{'base_tree':git('rev-parse','HEAD^{tree}'),'tree':tree})['sha']
-          message='Restore real workflow action controls and next-action focus\n\nRoute actual intake, response selection and proposal actions to their controls rather than navigation-only buttons. Keep state and actor with actionable controls before long details. Retain outcome accounting and disclosure content. Add real-engine intake coverage, primary ownership and mutant regressions, and three-width browser checks. Remove the one-use repair transport. Node regressions passed; full browser and product acceptance are not asserted by this commit.'
-          commit=post('/git/commits',{'message':message,'tree':tree_sha,'parents':[git('rev-parse','HEAD')]})['sha']
-          result={'candidate':commit,'parent':git('rev-parse','HEAD'),'tree':tree_sha,'files':digests,'branchUpdated':False}
-          pathlib.Path('candidate-manifest.json').write_text(json.dumps(result,indent=2))
-          with open(os.environ['GITHUB_OUTPUT'],'a') as output: output.write('candidate='+commit+'\n')
-          print(json.dumps(result))
-          PY
+        run: python3 .github/operator-repair.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: operator-repair-candidate
+          name: integrated-repair-candidate
           path: candidate-manifest.json
           if-no-files-found: warn
           retention-days: 3
-  browser:
-    needs: prepare
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ needs.prepare.outputs.candidate }}
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22'
-      - name: Exercise exact repaired build through the browser
-        env:
-          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
-        run: |
-          set -euo pipefail
-          node build-static-site.mjs --out _site --source-commit "$CANDIDATE" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _site > /tmp/operator-http.log 2>&1 &
-          server=$!
-          trap 'kill "$server" 2>/dev/null || true' EXIT
-          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:4173/ > /dev/null && break; sleep 1; done
-          timeout 95m node verify-complete-operator-journey.mjs
-          timeout 10m node verify-browser-recovery.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: repaired-operator-evidence
-          path: |
-            operator-evidence/journey.json
-            operator-evidence/*.png
-            operator-evidence/viewport-*/*.png
-            operator-evidence/viewport-*/*.json
-            recovery-browser-evidence/**
+          name: integrated-repair-checks
+          path: /tmp/exact-operator-repair-checks/*.log
           if-no-files-found: warn
           retention-days: 3
