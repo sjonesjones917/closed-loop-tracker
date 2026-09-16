@@ -1,0 +1,88 @@
+{
+  "schema": "closed-loop-continuation-startup-draft-evidence/1",
+  "startingCommit": "97bef62f0ca90f0060d52bea512aa7e563d0cd25",
+  "productionMechanism": "initializeHistoryNavigation ordinary project-link startup",
+  "failure": {
+    "expected": "Retained unaccepted draft text and checkbox state remain visible after final startup render",
+    "actual": "Final render cleared retained text and checkbox state",
+    "reproduction": "verify-history-navigation.mjs with a renderer that replaces form controls",
+    "baselineExitCode": 1,
+    "baselineOracleDetected": true
+  },
+  "verification": {
+    "synthetic": true,
+    "environment": "Real application navigation functions and production persistence with lifecycle adapter; minimal view/history boundary doubles",
+    "actualBrowser": false,
+    "cases": [
+      {
+        "name": "View capture accepts ordinary form controls and preserves subpixel scroll position",
+        "result": "PASS"
+      },
+      {
+        "name": "All registered stage selections preserve active project data",
+        "result": "PASS"
+      },
+      {
+        "name": "Destination-based restoration preserves native path across multi-entry jumps",
+        "result": "PASS"
+      },
+      {
+        "name": "Undo and Redo cross view-only checkpoints to reverse the last project change",
+        "result": "PASS"
+      },
+      {
+        "name": "Rapid traversal aborts abandoned restore and activates the final destination",
+        "result": "PASS"
+      },
+      {
+        "name": "Native traversal reconciles an owned pending commit before restoring without adding history entries",
+        "result": "PASS"
+      },
+      {
+        "name": "A later draft arriving during a pending checkpoint is saved before navigation continues",
+        "result": "PASS"
+      },
+      {
+        "name": "Response, audited and delivery selections retain exact bytes through navigation and full restoration without acceptance",
+        "result": "PASS"
+      },
+      {
+        "name": "Corrupt selected bytes are rejected and restored bytes progress",
+        "result": "PASS"
+      },
+      {
+        "name": "Exported backup bytes recover unvalidated selections and their exact files in fresh persistence",
+        "result": "PASS"
+      },
+      {
+        "name": "Checkpoint failure preserves the prior selected files and accepted work",
+        "result": "PASS"
+      },
+      {
+        "name": "An unavailable saved-version link keeps current data and usable History",
+        "result": "PASS"
+      },
+      {
+        "name": "Saved-version startup completes within its existing loading action without self-wait",
+        "result": "PASS"
+      },
+      {
+        "name": "Ordinary project-link startup restores drafts after the final control render",
+        "result": "PASS"
+      },
+      {
+        "name": "Stale tab cannot restore over independent work",
+        "result": "PASS"
+      },
+      {
+        "name": "Deliberately skipped final draft restoration is detected by the navigation regression",
+        "result": "PASS"
+      }
+    ]
+  },
+  "applicationComplete": false,
+  "limitations": [
+    "Synthetic navigation and transaction adapters; exact deployed browser and physical device replay still required.",
+    "Full integrated CI and all mandatory specification evidence remain required."
+  ]
+}

@@ -21,7 +21,7 @@ assert.equal(typeof engine.recordPreDeliveryCheckpointExport,'function','Product
 
 const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-v001',requirementsVersion:'REQ-v001',testSuiteVersion:'TEST-v001',instructionVersion:'INSTR-v001',iterationId:'ITER-1',candidateId:'CAND-1',baselineId:'BASE-1',productId:'PROD-1',productVersion:'1.0.0',deliveryCandidateSetId:'SET-1'};
 const record=(family,fields,id,sc=scope)=>{const def=schema.RECORD_SCHEMAS[family]; return {id,active:true,fields:{...fields,[def.idField]:id},...fields,[def.idField]:id,scope:sc};};
-const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',hashReviewId='HASH-1',chainReleaseId='REL-1',status='COMPLETE',missingLinks=[]}={})=>{
+const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',hashReviewId='HASH_REVIEW-'+ '7'.repeat(64),chainReleaseId='REL-1',status='COMPLETE',missingLinks=[]}={})=>{
   const p=core.createBlankState('VERIFY-STAGE29');
   engine.ensureShape(p);
   Object.assign(p.job,{JOB_ID:'JOB-STAGE29',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INSTR-v001',CURRENT_ITERATION:'ITER-1',CURRENT_CANDIDATE_ID:'CAND-1',CURRENT_BASELINE_ID:baselineId,CURRENT_PRODUCT_ID:productId,CURRENT_PRODUCT_VERSION:'1.0.0',CURRENT_DELIVERY_CANDIDATE_SET_ID:'SET-1',CURRENT_RELEASE_ID:releaseId,CURRENT_HASH_REVIEW_ID:hashReviewId,CURRENT_EVIDENCE_CHAIN_VERSION:null});
@@ -35,7 +35,9 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   const trace=record('instructionTraces',{TRACE_ID:'TRACE-1',REQ_ID:'REQ-1',INSTRUCTION_ID:'INSTR-1',INSTRUCTION_LOCATION:'stage-29.evidence-chain',IMPLEMENTED_BEHAVIOR:'Required evidence-chain validation',EVIDENCE_ID:'EVID-1',STATUS:'CURRENT'},'TRACE-1',scope);
   const test=record('tests',{REQ_ID:'REQ-1',TEST_ID:'TEST-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',STATUS:'READY'},'TEST-1',scope);
   const result=record('verification',{REQ_ID:'REQ-1',TEST_ID:'TEST-1',DETERMINATION:'SATISFIED',EVIDENCE_ID:['EVID-1'],RESULT_ID:'RES-1'},'RES-1',scope);
-  const identity=record('artifactIdentities',{IDENTITY_ID:'ART-1',ARTIFACT_ID:'ART-1',AUDITED_FILENAME:'artifact.bin',RELEASE_FILENAME:'artifact.bin',AUTHORIZATION:'AUTHORIZED',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,RELEASE_BYTE_SIZE:10,PRE_DELIVERY_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'},'ART-1',scope);
+  const identity=record('artifactIdentities',{IDENTITY_ID:'ART-1',ARTIFACT_ID:'ART-1',AUDITED_FILENAME:'artifact.bin',RELEASE_FILENAME:'artifact.bin',AUTHORIZATION:'AUTHORIZED',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,RELEASE_BYTE_SIZE:10,AUDITED_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210',PRE_DELIVERY_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'},'ART-1',scope);
+  identity.identityEvidenceSha256='7'.repeat(64);identity.scope={...scope,releaseId,deliveryCandidateSetId:'SET-1'};
+  p.projectData.deliveryCandidateSets.push(record('deliveryCandidateSets',{STATUS:'FROZEN',ARTIFACT_IDS:['ART-1'],AUTHORIZED_FILENAMES:{'ART-1':'artifact.bin'}},'SET-1',scope));
   p.projectData.sources.push(source);
   p.projectData.requirements.push(requirement);
   p.projectData.instructions.push(instruction);
@@ -50,6 +52,23 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   p.projectData.evidenceChains.push(record('evidenceChains',{REQ_ID:'REQ-1',STATUS:status,MISSING_LINKS:missingLinks,RELEASE_DECISION_ID:chainReleaseId,HASH_REVIEW_ID:hashReviewId,PRODUCT_ELEMENT:productId,BASELINE_ID:baselineId,TEST_ID:['TEST-1'],EVIDENCE_ID:['EVID-1'],ARTIFACT_HASH_IDENTITY:['ART-1'],TEST_RESULT_ID:['RES-1']},'CHAIN-1',scope));
   return p;
 };
+
+// Empty and incomplete binding universes cannot obtain completion from missing data.
+const emptyProject=core.createBlankState('DISPOSABLE-EMPTY-EVIDENCE-UNIVERSE');engine.ensureShape(emptyProject);
+assert.equal(engine.currentEvidenceChainSet(emptyProject).complete,false,'An unreviewed empty mandatory universe must not pass Stage 29.');
+assert.equal(engine.calculateEvidenceChains(emptyProject).complete,false,'The direct calculation must preserve the unknown empty universe.');
+engine.recalculate(emptyProject);
+assert.equal(emptyProject.stages[29].derivedData.MANDATORY_EVIDENCE_CHAIN_COVERAGE,null,'An unreviewed empty denominator must remain unknown, not 100%.');
+for(const missing of ['RELEASE_DECISION_ID','HASH_REVIEW_ID','PRODUCT_ELEMENT','BASELINE_ID']){
+ const project=makeProject(),chain=project.projectData.evidenceChains[0];delete chain[missing];delete chain.fields[missing];if(chain.relationships)delete chain.relationships[missing];
+ const set=engine.currentEvidenceChainSet(project);project.job.CURRENT_EVIDENCE_CHAIN_VERSION=set.expectedVersion;
+ assert.equal(engine.currentEvidenceChainSet(project).complete,false,'Missing '+missing+' must not satisfy current evidence closure.');
+}
+for(const dimension of ['inputVersion','requirementsVersion','testSuiteVersion','instructionVersion','productId','baselineId']){
+ const project=makeProject();project.projectData.evidenceChains[0].scope={...scope,[dimension]:'HISTORICAL'};
+ project.job.CURRENT_EVIDENCE_CHAIN_VERSION=engine.currentEvidenceChainSet(project).expectedVersion;
+ assert.equal(engine.currentEvidenceChainSet(project).complete,false,'Historical '+dimension+' evidence was accepted.');
+}
 
 const validProject=makeProject();
 const validSet=engine.currentEvidenceChainSet(validProject);
@@ -103,7 +122,7 @@ assert.equal(calculated.complete,true,'Checkpoint proof requires the exact curre
 const checkpoint=engine.createPreDeliveryCheckpoint(checkpointProject,{packageId:'PKG-1',packageSha256:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',artifactManifestSha256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'});
 assert.equal(checkpoint.CUSTODY_STATE,'BACKUP_PACKAGE_GENERATED','The real checkpoint creation path must begin as generated package custody.');
 assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject),null,'Generated-only backup custody must not satisfy the terminal pre-delivery gate.');
-const exportEvidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'9999999999999999999999999999999999999999999999999999999999999999',STATUS:'CURRENT'},'EVID-EXPORT-1',{...scope,releaseId:'REL-1',hashReviewId:'HASH-1',evidenceChainVersion:checkpointProject.job.CURRENT_EVIDENCE_CHAIN_VERSION});
+const exportEvidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'9999999999999999999999999999999999999999999999999999999999999999',STATUS:'CURRENT'},'EVID-EXPORT-1',{...scope,releaseId:'REL-1',hashReviewId:'HASH_REVIEW-'+ '7'.repeat(64),evidenceChainVersion:checkpointProject.job.CURRENT_EVIDENCE_CHAIN_VERSION});
 exportEvidence.source='OPERATOR_ACTION';
 checkpointProject.projectData.evidenceRecords.push(exportEvidence);
 const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-EXPORT-1']});

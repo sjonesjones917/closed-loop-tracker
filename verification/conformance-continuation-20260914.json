@@ -1,0 +1,184 @@
+{
+  "schema": "closed-loop-conformance-continuation/1",
+  "phase": "IMPLEMENTING_AND_VERIFYING",
+  "takeoverAuthority": "User explicitly instructed this chat to proceed after the predecessor conversation became too long.",
+  "originalStartingMainCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "continuationStartingCommit": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
+  "predecessorPullRequest": 1240,
+  "predecessorBranch": "repair/recoverable-conformance-integrated-20260914",
+  "continuationBranch": "repair/complete-conformance-continuation-20260914",
+  "controllingSpecification": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "bytes": 309472,
+    "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+    "completeRead": true
+  },
+  "additionalControllingInstruction": "specification/recovery-user-instruction-20260914.txt",
+  "scope": "The complete specification and all twelve additional instruction sections remain controlling across every applicable operation in all 30 stages. The added recovery requirements supersede the prior view-only browser-history restriction.",
+  "coverageRegisters": [
+    "specification/closed-loop-normative-requirements.json",
+    "specification/recovery-requirements.json"
+  ],
+  "completionClaim": false,
+  "repairs": [
+    {
+      "id": "EXECUTION_REPORT_SELECTION",
+      "responsibleCode": [
+        "verify-v3-definition-of-done.mjs",
+        "execution-report.mjs"
+      ],
+      "requirement": "Executed evidence must retain the observations it claims to report; static flags or unrelated output cannot establish behavioral coverage.",
+      "reproductionRevision": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
+      "sequence": [
+        "Execute verify-ingestion.mjs",
+        "Read attachment-slot coverage using the former final-JSON-object consumer"
+      ],
+      "expected": "Use the unique attachmentSlotMapping report emitted by executed slot checks.",
+      "actualBefore": "A later acceptedPropositionPersistence report replaced the earlier slot proof, leaving its fields undefined and reporting zero covered slot assertions.",
+      "change": "Select exactly one report by its declared identifying field, independently of output order. Missing, duplicate or malformed reports fail verification.",
+      "regression": "verify-execution-reports.mjs",
+      "executedResult": {
+        "environment": "Node v24.19.0; synthetic producer tests using production modules",
+        "result": "PASS",
+        "producerReports": 17,
+        "attachmentProofPreserved": true,
+        "reportOrderIndependent": true,
+        "missingRejected": true,
+        "duplicateRejected": true,
+        "corruptRejected": true,
+        "failedObservationNotPromoted": true,
+        "formerConsumerFaultDetected": true
+      },
+      "fullAcceptanceImplication": "This repairs evidence selection only. It does not prove complete attachment coverage or application completion."
+    },
+    {
+      "id": "BACKUP_STRING_SCAN_COST",
+      "responsibleCode": [
+        "project-store.js:readPackageJson"
+      ],
+      "requirement": "Required complete backups and retained-history transport must process representative accumulated workloads without unnecessary per-character application work, preserving exact content and failure handling.",
+      "reproductionRevision": "6ba8e66c5ae53bef04c6e7872c7b2daf240628f0",
+      "relatedBrowserFailure": {
+        "runId": 34859874306,
+        "jobId": 104028949107,
+        "suite": "verify-mobile-stage-action.mjs",
+        "operation": "Export complete 48-million-character project after visiting all 30 stages",
+        "actualBefore": "Generic click helper exceeded its 20-second busy timeout. Final export behavior was not established by that failed run."
+      },
+      "independentReproduction": {
+        "plainTextCharacters": 4194304,
+        "parserSteps": 4604695,
+        "expectedStepBound": 20481,
+        "regression": "verify-backup-json-stream.mjs",
+        "resultBefore": "FAIL: BACKUP_SCAN_COST_ORACLE"
+      },
+      "change": "Scan ordinary JSON string spans with the native regular-expression engine, preserving bounded pieces, escaping, Unicode, syntax rejection, and spooled file contents. The existing browser export now uses its declared 60-second operation wait and records actual elapsed time.",
+      "evidence": [
+        "verification/continuation-backup-parser-20260914.json",
+        "verification/continuation-project-lifecycle-20260914.json"
+      ],
+      "remaining": "Exact candidate browser export and full CI still required."
+    },
+    {
+      "id": "CURRENT_CONTROL_AVAILABILITY",
+      "responsibleCode": [
+        "app-core.js:setControlDisabled",
+        "app-core.js:paintOperatorAction",
+        "app-core.js:paintHistory",
+        "app-core.js:syncDeleteProjectControl",
+        "app-core.js:deleteCurrentProject"
+      ],
+      "requirement": "Recovery remains available after restoration, with duplicate execution prevented while an operation is pending. Control availability must match the actual current version after success or failure.",
+      "relatedBrowserFailure": {
+        "runId": 34862083217,
+        "jobId": 104043465167,
+        "headRevision": "e06cc600dea2aa903f889a75b86e809cc6ea6935",
+        "verifiedMergeRevision": "737e2ec6f52223ae9589f9c9650070ebfb93c43e",
+        "suite": "verify-browser-recovery.mjs",
+        "sequence": "Accept replacement, traverse saved native history entries including session start and the replacement, then Undo.",
+        "actual": "Missing or disabled control: #history-undo"
+      },
+      "reproductionRevision": "68d03b28c0d2c00b71c36a7bf68b1923bf542d7d",
+      "actualBefore": "The busy-state cache restored obsolete control availability and allowed a newly available control to enable before the active operation ended.",
+      "change": "A shared availability setter records newly computed state while keeping controls disabled until the active operation completes. History and project-removal consumers use the same owner.",
+      "evidence": "verification/continuation-control-state-20260914.json",
+      "regressions": [
+        "verify-operator-action-lifecycle.mjs",
+        "verify-operator-control-state-fault.mjs",
+        "verify-project-lifecycle.mjs"
+      ],
+      "browserReplay": "PENDING_CI"
+    }
+  ],
+  "pendingVerification": [
+    "Latest predecessor browser CI, followed by continuation PR CI",
+    "Complete requirement-level evidence closure and independent omission review",
+    "All required actual-control journeys on the final integrated and deployed source",
+    "Full candidate regression and parser/storage integration after the current production correction"
+  ],
+  "executionLimitations": [
+    "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
+    "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
+  ],
+  "nextAction": "Run the complete normal CI against the reconciled candidate and replay all remaining integration checks. Continue actual browser/file journeys and repair every failure before main integration/deployment. No physical-device or complete conformance claim.",
+  "updatedAt": "2026-09-14T17:07:46.042038+00:00",
+  "continuationPullRequest": 1242,
+  "publishedHeadBeforeThisChange": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
+  "baselineVerification": {
+    "sourceCommit": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
+    "suites": 46,
+    "passed": 46,
+    "evidence": "verification/continuation-baseline-20260914.json",
+    "browser": false,
+    "physicalDevice": false
+  },
+  "definitionOfDoneRun": {
+    "exitCode": 0,
+    "attachmentSlotMappingCoverage": 1,
+    "section49ZeroCountUnknowns": 26,
+    "normativeRequirementsProven": 0,
+    "normativeRequirementCount": 3825,
+    "note": "A successful verifier command is not application completion. Unproven requirements remain explicitly UNKNOWN."
+  },
+  "browserFixtureCorrections": [
+    {
+      "suite": "verify-browser.mjs",
+      "change": "Select the owning stage before inspecting provenance after acceptance advances to the next required operation. No production navigation behavior is weakened.",
+      "verification": "PENDING_CI"
+    },
+    {
+      "suite": "verify-browser-extra.mjs",
+      "change": "Replace the cross-project receipt copy and forced Stage 02/03 state with actual response-file ingestion, Stage 02 acceptance, one invalid Stage 03 property, duplicate submission, and corrected current-response acceptance in the existing disposable intake project. The source-search contract and independent SEARCH_ADEQUACY_REVIEW are also performed through actual response files before Stage 03.",
+      "verification": "PENDING_CI"
+    }
+  ],
+  "ciExecutionCorrection": {
+    "observedRun": 34862083217,
+    "fullJourneyReachedStage": 12,
+    "actualProblem": "The generic ten-minute subprocess deadline terminated the still-progressing complete 30-stage operator journey. No final journey report survived the termination.",
+    "change": "The full journey has a 60-minute execution budget while other browser scripts retain their ten-minute budgets. Existing source verification and deployed verification jobs allow 120 and 180 minutes respectively to retain every required gate. Progress is written atomically before each operation and SIGTERM records incomplete status.",
+    "notClaimed": "This budget is not a user-facing performance guarantee and does not establish any unexecuted stage."
+  },
+  "pendingCI": [
+    {
+      "runId": 34872338962,
+      "head": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
+      "lastObservedStatus": "failure",
+      "cause": "Final-product timing fixture used authoring-preview scope for accepted records; corrected by this change."
+    }
+  ],
+  "reconciliation": {
+    "predecessorHead": "845be239f197698f30bc83551374fcc8b179ddc9",
+    "continuationHead": "49dca4908fe6851c83976cc9237158a492903f0c",
+    "method": "Preserve both parents; resolve shared fixes in an isolated checkout. No force push or predecessor branch writes.",
+    "decisions": [
+      "Retain source-scope, exact-progress and per-run completion corrections from the predecessor.",
+      "Retain the complete backup parser optimization and multi-report evidence selection.",
+      "Unify current control availability with both sets of fault checks and all eight success/failure availability combinations.",
+      "Use actual prior browser intake for the duplicate-response journey; do not install forced completed prerequisites.",
+      "Keep a 60-minute complete-journey budget and atomic interruption reports; preserve the 60-second accumulated export deadline."
+    ],
+    "status": "FOCUSED_CHECKS_PASS_FULL_INTEGRATED_CI_PENDING"
+  },
+  "integrationReplayEvidence": "verification/continuation-integration-replay-20260914.json"
+}

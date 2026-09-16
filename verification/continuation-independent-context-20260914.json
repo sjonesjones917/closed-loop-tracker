@@ -1,0 +1,33 @@
+{
+  "schema": "closed-loop-independent-context-replay/1",
+  "testOrigin": {
+    "pullRequest": 1241,
+    "sourceCommit": "43912b0844a1cff26dfcb6e9380ef88021725ff9",
+    "path": "verify-stage-context-boundary.mjs"
+  },
+  "candidateProductionRevision": "5694427abda882d26f71e058d989a26f1a5ee729",
+  "environment": "Linux Node v24.19.0",
+  "before": {
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "exitCode": 1,
+    "stagePairs": 435,
+    "externalOperations": 50,
+    "disclosures": 879,
+    "reportSha256": "918043485e9c4408a1e303c8a0aa5aea00ecf3ea2ab8da913635129e15b60546"
+  },
+  "after": {
+    "exitCode": 0,
+    "report": {
+      "case": "all-stage-future-context-boundary",
+      "sourceRevision": "working tree",
+      "fixture": "synthetic context selection; prerequisite UI progression is verified separately",
+      "stagePairs": 435,
+      "externalOperations": 50,
+      "failures": []
+    },
+    "reportSha256": "8ed5232eddf63c75bdc16155e6e2f9083611b96d575d33eb46c30c839de249e1"
+  },
+  "synthetic": true,
+  "scope": "Independent future evidence-record sentinels across every earlier/later stage pair and all registered external operations. Does not establish file transport, recovery or physical-device acceptance.",
+  "completeApplicationAcceptance": false
+}

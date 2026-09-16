@@ -21,6 +21,7 @@ Object.assign(state.job,{
   SUPPLIED_MATERIALS_INVENTORY:'NONE',
   CURRENT_INPUT_VERSION:'INPUT-ROUTE-v1',
   CURRENT_SOURCE_SET_VERSION:'SOURCE-ROUTE-v1',
+  CURRENT_RESEARCH_VERSION:'RESEARCH-ROUTE-v1',
   CURRENT_REQUIREMENTS_VERSION:'REQ-ROUTE-v1',
   CURRENT_TEST_SUITE_VERSION:'TEST-ROUTE-v1',
   CURRENT_INSTRUCTION_VERSION:'INST-ROUTE-v1',
@@ -30,11 +31,14 @@ Object.assign(state.job,{
 });
 engine.ensureShape(state);
 engine.recalculate(state);
+function bindIntake(){
 const intake=prompts.intakeCoverageManifest(state);
 state.stages[1].agentData={
   EXACT_DELIVERABLE_REQUESTED:'Complete route-proven deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',
-  INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'route closure fixture',extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT'}]}))})
+  INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'route closure fixture',externalInspectionClaimed:u.kind==='SUPPLIED_MATERIAL'&&Number(u.byteSize||0)>0?true:undefined,extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT',sourceLocation:u.kind==='SUPPLIED_MATERIAL'?u.sourceLocation:undefined}]}))})
 };
+}
+bindIntake();
 state.stages[1].status='COMPLETE';state.stages[1].gate={complete:true,blocked:false,reasons:[]};
 state.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};state.stages[2].status='COMPLETE';state.stages[2].gate={complete:true,blocked:false,reasons:[]};
 state.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false};state.stages[3].status='COMPLETE';state.stages[3].gate={complete:true,blocked:false,reasons:[]};
@@ -43,6 +47,7 @@ for(let stage=1;stage<30;stage++){state.stages[stage].status='COMPLETE';state.st
 const versionScopeFor=collection=>{
   const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),scope={};
   if(stage>=2){scope.inputVersion=state.job.CURRENT_INPUT_VERSION;scope.sourceSetVersion=state.job.CURRENT_SOURCE_SET_VERSION;}
+  if(stage>=3)scope.researchVersion=state.job.CURRENT_RESEARCH_VERSION;
   if(stage>=4)scope.requirementsVersion=state.job.CURRENT_REQUIREMENTS_VERSION;
   if(stage>=6)scope.testSuiteVersion=state.job.CURRENT_TEST_SUITE_VERSION;
   if(stage>=8)scope.instructionVersion=state.job.CURRENT_INSTRUCTION_VERSION;
@@ -59,14 +64,18 @@ for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
   const fields={[recordSchema.idField]:currentId};
   const staleFields={[recordSchema.idField]:staleId};
   if(agentField){fields[agentField]=`CURRENT-SENTINEL-${collection}`;staleFields[agentField]=`STALE-SENTINEL-${collection}`;}
+  if(collection==='defects'){fields.EXPECTED_CONDITION='Expected fixture condition';staleFields.EXPECTED_CONDITION='Stale fixture condition';}
   const current={stage:recordSchema.stage||1,fields,scope:versionScopeFor(collection),active:true,validity:'CURRENT'};
   const stale={stage:recordSchema.stage||1,fields:staleFields,scope:staleScopeFor(collection),active:true,validity:'CURRENT'};
+  engine.refreshRecordHashes(current,collection);engine.refreshRecordHashes(stale,collection);
   state.projectData[collection]=[stale,current];
   collectionSentinels[collection]={currentId,staleId,currentText:`CURRENT-SENTINEL-${collection}`,staleText:`STALE-SENTINEL-${collection}`};
   const selected=engine.recordsForCurrentScope(state,collection);
   assert(selected.some(record=>engine.recordId(record,collection)===currentId),`${collection}: current-scope selector omitted current record.`);
   assert(!selected.some(record=>engine.recordId(record,collection)===staleId),`${collection}: current-scope selector admitted stale record.`);
 }
+
+bindIntake();
 
 const forbiddenReads={
   '11:COMPLETE':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
@@ -102,15 +111,17 @@ for(let stage=1;stage<=30;stage++){
     for(const field of op.allowedStageData){const def=schema.STAGE_FIELDS[stage]?.[field];assert(def&&def.producer===schema.PRODUCER.AGENT,`Stage ${stage}/${operation} exposes unauthorized stage field ${field}.`);writableFieldsChecked++;}
     for(const blocked of forbiddenReads[`${stage}:${operation}`]||[])assert(!op.readCollections.includes(blocked),`Stage ${stage}/${operation} leaks forbidden ${blocked}.`);
 
-    const scope={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,contextId:collectionSentinels.freshContexts.currentId,baselineId:'BASE-ROUTE-v1',productId:'PROD-ROUTE-v1'};
+    const availableScope={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,contextId:collectionSentinels.freshContexts.currentId,baselineId:'BASE-ROUTE-v1',productId:'PROD-ROUTE-v1'};
+    const scope=Object.fromEntries(op.scopeRequirements.map(key=>[key,availableScope[key]||engine.currentScope(state)[key]||key.toUpperCase()+'-ROUTE']));
     for(const key of op.scopeRequirements)assert(scope[key]!==undefined,`Fixture missing required scope ${key} for Stage ${stage}/${operation}.`);
     let record;
-    try{record=prompts.buildPromptRecord(stage,state,{operation,scope});}catch{record=null;}
+    try{record=prompts.buildPromptRecord(stage,state,{operation,scope});}catch(error){assert(schema.STAGE_OPERATION_REGISTRY[`${stage}:${operation}`].acceptsExternalResponse===false&&error.code==='NON_EXTERNAL_OPERATION',`Stage ${stage}/${operation} unexpectedly failed prompt generation: ${error.message}`);record=null;}
     if(record){
       const manifest=record.contextManifest?.readCollections||{};
       for(const collection of op.readCollections){
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
+        if(Number(schema.RECORD_SCHEMAS[collection].stage)>stage){assert(!ids.includes(sent.currentId)&&!record.prompt.includes(sent.currentText),`Stage ${stage}/${operation} leaked subsequent-stage ${collection}.`);continue;}
         assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
         assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
