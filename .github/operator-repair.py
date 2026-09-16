@@ -1,8 +1,8 @@
-"""One-use exact-source transfer; both transport files are removed in the candidate.
+"""Materialize and test the existing exact repair; retain publication inputs.
 
 The immutable JSON blobs are readable, digest-bound data edits, not executable
-scripts. Existing concurrent ledger repairs are preserved. No branch, tag,
-deployment, secret or acceptance status is changed by this program.
+scripts. Both transport files are removed from the candidate. This program does
+not update a branch, deploy the application, or claim browser acceptance.
 """
 import base64
 import hashlib
@@ -48,6 +48,7 @@ def request(route, body=None):
         return json.load(response)
 
 parent = git('rev-parse', 'HEAD')
+base_tree = git('rev-parse', 'HEAD^{tree}')
 assert set(git('diff', '--name-only', BASE, 'HEAD').splitlines()) == TRANSPORT, 'Concurrent product changes: refusing to overwrite'
 repairs = {}
 for blob_sha, expected_digest in PAYLOADS:
@@ -60,7 +61,6 @@ for blob_sha, expected_digest in PAYLOADS:
     repairs.update(part)
 assert set(repairs) == FILES
 
-# Validate every source and every reconstructed output before writing any file.
 outputs = {}
 for name, repair in repairs.items():
     path = Path(name)
@@ -126,29 +126,24 @@ for name in sorted(FILES):
     entries.append({'path': name, 'mode': '100644', 'type': 'blob', 'sha': blob})
 for name in sorted(TRANSPORT):
     entries.append({'path': name, 'mode': '100644', 'type': 'blob', 'sha': None})
-# The index is scoped to the complete verified allowlist. All other source,
-# including the concurrent ledger repair, remains exactly the parent tree.
 git('add', '--', *sorted(FILES | TRANSPORT))
 assert set(git('diff', '--cached', '--name-only').splitlines()) == FILES | TRANSPORT
 expected_tree = git('write-tree')
-tree = request('/git/trees', {'base_tree': git('rev-parse', 'HEAD^{tree}'), 'tree': entries})['sha']
-assert tree == expected_tree, 'Published tree differs from the candidate that was executed'
-message = ('Preserve returned-data authority, preissue file contracts and restore workflow controls\n\n'
-           'Keep blind alias resolution inside typed relationship fields and preserve exact raw-value provenance. '
-           'Issue immutable returned-file slots in reserved prompts and ZIP manifests before a response exists; '
-           'reject invented, foreign, duplicate, missing, oversized and mismatched returned files. '
-           'Require the Stage 21 finished product bytes through the ordinary acceptance path. '
-           'Expose the actual stage-files control for Continue conversation and retain compact next-action focus and audit disclosures.\n\n'
-           'Retain all mandatory CI checks, with browser replay before the longer fault matrix. '
-           'Include 26 response-authority and 25 returned-slot regressions, real ZIP contract checks, '
-           'the synthetic full lifecycle and expanded production-control ownership tests. '
-           'Preserve the concurrent ledger execution-evidence correction. '
-           'The exact candidate passed the recorded Node verification commands. '
-           'Full browser replay and physical-device acceptance are not asserted. '
-           'Remove the one-use transfer recipe and workflow. No branch was updated by the transfer job.')
-commit = request('/git/commits', {'message': message, 'tree': tree, 'parents': [parent]})['sha']
-manifest = {'candidate': commit, 'parent': parent, 'tree': tree, 'branchUpdated': False,
-            'actualBrowserJourney': False, 'physicalDeviceAcceptance': False,
-            'files': {name: digest(outputs[name]) for name in sorted(FILES)}, 'checks': checks}
+# The Actions token rejected creating this workflow-containing tree. Retain the
+# exact verified objects for publication by the connected authorized GitHub
+# account. This is a transfer manifest, not a successful publication claim.
+manifest = {
+    'candidate': None,
+    'parent': parent,
+    'baseTree': base_tree,
+    'expectedTree': expected_tree,
+    'treeEntries': entries,
+    'publicationRequired': True,
+    'branchUpdated': False,
+    'actualBrowserJourney': False,
+    'physicalDeviceAcceptance': False,
+    'files': {name: digest(outputs[name]) for name in sorted(FILES)},
+    'checks': checks,
+}
 Path('candidate-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 print(json.dumps(manifest), flush=True)
