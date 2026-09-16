@@ -75,6 +75,10 @@ await import('./verify-operator-action-lifecycle.mjs');
     closedLoopWorkflowEngine.recalculate(previewProject);ui.select(previewProject);`,runtime);
   const p=runtime.previewProject,before=JSON.stringify(p),first=runtime.ui.workflow();
   assert.match(first,/id="export-prompt-context"/,'Required Export context is missing until another export saves the instruction.');
+  const panelStart=first.indexOf('id="next-required-action"'),exportStart=first.indexOf('id="next-export-prompt-file"',panelStart),detailsStart=first.indexOf('<div class="notice ',panelStart);
+  assert(exportStart>panelStart,'The initial external operation must expose the consolidated stage-files export in its next-action panel.');
+  assert(exportStart<detailsStart,'The next transport control must precede the potentially taller-than-viewport action details.');
+  assert.equal((first.match(/id="next-export-prompt-file"/g)||[]).length,1,'There must be exactly one next-action stage-files export control.');
   assert.match(first,/This instruction requires context\.json/);
   assert.equal(JSON.stringify(p),before,'Displaying required context must not reserve an operation or change project data.');
   assert.equal(runtime.previewBuilds,1,'Displaying required context built the accumulated prompt more than once.');
@@ -83,6 +87,7 @@ await import('./verify-operator-action-lifecycle.mjs');
   for(let stage=2;stage<=30;stage++){
     p.activeStage=stage;
     assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,`Stage ${stage} exposed a stale preview's context for an unavailable operation.`);
+    assert.doesNotMatch(runtime.ui.workflow(),/id="next-export-prompt-file"/,`Stage ${stage} exposed transport for an unavailable operation.`);
   }
   p.activeStage=1;p.revision++;p.job.EXACT_USER_OBJECTIVE_VERBATIM='Produce a short checklist.';
   assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,'A new revision with inline context retained the old attachment button.');

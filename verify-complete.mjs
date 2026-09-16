@@ -181,7 +181,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   const confirmed=ui.current.projectData.stageConfirmations.at(-1);assert(confirmed.acceptedChangeId===engine.acceptedChanges(ui.current,1).at(-1).changeId&&confirmed.inputVersion===acceptedInput&&engine.gate(1,ui.current).complete,'The actual intent confirmation control did not bind the accepted change and its compatible input version.');
   const saveStart=appSource.indexOf('async function saveJob('),saveEnd=appSource.indexOf('async function saveHumanStageFields(',saveStart);await vm.runInNewContext(appSource.slice(saveStart,saveEnd)+'\nsaveJob();',ui);
   assert(!engine.gate(1,ui.current).complete&&engine.acceptedChanges(ui.current,1).length===0,'Saving changed project inputs through the actual UI did not invalidate the prior intake acceptance.');
-  assert(appSource.includes("nextActionMarkup(displayedStageAction(n).actionType==='CONFIRM_STAGE_ONE_INTENT',n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
+  assert(appSource.includes("nextActionMarkup(true,n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
 
   assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.'"),'Completed human-decision stages are not reopened when their authority changes.');
   assert(!appSource.includes("invalidateDownstream(next,1,id,'User Job Input changed after Stage 01 completion.'"),'User Job Input edits still preserve stale Stage 01 acceptance.');

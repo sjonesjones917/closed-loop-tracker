@@ -5,6 +5,8 @@ import './verify-reservation-contract.mjs';
 import './verify-file-first-response.mjs';
 import './verify-file-first-operator.mjs';
 import './verify-response-contract-profile.mjs';
+import './verify-response-authority-integrity.mjs';
+import './verify-returned-slot-authority.mjs';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -94,6 +96,9 @@ function savePrompt(p,stage){
   p.projectData.generatedPrompts.push(record);
   return record;
 }
+function saveAttachmentPrompt(p,stage){const preview=fixtureBuildPrompt(stage,p),scope={...preview.scope};delete scope.projectRevision;return prompts.reserveAndBuildPromptRecord(p,stage,{operation:preview.operation,scope}).prompt;}
+function issuedDeclarations(prompt,envelope){const slots=prompts.promptFileManifest(prompt).attachmentSlots.filter(slot=>slot.role!=='STRUCTURED_RESPONSE');envelope.attachments.forEach((declaration,index)=>{if(!slots[index])throw new Error('Fixture has no issued file slot.');declaration.attachmentSlotId=slots[index].attachmentSlotId;declaration.role=slots[index].role;});}
+function returnedTransport(prompt){return {transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}};}
 function safeValue(name){
   if(name==='TEST_TYPE')return 'DETERMINISTIC';
   if(name==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';
@@ -135,6 +140,7 @@ function validEnvelope(p,stage,promptRecord){
     contractProfileId:schema.CONTRACT_PROFILE_ID,
     jobId:p.job.JOB_ID,
     stage,
+    ...(promptRecord.transportBindingRequired?{packageId:promptRecord.packageId,operationReservationId:promptRecord.operationReservationId,challengeNonce:promptRecord.challengeNonce}:{}),
     operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,
     responseType:'DATA_PROPOSAL',
     humanInputRequests:[],stageData,records,
@@ -288,14 +294,14 @@ negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].res
 // Attachment declarations are claims; only application-hashed supplied bytes may satisfy them.
 {
   const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:48203,sha256:'a'.repeat(64)};
-  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e};};
-  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{...exactFile,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
+  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e};};
+  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:[{...exactFile,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
   for(const [name,files,mutate,code] of [
     ['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT'],
     ['wrong attachment filename',[exactFile],e=>{e.attachments[0].filename='other.pdf';},'ATTACHMENT_FILENAME_MISMATCH'],
     ['wrong attachment byte size',[exactFile],e=>{e.attachments[0].byteSize=48204;},'ATTACHMENT_BYTE_SIZE_MISMATCH'],
     ['wrong attachment hash',[exactFile],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']
-  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:files.map(file=>({...file,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}))});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
+  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:files.map(file=>({...file,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}))});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
 }
 
 // Duplicate response is semantic, not whitespace-sensitive.
@@ -502,19 +508,19 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
 
 // Final boundary: naming a required executable/input artifact is not possession of its bytes.
 {
-  const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);
   if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
   const def=schema.RECORD_SCHEMAS.tests,fields={VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}};
   for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
   fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='FIXTURE_EXTERNAL_TOOL';fields.EXECUTABLE_KIND='NONE';fields.ARTIFACT_REQUIREMENTS='fixture.js';
   e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
-  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  let prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr});
   if(!prepared.validation.valid)throw new Error('Stage 06 future artifact requirement was rejected before execution readiness: '+JSON.stringify(prepared.validation.issues));
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Stage 06 incorrectly required execution bytes while accepting a test definition.');
   const sha='a'.repeat(64);
   e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
-  e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
-  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});
+  issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
+  prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
   if(!prepared.validation.valid)throw new Error('Byte-backed TEST artifact fixture was otherwise invalid: '+JSON.stringify(prepared.validation.issues));
   const proposedTest=prepared.proposal?.canonicalRecords?.tests?.[0],proposedEvidence=prepared.proposal?.evidence?.[0];
@@ -555,11 +561,11 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
 
 // Explicit returned-file slot regression. Filename and picker order are not authority.
 {
-  const p=project('JOB-EXPLICIT-ATTACHMENT-SLOTS'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  const p=project('JOB-EXPLICIT-ATTACHMENT-SLOTS'),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);
   const contents=['first\n','second\n'],files=contents.map((text,i)=>({artifactId:`RETURNED-ARTIFACT-${i}`,name:`returned-${i}.txt`,type:'text/plain',size:new TextEncoder().encode(text).byteLength,sha256:globalThis.closedLoopHash.sha256Text(text)}));
-  e.attachments=files.map((file,i)=>({temporaryKey:`slot-${i}`,filename:file.name,mediaType:file.type,byteSize:file.size,sha256:file.sha256,required:true}));e.evidence[0].attachmentRef={tempKey:'slot-0'};
+  e.attachments=files.map((file,i)=>({temporaryKey:`slot-${i}`,filename:file.name,mediaType:file.type,byteSize:file.size,sha256:file.sha256,required:true}));issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'slot-0'};
   const slots=ingestion.attachmentSlotPlan(p,e,pr),mapped=files.map((file,i)=>({...file,attachmentSlotId:slots[i].attachmentSlotId}));
-  const check=selected=>ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:selected});
+  const check=selected=>ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:selected});
   for(const [name,selected] of [
     ['filename-alone',files],['picker-order-without-slots',[...files].reverse()],
     ['swapped-slots',mapped.map((file,i)=>({...file,attachmentSlotId:slots[1-i].attachmentSlotId}))],
@@ -568,7 +574,7 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
     ['stale-slot',[{...mapped[0],attachmentSlotId:'ATTACHMENT-SLOT-STALE'},mapped[1]]]
   ]){const result=check(selected);if(result.validation.valid)throw new Error(`Attachment-slot mutation accepted: ${name}`);if(result.project.projectData.acceptedChanges.length||result.project.projectData.artifacts.length)throw new Error('Rejected returned files mutated canonical records.');negativeCount++;}
   const valid=check([...mapped].reverse());if(!valid.validation.valid)throw new Error(`Explicit reverse-order slot mapping rejected: ${JSON.stringify(valid.validation.issues)}`);
-  const captured=ingestion.captureRaw(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  const captured=ingestion.captureRaw(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr});
   const failed=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId});
   if(failed.validation.valid)throw new Error('Missing returned slots were not rejected.');
   const rebound=ingestion.bindAttachmentSlots(failed.project,{rawResponseId:captured.rawRecord.rawResponseId,files:mapped});
@@ -593,9 +599,9 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
     ['re\u0301sume\u0301.txt','re\u0301sume\u0301.txt',null],
     ['中文-🙂.txt','中文-🙂.txt',null]
   ]){
-    const p=project('JOB-FILENAME-GATE'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),text='Exact bytes\n',sha256=globalThis.closedLoopHash.sha256Text(text);
-    e.attachments=[{temporaryKey:'name-check',filename:declared,mediaType:'text/plain',byteSize:new TextEncoder().encode(text).byteLength,sha256,required:true}];e.evidence[0].attachmentRef={tempKey:'name-check'};
-    const slot=ingestion.attachmentSlotPlan(p,e,pr)[0],files=[{artifactId:'FILENAME-FILE',name:selected,type:'text/plain',size:e.attachments[0].byteSize,sha256,attachmentSlotId:slot.attachmentSlotId}],result=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files});
+    const p=project('JOB-FILENAME-GATE'),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr),text='Exact bytes\n',sha256=globalThis.closedLoopHash.sha256Text(text);
+    e.attachments=[{temporaryKey:'name-check',filename:declared,mediaType:'text/plain',byteSize:new TextEncoder().encode(text).byteLength,sha256,required:true}];issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'name-check'};
+    const slot=ingestion.attachmentSlotPlan(p,e,pr)[0],files=[{artifactId:'FILENAME-FILE',name:selected,type:'text/plain',size:e.attachments[0].byteSize,sha256,attachmentSlotId:slot.attachmentSlotId}],result=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files});
     if(expected){if(result.validation.valid||!result.validation.issues.some(issue=>issue.code===expected))throw new Error('FILENAME_GATE_ORACLE '+JSON.stringify({declared,expected,issues:result.validation.issues}));negativeCount++;}
     else {if(!result.validation.valid)throw new Error('FILENAME_VALID_ORACLE '+JSON.stringify(result.validation.issues));const accepted=ingestion.commit(result.project,result.proposal.proposalId),artifact=accepted.project.projectData.artifacts.at(-1);if(artifact.FILENAME!==selected||artifact.rawFilename!==selected||artifact.canonicalPath!==globalThis.closedLoopHash.pinnedNFC(selected))throw new Error('FILENAME_RAW_PRESERVATION_ORACLE');}
     checked.push({declared,expected,result:'PASS'});

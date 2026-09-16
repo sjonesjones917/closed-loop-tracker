@@ -11,7 +11,7 @@ globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,hash=globalThis.closedLoopHash;
 const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory});
-const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,stages:[],operations:[],failures:[],complete:false};
+const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,viewportChecks:[],stages:[],operations:[],failures:[],complete:false};
 let snapshot,stage=1,sequence=0,rejected=false,reloaded=false;
 function preserveReport(){
  report.events=browser.events;
@@ -41,12 +41,39 @@ async function external(){
   const contextFiles=manifest.contextFiles.map(required=>{const actual=members.find(member=>member.canonicalPath===required.path);assert.ok(actual,`Missing context ${required.path}`);assert.equal(digest(actual.bytes),required.sha256);assert.equal(actual.bytes.length,required.byteSize);return {filename:required.path,bytes:Buffer.from(actual.bytes),sha256:digest(actual.bytes)};});
   const p=await saved(),prompt=p.projectData.generatedPrompts.find(row=>row.instructionId===manifest.promptIdentity.instructionId);assert.ok(prompt);assert.equal(prompt.bodySha256,instruction.sha256);
   const request=responseFixture({schema,engine,prompt,manifest,contextFiles,instructionBytes:instruction.bytes,omitTerminalLF:stage===11&&!report.operations.some(row=>row.stage===11)});
-  if(stage===21){request.attachments=[{temporaryKey:'finished-product',filename:'result.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(OUTPUT),sha256:digest(Buffer.from(OUTPUT)),required:true}];request.evidence[0].attachmentRef={tempKey:'finished-product'};}
+  if(stage===21){const slot=manifest.attachmentSlots.find(item=>item.role==='FINISHED_PRODUCT'&&item.required);assert.ok(slot,'The exported package must issue a required finished-product slot before execution.');request.attachments=[{attachmentSlotId:slot.attachmentSlotId,role:slot.role,temporaryKey:'finished-product',filename:'result.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(OUTPUT),sha256:digest(Buffer.from(OUTPUT)),required:true}];request.evidence[0].attachmentRef={tempKey:'finished-product'};}
   if(!rejected){await ingest({...request,jobId:'WRONG-PROJECT'},{invalid:true});rejected=true;if(await browser.exists('#prepare-replacement-attempt'))await browser.click('#prepare-replacement-attempt');return;}
   await ingest(request);
 }
 try{
-  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Complete operator journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');assert.equal(await browser.evaluate(`document.querySelector('[data-view="Workflow"]')?.getAttribute('aria-selected')==='true'`),true,'Saving project information did not advance to Workflow.');assert.equal(await browser.visible('#next-required-action'),true,'Saving project information did not place the next required action in the viewport.');await saved();
+  // Independent fresh browser contexts exercise the real Save -> Workflow ->
+  // Export path at both additional required sizes. This is responsive Chrome,
+  // not a physical-device or independent-human acceptance assertion.
+  for(const [width,height]of [[320,568],[1280,800]]){
+    const check=await createOperatorBrowser({directory:path.join(directory,'viewport-'+width),width,height});
+    try{
+      await check.click('#new-project');
+      await check.fill('[data-job="JOB_TITLE"]','Operator action viewport '+width);
+      await check.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);
+      await check.click('#save-job');
+      assert.equal(await check.visible('#next-required-action'),true,'The actionable summary must fit the '+width+'px viewport after Save');
+      assert.equal(await check.visible('#next-required-action #next-export-prompt-file'),true,'The actual export control, not merely its heading, must be visible at '+width+'px');
+      const view=await check.inspect(1);
+      assert.match(view.action,/Current state:/);
+      assert.match(view.action,/Who acts:/);
+      const [file]=await check.download('#next-export-prompt-file');
+      const members=readStoreArchive(file.bytes);
+      assert.ok(members.some(member=>member.canonicalPath==='instruction.txt'));
+      assert.ok(members.some(member=>member.canonicalPath==='manifest.json'));
+      await check.click('[data-view="Project"]');
+      await check.click('[data-view="Workflow"]');
+      assert.equal(await check.visible('#next-required-action'),true,'Workflow navigation lost the next action at '+width+'px');
+      assert.equal(await check.visible('#next-export-prompt-file'),true,'Workflow navigation lost the primary control at '+width+'px');
+      assert.equal(check.exceptions().length,0,'Viewport check raised a browser exception');
+      report.viewportChecks.push({width,height,result:'PASS',view,exportSha256:file.sha256,events:check.events});preserveReport();
+    }finally{await check.close();}
+  }
+  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Complete operator journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');assert.equal(await browser.evaluate(`document.querySelector('[data-view="Workflow"]')?.getAttribute('aria-selected')==='true'`),true,'Saving project information did not advance to Workflow.');assert.equal(await browser.visible('#next-required-action'),true,'Saving project information did not place the next required action in the viewport.');assert.equal(await browser.visible('#next-required-action #next-export-prompt-file'),true,'The actual Stage 01 export control is not inside the visible next-action region.');await saved();
   for(stage=1;stage<=30;stage++){
     await browser.fill('#stage-picker',stage);const start=report.operations.length;
     for(let steps=0;steps<80;steps++){
