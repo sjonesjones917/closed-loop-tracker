@@ -12,7 +12,10 @@ function runtime(fault=null){
  let implementation=parser;
  if(fault){assert.ok(implementation.includes(fault.before),'Implementation fault anchor must exist');implementation=implementation.replace(fault.before,fault.after);}
  implementation=implementation.replace('for(let i=0;i<text.length;i++){','for(let i=0;i<text.length;i++){globalThis.parserSteps++;');
- const context=vm.createContext({Blob,TextDecoder,DecompressionStream,setTimeout,parserSteps:0});
+ const context=vm.createContext({Blob,TextEncoder,TextDecoder,DecompressionStream,setTimeout,clearTimeout,parserSteps:0});
+ // Preserve the parser's production read deadline rather than replacing it
+ // with a pass-through in this extracted-function fixture.
+ vm.runInContext(fs.readFileSync('hash.js','utf8')+'\nglobalThis.hash=closedLoopHash;',context,{filename:'hash.js'});
  vm.runInContext(implementation+'\nglobalThis.decode=readPackageJson;',context);
  return context;
 }

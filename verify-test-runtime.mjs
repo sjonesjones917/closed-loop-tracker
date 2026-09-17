@@ -1,5 +1,5 @@
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
-const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('hash.js','utf8'),context,{filename:'hash.js'});vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const runtime=context.closedLoopTestRuntime;
+const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto,setTimeout,clearTimeout};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('hash.js','utf8'),context,{filename:'hash.js'});vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const runtime=context.closedLoopTestRuntime;
 assert.equal(runtime.CAPABILITY,'CLOSED_LOOP_TEST_IR');assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');assert.ok(runtime.OPS.includes('BYTE_COMPARE'));assert.ok(!runtime.OPS.some(x=>/JAVASCRIPT|PYTHON|SHELL/i.test(x)));
 const invalid=runtime.validateSpec({version:runtime.SPEC_VERSION,steps:[{op:'ASSERT_EQ',value:1,javascript:'alert(1)'}]});assert.equal(invalid.valid,false);
 const test={EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runtime.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-1'},EXECUTABLE_SPEC:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.records'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}]}};assert.equal(runtime.supports(test),true);
@@ -8,7 +8,7 @@ const failed=await runtime.execute({spec:{...test.EXECUTABLE_SPEC,steps:[...test
 
 // Stage 04 consumes canonical Stage 01 + Stage 03 output. A filename in Stage 01's supplied-
 // material inventory is not an application-observed requirement to re-upload bytes.
-const appContext={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true};
+const appContext={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto,setTimeout,clearTimeout,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true};
 appContext.globalThis=appContext;vm.createContext(appContext);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),appContext,{filename:file});
 const core=appContext.closedLoopCore,schema=appContext.closedLoopWorkflowSchema,engine=appContext.closedLoopWorkflowEngine,prompts=appContext.closedLoopPromptEngine;
@@ -48,7 +48,7 @@ const preparedNative=vm.runInContext('nativeTestInputs(nativeBindingTest,nativeS
 assert.equal(appContext.nativeRowReads,1);assert.equal(deduplicatedFullReads,1);assert.equal(preparedInputs.artifactPayload.PRODUCT.bytes.buffer,preparedInputs.artifactPayload.ALIAS.bytes.buffer);assert.equal(appContext.current.job.JOB_ID,'NATIVE-SNAPSHOT-B');assert.equal(new TextDecoder().decode(preparedInputs.artifactPayload.PRODUCT.bytes),'{"records":[1,2]}');
 // Transferring is opt-in for buffers owned by this UI execution. Default callers
 // keep their buffers, and every execution still gets a fresh terminated worker.
-context.setTimeout=setTimeout;context.clearTimeout=clearTimeout;const workerPackets=[];let createdWorkers=0,terminatedWorkers=0;
+const workerPackets=[];let createdWorkers=0,terminatedWorkers=0;
 class TransferWorker{constructor(){createdWorkers++;}terminate(){terminatedWorkers++;}postMessage(message,transfers=[]){workerPackets.push({transfers:transfers.length,message:structuredClone(message,{transfer:transfers})});this.onmessage({data:{requestId:message.requestId,ok:true,result:{status:'COMPLETE',determination:'SATISFIED'}}});}}
 const ownedBytes=new Uint8Array([1,2,3]);await runtime.executeTest(test,{PRODUCT:{bytes:ownedBytes},ALIAS:{bytes:ownedBytes}},{},{Worker:TransferWorker,transferInputBuffers:true});assert.equal(ownedBytes.byteLength,0);assert.equal(workerPackets[0].transfers,1);assert.deepEqual(Array.from(workerPackets[0].message.artifacts.PRODUCT.bytes),[1,2,3]);
 const retainedBytes=new Uint8Array([4,5,6]);await runtime.executeTest(test,{PRODUCT:{bytes:retainedBytes}},{},{Worker:TransferWorker});assert.equal(retainedBytes.byteLength,3);assert.equal(workerPackets[1].transfers,0);assert.equal(createdWorkers,2);assert.equal(terminatedWorkers,2);

@@ -1,0 +1,72 @@
+{
+  "schema": "closed-loop-runtime-host-replay/1",
+  "candidate": "repair/complete-conformance-continuation-20260914",
+  "pullRequest": 1242,
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "Linux container",
+    "syntheticHostBoundaries": true,
+    "actualBrowser": false
+  },
+  "replays": [
+    {
+      "command": "node verify-test-runtime.mjs",
+      "sourceRevision": "5804711a2e59c7872b0997a8a325bbd1c516fe17",
+      "originalVerifierSha256": "6722961862dd658cc8f0603f43b4bac431101bf8753a01afb8faf10513a4909d",
+      "correctedVerifierSha256": "d87e777912c758d12f5e5adf4685e4a37a4b1e22f0385d7b042df1cc910094b3",
+      "before": {
+        "exitCode": 1,
+        "rawOutput": "verification/runtime-host-closure/test-runtime-before.log"
+      },
+      "after": {
+        "exitCode": 0,
+        "rawOutput": "verification/runtime-host-closure/test-runtime-after.log"
+      }
+    },
+    {
+      "command": "node verify-backup-json-stream.mjs",
+      "sourceRevision": "5804711a2e59c7872b0997a8a325bbd1c516fe17",
+      "originalVerifierSha256": "da493e81d770a5a3d0058faf3b35d5b9d2805c6b67a2b3a8ad58190ab2df8627",
+      "correctedVerifierSha256": "26b01d764980a6d52e4e5ac58d4578ada183611c6b4c13c683439a98b6a110fc",
+      "before": {
+        "exitCode": 1,
+        "rawOutput": "verification/runtime-host-closure/backup-parser-before.log"
+      },
+      "after": {
+        "exitCode": 0,
+        "rawOutput": "verification/runtime-host-closure/backup-parser-after.log"
+      }
+    }
+  ],
+  "unchangedProductionDependencies": [
+    {
+      "path": "hash.js",
+      "sha256": "1245c02d1d06bfebb3604c046f7750464a53c9705261bc9c9c813221b3e797db",
+      "sameBytesAsStartingHead": true
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "8af52bc79e07852deb86a170ac79976d4d83bd118637dcc73f53e11653a61264",
+      "sameBytesAsStartingHead": true
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "eea4841ea705237ba2dec7c9bda34e9d831078fbeab0774737dea8a42e46efdf",
+      "sameBytesAsStartingHead": true
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "57a388ba1c833a3d4844aec0658f16b9e617d0701a881fb969339195da6627a6",
+      "sameBytesAsStartingHead": true
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+      "sameBytesAsStartingHead": true
+    }
+  ],
+  "fullCandidateCiPassed": false,
+  "deploymentVerified": false,
+  "overallRequirementStatus": "UNVERIFIED",
+  "reason": "Focused executions do not substitute for the required full integrated candidate, browser and deployment proof."
+}
