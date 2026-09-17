@@ -127094,6 +127094,29 @@
         "restoration"
       ],
       "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "HARNESS-LIFECYCLE-SOURCE-CLOSURE",
+      "sourceLocation": "Task sections 7–8: executable regressions and earliest responsible layer; specification section 0",
+      "productionOwner": "app-core.js:readApplicationResource, retainedProjectForBuild, startClosedLoopApp; project-store.js:openDatabase; index.html:closed-loop-startup-guard",
+      "testOwner": "verify-project-lifecycle.mjs and verify-project-lifecycle-full.mjs",
+      "observableExpectedBehavior": "The lifecycle verifier executes the actual resource-reader, database-open and startup-feedback owners with their native host dependencies. A blocked upgrade produces its actual actionable startup error. A concurrent edit made during retained-project fetch remains preserved; an unchanged build fetches the bundled project once. No prototype monkeypatch or synthesized success feedback substitutes for those owners.",
+      "requiredEvidence": [
+        "node verify-project-lifecycle.mjs baseline and corrected raw output",
+        "startup:retained-refresh-keeps-snapshot-revision",
+        "startup:unchanged-build-reuses-retained-project",
+        "database:blocked-upgrade-visible-recovery",
+        "production startup and resource deadline fault cases",
+        "complete required CI"
+      ],
+      "applicableStages": "Session startup before every workflow stage",
+      "applicableOperations": [
+        "startup",
+        "retained project refresh",
+        "reload",
+        "blocked database recovery"
+      ],
+      "status": "UNVERIFIED"
     }
   ],
   "continuations": [
