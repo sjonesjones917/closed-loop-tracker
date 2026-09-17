@@ -1,0 +1,38 @@
+name: Apply accepted-proposal focus repair
+on:
+  push:
+    branches:
+      - repair/complete-conformance-continuation-20260914
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/complete-conformance-continuation-20260914
+      - name: Apply exact production repair and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('app-core.js')
+          text = path.read_text()
+          old = "current.activeStage=canonicalCurrentStage();current.activeView='Workflow';render();focusAfterAction($('#next-required-action'));\n}\nasync function confirmReplacement"
+          new = "current.activeStage=canonicalCurrentStage();current.activeView='Workflow';render();focusAfterAction($('#next-required-action'),{reason:'RETURN'});\n}\nasync function confirmReplacement"
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one accepted-proposal focus site, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+          node --check app-core.js
+          git rm .github/workflows/apply-focus-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'Fix accepted-proposal return focus'
+          git push origin HEAD:repair/complete-conformance-continuation-20260914
