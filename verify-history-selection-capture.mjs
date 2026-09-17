@@ -12,7 +12,7 @@ Object.assign(runtime,{current:p,projectStore:store,historyState:await store.his
 let source=fs.readFileSync('app-core.js','utf8');
 if(process.argv.includes('--fault=late-history-selection'))source=source.replace("bindAction('#history-restore',selection=>restoreHistoryVersion(selection.checkpointId,{jobId:selection.jobId}),'Restoring saved version',{capture:()=>({checkpointId:$('#history-version').value,jobId:targetJobId})});","bindAction('#history-restore',()=>restoreHistoryVersion($('#history-version').value,{jobId:targetJobId}),'Restoring saved version');");
 const extract=(start,end)=>{const i=source.indexOf(start),j=source.indexOf(end,i+start.length);assert.ok(i>=0&&j>i);return source.slice(i,j);};
-vm.runInContext(extract('function setControlDisabled(','function paintOperatorAction(')+extract('function runOperatorAction(','function focusAfterAction(')+extract('function bindAction(','function bindFileAction(')+extract('function paintHistory(','async function captureCurrentView('),runtime);
+vm.runInContext(extract('const OPERATION_LOADING_THRESHOLD_MS=','let core,schema,engine,')+extract('function setControlDisabled(','function paintOperatorAction(')+extract('function runOperatorAction(','function focusAfterAction(')+extract('function bindAction(','function bindFileAction(')+extract('function paintHistory(','async function captureCurrentView('),runtime);
 const cases=[];
 for(const target of targets.slice(0,-1).reverse()){
  runtime.historyState=await store.historyList(p.job.JOB_ID);runtime.paintHistory();nodes.get('#history-version').value=target.id;

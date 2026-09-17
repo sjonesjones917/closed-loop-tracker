@@ -111,7 +111,14 @@ async function main(){
   const historyExport=await evaluate(cdp,`(async()=>{const blob=globalThis.__historyExportBlob,payload=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text()),{packageSha256,...body}=payload,rows=payload.project.projectData.rawResponses;return {jobId:payload.project.job.JOB_ID,records:rows.length,lastRecordComplete:rows.at(-1).rawText.endsWith('é🙂TAIL-599'),rawCharacters:rows.reduce((sum,row)=>sum+row.rawText.length,0),hashVerified:closedLoopHash.sha256Value(body)===packageSha256};})()`);
   assert(historyExport.jobId==='BROWSER-ACCUMULATED-HISTORY'&&historyExport.records===600&&historyExport.lastRecordComplete&&historyExport.rawCharacters>=48000000&&historyExport.hashVerified,`Complete accumulated export lost bytes or identity: ${JSON.stringify(historyExport)}`);
   await evaluate(cdp,`(()=>{URL.createObjectURL=globalThis.__historyCreateUrl;delete globalThis.__historyExportBlob;})()`);
-  await evaluate(cdp,`closedLoopProjectStore.removeProject('BROWSER-ACCUMULATED-HISTORY')`);
+  // Removal belongs to the application's operation owner, which captures the
+  // departing view and excludes concurrent scroll checkpoints before committing.
+  await click(cdp,'[data-view="Project"]',60000);
+  await click(cdp,'#project-danger-zone>summary',60000);
+  await fill(cdp,'#delete-project-confirmation','BROWSER-ACCUMULATED-HISTORY');
+  await click(cdp,'#delete-project',60000);
+  await waitFor(cdp,`closedLoopProjectStore.readProject('BROWSER-ACCUMULATED-HISTORY').then(project=>!project)`,60000);
+  assert(await evaluate(cdp,`closedLoopProjectStore.historyList('BROWSER-ACCUMULATED-HISTORY').then(history=>history.removed&&history.entries.length>0)`),'Project removal lost promised History.');
   // Real IndexedDB custody, paged Files controls and complete export with an
   // accumulated file set. A whole-file read fails at the actual Blob boundary.
   const fileCustody=await evaluate(cdp,`(async()=>{
