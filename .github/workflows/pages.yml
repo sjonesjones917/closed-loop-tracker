@@ -61,6 +61,32 @@ jobs:
             node --check "$file"
           done
 
+      - name: Acceptance viewport regression and targeted layout fault
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node build-test-project.mjs
+          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log
+
+      - name: Preserve acceptance viewport observations
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: acceptance-viewport-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            acceptance-viewport-evidence/acceptance-viewport.json
+            acceptance-viewport-evidence/*/stage-*.png
+            acceptance-viewport-evidence/*/downloads/
+            /tmp/acceptance-viewport.log
+          if-no-files-found: warn
+
       - name: Deployment manifest, build identity, and reproducibility
         run: |
           set -euo pipefail
