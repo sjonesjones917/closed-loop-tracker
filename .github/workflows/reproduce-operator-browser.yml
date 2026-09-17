@@ -1,0 +1,67 @@
+name: Reproduce candidate operator browser failure
+on:
+  push:
+    branches: [repair/complete-conformance-continuation-20260914]
+    paths:
+      - .github/workflows/reproduce-operator-browser.yml
+      - verify-action-viewport.mjs
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Record exact baseline and retrieve untruncated original failure log
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p browser-reproduction
+          git rev-parse HEAD > browser-reproduction/source-commit.txt
+          sha256sum app-core.js index.html specification/closed-loop-reliability-controlling-implementation-specification.txt > browser-reproduction/source-hashes.txt
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            https://api.github.com/repos/sjonesjones917/closed-loop-tracker/actions/jobs/105056654500/logs \
+            -o browser-reproduction/original-job-105056654500.log
+      - name: Build and reproduce actual viewport path without production changes
+        env:
+          BROWSER: /usr/bin/google-chrome
+          VIEWPORT_EVIDENCE_DIR: browser-reproduction/viewport
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs > browser-reproduction/build-test-project.log 2>&1
+          node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID" > browser-reproduction/build.json
+          python3 -m http.server 4173 --directory _site > browser-reproduction/http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          set +e
+          timeout --signal=TERM --kill-after=10s 10m node verify-action-viewport.mjs > browser-reproduction/viewport.raw.log 2>&1
+          RESULT=$?
+          set -e
+          printf '%s\n' "$RESULT" > browser-reproduction/viewport.exit
+          cat browser-reproduction/viewport.raw.log
+          exit "$RESULT"
+      - name: Preserve reproduction source, geometry, screenshots and raw logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: browser-reproduction-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            browser-reproduction/source-commit.txt
+            browser-reproduction/source-hashes.txt
+            browser-reproduction/original-job-105056654500.log
+            browser-reproduction/build-test-project.log
+            browser-reproduction/build.json
+            browser-reproduction/http.log
+            browser-reproduction/viewport.raw.log
+            browser-reproduction/viewport.exit
+            browser-reproduction/viewport/viewport.json
+            browser-reproduction/viewport/*/stage-*.png
+          if-no-files-found: error
