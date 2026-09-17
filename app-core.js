@@ -749,7 +749,7 @@ async function finishAcceptedProposal(acceptance){
  const continuation=safe(current.projectData.generatedPrompts).find(prompt=>prompt.instructionId===continuationInstructionId&&!prompt.invalidatedBy);
  if(continuation)selectStageContinuation(continuation);
  announce(continuation?'Stage '+String(stage).padStart(2,'0')+' is not complete; the next instruction is saved and ready to export':current.stages[stage]?.gate?.complete?`response accepted; Stage ${String(stage).padStart(2,'0')} is complete`:`response saved; Stage ${String(stage).padStart(2,'0')} has not passed its completion gate`);
- current.activeStage=canonicalCurrentStage();current.activeView='Workflow';render();focusAfterAction($('#next-required-action'));
+ current.activeStage=canonicalCurrentStage();current.activeView='Workflow';render();focusAfterAction($('#next-required-action'),{reason:'RETURN'});
 }
 async function confirmReplacement(){
  if(!replacementReview?.next)return acceptPendingProposal(false);
