@@ -26,7 +26,16 @@ c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:fractional.id,
 c.ui.focus(fractional);
 assert.ok(fractionalRect.bottom<=c.innerHeight,'FOCUS_FRACTIONAL_EDGE_ORACLE: nearest scrolling left the actual action clipped');
 assert.ok(calls.find(call=>call.type==='residual-scroll')?.options.top>0,'Fractional correction must move forward, not upward');
-cases.push({caseId:'FOCUS-FRACTIONAL-EDGE',result:'PASS',bottomAfterCorrection:fractionalRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;
+cases.push({caseId:'FOCUS-FRACTIONAL-EDGE',result:'PASS',bottomAfterCorrection:fractionalRect.bottom,viewportHeight:c.innerHeight});calls.length=0;
+// A render can settle a fractional pixel after the synchronous focus pass.
+// The shared authority must recheck after layout without another operator action.
+const settledRect={top:760,bottom:851.75,width:300,height:91.75},settled=element('settled-next-action',settledRect);
+settled.scrollIntoView=options=>{calls.push({type:'scroll',id:settled.id,options});settledRect.top=759.625;settledRect.bottom=852.375;};
+c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:settled.id,options});settledRect.top-=options.top;settledRect.bottom-=options.top;};
+c.ui.focus(settled);settledRect.bottom=852.375;settledRect.top=760.625;await paint();
+assert.ok(settledRect.bottom<=c.innerHeight,'FOCUS_POST_LAYOUT_FRACTIONAL_ORACLE: the next action became clipped after layout settled');
+assert.ok(calls.some(call=>call.type==='residual-scroll'&&call.id===settled.id&&call.options.top>0),'Post-layout fractional correction did not expose the action');
+cases.push({caseId:'FOCUS-POST-LAYOUT-FRACTIONAL-EDGE',result:'PASS',bottomAfterCorrection:settledRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;
 const forwardAbove=element('forward-above',{top:-220,bottom:-176,left:0,right:300,width:300,height:44});c.ui.focus(forwardAbove);assert.equal(calls.some(x=>x.type==='scroll'),false,'FOCUS_FORWARD_UP_ORACLE: ordinary forward progress must not auto-scroll upward.');cases.push({caseId:'FOCUS-NO-UPWARD-SCROLL-FOR-FORWARD-PROGRESS',result:'PASS'});calls.length=0;
 // UX-003: acceptance is forward progress, not an operator-requested return.
 // The real browser journey separately requires the sticky action to be visible.
