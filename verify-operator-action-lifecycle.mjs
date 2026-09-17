@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 // Execute the real UI bindings with a deliberately delayed storage boundary.
-// The oracle is the operator contract: one action, visible progress before work,
-// no concurrent mutation, and usable controls after success or failure.
+// The oracle is the operator contract: one action, immediate duplicate lockout,
+// delayed progress only past the configured threshold, and usable controls after completion.
 let source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 if(process.argv.includes('--fault=obsolete-recovery-control')){
  const before='setControlDisabled(undo,!previous);';
@@ -48,8 +48,11 @@ for(const stage of [1]){
   const duplicate=nodes.get('#save-prompt').onclick();
   await paint();
   assert.equal(entered,1,`Stage ${stage}: repeated click started another operation.`);
-  assert.equal(nodes.get('#app-operation-status').hidden,false,`Stage ${stage}: no visible action feedback while waiting.`);
+  assert.equal(nodes.get('#app-operation-status').hidden,true,`Stage ${stage}: sub-threshold action displayed a loading indicator.`);
   assert.equal(nodes.get('#save-prompt').disabled,true,`Stage ${stage}: repeated action remains enabled.`);
+  await new Promise(resolve=>setTimeout(resolve,1510));await paint();
+  assert.equal(nodes.get('#app-operation-status').hidden,false,`Stage ${stage}: over-threshold action has no visible loading indicator.`);
+  assert.equal(nodes.get('#operation-label').textContent,'Working: current action',`Stage ${stage}: loading indicator is not bound to the actual action.`);
   release();await Promise.all([first,duplicate]);await paint();
   assert.equal(nodes.get('#save-prompt').disabled,false,`Stage ${stage}: successful completion left controls disabled.`);
   assert.equal(nodes.get('#app-operation-status').hidden,true,`Stage ${stage}: completed action still appears to run.`);

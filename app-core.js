@@ -3,6 +3,13 @@ const RUNTIME_BUILD_ID=(()=>{try{return document.currentScript?.src?new URL(docu
 const TAB_INSTANCE_ID=(()=>{try{return `TAB-${crypto.randomUUID()}`;}catch{const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);return `TAB-${[...bytes].map(value=>value.toString(16).padStart(2,'0')).join('')}`;}})();
 const $=s=>document.querySelector(s),safe=v=>Array.isArray(v)?v:[],clone=v=>v===undefined?undefined:structuredClone(v),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const views=['Overview','Project','Workflow','Records','Files','Release'];
+const OPERATION_LOADING_THRESHOLD_MS=1500;
+const OPERATION_LATENCY_SAMPLE_LIMIT=512;
+const operationLatencySamples=[];
+const operationClock=()=>Number(globalThis.performance?.now?.()??Date.now());
+function recordOperationLatency(kind,label,startedAt,outcome){const durationMs=operationClock()-startedAt;operationLatencySamples.push({kind:String(kind||'operation'),label:String(label||'Operation'),durationMs,outcome:String(outcome||'COMPLETED'),thresholdMs:OPERATION_LOADING_THRESHOLD_MS});if(operationLatencySamples.length>OPERATION_LATENCY_SAMPLE_LIMIT)operationLatencySamples.splice(0,operationLatencySamples.length-OPERATION_LATENCY_SAMPLE_LIMIT);return durationMs;}
+function operationLatencyEvidence(){return {thresholdMs:OPERATION_LOADING_THRESHOLD_MS,sampleLimit:OPERATION_LATENCY_SAMPLE_LIMIT,samples:operationLatencySamples.map(sample=>({...sample}))};}
+globalThis.closedLoopOperationLatencyEvidence=operationLatencyEvidence;
 let core,schema,engine,ingestion,projectStore,projects=[],current,acceptanceSession=null,projectUi={},projectStorage={artifactCount:0,byteSize:0,integrity:'NOT CHECKED',lastVerifiedAt:null,lastBackup:null,mismatches:[]};
 const operationSelection={},runSelection={},responseFileSelection={},fileSelectionDrafts={};
 const stageContinuationErrors=new Map();
@@ -34,8 +41,8 @@ let actionFailureNotice=null;
 function reportActionFailure(error){
  if(error?.code==='MUTATION_REVIEW_SHOWN')return;
  const message=String(error?.message||error||'The action could not be completed.');announce(message);
- const report=$('.next-action-panel > .notice')||$('#screen .notice')||$('#screen .section-intro');
- if(report){actionFailureNotice={node:report,text:report.textContent,className:report.className};report.textContent=message.slice(0,4096);report.classList.add('notice','danger');report.setAttribute('tabindex','-1');}
+ const report=$('#operation-error')||$('.next-action-panel > .notice')||$('#screen .notice')||$('#screen .section-intro');
+ if(report){actionFailureNotice={node:report,text:report.textContent,className:report.className,hidden:report.hidden};report.hidden=false;report.textContent=message.slice(0,4096);report.classList.add('notice','danger');report.setAttribute('tabindex','-1');}
  const control=error?.control?$(error.control):null;
  if(control){actionFocusTarget=control;for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;control.focus();}else{report?.scrollIntoView({block:'nearest'});report?.focus();}
 }
@@ -51,8 +58,10 @@ function setControlDisabled(control,disabled){
 }
 function paintOperatorAction(){
   const status=$('#app-operation-status'),text=$('#operation-label'),app=$('#app');
-  if(status)status.hidden=!(operatorActionInFlight||restoringHistory);
-  if(text&&operatorActionInFlight)text.textContent=operatorActionInFlight.label;
+  const operationVisible=Boolean(operatorActionInFlight?.visible),restoreVisible=Boolean(restoringHistory&&historyRestoreVisible);
+  if(status)status.hidden=!(operationVisible||restoreVisible);
+  if(text&&operationVisible)text.textContent=operatorActionInFlight.label;
+  else if(text&&restoreVisible)text.textContent='Restoring project and verifying saved files…';
   if(operatorActionInFlight||restoringHistory){
     app?.setAttribute('aria-busy','true');
     for(const control of document.querySelectorAll('button,input,select,textarea')){
@@ -69,18 +78,20 @@ function runOperatorAction(label,operation){
   // One pending UI action owns the selected project and controls until it ends.
   // Storage still performs its own revision, identity, and transaction checks.
   if(operatorActionInFlight)return operatorActionInFlight.promise;
-  const pending={label,promise:null,activationId:current?.historyActivationId||null};operatorActionInFlight=pending;
-  paintOperatorAction();announce(label);
+  const pending={label,promise:null,activationId:current?.historyActivationId||null,visible:false,startedAt:operationClock(),timer:null};operatorActionInFlight=pending;
+  pending.timer=setTimeout(()=>{if(operatorActionInFlight!==pending)return;pending.visible=true;paintOperatorAction();announce(label);},OPERATION_LOADING_THRESHOLD_MS);
+  paintOperatorAction();
   pending.promise=(async()=>{
-    // Give the visible status a paint before hashing, validation, or derivation.
+    // Yield once so control disabling is painted before potentially expensive work.
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    let outcome='COMPLETED';
     try{if(globalThis.history?.state?.closedLoopHistory)await captureCurrentView();return await operation();}
-    catch(error){reportActionFailure(error);}
-    finally{if(operatorActionInFlight===pending){try{if((current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}catch(error){reportActionFailure(error);}operatorActionInFlight=null;paintOperatorAction();if(actionFocusTarget?.isConnected)actionFocusTarget.focus();actionFocusTarget=null;}}
+    catch(error){outcome='FAILED';reportActionFailure(error);}
+    finally{clearTimeout(pending.timer);recordOperationLatency('operator',label,pending.startedAt,outcome);if(operatorActionInFlight===pending){try{if((current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}catch(error){reportActionFailure(error);}operatorActionInFlight=null;paintOperatorAction();const deferredFocus=actionFocusTarget;actionFocusTarget=null;if(deferredFocus?.isConnected)focusAfterAction(deferredFocus);}}
   })();
   return pending.promise;
 }
-function focusAfterAction(control){if(!control)return;if(operatorActionInFlight&&control.disabled)actionFocusTarget=control;else{control.focus({preventScroll:true});control.scrollIntoView?.({block:'start',inline:'nearest',behavior:'instant'});}}
+function focusAfterAction(control,{reason='FORWARD'}={}){if(!control)return;if(operatorActionInFlight&&control.disabled){actionFocusTarget=control;return;}for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;control.focus({preventScroll:true});const rect=control.getBoundingClientRect?.(),viewportHeight=Number(globalThis.innerHeight||document.documentElement?.clientHeight||0),below=Boolean(rect&&viewportHeight&&rect.bottom>viewportHeight),above=Boolean(rect&&rect.top<0),allowUp=reason==='CORRECTION'||reason==='RETURN'||reason==='RETRY';if(below||(above&&allowUp))control.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'instant'});}
 function bindAction(selector,operation,label,{capture}={}){
   const control=typeof selector==='string'?$(selector):selector;if(!control)return;
   control.onclick=()=>{const input=capture?.();return runOperatorAction(label||`Working: ${control.textContent.trim()||'current action'}`,()=>operation(input));};
@@ -98,10 +109,11 @@ function paintStorageActivity(){
   const label=visible[0].label+(storageActivities.size>1?` · ${storageActivities.size-1} other operation(s)`:'');node.setAttribute('data-operation',label);node.setAttribute('aria-busy','true');
 }
 async function withStorageActivity(label,operation){
-  const token={},entry={label,visible:false};storageActivities.set(token,entry);const timer=setTimeout(()=>{entry.visible=true;paintStorageActivity();const live=$('#app-live-status');if(live)live.textContent=label;},180);
-  try{return await operation();}finally{clearTimeout(timer);storageActivities.delete(token);paintStorageActivity();}
+  const token={},entry={label,visible:false,startedAt:operationClock()};storageActivities.set(token,entry);const timer=setTimeout(()=>{entry.visible=true;paintStorageActivity();const live=$('#app-live-status');if(live)live.textContent=label;},OPERATION_LOADING_THRESHOLD_MS);
+  let outcome='COMPLETED';
+  try{return await operation();}catch(error){outcome='FAILED';throw error;}finally{clearTimeout(timer);recordOperationLatency('storage',label,entry.startedAt,outcome);storageActivities.delete(token);paintStorageActivity();}
 }
-function announce(message){if(actionFailureNotice){const {node,text,className}=actionFailureNotice;if(node.isConnected){node.textContent=text;node.className=className;}actionFailureNotice=null;}const node=$('#app-live-status');if(node)node.textContent=String(message||'');}
+function announce(message){if(actionFailureNotice){const {node,text,className,hidden}=actionFailureNotice;if(node.isConnected){node.textContent=text;node.className=className;node.hidden=Boolean(hidden);}actionFailureNotice=null;}const node=$('#app-live-status');if(node)node.textContent=String(message||'');}
 const recordValue=(record,key)=>record?.[key]??record?.fields?.[key]??'';
 // UI disclosures retain references; closed panels never serialize their contents.
 const detailViews=new Map();
@@ -468,7 +480,7 @@ function files(){
   return `<div class="panel"><h2 class="section-title">Files and artifacts</h2><p class="section-intro">Hashes are calculated only from actual bytes available to the browser. Download re-verifies the stored Blob against the current canonical filename, byte size, and SHA-256 before transfer.</p>${downloads?`<div class="record-stack">${downloads}</div>`:'<div class="empty-state">No application-verified artifact bytes are currently downloadable.</div>'}${all.length?details('Recorded file identities',all,true):'<div class="empty-state">No file bytes or artifact metadata have been recorded.</div>'}</div>`;
 }
 function release(){const metrics=engine.releaseMetrics(current);return `<div class="hero release-hero"><div class="hero-top"><div><h2>Release control</h2><p>Release requires Stage 27 acceptance and exact audited-versus-delivery byte identity.</p></div><span class="status ${statusClass(metrics.determination)}">${esc(metrics.determination)}</span></div></div><div class="panel"><h2 class="section-title">Release gate</h2>${details('Calculated release metrics',metrics,true)}<div class="button-row"><button id="calculate-release-state">Recalculate release determination</button></div></div><div class="panel"><h2 class="section-title">Exact artifact identity</h2><p class="section-intro">Select the audited canonical files and the exact delivery files. The application hashes both selections. Audited selections must match one existing canonical artifact exactly; delivery selections are then compared to that canonical identity by authorized filename, byte size, and SHA-256.</p><div class="grid-2"><div class="field"><label for="audited-files">Audited canonical files</label><input id="audited-files" type="file" multiple><label for="audited-directory">or audited package folder</label><input id="audited-directory" type="file" webkitdirectory directory multiple></div><div class="field"><label for="release-files">Exact delivery files</label><input id="release-files" type="file" multiple><label for="release-directory">or delivery package folder</label><input id="release-directory" type="file" webkitdirectory directory multiple></div></div><div class="button-row"><button id="hash-audited">Verify audited selection</button><button id="hash-release">Hash delivery selection</button><button class="primary" id="compare-release">Compare exact identity</button></div>${details('Release state',current.release,true)}</div>`;}
-let historyState=null,restoringHistory=false,historyRestoreController=null,navigationSequence=0;
+let historyState=null,restoringHistory=false,historyRestoreVisible=false,historyRestoreTimer=null,historyRestoreController=null,navigationSequence=0;
 let savedDraftView=null,savedViewSignature=null,capturingViewPromise=null,historyRestoreTail=Promise.resolve();
 const APPLICATION_SESSION_ID=(()=>{try{const key='closed-loop-application-session',prior=sessionStorage.getItem(key);if(prior)return prior;const id=crypto.randomUUID();sessionStorage.setItem(key,id);return id;}catch{return TAB_INSTANCE_ID;}})();
 function captureView(){
@@ -545,11 +557,11 @@ async function navigateWithinVersion({activeView=current.activeView,activeStage=
 async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode='HISTORY',view=null,traversal=false,pendingAction=null}={}){
  if(!checkpointId)throw new Error('No retained version is available in that direction.');
  const sequence=++navigationSequence;historyRestoreController?.abort();const controller=new AbortController();historyRestoreController=controller;
- const preceding=historyRestoreTail,pendingUi=pendingAction;let release;historyRestoreTail=new Promise(resolve=>{release=resolve;});
+ const preceding=historyRestoreTail,pendingUi=pendingAction;let release,restoreStartedAt=null,restoreOutcome='COMPLETED';historyRestoreTail=new Promise(resolve=>{release=resolve;});
  if(pendingUi){restoringHistory=true;paintOperatorAction();}
  try{
   await preceding;await pendingUi?.catch(()=>{});await capturingViewPromise?.catch(()=>{});if(sequence!==navigationSequence)return;
-  if(!traversal)await captureCurrentView();restoringHistory=true;replacementReview=null;paintOperatorAction();const label=$('#operation-label');if(label)label.textContent='Restoring project and verifying saved files…';
+  if(!traversal)await captureCurrentView();restoringHistory=true;historyRestoreVisible=false;replacementReview=null;clearTimeout(historyRestoreTimer);restoreStartedAt=operationClock();historyRestoreTimer=setTimeout(()=>{if(sequence!==navigationSequence||!restoringHistory)return;historyRestoreVisible=true;paintOperatorAction();announce('Restoring project and verifying saved files…');},OPERATION_LOADING_THRESHOLD_MS);paintOperatorAction();
   const prior=jobId===current.job.JOB_ID?current:projects.find(project=>project.job.JOB_ID===jobId);
   const result=await projectStore.restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision:prior?.revision,signal:controller.signal,mode});
   // Keep our committed concurrency head even when a newer destination is queued.
@@ -560,8 +572,8 @@ async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode
   for(const key of Object.keys(operationSelection))delete operationSelection[key];Object.assign(operationSelection,selected.operationSelection||{});for(const key of Object.keys(runSelection))delete runSelection[key];Object.assign(runSelection,selected.runSelection||{});
   for(const key of Object.keys(responseFileSelection))delete responseFileSelection[key];
   await loadAcceptanceSession();await refreshHistory();if(!traversal)writeBrowserEntry(checkpointId,selected);render();applySavedView(selected);savedDraftView=selected;announce('Saved version restored.');
- }catch(error){if(error.code!=='RESTORE_INTERRUPTED')reportActionFailure(error);throw error;}
- finally{release();if(sequence===navigationSequence){restoringHistory=false;historyRestoreController=null;paintOperatorAction();}}
+ }catch(error){restoreOutcome=error.code==='RESTORE_INTERRUPTED'?'INTERRUPTED':'FAILED';if(error.code!=='RESTORE_INTERRUPTED')reportActionFailure(error);throw error;}
+ finally{release();if(sequence===navigationSequence){clearTimeout(historyRestoreTimer);historyRestoreTimer=null;if(restoreStartedAt!==null)recordOperationLatency('restoration','Restoring project and verifying saved files…',restoreStartedAt,restoreOutcome);restoringHistory=false;historyRestoreVisible=false;historyRestoreController=null;paintOperatorAction();}}
 }
 
 async function initializeHistoryNavigation(){
@@ -1073,7 +1085,7 @@ $('#project-picker').onchange=e=>{const selected=projects[Number(e.target.value)
 bindAction('#resume-backup-import',async()=>{const selection=Object.values(fileSelectionDrafts).find(item=>item.jobId===current.job.JOB_ID&&item.kind==='backup-import');if(!selection)throw new Error('Select a backup file first.');const files=await readFileSelection('backup-import',selection.stage);await importProjectPackageFile(files[0],{recordSelection:false});},'Restoring selected backup');
 bindAction('#backup-password-continue',()=>{const action=pendingBackupAction;pendingBackupAction=null;const button=$('#backup-password-continue');if(button)button.hidden=true;return action?.();},'Unlocking backup');
 
-globalThis.closedLoopAppReady=false;globalThis.closedLoopAppError=null;const startClosedLoopApp=()=>runOperatorAction('Loading project',()=>load().then(()=>{globalThis.closedLoopAppReady=true;}).catch(error=>{globalThis.closedLoopAppError=String(error?.stack||error);console.error(error);const message=error?.code==='INDEXEDDB_BLOCKED'?'Storage upgrade blocked. Close other Closed-Loop Tracker tabs, then reload.':`Storage failed: ${error?.message||error}`;const node=$('#storage-status');if(node)node.textContent=message;announce(message);}));if(globalThis.closedLoopCore)startClosedLoopApp();else addEventListener('closed-loop-core-ready',startClosedLoopApp,{once:true});
+globalThis.closedLoopAppReady=false;globalThis.closedLoopAppError=null;const startClosedLoopApp=async()=>{const startedAt=operationClock(),startup=$('#app-startup-status'),app=$('#app');if(startup)startup.hidden=false;app?.setAttribute('aria-busy','true');app?.setAttribute('inert','');try{await load();globalThis.closedLoopAppReady=true;recordOperationLatency('startup','Loading project',startedAt,'COMPLETED');if(startup)startup.hidden=true;app?.removeAttribute('inert');app?.removeAttribute('aria-busy');}catch(error){recordOperationLatency('startup','Loading project',startedAt,'FAILED');globalThis.closedLoopAppError=String(error?.stack||error);console.error(error);const message=error?.code==='INDEXEDDB_BLOCKED'?'Storage upgrade blocked. Close other Closed-Loop Tracker tabs, then reload.':`Storage failed: ${error?.message||error}`;if(startup){startup.hidden=false;startup.classList.add('danger');startup.innerHTML=`<strong>Startup failed.</strong><span>${esc(message)} Use the recovery guidance below, then reload.</span>`;}const node=$('#storage-status');if(node)node.textContent=message;announce(message);}};if(globalThis.closedLoopCore)void startClosedLoopApp();else addEventListener('closed-loop-core-ready',()=>{void startClosedLoopApp();},{once:true});
 // Long-section navigation belongs to the UI layer. It is frame-coalesced and samples only viewport-intersecting sections to avoid synchronous whole-document layout scans on mobile.
 if(typeof document!=='undefined'){
   const jumpId='prompt-bottom-jump';
