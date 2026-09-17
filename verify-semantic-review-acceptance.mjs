@@ -115,7 +115,7 @@ function review(results){return prepare(structuredClone(author),5,'SEMANTIC_REVI
 // IndexedDB behavior remains covered by the existing local/deployed browser suite.
 function application(project,operation='COMPLETE',{storageFailure=false,stage=5}={}){
   let saved=structuredClone(project);saved.activeStage=stage;
-  const refineButton={textContent:'Refine accepted result',disabled:false,isConnected:true},notices=[],runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,queueMicrotask,requestAnimationFrame:callback=>queueMicrotask(callback),
+  const refineButton={textContent:'Refine accepted result',disabled:false,isConnected:true},notices=[],runtime=vm.createContext({crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:callback=>queueMicrotask(callback),
     document:{currentScript:null,querySelector:selector=>selector==='#refine-accepted-response'?refineButton:selector==='#accepted-refinement-reason'?{value:'Correct the governing condition.'}:selector==='#operator-label'?{value:'FIXTURE'}:{value:'',textContent:'',focus(){},scrollIntoView(options){assert.equal(options.block,'start','Replacement confirmation heading must be scrolled into view.');},setAttribute(){},removeAttribute(){}},querySelectorAll:()=>[]},
     closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion,
     closedLoopHash:{...hash,sha256Value:value=>hash.sha256Value(structuredClone(value))},closedLoopProjectStore:{...closedLoopProjectStore,replaceProject:async(next,{expectedProjectRevision})=>{
