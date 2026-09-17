@@ -1,13 +1,9 @@
 name: Apply verified operator feedback repair
-
 on:
   push:
-    branches:
-      - repair/complete-conformance-continuation-20260914
-
+    branches: [repair/complete-conformance-continuation-20260914]
 permissions:
   contents: write
-
 jobs:
   apply:
     if: github.actor != 'github-actions[bot]'
@@ -19,61 +15,17 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Apply corrected repair payload
+      - name: Apply repair
+        env:
+          OLD_BLOCK: "ICBjb25zdCBwZW5kaW5nPXtsYWJlbCxwcm9taXNlOm51bGwsYWN0aXZhdGlvbklkOmN1cnJlbnQ/Lmhpc3RvcnlBY3RpdmF0aW9uSWR8fG51bGx9O29wZXJhdG9yQWN0aW9uSW5GbGlnaHQ9cGVuZGluZzsKICBwYWludE9wZXJhdG9yQWN0aW9uKCk7YW5ub3VuY2UobGFiZWwpOwogIHBlbmRpbmcucHJvbWlzZT0oYXN5bmMoKT0+ewogICAgLy8gR2l2ZSB0aGUgdmlzaWJsZSBzdGF0dXMgYSBwYWludCBiZWZvcmUgaGFzaGluZywgdmFsaWRhdGlvbiwgb3IgZGVyaXZhdGlvbi4KICAgIGF3YWl0IG5ldyBQcm9taXNlKHJlc29sdmU9PnJlcXVlc3RBbmltYXRpb25GcmFtZSgoKT0+cmVxdWVzdEFuaW1hdGlvbkZyYW1lKHJlc29sdmUpKSk7CiAgICB0cnl7aWYoZ2xvYmFsVGhpcy5oaXN0b3J5Py5zdGF0ZT8uY2xvc2VkTG9vcEhpc3RvcnkpYXdhaXQgY2FwdHVyZUN1cnJlbnRWaWV3KCk7cmV0dXJuIGF3YWl0IG9wZXJhdGlvbigpO30KICAgIGNhdGNoKGVycm9yKXtyZXBvcnRBY3Rpb25GYWlsdXJlKGVycm9yKTt9CiAgICBmaW5hbGx5e2lmKG9wZXJhdG9yQWN0aW9uSW5GbGlnaHQ9PT1wZW5kaW5nKXt0cnl7aWYoKGN1cnJlbnQ/Lmhpc3RvcnlBY3RpdmF0aW9uSWR8fG51bGwpPT09cGVuZGluZy5hY3RpdmF0aW9uSWQpYXdhaXQgY2FwdHVyZUN1cnJlbnRWaWV3KCk7fWNhdGNoKGVycm9yKXtyZXBvcnRBY3Rpb25GYWlsdXJlKGVycm9yKTt9b3BlcmF0b3JBY3Rpb25JbkZsaWdodD1udWxsO3BhaW50T3BlcmF0b3JBY3Rpb24oKTtpZihhY3Rpb25Gb2N1c1RhcmdldD8uaXNDb25uZWN0ZWQpYWN0aW9uRm9jdXNUYXJnZXQuZm9jdXMoKTthY3Rpb25Gb2N1c1RhcmdldD1udWxsO319CiAgfSkoKTsKICByZXR1cm4gcGVuZGluZy5wcm9taXNlOwp9CmZ1bmN0aW9uIGZvY3VzQWZ0ZXJBY3Rpb24oY29udHJvbCl7aWYoIWNvbnRyb2wpcmV0dXJuO2lmKG9wZXJhdG9yQWN0aW9uSW5GbGlnaHQmJmNvbnRyb2wuZGlzYWJsZWQpYWN0aW9uRm9jdXNUYXJnZXQ9Y29udHJvbDtlbHNle2NvbnRyb2wuZm9jdXMoe3ByZXZlbnRTY3JvbGw6dHJ1ZX0pO2NvbnRyb2wuc2Nyb2xsSW50b1ZpZXc/Lih7YmxvY2s6J3N0YXJ0JyxpbmxpbmU6J25lYXJlc3QnLGJlaGF2aW9yOidpbnN0YW50J30pO319Cg=="
+          NEW_BLOCK: "ICBjb25zdCBwZW5kaW5nPXtsYWJlbCxwcm9taXNlOm51bGwsYWN0aXZhdGlvbklkOmN1cnJlbnQ/Lmhpc3RvcnlBY3RpdmF0aW9uSWR8fG51bGwsdmlzaWJsZTpmYWxzZSxzdGFydGVkQXQ6b3BlcmF0aW9uQ2xvY2soKSx0aW1lcjpudWxsfTtvcGVyYXRvckFjdGlvbkluRmxpZ2h0PXBlbmRpbmc7CiAgcGVuZGluZy50aW1lcj1zZXRUaW1lb3V0KCgpPT57aWYob3BlcmF0b3JBY3Rpb25JbkZsaWdodCE9PXBlbmRpbmcpcmV0dXJuO3BlbmRpbmcudmlzaWJsZT10cnVlO3BhaW50T3BlcmF0b3JBY3Rpb24oKTthbm5vdW5jZShsYWJlbCk7fSxPUEVSQVRJT05fTE9BRElOR19USFJFU0hPTERfTVMpOwogIHBhaW50T3BlcmF0b3JBY3Rpb24oKTsKICBwZW5kaW5nLnByb21pc2U9KGFzeW5jKCk9PnsKICAgIC8vIFlpZWxkIG9uY2Ugc28gY29udHJvbCBkaXNhYmxpbmcgaXMgcGFpbnRlZCBiZWZvcmUgcG90ZW50aWFsbHkgZXhwZW5zaXZlIHdvcmsuCiAgICBhd2FpdCBuZXcgUHJvbWlzZShyZXNvbHZlPT5yZXF1ZXN0QW5pbWF0aW9uRnJhbWUoKCk9PnJlcXVlc3RBbmltYXRpb25GcmFtZShyZXNvbHZlKSkpOwogICAgbGV0IG91dGNvbWU9J0NPTVBMRVRFRCc7CiAgICB0cnl7aWYoZ2xvYmFsVGhpcy5oaXN0b3J5Py5zdGF0ZT8uY2xvc2VkTG9vcEhpc3RvcnkpYXdhaXQgY2FwdHVyZUN1cnJlbnRWaWV3KCk7cmV0dXJuIGF3YWl0IG9wZXJhdGlvbigpO30KICAgIGNhdGNoKGVycm9yKXtvdXRjb21lPSdGQUlMRUQnO3JlcG9ydEFjdGlvbkZhaWx1cmUoZXJyb3IpO30KICAgIGZpbmFsbHl7Y2xlYXJUaW1lb3V0KHBlbmRpbmcudGltZXIpO3JlY29yZE9wZXJhdGlvbkxhdGVuY3koJ29wZXJhdG9yJyxsYWJlbCxwZW5kaW5nLnN0YXJ0ZWRBdCxvdXRjb21lKTtpZihvcGVyYXRvckFjdGlvbkluRmxpZ2h0PT09cGVuZGluZyl7dHJ5e2lmKChjdXJyZW50Py5oaXN0b3J5QWN0aXZhdGlvbklkfHxudWxsKT09PXBlbmRpbmcuYWN0aXZhdGlvbklkKWF3YWl0IGNhcHR1cmVDdXJyZW50VmlldygpO31jYXRjaChlcnJvcil7cmVwb3J0QWN0aW9uRmFpbHVyZShlcnJvcik7fW9wZXJhdG9yQWN0aW9uSW5GbGlnaHQ9bnVsbDtwYWludE9wZXJhdG9yQWN0aW9uKCk7Y29uc3QgZGVmZXJyZWRGb2N1cz1hY3Rpb25Gb2N1c1RhcmdldDthY3Rpb25Gb2N1c1RhcmdldD1udWxsO2lmKGRlZmVycmVkRm9jdXM/LmlzQ29ubmVjdGVkKWZvY3VzQWZ0ZXJBY3Rpb24oZGVmZXJyZWRGb2N1cyk7fX0KICB9KSgpOwogIHJldHVybiBwZW5kaW5nLnByb21pc2U7Cn0KZnVuY3Rpb24gZm9jdXNBZnRlckFjdGlvbihjb250cm9sLHtyZWFzb249J0ZPUldBUkQnfT17fSl7aWYoIWNvbnRyb2wpcmV0dXJuO2lmKG9wZXJhdG9yQWN0aW9uSW5GbGlnaHQmJmNvbnRyb2wuZGlzYWJsZWQpe2FjdGlvbkZvY3VzVGFyZ2V0PWNvbnRyb2w7cmV0dXJuO31mb3IobGV0IHBhcmVudD1jb250cm9sLnBhcmVudEVsZW1lbnQ7cGFyZW50O3BhcmVudD1wYXJlbnQucGFyZW50RWxlbWVudClpZihwYXJlbnQudGFnTmFtZT09PSdERVRBSUxTJylwYXJlbnQub3Blbj10cnVlO2NvbnRyb2wuZm9jdXMoe3ByZXZlbnRTY3JvbGw6dHJ1ZX0pO2NvbnN0IHJlY3Q9Y29udHJvbC5nZXRCb3VuZGluZ0NsaWVudFJlY3Q/LigpLHZpZXdwb3J0SGVpZ2h0PU51bWJlcihnbG9iYWxUaGlzLmlubmVySGVpZ2h0fHxkb2N1bWVudC5kb2N1bWVudEVsZW1lbnQ/LmNsaWVudEhlaWdodHx8MCksYmVsb3c9Qm9vbGVhbihyZWN0JiZ2aWV3cG9ydEhlaWdodCYmcmVjdC5ib3R0b20+dmlld3BvcnRIZWlnaHQpLGFib3ZlPUJvb2xlYW4ocmVjdCYmcmVjdC50b3A8MCksYWxsb3dVcD1yZWFzb249PT0nQ09SUkVDVElPTid8fHJlYXNvbj09PSdSRVRVUk4nfHxyZWFzb249PT0nUkVUUlknO2lmKGJlbG93fHwoYWJvdmUmJmFsbG93VXApKWNvbnRyb2wuc2Nyb2xsSW50b1ZpZXc/Lih7YmxvY2s6J25lYXJlc3QnLGlubGluZTonbmVhcmVzdCcsYmVoYXZpb3I6J2luc3RhbnQnfSk7fQo="
         run: |
           set -euo pipefail
           cat .repair-feedback/part* | base64 -d > /tmp/raw.patch
-          python3 - <<'PY'
-          from pathlib import Path
-          lines=Path('/tmp/raw.patch').read_text().splitlines()
-          out=[]
-          for i,line in enumerate(lines,1):
-              if 67 <= i <= 79:
-                  continue
-              out.append(line.replace('paintOperatorAction(.);','paintOperatorAction();'))
-          Path('/tmp/fixed.patch').write_text('\n'.join(out)+'\n')
-          PY
+          python3 -c "from pathlib import Path; p=Path('/tmp/raw.patch'); lines=p.read_text().splitlines(); Path('/tmp/fixed.patch').write_text('\\n'.join(line.replace('paintOperatorAction(.);','paintOperatorAction();') for i,line in enumerate(lines,1) if not 67 <= i <= 79)+'\\n')"
           git apply --reject --recount /tmp/fixed.patch || true
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('app-core.js'); s=p.read_text()
-          old="""  const pending={label,promise:null,activationId:current?.historyActivationId||null};operatorActionInFlight=pending;
-          paintOperatorAction();announce(label);
-          pending.promise=(async()=>{
-            // Give the visible status a paint before hashing, validation, or derivation.
-            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-            try{if(globalThis.history?.state?.closedLoopHistory)await captureCurrentView();return await operation();}
-            catch(error){reportActionFailure(error);}
-            finally{if(operatorActionInFlight===pending){try{if((current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}catch(error){reportActionFailure(error);}operatorActionInFlight=null;paintOperatorAction();if(actionFocusTarget?.isConnected)actionFocusTarget.focus();actionFocusTarget=null;}}
-          })();
-          return pending.promise;
-        }
-        function focusAfterAction(control){if(!control)return;if(operatorActionInFlight&&control.disabled)actionFocusTarget=control;else{control.focus({preventScroll:true});control.scrollIntoView?.({block:'start',inline:'nearest',behavior:'instant'});}}
-        """
-          new="""  const pending={label,promise:null,activationId:current?.historyActivationId||null,visible:false,startedAt:operationClock(),timer:null};operatorActionInFlight=pending;
-          pending.timer=setTimeout(()=>{if(operatorActionInFlight!==pending)return;pending.visible=true;paintOperatorAction();announce(label);},OPERATION_LOADING_THRESHOLD_MS);
-          paintOperatorAction();
-          pending.promise=(async()=>{
-            // Yield once so control disabling is painted before potentially expensive work.
-            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-            let outcome='COMPLETED';
-            try{if(globalThis.history?.state?.closedLoopHistory)await captureCurrentView();return await operation();}
-            catch(error){outcome='FAILED';reportActionFailure(error);}
-            finally{clearTimeout(pending.timer);recordOperationLatency('operator',label,pending.startedAt,outcome);if(operatorActionInFlight===pending){try{if((current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}catch(error){reportActionFailure(error);}operatorActionInFlight=null;paintOperatorAction();const deferredFocus=actionFocusTarget;actionFocusTarget=null;if(deferredFocus?.isConnected)focusAfterAction(deferredFocus);}}
-          })();
-          return pending.promise;
-        }
-        function focusAfterAction(control,{reason='FORWARD'}={}){if(!control)return;if(operatorActionInFlight&&control.disabled){actionFocusTarget=control;return;}for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;control.focus({preventScroll:true});const rect=control.getBoundingClientRect?.(),viewportHeight=Number(globalThis.innerHeight||document.documentElement?.clientHeight||0),below=Boolean(rect&&viewportHeight&&rect.bottom>viewportHeight),above=Boolean(rect&&rect.top<0),allowUp=reason==='CORRECTION'||reason==='RETURN'||reason==='RETRY';if(below||(above&&allowUp))control.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'instant'});}
-        """
-          if old not in s: raise SystemExit('runOperatorAction source mismatch')
-          p.write_text(s.replace(old,new))
-          p=Path('verify-conformance-regressions.mjs'); s=p.read_text()
-          needle="'verify-operator-action-lifecycle.mjs',"
-          if "'verify-operator-feedback.mjs'," not in s:
-              if needle not in s: raise SystemExit('regression suite source mismatch')
-              s=s.replace(needle,needle+"'verify-operator-feedback.mjs',",1)
-          p.write_text(s)
-          PY
+          python3 -c "import os,base64; from pathlib import Path; p=Path('app-core.js'); s=p.read_text(); old=base64.b64decode(os.environ['OLD_BLOCK']).decode(); new=base64.b64decode(os.environ['NEW_BLOCK']).decode(); assert old in s; p.write_text(s.replace(old,new))"
+          python3 -c "from pathlib import Path; p=Path('verify-conformance-regressions.mjs'); s=p.read_text(); n=\"'verify-operator-action-lifecycle.mjs',\"; p.write_text(s if \"'verify-operator-feedback.mjs',\" in s else s.replace(n,n+\"'verify-operator-feedback.mjs',\",1))"
           rm -f *.rej
       - name: Verify focused dependency closure
         run: |
