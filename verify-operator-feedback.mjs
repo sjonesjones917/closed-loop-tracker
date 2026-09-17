@@ -8,6 +8,7 @@ const html=fs.readFileSync(process.env.HTML_SOURCE||'index.html','utf8');
 const cases=[];
 const note=(caseId,details={})=>cases.push({caseId,...details,result:'PASS'});
 
+// D-1 remains operator-reserved; this verifies only the configurable production default.
 assert.match(source,/const OPERATION_LOADING_THRESHOLD_MS=1500;/,'D-1 default is not a single 1.5 second production constant.');
 assert.match(html,/id="app-startup-status"[^>]*role="status"/,'Startup has no dedicated status surface.');
 assert.match(html,/id="app-operation-status"[^>]*hidden/,'Ordinary operation indicator is visible during startup.');
