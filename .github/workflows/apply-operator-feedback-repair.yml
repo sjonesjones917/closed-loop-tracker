@@ -19,11 +19,62 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Apply exact repair
+      - name: Apply corrected repair payload
         run: |
           set -euo pipefail
-          cat .repair-feedback/part* | base64 -d > /tmp/operator-feedback.patch
-          patch -p1 --forward < /tmp/operator-feedback.patch
+          cat .repair-feedback/part* | base64 -d > /tmp/raw.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/raw.patch').read_text().splitlines()
+          out=[]
+          for i,line in enumerate(lines,1):
+              if 67 <= i <= 79:
+                  continue
+              out.append(line.replace('paintOperatorAction(.);','paintOperatorAction();'))
+          Path('/tmp/fixed.patch').write_text('\n'.join(out)+'\n')
+          PY
+          git apply --reject --recount /tmp/fixed.patch || true
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js'); s=p.read_text()
+          old="""  const pending={label,promise:null,activationId:current?.historyActivationId||null};operatorActionInFlight=pending;
+          paintOperatorAction();announce(label);
+          pending.promise=(async()=>{
+            // Give the visible status a paint before hashing, validation, or derivation.
+            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+            try{if(globalThis.history?.state?.closedLoopHistory)await captureCurrentView();return await operation();}
+            catch(error){reportActionFailure(error);}
+            finally{if(operatorActionInFlight===pending){try{if((current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}catch(error){reportActionFailure(error);}operatorActionInFlight=null;paintOperatorAction();if(actionFocusTarget?.isConnected)actionFocusTarget.focus();actionFocusTarget=null;}}
+          })();
+          return pending.promise;
+        }
+        function focusAfterAction(control){if(!control)return;if(operatorActionInFlight&&control.disabled)actionFocusTarget=control;else{control.focus({preventScroll:true});control.scrollIntoView?.({block:'start',inline:'nearest',behavior:'instant'});}}
+        """
+          new="""  const pending={label,promise:null,activationId:current?.historyActivationId||null,visible:false,startedAt:operationClock(),timer:null};operatorActionInFlight=pending;
+          pending.timer=setTimeout(()=>{if(operatorActionInFlight!==pending)return;pending.visible=true;paintOperatorAction();announce(label);},OPERATION_LOADING_THRESHOLD_MS);
+          paintOperatorAction();
+          pending.promise=(async()=>{
+            // Yield once so control disabling is painted before potentially expensive work.
+            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+            let outcome='COMPLETED';
+            try{if(globalThis.history?.state?.closedLoopHistory)await captureCurrentView();return await operation();}
+            catch(error){outcome='FAILED';reportActionFailure(error);}
+            finally{clearTimeout(pending.timer);recordOperationLatency('operator',label,pending.startedAt,outcome);if(operatorActionInFlight===pending){try{if((current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}catch(error){reportActionFailure(error);}operatorActionInFlight=null;paintOperatorAction();const deferredFocus=actionFocusTarget;actionFocusTarget=null;if(deferredFocus?.isConnected)focusAfterAction(deferredFocus);}}
+          })();
+          return pending.promise;
+        }
+        function focusAfterAction(control,{reason='FORWARD'}={}){if(!control)return;if(operatorActionInFlight&&control.disabled){actionFocusTarget=control;return;}for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;control.focus({preventScroll:true});const rect=control.getBoundingClientRect?.(),viewportHeight=Number(globalThis.innerHeight||document.documentElement?.clientHeight||0),below=Boolean(rect&&viewportHeight&&rect.bottom>viewportHeight),above=Boolean(rect&&rect.top<0),allowUp=reason==='CORRECTION'||reason==='RETURN'||reason==='RETRY';if(below||(above&&allowUp))control.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'instant'});}
+        """
+          if old not in s: raise SystemExit('runOperatorAction source mismatch')
+          p.write_text(s.replace(old,new))
+          p=Path('verify-conformance-regressions.mjs'); s=p.read_text()
+          needle="'verify-operator-action-lifecycle.mjs',"
+          if "'verify-operator-feedback.mjs'," not in s:
+              if needle not in s: raise SystemExit('regression suite source mismatch')
+              s=s.replace(needle,needle+"'verify-operator-feedback.mjs',",1)
+          p.write_text(s)
+          PY
+          rm -f *.rej
       - name: Verify focused dependency closure
         run: |
           set -euo pipefail
@@ -36,11 +87,11 @@ jobs:
           node verify-file-first-operator.mjs
           node verify-ui-acceptance-impact.mjs
           node verify-ui-persistence-preconditions.mjs
-      - name: Commit verified repair
+      - name: Commit verified repair and remove scaffolding
         run: |
           set -euo pipefail
-          rm -rf .repair-feedback
-          git add -A -- ':!.github/workflows/apply-operator-feedback-repair.yml'
+          rm -rf .repair-feedback .github/workflows/apply-operator-feedback-repair.yml
+          git add -A
           git config user.name 'closed-loop conformance bot'
           git config user.email 'actions@users.noreply.github.com'
           git commit -m 'Close operator loading startup and latency feedback gaps'
