@@ -1,0 +1,45 @@
+name: Apply project lifecycle timing harness fix
+
+on:
+  push:
+    branches:
+      - repair/complete-conformance-continuation-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Repair lifecycle verifier timing harness
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-project-lifecycle.mjs')
+          s=p.read_text()
+          old="const runtime=vm.createContext({...inactiveMobileAcceptance,runOperatorAction:async(_label,operation)=>operation(),closedLoopCore:{},load:async()=>{throw Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'});},console:{error(){}},announce:message=>announcements.push(message),$:selector=>selector==='#storage-status'?status:null});"
+          new="const runtime=vm.createContext({...inactiveMobileAcceptance,operationClock:()=>Date.now(),recordOperationLatency:()=>0,runOperatorAction:async(_label,operation)=>operation(),closedLoopCore:{},load:async()=>{throw Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'});},console:{error(){}},announce:message=>announcements.push(message),$:selector=>selector==='#storage-status'?status:null});"
+          if old not in s:
+              raise SystemExit('project lifecycle timing harness target not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node --check verify-project-lifecycle.mjs
+          node verify-project-lifecycle.mjs
+      - name: Commit verified lifecycle harness correction
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-project-lifecycle-timing-harness.yml
+          git add verify-project-lifecycle.mjs .github/workflows/apply-project-lifecycle-timing-harness.yml
+          git config user.name 'closed-loop conformance bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Provide startup timing owner in lifecycle verifier VM'
+          git push origin HEAD:repair/complete-conformance-continuation-20260914
