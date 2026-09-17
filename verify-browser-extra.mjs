@@ -33,6 +33,11 @@ async function openValidationDetails(cdp,expectedCode){
   // disclosures, and keep following the current report until its error is visible.
   await waitExpr(cdp,`(()=>{const report=document.querySelector('#validation-report');if(!report)return false;const technical=report.querySelector(':scope > details');if(technical&&!technical.open)technical.querySelector(':scope > summary').click();const issues=report.querySelector('[data-detail-id]');if(issues&&!issues.open)issues.querySelector(':scope > summary').click();for(const card of report.querySelectorAll('[data-detail-id] > .record-body > .record-rows > details'))if(!card.open)card.querySelector(':scope > summary').click();return report.innerText.includes(${JSON.stringify(expectedCode)});})()`);
 }
+async function assertRecoverableReturnedFiles(cdp,reservationId,phase){
+ const observation=await evalValue(cdp,`closedLoopProjectStore.readProject('JOB-20260823144121').then(project=>{const engine=closedLoopWorkflowEngine,reservation=project?.projectData?.operationReservations.find(row=>engine.recordId(row,'operationReservations')===${JSON.stringify(reservationId)});return {phase:${JSON.stringify(phase)},reservation,status:engine.recordValue(reservation,'STATUS'),latestValidation:project?.projectData?.responseValidations?.at(-1),raw:project?.projectData?.rawResponses?.at(-1),visibleValidation:document.querySelector('#validation-report')?.innerText};})`);
+ console.log(JSON.stringify({returnedFileRecoveryObservation:observation}));
+ assert(observation.status==='RESPONSE_STAGED',phase+': the otherwise valid returned-file response must stay recoverable: '+JSON.stringify(observation));
+}
 async function selectResponseFile(cdp,text,filename='response.json'){
   await waitForIdle(cdp);
   const safeName=String(filename||'response.json').replace(/[^A-Za-z0-9._-]/g,'_'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-response-file-')),filePath=path.join(directory,safeName);
@@ -154,9 +159,9 @@ async function main(){
   const returnedSlot=exportedManifest.attachmentSlots.find(item=>item.role==='SUPPORTING_EVIDENCE');assert(returnedSlot,'The saved source instruction did not issue its supporting-evidence slot.');envelope.attachments=[{attachmentSlotId:returnedSlot.attachmentSlotId,role:returnedSlot.role,temporaryKey:'returned-source-proof',filename:'source-proof.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(returnedContent),sha256:returnedSha,required:true}];envelope.evidence[0].attachmentRef={tempKey:'returned-source-proof'};
   await selectResponseFile(cdp,JSON.stringify(envelope));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('[data-returned-slot]'))`);
   const originalRaw=(await activeProject(cdp)).projectData.rawResponses.at(-1),slotId=await evalValue(cdp,`document.querySelector('[data-returned-slot]').dataset.returnedSlot`);
-  await click(cdp,'#validate-returned-files');await openValidationDetails(cdp,'MISSING_REQUIRED_ATTACHMENT');assert(await evalValue(cdp,`closedLoopProjectStore.readAll().then(all=>{const p=all.find(x=>x.job?.JOB_ID==='JOB-20260823144121'),r=(p?.projectData?.operationReservations||[]).find(x=>(x.OPERATION_RESERVATION_ID||x.id)===${JSON.stringify(pr.operationReservationId)});return (r?.STATUS||r?.status)==='RESPONSE_STAGED';})`),'Missing returned-file bytes terminally rejected the still-recoverable response reservation.');
+  await click(cdp,'#validate-returned-files');await openValidationDetails(cdp,'MISSING_REQUIRED_ATTACHMENT');await assertRecoverableReturnedFiles(cdp,pr.operationReservationId,'MISSING_REQUIRED_ATTACHMENT');
   await selectReturnedSlot(cdp,slotId,returnedContent.replace('Independent','Unsupported'));
-  await click(cdp,'#validate-returned-files');await openValidationDetails(cdp,'ATTACHMENT_SHA256_MISMATCH');assert(await evalValue(cdp,`closedLoopProjectStore.readAll().then(all=>{const p=all.find(x=>x.job?.JOB_ID==='JOB-20260823144121'),r=(p?.projectData?.operationReservations||[]).find(x=>(x.OPERATION_RESERVATION_ID||x.id)===${JSON.stringify(pr.operationReservationId)});return (r?.STATUS||r?.status)==='RESPONSE_STAGED';})`),'Returned-file SHA mismatch terminally rejected the still-recoverable response reservation.');
+  await click(cdp,'#validate-returned-files');await openValidationDetails(cdp,'ATTACHMENT_SHA256_MISMATCH');await assertRecoverableReturnedFiles(cdp,pr.operationReservationId,'ATTACHMENT_SHA256_MISMATCH');
   assert((await activeProject(cdp)).projectData.artifacts.length===0,'Invalid returned bytes were prematurely promoted to canonical artifacts.');
   await selectReturnedSlot(cdp,slotId,returnedContent);
   // A stored attachment advances revision without ending its prompt attempt.

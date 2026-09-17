@@ -8,7 +8,7 @@ function element(id,rect={top:120,bottom:164,left:0,right:300,width:300,height:4
 for(const id of ['project-picker','new-project','import-project','import-file','app','app-operation-status','operation-label','app-live-status','operation-error','save-prompt'])nodes.set('#'+id,element(id));
 nodes.get('#operation-error').tagName='DIV';nodes.get('#operation-error').hidden=true;
 const c=vm.createContext({console,URL,URLSearchParams,Blob,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),innerHeight:852,innerWidth:393,window:{innerHeight:852,innerWidth:393,scrollX:0,scrollY:0},document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:()=>[...nodes.values()].filter(x=>x.tagName==='BUTTON'),dispatchEvent(){}}});
-vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`globalThis.ui={focus:focusAfterAction,run:runOperatorAction,fail:reportActionFailure,announce};})();`,c,{filename:'app-core.js'});
+vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`globalThis.ui={focus:focusAfterAction,run:runOperatorAction,fail:reportActionFailure,announce,retry:async()=>{const previous={current,savePromptRecord,render,selectedOperation};current={job:{JOB_ID:'FOCUS-DISPOSABLE'},activeStage:1};savePromptRecord=async()=>{};render=()=>{};selectedOperation=()=> 'COMPLETE';try{await prepareReplacementAttempt();await Promise.resolve();}finally{({current,savePromptRecord,render,selectedOperation}=previous);}}};})();`,c,{filename:'app-core.js'});
 async function paint(){for(let i=0;i<3;i++){frames.splice(0).forEach(fn=>fn());await Promise.resolve();}}
 const target=element('visible-next-control');c.ui.focus(target);
 assert.deepEqual(calls.filter(x=>x.type==='scroll'),[],'FOCUS_VISIBLE_ORACLE: an already visible next action must not scroll.');
@@ -29,5 +29,24 @@ assert.ok(calls.find(call=>call.type==='residual-scroll')?.options.top>0,'Fracti
 cases.push({caseId:'FOCUS-FRACTIONAL-EDGE',result:'PASS',bottomAfterCorrection:fractionalRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;
 const forwardAbove=element('forward-above',{top:-220,bottom:-176,left:0,right:300,width:300,height:44});c.ui.focus(forwardAbove);assert.equal(calls.some(x=>x.type==='scroll'),false,'FOCUS_FORWARD_UP_ORACLE: ordinary forward progress must not auto-scroll upward.');cases.push({caseId:'FOCUS-NO-UPWARD-SCROLL-FOR-FORWARD-PROGRESS',result:'PASS'});calls.length=0;
 const correction=element('required-correction',{top:-220,bottom:-176,left:0,right:300,width:300,height:44}),details={tagName:'DETAILS',open:false,parentElement:null};correction.parentElement=details;c.ui.focus(correction,{reason:'CORRECTION'});assert.equal(details.open,true,'FOCUS_CLOSED_PARENT_ORACLE: corrective control remains inside a closed disclosure.');assert.equal(calls.find(x=>x.type==='scroll')?.id,correction.id);cases.push({caseId:'FOCUS-EXACT-CORRECTION-CONTROL',result:'PASS'});calls.length=0;
+// Retry is an explicit return, not ordinary forward progress. Exercise both
+// its authored operation caller and the shared disabled-control continuation.
+const retryFailures=[];
+try{
+ const retryControl=nodes.get('#save-prompt'),oldRect=retryControl.getBoundingClientRect;
+ retryControl.getBoundingClientRect=()=>({top:-220,bottom:-176,width:300,height:44});
+ let completeRetry;const heldRetry=new Promise(resolve=>completeRetry=resolve);
+ const retryOperation=c.ui.run('Retrying',async()=>{c.ui.focus(retryControl,{reason:'RETRY'});await heldRetry;});await paint();completeRetry();await retryOperation;
+ assert.ok(calls.some(call=>call.type==='scroll'&&call.id===retryControl.id),'FOCUS_DEFERRED_REASON_ORACLE: explicit retry lost permission to return to its action after unlocking');
+ retryControl.getBoundingClientRect=oldRect;cases.push({caseId:'FOCUS-DEFERRED-EXPLICIT-RETRY',result:'PASS'});
+}catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-DEFERRED-EXPLICIT-RETRY',result:'FAIL'});}calls.length=0;
+try{
+ const retryRegion=element('next-required-action',{top:-240,bottom:-20,width:300,height:220});nodes.set('#next-required-action',retryRegion);
+ await c.ui.retry();
+ assert.ok(calls.some(call=>call.type==='scroll'&&call.id===retryRegion.id),'FOCUS_RETRY_CALLER_ORACLE: the authored replacement-attempt operation treated an explicit retry as forward progress');
+ cases.push({caseId:'FOCUS-AUTHORED-REPLACEMENT-ATTEMPT',result:'PASS'});
+}catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-AUTHORED-REPLACEMENT-ATTEMPT',result:'FAIL'});}calls.length=0;
 c.ui.fail(new Error('Disposable storage failure'));assert.equal(nodes.get('#operation-error').hidden,false,'OPERATION_ERROR_ORACLE: a failed operation must have a visible report independent of optional tutorial content.');assert.equal(nodes.get('#operation-error').textContent,'Disposable storage failure');assert.equal(nodes.get('#app-live-status').textContent,'Disposable storage failure');c.ui.announce('Retry started');assert.equal(nodes.get('#operation-error').hidden,true);cases.push({caseId:'FOCUS-VISIBLE-FAILURE-AND-RETRY',result:'PASS'});
 console.log(JSON.stringify({schema:'closed-loop-focus-observations/1',productionSourceSha256:createHash('sha256').update(source).digest('hex'),synthetic:true,actualBrowser:false,scope:'Production focus and shared operation lifecycle with controlled geometry/frame boundaries. These cases do not establish physical device acceptance or every cross-stage forward-scroll postcondition.',cases},null,2));
+
+if(retryFailures.length)throw new AggregateError(retryFailures,'Explicit retry focus regression failed');
