@@ -28,7 +28,14 @@ assert.ok(fractionalRect.bottom<=c.innerHeight,'FOCUS_FRACTIONAL_EDGE_ORACLE: ne
 assert.ok(calls.find(call=>call.type==='residual-scroll')?.options.top>0,'Fractional correction must move forward, not upward');
 cases.push({caseId:'FOCUS-FRACTIONAL-EDGE',result:'PASS',bottomAfterCorrection:fractionalRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;
 const forwardAbove=element('forward-above',{top:-220,bottom:-176,left:0,right:300,width:300,height:44});c.ui.focus(forwardAbove);assert.equal(calls.some(x=>x.type==='scroll'),false,'FOCUS_FORWARD_UP_ORACLE: ordinary forward progress must not auto-scroll upward.');cases.push({caseId:'FOCUS-NO-UPWARD-SCROLL-FOR-FORWARD-PROGRESS',result:'PASS'});calls.length=0;
-const acceptedNext=element('next-required-action',{top:-3412.875,bottom:-3259.875,left:0,right:347,width:347,height:153});nodes.set('#next-required-action',acceptedNext);await c.ui.accept();assert.ok(calls.some(call=>call.type==='scroll'&&call.id===acceptedNext.id),'FOCUS_ACCEPTANCE_RETURN_ORACLE: committed acceptance did not return the next required action to view.');cases.push({caseId:'FOCUS-AFTER-ACCEPTANCE-RETURNS-NEXT-ACTION',result:'PASS'});calls.length=0;nodes.delete('#next-required-action');
+// UX-003: acceptance is forward progress, not an operator-requested return.
+// The real browser journey separately requires the sticky action to be visible.
+for(const [caseId,rect] of [['FOCUS-ACCEPTANCE-VISIBLE',{top:100,bottom:253,width:347,height:153}],['FOCUS-ACCEPTANCE-NO-UPWARD-RETURN',{top:-3412.875,bottom:-3259.875,width:347,height:153}]] ){
+ const acceptedNext=element('next-required-action',rect);nodes.set('#next-required-action',acceptedNext);await c.ui.accept();
+ assert.equal(calls.some(call=>call.type==='scroll'||call.type==='residual-scroll'),false,'FOCUS_ACCEPTANCE_DIRECTION_ORACLE: forward acceptance was relabeled as an explicit return.');
+ assert.equal(calls.find(call=>call.type==='focus'&&call.id===acceptedNext.id)?.options.preventScroll,true,'FOCUS_ACCEPTANCE_TARGET_ORACLE: the next required action did not receive non-scrolling focus.');
+ cases.push({caseId,result:'PASS'});calls.length=0;nodes.delete('#next-required-action');
+}
 const correction=element('required-correction',{top:-220,bottom:-176,left:0,right:300,width:300,height:44}),details={tagName:'DETAILS',open:false,parentElement:null};correction.parentElement=details;c.ui.focus(correction,{reason:'CORRECTION'});assert.equal(details.open,true,'FOCUS_CLOSED_PARENT_ORACLE: corrective control remains inside a closed disclosure.');assert.equal(calls.find(x=>x.type==='scroll')?.id,correction.id);cases.push({caseId:'FOCUS-EXACT-CORRECTION-CONTROL',result:'PASS'});calls.length=0;
 // Retry is an explicit return, not ordinary forward progress. Exercise both
 // its authored operation caller and the shared disabled-control continuation.
