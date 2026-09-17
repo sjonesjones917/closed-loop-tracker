@@ -1,0 +1,107 @@
+{
+  "baseHead": "7df7add251fa87c40d87f92eb5641f10a5161a26",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "repairs": [
+    {
+      "path": "verify-project-lifecycle.mjs",
+      "before": "7eb4e441c270e178e34830aaf42b25bc69e95ccbeea73d09f34f9e9c63d2e388",
+      "after": "c30f18e51f068970f9eaf10adf86dcb1ad8b97d22106de1ad01dbc9cd4d16386",
+      "edits": [
+        {
+          "offset": 0,
+          "deleteBytes": 1564,
+          "insert": "// Run the complete lifecycle suite with its explicit host and production dependencies.\nimport './verify-project-lifecycle-full.mjs';\n"
+        }
+      ]
+    },
+    {
+      "path": "verify-project-lifecycle-full.mjs",
+      "before": "0c1adb5346de8d6173809e35d74ef4c63e29d69abfa779d2d6eab66751b3abbb",
+      "after": "8f87dc2d94d2c8b76576362fdb3b079549423f1df004dbc95c6c00dfedab948b",
+      "edits": [
+        {
+          "offset": 853,
+          "deleteBytes": 0,
+          "insert": "// Supply host facilities explicitly; never alter VM or String built-ins.\nconst lifecycleContext=context=>vm.createContext({setTimeout,clearTimeout,AbortController,...context});\nlet blockedUpgradeError;\n"
+        },
+        {
+          "offset": 1739,
+          "deleteBytes": 520,
+          "insert": "  const runtime=lifecycleContext({...inactiveMobileAcceptance,indexedDB:{open(){const request={};requests.push(request);return request;}}});\n  vm.runInContext(\"const DB_NAME='closed-loop-reliability',DB_VERSION=2;\"+store.slice(store.indexOf('const STORAGE_IO_TIMEOUT_MS='),store.indexOf('const request='))+store.slice(store.indexOf('let databasePromise=null;'),store.indexOf('function parseLegacy('))+';globalThis.open=openDatabase;',runtime);\n  const first=runtime.open().catch(error=>error);requests[0].onblocked();blockedUpgradeError=await first;assert(blockedUpgradeError.code==='INDEXEDDB_BLOCKED','Blocked upgrade did not report its cause.');\n"
+        },
+        {
+          "offset": 3087,
+          "deleteBytes": 514,
+          "insert": "  const attributes=()=>({hidden:false,textContent:'',innerHTML:'',attrs:{},classList:{add(){}},setAttribute(key,value){this.attrs[key]=String(value);},removeAttribute(key){delete this.attrs[key];}});\n  const nodes=Object.fromEntries(['storage-status','app-startup-status','app-operation-status','app','startup-retry','startup-title','startup-detail'].map(id=>[id,attributes()]));\n  const status=nodes['storage-status'];let reloads=0;\n  const runtime=lifecycleContext({...inactiveMobileAcceptance,operationClock:()=>Date.now(),recordOperationLatency:()=>0,esc:value=>String(value??''),closedLoopCore:{},load:async()=>{throw blockedUpgradeError;},console:{error(){}},announce:()=>{},$:selector=>nodes[selector.slice(1)]||null,document:{getElementById:id=>nodes[id]||null},location:{reload(){reloads++;}}});\n  const startupGuard=html.match(/<script id=\"closed-loop-startup-guard\">([\\s\\S]*?)<\\/script>/)?.[1];\n  assert(startupGuard,'The authored startup guard is required by the lifecycle fixture.');\n  vm.runInContext(startupGuard,runtime,{filename:'index.html#closed-loop-startup-guard'});\n"
+        },
+        {
+          "offset": 3943,
+          "deleteBytes": 194,
+          "insert": "  assert(/close.*tabs.*reload/i.test(status.textContent)&&nodes['app-startup-status'].attrs.role==='alert'&&!nodes['app-startup-status'].hidden,'Blocked startup did not show its actual actionable recovery message.');\n  assert(!nodes['startup-retry'].hidden&&!nodes['startup-retry'].disabled&&typeof nodes['startup-retry'].onclick==='function','Blocked startup did not expose the real recovery control.');\n  nodes['startup-retry'].onclick();nodes['startup-retry'].onclick();assert(reloads===1,'Startup recovery activation was duplicated.');\n"
+        },
+        {
+          "offset": 13882,
+          "deleteBytes": 518,
+          "insert": "const exportRuntime=lifecycleContext({...inactiveMobileAcceptance,current:{activeStage:3,job:{JOB_ID:'EXPORT-QUEUE'}},setTimeout,announce:()=>{},reportActionFailure:error=>exportErrors.push(String(error.message||error)),alert:message=>{throw new Error('Unexpected native popup: '+message);},savePromptRecord:async stage=>{activeSaves++;maxActiveSaves=Math.max(maxActiveSaves,activeSaves);await new Promise(resolve=>setTimeout(resolve,10));activeSaves--;return {stage,instructionId:'SAME-CONTROLLING-INSTRUCTION'};}});\n"
+        },
+        {
+          "offset": 15769,
+          "deleteBytes": 812,
+          "insert": "const packageRuntime=lifecycleContext({...inactiveMobileAcceptance,withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'PACKAGE-A'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>null,document:{querySelectorAll:()=>[],createElement:()=>({click(){packageDownloads.push({filename:this.download,href:this.href});}})},URL:{createObjectURL:blob=>`blob:${blob.jobId}`,revokeObjectURL:()=>{}},projectStore:{storageHealth:async()=>({}),exportPackage:async jobId=>{packageRequests.push(jobId);activePackages++;maxActivePackages=Math.max(maxActivePackages,activePackages);await new Promise(resolve=>setTimeout(resolve,10));activePackages--;if(rejectNextPackage){rejectNextPackage=false;throw new Error('CONTROLLED_PACKAGE_EXPORT_FAILURE');}return {jobId};}}});\n"
+        },
+        {
+          "offset": 18321,
+          "deleteBytes": 230,
+          "insert": "const filePackageRuntime=lifecycleContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});\n"
+        },
+        {
+          "offset": 27185,
+          "deleteBytes": 91,
+          "insert": "const decoderRuntime=lifecycleContext({...inactiveMobileAcceptance,Blob,Uint8Array,atob});\n"
+        },
+        {
+          "offset": 28131,
+          "deleteBytes": 116,
+          "insert": "  const runtime=lifecycleContext({...inactiveMobileAcceptance,crypto:globalThis.crypto,URL,structuredClone,console,\n"
+        },
+        {
+          "offset": 33567,
+          "deleteBytes": 294,
+          "insert": "const viewRuntime=lifecycleContext({...inactiveMobileAcceptance,engine,schema:globalThis.closedLoopWorkflowSchema,current:core.createBlankState('VIEW-PRESSURE'),safe:value=>Array.isArray(value)?value:[],esc:value=>String(value??''),label:value=>String(value),proposalVersionCurrent:()=>true});\n"
+        },
+        {
+          "offset": 36885,
+          "deleteBytes": 319,
+          "insert": "const storageRuntime=lifecycleContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,console,document:{querySelectorAll:()=>[]},Event:globalThis.Event,dispatchEvent:()=>true});\n"
+        },
+        {
+          "offset": 42054,
+          "deleteBytes": 380,
+          "insert": "for(const name of ['readApplicationResource','blankStage','ensureState','projectDisplayName','saveProjectUi','persistAll','persistNewProject','persistReplacement','save','createUniqueJobId','addNew','duplicateCurrentProject','restoreStageContinuation','materializeProject','unloadInactiveProjects','archiveCurrentProject']){const source=appFunction(name);if(source)vm.runInContext(source,storageRuntime);}\n"
+        },
+        {
+          "offset": 58435,
+          "deleteBytes": 712,
+          "insert": "  const runtime=lifecycleContext({...inactiveMobileAcceptance,withStorageActivity:async(_label,operation)=>operation(),current:{job:{JOB_ID:'DIAGNOSTICS-EXPORT'}},setTimeout,announce:()=>{},render:()=>{},refreshProjectStorage:async()=>{},$:()=>status,console:{error:()=>{}},document:{querySelectorAll:()=>[],createElement:()=>({click(){downloads.push(this.download);}})},URL:{createObjectURL:()=> 'blob:verified-package',revokeObjectURL(){}},projectStore:{storageHealth:async()=>{healthCalls++;entered();await held;throw new Error('CONTROLLED_DIAGNOSTICS_FAILURE');},exportPackage:async()=>{active++;maxActive=Math.max(maxActive,active);await new Promise(resolve=>setTimeout(resolve,0));active--;return {};}}});\n"
+        },
+        {
+          "offset": 100498,
+          "deleteBytes": 668,
+          "insert": "    const worker=lifecycleContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,DataView,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,URL,URLSearchParams,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true,location:new URL(url),openStorageTransaction:storageRuntime.openStorageTransaction,addEventListener:(type,callback)=>{if(type==='message')listener=callback;},postMessage:message=>{if(this.stopped)return;if(dropWorkerReply){dropWorkerReply=false;this.onerror?.({message:'CONTROLLED_LOST_COMMITTED_REPLY'});}else this.onmessage?.({data:storageRead(message)});}});\n"
+        }
+      ]
+    },
+    {
+      "path": "verification/current-task-requirement-register.json",
+      "before": "246033ee441516405c9b443b4e1a17747a05aea066d9f34d08856cb8d73b3d4a",
+      "after": "9f7b3b744100944519aaaec1be72a30cb4dae83213dc8f0b91535a5d03b5283e",
+      "edits": [
+        {
+          "offset": 5218575,
+          "deleteBytes": 0,
+          "insert": ",\n    {\n      \"requirementId\": \"HARNESS-LIFECYCLE-SOURCE-CLOSURE\",\n      \"sourceLocation\": \"Task sections 7–8: executable regressions and earliest responsible layer; specification section 0\",\n      \"productionOwner\": \"app-core.js:readApplicationResource, retainedProjectForBuild, startClosedLoopApp; project-store.js:openDatabase; index.html:closed-loop-startup-guard\",\n      \"testOwner\": \"verify-project-lifecycle.mjs and verify-project-lifecycle-full.mjs\",\n      \"observableExpectedBehavior\": \"The lifecycle verifier executes the actual resource-reader, database-open and startup-feedback owners with their native host dependencies. A blocked upgrade produces its actual actionable startup error. A concurrent edit made during retained-project fetch remains preserved; an unchanged build fetches the bundled project once. No prototype monkeypatch or synthesized success feedback substitutes for those owners.\",\n      \"requiredEvidence\": [\n        \"node verify-project-lifecycle.mjs baseline and corrected raw output\",\n        \"startup:retained-refresh-keeps-snapshot-revision\",\n        \"startup:unchanged-build-reuses-retained-project\",\n        \"database:blocked-upgrade-visible-recovery\",\n        \"production startup and resource deadline fault cases\",\n        \"complete required CI\"\n      ],\n      \"applicableStages\": \"Session startup before every workflow stage\",\n      \"applicableOperations\": [\n        \"startup\",\n        \"retained project refresh\",\n        \"reload\",\n        \"blocked database recovery\"\n      ],\n      \"status\": \"UNVERIFIED\"\n    }"
+        }
+      ]
+    }
+  ]
+}
