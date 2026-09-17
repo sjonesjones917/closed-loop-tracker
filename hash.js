@@ -92,7 +92,7 @@ function* canonicalChunks(value){
     }else if(frame.kind==='colon'){pending+=':';stack.pop();}
     else if(frame.kind==='array'){
       if(frame.index===input.length){pending+=']';seen.delete(input);stack.pop();}
-      else{const index=frame.index++;if(index)pending+=',';stack.push({kind:'value',value:input[index],path:`${path}[${index}]`});}
+      else{const index=frame.index++,descriptor=Object.getOwnPropertyDescriptor(input,String(index));if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}[${index}].`);if(index)pending+=',';stack.push({kind:'value',value:descriptor.value,path:`${path}[${index}]`});}
     }else if(frame.kind==='object'){
       if(frame.index===frame.keys.length){pending+='}';seen.delete(input);stack.pop();}
       else{
@@ -113,14 +113,14 @@ function* canonicalChunks(value){
         if(typeof input!=='object')throw new TypeError(`Cannot canonically hash ${typeof input} at ${path}.`);
         if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
         seen.add(input);const keys=Object.keys(input);
+        if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
         if(Array.isArray(input)){
           for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
-          if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
+          if(keys.some(key=>!/^(?:0|[1-9]\d*)$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
           pending+='[';stack.push({kind:'array',value:input,index:0,path});
         }else{
           const prototype=Object.getPrototypeOf(input);
           if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
-          if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
           for(const key of keys)assertUnicodeScalars(key,`${path} object key`);keys.sort(compareUnicodeScalarSequence);
           pending+='{';stack.push({kind:'object',value:input,index:0,keys,path});
         }
@@ -175,14 +175,30 @@ async function sha256Chunks(chunks){
 }
 function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');}
 function hexToBytes(hex){const text=String(hex||'').toLowerCase();if(!/^[0-9a-f]+$/.test(text)||text.length%2)throw new TypeError('hexToBytes requires an even-length hexadecimal string.');const out=new Uint8Array(text.length/2);for(let i=0;i<out.length;i++)out[i]=parseInt(text.slice(i*2,i*2+2),16);return out;}
+// Native read/crypto/stream waits are finite. This does not race a durable
+// mutation: callers must abort/reconcile transactions through the store.
+const IO_READ_TIMEOUT_MS=30000;
+function readWithDeadline(promise,label='Reading data',abort=null){
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    const finish=(callback,value)=>{if(settled)return;settled=true;clearTimeout(timer);callback(value);};
+    const timer=setTimeout(()=>{
+      if(settled)return;
+      const error=Object.assign(new Error(`${label} did not finish within ${IO_READ_TIMEOUT_MS} ms. The read was abandoned. Reload and verify the saved state before retrying.`),{code:'IO_READ_TIMEOUT',existingProjectsUnchanged:false});
+      finish(reject,error);
+      try{const cancelled=abort?.(error);if(cancelled&&typeof cancelled.then==='function')void cancelled.catch(()=>{});}catch{}
+    },IO_READ_TIMEOUT_MS);
+    Promise.resolve(promise).then(value=>finish(resolve,value),error=>finish(reject,error));
+  });
+}
 async function sha256Bytes(bytes){
   if(bytes instanceof Blob){
     const digest=createSha256();let lastYield=Date.now();
-    for(let offset=0;offset<bytes.size;offset+=65536){digest.update(new Uint8Array(await bytes.slice(offset,offset+65536).arrayBuffer()));if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
+    for(let offset=0;offset<bytes.size;offset+=65536){digest.update(new Uint8Array(await readWithDeadline(bytes.slice(offset,offset+65536).arrayBuffer(),'Reading artifact bytes')));if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
     return digest.digest();
   }
   let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');
-  return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',view)));
+  return bytesToHex(new Uint8Array(await readWithDeadline(crypto.subtle.digest('SHA-256',view),'Hashing artifact bytes')));
 }
 function rawResponseSha256(raw){return sha256Text(String(raw??''));}
 function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
@@ -274,7 +290,10 @@ function normalizeFilenameSet(filenames){
 
 const RFC3339_INSTANT=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/;
 const DATE_ONLY=/^(\d{4})-(\d{2})-(\d{2})$/;
-function validCalendarDate(year,month,day){const date=new Date(Date.UTC(year,month-1,day));return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day;}
+// Date.UTC remaps years 0..99 to 1900..1999. The registered four-digit
+// Gregorian year must instead survive both validation and instant conversion.
+function utcCalendarDate(year,month,day,hour=0,minute=0,second=0,millis=0){const date=new Date(0);date.setUTCFullYear(year,month-1,day);date.setUTCHours(hour,minute,second,millis);return date;}
+function validCalendarDate(year,month,day){const date=utcCalendarDate(year,month,day);return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day;}
 function normalizeDateTime(value){
   const input=String(value??'');
   let match=input.match(DATE_ONLY);
@@ -288,8 +307,10 @@ function normalizeDateTime(value){
   let offsetMinutes=0;
   if(zone!=='Z'){const sign=zone[0]==='-'?-1:1,oh=Number(zone.slice(1,3)),om=Number(zone.slice(4,6));if(oh>23||om>59)throw new TypeError('INVALID_DATE_TIME: invalid UTC offset.');offsetMinutes=sign*(oh*60+om);}
   const millis=Number((fraction+'000').slice(0,3));
-  const epoch=Date.UTC(year,month-1,day,hour,minute,second,millis)-offsetMinutes*60000;
-  const normalized=new Date(epoch).toISOString();
+  const epoch=utcCalendarDate(year,month,day,hour,minute,second,millis).getTime()-offsetMinutes*60000;
+  const instant=new Date(epoch);
+  if(instant.getUTCFullYear()<0||instant.getUTCFullYear()>9999)throw new TypeError('INVALID_DATE_TIME: normalized UTC year is outside the four-digit RFC 3339 domain.');
+  const normalized=instant.toISOString();
   return Object.freeze({version:TRUSTED_TIME_VERSION,kind:'INSTANT',original:input,normalized,timeBasis:'DEVICE_REPORTED'});
 }
 function evaluateTrustedTimeEvidence({basis='NONE',attestationContractId=null,attributableExternalSystem=false}={}){
@@ -302,7 +323,7 @@ function evaluateTrustedTimeEvidence({basis='NONE',attestationContractId=null,at
   return Object.freeze({version:TRUSTED_TIME_VERSION,basis:normalizedBasis,trusted:false,attestationContractId:null,attributableExternalSystem:false});
 }
 
-const api={version:'closed-loop-hash/9',canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,unicodeContract:UNICODE_CONTRACT,canonicalChunks,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Chunks,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,assertPinnedUnicodeHost,pinnedNFD,pinnedNFC,defaultCaseFold,confusableSkeleton,normalizeFilename,filenameCollisionKeys,normalizeFilenameSet,normalizeDateTime,evaluateTrustedTimeEvidence,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
+const api={version:'closed-loop-hash/9',IO_READ_TIMEOUT_MS,readWithDeadline,canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,unicodeContract:UNICODE_CONTRACT,canonicalChunks,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Chunks,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,assertPinnedUnicodeHost,pinnedNFD,pinnedNFC,defaultCaseFold,confusableSkeleton,normalizeFilename,filenameCollisionKeys,normalizeFilenameSet,normalizeDateTime,evaluateTrustedTimeEvidence,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
 globalThis.closedLoopHash=Object.freeze(api);
 
 })();

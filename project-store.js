@@ -22,8 +22,25 @@ const projectPickerKey=(project,revision=project?.revision,jobId=projectIdentity
 const projectPickerSummary=key=>{const data=JSON.parse(key[1]);return {_unloaded:true,job:{JOB_ID:key[0],JOB_TITLE:data.title},revision:data.revision,isRetainedTestProject:data.isRetainedTestProject,retainedSpecRevision:data.retainedSpecRevision,activeView:data.activeView,activeStage:data.activeStage};};
 const now=()=>new Date().toISOString();
 const fault=phase=>{const configured=globalThis.__closedLoopStorageFault;if(configured===phase||configured?.phase===phase){const error=new Error(`Injected storage failure at ${phase}.`);error.code='INJECTED_STORAGE_FAILURE';throw error;}};
-const request=req=>new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB request failed.'));});
-const complete=tx=>new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed.'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted.'));});
+// These are native I/O deadlines, not the delayed UI indicator threshold.
+const STORAGE_IO_TIMEOUT_MS=30000;
+const STORAGE_WORKER_TIMEOUT_MS=600000;
+function storageEvent(kind,subscribe,transaction=null){
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);if(error)reject(error);else resolve(value);};
+    const timer=setTimeout(()=>{
+      if(settled)return;
+      // Aborting one transaction does not prove that every earlier operation
+      // in the operator action was rolled back. Require read-back recovery.
+      const error=Object.assign(new Error(`Storage ${kind.toLowerCase()} did not return within ${STORAGE_IO_TIMEOUT_MS} ms. Reload and verify the saved project before retrying.`),{code:`STORAGE_${kind}_TIMEOUT`,existingProjectsUnchanged:false});
+      finish(error);try{transaction?.abort();}catch{/* A commit may already have happened; its outcome remains unconfirmed. */}
+    },STORAGE_IO_TIMEOUT_MS);
+    try{subscribe(value=>finish(null,value),error=>finish(error),()=>!settled);}catch(error){finish(error);}
+  });
+}
+const request=req=>storageEvent('REQUEST',(resolve,reject,active)=>{req.onsuccess=()=>{if(active())resolve(req.result);};req.onerror=()=>{if(active())reject(req.error||new Error('IndexedDB request failed.'));};},req.transaction);
+const complete=tx=>storageEvent('TRANSACTION',(resolve,reject,active)=>{tx.oncomplete=()=>{if(active())resolve();};tx.onerror=()=>{if(active())reject(tx.error||new Error('IndexedDB transaction failed.'));};tx.onabort=()=>{if(active())reject(tx.error||new Error('IndexedDB transaction aborted.'));};},tx);
 const canonicalProject=project=>{const copy={...project};delete copy.projectSha256;return copy;};
 const projectSha256=project=>hash.sha256Value(canonicalProject(project));
 const storageError=(message,code)=>Object.assign(new Error(message),{code});
@@ -38,11 +55,11 @@ async function recoverWorkerOperation(pending,error){
 function requestStoreWorker(method,args){
   if(!operationWorker){
     const url=new URL(STORE_SCRIPT_URL);url.searchParams.set('storeWorker','1');const worker=new Worker(url.href);operationWorker=worker;
-    const lost=event=>{if(operationWorker!==worker)return;operationWorker=null;worker.terminate();const pending=[...workerRequests.values()];workerRequests.clear();for(const entry of pending)void recoverWorkerOperation(entry,storageError(event?.message||'Storage worker stopped before returning its result.','STORAGE_WORKER_STOPPED'));};
+    const lost=event=>{if(operationWorker!==worker)return;operationWorker=null;worker.terminate();const pending=[...workerRequests.values()];workerRequests.clear();for(const entry of pending){clearTimeout(entry.timer);void recoverWorkerOperation(entry,storageError(event?.message||'Storage worker stopped before returning its result.','STORAGE_WORKER_STOPPED'));}};
     worker.onerror=lost;worker.onmessageerror=lost;
-    worker.onmessage=event=>{const message=event.data||{},pending=workerRequests.get(message.operationId);if(!pending)return;if(message.buildIdentity!==STORE_BUILD_ID){lost({message:'Storage worker build identity mismatch.'});return;}workerRequests.delete(message.operationId);if(message.ok){void clearWorkerCommit(message.operationId);pending.resolve(message.project);}else void recoverWorkerOperation(pending,Object.assign(new Error(message.error?.message||'Storage operation failed.'),message.error));};
+    worker.onmessage=event=>{if(operationWorker!==worker)return;const message=event.data||{},pending=workerRequests.get(message.operationId);if(!pending)return;if(message.buildIdentity!==STORE_BUILD_ID){lost({message:'Storage worker build identity mismatch.'});return;}workerRequests.delete(message.operationId);clearTimeout(pending.timer);if(message.ok){void clearWorkerCommit(message.operationId);pending.resolve(message.project);}else void recoverWorkerOperation(pending,Object.assign(new Error(message.error?.message||'Storage operation failed.'),message.error));};
   }
-  const operationId=crypto.randomUUID();return new Promise((resolve,reject)=>{workerRequests.set(operationId,{operationId,resolve,reject});try{operationWorker.postMessage({operationId,method,args,buildIdentity:STORE_BUILD_ID,fault:globalThis.__closedLoopStorageFault||null});}catch(error){workerRequests.delete(operationId);reject(Object.assign(error,{existingProjectsUnchanged:true}));}});
+  const operationId=crypto.randomUUID(),worker=operationWorker;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{if(workerRequests.has(operationId)&&operationWorker===worker)worker.onerror({message:`Storage worker did not return within ${STORAGE_WORKER_TIMEOUT_MS} ms. Its durable commit receipt is being checked before retry is permitted.`});},STORAGE_WORKER_TIMEOUT_MS);workerRequests.set(operationId,{operationId,resolve,reject,timer});try{worker.postMessage({operationId,method,args,buildIdentity:STORE_BUILD_ID,fault:globalThis.__closedLoopStorageFault||null});}catch(error){clearTimeout(timer);workerRequests.delete(operationId);reject(Object.assign(error,{existingProjectsUnchanged:true}));}});
 }
 const useStoreWorker=()=>Boolean(STORE_SCRIPT_URL&&typeof Worker==='function');
 const runSynchronousMutator=(mutator,next,before)=>{const result=mutator(next,before);if(result&&typeof result.then==='function')throw storageError('Project transaction mutators must be synchronous. Complete asynchronous work before opening the canonical IndexedDB transaction.','ASYNC_TRANSACTION_MUTATOR');return result;};
@@ -84,16 +101,18 @@ function resetDatabaseConnection(db=null){
 function openDatabase(){
   if(!globalThis.indexedDB)return Promise.reject(Object.assign(new Error('IndexedDB is required by the supported browser contract.'),{code:'INDEXEDDB_REQUIRED'}));
   if(databasePromise)return databasePromise;
-  const opening=new Promise((resolve,reject)=>{
-    const req=indexedDB.open(DB_NAME,DB_VERSION);let blocked=false;
-    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(PROJECTS))db.createObjectStore(PROJECTS,{keyPath:'jobId'});if(!db.objectStoreNames.contains(ARTIFACTS))db.createObjectStore(ARTIFACTS,{keyPath:'artifactId'});if(!db.objectStoreNames.contains(META))db.createObjectStore(META,{keyPath:'key'});const artifacts=req.transaction.objectStore(ARTIFACTS);if(!artifacts.indexNames.contains('jobId'))artifacts.createIndex('jobId','jobId',{unique:false});const projects=req.transaction.objectStore(PROJECTS);if(!projects.indexNames.contains('picker')){projects.createIndex('picker','picker',{unique:true});const scan=projects.openCursor();scan.onsuccess=()=>{const cursor=scan.result;if(!cursor)return;const row=cursor.value;row.picker=projectPickerKey(row.project,row.revision,String(row.jobId));cursor.update(row);cursor.continue();};}};
-    req.onsuccess=()=>{const db=req.result;if(blocked){db.close();resetDatabaseConnection();return;}databaseHandle=db;db.onclose=()=>resetDatabaseConnection(db);db.onversionchange=()=>{resetDatabaseConnection(db);try{db.close();}catch{}};resolve(db);};
-    req.onerror=()=>{resetDatabaseConnection();reject(req.error||new Error('IndexedDB open failed.'));};
-    // Keep the rejected promise until this pending request finishes. Another
-    // open would queue behind it and could leave startup waiting indefinitely.
-    req.onblocked=()=>{blocked=true;reject(Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'}));};
-  });
+  let requestHandle=null,expired=false;
+  const opening=storageEvent('OPEN',(resolve,reject,active)=>{
+    const req=indexedDB.open(DB_NAME,DB_VERSION);requestHandle=req;
+    req.onupgradeneeded=()=>{if(expired||!active()){try{req.transaction?.abort();}catch{}return;}const db=req.result;if(!db.objectStoreNames.contains(PROJECTS))db.createObjectStore(PROJECTS,{keyPath:'jobId'});if(!db.objectStoreNames.contains(ARTIFACTS))db.createObjectStore(ARTIFACTS,{keyPath:'artifactId'});if(!db.objectStoreNames.contains(META))db.createObjectStore(META,{keyPath:'key'});const artifacts=req.transaction.objectStore(ARTIFACTS);if(!artifacts.indexNames.contains('jobId'))artifacts.createIndex('jobId','jobId',{unique:false});const projects=req.transaction.objectStore(PROJECTS);if(!projects.indexNames.contains('picker')){projects.createIndex('picker','picker',{unique:true});const scan=projects.openCursor();scan.onsuccess=()=>{if(!active())return;const cursor=scan.result;if(!cursor)return;const row=cursor.value;row.picker=projectPickerKey(row.project,row.revision,String(row.jobId));cursor.update(row);cursor.continue();};}};
+    req.onsuccess=()=>{const db=req.result;if(expired||!active()){try{db.close();}finally{if(databasePromise===opening)resetDatabaseConnection();}return;}databaseHandle=db;db.onclose=()=>resetDatabaseConnection(db);db.onversionchange=()=>{resetDatabaseConnection(db);try{db.close();}catch{}};resolve(db);};
+    req.onerror=()=>{if(databasePromise===opening)resetDatabaseConnection();reject(req.error||new Error('IndexedDB open failed.'));};
+    req.onblocked=()=>{expired=true;reject(Object.assign(new Error('IndexedDB upgrade is blocked by another tab. Close other application tabs, then reload.'),{code:'INDEXEDDB_BLOCKED'}));};
+  },{abort(){expired=true;try{requestHandle?.transaction?.abort();}catch{}}});
+  // Retain a rejected open until its native request terminates. Retrying an
+  // unresolved open must not queue another request behind the same blocker.
   databasePromise=opening;
+  void opening.catch(()=>{if(!requestHandle&&databasePromise===opening)resetDatabaseConnection();});
   return opening;
 }
 async function openTransaction(stores,mode='readonly'){
@@ -262,8 +281,8 @@ async function readAllIndexed(){
 }
 async function listProjectSummaries(){
   const tx=await openTransaction(PROJECTS,'readonly'),finished=complete(tx),summaries=[];
-  await new Promise((resolve,reject)=>{const req=tx.objectStore(PROJECTS).index('picker').openKeyCursor();req.onerror=()=>reject(req.error||new Error('Project picker could not be read.'));req.onsuccess=()=>{const cursor=req.result;if(!cursor){resolve();return;}summaries.push(projectPickerSummary(cursor.key));cursor.continue();};});
-  await finished;return summaries;
+  const cursorRead=storageEvent('CURSOR',(resolve,reject,active)=>{const req=tx.objectStore(PROJECTS).index('picker').openKeyCursor();req.onerror=()=>{if(active())reject(req.error||new Error('Project picker could not be read.'));};req.onsuccess=()=>{if(!active())return;const cursor=req.result;if(!cursor){resolve();return;}summaries.push(projectPickerSummary(cursor.key));cursor.continue();};},tx);
+  await Promise.all([cursorRead,finished]);return summaries;
 }
 async function readProject(jobId){
   const tx=await openTransaction([PROJECTS,META],'readonly'),row=await request(tx.objectStore(PROJECTS).get(String(jobId))),journal=await request(tx.objectStore(META).get(operationalKey(jobId)));await complete(tx);
@@ -739,8 +758,8 @@ function base64ToBlob(text,mediaType){
   }
   parts.push(base64ToBytes(pending));return new Blob(parts,{type:mediaType||'application/octet-stream'});
 }
-async function compressBytes(bytes){if(typeof CompressionStream!=='function')throw Object.assign(new Error('CompressionStream is required for complete package export.'),{code:'COMPRESSION_STREAM_REQUIRED'});const stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));return new Uint8Array(await new Response(stream).arrayBuffer());}
-async function decompressBytes(bytes){if(typeof DecompressionStream!=='function')throw Object.assign(new Error('DecompressionStream is required for complete package import.'),{code:'DECOMPRESSION_STREAM_REQUIRED'});const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return new Uint8Array(await new Response(stream).arrayBuffer());}
+async function compressBytes(bytes){if(typeof CompressionStream!=='function')throw Object.assign(new Error('CompressionStream is required for complete package export.'),{code:'COMPRESSION_STREAM_REQUIRED'});const stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));return new Uint8Array(await hash.readWithDeadline(new Response(stream).arrayBuffer(),'Processing recovery bytes'));}
+async function decompressBytes(bytes){if(typeof DecompressionStream!=='function')throw Object.assign(new Error('DecompressionStream is required for complete package import.'),{code:'DECOMPRESSION_STREAM_REQUIRED'});const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return new Uint8Array(await hash.readWithDeadline(new Response(stream).arrayBuffer(),'Processing recovery bytes'));}
 // Package schemas have string-valued file members. Keep those members as Blob
 // references during assembly and emit their exact JSON strings on demand. The
 // canonical serializer remains the authority for every ordinary key and value.
@@ -749,10 +768,10 @@ async function* packageJsonChunks(value,fileContents){
     yield '"';
     if(source.encoding==='base64'){
       // A multiple of three prevents padding between successive base64 chunks.
-      for(let offset=0;offset<source.blob.size;offset+=49152)yield bytesToBase64(new Uint8Array(await source.blob.slice(offset,offset+49152).arrayBuffer()));
+      for(let offset=0;offset<source.blob.size;offset+=49152)yield bytesToBase64(new Uint8Array(await hash.readWithDeadline(source.blob.slice(offset,offset+49152).arrayBuffer(),'Reading export bytes')));
     }else{
       const decoder=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true});
-      for(let offset=0;offset<source.blob.size;offset+=49152){const text=decoder.decode(await source.blob.slice(offset,offset+49152).arrayBuffer(),{stream:true});yield hash.stableStringify(text).slice(1,-1);}
+      for(let offset=0;offset<source.blob.size;offset+=49152){const text=decoder.decode(await hash.readWithDeadline(source.blob.slice(offset,offset+49152).arrayBuffer(),'Reading export bytes'),{stream:true});yield hash.stableStringify(text).slice(1,-1);}
       yield hash.stableStringify(decoder.decode()).slice(1,-1);
     }
     yield '"';
@@ -785,11 +804,11 @@ async function compressPackage(body,fileContents=new WeakMap()){
   async function* hashAndCompress(){
     let previous=null;
     for await(const bytes of encodedBody()){
-      if(previous)await writer.write(previous);
+      if(previous)await hash.readWithDeadline(writer.write(previous),'Compressing recovery bytes',error=>writer.abort(error));
       yield bytes;previous=bytes;
     }
     if(!previous||previous[previous.length-1]!==125)throw storageError('Package body did not end with its object boundary.','PACKAGE_BODY_INVALID');
-    if(previous.length>1)await writer.write(previous.subarray(0,-1));
+    if(previous.length>1)await hash.readWithDeadline(writer.write(previous.subarray(0,-1)),'Compressing recovery boundary',error=>writer.abort(error));
   }
   try{
     // Hash the unchanged canonical body, including its closing brace, while
@@ -797,9 +816,9 @@ async function compressPackage(body,fileContents=new WeakMap()){
     // the digest as the last JSON member; it remains outside its own preimage.
     // Retain only one bounded body chunk to replace the final closing brace.
     const packageSha256=await hash.sha256Chunks(hashAndCompress());
-    await writer.write(encoder.encode(`${Object.keys(body).length?',':''}"packageSha256":"${packageSha256}"}`));
-    await writer.close();return {blob:await compressed,packageSha256};
-  }catch(error){await writer.abort(error).catch(()=>{});await compressed.catch(()=>{});throw error;}
+    await hash.readWithDeadline(writer.write(encoder.encode(`${Object.keys(body).length?',':''}"packageSha256":"${packageSha256}"}`)),'Completing recovery bytes',error=>writer.abort(error));
+    await hash.readWithDeadline(writer.close(),'Closing recovery output',error=>writer.abort(error));return {blob:await hash.readWithDeadline(compressed,'Reading compressed recovery output'),packageSha256};
+  }catch(error){void writer.abort(error).catch(()=>{});void compressed.catch(()=>{});throw error;}
 }
 function requiredProjectArtifactBytes(project){
   const id=projectIdentity(project),engine=globalThis.closedLoopWorkflowEngine,expected=[];
@@ -839,7 +858,7 @@ function encryptionBytes(value,length){if(typeof value!=='string'||!new RegExp(`
 async function backupKey(passphrase,salt,usage){
   if(typeof passphrase!=='string'||!passphrase.length)throw storageError('Enter the backup password to continue.','BACKUP_PASSPHRASE_REQUIRED');
   const api=encryptionCrypto(),encoded=new TextEncoder().encode(passphrase);
-  try{const material=await api.subtle.importKey('raw',encoded,'PBKDF2',false,['deriveKey']);return await api.subtle.deriveKey({name:'PBKDF2',salt,iterations:ENCRYPTED_EXPORT_PROFILE.iterations,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,[usage]);}finally{encoded.fill(0);}
+  try{const material=await hash.readWithDeadline(api.subtle.importKey('raw',encoded,'PBKDF2',false,['deriveKey']),'Preparing backup protection');return await hash.readWithDeadline(api.subtle.deriveKey({name:'PBKDF2',salt,iterations:ENCRYPTED_EXPORT_PROFILE.iterations,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,[usage]),'Deriving backup protection key');}finally{encoded.fill(0);}
 }
 async function encryptedPackage(blob,manifestSha256,passphrase){
   const api=encryptionCrypto(),salt=api.getRandomValues(new Uint8Array(16)),iv=api.getRandomValues(new Uint8Array(12)),key=await backupKey(passphrase,salt,'encrypt'),aad=encryptionBytes(manifestSha256,32);
@@ -847,21 +866,21 @@ async function encryptedPackage(blob,manifestSha256,passphrase){
   // passphrase; repeated CSPRNG output fails before any ciphertext is returned.
   const tx=await openTransaction(META,'readwrite'),nonceKey='encryptedExportNonce:'+encryptionHex(salt)+':'+encryptionHex(iv);
   try{if(await request(tx.objectStore(META).get(nonceKey)))throw storageError('Secure backup randomness was repeated. Retry with a working cryptography provider.','BACKUP_NONCE_REUSE');fault('during-backup-protection');tx.objectStore(META).put({key:nonceKey,value:{profile:ENCRYPTED_EXPORT_PROFILE.schema,createdAt:now()}});await complete(tx);}catch(error){try{tx.abort();}catch{}throw error;}
-  const bytes=new Uint8Array(await blob.arrayBuffer());let result;
-  try{result=new Uint8Array(await api.subtle.encrypt({name:'AES-GCM',iv,additionalData:aad,tagLength:128},key,bytes));}finally{bytes.fill(0);}
+  const bytes=new Uint8Array(await hash.readWithDeadline(blob.arrayBuffer(),'Reading backup bytes'));let result;
+  try{result=new Uint8Array(await hash.readWithDeadline(api.subtle.encrypt({name:'AES-GCM',iv,additionalData:aad,tagLength:128},key,bytes),'Protecting backup bytes'));}finally{bytes.fill(0);}
   const ciphertext=result.subarray(0,result.length-16),tag=result.subarray(result.length-16),container={...ENCRYPTED_EXPORT_PROFILE,salt:encryptionHex(salt),iv:encryptionHex(iv),manifestSha256,ciphertextLength:ciphertext.length,authenticationTag:encryptionHex(tag),ciphertext:bytesToBase64(ciphertext)};
   return new Blob([JSON.stringify(container)],{type:'application/vnd.closed-loop.encrypted+json'});
 }
-async function isEncryptedPackage(blob){return /^\s*\{\s*"schema"\s*:\s*"closed-loop-encrypted-export\/1"/.test(await blob.slice(0,160).text());}
+async function isEncryptedPackage(blob){return /^\s*\{\s*"schema"\s*:\s*"closed-loop-encrypted-export\/1"/.test(await hash.readWithDeadline(blob.slice(0,160).text(),'Reading backup header'));}
 async function decryptPackage(blob,passphrase){
-  let container;try{container=JSON.parse(await blob.text());}catch{throw storageError('The encrypted backup is incomplete or invalid.','ENCRYPTED_PACKAGE_INVALID');}
+  let container;try{container=JSON.parse(await hash.readWithDeadline(blob.text(),'Reading protected backup'));}catch(error){if(error?.code==='IO_READ_TIMEOUT')throw error;throw storageError('The encrypted backup is incomplete or invalid.','ENCRYPTED_PACKAGE_INVALID');}
   const expected=[...Object.keys(ENCRYPTED_EXPORT_PROFILE),'salt','iv','manifestSha256','ciphertextLength','authenticationTag','ciphertext'];
   if(Object.keys(container).length!==expected.length||Object.keys(container).some(key=>!expected.includes(key))||Object.entries(ENCRYPTED_EXPORT_PROFILE).some(([key,value])=>container[key]!==value))throw storageError('The encrypted backup uses unsupported or modified protection settings.','ENCRYPTED_PACKAGE_INVALID');
   if(typeof container.ciphertext!=='string'||container.ciphertext.length%4!==0||! /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(container.ciphertext))throw storageError('Encrypted backup ciphertext is invalid.','ENCRYPTED_PACKAGE_INVALID');
   const salt=encryptionBytes(container.salt,16),iv=encryptionBytes(container.iv,12),tag=encryptionBytes(container.authenticationTag,16),aad=encryptionBytes(container.manifestSha256,32),ciphertext=base64ToBytes(container.ciphertext);
   if(!Number.isSafeInteger(container.ciphertextLength)||ciphertext.length!==container.ciphertextLength)throw storageError('The encrypted backup has missing or modified bytes.','ENCRYPTED_PACKAGE_INVALID');
   const key=await backupKey(passphrase,salt,'decrypt'),combined=new Uint8Array(ciphertext.length+tag.length);combined.set(ciphertext);combined.set(tag,ciphertext.length);let plaintext;
-  try{plaintext=await encryptionCrypto().subtle.decrypt({name:'AES-GCM',iv,additionalData:aad,tagLength:128},key,combined);}catch{throw storageError('The backup password is incorrect or the encrypted file has changed. The existing project is unchanged.','BACKUP_AUTHENTICATION_FAILED');}
+  try{plaintext=await hash.readWithDeadline(encryptionCrypto().subtle.decrypt({name:'AES-GCM',iv,additionalData:aad,tagLength:128},key,combined),'Verifying protected backup');}catch(error){if(error?.code==='IO_READ_TIMEOUT')throw error;throw storageError('The backup password is incorrect or the encrypted file has changed. The existing project is unchanged.','BACKUP_AUTHENTICATION_FAILED');}
   const result=new Blob([plaintext],{type:'application/gzip'}),parsed=await readPackageJson(result);
   if(hash.sha256Value(parsed.payload.packageManifest)!==container.manifestSha256)throw storageError('The decrypted backup does not match its protected manifest.','BACKUP_AUTHENTICATION_FAILED');
   new Uint8Array(plaintext).fill(0);return result;
@@ -957,13 +976,13 @@ async function readPackageJson(blob){
   }
   const reader=blob.stream().pipeThrough(new DecompressionStream('gzip')).getReader(),decoder=new TextDecoder();let expandedBytes=0;
   try{
-    while(true){const {value:bytes,done}=await reader.read();if(done)break;expandedBytes+=bytes.byteLength;for(let offset=0;offset<bytes.length;offset+=65536){parseChunk(decoder.decode(bytes.subarray(offset,offset+65536),{stream:true}));if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}}
+    while(true){const {value:bytes,done}=await hash.readWithDeadline(reader.read(),'Reading recovery stream',error=>reader.cancel(error));if(done)break;expandedBytes+=bytes.byteLength;for(let offset=0;offset<bytes.length;offset+=65536){parseChunk(decoder.decode(bytes.subarray(offset,offset+65536),{stream:true}));if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}}
     parseChunk(decoder.decode());if(kind==='atom'){value(JSON.parse(atom));kind=null;}if(kind||stack.length||!hasRoot)fail();return {payload:root,fileContents,expandedBytes};
-  }catch(error){try{await reader.cancel(error);}catch{}throw error;}finally{reader.releaseLock();}
+  }catch(error){try{void reader.cancel(error).catch(()=>{});}catch{}throw error;}finally{reader.releaseLock();}
 }
 async function base64BlobToBlob(blob,mediaType){
   const parts=[];let pending='';
-  for(let offset=0;offset<blob.size;offset+=65536){pending+=(await blob.slice(offset,offset+65536).text()).replace(/[\t\n\f\r ]/g,'');const end=Math.max(0,Math.floor(pending.length/4)*4-4);if(end){const part=pending.slice(0,end);if(part.includes('='))throw new TypeError('Invalid base64 padding before the end of an artifact.');parts.push(base64ToBytes(part));pending=pending.slice(end);}}
+  for(let offset=0;offset<blob.size;offset+=65536){pending+=(await hash.readWithDeadline(blob.slice(offset,offset+65536).text(),'Reading recovered artifact')).replace(/[\t\n\f\r ]/g,'');const end=Math.max(0,Math.floor(pending.length/4)*4-4);if(end){const part=pending.slice(0,end);if(part.includes('='))throw new TypeError('Invalid base64 padding before the end of an artifact.');parts.push(base64ToBytes(part));pending=pending.slice(end);}}
   parts.push(base64ToBytes(pending));return new Blob(parts,{type:mediaType||'application/octet-stream'});
 }
 async function importPackage(blob,{operationId=null,passphrase=null}={}){
@@ -1055,7 +1074,7 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     fault('during-import-project-write');meta.delete(operationalKey(id));projects.put({jobId:id,revision:next.revision,picker:projectPickerKey(next),project:next,projectSha256:digest,updatedAt:now()});
     for(const a of activeArtifacts){fault('during-import-artifact-write');artifacts.put({...a,jobId:id});const staged=a.lineage?.stagedResponse;if(staged)meta.put({key:`responseStaging:${id}:${staged.stagingId}`,value:{...clone(staged),blob:a.blob},updatedAt:now()});}
     meta.put({key:'selectedProject',value:id,updatedAt:now()});meta.put({key:'lastCommittedRevision',value:{jobId:id,revision:next.revision,projectSha256:digest},updatedAt:now()});meta.put({key:'lastVerifiedImport',value:{jobId:id,packageSha256,artifactCount:activeArtifacts.length,historyCheckpointCount:prepared.state.entries.length,at:now()},updatedAt:now()});recordWorkerCommit(tx,operationId,next,digest);fault('before-import-commit');await complete(tx);next.projectSha256=digest;notifyProjectChange(next);return next;
-  }catch(error){try{tx.abort();}catch{}throw Object.assign(error,{existingProjectsUnchanged:true});}
+  }catch(error){let aborted=false;try{tx.abort();aborted=true;}catch{}throw Object.assign(error,{existingProjectsUnchanged:error.existingProjectsUnchanged!==false&&aborted});}
 }
 
 function promptContextArtifactId(jobId,file){return 'PROMPT-CONTEXT-'+hash.sha256Value({jobId:String(jobId),sha256:file.sha256});}
@@ -1120,7 +1139,7 @@ async function handoffArchive(members){
   const table=new Uint32Array(256);for(let i=0;i<256;i++){let crc=i;for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);table[i]=crc;}
   const parts=[],central=[];let offset=0,centralSize=0;
   for(const entry of entries){
-    let crc=0xffffffff;for(let pos=0;pos<entry.blob.size;pos+=65536){const bytes=new Uint8Array(await entry.blob.slice(pos,pos+65536).arrayBuffer());for(const byte of bytes)crc=table[(crc^byte)&255]^(crc>>>8);}crc=(crc^0xffffffff)>>>0;
+    let crc=0xffffffff;for(let pos=0;pos<entry.blob.size;pos+=65536){const bytes=new Uint8Array(await hash.readWithDeadline(entry.blob.slice(pos,pos+65536).arrayBuffer(),'Reading handoff file'));for(const byte of bytes)crc=table[(crc^byte)&255]^(crc>>>8);}crc=(crc^0xffffffff)>>>0;
     const local=new Uint8Array(30+entry.name.length),lv=new DataView(local.buffer);
     lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0x800,true);lv.setUint16(12,33,true);lv.setUint32(14,crc,true);lv.setUint32(18,entry.blob.size,true);lv.setUint32(22,entry.blob.size,true);lv.setUint16(26,entry.name.length,true);local.set(entry.name,30);
     const directory=new Uint8Array(46+entry.name.length),dv=new DataView(directory.buffer);
@@ -1182,15 +1201,15 @@ async function stageResponseFile({jobId,stage,blob,rawFilename='response.json',m
   const {blob:responseBlob,...stagingIdentity}=record;
   await putArtifact({artifactId:'RAW-'+stagingId,jobId:owner,blob:record.blob,filename:originalName,mediaType:claimedType,lineage:{stage:stageNumber,role:'RAW_RESPONSE_RECOVERY',stagedResponse:stagingIdentity}});fault('during-response-staging-write');await metaPut(key,record);const stored=await metaGet(key);if(!stored?.blob)throw storageError('Staged response bytes were not persisted.','RESPONSE_STAGE_BYTES_MISSING');const verifyDigest=await hash.sha256Bytes(stored.blob);if(stored.blob.size!==byteSize||verifyDigest!==sha256){const tx=await openTransaction(META,'readwrite');tx.objectStore(META).delete(key);await complete(tx);throw storageError('Staged response bytes failed read-back verification.','RESPONSE_STAGE_REHASH_MISMATCH');}return {...stored,blob:undefined,storageKey:key};
 }
-async function readStagedResponseFile({jobId,stagingId}={}){const owner=String(jobId||'').trim(),id=String(stagingId||'').trim();if(!owner||!id)throw storageError('JOB_ID and stagingId are required.','RESPONSE_STAGE_ID_REQUIRED');const key=`responseStaging:${owner}:${id}`,stored=await metaGet(key);if(!stored?.blob)throw storageError('Staged response file is unavailable.','RESPONSE_STAGE_NOT_FOUND');if(String(stored.jobId)!==owner)throw storageError('Staged response belongs to another project.','CROSS_PROJECT_RESPONSE_STAGE');const limit=globalThis.closedLoopWorkflowSchema?.DEFAULT_RESOURCE_LIMITS?.maxRawResponseBytes;if(Number.isFinite(limit)&&stored.blob.size>limit){const digest=await hash.sha256Bytes(stored.blob);if(stored.blob.size!==Number(stored.byteSize)||digest!==String(stored.sha256))throw storageError('Staged response bytes no longer match their captured identity.','RESPONSE_STAGE_REHASH_MISMATCH');await metaPut(key,{...stored,rejection:{code:'OVERSIZED_RESPONSE',byteSize:stored.blob.size,maxRawResponseBytes:limit,at:now()}});throw storageError(`Response file exceeds the ${limit}-byte stage limit. The exact original bytes and rejection receipt remain staged for ${owner}.`,'OVERSIZED_RESPONSE');}const bytes=new Uint8Array(await stored.blob.arrayBuffer()),sha256=await hash.sha256Bytes(bytes);if(bytes.byteLength!==Number(stored.byteSize)||sha256!==String(stored.sha256))throw storageError('Staged response bytes no longer match their captured identity.','RESPONSE_STAGE_REHASH_MISMATCH');return {...stored,bytes,blob:stored.blob,storageKey:key};}
+async function readStagedResponseFile({jobId,stagingId}={}){const owner=String(jobId||'').trim(),id=String(stagingId||'').trim();if(!owner||!id)throw storageError('JOB_ID and stagingId are required.','RESPONSE_STAGE_ID_REQUIRED');const key=`responseStaging:${owner}:${id}`,stored=await metaGet(key);if(!stored?.blob)throw storageError('Staged response file is unavailable.','RESPONSE_STAGE_NOT_FOUND');if(String(stored.jobId)!==owner)throw storageError('Staged response belongs to another project.','CROSS_PROJECT_RESPONSE_STAGE');const limit=globalThis.closedLoopWorkflowSchema?.DEFAULT_RESOURCE_LIMITS?.maxRawResponseBytes;if(Number.isFinite(limit)&&stored.blob.size>limit){const digest=await hash.sha256Bytes(stored.blob);if(stored.blob.size!==Number(stored.byteSize)||digest!==String(stored.sha256))throw storageError('Staged response bytes no longer match their captured identity.','RESPONSE_STAGE_REHASH_MISMATCH');await metaPut(key,{...stored,rejection:{code:'OVERSIZED_RESPONSE',byteSize:stored.blob.size,maxRawResponseBytes:limit,at:now()}});throw storageError(`Response file exceeds the ${limit}-byte stage limit. The exact original bytes and rejection receipt remain staged for ${owner}.`,'OVERSIZED_RESPONSE');}const bytes=new Uint8Array(await hash.readWithDeadline(stored.blob.arrayBuffer(),'Reading staged response')),sha256=await hash.sha256Bytes(bytes);if(bytes.byteLength!==Number(stored.byteSize)||sha256!==String(stored.sha256))throw storageError('Staged response bytes no longer match their captured identity.','RESPONSE_STAGE_REHASH_MISMATCH');return {...stored,bytes,blob:stored.blob,storageKey:key};}
 async function removeStagedResponseFile({jobId,stagingId}={}){const owner=String(jobId||'').trim(),id=String(stagingId||'').trim();if(!owner||!id)return false;const key=`responseStaging:${owner}:${id}`,tx=await openTransaction(META,'readwrite'),store=tx.objectStore(META);const row=await request(store.get(key));if(row?.value&&String(row.value.jobId)!==owner){try{tx.abort();}catch{}throw storageError('Staged response belongs to another project.','CROSS_PROJECT_RESPONSE_STAGE');}store.delete(key);await complete(tx);return Boolean(row);}
-async function storageHealth(){let persistent=false,estimate={usage:null,quota:null};try{persistent=await navigator.storage.persist();estimate=await navigator.storage.estimate();}catch{}return {database:DB_NAME,persistent:Boolean(persistent),usage:estimate.usage??null,quota:estimate.quota??null,lastCommittedRevision:await metaGet('lastCommittedRevision'),lastVerifiedExport:await metaGet('lastVerifiedExport'),migrationStatus:await metaGet('migrationStatus')};}
+async function storageHealth(){let persistent=false,estimate={usage:null,quota:null};try{persistent=await hash.readWithDeadline(navigator.storage.persist(),'Requesting persistent storage');estimate=await hash.readWithDeadline(navigator.storage.estimate(),'Measuring available storage');}catch{}return {database:DB_NAME,persistent:Boolean(persistent),usage:estimate.usage??null,quota:estimate.quota??null,lastCommittedRevision:await metaGet('lastCommittedRevision'),lastVerifiedExport:await metaGet('lastVerifiedExport'),migrationStatus:await metaGet('migrationStatus')};}
 function archiveMigrationPayload(project,archive){if(!project||typeof project!=='object')throw new TypeError('A project is required.');project.projectData=project.projectData&&typeof project.projectData==='object'?project.projectData:{};project.projectData.migrationArchives=Array.isArray(project.projectData.migrationArchives)?project.projectData.migrationArchives:[];const record={...clone(archive),operational:false};project.projectData.migrationArchives.push(record);return record;}
 function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(const key of LEGACY_KEYS)try{storage.removeItem(key);}catch{}}
 
 const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB)try{await migrateLegacy();globalThis.closedLoopLegacyMigrationError=null;}catch(error){globalThis.closedLoopLegacyMigrationError=String(error?.stack||error);console.error('Legacy migration failed without deleting the preserved legacy payload; application startup will continue.',error);}return true;})();
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;const project=message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId});globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,project});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({listQuarantinedProjects,exportQuarantinedProject,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
+globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{
 'use strict';

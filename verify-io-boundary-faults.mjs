@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
+const files=['project-store.js','hash.js','app-core.js','index.html'];
+const originals=new Map(files.map(file=>[file,fs.readFileSync(file,'utf8')]));
+const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-io-faults-'));
+const events=[];
+function execute(test,args=[],env={}){const command=[process.execPath,test,...args],r=spawnSync(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout:30000,maxBuffer:16*1024*1024});const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;}
+function replaceOne(source,before,after){assert.equal(source.split(before).length-1,1,'Fault anchor must identify exactly one production location');return source.replace(before,after);}
+const faults=[
+ ...['OPEN','REQUEST','TRANSACTION'].map(kind=>({id:'IO-MUT-'+kind,file:'project-store.js',env:'STORE_SOURCE',test:'verify-storage-deadlines.mjs',caseId:'IO-'+kind+'-DEADLINE',oracle:'IO_'+kind+'_DEADLINE_ORACLE',apply:s=>replaceOne(s,'const error=Object.assign(new Error(`Storage ${kind.toLowerCase()}',`if(kind==='${kind}')return;const error=Object.assign(new Error(\`Storage \${kind.toLowerCase()}`)})),
+ {id:'IO-MUT-LATE-UPGRADE',file:'project-store.js',env:'STORE_SOURCE',test:'verify-storage-deadlines.mjs',caseId:'IO-OPEN-UPGRADE-LATE',oracle:'IO_OPEN_LATE_SCHEMA_ORACLE',apply:s=>replaceOne(s,"if(expired||!active()){try{req.transaction?.abort();}catch{}return;}",'')},
+ {id:'IO-MUT-WORKER',file:'project-store.js',env:'STORE_SOURCE',test:'verify-storage-deadlines.mjs',caseId:'IO-WORKER-ABSENT',oracle:null,apply:s=>replaceOne(s,'const STORAGE_WORKER_TIMEOUT_MS=600000;','const STORAGE_WORKER_TIMEOUT_MS=1200000;')},
+ {id:'IO-MUT-BLOB',file:'hash.js',env:'HASH_SOURCE',test:'verify-byte-deadlines.mjs',caseId:'IO-BYTES-BLOB',oracle:'IO_BLOB_DEADLINE_ORACLE',apply:s=>replaceOne(s,'const IO_READ_TIMEOUT_MS=30000;','const IO_READ_TIMEOUT_MS=60000;')},
+ {id:'IO-MUT-CRYPTO',file:'hash.js',env:'HASH_SOURCE',test:'verify-byte-deadlines.mjs',caseId:'IO-BYTES-CRYPTO',oracle:'IO_CRYPTO_DEADLINE_ORACLE',apply:s=>replaceOne(s,'const IO_READ_TIMEOUT_MS=30000;','const IO_READ_TIMEOUT_MS=60000;')},
+ {id:'IO-MUT-STARTUP',file:'index.html',env:'HTML_SOURCE',test:'verify-startup-deadlines.mjs',caseId:'IO-STARTUP-MODULES',oracle:'IO_MODULE_DEADLINE_ORACLE',apply:s=>replaceOne(s,'const MODULE_TIMEOUT_MS=30000;','const MODULE_TIMEOUT_MS=60000;')},
+ {id:'IO-MUT-HANDLED-FAILURE',file:'app-core.js',env:'APP_SOURCE',test:'verify-action-finalization.mjs',caseId:'ACTION-INTERNAL-FAILURE',oracle:'FINALIZATION_OUTCOME_ORACLE',apply:s=>{assert.equal(s.split('operatorActionInFlight.failed=true;').length-1,2);return s.replaceAll('operatorActionInFlight.failed=true;','');}},
+ {id:'IO-MUT-POST-COMMIT',file:'app-core.js',env:'APP_SOURCE',test:'verify-action-finalization.mjs',caseId:'ACTION-POST-COMMIT-FAILURE',oracle:'POST_COMMIT_FEEDBACK_ORACLE',apply:s=>replaceOne(s,"(operatorActionInFlight&&((current?.job?.JOB_ID||null)!==operatorActionInFlight.jobId||(current?.projectSha256||null)!==operatorActionInFlight.projectSha256))",'false')},
+ {id:'IO-MUT-FINAL-CHECKPOINT',file:'app-core.js',env:'APP_SOURCE',test:'verify-action-finalization.mjs',caseId:'ACTION-FINALIZATION-HELD',oracle:'FINALIZATION_LOADING_ORACLE',apply:s=>replaceOne(s,"try{if(operatorActionInFlight===pending&&(current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}","try{clearTimeout(pending.timer);if(operatorActionInFlight===pending&&(current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}")},
+];
+const results=[];
+try{
+ for(const test of [...new Set(faults.map(f=>f.test))]){const r=execute(test);assert.equal(r.status,0,'The unchanged valid implementation must pass '+test);}
+ for(const fault of faults){const content=fault.apply(originals.get(fault.file)),filename=path.join(directory,fault.id+path.extname(fault.file));fs.writeFileSync(filename,content);const args=fault.test==='verify-action-finalization.mjs'?[]:['--case-prefix='+fault.caseId];const r=execute(fault.test,args,{[fault.env]:filename});assert.equal(r.status,1,'Fault was not rejected: '+fault.id);const body=JSON.parse(r.stdout),row=body.cases.find(c=>c.caseId===fault.caseId);assert(row,'Named oracle case did not execute');assert.equal(row.status||row.result,'FAIL','Named case did not detect '+fault.id);if(fault.oracle)assert(r.stdout.includes(fault.oracle),'Rejection must cite the intended behavior oracle');results.push({faultId:fault.id,productionFile:fault.file,originalSha256:sha(originals.get(fault.file)),injectedSha256:sha(content),caughtBy:fault.caseId,result:'PASS'});fs.unlinkSync(filename);}
+ for(const [file,original]of originals)assert.equal(fs.readFileSync(file,'utf8'),original,'Fault injection altered retained production source');
+ for(const test of [...new Set(faults.map(f=>f.test))])assert.equal(execute(test).status,0,'Restored implementation must return to green: '+test);
+ console.log(JSON.stringify({schema:'closed-loop-executed-io-faults/1',syntheticPlatformBoundaries:true,scope:'Actual production functions under one targeted fault per disposable source; not browser or physical-device proof.',faults:results,rawRuns:events,sourceRestored:true},null,2));
+}catch(error){console.log(JSON.stringify({faults:results,rawRuns:events,failure:String(error.stack||error)},null,2));process.exitCode=1;}finally{fs.rmSync(directory,{recursive:true,force:true});}
