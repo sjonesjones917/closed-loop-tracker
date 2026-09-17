@@ -27,7 +27,7 @@ const storageHealthSource=app.includes('function storageHealthValue(')?app.slice
 }
 {
   const status={textContent:'Storage status loading…'},announcements=[];
-  const runtime=vm.createContext({...inactiveMobileAcceptance,runOperatorAction:async(_label,operation)=>operation(),closedLoopCore:{},load:async()=>{throw Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'});},console:{error(){}},announce:message=>announcements.push(message),$:selector=>selector==='#storage-status'?status:null});
+  const runtime=vm.createContext({...inactiveMobileAcceptance,operationClock:()=>Date.now(),recordOperationLatency:()=>0,runOperatorAction:async(_label,operation)=>operation(),closedLoopCore:{},load:async()=>{throw Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'});},console:{error(){}},announce:message=>announcements.push(message),$:selector=>selector==='#storage-status'?status:null});
   vm.runInContext(app.slice(app.indexOf('globalThis.closedLoopAppReady=false;'),app.indexOf('// Long-section navigation belongs'))+';globalThis.start=startClosedLoopApp;',runtime);
   await runtime.start();assert(runtime.closedLoopAppReady===false&&/blocked/i.test(runtime.closedLoopAppError),'Blocked startup was incorrectly marked ready.');
   assert(/close.*tabs.*reload/i.test(status.textContent)&&announcements.includes(status.textContent),'Blocked startup did not show an actionable recovery message in the existing status area.');
