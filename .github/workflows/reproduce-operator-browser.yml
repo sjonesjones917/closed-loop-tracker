@@ -10,40 +10,47 @@ permissions:
 jobs:
   reproduce:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Apply exact reviewed source repairs without overwriting concurrent work
+      - name: Apply exact reviewed repairs on the existing integration candidate
         run: |
           set -euo pipefail
           mkdir -p browser-reproduction
           git rev-parse HEAD > browser-reproduction/starting-commit.txt
-          node verification/conformance-20260917/apply-view-coordinate-repair.mjs > browser-reproduction/repair.json
-          node --check app-core.js
-          node --check test-project-store-runtime.mjs
+          cp app-core.js /tmp/clt-focus-before.js
+          node verification/conformance-20260917/apply-browser-repair-delta.mjs > browser-reproduction/repair.json
+          for FILE in app-core.js verify-workflow-focus.mjs verify-history-selection-capture.mjs verify-browser.mjs verify-browser-extra.mjs verify-mobile-stage-action.mjs; do node --check "$FILE"; done
           git diff --check
-          git diff -- app-core.js test-project-store-runtime.mjs > browser-reproduction/repair.diff
+          git diff > browser-reproduction/repair.diff
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app-core.js test-project-store-runtime.mjs
-          git commit -m 'Initialize new view coordinates and provide shared history timer cancellation'
+          git add app-core.js verify-workflow-focus.mjs verify-history-selection-capture.mjs verify-browser.mjs verify-browser-extra.mjs verify-mobile-stage-action.mjs
+          git commit -m 'Close computed viewport overflow and align browser fixtures with recovery ownership'
           git push origin HEAD:refs/heads/repair/complete-conformance-continuation-20260914
           SOURCE_COMMIT=$(git rev-parse HEAD)
           echo "SOURCE_COMMIT=$SOURCE_COMMIT" >> "$GITHUB_ENV"
           printf '%s\n' "$SOURCE_COMMIT" > browser-reproduction/source-commit.txt
-          sha256sum app-core.js index.html test-project-store-runtime.mjs specification/closed-loop-reliability-controlling-implementation-specification.txt > browser-reproduction/source-hashes.txt
-      - name: Replay shared production history navigation
+          sha256sum app-core.js index.html test-project-store-runtime.mjs verify-workflow-focus.mjs verify-history-selection-capture.mjs verify-browser.mjs verify-browser-extra.mjs verify-mobile-stage-action.mjs specification/closed-loop-reliability-controlling-implementation-specification.txt > browser-reproduction/source-hashes.txt
+      - name: Execute failing-original and repaired focus plus history regressions
         run: |
           set -euo pipefail
-          node verify-history-navigation.mjs > browser-reproduction/history-navigation.stdout 2> browser-reproduction/history-navigation.stderr
-      - name: Build exact corrected source
-        run: |
-          set -euo pipefail
-          node build-test-project.mjs > browser-reproduction/build-test-project.log 2>&1
-          node build-static-site.mjs --out _site --source-commit "$SOURCE_COMMIT" --workflow-run "$GITHUB_RUN_ID" > browser-reproduction/build.json
+          set +e
+          APP_SOURCE=/tmp/clt-focus-before.js node verify-workflow-focus.mjs > browser-reproduction/focus-before.stdout 2> browser-reproduction/focus-before.stderr
+          BEFORE=$?
+          set -e
+          printf '%s\n' "$BEFORE" > browser-reproduction/focus-before.exit
+          test "$BEFORE" != 0
+          grep -q FOCUS_FRACTIONAL_EDGE_ORACLE browser-reproduction/focus-before.stderr
+          for SUITE in verify-workflow-focus.mjs verify-history-selection-capture.mjs verify-history-selection-fault.mjs verify-history-navigation.mjs; do
+            node "$SUITE" > "browser-reproduction/$SUITE.stdout" 2> "browser-reproduction/$SUITE.stderr"
+            printf '0\n' > "browser-reproduction/$SUITE.exit"
+          done
+      - name: Build exact corrected static resources
+        run: node build-static-site.mjs --out _site --source-commit "$SOURCE_COMMIT" --workflow-run "$GITHUB_RUN_ID" > browser-reproduction/build.json
       - name: Replay actual Save and navigation viewport regression
         id: viewport
         env:
@@ -57,33 +64,59 @@ jobs:
           set +e
           timeout --signal=TERM --kill-after=10s 10m node verify-action-viewport.mjs > browser-reproduction/viewport.raw.log 2>&1
           RESULT=$?
-          set -e
           printf '%s\n' "$RESULT" > browser-reproduction/viewport.exit
           cat browser-reproduction/viewport.raw.log
           exit "$RESULT"
-      - name: Preserve exact focused evidence before the complete journey
+      - name: Preserve focused raw evidence immediately
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: browser-repair-focused-${{ github.run_id }}
           path: |
-            browser-reproduction/starting-commit.txt
-            browser-reproduction/source-commit.txt
-            browser-reproduction/source-hashes.txt
-            browser-reproduction/repair.json
-            browser-reproduction/repair.diff
-            browser-reproduction/history-navigation.stdout
-            browser-reproduction/history-navigation.stderr
-            browser-reproduction/build-test-project.log
-            browser-reproduction/build.json
-            browser-reproduction/http.log
-            browser-reproduction/viewport.raw.log
-            browser-reproduction/viewport.exit
+            browser-reproduction/*.txt
+            browser-reproduction/*.json
+            browser-reproduction/*.diff
+            browser-reproduction/*.stdout
+            browser-reproduction/*.stderr
+            browser-reproduction/*.exit
+            browser-reproduction/*.log
             browser-reproduction/viewport/viewport.json
             browser-reproduction/viewport/*/stage-*.png
           if-no-files-found: error
-      - name: Replay complete actual-controls operator journey against corrected source
-        if: steps.viewport.outcome == 'success'
+      - name: Replay every previously failing browser suite and affected recovery
+        if: always() && steps.viewport.outcome == 'success'
+        env:
+          BROWSER: /usr/bin/google-chrome
+          STATIC_SITE_ROOT: _site
+        run: |
+          set -euo pipefail
+          mkdir -p browser-reproduction/affected
+          python3 -m http.server 4173 --directory _site > browser-reproduction/affected/http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          RESULT=0
+          for SUITE in verify-browser-extra.mjs verify-browser.mjs verify-mobile-stage-action.mjs verify-browser-recovery.mjs; do
+            set +e
+            timeout --signal=TERM --kill-after=10s 15m node "$SUITE" > "browser-reproduction/affected/$SUITE.stdout" 2> "browser-reproduction/affected/$SUITE.stderr"
+            STATUS=$?
+            set -e
+            printf '%s\n' "$STATUS" > "browser-reproduction/affected/$SUITE.exit"
+            if test "$STATUS" != 0; then RESULT=1; fi
+          done
+          exit "$RESULT"
+      - name: Preserve affected browser results without truncation
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: browser-repair-affected-${{ github.run_id }}
+          path: |
+            browser-reproduction/source-commit.txt
+            browser-reproduction/source-hashes.txt
+            browser-reproduction/affected/
+            recovery-browser-evidence/
+          if-no-files-found: error
+      - name: Replay complete actual-controls operator journey
+        if: always() && steps.viewport.outcome == 'success'
         env:
           BROWSER: /usr/bin/google-chrome
           STATIC_SITE_ROOT: _site
