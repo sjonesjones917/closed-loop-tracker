@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+const sha=value=>createHash('sha256').update(value).digest('hex');
+const repairs=JSON.parse(fs.readFileSync('verification/conformance-20260917/continuation-repair-delta.json','utf8'));
+const allowed=new Set(['app-core.js','verify-workflow-focus.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-browser-recovery.mjs','operator-browser-driver.mjs','verify-complete-operator-journey.mjs','verify-conformance-regressions.mjs']);
+const prepared=[];
+for(const repair of repairs){assert.ok(allowed.delete(repair.path),'Unexpected or duplicate repair target');let bytes=fs.readFileSync(repair.path);assert.equal(sha(bytes),repair.before,repair.path+': source changed; preserve independent work');let boundary=bytes.length;for(const edit of [...repair.edits].reverse()){assert.ok(Number.isSafeInteger(edit.offset)&&Number.isSafeInteger(edit.deleteBytes)&&edit.offset>=0&&edit.deleteBytes>=0&&edit.offset+edit.deleteBytes<=boundary,'Invalid or overlapping byte range');bytes=Buffer.concat([bytes.subarray(0,edit.offset),Buffer.from(edit.insert,'utf8'),bytes.subarray(edit.offset+edit.deleteBytes)]);boundary=edit.offset;}assert.equal(sha(bytes),repair.after,repair.path+': corrected bytes differ from reviewed source');prepared.push({...repair,bytes});}
+assert.equal(allowed.size,0,'Incomplete repair set');
+for(const repair of prepared)fs.writeFileSync(repair.path,repair.bytes);
+console.log(JSON.stringify({schema:'closed-loop-bound-continuation-repair/1',productionCorrections:['Retain the explicit retry/correction focus reason through operation completion','Route authored retry and correction controls with their actual intent','Describe removal truthfully without claiming loss of retained History'],testCorrections:['Create only the new independent project','Compare complete backup membership and each member byte identity against stored authority','Expose actual returned-file validation and reservation observations without assuming a pass','Retain exact unrounded observed durations and failure geometry','Execute all independent fault suites and retain failures'],contractTextModified:false,changes:prepared.map(({path,before,after})=>({path,before,after})),verificationRequired:true},null,2));
