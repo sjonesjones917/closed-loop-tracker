@@ -34,8 +34,10 @@ async function ingest(request,{invalid=false}={}){
   report.operations.push({stage,operation:request.operation,responseSha256:digest(bytes),acceptedChangeId:after.projectData.acceptedChanges.at(-1).changeId,revision:after.revision});
 }
 async function external(){
-  assert.equal(await browser.visible('#next-export-prompt-file'),true,`Stage ${stage}: consolidated stage-file export was not the visible next action before transport.`);
-  const [archive]=await browser.download('#next-export-prompt-file'),members=readStoreArchive(archive.bytes);
+  const exportControl=await browser.exists('#next-export-prompt-file')?'#next-export-prompt-file':await browser.exists('#download-execution-package')?'#download-execution-package':null;
+  assert.ok(exportControl,`Stage ${stage}: no consolidated stage package control was available for the current external operation.`);
+  assert.equal(await browser.visible(`#next-required-action ${exportControl}`),true,`Stage ${stage}: consolidated stage-file export was not the visible next action before transport.`);
+  const [archive]=await browser.download(exportControl),members=readStoreArchive(archive.bytes);
   const manifest=JSON.parse(Buffer.from(members.find(member=>member.canonicalPath==='manifest.json').bytes).toString()),instructionMember=members.find(member=>member.canonicalPath==='instruction.txt'),instruction={bytes:Buffer.from(instructionMember.bytes),sha256:digest(instructionMember.bytes)};
   assert.equal(instruction.sha256,manifest.instruction.bodySha256);assert.equal(instruction.bytes.length,manifest.members.find(member=>member.canonicalPath==='instruction.txt').byteSize);
   const contextFiles=manifest.contextFiles.map(required=>{const actual=members.find(member=>member.canonicalPath===required.path);assert.ok(actual,`Missing context ${required.path}`);assert.equal(digest(actual.bytes),required.sha256);assert.equal(actual.bytes.length,required.byteSize);return {filename:required.path,bytes:Buffer.from(actual.bytes),sha256:digest(actual.bytes)};});

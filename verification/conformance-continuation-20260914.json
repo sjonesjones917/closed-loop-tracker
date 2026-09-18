@@ -205,21 +205,23 @@
         ]
       },
       "classification": "PRODUCTION",
-      "authorityTrace": "Stage/view state change -> navigateWithinVersion -> render -> layout-affecting closed-loop-rendered listener -> focusAfterAction; the focus placement ran before that listener changed stage-picker geometry. Separately, authored inline shell behavior -> index.html inline script -> CSP hash list was stale.",
+      "authorityTrace": "Stage/view state change -> render -> stage-picker shell/layout synchronization -> focusAfterAction post-layout placement; startup CSP -> exact authored inline startup-guard bytes -> CSP hash.",
       "dependencyClosure": [
         "all 30 workflow stage selections",
         "view navigation",
         "post-layout next-action placement",
         "mobile stage-picker layout",
-        "project action menu",
+        "startup CSP",
         "browser runtime error gate"
       ],
-      "change": "Defer workflow next-action placement until the next animation frame so the existing two-frame placement oracle runs after render listeners settle. Move the non-startup shell behavior to a same-origin deferred script, eliminating its stale inline CSP hash authority.",
+      "change": "Keep the post-render frame deferral that moved the full journey through Stage 09; integrate stage-picker shell synchronization into app-core.js so it participates in the same render/layout authority; remove the unused ui-shell.js dependency; authorize only the exact remaining startup guard hash and preserve its one-byte fault oracle.",
       "regressions": [
         "verify-complete-operator-journey.mjs",
         "verify-browser.mjs"
       ],
       "focusedVerification": {
+        "run5886": "Stage 09 progressed; later Stage 12 verifier mismatch exposed",
+        "startupCspFault": "PASS locally",
         "browserReplay": "PENDING_CI"
       },
       "status": "UNVERIFIED"
@@ -234,24 +236,179 @@
       "requirement": "An unconfirmed file correction remains unaccepted across reload and its in-page confirmation is restored from the saved view.",
       "reproductionRevision": "321b91ee90c48d881ba6d92d57088f41e9c3f361",
       "relatedBrowserFailure": {
-        "runId": 35381100815,
-        "jobId": 105717176469,
+        "runId": 35387696895,
+        "jobId": 105738320660,
         "suite": "verify-browser-recovery.mjs",
-        "actual": "The verifier expected #replacement-confirmation immediately after reload; classification requires preserving the production contract and making the assertion explicit."
+        "actual": "Reload preserved the pending confirmation; after Keep current progress and explicit History restoration of the saved pending checkpoint, #replacement-confirmation was not restored."
       },
-      "classification": "VERIFIER_PENDING_REPLAY",
-      "authorityTrace": "file selection -> persistReplacement mutation review -> captureCurrentView pendingMutation -> history checkpoint -> reload/selectSavedView -> rebaseHistoryView -> replacement confirmation renderer",
+      "classification": "PRODUCTION",
+      "authorityTrace": "saved checkpoint view -> project-store restoreCheckpoint/rebaseHistoryView -> app-core restoreHistoryVersion -> selectSavedView -> write/apply exact normalized restored view -> replacementConfirmationMarkup",
       "dependencyClosure": [
         "Stage 01 supplied-file correction",
         "pending mutation persistence",
         "reload",
-        "History restoration",
+        "explicit History restoration",
+        "Undo/Redo/native traversal consumers of normalized restored view",
         "replacement confirmation"
       ],
-      "change": "Retain the existing production authority and make the reload invariant explicit in the browser regression; no production weakening.",
-      "regression": "verify-browser-recovery.mjs",
+      "change": "Use the rebased/normalized saved view returned by selectSavedView as the sole restored-view authority for History URL/view persistence, render/application, and saved draft state. Do not apply the stale pre-rebase view after project restoration.",
+      "regression": "verify-browser-recovery.mjs existing failing invariant retained",
+      "focusedVerification": {
+        "storeRecovery": "verify-recoverable-history.mjs PASS locally",
+        "historySelection": "verify-history-selection-capture.mjs PASS locally",
+        "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
+    },
+    {
+      "id": "EXTERNAL_PACKAGE_CONTROL_VERIFIER_AUTHORITY",
+      "responsibleCode": [
+        "verify-complete-operator-journey.mjs",
+        "app-core.js:nextActionMarkup"
+      ],
+      "requirement": "Operator journeys must drive the production-selected transfer control for the current action class rather than hard-coding the ordinary stage-file control.",
+      "reproductionRevision": "12360d728fd44d777b3c8caa5c4828da565748e3",
+      "relatedBrowserFailure": {
+        "runId": 35387696895,
+        "jobId": 105738320660,
+        "actual": "Stage 12 AI review displayed a fully visible #download-execution-package control, but external() asserted #next-export-prompt-file."
+      },
+      "classification": "VERIFIER",
+      "authorityTrace": "workflow engine action class -> nextActionMarkup chooses #next-export-prompt-file for ordinary agent handoff or #download-execution-package for package/reviewer execution -> operator verifier transport helper",
+      "dependencyClosure": [
+        "AI_REVIEW",
+        "EXTERNAL_AGENT_TOOL",
+        "EXTERNAL_SYSTEM",
+        "CONTINUE_AGENT_CONVERSATION",
+        "SELECT_RESPONSE_JSON_FILE",
+        "all applicable stages"
+      ],
+      "change": "Select whichever production next-action transfer control exists, assert that exact control is visible, and download it. Preserve package/member validation after download.",
+      "regression": "verify-complete-operator-journey.mjs",
       "focusedVerification": {
         "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
+    },
+    {
+      "id": "OPERATIONAL_STORAGE_FAULT_VERIFIER_AUTHORITY",
+      "responsibleCode": [
+        "verify-browser-extra.mjs",
+        "project-store.js operational write fault site"
+      ],
+      "requirement": "The storage-failure regression must inject the failure at the write path actually used by response staging and prove the existing inline retry behavior.",
+      "reproductionRevision": "12360d728fd44d777b3c8caa5c4828da565748e3",
+      "relatedBrowserFailure": {
+        "runId": 35387696895,
+        "jobId": 105738320660,
+        "actual": "Verifier injected during-project-write while response staging used the operational-write path, so the expected inline staging failure never occurred."
+      },
+      "classification": "VERIFIER",
+      "authorityTrace": "response file selection -> operational raw-byte persistence -> project-store operational write fault hook -> inline report oracle",
+      "dependencyClosure": [
+        "response selection",
+        "operational raw-byte staging",
+        "storage failure",
+        "retry without duplicate download",
+        "accepted-work preservation"
+      ],
+      "change": "Inject during-operational-write for this regression; do not alter product storage semantics.",
+      "regression": "verify-browser-extra.mjs",
+      "focusedVerification": {
+        "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
+    },
+    {
+      "id": "FILE_PRESSURE_IMPORT_REHYDRATION_VERIFIER_AUTHORITY",
+      "responsibleCode": [
+        "verify-mobile-stage-action.mjs",
+        "app-core.js project-load/concurrency guards"
+      ],
+      "requirement": "A verifier that mutates canonical storage directly must rehydrate the UI before judging an operator action whose preconditions include the current project revision.",
+      "reproductionRevision": "12360d728fd44d777b3c8caa5c4828da565748e3",
+      "relatedBrowserFailure": {
+        "runId": 35387696895,
+        "jobId": 105738320660,
+        "actual": "The test directly imported a backup through project-store, advancing stored revision behind the live UI, then attempted UI deletion and waited for disappearance."
+      },
+      "classification": "VERIFIER",
+      "authorityTrace": "direct store import -> canonical revision advances outside UI -> stale live UI -> delete uses concurrency protection -> verifier must reopen selected stored project before operator deletion",
+      "dependencyClosure": [
+        "large file export",
+        "backup import",
+        "project UI rehydration",
+        "delete concurrency guard",
+        "retained History after removal"
+      ],
+      "change": "After direct import, reopen the selected project through the ordinary project link and wait for application readiness before exercising UI deletion. Preserve the product stale-revision guard.",
+      "regression": "verify-mobile-stage-action.mjs",
+      "focusedVerification": {
+        "storeBenchmark": "Direct import/delete store path succeeds without product optimization",
+        "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
+    },
+    {
+      "id": "UX006_SINGLE_EXPORT_CONTROL_AUTHORITY",
+      "responsibleCode": [
+        "app-core.js:workflow/nextActionMarkup/wire",
+        "index.html operator help",
+        "verify-file-first-response.mjs",
+        "verify-file-first-operator.mjs",
+        "verify-human-stage-walkthrough.mjs",
+        "verify-browser.mjs",
+        "verify-browser-extra.mjs",
+        "verification/current-task-requirement-register-overlay-20260918.json"
+      ],
+      "requirement": "UX-005 handoff export is one file by one operator action; UX-006 removes the replaced per-artifact export controls rather than retaining them alongside the consolidated action.",
+      "reproductionRevision": "12360d728fd44d777b3c8caa5c4828da565748e3",
+      "classification": "PRODUCTION",
+      "authorityTrace": "workflow action -> nextActionMarkup consolidated stage/package control -> workflow prompt section previously rendered duplicate export-stage-files plus instruction/manifest/context export controls -> wire bound all controls",
+      "dependencyClosure": [
+        "every external-agent stage/operation",
+        "prompt preview",
+        "context-required handoffs",
+        "mobile ZIP file transport",
+        "browser operator journeys",
+        "current task requirement register numbering"
+      ],
+      "change": "Render only the next-action consolidated transfer control; remove the duplicate stage export and separate instruction/manifest/context export controls and bindings. Retain non-export Save/Copy instruction tools. Update operator guidance and verifiers to inspect the ZIP members produced by the one action.",
+      "regressions": [
+        "verify-file-first-response.mjs",
+        "verify-file-first-operator.mjs",
+        "verify-human-stage-walkthrough.mjs",
+        "verify-browser.mjs",
+        "verify-browser-extra.mjs"
+      ],
+      "focusedVerification": {
+        "fileFirstResponse": "PASS locally",
+        "fileFirstOperator": "PASS locally",
+        "ingestion": "PASS locally",
+        "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
+    },
+    {
+      "id": "REPAIR_TRANSPORT_PROHIBITION_CLOSURE",
+      "responsibleCode": [
+        "verify.mjs",
+        "verification/conformance-20260917"
+      ],
+      "requirement": "The open candidate contains no repair-transport scripts, encoded repair deltas, patch applicators, or staging payloads.",
+      "reproductionRevision": "12360d728fd44d777b3c8caa5c4828da565748e3",
+      "classification": "PRODUCTION_GOVERNANCE",
+      "authorityTrace": "candidate repository tree -> obsolete conformance-20260917 repair applicators/delta payloads -> ordinary CI repository verifier",
+      "dependencyClosure": [
+        "all candidate source",
+        "normal PR CI source checkout",
+        "no mutation workflow or repair transport path"
+      ],
+      "change": "Remove three obsolete repair applicators and their two encoded repair-delta payloads. Extend verify.mjs to reject these transport artifact classes repository-wide.",
+      "regression": "verify.mjs",
+      "focusedVerification": {
+        "defectiveTree": "FAIL as expected: exact 5886 source rejected five repair transport artifacts",
+        "repairedTree": "PASS locally"
       },
       "status": "UNVERIFIED"
     }
@@ -266,8 +423,8 @@
     "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
     "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
   ],
-  "nextAction": "Run complete normal CI against the single substantive candidate revision containing the post-layout next-action authority repair, CSP source-authority repair, and preserved recovery regressions. Classify any remaining failure before another mutation.",
-  "updatedAt": "2026-09-18T14:24:00-05:00",
+  "nextAction": "Publish one compare-and-swap candidate revision containing the dependency-closed production and verifier repairs, then run complete normal PR CI. Do not mutate while that exact CI is running.",
+  "updatedAt": "2026-09-18T21:57:59Z",
   "continuationPullRequest": 1242,
   "publishedHeadBeforeThisChange": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
   "baselineVerification": {
@@ -326,5 +483,6 @@
     ],
     "status": "FOCUSED_CHECKS_PASS_FULL_INTEGRATED_CI_PENDING"
   },
-  "integrationReplayEvidence": "verification/continuation-integration-replay-20260914.json"
+  "integrationReplayEvidence": "verification/continuation-integration-replay-20260914.json",
+  "currentTaskRegisterOverlay": "verification/current-task-requirement-register-overlay-20260918.json"
 }

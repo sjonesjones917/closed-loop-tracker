@@ -1,0 +1,705 @@
+{
+  "schema": "closed-loop-current-task-requirement-overlay/1",
+  "candidate": "repair/complete-conformance-continuation-20260914",
+  "baseRegister": "verification/current-task-requirement-register.json",
+  "sourceInstruction": "Current user task as restated 2026-09-18",
+  "rule": "For duplicate current-user IDs, these rows are the controlling current-task definitions. Base rows remain historical and are not removed. Coverage reconciles each controlling current-user ID once.",
+  "statusBaseline": "UNVERIFIED",
+  "rows": [
+    {
+      "requirementId": "UX-001",
+      "sourceLocation": "Current user task section 9 E, UX-001",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "After every state change, the correct next action is visible after layout settles, with no prohibited upward movement.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-002",
+      "sourceLocation": "Current user task section 9 E, UX-002",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Completing a stage's operator work brings the next required reading or action into view.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-003",
+      "sourceLocation": "Current user task section 9 E, UX-003",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Auto-scroll moves downward for forward progress and upward only for explicit return, correction, or retry, landing on the required element.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-004",
+      "sourceLocation": "Current user task section 9 E, UX-004",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Saving project information confirms ingestion and directs the operator to the next required operation.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-005",
+      "sourceLocation": "Current user task section 9 E, UX-005",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Each stage's required exports are produced as one file by one operator action in a target-mobile-compatible format, with stage/version isolation enforced before assembly.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-006",
+      "sourceLocation": "Current user task section 9 E, UX-006",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Separate per-artifact export controls replaced by UX-005 are removed rather than retained beside the consolidated control.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-007",
+      "sourceLocation": "Current user task section 9 E, UX-007",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Instruction text appears once per view with no duplicated instruction text on any stage.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-008",
+      "sourceLocation": "Current user task section 9 E, UX-008",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Instruction state text derives from actual attempt/revision state; first generation is original and regenerated state is not hard-coded.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-009",
+      "sourceLocation": "Current user task section 9 E, UX-009",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "When instructions have actually been regenerated, the operator is told at the point of use.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-010",
+      "sourceLocation": "Current user task section 9 E, UX-010",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Language is concise and imperative and removes redundant text, controls, confirmations, and non-actionable information.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-011",
+      "sourceLocation": "Current user task section 9 E, UX-011",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Required decisions, useful status, actionable errors, and recovery remain visible while codes/internal IDs/diagnostics/advanced tools are behind details or advanced controls.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-012",
+      "sourceLocation": "Current user task section 9 E, UX-012",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Confirmations are in-page and scrolled into view; no popup, modal, alert, or browser confirmation dialog is used.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-013",
+      "sourceLocation": "Current user task section 9 E, UX-013",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "History restoration restores the recorded view and does not automatically advance to another stage.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-014",
+      "sourceLocation": "Current user task section 9 E, UX-014",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "After acceptance succeeds, the next required operation is in view and concise Undo is available.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-015",
+      "sourceLocation": "Current user task section 9 F, UX-015",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Any operation exceeding the configured D-1 threshold shows a small clearly visible loading/progress indicator, including export, response import, restoration, and pending operations.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-016",
+      "sourceLocation": "Current user task section 9 F, UX-016",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Startup has a unique informative startup view distinct from operation loading.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-017",
+      "sourceLocation": "Current user task section 9 F, UX-017",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Every load terminates visibly in success or actionable failure with recovery access; no indicator runs indefinitely.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-018",
+      "sourceLocation": "Current user task section 9 F, UX-018",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Loading indicators appear only while genuinely loading and are not shown for crashed, stalled, or broken states.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-019",
+      "sourceLocation": "Current user task section 9 F, UX-019",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Controls are disabled while their operation is in flight and repeated activation cannot duplicate execution or enqueue a second operation.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-020",
+      "sourceLocation": "Current user task section 9 F, UX-020",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Completion, failure, and recovery feedback is explicit in every case.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-021",
+      "sourceLocation": "Current user task section 9 F, UX-021",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Operation latency is measured and reported across the workflow and automatable computation, assembly, and coordination are application-owned.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-1",
+      "sourceLocation": "Current user task section 8, DEF-1",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Saving project information produces no confirmation, no ingestion feedback, and no advance to the next required operation.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-2",
+      "sourceLocation": "Current user task section 8, DEF-2",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Instruction text is duplicated within and across views; inspect every stage.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-3",
+      "sourceLocation": "Current user task section 8, DEF-3",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Instruction display asserts a regenerated state unconditionally; first generation must be original.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-4",
+      "sourceLocation": "Current user task section 8, DEF-4",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: True regenerated instructions lack an operator-visible indicator.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-5",
+      "sourceLocation": "Current user task section 8, DEF-5",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Each stage requires three separate export actions instead of one consolidated file action.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-6",
+      "sourceLocation": "Current user task section 8, DEF-6",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Changing project input after Stage 1 completed crashes or fails without rollback confirmation/effective change.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-7",
+      "sourceLocation": "Current user task section 8, DEF-7",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Operations including export and response import lack threshold-governed loading feedback.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-8",
+      "sourceLocation": "Current user task section 8, DEF-8",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Application lacks a startup view while loading.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-9",
+      "sourceLocation": "Current user task section 8, DEF-9",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Operation latency is excessive, unmeasured, or unreported.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-10",
+      "sourceLocation": "Current user task section 8, DEF-10",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Next-action visibility fails after layout settling beyond the originally reproduced case; the complete post-layout invariant must hold.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROHIBITION-REPAIR-TRANSPORT",
+      "sourceLocation": "Current user task section 2 — No repair-transport artifacts",
+      "responsibleProductionCode": {
+        "file": "repository candidate tree; verify.mjs",
+        "symbol": "repairTransportPatterns / walkRepairTransport"
+      },
+      "observableExpectedBehavior": "No transfer scripts, digest applicators, encoded repair payloads, patch appliers, or repair staging files remain in the candidate tree.",
+      "requiredEvidence": [
+        "Exact candidate tree scan",
+        "Injected prohibited transport fixture rejected",
+        "Full exact-revision CI"
+      ],
+      "applicableStages": "REPOSITORY_WIDE",
+      "applicableOperations": "ALL",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "D-1",
+      "sourceLocation": "Current user task section 6, D-1",
+      "responsibleProductionCode": "operator decision and responsible production owner",
+      "observableExpectedBehavior": "Use one configurable loading threshold default from 1000–2000 ms, measure raw workflow latency, and submit threshold plus measured distribution for operator confirmation.",
+      "requiredEvidence": [
+        "Exact outstanding decision and evidence for operator confirmation"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "D-2",
+      "sourceLocation": "Current user task section 6, D-2",
+      "responsibleProductionCode": "operator decision and responsible production owner",
+      "observableExpectedBehavior": "Do not modify contract text; any proposed change must identify its motivating requirement and remain operator-reserved.",
+      "requiredEvidence": [
+        "Exact outstanding decision and evidence for operator confirmation"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "D-3",
+      "sourceLocation": "Current user task section 6, D-3",
+      "responsibleProductionCode": "operator decision and responsible production owner",
+      "observableExpectedBehavior": "Preserve approved visuals except where the controlling specification or numbered requirement requires a change; approval remains operator-reserved.",
+      "requiredEvidence": [
+        "Exact outstanding decision and evidence for operator confirmation"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "D-4",
+      "sourceLocation": "Current user task section 6, D-4",
+      "responsibleProductionCode": "operator decision and responsible production owner",
+      "observableExpectedBehavior": "Use specified definitions/defaults; otherwise record unresolved ambiguity and candidate readings without silent selection.",
+      "requiredEvidence": [
+        "Exact outstanding decision and evidence for operator confirmation"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    }
+  ]
+}

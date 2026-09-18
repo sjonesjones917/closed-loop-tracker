@@ -74,7 +74,8 @@ await import('./verify-operator-action-lifecycle.mjs');
     previewProject.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve the complete source é🙂. '.repeat(4000)+'FIRST-PREVIEW-TAIL';
     closedLoopWorkflowEngine.recalculate(previewProject);ui.select(previewProject);`,runtime);
   const p=runtime.previewProject,before=JSON.stringify(p),first=runtime.ui.workflow();
-  assert.match(first,/id="export-prompt-context"/,'Required Export context is missing until another export saves the instruction.');
+  assert.match(first,/This instruction requires context\.json\. It is included in the one stage ZIP\./,'Required context must be disclosed as a member of the consolidated stage package.');
+  for(const legacy of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files'])assert.doesNotMatch(first,new RegExp('id="'+legacy+'"'),'Superseded export control remains: '+legacy);
   const panelStart=first.indexOf('id="next-required-action"'),exportStart=first.indexOf('id="next-export-prompt-file"',panelStart),detailsStart=first.indexOf('<div class="notice ',panelStart);
   assert(exportStart>panelStart,'The initial external operation must expose the consolidated stage-files export in its next-action panel.');
   assert(exportStart<detailsStart,'The next transport control must precede the potentially taller-than-viewport action details.');
@@ -82,20 +83,20 @@ await import('./verify-operator-action-lifecycle.mjs');
   assert.match(first,/This instruction requires context\.json/);
   assert.equal(JSON.stringify(p),before,'Displaying required context must not reserve an operation or change project data.');
   assert.equal(runtime.previewBuilds,1,'Displaying required context built the accumulated prompt more than once.');
-  assert.match(runtime.ui.workflow(),/id="export-prompt-context"/);
+  assert.match(runtime.ui.workflow(),/This instruction requires context\.json\. It is included in the one stage ZIP\./);
   assert.equal(runtime.previewBuilds,1,'Revisiting the same preview rebuilt its context.');
   for(let stage=2;stage<=30;stage++){
     p.activeStage=stage;
-    assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,`Stage ${stage} exposed a stale preview's context for an unavailable operation.`);
+    assert.doesNotMatch(runtime.ui.workflow(),/This instruction requires context\.json\. It is included in the one stage ZIP\./,`Stage ${stage} exposed stale packaged context for an unavailable operation.`);
     assert.doesNotMatch(runtime.ui.workflow(),/id="next-export-prompt-file"/,`Stage ${stage} exposed transport for an unavailable operation.`);
   }
   p.activeStage=1;p.revision++;p.job.EXACT_USER_OBJECTIVE_VERBATIM='Produce a short checklist.';
-  assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,'A new revision with inline context retained the old attachment button.');
+  assert.doesNotMatch(runtime.ui.workflow(),/This instruction requires context\.json\. It is included in the one stage ZIP\./,'A new revision with inline context retained stale packaged-context guidance.');
   p.revision++;p.job.EXACT_USER_OBJECTIVE_VERBATIM='Large current project context. '.repeat(4000);
-  assert.match(runtime.ui.workflow(),/id="export-prompt-context"/);
+  assert.match(runtime.ui.workflow(),/This instruction requires context\.json\. It is included in the one stage ZIP\./);
   const other=runtime.closedLoopCore.createBlankState('CONTEXT-OTHER-PROJECT');other.revision=p.revision;
   runtime.closedLoopWorkflowEngine.recalculate(other);runtime.ui.select(other);
-  assert.doesNotMatch(runtime.ui.workflow(),/id="export-prompt-context"/,'Switching projects leaked the preceding project\'s required context.');
+  assert.doesNotMatch(runtime.ui.workflow(),/This instruction requires context\.json\. It is included in the one stage ZIP\./,'Switching projects leaked the preceding project\'s required packaged context.');
   const saved=runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
   assert.doesNotMatch(runtime.ui.workflow(),/Regenerated and saved for the remaining work/,'The first saved instruction was mislabeled as regenerated.');
   runtime.closedLoopWorkflowEngine.transitionOperationReservation(saved.reservation,'SUPERSEDED');
@@ -179,7 +180,7 @@ verify();
 }
 // An action on an inspected stage belongs to that selected stage in the active version.
 {
- const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("bindAction('#export-prompt-context'",wireStart),source=app.slice(wireStart,wireEnd);
+ const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("document.querySelectorAll('[data-returned-slot]'",wireStart),source=app.slice(wireStart,wireEnd);
  assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
  for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
   const button={dataset:{operation}},current={activeStage:stage},operationSelection={};let exported;
@@ -272,7 +273,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
   assert.equal(nextAction.primaryButton,'Export instruction file','The reviewer action must export instructions directly, not require a saved verification package first.');
   const button={dataset:{operation:nextAction.operation}};runtime.$=selector=>selector==='#next-export-prompt-file'?button:notice;runtime.operationSelection={};runtime.exportStageFiles=()=>runtime.exportAttempt(()=>downloaded++);
-  const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("bindAction('#export-prompt-context'",wireStart);
+  const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("document.querySelectorAll('[data-returned-slot]'",wireStart);
   runtime.bindAction=(_selector,operation)=>{button.onclick=operation;};
   vm.runInContext(app.match(/^function canonicalCurrentStage\([^\n]+/m)[0]+'\n'+app.slice(wireStart,wireEnd),runtime);await button.onclick();
   assert.equal(downloaded,3,'The actual next-action handler failed to reach automatic instruction export.');

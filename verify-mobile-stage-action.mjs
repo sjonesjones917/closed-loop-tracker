@@ -163,6 +163,10 @@ async function main(){
     return {largestRead:__largestFileRead,maxBase64Read,restoredFiles:restored.projectData.artifacts.length,count:payload.artifacts.length,expectedCount:expectedMembers.length,memberSetVerified,memberBytes,historyManifestVerified,restoredHistoryVerified,tail,hashVerified:closedLoopHash.sha256Value(body)===packageSha256,lastVerified:last.sha256===await closedLoopHash.sha256Bytes(file),lastTail:atob(last.base64).endsWith('FILE-PRESSURE-21-TAIL')};
   })()`);
   assert(fileExport.largestRead<=65536&&fileExport.maxBase64Read<=65536&&fileExport.restoredFiles===fileCustody.count&&fileExport.memberSetVerified&&fileExport.memberBytes.every(row=>row.verified)&&fileExport.historyManifestVerified&&fileExport.restoredHistoryVerified&&fileExport.hashVerified&&fileExport.lastVerified&&fileExport.lastTail&&fileExport.tail.endsWith('FILE-PRESSURE-21-TAIL'),`Paged download/export/restore changed file bytes: ${JSON.stringify(fileExport)}`);
+  // The preceding import intentionally exercised the store API directly and advanced
+  // the canonical revision outside the UI. Rehydrate the application before testing
+  // the operator-owned delete path so its normal stale-revision guard remains binding.
+  await openStoredFixture(cdp);await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);
   await click(cdp,'[data-view="Project"]',60000);await click(cdp,'#project-danger-zone>summary',60000);
   await fill(cdp,'#delete-project-confirmation','BROWSER-FILE-PRESSURE');await click(cdp,'#delete-project',60000);
   await waitFor(cdp,`closedLoopProjectStore.readProject('BROWSER-FILE-PRESSURE').then(project=>!project)`,60000);

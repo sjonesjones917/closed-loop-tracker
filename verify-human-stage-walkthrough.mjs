@@ -88,25 +88,22 @@ try{
     const promptElement=document.querySelector('#generated-prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
     const renderedStage1=promptElement.textContent||'';
     for(const required of ['first semantic reader','PASS 1 — EXHAUSTIVE EXTRACTION','PASS 2 — OMISSION CHALLENGE','humanAuthorityCandidates'])if(!renderedStage1.includes(required))throw new Error('Rendered Stage 01 COMPLETE prompt omitted required behavior: '+required+'; selected stage: '+document.querySelector('#stage-picker')?.value+'; operation: '+document.querySelector('#operation-picker')?.value+'; feedback: '+document.querySelector('#app-live-status')?.textContent+'; notice: '+document.querySelector('#next-required-action > .notice')?.textContent+'; actual prompt: '+renderedStage1.slice(0,1200));
-    // Exercise the real application save/export controls and compare the displayed committed instruction
-    // to the exact Blob bytes that the export path transfers.
+    // Exercise the one real stage-package action. It must save the controlling
+    // instruction as part of producing exactly one mobile-safe ZIP transfer.
     const stage2Picker=document.querySelector('#stage-picker');stage2Picker.value='2';stage2Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
-    const saveButton=document.getElementById('save-prompt'),exportButton=document.getElementById('export-prompt-file');
-    if(!saveButton||saveButton.disabled||!exportButton||exportButton.disabled)throw new Error('Current external-agent prompt controls are not available.');
-    await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('Saving the prompt did not rerender the application.')),5000);document.addEventListener('closed-loop-rendered',()=>{clearTimeout(timeout);resolve();},{once:true});saveButton.click();});
-    await idle();
-    const committedDisplayed=document.getElementById('generated-prompt')?.textContent||'';
-    if(!committedDisplayed.includes('STRICT RESPONSE CONTRACT'))throw new Error('Saved displayed prompt is incomplete.');
+    const exportButton=document.getElementById('next-export-prompt-file');
+    if(!exportButton||exportButton.disabled)throw new Error('Current consolidated stage-file package control is not available.');
+    for(const legacy of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files'])if(document.getElementById(legacy))throw new Error('Superseded export control remains: '+legacy);
     const originalCreateObjectURL=URL.createObjectURL.bind(URL);let exportedBlob=null;
     URL.createObjectURL=blob=>{exportedBlob=blob;return originalCreateObjectURL(blob);};
-    try{document.getElementById('export-prompt-file')?.click();await idle();await waitFor(()=>exportedBlob instanceof Blob,'Prompt export did not create a Blob.');}finally{URL.createObjectURL=originalCreateObjectURL;}
-    if(!(exportedBlob instanceof Blob))throw new Error('Prompt export did not create a Blob.');
-    const exportedPrompt=await exportedBlob.text();
-    if(exportedPrompt!==committedDisplayed)throw new Error('Displayed committed prompt bytes differ from exported instruction-file bytes.');
+    try{exportButton.click();await idle();await waitFor(()=>exportedBlob instanceof Blob,'Stage package export did not create one Blob.');}finally{URL.createObjectURL=originalCreateObjectURL;}
+    if(!(exportedBlob instanceof Blob)||exportedBlob.type!=='application/zip')throw new Error('Stage package export did not create the required ZIP Blob.');
+    const committedDisplayed=document.getElementById('generated-prompt')?.textContent||'';
+    if(!committedDisplayed.includes('STRICT RESPONSE CONTRACT'))throw new Error('Export did not commit the displayed controlling instruction.');
     const stage18Picker=document.querySelector('#stage-picker');stage18Picker.value='18';stage18Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
     const appOnlyPrompt=document.querySelector('#generated-prompt')?.textContent||'';
     if(!appOnlyPrompt.includes('NO EXTERNAL AGENT INSTRUCTION REQUIRED'))throw new Error('Application-owned Stage 18 is rendered as external-agent work.');
-    for(const id of ['save-prompt','export-prompt-file','export-prompt-manifest','copy-prompt'])if(!document.getElementById(id)?.disabled)throw new Error('Application-owned Stage 18 exposes prompt control '+id+'.');
+    for(const id of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files','next-export-prompt-file','download-execution-package'])if(document.getElementById(id)&&!document.getElementById(id)?.disabled)throw new Error('Application-owned Stage 18 exposes external transfer control '+id+'.');
     const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join(' ');
     const compact=css;
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');

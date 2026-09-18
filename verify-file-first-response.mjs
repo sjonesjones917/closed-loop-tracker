@@ -29,7 +29,8 @@ export function assertFileFirstResponseContract({appSource=app,promptSource=prom
   assert.match(ingestionSource,/transport:transportRecord/,'Raw response records must preserve the supplied transport basis.');
   assert.match(ingestionSource,/NONAUTHORITATIVE_TEXT_FALLBACK/,'Fallback transport must remain explicitly nonauthoritative.');
   assert.match(ingestionSource,/RESPONSE_FILE_DECODE_HASH_MISMATCH/,'Decoded text must remain bound to exact staged bytes.');
-  assert.match(appSource,/id="export-prompt-file"/,'External work must expose instruction-file export without requiring clipboard use.');
+  assert.match(appSource,/id="next-export-prompt-file"/,'External work must expose the one consolidated stage-file package action.');
+  for(const legacy of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files'])assert.doesNotMatch(appSource,new RegExp('id=\"'+legacy+'\"'),'Superseded per-artifact or duplicate export control remains: '+legacy);
   assert.match(htmlSource,/obtain the authoritative response\.json file for the current instruction/i,'Static operator guidance must identify the authoritative response.json filename and current-instruction binding.');
   assert.match(htmlSource,/Select the exact response\.json file returned by the agent in the application/i,'Static operator guidance must identify the selected response.json file and its external-agent origin.');
   assert.doesNotMatch(htmlSource,/Paste only that final JSON|Parse \/ validate response/,'Static guidance must not require pasted final JSON.');
