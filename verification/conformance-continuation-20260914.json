@@ -184,6 +184,76 @@
         "browserReplay": "PENDING_CI"
       },
       "status": "UNVERIFIED"
+    },
+    {
+      "id": "NEXT_ACTION_LAYOUT_QUIESCENCE_AND_CSP_AUTHORITY",
+      "responsibleCode": [
+        "app-core.js:navigateWithinVersion/focusAfterAction",
+        "index.html Content-Security-Policy",
+        "ui-shell.js",
+        "verify-complete-operator-journey.mjs",
+        "verify-browser.mjs"
+      ],
+      "requirement": "After every state change, the correct next action is visible after layout settles with no prohibited upward movement; every authored inline script permitted by CSP must match the actual executable source.",
+      "reproductionRevision": "321b91ee90c48d881ba6d92d57088f41e9c3f361",
+      "relatedBrowserFailure": {
+        "runId": 35381100815,
+        "jobId": 105717176469,
+        "observations": [
+          "Stage 9 next required action not visible before operator action 23",
+          "CSP blocked the stage-picker/project-menu inline script because its current SHA-256 was not authorized"
+        ]
+      },
+      "classification": "PRODUCTION",
+      "authorityTrace": "Stage/view state change -> navigateWithinVersion -> render -> layout-affecting closed-loop-rendered listener -> focusAfterAction; the focus placement ran before that listener changed stage-picker geometry. Separately, authored inline shell behavior -> index.html inline script -> CSP hash list was stale.",
+      "dependencyClosure": [
+        "all 30 workflow stage selections",
+        "view navigation",
+        "post-layout next-action placement",
+        "mobile stage-picker layout",
+        "project action menu",
+        "browser runtime error gate"
+      ],
+      "change": "Defer workflow next-action placement until the next animation frame so the existing two-frame placement oracle runs after render listeners settle. Move the non-startup shell behavior to a same-origin deferred script, eliminating its stale inline CSP hash authority.",
+      "regressions": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser.mjs"
+      ],
+      "focusedVerification": {
+        "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
+    },
+    {
+      "id": "PENDING_FILE_CORRECTION_RELOAD_FIXTURE",
+      "responsibleCode": [
+        "verify-browser-recovery.mjs",
+        "app-core.js:captureView/selectSavedView",
+        "project-store.js:rebaseHistoryView"
+      ],
+      "requirement": "An unconfirmed file correction remains unaccepted across reload and its in-page confirmation is restored from the saved view.",
+      "reproductionRevision": "321b91ee90c48d881ba6d92d57088f41e9c3f361",
+      "relatedBrowserFailure": {
+        "runId": 35381100815,
+        "jobId": 105717176469,
+        "suite": "verify-browser-recovery.mjs",
+        "actual": "The verifier expected #replacement-confirmation immediately after reload; classification requires preserving the production contract and making the assertion explicit."
+      },
+      "classification": "VERIFIER_PENDING_REPLAY",
+      "authorityTrace": "file selection -> persistReplacement mutation review -> captureCurrentView pendingMutation -> history checkpoint -> reload/selectSavedView -> rebaseHistoryView -> replacement confirmation renderer",
+      "dependencyClosure": [
+        "Stage 01 supplied-file correction",
+        "pending mutation persistence",
+        "reload",
+        "History restoration",
+        "replacement confirmation"
+      ],
+      "change": "Retain the existing production authority and make the reload invariant explicit in the browser regression; no production weakening.",
+      "regression": "verify-browser-recovery.mjs",
+      "focusedVerification": {
+        "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
     }
   ],
   "pendingVerification": [
@@ -196,8 +266,8 @@
     "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
     "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
   ],
-  "nextAction": "Run the complete normal CI against this exact candidate revision. The repaired browser fixture must pass the real Chromium path before any further candidate mutation.",
-  "updatedAt": "2026-09-14T17:07:46.042038+00:00",
+  "nextAction": "Run complete normal CI against the single substantive candidate revision containing the post-layout next-action authority repair, CSP source-authority repair, and preserved recovery regressions. Classify any remaining failure before another mutation.",
+  "updatedAt": "2026-09-18T14:24:00-05:00",
   "continuationPullRequest": 1242,
   "publishedHeadBeforeThisChange": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
   "baselineVerification": {

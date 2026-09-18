@@ -564,7 +564,7 @@ async function recordCommittedBoundary(){
 async function navigateWithinVersion({activeView=current.activeView,activeStage=current.activeStage}={}){
  await captureCurrentView();replacementReview=null;current.activeView=views.includes(activeView)?activeView:'Workflow';current.activeStage=Math.max(1,Math.min(schema.STAGE_COUNT,Number(activeStage)||1));
  const view={...captureView(),activeView:current.activeView,activeStage:current.activeStage,scrollX:0,scrollY:0,drafts:{}};
- writeBrowserEntry(historyState.activeId,view);render();if(current.activeView==='Workflow')focusAfterAction($('#next-required-action'));else window.scrollTo(0,0);
+ writeBrowserEntry(historyState.activeId,view);render();if(current.activeView==='Workflow')requestAnimationFrame(()=>focusAfterAction($('#next-required-action')));else window.scrollTo(0,0);
 }
 async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode='HISTORY',view=null,traversal=false,pendingAction=null}={}){
  if(!checkpointId)throw new Error('No retained version is available in that direction.');
