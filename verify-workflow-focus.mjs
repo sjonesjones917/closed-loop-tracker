@@ -17,6 +17,19 @@ let entered=0,release;const held=new Promise(r=>release=r);const delayed=nodes.g
 const p=c.ui.run('Saving',async()=>{entered++;c.ui.focus(delayed);await held;});const duplicate=c.ui.run('Saving',()=>{entered++;});await paint();
 assert.equal(entered,1);assert.equal(delayed.disabled,true);assert.equal(nodes.get('#app-operation-status').hidden,true,'Sub-threshold work must not display a loading indicator.');assert.equal(calls.some(x=>x.type==='focus'),false,'FOCUS_PENDING_ORACLE: disabled controls must not take focus before resolution.');release();await p;await duplicate;
 const focus=calls.find(x=>x.type==='focus'&&x.id===delayed.id);assert.ok(focus,'FOCUS_DEFERRED_ORACLE: the next control was not focused after unlocking.');assert.equal(focus.disabled,false);assert.equal(focus.options?.preventScroll,true,'FOCUS_NATIVE_SCROLL_ORACLE: deferred focus reintroduced implicit scrolling.');assert.equal(calls.some(x=>x.type==='scroll'),false);assert.equal(delayed.disabled,false);cases.push({caseId:'FOCUS-AFTER-UNLOCK-WITHOUT-DUPLICATION',result:'PASS'});calls.length=0;
+// UX-001/DEF-10: a non-form next-action container rendered during an
+// in-flight operation must not be placed until the operation unlocks and the
+// final post-action layout has settled. This is the real Stage 9 -> 10 class.
+let releaseRegion;const heldRegion=new Promise(r=>releaseRegion=r),regionRect={top:651.21875,bottom:852.21875,left:10,right:383,width:373,height:201};
+const region=element('next-required-action',regionRect);region.tagName='DIV';nodes.set('#next-required-action',region);
+region.scrollIntoView=options=>{calls.push({type:'scroll',id:region.id,options});regionRect.top-=1;regionRect.bottom-=1;};
+c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:region.id,options});regionRect.top-=options.top;regionRect.bottom-=options.top;};
+const regionRun=c.ui.run('Advancing stage',async()=>{c.ui.focus(region);await heldRegion;});await paint();
+assert.equal(calls.some(call=>call.type==='focus'&&call.id===region.id),false,'FOCUS_PENDING_REGION_ORACLE: a next-action region was placed before operator-action finalization.');
+releaseRegion();await regionRun;await paint();
+assert.ok(calls.some(call=>call.type==='focus'&&call.id===region.id),'FOCUS_FINALIZED_REGION_ORACLE: finalized next-action region did not receive focus.');
+assert.ok(regionRect.bottom<=c.innerHeight,'FOCUS_FINALIZED_REGION_VISIBILITY_ORACLE: finalized next-action region remained clipped after layout settled.');
+cases.push({caseId:'FOCUS-NONCONTROL-REGION-AFTER-ACTION-FINALIZATION',result:'PASS',bottomAfterFinalization:regionRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;nodes.delete('#next-required-action');
 const below=element('next-field',{top:930,bottom:974,left:0,right:300,width:300,height:44});c.ui.focus(below);assert.equal(calls.filter(x=>x.type==='scroll').length,1);assert.equal(calls.at(-1).options.block,'nearest','FOCUS_DISTANCE_ORACLE: move only enough to expose the next required element.');cases.push({caseId:'FOCUS-NEXT-FIELD-BELOW-VIEWPORT',result:'PASS'});calls.length=0;
 // Chromium may round the first nearest scroll down while the CSS box ends
 // at a fractional coordinate. The computed residual must still be exposed.
@@ -36,6 +49,19 @@ c.ui.focus(settled);settledRect.bottom=852.375;settledRect.top=760.625;await pai
 assert.ok(settledRect.bottom<=c.innerHeight,'FOCUS_POST_LAYOUT_FRACTIONAL_ORACLE: the next action became clipped after layout settled');
 assert.ok(calls.some(call=>call.type==='residual-scroll'&&call.id===settled.id&&call.options.top>0),'Post-layout fractional correction did not expose the action');
 cases.push({caseId:'FOCUS-POST-LAYOUT-FRACTIONAL-EDGE',result:'PASS',bottomAfterCorrection:settledRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;
+// Layout work can arrive after the first scheduled placement pass (for example,
+// sticky-header/inset geometry on the next frame). The shared authority must
+// remain active through quiescence rather than assuming one RAF is enough.
+const lateRect={top:650.75,bottom:851.75,width:373,height:201},late=element('late-layout-next-action',lateRect);
+late.scrollIntoView=options=>{calls.push({type:'scroll',id:late.id,options});};
+c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:late.id,options});lateRect.top-=options.top;lateRect.bottom-=options.top;};
+c.ui.focus(late);
+frames.splice(0).forEach(fn=>fn());await Promise.resolve();
+lateRect.top=651.21875;lateRect.bottom=852.21875;
+await paint();
+assert.ok(lateRect.bottom<=c.innerHeight,'FOCUS_LAYOUT_QUIESCENCE_ORACLE: a later layout phase clipped the next action after the focus authority stopped observing geometry');
+assert.ok(calls.some(call=>call.type==='residual-scroll'&&call.id===late.id&&call.options.top>0),'FOCUS_LAYOUT_QUIESCENCE_DIRECTION_ORACLE: late-layout correction must move forward, never upward');
+cases.push({caseId:'FOCUS-LAYOUT-QUIESCENCE-AFTER-LATE-FRAME',result:'PASS',bottomAfterCorrection:lateRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;
 const forwardAbove=element('forward-above',{top:-220,bottom:-176,left:0,right:300,width:300,height:44});c.ui.focus(forwardAbove);assert.equal(calls.some(x=>x.type==='scroll'),false,'FOCUS_FORWARD_UP_ORACLE: ordinary forward progress must not auto-scroll upward.');cases.push({caseId:'FOCUS-NO-UPWARD-SCROLL-FOR-FORWARD-PROGRESS',result:'PASS'});calls.length=0;
 // UX-003: acceptance is forward progress, not an operator-requested return.
 // The real browser journey separately requires the sticky action to be visible.

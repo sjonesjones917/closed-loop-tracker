@@ -10,15 +10,16 @@
       "requirementId": "UX-001",
       "sourceLocation": "Current user task section 9 E, UX-001",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "requirement-specific authority traced by permanent verifiers"
+        "file": "app-core.js",
+        "symbol": "runOperatorAction finalization + focusAfterAction layout-quiescence authority"
       },
       "observableExpectedBehavior": "After every state change, the correct next action is visible after layout settles, with no prohibited upward movement.",
       "requiredEvidence": [
         "Executed behavioral case on exact candidate source",
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
-        "Affected downstream browser/recovery verification where applicable"
+        "Affected downstream browser/recovery verification where applicable",
+        "Finalized operator-action focus is deferred until controls unlock and remains authoritative through settled layout geometry"
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -110,15 +111,16 @@
       "requirementId": "UX-006",
       "sourceLocation": "Current user task section 9 E, UX-006",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "requirement-specific authority traced by permanent verifiers"
+        "file": "app-core.js",
+        "symbol": "workflow consolidated stage-package action rendering"
       },
       "observableExpectedBehavior": "Separate per-artifact export controls replaced by UX-005 are removed rather than retained beside the consolidated control.",
       "requiredEvidence": [
         "Executed behavioral case on exact candidate source",
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
-        "Affected downstream browser/recovery verification where applicable"
+        "Affected downstream browser/recovery verification where applicable",
+        "Browser recovery and operator verifiers exercise only the consolidated stage-package action and reject legacy export controls"
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -610,15 +612,16 @@
       "requirementId": "DEF-10",
       "sourceLocation": "Current user task section 8, DEF-10",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "defect-specific authority established by reproduction"
+        "file": "app-core.js",
+        "symbol": "runOperatorAction finalization + focusAfterAction layout-quiescence authority"
       },
       "observableExpectedBehavior": "Reproduce and correct: Next-action visibility fails after layout settling beyond the originally reproduced case; the complete post-layout invariant must hold.",
       "requiredEvidence": [
         "Inputs and exact operation sequence",
         "Baseline failing invariant on exact defective source",
         "Corrected same-path execution",
-        "Permanent regression demonstrated to detect the failure"
+        "Permanent regression demonstrated to detect the failure",
+        "Finalized operator-action focus is deferred until controls unlock and remains authoritative through settled layout geometry"
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
