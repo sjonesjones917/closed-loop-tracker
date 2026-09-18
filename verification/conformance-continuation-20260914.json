@@ -148,6 +148,42 @@
         "browserReplay": "PENDING_CI"
       },
       "status": "UNVERIFIED"
+    },
+    {
+      "id": "RETURNED_FILE_REPLACEMENT_CONFIRMATION_FIXTURE_AUTHORITY",
+      "responsibleCode": [
+        "verify-browser-extra.mjs",
+        "app-core.js:persistReplacement/confirmReplacement",
+        "project-store.js:mutationImpact/assertMutationConfirmation"
+      ],
+      "requirement": "A valid replacement that affects accepted work remains uncommitted until the in-page replacement impact is shown and the operator explicitly accepts that exact replacement; verifier journeys must exercise that confirmation rather than waiting for an unconfirmed proposal to commit.",
+      "reproductionRevision": "81db0b0786dd1b29cfdae7b1f88ad97f0c04eb73",
+      "relatedBrowserFailure": {
+        "runId": 35376600377,
+        "jobId": 105702618601,
+        "suite": "verify-browser-extra.mjs",
+        "sequence": "Reload the valid Stage 02 SEARCH_ADEQUACY_REVIEW proposal, activate Accept proposal, then wait for canonical semanticReviews mutation without accepting the required replacement confirmation.",
+        "actual": "Production displayed #replacement-confirmation and correctly withheld canonical acceptance; the verifier timed out waiting for the unconfirmed semantic review to appear."
+      },
+      "classification": "VERIFIER",
+      "authorityTrace": "Accept proposal -> prepareAcceptanceCandidate -> persistReplacement -> project-store mutationImpact/assertMutationConfirmation -> in-page #replacement-confirmation. Production confirmation authority is correct; the verifier omitted the required operator confirmation action.",
+      "dependencyClosure": [
+        "Stage 02 replacement acceptance",
+        "replacement impact confirmation",
+        "recoverable prior version disclosure",
+        "returned-file recovery after reload",
+        "operator acceptance journey"
+      ],
+      "change": "After activating Accept proposal, require the in-page replacement confirmation, assert its History recovery disclosure, activate Accept replacement, then require the exact semantic review and reservation acceptance to commit.",
+      "regression": "verify-browser-extra.mjs",
+      "faultInjectionProof": {
+        "fault": "Omit the Accept replacement action after #replacement-confirmation appears.",
+        "caughtBy": "Run 35376600377 timed out waiting for the semantic review to commit, proving unconfirmed replacement acceptance is not silently committed."
+      },
+      "focusedVerification": {
+        "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
     }
   ],
   "pendingVerification": [
@@ -160,7 +196,7 @@
     "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
     "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
   ],
-  "nextAction": "Run complete normal CI against the exact candidate revision containing the corrected view-persistence fixture. Classify any next failure before repair; do not weaken canonical revision binding.",
+  "nextAction": "Run the complete normal CI against this exact candidate revision. The repaired browser fixture must pass the real Chromium path before any further candidate mutation.",
   "updatedAt": "2026-09-14T17:07:46.042038+00:00",
   "continuationPullRequest": 1242,
   "publishedHeadBeforeThisChange": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
