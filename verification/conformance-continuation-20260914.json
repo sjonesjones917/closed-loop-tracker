@@ -108,6 +108,43 @@
         "verify-project-lifecycle.mjs"
       ],
       "browserReplay": "PENDING_CI"
+    },
+    {
+      "id": "RETURNED_FILE_STALE_REVISION_FIXTURE_AUTHORITY",
+      "responsibleCode": [
+        "verify-browser-extra.mjs",
+        "project-store.js:assertMutationConfirmation/writeProject"
+      ],
+      "requirement": "A verifier must reproduce stale-revision recovery without bypassing the product's replacement-impact confirmation contract or mutating semantic project input solely to manufacture concurrency.",
+      "reproductionRevision": "8fa74d7d7b02555f5101dbfbc8d45b5cf5e3e2a8",
+      "relatedBrowserFailure": {
+        "runId": 35360554147,
+        "jobId": 105650469669,
+        "suite": "verify-browser-extra.mjs",
+        "sequence": "Stage 02 returned-file recovery fixture deliberately stores a concurrent project mutation before validating the corrected returned attachment.",
+        "actual": "The fixture wrote projectData.userEntered.concurrentValidationMarker directly. Production correctly rejected the write with MUTATION_CONFIRMATION_REQUIRED: Review the correction and affected work before saving."
+      },
+      "classification": "VERIFIER",
+      "authorityTrace": "Synthetic concurrent semantic input mutation -> project-store.writeProject -> mutationImpact -> assertMutationConfirmation. The production guard is the correct earliest authority; the defect is the fixture's choice of mutation.",
+      "dependencyClosure": [
+        "returned-file stale-revision recovery",
+        "replacement-impact confirmation",
+        "browser recovery verifier",
+        "mutation-confirmation negative controls"
+      ],
+      "change": "Advance durable revision with non-semantic activeView state instead of project input, then prove the stale-revision recovery preserves that newer persisted state.",
+      "regressions": [
+        "verify-browser-extra.mjs",
+        "verify-history-contracts.mjs",
+        "verify-ui-acceptance-impact.mjs"
+      ],
+      "focusedVerification": {
+        "verifyHistoryContracts": "PASS",
+        "skipPersistenceConfirmationFault": "DETECTED_AND_RESTORED_PASS",
+        "verifyUiAcceptanceImpact": "PASS",
+        "browserReplay": "PENDING_CI"
+      },
+      "status": "UNVERIFIED"
     }
   ],
   "pendingVerification": [
@@ -120,7 +157,7 @@
     "Cloud preview server creation returned listen EPERM; this is an environment restriction, not an application defect. Candidate browser verification uses the repository's existing CI.",
     "Physical iPhone Safari, approved visual-baseline authority, and real external-project evidence have not been established."
   ],
-  "nextAction": "Run the complete normal CI against the reconciled candidate and replay all remaining integration checks. Continue actual browser/file journeys and repair every failure before main integration/deployment. No physical-device or complete conformance claim.",
+  "nextAction": "Run the complete normal CI against this exact candidate revision. If browser replay passes, reconcile register evidence without changing the candidate; otherwise classify the next failure before repair.",
   "updatedAt": "2026-09-14T17:07:46.042038+00:00",
   "continuationPullRequest": 1242,
   "publishedHeadBeforeThisChange": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
