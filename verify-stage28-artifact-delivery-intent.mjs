@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,7 +8,7 @@ import {execFileSync} from 'node:child_process';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']) vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']) createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const {closedLoopWorkflowEngine:engine}=globalThis;
 const tmp=fs.mkdtempSync(path.join(process.cwd(),'.stage28-fixture-'));
 const snapshotPath=path.join(tmp,'stage27-ready.json');
@@ -67,6 +68,7 @@ for (const [id,mutate] of [
 // Repaired execution through the same production mechanisms completes Stage 28 while authorization remains a later terminal fact.
 {
   const p=fresh(),c=context(p),created=engine.verifyArtifactIdentity(p,c.files,c.files);assert.equal(created.length,c.ids.length);const decision=engine.captureDeliveryIntent(p,{value:validIntent(c),operatorLabel:'STAGE28_VERIFIER'});assert.ok(decision);assert.equal(engine.gate(28,p).complete,true,'The repaired Stage 28 mechanism did not progress after exact identity plus destination-bound human intent.');assert.equal(p.release.authorization,'NOT AUTHORIZED','Stage 28 collapsed delivery intent into Stage 30 authorization.');
+  const summary=p.stages[28].derivedData;assert.match(summary.HASH_REVIEW_ID,/^HASH_REVIEW-[A-F0-9]{64}$/,'The completed identity review lacks its application-owned hash-review identity.');assert.equal(p.job.CURRENT_HASH_REVIEW_ID,summary.HASH_REVIEW_ID);assert.equal(summary.ARTIFACT_HASH_RECORDS,c.ids.length);assert.equal(summary.TOTAL_EXACT_HASH_MATCHES,c.ids.length);assert.equal(summary.TOTAL_HASH_MISMATCHES,0);assert.equal(summary.TOTAL_UNKNOWN_HASH_COMPARISONS,0);assert.equal(summary.ALL_RELEASE_HASHES_EQUAL_AUDITED_HASHES,true);assert.equal(summary.AUTHORIZATION_EVIDENCE,engine.recordId(decision,'humanDecisions'));const reloaded=structuredClone(p);engine.recalculate(reloaded);assert.equal(reloaded.job.CURRENT_HASH_REVIEW_ID,summary.HASH_REVIEW_ID,'Reload changed the identity review.');
   const duplicate=engine.captureDeliveryIntent(p,{value:validIntent(c),operatorLabel:'STAGE28_VERIFIER'});assert.ok(duplicate);assert.equal(engine.gate(28,p).complete,false,'Two current delivery-intent decisions were treated as one unambiguous authorization scope.');rejected.push('duplicate-current-delivery-intent');
 }
 

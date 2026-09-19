@@ -1,3 +1,4 @@
+import {syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS,REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS,isClosedLoopUtcInstant} from './verify-mobile-acceptance-evidence.mjs';
@@ -25,7 +26,13 @@ export function releaseTagEligibility(status){
   );
 }
 
+export function assertRepositoryReadOnlyCI(workflow){
+  assert.doesNotMatch(workflow,/permissions:\s*write-all|contents:\s*write/,'CI_READ_ONLY_PERMISSION_ORACLE: CI must not have repository write permission.');
+  assert.doesNotMatch(workflow,/\bgit\s+push\b|github\.rest\.git\.(?:create|update|delete)|createOrUpdateFileContents/,'CI_READ_ONLY_REPOSITORY_ORACLE: CI publishes artifacts and status, not repository mutations.');
+}
+
 export function assertWorkflowGovernance(workflow){
+  assertRepositoryReadOnlyCI(workflow);
   assert.doesNotMatch(workflow,/actualAndroidChromeAcceptance/,'Android acceptance must not substitute for the pinned actual-iPhone requirement.');
   assert.match(workflow,/actualIPhoneSafariAcceptance/,'The acceptance calculation must consume actual-iPhone Safari status.');
   assert.match(workflow,/mobileAcceptanceResult/,'The acceptance calculation must consume the physical-device result.');
@@ -40,13 +47,14 @@ export function assertWorkflowGovernance(workflow){
   assert.match(workflow,/const mobileAcceptance=JSON\.parse\(fs\.readFileSync\('\/tmp\/mobile-acceptance\.json','utf8'\)\)/,'The machine acceptance artifact must consume the evaluator result.');
   assert.match(workflow,/\.\.\.mobileAcceptance/,'The complete accepted or blocked physical-device result must be projected into the machine acceptance artifact.');
   assert.doesNotMatch(workflow,/actualIPhoneSafariAcceptance:false/,'The workflow must not hard-code physical-iPhone acceptance to false after evaluating submitted evidence.');
-  assert.match(workflow,/mobile-acceptance-challenge-\$CHALLENGE/,'Accepted challenges must be durably marked as used.');
-  assert.match(workflow,/refs\/tags\/\$CHALLENGE_TAG/,'The used-challenge marker must be written as a repository tag.');
+  assert.match(workflow,/USED_MOBILE_CHALLENGES_JSON/,'The evaluator must read durable used-challenge markers.');
+  assert.match(workflow,/git ls-remote --tags origin 'refs\/tags\/mobile-acceptance-challenge-\*'/,'Challenge reuse must be checked against repository markers.');
+  assert.match(workflow,/authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag/,'Publication authority and single-use challenge requirements must remain explicit.');
 
-  const tagStep=workflow.match(/\n\s*- name: Create release tag[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
-  assert.ok(tagStep,'A release-tag step must exist.');
-  assert.match(tagStep.groups.body,/^\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/m,'The release-tag step must be conditionally gated by final acceptance.');
-  assert.match(tagStep.groups.body,/git push origin/,'The condition must govern the actual remote tag write.');
+  const eligibilityStep=workflow.match(/\n\s*- name: Record release tag eligibility[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
+  assert.ok(eligibilityStep,'A release-tag eligibility status step must exist.');
+  assert.match(eligibilityStep.groups.body,/^\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/m,'Release eligibility must be conditionally gated by final acceptance.');
+  assert.match(eligibilityStep.groups.body,/Release tag eligible/,'CI must report eligibility for the authorized repository connection.');
 
   const blockedStep=workflow.match(/\n\s*- name: Record blocked actual-iPhone acceptance[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
   assert.ok(blockedStep,'A truthful blocked-status step must exist when physical proof is absent.');
@@ -127,6 +135,7 @@ const evidence={
   exportedProjectDigest:'b'.repeat(64),
   screenshotOrRecordingReferences:['capture-001']
 };
+Object.assign(evidence,syntheticMobileOperations(target));
 const expected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T00:00:00.000Z'};
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence,expected}).accepted,true,'Complete pinned mobile evidence must validate.');
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:{...evidence,challenge:'f'.repeat(32)},expected}).accepted,false,'Mismatched challenge must be rejected.');
@@ -161,6 +170,15 @@ const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
 assertWorkflowGovernance(workflow);
 const unconditionalMutation=workflow.replace(/\n\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/,'');
 assert.throws(()=>assertWorkflowGovernance(unconditionalMutation),/conditionally gated/,'The regression must fail when release tagging becomes unconditional.');
+const repositoryMutationFaults=[];
+for(const [fault,mutated,oracle] of [
+  ['repository-write-permission',workflow.replace('contents: read','contents: write'),'CI_READ_ONLY_PERMISSION_ORACLE'],
+  ['unconditional-remote-tag-write',workflow+'\n      - name: Forbidden mutation\n        run: git push origin refs/tags/forbidden\n','CI_READ_ONLY_REPOSITORY_ORACLE']
+]){
+  let rejection='';try{assertWorkflowGovernance(mutated);}catch(error){rejection=error.message;}
+  assert.ok(rejection.includes(oracle),'Fault was not detected by its intended governance oracle: '+fault);
+  assertWorkflowGovernance(workflow);repositoryMutationFaults.push({fault,oracle,result:'DETECTED',rejection,restored:'PASS'});
+}
 const hardCodedBlockMutation=workflow.replace('...mobileAcceptance,','...mobileAcceptance,actualIPhoneSafariAcceptance:false,');
 assert.throws(()=>assertWorkflowGovernance(hardCodedBlockMutation),/hard-code/,'The regression must fail when valid physical evidence is made impossible to accept.');
 const missingEvaluatorMutation=workflow.replace('node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json','true');
@@ -191,5 +209,8 @@ console.log(JSON.stringify({
   usedChallengeRejectedAcrossCaseVariants:true,
   workflowExecutesStrictEvidenceEvaluator:true,
   unconditionalTagMutationDetected:true,
+  unconditionalEligibilityMutationDetected:true,
+  repositoryReadOnlyCI:true,
+  repositoryMutationFaults,
   falseAcceptanceTagRegressionCovered:true
 },null,2));

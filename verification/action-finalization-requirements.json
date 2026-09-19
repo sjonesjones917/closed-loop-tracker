@@ -1,0 +1,93 @@
+{
+  "rows": [
+    {
+      "requirementId": "FINALIZATION_LOADING_ORACLE",
+      "sourceLocation": "Current task UX-014, UX-016, UX-018, UX-019, UX-020; recovery capture requirements \u00a76.C",
+      "productionOwner": "app-core.js:runOperatorAction, reportActionFailure, reportResponseFailure",
+      "observableExpectedBehavior": "Loading remains active, controls locked and duplicate calls coalesced until required final checkpoint has settled.",
+      "requiredEvidence": [
+        "verify-action-finalization.mjs",
+        "paired valid case",
+        "production fault rejection",
+        "real browser complete operator journey"
+      ],
+      "applicableStages": "All stages invoking shared operator controller",
+      "applicableOperations": [
+        "save",
+        "export",
+        "import",
+        "acceptance",
+        "confirmation",
+        "restoration",
+        "checkpoint"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "FINALIZATION_LATENCY_ORACLE",
+      "sourceLocation": "Current task UX-014, UX-016, UX-018, UX-019, UX-020; recovery capture requirements \u00a76.C",
+      "productionOwner": "app-core.js:runOperatorAction, reportActionFailure, reportResponseFailure",
+      "observableExpectedBehavior": "Operation duration includes final required durable view checkpoint and records no completion before it settles.",
+      "requiredEvidence": [
+        "verify-action-finalization.mjs",
+        "paired valid case",
+        "production fault rejection",
+        "real browser complete operator journey"
+      ],
+      "applicableStages": "All stages invoking shared operator controller",
+      "applicableOperations": [
+        "save",
+        "export",
+        "import",
+        "acceptance",
+        "confirmation",
+        "restoration",
+        "checkpoint"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "FINALIZATION_OUTCOME_ORACLE",
+      "sourceLocation": "Current task UX-014, UX-016, UX-018, UX-019, UX-020; recovery capture requirements \u00a76.C",
+      "productionOwner": "app-core.js:runOperatorAction, reportActionFailure, reportResponseFailure",
+      "observableExpectedBehavior": "Failure in any required operation phase, including internally handled failures and final checkpoint, is recorded FAILED and exposes recovery rather than a completed latency sample.",
+      "requiredEvidence": [
+        "verify-action-finalization.mjs",
+        "paired valid case",
+        "production fault rejection",
+        "real browser complete operator journey"
+      ],
+      "applicableStages": "All stages invoking shared operator controller",
+      "applicableOperations": [
+        "save",
+        "export",
+        "import",
+        "acceptance",
+        "confirmation",
+        "restoration",
+        "checkpoint"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "ACTION-NO-FALSE-ROLLBACK",
+      "sourceLocation": "Current task \u00a76.B atomic acceptance, \u00a76.C interrupted/pending operations, UX-019",
+      "productionOwner": "app-core.js:runOperatorAction, reportResponseFailure",
+      "observableExpectedBehavior": "A failure after a prior phase changed the project cannot claim that the entire operation left accepted work unchanged. The UI directs the operator to verify saved state and History without replaying an external action.",
+      "requiredEvidence": [
+        "ACTION-POST-COMMIT-FAILURE",
+        "paired unchanged control",
+        "real operator persistence-failure replay"
+      ],
+      "applicableStages": "All applicable stages",
+      "applicableOperations": [
+        "acceptance",
+        "save",
+        "import",
+        "confirmation",
+        "restoration"
+      ],
+      "status": "UNVERIFIED"
+    }
+  ]
+}

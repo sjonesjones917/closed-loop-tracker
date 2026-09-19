@@ -1,0 +1,47 @@
+{
+  "version": "15.1.0",
+  "repository": "https://github.com/unicode-org/unicodetools",
+  "sourceCommit": "9595f090650e99e3e752b37a7a3866ac8a91999b",
+  "files": [
+    {
+      "path": "CaseFolding.txt",
+      "sourcePath": "unicodetools/data/ucd/dev/CaseFolding.txt",
+      "sourceCommit": "9595f090650e99e3e752b37a7a3866ac8a91999b",
+      "byteLength": 84870,
+      "sha256": "4e55acfdc32825a22e87670e9056a3bf94ad7c5400065778e9e10f8314372bcf",
+      "gitBlobSha1": "69c5c64b4c6a124f4608722db723a9e32667f190"
+    },
+    {
+      "path": "UnicodeData.txt",
+      "sourcePath": "unicodetools/data/ucd/dev/UnicodeData.txt",
+      "sourceCommit": "9595f090650e99e3e752b37a7a3866ac8a91999b",
+      "byteLength": 1914200,
+      "sha256": "2fc713e6a31a87c4850a37fe2caffa4218180fadb5de86b43a143ddb4581fb86",
+      "gitBlobSha1": "bdcc41850d7f01c90902491f2aea6a9b712bb792"
+    },
+    {
+      "path": "DerivedNormalizationProps.txt",
+      "sourcePath": "unicodetools/data/ucd/dev/DerivedNormalizationProps.txt",
+      "sourceCommit": "9595f090650e99e3e752b37a7a3866ac8a91999b",
+      "byteLength": 1355530,
+      "sha256": "8875dccee2bc1a7c1fe568a3b502a9e78c9e0495afd96b6568b4294d0ed1f7e1",
+      "gitBlobSha1": "7f8edd6e0787951624113b7f364d9ba17e628320"
+    },
+    {
+      "path": "NormalizationTest.txt",
+      "sourcePath": "unicodetools/data/ucd/dev/NormalizationTest.txt",
+      "sourceCommit": "9595f090650e99e3e752b37a7a3866ac8a91999b",
+      "byteLength": 2625136,
+      "sha256": "871238e37e3be0696ec2bd0891119a041b052da1a84485eda05a5438724b223e",
+      "gitBlobSha1": "2e88574243dbb5dd4109f54bd25d43588e78226f"
+    },
+    {
+      "path": "confusables.txt",
+      "sourcePath": "unicodetools/data/security/dev/confusables.txt",
+      "sourceCommit": "9595f090650e99e3e752b37a7a3866ac8a91999b",
+      "byteLength": 718291,
+      "sha256": "8289f833e4cf78fde56b2080dc0e42934ef5182c9c3f4dd1fbdf2bced69fd5ed",
+      "gitBlobSha1": "cf73eca009c7b7a6383795bb87e68ddedf9e3399"
+    }
+  ]
+}

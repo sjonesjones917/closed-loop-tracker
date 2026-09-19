@@ -1,0 +1,38 @@
+{
+  "synthetic": true,
+  "actualBrowser": false,
+  "environment": "Node executes the production streaming backup parser; node:zlib and JSON.parse provide independent byte/structure fixtures",
+  "workload": {
+    "plainTextCharacters": 4194304,
+    "expandedBytes": 4194493
+  },
+  "observation": {
+    "elapsedMs": 101.410968,
+    "parserSteps": 1143,
+    "stepBound": 20481,
+    "deliberateSlowFaultSteps": 4194495
+  },
+  "cases": [
+    {
+      "name": "Long project text, prototype-named properties, numeric values, escape sequences and spooled artifact spelling match independent JSON decoding",
+      "result": "PASS"
+    },
+    {
+      "name": "Escaped characters and Unicode remain exact across both chunk boundaries",
+      "result": "PASS"
+    },
+    {
+      "name": "Malformed escapes, raw controls, missing separators, mismatched containers, trailing values and non-ASCII artifact encodings are rejected",
+      "result": "PASS"
+    },
+    {
+      "name": "Plain retained strings are scanned in bounded spans rather than one JavaScript iteration per character",
+      "result": "PASS"
+    },
+    {
+      "name": "Targeted slow-scanning and mismatched-container validation faults are detected by the same cost and rejection oracles",
+      "result": "PASS"
+    }
+  ]
+}
+exit_code=0

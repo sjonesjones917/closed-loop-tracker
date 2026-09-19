@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
@@ -6,7 +7,7 @@ globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
 const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json'];
 for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer runtime failed to load.');
 const html=fs.readFileSync('index.html','utf8'),orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
@@ -15,6 +16,10 @@ if(scriptTags.length!==orderedScripts.length)throw new Error('Runtime scripts mu
 const tokens=new Set();orderedScripts.forEach((file,index)=>{if(scriptTags[index]?.split('?')[0]!==file)throw new Error(`Runtime script order mismatch at ${file}.`);if(scriptTags.filter(src=>src.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique.`);const token=new URLSearchParams(scriptTags[index].split('?')[1]||'').get('v');if(!token)throw new Error(`${file} lacks a build token.`);tokens.add(token);});if(tokens.size!==1)throw new Error('Runtime scripts use mixed build tokens.');
 if(fs.existsSync('app.js')||/document\.write\s*\(/.test(html))throw new Error('Dynamic runtime injection remains.');
 for(const file of fs.readdirSync('.'))if(/^\.repair-/.test(file))throw new Error(`Repair scaffolding remains: ${file}`);
+const repairTransportPatterns=[/^apply-.*repair.*\.(?:mjs|js)$/i,/.*repair.*delta.*\.json$/i,/.*repair.*(?:payload|applicator|patch).*$/i];
+const walkRepairTransport=(dir='.')=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>{const relative=dir==='.'?entry.name:`${dir}/${entry.name}`;if(entry.isDirectory())return ['.git','node_modules'].includes(entry.name)?[]:walkRepairTransport(relative);return repairTransportPatterns.some(pattern=>pattern.test(entry.name))?[relative]:[];});
+const repairTransport=walkRepairTransport().sort();
+if(repairTransport.length)throw new Error(`Repair transport artifacts remain: ${repairTransport.join(', ')}`);
 const expected=[
 'Initialize the Job','Build the Source Inventory','Research the Requirements','Compile the Requirement Specification','Resolve the Requirement Set','Build the Verification Suite Before Writing the Production Instruction','Build Failure Tests','Author the Production Instruction','Preflight the Production Instruction','Freeze the Test Candidate','Run Ten Independent Executions','Verify Each Execution Independently','Compare the Ten Executions','Root-Cause Every Defect','Convert Every Confirmed Failure Into a Regression Test','Correct the Root Cause','Re-Run the Complete Ten-Execution Iteration','Continue Until Convergence','Run an Unchanged Confirmation Iteration','Freeze the Production Baseline','Generate the Finished Product','Run Deterministic Verification on the Finished Product','Run Independent Meaning-Based Verification','Run Adversarial Verification','Inspect the Final Representation','Reconcile Process and Product Evidence','Apply the Release Gate','Verify Artifact Identity Before Release','Preserve the Complete Evidence Chain','Preserve Failures Permanently and Close Delivery'];
 if(core.STAGES.length!==30)throw new Error(`Expected exactly 30 stages; found ${core.STAGES.length}.`);
@@ -84,7 +89,7 @@ if(!prepareSource||prepareSource.includes('savePromptRecord(n)'))throw new Error
 for(const token of ['function responsePromptRecord(n,text)','ingestion.captureRaw(current','projectStore.stageResponseFile','projectStore.readStagedResponseFile'])if(!appSourceForStatus.includes(token))throw new Error(`Returned-instruction validation regression missing ${token}.`);
 const statusSource=appSourceForStatus.match(/const statusClass=v=>\{.*?\};/)?.[0];
 if(!statusSource)throw new Error('Status classifier is not inspectable.');
-const statusProbe=vm.runInNewContext(`${statusSource};({notReady:statusClass('NOT READY'),notAuthorized:statusClass('NOT AUTHORIZED'),notComplete:statusClass('NOT COMPLETE'),unauthorized:statusClass('UNAUTHORIZED'),accepted:statusClass('ACCEPTED'),ready:statusClass('READY'),blocked:statusClass('BLOCKED')})`);
+const statusProbe=createVerifierRuntime.loadScript(createVerifierRuntime(),`${statusSource};({notReady:statusClass('NOT READY'),notAuthorized:statusClass('NOT AUTHORIZED'),notComplete:statusClass('NOT COMPLETE'),unauthorized:statusClass('UNAUTHORIZED'),accepted:statusClass('ACCEPTED'),ready:statusClass('READY'),blocked:statusClass('BLOCKED')})`);
 if(statusProbe.notReady!=='warn'||statusProbe.notAuthorized!=='danger'||statusProbe.notComplete!=='warn'||statusProbe.unauthorized!=='danger'||statusProbe.accepted!=='success'||statusProbe.ready!=='success'||statusProbe.blocked!=='warn')throw new Error(`Status presentation polarity is unsafe: ${JSON.stringify(statusProbe)}`);
 const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.readFileSync(f,'utf8')).join('\n');
 if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');

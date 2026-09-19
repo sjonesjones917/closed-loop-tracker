@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore,hash=globalThis.closedLoopHash;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer modules failed to load.');
 const assert=(value,message)=>{if(!value)throw new Error(message);};
@@ -16,7 +17,7 @@ function deliveryCandidate(p,artifactIds,filenames){
   artifactIds.forEach((id,index)=>p.projectData.artifacts.push(record('artifacts',21,{FILENAME:filenames[index],BYTE_SIZE:index+1,SHA256:String.fromCharCode(97+index),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},id)));
   p.projectData.deliveryCandidateSets.push(candidate);p.job.CURRENT_DELIVERY_CANDIDATE_SET_ID=candidate.id;return candidate;
 }
-function prompt(p,stage){const r={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}
+function prompt(p,stage){const r={...prompts.buildPromptRecord(stage,p,engine.preparePromptContext(p,stage).options),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}
 function acceptStage1Fixture(p){
   const stage=1,pr=prompt(p,stage),manifest=pr.contextManifest.intakeCoverageManifest;
   const capture={schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Accepted Stage 01 prerequisite fixture preserves current human authority.',extractedStatements:[{statementKey:'STAGE1-'+String(index+1),text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
@@ -135,7 +136,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Invalid canonical relationship is rejected before mutation.
 {
-  const p=project('JOB-BAD-REL'),stage=3;p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);
+  const p=project('JOB-BAD-REL'),stage=3;p.job.CURRENT_SOURCE_SET_VERSION='SYNTHETIC-SOURCES';p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);
   const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
   assert(!prepared.validation.valid&&prepared.validation.issues.some(x=>x.code==='UNRESOLVED_RELATIONSHIP'),'Invalid relationship was not rejected.');
@@ -173,9 +174,16 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(stageOneConfirmationSource.includes("displayedStageAction(n).actionType!=='CONFIRM_STAGE_ONE_INTENT'"),'Stage 01 confirmation control is not driven by the canonical next-action state.');
   assert(!stageOneConfirmationSource.includes('isRetainedTestProject'),'Retained/imported project origin still suppresses a mandatory Stage 01 confirmation control.');
   assert(appSource.includes("CONFIRM_STAGE_ONE_INTENT:'Human operator'"),'Stage 01 confirmation next action is not assigned to the human operator.');
-  assert(appSource.includes("acceptedChangeId:latest.changeId,inputVersion:next.job.CURRENT_INPUT_VERSION"),'Stage 01 confirmation click is not explicitly bound to the current accepted change and input version.');
-  assert(appSource.includes("nextActionMarkup(displayedStageAction(n).actionType==='CONFIRM_STAGE_ONE_INTENT',n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
-  assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage:1,reason:'User Job Input changed after Stage 01 completion.'"),'User Job Input edits do not reopen Stage 01.');
+  const seeded=project('JOB-ACTUAL-INTENT-CONTROL');engine.recordHumanInputVersion(seeded,['EXACT_USER_OBJECTIVE_VERBATIM']);const accepted=acceptStage1Fixture(seeded),acceptedInput=accepted.job.CURRENT_INPUT_VERSION;
+  accepted.projectData.userEntered.clarifications.push({stage:core.STAGES[1].number,operation:schema.STAGE_CONTRACTS[core.STAGES[1].number].operations[0],answer:'Scoped later clarification.'});engine.recordHumanInputVersion(accepted,['CLARIFICATION']);engine.recalculate(accepted);
+  const ui={current:accepted,engine,clone:structuredClone,render:()=>{},announce:()=>{},reportActionFailure:error=>{throw error;},$:()=>({value:'SYNTHETIC'}),canonicalCurrentStage:()=>2,focusAfterAction:()=>{},requestAnimationFrame:fn=>fn(),document:{querySelector:()=>null,querySelectorAll:()=>[{dataset:{job:'EXACT_USER_OBJECTIVE_VERBATIM'},type:'text',value:'Changed exact deliverable.'}]}};
+  ui.persistReplacement=async next=>{ui.current=next;};
+  const confirmStart=appSource.indexOf('async function confirmStageOne('),confirmEnd=appSource.indexOf('async function savePromptRecord(',confirmStart);await createVerifierRuntime.loadScript(createVerifierRuntime(ui),appSource.slice(confirmStart,confirmEnd)+'\nconfirmStageOne();');
+  const confirmed=ui.current.projectData.stageConfirmations.at(-1);assert(confirmed.acceptedChangeId===engine.acceptedChanges(ui.current,1).at(-1).changeId&&confirmed.inputVersion===acceptedInput&&engine.gate(1,ui.current).complete,'The actual intent confirmation control did not bind the accepted change and its compatible input version.');
+  const saveStart=appSource.indexOf('async function saveJob('),saveEnd=appSource.indexOf('async function saveHumanStageFields(',saveStart);await createVerifierRuntime.loadScript(createVerifierRuntime(ui),appSource.slice(saveStart,saveEnd)+'\nsaveJob();');
+  assert(!engine.gate(1,ui.current).complete&&engine.acceptedChanges(ui.current,1).length===0,'Saving changed project inputs through the actual UI did not invalidate the prior intake acceptance.');
+  assert(appSource.includes("nextActionMarkup(true,n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
+
   assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.'"),'Completed human-decision stages are not reopened when their authority changes.');
   assert(!appSource.includes("invalidateDownstream(next,1,id,'User Job Input changed after Stage 01 completion.'"),'User Job Input edits still preserve stale Stage 01 acceptance.');
   assert(!appSource.includes("invalidateDownstream(next,stage,id,'Human-owned stage input changed after completion.'"),'Human stage edits still preserve stale current-stage acceptance.');
@@ -291,7 +299,7 @@ console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,no
  engine.invalidateAcceptedResponse(p,{stage,rawResponseId:changeA.rawResponseId,reason:'Run A needs a more complete answer.',operatorLabel:'VERIFY'});engine.recalculate(p);
  const runA=engine.records(p,'runs',{active:true}).find(r=>engine.recordId(r,'runs')===slots[0].runId),runB=engine.records(p,'runs',{active:true}).find(r=>engine.recordId(r,'runs')===slots[1].runId);assert(engine.recordValue(runA,'EXECUTION_STATUS')==='RESERVED'&&runA?.status!=='COMPLETED','Refined Run A reservation was not restored.');assert(runB?.status==='COMPLETED','Unrelated Run B was invalidated by Run A refinement.');assert(!changeB.invalidatedBy&&engine.acceptedChanges(p,stage).some(c=>c.changeId===changeB.changeId),'Unrelated accepted Run B change was invalidated.');assert(p.projectData.generatedPrompts.some(x=>x.scope?.runId===slots[1].runId&&!x.invalidatedBy),'Unrelated Run B prompt was invalidated.');
 }
-assert(fs.readFileSync('app-core.js','utf8').includes('No accepted response matches the selected operation/run scope.'),'Refinement UI does not target the selected operation/run scope.');
+assert(fs.readFileSync('app-core.js','utf8').includes('No accepted response matches this operation.'),'Refinement UI does not target the selected operation/run scope.');
 
 // Operator recovery: exact run-batch reservation is idempotent and partial batches fail closed.
 {

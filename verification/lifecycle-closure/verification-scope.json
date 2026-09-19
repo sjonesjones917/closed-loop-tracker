@@ -1,0 +1,42 @@
+{
+  "schema": "closed-loop-lifecycle-verification-scope/1",
+  "candidate": "repair/complete-conformance-continuation-20260914",
+  "pullRequest": 1242,
+  "startingHead": "7df7add251fa87c40d87f92eb5641f10a5161a26",
+  "repairCommit": "d7c8d4c350580aee6f241dd6dabc0ed12179cd88",
+  "failedRequiredRun": 35239593659,
+  "focusedReplayRun": 35243147601,
+  "requirementId": "HARNESS-LIFECYCLE-SOURCE-CLOSURE",
+  "reproducedFailure": "The lifecycle startup fixture failed with ReferenceError: readApplicationResource is not defined; retained-refresh and unchanged-build cases consequently failed. This is a verifier dependency-closure defect, not evidence that the production resource reader is absent.",
+  "correction": "Load the actual production resource reader and host dependencies explicitly. Execute the authored startup guard with the actual blocked database error. Remove VM/String prototype monkeypatches and synthesized startup feedback. Preserve all existing lifecycle assertions and add actionable blocked-startup recovery assertions.",
+  "executedFocusedEvidence": [
+    {
+      "command": "node verify-project-lifecycle.mjs",
+      "exitCode": 0,
+      "rawOutput": "verification/lifecycle-closure/remote-lifecycle.log",
+      "cases": [
+        "database:blocked-upgrade-does-not-queue-startup",
+        "database:blocked-upgrade-visible-recovery",
+        "startup:retained-refresh-keeps-snapshot-revision",
+        "startup:unchanged-build-reuses-retained-project"
+      ],
+      "environment": "GitHub Actions Ubuntu Node 22; production functions with explicit synthetic host/storage boundaries"
+    },
+    {
+      "command": "node verify-infrastructure-route-closure.mjs",
+      "exitCode": 0,
+      "rawOutput": "verification/lifecycle-closure/remote-infrastructure.log",
+      "environment": "GitHub Actions Ubuntu Node 22; includes the ingestion and complete lifecycle suites"
+    }
+  ],
+  "requiredCi": ".github/workflows/pages.yml",
+  "requiredCiSha256": "57a388ba1c833a3d4844aec0658f16b9e617d0701a881fb969339195da6627a6",
+  "contractTextModified": false,
+  "requiredCiGatesModified": false,
+  "completeCandidatePassEstablished": false,
+  "browserAcceptanceEstablished": false,
+  "physicalDeviceAcceptanceEstablished": false,
+  "deploymentAcceptanceEstablished": false,
+  "registerDisposition": "UNVERIFIED pending complete requirement-specific evidence, including the fresh integrated CI run",
+  "mergeDisposition": "DO_NOT_MERGE_UNTIL_COMPLETE_CANDIDATE_CLOSURE_IS_VERIFIED"
+}

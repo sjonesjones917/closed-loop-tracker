@@ -1,0 +1,857 @@
+{
+  "schema": "closed-loop-focused-repair-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "repairBaseCommit": "16a42c47c1173de08bc6e448b464d0af62fcfadd",
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "sourceFiles": [
+    {
+      "path": "app-core.js",
+      "sha256": "4698bfee8396b7e716837c850e9ad8475cfb5ac4847f67699d43e5264c165b3c"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "f0e9b696c931ad9be01b2e56e40d3b94ff5a0dd0b16e75cc3ca25451166eb8b9"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "4c0f7866d3e59e4c888983505f54b06fc8dd4e463f4fc167caa69bbc65a9789d"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "bb24a959dd9f5147bd68907bcc278f0fce939c1d75522119326a6938d2c38c9c"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "4679495b90d7f58c431895594d21001b30a96d04c3c4de61e6bf72fbcdab5ed1"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "236cf08b578991d290c829e6da47ec415a51ad8a5fc0d87335ec6f012896d756"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "44c83bf5c83a64bfa47005cfd154a9fa95dcfb437ec5774b55345077cd897c9d"
+    }
+  ],
+  "environment": {
+    "local": "Node 24.19.0 on Linux; production scripts executed through Node VM and the repository transaction adapter",
+    "browser": "Separate GitHub Actions Chromium execution; Node 22.23.2. No physical-device observation."
+  },
+  "repairs": [
+    {
+      "productionOwners": [
+        "workflow-schema.js:STAGE_OPERATION_SCOPE_MATRIX",
+        "workflow-engine.js:operationScope/assertOperationScope/registerStageVersion",
+        "prompt-engine.js:reserveAndBuildPromptRecord",
+        "response-ingestion.js:validateEnvelope"
+      ],
+      "expected": "Every required scope dimension is present, current inputs match, creation targets are reserved before handoff, extra dimensions and unprovided canonical references are rejected, exact retry retains identity.",
+      "reproduction": "After actual Stage 01 prerequisite acceptance, the next authoring instruction had no reserved source-set version. Later per-run verifier prompts assigned only a run while the old fixture returned an entire iteration.",
+      "correction": "The authoritative operation matrix governs handoff and ingestion. Output version reservations use allocation receipts and become current only at acceptance; returned verifier cells must belong to the exported batch.",
+      "evidence": [
+        "requiredScope",
+        "counterpart"
+      ]
+    },
+    {
+      "productionOwners": [
+        "workflow-schema.js:canonicalRatio/canonicalDecimal",
+        "workflow-engine.js:coverage and convergence derivations",
+        "app-core.js:saveHumanAnswers"
+      ],
+      "expected": "Meaningful partial progress and exact numeric human answers can be checkpointed without accepting fractional JSON numbers prohibited by section 34.1.",
+      "reproduction": "Accepting the first run verification in a ten-run iteration produced VERIFICATION_COVERAGE=0.1; canonical project hashing rejected the otherwise valid continuation.",
+      "correction": "Persist exact reduced rational strings or safe integers, including convergence evidence snapshots. Numeric input strings are parsed exactly.",
+      "evidence": [
+        "exactProgress",
+        "exactProgressFault",
+        "counterpart"
+      ]
+    },
+    {
+      "productionOwners": [
+        "workflow-engine.js:acceptedOperationSet",
+        "workflow-engine.js:recordsForScope/recordsForCurrentScope",
+        "workflow-engine.js:deliveryCandidateManifest/deliveryCandidateClosure"
+      ],
+      "expected": "An operation remains due until every applicable verification/comparison/regression is accepted. Later review identities cannot make earlier frozen materials stale.",
+      "reproduction": "The generated corrected-iteration journey advanced after a single VERIFY response with other runs unverified. Later Stage 26 review creation also changed the hash of an earlier delivery freeze.",
+      "correction": "Completion uses the actual remaining required matrix; record selection compares dimensions belonging to that record stage; frozen delivery closure excludes future review dimensions.",
+      "evidence": [
+        "counterpart",
+        "counterpartFaults",
+        "releaseScope"
+      ]
+    },
+    {
+      "productionOwners": [
+        "workflow-engine.js:reserveProductExecution/appendArtifactBytes",
+        "response-ingestion.js:commit"
+      ],
+      "expected": "A reserved product remains a candidate until acceptance; returned files and accepted product share the reserved identity.",
+      "reproduction": "The scoped journey reached Stage 21 but returned-file acceptance searched the current accepted product selector for a pending product.",
+      "correction": "Validate the exact reserved scope before promoting returned files; bind bytes to that product and set current product pointers on acceptance.",
+      "evidence": [
+        "counterpart"
+      ]
+    },
+    {
+      "productionOwners": [
+        "app-core.js:setControlDisabled/paintHistory/paintOperatorAction"
+      ],
+      "expected": "After restoration finishes, Undo availability reflects the restored History while pending actions prevent duplicate use.",
+      "reproduction": "Chromium recovery on tested merge 737e2ec6f52223ae9589f9c9650070ebfb93c43e passed five destination-based native history jumps and then timed out clicking disabled Undo. The shared action redraw restored obsolete disabled state.",
+      "correction": "History availability updates the desired post-operation control state.",
+      "evidence": [
+        "recoveryControls",
+        "recoveryControlFault",
+        "historySelection"
+      ]
+    }
+  ],
+  "executed": {
+    "requiredScope": {
+      "stdoutSha256": "44388a3b489504cb24e2e18c775c3c67c77ca648b2e117f688939e708d20d1fd",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "scope": "Executed authoring boundary with actual prerequisite acceptance; this does not claim all 66 operations are verified",
+        "stage": 2,
+        "operation": "COMPLETE",
+        "required": [
+          "inputVersion",
+          "sourceSetVersion"
+        ],
+        "cases": [
+          {
+            "name": "A new external operation reserves every required identity before handoff without accepting its target",
+            "result": "PASS"
+          },
+          {
+            "name": "unregistered dimension rejects for its specific scope violation; removing it passes",
+            "result": "PASS"
+          },
+          {
+            "name": "stale input rejects for its specific scope violation; removing it passes",
+            "result": "PASS"
+          },
+          {
+            "name": "unreserved output rejects for its specific scope violation; removing it passes",
+            "result": "PASS"
+          },
+          {
+            "name": "Accepted targets cannot be reused; repeated authoring allocates a new target and exact retry retains that reservation without replacing accepted work",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    "exactProgress": {
+      "stdoutSha256": "77dca57cf98f506c8d90fa2a5b02df2403e320361650aa446a8514c561498d4a",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node production derivation, validation and persistence with transaction adapter",
+        "bounds": {
+          "maxCoverageDenominator": 128,
+          "decimalCharacters": 4096,
+          "decimalExponentMagnitude": 4096
+        },
+        "cases": [
+          {
+            "name": "Every completion count through 128 preserves its exact rational value and canonical JSON identity",
+            "result": "PASS",
+            "ratios": 8384
+          },
+          {
+            "name": "Decimal entry preserves precision; canonical NUMBER validation rejects the violation and accepts exact values",
+            "result": "PASS"
+          },
+          {
+            "name": "Partial canonical work and exact numeric drafts survive durable checkpoint, read and whole-version restoration",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    "exactProgressFault": {
+      "stdoutSha256": "21547e46322653c3c615a20cce7f715ed74b532d786e6b27bd2069a02e53cc9e",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "fault": "Fractional JSON number substituted in the responsible coverage producer",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS",
+        "restoredCases": [
+          {
+            "name": "Every completion count through 128 preserves its exact rational value and canonical JSON identity",
+            "result": "PASS",
+            "ratios": 8384
+          },
+          {
+            "name": "Decimal entry preserves precision; canonical NUMBER validation rejects the violation and accepts exact values",
+            "result": "PASS"
+          },
+          {
+            "name": "Partial canonical work and exact numeric drafts survive durable checkpoint, read and whole-version restoration",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    "recoveryControls": {
+      "stdoutSha256": "897c41df6e1c3d51731ca63e0bff9ec15cebdf3816d3de55956a9ee1a6fb7ca7",
+      "report": {
+        "schema": "closed-loop-executed-cases/1",
+        "synthetic": true,
+        "environment": "Node VM with delayed operation and frame boundary",
+        "scope": "Shared action binding only; this is not stage-by-stage or file-transport acceptance.",
+        "cases": [
+          {
+            "caseId": "UI-SHARED-ACTION-DUPLICATE",
+            "fixtureStage": 1,
+            "operation": "SAVE_INSTRUCTION",
+            "repeatedClicks": 2,
+            "executions": 1,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-ACTION-FAILURE-RETRY",
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-RECOVERY-AVAILABILITY-true",
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-RECOVERY-AVAILABILITY-false",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    "recoveryControlFault": {
+      "stdoutSha256": "83175f91bf4c3da53ad10aaa426f876f5ae22e3007aba7ac17641894664d7e4a",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "cases": [
+          {
+            "fault": "Restore pre-operation Undo availability after the active history changes",
+            "oracle": "RECOVERY_CONTROL_ORACLE",
+            "result": "DETECTED"
+          }
+        ],
+        "restoredImplementation": "PASS"
+      }
+    },
+    "counterpart": {
+      "stdoutSha256": "bda26d93a5fe05d53e24f35efd716b2077313c1f3cdc1fd698c3aac63ef72feb",
+      "report": {
+        "counterpartContracts": "PASS",
+        "stages": 30,
+        "cases": [
+          {
+            "stage": 1,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 2,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 2,
+            "operation": "SEARCH_ADEQUACY_REVIEW",
+            "result": "PASS"
+          },
+          {
+            "stage": 3,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 4,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 5,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 5,
+            "operation": "SEMANTIC_REVIEW",
+            "result": "PASS"
+          },
+          {
+            "stage": 6,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 6,
+            "operation": "PROOF_REVIEW",
+            "result": "PASS"
+          },
+          {
+            "stage": 7,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 8,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 9,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 11,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 12,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 13,
+            "operation": "COMPARE",
+            "result": "PASS"
+          },
+          {
+            "stage": 13,
+            "caseId": "initial-violation-defect-rejection-and-correction",
+            "rejectionReasons": [
+              "Comparison violation requires a current evidence-linked defect for REQ-huicdc6cq0h6r8632jd7o7ccolel25tj."
+            ],
+            "result": "PASS"
+          },
+          {
+            "stage": 14,
+            "operation": "ROOT_CAUSE",
+            "result": "PASS"
+          },
+          {
+            "stage": 15,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 16,
+            "operation": "CORRECT",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "COMPARE",
+            "result": "PASS"
+          },
+          {
+            "stage": 17,
+            "operation": "REGRESSION",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "EXECUTE_RUN",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "COMPARE",
+            "result": "PASS"
+          },
+          {
+            "stage": 19,
+            "operation": "REGRESSION_VERIFY",
+            "result": "PASS"
+          },
+          {
+            "stage": 21,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 23,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 24,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 25,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          },
+          {
+            "stage": 26,
+            "operation": "COMPLETE",
+            "result": "PASS"
+          }
+        ],
+        "sourceCommit": null,
+        "injectedFault": null,
+        "actualBrowserJourney": false,
+        "externalOutputs": "SYNTHETIC",
+        "persistenceCheckedAfterEveryOperation": true
+      }
+    },
+    "counterpartFaults": {
+      "stdoutSha256": "4e535114fe28207f1529a9929d9c118c12a615ddf2c6b883d93786a148fb8be2",
+      "report": {
+        "counterpartFaultDetection": "PASS",
+        "cases": [
+          {
+            "fault": "fractional-stability",
+            "throughStage": 12,
+            "exitCode": 1,
+            "detectedBy": "must remain persistable after every operation",
+            "result": "PASS"
+          },
+          {
+            "fault": "missing-defect-gate",
+            "throughStage": 13,
+            "exitCode": 1,
+            "detectedBy": "An observed initial violation without an evidence-linked defect must be rejected",
+            "result": "PASS"
+          },
+          {
+            "fault": "partial-verification-completes-operation",
+            "throughStage": 17,
+            "exitCode": 1,
+            "detectedBy": "ITERATION_PARTIAL_VERIFY_ORACLE",
+            "result": "PASS"
+          }
+        ],
+        "injection": "Disposable VM production source; repository implementation stays unchanged.",
+        "synthetic": true
+      }
+    },
+    "acceptanceFaults": {
+      "stdoutSha256": "4491bd536617c992cebbc2a1f917faf66c89b4eac82ba38fe26541540a786c6a",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "method": "Targeted in-memory production faults; source files remain unchanged",
+        "cases": [
+          {
+            "suite": "verify-context-provenance.mjs",
+            "fault": "global-prompt-input",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-context-provenance.mjs",
+            "fault": "limited-provenance",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-context-provenance.mjs",
+            "fault": "global-version",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-ui-acceptance-impact.mjs",
+            "fault": "skip-complete-confirmation",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-mutation-impact-projections.mjs",
+            "fault": "stale-projection",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-semantic-review-acceptance.mjs",
+            "fault": "review-request-invalidates",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-clarification-continuation.mjs",
+            "fault": "global-input-gate",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-clarification-continuation.mjs",
+            "fault": "global-input-selector",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          }
+        ]
+      }
+    },
+    "historySelection": {
+      "stdoutSha256": "3f7fc48d997419452d8f4e988d803d9ca1154be773566fe11a58fb07de3c316d",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Actual History binding and action pipeline with production persistence and transactional test adapter",
+        "cases": [
+          {
+            "name": "Captured selection restores its complete retained project despite intervening History repaint",
+            "target": "Accepted continuation",
+            "result": "PASS"
+          },
+          {
+            "name": "Captured selection restores its complete retained project despite intervening History repaint",
+            "target": "Initial work",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    "releaseScope": {
+      "stdoutSha256": "0a1a247ff2b29123b95241916e61a69ade73ad19abe04969360213dc1b0c5010",
+      "report": {
+        "stage27ReleaseBinding": "PASS",
+        "invalidFixtures": 2,
+        "repairedFixtures": 2,
+        "releasePrecedence": "PASS",
+        "idempotency": "PASS",
+        "optionalAdvisoryNonGating": "PASS",
+        "truthfulOperatorText": "PASS",
+        "applicationOwnedActionText": "PASS",
+        "structuredActionPurity": "PASS",
+        "digest": "48c88fdfa58561ce62853a9f1d8dc39cf7faf72c953898a1da689b9585933906"
+      }
+    }
+  },
+  "priorExactBrowserExecution": {
+    "head": "e06cc600dea2aa903f889a75b86e809cc6ea6935",
+    "testedMerge": "737e2ec6f52223ae9589f9c9650070ebfb93c43e",
+    "workflowRun": 34862083217,
+    "jobId": 104043465167,
+    "result": "FAIL",
+    "observed": [
+      "Required CI steps 6 through 21 passed on this earlier revision.",
+      "Complete browser journey exceeded the previous ten-minute verifier deadline after reaching Stage 12.",
+      "Recovery verified five native destination jumps restoring whole project state and bytes, then failed at disabled Undo.",
+      "Accumulated history export hit the click helper deadline before its longer explicit completion wait.",
+      "Provenance inspection looked in the next stage after acceptance advanced the view.",
+      "Duplicate-response browser fixture changed a copied project namespace and failed allocation integrity."
+    ],
+    "currentRevalidation": "Required after these changes; no deployment or whole browser journey pass claimed."
+  },
+  "verificationHarnessCorrections": [
+    "Blind verifier fixture returns only the public run alias assigned by the exported manifest.",
+    "Browser duplicate fixture now creates its own project namespace and produces prerequisite/rejection state through application mechanisms.",
+    "Browser provenance inspection selects the stage being inspected after acceptance advances the workflow.",
+    "Accumulated export uses one overall 60-second verifier deadline and records actual elapsed time. This is not physical-device performance qualification.",
+    "Complete browser journey has a 30-minute CI budget; the other browser verifier deadlines and all required gates remain in place."
+  ],
+  "testedBounds": {
+    "exactProgress": "All 8384 completion/total ratios with totals from 1 through 128; exact decimal examples and invalid-value rejection; synthetic partial progress checkpoint/restore.",
+    "numericInputImplementation": "4096 input characters and exponent magnitude 4096; maximal numeric input bounds are not qualified by this evidence.",
+    "counterpart": "One synthetic project follows operationalNextAction through 30 stages; 86 reported cases. It includes an initial violation, correction, and per-run verification. Human labels, file receipts and external outputs are synthetic; this is not the complete browser or real-project journey.",
+    "historyImplementation": "2048 checkpoints, 512 MiB compressed snapshots, 1 GiB retained files per project; no eviction. Existing count tests do not establish maximum byte-bound or physical-device support."
+  },
+  "unresolved": [
+    "Complete required scope and negative-case coverage for every application-owned creation operation remains to be established.",
+    "Prior stored versions and old pending reservations need full compatibility review against the strengthened scope contract.",
+    "Full integrated CI and browser operator acceptance have not passed on this source.",
+    "Browser export timings and representative History byte limits remain unqualified.",
+    "All mandatory real-project, physical-iPhone Safari, approved visual-baseline and exact deployment acceptance remain required.",
+    "The requirement manifest remains partial/open; these repairs do not establish application completion."
+  ]
+}

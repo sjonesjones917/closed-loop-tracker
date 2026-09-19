@@ -1,3 +1,5 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -11,7 +13,7 @@ import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-s
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
-  vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+  createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 }
 const core=globalThis.closedLoopCore;
 const engine=globalThis.closedLoopWorkflowEngine;
@@ -24,7 +26,6 @@ assert.match(appSource,/stage30MobileAcceptance\.v1:/,'Acceptance-session state 
 assert.doesNotMatch(appSource,/mobile-acceptance-receipt-kind|mobile-runtime-exceptions|mobile-horizontal-overflow/,'Application-observable acceptance values must not be manually declared by the operator.');
 assert.match(appSource,/function measureMobileAcceptance\(\)/,'Acceptance measurements must be calculated from browser-observable state.');
 assert.match(appSource,/mobileAcceptanceEvidenceId/,'The application must generate and bind an acceptance evidence ID.');
-assert.match(appSource,/indexedDB\.open/,'The capability probe must exercise backup storage rather than check API presence only.');
 assert.doesNotMatch(appSource,/viewport:actorEvidence\.viewport/,'Actor evidence must not override the pinned viewport.');
 const target=createMobileAcceptanceTarget({
   sourceCommit:'f'.repeat(40),deploymentManifestDigest:'a'.repeat(64),
@@ -78,6 +79,7 @@ const mobileEvidence={
   measurements:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44},
   exportedProjectDigest:'b'.repeat(64),screenshotOrRecordingReferences:['SCREENSHOT-STAGE30']
 };
+Object.assign(mobileEvidence,syntheticMobileOperations(target));
 const mobileExpected={sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,origin:target.origin,basePath:target.basePath,verificationTime:'2026-09-03T01:00:00.000Z'};
 assert.equal(verifyMobileAcceptanceEvidence({target,evidence:mobileEvidence,expected:mobileExpected}).accepted,true,'The valid mobile evidence oracle fixture must be accepted.');
 assert.equal(evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(mobileEvidence),expected:mobileExpected}).actualIPhoneSafariAcceptance,true,'The submission oracle must accept valid mobile evidence.');

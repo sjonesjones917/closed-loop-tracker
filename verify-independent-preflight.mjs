@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {recordProposal,evidence,reviewProofFixture} from './test-fixtures.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(f,'utf8'),{filename:f});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion;
 const assert=(v,m)=>{if(!v)throw new Error(m)};
 
@@ -23,7 +24,7 @@ function base(jobId){
 function instruction(){return recordProposal(schema,'instructions',{tempKey:'instruction',overrides:{OBJECTIVE:'Produce required content',AUTHORIZED_INPUTS:'Current canonical inputs',FAILURE_HANDLING:'Fail closed',AUTHORITY_RULES:'Use canonical authority',SCOPE:'Current job',PROHIBITIONS:'No invention',DEFINED_TERMS:'Defined',ORDERED_PROCEDURE:'Execute in order',TOOL_REQUIREMENTS:'Available tools only',OUTPUT_CONTRACT:'Structured output',FACTUAL_STATE_HANDLING:'Use explicit states',REJECTION_BLOCKING_RULES:'Block uncertainty',COMPLETION_CONDITIONS:'All gates pass',REQUIREMENT_TRACEABILITY:'Trace every requirement',INSTRUCTION_TEXT:'Controlled production instruction'}})}
 function trace(){return recordProposal(schema,'instructionTraces',{tempKey:'trace',relationships:{REQ_ID:{recordId:'REQ-1'},INSTRUCTION_ID:{tempKey:'instruction'}},overrides:{INSTRUCTION_LOCATION:'Instruction section 1',IMPLEMENTED_BEHAVIOR:'Implements required content'}})}
 function submitStage8(p){
-  const pr={...prompts.buildPromptRecord(8,p,{operation:'COMPLETE'}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);
+  const pr={...prompts.buildPromptRecord(8,p,engine.preparePromptContext(p,8,{operation:'COMPLETE'}).options),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);
   const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:8,operation:'COMPLETE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{instructions:[instruction()],instructionTraces:[trace()]},evidence:[evidence('stage-08-independent-preflight-prerequisite')],unresolved:[],warnings:[],attachments:[]};
   const prepared=ingestion.prepare(p,{stage:8,text:JSON.stringify(envelope),promptRecord:pr});
   assert(prepared.validation.valid,`Stage 08 prerequisite rejected: ${JSON.stringify(prepared.validation.issues)}`);

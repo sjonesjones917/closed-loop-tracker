@@ -1,0 +1,303 @@
+{
+  "schema": "closed-loop-acceptance-boundary-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "baseCommit": "28463682a0b076726baa71a0049b885f83548455",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "sourceFiles": [
+    {
+      "path": "app-core.js",
+      "sha256": "8c52c68788338de8e91e7103c48cebb3def269418eb18030bcb29588cd4ab82f"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "872873c6853d2b54bdec1c02d8d4b111006d747785fe017629aa66bc52a3155b"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "3d75b2edc1987fa87271bbe388bc2a3288328c29ca415e6880bd38eaf922f25d"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "4caddcacd1b08023a0342409eb8d25e20a595b91cacea21b766b59dced7493a5"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "d9f47e1160b798322cdabb218b5f4dd24cc6e7d66838019e75306a4b1c41e88f"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "cc4abc8ce710f1192e1e3b9b9c2d2cfa6b89687794bcbb2f6df4d4f8e0490990"
+    },
+    {
+      "path": "verify-mutation-impact-projections.mjs",
+      "sha256": "c410b4644cecea729507823e7a29f3f8f358055dbbe955abaf1947043f5ae221"
+    },
+    {
+      "path": "verify-acceptance-boundary-faults.mjs",
+      "sha256": "00624b6897b649e230f5a7994970d9332e58a74eb1cea319726c5b5909be5b10"
+    },
+    {
+      "path": "verify-semantic-review-acceptance.mjs",
+      "sha256": "e059b2eb239a2a01208817e25aacf4cce8e3290033538cedd8a04e732f140b9d"
+    },
+    {
+      "path": "verify-proposal-acceptance-memory.mjs",
+      "sha256": "eddd44a5b925ab8bef0b3d2554b398ceb537c9baea24b19ee99798339a78c01e"
+    },
+    {
+      "path": "verify-history-contracts.mjs",
+      "sha256": "4b5b32db0df87d2e4324eb273c6cc613ede0523484b90d8c59ac1c93d1735119"
+    }
+  ],
+  "synthetic": true,
+  "actualBrowser": false,
+  "environment": "Linux, Node 24.19.0; production modules and lifecycle transaction adapter for persistence cases",
+  "repairs": [
+    {
+      "defect": "Cached completion could hide actual loss of accepted progress from the confirmation check.",
+      "before": {
+        "command": "node verify-mutation-impact-projections.mjs",
+        "logSha256": "13f004cac4d3c3a156ee2c6b12468b529dfdcf6856ce409d13cd2b47d1c9497e",
+        "result": "FAIL: DERIVED_IMPACT_CONFIRMATION_ORACLE, missing expected rejection"
+      },
+      "correction": "Compute impact from recalculated authoritative candidate state while binding confirmation to the exact submitted candidate. Recomputed proof-obligation projections are registered separately from executed work; their dependent work remains gated.",
+      "after": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Production workflow and project store with lifecycle transaction adapter",
+        "cases": [
+          {
+            "name": "Recomputed completion loss requires confirmation even when the candidate retains a stale complete projection",
+            "result": "PASS"
+          },
+          {
+            "name": "Confirmation is bound to the exact candidate and restoring the previous version restores its matching approval",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "defect": "Requesting a further semantic review immediately removed accepted completion and later progress.",
+      "before": {
+        "command": "node verify-semantic-review-acceptance.mjs",
+        "logSha256": "92a02a81160c7cda4f548a0d58eb05c7b55d1a9fc59c330efa017339ce6be892",
+        "result": "FAIL: REVIEW_REQUEST_PROGRESS_ORACLE"
+      },
+      "correction": "Accepted findings govern completion until new findings are accepted. A pending reservation remains separately actionable within its selected stage. Replacing a transport does not invalidate its still-accepted source capture.",
+      "after": {
+        "command": "node verify-acceptance-boundary-faults.mjs",
+        "result": "PASS; unmodified semantic acceptance suite rerun after injected fault",
+        "coverage": "Registered Stage 01-04 review operations plus author, review, correction and legacy-restoration cases through Stage 06; not a complete 30-stage browser journey."
+      }
+    },
+    {
+      "defect": "Canonical instruction allocation previews copied complete retained project bodies and exceeded the existing bounded heap.",
+      "before": {
+        "ciRun": 34853897788,
+        "ciJob": 104008384766,
+        "headCommit": "28463682a0b076726baa71a0049b885f83548455",
+        "mergeCommit": "72a07f69d4bff533494cdcd4111cd47c5d654291",
+        "result": "FAIL: heap exhausted in verify-proposal-acceptance-memory.mjs",
+        "localReproductionSha256": "0c4cb0dc00406cd8a28183c0d0b4f0c0620e3e548bc2277753d8e1f66d8f819c"
+      },
+      "correction": "Allocation previews copy only mutable containers; retained identities still participate in collision checks.",
+      "after": {
+        "proposalAcceptanceMemory": "PASS",
+        "heapLimitMiB": 512,
+        "historicalPayloadMiB": 120,
+        "reviewRecords": 249,
+        "acceptedChangeId": "ACCEPTED-CHANGE-lqp7p9div7sd1h48e3mp0kkjmf43tc5i",
+        "originalUnchanged": true,
+        "staleAndDuplicateRejected": true,
+        "stage6Unlocked": true,
+        "elapsedMs": 7998
+      }
+    },
+    {
+      "defect": "Completed input-stage controls prevented selecting a correction file.",
+      "correction": "File selection respects current prerequisites and product availability; existing completion does not disable the correction control.",
+      "evidence": "Production file-intake path passed previously; exact browser control replay remains required."
+    }
+  ],
+  "faultInjection": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "method": "Targeted in-memory production faults; source files remain unchanged",
+    "cases": [
+      {
+        "suite": "verify-mutation-impact-projections.mjs",
+        "fault": "stale-projection",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      },
+      {
+        "suite": "verify-semantic-review-acceptance.mjs",
+        "fault": "review-request-invalidates",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      }
+    ]
+  },
+  "allocationPreview": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "environment": "Node production runtime with transactional test adapter",
+    "cases": [
+      {
+        "name": "Instruction preview uses the canonical identity algorithm without mutating the project",
+        "result": "PASS"
+      },
+      {
+        "name": "Instruction, package, and reservation are committed with their allocation receipts",
+        "result": "PASS"
+      },
+      {
+        "name": "Exact prompt registration retry neither reallocates identities nor appends receipts",
+        "result": "PASS"
+      },
+      {
+        "name": "Restoration recovers the exact saved identities and receipts without reallocating",
+        "result": "PASS"
+      }
+    ]
+  },
+  "recoveryFaults": {
+    "synthetic": true,
+    "environment": "Disposable Node module instances; production source file remains unchanged",
+    "implementationFaults": [
+      {
+        "fault": "mixed-versions",
+        "result": "DETECTED",
+        "expectedFailure": "AssertionError|HISTORY_VERSION_INCOMPATIBLE",
+        "restoredImplementation": "PASS"
+      },
+      {
+        "fault": "mutate-retained",
+        "result": "DETECTED",
+        "expectedFailure": "HISTORY_SNAPSHOT_INTEGRITY_FAILED",
+        "restoredImplementation": "PASS"
+      },
+      {
+        "fault": "refuse-removed",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      },
+      {
+        "fault": "skip-file-inventory",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      }
+    ]
+  },
+  "executedChecks": [
+    {
+      "command": "TMPDIR=/workspace/scratch/ec4ac78ce440/tmp node verify.mjs",
+      "result": "PASS",
+      "logSha256": "006630ea9c0f50b8701ab29548545b3bc2175e9b073325e9fef1d7932c502035",
+      "scope": "Schema, ownership, prompt/response contract and ingestion checks, including 66 registered operations. This count is not evidence of complete operator acceptance."
+    },
+    {
+      "command": "node verify-reservation-contract.mjs",
+      "result": "PASS",
+      "logSha256": "d610ada73c983f2f0eb8caf01dbc467d4604e76467ab91b6a1ba5de81343858c"
+    },
+    {
+      "command": "node verify-history-contracts.mjs",
+      "result": "PASS",
+      "report": {
+        "synthetic": true,
+        "environment": "Node VM production modules and lifecycle transaction adapter",
+        "realIndexedDB": false,
+        "cases": [
+          {
+            "name": "Every selected stage excludes all subsequent-stage sentinels, including copied records and forged projection marker",
+            "selectedStages": 30,
+            "comparedStagePairs": 900,
+            "basis": "Synthetic context-boundary sentinels; not full stage execution",
+            "result": "PASS"
+          },
+          {
+            "name": "All selected-stage job metadata excludes later version pointers and global completion",
+            "result": "PASS"
+          },
+          {
+            "name": "Every semantic author/reviewer operation prepares its selected-stage scope independently of later execution scopes",
+            "operations": 19,
+            "result": "PASS"
+          },
+          {
+            "name": "Restored pending candidate stays unaccepted; retained bytes revalidate locally; new abandoned-operation response rejects",
+            "result": "PASS"
+          },
+          {
+            "name": "Restored unvalidated file progresses only through its saved exact-byte permission; an arriving response stays stale",
+            "result": "PASS"
+          },
+          {
+            "name": "Unconfirmed and stale-confirmation mutations reject; exact confirmed change commits",
+            "result": "PASS"
+          },
+          {
+            "name": "Pending correction restores and imports as an unconfirmed exact candidate with a fresh confirmation binding",
+            "result": "PASS"
+          },
+          {
+            "name": "Consolidated stage export includes the same authoritative response scope and profile as its instruction manifest",
+            "result": "PASS"
+          }
+        ],
+        "implementationFaults": [
+          {
+            "id": "BYPASS-CONTEXT-PROJECTION",
+            "result": "DETECTED",
+            "restored": "PASS"
+          },
+          {
+            "id": "INHERIT-LATER-EXECUTION-SCOPE",
+            "result": "DETECTED",
+            "restored": "PASS"
+          },
+          {
+            "id": "INHERIT-GLOBAL-PROMPT-ITERATION",
+            "result": "DETECTED",
+            "restored": "PASS"
+          },
+          {
+            "id": "SKIP-PERSISTENCE-CONFIRMATION",
+            "result": "DETECTED",
+            "restored": "PASS"
+          }
+        ]
+      }
+    }
+  ],
+  "pendingChecks": [
+    "Complete integrated CI, browser journeys and deployment acceptance for this revision.",
+    "Browser 48-million-character workload after allocation and checkpoint optimizations.",
+    "All required all-stage, operation, failure and restoration combinations.",
+    "Physical iPhone Safari and approved visual-baseline evidence on the final deployment.",
+    "Real external outputs and independent human evidence."
+  ],
+  "openProductionInvestigation": [
+    {
+      "defect": "A stage-specific human-input answer can make unchanged upstream intake fail its input-version checks.",
+      "sequence": "Accept and confirm Stage 01, request a Stage 02 human clarification through production ingestion, save its answer, recalculate.",
+      "observed": "The upstream Stage 01 gate becomes false.",
+      "expected": "The same stage/operation must continue with coherent compatible upstream prerequisites and isolated current-stage information.",
+      "reproductionSha256": "162e2f309e8785000bb8a0df90fbc9bf36c31b297c8910379c45fc2ee332a8f4",
+      "status": "REPRODUCED; scoped input-version, dependency and continuation contracts require correction."
+    },
+    "Agreement between response acceptance impact and final persistence impact still requires complete operation/failure coverage; no blanket completion claim."
+  ],
+  "recoveryLimits": {
+    "checkpointsPerProject": 2048,
+    "compressedSnapshotBytes": 536870912,
+    "retainedFileBytes": 1073741824,
+    "subjectToBrowserQuota": true,
+    "qualification": "Count-cap tested separately. Maximum combined byte workload and physical mobile retention are unqualified."
+  },
+  "completeApplication": false,
+  "deployed": false,
+  "physicalDeviceAcceptance": false
+}

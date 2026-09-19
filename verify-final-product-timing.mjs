@@ -2,12 +2,13 @@ import {reviewProofFixture} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-const c=vm.createContext({TextEncoder,TextDecoder,Event:class Event{},dispatchEvent(){}});
+import {createVerifierRuntime} from './verifier-runtime.mjs';
+const c=createVerifierRuntime({TextEncoder,TextDecoder,Event:class Event{},dispatchEvent(){}});
 for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(f,'utf8'),c,{filename:f});
 const e=c.closedLoopWorkflowEngine,p=c.closedLoopCore.createBlankState('JOB-FINAL-TIMING');
 e.ensureShape(p);
-Object.assign(p.job,{CURRENT_INPUT_VERSION:'INPUT-1',CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_REQUIREMENTS_VERSION:'REQSET-1',CURRENT_TEST_SUITE_VERSION:'TESTSET-1',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-1',CURRENT_PRODUCT_ID:'PRODUCT-1',CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});
-const scope=e.currentScope(p),record=(id,stage,fields)=>({id,stage,active:true,scope:{...scope},fields:{...fields},...fields});
+Object.assign(p.job,{CURRENT_INPUT_VERSION:'INPUT-1',CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_RESEARCH_VERSION:'RESEARCH-1',CURRENT_REQUIREMENTS_VERSION:'REQSET-1',CURRENT_TEST_SUITE_VERSION:'TESTSET-1',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-1',CURRENT_PRODUCT_ID:'PRODUCT-1',CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});
+const scope=e.currentScope(p),record=(id,stage,fields)=>({id,stage,active:true,scope:e.currentScope(e.stageContext(p,stage)),fields:{...fields},...fields});
 p.projectData.requirements.push(e.clone(record('REQ-1',4,{REQ_ID:'REQ-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'})));
 let checks=0;
 for(const [stage,type,phase] of [[22,'DETERMINISTIC','FINAL_PRODUCT_DETERMINISTIC'],[23,'MEANING','FINAL_PRODUCT_MEANING'],[24,'ADVERSARIAL','FINAL_PRODUCT_ADVERSARIAL']]){
@@ -34,7 +35,7 @@ for(const [stage,type,phase] of [[22,'DETERMINISTIC','FINAL_PRODUCT_DETERMINISTI
 // Stage 06 cannot design numeric timing from phase names alone. Publish the
 // application stage purposes in the controlling prompt, before untrusted data.
 
-const scheduleProject=c.closedLoopCore.createBlankState('JOB-SCHEDULE-CONTEXT');e.ensureShape(scheduleProject);scheduleProject.stages[5].status='COMPLETE';scheduleProject.stages[5].gate={complete:true};
+const scheduleProject=c.closedLoopCore.createBlankState('JOB-SCHEDULE-CONTEXT');e.ensureShape(scheduleProject);Object.assign(scheduleProject.job,{CURRENT_SOURCE_SET_VERSION:'SCHEDULE-SOURCES',CURRENT_RESEARCH_VERSION:'SCHEDULE-RESEARCH',CURRENT_REQUIREMENTS_VERSION:'SCHEDULE-REQUIREMENTS'});scheduleProject.stages[5].status='COMPLETE';scheduleProject.stages[5].gate={complete:true};
 const instruction=c.closedLoopPromptEngine.buildPromptRecord(6,scheduleProject,{operation:'COMPLETE'}).prompt;
 assert.match(instruction,/APPLICATION VERIFICATION SCHEDULE/,'Stage 06 omits the application scheduling context required by its test fields.');
 for(const stage of [12,17,19,22,23,24,26,28,29,30])assert(instruction.includes(`Stage ${String(stage).padStart(2,'0')}: ${c.closedLoopCore.STAGES[stage-1].title}`),`Stage ${stage} is absent from the controlling schedule.`);

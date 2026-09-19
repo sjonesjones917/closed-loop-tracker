@@ -45,8 +45,27 @@ export function isClosedLoopUtcInstant(value){
 
 function issue(errors,code,message){errors.push({code,message});}
 function same(actual,expected){return actual===expected;}
+function operationObserved(kind,o,target){
+  if(!o||typeof o!=='object')return false;
+  const file=value=>SHA256(value?.sha256)&&Number.isSafeInteger(value?.byteSize)&&value.byteSize>=0;
+  if(['PROMPT_FILE_EXPORTED_OR_SHARED','INPUT_FILE_ATTACHMENT_INSTRUCTIONS_CONFIRMED','ARTIFACT_DOWNLOAD_OR_SHARE_VERIFIED','LOGICAL_EXECUTION_PACKAGE_EXPORTED'].includes(kind))return file(o)&&NONEMPTY(o.selectedFilename)&&o.verification==='EXPORTED_BYTES_SELECTED_AND_REHASHED';
+  if(['BACKUP_EXPORTED','BACKUP_RESTORED_FROM_EXPORTED_COPY'].includes(kind))return file(o)&&SHA256(o.packageSha256)&&o.testProjectId===target.testProjectId&&o.verification==='SELECTED_EXPORTED_BYTES_IMPORTED_AND_VERIFIED';
+  switch(kind){
+    case 'PROJECT_CREATED':return o.createdProjectId===target.testProjectId&&Number.isSafeInteger(o.revision);
+    case 'RAW_FILE_INTAKE':return o.stage===1&&Array.isArray(o.files)&&o.files.length>0&&o.files.every(x=>file(x)&&NONEMPTY(x.artifactId));
+    case 'RESPONSE_JSON_SELECTED_AND_INGESTED':return file(o)&&NONEMPTY(o.rawResponseId)&&Number.isSafeInteger(o.stage);
+    case 'RETURNED_FILE_SLOTS_SELECTED':return NONEMPTY(o.slotId)&&NONEMPTY(o.rawResponseId)&&NONEMPTY(o.artifactId)&&SHA256(o.sha256);
+    case 'VALIDATION_FAILURE_RECOVERED':return o.valid===true&&NONEMPTY(o.rawResponseId)&&NONEMPTY(o.validationId)&&NONEMPTY(o.rejectedReceiptId)&&NONEMPTY(o.rejectedResponseId);
+    case 'PROPOSAL_REVIEWED_AND_ACCEPTED':return NONEMPTY(o.proposalId)&&NONEMPTY(o.rawResponseId)&&Number.isSafeInteger(o.stage);
+    case 'PERSISTENCE_RELOAD_VERIFIED':return SHA256(o.projectSha256)&&o.projectSha256===o.readBackProjectSha256&&NONEMPTY(o.tabId)&&NONEMPTY(o.reloadedTabId)&&o.tabId!==o.reloadedTabId&&Number.isSafeInteger(o.revision);
+    case 'ACCESSIBILITY_AND_OVERFLOW_VERIFIED':return finite(o.horizontalOverflowPx)&&o.horizontalOverflowPx<=1&&o.minimumPrimaryTextPx>=16&&o.minimumSecondaryTextPx>=14&&o.minimumTouchTargetPx>=44&&NONEMPTY(o.focusTarget)&&NONEMPTY(o.liveRegion)&&NONEMPTY(o.liveAnnouncement);
+    case 'DEPLOYED_BUILD_IDENTITY_VERIFIED':return NONEMPTY(o.buildIdentity)&&Array.isArray(o.resources)&&['app-core.js','test-runtime.js','test-worker.js','project-store.js'].every(path=>o.resources.some(r=>r.path===path&&file(r)));
+    case 'RUNTIME_EXCEPTION_CHECK_COMPLETED':return o.runtimeExceptions===0&&o.unhandledRejections===0&&Array.isArray(o.observedTabs)&&o.observedTabs.length>0;
+    default:return false;
+  }
+}
 
-function validateCapabilityProbe(errors,probe){
+function validateCapabilityProbe(errors,probe,target){
   if(!probe||typeof probe!=='object'||Array.isArray(probe)){
     issue(errors,'MOBILE_CAPABILITY_PROBE_REQUIRED','A recorded MOBILE_CAPABILITY_PROBE is required before the physical acceptance run.');
     return;
@@ -63,6 +82,13 @@ function validateCapabilityProbe(errors,probe){
   for(const key of REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS){
     if(capabilities[key]!==true)issue(errors,'MOBILE_CAPABILITY_PROBE_CAPABILITY_UNAVAILABLE',`Required mobile capability ${key} is not affirmatively available.`);
   }
+  if(probe.evidenceBasis!=='APPLICATION_OBSERVATION'||!probe.observations)issue(errors,'MOBILE_CAPABILITY_OBSERVATIONS_REQUIRED','API availability and declared success do not establish executed capability operations.');
+  for(const field of ['challenge','sourceCommit','deploymentManifestDigest','origin','basePath','testProjectId','procedureVersion'])if(probe[field]!==target[field])issue(errors,'MOBILE_CAPABILITY_BINDING_MISMATCH',`Capability probe ${field} differs from the pinned target.`);
+  if(probe.targetId!==target.mobileAcceptanceTargetId)issue(errors,'MOBILE_CAPABILITY_BINDING_MISMATCH','Capability probe target identity differs.');
+  const observed=probe.observations||{},members=observed.selectedMembers||{};
+  for(const role of ['RESPONSE','RETURNED','MANIFEST'])if(!SHA256(members[role]?.sha256)||!NONEMPTY(members[role]?.selectedFilename)||!Number.isSafeInteger(members[role]?.byteSize)||members[role].byteSize<0)issue(errors,'MOBILE_CAPABILITY_FILE_OBSERVATION_REQUIRED',`Selected exported ${role} member bytes were not recorded.`);
+  if(observed.persistenceRequest?.completed!==true)issue(errors,'MOBILE_CAPABILITY_STORAGE_OBSERVATION_REQUIRED','The actual persistent-storage request result is required.');
+  if(!SHA256(observed.backupRestore?.sha256)||!SHA256(observed.backupRestore?.packageSha256)||observed.backupRestore?.testProjectId!==target.testProjectId||observed.backupRestore?.verification!=='SELECTED_EXPORTED_BYTES_IMPORTED_AND_VERIFIED')issue(errors,'MOBILE_CAPABILITY_BACKUP_OBSERVATION_REQUIRED','An actual import of selected exported backup bytes is required.');
 }
 
 export function verifyMobileAcceptanceEvidence({target,evidence,expected={},usedChallenges=[]}={}){
@@ -117,7 +143,9 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(evidence.safariUserAgent)||!/(iPhone|iPod)/.test(evidence.safariUserAgent)||!/Safari\//.test(evidence.safariUserAgent)||/(CriOS|FxiOS|EdgiOS|OPiOS)/.test(evidence.safariUserAgent))issue(errors,'SAFARI_USER_AGENT_INVALID','Evidence must identify Safari on the pinned iPhone target and reject substitute browsers.');
   if(!evidence.viewport||!same(evidence.viewport.width,target.viewport.width)||!same(evidence.viewport.height,target.viewport.height)||!same(evidence.viewport.devicePixelRatio,target.viewport.devicePixelRatio))issue(errors,'VIEWPORT_MISMATCH','Evidence viewport must match the pinned target exactly.');
 
-  validateCapabilityProbe(errors,evidence.mobileCapabilityProbe);
+  validateCapabilityProbe(errors,evidence.mobileCapabilityProbe,target);
+  if(!NONEMPTY(evidence.buildIdentity))issue(errors,'EVIDENCE_BUILD_IDENTITY_REQUIRED','The application running build identity is required.');
+  if(expected.buildIdentity&&evidence.buildIdentity!==expected.buildIdentity)issue(errors,'EVIDENCE_BUILD_IDENTITY_MISMATCH','The running build identity differs from the deployed build.');
 
   const receipts=Array.isArray(evidence.operationReceipts)?evidence.operationReceipts:[];
   const kinds=new Set();
@@ -126,6 +154,11 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     if(kinds.has(receipt.kind))issue(errors,'DUPLICATE_RECEIPT_KIND',`Receipt kind ${receipt.kind} is duplicated.`);
     kinds.add(receipt.kind);
     if(receipt.result!=='PASS')issue(errors,'RECEIPT_NOT_PASSING',`Receipt ${receipt.kind} did not pass.`);
+    for(const field of ['challenge','sourceCommit','deploymentManifestDigest','origin','basePath','testProjectId','procedureVersion'])if(receipt[field]!==target[field])issue(errors,'RECEIPT_BINDING_MISMATCH',`Receipt ${receipt.kind} ${field} differs from the pinned target.`);
+    if(receipt.targetId!==target.mobileAcceptanceTargetId||receipt.buildIdentity!==evidence.buildIdentity)issue(errors,'RECEIPT_BINDING_MISMATCH',`Receipt ${receipt.kind} target or build identity differs.`);
+    if(receipt.evidenceBasis!=='APPLICATION_OBSERVATION'||!receipt.observation||typeof receipt.observation!=='object'||Array.isArray(receipt.observation)||!Object.keys(receipt.observation).length)issue(errors,'RECEIPT_OBSERVATION_REQUIRED',`Receipt ${receipt.kind} requires executed-operation evidence; a success flag is insufficient.`);
+    else if(!operationObserved(receipt.kind,receipt.observation,target))issue(errors,'RECEIPT_OPERATION_EVIDENCE_INVALID',`Receipt ${receipt.kind} lacks the required operation-specific observation.`);
+    if(!isClosedLoopUtcInstant(receipt.recordedAt))issue(errors,'RECEIPT_TIME_INVALID',`Receipt ${receipt.kind} requires its observed UTC time.`);
   }
   for(const kind of REQUIRED_MOBILE_RECEIPT_KINDS){if(!kinds.has(kind))issue(errors,'REQUIRED_RECEIPT_MISSING',`Required mobile acceptance receipt ${kind} is missing.`);}
 
@@ -139,6 +172,7 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!finite(measurements.minimumTouchTargetPx)||measurements.minimumTouchTargetPx<44)issue(errors,'TOUCH_TARGET_FLOOR_INVALID','Interactive targets must meet the 44 CSS px minimum.');
 
   if(!NONEMPTY(evidence.exportedProjectDigest)||!SHA256(evidence.exportedProjectDigest))issue(errors,'EXPORTED_PROJECT_DIGEST_INVALID','Exported project digest must be present and SHA-256 encoded.');
+  if(evidence.exportedProjectDigest!==receipts.find(r=>r.kind==='BACKUP_RESTORED_FROM_EXPORTED_COPY')?.observation?.sha256)issue(errors,'EXPORTED_PROJECT_RECEIPT_MISMATCH','The exported project digest must match the selected exported backup bytes that were restored.');
   if(!Array.isArray(evidence.screenshotOrRecordingReferences)||evidence.screenshotOrRecordingReferences.length===0||evidence.screenshotOrRecordingReferences.some(value=>!NONEMPTY(value)))issue(errors,'VISUAL_EVIDENCE_REQUIRED','At least one screenshot or screen-recording reference is required.');
 
   return {

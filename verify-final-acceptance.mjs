@@ -23,7 +23,6 @@ reject(r=>r.mobileAcceptanceSourceCommit='e'.repeat(40));reject(r=>r.mobileAccep
 reject(()=>{},v=>v.status='OPEN');reject(()=>{},v=>v.comparedCommit='e'.repeat(40));reject(()=>{},v=>v.evidenceReferences=[]);
 // The formerly green summary cannot hide 1/2 detailed evidence.
 reject(r=>{r.section49CoverageMetrics.stage01RawInputAccounting.numerator=1;r.section49CoverageMetrics.stage01RawInputAccounting.value=0.5;r.stage01RawInputAccounting=1;});
-console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true}));
 
 const workflow=fs.readFileSync(new URL('./.github/workflows/pages.yml',import.meta.url),'utf8');
 function assertPublicationWiring(source){
@@ -32,6 +31,19 @@ function assertPublicationWiring(source){
   assert.match(source,/report\.finalAcceptancePublication=finalGate\.accepted/);
   assert.match(source,/report\.releaseTagEligible=finalGate\.accepted/);
   assert.match(source,/if: steps\.acceptance\.outputs\.final_acceptance == 'true'/);
+  const live=source.slice(source.indexOf('\n  verify-live:'),source.indexOf('\n  publish-status:')),publication=source.slice(source.indexOf('\n  publish-status:'));
+  for(const [job,text,prefix] of [['verify-live',live,'deployed'],['publish-status',publication,'reverified-deployed']]){
+    assert.ok(text.includes('name: '+prefix+'-operator-journeys-${{ github.sha }}-${{ github.run_id }}'),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: '+job+' must preserve raw observations against the exact SHA/run');
+    assert.match(text,/if: always\(\)/,'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: retain failure evidence');
+    for(const directory of ['operator-evidence/','recovery-browser-evidence/','mobile-capability-evidence/'])assert.ok(text.includes(directory),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: '+directory);
+  }
+  assert.ok(live.includes('node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log'),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: retain raw deployed-byte proof');
 }
 assertPublicationWiring(workflow);
 for(const token of ['node verify-final-acceptance.mjs','const finalGate=evaluateFinalAcceptance(report,{visualBaseline})','report.finalAcceptancePublication=finalGate.accepted','report.releaseTagEligible=finalGate.accepted',"if: steps.acceptance.outputs.final_acceptance == 'true'"])assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')));
+const artifactFaults=[];
+for(const prefix of ['deployed','reverified-deployed']){
+ const token='name: '+prefix+'-operator-journeys-${{ github.sha }}-${{ github.run_id }}';
+ assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),/DEPLOYED_JOURNEY_ARTIFACT_ORACLE/);assertPublicationWiring(workflow);artifactFaults.push({fault:'remove-'+prefix+'-archive',oracle:'DEPLOYED_JOURNEY_ARTIFACT_ORACLE',result:'DETECTED',restored:'PASS'});
+}
+console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,artifactFaults,artifactEvidenceLimit:'Wiring regression only; actual deployed artifact publication and byte verification must execute after merge.'}));

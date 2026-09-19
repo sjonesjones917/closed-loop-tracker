@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -5,11 +6,13 @@ import './verify-reservation-contract.mjs';
 import './verify-file-first-response.mjs';
 import './verify-file-first-operator.mjs';
 import './verify-response-contract-profile.mjs';
+import './verify-response-authority-integrity.mjs';
+import './verify-returned-slot-authority.mjs';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
-  vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+  createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 }
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
@@ -39,6 +42,7 @@ function project(jobId='JOB-INGESTION-TEST'){
 }
 function preparePromptPrerequisites(p,stage){
   if(stage<=1)return p;
+  for(const key of ['CURRENT_SOURCE_SET_VERSION','CURRENT_RESEARCH_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION','CURRENT_INSTRUCTION_VERSION','CURRENT_PRODUCT_VERSION','CURRENT_REVIEW_VERSION','CURRENT_RECONCILED_REVIEW_VERSION','CURRENT_EVIDENCE_CHAIN_VERSION','CURRENT_RELEASE_ID','CURRENT_HASH_REVIEW_ID'])if(!p.job[key]||['NOT APPLICABLE','NONE'].includes(p.job[key]))p.job[key]='SYNTHETIC-'+key;
   const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
   p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
   p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
@@ -47,9 +51,31 @@ function preparePromptPrerequisites(p,stage){
   for(let prior=4;prior<stage;prior++){p.stages[prior].status='COMPLETE';p.stages[prior].gate={complete:true,blocked:false,reasons:[]};}
   return p;
 }
-function fixtureBuildPrompt(stage,p,options){
+function fixtureBuildPrompt(stage,p,options={operation:fixturePromptOperation(stage)}){
   preparePromptPrerequisites(p,stage);
-  return prompts.buildPromptRecord(stage,p,options);
+  options={operation:fixturePromptOperation(stage),...options};
+  const references={...(options.scope||{})};
+  const contract=schema.operationContract(stage,options.operation);
+  for(const key of contract.scopeRequirements){
+    const family=schema.SCOPE_REFERENCE_FAMILIES[key];if(!family)continue;
+    const existing=engine.records(p,family).find(row=>engine.isActiveRecord(row)&&!(family==='products'&&contract.scope.dimensions[key]==='TARGET_RESERVED'&&String(row.completionState||row.status||engine.recordValue(row,'STATUS')).toUpperCase()==='COMPLETED')&&(key!=='confirmationIterationId'||engine.recordValue(row,'PURPOSE')==='UNCHANGED_CONFIRMATION')&&(!references[key]||engine.recordId(row,family)===references[key]));
+    if(existing){references[key]=engine.recordId(existing,family);continue;}
+    const definition=schema.RECORD_SCHEMAS[family],id=engine.allocateId(p,family),fields={[definition.idField]:id};
+    if(key==='confirmationIterationId'){fields.PURPOSE='UNCHANGED_CONFIRMATION';fields.PREVIOUS_ITERATION_ID=references.sourceConvergedIterationId||references.iterationId||id;}
+    if(family==='products'){fields.BASELINE_ID=references.baselineId;fields.PRODUCT_VERSION=p.job.CURRENT_PRODUCT_VERSION;}
+    const row={id,stage:Math.min(stage,definition.stage),active:true,fields,...fields,source:'SYNTHETIC_INGESTION_SCOPE'};
+    if(family==='products'&&contract.scope.dimensions[key]==='INPUT_CURRENT')row.completionState='COMPLETED';
+    if(contract.scope.dimensions[key]==='INPUT_CURRENT'){const jobKey='CURRENT_'+key.replace(/([a-z])([A-Z])/g,'$1_$2').toUpperCase();if(Object.hasOwn(p.job,jobKey))p.job[jobKey]=id;}
+    engine.refreshRecordHashes(row,family);p.projectData[family].push(row);references[key]=id;
+  }
+  if(stage===12){
+    const scope={...engine.currentScope(p),...references};
+    for(const [family,fields] of [['requirements',{REQ_ID:'SYNTHETIC-REQ',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',APPLICABILITY:'APPLICABLE'}],['tests',{TEST_ID:'SYNTHETIC-TEST',REQ_ID:'SYNTHETIC-REQ',TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}}]]){
+      const id=fields[schema.RECORD_SCHEMAS[family].idField],row={id,stage:schema.RECORD_SCHEMAS[family].stage,active:true,scope,fields,...fields,relationships:family==='tests'?{REQ_ID:'SYNTHETIC-REQ'}:{}};engine.refreshRecordHashes(row,family);p.projectData[family].push(row);
+    }
+    const run=engine.records(p,'runs').find(row=>engine.recordId(row,'runs')===references.runId);run.scope=scope;run.fields.ITERATION_ID=references.iterationId;run.fields.EXECUTION_STATUS='COMPLETED';run.completionState='COMPLETED';engine.refreshRecordHashes(run,'runs');
+  }
+  return prompts.buildPromptRecord(stage,p,engine.preparePromptContext(p,stage,{...options,scope:references}).options);
 }
 function fixturePromptOperation(stage){
   if(stage===17||stage===19)return 'COMPARE';
@@ -59,7 +85,7 @@ function fixturePromptOptions(stage,operation=fixturePromptOperation(stage)){
   const required=schema.operationContract(stage,operation)?.scopeRequirements||[];
   const scope={};
   if(required.includes('runId'))scope.runId=`RUN-${stage}-${operation}-FIXTURE`;
-  if(required.includes('contextId'))scope.contextId=`CONTEXT-${stage}-${operation}-FIXTURE`;
+
   return {operation,...(Object.keys(scope).length?{scope}:{})};
 }
 function savePrompt(p,stage){
@@ -71,6 +97,9 @@ function savePrompt(p,stage){
   p.projectData.generatedPrompts.push(record);
   return record;
 }
+function saveAttachmentPrompt(p,stage){const preview=fixtureBuildPrompt(stage,p),scope={...preview.scope};delete scope.projectRevision;return prompts.reserveAndBuildPromptRecord(p,stage,{operation:preview.operation,scope}).prompt;}
+function issuedDeclarations(prompt,envelope){const slots=prompts.promptFileManifest(prompt).attachmentSlots.filter(slot=>slot.role!=='STRUCTURED_RESPONSE');envelope.attachments.forEach((declaration,index)=>{if(!slots[index])throw new Error('Fixture has no issued file slot.');declaration.attachmentSlotId=slots[index].attachmentSlotId;declaration.role=slots[index].role;});}
+function returnedTransport(prompt){return {transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}};}
 function safeValue(name){
   if(name==='TEST_TYPE')return 'DETERMINISTIC';
   if(name==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';
@@ -104,7 +133,7 @@ function validEnvelope(p,stage,promptRecord){
     const fields=collection==='tests'?{VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}}:{};
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
-    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
+    records[collection]=[{tempKey:'record-1',fields,relationships:collection==='verification'?{REQ_ID:{recordId:'SYNTHETIC-REQ'},TEST_ID:{recordId:'SYNTHETIC-TEST'},RUN_ID:{recordId:promptRecord.scope.runId}}:{},evidenceRefs:['evidence-1']}];
     if(stage===4&&collection==='requirements'){const obligationManifest=promptRecord.contextManifest.obligationManifest;records.requirements=(obligationManifest.items||[]).map((item,index)=>{const requirementFields={};for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)requirementFields[name]=safeValue(name);}requirementFields.USER_INPUT_RELATIONSHIP=item.obligationId;return {tempKey:'requirement-'+String(index+1),fields:requirementFields,relationships:{},evidenceRefs:['evidence-1']};});}
   }
   return {
@@ -112,6 +141,7 @@ function validEnvelope(p,stage,promptRecord){
     contractProfileId:schema.CONTRACT_PROFILE_ID,
     jobId:p.job.JOB_ID,
     stage,
+    ...(promptRecord.transportBindingRequired?{packageId:promptRecord.packageId,operationReservationId:promptRecord.operationReservationId,challengeNonce:promptRecord.challengeNonce}:{}),
     operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,
     responseType:'DATA_PROPOSAL',
     humanInputRequests:[],stageData,records,
@@ -126,7 +156,7 @@ function sourceProposal(tempKey='source-1',overrides={}){return {tempKey,fields:
 // regenerates correction instructions, before any canonical test is accepted.
 for(const operation of ['COMPLETE','RECONCILE_VERIFICATION_SUITE'])for(const [phase,due] of [['DELIVERY_IDENTITY',28],['EVIDENCE_CLOSURE',29],['REGISTRY_CLOSURE',30],['TERMINAL_DELIVERY',30]]){
   const p=project(`JOB-TIMING-${operation}-${phase}`);preparePromptPrerequisites(p,6);
-  const pr=prompts.buildPromptRecord(6,p,{operation});p.projectData.generatedPrompts.push(pr);
+  const pr=prompts.buildPromptRecord(6,p,engine.preparePromptContext(p,6,{operation}).options);p.projectData.generatedPrompts.push(pr);
   const e=validEnvelope(p,6,pr);e.stageData={};
   const fields={TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'Future declared target',TOOLS:'Review',PROCEDURE:'Inspect the actual target',EXPECTED_RESULT:'Established',FAILURE_CONDITION:'Not established',EVIDENCE_TO_PRESERVE:'Review report',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:due,REQUIRED_BY_STAGE:due,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:true,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}};
   e.records={tests:[{tempKey:'timing-test',fields,relationships:{},evidenceRefs:['evidence-1']}]};
@@ -158,6 +188,8 @@ for(let stage=1;stage<=30;stage++){
   if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);
   if(!prepared.proposal||prepared.proposal.status!=='PENDING_OPERATOR_REVIEW')throw new Error(`Stage ${stage} did not create a pending proposal.`);
   if(prepared.project.projectData.acceptedChanges.length)throw new Error(`Stage ${stage} mutated canonical state before operator acceptance.`);
+  // This loop isolates ingestion; re-establish its synthetic prerequisites after gate recalculation. Complete journeys are tested separately.
+  preparePromptPrerequisites(prepared.project,stage);
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR',reviewNote:'Controlled test acceptance.'});
   p=committed.project;
   if(!p.projectData.acceptedChanges.length)throw new Error(`Stage ${stage} did not create an accepted canonical change.`);
@@ -263,14 +295,14 @@ negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].res
 // Attachment declarations are claims; only application-hashed supplied bytes may satisfy them.
 {
   const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:48203,sha256:'a'.repeat(64)};
-  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e};};
-  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{...exactFile,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
+  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e};};
+  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:[{...exactFile,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
   for(const [name,files,mutate,code] of [
     ['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT'],
     ['wrong attachment filename',[exactFile],e=>{e.attachments[0].filename='other.pdf';},'ATTACHMENT_FILENAME_MISMATCH'],
     ['wrong attachment byte size',[exactFile],e=>{e.attachments[0].byteSize=48204;},'ATTACHMENT_BYTE_SIZE_MISMATCH'],
     ['wrong attachment hash',[exactFile],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']
-  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:files.map(file=>({...file,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}))});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
+  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:files.map(file=>({...file,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}))});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
 }
 
 // Duplicate response is semantic, not whitespace-sensitive.
@@ -332,7 +364,7 @@ console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,promptEngine
 {let p=project('JOB-EXECUTION-FAIL-CLOSED'),stage=1,pr=savePrompt(p,stage);const fail={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'EXECUTION_FAILED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'failure-1',kind:'TOOL_FAILURE',description:'Required tool failed.',whyBlocking:'The operation could not be executed.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(fail),promptRecord:pr});p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;if(p.stages[stage].status!=='BLOCKED'||!engine.gate(stage,p).reasons.some(x=>x.includes('execution failure')))throw new Error('Accepted execution failure did not fail closed.');const replacement=validEnvelope(p,stage,pr);prepared=ingestion.prepare(p,{stage,text:JSON.stringify(replacement),promptRecord:pr});p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;if(p.projectData.executionFailures.some(x=>Number(x.stage)===stage&&!x.resolvedBy&&!x.invalidatedBy))throw new Error('Successful replacement did not resolve execution failure.');}
 
 {let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;p.revision=0;const a={...fixtureBuildPrompt(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(a);const b={...fixtureBuildPrompt(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(b);const q={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:a.operation,promptIdentity:{instructionId:a.instructionId,bodySha256:a.bodySha256,contractSha256:a.contractSha256,contextSignature:a.contextSignature},scope:a.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'parallel-q',question:'Provide the missing run-specific value.',whyRequired:'The selected run cannot continue without it.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:a});if(!prepared.validation.valid)throw new Error('Unrelated newer run prompt incorrectly staled the controlling run prompt: '+JSON.stringify(prepared.validation.issues));}
-{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;const pr={...fixtureBuildPrompt(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-CLARIFY',contextId:'CTX-CLARIFY'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const q={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'scoped-q',question:'Provide the run-specific missing input.',whyRequired:'This exact run is missing required human authority.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Scoped clarification response invalid: '+JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;const request=p.projectData.humanInputRequests.at(-1);preparePromptPrerequisites(p,stage);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;const active=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy);if(!active.some(x=>x.operation==='EXECUTE_RUN'&&x.scope?.runId==='RUN-CLARIFY'&&x.scope?.contextId==='CTX-CLARIFY'))throw new Error('Scoped clarification did not regenerate the exact operation/run prompt.');if(active.some(x=>x.operation==='FREEZE'))throw new Error('Scoped clarification incorrectly regenerated the stage default operation.');}
+{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;const pr={...fixtureBuildPrompt(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-CLARIFY',contextId:'CTX-CLARIFY'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const q={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'scoped-q',question:'Provide the run-specific missing input.',whyRequired:'This exact run is missing required human authority.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Scoped clarification response invalid: '+JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;const request=p.projectData.humanInputRequests.at(-1);preparePromptPrerequisites(p,stage);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;const active=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy);if(!active.some(x=>x.operation==='EXECUTE_RUN'&&x.scope?.runId===pr.scope.runId&&x.scope?.contextId===pr.scope.contextId))throw new Error('Scoped clarification did not regenerate the exact operation/run prompt.');if(active.some(x=>x.operation==='FREEZE'))throw new Error('Scoped clarification incorrectly regenerated the stage default operation.');}
 
 
 // Raw capture audit scope must be controlled by the persisted prompt, not a caller-supplied context hint.
@@ -342,7 +374,7 @@ console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,promptEngine
   const prompt=fixtureBuildPrompt(17,p,{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-SCOPE-001',candidateId:'CANDIDATE-SCOPE-001',runId:'RUN-SCOPE-001',contextId:'CONTEXT-SCOPE-001'}});
   p.projectData.generatedPrompts.push({...prompt,generatedAt:new Date().toISOString()});
   const captured=ingestion.captureRaw(p,{stage:17,text:'{}',promptRecord:prompt,contextId:'MISLEADING-CALLER-CONTEXT'});
-  if(captured.rawRecord.runId!=='RUN-SCOPE-001'||captured.rawRecord.contextId!=='CONTEXT-SCOPE-001'||captured.rawRecord.iteration!=='ITERATION-SCOPE-001')throw new Error('Raw-response audit identity is not bound to the controlling prompt scope.');
+  if(captured.rawRecord.runId!==prompt.scope.runId||captured.rawRecord.contextId!==prompt.scope.contextId||captured.rawRecord.iteration!==prompt.scope.iterationId)throw new Error('Raw-response audit identity is not bound to the controlling prompt scope.');
 }
 
 
@@ -477,19 +509,19 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
 
 // Final boundary: naming a required executable/input artifact is not possession of its bytes.
 {
-  const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);
   if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
   const def=schema.RECORD_SCHEMAS.tests,fields={VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}};
   for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
   fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='FIXTURE_EXTERNAL_TOOL';fields.EXECUTABLE_KIND='NONE';fields.ARTIFACT_REQUIREMENTS='fixture.js';
   e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
-  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  let prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr});
   if(!prepared.validation.valid)throw new Error('Stage 06 future artifact requirement was rejected before execution readiness: '+JSON.stringify(prepared.validation.issues));
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Stage 06 incorrectly required execution bytes while accepting a test definition.');
   const sha='a'.repeat(64);
   e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
-  e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
-  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});
+  issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
+  prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
   if(!prepared.validation.valid)throw new Error('Byte-backed TEST artifact fixture was otherwise invalid: '+JSON.stringify(prepared.validation.issues));
   const proposedTest=prepared.proposal?.canonicalRecords?.tests?.[0],proposedEvidence=prepared.proposal?.evidence?.[0];
@@ -530,11 +562,11 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
 
 // Explicit returned-file slot regression. Filename and picker order are not authority.
 {
-  const p=project('JOB-EXPLICIT-ATTACHMENT-SLOTS'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  const p=project('JOB-EXPLICIT-ATTACHMENT-SLOTS'),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);
   const contents=['first\n','second\n'],files=contents.map((text,i)=>({artifactId:`RETURNED-ARTIFACT-${i}`,name:`returned-${i}.txt`,type:'text/plain',size:new TextEncoder().encode(text).byteLength,sha256:globalThis.closedLoopHash.sha256Text(text)}));
-  e.attachments=files.map((file,i)=>({temporaryKey:`slot-${i}`,filename:file.name,mediaType:file.type,byteSize:file.size,sha256:file.sha256,required:true}));e.evidence[0].attachmentRef={tempKey:'slot-0'};
+  e.attachments=files.map((file,i)=>({temporaryKey:`slot-${i}`,filename:file.name,mediaType:file.type,byteSize:file.size,sha256:file.sha256,required:true}));issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'slot-0'};
   const slots=ingestion.attachmentSlotPlan(p,e,pr),mapped=files.map((file,i)=>({...file,attachmentSlotId:slots[i].attachmentSlotId}));
-  const check=selected=>ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:selected});
+  const check=selected=>ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:selected});
   for(const [name,selected] of [
     ['filename-alone',files],['picker-order-without-slots',[...files].reverse()],
     ['swapped-slots',mapped.map((file,i)=>({...file,attachmentSlotId:slots[1-i].attachmentSlotId}))],
@@ -543,7 +575,7 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
     ['stale-slot',[{...mapped[0],attachmentSlotId:'ATTACHMENT-SLOT-STALE'},mapped[1]]]
   ]){const result=check(selected);if(result.validation.valid)throw new Error(`Attachment-slot mutation accepted: ${name}`);if(result.project.projectData.acceptedChanges.length||result.project.projectData.artifacts.length)throw new Error('Rejected returned files mutated canonical records.');negativeCount++;}
   const valid=check([...mapped].reverse());if(!valid.validation.valid)throw new Error(`Explicit reverse-order slot mapping rejected: ${JSON.stringify(valid.validation.issues)}`);
-  const captured=ingestion.captureRaw(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  const captured=ingestion.captureRaw(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr});
   const failed=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId});
   if(failed.validation.valid)throw new Error('Missing returned slots were not rejected.');
   const rebound=ingestion.bindAttachmentSlots(failed.project,{rawResponseId:captured.rawRecord.rawResponseId,files:mapped});
@@ -555,9 +587,32 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   console.log(JSON.stringify({attachmentSlotMapping:'PASS',explicitSlotsRequired:true,pickerOrderIndependent:true,filenameOnlyRejected:true,staleOrDuplicateSlotsRejected:true,slotMutationsDetected:7,rawBytesPreserved:true,failedResponseRepairedWithoutReselect:true,atomicReturnedArtifactPromotion:true,totalNegativeCases:negativeCount}));
 }
 
+// The raw transport name is a claim, never a trim-normalized identity. These
+// otherwise-valid cases isolate the filename gate from slot and byte identity.
+{
+  const checked=[];
+  for(const [declared,selected,expected] of [
+    [' result.txt','result.txt','ATTACHMENT_FILENAME_MISMATCH'],
+    ['result.txt ','result.txt ','INVALID_ATTACHMENT_FILENAME'],
+    ['../result.txt','../result.txt','INVALID_ATTACHMENT_FILENAME'],
+    ['bad\u0085name.txt','bad\u0085name.txt','INVALID_ATTACHMENT_FILENAME'],
+    [42,'42','INVALID_ATTACHMENT_FILENAME'],
+    ['re\u0301sume\u0301.txt','re\u0301sume\u0301.txt',null],
+    ['中文-🙂.txt','中文-🙂.txt',null]
+  ]){
+    const p=project('JOB-FILENAME-GATE'),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr),text='Exact bytes\n',sha256=globalThis.closedLoopHash.sha256Text(text);
+    e.attachments=[{temporaryKey:'name-check',filename:declared,mediaType:'text/plain',byteSize:new TextEncoder().encode(text).byteLength,sha256,required:true}];issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'name-check'};
+    const slot=ingestion.attachmentSlotPlan(p,e,pr)[0],files=[{artifactId:'FILENAME-FILE',name:selected,type:'text/plain',size:e.attachments[0].byteSize,sha256,attachmentSlotId:slot.attachmentSlotId}],result=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files});
+    if(expected){if(result.validation.valid||!result.validation.issues.some(issue=>issue.code===expected))throw new Error('FILENAME_GATE_ORACLE '+JSON.stringify({declared,expected,issues:result.validation.issues}));negativeCount++;}
+    else {if(!result.validation.valid)throw new Error('FILENAME_VALID_ORACLE '+JSON.stringify(result.validation.issues));const accepted=ingestion.commit(result.project,result.proposal.proposalId),artifact=accepted.project.projectData.artifacts.at(-1);if(artifact.FILENAME!==selected||artifact.rawFilename!==selected||artifact.canonicalPath!==globalThis.closedLoopHash.pinnedNFC(selected))throw new Error('FILENAME_RAW_PRESERVATION_ORACLE');}
+    checked.push({declared,expected,result:'PASS'});
+  }
+  console.log(JSON.stringify({filenameGate:'PASS',synthetic:true,checked}));
+}
+
 // Pending application-owned references must persist without pretending proof exists.
 {
-  const runtime={core,schema,engine,prompts,ingestion},p=stage04AcceptanceFixture(runtime,'JOB-PROOF-PERSISTENCE'),pr=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(pr);
+  const runtime={core,schema,engine,prompts,ingestion},p=stage04AcceptanceFixture(runtime,'JOB-PROOF-PERSISTENCE'),pr=prompts.buildPromptRecord(4,p,engine.preparePromptContext(p,4,{operation:'COMPLETE'}).options);p.projectData.generatedPrompts.push(pr);
   const envelope=stage04AcceptanceEnvelope(runtime,p,pr),prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope),promptRecord:pr});
   if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
   const accepted=ingestion.commit(prepared.project,prepared.proposal.proposalId).project,store=globalThis.closedLoopProjectStore,integrity=store.validateProjectIntegrity(accepted);

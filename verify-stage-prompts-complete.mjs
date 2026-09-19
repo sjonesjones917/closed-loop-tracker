@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
 if(!core||!schema||!engine||!prompts)throw new Error('Prompt audit runtime failed to load.');
 const p=core.createBlankState('JOB-PROMPT-CLOSURE');
@@ -55,7 +56,7 @@ for(let stage=1;stage<=30;stage++){
   for(const operation of contract.operations){
     const op=schema.operationContract(stage,operation);
     for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
-    const scope={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
+    const scope=Object.fromEntries(op.scopeRequirements.map(key=>[key,key.toUpperCase()+'-AUDIT']));
     const reg=schema.STAGE_OPERATION_REGISTRY[`${stage}:${operation}`];
     if(reg?.executorClass!=='EXTERNAL_AGENT'){
       let blocked=false;try{prompts.buildPromptRecord(stage,p,{operation,scope});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}
