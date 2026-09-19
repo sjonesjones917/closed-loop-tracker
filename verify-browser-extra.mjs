@@ -36,6 +36,16 @@ async function waitForSavedPrompt(cdp){
 }
 async function waitForIdle(cdp){await waitExpr(cdp,`document.querySelector('#app')?.getAttribute('aria-busy')!=='true'`,60000);}
 async function click(cdp,selector){await waitForIdle(cdp);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled)return false;e.click();return true})()`);assert(ok,`Missing or disabled clickable ${selector}`);await waitForIdle(cdp);}
+async function selectProjectByJobId(cdp,jobId){
+ await waitForIdle(cdp);
+ const values=await evalValue(cdp,`Array.from(document.querySelector('#project-picker')?.options||[]).map(option=>option.value)`);
+ for(const value of values||[]){
+  const ok=await evalValue(cdp,`(async()=>{const picker=document.querySelector('#project-picker');if(!picker)return false;picker.value=${JSON.stringify(value)};await picker.onchange({target:picker});return true;})()`);
+  assert(ok,'Project selector disappeared while selecting '+jobId);await waitForIdle(cdp);
+  if(await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.startsWith(${JSON.stringify(jobId)})`))return;
+ }
+ throw new Error(`Project ${jobId} is unavailable through the actual project selector.`);
+}
 async function fill(cdp,selector,value){await waitForIdle(cdp);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);assert(ok,`Missing input ${selector}`);await waitForIdle(cdp);}
 async function openValidationDetails(cdp,expectedCode){
   // Validation persists asynchronously and replaces the report. Open only closed
@@ -97,7 +107,7 @@ async function main(){
   // Continue the disposable project's actual accepted intake. A project fork
   // must never copy another job namespace's allocation receipts or force gates.
   const duplicateJob=atomicStageOne.jobId;
-  await fill(cdp,'#project-picker',duplicateJob);await openStage(cdp,2);
+  await selectProjectByJobId(cdp,duplicateJob);await openStage(cdp,2);
   await click(cdp,'#save-prompt');await waitForSavedPrompt(cdp);
   function responseFor(project,stage,stageData){
     const pr=project.projectData.generatedPrompts.filter(row=>Number(row.stage)===stage&&!row.invalidatedBy).at(-1);
@@ -140,7 +150,7 @@ async function main(){
   await click(cdp,'#save-prompt');await waitForSavedPrompt(cdp);
   await selectResponseFile(cdp,JSON.stringify(responseFor(await activeProject(cdp),3,stageThreeData)));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);await click(cdp,'#accept-proposal');
   assert((await activeProject(cdp)).stages[3].status==='COMPLETE','The corrected response must complete the valid Stage 03 path.');
-  await fill(cdp,'#project-picker',atomicStageOne.previousSelected);await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.startsWith(${JSON.stringify(atomicStageOne.previousSelected)})`);
+  await selectProjectByJobId(cdp,atomicStageOne.previousSelected);
 
 
   console.log('extra:project-lifecycle-ui');

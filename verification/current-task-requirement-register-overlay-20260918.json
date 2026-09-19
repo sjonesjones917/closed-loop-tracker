@@ -635,7 +635,7 @@
     },
     {
       "requirementId": "PROHIBITION-REPAIR-TRANSPORT",
-      "sourceLocation": "Current user task section 2 — No repair-transport artifacts",
+      "sourceLocation": "Current user task section 2 \u2014 No repair-transport artifacts",
       "responsibleProductionCode": {
         "file": "repository candidate tree; verify.mjs",
         "symbol": "repairTransportPatterns / walkRepairTransport"
@@ -656,7 +656,7 @@
       "requirementId": "D-1",
       "sourceLocation": "Current user task section 6, D-1",
       "responsibleProductionCode": "operator decision and responsible production owner",
-      "observableExpectedBehavior": "Use one configurable loading threshold default from 1000–2000 ms, measure raw workflow latency, and submit threshold plus measured distribution for operator confirmation.",
+      "observableExpectedBehavior": "Use one configurable loading threshold default from 1000\u20132000 ms, measure raw workflow latency, and submit threshold plus measured distribution for operator confirmation.",
       "requiredEvidence": [
         "Exact outstanding decision and evidence for operator confirmation"
       ],
@@ -732,6 +732,13 @@
           "runId": 35413700912,
           "case": "verify-browser-extra.mjs stage03-duplicate-response-recovery",
           "actual": "After Stage 02 COMPLETE acceptance, the saved next instruction did not bind SEARCH_ADEQUACY_REVIEW."
+        },
+        {
+          "classification": "VERIFIER_CAUSAL_REFUTATION",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "runId": 35419893155,
+          "case": "verify-browser-extra.mjs stage03-duplicate-response-recovery causal trace",
+          "actual": "The verifier assigned JOB_ID text to #project-picker even though the production selector values are numeric project indices; the resulting empty selection coerced to projects[0]. Independent production semantic replay derived SEARCH_ADEQUACY_REVIEW, and verify-post-acceptance-lane-selection.mjs passed while detecting stale operation/run faults."
         }
       ],
       "mandatory": true
@@ -758,6 +765,13 @@
           "runId": 35413700912,
           "case": "verify-browser.mjs",
           "actual": "Timed out waiting for document.body.innerText.includes('SOURCE-') although the operator journey accepted Stage 02 without rendering that internal ID."
+        },
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "runId": 35419893155,
+          "case": "verify-browser.mjs Stage 02 canonical source state oracle",
+          "actual": "Verifier read SOURCE_ID from source.SOURCE_ID/source.id although canonical records store SOURCE_ID in record.fields and workflow-engine recordId is the shared authority."
         }
       ],
       "mandatory": true
@@ -794,6 +808,72 @@
           "runId": 35418782785,
           "case": "verify-final-product-timing.mjs in Physical iPhone release-tag governance",
           "actual": "Factory-provided host structuredClone returned a foreign-realm proposal scope; production hash.js correctly rejected it as a non-plain object at $."
+        },
+        {
+          "classification": "VERIFIER_REPAIR_PROOF",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "case": "verify-verifier-runtime.mjs + verify-mobile-operation-observations.mjs local exact-source replay",
+          "actual": "Shared verifier runtime passed its contract; all discovered VM consumers used the factory and mobile operation observations passed. Integrated run 5891 also passed all pre-browser gates."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-12",
+      "sourceLocation": "Current user task sections 3, 4A, 4C, 9C/D/E UX-013 and 10; controlling specification History destination and retained unaccepted-candidate restoration requirements",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "captureView / document input preservation / History destination controls"
+      },
+      "observableExpectedBehavior": "Selecting an application-History project/version is navigation state, not a workflow draft. Choosing a retained checkpoint must not capture the selector into the current view, create an intervening checkpoint that repaints the selector, or rewrite the requested restore destination. Restoring a retained unaccepted correction must reactivate its in-page replacement confirmation without accepting it.",
+      "requiredEvidence": [
+        "Run-5891 actual-browser reproduction",
+        "Regression that fails when History destination controls are serialized as workflow drafts",
+        "Targeted fault injection that reclassifies History destination controls as drafts and is detected",
+        "Real-browser restore of the retained unaccepted file correction followed by cancellation/acceptance checks"
+      ],
+      "applicableStages": "ALL_HISTORY_RESTORABLE_STAGES",
+      "applicableOperations": "HISTORY_SELECT -> HISTORY_RESTORE; CANCEL_UNCONFIRMED -> RESTORE_UNCONFIRMED",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "PRODUCTION",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "runId": 35419893155,
+          "case": "verify-browser-recovery.mjs retained file-correction restore",
+          "actual": "After selecting the retained pending checkpoint and activating History restore, #replacement-confirmation was absent. The checkpoint artifact itself contained pendingMutation, proving the recovery point was retained but the actual browser navigation path did not reactivate it."
+        },
+        {
+          "classification": "REGRESSION_BASELINE",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "case": "verify-file-correction-recovery.mjs HISTORY_NAVIGATION_DRAFT_ORACLE",
+          "actual": "The exact defective source serialized #history-project and #history-version as workflow drafts; the invariant regression failed before the production repair."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-003",
+      "sourceLocation": "Current user task sections 4B/4C, 10, 11 and 13; controlling specification actual-control operator-journey discipline",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs",
+        "symbol": "project selector navigation helper"
+      },
+      "observableExpectedBehavior": "The browser verifier must select projects through the actual #project-picker option value corresponding to the intended visible project and verify the resulting active project before exercising stage behavior. It must not write a JOB_ID into a selector whose production values are numeric project indices.",
+      "requiredEvidence": [
+        "Run-5891 raw failure and project-picker value trace",
+        "Repaired actual-browser verifier selects the intended project then derives SEARCH_ADEQUACY_REVIEW for incomplete source discovery"
+      ],
+      "applicableStages": "ALL",
+      "applicableOperations": "PROJECT_SELECTION -> STAGE_OPERATOR_PATH",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "runId": 35419893155,
+          "case": "verify-browser-extra.mjs stage03-duplicate-response-recovery",
+          "actual": "Verifier called fill(#project-picker, JOB_ID). Production option values are numeric project indices, so the value became empty and Number(\"\") selected projects[0], causing the test to inspect a different project and report COMPLETE instead of SEARCH_ADEQUACY_REVIEW."
         }
       ],
       "mandatory": true

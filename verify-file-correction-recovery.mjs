@@ -12,7 +12,26 @@ draft=copy(p);engine.recordStageConfirmation(draft,1,true,'Synthetic operator co
 const invalidConfirmation=copy(p);invalidConfirmation.projectData.stageConfirmations.at(-1).inputVersion='INCOMPATIBLE-INPUT-VERSION';engine.recalculate(invalidConfirmation);p=await store.writeProject(invalidConfirmation,{expectedProjectRevision:p.revision,mutationConfirmation:store.mutationImpact(p,invalidConfirmation)});assert.equal(engine.gate(1,p).complete,false);
 draft=copy(p);engine.recordStageConfirmation(draft,1,true,'Synthetic operator confirms the actual current accepted input.','SYNTHETIC',{acceptedChangeId:engine.acceptedChanges(draft,1).at(-1).changeId,inputVersion:draft.job.CURRENT_INPUT_VERSION});assert.equal(store.mutationImpact(p,draft).requiresConfirmation,false,'INVALID_CONFIRMATION_REPAIR_ORACLE: correcting an incompatible confirmation must not require confirmation of that same decision again');p=await store.writeProject(draft,{expectedProjectRevision:p.revision});assert.equal(engine.gate(1,p).complete,true);note('A current human confirmation repairs an incompatible prior confirmation without a redundant replacement decision');
 draft=copy(p);prompts.reserveAndBuildPromptRecord(draft,2);p=await store.writeProject(draft,{expectedProjectRevision:p.revision});const acceptedState=copy(p),beforeFiles=await store.listArtifacts(p.job.JOB_ID),messages=[];
-let source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');if(faultName==='candidate-files')source=source.replace("if(error.code==='MUTATION_REVIEW_SHOWN')return;",'');if(faultName==='cancel-checkpoint')source=source.replace("try{await captureCurrentView();}catch(error){replacementReview=review;throw error;}","try{}catch(error){replacementReview=review;throw error;}");const extract=(start,end)=>{const a=source.indexOf(start);assert.ok(a>=0);return source.slice(a,source.indexOf(end,a+start.length));};
+let source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');if(faultName==='candidate-files')source=source.replace("if(error.code==='MUTATION_REVIEW_SHOWN')return;",'');if(faultName==='cancel-checkpoint')source=source.replace("try{await captureCurrentView();}catch(error){replacementReview=review;throw error;}","try{}catch(error){replacementReview=review;throw error;}");if(faultName==='history-navigation-draft')source=source.replace("!VIEW_NAVIGATION_CONTROL_IDS.has(node.id)","true");const extract=(start,end)=>{const a=source.indexOf(start);assert.ok(a>=0);return source.slice(a,source.indexOf(end,a+start.length));};
+// History destination controls are navigation, not workflow drafts. Serializing them into the current view
+// can rewrite the operator's selected restore destination before Restore is activated.
+{
+ const originalDocument=runtime.document,originalWindow=runtime.window,originalCss=runtime.CSS;
+ const nodes=[
+  {id:'accepted-refinement-reason',type:'text',value:'keep me',multiple:false},
+  {id:'history-project',type:'select-one',value:'PROJECT-X',multiple:false},
+  {id:'history-version',type:'select-one',value:'CHECKPOINT-X',multiple:false}
+ ];
+ runtime.document={querySelectorAll:()=>nodes};runtime.window={scrollX:0,scrollY:0};runtime.CSS={escape:value=>String(value)};
+ Object.assign(runtime,{current:p,fileSelectionDrafts:{},operationSelection:{},runSelection:{},replacementReview:null,clone:copy});
+ vm.runInContext(extract('const VIEW_NAVIGATION_CONTROL_IDS=','function selectSavedView(')+'\nglobalThis.productionCaptureView=captureView;',runtime);
+ const captured=runtime.productionCaptureView();
+ assert.equal(captured.drafts['#accepted-refinement-reason']?.value,'keep me','HISTORY_NAVIGATION_DRAFT_ORACLE: ordinary workflow drafts must still be captured');
+ assert.equal(captured.drafts['#history-project'],undefined,'HISTORY_NAVIGATION_DRAFT_ORACLE: History project selector must never become a workflow draft');
+ assert.equal(captured.drafts['#history-version'],undefined,'HISTORY_NAVIGATION_DRAFT_ORACLE: History version selector must never become a workflow draft');
+ runtime.document=originalDocument;runtime.window=originalWindow;runtime.CSS=originalCss;
+ note('History destination selectors are excluded from captured workflow drafts so selecting a restore destination cannot rewrite itself');
+}
 Object.assign(runtime,{current:p,projects:copy([p]),replacementReview:null,projectStore:store,core,engine,clone:copy,safe:engine.safe,withStorageActivity:async(_label,fn)=>fn(),unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,recordMobileOperation:async()=>{},recordCommittedBoundary:async()=>{},render:()=>{},announce:message=>messages.push(message),reportActionFailure:error=>messages.push(String(error.message||error)),focusAfterAction:()=>{},$ :()=>({scrollIntoView(){},focus(){}})});
 runtime.captureView=()=>copy({activeStage:runtime.current.activeStage,activeView:runtime.current.activeView,pendingMutation:runtime.replacementReview?{baseProjectSha256:runtime.current.projectSha256,next:runtime.replacementReview.next,impact:runtime.replacementReview.impact,expectedProjectRevision:runtime.replacementReview.expectedProjectRevision}:null});
 runtime.captureCurrentView=async()=>store.saveCheckpoint(runtime.current.job.JOB_ID,{expectedProjectRevision:runtime.current.revision,view:runtime.captureView()});

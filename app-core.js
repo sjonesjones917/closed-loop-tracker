@@ -504,10 +504,12 @@ function release(){const metrics=engine.releaseMetrics(current);return `<div cla
 let historyState=null,restoringHistory=false,historyRestoreVisible=false,historyRestoreTimer=null,historyRestoreController=null,navigationSequence=0;
 let savedDraftView=null,savedViewSignature=null,capturingViewPromise=null,historyRestoreTail=Promise.resolve();
 const APPLICATION_SESSION_ID=(()=>{try{const key='closed-loop-application-session',prior=sessionStorage.getItem(key);if(prior)return prior;const id=crypto.randomUUID();sessionStorage.setItem(key,id);return id;}catch{return TAB_INSTANCE_ID;}})();
+const VIEW_NAVIGATION_CONTROL_IDS=new Set(['stage-picker','operation-picker','run-slot-picker','history-project','history-version']);
+function isWorkflowDraftControl(node){return Boolean(node)&&node.type!=='file'&&node.type!=='password'&&!VIEW_NAVIGATION_CONTROL_IDS.has(node.id);}
 function captureView(){
  const drafts={};
  for(const node of document.querySelectorAll('#screen input,#screen textarea,#screen select')){
-  if(node.type==='file'||node.type==='password'||['stage-picker','operation-picker','run-slot-picker'].includes(node.id))continue;
+  if(!isWorkflowDraftControl(node))continue;
   const selector=node.id?'#'+CSS.escape(node.id):['job','humanStageField','humanAnswer','humanAuthorityConfirmation'].find(key=>node.dataset[key])?(function(){const key=['job','humanStageField','humanAnswer','humanAuthorityConfirmation'].find(key=>node.dataset[key]),attribute=key.replace(/[A-Z]/g,letter=>'-'+letter.toLowerCase());return `[data-${attribute}="${CSS.escape(node.dataset[key])}"]`;})():null;
   if(selector){const draft={value:node.multiple?[...node.selectedOptions].map(option=>option.value):String(node.value??'')};if(['checkbox','radio'].includes(node.type))draft.checked=Boolean(node.checked);drafts[selector]=draft;}
  }
@@ -615,7 +617,7 @@ async function initializeHistoryNavigation(){
  // Remember the current entry synchronously, then persist the complete view.
  // A later edit is coalesced behind an in-flight checkpoint, never dropped.
  const preserveView=()=>{if(!current||operatorActionInFlight||restoringHistory)return;const entry=history.state;if(entry?.closedLoopHistory&&entry.jobId===current.job.JOB_ID)writeBrowserEntry(entry.checkpointId,captureView(),{replace:true});void captureCurrentView().catch(reportActionFailure);};
- document.addEventListener('input',event=>{if(event.target?.closest?.('#screen')&&event.target.type!=='file'&&!['stage-picker','operation-picker','run-slot-picker'].includes(event.target.id))preserveView();});
+ document.addEventListener('input',event=>{if(event.target?.closest?.('#screen')&&isWorkflowDraftControl(event.target))preserveView();});
  window.addEventListener('scroll',preserveView,{passive:true});
  window.addEventListener('pagehide',preserveView);
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')preserveView();});
