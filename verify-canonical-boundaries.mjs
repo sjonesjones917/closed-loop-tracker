@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
@@ -7,7 +8,7 @@ import {isDeepStrictEqual} from 'node:util';
 // implementation's regexes, Date.UTC behavior, or generated success flags.
 const sourcePath=process.env.CANONICAL_BOUNDARY_HASH_SOURCE||'hash.js';
 const source=fs.readFileSync(sourcePath,'utf8');
-vm.runInThisContext(source,{filename:sourcePath});
+createVerifierRuntime.loadScript(globalThis,source,{filename:sourcePath});
 const h=globalThis.closedLoopHash,results=[];
 const prefixes=process.argv.slice(2).map(arg=>{if(!arg.startsWith('--case-prefix='))throw new Error('Unknown argument: '+arg);return arg.slice('--case-prefix='.length);});
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -46,6 +47,18 @@ for(const [method,serialize] of Object.entries(serializers)){
     await check(`CB-ARRAY-VALID-${method}-${index}`,{canonical},expected,()=>serialize(value));
   }
 }
+// Unsigned Unicode scalar ordering is independent of insertion order and UTF-16
+// code-unit order. These literal expected orders precede the measured fast path.
+const scalarKeyCases=[
+ {id:'BMP',keys:['\uffff','z','\u0000','a','\ue000'],ordered:['\u0000','a','z','\ue000','\uffff']},
+ {id:'MIXED',keys:['\u{10000}','\ue000','\u{10ffff}','\uffff','a'],ordered:['a','\ue000','\uffff','\u{10000}','\u{10ffff}']},
+ {id:'PREFIX',keys:['a\u{10000}','a\ue000','a','a\u{10000}b','a\u{10001}'],ordered:['a','a\ue000','a\u{10000}','a\u{10000}b','a\u{10001}']}
+];
+for(const fixture of scalarKeyCases)for(const [method,serialize] of Object.entries(serializers)){
+ const value=Object.fromEntries(fixture.keys.map(key=>[key,'value'])),canonical='{'+fixture.ordered.map(key=>JSON.stringify(key)+':"value"').join(',')+'}';
+ await check(`CB-KEY-ORDER-${fixture.id}-${method}`,{insertionKeys:fixture.keys,expectedOrder:fixture.ordered},method==='string'?canonical:digest(canonical),()=>serialize(value));
+}
+
 // Calendar exploration is bounded to a complete 400-year Gregorian leap cycle,
 // including every month. The oracle is independent integer divisibility and a
 // month-length table. We exercise each final valid day and the following invalid

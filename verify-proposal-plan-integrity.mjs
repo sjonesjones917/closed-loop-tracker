@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import cp from 'node:child_process';
@@ -5,7 +6,7 @@ import assert from 'node:assert/strict';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
 globalThis.dispatchEvent=()=>{};
 for(const file of ['workbook','hash','workflow-schema','test-runtime','workflow-engine','prompt-engine','response-ingestion']){
- let source=fs.readFileSync(file+'.js','utf8');if(file==='response-ingestion'&&process.env.CLOSED_LOOP_PROPOSAL_PLAN_FAULT==='1'){const anchor='assertProposalPlan(project,proposal,latest,raw);';assert.ok(source.includes(anchor));source=source.replace(anchor,'/* Deliberate disposable precommit fault. */');}vm.runInThisContext(source,{filename:file+'.js'});
+ let source=fs.readFileSync(file+'.js','utf8');if(file==='response-ingestion'&&process.env.CLOSED_LOOP_PROPOSAL_PLAN_FAULT==='1'){const anchor='assertProposalPlan(project,proposal,latest,raw);';assert.ok(source.includes(anchor));source=source.replace(anchor,'/* Deliberate disposable precommit fault. */');}createVerifierRuntime.loadScript(globalThis,source,{filename:file+'.js'});
 }
 const runtime={core:closedLoopCore,schema:closedLoopWorkflowSchema,engine:closedLoopWorkflowEngine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion}, {engine,prompts,ingestion}=runtime;
 const project=stage04AcceptanceFixture(runtime,'DISPOSABLE-PROPOSAL-PLAN'),prompt=prompts.buildPromptRecord(4,project,engine.preparePromptContext(project,4,{operation:'COMPLETE'}).options);project.projectData.generatedPrompts.push(prompt);

@@ -1,7 +1,8 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(f,'utf8'),{filename:f});
 const core=globalThis.closedLoopCore,hash=globalThis.closedLoopHash,engine=globalThis.closedLoopWorkflowEngine,assert=(v,m)=>{if(!v)throw new Error(m)};
 function project(jobId){const p=core.createBlankState(jobId);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Freeze exact selected candidate bytes.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v001';p.job.CURRENT_INSTRUCTION_VERSION='INSTRUCTION-v001';engine.ensureShape(p);for(let n=1;n<=9;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}return p;}
 function add(p,id,text){const b=new TextEncoder().encode(text);engine.registerArtifactBytes(p,{stage:10,artifactId:id,filename:id+'.bin',mediaType:'application/octet-stream',byteSize:b.byteLength,sha256:hash.sha256Text(text)});}

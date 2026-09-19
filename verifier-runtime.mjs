@@ -1,7 +1,9 @@
 import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 import {Blob as NodeBlob, File as NodeFile} from 'node:buffer';
 import {performance as nodePerformance} from 'node:perf_hooks';
+const verifierHashSource=readFileSync(new URL('./hash.js',import.meta.url),'utf8');
 
 function memoryStorage(){
   const values=new Map();
@@ -16,6 +18,8 @@ function memoryStorage(){
 }
 
 function installMissing(target,key,value){if(!(key in target)||target[key]===undefined)target[key]=value;}
+
+function evaluateScript(context,source,options){return context===globalThis?vm.runInThisContext(source,options):vm.runInContext(source,context,options);}
 
 export function createVerifierRuntime(seed={},options){
   if(!seed||typeof seed!=='object')throw new TypeError('Verifier runtime seed must be an object.');
@@ -47,9 +51,9 @@ export function createVerifierRuntime(seed={},options){
   if(typeof context.requestAnimationFrame!=='function')context.requestAnimationFrame=callback=>context.setTimeout(()=>callback(context.performance?.now?.()??Date.now()),0);
   if(typeof context.cancelAnimationFrame!=='function')context.cancelAnimationFrame=id=>context.clearTimeout(id);
   const hasStructuredCloneOverride=Object.prototype.hasOwnProperty.call(context,'structuredClone')&&context.structuredClone!==undefined;
-  const created=vm.createContext(context,options);
+  const created=context===globalThis?context:vm.createContext(context,options);
   if(!hasStructuredCloneOverride){
-    created.structuredClone=vm.runInContext(`(()=>{
+    created.structuredClone=evaluateScript(created,`(()=>{
       const tagOf=value=>Object.prototype.toString.call(value);
       const clone=(value,seen=new Map())=>{
         const type=typeof value;
@@ -70,9 +74,10 @@ export function createVerifierRuntime(seed={},options){
         const out={};seen.set(value,out);for(const key of Object.keys(value))out[key]=clone(value[key],seen);return out;
       };
       return (value,options)=>{if(options?.transfer?.length)throw new TypeError('Transfer lists are not supported by verifier structuredClone.');return clone(value);};
-    })()`,created,{filename:'verifier-runtime:structuredClone'});
+    })()`,{filename:'verifier-runtime:structuredClone'});
   }
+  if(!('closedLoopHash' in created)||created.closedLoopHash===undefined)evaluateScript(created,verifierHashSource,{filename:'hash.js'});
   return created;
 }
 
-createVerifierRuntime.loadScript=(context,source,options)=>vm.runInContext(source,context,options);
+createVerifierRuntime.loadScript=(context,source,options)=>evaluateScript(context===globalThis?createVerifierRuntime(context):context,source,options);

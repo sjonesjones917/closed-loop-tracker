@@ -1,7 +1,8 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-if(!globalThis.closedLoopHash)vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
+if(!globalThis.closedLoopHash)createVerifierRuntime.loadScript(globalThis,fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 const mustReject=(name,fn,pattern)=>{

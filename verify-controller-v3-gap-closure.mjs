@@ -1,6 +1,7 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(f,'utf8'),{filename:f});
 const core=closedLoopCore,schema=closedLoopWorkflowSchema,engine=closedLoopWorkflowEngine;
 function record(family,fields,id){const def=schema.RECORD_SCHEMAS[family];return{id,active:true,fields:{...fields,[def.idField]:id},...fields,[def.idField]:id,scope:{inputVersion:'INPUT-v001'}}}
 {const p=core.createBlankState('ACTIVATION-NEG');engine.ensureShape(p);p.projectData.requirements.push(record('requirements',{MANDATORY_OPTIONAL_STATUS:'CONDITIONAL',STATUS:'ACTIVE'},'REQ-A'));p.projectData.propositions.push(record('propositions',{REQUIREMENT_ID:'REQ-A'},'PROP-A'));p.projectData.applicabilityRecords.push(record('applicabilityRecords',{SUBJECT_ID:'PROP-A',SELECTED_APPLICABILITY:'APPLICABLE',PROPOSED_APPLICABILITY:'APPLICABLE'},'APP-A'));assert.equal(engine.evaluateApplicability(p,'PROP-A'),'UNKNOWN');assert.equal(schema.RECORD_SCHEMAS.applicabilityRecords.relationships.ACTIVATION_PROOF_OBLIGATION_ID,'proofObligations');}

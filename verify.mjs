@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
@@ -6,7 +7,7 @@ globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
 const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json'];
 for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer runtime failed to load.');
 const html=fs.readFileSync('index.html','utf8'),orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
@@ -88,7 +89,7 @@ if(!prepareSource||prepareSource.includes('savePromptRecord(n)'))throw new Error
 for(const token of ['function responsePromptRecord(n,text)','ingestion.captureRaw(current','projectStore.stageResponseFile','projectStore.readStagedResponseFile'])if(!appSourceForStatus.includes(token))throw new Error(`Returned-instruction validation regression missing ${token}.`);
 const statusSource=appSourceForStatus.match(/const statusClass=v=>\{.*?\};/)?.[0];
 if(!statusSource)throw new Error('Status classifier is not inspectable.');
-const statusProbe=vm.runInNewContext(`${statusSource};({notReady:statusClass('NOT READY'),notAuthorized:statusClass('NOT AUTHORIZED'),notComplete:statusClass('NOT COMPLETE'),unauthorized:statusClass('UNAUTHORIZED'),accepted:statusClass('ACCEPTED'),ready:statusClass('READY'),blocked:statusClass('BLOCKED')})`);
+const statusProbe=createVerifierRuntime.loadScript(createVerifierRuntime(),`${statusSource};({notReady:statusClass('NOT READY'),notAuthorized:statusClass('NOT AUTHORIZED'),notComplete:statusClass('NOT COMPLETE'),unauthorized:statusClass('UNAUTHORIZED'),accepted:statusClass('ACCEPTED'),ready:statusClass('READY'),blocked:statusClass('BLOCKED')})`);
 if(statusProbe.notReady!=='warn'||statusProbe.notAuthorized!=='danger'||statusProbe.notComplete!=='warn'||statusProbe.unauthorized!=='danger'||statusProbe.accepted!=='success'||statusProbe.ready!=='success'||statusProbe.blocked!=='warn')throw new Error(`Status presentation polarity is unsafe: ${JSON.stringify(statusProbe)}`);
 const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.readFileSync(f,'utf8')).join('\n');
 if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');

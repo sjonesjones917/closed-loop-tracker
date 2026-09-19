@@ -1,8 +1,9 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const f of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+for(const f of ['workbook.js','hash.js','workflow-schema.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(f,'utf8'),{filename:f});
 const schema=globalThis.closedLoopWorkflowSchema,m=schema.STAGE_OPERATION_SCOPE_MATRIX;assert(schema&&m,'scope matrix missing');
 const input=(key,dim)=>assert.equal(m[key].dimensions[dim],'INPUT_CURRENT',`${key} ${dim} must be INPUT_CURRENT`);const target=(key,dim)=>assert.equal(m[key].dimensions[dim],'TARGET_RESERVED',`${key} ${dim} must be TARGET_RESERVED`);
 target('19:CONFIRM_FREEZE','confirmationIterationId');for(const key of ['19:EXECUTE_RUN','19:VERIFY','19:COMPARE','19:REGRESSION_VERIFY','19:CONFIRM'])input(key,'confirmationIterationId');

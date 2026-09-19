@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -6,7 +7,7 @@ import {createOperatorBrowser,digest} from './operator-browser-driver.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {responseFixture,OBJECTIVE} from './operator-journey-fixtures.mjs';
 globalThis.dispatchEvent=()=>true;
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema;
 const directory=path.resolve(process.env.RECOVERY_EVIDENCE_DIR||'recovery-browser-evidence'),browser=await createOperatorBrowser({directory});
 const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_CONTROLS_INDEXEDDB_AND_FILE_TRANSPORT',physicalDevice:false,humanIndependenceEstablished:false,cases:[],failures:[],complete:false};

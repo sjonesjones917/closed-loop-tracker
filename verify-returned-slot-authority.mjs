@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ import {readStoreArchive} from './test-zip.mjs';
 // The actual reservation, prompt and response boundary run here. File metadata
 // is calculated from these fixture bytes; this is not a physical picker test.
 globalThis.dispatchEvent=()=>{};
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
 const {closedLoopCore:core,closedLoopHash:hash,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion}=globalThis;
 const results=[];
 async function check(name,operation){try{await operation();results.push({name,result:'PASS'});}catch(error){results.push({name,result:'FAIL',message:String(error.stack||error)});}}

@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.Event=class Event{};globalThis.dispatchEvent=()=>{};
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const e=closedLoopWorkflowEngine;
 // Independent safety oracle from Section 35.6: operational events retain
 // bindings/revision, terminal states cannot be reopened, exact retry is stable.

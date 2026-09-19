@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
@@ -7,7 +8,7 @@ import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 globalThis.dispatchEvent=()=>{};
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
   const source=process.env.BASELINE_COMMIT?execFileSync('git',['show',process.env.BASELINE_COMMIT+':'+file],{encoding:'utf8',maxBuffer:10*1024*1024}):fs.readFileSync(file,'utf8');
-  vm.runInThisContext(source,{filename:file});
+  createVerifierRuntime.loadScript(globalThis,source,{filename:file});
 }
 const core=closedLoopCore,schema=closedLoopWorkflowSchema,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion;
 const project=stage04AcceptanceFixture({core,schema,engine,prompts,ingestion},'JOB-CONTEXT-BOUNDARY');

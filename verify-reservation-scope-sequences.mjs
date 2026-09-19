@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -15,7 +16,7 @@ const faults={
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']){
   let source=fs.readFileSync(file,'utf8');
   if(file==='workflow-engine.js'&&faultId){const fault=faults[faultId];assert.ok(fault&&source.includes(fault.before),'Fault anchor missing');source=source.replace(fault.before,fault.after);}
-  vm.runInThisContext(source,{filename:file});
+  createVerifierRuntime.loadScript(globalThis,source,{filename:file});
 }
 const engine=closedLoopWorkflowEngine,schema=closedLoopWorkflowSchema;
 const contracts=Object.values(schema.STAGE_OPERATION_REGISTRY).filter(contract=>contract.reservationRequired);

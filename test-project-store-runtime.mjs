@@ -23,5 +23,13 @@ export function projectStoreRuntime({fault=null,sourceOverrides={}}={}){
   if(fault?.file===file){if(!source.includes(fault.before))throw new Error('Fault anchor missing: '+fault.id);source=source.replace(fault.before,fault.after);}
   vm.runInContext(source,runtime,{filename:file});
  }
+ // The persistence UI's continuation dependencies belong to this shared
+ // runtime. Extract the actual owners together so every acceptance, correction
+ // and retry verifier sees the same complete dependency set.
+ const uiSource=sourceOverrides['app-core.js']??fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
+ const continuationStart=uiSource.indexOf('function acceptedContinuation('),continuationEnd=uiSource.indexOf('const stageContinuationErrors=',continuationStart);
+ if(continuationStart<0||continuationEnd<continuationStart)throw new Error('The actual persistence UI continuation owners are unavailable.');
+ Object.assign(runtime,{safe:runtime.closedLoopWorkflowEngine.safe,operationSelection:{},runSelection:{}});
+ vm.runInContext(uiSource.slice(continuationStart,continuationEnd),runtime,{filename:'app-core.js:continuation-owners'});
  return {runtime,rows,copy,store:runtime.closedLoopProjectStore,engine:runtime.closedLoopWorkflowEngine,core:runtime.closedLoopCore,ingestion:runtime.closedLoopResponseIngestion,prompts:runtime.closedLoopPromptEngine};
 }

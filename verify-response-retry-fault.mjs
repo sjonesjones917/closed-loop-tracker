@@ -13,5 +13,8 @@ try{
  assert.ok(faulty.stderr.includes('RETRY_COMMIT_ORACLE'),'The injected fault failed for an unrelated reason: '+faulty.stderr);
  const restored=spawnSync(process.execPath,['verify-response-retry-persistence.mjs'],{encoding:'utf8',maxBuffer:8*1024*1024});
  assert.equal(restored.status,0,restored.stderr);assert.equal(fs.readFileSync('app-core.js','utf8'),source);
- console.log(JSON.stringify({synthetic:true,actualBrowser:false,cases:[{fault:'COMPARE_WITH_CANDIDATE_REVISION',oracle:'RETRY_COMMIT_ORACLE',result:'DETECTED'}],restoredImplementation:'PASS'},null,2));
+ const draftFault=spawnSync(process.execPath,['verify-file-selection-drafts.mjs','--fault=drop-selection-drafts'],{encoding:'utf8',maxBuffer:8*1024*1024});
+ assert.notEqual(draftFault.status,0,'The lost-draft fault escaped detection');assert.ok(draftFault.stderr.includes('FILE_SELECTION_DRAFT_RETENTION_ORACLE'),draftFault.stderr);
+ const draftRestored=spawnSync(process.execPath,['verify-file-selection-drafts.mjs'],{encoding:'utf8',maxBuffer:8*1024*1024});assert.equal(draftRestored.status,0,draftRestored.stderr);
+ console.log(JSON.stringify({synthetic:true,actualBrowser:false,cases:[{fault:'COMPARE_WITH_CANDIDATE_REVISION',oracle:'RETRY_COMMIT_ORACLE',result:'DETECTED',stdout:faulty.stdout,stderr:faulty.stderr},{fault:'DROP_FILE_SELECTION_DRAFTS',oracle:'FILE_SELECTION_DRAFT_RETENTION_ORACLE',result:'DETECTED',stdout:draftFault.stdout,stderr:draftFault.stderr}],restoredImplementation:'PASS',restoredDraftEvidence:{stdout:draftRestored.stdout,stderr:draftRestored.stderr}},null,2));
 }finally{fs.rmSync(directory,{recursive:true,force:true});}

@@ -9,6 +9,7 @@ const sha=value=>createHash('sha256').update(value).digest('hex');
 const original=fs.readFileSync('hash.js','utf8'),sourceSha256=sha(original);
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-canonical-faults-'));
 const faults=[
+ {id:'CB-MUT-KEY-ORDER',before:'keys.sort(keys.some(key=>/[\\uD800-\\uDBFF]/.test(key))?compareUnicodeScalarSequence:undefined);',after:'keys.sort();',oracle:'CB-KEY-ORDER-MIXED-string',control:'CB-KEY-ORDER-BMP-string'},
  {id:'CB-MUT-INDEX',before:'!/^(?:0|[1-9]\\d*)$/.test(key)',after:'!/^\\d+$/.test(key)',oracle:'CB-ARRAY-EXTRA-string-00',control:'CB-ARRAY-VALID-string-2'},
  {id:'CB-MUT-ACCESSOR',before:"else{const index=frame.index++,descriptor=Object.getOwnPropertyDescriptor(input,String(index));if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}[${index}].`);if(index)pending+=',';stack.push({kind:'value',value:descriptor.value,path:`${path}[${index}]`});}",after:"else{const index=frame.index++;if(index)pending+=',';stack.push({kind:'value',value:input[index],path:`${path}[${index}]`});}",oracle:'CB-ARRAY-ACCESSOR-string-get',control:'CB-ARRAY-VALID-string-2'},
  {id:'CB-MUT-SYMBOL',before:'        if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);\n',after:'',oracle:'CB-ARRAY-SYMBOL-string-true',control:'CB-ARRAY-VALID-string-2'},

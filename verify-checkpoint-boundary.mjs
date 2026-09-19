@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -6,7 +7,7 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 
 globalThis.dispatchEvent=()=>true;
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const engine=globalThis.closedLoopWorkflowEngine,hash=globalThis.closedLoopHash,source=fs.readFileSync('verify-full-cycle.mjs','utf8'),anchor=source.indexOf('const checkpoint=engine.createPreDeliveryCheckpoint(p');
 assert.ok(anchor>0);
 const capture=path.join(os.tmpdir(),`checkpoint-${process.pid}.json`),script=path.resolve(`.checkpoint-${process.pid}.mjs`);

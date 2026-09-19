@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
@@ -5,7 +6,7 @@ const assert=(v,m)=>{if(!v)throw new Error(m);};
 const setEq=(a,e,label)=>{a=[...new Set(a||[])].sort();e=[...new Set(e||[])].sort();assert(JSON.stringify(a)===JSON.stringify(e),`${label}: expected [${e.join(', ')}], got [${a.join(', ')}].`);};
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion;
 assert(core&&schema&&engine&&prompts&&ingestion,'Specification-grounded route oracle runtime failed to load.');
 assert(core.STAGE_COUNT===30&&core.STAGES.length===30,'The controlling workflow must contain exactly 30 stages.');

@@ -138,7 +138,8 @@ const OPERATIONAL_COLLECTIONS=new Set(['rawResponses','generatedOutputs','respon
 const OPERATIONAL_JOB_FIELDS=new Set(['CURRENT_STAGE','CURRENT_STATE','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION','JOB_RECORD_STATUS','STATUS_EVIDENCE']);
 const OPERATIONAL_STAGE_FIELDS=new Set(['gate','status','derivedData','responseDraft']);
 function operationalPatches(before,after,path=[]){
-  if(equivalent(before,after))return [];
+  // Traverse once; canonical validation and commit integrity checks remain authoritative.
+  if(Object.is(before,after))return [];
   if(before&&after&&typeof before==='object'&&typeof after==='object'&&Array.isArray(before)===Array.isArray(after)){
     if(Array.isArray(before)&&after.length<before.length)return [{path,value:clone(after)}];
     return [...new Set([...Object.keys(before),...Object.keys(after)])].flatMap(key=>{

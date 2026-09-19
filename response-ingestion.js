@@ -639,15 +639,7 @@ function acceptanceImpact(project,proposalId){
       if(!rows.length)continue;
       if(schema.RECORD_SCHEMAS[collection]?.commitPolicy==='REPLACE_CURRENT_STAGE_SET')for(const record of workflow.records(project,collection,{stage,active:true}))replaces.push({kind:collection,id:workflow.recordId(record,collection)});
     }
-    // Include partially populated stages, drafts, reserved commands and pending
-    // responses even when no later completion gate has passed.
-    for(const [collection,rows] of Object.entries(project.projectData||{})){
-      if(!Array.isArray(rows)||['history','inputVersions','proofObligations'].includes(collection))continue;
-      for(const row of rows){const owner=Number(row.stage??row.STAGE??row.fields?.STAGE);if(owner>stage&&owner<=schema.STAGE_COUNT&&!row.invalidatedBy&&row.active!==false)add(owner,collection,workflow.recordId(row,collection)||row.proposalId||row.instructionId||row.changeId||row.requestId);}
-    }
-    for(const state of Object.values(project.stages||{}))if(Number(state.number)>stage){
-      if(state.status==='COMPLETE'||Object.keys(state.agentData||{}).length||state.responseDraft||(state.draftRecord&&state.draftRecord!==globalThis.closedLoopCore.stageTemplate(globalThis.closedLoopCore.STAGES[Number(state.number)-1]))||state.acceptedDataChangeIds?.length||state.acceptedControlEventIds?.length)add(Number(state.number),'stage progress',state.number);
-    }
+    for(const item of workflow.downstreamWorkImpact(project,stage))for(const work of item.work)add(item.stage,work.kind,work.id);
   }
   const effect={jobId:String(project.job.JOB_ID),projectRevision:Number(project.revision||0),historyActivationId:project.historyActivationId||null,proposalId,stage,operation,proposalSha256:hash.sha256Value(proposal),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
   return {...effect,requiresConfirmation:Boolean(replaces.length||affected.size),confirmationKey:hash.sha256Value(effect)};

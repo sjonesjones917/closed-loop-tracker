@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ import {recordProposal,evidence} from './test-fixtures.mjs';
 // runs the actual prompt generator, parser, validator, proposal and commit code;
 // it is not evidence of a full external-agent or physical-device journey.
 globalThis.dispatchEvent=()=>{};
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
 const {closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion,closedLoopHash:hash}=globalThis;
 const results=[];
 async function check(name,operation){try{await operation();results.push({name,result:'PASS'});}catch(error){results.push({name,result:'FAIL',message:String(error.stack||error)});}}

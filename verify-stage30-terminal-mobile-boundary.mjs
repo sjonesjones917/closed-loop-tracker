@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +13,7 @@ import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-s
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
-  vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+  createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 }
 const core=globalThis.closedLoopCore;
 const engine=globalThis.closedLoopWorkflowEngine;

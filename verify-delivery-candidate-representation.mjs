@@ -1,8 +1,9 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,hash=globalThis.closedLoopHash;
 let fixtureSequence=0;
 function fixture(){const p=core.createBlankState('JOB-STAGE26-'+String(++fixtureSequence).padStart(3,'0'));engine.ensureShape(p);const baseline={id:'BASELINE-1',stage:20,active:true,scope:{},fields:{BASELINE_ID:'BASELINE-1',STATUS:'FROZEN'},BASELINE_ID:'BASELINE-1',STATUS:'FROZEN'},product={id:'PRODUCT-1',stage:21,active:true,scope:{baselineId:'BASELINE-1',productId:'PRODUCT-1'},fields:{PRODUCT_ID:'PRODUCT-1',PRODUCT_VERSION:'PRODUCT-v001',BASELINE_ID:'BASELINE-1',STATUS:'COMPLETED',GENERATED_ARTIFACT_INVENTORY:['ART-A','ART-B']},PRODUCT_ID:'PRODUCT-1',PRODUCT_VERSION:'PRODUCT-v001',BASELINE_ID:'BASELINE-1',STATUS:'COMPLETED',GENERATED_ARTIFACT_INVENTORY:['ART-A','ART-B']};p.projectData.baselines.push(baseline);p.projectData.products.push(product);p.job.CURRENT_BASELINE_ID='BASELINE-1';p.job.CURRENT_PRODUCT_ID='PRODUCT-1';p.job.CURRENT_PRODUCT_VERSION='PRODUCT-v001';for(const [id,text] of [['ART-A','A'],['ART-B','B']])engine.registerArtifactBytes(p,{stage:21,artifactId:id,filename:id+'.pdf',byteSize:text.length,sha256:hash.sha256Text(text),lineage:{productId:'PRODUCT-1',transformationIds:['TRANSFORM-'+id],packageMembership:{package:'delivery'},viewerRequirements:['PDF']}});for(let stage=1;stage<=24;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}return p;}

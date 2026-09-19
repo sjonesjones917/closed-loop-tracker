@@ -121,7 +121,7 @@ function* canonicalChunks(value){
         }else{
           const prototype=Object.getPrototypeOf(input);
           if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
-          for(const key of keys)assertUnicodeScalars(key,`${path} object key`);keys.sort(compareUnicodeScalarSequence);
+          for(const key of keys)assertUnicodeScalars(key,`${path} object key`);keys.sort(keys.some(key=>/[\uD800-\uDBFF]/.test(key))?compareUnicodeScalarSequence:undefined);
           pending+='{';stack.push({kind:'object',value:input,index:0,keys,path});
         }
       }

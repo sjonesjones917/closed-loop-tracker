@@ -311,7 +311,9 @@ jobs:
       - name: Rebuild retained fixture used by deployment
         run: node build-test-project.mjs
       - name: Exact deployed-byte verification
-        run: node verify-live.mjs
+        run: |
+          set -euo pipefail
+          node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log
       - name: Deployed Chromium operator path
         run: |
           set -euo pipefail
@@ -340,6 +342,20 @@ jobs:
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
           test "$BROWSER_VERIFY_RESULT" = 0
 
+      - name: Preserve deployed operator evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            operator-evidence/
+            recovery-browser-evidence/
+            mobile-capability-evidence/
+            /tmp/verify-*.mjs.*.log
+            /tmp/deployed-byte-proof.log
+          retention-days: 90
+          if-no-files-found: warn
+
   publish-status:
     name: Publish machine acceptance status
     if: >-
@@ -349,7 +365,7 @@ jobs:
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -385,6 +401,18 @@ jobs:
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
           test "$BROWSER_VERIFY_RESULT" = 0
+      - name: Preserve reverified deployed operator evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reverified-deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            operator-evidence/
+            recovery-browser-evidence/
+            mobile-capability-evidence/
+            /tmp/mobile-verify-*.mjs.*.log
+          retention-days: 90
+          if-no-files-found: warn
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:
@@ -514,7 +542,7 @@ jobs:
             realThirtyStageProjectAcceptance:false,
             fullProductionMaturity:false,
             jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobileAcceptance.physicalIPhoneJobResult},
-            nextProofStep:finalAcceptancePublication?'Create the release tag for this exact accepted commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
+            nextProofStep:finalAcceptancePublication?'Use the authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag for this commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
             proofSources:{
               ownership:'verify.mjs',
               canonicalDataRoutes:'verify-data-route-closure.mjs',
@@ -555,7 +583,7 @@ jobs:
           report.finalAcceptancePublication=finalGate.accepted;
           report.releaseTagEligible=finalGate.accepted;
           report.visualBaselineEvidence=visualBaseline;
-          report.nextProofStep=finalGate.accepted?'Create the release tag for this exact accepted commit.':finalGate.blockers.map(item=>`${item.requiredActor}: ${item.code} (${item.path})`).join('; ');
+          report.nextProofStep=finalGate.accepted?'Use the authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag for this commit.':finalGate.blockers.map(item=>`${item.requiredActor}: ${item.code} (${item.path})`).join('; ');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
           fs.appendFileSync(process.env.GITHUB_OUTPUT,[
@@ -575,24 +603,8 @@ jobs:
           set -euo pipefail
           echo "::notice title=Release tag blocked::Final Section 49 and actor acceptance is not proven for ${GITHUB_SHA}; see closed-loop-acceptance.json blockers. No release tag was created."
           test "${{ steps.acceptance.outputs.final_acceptance }}" = false
-      - name: Create release tag only after deployed and actual-iPhone proof
+      - name: Record release tag eligibility for authorized repository connection
         if: steps.acceptance.outputs.final_acceptance == 'true'
         run: |
           set -euo pipefail
-          TAG="acceptance-${GITHUB_SHA::12}"
-          CHALLENGE="$(node -e "const r=require('./closed-loop-acceptance.json');const c=String(r.mobileAcceptanceChallenge||'').toLowerCase();if(!/^[0-9a-f]{32,}$/.test(c))process.exit(2);process.stdout.write(c);")"
-          CHALLENGE_TAG="mobile-acceptance-challenge-$CHALLENGE"
-          git config user.name closed-loop-release
-          git config user.email closed-loop-release@users.noreply.github.com
-          test -z "$(git ls-remote --tags origin "refs/tags/$CHALLENGE_TAG" | awk '{print $1}')"
-          EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
-          if [ -n "$EXISTING" ]; then
-            test "$EXISTING" = "$GITHUB_SHA"
-          fi
-          git tag "$CHALLENGE_TAG" "$GITHUB_SHA"
-          if [ -z "$EXISTING" ]; then
-            git tag "$TAG" "$GITHUB_SHA"
-            git push origin "refs/tags/$CHALLENGE_TAG" "refs/tags/$TAG"
-          else
-            git push origin "refs/tags/$CHALLENGE_TAG"
-          fi
+          echo "::notice title=Release tag eligible::Recheck closed-loop-acceptance.json through the authorized repository connection, consume its unused challenge marker, and publish the tag for ${GITHUB_SHA}."

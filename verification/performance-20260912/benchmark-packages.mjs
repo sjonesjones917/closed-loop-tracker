@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from '../../verifier-runtime.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -7,11 +8,11 @@ import {performance} from 'node:perf_hooks';
 
 const repo=path.resolve(process.argv[2]||'.'),output=path.resolve(process.argv[3]||'verification/performance-20260912/packages-after.json');
 globalThis.dispatchEvent=()=>true;
-for(const name of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(path.join(repo,name),'utf8'),{filename:name});
+for(const name of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(path.join(repo,name),'utf8'),{filename:name});
 // Substitute only export storage reads/writes. Import is the complete production
 // pre-transaction path and stops at its existing fault-injection boundary.
 const source=fs.readFileSync(path.join(repo,'project-store.js'),'utf8');
-vm.runInThisContext(source.replace('globalThis.closedLoopProjectStore=',"readProject=async()=>globalThis.diagnosticProject;listArtifacts=async()=>globalThis.diagnosticArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore="),{filename:'project-store.js'});
+createVerifierRuntime.loadScript(globalThis,source.replace('globalThis.closedLoopProjectStore=',"readProject=async()=>globalThis.diagnosticProject;listArtifacts=async()=>globalThis.diagnosticArtifacts;metaPut=async()=>{};globalThis.closedLoopProjectStore="),{filename:'project-store.js'});
 const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,store=globalThis.closedLoopProjectStore;
 const results={date:new Date().toISOString(),node:process.version,note:'Production package CPU/stream code with export storage I/O substituted. Import stops before the real IndexedDB transaction. Synthetic data only. V8 heap snapshots and timer gaps are not physical-iPhone peak memory or frame measurements.',cases:[]};
 const nativeParse=JSON.parse,nativeText=Response.prototype.text;

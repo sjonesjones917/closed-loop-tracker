@@ -1,7 +1,8 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';import vm from 'node:vm';
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 globalThis.Event=globalThis.Event||class Event{};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(f,'utf8'),{filename:f});
 const s=closedLoopWorkflowSchema,e=closedLoopWorkflowEngine,c=(st,op)=>s.operationContract(st,op),has=(x,n)=>x.includes(n);
 assert(has(c(1,'SEMANTIC_CHALLENGE').agentWritableCollections,'semanticChallenges'),'Stage 1 challenge missing durable challenge family');assert(!c(1,'SEMANTIC_CHALLENGE').allowedStageData.length,'Stage 1 challenge can overwrite intake stageData');assert(has(c(1,'RECONCILE_INTAKE').agentWritableCollections,'semanticReviews'),'Stage 1 reconciliation missing semantic review record');
 assert(has(c(2,'COMPLETE').agentWritableCollections,'sourceSearchContracts'),'Stage 2 COMPLETE cannot create bounded search contract');assert(has(c(2,'SEARCH_ADEQUACY_REVIEW').agentWritableCollections,'semanticReviews'),'Stage 2 adequacy review cannot create independent review');assert(!has(c(2,'SEARCH_ADEQUACY_REVIEW').agentWritableCollections,'sources'),'Stage 2 reviewer can overwrite author source set');for(const n of ['sources','sourceSearchContracts'])assert(has(c(2,'SEARCH_ADEQUACY_REVIEW').readCollections,n),`Stage2 adequacy review omits ${n}`);

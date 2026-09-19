@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -8,7 +9,7 @@ import {spawnSync} from 'node:child_process';
 // gate, accepted stage, or proof result is patched by this verifier.
 let source=fs.readFileSync('verify-full-cycle.mjs','utf8');
 const skipProof=process.env.CONFORMANCE_NATIVE_FAULT==='skip-proof-recording';
-if(skipProof)source=source.replace("vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});","vm.runInThisContext(file==='workflow-engine.js'?fs.readFileSync(file,'utf8').replace('recordApplicationDeterministicResult:recordNativeProofResult','recordApplicationDeterministicResult:e0.recordApplicationDeterministicResult'):fs.readFileSync(file,'utf8'),{filename:file});");
+if(skipProof)source=source.replace("createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});","createVerifierRuntime.loadScript(globalThis,file==='workflow-engine.js'?fs.readFileSync(file,'utf8').replace('recordApplicationDeterministicResult:recordNativeProofResult','recordApplicationDeterministicResult:e0.recordApplicationDeterministicResult'):fs.readFileSync(file,'utf8'),{filename:file});");
 const anchor="tempKey:'test-final-det',relationships:{REQ_ID:{recordId:reqId}},overrides:{";
 assert.equal(source.split(anchor).length,2);
 const spec={version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'released-product-bytes'}]};

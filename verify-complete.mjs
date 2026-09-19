@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore,hash=globalThis.closedLoopHash;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer modules failed to load.');
 const assert=(value,message)=>{if(!value)throw new Error(message);};
@@ -177,9 +178,9 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   accepted.projectData.userEntered.clarifications.push({stage:core.STAGES[1].number,operation:schema.STAGE_CONTRACTS[core.STAGES[1].number].operations[0],answer:'Scoped later clarification.'});engine.recordHumanInputVersion(accepted,['CLARIFICATION']);engine.recalculate(accepted);
   const ui={current:accepted,engine,clone:structuredClone,render:()=>{},announce:()=>{},reportActionFailure:error=>{throw error;},$:()=>({value:'SYNTHETIC'}),canonicalCurrentStage:()=>2,focusAfterAction:()=>{},requestAnimationFrame:fn=>fn(),document:{querySelector:()=>null,querySelectorAll:()=>[{dataset:{job:'EXACT_USER_OBJECTIVE_VERBATIM'},type:'text',value:'Changed exact deliverable.'}]}};
   ui.persistReplacement=async next=>{ui.current=next;};
-  const confirmStart=appSource.indexOf('async function confirmStageOne('),confirmEnd=appSource.indexOf('async function savePromptRecord(',confirmStart);await vm.runInNewContext(appSource.slice(confirmStart,confirmEnd)+'\nconfirmStageOne();',ui);
+  const confirmStart=appSource.indexOf('async function confirmStageOne('),confirmEnd=appSource.indexOf('async function savePromptRecord(',confirmStart);await createVerifierRuntime.loadScript(createVerifierRuntime(ui),appSource.slice(confirmStart,confirmEnd)+'\nconfirmStageOne();');
   const confirmed=ui.current.projectData.stageConfirmations.at(-1);assert(confirmed.acceptedChangeId===engine.acceptedChanges(ui.current,1).at(-1).changeId&&confirmed.inputVersion===acceptedInput&&engine.gate(1,ui.current).complete,'The actual intent confirmation control did not bind the accepted change and its compatible input version.');
-  const saveStart=appSource.indexOf('async function saveJob('),saveEnd=appSource.indexOf('async function saveHumanStageFields(',saveStart);await vm.runInNewContext(appSource.slice(saveStart,saveEnd)+'\nsaveJob();',ui);
+  const saveStart=appSource.indexOf('async function saveJob('),saveEnd=appSource.indexOf('async function saveHumanStageFields(',saveStart);await createVerifierRuntime.loadScript(createVerifierRuntime(ui),appSource.slice(saveStart,saveEnd)+'\nsaveJob();');
   assert(!engine.gate(1,ui.current).complete&&engine.acceptedChanges(ui.current,1).length===0,'Saving changed project inputs through the actual UI did not invalidate the prior intake acceptance.');
   assert(appSource.includes("nextActionMarkup(true,n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
 

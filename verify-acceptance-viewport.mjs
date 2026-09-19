@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -10,7 +11,7 @@ import {OBJECTIVE,responseFixture} from './operator-journey-fixtures.mjs';
 // Synthetic external counterpart, actual application controls and file bytes.
 // This does not claim physical-device acceptance or independent human evidence.
 globalThis.dispatchEvent=()=>true;
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine;
 const directory=path.resolve(process.env.ACCEPTANCE_VIEWPORT_EVIDENCE_DIR||'acceptance-viewport-evidence');
 fs.mkdirSync(directory,{recursive:true});
