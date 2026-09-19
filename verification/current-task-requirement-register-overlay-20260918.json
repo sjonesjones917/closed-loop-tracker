@@ -769,12 +769,14 @@
         "file": "verifier-runtime.mjs and VM verifier consumers",
         "symbol": "shared verifier runtime factory"
       },
-      "observableExpectedBehavior": "Every Node VM verifier consumes one shared runtime factory that supplies timers, RAF, AbortController/AbortSignal, crypto/hash prerequisites, Blob/File, URL, text codecs, and storage defaults without overwriting explicit fixture overrides.",
+      "observableExpectedBehavior": "Every Node VM verifier consumes one shared runtime factory that supplies timers, RAF, AbortController/AbortSignal, crypto/hash prerequisites, Blob/File, URL, text codecs, and storage defaults without overwriting explicit fixture overrides. Factory-provided structuredClone returns values native to the verifier realm so production canonical hashing and plain-object checks behave the same way they do in the application.",
       "requiredEvidence": [
         "Failing current-source reproduction of missing AbortController",
         "Factory contract regression",
         "Consumer scan proving no independent vm.createContext authority remains",
-        "Affected mobile-operation and downstream conformance suites"
+        "Affected mobile-operation and downstream conformance suites",
+        "Failing run-5890 reproduction of foreign-realm structuredClone output rejected by production canonical hashing",
+        "Realm-local structuredClone contract regression and targeted host-realm fault injection"
       ],
       "applicableStages": "VERIFICATION_INFRASTRUCTURE",
       "applicableOperations": "ALL_VM_VERIFIER_EXECUTION",
@@ -785,6 +787,13 @@
           "sourceSha": "d823127d508a1506aa4d6eb550c5d6847939572e",
           "case": "verify-mobile-operation-observations.mjs local exact-source reproduction",
           "actual": "Capability probe failed with 'AbortController is not defined'; verifier context reported typeof AbortController === 'undefined'."
+        },
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "7d9727ce5cbbfe92baf40149acf008cc8aaa4dae",
+          "runId": 35418782785,
+          "case": "verify-final-product-timing.mjs in Physical iPhone release-tag governance",
+          "actual": "Factory-provided host structuredClone returned a foreign-realm proposal scope; production hash.js correctly rejected it as a non-plain object at $."
         }
       ],
       "mandatory": true

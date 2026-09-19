@@ -33,6 +33,8 @@ const hashSource=fs.readFileSync('hash.js','utf8');
 createVerifierRuntime.loadScript(context,hashSource,{filename:'hash.js'});
 assert.equal(typeof context.closedLoopHash?.sha256Value,'function','VERIFIER_RUNTIME_HASH_ORACLE');
 assert.equal(context.closedLoopHash.sha256Value(createVerifierRuntime.loadScript(context,'({b:2,a:1})')),context.closedLoopHash.sha256Value(createVerifierRuntime.loadScript(context,'({a:1,b:2})')),'VERIFIER_RUNTIME_HASH_DETERMINISM_ORACLE');
+assert.equal(createVerifierRuntime.loadScript(context,'Object.getPrototypeOf(structuredClone({scope:{projectRevision:1}}))===Object.prototype'),true,'VERIFIER_RUNTIME_STRUCTURED_CLONE_REALM_ORACLE');
+assert.match(createVerifierRuntime.loadScript(context,"closedLoopHash.sha256Value(structuredClone({scope:{projectRevision:1}}))"),/^[0-9a-f]{64}$/,'VERIFIER_RUNTIME_STRUCTURED_CLONE_CANONICAL_HASH_ORACLE');
 
 const consumers=fs.readdirSync('.').filter(name=>/\.mjs$/.test(name)&&!['verifier-runtime.mjs','verify-verifier-runtime.mjs'].includes(name));
 const independent=consumers.filter(name=>fs.readFileSync(name,'utf8').includes('vm.createContext('));
