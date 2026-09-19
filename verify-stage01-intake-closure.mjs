@@ -1,3 +1,4 @@
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -12,12 +13,12 @@ const assert=(value,message)=>{if(!value)throw new Error(message);};
 const p=core.createBlankState('JOB-STAGE01-CLOSURE');
 Object.assign(p.job,{JOB_TITLE:'Intake closure',JOB_OWNER:'Operator',EXACT_USER_OBJECTIVE_VERBATIM:'Build the exact requested product.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',REQUIRED_OUTPUT_FORMAT:'Exact requested artifacts',PROHIBITED_ACTIONS:'Do not discard supplied intent.',EXPLICIT_USER_REQUIREMENTS:'Capture every supplied requirement exactly.',CURRENT_INPUT_VERSION:'INPUT-v001'});
 engine.ensureShape(p);
-engine.registerArtifactBytes(p,{stage:1,artifactId:'ARTIFACT-INTENT-001',filename:'intent.txt',mediaType:'text/plain',byteSize:42,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',role:'HUMAN_INPUT'});
-p.stages[1].authorizedFiles=[{artifactId:'ARTIFACT-INTENT-001'}];
+engine.registerArtifactBytes(p,{stage:1,artifactId:artifactFixtureId(engine,p,'ARTIFACT-INTENT-001'),filename:'intent.txt',mediaType:'text/plain',byteSize:42,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',role:'HUMAN_INPUT'});
+p.stages[1].authorizedFiles=[{artifactId:artifactFixtureId(engine,p,'ARTIFACT-INTENT-001')}];
 
 const manifest=engine.intakeCoverageManifest(p);
 assert(manifest.unitCount===manifest.units.length&&manifest.unitCount>0,'Stage 01 intake manifest is not a closed controlled-unit set.');
-assert(JSON.stringify(manifest.units).includes('ARTIFACT-INTENT-001'),'Stage 01 intake manifest does not bind the supplied artifact identity.');
+assert(JSON.stringify(manifest.units).includes(artifactFixtureId(engine,p,'ARTIFACT-INTENT-001')),'Stage 01 intake manifest does not bind the supplied artifact identity.');
 const prompt={...prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}),generatedAt:new Date().toISOString()};
 p.projectData.generatedPrompts.push(prompt);
 assert(prompt.contextManifest.intakeCoverageManifest.manifestSha256===manifest.manifestSha256,'Stage 01 prompt is not bound to the current application intake manifest.');
@@ -27,7 +28,7 @@ assert(prompt.prompt.includes('first semantic reader')||prompt.prompt.includes('
 assert(!prompt.prompt.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),'Prompt still contains obsolete CUSTOM_PIPELINE instruction.');
 
 const capture={schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Preserved as current human-authority input.',externalInspectionClaimed:unit.kind==='SUPPLIED_MATERIAL'?true:undefined,extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT',sourceLocation:unit.kind==='SUPPLIED_MATERIAL'?unit.sourceLocation:undefined}]}))};
-assert(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(capture)}).complete,'Complete Stage 01 intake accounting did not close.');
+assert(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(capture)}).complete,'Complete Stage 01 intake accounting did not close: '+JSON.stringify(engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(capture)})));
 const legacySchema=structuredClone(capture);legacySchema.schema='closed-loop-stage01-capture/1';
 assert(!engine.evaluateIntakeAccounting(p,{capture:JSON.stringify(legacySchema)}).complete,'Stage 01 accepted a non-migrated legacy capture schema.');
 const missingPassOne=structuredClone(capture);delete missingPassOne.pass1Completed;

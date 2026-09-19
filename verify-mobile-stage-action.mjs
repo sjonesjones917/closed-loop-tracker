@@ -126,7 +126,7 @@ async function main(){
     let largestRead=0;Blob.prototype.arrayBuffer=function(){largestRead=Math.max(largestRead,this.size);if(this.size>65536)throw new Error('WHOLE_FILE_READ:'+this.size);return read.call(this);};
     try{
       for(let i=0;i<22;i++){
-        const id='BROWSER-FILE-'+String(i).padStart(2,'0'),bytes=new Uint8Array(i===21?2097153:1024);let seed=917+i;
+        const id=engine.allocateId(p,'artifacts',{commandId:'BROWSER-FILE-'+i,idempotencyKey:'file'}),bytes=new Uint8Array(i===21?2097153:1024);let seed=917+i;
         for(let j=0;j<bytes.length;j++){seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;bytes[j]=seed&255;}
         const blob=new Blob([bytes,'FILE-PRESSURE-'+i+'-TAIL'],{type:'text/plain'});
         const row=await store.putArtifact({artifactId:id,jobId:p.job.JOB_ID,blob,filename:id+'.txt',mediaType:'text/plain'});

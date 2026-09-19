@@ -1,3 +1,4 @@
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -18,7 +19,7 @@ function fixture(id='PREISSUED-RETURN-SLOTS'){
  const text='Independent exact file bytes.\n',size=new TextEncoder().encode(text).byteLength,sha256=hash.sha256Text(text);
  const declaration={temporaryKey:'returned-file',attachmentSlotId:slot.attachmentSlotId,role:slot.role,filename:'observations.txt',mediaType:'text/plain',byteSize:size,sha256};
  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:id,stage:1,operation:prompt.operation,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce,scope:manifest.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'unavailable',kind:'MISSING_CAPABILITY',description:'Synthetic boundary fixture retains the available observations.',whyBlocking:'No result is claimed by this boundary test.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[declaration]};
- const file={artifactId:'ARTIFACT-RETURNED-FIXTURE',attachmentSlotId:slot.attachmentSlotId,name:declaration.filename,type:declaration.mediaType,size,sha256};return {project,prompt,manifest,slots,fileSlots,slot,envelope,file};
+ const file={artifactId:artifactFixtureId(engine,project,'RETURNED-FILE'),attachmentSlotId:slot.attachmentSlotId,name:declaration.filename,type:declaration.mediaType,size,sha256};return {project,prompt,manifest,slots,fileSlots,slot,envelope,file};
 }
 const f=fixture();
 const prepare=(envelope=f.envelope,files=[f.file])=>ingestion.prepare(f.project,{stage:1,text:JSON.stringify(envelope),promptRecord:f.prompt,files,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:f.prompt.packageId,operationReservationId:f.prompt.operationReservationId,challengeNonce:f.prompt.challengeNonce}});

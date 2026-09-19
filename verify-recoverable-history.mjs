@@ -1,3 +1,4 @@
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 const mutation=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),faults={
@@ -11,7 +12,7 @@ const id='SYNTHETIC-RECOVERY-REGRESSION',cases=[];
 const record=(name,details={})=>cases.push({name,...details,result:'PASS'});
 let p=core.createBlankState(id);engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true});
 await store.beginHistorySession('SESSION-A');let history=await store.historyList(id);const start=history.sessions['SESSION-A'].checkpointId,starting=copy(p);
-const bytes=new Blob([Uint8Array.of(0,13,10,255,65)]),file=await store.putArtifact({artifactId:'RECOVERY-ARTIFACT',jobId:id,filename:'exact.bin',mediaType:'application/octet-stream',blob:bytes});
+const bytes=new Blob([Uint8Array.of(0,13,10,255,65)]),file=await store.putArtifact({artifactId:artifactFixtureId(engine,p,'RECOVERY-ARTIFACT'),jobId:id,filename:'exact.bin',mediaType:'application/octet-stream',blob:bytes});
 let next=copy(p);next.job.JOB_TITLE='First continuation';engine.registerArtifactBytes(next,{stage:1,artifactId:file.artifactId,filename:file.filename,mediaType:file.mediaType,byteSize:file.byteSize,sha256:file.sha256});p=await store.writeProject(next,{expectedProjectRevision:p.revision});
 history=await store.historyList(id);const first=history.activeId,firstProject=copy(p);
 next=copy(p);next.job.JOB_TITLE='Second continuation';p=await store.writeProject(next,{expectedProjectRevision:p.revision});history=await store.historyList(id);const second=history.activeId;

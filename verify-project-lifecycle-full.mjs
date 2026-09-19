@@ -588,11 +588,13 @@ await storageRegression('storage-refresh:navigation-cannot-replace-totals',async
 });
 for(const action of ['addNew','duplicateCurrentProject','materializeProject','unloadInactiveProjects','archiveCurrentProject'])await storageRegression(`${action}:preserve-newer-project`,async()=>{
   await vm.runInContext(`(async()=>{projects=[await makeStored('STALE-${action}')];current=projects[0];const newer=clone(current);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});})()`,storageRuntime);
-  storageAccess.length=0;await vm.runInContext(`${action}()`,storageRuntime);
+  storageAccess.length=0;let actionError=null;try{await vm.runInContext(`${action}()`,storageRuntime);}catch(error){actionError=error;}
+  if(action==='duplicateCurrentProject')assert(actionError?.code==='STALE_PROJECT_REVISION','Copying must reject a stale source version before creating its new project.');else if(actionError)throw actionError;
   const unrelated=storageAccess.filter(x=>x.name==='projects'&&x.key===`STALE-${action}`);
   const after=await storageRuntime.projectStore.readProject(`STALE-${action}`);
   assert(after.newerWork==='PRESERVE',`${action} overwrote newer saved work from its stale project list.`);
-  assert(unrelated.length===0,`${action} read or rewrote an unrelated project ${unrelated.length} times.`);
+  if(action!=='duplicateCurrentProject')assert(unrelated.length===0,`${action} read or rewrote an unrelated project ${unrelated.length} times.`);
+  else assert(!unrelated.some(row=>['put','delete'].includes(row.method)), 'A rejected stale copy must not rewrite its source.');
 });
 await storageRegression('bulk-write:stale-revision-atomic',async()=>{
   await vm.runInContext(`(async()=>{globalThis.bulkStale=await makeStored('BULK-STALE');const newer=clone(bulkStale);newer.newerWork='PRESERVE';await projectStore.writeProject(newer,{expectedProjectRevision:newer.revision});globalThis.bulkNew=ensureState(core.createBlankState('BULK-MUST-ROLL-BACK'));})()`,storageRuntime);
@@ -607,7 +609,7 @@ await storageRegression('create-only:existing-zero-revision',async()=>{
   assert(rejected&&(await storageRuntime.projectStore.readProject('CREATE-COLLISION')).newerWork==='PRESERVE','Creating a project reused an existing revision-zero identity.');
 });
 await storageRegression('backup:required-canonical-bytes',async()=>{
-  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CLOSURE');const row=await projectStore.putArtifact({artifactId:'BACKUP-FILE',jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});globalThis.backupProject=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});globalThis.goodBackup=await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(row.artifactId,p.job.JOB_ID);})()`,storageRuntime);
+  await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CLOSURE');const fixtureId=engine.allocateId(p,'artifacts',{commandId:'BACKUP-FILE',idempotencyKey:'file'}),row=await projectStore.putArtifact({artifactId:fixtureId,jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});globalThis.backupProject=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});globalThis.goodBackup=await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(row.artifactId,p.job.JOB_ID);})()`,storageRuntime);
   const previous=await storageRuntime.projectStore.metaGet('lastVerifiedExport:BACKUP-CLOSURE');
   let rejected=false;try{await storageRuntime.projectStore.exportPackage('BACKUP-CLOSURE');}catch(error){rejected=error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH';}
   assert(rejected,'A verified export was created despite missing canonical artifact bytes.');
@@ -784,7 +786,7 @@ await storageRegression('storage-worker:atomic-abort-and-import-recovery',async(
   try{await vm.runInContext(`makeStored('WORKER-ABORT')`,storageRuntime);}catch(e){error=e;}finally{delete storageRuntime.__closedLoopStorageFault;}
   assert(error?.code==='INJECTED_STORAGE_FAILURE'&&!(await storageRuntime.projectStore.readProject('WORKER-ABORT')),'Worker acknowledged a partially committed save.');
   dropWorkerReply=true;const restored=await storageRuntime.projectStore.importPackage(storageRuntime.goodBackup);
-  assert(restored.job.JOB_ID==='BACKUP-CLOSURE'&&(await storageRuntime.projectStore.getArtifact('BACKUP-FILE')),'Worker lost a committed import and its bytes after response failure.');
+  assert(restored.job.JOB_ID==='BACKUP-CLOSURE'&&(await storageRuntime.projectStore.listArtifacts(restored.job.JOB_ID)).some(row=>row.filename==='required.txt'),'Worker lost a committed import and its bytes after response failure.');
 });
 assert(lifecycleFailures.length===0,JSON.stringify(lifecycleFailures,null,2));
 console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,completeExportIdentityAfterNavigation:true,serializedCompletePackages:true,completeExportFailureRecovery:true,unsafeOverrides:0}));

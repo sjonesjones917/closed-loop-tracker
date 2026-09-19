@@ -1,3 +1,4 @@
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -20,9 +21,9 @@ function makeProject(jobId){
   p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v001';
   p.job.CURRENT_INSTRUCTION_VERSION='INSTRUCTION-v001';
   engine.ensureShape(p);
-  engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-STAGE15-CANDIDATE',filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:sha});
-  const decision=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(['ARTIFACT-STAGE15-CANDIDATE']),value:['ARTIFACT-STAGE15-CANDIDATE'],operatorLabel:'STAGE15_VERIFIER'});
-  const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-STAGE15-CANDIDATE'],selectionDecisionId:engine.recordId(decision,'humanDecisions'),operatorLabel:'STAGE15_VERIFIER'});
+  engine.registerArtifactBytes(p,{stage:10,artifactId:artifactFixtureId(engine,p,'ARTIFACT-STAGE15-CANDIDATE'),filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:sha});
+  const decision=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value([artifactFixtureId(engine,p,'ARTIFACT-STAGE15-CANDIDATE')]),value:[artifactFixtureId(engine,p,'ARTIFACT-STAGE15-CANDIDATE')],operatorLabel:'STAGE15_VERIFIER'});
+  const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:[artifactFixtureId(engine,p,'ARTIFACT-STAGE15-CANDIDATE')],selectionDecisionId:engine.recordId(decision,'humanDecisions'),operatorLabel:'STAGE15_VERIFIER'});
   return {p,iterationId:engine.recordId(frozen.iteration,'iterations'),candidateId:engine.recordId(frozen.candidate,'candidateFreezes')};
 }
 

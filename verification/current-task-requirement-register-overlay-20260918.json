@@ -1569,6 +1569,487 @@
         "verify-final-acceptance.mjs",
         "pages.yml verify-live job"
       ]
+    },
+    {
+      "requirementId": "DEF-15",
+      "sourceLocation": [
+        "Controlling specification section 34.2 canonical ID allocation",
+        "Current task sections 4A, 10 and 11"
+      ],
+      "responsibleProductionCode": [
+        {
+          "file": "workflow-engine.js",
+          "symbol": "allocateRecordIdentity / appendArtifactBytes"
+        },
+        {
+          "file": "app-core.js",
+          "symbol": "storeArtifactFile / registerStageFiles / selectReturnedSlotFile"
+        },
+        {
+          "file": "response-ingestion.js",
+          "symbol": "bindAttachmentSlots / commit"
+        },
+        {
+          "file": "project-store.js",
+          "symbol": "writeProject / writeOperationalProject / putArtifact"
+        }
+      ],
+      "observableExpectedBehavior": "Every newly canonical artifact occurrence uses the registered closed-loop-id/1 allocator with one matching immutable receipt, correct project namespace, retry binding and atomic persisted authority. Raw selected files remain unaccepted until their required acceptance operation.",
+      "requiredEvidence": [
+        "Actual input-file intake and returned-file mapping through production handlers and browser controls",
+        "Authoritative allocation identity and receipts; exact stored bytes; restoration and independent equal-content occurrences",
+        "Rejected cross-project, conflicting retry, missing/forged receipt and interrupted persistence cases",
+        "Targeted allocator-bypass fault rejected by permanent regression"
+      ],
+      "applicableStages": "Every stage and operation accepting artifacts; input, returned output, product and delivery artifact paths",
+      "applicableOperations": [
+        "FILE_INTAKE",
+        "RETURNED_FILE_MAPPING",
+        "RESPONSE_ACCEPTANCE",
+        "REEXECUTION",
+        "RESTORE",
+        "BACKUP_IMPORT"
+      ],
+      "status": "UNVERIFIED",
+      "classification": "production",
+      "reproduction": {
+        "sourceRevision": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "command": "node reproduce-current-creation-authority.mjs",
+        "rawOutput": "current-canonical-file-intake-baseline.log",
+        "actual": "Actual registerStageFiles commits JOB-\u2026-ARTIFACT-UUID identity with no matching allocation receipt; CANONICAL_INTAKE_IDENTITY_ORACLE fails.",
+        "rawOutputSha256": "c48ca424927222eace978814e160ccf65b8898acae506f213979f251f269c532"
+      },
+      "authorityTrace": [
+        "Actual file selection",
+        "storeArtifactFile constructs a random identifier",
+        "registerArtifactBytesBatch/appendArtifactBytes accept caller identity",
+        "Canonical allocator is bypassed",
+        "Persistence commits artifact metadata without a receipt"
+      ],
+      "dependencyClosure": [
+        "Stage-file batch input and product registration",
+        "Returned-file selection, raw-response mapping, canonical evidence relationships and acceptance promotion",
+        "Pending picker recovery identifiers remain separate from canonical record identities",
+        "Committed receipt/counter integrity, concurrency, repeated equal bytes and history restoration",
+        "Every engine-level verifier and authoritative fixture builder that currently supplies a handcrafted artifact identity"
+      ],
+      "mandatory": true,
+      "additionalReproduction": {
+        "command": "node reproduce-returned-file-allocation.mjs",
+        "rawOutput": "current-returned-file-allocation-baseline.log",
+        "rawOutputSha256": "86389d6fdc38c5f33c468390309b9163e7703f8b573c6650e1608a83967aa596",
+        "actual": "The actual returned-file selection handler persists exact bytes and an unaccepted slot mapping, but assigns a noncanonical random artifact ID with no allocation receipt. RETURNED_FILE_IDENTITY_ORACLE fails."
+      },
+      "permanentRegressionCommands": [
+        "node verify-file-intake-allocation.mjs",
+        "node verify-returned-file-allocation.mjs",
+        "node verify-file-allocation-boundaries.mjs",
+        "node verify-creation-presentation-faults.mjs",
+        "node verify-project-lifecycle-full.mjs",
+        "node verify-browser-extra.mjs"
+      ],
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "DEF-16",
+      "sourceLocation": [
+        "Controlling specification sections 34.2 and 35.7",
+        "Acceptance cases 190 and 197",
+        "Current task sections 9C, 10 and 11"
+      ],
+      "responsibleProductionCode": [
+        {
+          "file": "app-core.js",
+          "symbol": "duplicateCurrentProject / archiveCurrentProject / createUniqueJobId / persistNewProject"
+        },
+        {
+          "file": "project-store.js",
+          "symbol": "createProject / prepareCopiedInputs / sameCopiedFileIdentity / writeProjectRow / restoreProjectAllocation"
+        }
+      ],
+      "observableExpectedBehavior": "Every ordinary project-creation path uses one canonical project allocator. Copying valid human inputs succeeds with unset optional fields, preserves the source, gives copied files valid new project identities and exact bytes, and retains a source-bound command/mapping receipt outside both project bodies. An exact retry returns the same copy.",
+      "requiredEvidence": [
+        "Actual Start from copy and archive-last-project controls",
+        "Unset optional fields and valid original file input",
+        "Namespace separation, explicit copied/excluded material, byte mapping, retry/conflicting retry, concurrency and failed commit",
+        "Backup/recovery preserves source, copy and command receipts without incompatible accepted state",
+        "Reject inconsistent source file identity and recheck it immediately before the atomic copy commit; preserve existing recoverable state on rejection"
+      ],
+      "applicableStages": "All active project versions in which project management is permitted",
+      "applicableOperations": [
+        "COPY_PROJECT",
+        "ARCHIVE_LAST_PROJECT",
+        "RETRY",
+        "BACKUP",
+        "RESTORE"
+      ],
+      "status": "UNVERIFIED",
+      "classification": "production",
+      "reproduction": {
+        "sourceRevision": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "command": "node reproduce-current-project-copy-authority.mjs",
+        "rawOutput": "current-canonical-project-copy-baseline.log",
+        "actual": "Actual Start from copy on a project made by createProject throws Cannot canonically hash undefined at $.job.DESIRED_SOURCE_COUNT. The handler also bypasses createProject, using timestamp identity and writeProject directly.",
+        "rawOutputSha256": "fe5189bf7bf91639e54f563fe32361ed870a6dcdd7424ed8d7c6fe8f27c9c0ac"
+      },
+      "authorityTrace": [
+        "Start from copy on a valid newly created source",
+        "duplicateCurrentProject copies every UI field including absent optional values",
+        "createUniqueJobId chooses timestamp JOB identity",
+        "persistNewProject bypasses the canonical project creation owner",
+        "Canonical hashing rejects undefined; no clone command receipt exists"
+      ],
+      "dependencyClosure": [
+        "Copy project and archive-last-project fallback",
+        "Schema-owned reusable human input and supplied file relationships",
+        "Canonical metadata allocation and project creation transaction",
+        "Exact retry, payload conflict, source revision/hash checks",
+        "Source and clone recovery points, backup import and metadata receipts",
+        "Canonical input record, saved human input/file/text metadata, live Blob metadata, clone mapping, preparation and commit-time source identity"
+      ],
+      "mandatory": true,
+      "additionalReproduction": {
+        "command": "node reproduce-current-project-copy-authority.mjs --explicit-optional-null",
+        "rawOutput": "current-canonical-project-copy-identity-baseline.log",
+        "rawOutputSha256": "0ad6365c9257040d43c79bbb2cab35ff7553590c2aedb2ad9227f6163d70b5e1",
+        "actual": "With the optional field explicitly null, creation commits a timestamp-based JOB_ID and no project allocation receipt; CANONICAL_COPY_IDENTITY_ORACLE fails."
+      },
+      "inputCustodyReproduction": {
+        "command": "node reproduce-copy-input-custody.mjs",
+        "rawOutput": "current-copy-input-custody-baseline.log",
+        "rawOutputSha256": "191a24748a928dc01541bc568c98ae88493e77ba216083714299bbb55ebe416e",
+        "actual": "A valid source with an allocated canonical input artifact is copied by the actual handler. The copy retains the source artifact reference but has no stored bytes; COPY_INPUT_CUSTODY_ORACLE fails. The original source remains unchanged."
+      },
+      "archiveFallbackReproduction": {
+        "command": "node reproduce-archive-last-project-allocation.mjs",
+        "rawOutput": "current-archive-last-project-allocation-baseline.log",
+        "rawOutputSha256": "3cdbf6ee5d158aace43345c3648ec5e7d4d139cafbbf878b0b6341332334c6c4",
+        "actual": "The actual archive-last-project handler preserves its source but creates a replacement with a timestamp JOB_ID and no project allocation receipt. ARCHIVE_REPLACEMENT_IDENTITY_ORACLE fails."
+      },
+      "permanentRegressionCommands": [
+        "node verify-copy-creation-authority.mjs",
+        "node verify-archive-creation-authority.mjs",
+        "node verify-copy-transaction.mjs",
+        "node verify-creation-presentation-faults.mjs",
+        "node verify-project-lifecycle-full.mjs",
+        "node verify-browser-extra.mjs"
+      ],
+      "executedEvidence": [],
+      "copySourceIdentityReproduction": {
+        "baseCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "uncommittedSource": true,
+        "sourceFile": "project-store.js",
+        "sourceFileSha256": "6b0760151297ebc4cd29c9c09f4ec8ad32b196d1b0309dc1e0b678d8a3098e11",
+        "command": "node verify-copy-transaction.mjs",
+        "rawOutputSha256": "679f42ace3ae598b0efab2d77b283572619324525cd2621b7539048326e33076",
+        "actual": "COPY_SOURCE_IDENTITY_ORACLE fails because inconsistent stored filename is accepted; the source identity is not fully checked before copying.",
+        "classification": "production",
+        "expected": "The canonical input, retained file metadata and stored bytes must describe one exact source identity before preparation and again before the copy commits."
+      }
+    },
+    {
+      "requirementId": "DEF-17",
+      "sourceLocation": "Current task UX-010 and UX-011",
+      "responsibleProductionCode": [
+        {
+          "file": "app-core.js",
+          "symbol": "header / overview / nextActionMarkup / paintStorageHealth / reportActionFailure / announce / noticeText / runBatchMarkup / testExecutionGuidanceMarkup"
+        }
+      ],
+      "observableExpectedBehavior": "The normal workflow displays the project name, current selected-stage action, useful status, actionable errors and recovery. Internal project/record identifiers, machine state codes and diagnostic storage quantities remain available behind details or advanced controls.",
+      "requiredEvidence": [
+        "Execute actual header and primary action rendering against the invariant",
+        "Browser DOM visibility after layout settles at every required viewport",
+        "Internal diagnostic values remain accessible in existing advanced project/action details",
+        "Targeted exposed-identifier fault detected"
+      ],
+      "applicableStages": "All stages and ordinary views",
+      "applicableOperations": [
+        "NAVIGATION",
+        "STATE_CHANGE",
+        "ACCEPTANCE",
+        "RESTORATION",
+        "ERROR_RECOVERY"
+      ],
+      "status": "UNVERIFIED",
+      "classification": "production",
+      "reproduction": {
+        "sourceRevision": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "command": "node reproduce-primary-diagnostics-visibility.mjs",
+        "rawOutput": "current-primary-diagnostics-baseline.log",
+        "rawOutputSha256": "c4d30862364627ef5ec605923214f0d4f8af3c5af0a7662e6a9091f46562750a",
+        "actual": "The production header writes JOB_ID directly into its permanently visible current-project-summary. PRIMARY_INFORMATION_ORACLE fails. CI viewport artifact also shows the visible identifier, machine state and diagnostic quantities."
+      },
+      "browserEvidence": {
+        "runId": 35452763649,
+        "artifactId": 10587526007,
+        "archiveSha256": "447711295ac3a907a74efaa850d85df3db0847958ce937edf845a70de96d71e7",
+        "viewportImage": "393x852/stage-01.png"
+      },
+      "authorityTrace": [
+        "Ordinary project and workflow rendering",
+        "header and nextActionMarkup include raw internal values in primary text",
+        "Primary presentation uses machine/audit values without the existing advanced-detail boundary",
+        "Shared underlying workflow state remains authoritative; only its presentation requires correction"
+      ],
+      "dependencyClosure": [
+        "Header, overview project summary, selected-stage action summary and current action change diagnostics",
+        "Storage-health useful status versus advanced numeric diagnostics",
+        "Actual browser geometry and no-upward-scroll proof after text wrapping changes",
+        "All UI verifiers that depend on primary text or geometry",
+        "Shared operation error and announcement presentation, restoration of previous feedback, and actionable retry/recovery controls"
+      ],
+      "mandatory": true,
+      "errorPresentationReproduction": {
+        "command": "node reproduce-primary-error-diagnostics.mjs",
+        "rawOutput": "current-primary-error-diagnostics-baseline.log",
+        "rawOutputSha256": "b35b1b7dcccd00dd7d996119cd3b679ded0de4d712ab0eea4cc31c82e7adaf6f",
+        "actual": "A valid ownership rejection from the production artifact store is reported through the actual reportActionFailure owner. Both the primary visible error and its announcement expose the internal artifact identity. PRIMARY_ERROR_INFORMATION_ORACLE fails. The underlying cross-project rejection remains correct."
+      },
+      "permanentRegressionCommands": [
+        "node verify-primary-information.mjs",
+        "node verify-primary-error-information.mjs",
+        "node verify-primary-guidance.mjs",
+        "node verify-creation-presentation-faults.mjs",
+        "node verify-browser.mjs"
+      ],
+      "executedEvidence": [],
+      "guidanceReproduction": {
+        "sourceCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "command": "APP_SOURCE=<exact-head-app-core.js> node verify-primary-guidance.mjs",
+        "rawOutputSha256": "2fea9a575aebba1ad34e9cc8952baaa2d0a774aa3bc57ce7538c97f7dd099be7",
+        "actual": "PRIMARY_GUIDANCE_ORACLE detects internal identities in primary notices, run selectors and test guidance over every registered stage/operation with the authoritative Stage 19 fixture.",
+        "bounds": "Synthetic rendered markup, preceding state constructed through authoritative builders; browser layout verified separately."
+      }
+    },
+    {
+      "requirementId": "DEF-18",
+      "sourceLocation": [
+        "Controlling specification Stage 21; products field ownership and closed field types",
+        "Current task sections 4A, 10, 13 and UX-017"
+      ],
+      "responsibleProductionCode": {
+        "file": "workflow-engine.js; prompt-engine.js; project-store.js",
+        "symbol": "reserveProductExecution; preparePromptContext; reserveAndBuildPromptRecord; writeProject"
+      },
+      "observableExpectedBehavior": "Preparing Stage 21 handoff reserves and durably saves only application-owned product fields; external execution observations remain absent until a valid response is accepted. The handoff exports successfully and the reserved state survives reload and restoration without claiming completed execution.",
+      "requiredEvidence": [
+        "Valid preceding workflow built through authoritative controls/builders",
+        "Persistence before response acceptance",
+        "Absent agent-owned observations in reservation",
+        "Valid external response commits its own observations",
+        "Injected premature observations rejected by ownership oracle"
+      ],
+      "applicableStages": [
+        21
+      ],
+      "applicableOperations": [
+        "First execution",
+        "Repeated execution",
+        "Handoff export",
+        "Persistence",
+        "Reload",
+        "Restoration",
+        "Response acceptance"
+      ],
+      "status": "UNVERIFIED",
+      "mandatory": true,
+      "executedEvidence": [],
+      "failureClassification": "production",
+      "reproduction": {
+        "sourceCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "runId": 35452763649,
+        "jobId": 105922684756,
+        "command": "node verify-complete-operator-journey.mjs",
+        "actual": "Stage 21 export fails: products BASELINE_MATERIALS and EXECUTION_TIMESTAMPS Expected STRING; application reservation authored agent-owned observations.",
+        "rawOutputSha256": "f626d41571f7d9f839f03d20720e2c4ea8333d9eba0fa11b827b94cffb1b8072"
+      },
+      "authorityTrace": [
+        "Export Stage 21 after accepted Stage 20",
+        "Prompt preparation reserves product identity",
+        "reserveProductExecution prepopulates agent-owned material/timestamps",
+        "Persistence enforces STRING definitions and rejects reserved version"
+      ],
+      "dependencyClosure": [
+        "Products ownership and reservation",
+        "Prompt context and exports",
+        "Persistence and recovery",
+        "Response completion and product bytes",
+        "Full lifecycle and complete operator browser journey"
+      ],
+      "permanentRegressionCommands": [
+        "node verify-product-reservation-persistence.mjs",
+        "node verify-creation-presentation-faults.mjs",
+        "node verify-full-cycle.mjs",
+        "node verify-complete-operator-journey.mjs"
+      ]
+    },
+    {
+      "requirementId": "VER-008",
+      "sourceLocation": "Current task sections 4B, 4E, 9B and UX-010/UX-011",
+      "responsibleProductionCode": {
+        "file": "verify-browser.mjs",
+        "symbol": "Browser assertion over operator-visible state"
+      },
+      "observableExpectedBehavior": "Normal operator text excludes internal identifiers while the exact agent-facing instruction retains its required context bindings. The oracle checks the intended text region after actual acceptance and detects an injected primary-text leak.",
+      "requiredEvidence": [
+        "Original CI failure output",
+        "Independent behavior reproduction",
+        "Corrected actual-control browser path",
+        "Targeted oracle fault detection"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": [
+        "Initial acceptance",
+        "Replacement acceptance",
+        "Cancellation",
+        "Next-stage handoff"
+      ],
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "verifier",
+      "reproduction": {
+        "sourceCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "runId": 35452763649,
+        "jobId": 105922684756,
+        "rawOutputSha256": "f626d41571f7d9f839f03d20720e2c4ea8333d9eba0fa11b827b94cffb1b8072"
+      },
+      "authorityTrace": [
+        "Actual first Stage 2 acceptance advances selectedStage to 3",
+        "The required Stage 3 agent prompt contains the accepted source identity",
+        "The failing whole-body text assertion includes the generated-prompt preformatted instruction",
+        "Actual rendering reproduction locates the source identity exclusively in #generated-prompt"
+      ],
+      "dependencyClosure": [
+        "verify-browser.mjs",
+        "First acceptance and actual replacement browser controls",
+        "Primary information visibility",
+        "Agent instruction integrity"
+      ]
+    },
+    {
+      "requirementId": "VER-009",
+      "sourceLocation": "Current task sections 4B, 4E, 9B and UX-010/UX-011",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs",
+        "symbol": "Browser assertion over operator-visible state"
+      },
+      "observableExpectedBehavior": "The initial valid response with no accepted or downstream work commits without replacement confirmation. A real replacement, built from preceding accepted controls, requires an exact in-page confirmation; cancellation preserves accepted work.",
+      "requiredEvidence": [
+        "Original CI failure output",
+        "Independent behavior reproduction",
+        "Corrected actual-control browser path",
+        "Targeted oracle fault detection"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": [
+        "Initial acceptance",
+        "Replacement acceptance",
+        "Cancellation",
+        "Next-stage handoff"
+      ],
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "verifier",
+      "reproduction": {
+        "sourceCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "runId": 35452763649,
+        "jobId": 105922684756,
+        "rawOutputSha256": "f626d41571f7d9f839f03d20720e2c4ea8333d9eba0fa11b827b94cffb1b8072"
+      },
+      "authorityTrace": [
+        "CI returns to reloaded initial Stage 2 proposal",
+        "No accepted source exists before this proposal",
+        "Verifier waits for replacement confirmation contrary to actual-work policy",
+        "Retained-project acceptance runtime independently proves first acceptance commits once without confirmation"
+      ],
+      "dependencyClosure": [
+        "verify-browser-extra.mjs",
+        "First acceptance and actual replacement browser controls",
+        "Primary information visibility",
+        "Agent instruction integrity"
+      ]
+    },
+    {
+      "requirementId": "VER-010",
+      "sourceLocation": "Current task sections 4A, 4C and 4E; DEF-15 and DEF-17 dependency closure",
+      "responsibleProductionCode": {
+        "file": "test-artifact-fixtures.mjs; verify-full-cycle.mjs; verify-ingestion.mjs; verify-native-proof-journey.mjs; verify-operator-counterpart.mjs; verify-file-first-operator.mjs; verify-stage28-artifact-delivery-intent.mjs",
+        "symbol": "artifactFixtureId; authoritative canonical fixture construction and semantic outcome assertions"
+      },
+      "observableExpectedBehavior": "Positive test fixtures obtain canonical file identities from the production allocator and pass the same identities to every runtime, ingestion, delivery and recovery consumer. Operator feedback assertions require visible acceptance status while exact internal identities remain behind details. Production behavior is independently exercised after correcting a verifier.",
+      "requiredEvidence": [
+        "Preserved original failures",
+        "Production allocation and primary-information negative/fault regressions",
+        "All affected ingestion, full lifecycle, native-proof, counterpart, delivery and wrapper suites executed successfully"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": [
+        "FILE_INTAKE",
+        "RESPONSE_VALIDATION",
+        "ACCEPTANCE",
+        "NATIVE_EXECUTION",
+        "DELIVERY",
+        "RECOVERY"
+      ],
+      "status": "UNVERIFIED",
+      "mandatory": true,
+      "classification": "verifier",
+      "executedEvidence": [],
+      "authorityTrace": [
+        "Canonical allocation and primary information presentation are corrected in production",
+        "Old positive fixtures retain fabricated artifact identifiers or assert an identifier in primary feedback",
+        "Downstream consumers reuse those assumptions in execution and delivery",
+        "The shared canonical fixture builder supplies actual identities; status assertions use the specified visible behavior"
+      ],
+      "dependencyClosure": [
+        "verify-file-first-operator.mjs and its ingestion/schema/semantics/route/definition consumers",
+        "verify-ingestion.mjs and execution-report wrappers",
+        "verify-full-cycle.mjs, native-proof and its fault case, Stage 28 delivery boundary, operator counterpart and its fault case",
+        "All VM fixtures using canonical artifact creation",
+        "Stage 28 order-independence positive fixture must reach its accepted release using allocated canonical product files and the real delivery-candidate freeze; a manually assembled candidate is not a valid positive case."
+      ],
+      "reproductions": [
+        {
+          "rawOutputSha256": "9ca6002e95fed2d496847b4b500cf16fa5d9e9bbe9f3c60c79eab3ca61f54fbf",
+          "command": "Workflow schema/ownership step",
+          "actual": "Primary saved-response assertion expects obsolete OLD-CHANGE identifier"
+        },
+        {
+          "rawOutputSha256": "1c05317c91c467139a2caa9faf0f7af2db0151e9c99366e1948a7384d8ee901d",
+          "command": "node verify-native-proof-journey.mjs with disposable fixture correction",
+          "actual": "A first verifier correction used a helper-local variable outside its scope; corrected consumer reads the actual shared allocation identity"
+        },
+        {
+          "command": "node verify-execution-reports.mjs",
+          "actual": "An ingestion consumer repeats the obsolete primary-feedback assertion",
+          "rawOutputSha256": "ac4b1484f59a6bcb913776a8207c8a0986547f5864480be963e77625a718b183"
+        },
+        {
+          "command": "node verify-ingestion.mjs with disposable fixture migration",
+          "actual": "Remaining dynamically constructed returned artifact identities have no canonical allocation receipt",
+          "rawOutputSha256": "cba9c115b78125842af1167e470f5204c6a24fea8e9014f205a37be9f1e1c8d8"
+        },
+        {
+          "command": "Workflow schema/ownership step",
+          "actual": "The saved-response oracle expects an obsolete OLD-CHANGE identifier in primary feedback.",
+          "rawOutputSha256": "9ca6002e95fed2d496847b4b500cf16fa5d9e9bbe9f3c60c79eab3ca61f54fbf"
+        },
+        {
+          "command": "node reproduce-stage28-positive-allocation.mjs",
+          "classification": "verifier",
+          "actual": "The positive second-file fixture fails the production allocation guard with ARTIFACT_ALLOCATION_REQUIRED; its constructed delivery candidate bypasses the authoritative freeze.",
+          "rawOutputSha256": "54d36764585b0067ef0dfef9e39a0d402d391536462871e8170fd470aca00178"
+        },
+        {
+          "command": "node verify-stage28-artifact-delivery-intent.mjs",
+          "classification": "verifier",
+          "actual": "The multi-file fixture supplied an unsorted selection-set hash; the actual freeze correctly rejected it. The fixture now normalizes the selected set before binding the human decision.",
+          "rawOutputSha256": "146f580d66dbce474d1c5ddd92bfa91c10586dbb3c0566a52a61fe6a8909bf09"
+        }
+      ]
     }
   ],
   "currentReview": {

@@ -552,10 +552,25 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
 }
 
 async function persistProjectPromptFiles(project){await persistPromptContextRecords((project.projectData?.generatedPrompts||[]).filter(record=>!record.invalidatedBy&&record.promptEngineVersion===globalThis.closedLoopPromptEngine?.version),project);}
-async function writeProjectRow(project,tx,{expectedProjectRevision=null,incrementRevision=true,createOnly=false,skipUnchanged=false,selectProject=true,operationId=null,preparedHistory=null,expectedStateSha256=null,projectAllocation=null}={}){
+async function writeProjectRow(project,tx,{expectedProjectRevision=null,incrementRevision=true,createOnly=false,skipUnchanged=false,selectProject=true,operationId=null,preparedHistory=null,expectedStateSha256=null,projectAllocation=null,creation=null}={}){
   const id=projectIdentity(project);if(!id)throw new Error('A project without a JOB_ID cannot be committed.');
   const store=tx.objectStore(PROJECTS),prior=await projectRowWithOperations(tx,id),currentRevision=Number(prior?.revision||0);
   if(createOnly&&prior)throw storageError(`Project ${id} already exists and was not replaced.`,'PROJECT_ALREADY_EXISTS');
+  if(creation){
+    if(!createOnly||!projectAllocation||creation.receipt.resultingJobId!==id)throw storageError('The copy is not bound to this project creation.','CLONE_BINDING_INVALID');
+    const source=await projectRowWithOperations(tx,creation.receipt.sourceJobId),meta=tx.objectStore(META),files=tx.objectStore(ARTIFACTS);
+    if(!source||source.projectSha256!==creation.receipt.sourceProjectSha256)throw storageError('The source project changed before the copy could be saved. Select the current source and retry.','STALE_PROJECT_REVISION');
+    const previous=await request(meta.get(creation.receiptKey));
+    if(previous)throw storageError('This copy command already completed. Retry the same command to retrieve its result.','CLONE_ALREADY_COMMITTED');
+    validateCloneReceipt(creation.receiptKey,creation.receipt,id);
+    for(const mapping of creation.receipt.mappingManifest.files){
+      const sourceFile=await request(files.get(mapping.sourceArtifactId)),copied=creation.artifacts.find(row=>row.artifactId===mapping.artifactId);
+      if(!sameCopiedFileIdentity(sourceFile,{...mapping,artifactId:mapping.sourceArtifactId})||sourceFile.jobId!==source.jobId||!sameCopiedFileIdentity(copied,mapping)||copied.jobId!==id||await request(files.get(mapping.artifactId)))throw storageError('A source file changed before the copy could be saved. Restore or reselect the source file and retry.','CLONE_FILE_CHANGED');
+      files.put(copied);
+    }
+    await commitHistory(tx,creation.sourceHistory);
+    meta.put({key:creation.receiptKey,value:creation.receipt,updatedAt:now()});
+  }
   if(projectAllocation){
     const allocationStore=tx.objectStore(META),stored=(await request(allocationStore.get('canonicalProjectAllocation')))?.value;
     if(Number(stored?.generation||0)!==projectAllocation.expectedGeneration)throw storageError('Another project was created while this one was being prepared.','PROJECT_ALLOCATION_CONFLICT');
@@ -628,7 +643,8 @@ async function prepareProjectWrite(project,options={}){
   engine.reconcileReservationRevisions(next);
   engine.recalculate(next);assertMutationConfirmation(prior,project,options.mutationConfirmation,next);assertProjectIntegrity(next);
   await persistProjectPromptFiles(next);
-  const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView});
+  const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,artifactRows:options.creation?.artifacts||null});
+  if(options.creation)preparedHistory.state.commandReceipts={...(preparedHistory.state.commandReceipts||{}),[options.creation.receiptKey]:clone(options.creation.receipt)};
   return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior?.projectSha256||null,preparedHistory}};
 }
 async function writeProject(project,options={}){
@@ -636,27 +652,77 @@ async function writeProject(project,options={}){
   if(useStoreWorker())return requestStoreWorker('WRITE_PROJECT',[project,options]);
   if(options.operational)return writeOperationalProject(project,options);
   if(!projectIdentity(project))throw new Error('A project without a JOB_ID cannot be committed.');
-  const prepared=await prepareProjectWrite(project,options);fault('before-project-transaction');const tx=await openTransaction([PROJECTS,META],'readwrite');
+  const prepared=await prepareProjectWrite(project,options);fault('before-project-transaction');const tx=await openTransaction(options.creation?[PROJECTS,ARTIFACTS,META]:[PROJECTS,META],'readwrite');
   try{const next=await writeProjectRow(prepared.project,tx,prepared.options);fault('before-transaction-commit');await complete(tx);notifyProjectChange(next);return next;}catch(error){try{tx.abort();}catch{}throw error;}
 }
 
-async function createProject({commandId=crypto.randomUUID()}={}){
+function validateCloneReceipt(key,receipt,jobId){
+  const fields=['schema','commandId','sourceJobId','sourceProjectSha256','payloadSha256','resultingJobId','mappingManifest','mappingManifestSha256','result'];
+  const payload={operation:'CLONE',sourceJobId:receipt?.sourceJobId,sourceProjectSha256:receipt?.sourceProjectSha256};
+  if(!receipt||key!=='cloneReceipt:'+receipt.commandId||receipt.schema!=='closed-loop-clone-command-receipt/1'||!receipt.commandId||!receipt.sourceJobId||!receipt.resultingJobId||receipt.sourceJobId===receipt.resultingJobId||![receipt.sourceJobId,receipt.resultingJobId].includes(jobId)||receipt.result!==true||Object.keys(receipt).some(name=>!fields.includes(name))||!fields.every(name=>Object.hasOwn(receipt,name))||!/^[a-f0-9]{64}$/.test(receipt.sourceProjectSha256)||receipt.payloadSha256!==hash.hashRegistered('CLONE_COMMAND',payload)||receipt.mappingManifestSha256!==hash.hashRegistered('CLONE_MAPPING_MANIFEST',receipt.mappingManifest))throw storageError('The saved copy receipt has an invalid binding.','CLONE_BINDING_INVALID');
+  const manifest=receipt.mappingManifest;
+  if(!manifest||manifest.schema!=='closed-loop-clone-mapping/1'||manifest.sourceJobId!==receipt.sourceJobId||manifest.resultingJobId!==receipt.resultingJobId||Object.keys(manifest).some(name=>!['schema','sourceJobId','resultingJobId','files'].includes(name))||!Array.isArray(manifest.files))throw storageError('The saved copy mapping is invalid.','CLONE_BINDING_INVALID');
+  const old=new Set(),fresh=new Set();
+  for(const row of manifest.files){if(!row||!row.sourceArtifactId||!/^ARTIFACT-[0-9a-v]{32}$/.test(row.artifactId)||row.sourceArtifactId===row.artifactId||old.has(row.sourceArtifactId)||fresh.has(row.artifactId)||!/^[a-f0-9]{64}$/.test(row.sha256)||!Number.isSafeInteger(row.byteSize)||row.byteSize<0||!row.filename||!row.mediaType||Object.keys(row).some(name=>!['sourceArtifactId','artifactId','sha256','byteSize','filename','mediaType'].includes(name)))throw storageError('The saved copy file mapping is invalid.','CLONE_BINDING_INVALID');old.add(row.sourceArtifactId);fresh.add(row.artifactId);}
+  return true;
+}
+function sameCopiedFileIdentity(actual,expected){return Boolean(actual&&expected&&['artifactId','filename','mediaType','byteSize','sha256'].every(field=>actual[field]===expected[field]));}
+async function prepareCopiedInputs(project,source,commandId,payloadSha256){
+  const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,artifacts=[],mapping=[];
+  for(const field of schema.HUMAN_INTAKE_FIELDS)if(Object.hasOwn(source.job,field)&&source.job[field]!==undefined)project.job[field]=clone(source.job[field]);
+  project.job.JOB_TITLE=source.job.JOB_TITLE?`${source.job.JOB_TITLE} — copy`:'Project copy';
+  const inputs={objective:'EXACT_USER_OBJECTIVE_VERBATIM',suppliedMaterials:'SUPPLIED_MATERIALS_INVENTORY',requiredOutputFormat:'REQUIRED_OUTPUT_FORMAT',deadlineOrTemporalScope:'DEADLINE_OR_TEMPORAL_SCOPE',desiredSourceCount:'DESIRED_SOURCE_COUNT',knownAuthorities:'KNOWN_AUTHORITATIVE_SOURCES',availableTools:'AVAILABLE_TOOLS',prohibitedActions:'PROHIBITED_ACTIONS'};
+  project.projectData.userEntered={suppliedArtifactFiles:{},suppliedArtifactText:{},explicitRequirements:String(project.job.EXPLICIT_USER_REQUIREMENTS||'').split(/\r?\n/).filter(Boolean)};
+  for(const [key,field] of Object.entries(inputs))if(project.job[field]!==undefined)project.projectData.userEntered[key]=clone(project.job[field]);
+  for(const [oldId,metadata] of Object.entries(source.projectData.userEntered?.suppliedArtifactFiles||{}).sort(([a],[b])=>a<b?-1:a>b?1:0)){
+    const original=await getArtifact(oldId),canonical=engine.records(source,'artifacts',{active:false}).find(row=>engine.recordId(row,'artifacts')===oldId);
+    const identity=canonical?{artifactId:oldId,filename:engine.recordValue(canonical,'FILENAME'),mediaType:engine.recordValue(canonical,'TYPE'),byteSize:Number(engine.recordValue(canonical,'BYTE_SIZE')),sha256:engine.recordValue(canonical,'SHA256')}:null;
+    if(!identity||!sameCopiedFileIdentity(original,identity)||!sameCopiedFileIdentity(metadata,identity)||original.jobId!==source.job.JOB_ID||!(original.blob instanceof Blob)||original.byteSize!==original.blob.size||await hash.sha256Bytes(original.blob)!==original.sha256)throw storageError('A supplied input file is missing or corrupt. Restore the source from History or a verified backup before copying.','CLONE_SOURCE_FILE_INVALID');
+    const artifactId=engine.allocateId(project,'artifacts',{commandId,targetSlot:oldId,idempotencyKey:'CLONE_INPUT',payload:{payloadSha256,sha256:original.sha256,byteSize:original.byteSize,filename:original.filename}}),lineage={stage:1,role:'STAGE_ARTIFACT',logicalPath:original.filename,origin:'COPIED_HUMAN_INPUT'},row={artifactId,jobId:project.job.JOB_ID,blob:original.blob,filename:original.filename,mediaType:original.mediaType,byteSize:original.byteSize,sha256:original.sha256,lineage,createdAt:now()};
+    artifacts.push(row);mapping.push({sourceArtifactId:oldId,artifactId,sha256:row.sha256,byteSize:row.byteSize,filename:row.filename,mediaType:row.mediaType});
+    engine.registerArtifactBytes(project,{stage:1,artifactId,filename:row.filename,mediaType:row.mediaType,byteSize:row.byteSize,sha256:row.sha256,lineage});
+    const file={artifactId,filename:row.filename,sha256:row.sha256,byteSize:row.byteSize,mediaType:row.mediaType};
+    project.projectData.userEntered.suppliedArtifactFiles[artifactId]=file;
+    const text=source.projectData.userEntered?.suppliedArtifactText?.[oldId];
+    if(text){if(!sameCopiedFileIdentity(text,identity)||typeof text.text!=='string'||await row.blob.text()!==text.text)throw storageError('A supplied input text no longer matches its file. Restore the source input before copying.','CLONE_SOURCE_FILE_INVALID');project.projectData.userEntered.suppliedArtifactText[artifactId]={...file,text:text.text};}
+    project.stages[1].authorizedFiles.push({artifactId,name:row.filename,type:row.mediaType,size:row.byteSize,sha256:row.sha256,stage:'STAGE 01',role:globalThis.closedLoopCore.STAGES[0].role,retainedBytes:true,availability:'Copied bytes verified and retained with this project.',addedAt:now()});
+  }
+  engine.recordHumanInputVersion(project,schema.HUMAN_INTAKE_FIELDS,'HUMAN_OPERATOR');
+  return {artifacts,mapping};
+}
+async function createProject({commandId=crypto.randomUUID(),sourceJobId=null,expectedSourceSha256=null}={}){
   const command=String(commandId||'');if(!command)throw storageError('A project creation command identity is required.','PROJECT_COMMAND_REQUIRED');
+  const sourceId=sourceJobId===null?null:String(sourceJobId),payload=sourceId?{operation:'CLONE',sourceJobId:sourceId,sourceProjectSha256:expectedSourceSha256}:{operation:'CREATE_PROJECT'},payloadSha256=sourceId?hash.hashRegistered('CLONE_COMMAND',payload):hash.sha256Value(payload),receiptKey='cloneReceipt:'+command;
+  if(sourceId&&!/^[a-f0-9]{64}$/.test(String(expectedSourceSha256||'')))throw storageError('Select the exact saved source version before copying.','CLONE_SOURCE_REQUIRED');
   const engine=globalThis.closedLoopWorkflowEngine,family=engine.INFRA_ID_FAMILIES['projects:JOB'];
   for(let attempt=0;attempt<8;attempt++){
+    const completedCopy=await metaGet(receiptKey);
+    if(completedCopy){validateCloneReceipt(receiptKey,completedCopy,sourceId);if(completedCopy.payloadSha256!==payloadSha256)throw storageError('This copy command was already used for a different source version.','IDEMPOTENCY_PAYLOAD_CONFLICT');const retained=await readProject(completedCopy.resultingJobId);if(retained)return retained;throw storageError('This copy already completed. Restore that copy from History or its backup.','CREATED_PROJECT_RETAINED');}
     const prior=await metaGet('canonicalProjectAllocation')||{generation:0,sequence:0,receipts:[]};
     const existing=prior.receipts.find(row=>row.commandId===command);
-    if(existing){const project=await readProject(existing.resultingId);if(project)return project;throw storageError('This creation already completed. Its project is available in History.','CREATED_PROJECT_RETAINED');}
+    if(existing){if(existing.payloadSha256!==payloadSha256)throw storageError('This creation command was already used with different content.','IDEMPOTENCY_PAYLOAD_CONFLICT');const project=await readProject(existing.resultingId);if(project)return project;throw storageError('This creation already completed. Its project is available in History.','CREATED_PROJECT_RETAINED');}
+    const source=sourceId?await readProject(sourceId):null;
+    if(sourceId&&(!source||source.projectSha256!==expectedSourceSha256))throw storageError('The source project changed. Select its current saved version before copying.','STALE_PROJECT_REVISION');
     const allocationSequence=Number(prior.sequence)+1;
     if(!Number.isSafeInteger(allocationSequence))throw storageError('The project allocation sequence is exhausted.','ALLOCATION_SEQUENCE_INVALID');
     const retainedIds=new Set([...(await listProjectSummaries()).map(projectIdentity),...(await listRecoverableProjects()).map(row=>row.jobId)]);
     const known=new Map(prior.receipts.map(row=>[row.resultingId,row.inputTuple]));
     const allocation=hash.allocateCanonicalIdWithCollisionCheck({familyPrefix:family.prefix,familyNamespace:family.familyNamespace,jobNamespace:'closed-loop-global/project-metadata',commandId:command,targetSlot:'',parentId:'',allocationSequence},{exists:id=>known.get(id)||(retainedIds.has(id)?true:null)});
     const receipt={schema:'closed-loop-allocation-receipt/1',algorithmVersion:hash.idVersion,familyPrefix:family.prefix,familyNamespace:family.familyNamespace,jobNamespace:allocation.payload.jobNamespace,collection:'projects',commandId:command,targetSlot:'',parentId:'',inputTuple:allocation.payload,allocationSequence,collisionCounter:allocation.collisionCounter,collisionCheck:'CHECKED_AGAINST_ACTIVE_AND_RETAINED_PROJECT_IDENTITIES',resultingId:allocation.id,projectRevision:0,revisionMeaning:'ALLOCATION_INPUT',retryIdentity:hash.sha256Value({commandId:command,operation:'CREATE_PROJECT'}),payloadSha256:hash.sha256Value({operation:'CREATE_PROJECT'})};
-    const project=globalThis.closedLoopCore.createBlankState(allocation.id);engine.ensureShape(project);project.projectData.allocationReceipts.push(receipt);project.job.DATE_OPENED=now();project.activeView='Project';engine.createNewJobReset(project);
+    receipt.payloadSha256=payloadSha256;
+    const project=globalThis.closedLoopCore.createBlankState(allocation.id);engine.ensureShape(project);project.projectData.allocationReceipts.push(receipt);project.job.DATE_OPENED=now();project.activeView='Project';
+    let creation=null;
+    if(source){
+      const {artifacts,mapping}=await prepareCopiedInputs(project,source,command,payloadSha256),mappingManifest={schema:'closed-loop-clone-mapping/1',sourceJobId:sourceId,resultingJobId:allocation.id,files:mapping};
+      const cloneReceipt={schema:'closed-loop-clone-command-receipt/1',commandId:command,sourceJobId:sourceId,sourceProjectSha256:expectedSourceSha256,payloadSha256,resultingJobId:allocation.id,mappingManifest,mappingManifestSha256:hash.hashRegistered('CLONE_MAPPING_MANIFEST',mappingManifest),result:true};
+      const sourceState=await metaGet(historyKey(sourceId));if(!sourceState)throw storageError('Save a recovery checkpoint for the source before copying.','HISTORY_CHECKPOINT_REQUIRED');
+      const sourceHistory={state:{...clone(sourceState),generation:Number(sourceState.generation)+1,commandReceipts:{...(sourceState.commandReceipts||{}),[receiptKey]:cloneReceipt}},expectedGeneration:Number(sourceState.generation),snapshots:[],newFiles:[]};
+      creation={receiptKey,receipt:cloneReceipt,artifacts,sourceHistory};
+    }
+    engine.createNewJobReset(project,{humanInputReused:Boolean(source),reusedArtifactIds:creation?.artifacts.map(row=>row.artifactId)||[]});
     const state={generation:prior.generation+1,sequence:allocationSequence,receipts:[...prior.receipts,receipt]};
-    try{return await writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true,projectAllocation:{expectedGeneration:prior.generation,state}});}
-    catch(error){if(!['PROJECT_ALLOCATION_CONFLICT','PROJECT_ALREADY_EXISTS'].includes(error?.code))throw error;}
+    try{return await writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true,creation,projectAllocation:{expectedGeneration:prior.generation,state}});}
+    catch(error){if(!['PROJECT_ALLOCATION_CONFLICT','PROJECT_ALREADY_EXISTS','CLONE_ALREADY_COMMITTED'].includes(error?.code))throw error;}
   }
   throw storageError('Project creation could not obtain a current allocation. Retry after the other creation finishes.','PROJECT_ALLOCATION_CONFLICT');
 }
@@ -1045,7 +1111,7 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     }
     for(const [session,info] of Object.entries(incoming.sessions||{})){if(!incoming.entries.some(e=>e.id===info.checkpointId))throw storageError('Backup session start is unavailable.','HISTORY_VERSION_MISMATCH');if(merged.sessions[session]&&merged.sessions[session].checkpointId!==info.checkpointId)throw storageError('Backup session start conflicts with retained History.','IMMUTABLE_HISTORY_CONFLICT');merged.sessions[session]=clone(info);}
     for(const [command,transfer] of Object.entries(incoming.transfers||{})){const prior=merged.transfers?.[command];if(prior&&prior.intentSha256!==transfer.intentSha256)throw storageError('Backup external-operation history conflicts with retained evidence.','EXTERNAL_OPERATION_CONFLICT');merged.transfers=merged.transfers||{};if(!prior||!['SUCCEEDED','FAILED'].includes(prior.result))merged.transfers[command]=clone(transfer);}
-    for(const [key,receipt] of Object.entries(incoming.commandReceipts||{})){if(key!=='deleteReceipt:'+receipt.idempotencyKey||receipt.jobId!==id||receipt.result!==true||!Number.isFinite(Date.parse(receipt.retentionExpiry))||Object.keys(receipt).some(key=>!['jobId','commandId','idempotencyKey','payloadSha256','result','committedMetadataSequence','retentionExpiry'].includes(key)))throw storageError('Backup command receipt is incompatible.','HISTORY_VERSION_MISMATCH');const existing=merged.commandReceipts?.[key];if(existing&&hash.sha256Value(existing)!==hash.sha256Value(receipt))throw storageError('Backup command receipt conflicts with retained execution history.','IDEMPOTENCY_PAYLOAD_CONFLICT');merged.commandReceipts={...(merged.commandReceipts||{}),[key]:clone(receipt)};}
+    for(const [key,receipt] of Object.entries(incoming.commandReceipts||{})){if(receipt?.schema==='closed-loop-clone-command-receipt/1')validateCloneReceipt(key,receipt,id);else if(key!=='deleteReceipt:'+receipt.idempotencyKey||receipt.jobId!==id||receipt.result!==true||!Number.isFinite(Date.parse(receipt.retentionExpiry))||Object.keys(receipt).some(key=>!['jobId','commandId','idempotencyKey','payloadSha256','result','committedMetadataSequence','retentionExpiry'].includes(key)))throw storageError('Backup command receipt is incompatible.','HISTORY_VERSION_MISMATCH');const existing=merged.commandReceipts?.[key];if(existing&&hash.sha256Value(existing)!==hash.sha256Value(receipt))throw storageError('Backup command receipt conflicts with retained execution history.','IDEMPOTENCY_PAYLOAD_CONFLICT');merged.commandReceipts={...(merged.commandReceipts||{}),[key]:clone(receipt)};}
     merged.activeId=incoming.activeId;
   }else if(verifiedArtifacts.some(a=>a.archiveKind))throw storageError('Backup archive members have no governing History manifest.','HISTORY_VERSION_MISMATCH');
   const next=clone(project);next.revision=Math.max(Number(priorProject?.revision||0),Number(project.revision||0))+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;

@@ -139,7 +139,7 @@ function bindAttachmentSlots(project,{rawResponseId,files=[]}={}){
   const prompt=promptRecordFor(next,{instructionId:raw.promptInstructionId}),slots=attachmentSlotPlan(next,strictParse(raw.completeRawResponse),prompt),ids=new Set(slots.map(slot=>slot.attachmentSlotId)),seen=new Set(),artifacts=new Set();
   for(const file of safe(files)){
     if(!ids.has(file?.attachmentSlotId)||seen.has(file.attachmentSlotId)||!file.artifactId||artifacts.has(file.artifactId))throw new Error('Returned files require one explicit, unique current slot and artifact identity per selection.');
-    seen.add(file.attachmentSlotId);artifacts.add(file.artifactId);
+    workflow.assertArtifactAllocation(next,String(file.artifactId));seen.add(file.attachmentSlotId);artifacts.add(file.artifactId);
   }
   raw.files=clone(files);
   workflow.addHistory(next,'RETURNED_FILES_SLOT_MAPPED',{stage:raw.stage,rawResponseId:raw.rawResponseId,promptInstructionId:raw.promptInstructionId,rawResponseSha256:raw.sha256,files:clone(files)});
@@ -309,6 +309,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
   const slotIds=new Set(attachmentSlots.map(slot=>slot.attachmentSlotId));
   const declaredSlots=new Set(safe(envelope.attachments).map(item=>item?.attachmentSlotId)),selectedArtifacts=new Set();
   for(const file of suppliedFiles){
+    try{workflow.assertArtifactAllocation(project,String(file?.artifactId||file?.id||''));}catch(error){issues.push(issue(error.code||'ARTIFACT_ALLOCATION_REQUIRED','/attachments',error.message));}
     if(!file?.attachmentSlotId||!declaredSlots.has(file.attachmentSlotId))issues.push(issue('UNEXPECTED_RETURNED_FILE','/attachments','Every selected file must belong to one declared current returned slot. Extra or unassigned selected files are rejected.'));
     else if(!slotIds.has(file.attachmentSlotId))issues.push(issue('UNKNOWN_ATTACHMENT_SLOT','/attachments','Returned-file mapping belongs to an unknown or stale slot.'));
     const id=String(file?.artifactId||file?.id||'');if(id&&selectedArtifacts.has(id))issues.push(issue('DUPLICATE_RETURNED_ARTIFACT','/attachments','One selected artifact cannot fill multiple returned slots.'));if(id)selectedArtifacts.add(id);
