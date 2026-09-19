@@ -635,7 +635,7 @@
     },
     {
       "requirementId": "PROHIBITION-REPAIR-TRANSPORT",
-      "sourceLocation": "Current user task section 2 \u2014 No repair-transport artifacts",
+      "sourceLocation": "Current user task section 2 — No repair-transport artifacts",
       "responsibleProductionCode": {
         "file": "repository candidate tree; verify.mjs",
         "symbol": "repairTransportPatterns / walkRepairTransport"
@@ -656,7 +656,7 @@
       "requirementId": "D-1",
       "sourceLocation": "Current user task section 6, D-1",
       "responsibleProductionCode": "operator decision and responsible production owner",
-      "observableExpectedBehavior": "Use one configurable loading threshold default from 1000\u20132000 ms, measure raw workflow latency, and submit threshold plus measured distribution for operator confirmation.",
+      "observableExpectedBehavior": "Use one configurable loading threshold default from 1000–2000 ms, measure raw workflow latency, and submit threshold plus measured distribution for operator confirmation.",
       "requiredEvidence": [
         "Exact outstanding decision and evidence for operator confirmation"
       ],
@@ -750,7 +750,7 @@
         "file": "verify-browser.mjs",
         "symbol": "Stage 02 acceptance synchronization oracle"
       },
-      "observableExpectedBehavior": "The browser verifier synchronizes on committed application state and checks canonical SOURCE_ID in authoritative state; it does not require an internal identifier to be rendered in normal operator text.",
+      "observableExpectedBehavior": "The browser verifier synchronizes on completion of the actual acceptance action, rejects any unexpected replacement confirmation, then inspects canonical source state and its application-assigned SOURCE_ID. It does not use an internal identifier as the synchronization primitive.",
       "requiredEvidence": [
         "Run-5889 raw failure",
         "Repaired browser verifier succeeds while canonical SOURCE_ID remains hidden from ordinary operator text"
@@ -772,6 +772,13 @@
           "runId": 35419893155,
           "case": "verify-browser.mjs Stage 02 canonical source state oracle",
           "actual": "Verifier read SOURCE_ID from source.SOURCE_ID/source.id although canonical records store SOURCE_ID in record.fields and workflow-engine recordId is the shared authority."
+        },
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "004e53e11f4ae6b46d0279ace8b201353e633831",
+          "runId": 35426991714,
+          "case": "verify-browser.mjs Stage 02 acceptance synchronization oracle",
+          "actual": "Run 5892 timed out while polling SOURCE_ID after the click helper had already waited for operator-action idle. The verifier now synchronizes on proposal/confirmation UI completion and then asserts exact committed source state, so a production failure is reported directly instead of as an ambiguous polling timeout."
         }
       ],
       "mandatory": true
@@ -822,14 +829,14 @@
       "requirementId": "DEF-12",
       "sourceLocation": "Current user task sections 3, 4A, 4C, 9C/D/E UX-013 and 10; controlling specification History destination and retained unaccepted-candidate restoration requirements",
       "responsibleProductionCode": {
-        "file": "app-core.js",
-        "symbol": "captureView / document input preservation / History destination controls"
+        "file": "app-core.js + project-store.js",
+        "symbol": "restoreHistoryVersion / selectSavedView / projectStore.restoreCheckpoint rebase authority"
       },
       "observableExpectedBehavior": "Selecting an application-History project/version is navigation state, not a workflow draft. Choosing a retained checkpoint must not capture the selector into the current view, create an intervening checkpoint that repaints the selector, or rewrite the requested restore destination. Restoring a retained unaccepted correction must reactivate its in-page replacement confirmation without accepting it.",
       "requiredEvidence": [
-        "Run-5891 actual-browser reproduction",
-        "Regression that fails when History destination controls are serialized as workflow drafts",
-        "Targeted fault injection that reclassifies History destination controls as drafts and is detected",
+        "Run-5891 and run-5892 actual-browser reproduction",
+        "Permanent regression proving an already-rebased restore result is consumed exactly once",
+        "Targeted fault injection that forces a second history-view rebase and is detected",
         "Real-browser restore of the retained unaccepted file correction followed by cancellation/acceptance checks"
       ],
       "applicableStages": "ALL_HISTORY_RESTORABLE_STAGES",
@@ -848,6 +855,13 @@
           "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
           "case": "verify-file-correction-recovery.mjs HISTORY_NAVIGATION_DRAFT_ORACLE",
           "actual": "The exact defective source serialized #history-project and #history-version as workflow drafts; the invariant regression failed before the production repair."
+        },
+        {
+          "classification": "PRODUCTION",
+          "sourceSha": "004e53e11f4ae6b46d0279ace8b201353e633831",
+          "runId": 35426991714,
+          "case": "verify-browser-recovery.mjs retained unaccepted file-correction History restore",
+          "actual": "Run 5892 again retained and selected the checkpoint but did not reactivate #replacement-confirmation. Inspection of the restore authority found app-core rebasing result.view again after project-store.restoreCheckpoint had already returned the destination view rebased to the activated revision; the repair removes that duplicate ownership and adds a fault that fails if it returns."
         }
       ],
       "mandatory": true
@@ -874,6 +888,60 @@
           "runId": 35419893155,
           "case": "verify-browser-extra.mjs stage03-duplicate-response-recovery",
           "actual": "Verifier called fill(#project-picker, JOB_ID). Production option values are numeric project indices, so the value became empty and Number(\"\") selected projects[0], causing the test to inspect a different project and report COMPLETE instead of SEARCH_ADEQUACY_REVIEW."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-004",
+      "sourceLocation": "Current user task sections 4B/4C, 10, 11 and 13; controlling specification exact exported instruction/reservation identity verification",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs",
+        "symbol": "correction stage-package identity assertion"
+      },
+      "observableExpectedBehavior": "The corrected-response browser verifier compares response promptIdentity.bodySha256 with the authoritative stage-package manifest instruction.bodySha256 (with legacy sha256 fallback only where the manifest schema permits it) and compares the exact operationReservationId. The verifier must not read a nonexistent manifest field and report a false mismatch.",
+      "requiredEvidence": [
+        "Run-5892 raw failure",
+        "Focused corrected manifest-identity assertion",
+        "Integrated actual-browser correction/retry path on the repaired candidate"
+      ],
+      "applicableStages": "ALL_EXTERNAL_RESPONSE_CORRECTION_PATHS",
+      "applicableOperations": "VALIDATION_REJECTION -> REGENERATED_EXPORT -> CORRECTED_RESPONSE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "004e53e11f4ae6b46d0279ace8b201353e633831",
+          "runId": 35426991714,
+          "case": "verify-browser-extra.mjs correction-instruction-to-accepted-proposition-persistence",
+          "actual": "The package integrity assertion accepted manifest.instruction.bodySha256, but the later corrected-envelope assertion compared against manifest.instruction.sha256 only. The current manifest exposes bodySha256, so the verifier produced a false exact-instruction mismatch."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-005",
+      "sourceLocation": "Current user task sections 4B, 10, 11 and 13; controlling specification real-interface acceptance verification discipline",
+      "responsibleProductionCode": {
+        "file": "verify-browser.mjs",
+        "symbol": "Stage 02 post-acceptance synchronization"
+      },
+      "observableExpectedBehavior": "After the actual acceptance control finishes, the verifier distinguishes direct commit from an unexpected confirmation and then asserts the authoritative stored result. A polling expression over a derived/internal ID is not allowed to hide the actual state transition outcome.",
+      "requiredEvidence": [
+        "Run-5892 raw polling timeout",
+        "Focused verifier source/syntax check",
+        "Integrated actual-browser Stage 02 acceptance path"
+      ],
+      "applicableStages": "2",
+      "applicableOperations": "ACCEPT_RESPONSE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "004e53e11f4ae6b46d0279ace8b201353e633831",
+          "runId": 35426991714,
+          "case": "verify-browser.mjs post-acceptance SOURCE_ID poll",
+          "actual": "The browser test timed out on a SOURCE_ID polling predicate instead of reporting whether acceptance committed, requested confirmation, or failed. The repaired oracle synchronizes on the visible action outcome and then asserts stored canonical state."
         }
       ],
       "mandatory": true

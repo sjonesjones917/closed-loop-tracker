@@ -515,9 +515,12 @@ function captureView(){
  }
  return {fileSelections:Object.fromEntries(Object.entries(fileSelectionDrafts).filter(([,selection])=>selection.jobId===current.job.JOB_ID)),pendingMutation:replacementReview?.next?{baseProjectSha256:current.projectSha256,next:replacementReview.next,impact:replacementReview.impact,expectedProjectRevision:replacementReview.expectedProjectRevision,...(replacementReview.acceptance?{acceptance:clone(replacementReview.acceptance)}:{})}:null,activeView:current.activeView,activeStage:current.activeStage,scrollX:String(window.scrollX||0),scrollY:String(window.scrollY||0),drafts,operationSelection:clone(operationSelection),runSelection:clone(runSelection)};
 }
-function selectSavedView(view){
+function replacementReviewFromSavedView(view){
+ const pending=view?.pendingMutation;if(!pending)return null;const acceptance=pending.acceptance?clone(pending.acceptance):null,semanticImpact=acceptance?ingestion.acceptanceImpact(current,acceptance.proposalId):null;if(acceptance)acceptance.impact=semanticImpact;return {next:pending.next,impact:acceptance?.confirmationAuthority==='ACCEPTANCE'?semanticImpact:pending.impact,expectedProjectRevision:pending.expectedProjectRevision,...(acceptance?{acceptance}:{})};
+}
+function selectSavedView(view,{alreadyRebased=false}={}){
  pendingBackupAction=null;takeBackupPassphrase();const pendingButton=$('#backup-password-continue');if(pendingButton)pendingButton.hidden=true;
- if(!view)return null;view=projectStore.rebaseHistoryView(current,view);replacementReview=null;const pending=view.pendingMutation;if(pending){const acceptance=pending.acceptance?clone(pending.acceptance):null,semanticImpact=acceptance?ingestion.acceptanceImpact(current,acceptance.proposalId):null;if(acceptance)acceptance.impact=semanticImpact;replacementReview={next:pending.next,impact:acceptance?.confirmationAuthority==='ACCEPTANCE'?semanticImpact:pending.impact,expectedProjectRevision:pending.expectedProjectRevision,...(acceptance?{acceptance}:{})};}current.activeView=views.includes(view.activeView)?view.activeView:'Workflow';current.activeStage=Math.max(1,Math.min(schema.STAGE_COUNT,Number(view.activeStage)||1));
+ if(!view)return null;if(!alreadyRebased)view=projectStore.rebaseHistoryView(current,view);replacementReview=replacementReviewFromSavedView(view);current.activeView=views.includes(view.activeView)?view.activeView:'Workflow';current.activeStage=Math.max(1,Math.min(schema.STAGE_COUNT,Number(view.activeStage)||1));
  for(const key of Object.keys(operationSelection))delete operationSelection[key];Object.assign(operationSelection,view.operationSelection||{});
  for(const key of Object.keys(runSelection))delete runSelection[key];Object.assign(runSelection,view.runSelection||{});
  for(const key of Object.keys(fileSelectionDrafts))delete fileSelectionDrafts[key];Object.assign(fileSelectionDrafts,clone(view.fileSelections||{}));
@@ -592,9 +595,9 @@ async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode
   // The newer restore must not mistake our own completed activation for another tab.
   current=result.project;historyBrowseState=null;const index=projects.findIndex(project=>project.job.JOB_ID===jobId);if(index<0)projects.unshift(current);else projects[index]=current;
   if(sequence!==navigationSequence)return;
-  let selected=view||result.view||{activeView:'Workflow',activeStage:1};
+  let selected=view||result.view||{activeView:'Workflow',activeStage:1},alreadyRebased=!view&&Boolean(result.view);
   for(const key of Object.keys(responseFileSelection))delete responseFileSelection[key];
-  await loadAcceptanceSession();await refreshHistory();selected=selectSavedView(selected)||selected;if(!traversal)writeBrowserEntry(checkpointId,selected);render();applySavedView(selected);savedDraftView=selected;announce('Saved version restored.');
+  await loadAcceptanceSession();await refreshHistory();selected=selectSavedView(selected,{alreadyRebased})||selected;savedDraftView=selected;if(selected.pendingMutation&&!replacementReview)throw new Error('The saved unaccepted replacement could not be restored. The current project remains recoverable in History.');if(!traversal)writeBrowserEntry(checkpointId,selected);render();applySavedView(selected);announce('Saved version restored.');
  }catch(error){restoreOutcome=error.code==='RESTORE_INTERRUPTED'?'INTERRUPTED':'FAILED';if(error.code!=='RESTORE_INTERRUPTED')reportActionFailure(error);throw error;}
  finally{release();if(sequence===navigationSequence){clearTimeout(historyRestoreTimer);historyRestoreTimer=null;if(restoreStartedAt!==null)recordOperationLatency('restoration','Restoring project and verifying saved files…',restoreStartedAt,restoreOutcome);restoringHistory=false;historyRestoreVisible=false;historyRestoreController=null;paintOperatorAction();}}
 }
