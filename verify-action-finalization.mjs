@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const frameQueue=[];const cases=[];
 const element=id=>({id,disabled:false,hidden:true,isConnected:true,textContent:'',attrs:{},setAttribute(k,v){this.attrs[k]=String(v)},removeAttribute(k){delete this.attrs[k]},focus(){},scrollIntoView(){},classList:{add(){},remove(){},contains(){return false}}});
 const nodes=new Map(['app','app-operation-status','operation-label','app-live-status','save-prompt','project-picker','import-project'].map(id=>['#'+id,element(id)]));
-const ctx=vm.createContext({console,Event:class{},dispatchEvent(){},addEventListener(){},structuredClone,Blob,URL,TextEncoder,TextDecoder,crypto:globalThis.crypto,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frameQueue.push(fn),document:{querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[nodes.get('#save-prompt')]:[],currentScript:null,addEventListener(){}}});
+const ctx=createVerifierRuntime({console,Event:class{},dispatchEvent(){},addEventListener(){},structuredClone,Blob,URL,TextEncoder,TextDecoder,crypto:globalThis.crypto,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frameQueue.push(fn),document:{querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[nodes.get('#save-prompt')]:[],currentScript:null,addEventListener(){}}});
 for(const name of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(name,'utf8'),ctx,{filename:name});
 const marker='globalThis.closedLoopAppReady=false;';assert.equal(source.split(marker).length,2,'Unique application-start boundary is required');
 vm.runInContext(source.replace(marker,`globalThis.finalization={run:fn=>runOperatorAction('Finalization regression',fn),capture:fn=>{captureCurrentView=fn},failure:()=>reportActionFailure(new Error('Recorded internal failure')),responseFailure:()=>{render=()=>{};reportResponseFailure('Your accepted work is unchanged.',new Error('The follow-up receipt failed'))},changed:()=>{current.projectSha256='CHANGED-PROJECT'},samples:()=>operationLatencyEvidence().samples,select:()=>{current={job:{JOB_ID:'FINALIZATION-FIXTURE'},revision:0,projectSha256:'SOURCE-PROJECT',activeStage:1,historyActivationId:null}}};return;`),ctx,{filename:'app-core.js'});

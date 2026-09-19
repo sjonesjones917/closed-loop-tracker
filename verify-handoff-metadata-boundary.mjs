@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {readStoreArchive} from './test-zip.mjs';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 // Exercises the production exporter and actual ZIP bytes. The storage adapter
 // is synthetic; this is not a browser, physical-device, or complete journey.
@@ -33,7 +34,7 @@ async function checkUi(fault=null){
   if(fault){assert(source.includes(fault.before));source=source.replace(fault.before,fault.after);}
   const begin=source.indexOf('async function exportStageFiles('),end=source.indexOf('async function exportPromptContext(',begin);
   let downloads=0;
-  const runtime=vm.createContext({Set,Blob,Number,String,current:{job:{JOB_ID:'UI-SCOPE'},activeStage:12,revision:1},promptExport:async operation=>operation({instructionId:'CURRENT-INSTRUCTION',contextManifest:{readCollections:{tests:[{id:'ALLOWED'},{id:'NATIVE'}]}}}),withStorageActivity:async(_label,operation)=>operation(),promptOptions:()=>({operation:'VERIFY',scope:{runId:'CURRENT-RUN'}}),displayedStageAction:()=>({actionType:'AI_REVIEW'}),stagePlanItems:()=>[{testId:'ALLOWED',executionMode:'INDEPENDENT_AGENT_REVIEW',operatorAction:'SEND_TO_INDEPENDENT_REVIEWER'},{testId:'OUTSIDE_CURRENT_BATCH',executionMode:'INDEPENDENT_AGENT_REVIEW',operatorAction:'SEND_TO_INDEPENDENT_REVIEWER'},{testId:'NATIVE',executionMode:'APPLICATION_DETERMINISTIC',operatorAction:'SEND_TO_INDEPENDENT_REVIEWER'}],projectStore:{createExecutionPackage:async args=>{assert.deepEqual([...args.testIds],['ALLOWED'],'UI_TEST_SELECTION_ORACLE: stage export requested tests outside the saved handoff');return {blob:new Blob(['fixture']),filename:'stage.zip'};}},downloadBlob:()=>downloads++,recordInstructionExport:async()=>{},announce(){},render(){},requestAnimationFrame(){}});
+  const runtime=createVerifierRuntime({Set,Blob,Number,String,current:{job:{JOB_ID:'UI-SCOPE'},activeStage:12,revision:1},promptExport:async operation=>operation({instructionId:'CURRENT-INSTRUCTION',contextManifest:{readCollections:{tests:[{id:'ALLOWED'},{id:'NATIVE'}]}}}),withStorageActivity:async(_label,operation)=>operation(),promptOptions:()=>({operation:'VERIFY',scope:{runId:'CURRENT-RUN'}}),displayedStageAction:()=>({actionType:'AI_REVIEW'}),stagePlanItems:()=>[{testId:'ALLOWED',executionMode:'INDEPENDENT_AGENT_REVIEW',operatorAction:'SEND_TO_INDEPENDENT_REVIEWER'},{testId:'OUTSIDE_CURRENT_BATCH',executionMode:'INDEPENDENT_AGENT_REVIEW',operatorAction:'SEND_TO_INDEPENDENT_REVIEWER'},{testId:'NATIVE',executionMode:'APPLICATION_DETERMINISTIC',operatorAction:'SEND_TO_INDEPENDENT_REVIEWER'}],projectStore:{createExecutionPackage:async args=>{assert.deepEqual([...args.testIds],['ALLOWED'],'UI_TEST_SELECTION_ORACLE: stage export requested tests outside the saved handoff');return {blob:new Blob(['fixture']),filename:'stage.zip'};}},downloadBlob:()=>downloads++,recordInstructionExport:async()=>{},announce(){},render(){},requestAnimationFrame(){}});
   vm.runInContext(source.slice(begin,end)+';globalThis.invoke=exportStageFiles;',runtime);
   await runtime.invoke();assert.equal(downloads,1);
 }

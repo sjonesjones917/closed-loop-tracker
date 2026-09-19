@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 // Specification oracles: Sections 8/14 (producer authority), 36.1
 // (conservative invalidation), and 42 (actual byte equality). All projects,
 // sentinels and faulted module instances are disposable in-memory fixtures.
 const sources=Object.fromEntries(['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'].map(file=>[file,fs.readFileSync(file,'utf8')]));
 function runtime(fault){
-  const c=vm.createContext({console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,Blob,structuredClone,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){}});
+  const c=createVerifierRuntime({console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,Blob,structuredClone,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){}});
   for(const [file,original] of Object.entries(sources)){
     let source=original;
     if(fault?.file===file){assert.ok(source.includes(fault.before),`Fault anchor disappeared: ${fault.id}`);source=source.replaceAll(fault.before,fault.after);}

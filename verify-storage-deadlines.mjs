@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 const source = fs.readFileSync(process.env.STORE_SOURCE || 'project-store.js','utf8');
 const cases=[];
 const prefixes=process.argv.filter(x=>x.startsWith('--case-prefix=')).map(x=>x.slice(14));
@@ -13,7 +14,7 @@ function environment({worker=false}={}){
  const setTimeout=(fn,delay=0)=>{const id=next++;timers.set(id,{fn,at:clock+Number(delay)});return id;};
  const clearTimeout=id=>timers.delete(id);
  const advance=async ms=>{const end=clock+ms;while(true){const due=[...timers].filter(([,x])=>x.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!due)break;clock=due[1].at;timers.delete(due[0]);due[1].fn();await flush();}clock=end;await flush();};
- const context=vm.createContext({Blob,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,AbortController,URL,URLSearchParams,Uint8Array,ArrayBuffer,structuredClone,crypto:crypto.webcrypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console:{log(){},error(...x){errors.push(x.map(String).join(' '));}},navigator:{storage:{persist:async()=>true,estimate:async()=>({usage:0,quota:1024})}},Event:class Event{},dispatchEvent(){}});
+ const context=createVerifierRuntime({Blob,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,AbortController,URL,URLSearchParams,Uint8Array,ArrayBuffer,structuredClone,crypto:crypto.webcrypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console:{log(){},error(...x){errors.push(x.map(String).join(' '));}},navigator:{storage:{persist:async()=>true,estimate:async()=>({usage:0,quota:1024})}},Event:class Event{},dispatchEvent(){}});
  if(worker){context.document={currentScript:{src:'https://fixture.invalid/project-store.js?v=FIXTURE-BUILD'}};context.Worker=class{constructor(url){this.url=url;this.messages=[];workers.push(this);}postMessage(message){this.messages.push(message);}terminate(){events.workerTerminated++;}};vm.runInContext(fs.readFileSync('workbook.js','utf8'),context,{filename:'workbook.js'});}
  vm.runInContext(fs.readFileSync(process.env.HASH_SOURCE||'hash.js','utf8'),context,{filename:'hash.js'});
  if(worker)for(const file of ['workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 const appSource=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),html=fs.readFileSync(process.env.HTML_SOURCE||'index.html','utf8');
 const cases=[],prefixes=process.argv.filter(x=>x.startsWith('--case-prefix=')).map(x=>x.slice(14)),flush=async()=>{for(let i=0;i<32;i++)await Promise.resolve();};
 function startupGuardAuthorization(source=html){
@@ -16,7 +17,7 @@ function environment({loadError=null,core=true}={}){
  for(const m of html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g)){const n=node(m[1]);n.hidden=/\bhidden\b/.test(m[0]);n.disabled=/\bdisabled\b/.test(m[0]);if(/\binert\b/.test(m[0]))n.setAttribute('inert','');if(/aria-busy="true"/.test(m[0]))n.setAttribute('aria-busy','true');nodes.set(m[1],n);}
  const setTimeout=(fn,delay=0)=>{timers.set(++id,{fn,at:time+delay});return id;},clearTimeout=id=>timers.delete(id),on=(name,fn,options)=>{const list=listeners.get(name)||[];list.push({fn,once:options?.once});listeners.set(name,list);};
  const document={currentScript:null,readyState:'loading',documentElement:{clientHeight:852},body:{append(n){if(n.id)nodes.set(n.id,n);}},querySelector:s=>s.startsWith('#')?nodes.get(s.slice(1))||null:null,querySelectorAll:()=>[],getElementById:id=>nodes.get(id)||null,createElement:()=>node(),addEventListener:on,elementFromPoint:()=>null};
- const context=vm.createContext({console:{error(...args){logs.push(args.map(String));},log(){}},document,URL,URLSearchParams,Blob,TextEncoder,TextDecoder,AbortController,structuredClone,crypto:crypto.webcrypto,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>setTimeout(fn,0),cancelAnimationFrame:clearTimeout,addEventListener:on,innerWidth:393,innerHeight:852,performance:{now:()=>time},location:{href:'https://fixture.invalid/',reload(){reloads++;}},Event:class Event{},dispatchEvent(){}});context.window=context;
+ const context=createVerifierRuntime({console:{error(...args){logs.push(args.map(String));},log(){}},document,URL,URLSearchParams,Blob,TextEncoder,TextDecoder,AbortController,structuredClone,crypto:crypto.webcrypto,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>setTimeout(fn,0),cancelAnimationFrame:clearTimeout,addEventListener:on,innerWidth:393,innerHeight:852,performance:{now:()=>time},location:{href:'https://fixture.invalid/',reload(){reloads++;}},Event:class Event{},dispatchEvent(){}});context.window=context;
  context.__controlledLoad=async()=>{loadCalls++;if(loadError)throw Object.assign(new Error(loadError),{code:'STORAGE_OPEN_TIMEOUT'});};
  const bootstrap=html.match(/<script id="closed-loop-startup-guard">([\s\S]*?)<\/script>/)?.[1];if(bootstrap)vm.runInContext(bootstrap,context,{filename:'index.html#closed-loop-startup-guard'});
  const run=()=>{if(core)context.closedLoopCore={};const anchor='globalThis.closedLoopAppReady=false;';assert.equal(appSource.split(anchor).length-1,1,'Startup instrumentation anchor is not unique');const instrumented=appSource.replace(anchor,'load=globalThis.__controlledLoad;'+anchor);vm.runInContext(instrumented,context,{filename:'app-core.js'});};

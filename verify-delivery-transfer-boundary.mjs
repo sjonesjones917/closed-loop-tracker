@@ -4,6 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
@@ -48,7 +49,7 @@ async function uiCase(name,{priorAttempt=false,failSave=false,failTransfer=false
       transfer:()=>{assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'PENDING','The transfer began before a pending receipt was committed.');exports++;if(failTransfer)throw new Error('Injected browser transfer failure');},
       error:e=>errors.push(e.message)
     };
-    const context=vm.createContext({api,console,URL,Blob,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,document:{currentScript:null,querySelector:()=>({focus(){},setAttribute(){},removeAttribute(){},addEventListener(){}})},requestAnimationFrame:fn=>fn()});
+    const context=createVerifierRuntime({api,console,URL,Blob,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,document:{currentScript:null,querySelector:()=>({focus(){},setAttribute(){},removeAttribute(){},addEventListener(){}})},requestAnimationFrame:fn=>fn()});
     vm.runInContext(appSource.slice(0,appSource.indexOf('globalThis.closedLoopAppReady=false;'))+`
       engine=api.engine;current=api.project;current.activeStage=30;
       projectStore={readProject:api.read,assertRecoveryTransfer:async project=>engine.deliveryTransferPrecondition(project)};

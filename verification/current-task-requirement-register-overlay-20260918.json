@@ -707,6 +707,87 @@
       "status": "UNVERIFIED",
       "executedEvidence": [],
       "mandatory": true
+    },
+    {
+      "requirementId": "DEF-11",
+      "sourceLocation": "Current user task sections 3, 4A, 8, 9A/B/D/E and 10; controlling specification operator-next-action and semantic-review transition requirements",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "selectedOperation / selectedRun / finishAcceptedProposal lane-selection authority"
+      },
+      "observableExpectedBehavior": "After a committed response changes the authoritative next operation or run, stale pre-acceptance UI lane selections cannot override that new state. Saving or exporting the next instruction uses the current derived operation and current applicable run; any explicitly created continuation becomes the new selection.",
+      "requiredEvidence": [
+        "Run-5889 actual-browser reproduction",
+        "Permanent actual-control regression spanning a multi-operation stage",
+        "Fault injection that preserves a stale operation/run selection and is rejected",
+        "Affected prompt, acceptance, recovery, and browser verification on the exact repaired candidate"
+      ],
+      "applicableStages": "ALL_MULTI_OPERATION_OR_RUN_SCOPED_STAGES",
+      "applicableOperations": "ACCEPT_RESPONSE -> NEXT_REQUIRED_EXTERNAL_OPERATION_OR_RUN",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "PRODUCTION",
+          "sourceSha": "d823127d508a1506aa4d6eb550c5d6847939572e",
+          "runId": 35413700912,
+          "case": "verify-browser-extra.mjs stage03-duplicate-response-recovery",
+          "actual": "After Stage 02 COMPLETE acceptance, the saved next instruction did not bind SEARCH_ADEQUACY_REVIEW."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-001",
+      "sourceLocation": "Current user task sections 4B, 9 UX-011, 10 and 11; controlling specification visible-interface verification discipline",
+      "responsibleProductionCode": {
+        "file": "verify-browser.mjs",
+        "symbol": "Stage 02 acceptance synchronization oracle"
+      },
+      "observableExpectedBehavior": "The browser verifier synchronizes on committed application state and checks canonical SOURCE_ID in authoritative state; it does not require an internal identifier to be rendered in normal operator text.",
+      "requiredEvidence": [
+        "Run-5889 raw failure",
+        "Repaired browser verifier succeeds while canonical SOURCE_ID remains hidden from ordinary operator text"
+      ],
+      "applicableStages": "2",
+      "applicableOperations": "ACCEPT_RESPONSE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "d823127d508a1506aa4d6eb550c5d6847939572e",
+          "runId": 35413700912,
+          "case": "verify-browser.mjs",
+          "actual": "Timed out waiting for document.body.innerText.includes('SOURCE-') although the operator journey accepted Stage 02 without rendering that internal ID."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-002",
+      "sourceLocation": "Current user task section 4C shared verifier-runtime factory requirement and section 11 fault-detection requirements",
+      "responsibleProductionCode": {
+        "file": "verifier-runtime.mjs and VM verifier consumers",
+        "symbol": "shared verifier runtime factory"
+      },
+      "observableExpectedBehavior": "Every Node VM verifier consumes one shared runtime factory that supplies timers, RAF, AbortController/AbortSignal, crypto/hash prerequisites, Blob/File, URL, text codecs, and storage defaults without overwriting explicit fixture overrides.",
+      "requiredEvidence": [
+        "Failing current-source reproduction of missing AbortController",
+        "Factory contract regression",
+        "Consumer scan proving no independent vm.createContext authority remains",
+        "Affected mobile-operation and downstream conformance suites"
+      ],
+      "applicableStages": "VERIFICATION_INFRASTRUCTURE",
+      "applicableOperations": "ALL_VM_VERIFIER_EXECUTION",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "d823127d508a1506aa4d6eb550c5d6847939572e",
+          "case": "verify-mobile-operation-observations.mjs local exact-source reproduction",
+          "actual": "Capability probe failed with 'AbortController is not defined'; verifier context reported typeof AbortController === 'undefined'."
+        }
+      ],
+      "mandatory": true
     }
   ]
 }

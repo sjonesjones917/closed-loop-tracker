@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 // The existing lifecycle suite's transaction adapter, extracted for recovery
 // regressions. This is explicitly not a browser or an IndexedDB implementation.
 export function projectStoreRuntime({fault=null,sourceOverrides={}}={}){
  const rows=new Map();
- const runtime=vm.createContext({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console,Event:class Event{},dispatchEvent(){}});
+ const runtime=createVerifierRuntime({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console,Event:class Event{},dispatchEvent(){}});
  const parse=vm.runInContext('(text)=>JSON.parse(text)',runtime);
  // Preserve undefined properties and shared references just as structured clone
  // does. JSON cloning would hide invalid durable-view fields in these tests.

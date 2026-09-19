@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
 // History is exercised by verify-recoverable-history and the browser recovery gate.
@@ -21,7 +22,7 @@ await import('./verify-operator-action-lifecycle.mjs');
 {
   const writes=[],views=[],notices=[];let release;
   const fields=[{dataset:{job:'EXACT_USER_OBJECTIVE_VERBATIM'},type:'text',value:'Create the requested checklist.'}];
-  const runtime=vm.createContext({...inactiveMobileAcceptance,structuredClone,clone:structuredClone,setTimeout,clearTimeout,
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,structuredClone,clone:structuredClone,setTimeout,clearTimeout,
     current:{activeStage:1,activeView:'Project',job:{JOB_ID:'SAVE-PATH',EXACT_USER_OBJECTIVE_VERBATIM:''},stages:{1:{status:'NOT STARTED'}},projectData:{}},
     document:{querySelector:()=>null,querySelectorAll:()=>fields},$:()=>null,
     engine:{recordHumanInputVersion(p){p.job.CURRENT_STAGE='STAGE 01';}},
@@ -46,7 +47,7 @@ await import('./verify-operator-action-lifecycle.mjs');
 // serialize duplicate exports after the first one completes.
 {
   let saves=0,downloads=0,release;const notices=[];
-  const runtime=vm.createContext({current:{activeStage:1,job:{JOB_ID:'EXPORT-RETRY'}},setTimeout,clearTimeout,
+  const runtime=createVerifierRuntime({current:{activeStage:1,job:{JOB_ID:'EXPORT-RETRY'}},setTimeout,clearTimeout,
     announce:message=>notices.push(message),reportActionFailure:error=>notices.push(error.message),
     withStorageActivity:async(_label,work)=>work(),document:{querySelectorAll:()=>[]},$:()=>null,
     savePromptRecord:async()=>{saves++;await new Promise(resolve=>release=resolve);return {instructionId:'SAME'};}});
@@ -61,7 +62,7 @@ await import('./verify-operator-action-lifecycle.mjs');
 // The complete workflow renderer must advertise required files before the first
 // save/export, using the same preview it already built without reserving work.
 {
-  const runtime=vm.createContext({...inactiveMobileAcceptance,crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,crypto:globalThis.crypto,URL,structuredClone,console,TextEncoder,TextDecoder,Blob,setTimeout,
     Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]}});
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
@@ -110,7 +111,7 @@ await import('./verify-operator-action-lifecycle.mjs');
 for(const change of ['project','stage','revision']){
   let release,entered;const held=new Promise(resolve=>release=resolve),started=new Promise(resolve=>entered=resolve),reads=[],captures=[],failures=[];
   const source={job:{JOB_ID:'RESPONSE-OWNER'},revision:4,activeStage:1},other={job:{JOB_ID:'RESPONSE-OTHER'},revision:4,activeStage:2};
-  const runtime=vm.createContext({...inactiveMobileAcceptance,current:source,responseActionFailure:null,Blob,TextDecoder,reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),responseAttemptPrompt:()=>({transportBindingRequired:true,instructionId:'PROMPT-OWNER',bodySha256:'hash',contractSha256:'contract',contextSignature:'scope'}),projectStore:{stageResponseFile:async options=>{entered();await held;return {stagingId:'OWNER-STAGED',jobId:options.jobId};},readStagedResponseFile:async options=>{reads.push(options);return {bytes:new Uint8Array([123,125]),sha256:'digest'};}},closedLoopHash:{sha256Text:()=> 'digest'},responsePromptRecord:()=>({scope:{}}),pendingProposal:()=>null,ingestion:{captureRaw:()=>{captures.push(true);throw new Error('CAPTURE_REACHED');}}});
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,current:source,responseActionFailure:null,Blob,TextDecoder,reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),responseAttemptPrompt:()=>({transportBindingRequired:true,instructionId:'PROMPT-OWNER',bodySha256:'hash',contractSha256:'contract',contextSignature:'scope'}),projectStore:{stageResponseFile:async options=>{entered();await held;return {stagingId:'OWNER-STAGED',jobId:options.jobId};},readStagedResponseFile:async options=>{reads.push(options);return {bytes:new Uint8Array([123,125]),sha256:'digest'};}},closedLoopHash:{sha256Text:()=> 'digest'},responsePromptRecord:()=>({scope:{}}),pendingProposal:()=>null,ingestion:{captureRaw:()=>{captures.push(true);throw new Error('CAPTURE_REACHED');}}});
   vm.runInContext(app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('))+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
   const pending=runtime.selectResponse(new Blob(['{}'],{type:'application/json'}));await started;
   if(change==='project')runtime.current=other;else if(change==='stage')source.activeStage=2;else source.revision++;
@@ -148,7 +149,7 @@ verify();
 // The old failed attempt remains audit history after a newer response is
 // accepted. Exercise the production selector in every stage view.
 {
-  const runtime=vm.createContext({...inactiveMobileAcceptance,safe:x=>Array.isArray(x)?x:[],operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE'});
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,safe:x=>Array.isArray(x)?x:[],operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE'});
   const selectionSource=(app.match(/^function (?:latestResponseAttempt|latestResponseValidation|pendingReturnedResponse)\([^\n]+/gm)||[]).join('\n');
   const validationSource=app.slice(app.indexOf('function validationMarkup('),app.indexOf('function proposalMarkup('));
   Object.assign(runtime,{responseActionFailure:null,esc:String,details:()=>'',currentPromptRecord:()=>null});
@@ -165,7 +166,7 @@ verify();
 }
 // One current response mode: an older success cannot hide a newer rejection.
 {
- const runtime=vm.createContext({...inactiveMobileAcceptance,safe:x=>Array.isArray(x)?x:[],esc:String,operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE',currentNextAction:()=>({}),pendingProposal:()=>null,acceptedLaneChanges:()=>[{changeId:'OLD-CHANGE'}],stageLocked:()=>null,canonicalCurrentStage:()=>1,reviewerOperation:()=>false});
+ const runtime=createVerifierRuntime({...inactiveMobileAcceptance,safe:x=>Array.isArray(x)?x:[],esc:String,operatorLaneMatches:(x,n)=>Number(x.stage)===n&&x.operation==='COMPLETE',currentNextAction:()=>({}),pendingProposal:()=>null,acceptedLaneChanges:()=>[{changeId:'OLD-CHANGE'}],stageLocked:()=>null,canonicalCurrentStage:()=>1,reviewerOperation:()=>false});
  const source=(app.match(/^function (?:latestResponseAttempt|latestResponseValidation|interactionModeMarkup)\([^\n]+/gm)||[]).join('\n');
  vm.runInContext(source+'\nglobalThis.mode=interactionModeMarkup;',runtime);
  for(let stage=1;stage<=30;stage++){
@@ -184,7 +185,7 @@ verify();
  assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
  for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
   const button={dataset:{operation}},current={activeStage:stage},operationSelection={};let exported;
-  const runtime=vm.createContext({...inactiveMobileAcceptance,bindAction:(_selector,operation)=>{button.onclick=operation;},$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage===30?1:stage+1,exportStageFiles:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,bindAction:(_selector,operation)=>{button.onclick=operation;},$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage===30?1:stage+1,exportStageFiles:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
   vm.runInContext(source,runtime);await button.onclick();
   assert.deepEqual(exported,{stage,operation},'The action escaped the selected stage.');
  }
@@ -210,7 +211,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   const proposal={proposalId:'EXISTING-PROPOSAL',rawResponseId:'EXISTING-RAW',promptId:saved.instructionId,stage:4,status:'PENDING_OPERATOR_REVIEW',preconditions:{projectRevision:3,promptEngineVersion:'test-version'}};
   const current={job:{JOB_ID:'RESELECT-PENDING'},activeStage:4,revision:3,stages:{4:{}},projectData:{generatedPrompts:[saved],rawResponses:[{rawResponseId:'EXISTING-RAW',sha256:digest,promptInstructionId:saved.instructionId,status:'VALIDATED_PENDING_REVIEW',transport:{authority:'AUTHORITATIVE_RESPONSE_FILE'},proposalId:proposal.proposalId}],responseProposals:[proposal]}};
   const dialogs=[],reports=[];let staged=0,captured=0,downloaded=0,renders=0,inlineReplacements=0;const removedStages=[];
-  const runtime=vm.createContext({...inactiveMobileAcceptance,operatorActionInFlight:null,responseActionFailure:null,closedLoopPromptEngine:{version:saved.promptEngineVersion},current,Blob,Uint8Array,TextDecoder,queueMicrotask,safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>renders++,detailViews:new Map(),wireDetails:()=>{},document:{createElement:()=>({content:{firstElementChild:{}}})},esc:String,details:()=>'', $:selector=>selector==='#validation-report'?{focus(){},querySelectorAll:()=>[],replaceWith:()=>inlineReplacements++}:{focus(){}},alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,closedLoopHash:{sha256Text:sha},projectStore:{removeStagedResponseFile:async options=>removedStages.push(options),stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,operatorActionInFlight:null,responseActionFailure:null,closedLoopPromptEngine:{version:saved.promptEngineVersion},current,Blob,Uint8Array,TextDecoder,queueMicrotask,safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>renders++,detailViews:new Map(),wireDetails:()=>{},document:{createElement:()=>({content:{firstElementChild:{}}})},esc:String,details:()=>'', $:selector=>selector==='#validation-report'?{focus(){},querySelectorAll:()=>[],replaceWith:()=>inlineReplacements++}:{focus(){}},alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,closedLoopHash:{sha256Text:sha},projectStore:{removeStagedResponseFile:async options=>removedStages.push(options),stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
   const helpers=app.slice(app.indexOf('function promptMatches'),app.indexOf('function operationMarkup'));
   const handler=app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('));
   vm.runInContext(helpers+'\n'+app.slice(app.indexOf('function reportResponseFailure'),app.indexOf('function proposalMarkup'))+'\n'+handler+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
@@ -246,7 +247,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 {
   const dialogs=[],announcements=[];let rendered=0,downloaded=0;
   const notice={textContent:'Existing next action',className:'notice',classList:{add(){}},focus(){},scrollIntoView(){},setAttribute(){}};
-  const runtime=vm.createContext({...inactiveMobileAcceptance,operatorActionInFlight:null,actionFocusTarget:null,setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,URL,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,actionFailureNotice:null,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,clone:structuredClone,TAB_INSTANCE_ID:'TAB-FILE-FIRST', $:selector=>selector==='#fresh-context-id'?null:notice});
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,operatorActionInFlight:null,actionFocusTarget:null,setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,URL,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,actionFailureNotice:null,announce:message=>announcements.push(message),alert:message=>dialogs.push(String(message)),render:()=>rendered++,externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),currentStage5AuthorContext:()=>null,currentReviewerContext:()=>null,reviewerOperation:()=>false,clone:structuredClone,TAB_INSTANCE_ID:'TAB-FILE-FIRST', $:selector=>selector==='#fresh-context-id'?null:notice});
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   runtime.ingestion=runtime.closedLoopResponseIngestion;runtime.stageContinuationErrors=new Map();
   vm.runInContext(app.slice(app.indexOf('async function restoreStageContinuation('),app.indexOf('async function materializeProject(')),runtime);
@@ -294,7 +295,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 // never overwrite the newer project with the failed candidate.
 {
   const failures=[],downloads=[];
-  const runtime=vm.createContext({...inactiveMobileAcceptance,setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,safe:v=>Array.isArray(v)?v:[],clone:structuredClone,TAB_INSTANCE_ID:'TAB-REVISION-RECOVERY',responseActionFailure:null,announce(){},render(){},$:()=>({focus(){}}),reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),reportActionFailure:error=>failures.push(String(error.message||error)),externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),operatorLaneMatches:()=>true,reverifyReturnedFiles:async()=>{}});
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,setTimeout,queueMicrotask,structuredClone,TextEncoder,TextDecoder,Blob,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){},console,safe:v=>Array.isArray(v)?v:[],clone:structuredClone,TAB_INSTANCE_ID:'TAB-REVISION-RECOVERY',responseActionFailure:null,announce(){},render(){},$:()=>({focus(){}}),reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),reportActionFailure:error=>failures.push(String(error.message||error)),externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),operatorLaneMatches:()=>true,reverifyReturnedFiles:async()=>{}});
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   runtime.clone=vm.runInContext('(value)=>JSON.parse(JSON.stringify(value))',runtime);
   const engine=runtime.closedLoopWorkflowEngine,ingestion=runtime.closedLoopResponseIngestion,prompts=runtime.closedLoopPromptEngine;

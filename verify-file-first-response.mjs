@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const app=read('./app-core.js');
@@ -49,7 +50,7 @@ function assertResponseFileInstruction(text){
 }
 
 // Exercise the generated instruction for every registered operation in an isolated runtime.
-const runtime=vm.createContext({TextEncoder,TextDecoder,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true});
+const runtime=createVerifierRuntime({TextEncoder,TextDecoder,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true});
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(read('./'+file),runtime,{filename:file});
 const {closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:workflow,closedLoopPromptEngine:prompts}=runtime;
 const state=core.createBlankState('JOB-RESPONSE-FILE-PROMPTS');

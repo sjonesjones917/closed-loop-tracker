@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const html=fs.readFileSync(process.env.HTML_SOURCE||'index.html','utf8');
@@ -23,7 +24,7 @@ const loadPromise=()=>new Promise((resolve,reject)=>{releaseLoad=()=>failLoad?re
 const start=source.indexOf('globalThis.closedLoopAppReady=false;');
 const end=source.indexOf('// Long-section navigation',start);
 assert.ok(start>=0&&end>start,'Startup production block missing.');
-const context=vm.createContext({console,Date,setTimeout,clearTimeout,globalThis:null});context.globalThis=context;
+const context=createVerifierRuntime({console,Date,setTimeout,clearTimeout,globalThis:null});context.globalThis=context;
 Object.assign(context,{closedLoopCore:true,operationLatencySamples:[],OPERATION_LOADING_THRESHOLD_MS:1500,OPERATION_LATENCY_SAMPLE_LIMIT:512,operationClock:()=>Date.now(),recordOperationLatency(kind,label,startedAt,outcome){const durationMs=Date.now()-startedAt;context.operationLatencySamples.push({kind,label,durationMs,outcome,thresholdMs:1500});return durationMs;},$:selector=>nodes.get(selector)||null,load:loadPromise,esc:String,announce:m=>announcements.push(String(m)),addEventListener(){}});
 vm.runInContext(source.slice(start,end),context,{filename:'app-core-startup.js'});
 await new Promise(resolve=>setTimeout(resolve,0));
@@ -43,7 +44,7 @@ note('UX-020-STARTUP-LATENCY-RECORDED',{recordedOutcome:'COMPLETED'});
 // Re-run the exact startup block with a controlled failure. It must terminate in
 // an actionable failure state, not an indefinitely running loading indicator.
 const failedNodes=new Map(['app-startup-status','app-operation-status','operation-label','app-live-status','app','storage-status'].map(id=>['#'+id,element(id)]));
-const failed=vm.createContext({console,Date,setTimeout,clearTimeout,globalThis:null});failed.globalThis=failed;
+const failed=createVerifierRuntime({console,Date,setTimeout,clearTimeout,globalThis:null});failed.globalThis=failed;
 let rejectStartup;
 Object.assign(failed,{closedLoopCore:true,operationLatencySamples:[],OPERATION_LOADING_THRESHOLD_MS:1500,OPERATION_LATENCY_SAMPLE_LIMIT:512,operationClock:()=>Date.now(),recordOperationLatency(kind,label,startedAt,outcome){const durationMs=Date.now()-startedAt;failed.operationLatencySamples.push({kind,label,durationMs,outcome,thresholdMs:1500});return durationMs;},$:selector=>failedNodes.get(selector)||null,load:()=>new Promise((_resolve,reject)=>{rejectStartup=reject;}),esc:String,announce:m=>announcements.push(String(m)),addEventListener(){}});
 vm.runInContext(source.slice(start,end),failed,{filename:'app-core-startup-failure.js'});await new Promise(resolve=>setTimeout(resolve,0));rejectStartup(new Error('CONTROLLED_STARTUP_FAILURE'));await new Promise(resolve=>setTimeout(resolve,0));

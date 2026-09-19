@@ -107,10 +107,16 @@ async function main(){
   const stageTwo=responseFor(await activeProject(cdp),2,{AUTHORITY_HIERARCHY:'The accepted operator input governs this disposable checklist.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The current checklist scope has no external factual or jurisdictional claim.'});
   stageTwo.records.sourceSearchContracts=[await evalValue(cdp,`(()=>{${scalarFor.toString()}\n${recordProposal.toString()}\nreturn recordProposal(closedLoopWorkflowSchema,'sourceSearchContracts',{tempKey:'retry-search',evidenceRef:'retry-evidence',overrides:{PROJECT_SCOPE:'The accepted one-page checklist scope.',JURISDICTION_OR_SYSTEM_SCOPE:'No jurisdiction-dependent factual proposition is requested.',SOURCE_CLASSES_CONSIDERED:['Accepted operator input','External factual authority'],LOCATIONS_AND_REPOSITORIES:['Current accepted input and intake'],QUERIES_OR_STRATEGIES:['Check for claims requiring external factual authority.'],DATE_OR_VERSION_CUTOFF:'Current accepted input version',EXCLUSIONS:['Unrelated factual topics'],ACCESS_LIMITATIONS:[],ADEQUACY_RATIONALE:'The requested checklist contains no claim requiring external authority.',UNRESOLVED_DISCOVERY_RISK:'NONE'}});})()`)];
   await selectResponseFile(cdp,JSON.stringify(stageTwo));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);await click(cdp,'#accept-proposal');
-  if((await activeProject(cdp)).stages[2].status!=='COMPLETE'){
-    await openStage(cdp,2);await click(cdp,'#save-prompt');await waitForSavedPrompt(cdp);
+  const stageTwoAccepted=await activeProject(cdp);
+  if(stageTwoAccepted.stages[2].status!=='COMPLETE'){
+    const derivedOperation=String(stageTwoAccepted.job?.NEXT_REQUIRED_ACTION?.operation||'');
+    assert(derivedOperation==='SEARCH_ADEQUACY_REVIEW',`Incomplete source discovery derived the wrong next operation: ${derivedOperation||'NONE'}.`);
+    await openStage(cdp,2);
+    const selectedOperation=await evalValue(cdp,`document.querySelector('#operation-picker')?.value||''`);
+    assert(selectedOperation===derivedOperation,`Post-acceptance lane selection is stale: derived ${derivedOperation}, UI selected ${selectedOperation||'NONE'}.`);
+    await click(cdp,'#save-prompt');await waitForSavedPrompt(cdp);
     const review=responseFor(await activeProject(cdp),2,{});
-    assert(review.operation==='SEARCH_ADEQUACY_REVIEW','Incomplete source discovery must request its actual independent adequacy review.');
+    assert(review.operation==='SEARCH_ADEQUACY_REVIEW',`Incomplete source discovery saved ${review.operation||'NONE'} instead of its actual independent adequacy review.`);
     review.records.semanticReviews=[await evalValue(cdp,`(()=>{${scalarFor.toString()}\n${recordProposal.toString()}\nreturn recordProposal(closedLoopWorkflowSchema,'semanticReviews',{tempKey:'retry-search-review',evidenceRef:'retry-evidence',overrides:{REVIEW_QUESTION:'Does the current bounded search address this checklist scope?',FINDING:'The relevant input and source classes are covered.',REASONING:'The accepted scope contains no external factual or jurisdictional claim. This is a synthetic external review; human independence is not asserted.',RESULT:'ACCEPTED'}});})()`)];
     await selectResponseFile(cdp,JSON.stringify(review));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);await click(cdp,'#accept-proposal');
   }

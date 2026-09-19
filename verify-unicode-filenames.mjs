@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 await import('./hash.js');
 const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.split('=')[1],faults={fold:['PINNED_UNICODE_TABLES.caseFoldMappings[cp]||[cp]','[cp]'],confusable:['PINNED_UNICODE_TABLES.confusableMappings[cp]||[cp]','[cp]'],order:['while(position>0&&(ccc[out[position-1]]||0)>rank)','while(false)']};
-let h=globalThis.closedLoopHash;if(faultName){let source=fs.readFileSync('hash.js','utf8');const [before,after]=faults[faultName];assert.ok(source.includes(before));const runtime=vm.createContext({TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,Blob});vm.runInContext(source.replace(before,after),runtime);h=runtime.closedLoopHash;}
+let h=globalThis.closedLoopHash;if(faultName){let source=fs.readFileSync('hash.js','utf8');const [before,after]=faults[faultName];assert.ok(source.includes(before));const runtime=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,Blob});vm.runInContext(source.replace(before,after),runtime);h=runtime.closedLoopHash;}
 const root='unicode-data/15.1.0/',cases=[],note=name=>cases.push({name,result:'PASS'});
 assert.equal(h.normalizeFilename('re\u0301sume\u0301.txt').canonicalPath,'résumé.txt','UNICODE_FILENAME_ORACLE');
 assert.equal(h.normalizeFilename('中文-🙂.txt').canonicalPath,'中文-🙂.txt');note('Non-ASCII filenames retain their raw spelling and use pinned NFC canonical identities');
@@ -19,6 +20,6 @@ for(const [left,right] of [['résumé.txt','re\u0301sume\u0301.txt'],['Straße.t
 for(const [names,reason] of [[['résumé.txt','re\u0301sume\u0301.txt'],'DUPLICATE_CANONICAL_PATH'],[['Straße.txt','STRASSE.txt'],'CASE_FOLD_PATH_COLLISION'],[['paypal.txt','pаypal.txt'],'PLATFORM_RISK_PATH_COLLISION']])assert.throws(()=>h.normalizeFilenameSet(names),new RegExp(reason),'PACKAGE_COLLISION_ORACLE');
 assert.equal(h.normalizeFilenameSet(['slots/first/result.txt','slots/second/result.txt']).length,2,'Distinct canonical slot paths must not be conflated with matching basenames');
 for(const name of ['bad\u0085name.txt','bad\u202ename.txt','..\u2024/secret.txt','folder∕file.txt'])assert.throws(()=>h.normalizeFilename(name,{allowPath:true}),/UNSAFE_FILENAME/);note('Canonical, case-fold, script-confusable, control and ambiguous-path violations are rejected or detected by the shared filename owner');
-const context=vm.createContext({TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,Blob});vm.runInContext("String.prototype.normalize=function(){throw new Error('HOST NORMALIZATION MUST NOT RUN');};"+fs.readFileSync('hash.js','utf8'),context);assert.equal(context.closedLoopHash.normalizeFilename('re\u0301sume\u0301.txt').canonicalPath,'résumé.txt');note('Host normalization changes cannot change identities because the application uses its bundled pinned tables');
+const context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,Blob});vm.runInContext("String.prototype.normalize=function(){throw new Error('HOST NORMALIZATION MUST NOT RUN');};"+fs.readFileSync('hash.js','utf8'),context);assert.equal(context.closedLoopHash.normalizeFilename('re\u0301sume\u0301.txt').canonicalPath,'résumé.txt');note('Host normalization changes cannot change identities because the application uses its bundled pinned tables');
 const reproduced=spawnSync(process.execPath,['generate-unicode-tables.mjs','--check'],{encoding:'utf8'});assert.equal(reproduced.status,0,reproduced.stderr);note('Runtime tables reproduce exactly from the recorded official source bytes and digests');
 console.log(JSON.stringify({synthetic:true,actualBrowser:false,normalizationRows,unchangedScalars,caseFoldRows,confusableRows,unicodeContract:h.unicodeContract,cases},null,2));

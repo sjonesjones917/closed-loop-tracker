@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {gzipSync} from 'node:zlib';
 import {performance} from 'node:perf_hooks';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const source=fs.readFileSync('project-store.js','utf8');
 const start=source.indexOf('async function readPackageJson('),end=source.indexOf('\nasync function base64BlobToBlob(',start);
@@ -12,7 +13,7 @@ function runtime(fault=null){
  let implementation=parser;
  if(fault){assert.ok(implementation.includes(fault.before),'Implementation fault anchor must exist');implementation=implementation.replace(fault.before,fault.after);}
  implementation=implementation.replace('for(let i=0;i<text.length;i++){','for(let i=0;i<text.length;i++){globalThis.parserSteps++;');
- const context=vm.createContext({Blob,TextEncoder,TextDecoder,DecompressionStream,setTimeout,clearTimeout,parserSteps:0});
+ const context=createVerifierRuntime({Blob,TextEncoder,TextDecoder,DecompressionStream,setTimeout,clearTimeout,parserSteps:0});
  // Preserve the parser's production read deadline rather than replacing it
  // with a pass-through in this extracted-function fixture.
  vm.runInContext(fs.readFileSync('hash.js','utf8')+'\nglobalThis.hash=closedLoopHash;',context,{filename:'hash.js'});

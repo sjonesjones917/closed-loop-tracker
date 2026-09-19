@@ -13,6 +13,8 @@ function operationLatencyEvidence(){return {thresholdMs:OPERATION_LOADING_THRESH
 globalThis.closedLoopOperationLatencyEvidence=operationLatencyEvidence;
 let core,schema,engine,ingestion,projectStore,projects=[],current,acceptanceSession=null,projectUi={},projectStorage={artifactCount:0,byteSize:0,integrity:'NOT CHECKED',lastVerifiedAt:null,lastBackup:null,mismatches:[]};
 const operationSelection={},runSelection={},responseFileSelection={},fileSelectionDrafts={};
+function acceptedContinuation(project,acceptance){const id=String(acceptance?.continuationInstructionId||'');return id?safe(project?.projectData?.generatedPrompts).find(prompt=>prompt.instructionId===id&&!prompt.invalidatedBy)||null:null;}
+function rebaseAcceptedLaneSelection(stage,continuation,operations=operationSelection,runs=runSelection){stage=Number(stage);if(!Number.isInteger(stage)||stage<1)return;delete operations[stage];delete runs[stage];if(continuation){operations[stage]=continuation.operation;if(continuation.scope?.runId)runs[stage]=continuation.scope.runId;}}
 const stageContinuationErrors=new Map();
 let responseActionFailure=null;
 let storageHealthRefresh=null;
@@ -206,8 +208,13 @@ async function persistReplacement(next,{expectedProjectRevision=null,mutationCon
  if(expectedProjectRevision===null)expectedProjectRevision=Number(source?.revision??next.revision??0);
  const impact=projectStore.mutationImpact?.(source,next);
  if(impact?.requiresConfirmation&&mutationConfirmation?.confirmationKey!==impact.confirmationKey){await showReplacementReview({impact,next,expectedProjectRevision,acceptance});throw Object.assign(new Error('Review this change before saving.'),{code:'MUTATION_REVIEW_SHOWN'});}
- let committed;
- try{await captureCurrentView();committed=await withStorageActivity('Saving project · '+jobId,()=>projectStore.replaceProject(next,{expectedProjectRevision,expectedStateSha256,operational,selectProject:false,historyView:String(current?.job?.JOB_ID||'')===jobId?{...captureView(),pendingMutation:null}:undefined,mutationConfirmation}));}
+ let committed,committedView;
+ try{
+  await captureCurrentView();
+  committedView=String(current?.job?.JOB_ID||'')===jobId?{...captureView(),pendingMutation:null}:undefined;
+  if(committedView&&acceptance?.stage){const continuation=acceptedContinuation(next,acceptance);rebaseAcceptedLaneSelection(acceptance.stage,continuation,committedView.operationSelection,committedView.runSelection);}
+  committed=await withStorageActivity('Saving project · '+jobId,()=>projectStore.replaceProject(next,{expectedProjectRevision,expectedStateSha256,operational,selectProject:false,historyView:committedView,mutationConfirmation}));
+ }
  catch(error){
   // Keep the compare-and-swap guard. Discard this candidate and refresh the
   // selected project so a retry can recompute from current canonical state.
@@ -218,7 +225,7 @@ async function persistReplacement(next,{expectedProjectRevision=null,mutationCon
   throw error;
  }
  projects=projects.map(p=>p.job?.JOB_ID===committed.job?.JOB_ID?committed:p);if(!projects.some(p=>p.job?.JOB_ID===committed.job?.JOB_ID))projects.unshift(committed);
- if(String(current?.job?.JOB_ID||'')===jobId){committed.activeView=current.activeView;committed.activeStage=current.activeStage;current=committed;}unloadInactiveProjects();if(mobileSessionCurrent())try{await saveAcceptanceSession();}catch(error){acceptanceSession.receiptPersistenceError=String(error.message||error);}if(String(current?.job?.JOB_ID||'')===jobId)await recordCommittedBoundary();return committed;
+ if(String(current?.job?.JOB_ID||'')===jobId){committed.activeView=current.activeView;committed.activeStage=current.activeStage;current=committed;if(acceptance?.stage)rebaseAcceptedLaneSelection(acceptance.stage,acceptedContinuation(current,acceptance),operationSelection,runSelection);}unloadInactiveProjects();if(mobileSessionCurrent())try{await saveAcceptanceSession();}catch(error){acceptanceSession.receiptPersistenceError=String(error.message||error);}if(String(current?.job?.JOB_ID||'')===jobId)await recordCommittedBoundary();return committed;
 }
 async function save(){try{await persistReplacement(current);announce('saved');return true;}catch(error){console.error(error);announce('storage failed');reportActionFailure(error.existingProjectsUnchanged===false?error:`Save failed without replacing the prior persisted project state: ${error.message||error}`);return false;}}
 function blankStage(n){const d=core.STAGES[n-1];return {number:n,status:'NOT STARTED',draftRecord:core.stageTemplate(d),responseDraft:'',authorizedFiles:[],acceptedData:{},humanData:{},acceptedResponseIds:[],gate:{reasons:[]},revisions:[]};}
@@ -758,8 +765,7 @@ async function showReplacementReview({impact,next,expectedProjectRevision,accept
 async function finishAcceptedProposal(acceptance){
  const {proposalId,rawResponseId,stage,continuationInstructionId}=acceptance;replacementReview=null;
  await recordMobileOperation('PROPOSAL_REVIEWED_AND_ACCEPTED',{proposalId,rawResponseId,stage});
- const continuation=safe(current.projectData.generatedPrompts).find(prompt=>prompt.instructionId===continuationInstructionId&&!prompt.invalidatedBy);
- if(continuation)selectStageContinuation(continuation);
+ const continuation=acceptedContinuation(current,acceptance);
  announce(continuation?'Stage '+String(stage).padStart(2,'0')+' is not complete; the next instruction is saved and ready to export':current.stages[stage]?.gate?.complete?`response accepted; Stage ${String(stage).padStart(2,'0')} is complete`:`response saved; Stage ${String(stage).padStart(2,'0')} has not passed its completion gate`);
  current.activeStage=canonicalCurrentStage();current.activeView='Workflow';render();focusAfterAction($('#next-required-action'));
 }
