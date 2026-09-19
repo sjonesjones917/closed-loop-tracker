@@ -232,15 +232,16 @@
       "requirementId": "UX-012",
       "sourceLocation": "Current user task section 9 E, UX-012",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "requirement-specific authority traced by permanent verifiers"
+        "file": "app-core.js + response-ingestion.js",
+        "symbol": "acceptPendingProposal / showReplacementReview / confirmReplacement + acceptanceImpact"
       },
       "observableExpectedBehavior": "Confirmations are in-page and scrolled into view; no popup, modal, alert, or browser confirmation dialog is used.",
       "requiredEvidence": [
         "Executed behavioral case on exact candidate source",
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
-        "Affected downstream browser/recovery verification where applicable"
+        "Affected downstream browser/recovery verification where applicable",
+        "Acceptance-specific replacement/invalidation impact must be the exact in-page confirmation authority; generic storage mutation impact remains an internal CAS guard."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -252,15 +253,16 @@
       "requirementId": "UX-013",
       "sourceLocation": "Current user task section 9 E, UX-013",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "requirement-specific authority traced by permanent verifiers"
+        "file": "app-core.js + project-store.js",
+        "symbol": "keepCurrentProgress / captureCurrentView / selectSavedView / rebaseHistoryView"
       },
       "observableExpectedBehavior": "History restoration restores the recorded view and does not automatically advance to another stage.",
       "requiredEvidence": [
         "Executed behavioral case on exact candidate source",
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
-        "Affected downstream browser/recovery verification where applicable"
+        "Affected downstream browser/recovery verification where applicable",
+        "Cancellation creates a distinct durable saved view while the prior unaccepted candidate checkpoint remains restorable with its recorded view."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -272,15 +274,16 @@
       "requirementId": "UX-014",
       "sourceLocation": "Current user task section 9 E, UX-014",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "requirement-specific authority traced by permanent verifiers"
+        "file": "app-core.js + response-ingestion.js",
+        "symbol": "confirmReplacement / finishAcceptedProposal / acceptanceImpact"
       },
       "observableExpectedBehavior": "After acceptance succeeds, the next required operation is in view and concise Undo is available.",
       "requiredEvidence": [
         "Executed behavioral case on exact candidate source",
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
-        "Affected downstream browser/recovery verification where applicable"
+        "Affected downstream browser/recovery verification where applicable",
+        "Acceptance commits only after the exact confirmed semantic impact is rechecked, then moves to the next required operation with recovery preserved."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -532,15 +535,16 @@
       "requirementId": "DEF-6",
       "sourceLocation": "Current user task section 8, DEF-6",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "defect-specific authority established by reproduction"
+        "file": "app-core.js + project-store.js",
+        "symbol": "registerStageFiles / keepCurrentProgress / History restore pendingMutation"
       },
       "observableExpectedBehavior": "Reproduce and correct: Changing project input after Stage 1 completed crashes or fails without rollback confirmation/effective change.",
       "requiredEvidence": [
         "Inputs and exact operation sequence",
         "Baseline failing invariant on exact defective source",
         "Corrected same-path execution",
-        "Permanent regression demonstrated to detect the failure"
+        "Permanent regression demonstrated to detect the failure",
+        "Cancelled Stage-1 input correction remains unaccepted, current progress is preserved, and the exact prior correction candidate remains recoverable through History."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",

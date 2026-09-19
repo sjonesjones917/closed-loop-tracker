@@ -696,7 +696,7 @@ function commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accept
 function prepareAcceptanceCandidate(project,proposalId,options={}){
  const proposal=findProposal(project,proposalId),impact=acceptanceImpact(project,proposalId);
  const result=commit(project,proposalId,{...options,replacementConfirmation:impact});
- return {...result,acceptance:{proposalId,proposalSha256:hash.sha256Value(proposal),rawResponseId:proposal.rawResponseId,stage:Number(proposal.stage)}};
+ return {...result,acceptance:{proposalId,proposalSha256:hash.sha256Value(proposal),rawResponseId:proposal.rawResponseId,stage:Number(proposal.stage),impact:clone(impact)}};
 }
 function validateAcceptanceCandidate(project,candidate,acceptance){
  const proposal=findProposal(project,acceptance?.proposalId);
