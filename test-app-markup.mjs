@@ -13,7 +13,7 @@ export function appMarkup(runtime,project,{view='Workflow',operations={},source=
  runtime.window=runtime;
  runtime.addEventListener=()=>{};
  const render=view==='Files'?'files()':view==='Overview'?'overview()':'workflow()';
- const result=instructionEvidence?`const html=${render};return {html,instruction:currentPromptRecord(current.activeStage)?.prompt||currentStagePrompt(current.activeStage)};`:`return ${render};`;
+ const result=instructionEvidence?`const html=${render};return {html,instruction:currentPromptRecord(current.activeStage)?.prompt||currentStagePrompt(current.activeStage),selectedOperation:selectedOperation(current.activeStage),displayedOperation:displayedStageAction(current.activeStage).operation};`:`return ${render};`;
  const body=source.slice(0,end)+`core=globalThis.closedLoopCore;schema=globalThis.closedLoopWorkflowSchema;engine=globalThis.closedLoopWorkflowEngine;ingestion=globalThis.closedLoopResponseIngestion;projectStore=globalThis.closedLoopProjectStore;current=__markupProject;projects=[current];Object.assign(operationSelection,__markupOperations);${result}})();`;
  return createVerifierRuntime.loadScript(runtime,body,{filename:'app-core.js:actual-rendering'});
 }

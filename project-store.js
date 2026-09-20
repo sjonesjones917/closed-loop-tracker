@@ -421,10 +421,13 @@ async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),par
   const sha256=await hash.sha256Bytes(encoded.blob);
   return {id,parentId,label,workSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,createdAt:body.createdAt,stage:Number(view.activeStage||project.activeStage||1),projectSha256:body.projectSha256,...(projectReference?{projectReference:clone(projectReference)}:{}),...(body.projectParts?{projectParts:clone(body.projectParts)}:{}),sha256,byteSize:encoded.blob.size,blob:encoded.blob};
 }
-async function prepareHistoryCommit(next,prior,{label=null,view=null,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[]}={}){
+async function prepareHistoryCommit(next,prior,{label=null,view=null,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[],verifiedRead=null}={}){
   // These private objects remain unchanged throughout this preparation. Reuse
-  // only digests computed here, never a project-supplied stored hash.
+  // only digests computed here or verified by the private read below.
   const digests=new WeakMap(),digest=project=>{if(!digests.has(project))digests.set(project,projectSha256(project));return digests.get(project);};
+  // Only saveCheckpoint supplies this private, freshly verified read. It has
+  // not exposed or mutated the object; public write options cannot supply it.
+  if(verifiedRead)digests.set(verifiedRead.project,verifiedRead.digest);
   const jobId=projectIdentity(next),existing=baseState||await metaGet(historyKey(jobId));
   const state=clone(existing||{schema:HISTORY_SCHEMA,jobId,generation:0,activeId:null,activeProjectSha256:null,entries:[],sessions:{},files:{},compressedProjectBytes:0,retainedFileBytes:0,redo:[]});
   const retainedRedo=clone(state.redo||[]),viewOnly=prior&&digest(next)===digest(prior);
@@ -489,7 +492,7 @@ async function historyList(jobId){
 async function saveCheckpoint(jobId,{expectedProjectRevision,view=null,label='Saved view',sessionId=null}={}){
   const project=await readProject(jobId);if(!project)throw storageError('The project is unavailable.','HISTORY_PROJECT_MISSING');
   if(expectedProjectRevision!==undefined&&Number(project.revision)!==Number(expectedProjectRevision))throw storageError('Project changed before its view could be saved.','STALE_PROJECT_REVISION');
-  const prepared=await prepareHistoryCommit(project,project,{label,view,sessionId}),tx=await openTransaction([PROJECTS,META],'readwrite');
+  const prepared=await prepareHistoryCommit(project,project,{label,view,sessionId,verifiedRead:{project,digest:project.projectSha256}}),tx=await openTransaction([PROJECTS,META],'readwrite');
   try{const row=await projectRowWithOperations(tx,jobId);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);await complete(tx);return prepared.state.activeId;}catch(error){try{tx.abort();}catch{}throw error;}
 }
 async function beginHistorySession(sessionId){

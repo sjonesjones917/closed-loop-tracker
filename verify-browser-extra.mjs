@@ -1,3 +1,4 @@
+import {createBrowserReadiness} from './operator-browser-driver.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {createHash} from 'node:crypto';
 import {spawn} from 'node:child_process';
@@ -35,7 +36,7 @@ async function exportStagePackage(cdp,selector='#next-export-prompt-file'){
 async function waitForSavedPrompt(cdp){
   await waitExpr(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.dataset?.projectId,stage=Number(document.querySelector('#stage-picker')?.value);if(!id||!stage)return false;const project=await closedLoopProjectStore.readProject(id);return Boolean(project?.projectData.generatedPrompts.some(record=>Number(record.stage)===stage&&!record.invalidatedBy&&record.instructionId&&record.bodySha256&&record.prompt&&record.promptEngineVersion===closedLoopPromptEngine.version&&Number(record.scope?.projectRevision)===Number(project.revision)));})()`);
 }
-async function waitForIdle(cdp){await waitExpr(cdp,`globalThis.closedLoopAppReady===true&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true'`,60000);}
+async function waitForIdle(cdp,timeout=60000){await createBrowserReadiness(cdp,expression=>evalValue(cdp,expression),{timeout}).idle();}
 async function assertInlineError(cdp,message){
  await waitExpr(cdp,`document.querySelector('#operation-error')?.textContent.includes(${JSON.stringify(message)})`);
  const result=await evalValue(cdp,`new Promise(resolve=>{let frames=0,stable=0,previous='';const sample=()=>{const node=document.querySelector('#operation-error'),rect=node?.getBoundingClientRect(),geometry=rect?JSON.stringify([rect.top,rect.bottom,rect.left,rect.right,scrollY]):'';stable=geometry&&geometry===previous?stable+1:0;previous=geometry;frames++;if(frames>=4&&stable>=2||frames>=12){const style=node&&getComputedStyle(node);resolve({frames,stable,text:node?.textContent,visible:Boolean(node&&!node.hidden&&style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0),inView:Boolean(rect&&rect.top>=0&&rect.bottom<=innerHeight),focused:document.activeElement===node});}else requestAnimationFrame(sample);};requestAnimationFrame(sample);})`);
@@ -89,13 +90,7 @@ async function selectReturnedSlot(cdp,slotId,content){
 }
 // Synthetic setup writes a chosen current state. Navigate by an ordinary
 // project link; a reload of a saved-version URL must restore that saved version.
-async function navigateAndWait(cdp,method,params={},options={}){
- const previous=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;
- await cdp.send(method,params);
- await poll(async()=>{const destination=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;if(!destination||destination===previous)throw new Error('Waiting for the destination document');return destination;},60000);
- if(options.allowStartupFailure)await waitExpr(cdp,`globalThis.closedLoopAppReady===true||Boolean(globalThis.closedLoopAppError)`,60000);
- else await waitForIdle(cdp);
-}
+async function navigateAndWait(cdp,method,params={},options={}){await createBrowserReadiness(cdp,expression=>evalValue(cdp,expression),{timeout:60000}).navigate(method,params,options);}
 async function openStoredFixture(cdp){const url=await evalValue(cdp,`(async()=>{const url=new URL(location.href);url.searchParams.delete('version');url.searchParams.delete('stage');url.searchParams.set('project',await closedLoopProjectStore.metaGet('selectedProject'));return url.href;})()`);await navigateAndWait(cdp,'Page.navigate',{url});}
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);

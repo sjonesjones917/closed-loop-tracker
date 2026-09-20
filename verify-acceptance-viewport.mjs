@@ -29,7 +29,7 @@ function assertSurface(value,label){
  assert.ok(value.documentOverflow<=1,`${label}: document overflows horizontally`);
 }
 async function observe(browser,row,label){
- const value=await browser.evaluate(geometry);row.observations.push({label,value});persist();
+ await browser.settle();const value=await browser.evaluate(geometry);row.observations.push({label,value});persist();
  try{assertSurface(value,label);}catch(error){row.failures.push(String(error.message));}
  return value;
 }

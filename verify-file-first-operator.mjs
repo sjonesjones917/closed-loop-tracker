@@ -2,18 +2,36 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
+import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
 
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
 // History is exercised by verify-recoverable-history and the browser recovery gate.
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
 
-const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
+let app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');if(process.argv.includes('--fault=selected-operation')){const anchor='if(!registration||explicit===action.operation)return action;';assert.equal(app.split(anchor).length-1,1);app=app.replace(anchor,'if(true)return action;');}
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
 const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
+
+// The selected operation, its instruction and its sole handoff must agree.
+{
+ const runtime=createVerifierRuntime({Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:()=>null,querySelectorAll:()=>[]}});
+ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(runtime,fs.readFileSync(file,'utf8'),{filename:file});
+ const schema=runtime.closedLoopWorkflowSchema,engine=runtime.closedLoopWorkflowEngine,fixtureRuntime={core:runtime.closedLoopCore,schema,engine,prompts:runtime.closedLoopPromptEngine,ingestion:runtime.closedLoopResponseIngestion},results=[];
+ const fixture=stage04AcceptanceFixture(fixtureRuntime,'SELECTED-OPERATION-HANDOFF');
+ for(const stage of Object.keys(fixture.stages).map(Number))for(const operation of schema.STAGE_CONTRACTS[stage].operations){
+  const p=engine.clone(fixture);p.activeStage=stage;const before=JSON.stringify(p),rendered=appMarkup(runtime,p,{operations:{[stage]:operation},source:app,instructionEvidence:true}),match=rendered.html.match(/id="next-export-prompt-file" data-operation="([^"]+)"/),actual=match?.[1]||null;
+  assert.equal(JSON.stringify(p),before,'SELECTED_OPERATION_HANDOFF_ORACLE: selection changed accepted data');
+  if(actual!==null){assert.equal(actual,operation,'SELECTED_OPERATION_HANDOFF_ORACLE: exported handoff ignores the chosen operation');assert.ok(rendered.html.includes('Double-check before you continue'),'SELECTED_OPERATION_HANDOFF_ORACLE: operation selection lost required operator checks');}
+  if(schema.STAGE_OPERATION_REGISTRY[stage+':'+operation].executorClass!=='EXTERNAL_AGENT')assert.equal(actual,null,'SELECTED_OPERATION_HANDOFF_ORACLE: application or human work exported an agent instruction');
+  if([1,2].includes(stage)&&schema.STAGE_OPERATION_REGISTRY[stage+':'+operation].executorClass==='EXTERNAL_AGENT')assert.equal(actual,operation,'SELECTED_OPERATION_HANDOFF_ORACLE: permitted earlier-stage operation has no handoff');
+  results.push({stage,operation,exportedOperation:actual,acceptedStatePreserved:true,result:'PASS'});
+ }
+ console.log(JSON.stringify({caseId:'SELECTED_OPERATION_HANDOFF',synthetic:true,actualBrowser:false,results}));
+}
 
 // Exercise the application's one shared pending-action controller.
 await import('./verify-operator-action-lifecycle.mjs');
@@ -188,10 +206,11 @@ verify();
  const wireStart=app.indexOf("bindAction('#next-export-prompt-file'"),wireEnd=app.indexOf("document.querySelectorAll('[data-returned-slot]'",wireStart),source=app.slice(wireStart,wireEnd);
  assert(wireStart>=0&&wireEnd>wireStart,'The existing next-instruction action is missing.');
  for(const [stage,operation] of [[5,'SEMANTIC_REVIEW'],[6,'RECONCILE_VERIFICATION_SUITE'],[11,'EXECUTE_RUN'],[17,'VERIFY'],[21,'COMPLETE']]){
-  const button={dataset:{operation}},current={activeStage:stage},operationSelection={};let exported;
-  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,bindAction:(_selector,operation)=>{button.onclick=operation;},$:()=>button,current,operationSelection,canonicalCurrentStage:()=>stage===30?1:stage+1,exportStageFiles:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
+  const button={dataset:{operation}},current={activeStage:stage},operationSelection={[stage]:operation};let exported;
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,bindAction:(_selector,operation)=>{button.onclick=operation;},$:()=>button,current,operationSelection,selectedOperation:n=>operationSelection[n],canonicalCurrentStage:()=>stage===30?1:stage+1,exportStageFiles:()=>{exported={stage:current.activeStage,operation:operationSelection[current.activeStage]};}});
   vm.runInContext(source,runtime);await button.onclick();
   assert.deepEqual(exported,{stage,operation},'The action escaped the selected stage.');
+  exported=null;button.dataset.operation='STALE-OPERATION';assert.throws(()=>button.onclick(),/selected operation changed/);assert.equal(exported,null,'A stale control exported another operation.');assert.equal(operationSelection[stage],operation);
  }
 }
 assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
@@ -282,7 +301,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.bindAction=(_selector,operation)=>{button.onclick=operation;};
   vm.runInContext(app.match(/^function canonicalCurrentStage\([^\n]+/m)[0]+'\n'+app.slice(wireStart,wireEnd),runtime);await button.onclick();
   assert.equal(downloaded,3,'The actual next-action handler failed to reach automatic instruction export.');
-  assert.equal(runtime.operationSelection[9],'COMPLETE');assert.equal(runtime.current.projectData.freshContexts.length,1);
+  assert.equal(runtime.current.projectData.generatedPrompts.at(-1).operation,'COMPLETE');assert.equal(runtime.operationSelection[9],undefined,'Export must preserve an implicit selection without inventing an explicit override');assert.equal(runtime.current.projectData.freshContexts.length,1);
   runtime.savePromptRecord=async()=>{throw new Error('The selected file could not be read. Select it again.');};
   for(let stage=1;stage<=30;stage++){
     runtime.current.activeStage=stage;await runtime.exportAttempt(()=>downloaded++);

@@ -22,7 +22,7 @@ function preserveReport(){
 }
 process.once('SIGTERM',()=>{
  report.failures.push({stage,sequence,message:'The operator journey was interrupted before completion. Retained observations do not establish the unexecuted stages.'});
- preserveReport();process.exit(143);
+ preserveReport();console.error(JSON.stringify({operatorJourneyInterrupted:true,stage,sequence,completedStages:report.stages.length,currentOperation:report.currentOperation}));process.exit(143);
 });
 
 async function captureOperationLatency(driver=browser){
@@ -43,7 +43,7 @@ async function inspectPresentation(driver,caseId,instruction){
   const observed=await driver.evaluate('('+observeWorkflowDOM.toString()+')()');
   const result=assertWorkflowPresentation(observed,{caseId,instruction});report.presentationCases.push(result);if(driver===browser)await captureOperationLatency(driver);return result;
 }
-async function saved({backup=false}={}){if(!backup)return browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
+async function saved({backup=false}={}){await captureOperationLatency();if(!backup)return browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
 async function ingest(request,{invalid=false}={}){
   const before=await saved(),count=before.projectData.acceptedChanges.length,bytes=Buffer.from(JSON.stringify(request)+'\n');
   await browser.selectFiles('#response-json-file',[{filename:'response.json',bytes}]);await browser.click('#process-response-file');
@@ -101,7 +101,7 @@ try{
   for(stage=1;stage<=30;stage++){
     await browser.fill('#stage-picker',stage);const start=report.operations.length;
     for(let steps=0;steps<80;steps++){
-      assert.ok(++sequence<=240,'Bound of 240 operator actions exceeded');assert.equal(await browser.visible('#next-required-action'),true,`Stage ${stage}: the next required action was not visible before operator action ${sequence}.`);const p=await saved(),gate=engine.gate(stage,p),action=engine.operationalNextAction(p,stage);
+      assert.ok(++sequence<=240,'Bound of 240 operator actions exceeded');await browser.settle();assert.equal(await browser.visible('#next-required-action'),true,`Stage ${stage}: the next required action was not visible before operator action ${sequence}.`);const p=await saved(),gate=engine.gate(stage,p),action=engine.operationalNextAction(p,stage);
       await inspectPresentation(browser,'operator-stage-'+stage+'-sequence-'+sequence);
       if(gate.complete&&!(stage===30&&action.actionType!=='COMPLETE')){report.stages.push({stage,result:'PASS',projection:verifyCompletedStageProjection(p,stage,schema),view:await browser.inspect(stage),operations:report.operations.length-start});break;}
       report.currentOperation={stage,sequence,action:action.actionType,operation:action.operation,startedAt:new Date().toISOString()};preserveReport();
@@ -125,4 +125,4 @@ try{
   assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.complete=true;
 }catch(error){report.failures.push({stage,sequence,message:error.stack});console.error(error);process.exitCode=1;try{report.failureView=await browser.evaluate(`(()=>{const node=document.querySelector('#next-required-action'),rect=node?.getBoundingClientRect();return {stage:document.querySelector('#stage-picker')?.value,width:innerWidth,height:innerHeight,scrollY,action:node?.innerText,rect:rect?.toJSON(),active:document.activeElement?.id,loading:document.querySelector('#app')?.getAttribute('aria-busy')};})()`);await browser.inspect(stage);}catch{}}
 finally{try{await captureOperationLatency();}catch(error){report.latencyReadFailure=String(error.message||error);}preserveReport();await browser.close();}
-console.log(JSON.stringify({completeOperatorJourney:report.complete,stages:report.stages.length,operations:report.operations.length,failures:report.failures}));
+console.log(JSON.stringify({completeOperatorJourney:report.complete,stages:report.stages.length,operations:report.operations.length,failures:report.failures,operationLatency:report.operationLatency},null,2));
