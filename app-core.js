@@ -256,7 +256,15 @@ async function persistReplacement(next,{expectedProjectRevision=null,mutationCon
   throw error;
  }
  projects=projects.map(p=>p.job?.JOB_ID===committed.job?.JOB_ID?committed:p);if(!projects.some(p=>p.job?.JOB_ID===committed.job?.JOB_ID))projects.unshift(committed);
- if(String(current?.job?.JOB_ID||'')===jobId){committed.activeView=current.activeView;committed.activeStage=current.activeStage;current=committed;if(acceptance?.stage)rebaseAcceptedLaneSelection(acceptance.stage,acceptedContinuation(current,acceptance),operationSelection,runSelection);}unloadInactiveProjects();if(mobileSessionCurrent())try{await saveAcceptanceSession();}catch(error){acceptanceSession.receiptPersistenceError=String(error.message||error);}if(String(current?.job?.JOB_ID||'')===jobId)await recordCommittedBoundary();return committed;
+ if(String(current?.job?.JOB_ID||'')===jobId){committed.activeView=current.activeView;committed.activeStage=current.activeStage;current=committed;if(acceptance?.stage)rebaseAcceptedLaneSelection(acceptance.stage,acceptedContinuation(current,acceptance),operationSelection,runSelection);}unloadInactiveProjects();if(mobileSessionCurrent())try{await saveAcceptanceSession();}catch(error){acceptanceSession.receiptPersistenceError=String(error.message||error);}
+ if(String(current?.job?.JOB_ID||'')===jobId)try{await recordCommittedBoundary();}catch(error){
+  // replaceProject has already committed the canonical version and its durable
+  // recovery state. Presentation/browser-history bookkeeping cannot turn that
+  // committed acceptance into a reported acceptance failure.
+  if(!acceptance)throw error;
+  globalThis.__closedLoopPostCommitRecoveryWarning={message:'Response accepted and saved. History recovery could not refresh after the commit. Reload the application to refresh History; the accepted work remains committed.',diagnostic:String(error?.message||error||'History recovery bookkeeping failed.')};
+ }
+ return committed;
 }
 async function save(){try{await persistReplacement(current);announce('saved');return true;}catch(error){console.error(error);announce('storage failed');reportActionFailure(error.existingProjectsUnchanged===false?error:`Save failed without replacing the prior persisted project state: ${error.message||error}`);return false;}}
 function blankStage(n){const d=core.STAGES[n-1];return {number:n,status:'NOT STARTED',draftRecord:core.stageTemplate(d),responseDraft:'',authorizedFiles:[],acceptedData:{},humanData:{},acceptedResponseIds:[],gate:{reasons:[]},revisions:[]};}
@@ -850,6 +858,7 @@ async function finishAcceptedProposal(acceptance){
  const continuation=acceptedContinuation(current,acceptance);
  announce(continuation?'Stage '+String(stage).padStart(2,'0')+' is not complete; the next instruction is saved and ready to export':current.stages[stage]?.gate?.complete?`response accepted; Stage ${String(stage).padStart(2,'0')} is complete`:`response saved; Stage ${String(stage).padStart(2,'0')} has not passed its completion gate`);
  current.activeStage=canonicalCurrentStage();current.activeView='Workflow';render();focusAfterAction($('#next-required-action'));
+ const recoveryWarning=globalThis.__closedLoopPostCommitRecoveryWarning;if(recoveryWarning){delete globalThis.__closedLoopPostCommitRecoveryWarning;const report=$('#operation-error')||$('.next-action-panel > .notice')||$('#screen .notice')||$('#screen .section-intro');if(report){report.hidden=false;report.textContent=recoveryWarning.message;report.classList?.remove?.('danger');report.classList?.add?.('notice','warn');report.setAttribute?.('tabindex','-1');report.scrollIntoView?.({block:'nearest'});}}
 }
 async function keepCurrentProgress(){
  const review=replacementReview;if(!review)return;

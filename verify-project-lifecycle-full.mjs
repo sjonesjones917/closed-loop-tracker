@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
 // History is exercised by verify-recoverable-history and the browser recovery gate.
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
@@ -148,6 +149,27 @@ for(let i=0;i<artifactSizes.length;i++){
 vm.runInContext(`fixtureArtifacts[0].sha256='0'.repeat(64)`,filePackageRuntime);
 let damagedFileRejected=false;try{await filePackageRuntime.closedLoopProjectStore.exportPackage('FILE-PRESSURE');}catch(error){damagedFileRejected=error.code==='ARTIFACT_INTEGRITY_MISMATCH';}
 assert(damagedFileRejected,'Bounded file export accepted corrupted stored bytes.');
+// Representative accumulated-history export is deliberately non-browser. The
+// real-browser operator path uses a fixed small fixture; this production-store
+// case carries the historical 600 x ~80k-character workload and requires exact
+// bytes/hash plus bounded termination without increasing the browser timeout.
+{
+  const large=projectStoreRuntime(),records=600,charactersPerRecord=80000,deadlineMs=60000,jobId='NONBROWSER-ACCUMULATED-HISTORY';
+  let project=large.core.createBlankState(jobId);
+  project.projectData.rawResponses=large.copy(Array.from({length:records},(_,i)=>({rawResponseId:'RAW-NONBROWSER-'+i,stage:i%large.core.STAGES.length+1,status:'PRESERVED',rawText:'H'.repeat(charactersPerRecord)+'é🙂TAIL-'+i})));
+  project=await large.store.writeProject(project,{expectedProjectRevision:0,createOnly:true});
+  let timer;const started=performance.now();
+  const exported=await Promise.race([
+    large.store.exportPackage(jobId),
+    new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(`NONBROWSER_COMPLETE_EXPORT_TIMEOUT_ORACLE: complete project export exceeded ${deadlineMs} ms`)),deadlineMs);})
+  ]).finally(()=>clearTimeout(timer));
+  const elapsedMs=performance.now()-started,payload=JSON.parse(await new Response(exported.stream().pipeThrough(new DecompressionStream('gzip'))).text()),rows=payload.project.projectData.rawResponses,{packageSha256,...body}=payload,rawCharacters=rows.reduce((sum,row)=>sum+row.rawText.length,0);
+  assert(elapsedMs<=deadlineMs,`NONBROWSER_COMPLETE_EXPORT_TIMEOUT_ORACLE: ${elapsedMs} ms exceeded ${deadlineMs} ms`);
+  assert(rows.length===records&&rows.at(-1).rawText.endsWith('é🙂TAIL-'+(records-1)),'NONBROWSER_COMPLETE_EXPORT_BYTES_ORACLE: accumulated history was truncated or changed.');
+  assert(rawCharacters>=records*charactersPerRecord,'NONBROWSER_COMPLETE_EXPORT_BYTES_ORACLE: accumulated history character count changed.');
+  assert(globalThis.closedLoopHash.sha256Value(body)===packageSha256,'NONBROWSER_COMPLETE_EXPORT_HASH_ORACLE: complete project package digest changed.');
+  console.log(JSON.stringify({storageRegression:'export:representative-accumulated-history-nonbrowser',passed:true,records,charactersPerRecord,rawCharacters,elapsedMs,deadlineMs,compressedBytes:exported.size}));
+}
 // Exercise the other production package schema, including streamed UTF-8 JSON
 // strings with multi-byte characters and escapes spanning file-read boundaries.
 filePackageRuntime.fixtureContextBlob=new Blob(['é🙂\\\n\t"'.repeat(20000),'CONTEXT-FINAL-TAIL']);

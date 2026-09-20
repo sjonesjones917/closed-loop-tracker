@@ -22,6 +22,12 @@ async function verifyPendingRestoration({failCheckpoint=false}={}){
  const firstEntry=await position(),firstState=await browser.evaluate('structuredClone(history.state)');
  await browser.click('[data-view="Project"]');await browser.fill('[data-job="JOB_TITLE"]',prefix+' — second');await browser.click('#save-job');await browser.click('[data-view="Project"]');
  const before=await browser.readProject(),jobId=before.job.JOB_ID,latestDraft=prefix+' — latest uncommitted draft';let traversal;
+ // Leaving a browser entry is allowed to replace that same entry with its final
+ // durable checkpoint/view. Re-read the recorded destination after departure
+ // instead of comparing Back navigation with the earlier, pre-departure state.
+ const navigationAfterDeparture=await browser.navigationHistory(),recordedFirst=navigationAfterDeparture.entries.find(entry=>entry.id===firstEntry.id);
+ assert.ok(recordedFirst,'RESTORATION_BROWSER_DESTINATION_ORACLE: recorded destination entry disappeared');
+ const recordedFirstCheckpoint=new URL(recordedFirst.url).searchParams.get('version');assert.ok(recordedFirstCheckpoint,'RESTORATION_BROWSER_DESTINATION_ORACLE: recorded destination checkpoint is missing');const recordedFirstView=await browser.evaluate(`closedLoopProjectStore.readHistoryView(${JSON.stringify(jobId)},${JSON.stringify(recordedFirstCheckpoint)})`),recordedFirstState={...firstState,checkpointId:recordedFirstCheckpoint,view:recordedFirstView};
  // Hold only transaction scheduling. This barrier writes no canonical state.
  await browser.evaluate(`new Promise((resolve,reject)=>{const request=indexedDB.open(closedLoopProjectStore.DB_NAME);request.onerror=()=>reject(request.error);request.onsuccess=()=>{const db=request.result,tx=db.transaction(closedLoopProjectStore.stores.meta,'readwrite'),store=tx.objectStore(closedLoopProjectStore.stores.meta),barrier={released:false};globalThis.__restorationCaptureBarrier=barrier;const pump=()=>{const get=store.get('selectedProject');get.onerror=()=>reject(get.error);get.onsuccess=()=>{resolve(true);if(!barrier.released)pump();};};tx.oncomplete=()=>{db.close();barrier.completed=true;};tx.onabort=()=>{db.close();reject(tx.error);};pump();};})`);
  let pending,finished,result;
@@ -34,7 +40,7 @@ async function verifyPendingRestoration({failCheckpoint=false}={}){
   await browser.evaluate(`(()=>{if(globalThis.__restorationCaptureBarrier)globalThis.__restorationCaptureBarrier.released=true;return true;})()`);
   try{if(traversal)await traversal;}finally{await browser.evaluate('delete globalThis.__closedLoopStorageFault');}
  }
- assert.equal(pending.busy,'true','RESTORATION_BROWSER_OWNERSHIP_ORACLE');assert.equal(pending.disabled,true,'RESTORATION_BROWSER_OWNERSHIP_ORACLE');assert.equal(pending.loading,true,'RESTORATION_BROWSER_LOADING_ORACLE');assert.deepEqual(pending.nativeEntry,firstState,'RESTORATION_BROWSER_DESTINATION_ORACLE');
+ assert.equal(pending.busy,'true','RESTORATION_BROWSER_OWNERSHIP_ORACLE');assert.equal(pending.disabled,true,'RESTORATION_BROWSER_OWNERSHIP_ORACLE');assert.equal(pending.loading,true,'RESTORATION_BROWSER_LOADING_ORACLE');assert.deepEqual(pending.nativeEntry,recordedFirstState,'RESTORATION_BROWSER_DESTINATION_ORACLE');
  finished=await browser.evaluate(`({busy:document.querySelector('#app').getAttribute('aria-busy'),loading:!document.querySelector('#app-operation-status').hidden,errorVisible:!document.querySelector('#operation-error').hidden,errorText:document.querySelector('#operation-error').textContent,title:document.querySelector('[data-job="JOB_TITLE"]')?.value||null,nativeEntry:structuredClone(history.state),latency:closedLoopOperationLatencyEvidence().samples.filter(sample=>sample.kind==='restoration').at(-1)})`);
  assert.equal(finished.busy,null);assert.equal(finished.loading,false);assert.ok(finished.latency.durationMs>=pending.thresholdMs);
  if(failCheckpoint){
@@ -43,8 +49,8 @@ async function verifyPendingRestoration({failCheckpoint=false}={}){
   const repairedDraft=latestDraft+' — retained after retry';await browser.fill('[data-job="JOB_TITLE"]',repairedDraft);
   // A normal export waits for the operator-owned departure capture and verifies actual downloaded backup bytes.
   const backup=await state(),retained=await browser.evaluate(`(async()=>{const store=closedLoopProjectStore,history=await store.historyList(${JSON.stringify(jobId)});for(const entry of history.entries.slice().reverse()){const view=await store.readHistoryView(${JSON.stringify(jobId)},entry.id);if(view?.drafts?.['[data-job="JOB_TITLE"]']?.value===${JSON.stringify(repairedDraft)})return {checkpointId:entry.id,view};}return null;})()`);
-  assert.ok(retained,'RESTORATION_BROWSER_RETRY_DRAFT_ORACLE');assert.deepEqual(await browser.evaluate('structuredClone(history.state)'),firstState,'RESTORATION_BROWSER_FAILED_ENTRY_ORACLE');
-  await browser.fill('#history-version',firstState.checkpointId);await browser.click('#history-restore');assert.equal((await browser.readProject()).job.JOB_TITLE,prefix+' — first');
+  assert.ok(retained,'RESTORATION_BROWSER_RETRY_DRAFT_ORACLE');assert.deepEqual(await browser.evaluate('structuredClone(history.state)'),recordedFirstState,'RESTORATION_BROWSER_FAILED_ENTRY_ORACLE');
+  await browser.fill('#history-version',recordedFirstCheckpoint);await browser.click('#history-restore');assert.equal((await browser.readProject()).job.JOB_TITLE,prefix+' — first');
   result={retainedCheckpoint:retained.checkpointId,backupSha256:digest(backup.file.bytes)};
  }else{
   assert.equal((await browser.readProject()).job.JOB_TITLE,prefix+' — first');assert.equal(finished.latency.outcome,'COMPLETED');

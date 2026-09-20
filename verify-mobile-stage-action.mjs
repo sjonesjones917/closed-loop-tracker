@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
+const BROWSER_HISTORY_RECORDS=60,BROWSER_HISTORY_CHARACTERS=4096;
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found');
 const port=9700+Math.floor(Math.random()*200),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-mobile-stage-'));
@@ -47,8 +48,8 @@ async function main(){
     assert(state.copy&&state.copy.left>=-1&&state.copy.right<=width+1&&state.copy.height>=44,`Primary copy action is unusable at ${width}px: ${JSON.stringify(state.copy)}`);
     assert(state.prompt&&state.prompt.left>=-1&&state.prompt.right<=width+1,`Prompt box exceeds the viewport at ${width}px: ${JSON.stringify(state.prompt)}`);
   }
-  await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:600},(_,i)=>({rawResponseId:'RAW-PRESSURE-'+i,stage:i%30+1,status:'PRESERVED',rawText:'H'.repeat(80000)+'é🙂TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
-  console.log(JSON.stringify({browserStageActionPhase:'pressure-project-stored',rawRecords:600,charactersPerRecord:80000}));await openStoredFixture(cdp);await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
+  await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:${BROWSER_HISTORY_RECORDS}},(_,i)=>({rawResponseId:'RAW-BROWSER-'+i,stage:i%closedLoopCore.STAGES.length+1,status:'PRESERVED',rawText:'H'.repeat(${BROWSER_HISTORY_CHARACTERS})+'é🙂TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
+  console.log(JSON.stringify({browserStageActionPhase:'bounded-history-project-stored',rawRecords:BROWSER_HISTORY_RECORDS,charactersPerRecord:BROWSER_HISTORY_CHARACTERS}));await openStoredFixture(cdp);await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
   const pressureDom=await evaluate(cdp,`({bytes:document.querySelector('#screen').innerHTML.length,nodes:document.querySelector('#screen').querySelectorAll('*').length})`);
   assert(pressureDom.bytes<100000&&pressureDom.nodes<1500,`Collapsed accumulated history was eagerly rendered: ${JSON.stringify(pressureDom)}`);
   await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('summary')].find(node=>node.textContent.includes('Raw agent responses'));node.parentElement.open=true;})()`);
@@ -104,15 +105,17 @@ async function main(){
       await click(cdp,'#toggle-prompt');
     }
   }
-  // The same retained history must also leave through the real complete-export action.
+  // Browser acceptance uses a fixed small retained-history fixture. Representative large-history
+  // export/decoder bounds remain non-browser verification; this browser gate proves the real
+  // control terminates with verified bytes or a visible actionable failure within 60 seconds.
   await evaluate(cdp,`(()=>{globalThis.__historyExportBlob=null;globalThis.__historyExportError='';globalThis.__historyCreateUrl=URL.createObjectURL;URL.createObjectURL=blob=>{globalThis.__historyExportBlob=blob;return globalThis.__historyCreateUrl(blob);};window.alert=message=>{globalThis.__historyExportError=String(message);};})()`);
   await click(cdp,'#project-actions-toggle');const exportStartedAt=Date.now();await click(cdp,'#export-project',60000);
   await waitFor(cdp,`document.querySelector('#app-live-status')?.textContent==='complete project package exported'||globalThis.__historyExportError`,Math.max(1,60000-(Date.now()-exportStartedAt)));
   console.log(JSON.stringify({browserStageActionPhase:'pressure-export-completed',elapsedMs:Date.now()-exportStartedAt}));
   assert(!(await evaluate(cdp,'globalThis.__historyExportError')),`Accumulated complete export failed: ${await evaluate(cdp,'globalThis.__historyExportError')}`);
   const exportElapsedMs=Date.now()-exportStartedAt;assert(exportElapsedMs<=60000,'Accumulated export exceeded the 60-second verifier deadline');console.log(JSON.stringify({operation:'accumulated-history-export',elapsedMs:exportElapsedMs,verifierDeadlineMs:60000,physicalDevice:false}));
-  const historyExport=await evaluate(cdp,`(async()=>{const blob=globalThis.__historyExportBlob,payload=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text()),{packageSha256,...body}=payload,rows=payload.project.projectData.rawResponses;return {jobId:payload.project.job.JOB_ID,records:rows.length,lastRecordComplete:rows.at(-1).rawText.endsWith('é🙂TAIL-599'),rawCharacters:rows.reduce((sum,row)=>sum+row.rawText.length,0),hashVerified:closedLoopHash.sha256Value(body)===packageSha256};})()`);
-  assert(historyExport.jobId==='BROWSER-ACCUMULATED-HISTORY'&&historyExport.records===600&&historyExport.lastRecordComplete&&historyExport.rawCharacters>=48000000&&historyExport.hashVerified,`Complete accumulated export lost bytes or identity: ${JSON.stringify(historyExport)}`);
+  const historyExport=await evaluate(cdp,`(async()=>{const blob=globalThis.__historyExportBlob,payload=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text()),{packageSha256,...body}=payload,rows=payload.project.projectData.rawResponses;return {jobId:payload.project.job.JOB_ID,records:rows.length,lastRecordComplete:rows.at(-1).rawText.endsWith('é🙂TAIL-'+(rows.length-1)),rawCharacters:rows.reduce((sum,row)=>sum+row.rawText.length,0),hashVerified:closedLoopHash.sha256Value(body)===packageSha256};})()`);
+  assert(historyExport.jobId==='BROWSER-ACCUMULATED-HISTORY'&&historyExport.records===BROWSER_HISTORY_RECORDS&&historyExport.lastRecordComplete&&historyExport.rawCharacters>=BROWSER_HISTORY_RECORDS*BROWSER_HISTORY_CHARACTERS&&historyExport.hashVerified,`Complete accumulated export lost bytes or identity: ${JSON.stringify(historyExport)}`);
   await evaluate(cdp,`(()=>{URL.createObjectURL=globalThis.__historyCreateUrl;delete globalThis.__historyExportBlob;})()`);
   // Removal belongs to the application's operation owner, which captures the
   // departing view and excludes concurrent scroll checkpoints before committing.
@@ -177,7 +180,7 @@ async function main(){
   await waitFor(cdp,`closedLoopProjectStore.readProject('BROWSER-FILE-PRESSURE').then(project=>!project)`,60000);
   assert(await evaluate(cdp,`closedLoopProjectStore.historyList('BROWSER-FILE-PRESSURE').then(history=>history.removed&&history.entries.length>0)`),'File-pressure removal lost promised History.');
   console.log(JSON.stringify({boundedFileCustodyAndStaging:fileCustody,pagedArtifactDownloadAndCompleteExport:fileExport}));
-  console.log(JSON.stringify({all30StageCollapsedDiagnostics:true,diagnosticArrowProof,diagnosticReasonCount,all30StageAccumulatedDataViews:true,historyRecords:600,minimumRawHistoryBytes:48000000,collapsedDom:pressureDom,pagedDom,historyExport}));
+  console.log(JSON.stringify({all30StageCollapsedDiagnostics:true,diagnosticArrowProof,diagnosticReasonCount,all30StageAccumulatedDataViews:true,historyRecords:BROWSER_HISTORY_RECORDS,minimumRawHistoryCharacters:BROWSER_HISTORY_RECORDS*BROWSER_HISTORY_CHARACTERS,collapsedDom:pressureDom,pagedDom,historyExport}));
   console.log(JSON.stringify({mobileStageActionRegression:true,widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false,mobileCapabilityEvidence:'verify-mobile-capability-journey.mjs performs actual export, selection, and restore'}));
   cdp.close();
 }

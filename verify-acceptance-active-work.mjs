@@ -54,6 +54,25 @@ note('Actual acceptance commits one source, preserves migration evidence, and re
 const restored=await store.restoreCheckpoint(before.job.JOB_ID,checkpoint,{expectedProjectRevision:runtime.current.revision});
 assert.equal(restored.project.projectData.sources.length,0);assert.equal(ingestion.findProposal(restored.project,staged.proposal.proposalId).status,'PENDING_OPERATOR_REVIEW');assert.equal(runtime.closedLoopHash.stableStringify(restored.project.projectData.migrationArchives),archivedBefore);
 note('Restoration returns the matching unaccepted proposal and exact migration evidence');
+// A canonical acceptance commit is authoritative even if subsequent History/UI
+// bookkeeping fails. Post-commit recovery work may warn, but it must never
+// report that acceptance failed or that accepted work was unchanged.
+runtime.current=restored.project;runtime.projects=[runtime.current];failures.length=0;observations.length=0;runtime.operatorActionInFlight={failed:false,focusReason:'FORWARD'};
+const recoveryReport={hidden:true,textContent:'',classes:new Set(),classList:{add(...names){names.forEach(name=>recoveryReport.classes.add(name));},remove(...names){names.forEach(name=>recoveryReport.classes.delete(name));}},setAttribute(){},scrollIntoView(){},focus(){}};const realDollar=runtime.$;runtime.$=selector=>selector==='#operation-error'?recoveryReport:realDollar(selector);
+const realBoundary=runtime.recordCommittedBoundary;runtime.recordCommittedBoundary=async()=>{throw new Error('CONTROLLED_POST_COMMIT_HISTORY_FAILURE');};
+await runtime.acceptPendingProposal();runtime.recordCommittedBoundary=realBoundary;runtime.$=realDollar;
+const committedAfterBookkeepingFault=await store.readProject(before.job.JOB_ID);
+assert.equal(committedAfterBookkeepingFault.projectData.sources.length,1,'ACCEPTANCE_TRANSACTION_BOUNDARY_ORACLE: canonical acceptance did not remain committed');
+assert.equal(runtime.current.projectData.sources.length,1,'ACCEPTANCE_TRANSACTION_BOUNDARY_ORACLE: in-memory state did not retain the committed acceptance');
+assert.equal(failures.length,0,'ACCEPTANCE_TRANSACTION_BOUNDARY_ORACLE: post-commit bookkeeping was routed through failure reporting');
+assert.equal(runtime.operatorActionInFlight.failed,false,'ACCEPTANCE_TRANSACTION_BOUNDARY_ORACLE: committed acceptance was marked as a failed operator action');
+assert.equal(recoveryReport.hidden,false,'ACCEPTANCE_TRANSACTION_BOUNDARY_ORACLE: post-commit bookkeeping failure did not become a visible recovery warning');
+assert.ok(recoveryReport.classes.has('warn')&&!recoveryReport.classes.has('danger'),'ACCEPTANCE_TRANSACTION_BOUNDARY_ORACLE: post-commit bookkeeping was not presented as a warning');
+assert.match(recoveryReport.textContent,/accepted and saved.*History recovery.*accepted work remains committed/i,'ACCEPTANCE_TRANSACTION_BOUNDARY_ORACLE: recovery warning did not preserve committed-acceptance truth');
+assert.ok(observations.some(item=>/accepted|saved/i.test(item.announcement||'')),'ACCEPTANCE_TRANSACTION_BOUNDARY_ORACLE: committed acceptance lost its success feedback');
+note('Post-commit History/UI bookkeeping failure cannot misreport or undo canonical acceptance');
+// Return to the retained unaccepted checkpoint for the remaining impact tests.
+const restoredAgain=await store.restoreCheckpoint(before.job.JOB_ID,checkpoint,{expectedProjectRevision:runtime.current.revision});runtime.current=restoredAgain.project;runtime.projects=[runtime.current];failures.length=0;observations.length=0;
 // Drafts are authored work, including partial values and unstructured notes.
 // Unchanged legacy field names and titles do not make a blank template authored.
 for(const definition of core.STAGES){
