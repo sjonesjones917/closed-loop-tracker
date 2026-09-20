@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {evaluateFinalAcceptance,CORE_COVERAGE_KEYS,SECTION49_COVERAGE_KEYS,CORE_ZERO_KEYS,SECTION49_ZERO_KEYS} from './final-acceptance.mjs';
 // Disposable publication fixture. This proves the gate, not a physical-device run.
 const commit='a'.repeat(40),visual={status:'PROVEN',sourceCommit:'b'.repeat(40),comparedCommit:commit,comparisonResult:'PASS',evidenceReferences:['DISPOSABLE-VISUAL-EVIDENCE'],authority:'VISUAL_BASELINE_AUTHORIZATION'};
@@ -24,6 +25,54 @@ reject(()=>{},v=>v.status='OPEN');reject(()=>{},v=>v.comparedCommit='e'.repeat(4
 // The formerly green summary cannot hide 1/2 detailed evidence.
 reject(r=>{r.section49CoverageMetrics.stage01RawInputAccounting.numerator=1;r.section49CoverageMetrics.stage01RawInputAccounting.value=0.5;r.stage01RawInputAccounting=1;});
 
+// Execute the actual report derivation on controlled observation records. This
+// checks reporting truthfulness; the referenced intake suites independently
+// execute the underlying application behavior in the same required CI.
+const intakeSource=fs.readFileSync(process.env.V3_DEFINITION_SOURCE||new URL('./verify-v3-definition-of-done.mjs',import.meta.url),'utf8');
+const intakeDefinitions=[
+ ['stage01RequiredFileInspectionAccounting','actualStage01',['artifactIdentityBound','missingInspectionClaimRejected','missingHandoffRejected']],
+ ['stage01AcceptedSemanticMappingCoverage','actualZeroLoss',['zeroLossStage01','incompleteIntakeRejected']],
+ ['stage04ObligationAccounting','actualZeroLoss',['zeroLossStage04','completeStage03ResearchUnion','incompleteObligationRejected']]
+];
+const observationFixture={actualStage01:{stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,humanAuthorityRoundTripIntegrated:true},actualZeroLoss:{zeroLossStage01:true,incompleteIntakeRejected:true,zeroLossStage04:true,completeStage03ResearchUnion:true,incompleteObligationRejected:true}};
+function deriveIntake(source,observations){
+ const start=source.indexOf('const executedMetricIds='),end=source.indexOf('const has=',start);assert.ok(start>=0&&end>start);
+ const entries=intakeDefinitions.map(([key])=>{const line=source.split('\n').find(line=>line.trimStart().startsWith(key+':metric('));assert.ok(line,'Missing intake reporting owner: '+key);return line;});
+ const runtime=createVerifierRuntime({assert,...observations,stage01Source:'',stage01Tests:'',zeroLossTests:'',ingestionTests:'',stage04Source:''});
+ return createVerifierRuntime.loadScript(runtime,source.slice(start,end)+'\nglobalThis.observedIntake={'+entries.join('\n')+'};observedIntake;',{filename:'verify-v3-definition-of-done.mjs:actual-intake-metric-derivation'});
+}
+function checkIntakeReporting(source){
+ const healthy=deriveIntake(source,observationFixture),cases=[];
+ for(const [key,group,fields] of intakeDefinitions){
+  assert.equal(healthy[key].value,1,'EXECUTED_INTAKE_METRIC_ORACLE: executed successful '+key+' must remain available to the status publisher.');
+  assert.equal(healthy[key].evidenceBasis,'EXECUTED_SYNTHETIC_CASES');
+  assert.equal(healthy[key].applicationConformanceEstablished,false,'A narrow executed case must not claim complete application conformance.');
+  cases.push({caseId:key+'-executed',result:'PASS',value:healthy[key].value});
+  for(const field of fields){
+   const observations=structuredClone(observationFixture);observations[group][field]=false;
+   const incomplete=deriveIntake(source,observations)[key];
+   assert.ok(incomplete.value<1&&incomplete.disposition!=='SATISFIED','EXECUTED_INTAKE_METRIC_ORACLE: '+key+' hides failed observation '+field);
+   cases.push({caseId:key+'-reject-'+field,result:'PASS',value:incomplete.value});
+  }
+ }
+ const missingRoundTrip=structuredClone(observationFixture);missingRoundTrip.actualStage01.humanAuthorityRoundTripIntegrated=false;
+ const incomplete=deriveIntake(source,missingRoundTrip).stage01AcceptedSemanticMappingCoverage;
+ assert.ok(incomplete.value<1&&incomplete.disposition!=='SATISFIED','EXECUTED_INTAKE_METRIC_ORACLE: semantic mapping hides an unproved human-authority roundtrip.');
+ cases.push({caseId:'semantic-mapping-reject-missing-human-authority-roundtrip',result:'PASS',value:incomplete.value});
+ return cases;
+}
+const intakeMetricCases=checkIntakeReporting(intakeSource),intakeMetricFaults=[];
+for(const [id,before,after] of [
+ ['executed-observation-discarded',"'STAGE_01_REQUIRED_FILE_INSPECTION_ACCOUNTING'","'UNEXECUTED_INSPECTION'"],
+ ['missing-file-inspection-masked','actualStage01.missingInspectionClaimRejected===true','true'],
+ ['missing-intake-unit-masked','actualZeroLoss.incompleteIntakeRejected===true','true'],
+ ['missing-obligation-masked','actualZeroLoss.incompleteObligationRejected===true','true']
+]){
+ assert.ok(intakeSource.includes(before),'Missing reporting fault anchor: '+id);
+ assert.throws(()=>checkIntakeReporting(intakeSource.replace(before,after)),/EXECUTED_INTAKE_METRIC_ORACLE/);
+ checkIntakeReporting(intakeSource);intakeMetricFaults.push({fault:id,result:'DETECTED',restored:'PASS'});
+}
+
 const workflow=fs.readFileSync(new URL('./.github/workflows/pages.yml',import.meta.url),'utf8');
 function assertPublicationWiring(source){
   assert.match(source,/node verify-final-acceptance\.mjs/);
@@ -46,4 +95,4 @@ for(const prefix of ['deployed','reverified-deployed']){
  const token='name: '+prefix+'-operator-journeys-${{ github.sha }}-${{ github.run_id }}';
  assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),/DEPLOYED_JOURNEY_ARTIFACT_ORACLE/);assertPublicationWiring(workflow);artifactFaults.push({fault:'remove-'+prefix+'-archive',oracle:'DEPLOYED_JOURNEY_ARTIFACT_ORACLE',result:'DETECTED',restored:'PASS'});
 }
-console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,artifactFaults,artifactEvidenceLimit:'Wiring regression only; actual deployed artifact publication and byte verification must execute after merge.'}));
+console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,artifactFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));

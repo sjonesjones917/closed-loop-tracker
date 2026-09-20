@@ -73,6 +73,22 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  const exportedManifest=JSON.parse(new TextDecoder().decode(members.get('manifest.json')));
  assert.equal(exportedManifest.promptIdentity.bodySha256,committed.bodySha256,'HANDOFF_EXPORTED_MANIFEST_ORACLE');
  assert.equal(exportedManifest.scope.productId,committed.scope.productId,'HANDOFF_EXPORTED_TARGET_ORACLE');
+ // Execute the real stage export owner, including its durable receipt. A
+ // duplicate activation must still deliver one archive containing exact bytes.
+ const downloads=[];
+ Object.assign(runtime,{stagePlanItems:(stage,operation)=>uiEngine.stageTestExecutionPlan(runtime.current,{stage,operation}).items,displayedStageAction:stage=>uiEngine.operationalNextAction(runtime.current,stage),document:{querySelectorAll:()=>[]},$:()=>null,announce:()=>{},reportActionFailure:error=>{throw error;},downloadBlob:(blob,filename)=>downloads.push({blob,filename})});
+ const functionSource=name=>{const start=source.search(new RegExp('(?:async )?function '+name+'\\('));assert.ok(start>=0);const next=source.slice(start+1).search(/\n(?:async )?function /);assert.ok(next>=0);return source.slice(start,start+1+next);};
+ vm.runInContext(extract('let promptExportInFlight=','async function exportPromptContext(')+functionSource('recordInstructionExport')+'\n'+functionSource('exportStageFiles'),runtime,{filename:'app-core.js:actual-stage-export'});
+ await Promise.all([runtime.exportStageFiles(),runtime.exportStageFiles()]);
+ assert.equal(downloads.length,1,'ONE_FILE_HANDOFF_ORACLE: one stage action or repeated activation must produce exactly one file.');
+ const actualMembers=new Map(readStoreArchive(new Uint8Array(await downloads[0].blob.arrayBuffer())).map(entry=>[entry.canonicalPath,entry.bytes]));
+ assert.deepEqual(actualMembers.get('instruction.txt'),new TextEncoder().encode(committed.prompt),'ONE_FILE_HANDOFF_ORACLE: exact controlling instruction bytes are required.');
+ const actualManifest=JSON.parse(new TextDecoder().decode(actualMembers.get('manifest.json')));
+ assert.equal(actualManifest.promptIdentity.instructionId,committed.instructionId,'ONE_FILE_HANDOFF_ORACLE: package identity must match the committed instruction.');
+ assert.equal(actualManifest.scope.productId,committed.scope.productId,'ONE_FILE_HANDOFF_ORACLE: reserved target must remain bound.');
+ const exportedReservation=uiEngine.records(runtime.current,'operationReservations').find(row=>uiEngine.recordId(row,'operationReservations')===committed.operationReservationId);
+ assert.equal(uiEngine.recordValue(exportedReservation,'STATUS'),'EXPORTED','ONE_FILE_HANDOFF_ORACLE: record the completed export once.');
+ report.exportAction={caseId:'ONE_FILE_HANDOFF_ORACLE',result:'PASS',downloads:downloads.length,filename:downloads[0].filename,exactInstructionBytes:true,manifestIdentity:true,reservationStatus:'EXPORTED'};
  const revision=runtime.current.revision;assert.equal((await runtime.savePromptRecord(21)).instructionId,committed.instructionId,'HANDOFF_EXACT_RETRY_ORACLE');assert.equal(runtime.current.revision,revision);
  const healthy=runtime.current;
  const target=project=>uiEngine.records(project,'products').find(row=>uiEngine.recordId(row,'products')===committed.scope.productId);

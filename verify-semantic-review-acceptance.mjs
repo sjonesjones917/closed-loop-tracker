@@ -20,6 +20,29 @@ function prepare(project,stage,operation,content){
   const prepared=ingestion.prepare(project,{stage,promptRecord:prompt,text,transport});if(prepared.validation.valid)assert.equal(engine.operationalNextAction(prepared.project,stage).actionType,'REVIEW_PROPOSAL',`Stage ${stage} replaced a pending proposal with another instruction.`);return {...prepared,text};
 }
 function accept(prepared){assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));const impact=ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId);if(impact.requiresConfirmation)assert.throws(()=>ingestion.commit(prepared.project,prepared.proposal.proposalId),error=>error.code==='REPLACEMENT_CONFIRMATION_REQUIRED');return ingestion.commit(prepared.project,prepared.proposal.proposalId,{replacementConfirmation:impact}).project;}
+const browserAcceptanceCases=[];
+async function replayBrowserAcceptance(prepared,{helperSource=fs.readFileSync('verify-browser-extra.mjs','utf8'),fault=false}={}){
+ const response=JSON.parse(prepared.text),app=application(prepared.project,response.operation,{stage:response.stage}),clicks=[];let confirmationShown=false;
+ // The production ingestion fixture has already staged and validated these
+ // exact bytes. Only the browser boundary is simulated for this helper test.
+ const context=createVerifierRuntime({document:{visibilityState:'visible',querySelector:selector=>selector==='#accept-replacement'?(app.ui.pendingConfirmation()?{}:null):selector==='#accept-proposal'?(app.ui.proposal().includes('id="accept-proposal"')?{}:null):null},closedLoopProjectStore:{readProject:async()=>app.saved()}});
+ const evaluate=async(_cdp,expression)=>createVerifierRuntime.loadScript(context,expression,{filename:'browser-extra:observed-acceptance-state'});
+ const helperRuntime=createVerifierRuntime({cdp:{},console:{log(){}},assert,evalValue:evaluate,selectResponseFile:async(_cdp,text)=>assert.deepEqual(JSON.parse(text),response),click:async(_cdp,selector)=>{clicks.push(selector);if(selector==='#accept-proposal'){await app.ui.beginAcceptance();confirmationShown=Boolean(app.ui.pendingConfirmation());}else if(selector==='#accept-replacement')await app.ui.confirmReplacement();else assert.equal(selector,'#process-response-file');},waitExpr:async(_cdp,expression)=>{const value=await evaluate(_cdp,expression);if(!value)throw new Error('BROWSER_ACCEPTANCE_CONFIRMATION_ORACLE: the verifier waited for a commit while the required confirmation remained unanswered.');return value;}});
+ const start=helperSource.indexOf('  const acceptProofResponse=async(response)=>'),end=helperSource.indexOf('  const reviewRecords=',start);assert.ok(start>=0&&end>start);
+ createVerifierRuntime.loadScript(helperRuntime,helperSource.slice(start,end)+'\nglobalThis.acceptProof=acceptProofResponse;',{filename:'verify-browser-extra.mjs:actual-acceptance-helper'});
+ const before=app.saved(),beforeCount=before.projectData.acceptedChanges.length,impact=ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId);
+ try{await helperRuntime.acceptProof(response);}catch(error){
+  if(app.ui.pendingConfirmation()){
+   assert.equal(app.saved().projectData.acceptedChanges.length,beforeCount,'The unanswered replacement changed accepted progress.');
+   if(!fault)console.error(JSON.stringify({caseId:'BROWSER_ACCEPTANCE_CONFIRMATION_ORACLE',stage:response.stage,operation:response.operation,requiresConfirmation:confirmationShown,semanticImpactRequiresConfirmation:impact.requiresConfirmation,confirmationImpact:app.ui.pendingConfirmation()?.impact,clicks,acceptedProgressPreserved:true,actual:'The verifier stopped with the production in-page confirmation unanswered.'}));
+  }
+  throw error;
+ }
+ assert.equal(app.saved().projectData.acceptedChanges.length,beforeCount+1,'BROWSER_ACCEPTANCE_CONFIRMATION_ORACLE: acceptance must commit once.');
+ assert.equal(clicks.filter(selector=>selector==='#accept-replacement').length,Number(confirmationShown),'BROWSER_ACCEPTANCE_CONFIRMATION_ORACLE: operate exactly the required confirmation.');
+ if(!fault)browserAcceptanceCases.push({caseId:'browser-helper-'+response.stage+'-'+response.operation,result:'PASS',requiresConfirmation:confirmationShown,clicks});
+}
+
 // An orphaned historical audit row is not a live saved-instruction attempt.
 // Opening a backup may recalculate its old display without rewriting its audit projection.
 {
@@ -131,7 +154,7 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;projectStore=closedLoopProjectStore;
     current=selected;projects=[current];operationSelection[stage]=operation;
     captureCurrentView=async()=>{};captureView=()=>null;recordCommittedBoundary=async()=>{};withStorageActivity=async(label,work)=>work();render=()=>{};announce=message=>notices.push(message);reportResponseFailure=(message,error)=>{throw error||new Error(message);};reportActionFailure=error=>{throw error;};
-    globalThis.ui={accept:async()=>{await acceptPendingProposal();if(replacementReview)await confirmReplacement();},refine:()=>{const select=document.querySelector;document.querySelector=selector=>['#refine-accepted-response','#accepted-refinement-reason','#operator-label'].includes(selector)?select(selector):null;wire();document.querySelector=select;return document.querySelector('#refine-accepted-response').onclick();},restore:async()=>{current=await materializeProject(current);return current;},current:()=>current,prompt:()=>currentPromptRecord(stage),selectedOperation:()=>selectedOperation(stage),proposal:()=>proposalMarkup(stage)};
+    globalThis.ui={beginAcceptance:()=>acceptPendingProposal(),confirmReplacement:()=>confirmReplacement(),pendingConfirmation:()=>replacementReview,accept:async()=>{await acceptPendingProposal();if(replacementReview)await confirmReplacement();},refine:()=>{const select=document.querySelector;document.querySelector=selector=>['#refine-accepted-response','#accepted-refinement-reason','#operator-label'].includes(selector)?select(selector):null;wire();document.querySelector=select;return document.querySelector('#refine-accepted-response').onclick();},restore:async()=>{current=await materializeProject(current);return current;},current:()=>current,prompt:()=>currentPromptRecord(stage),selectedOperation:()=>selectedOperation(stage),proposal:()=>proposalMarkup(stage)};
   })();`,runtime);
   return {ui:runtime.ui,notices,saved:()=>saved};
 }
@@ -209,6 +232,13 @@ for(const result of ['REJECTED','PARTIAL','UNKNOWN','DISAGREED']){
   assert.equal(reconciliationPrompt.contextManifest.semanticReviewBinding?.bindingStatus,'BOUND','Stage 5 reconciliation has no application-bound context.');
   assert.notEqual(reconciliationPrompt.contextManifest.semanticReviewBinding.authorContextId,priorReview.AUTHOR_CONTEXT_ID,'Reconciliation reused the author context.');
   assert.notEqual(reconciliationPrompt.contextManifest.semanticReviewBinding.authorContextId,priorReview.REVIEWER_CONTEXT_ID,'Reconciliation reused the reviewer context.');
+  await replayBrowserAcceptance(authorPrepared);
+  await replayBrowserAcceptance(corrected);
+  const verifier=fs.readFileSync('verify-browser-extra.mjs','utf8'),confirmation="if(await evalValue(cdp,`Boolean(document.querySelector('#accept-replacement'))`))await click(cdp,'#accept-replacement');";
+  assert.ok(verifier.includes(confirmation),'The confirmation fault must target the actual browser helper.');
+  await assert.rejects(()=>replayBrowserAcceptance(corrected,{helperSource:verifier.replace(confirmation,''),fault:true}),/BROWSER_ACCEPTANCE_CONFIRMATION_ORACLE/);
+  await replayBrowserAcceptance(corrected);
+  browserAcceptanceCases.push({caseId:'browser-helper-skipped-confirmation-fault',result:'DETECTED',restored:'PASS'});
   const revised=accept(corrected);
   assert.equal(revised.stages[5].gate.complete,false,'Reconciliation approved its own corrected decisions.');
   assert.equal(revised.job.NEXT_REQUIRED_ACTION.operation,'SEMANTIC_REVIEW','Reconciliation loops without an independent review of the corrected decisions.');
@@ -298,4 +328,4 @@ engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.raw
 assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));

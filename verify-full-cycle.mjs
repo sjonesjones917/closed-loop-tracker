@@ -1,5 +1,6 @@
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
 import {verifyStageFieldInventory,verifyCompletedStageProjection} from './stage-projection-verification.mjs';
 import fs from 'node:fs';import vm from 'node:vm';import {recordProposal,evidence} from './test-fixtures.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -12,7 +13,17 @@ for(const c of ['iterations','candidateFreezes','baselines','artifacts'])if(sche
 if(schema.RECORD_SCHEMAS.products.fieldDefinitions.GENERATED_ARTIFACT_INVENTORY.producer!==schema.PRODUCER.APPLICATION||schema.RECORD_SCHEMAS.products.fieldDefinitions.GENERATED_ARTIFACT_INVENTORY.valueType!=='STRING_ARRAY')throw new Error('Product artifact inventory must be an application-owned string array.');
 
 const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='REFERENCE_ARRAY','Evidence-chain evidence identities must remain plural references.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must remain plural.');let p=core.createBlankState('JOB-FULL-CYCLE');Object.assign(p.job,{JOB_TITLE:'Full lifecycle proof',EXACT_USER_OBJECTIVE_VERBATIM:'Prove one complete closed-loop lifecycle.',EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_INPUT_VERSION:'INPUT-v001'});engine.ensureShape(p);engine.recalculate(p);
-function prompt(stage,operation,scope={}){return prompts.reserveAndBuildPromptRecord(p,stage,{operation,scope}).prompt;}
+const workflowPresentationCases=[],presentedOperations=new Set();
+function prompt(stage,operation,scope={}){
+  const key=stage+':'+operation;
+  if(!presentedOperations.has(key)){
+    presentedOperations.add(key);const project=engine.clone(p);project.activeStage=stage;
+    const rendered=appMarkup(globalThis,project,{operations:{[stage]:operation},instructionEvidence:true}),observation=observeWorkflowMarkup(rendered.html),caseId='full-cycle-handoff-'+key;
+    try{workflowPresentationCases.push({stage,operation,...assertWorkflowPresentation(observation,{instruction:rendered.instruction,caseId})});}
+    catch(error){workflowPresentationCases.push({caseId,stage,operation,result:'FAIL',handoffControlCount:observation.handoffControlCount,separateControlCount:observation.separateControlCount,error:error.message});}
+  }
+  return prompts.reserveAndBuildPromptRecord(p,stage,{operation,scope}).prompt;
+}
 
 let stage6AuthorInput=null;
 const artifactBatchEquivalence=[],stageProjectionCases=[];verifyStageFieldInventory(schema);
@@ -183,7 +194,9 @@ engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentSc
 const stage30=engine.terminalPrerequisites(p);const terminal=engine.calculateTerminal(p,{expectedRevision:Number(p.revision||0)});assert(engine.recordValue(terminal,'DELIVERY_STATE')==='AUTHORIZED',`Application-owned Stage 30 terminal calculation did not authorize the complete project: ${stage30.reasons.join(' | ')}`);engine.recordDeliveryAttempt(p,{deliveryId:engine.recordId(terminal,'deliveryRecords'),artifactIds:engine.recordValue(terminal,'AUTHORIZED_ARTIFACT_IDS'),result:'SUCCEEDED',operatorAction:'EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS'});complete(30);
 const serialized=JSON.stringify(p),reloaded=JSON.parse(serialized);engine.ensureShape(reloaded);engine.recalculate(reloaded);assert(Object.values(reloaded.stages).every(s=>s.status==='COMPLETE'),'Reload lost completed stages');assert(reloaded.projectData.rawResponses.length>0&&reloaded.projectData.outputReceipts.length>0&&reloaded.projectData.extractionManifests.length>0,'Traceability records missing');
 verifyArtifactRegistrationBatch('authorized-terminal',21,{productId});
-console.log(JSON.stringify({stagesCompleted:30,automaticExternalContinuations:true,completedRunsNotRepeated:true,compositeIterationOperationHandoffs:true,clarificationCycles:1,confirmedDefects:1,correctedIterationRuns:10,unchangedConfirmationRuns:10,verificationTripleCoverage:engine.coverageMetrics(reloaded).verificationCoverage,release:engine.releaseMetrics(reloaded).determination,artifactIdentity:true,evidenceChains:engine.gate(29,reloaded).complete,reloadIntegrity:true,artifactBatchEquivalence,stageProjectionCases,productAttachmentJourney:{result:'PASS',basis:'SYNTHETIC_PRODUCTION_LIFECYCLE_WITH_VERIFIED_FILE_METADATA',actualBrowserJourney:false,cases:productAttachmentCases}},null,2));
+console.log(JSON.stringify({stagesCompleted:30,automaticExternalContinuations:true,completedRunsNotRepeated:true,compositeIterationOperationHandoffs:true,clarificationCycles:1,confirmedDefects:1,correctedIterationRuns:10,unchangedConfirmationRuns:10,verificationTripleCoverage:engine.coverageMetrics(reloaded).verificationCoverage,release:engine.releaseMetrics(reloaded).determination,artifactIdentity:true,evidenceChains:engine.gate(29,reloaded).complete,reloadIntegrity:true,artifactBatchEquivalence,stageProjectionCases,workflowPresentationCases,productAttachmentJourney:{result:'PASS',basis:'SYNTHETIC_PRODUCTION_LIFECYCLE_WITH_VERIFIED_FILE_METADATA',actualBrowserJourney:false,cases:productAttachmentCases}},null,2));
+
+assert(workflowPresentationCases.every(row=>row.result==='PASS'),'WORKFLOW_PRESENTATION_ORACLE: '+JSON.stringify(workflowPresentationCases.filter(row=>row.result!=='PASS')));
 
 // Application-derived record values must conform to their canonical declared types.
 {

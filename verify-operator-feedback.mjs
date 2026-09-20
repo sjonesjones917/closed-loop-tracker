@@ -66,4 +66,46 @@ assert.match(source,/recordOperationLatency\('storage'/,'Storage operations do n
 assert.match(source,/recordOperationLatency\('restoration'/,'History restoration does not record latency.');
 note('UX-020-WORKFLOW-LATENCY-OWNERS',{sampleLimit:512});
 
+// Execute the production telemetry owner and the journey's actual collection
+// owner. Equal observations remain distinct; rereads must not count them twice.
+const journeySource=fs.readFileSync(process.env.JOURNEY_SOURCE||'verify-complete-operator-journey.mjs','utf8');
+async function verifyJourneyLatency(appSource,journey){
+  const boundary=appSource.indexOf('let core,schema,engine');assert.ok(boundary>0);
+  function applicationSession(identity){
+    const runtime=createVerifierRuntime({document:{currentScript:null,querySelector:()=>null},performance:{now:()=>100},crypto:{randomUUID:()=>identity}});
+    createVerifierRuntime.loadScript(runtime,appSource.slice(0,boundary)+'globalThis.recordMeasuredOperation=()=>recordOperationLatency("operator","Repeated measured operation",83,"COMPLETED");})();',{filename:'app-core.js:actual-latency-owner'});
+    return runtime;
+  }
+  let active=applicationSession('before-reload');const report={},browser={evaluate:async expression=>createVerifierRuntime.loadScript(active,expression,{filename:'actual-latency-observation'})};
+  const runtime=createVerifierRuntime({report,browser,assert,stage:1,preserveReport:()=>{}});
+  const begin=journey.indexOf('async function captureOperationLatency('),end=journey.indexOf('\nasync function inspectPresentation(',begin);
+  if(begin>=0){assert.ok(end>begin);createVerifierRuntime.loadScript(runtime,journey.slice(begin,end)+'\nglobalThis.collectLatency=captureOperationLatency;',{filename:'journey:actual-latency-collection'});}
+  else{
+    const original=journey.match(/report\.operationLatency=await browser\.evaluate\(`closedLoopOperationLatencyEvidence\(\)`\);/)?.[0];assert.ok(original,'The defective-source replay requires the original observation owner.');
+    createVerifierRuntime.loadScript(runtime,'globalThis.collectLatency=async()=>{'+original+'};',{filename:'journey:original-latency-observation'});
+  }
+  active.recordMeasuredOperation();await runtime.collectLatency();
+  active=applicationSession('after-reload');active.recordMeasuredOperation();await runtime.collectLatency();
+  assert.equal(report.operationLatency.samples.length,2,'LATENCY_JOURNEY_COVERAGE_ORACLE: reload discarded previously observed operation latency.');
+  assert.equal(new Set(report.operationLatency.samples.map(sample=>sample.sessionId)).size,2,'LATENCY_JOURNEY_COVERAGE_ORACLE: reload observations require distinct runtime identities.');
+  const limit=active.closedLoopOperationLatencyEvidence().sampleLimit,total=limit*2+17;
+  for(let i=0;i<total;i++){active.recordMeasuredOperation();if(i%37===0)await runtime.collectLatency();}
+  await runtime.collectLatency();await runtime.collectLatency();
+  assert.equal(report.operationLatency.samples.length,total+2,'LATENCY_JOURNEY_COVERAGE_ORACLE: rolling windows or repeated reads lost or duplicated measured operations.');
+  assert.ok(report.operationLatency.samples.every(sample=>sample.durationMs===17),'LATENCY_JOURNEY_COVERAGE_ORACLE: measured durations changed.');
+  assert.equal(active.closedLoopOperationLatencyEvidence().samples.length,limit,'Application observation retention must remain bounded.');
+  const retained=JSON.stringify(report.operationLatency.samples);active=applicationSession('missed-window');for(let i=0;i<=limit;i++)active.recordMeasuredOperation();
+  await assert.rejects(()=>runtime.collectLatency(),/LATENCY_WINDOW_GAP/,'LATENCY_JOURNEY_COVERAGE_ORACLE: silently accepted a missed sample window.');
+  assert.equal(JSON.stringify(report.operationLatency.samples),retained,'A missed window destroyed already observed evidence.');
+  return {samplesPreserved:total+2,runtimeSessions:2,applicationSampleLimit:limit,repeatedReadsNotCounted:true,missingWindowRejected:true};
+}
+const latencyJourney=await verifyJourneyLatency(source,journeySource);
+note('UX-021-LATENCY-ACROSS-RELOAD-AND-ROLLOVER',latencyJourney);
+assert.ok(journeySource.includes('report.operationLatency??='),'The overwrite fault must target the actual collection owner.');
+await assert.rejects(()=>verifyJourneyLatency(source,journeySource.replace('report.operationLatency??=','report.operationLatency=')),/LATENCY_JOURNEY_COVERAGE_ORACLE/);
+await verifyJourneyLatency(source,journeySource);note('UX-021-LATENCY-OVERWRITE-FAULT-DETECTED');
+assert.ok(source.includes('sequence:++operationLatencySequence'),'The sequence fault must target the actual telemetry owner.');
+await assert.rejects(()=>verifyJourneyLatency(source.replace('sequence:++operationLatencySequence','sequence:operationLatencySequence'),journeySource),/LATENCY_JOURNEY_COVERAGE_ORACLE|LATENCY_WINDOW_GAP/);
+await verifyJourneyLatency(source,journeySource);note('UX-021-LATENCY-SEQUENCE-FAULT-DETECTED');
+
 console.log(JSON.stringify({schema:'closed-loop-operator-feedback-cases/1',productionSourceSha256:createHash('sha256').update(source).digest('hex'),htmlSha256:createHash('sha256').update(html).digest('hex'),synthetic:true,actualBrowser:false,cases},null,2));

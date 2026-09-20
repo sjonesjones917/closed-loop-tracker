@@ -7,12 +7,13 @@ import {readStoreArchive} from './test-zip.mjs';
 import {createOperatorBrowser,digest} from './operator-browser-driver.mjs';
 import {responseFixture,OBJECTIVE,OUTPUT,CANDIDATE} from './operator-journey-fixtures.mjs';
 import {verifyCompletedStageProjection} from './stage-projection-verification.mjs';
+import {observeWorkflowDOM,assertWorkflowPresentation} from './test-app-markup.mjs';
 
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,hash=globalThis.closedLoopHash;
 const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory});
-const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,viewportChecks:[],stages:[],operations:[],failures:[],complete:false};
+const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,viewportChecks:[],stages:[],operations:[],presentationCases:[],failures:[],complete:false};
 let snapshot,stage=1,sequence=0,rejected=false,reloaded=false;
 function preserveReport(){
  report.events=browser.events;
@@ -24,6 +25,24 @@ process.once('SIGTERM',()=>{
  preserveReport();process.exit(143);
 });
 
+async function captureOperationLatency(driver=browser){
+  const observed=await driver.evaluate('closedLoopOperationLatencyEvidence()');
+  assert.ok(typeof observed.sessionId==='string'&&observed.sessionId&&Number.isSafeInteger(observed.totalSamples)&&observed.totalSamples>=0,'LATENCY_JOURNEY_COVERAGE_ORACLE: runtime observations lack a session-bound sequence.');
+  report.operationLatency??={thresholdMs:observed.thresholdMs,sampleLimit:observed.sampleLimit,sessions:[],samples:[]};
+  const aggregate=report.operationLatency,existing=aggregate.sessions.find(session=>session.sessionId===observed.sessionId),last=existing?.totalSamples||0,fresh=observed.samples.filter(sample=>sample.sequence>last);
+  assert.equal(observed.thresholdMs,aggregate.thresholdMs,'Latency threshold changed during the measured journey.');
+  assert.equal(observed.sampleLimit,aggregate.sampleLimit,'Latency support limit changed during the measured journey.');
+  assert.ok(observed.totalSamples>=last&&fresh.length===observed.totalSamples-last,'LATENCY_WINDOW_GAP: a bounded application window omitted uncollected operations.');
+  for(const [index,sample] of fresh.entries())assert.ok(sample.sequence===last+index+1&&Number.isFinite(sample.durationMs)&&sample.durationMs>=0,'LATENCY_JOURNEY_COVERAGE_ORACLE: invalid or noncontiguous measured operation.');
+  aggregate.samples.push(...fresh.map(sample=>({...sample,sessionId:observed.sessionId})));
+  if(existing)existing.totalSamples=observed.totalSamples;else aggregate.sessions.push({sessionId:observed.sessionId,totalSamples:observed.totalSamples});
+  preserveReport();return aggregate;
+}
+async function inspectPresentation(driver,caseId,instruction){
+  await driver.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');
+  const observed=await driver.evaluate('('+observeWorkflowDOM.toString()+')()');
+  const result=assertWorkflowPresentation(observed,{caseId,instruction});report.presentationCases.push(result);if(driver===browser)await captureOperationLatency(driver);return result;
+}
 async function saved({backup=false}={}){if(!backup)return browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
 async function ingest(request,{invalid=false}={}){
   const before=await saved(),count=before.projectData.acceptedChanges.length,bytes=Buffer.from(JSON.stringify(request)+'\n');
@@ -38,8 +57,9 @@ async function external(){
   const exportControl=await browser.exists('#next-export-prompt-file')?'#next-export-prompt-file':await browser.exists('#download-execution-package')?'#download-execution-package':null;
   assert.ok(exportControl,`Stage ${stage}: no consolidated stage package control was available for the current external operation.`);
   assert.equal(await browser.visible(`#next-required-action ${exportControl}`),true,`Stage ${stage}: consolidated stage-file export was not the visible next action before transport.`);
-  const [archive]=await browser.download(exportControl),members=readStoreArchive(archive.bytes);
+  const files=await browser.download(exportControl);assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: the stage export action must download exactly one file.');const [archive]=files,members=readStoreArchive(archive.bytes);
   const manifest=JSON.parse(Buffer.from(members.find(member=>member.canonicalPath==='manifest.json').bytes).toString()),instructionMember=members.find(member=>member.canonicalPath==='instruction.txt'),instruction={bytes:Buffer.from(instructionMember.bytes),sha256:digest(instructionMember.bytes)};
+  await inspectPresentation(browser,'exported-stage-'+stage+'-'+manifest.operation,instruction.bytes.toString());
   assert.equal(instruction.sha256,manifest.instruction.bodySha256);assert.equal(instruction.bytes.length,manifest.members.find(member=>member.canonicalPath==='instruction.txt').byteSize);
   const contextFiles=manifest.contextFiles.map(required=>{const actual=members.find(member=>member.canonicalPath===required.path);assert.ok(actual,`Missing context ${required.path}`);assert.equal(digest(actual.bytes),required.sha256);assert.equal(actual.bytes.length,required.byteSize);return {filename:required.path,bytes:Buffer.from(actual.bytes),sha256:digest(actual.bytes)};});
   const p=await saved(),prompt=p.projectData.generatedPrompts.find(row=>row.instructionId===manifest.promptIdentity.instructionId);assert.ok(prompt);assert.equal(prompt.bodySha256,instruction.sha256);
@@ -64,10 +84,11 @@ try{
       const view=await check.inspect(1);
       assert.match(view.action,/Current state:/);
       assert.match(view.action,/Who acts:/);
-      const [file]=await check.download('#next-export-prompt-file');
+      const files=await check.download('#next-export-prompt-file');assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: viewport stage export must download one file.');const [file]=files;
       const members=readStoreArchive(file.bytes);
       assert.ok(members.some(member=>member.canonicalPath==='instruction.txt'));
       assert.ok(members.some(member=>member.canonicalPath==='manifest.json'));
+      await inspectPresentation(check,'initial-viewport-'+width,Buffer.from(members.find(member=>member.canonicalPath==='instruction.txt').bytes).toString());
       await check.click('[data-view="Project"]');
       await check.click('[data-view="Workflow"]');
       assert.equal(await check.visible('#next-required-action'),true,'Workflow navigation lost the next action at '+width+'px');
@@ -81,6 +102,7 @@ try{
     await browser.fill('#stage-picker',stage);const start=report.operations.length;
     for(let steps=0;steps<80;steps++){
       assert.ok(++sequence<=240,'Bound of 240 operator actions exceeded');assert.equal(await browser.visible('#next-required-action'),true,`Stage ${stage}: the next required action was not visible before operator action ${sequence}.`);const p=await saved(),gate=engine.gate(stage,p),action=engine.operationalNextAction(p,stage);
+      await inspectPresentation(browser,'operator-stage-'+stage+'-sequence-'+sequence);
       if(gate.complete&&!(stage===30&&action.actionType!=='COMPLETE')){report.stages.push({stage,result:'PASS',projection:verifyCompletedStageProjection(p,stage,schema),view:await browser.inspect(stage),operations:report.operations.length-start});break;}
       report.currentOperation={stage,sequence,action:action.actionType,operation:action.operation,startedAt:new Date().toISOString()};preserveReport();
       console.log(JSON.stringify({operatorStage:stage,action:action.actionType,operation:action.operation,reasons:gate.reasons}));
@@ -93,13 +115,14 @@ try{
       if(controls[action.actionType]){if(action.actionType==='FREEZE_CANDIDATE'){assert.equal(engine.recordValue(engine.recordsForCurrentScope(p,'instructions').at(-1),'INSTRUCTION_TEXT'),CANDIDATE);await browser.selectFiles('#stage-files',[{filename:'production-instruction.txt',bytes:Buffer.from(CANDIDATE)}]);}await browser.click(controls[action.actionType]);report.operations.push({stage,command:action.actionType});}
       else if(['EXTERNAL_AGENT_TOOL','AI_REVIEW','EXTERNAL_SYSTEM','CONTINUE_AGENT_CONVERSATION','SELECT_RESPONSE_JSON_FILE'].includes(action.actionType))await external();
       else throw new Error(`Stage ${stage} has no progressing operator action: ${JSON.stringify(action)}`);
-      if(stage===5&&!reloaded){const before=await saved();await browser.reload();const after=await saved();assert.deepEqual(after.projectData,before.projectData);assert.deepEqual(after.stages,before.stages);reloaded=true;await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);}
+      if(stage===5&&!reloaded){const before=await saved();await captureOperationLatency();await browser.reload();const after=await saved();assert.deepEqual(after.projectData,before.projectData);assert.deepEqual(after.stages,before.stages);reloaded=true;await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);await captureOperationLatency();}
     }
     assert.ok(report.stages.some(row=>row.stage===stage),`Stage ${stage} did not finish within 80 actions`);
   }
+  for(const selected of globalThis.closedLoopCore.STAGES){await browser.fill('#stage-picker',selected.number);await inspectPresentation(browser,'completed-stage-selection-'+selected.number);}
   const before=await saved({backup:true}),backup=snapshot.file;await browser.selectFiles('#import-file',[{filename:'journey.closed-loop.json.gz',bytes:backup.bytes}]);const restored=await saved({backup:true});assert.equal(restored.job.JOB_ID,before.job.JOB_ID);assert.equal(restored.projectData.acceptedChanges.length,before.projectData.acceptedChanges.length);assert.ok(Array.from({length:30},(_,i)=>engine.gate(i+1,restored).complete).every(Boolean));report.backupRestore={selectedSha256:backup.sha256,stagesPreserved:30};
-  report.operationLatency=await browser.evaluate(`closedLoopOperationLatencyEvidence()`);assert.equal(report.operationLatency.thresholdMs,1500,'Operator loading threshold changed outside D-1 configured default.');assert.ok(report.operationLatency.samples.length>0,'Complete journey did not record operation latency.');assert.ok(report.operationLatency.samples.every(sample=>Number.isFinite(sample.durationMs)&&sample.durationMs>=0),'Operation latency evidence contains an invalid duration.');
+  await captureOperationLatency();assert.equal(report.operationLatency.thresholdMs,1500,'Operator loading threshold changed outside D-1 configured default.');assert.ok(report.operationLatency.samples.length>0,'Complete journey did not record operation latency.');assert.ok(report.operationLatency.samples.every(sample=>Number.isFinite(sample.durationMs)&&sample.durationMs>=0),'Operation latency evidence contains an invalid duration.');
   assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.complete=true;
 }catch(error){report.failures.push({stage,sequence,message:error.stack});console.error(error);process.exitCode=1;try{report.failureView=await browser.evaluate(`(()=>{const node=document.querySelector('#next-required-action'),rect=node?.getBoundingClientRect();return {stage:document.querySelector('#stage-picker')?.value,width:innerWidth,height:innerHeight,scrollY,action:node?.innerText,rect:rect?.toJSON(),active:document.activeElement?.id,loading:document.querySelector('#app')?.getAttribute('aria-busy')};})()`);await browser.inspect(stage);}catch{}}
-finally{try{report.operationLatency=await browser.evaluate(`closedLoopOperationLatencyEvidence()`);}catch(error){report.latencyReadFailure=String(error.message||error);}preserveReport();await browser.close();}
+finally{try{await captureOperationLatency();}catch(error){report.latencyReadFailure=String(error.message||error);}preserveReport();await browser.close();}
 console.log(JSON.stringify({completeOperatorJourney:report.complete,stages:report.stages.length,operations:report.operations.length,failures:report.failures}));

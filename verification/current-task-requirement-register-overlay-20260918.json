@@ -2292,6 +2292,253 @@
         "Successful startup, startup failure, held diagnostics and blocked-upgrade cases",
         "Production startup and file-selection behavior independently retested without changing production for a harness defect"
       ]
+    },
+    {
+      "requirementId": "DEF-21",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "workflow/nextActionMarkup/stagePurposeMarkup/testExecutionGuidanceMarkup/exportStageFiles"
+      },
+      "observableExpectedBehavior": "Expose one consolidated handoff control for the selected stage operation; supporting instruction or purpose panels must not repeat that action or offer handoff controls for application-only work. No separate per-artifact handoff downloads remain in the workflow; individual canonical file retrieval remains available in Files.",
+      "requiredEvidence": [
+        "Exact defective-source regression with named behavioral oracle",
+        "Targeted implementation or reporting fault detected; repaired source passes",
+        "Affected renderer, transport, acceptance, recovery and reporting checks",
+        "Fresh complete candidate CI and exact deployed workflow"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "production",
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "classification": "production",
+        "caseId": "STAGE_HANDOFF_SINGLE_CONTROL_ORACLE",
+        "actual": "Selecting accepted Stage 01 after the authoritative unchanged-confirmation fixture renders both Export stage files and Download verification package. Both call exportStageFiles."
+      },
+      "authorityTrace": [
+        "Inspect a previously accepted stage in the active version",
+        "workflow calls nextActionMarkup and stagePurposeMarkup",
+        "nextActionMarkup owns the selected-stage action",
+        "stagePurposeMarkup independently derives an extra export from stagePlanItems, which is not the current operator action",
+        "Both controls invoke the same consolidated export; no persistence or package-byte authority change is needed",
+        "testExecutionGuidanceMarkup separately renders handoff.send as per-artifact download buttons, even though the same permitted bytes belong to the current consolidated package"
+      ],
+      "dependencyClosure": [
+        "All registered stages and operations under selection and re-execution",
+        "Preview, accepted, pending and application-only operation views",
+        "Primary action, stage purpose and execution guidance renderers",
+        "Normal Files view retrieval remains a separate operation",
+        "Actual browser export/download counts and instruction presentation",
+        "Existing renderer regression/fault consumers and requirement overlay",
+        "Stage 22/23/24 actual finished-product file handoffs from the existing complete prerequisite sequence"
+      ]
+    },
+    {
+      "requirementId": "VER-014",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": "test-app-markup.mjs; verify-file-first-operator.mjs; verify-primary-guidance.mjs; verify-complete-operator-journey.mjs",
+        "symbol": "actual rendered instruction and handoff presentation oracles"
+      },
+      "observableExpectedBehavior": "Each instruction appears once in each view for every applicable stage and operation. A targeted duplicated-instruction implementation fault must cause the behavioral oracle to fail.",
+      "requiredEvidence": [
+        "Exact defective-source regression with named behavioral oracle",
+        "Targeted implementation or reporting fault detected; repaired source passes",
+        "Affected renderer, transport, acceptance, recovery and reporting checks",
+        "Fresh complete candidate CI and exact deployed workflow"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "classification": "verifier",
+        "caseId": "UX-007-DUPLICATED-INSTRUCTION-FAULT",
+        "actual": "The existing file-first operator verifier exited successfully when the instruction preview expression was duplicated in the actual renderer in memory."
+      },
+      "authorityTrace": [
+        "Rendered instruction text",
+        "workflow() in app-core.js",
+        "verify-file-first-operator.mjs currently lacks an occurrence oracle",
+        "Actual browser complete operator journey needs the corresponding rendered-content assertion"
+      ],
+      "dependencyClosure": [
+        "Instruction preview in applicable stages and operation classes",
+        "Initial preview, saved original, regenerated instruction, completed-stage selection",
+        "Superseded export controls and one-file transport assertions in the same view",
+        "Existing fault runner and existing complete browser journey",
+        "Requirement register addition"
+      ]
+    },
+    {
+      "requirementId": "VER-015",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": "verify-v3-definition-of-done.mjs; verify-final-acceptance.mjs; .github/workflows/pages.yml",
+        "symbol": "executed intake metric derivation and status publication consistency"
+      },
+      "observableExpectedBehavior": "The existing status publisher derives its intake evidence from actual executed cases, reconciles those facts, and preserves the truthful acceptance-status artifact, including outstanding unproved requirements.",
+      "requiredEvidence": [
+        "Exact defective-source regression with named behavioral oracle",
+        "Targeted implementation or reporting fault detected; repaired source passes",
+        "Affected renderer, transport, acceptance, recovery and reporting checks",
+        "Fresh complete candidate CI and exact deployed workflow"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "evidence",
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "classification": "evidence",
+        "caseId": "STATUS_PUBLISHER_EXECUTED_INTAKE_CONSISTENCY",
+        "actual": "The unchanged publisher throws Conflicting executed metric evidence: stage01RequiredFileInspectionAccounting because three aggregate metrics are STATIC_INSPECTION_ONLY/null while the directly executed intake and obligation cases pass."
+      },
+      "authorityTrace": [
+        "Existing Stage 01 and obligation verifiers execute their behavioral cases",
+        "verify-v3-definition-of-done executes Stage 01 but constructs three related metrics from static source searches and excludes them from its executed metric IDs",
+        "pages.yml independently derives successful booleans from those executed reports",
+        "The required consistency check detects a contradiction and throws before writing closed-loop-acceptance.json"
+      ],
+      "dependencyClosure": [
+        "Stage 01 required-file inspection accounting, accepted semantic mapping and Stage 04 obligation accounting metric derivation",
+        "Existing status-publication consistency check and final acceptance gate",
+        "False/missing executed observations remain non-passing; unexecuted broader metrics remain unknown",
+        "The actual underlying intake and omission-rejection suites independently rerun",
+        "Permanent reporting regression and targeted false/unknown metric fault detection"
+      ]
+    },
+    {
+      "requirementId": "VER-016",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs; verify-semantic-review-acceptance.mjs; app-core.js",
+        "symbol": "acceptProofResponse; acceptance confirmation replay; acceptPendingProposal/confirmReplacement"
+      },
+      "observableExpectedBehavior": "A browser verifier requesting replacement acceptance must operate the visible in-page confirmation and wait for its successful commit; merely opening the confirmation must not be treated as acceptance. Original acceptance still completes without an unnecessary second confirmation.",
+      "requiredEvidence": [
+        "Reproduce the exact Stage 05 reconciliation class through actual production acceptance owners",
+        "The original verifier helper fails while accepted progress remains preserved",
+        "Repaired helper clicks required confirmation exactly once and valid progression succeeds",
+        "Fresh browser operator replay and affected acceptance/recovery gates"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "runId": 35494646672,
+        "runNumber": 5897,
+        "jobId": 106035365482,
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "actual": "Stage 05 RECONCILE_REQUIREMENT_SET: timeout waiting for its promptId to appear in acceptedChanges after accept-proposal",
+        "causalStatus": "The permanent actual-handler regression reproduces the exact Stage 05 reconciliation failure on 66ce722852108fa0efcb68c1417ee42977c8c999. Production retains accepted progress and exposes confirmation; the unchanged browser helper omits that operator action."
+      },
+      "authorityTrace": [
+        "The Stage 05 reconciliation response validates and exposes proposal review",
+        "The browser verifier clicks accept-proposal",
+        "Production may require replacement confirmation before committing the accepted result",
+        "acceptProofResponse currently waits for committed data without consuming that confirmation",
+        "Both semantic acceptance impact and the persistence owner can require confirmation; the verifier must consume the actual visible confirmation rather than independently predict that none is needed."
+      ],
+      "dependencyClosure": [
+        "Every acceptance consumer in the affected browser verifier",
+        "Original responses, rejected review findings, reconciliation replacements, confirmation and successful continuation",
+        "Actual production acceptance handler and retained rejection history",
+        "Targeted omitted-confirmation verifier fault and fresh browser replay"
+      ]
+    },
+    {
+      "requirementId": "INF-001",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": ".github/workflows/pages.yml",
+        "symbol": "test job and existing complete operator journey execution budgets"
+      },
+      "observableExpectedBehavior": "The existing read-only CI and deployed verification paths permit the complete required operator journey to finish or report its actual failure. A verifier deadline cannot stand in for evidence of the remaining stages.",
+      "requiredEvidence": [
+        "CI 5897 immutable interruption report and raw log",
+        "The fresh final revision completes every required stage and recovery operation",
+        "Exact main rebuild and deployed verification complete independently"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "infrastructure",
+      "startingEvidence": {
+        "runId": 35494646672,
+        "runNumber": 5897,
+        "jobId": 106035365482,
+        "artifactId": 10601578260,
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "actual": "Configured 60m journey deadline interrupted Stage 25 at sequence 118; 24 completed stages and 92 recorded operations do not establish completion."
+      },
+      "authorityTrace": [
+        "The fresh operator journey progresses through actual controls and file transport",
+        "The existing shell timeout terminates it at Stage 25 before the complete workflow and backup checks",
+        "The saved SIGTERM observation distinguishes interruption from an observed application failure"
+      ],
+      "dependencyClosure": [
+        "The existing PR/main test job budget",
+        "All existing complete operator journey invocations, including deployed and authenticated re-verification paths",
+        "Immutable journey reports, logs and source identity",
+        "Final complete workflow remains fresh; no partial journey is accepted"
+      ],
+      "configuredVerificationLimits": {
+        "completeJourneyMinutes": 90,
+        "testJobMinutes": 180,
+        "reason": "The observed 60-minute verifier deadline terminated a progressing journey before the required full proof. Assertions and stage/operation coverage remain mandatory; a longer verification budget makes no performance or completion claim."
+      }
+    },
+    {
+      "requirementId": "VER-017",
+      "sourceLocation": "Current task sections 9 F UX-021, 13 and 15; DEF-9 dependency closure",
+      "responsibleProductionCode": {
+        "file": "app-core.js; verify-complete-operator-journey.mjs; verify-operator-feedback.mjs",
+        "symbol": "recordOperationLatency / operationLatencyEvidence / journey latency collection"
+      },
+      "observableExpectedBehavior": "Preserve actual completed-operation latency observations across the required reload and bounded application sample-window rollover. Do not overwrite prior observations, double-count repeated reads, or silently treat a missed sample window as complete evidence.",
+      "requiredEvidence": [
+        "Exact-source reproduction losing pre-reload observations",
+        "Observed latency collection across reload and sample-window rollover",
+        "Targeted overwrite and missing-window faults rejected; repaired collection passes",
+        "Fresh complete candidate and deployed workflow latency observations"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "All measured operator, storage, startup and restoration operations",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "evidence",
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "actual": "The existing complete journey reloads during Stage 5, reads application latency only at completion/finally, and replaces its report with the current bounded in-memory sample window."
+      },
+      "authorityTrace": [
+        "Application records completed-operation samples in a bounded per-load buffer",
+        "Required journey reload creates a new application runtime and buffer",
+        "Journey report reads only the final runtime window",
+        "Sequential session-bound observation identities and incremental collection preserve observed samples without expanding product retention"
+      ],
+      "dependencyClosure": [
+        "Production latency observation metadata only; configurable threshold and bounded sample retention remain unchanged",
+        "Existing journey captures at operation boundaries and before reload",
+        "Existing feedback verifier exercises actual telemetry and collector owners with reload and rollover",
+        "Immutable partial/final journey evidence retains completed observations; unfinished operations remain unmeasured"
+      ]
     }
   ],
   "currentReview": {

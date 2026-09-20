@@ -35,7 +35,7 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -236,7 +236,7 @@ jobs:
           run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 60m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -336,7 +336,7 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 60m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -396,7 +396,7 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 60m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1

@@ -41,11 +41,12 @@ const executedProof=(file,marker)=>{
   return selectExecutionReport(text,marker);
 };
 const actualStage01=executedProof('verify-stage01-intake-closure.mjs','stage01IntakeClosure');
+const actualZeroLoss=executedProof('verify-zero-loss-accounting.mjs','zeroLossStage01');
 const actualPromptIdentity=executedProof('verify-prompt-file-identity.mjs','promptFileIdentity');
 const actualAttachmentSlots=executedProof('verify-ingestion.mjs','attachmentSlotMapping');
 const actualDueStage=executedProof('verify-final-product-timing.mjs','finalProductTiming');
 const actualActivation=executedProof('verify-controller-v3-gap-closure.mjs','activationProofFailsClosed');
-const executedMetricIds=new Set(['STAGE_01_RAW_INPUT_ACCOUNTING','FILE_FIRST_PROMPT_BYTE_IDENTITY_COVERAGE','ATTACHMENT_SLOT_MAPPING_COVERAGE','DUE_STAGE_OBLIGATION_COVERAGE','ACTIVATION_PROOF_COVERAGE']);
+const executedMetricIds=new Set(['STAGE_01_RAW_INPUT_ACCOUNTING','STAGE_01_REQUIRED_FILE_INSPECTION_ACCOUNTING','STAGE_01_ACCEPTED_SEMANTIC_MAPPING_COVERAGE','STAGE_04_OBLIGATION_ACCOUNTING','FILE_FIRST_PROMPT_BYTE_IDENTITY_COVERAGE','ATTACHMENT_SLOT_MAPPING_COVERAGE','DUE_STAGE_OBLIGATION_COVERAGE','ACTIVATION_PROOF_COVERAGE']);
 const metric=(metricId,checks,evidenceReferences,dispositionOverride=null)=>{
   assert(Array.isArray(checks)&&checks.length>0,`${metricId} must have a nonempty closed universe.`);
   const normalized=checks.map(([id,ok])=>[String(id),Boolean(ok)]);
@@ -59,9 +60,9 @@ const has=(source,token)=>source.includes(token);
 const normativeManifest=JSON.parse(read('./specification/closed-loop-normative-requirements.json'));
 const section49CoverageMetrics={
   stage01RawInputAccounting:metric('STAGE_01_RAW_INPUT_ACCOUNTING',[['raw-intake-contract',actualStage01.stage01IntakeClosure===true],['raw-unit-accounting-negative',actualStage01.incompleteAccountingRejected===true]],['verify-stage01-intake-closure.mjs']),
-  stage01RequiredFileInspectionAccounting:metric('STAGE_01_REQUIRED_FILE_INSPECTION_ACCOUNTING',[['file-handoff-present',/handoff/i.test(stage01Source)],['uninspected-file-rejected',/uninspect|inspection/i.test(stage01Tests+ingestionTests)]],['verify-stage01-intake-closure.mjs','verify-ingestion.mjs']),
-  stage01AcceptedSemanticMappingCoverage:metric('STAGE_01_ACCEPTED_SEMANTIC_MAPPING_COVERAGE',[['semantic-mapping-present',/semantic/i.test(stage01Source)],['mapping-omission-negative',/(omit|missing|unaccounted)/i.test(zeroLossTests+ingestionTests)]],['verify-zero-loss-accounting.mjs','verify-ingestion.mjs']),
-  stage04ObligationAccounting:metric('STAGE_04_OBLIGATION_ACCOUNTING',[['obligation-manifest-present',/obligation/i.test(stage04Source)&&/manifest/i.test(stage04Source)],['omitted-obligation-rejected',/(omit|missing|unaccounted)/i.test(zeroLossTests+ingestionTests)]],['verify-zero-loss-accounting.mjs','verify-ingestion.mjs']),
+  stage01RequiredFileInspectionAccounting:metric('STAGE_01_REQUIRED_FILE_INSPECTION_ACCOUNTING',[['file-identity-bound',actualStage01.artifactIdentityBound===true],['missing-inspection-claim-rejected',actualStage01.missingInspectionClaimRejected===true],['missing-handoff-rejected',actualStage01.missingHandoffRejected===true]],['verify-stage01-intake-closure.mjs']),
+  stage01AcceptedSemanticMappingCoverage:metric('STAGE_01_ACCEPTED_SEMANTIC_MAPPING_COVERAGE',[['complete-intake-accounting',actualZeroLoss.zeroLossStage01===true],['missing-intake-unit-rejected',actualZeroLoss.incompleteIntakeRejected===true],['atomic-human-authority-roundtrip',actualStage01.humanAuthorityRoundTripIntegrated===true]],['verify-zero-loss-accounting.mjs','verify-stage01-intake-closure.mjs','verify-human-authority-roundtrip.mjs']),
+  stage04ObligationAccounting:metric('STAGE_04_OBLIGATION_ACCOUNTING',[['complete-obligation-accounting',actualZeroLoss.zeroLossStage04===true],['accepted-research-union',actualZeroLoss.completeStage03ResearchUnion===true],['missing-obligation-rejected',actualZeroLoss.incompleteObligationRejected===true]],['verify-zero-loss-accounting.mjs']),
   mandatoryEvidenceSufficiencyCoverage:metric('MANDATORY_EVIDENCE_SUFFICIENCY_COVERAGE',[['shared-evaluator',has(engine,'evaluateEvidenceSufficiency')],['byte-evidence-negative',/byte/i.test(semanticTests+completeTests)],['meaning-evidence-negative',/meaning/i.test(semanticTests+completeTests)],['human-evidence-negative',/human/i.test(semanticTests+completeTests)]],['workflow-engine.js','verify-semantic-invariant.mjs','verify-complete.mjs']),
   contractProfileMigrationCoverage:metric('CONTRACT_PROFILE_MIGRATION_COVERAGE',[['profile-identity',has(schema,'closed-loop-completion-profile/1')],['legacy-v3-migration-proof',/profile/i.test(migrationTests)&&/legacy/i.test(migrationTests)]],['workflow-schema.js','verify-v3-migration.mjs']),
   fieldRegistryCoverage:metric('FIELD_REGISTRY_COVERAGE',[['field-registry-export',has(schema,'FIELD_REGISTRY')],['closure-regression',/FIELD_REGISTRY/.test(contractClosureTests)]],['workflow-schema.js','verify-contract-closure.mjs']),

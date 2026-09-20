@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
 
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
 // History is exercised by verify-recoverable-history and the browser recovery gate.
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
 
-const app=fs.readFileSync('app-core.js','utf8');
+const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
 const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
@@ -67,8 +68,10 @@ await import('./verify-operator-action-lifecycle.mjs');
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;
-    globalThis.ui={select:p=>{current=p;projects=[p];},workflow:()=>{detailViews.clear();return workflow();}};
+    globalThis.ui={select:p=>{current=p;projects=[p];},instruction:()=>currentPromptRecord(current.activeStage)?.prompt||currentStagePrompt(current.activeStage),workflow:()=>{detailViews.clear();return workflow();}};
   })();`,runtime);
+  const renderWorkflow=runtime.ui.workflow,presentationCases=[];
+  runtime.ui.workflow=()=>{const html=renderWorkflow();presentationCases.push(assertWorkflowPresentation(observeWorkflowMarkup(html),{instruction:runtime.ui.instruction(),caseId:'file-first-view-'+presentationCases.length}));return html;};
   vm.runInContext(`globalThis.previewBuilds=0;const realPromptEngine=closedLoopPromptEngine;
     closedLoopPromptEngine={...realPromptEngine,buildPromptRecord(...args){previewBuilds++;return realPromptEngine.buildPromptRecord(...args);}};
     globalThis.previewProject=closedLoopCore.createBlankState('CONTEXT-FIRST-PREVIEW');
@@ -99,11 +102,11 @@ await import('./verify-operator-action-lifecycle.mjs');
   runtime.closedLoopWorkflowEngine.recalculate(other);runtime.ui.select(other);
   assert.doesNotMatch(runtime.ui.workflow(),/This instruction requires context\.json\. It is included in the one stage ZIP\./,'Switching projects leaked the preceding project\'s required packaged context.');
   const saved=runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
-  assert.doesNotMatch(runtime.ui.workflow(),/Regenerated and saved for the remaining work/,'The first saved instruction was mislabeled as regenerated.');
+  assert.doesNotMatch(runtime.ui.workflow(),/Regenerated and saved for the remaining work/,'INSTRUCTION_STATE_ORACLE: The first saved instruction was mislabeled as regenerated.');
   runtime.closedLoopWorkflowEngine.transitionOperationReservation(saved.reservation,'SUPERSEDED');
   runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
-  assert.match(runtime.ui.workflow(),/Regenerated and saved for the remaining work/, 'The existing instruction text does not identify the saved replacement.');
-  console.log(JSON.stringify({contextFirstPreview:true,previewDoesNotCommit:true,previewBuildsPerRender:1,unavailableStageChecks:29,staleRevisionAndProjectContextRejected:true}));
+  assert.match(runtime.ui.workflow(),/Regenerated and saved for the remaining work/, 'INSTRUCTION_STATE_ORACLE: The existing instruction text does not identify the saved replacement.');
+  console.log(JSON.stringify({contextFirstPreview:true,previewDoesNotCommit:true,previewBuildsPerRender:1,unavailableStageChecks:29,staleRevisionAndProjectContextRejected:true,presentationCases}));
 }
 
 // Changing selection while raw bytes are being staged must never make the
