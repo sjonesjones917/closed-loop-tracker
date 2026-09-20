@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 globalThis.dispatchEvent=()=>true;
@@ -44,4 +46,50 @@ const restored=await durableStore.restoreCheckpoint(saved.job.JOB_ID,checkpointR
 assert.ok(restored.project.projectData.products.some(row=>engine.recordId(row,'products')===productId),'PRODUCT_RESERVATION_RECOVERY_ORACLE');
 assert.deepEqual(new Uint8Array(await (await durableStore.getArtifact(artifactPayloads[0].artifactId)).blob.arrayBuffer()),artifactPayloads[0].bytes);
 report.durableCases=['Persist the baseline before product reservation','Persist and reload the reserved product before response acceptance','Restore the earlier baseline without a later reservation','Restore the matching reserved version and exact baseline bytes'].map(name=>({name,result:'PASS'}));
+// A valid prerequisite is insufficient unless the normal save path leaves a
+// current, exportable instruction after reservation and durable commit.
+{
+ const baselineRestored=await durableStore.restoreCheckpoint(saved.job.JOB_ID,checkpointBefore,{expectedProjectRevision:restored.project.revision});
+ const runtime=durable.runtime,uiEngine=durable.engine,source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
+ const extract=(start,end)=>{const a=source.indexOf(start),b=source.indexOf(end,a+start.length);assert.ok(a>=0&&b>a);return source.slice(a,b);};
+ Object.assign(runtime,{current:durable.copy(baselineRestored.project),projects:durable.copy([baselineRestored.project]),core:durable.core,engine:uiEngine,schema:runtime.closedLoopWorkflowSchema,ingestion:durable.ingestion,projectStore:durableStore,clone:durable.copy,recordValue:uiEngine.recordValue,safe:uiEngine.safe,TAB_INSTANCE_ID:'SYNTHETIC-HANDOFF',withStorageActivity:async(_label,work)=>work(),unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,recordCommittedBoundary:async()=>{},render:()=>{}});
+ runtime.current.activeStage=21;runtime.current.activeView='Workflow';
+ runtime.captureView=()=>durable.copy({activeStage:runtime.current.activeStage,activeView:runtime.current.activeView,operationSelection:runtime.operationSelection,runSelection:runtime.runSelection});
+ runtime.captureCurrentView=async()=>durableStore.saveCheckpoint(runtime.current.job.JOB_ID,{expectedProjectRevision:runtime.current.revision,view:runtime.captureView()});
+ vm.runInContext(extract('function canonicalCurrentStage(','function displayedStageAction(')+extract('function stageOperations(','// A saved response may be inspected independently.')+extract('async function persistReplacement(','async function save(')+extract('async function savePromptRecord(','function promptTransportFilename('),runtime,{filename:'app-core.js:handoff-save-and-current-binding'});
+ try{await runtime.savePromptRecord(21);}catch(error){
+  const record=runtime.current.projectData.generatedPrompts.at(-1),options=runtime.promptOptions(21),scope=runtime.closedLoopPromptEngine.scopeFor(21,runtime.current,options.scope||{},options.operation);
+  console.error(JSON.stringify({caseId:'HANDOFF-COMMITTED-CURRENT',operation:options.operation,selectedOptions:options,savedScope:record?.scope,currentScope:scope,revision:runtime.current.revision,error:String(error.message||error)}));
+  assert.fail('HANDOFF_COMMITTED_CURRENT_ORACLE: a generated handoff must remain current and exportable after its normal durable commit: '+String(error.message||error));
+ }
+ const committed=runtime.currentPromptRecord(21);assert.ok(committed?.transportBindingRequired,'HANDOFF_COMMITTED_CURRENT_ORACLE');
+ runtime.current=await durableStore.readProject(saved.job.JOB_ID);
+ assert.equal(runtime.currentPromptRecord(21)?.instructionId,committed.instructionId,'HANDOFF_RELOAD_CURRENT_ORACLE');
+ const bundle=await durableStore.createExecutionPackage({jobId:saved.job.JOB_ID,stage:21,operation:committed.operation,instructionId:committed.instructionId});
+ assert.equal(bundle.manifest.promptIdentity.bodySha256,committed.bodySha256,'HANDOFF_EXPORT_IDENTITY_ORACLE');
+ assert.equal(bundle.manifest.scope.productId,committed.scope.productId,'HANDOFF_EXPORT_TARGET_ORACLE');
+ const members=new Map(readStoreArchive(new Uint8Array(await bundle.blob.arrayBuffer())).map(entry=>[entry.canonicalPath,entry.bytes]));
+ assert.deepEqual(members.get('instruction.txt'),new TextEncoder().encode(committed.prompt),'HANDOFF_EXPORT_BYTES_ORACLE');
+ const exportedManifest=JSON.parse(new TextDecoder().decode(members.get('manifest.json')));
+ assert.equal(exportedManifest.promptIdentity.bodySha256,committed.bodySha256,'HANDOFF_EXPORTED_MANIFEST_ORACLE');
+ assert.equal(exportedManifest.scope.productId,committed.scope.productId,'HANDOFF_EXPORTED_TARGET_ORACLE');
+ const revision=runtime.current.revision;assert.equal((await runtime.savePromptRecord(21)).instructionId,committed.instructionId,'HANDOFF_EXACT_RETRY_ORACLE');assert.equal(runtime.current.revision,revision);
+ const healthy=runtime.current;
+ const target=project=>uiEngine.records(project,'products').find(row=>uiEngine.recordId(row,'products')===committed.scope.productId);
+ report.currentBindingCases=[];
+ for(const [caseId,violate] of [
+  ['another-project',project=>{project.job.JOB_ID+='-OTHER';}],
+  ['later-revision',project=>{project.revision++;}],
+  ['abandoned-activation',project=>{project.historyActivationId='ABANDONED-ACTIVATION';}],
+  ['missing-reserved-target',project=>{project.projectData.products=project.projectData.products.filter(row=>uiEngine.recordId(row,'products')!==committed.scope.productId);}],
+  ['invalidated-reserved-target',project=>{target(project).invalidatedBy='REPLACEMENT';}],
+  ['completed-reserved-target',project=>{target(project).completionState='COMPLETED';}]
+ ]){
+  runtime.current=durable.copy(healthy);violate(runtime.current);
+  assert.equal(runtime.currentPromptRecord(21),null,'HANDOFF_TARGET_VALIDITY_ORACLE: '+caseId);
+  runtime.current=healthy;assert.equal(runtime.currentPromptRecord(21)?.instructionId,committed.instructionId,'HANDOFF_RESTORED_VALIDITY_ORACLE: '+caseId);
+  report.currentBindingCases.push({caseId,expected:'Reject an incompatible handoff; accept its unchanged valid version',result:'PASS'});
+ }
+ report.durableCases.push(...['The actual handoff control commits a current instruction after restoring its valid prerequisites','The committed instruction remains current on reload and exports its exact reserved target','Repeating the save retains its exact instruction without a new revision'].map(name=>({name,result:'PASS'})));
+}
 console.log(JSON.stringify(report,null,2));

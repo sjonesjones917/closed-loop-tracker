@@ -2206,6 +2206,92 @@
         "Every assertion and downstream byte comparison in the affected browser verifier",
         "Retest actual production behavior through the existing browser controls"
       ]
+    },
+    {
+      "requirementId": "DEF-20",
+      "sourceLocation": "Current task section 9 A: execution and handoff binding; sections 9 B, 10 and 13",
+      "responsibleProductionCode": {
+        "file": "app-core.js; prompt-engine.js; workflow-engine.js; project-store.js",
+        "symbol": "savePromptRecord/currentPromptRecord; reserveAndBuildPromptRecord; preparePromptContext/operationScope; replaceProject"
+      },
+      "observableExpectedBehavior": "Preparing an external handoff through its normal control commits one instruction bound to the active project, operation, reserved targets and revision. That instruction remains current after its durable commit and reload, exports its exact permitted bytes, and does not require another attempt merely because reservation populated a previously unset target.",
+      "requiredEvidence": [
+        "Exact-current-source failing regression through the production UI save and persistence owners",
+        "Saved record, runtime scope, reservation and exported bytes agree before and after reload",
+        "Generated cases covering applicable reserved target and reviewer/run scope classes",
+        "Targeted incorrect binding fault detected; affected prompt, ingestion, persistence, recovery and full browser workflow gates"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Every external operation whose handoff reserves or selects target/context identities",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "production",
+      "startingEvidence": {
+        "runId": 35489533969,
+        "runNumber": 5896,
+        "headSha": "ee5f27dec37a889d2e4f472f3d594b31d2753315",
+        "jobId": 106021961609,
+        "artifactId": 10599636857,
+        "case": "Complete operator journey, Stage 21 export after accepted Stage 20 baseline",
+        "actual": "The generated prompt was not committed with its controlling reservation revision."
+      },
+      "authorityTrace": [
+        "Stage 21 Export stage files invokes savePromptRecord",
+        "reserveAndBuildPromptRecord reserves a product and binds the instruction/reservation to its exact target",
+        "persistReplacement commits the valid project",
+        "currentPromptRecord independently recomputes a target from accepted state, obtains null, and rejects the valid reserved product",
+        "The existing workflow-engine.assertOperationScope already distinguishes INPUT_CURRENT, TARGET_RESERVED and IMMUTABLE_REFERENCE and is the shared policy consumers must use"
+      ],
+      "dependencyClosure": [
+        "Every currentPromptRecord consumer: instruction display, save/retry, consolidated export and response preparation",
+        "Every registered operation scope class: current inputs, reserved versions, reserved record identities, immutable run/reviewer references",
+        "Revision, project and activation identity checks remain enforced; stale/invalid/completed targets remain rejected by shared scope policy",
+        "Exact handoff file bytes and manifest binding; reload, History restoration and continued acceptance",
+        "Existing prompt, ingestion, full-cycle, reservation sequence, persistence, browser and recovery gates"
+      ]
+    },
+    {
+      "requirementId": "VER-013",
+      "sourceLocation": "Current task sections 4 B, 4 C, 4 E, 9 C, 9 F, 10 and 13",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs; app-core.js",
+        "symbol": "waitForIdle/openStoredFixture/reload consumers; startClosedLoopApp/initializeHistoryNavigation"
+      },
+      "observableExpectedBehavior": "Browser operator actions begin only after the destination document completes startup and restoration and becomes interactive. Rendering a control during startup is not readiness; a previous document cannot satisfy a reload wait. Selected response bytes survive to the actual validation control.",
+      "requiredEvidence": [
+        "Actual startup held during saved-view restoration rejects premature verifier interaction, then permits interaction when startup completes",
+        "A navigation check rejects prior-document readiness and binds to the destination document",
+        "Targeted early-interaction faults are detected and restored checks pass",
+        "Fresh real-browser response-file selection, validation and acceptance after reload"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Startup, navigation, reload, file selection and subsequent operator controls",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "runId": 35489533969,
+        "runNumber": 5896,
+        "headSha": "ee5f27dec37a889d2e4f472f3d594b31d2753315",
+        "jobId": 106021961609,
+        "actual": "Stage 5 RECONCILE_REQUIREMENT_SET after reload: Select the authoritative response JSON file first.",
+        "causalStatus": "Both early-interaction and prior-document checks reproduce against the unchanged verifier. The file-loss association awaits fresh real-browser replay."
+      },
+      "authorityTrace": [
+        "Startup marks the application inert until load and saved-view restoration finish",
+        "The first render calls paintOperatorAction and can remove aria-busy while startup remains inert",
+        "waitForIdle inspected aria-busy alone and scripted file selection could run through inert controls",
+        "Saved-view restoration can replace the file draft before validation",
+        "Navigation waits can also observe the old document before replacement"
+      ],
+      "dependencyClosure": [
+        "All verifier clicks, fills, file selections, stage changes and exported handoffs consuming waitForIdle",
+        "All ordinary fixture navigation and reload consumers in the affected browser verifier",
+        "Successful startup, startup failure, held diagnostics and blocked-upgrade cases",
+        "Production startup and file-selection behavior independently retested without changing production for a harness defect"
+      ]
     }
   ],
   "currentReview": {

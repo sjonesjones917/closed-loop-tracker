@@ -5,13 +5,15 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
-const files=['project-store.js','hash.js','app-core.js','index.html'];
+const files=['project-store.js','hash.js','app-core.js','index.html','verify-browser-extra.mjs'];
 const originals=new Map(files.map(file=>[file,fs.readFileSync(file,'utf8')]));
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-io-faults-'));
 const events=[];
 function execute(test,args=[],env={}){const command=[process.execPath,test,...args],r=spawnSync(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout:30000,maxBuffer:16*1024*1024});const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;}
 function replaceOne(source,before,after){assert.equal(source.split(before).length-1,1,'Fault anchor must identify exactly one production location');return source.replace(before,after);}
 const faults=[
+ {id:'VER-MUT-EARLY-INTERACTION',file:'verify-browser-extra.mjs',env:'BROWSER_EXTRA_SOURCE',test:'verify-startup-deadlines.mjs',caseId:'VERIFIER-STARTUP-INTERACTION',oracle:'VERIFIER_STARTUP_INTERACTION_ORACLE',apply:s=>replaceOne(s,"globalThis.closedLoopAppReady===true&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true'","document.querySelector('#app')?.getAttribute('aria-busy')!=='true'")},
+ {id:'VER-MUT-PRIOR-DOCUMENT',file:'verify-browser-extra.mjs',env:'BROWSER_EXTRA_SOURCE',test:'verify-startup-deadlines.mjs',caseId:'VERIFIER-DESTINATION-DOCUMENT',oracle:'VERIFIER_DESTINATION_DOCUMENT_ORACLE',apply:s=>replaceOne(s,' await cdp.send(method,params);',' await cdp.send(method,params);return waitForIdle(cdp);')},
  ...['OPEN','REQUEST','TRANSACTION'].map(kind=>({id:'IO-MUT-'+kind,file:'project-store.js',env:'STORE_SOURCE',test:'verify-storage-deadlines.mjs',caseId:'IO-'+kind+'-DEADLINE',oracle:'IO_'+kind+'_DEADLINE_ORACLE',apply:s=>replaceOne(s,'const error=Object.assign(new Error(`Storage ${kind.toLowerCase()}',`if(kind==='${kind}')return;const error=Object.assign(new Error(\`Storage \${kind.toLowerCase()}`)})),
  {id:'IO-MUT-LATE-UPGRADE',file:'project-store.js',env:'STORE_SOURCE',test:'verify-storage-deadlines.mjs',caseId:'IO-OPEN-UPGRADE-LATE',oracle:'IO_OPEN_LATE_SCHEMA_ORACLE',apply:s=>replaceOne(s,"if(expired||!active()){try{req.transaction?.abort();}catch{}return;}",'')},
  {id:'IO-MUT-WORKER',file:'project-store.js',env:'STORE_SOURCE',test:'verify-storage-deadlines.mjs',caseId:'IO-WORKER-ABSENT',oracle:null,apply:s=>replaceOne(s,'const STORAGE_WORKER_TIMEOUT_MS=600000;','const STORAGE_WORKER_TIMEOUT_MS=1200000;')},

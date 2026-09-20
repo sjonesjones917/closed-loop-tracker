@@ -329,7 +329,12 @@ function promptMatches(record,n,options,requireCurrentRevision=true){if((record.
 function currentPromptEngineVersion(){return globalThis.closedLoopPromptEngine?.version||null;}
 function promptVersionCurrent(record){return Boolean(record)&&record.promptEngineVersion===currentPromptEngineVersion();}
 function proposalVersionCurrent(proposal){return Boolean(proposal)&&proposal.preconditions?.promptEngineVersion===currentPromptEngineVersion();}
-function currentPromptRecord(n){const options=promptOptions(n),scope=globalThis.closedLoopPromptEngine.scopeFor(n,current,options.scope||{},options.operation);return safe(current.projectData.generatedPrompts).filter(record=>promptMatches(record,n,options,true)&&promptVersionCurrent(record)&&globalThis.closedLoopPromptEngine.promptTransportBinding(current,n,record.operation,record.instructionId||record.promptId,record.scope)&&Object.entries(scope).every(([key,value])=>String(record.scope?.[key]??'')===String(value??''))).at(-1)||null;}
+function currentPromptRecord(n){const options=promptOptions(n);return safe(current.projectData.generatedPrompts).filter(record=>{
+ if(!promptMatches(record,n,options,true)||!promptVersionCurrent(record)||!globalThis.closedLoopPromptEngine.promptTransportBinding(current,n,record.operation,record.instructionId||record.promptId,record.scope))return false;
+ // Reserved outputs are not accepted current inputs. Resolve every scope role
+ // through the same policy that validates the eventual response.
+ try{engine.assertOperationScope(current,n,record.operation,record.scope);return true;}catch{return false;}
+}).at(-1)||null;}
 // A saved response may be inspected independently. Validation owns its exact
 // reservation revision and any explicitly retained recovery binding.
 function responseAttemptPrompt(n){const options=promptOptions(n),saved=safe(current.projectData.generatedPrompts).filter(x=>x.transportBindingRequired&&promptMatches(x,n,options,false)).at(-1);if(saved)return saved;const selection=currentFileSelection('response',n),recovery=current.restoredCandidates;if(recovery?.activationId===current.historyActivationId&&selection?.files.some(file=>recovery.selectedFiles?.[file.artifactId]?.rawSha256===file.sha256))return safe(current.projectData.generatedPrompts).find(record=>(record.instructionId||record.promptId)===selection.promptId&&record.transportBindingRequired&&operatorLaneMatches(record,n))||null;return null;}
