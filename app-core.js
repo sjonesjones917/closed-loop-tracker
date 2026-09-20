@@ -646,10 +646,10 @@ function presentRestoredVersion(presentation,{writeEntry=false}={}){
  if(writeEntry)writeBrowserEntry(presentation.checkpointId,selected,{restored:true});
  render();applySavedView(selected);pendingRestoredPresentation=null;
 }
-async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode='HISTORY',view=null,traversal=false,pendingAction=null}={}){
+async function restoreHistoryVersion(checkpointId,{jobId=current.job.JOB_ID,mode='HISTORY',view=null,traversal=false,pendingAction=null,pendingCapture=null}={}){
  if(!checkpointId)throw new Error('No retained version is available in that direction.');
  const sequence=++navigationSequence;historyRestoreController?.abort();const controller=new AbortController();historyRestoreController=controller;
- const preceding=historyRestoreTail,pendingUi=pendingAction,pendingOwner=pendingUi&&operatorActionInFlight?.promise===pendingUi?operatorActionInFlight:null,admittedCapture=capturingViewPromise?.then(()=>null,error=>error),destination=history.state?.closedLoopHistory&&history.state.jobId===jobId&&history.state.checkpointId===checkpointId?history.state.entryId:null;
+ const preceding=historyRestoreTail,pendingUi=pendingAction,pendingOwner=pendingUi&&operatorActionInFlight?.promise===pendingUi?operatorActionInFlight:null,admittedCapture=(pendingCapture||capturingViewPromise)?.then(()=>null,error=>error),destination=history.state?.closedLoopHistory&&history.state.jobId===jobId&&history.state.checkpointId===checkpointId?history.state.entryId:null;
  let release,restoreOutcome='COMPLETED';const restoreStartedAt=operationClock();historyRestoreTail=new Promise(resolve=>{release=resolve;});
  ++focusPlacementSequence;historyRestoreVisible=false;clearTimeout(historyRestoreTimer);
  const timer=setTimeout(()=>{if(sequence!==navigationSequence)return;historyRestoreVisible=true;paintOperatorAction();announce('Restoring project and verifying saved files…');},OPERATION_LOADING_THRESHOLD_MS);historyRestoreTimer=timer;paintOperatorAction();
@@ -692,7 +692,7 @@ async function initializeHistoryNavigation(){
   await projectStore.saveCheckpoint(current.job.JOB_ID,{expectedProjectRevision:current.revision,sessionId:APPLICATION_SESSION_ID,label:'Session start'});await refreshHistory();const startupView=captureView();writeBrowserEntry(historyState.activeId,startupView,{replace:true});render();applySavedView(startupView);
  }
  }catch(error){await refreshHistory();writeBrowserEntry(historyState.activeId,captureView(),{replace:true});render();reportActionFailure(new Error('The saved view could not be restored. Your current project is preserved and History is available. '+String(error.message||error)));}
- window.addEventListener('popstate',event=>{const destination=event.state;if(!destination?.closedLoopHistory)return;void restoreHistoryVersion(destination.checkpointId,{jobId:destination.jobId,view:destination.view,traversal:true,pendingAction:operatorActionInFlight?.promise}).catch(()=>{});});
+ window.addEventListener('popstate',event=>{const destination=event.state;if(!destination?.closedLoopHistory)return;const pendingCapture=captureCurrentView();void restoreHistoryVersion(destination.checkpointId,{jobId:destination.jobId,view:destination.view,traversal:true,pendingAction:operatorActionInFlight?.promise,pendingCapture}).catch(()=>{});});
  // Remember the current entry synchronously, then persist the complete view.
  // A later edit is coalesced behind an in-flight checkpoint, never dropped.
  const preserveView=()=>{if(!current||operatorActionInFlight||historyRestoreController||restoringHistory)return;const entry=displayedBrowserEntry();if(entry?.jobId===current.job.JOB_ID)writeBrowserEntry(entry.checkpointId,captureView(),{replace:true});void captureCurrentView().catch(reportActionFailure);};
