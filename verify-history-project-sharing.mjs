@@ -18,7 +18,11 @@ const sourceSha256=createHash('sha256').update(source).digest('hex');
 const emit=(name,result,details={})=>{const row={caseId:name,result,...details};observations.push(row);console.error(JSON.stringify(row));};
 const makeRuntime=(additionalFault=null)=>{
  let text=boundedSource;
- if(faultMode==='duplicate-project-body'){const before="const base=state.entries.find(entry=>entry.projectSha256===digest(project)&&!entry.projectReference);";assert.equal(text.split(before).length-1,1);text=text.replace(before,"const base=null;");}
+ if(faultMode==='duplicate-project-body'){
+  // The fault duplicates the full canonical body, bypassing both supported
+  // encodings that now share its contents across retained checkpoints.
+  for(const [before,after] of [["const base=state.entries.find(entry=>entry.projectSha256===digest(project)&&!entry.projectReference);","const base=null;"],['const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);','const contents={project:canonical};']]){assert.equal(text.split(before).length-1,1);text=text.replace(before,after);}
+ }
  if(additionalFault){assert.equal(text.split(additionalFault.before).length-1,1,'Missing or ambiguous implementation-fault anchor: '+additionalFault.id);text=text.replace(additionalFault.before,additionalFault.after);}
  return projectStoreRuntime({sourceOverrides:{'project-store.js':text}});
 };

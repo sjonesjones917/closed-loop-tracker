@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 const digest=path=>createHash('sha256').update(fs.readFileSync(path)).digest('hex');
 const originalSourceSha256=digest('project-store.js'),results=[];
 for(const [suite,fault,oracle] of [
+ ['verify-history-canonical-sharing.mjs','duplicate-canonical-content','HISTORY_CANONICAL_CAPACITY_ORACLE'],
  ['verify-history-project-sharing.mjs','duplicate-project-body','HISTORY_STORAGE_AMPLIFICATION_ORACLE'],
  ['verify-history-project-references.mjs','skip-project-body-byte-check','HISTORY_REFERENCE_BYTE_ORACLE'],
  ['verify-history-project-references.mjs','skip-selected-version-binding','HISTORY_SELECTED_VERSION_ORACLE']

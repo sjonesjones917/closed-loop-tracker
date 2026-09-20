@@ -2050,14 +2050,181 @@
           "rawOutputSha256": "146f580d66dbce474d1c5ddd92bfa91c10586dbb3c0566a52a61fe6a8909bf09"
         }
       ]
+    },
+    {
+      "requirementId": "DEF-19",
+      "sourceLocation": "Current task sections 9 C, 12, 13; specification sections 35 and 45; run 5895 Stage 21 History limit failure",
+      "responsibleProductionCode": {
+        "file": "project-store.js",
+        "symbol": "prepareHistoryCommit/encodeHistoryProject/encodeCheckpoint/restoreHistoryProject/readCheckpointBody/decodeCheckpoint/readPackageJson/importPackage/exportPackage"
+      },
+      "observableExpectedBehavior": "Meaningful project changes preserve complete recoverable versions within the declared limits while a complete valid 30-stage operator journey remains executable. Repeated unchanged large canonical content must not consume a fresh stored copy for each retained version.",
+      "requiredEvidence": [
+        "Reproduction against 1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "Normative behavioral regression; exact source digest and raw output",
+        "Targeted fault detection and restored successful progression",
+        "Affected file, persistence, recovery, browser and complete workflow verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "production",
+      "startingEvidence": {
+        "runId": 35464029955,
+        "runNumber": 5895,
+        "headSha": "1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "jobId": 105952851977
+      },
+      "dependencyClosure": [
+        "Canonical checkpoints, unchanged views and drafts, prior and active versions",
+        "History byte accounting and unchanged support limits",
+        "Exact-byte decoding, compatible restoration, Undo/Redo and saved History",
+        "Backup export/import including every shared dependency",
+        "Missing/corrupt dependencies, transaction failure, stale revisions and independent sessions",
+        "Complete operator journey, browser recovery and all persistence verifier consumers"
+      ],
+      "authorityTrace": [
+        "Complete browser journey cannot create the next Stage 21 handoff: History limit reached.",
+        "Prompt reservation persists a meaningful canonical revision.",
+        "writeProject prepares a complete checkpoint before its atomic canonical commit.",
+        "prepareHistoryCommit shares equal project digests only; changed revisions encode repeated complete canonical bodies.",
+        "Checkpoint serialization and content custody, restored by readCheckpointBody/decodeCheckpoint and transported by exportPackage/importPackage."
+      ],
+      "verificationNotes": [
+        {
+          "owner": "verifier",
+          "failure": "A local added assertion compared uncompressed unique recovery contents against the disposable compressed-snapshot budget.",
+          "basis": "The diagnostic fixture retained different derived evidence strings for different input versions; the compressed snapshot limit and retained-content limit are distinct existing limits.",
+          "correction": "Check each declared limit separately and retain the progression/exact-restoration oracle against the defective source."
+        },
+        {
+          "owner": "production",
+          "failure": "Affected lifecycle case import:replay-saved-projections-without-fabricating-gates rejected newly prepared retained content before its atomic import commit.",
+          "correction": "Pass the already verified pending recovery byte set into the same prepareHistoryCommit authority; the transaction still commits the full dependency set once."
+        },
+        {
+          "owner": "infrastructure",
+          "failure": "verify-verifier-runtime.mjs could not create its temporary fault fixture because /tmp is absent in this workspace.",
+          "correction": "Set TMPDIR to the existing writable workspace temporary directory for execution. No production or verifier source change."
+        }
+      ],
+      "permanentRegressions": [
+        {
+          "file": "verify-history-canonical-sharing.mjs",
+          "cases": [
+            "HISTORY-CANONICAL-PROGRESSION",
+            "HISTORY-CANONICAL-EXACT-RESTORATION",
+            "HISTORY-CANONICAL-EXPORTED-BYTES",
+            "HISTORY-CANONICAL-MISSING-CONTENT",
+            "HISTORY-CANONICAL-CORRUPT-CONTENT",
+            "HISTORY-CANONICAL-ATOMIC-FAILURE"
+          ]
+        },
+        {
+          "file": "verify-history-project-sharing-faults.mjs",
+          "fault": "duplicate-canonical-content",
+          "expectedFailureOracle": "HISTORY_CANONICAL_CAPACITY_ORACLE"
+        },
+        {
+          "file": "verify-history-project-references.mjs",
+          "case": "HISTORY-REFERENCE-LEGACY-INLINE-BACKUP"
+        },
+        {
+          "file": "verify-backup-json-stream.mjs",
+          "case": "Canonical recovery values use the same bounded decoder without interpreting a value named artifacts as backup transport"
+        },
+        {
+          "file": "verify-project-lifecycle-full.mjs",
+          "case": "import:replay-saved-projections-without-fabricating-gates"
+        }
+      ],
+      "reproductionSourceSha256": "1f4a8c95eb44ddb4ac51e9da6f0050730dd97d58f4bc7e933df7a7c28a231a03",
+      "testedMechanismScope": "Disposable compressed-snapshot budget and synthetic human-input corrections. Does not establish production byte capacity, physical-device acceptance, or complete browser progression."
+    },
+    {
+      "requirementId": "VER-011",
+      "sourceLocation": "Current task sections 4 C, 4 E, 10; specification sections 25 and 34.2",
+      "responsibleProductionCode": {
+        "file": "verify-mobile-stage-action.mjs",
+        "symbol": "fileCustody/paged artifact retrieval/backup byte comparison"
+      },
+      "observableExpectedBehavior": "The browser fixture carries the artifact identity returned by the canonical allocator through Files pagination, individual download and backup restoration, and independently compares every intended artifact byte.",
+      "requiredEvidence": [
+        "Reproduction against 1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "Normative behavioral regression; exact source digest and raw output",
+        "Targeted fault detection and restored successful progression",
+        "Affected file, persistence, recovery, browser and complete workflow verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "runId": 35464029955,
+        "runNumber": 5895,
+        "headSha": "1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "jobId": 105952851977
+      },
+      "dependencyClosure": [
+        "Current canonical identity and error presentation authorities",
+        "Every assertion and downstream byte comparison in the affected browser verifier",
+        "Retest actual production behavior through the existing browser controls"
+      ]
+    },
+    {
+      "requirementId": "VER-012",
+      "sourceLocation": "Current task UX-011, UX-012, UX-020 and sections 4 B, 4 E",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs",
+        "symbol": "inline application failure controls"
+      },
+      "observableExpectedBehavior": "After an invalid control activation, the browser checks the actual visible actionable error after layout settles, its focus and in-page presentation, without tying the result to an obsolete DOM parent.",
+      "requiredEvidence": [
+        "Reproduction against 1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "Normative behavioral regression; exact source digest and raw output",
+        "Targeted fault detection and restored successful progression",
+        "Affected file, persistence, recovery, browser and complete workflow verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "runId": 35464029955,
+        "runNumber": 5895,
+        "headSha": "1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "jobId": 105952851977
+      },
+      "dependencyClosure": [
+        "Current canonical identity and error presentation authorities",
+        "Every assertion and downstream byte comparison in the affected browser verifier",
+        "Retest actual production behavior through the existing browser controls"
+      ]
     }
   ],
   "currentReview": {
-    "sourceCommit": "488175ebb0ddb3d23a7667ae3039e83202691462",
+    "head": "1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+    "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
     "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
-    "reviewBasis": "Source specification read with independent comparison of mandatory source lines to base register, followed by review of current user groups A-F and protocol against base and overlay. No prior PASS inherited.",
-    "literalMandatoryLinesWithoutBaseRow": [],
-    "semanticIndependentActorReviewEstablished": false,
-    "specificationTextChanged": false
+    "specificationBytes": 309472,
+    "baseRows": 4343,
+    "overlayRows": 70,
+    "duplicateBaseIds": [],
+    "uncoveredLiteralMandatoryLines": [],
+    "baseStatuses": {
+      "UNVERIFIED": 4343
+    },
+    "overlayStatuses": {
+      "UNVERIFIED": 70
+    },
+    "independentSemanticReviewEstablished": false,
+    "sourceTextChanged": false,
+    "reviewBasis": "Read controlling source and current task; independently checked literal mandatory-line coverage and reviewed all current user groups and prohibitions. Semantic independent actor review remains unestablished."
   }
 }

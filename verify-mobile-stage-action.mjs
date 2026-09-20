@@ -123,7 +123,7 @@ async function main(){
   // accumulated file set. A whole-file read fails at the actual Blob boundary.
   const fileCustody=await evaluate(cdp,`(async()=>{
     const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,p=closedLoopCore.createBlankState('BROWSER-FILE-PRESSURE'),read=Blob.prototype.arrayBuffer;
-    let largestRead=0;Blob.prototype.arrayBuffer=function(){largestRead=Math.max(largestRead,this.size);if(this.size>65536)throw new Error('WHOLE_FILE_READ:'+this.size);return read.call(this);};
+    let largestRead=0,lastArtifact=null;Blob.prototype.arrayBuffer=function(){largestRead=Math.max(largestRead,this.size);if(this.size>65536)throw new Error('WHOLE_FILE_READ:'+this.size);return read.call(this);};
     try{
       for(let i=0;i<22;i++){
         const id=engine.allocateId(p,'artifacts',{commandId:'BROWSER-FILE-'+i,idempotencyKey:'file'}),bytes=new Uint8Array(i===21?2097153:1024);let seed=917+i;
@@ -131,21 +131,23 @@ async function main(){
         const blob=new Blob([bytes,'FILE-PRESSURE-'+i+'-TAIL'],{type:'text/plain'});
         const row=await store.putArtifact({artifactId:id,jobId:p.job.JOB_ID,blob,filename:id+'.txt',mediaType:'text/plain'});
         engine.registerArtifactBytes(p,{stage:1,artifactId:id,filename:row.filename,mediaType:row.mediaType,byteSize:row.byteSize,sha256:row.sha256});
+        lastArtifact={artifactId:id,sha256:row.sha256,byteSize:row.byteSize};
       }
       p.activeView='Files';await store.writeProject(p);await store.metaPut('selectedProject',p.job.JOB_ID);
       const verified=await store.verifyProjectArtifacts(p.job.JOB_ID);
       const staged=await store.stageResponseFile({jobId:p.job.JOB_ID,stage:4,blob:new Blob(['{"retained":"','z'.repeat(196609),'"}']),rawFilename:'pressure-response.json'});
       await store.removeStagedResponseFile({jobId:p.job.JOB_ID,stagingId:staged.stagingId});
-      return {largestRead,verified:verified.verified,count:verified.artifactCount};
+      return {largestRead,verified:verified.verified,count:verified.artifactCount,lastArtifact};
     }finally{Blob.prototype.arrayBuffer=read;}
   })()`);
   assert(fileCustody.verified&&fileCustody.count===22&&fileCustody.largestRead<=65536,`File custody/staging used unbounded reads: ${JSON.stringify(fileCustody)}`);
   await openStoredFixture(cdp);await waitFor(cdp,`closedLoopAppReady===true`);await click(cdp,'[data-view="Files"]');
   assert(await evaluate(cdp,`document.querySelectorAll('[data-download-artifact]').length===20`),'Files first page must contain exactly 20 download controls.');
   await click(cdp,'[data-detail-offset="20"]');
-  assert(await evaluate(cdp,`document.querySelectorAll('[data-download-artifact]').length===2&&Boolean(document.querySelector('[data-download-artifact="BROWSER-FILE-21"]'))`),'Files last page lost its final artifact.');
+  const lastArtifactSelector='[data-download-artifact="'+fileCustody.lastArtifact.artifactId+'"]';
+  assert(await evaluate(cdp,`document.querySelectorAll('[data-download-artifact]').length===2&&Boolean(document.querySelector(${JSON.stringify(lastArtifactSelector)}))`),'Files last page lost its final artifact.');
   await evaluate(cdp,`(()=>{globalThis.__fileDownloads=[];globalThis.__fileUrl=URL.createObjectURL;globalThis.__fileRead=Blob.prototype.arrayBuffer;globalThis.__largestFileRead=0;URL.createObjectURL=blob=>{__fileDownloads.push(blob);if(blob.type==='application/gzip')globalThis.__fileExportAuthority=Promise.all([closedLoopProjectStore.listArtifacts('BROWSER-FILE-PRESSURE'),closedLoopProjectStore.metaGet('recovery:BROWSER-FILE-PRESSURE')]);return __fileUrl(blob);};Blob.prototype.arrayBuffer=function(){__largestFileRead=Math.max(__largestFileRead,this.size);if(this.size>65536)throw new Error('WHOLE_FILE_READ:'+this.size);return __fileRead.call(this);};})()`);
-  await click(cdp,'[data-download-artifact="BROWSER-FILE-21"]');await waitFor(cdp,`__fileDownloads.length===1`);
+  await click(cdp,lastArtifactSelector);await waitFor(cdp,`__fileDownloads.length===1`);
   await click(cdp,'#project-actions-toggle');const exportStarted=Date.now();await click(cdp,'#export-project',60000);await waitFor(cdp,`__fileDownloads.length===2`,60000);
   const fileExport=await evaluate(cdp,`(async()=>{
     URL.createObjectURL=__fileUrl;const [file,backup]=__fileDownloads,nativeAtob=globalThis.atob;let maxBase64Read=0,restored;
@@ -159,8 +161,8 @@ async function main(){
     const restoredRecovery=await closedLoopProjectStore.metaGet('recovery:BROWSER-FILE-PRESSURE'),restoredById=new Map(restoredRecovery.entries.map(entry=>[entry.id,entry]));
     const historyManifestVerified=closedLoopHash.stableStringify(payload.recovery)===closedLoopHash.stableStringify(savedRecovery);
     const restoredHistoryVerified=savedRecovery.entries.every(entry=>restoredById.get(entry.id)?.sha256===entry.sha256)&&Object.entries(savedRecovery.files).every(([sha256,info])=>restoredRecovery.files[sha256]?.byteSize===info.byteSize);
-    const tail=await file.slice(-21).text(),last=payload.artifacts.find(row=>row.artifactId==='BROWSER-FILE-21');
-    return {largestRead:__largestFileRead,maxBase64Read,restoredFiles:restored.projectData.artifacts.length,count:payload.artifacts.length,expectedCount:expectedMembers.length,memberSetVerified,memberBytes,historyManifestVerified,restoredHistoryVerified,tail,hashVerified:closedLoopHash.sha256Value(body)===packageSha256,lastVerified:last.sha256===await closedLoopHash.sha256Bytes(file),lastTail:atob(last.base64).endsWith('FILE-PRESSURE-21-TAIL')};
+    const expectedLast=${JSON.stringify(fileCustody.lastArtifact)},tail=await file.slice(-21).text(),last=payload.artifacts.find(row=>row.artifactId===expectedLast.artifactId);
+    return {largestRead:__largestFileRead,maxBase64Read,restoredFiles:restored.projectData.artifacts.length,count:payload.artifacts.length,expectedCount:expectedMembers.length,memberSetVerified,memberBytes,historyManifestVerified,restoredHistoryVerified,tail,hashVerified:closedLoopHash.sha256Value(body)===packageSha256,lastVerified:Boolean(last)&&last.sha256===expectedLast.sha256&&file.size===expectedLast.byteSize&&expectedLast.sha256===await closedLoopHash.sha256Bytes(file),lastTail:Boolean(last)&&atob(last.base64).endsWith('FILE-PRESSURE-21-TAIL')};
   })()`);
   assert(fileExport.largestRead<=65536&&fileExport.maxBase64Read<=65536&&fileExport.restoredFiles===fileCustody.count&&fileExport.memberSetVerified&&fileExport.memberBytes.every(row=>row.verified)&&fileExport.historyManifestVerified&&fileExport.restoredHistoryVerified&&fileExport.hashVerified&&fileExport.lastVerified&&fileExport.lastTail&&fileExport.tail.endsWith('FILE-PRESSURE-21-TAIL'),`Paged download/export/restore changed file bytes: ${JSON.stringify(fileExport)}`);
   // The preceding import intentionally exercised the store API directly and advanced

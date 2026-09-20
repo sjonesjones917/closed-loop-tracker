@@ -35,6 +35,12 @@ async function waitForSavedPrompt(cdp){
   await waitExpr(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.dataset?.projectId,stage=Number(document.querySelector('#stage-picker')?.value);if(!id||!stage)return false;const project=await closedLoopProjectStore.readProject(id);return Boolean(project?.projectData.generatedPrompts.some(record=>Number(record.stage)===stage&&!record.invalidatedBy&&record.instructionId&&record.bodySha256&&record.prompt&&record.promptEngineVersion===closedLoopPromptEngine.version&&Number(record.scope?.projectRevision)===Number(project.revision)));})()`);
 }
 async function waitForIdle(cdp){await waitExpr(cdp,`document.querySelector('#app')?.getAttribute('aria-busy')!=='true'`,60000);}
+async function assertInlineError(cdp,message){
+ await waitExpr(cdp,`document.querySelector('#operation-error')?.textContent.includes(${JSON.stringify(message)})`);
+ const result=await evalValue(cdp,`new Promise(resolve=>{let frames=0,stable=0,previous='';const sample=()=>{const node=document.querySelector('#operation-error'),rect=node?.getBoundingClientRect(),geometry=rect?JSON.stringify([rect.top,rect.bottom,rect.left,rect.right,scrollY]):'';stable=geometry&&geometry===previous?stable+1:0;previous=geometry;frames++;if(frames>=4&&stable>=2||frames>=12){const style=node&&getComputedStyle(node);resolve({frames,stable,text:node?.textContent,visible:Boolean(node&&!node.hidden&&style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0),inView:Boolean(rect&&rect.top>=0&&rect.bottom<=innerHeight),focused:document.activeElement===node});}else requestAnimationFrame(sample);};requestAnimationFrame(sample);})`);
+ assert(result.stable>=2&&result.visible&&result.inView&&result.focused&&result.text.includes(message),'Actionable in-page error must remain visible and focused after layout settles: '+JSON.stringify(result));
+ return result;
+}
 async function click(cdp,selector){await waitForIdle(cdp);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled)return false;e.click();return true})()`);assert(ok,`Missing or disabled clickable ${selector}`);await waitForIdle(cdp);}
 async function selectProjectByJobId(cdp,jobId){
  await waitForIdle(cdp);
@@ -344,18 +350,22 @@ async function main(){
   assert(!beforeAuthorExport.projectData.freshContexts.some(r=>r.stage===5),'The fixture must exercise first export without a registered author.');
   const stage05Package=await exportStagePackage(cdp),stage05Transfer={manifest:stage05Package.manifest,instruction:stage05Package.instructionText};
   assert(createHash('sha256').update(stage05Transfer.instruction).digest('hex')===(stage05Transfer.manifest.instruction.bodySha256||stage05Transfer.manifest.instruction.sha256),'Stage 05 package changed manifest/instruction identity.');
-  // Separate non-response controls use the same established inline notice.
+  // Observe the current shared error presentation, including settled layout.
+  const beforeInvalidBlocker=await activeProject(cdp);
   await fill(cdp,'#blocker-reason','');await click(cdp,'#add-blocker');
-  await waitExpr(cdp,`document.querySelector('#next-required-action > .notice')?.textContent.includes('blocker reason is required')`);
+  const blockerError=await assertInlineError(cdp,'A blocker reason is required.');
+  assert((await activeProject(cdp)).projectSha256===beforeInvalidBlocker.projectSha256,'Rejected blocker input changed accepted project data.');
   await click(cdp,'[data-view="Project"]');
   await evalValue(cdp,`document.querySelector('#project-management').open=true`);
+  const beforeInvalidRename=await activeProject(cdp);
   await fill(cdp,'#project-display-name','');await click(cdp,'#rename-project');
-  await waitExpr(cdp,`Array.from(document.querySelectorAll('#screen .notice')).some(n=>n.textContent==='Enter a display name.')`);
+  const renameError=await assertInlineError(cdp,'Enter a display name.');
+  assert((await activeProject(cdp)).projectSha256===beforeInvalidRename.projectSha256,'Rejected project name changed accepted project data.');
   assert(cdp.dialogs.length===0,`Application action still opened a native popup: ${cdp.dialogs.join(' | ')}`);
   const automaticAuthor=await activeProject(cdp),authorContexts=automaticAuthor.projectData.freshContexts.filter(r=>r.stage===5);
   assert(authorContexts.length===1&&authorContexts[0].EXTERNAL_CONTEXT_IDENTIFIER==='UNKNOWN','Export must allocate exactly one internal context without inventing an external chat identity.');
   assert(!automaticAuthor.projectData.history.some(r=>r.type==='FRESH_CONTEXT_REGISTERED'&&r.stage===5),'The app fabricated a human context-registration event.');
-  console.log(JSON.stringify({stage05ExportAutomatic:true,stage05ManifestVerified:true,manualContextControls:0,projectAndStageFailuresInline:true,nativePopups:0}));
+  console.log(JSON.stringify({stage05ExportAutomatic:true,stage05ManifestVerified:true,manualContextControls:0,projectAndStageFailuresInline:true,blockerError,renameError,nativePopups:0}));
 
   console.log('extra:automatic-stage05-review-and-stage06-proof-review');
   const proofResponse=async(stage,content,jobId='JOB-BROWSER-PROOF-PERSISTENCE')=>evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}const {engine,schema}=runtime,p=await closedLoopProjectStore.readProject(${JSON.stringify(jobId)}),pr=p.projectData.generatedPrompts.filter(r=>r.stage===${stage}&&!r.invalidatedBy).at(-1),propId=engine.recordId(engine.recordsForCurrentScope(p,'propositions')[0],'propositions'),reqId=engine.recordId(engine.recordsForCurrentScope(p,'requirements')[0],'requirements');if(!pr)throw new Error('Missing browser proof instruction');return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:${stage},operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[evidence('browser-proof-review')],unresolved:[],warnings:[],attachments:[],...(${content})};})()`);

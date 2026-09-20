@@ -33,6 +33,10 @@ assert.deepEqual(JSON.parse(JSON.stringify(decoded.payload.nested)),fixture.nest
 assert.equal(decoded.payload.artifacts[0].base64,'');
 assert.equal(await decoded.fileContents.get(decoded.payload.artifacts[0]).blob.text(),'AAH+/w==');
 note('Long project text, prototype-named properties, numeric values, escape sequences and spooled artifact spelling match independent JSON decoding');
+const uncompressed=await r.decode(new Blob([encoded]),{compressed:false,spoolArtifacts:false});
+assert.deepEqual(JSON.parse(JSON.stringify(uncompressed.payload)),fixture);
+assert.equal(uncompressed.fileContents.get(uncompressed.payload.artifacts[0]),undefined);
+note('Canonical recovery values use the same bounded decoder without interpreting a value named artifacts as backup transport');
 
 // Put escaped Unicode, quotes and backslashes on both sides of the production
 // 16 KiB string-piece and 64 KiB decoder boundaries. No stage state is injected.

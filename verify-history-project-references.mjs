@@ -110,8 +110,9 @@ emit('HISTORY-REFERENCE-REORDERED-BACKUP-CLOSURE',{exportedBytes:exported.size,e
 // off sharing only, emitting the previous full-project checkpoint encoding.
 const inlineAnchor='const base=state.entries.find(entry=>entry.projectSha256===digest(project)&&!entry.projectReference);';
 assert.equal(source.split(inlineAnchor).length-1,1);
-const legacy=projectStoreRuntime({sourceOverrides:{'project-store.js':source.replace(inlineAnchor,'const base=null;')}}),old=await fixture(legacy,'HISTORY-LEGACY-INLINE');
-for(const id of [old.root,...old.children]){const body=await bodyOf(legacy.rows.get('meta').get(old.key(id)).value);assert.ok(body.project);assert.equal(Object.hasOwn(body,'projectReference'),false);}
+const partsAnchor='const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);';assert.equal(source.split(partsAnchor).length-1,1);
+const legacy=projectStoreRuntime({sourceOverrides:{'project-store.js':source.replace(inlineAnchor,'const base=null;').replace(partsAnchor,'const contents={project:canonical};')}}),old=await fixture(legacy,'HISTORY-LEGACY-INLINE');
+for(const id of [old.root,...old.children]){const body=await bodyOf(legacy.rows.get('meta').get(old.key(id)).value);assert.ok(body.project);assert.equal(Object.hasOwn(body,'projectReference'),false);assert.equal(Object.hasOwn(body,'projectParts'),false);}
 const legacyBytes=await legacy.store.exportPackage(old.p.job.JOB_ID),newReader=make();await newReader.store.importPackage(legacyBytes);
 for(let i=0;i<old.children.length;i++)assert.deepEqual(legacy.copy(await newReader.store.readHistoryView(old.p.job.JOB_ID,old.children[i])),old.views[i]);
 emit('HISTORY-REFERENCE-LEGACY-INLINE-BACKUP',{legacyBytes:legacyBytes.size,legacySha256:sha(Buffer.from(await legacyBytes.arrayBuffer())),legacyEncoding:'Inline project member; sharing suppressed only in the disposable writer.'});
