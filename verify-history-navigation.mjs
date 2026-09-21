@@ -108,7 +108,7 @@ if(selectedCase){
   const verifier=fs.readFileSync('verify-browser-recovery.mjs','utf8'),query=verifier.match(/const retained=await browser\.evaluate\(`([\s\S]*?)`\);assert\.ok\(retained,'RESTORATION_BROWSER_LATEST_DRAFT_ORACLE'\)/)?.[1];
   assert.ok(query,'The browser retained-draft query is unavailable');
   const testedQuery=selectedFault==='browser-draft-selector'?query.replace('view?.drafts?.[${JSON.stringify(titleDraftSelector)}]',`view?.drafts?.['[data-job="JOB_TITLE"]']`):query;
-  const expression=vm.runInNewContext('`'+testedQuery+'`',{jobId,latestDraft,titleDraftSelector});
+  Object.assign(runtime,{jobId,latestDraft,titleDraftSelector});const expression=vm.runInContext('`'+testedQuery+'`',runtime);
   const retained=await vm.runInContext(expression,runtime);actual={retained:retained||null,titleDraftSelector,latestDraft};passed=retained?.view?.drafts?.[titleDraftSelector]?.value===latestDraft;
  }else if(selectedCase==='RESTORATION-FAILED-DESTINATION-PRESERVATION'){
   expected='After failed native restoration, edits remain durably bound to the still-displayed version; the rejected destination entry and its retained view stay intact.';

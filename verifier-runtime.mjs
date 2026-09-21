@@ -50,7 +50,10 @@ export function createVerifierRuntime(seed={},options){
   installMissing(context.navigator.storage,'estimate',async()=>({usage:0,quota:Number.MAX_SAFE_INTEGER}));
   if(typeof context.requestAnimationFrame!=='function')context.requestAnimationFrame=callback=>context.setTimeout(()=>callback(context.performance?.now?.()??Date.now()),0);
   if(typeof context.cancelAnimationFrame!=='function')context.cancelAnimationFrame=id=>context.clearTimeout(id);
-  const hasStructuredCloneOverride=Object.prototype.hasOwnProperty.call(context,'structuredClone')&&context.structuredClone!==undefined;
+  // A host builtin passed into a VM returns host-prototype objects. Treat it
+  // like the default and install the realm-local implementation below; keep
+  // deliberate custom overrides and the real host builtin unchanged.
+  const hasStructuredCloneOverride=Object.prototype.hasOwnProperty.call(context,'structuredClone')&&context.structuredClone!==undefined&&(context===globalThis||context.structuredClone!==globalThis.structuredClone);
   const created=context===globalThis?context:vm.createContext(context,options);
   if(!hasStructuredCloneOverride){
     created.structuredClone=evaluateScript(created,`(()=>{

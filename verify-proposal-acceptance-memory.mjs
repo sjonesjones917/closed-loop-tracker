@@ -5,15 +5,32 @@ import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal,evidence} from './test-fixtures.mjs';
 
+const intakeFault=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8)||null;
+if(intakeFault)assert.ok(['raw-json-copy','validation-json-copy'].includes(intakeFault),'Unknown intake allocation fault');
+
 // Run in a bounded heap so another whole-project JSON round trip cannot hide
 // behind the much larger memory allowance of a developer workstation.
 if(!process.argv.includes('--bounded-heap')){
-  const result=spawnSync(process.execPath,['--max-old-space-size=512','--expose-gc',import.meta.filename,'--bounded-heap'],{encoding:'utf8',timeout:120000});
+  const result=spawnSync(process.execPath,['--max-old-space-size=512','--expose-gc',import.meta.filename,'--bounded-heap',...(intakeFault?['--fault='+intakeFault]:[])],{encoding:'utf8',timeout:120000});
   assert.equal(result.status,0,`Large proposal acceptance failed:\n${result.stdout}\n${result.stderr}`);
   process.stdout.write(result.stdout);
+  if(!intakeFault)for(const fault of ['raw-json-copy','validation-json-copy']){
+    const broken=spawnSync(process.execPath,['--max-old-space-size=512','--expose-gc',import.meta.filename,'--bounded-heap','--fault='+fault],{encoding:'utf8',timeout:120000});
+    assert.notEqual(broken.status,0,'Intake allocation fault went undetected: '+fault);
+    assert.match(broken.stderr,/INTAKE_HISTORY_ALLOCATION_ORACLE/,'The intake fault failed for an unrelated reason');
+    console.log(JSON.stringify({caseId:'INTAKE-PRESERVED-HISTORY-BOUNDARY',fault,result:'DETECTED',sourceMutation:false,command:['node','--max-old-space-size=512','--expose-gc','verify-proposal-acceptance-memory.mjs','--bounded-heap','--fault='+fault],exitCode:broken.status,stdout:broken.stdout,stderr:broken.stderr}));
+  }
 }else{
   globalThis.dispatchEvent=()=>true;
-  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
+    let source=fs.readFileSync(file,'utf8');
+    if(file==='response-ingestion.js'&&intakeFault){
+      const owner=intakeFault==='raw-json-copy'?'captureRaw':'prepareCaptured',start=source.indexOf('function '+owner+'('),end=source.indexOf('\nfunction ',start+1),body=source.slice(start,end),before="const next=typeof structuredClone==='function'?structuredClone(project):clone(project);";
+      assert.equal(body.split(before).length-1,1,'The intake fault must resolve to exactly one owning copy boundary');
+      source=source.slice(0,start)+body.replace(before,'const next=clone(project);')+source.slice(end);
+    }
+    createVerifierRuntime.loadScript(globalThis,source,{filename:file});
+  }
   const core=closedLoopCore,schema=closedLoopWorkflowSchema,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
   const runtime={core,schema,engine,prompts,ingestion};
   let project=stage04AcceptanceFixture(runtime,'JOB-LARGE-STAGE5-REGRESSION');
@@ -40,6 +57,38 @@ if(!process.argv.includes('--bounded-heap')){
   globalThis.gc();
   const proposalId=project.projectData.responseProposals.at(-1).proposalId;
   const before=hash.sha256Value(project);
+  // Raw-first intake must leave the complete retained project untouched without
+  // allocating an encoded copy of that entire history just to copy its objects.
+  // This is the same bounded-heap workload as acceptance, including exact tails.
+  const intakePrompt=project.projectData.generatedPrompts.at(-1);
+  const intakeText='{"deliberatelyIncomplete":"unaccepted intake pressure"}';
+  const nativeStringify=JSON.stringify;
+  let projectRoundTrips=0,admitted=null,checked=null,admissionMs,validationMs;
+  JSON.stringify=function(value,...args){
+    if(value?.job?.JOB_ID===project.job.JOB_ID&&value?.projectData?.rawResponses?.length>=history.length){projectRoundTrips++;throw new Error('INTAKE_HISTORY_ALLOCATION_ORACLE: admission or validation attempted to encode the complete retained project');}
+    return nativeStringify.call(JSON,value,...args);
+  };
+  try{
+    const intakeStart=performance.now();
+    admitted=ingestion.captureRaw(project,{stage:5,text:intakeText,promptRecord:intakePrompt});
+    admissionMs=performance.now()-intakeStart;
+    const validationStart=performance.now();
+    checked=ingestion.prepareCaptured(admitted.project,{rawResponseId:admitted.rawRecord.rawResponseId});
+    validationMs=performance.now()-validationStart;
+  }finally{JSON.stringify=nativeStringify;}
+  assert.equal(projectRoundTrips,0,'INTAKE_HISTORY_ALLOCATION_ORACLE: raw admission or validation encoded the whole retained project');
+  assert(admissionMs<60000&&validationMs<60000,'INTAKE_HISTORY_DEADLINE_ORACLE: intake did not terminate within the supported bound');
+  assert.equal(checked.validation.valid,false,'INTAKE_HISTORY_REJECTION_ORACLE: the deliberate invalid response was accepted');
+  assert.equal(checked.rawRecord.completeRawResponse,intakeText);
+  assert.equal(hash.sha256Value(project),before,'INTAKE_HISTORY_ISOLATION_ORACLE: intake changed its source project');
+  assert.deepEqual(checked.project.projectData.rawResponses.slice(-121,-1),history,'INTAKE_HISTORY_BYTES_ORACLE: intake changed retained response bytes');
+  checked.project.job.JOB_TITLE='Uncommitted intake candidate';
+  checked.project.projectData.rawResponses.at(-2).completeRawResponse='Uncommitted historical mutation';
+  assert.equal(hash.sha256Value(project),before,'INTAKE_HISTORY_ISOLATION_ORACLE: the candidate shares mutable retained objects with its source');
+  assert.notEqual(admitted.project.projectData.rawResponses.at(-2).completeRawResponse,'Uncommitted historical mutation','INTAKE_HISTORY_ISOLATION_ORACLE: validation shares mutable history with its source');
+  console.log(JSON.stringify({caseId:'INTAKE-PRESERVED-HISTORY-BOUNDARY',result:'PASS',synthetic:true,actualBrowser:false,heapLimitMiB:512,historyRecords:history.length,historyCharacters:history.reduce((total,row)=>total+row.completeRawResponse.length,0),projectRoundTrips,admissionMs,validationMs,deadlineMs:60000}));
+  admitted=null;checked=null;globalThis.gc();
+
   const start=performance.now();
   let result=ingestion.commit(project,proposalId);
   assert.equal(result.project.projectData.responseProposals.at(-1).status,'ACCEPTED');

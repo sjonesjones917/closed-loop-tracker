@@ -41,8 +41,17 @@ assert.equal(context.closedLoopHash.sha256Value(createVerifierRuntime.loadScript
 assert.equal(createVerifierRuntime.loadScript(context,'Object.getPrototypeOf(structuredClone({scope:{projectRevision:1}}))===Object.prototype'),true,'VERIFIER_RUNTIME_STRUCTURED_CLONE_REALM_ORACLE');
 assert.match(createVerifierRuntime.loadScript(context,"closedLoopHash.sha256Value(structuredClone({scope:{projectRevision:1}}))"),/^[0-9a-f]{64}$/,'VERIFIER_RUNTIME_STRUCTURED_CLONE_CANONICAL_HASH_ORACLE');
 
+// A VM consumer may explicitly pass Node's native builtin. Its results must
+// still belong to the application's realm, exactly as browser-local clones do.
+const nativeArgument=createVerifierRuntime({structuredClone:globalThis.structuredClone});
+assert.equal(createVerifierRuntime.loadScript(nativeArgument,'Object.getPrototypeOf(structuredClone({scope:{projectRevision:1}}))===Object.prototype'),true,'VERIFIER_RUNTIME_NATIVE_CLONE_ARGUMENT_ORACLE');
+assert.match(createVerifierRuntime.loadScript(nativeArgument,'closedLoopHash.sha256Value(structuredClone({scope:{projectRevision:1}}))'),/^[0-9a-f]{64}$/,'VERIFIER_RUNTIME_NATIVE_CLONE_ARGUMENT_HASH_ORACLE');
+const cloneOverride=value=>({deliberateOverride:value});
+assert.equal(createVerifierRuntime({structuredClone:cloneOverride}).structuredClone,cloneOverride,'VERIFIER_RUNTIME_CUSTOM_CLONE_OVERRIDE_ORACLE');
+const nativeHostClone=globalThis.structuredClone;
 const host=createVerifierRuntime(globalThis);
 assert.equal(host,globalThis,'VERIFIER_HOST_IDENTITY_ORACLE');
+assert.equal(host.structuredClone,nativeHostClone,'VERIFIER_HOST_NATIVE_CLONE_IDENTITY_ORACLE');
 assert.equal(Object.getPrototypeOf(createVerifierRuntime.loadScript(host,'({value:1})')),Object.prototype,'VERIFIER_HOST_REALM_ORACLE');
 createVerifierRuntime.loadScript(host,hashSource,{filename:'hash.js'});
 assert.match(host.closedLoopHash.sha256Value(structuredClone({scope:{projectRevision:1}})),/^[0-9a-f]{64}$/,'VERIFIER_HOST_CANONICAL_HASH_ORACLE');
@@ -58,6 +67,7 @@ const faults=[];
 if(!process.argv.includes('--fault-probe')){
  const original=fs.readFileSync('verifier-runtime.mjs','utf8'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-runtime-faults-'));
  const mutations=[
+  {name:'honored-foreign-native-override',before:"&&(context===globalThis||context.structuredClone!==globalThis.structuredClone)",after:'',oracle:'VERIFIER_RUNTIME_NATIVE_CLONE_ARGUMENT_ORACLE'},
   {name:'missing-animation-frame',before:original.split('\n').find(line=>line.includes("context.requestAnimationFrame=callback=>")),after:'',oracle:'VERIFIER_RUNTIME_ANIMATION_REQUESTANIMATIONFRAME_ORACLE'},
   {name:'foreign-structured-clone',before:'  return created;',after:'  if(created!==globalThis)created.structuredClone=globalThis.structuredClone;\n  return created;',oracle:'VERIFIER_RUNTIME_STRUCTURED_CLONE_REALM_ORACLE'},
   {name:'foreign-host-evaluation',before:'context===globalThis?vm.runInThisContext(source,options)',after:'context===globalThis?vm.runInNewContext(source,{...context,TextEncoder:context.TextEncoder},options)',oracle:'VERIFIER_HOST_REALM_ORACLE'},
