@@ -22,6 +22,7 @@ async function verifyPendingRestoration({failCheckpoint=false}={}){
  const firstEntry=await position(),firstState=await browser.evaluate('structuredClone(history.state)');
  await browser.click('[data-view="Project"]');await browser.fill('[data-job="JOB_TITLE"]',prefix+' — second');await browser.click('#save-job');await browser.click('[data-view="Project"]');
  const before=await browser.readProject(),jobId=before.job.JOB_ID,latestDraft=prefix+' — latest uncommitted draft';let traversal;
+ const titleDraftSelector=await browser.evaluate(`'#'+CSS.escape(document.querySelector('[data-job="JOB_TITLE"]').id)`);
  // Leaving a browser entry is allowed to replace that same entry with its final
  // durable checkpoint/view. Re-read the recorded destination after departure
  // instead of comparing Back navigation with the earlier, pre-departure state.
@@ -48,13 +49,13 @@ async function verifyPendingRestoration({failCheckpoint=false}={}){
   await browser.evaluate('delete globalThis.__closedLoopStorageFault');
   const repairedDraft=latestDraft+' — retained after retry';await browser.fill('[data-job="JOB_TITLE"]',repairedDraft);
   // A normal export waits for the operator-owned departure capture and verifies actual downloaded backup bytes.
-  const backup=await state(),retained=await browser.evaluate(`(async()=>{const store=closedLoopProjectStore,history=await store.historyList(${JSON.stringify(jobId)});for(const entry of history.entries.slice().reverse()){const view=await store.readHistoryView(${JSON.stringify(jobId)},entry.id);if(view?.drafts?.['[data-job="JOB_TITLE"]']?.value===${JSON.stringify(repairedDraft)})return {checkpointId:entry.id,view};}return null;})()`);
+  const backup=await state(),retained=await browser.evaluate(`(async()=>{const store=closedLoopProjectStore,history=await store.historyList(${JSON.stringify(jobId)});for(const entry of history.entries.slice().reverse()){const view=await store.readHistoryView(${JSON.stringify(jobId)},entry.id);if(view?.drafts?.[${JSON.stringify(titleDraftSelector)}]?.value===${JSON.stringify(repairedDraft)})return {checkpointId:entry.id,view};}return null;})()`);
   assert.ok(retained,'RESTORATION_BROWSER_RETRY_DRAFT_ORACLE');assert.deepEqual(await browser.evaluate('structuredClone(history.state)'),recordedFirstState,'RESTORATION_BROWSER_FAILED_ENTRY_ORACLE');
   await browser.fill('#history-version',recordedFirstCheckpoint);await browser.click('#history-restore');assert.equal((await browser.readProject()).job.JOB_TITLE,prefix+' — first');
   result={retainedCheckpoint:retained.checkpointId,backupSha256:digest(backup.file.bytes)};
  }else{
   assert.equal((await browser.readProject()).job.JOB_TITLE,prefix+' — first');assert.equal(finished.latency.outcome,'COMPLETED');
-  const retained=await browser.evaluate(`(async()=>{const store=closedLoopProjectStore,history=await store.historyList(${JSON.stringify(jobId)});for(const entry of history.entries.slice().reverse()){const view=await store.readHistoryView(${JSON.stringify(jobId)},entry.id);if(view?.drafts?.['[data-job="JOB_TITLE"]']?.value===${JSON.stringify(latestDraft)})return {checkpointId:entry.id,view};}return null;})()`);assert.ok(retained,'RESTORATION_BROWSER_LATEST_DRAFT_ORACLE');
+  const retained=await browser.evaluate(`(async()=>{const store=closedLoopProjectStore,history=await store.historyList(${JSON.stringify(jobId)});for(const entry of history.entries.slice().reverse()){const view=await store.readHistoryView(${JSON.stringify(jobId)},entry.id);if(view?.drafts?.[${JSON.stringify(titleDraftSelector)}]?.value===${JSON.stringify(latestDraft)})return {checkpointId:entry.id,view};}return null;})()`);assert.ok(retained,'RESTORATION_BROWSER_LATEST_DRAFT_ORACLE');
   await browser.fill('#history-version',retained.checkpointId);await browser.click('#history-restore');assert.equal(await browser.evaluate(`document.querySelector('[data-job="JOB_TITLE"]').value`),latestDraft);await browser.reload();assert.equal(await browser.evaluate(`document.querySelector('[data-job="JOB_TITLE"]').value`),latestDraft);
   const exported=await state();await browser.selectFiles('#import-file',[{filename:'retained-draft.closed-loop.json.gz',bytes:exported.file.bytes}]);await browser.fill('#history-version',retained.checkpointId);await browser.click('#history-restore');assert.equal(await browser.evaluate(`document.querySelector('[data-job="JOB_TITLE"]').value`),latestDraft);assert.equal((await browser.readProject()).job.JOB_TITLE,before.job.JOB_TITLE);
   result={retainedCheckpoint:retained.checkpointId,backupSha256:digest(exported.file.bytes)};
