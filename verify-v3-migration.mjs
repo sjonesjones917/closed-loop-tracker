@@ -2,12 +2,24 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+
+const fault=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8)||null;
+assert.ok(!fault||['foreign-observation','lost-extension','rewritten-raw-response'].includes(fault),'Unknown migration fault');
 
 class Event { constructor(type){ this.type=type; } }
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,structuredClone,Uint8Array,ArrayBuffer,Date,Math,JSON,Set,Map,Event,dispatchEvent:()=>true};context.globalThis=context;
 createVerifierRuntime(context);
-for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),context,{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js']){
+  let source=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
+  if(file==='workflow-schema.js'&&['lost-extension','rewritten-raw-response'].includes(fault)){
+    const anchor='  migrated=ensureV3Defaults(migrated);';
+    assert.equal(source.split(anchor).length-1,1,'Migration fault must target exactly one production boundary');
+    source=source.replace(anchor,anchor+(fault==='lost-extension'?'\n  delete migrated.unknownTopLevelExtension;':"\n  migrated.projectData.rawResponses[0].rawText='rewritten historical response';"));
+  }
+  vm.runInContext(source,context,{filename:file});
+}
 const schema=context.closedLoopWorkflowSchema;
 assert.ok(schema,'schema must load');
 assert.equal(schema.PROJECT_SCHEMA||schema.PROJECT_SCHEMA_ID,'closed-loop-project/3');
@@ -28,18 +40,22 @@ const previous={
   }
 };
 const original=structuredClone(previous);
-const migrated=schema.migrateProjectToCurrent(previous);
+// The production migration executes in its browser-like VM realm. Observe its
+// result in the assertion realm without JSON normalization or loss of undefined
+// properties. Cross-realm prototypes are not part of the persisted data contract.
+const migrationResult=schema.migrateProjectToCurrent(previous);
+const migrated=fault==='foreign-observation'?migrationResult:structuredClone(migrationResult);
 assert.equal(migrated.schema,'closed-loop-project/3');
 assert.equal(migrated.workflow,'mobile-closed-loop/30');
 assert.equal(Object.keys(migrated.stages).length,30,'migration must preserve exactly 30 stages');
-assert.deepEqual(migrated.unknownTopLevelExtension,{preserve:'exactly'});
+assert.deepEqual(migrated.unknownTopLevelExtension,{preserve:'exactly'},'MIGRATION_EXTENSION_PRESERVATION_ORACLE');
 assert.deepEqual(migrated.projectData.unknownProjectDataExtension,{preserve:42});
 assert.deepEqual(migrated.stages[7].unknownStageExtension,{preserve:true});
 assert.deepEqual(migrated.projectData.collections.tests[0].unknownRecordExtension,{keep:true});
 assert.equal(migrated.projectData.collections.tests[0].fields.EXECUTABLE_KIND,'TEST_IR');
 assert.equal(migrated.projectData.collections.tests[0].fields.EXECUTABLE_SPEC_VERSION,'closed-loop-test-spec/1');
 assert.equal(migrated.projectData.rawResponses[0].envelope.schema,'closed-loop-stage-response/2','old responses remain historical bytes/data');
-assert.equal(migrated.projectData.rawResponses[0].rawText,original.projectData.rawResponses[0].rawText,'raw response text must remain exact');
+assert.equal(migrated.projectData.rawResponses[0].rawText,original.projectData.rawResponses[0].rawText,'MIGRATION_RAW_RESPONSE_BYTES_ORACLE: raw response text must remain exact');
 assert.ok(Array.isArray(migrated.projectData.nonOperationalImportedPayloads));
 const audit=migrated.projectData.nonOperationalImportedPayloads.at(-1);
 assert.equal(audit.operational,false);
@@ -67,4 +83,12 @@ assert.equal(second.projectData.nonOperationalImportedPayloads.length,migrated.p
 
 const profileless=context.closedLoopCore.createBlankState('JOB-PREPROFILE');delete profileless.job.CONTRACT_PROFILE_ID;profileless.stages[1].status='COMPLETE';profileless.stages[1].agentData={INPUT_SET_CONTENTS:'must not gate'};const guarded=schema.migrateProjectToCurrent(profileless);assert.equal(schema.validateContractProfile(guarded).valid,false);assert.equal(guarded.job.CURRENT_STATE,'BLOCKED');assert.equal(guarded.stages[1].status,'NOT STARTED');assert.equal(String(guarded.stages[1].agentData.INPUT_SET_CONTENTS||''),'');assert.ok(guarded.projectData.nonOperationalImportedPayloads.some(x=>x.sourceSchema==='closed-loop-project/3'&&x.operational===false));
 
-console.log(JSON.stringify({verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,idempotent:true,legacyStage01SemanticFabricationRejected:true,currentV3NoSilentHeal:true}));
+const faults=[];
+if(!fault)for(const [injected,oracle] of [['foreign-observation','MIGRATION_EXTENSION_PRESERVATION_ORACLE'],['lost-extension','MIGRATION_EXTENSION_PRESERVATION_ORACLE'],['rewritten-raw-response','MIGRATION_RAW_RESPONSE_BYTES_ORACLE']]){
+  const run=spawnSync(process.execPath,[import.meta.filename,'--fault='+injected],{encoding:'utf8',timeout:60000,killSignal:'SIGKILL',maxBuffer:1024*1024});
+  assert.equal(run.error,undefined,'Migration fault gate timed out or could not execute');
+  assert.notEqual(run.status,0,'Undetected migration fault: '+injected);
+  assert.ok(run.stderr.includes(oracle),'Migration fault failed for an unrelated reason: '+run.stderr);
+  faults.push({fault:injected,oracle,result:'DETECTED',exitCode:run.status,stdout:run.stdout,stderr:run.stderr});
+}
+console.log(JSON.stringify({faults,verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,idempotent:true,legacyStage01SemanticFabricationRejected:true,currentV3NoSilentHeal:true}));
