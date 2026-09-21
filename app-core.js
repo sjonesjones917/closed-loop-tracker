@@ -978,7 +978,7 @@ async function importProjectPackageFile(file,{recordSelection=true,mobileSelecte
       await loadAcceptanceSession();await recordMobileBackupRestore(mobileSelected);await refreshProjectStorage();const savedView=await projectStore.readHistoryView?.(current.job.JOB_ID);selectSavedView(savedView);announce('project package imported and reloaded');await recordCommittedBoundary();render();applySavedView(savedView);
     }catch(error){
       try{render();}catch{}
-      reportActionFailure(`Project package imported and saved, but the view could not refresh: ${error.message||error}. Reload the application to refresh the saved project.`);
+      reportActionFailure(new Error(`Project package imported and saved, but the view could not refresh: ${error.message||error}. Reload the application to refresh the saved project.`));
     }
   };
   await attempt();
