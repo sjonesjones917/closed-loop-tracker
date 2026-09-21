@@ -121,4 +121,35 @@ await check('IO-STARTUP-RELOAD','Recovery reload remains available after failure
 await check('IO-STARTUP-MODULES','If a deferred runtime script never arrives, the startup view becomes an actionable failure by its declared module deadline.',async()=>{const e=environment();await e.advance(30000);const observed=e.observed();assert(observed.error,'IO_MODULE_DEADLINE_ORACLE');assert.equal(observed.appBusy,null);assert.equal(observed.recoveryVisible,true);assert.equal(observed.ready,false);return observed;});
 await check('IO-STARTUP-LATE-MODULE','A runtime arriving after module startup failed cannot later activate saved work behind the failure message.',async()=>{const e=environment();await e.advance(30000);e.run();await flush();const observed=e.observed();assert.equal(observed.loadCalls,0,'IO_LATE_MODULE_ORACLE');assert.equal(observed.ready,false);assert.equal(observed.recoveryVisible,true);return observed;});
 await check('IO-STARTUP-CORE','An app script with an unavailable prerequisite stops waiting and ignores a late ready event until reload.',async()=>{const e=environment({core:false});e.run();await e.advance(30000);const before=e.observed();assert(before.error,'IO_CORE_DEADLINE_ORACLE');await e.emit('closed-loop-core-ready');await flush();assert.equal(e.observed().loadCalls,0);assert.equal(e.observed().ready,false);return {before,after:e.observed()};});
+// The named Chromium hangs must terminate at the gate's budget, not at a
+// slower CDP request deadline. These are pending platform reads, not product
+// failures. The outer watchdog observes a missing timeout without hanging CI.
+async function boundedObservation(operation){
+ let timer;
+ try{return await Promise.race([operation.then(value=>({outcome:'PASS',value}),error=>({outcome:error.code==='VERIFIER_TIMEOUT'?'TIMEOUT':'FAIL',code:error.code,message:error.message})),new Promise(resolve=>{timer=setTimeout(()=>resolve({outcome:'UNSETTLED'}),100);})]);}
+ finally{clearTimeout(timer);}
+}
+await check('VERIFIER-BOUNDED-READ','A pending browser observation terminates as TIMEOUT at its declared gate budget; a late answer cannot turn it into success or start another read.',async()=>{
+ let release,reads=0;const pending=new Promise(resolve=>{release=resolve;});
+ const readiness=readinessFactory({},async()=>{reads++;return pending;},{timeout:20});
+ const outcome=await boundedObservation(readiness.idle());release(true);await flush();
+ assert.equal(outcome.outcome,'TIMEOUT','VERIFIER_GATE_DEADLINE_ORACLE: a non-resolving browser read escaped its gate deadline');
+ assert.equal(reads,1,'VERIFIER_GATE_DEADLINE_ORACLE: the expired gate issued another observation');
+ assert.equal(await readinessFactory({},async()=>true,{timeout:20}).idle(),true,'A corrected observation must still progress');
+ return {outcome,reads,disposableBudgetMs:20,outerWatchdogMs:100,lateAnswerIgnored:true,correctedObservation:'PASS'};
+});
+await check('VERIFIER-BOUNDED-NAVIGATION','A pending destination lookup or navigation command terminates as TIMEOUT; a late lookup cannot issue a navigation after the gate has ended.',async()=>{
+ const observations=[];
+ for(const heldMethod of ['Page.getFrameTree','Page.navigate','Page.navigateToHistoryEntry']){
+  let release;const pending=new Promise(resolve=>{release=resolve;}),calls=[];
+  const cdp={async send(method){calls.push(method);if(method===heldMethod)return pending;return {frameTree:{frame:{loaderId:'previous'}}};}};
+  const readiness=readinessFactory(cdp,async()=>true,{timeout:20});
+  const operation=heldMethod==='Page.navigateToHistoryEntry'?readiness.restoreEntry(7):readiness.navigate('Page.navigate',{url:'https://fixture.invalid/'});
+  const outcome=await boundedObservation(operation),callsAtTimeout=[...calls];release({frameTree:{frame:{loaderId:'previous'}},loaderId:'destination'});await flush();
+  assert.equal(outcome.outcome,'TIMEOUT','VERIFIER_NAVIGATION_DEADLINE_ORACLE: '+heldMethod+' escaped its gate deadline');
+  assert.deepEqual(calls,callsAtTimeout,'VERIFIER_NAVIGATION_DEADLINE_ORACLE: a late answer started further navigation work');
+  observations.push({heldMethod,outcome,calls,disposableBudgetMs:20,outerWatchdogMs:100});
+ }
+ return observations;
+});
 if(!cases.length)throw new Error('No selected startup cases');console.log(JSON.stringify({schema:'closed-loop-startup-deadlines/1',syntheticDom:true,controlledLoadBoundary:true,physicalBrowser:false,appSha256:crypto.createHash('sha256').update(appSource).digest('hex'),htmlSha256:crypto.createHash('sha256').update(html).digest('hex'),cases},null,2));if(cases.some(x=>x.status!=='PASS'))process.exitCode=1;

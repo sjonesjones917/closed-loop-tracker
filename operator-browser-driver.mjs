@@ -8,23 +8,54 @@ import assert from 'node:assert/strict';
 
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
-async function until(read,description,timeout=90000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{const value=await read();if(value)return value;}catch(error){last=error;}await delay(80);}throw new Error(`${description}${last?`: ${last.message}`:''}`);}
+// The gate owns its deadline even when the browser transport never answers.
+// Observe late rejection, stop follow-up work, and release timer ownership on
+// every terminal path. A request-level timeout may be longer than this gate.
+async function verifierDeadline(work,description,timeout){
+  if(!Number.isFinite(timeout)||timeout<=0)throw new RangeError('A verifier deadline must be a positive finite duration.');
+  let timer,active=true;
+  const error=Object.assign(new Error(`${description}: verifier timed out after ${timeout} ms`),{code:'VERIFIER_TIMEOUT',timeoutMs:timeout});
+  const requireActive=()=>{if(!active)throw error;};
+  const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{active=false;reject(error);},timeout);});
+  try{return await Promise.race([Promise.resolve().then(()=>work(requireActive)),deadline]);}
+  finally{active=false;clearTimeout(timer);}
+}
+async function until(read,description,timeout=90000){
+  let last,retryTimer;
+  try{return await verifierDeadline(async requireActive=>{
+    while(true){
+      requireActive();
+      try{const value=await read();requireActive();if(value)return value;}
+      catch(error){requireActive();last=error;}
+      await new Promise(resolve=>{retryTimer=setTimeout(resolve,80);});
+    }
+  },description,timeout);}
+  catch(error){if(error.code==='VERIFIER_TIMEOUT'&&last)error.cause=last;throw error;}
+  finally{clearTimeout(retryTimer);}
+}
 // Every browser consumer uses the same document and interaction boundary.
 // CDP can acknowledge navigation while the previous document is still ready.
 export function createBrowserReadiness(cdp,evaluate,{timeout=90000,wait=until}={}){
   const interactive=`globalThis.closedLoopAppReady===true&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true'`;
   async function idle({allowStartupFailure=false}={}){return wait(()=>evaluate(allowStartupFailure?`(${interactive})||Boolean(globalThis.closedLoopAppError)`:interactive),'The application did not become interactive',timeout);}
   async function navigate(method,params={},options={}){
+    return verifierDeadline(async requireActive=>{
     const previous=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;
+    requireActive();
     const result=await cdp.send(method,params);
+    requireActive();
     if(result.errorText)throw new Error(result.errorText);
-    await wait(async()=>{const destination=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;return Boolean(destination&&destination!==previous&&(!result.loaderId||destination===result.loaderId));},'The destination document did not arrive',timeout);
-    await idle(options);
+    await wait(async()=>{requireActive();const destination=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;requireActive();return Boolean(destination&&destination!==previous&&(!result.loaderId||destination===result.loaderId));},'The destination document did not arrive',timeout);
+    requireActive();await idle(options);
+    },'The destination navigation did not complete',timeout);
   }
   async function restoreEntry(entryId){
+    return verifierDeadline(async requireActive=>{
     await cdp.send('Page.navigateToHistoryEntry',{entryId});
-    await wait(async()=>{const state=await cdp.send('Page.getNavigationHistory');return state.entries[state.currentIndex]?.id===entryId;},'The destination history entry did not arrive',timeout);
-    await idle();
+    requireActive();
+    await wait(async()=>{requireActive();const state=await cdp.send('Page.getNavigationHistory');requireActive();return state.entries[state.currentIndex]?.id===entryId;},'The destination history entry did not arrive',timeout);
+    requireActive();await idle();
+    },'The destination history traversal did not complete',timeout);
   }
   return {idle,navigate,restoreEntry};
 }
