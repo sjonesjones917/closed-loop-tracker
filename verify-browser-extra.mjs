@@ -92,6 +92,31 @@ async function selectReturnedSlot(cdp,slotId,content){
 // project link; a reload of a saved-version URL must restore that saved version.
 async function navigateAndWait(cdp,method,params={},options={}){await createBrowserReadiness(cdp,expression=>evalValue(cdp,expression),{timeout:60000}).navigate(method,params,options);}
 async function openStoredFixture(cdp){const url=await evalValue(cdp,`(async()=>{const url=new URL(location.href);url.searchParams.delete('version');url.searchParams.delete('stage');url.searchParams.set('project',await closedLoopProjectStore.metaGet('selectedProject'));return url.href;})()`);await navigateAndWait(cdp,'Page.navigate',{url});}
+// Observe the real storage-worker response rather than replacing frozen store
+// methods. Only its matching committed import may arm the following view-read fault.
+function installPostImportRefreshFault(jobId){
+ const nativePost=Worker.prototype.postMessage,nativeGet=IDBObjectStore.prototype.get;
+ const observation={importCommitted:false,injected:false},listeners=[];
+ Worker.prototype.postMessage=function(message,...rest){
+  if(message?.method==='IMPORT_PACKAGE'&&message.operationId){
+   const operationId=message.operationId,buildIdentity=message.buildIdentity;
+   const listener=event=>{
+    const result=event.data;
+    if(result?.operationId!==operationId||result.buildIdentity!==buildIdentity||result.ok!==true||result.project?.job?.JOB_ID!==jobId)return;
+    observation.importCommitted=true;
+   };
+   this.addEventListener('message',listener);listeners.push([this,listener]);
+  }
+  return nativePost.call(this,message,...rest);
+ };
+ IDBObjectStore.prototype.get=function(key,...rest){
+  if(observation.importCommitted&&!observation.injected&&this.name==='meta'&&key==='recovery:'+jobId){
+   observation.injected=true;throw new Error('CONTROLLED_POST_IMPORT_REFRESH_FAILURE');
+  }
+  return nativeGet.call(this,key,...rest);
+ };
+ return {observation,restore(){Worker.prototype.postMessage=nativePost;IDBObjectStore.prototype.get=nativeGet;for(const [worker,listener]of listeners)worker.removeEventListener('message',listener);}};
+}
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
   const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
@@ -472,11 +497,11 @@ async function main(){
   console.log('extra:complete-backup-custody-and-import-commit-boundary');
   const packageCustodyProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine;let p=closedLoopCore.createBlankState('BACKUP-BROWSER-CLOSURE');const fixtureId=engine.allocateId(p,'artifacts',{commandId:'BACKUP-BROWSER-FILE',idempotencyKey:'file'}),row=await store.putArtifact({artifactId:fixtureId,jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['exact required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});p=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true});globalThis.__completeBackup=await store.exportPackage(p.job.JOB_ID);const checkpoint=await store.metaGet('lastVerifiedExport:'+p.job.JOB_ID);await store.deleteArtifact(row.artifactId,p.job.JOB_ID);let code='';try{await store.exportPackage(p.job.JOB_ID);}catch(error){code=error.code;}const failedCheckpoint=await store.metaGet('lastVerifiedExport:'+p.job.JOB_ID);return {missingBytesBlocked:code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH',checkpointPreserved:JSON.stringify(checkpoint)===JSON.stringify(failedCheckpoint),revision:p.revision};})()`);
   assert(packageCustodyProof.missingBytesBlocked&&packageCustodyProof.checkpointPreserved,`Incomplete backup was marked verified: ${JSON.stringify(packageCustodyProof)}`);
-  // Inject only after importPackage resolves. That promise resolves after the
-  // production IndexedDB import transaction commits, so selection/history capture
-  // transactions that happen before import cannot consume this fault.
-  const importCommitProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,nativeImport=store.importPackage,nativeReadHistoryView=store.readHistoryView,input=document.querySelector('#import-file'),dt=new DataTransfer();dt.items.add(new File([__completeBackup],'verified.closed-loop.json.gz',{type:'application/gzip'}));input.files=dt.files;let injected=false,importCommitted=false;store.importPackage=async(...args)=>{const imported=await nativeImport(...args);importCommitted=true;return imported;};store.readHistoryView=async(...args)=>{if(importCommitted&&!injected){injected=true;throw new Error('CONTROLLED_POST_IMPORT_REFRESH_FAILURE');}return nativeReadHistoryView(...args);};try{await input.onchange({target:input});}finally{store.importPackage=nativeImport;store.readHistoryView=nativeReadHistoryView;}const notice=document.querySelector('#app-live-status')?.textContent||'',p=await store.readProject('BACKUP-BROWSER-CLOSURE'),row=(await store.listArtifacts(p.job.JOB_ID)).find(file=>file.filename==='required.txt');return {importCommitted,injected,commitAdvanced:p.revision>${packageCustodyProof.revision},bytesRestored:Boolean(row)&&await row.blob.text()==='exact required bytes',selectedCommittedProject:(document.querySelector('#current-project-summary')?.dataset?.projectId===p.job.JOB_ID),truthfulNotice:/imported and saved/.test(notice)&&/refresh/.test(notice)&&!/rejected|unchanged|without changing/i.test(notice),fileSelectionCleared:input.value===''};})()`);
+  // The fault observes a matching successful import response and then fails the
+  // saved-view read. The real imported bytes and public recovery message are checked.
+  const importCommitProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,input=document.querySelector('#import-file'),dt=new DataTransfer();dt.items.add(new File([__completeBackup],'verified.closed-loop.json.gz',{type:'application/gzip'}));input.files=dt.files;const fault=(${installPostImportRefreshFault.toString()})('BACKUP-BROWSER-CLOSURE');try{await input.onchange({target:input});}finally{fault.restore();}const notice=document.querySelector('#app-live-status')?.textContent||'',p=await store.readProject('BACKUP-BROWSER-CLOSURE'),row=(await store.listArtifacts(p.job.JOB_ID)).find(file=>file.filename==='required.txt');return {...fault.observation,commitAdvanced:p.revision>${packageCustodyProof.revision},bytesRestored:Boolean(row)&&await row.blob.text()==='exact required bytes',selectedCommittedProject:(document.querySelector('#current-project-summary')?.dataset?.projectId===p.job.JOB_ID),truthfulNotice:/imported and saved/.test(notice)&&/refresh/.test(notice)&&/Reload/.test(notice)&&!/rejected|unchanged|without changing|CONTROLLED_/i.test(notice),fileSelectionCleared:input.value===''};})()`);
   assert(Object.values(importCommitProof).every(Boolean),`Import post-commit failure was misreported: ${JSON.stringify(importCommitProof)}`);
+  await assertInlineError(cdp,'Project package imported and saved');
   await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);
   assert((await activeProject(cdp)).job.JOB_ID==='BACKUP-BROWSER-CLOSURE','The committed import did not survive reload.');
   console.log(JSON.stringify({storageReliabilityBrowser:true,...staleCreateProof,...packageCustodyProof,...importCommitProof,importSurvivedReload:true}));

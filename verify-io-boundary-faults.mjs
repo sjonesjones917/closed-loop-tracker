@@ -5,13 +5,23 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
-const files=['project-store.js','hash.js','app-core.js','index.html','operator-browser-driver.mjs'];
+const files=['project-store.js','hash.js','app-core.js','index.html','operator-browser-driver.mjs','verify-browser-extra.mjs'];
 const originals=new Map(files.map(file=>[file,fs.readFileSync(file,'utf8')]));
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-io-faults-'));
 const events=[];
 function execute(test,args=[],env={}){const command=[process.execPath,test,...args],r=spawnSync(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout:30000,maxBuffer:16*1024*1024});const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;}
 function replaceOne(source,before,after){assert.equal(source.split(before).length-1,1,'Fault anchor must identify exactly one production location');return source.replace(before,after);}
 const faults=[
+ {id:'IO-MUT-ANSWER-ERROR-CONTROL',file:'app-core.js',env:'APP_SOURCE',test:'verify-workflow-focus.mjs',caseId:'FOCUS-HUMAN-ANSWER-ERROR-CALLER',oracle:'HUMAN_ANSWER_RECOVERY_TARGET_ORACLE',apply:s=>replaceOne(s,"reportActionFailure(control?Object.assign(error,{control}):error);","reportActionFailure(error);")},
+
+ {id:'IO-MUT-PENDING-FAILURE-FEEDBACK',file:'app-core.js',env:'APP_SOURCE',test:'verify-action-finalization.mjs',caseId:'ACTION-FAILURE-WHILE-FINALIZATION-HELD',oracle:'ERROR_FEEDBACK_PENDING_ORACLE',apply:s=>replaceOne(s,"if(!pending.failed)announce(label);","announce(label);")},
+
+ {id:'IO-MUT-ERROR-RECOVERY-TARGET',file:'app-core.js',env:'APP_SOURCE',test:'verify-workflow-focus.mjs',caseId:'FOCUS-ERROR-PENDING-REPORT',oracle:'ERROR_NEXT_ACTION_ORACLE',apply:s=>replaceOne(s,"focusAfterAction(control||report,{reason:'RETRY'});","if(control){actionFocusTarget=control;control.focus();}else{report?.scrollIntoView({block:'nearest'});report?.focus();}")},
+ {id:'IO-MUT-IMPORT-COMMITTED-MESSAGE',file:'app-core.js',env:'APP_SOURCE',test:'verify-primary-error-information.mjs',caseId:null,oracle:'IMPORT_COMMITTED_FEEDBACK_ORACLE',apply:s=>replaceOne(s,"if(code==='IMPORT_COMMITTED_REFRESH_FAILED')","if(false)")},
+ {id:'VER-MUT-IMPORT-RESPONSE-IDENTITY',file:'verify-browser-extra.mjs',env:'BROWSER_EXTRA_SOURCE',test:'verify-primary-error-information.mjs',caseId:null,oracle:'IMPORT_FAULT_CORRELATION_ORACLE',apply:s=>replaceOne(s,"result?.operationId!==operationId||","false||")},
+ {id:'VER-MUT-IMPORT-PRECOMMIT-FAULT',file:'verify-browser-extra.mjs',env:'BROWSER_EXTRA_SOURCE',test:'verify-primary-error-information.mjs',caseId:null,oracle:'IMPORT_FAULT_PRECOMMIT_ORACLE',apply:s=>replaceOne(s,"observation.importCommitted&&!observation.injected&&","!observation.injected&&")},
+ {id:'VER-MUT-IMPORT-ABSENT-FAULT',file:'verify-browser-extra.mjs',env:'BROWSER_EXTRA_SOURCE',test:'verify-primary-error-information.mjs',caseId:null,oracle:'IMPORT_FAULT_BOUNDARY_ORACLE',apply:s=>replaceOne(s,"observation.injected=true;throw new Error('CONTROLLED_POST_IMPORT_REFRESH_FAILURE');","observation.injected=true;")},
+
  {id:'VER-MUT-MISSING-DEADLINE',file:'operator-browser-driver.mjs',env:'BROWSER_READINESS_SOURCE',test:'verify-startup-deadlines.mjs',caseId:'VERIFIER-BOUNDED-READ',oracle:'VERIFIER_GATE_DEADLINE_ORACLE',apply:s=>replaceOne(s,'timer=setTimeout(()=>{active=false;reject(error);},timeout);','timer=setTimeout(()=>{},timeout);')},
  {id:'VER-MUT-LATE-NAVIGATION',file:'operator-browser-driver.mjs',env:'BROWSER_READINESS_SOURCE',test:'verify-startup-deadlines.mjs',caseId:'VERIFIER-BOUNDED-NAVIGATION',oracle:'VERIFIER_NAVIGATION_DEADLINE_ORACLE',apply:s=>replaceOne(s,"const previous=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;\n    requireActive();","const previous=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;")},
  {id:'VER-MUT-EARLY-INTERACTION',file:'operator-browser-driver.mjs',env:'BROWSER_READINESS_SOURCE',test:'verify-startup-deadlines.mjs',caseId:'VERIFIER-STARTUP-INTERACTION',oracle:'VERIFIER_STARTUP_INTERACTION_ORACLE',apply:s=>replaceOne(s,"globalThis.closedLoopAppReady===true&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true'","document.querySelector('#app')?.getAttribute('aria-busy')!=='true'")},

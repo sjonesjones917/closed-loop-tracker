@@ -5,7 +5,7 @@ import {createVerifierRuntime} from './verifier-runtime.mjs';
 const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const frameQueue=[];const cases=[];
 const element=id=>({id,disabled:false,hidden:true,isConnected:true,textContent:'',attrs:{},setAttribute(k,v){this.attrs[k]=String(v)},removeAttribute(k){delete this.attrs[k]},focus(){},scrollIntoView(){},classList:{add(){},remove(){},contains(){return false}}});
-const nodes=new Map(['app','app-operation-status','operation-label','app-live-status','save-prompt','project-picker','import-project'].map(id=>['#'+id,element(id)]));
+const nodes=new Map(['app','app-operation-status','operation-label','app-live-status','operation-error','save-prompt','project-picker','import-project'].map(id=>['#'+id,element(id)]));
 const ctx=createVerifierRuntime({console,Event:class{},dispatchEvent(){},addEventListener(){},structuredClone,Blob,URL,TextEncoder,TextDecoder,crypto:globalThis.crypto,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frameQueue.push(fn),document:{querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[nodes.get('#save-prompt')]:[],currentScript:null,addEventListener(){}}});
 for(const name of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(name,'utf8'),ctx,{filename:name});
 const marker='globalThis.closedLoopAppReady=false;';assert.equal(source.split(marker).length,2,'Unique application-start boundary is required');
@@ -27,6 +27,16 @@ await check('ACTION-FINALIZATION-HELD',async()=>{
  assert.ok(ui.samples().at(-1).durationMs>=1500,'FINALIZATION_LATENCY_ORACLE: measured duration omitted final persistence');assert.equal(nodes.get('#save-prompt').disabled,false);assert.equal(nodes.get('#app-operation-status').hidden,true);
 });
 await check('ACTION-FINALIZATION-FAILURE',async()=>{ui.capture(async()=>{throw new Error('Required view checkpoint failed')});const run=ui.run(async()=>{});await frames();await run;assert.match(nodes.get('#app-live-status').textContent,/Required view checkpoint failed/);assert.equal(ui.samples().at(-1).outcome,'FAILED','FINALIZATION_OUTCOME_ORACLE: failed persistence was recorded as completed');assert.equal(nodes.get('#save-prompt').disabled,false);assert.equal(nodes.get('#app-operation-status').hidden,true)});
+await check('ACTION-FAILURE-WHILE-FINALIZATION-HELD',async()=>{
+ let release;const held=new Promise(resolve=>{release=resolve});ui.capture(async()=>{await held});
+ const run=ui.run(async()=>ui.failure());await frames();
+ await new Promise(resolve=>setTimeout(resolve,1510));await frames();
+ const observed={message:nodes.get('#app-live-status').textContent,errorHidden:nodes.get('#operation-error').hidden,disabled:nodes.get('#save-prompt').disabled};
+ release();await run;await frames();
+ assert.match(observed.message,/Recorded internal failure/,'ERROR_FEEDBACK_PENDING_ORACLE: a delayed loading announcement replaced actionable failure feedback.');
+ assert.equal(observed.errorHidden,false,'ERROR_FEEDBACK_PENDING_ORACLE: pending checkpoint loading hid the recovery error.');
+ assert.equal(observed.disabled,true);assert.equal(ui.samples().at(-1).outcome,'FAILED');
+});
 await check('ACTION-INTERNAL-FAILURE',async()=>{ui.capture(async()=>{});const run=ui.run(async()=>ui.failure());await frames();await run;assert.equal(ui.samples().at(-1).outcome,'FAILED','FINALIZATION_OUTCOME_ORACLE: an error handled by the production action was recorded as completed');assert.equal(nodes.get('#save-prompt').disabled,false)});
 await check('ACTION-UNCHANGED-FAILURE-CONTROL',async()=>{ui.select();ui.capture(async()=>{});const run=ui.run(async()=>ui.responseFailure());await frames();await run;assert.match(nodes.get('#app-live-status').textContent,/accepted work is unchanged/);assert.equal(ui.samples().at(-1).outcome,'FAILED');});
 await check('ACTION-POST-COMMIT-FAILURE',async()=>{ui.select();ui.capture(async()=>{});const run=ui.run(async()=>{ui.changed();ui.responseFailure()});await frames();await run;assert.doesNotMatch(nodes.get('#app-live-status').textContent,/accepted work is unchanged/,'POST_COMMIT_FEEDBACK_ORACLE: prior committed change was falsely reported as rolled back');assert.match(nodes.get('#app-live-status').textContent,/No rollback is claimed/);assert.equal(ui.samples().at(-1).outcome,'FAILED');});

@@ -11,7 +11,7 @@
       "sourceLocation": "Current user task section 9 E, UX-001",
       "responsibleProductionCode": {
         "file": "app-core.js",
-        "symbol": "runOperatorAction finalization + focusAfterAction layout-quiescence authority"
+        "symbol": "reportActionFailure + runOperatorAction finalization + focusAfterAction; saveHumanAnswers corrective-control binding"
       },
       "observableExpectedBehavior": "After every state change, the correct next action is visible after layout settles, with no prohibited upward movement.",
       "requiredEvidence": [
@@ -19,7 +19,8 @@
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
         "Affected downstream browser/recovery verification where applicable",
-        "Finalized operator-action focus is deferred until controls unlock and remains authoritative through settled layout geometry"
+        "Finalized operator-action focus is deferred until controls unlock and remains authoritative through settled layout geometry",
+        "verify-workflow-focus.mjs exercises error-target precedence, post-unlock placement and subsequent layout phases; verify-browser-extra.mjs asserts actual viewport/focus after settled invalid-input and committed-import paths."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -51,15 +52,16 @@
       "requirementId": "UX-003",
       "sourceLocation": "Current user task section 9 E, UX-003",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "requirement-specific authority traced by permanent verifiers"
+        "file": "app-core.js",
+        "symbol": "reportActionFailure + runOperatorAction finalization + focusAfterAction; saveHumanAnswers corrective-control binding"
       },
       "observableExpectedBehavior": "Auto-scroll moves downward for forward progress and upward only for explicit return, correction, or retry, landing on the required element.",
       "requiredEvidence": [
         "Executed behavioral case on exact candidate source",
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
-        "Affected downstream browser/recovery verification where applicable"
+        "Affected downstream browser/recovery verification where applicable",
+        "verify-workflow-focus.mjs exercises error-target precedence, post-unlock placement and subsequent layout phases; verify-browser-extra.mjs asserts actual viewport/focus after settled invalid-input and committed-import paths."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -212,15 +214,16 @@
       "requirementId": "UX-011",
       "sourceLocation": "Current user task section 9 E, UX-011",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "requirement-specific authority traced by permanent verifiers"
+        "file": "app-core.js",
+        "symbol": "reportActionFailure + importProjectPackageFile post-commit classification"
       },
       "observableExpectedBehavior": "Required decisions, useful status, actionable errors, and recovery remain visible while codes/internal IDs/diagnostics/advanced tools are behind details or advanced controls.",
       "requiredEvidence": [
         "Executed behavioral case on exact candidate source",
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
-        "Affected downstream browser/recovery verification where applicable"
+        "Affected downstream browser/recovery verification where applicable",
+        "verify-primary-error-information.mjs exercises committed import, exact retained bytes, independent-state preservation, public recovery outcome, rejected import and matching post-commit fault injection; verify-io-boundary-faults.mjs detects targeted reversals; verify-browser-extra.mjs requires real committed-import and settled visible-error observations."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -395,15 +398,16 @@
       "requirementId": "UX-020",
       "sourceLocation": "Current user task section 9 F, UX-020",
       "responsibleProductionCode": {
-        "file": "app-core.js and shared production dependencies",
-        "symbol": "requirement-specific authority traced by permanent verifiers"
+        "file": "app-core.js",
+        "symbol": "reportActionFailure + importProjectPackageFile post-commit classification"
       },
       "observableExpectedBehavior": "Completion, failure, and recovery feedback is explicit in every case.",
       "requiredEvidence": [
         "Executed behavioral case on exact candidate source",
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
-        "Affected downstream browser/recovery verification where applicable"
+        "Affected downstream browser/recovery verification where applicable",
+        "verify-primary-error-information.mjs exercises committed import, exact retained bytes, independent-state preservation, public recovery outcome, rejected import and matching post-commit fault injection; verify-io-boundary-faults.mjs detects targeted reversals; verify-browser-extra.mjs requires real committed-import and settled visible-error observations."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
