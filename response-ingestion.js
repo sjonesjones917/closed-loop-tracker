@@ -385,6 +385,18 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
     }
   });
 
+  // A batch cannot create two current observations for the same logical
+  // target. This uses the same target identity as confirmed supersession.
+  for(const [collection,rows] of Object.entries(envelope.records||{})){
+    const seen=new Set();
+    for(const [index,row] of safe(rows).entries()){
+      const fields={...(row?.fields||{})};
+      for(const [name,reference] of Object.entries(row?.relationships||{}))fields[name]=reference?.recordId||(reference?.tempKey?`TEMP:${reference.tempKey}`:'');
+      const target=workflow.scopedObservationIdentity(collection,{fields,scope:envelope.scope});
+      if(target&&seen.has(target))issues.push(issue('DUPLICATE_SCOPED_OBSERVATION',`/records/${collection}/${index}`,'The response contains more than one current observation for the same scoped target.'));
+      if(target)seen.add(target);
+    }
+  }
   const verificationPlan=promptRecord?.contextManifest?.verificationBatchPlan;
   if(verificationPlan){const allowedCells=new Set(safe(verificationPlan.triples).map(cell=>[cell.requirementId,cell.runId,cell.testId].join('|')));for(const [index,record] of safe(envelope.records?.verification).entries()){const cell=['REQ_ID','RUN_ID','TEST_ID'].map(key=>record?.relationships?.[key]?.recordId||'').join('|');if(!allowedCells.has(cell))issues.push(issue('VERIFICATION_CELL_OUT_OF_SCOPE',`/records/verification/${index}`, 'The verification cell was not assigned to this operation.'));}}
   const proofTargets=new Set();
@@ -639,11 +651,24 @@ function acceptanceImpact(project,proposalId){
   };
   if(proposal.responseType==='DATA_PROPOSAL'){
     const laneKeys=['iterationId','candidateId','runId','baselineId','productId'];
-    for(const change of workflow.acceptedChanges(project,stage))if(change.operation===operation&&laneKeys.every(key=>String(change.scope?.[key]??'')===String(scope[key]??'')))replaces.push({kind:'accepted response',id:change.changeId});
+    // Calculate exact canonical supersession first. An operation may contain
+    // independent partial batches; its name alone is not a replacement target.
     for(const [collection,rows] of Object.entries(proposal.canonicalRecords||{})){
       if(!rows.length)continue;
-      if(schema.RECORD_SCHEMAS[collection]?.commitPolicy==='REPLACE_CURRENT_STAGE_SET')for(const record of workflow.records(project,collection,{stage,active:true}))replaces.push({kind:collection,id:workflow.recordId(record,collection)});
+      const policy=schema.RECORD_SCHEMAS[collection]?.commitPolicy,targets=new Set(rows.map(row=>workflow.scopedObservationIdentity(collection,row)).filter(Boolean));
+      for(const record of workflow.records(project,collection,{stage,active:true}))if(policy==='REPLACE_CURRENT_STAGE_SET'||policy==='APPEND_SCOPED'&&targets.has(workflow.scopedObservationIdentity(collection,record)))replaces.push({kind:collection,id:workflow.recordId(record,collection)});
     }
+    const replacedIds=new Set(replaces.map(item=>item.id)),newFields=new Set(Object.keys(proposal.proposedStageData||{}));
+    for(const change of workflow.acceptedChanges(project,stage)){
+      const entries=workflow.acceptedChangeRecordEntries(project,change),current=entries.filter(item=>workflow.isActiveRecord(item.record));
+      const sameLane=change.operation===operation&&laneKeys.every(key=>String(change.scope?.[key]??'')===String(scope[key]??''));
+      const fields=safe(change.stageFields),fieldsReplaced=fields.every(key=>sameLane&&newFields.has(key));
+      const recordsReplaced=current.length>0&&current.every(item=>replacedIds.has(workflow.recordId(item.record,item.collection)));
+      // Legacy scalar-only accepted responses retain their prior operation
+      // semantics; canonical batches retire only after their last contribution.
+      if(fieldsReplaced&&(recordsReplaced||!entries.length&&sameLane))replaces.push({kind:'accepted response',id:change.changeId});
+    }
+    for(const work of workflow.scopedObservationDependents(project,{stage,operation,scope,collections:Object.entries(proposal.canonicalRecords||{}).filter(([,rows])=>rows.length).map(([collection])=>collection)}))add(stage,work.kind,work.id);
     for(const item of workflow.downstreamWorkImpact(project,stage))for(const work of item.work)add(item.stage,work.kind,work.id);
   }
   const effect={jobId:String(project.job.JOB_ID),projectRevision:Number(project.revision||0),historyActivationId:project.historyActivationId||null,proposalId,stage,operation,proposalSha256:hash.sha256Value(proposal),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
@@ -672,10 +697,16 @@ function commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accept
   const authorityCandidates=safe(proposal.humanAuthorityCandidates);const authorityConfirmationIds=[];
   if(authorityCandidates.length){const confirmations=object(humanAuthorityConfirmations)?humanAuthorityConfirmations:null;if(!confirmations){const error=new Error('Confirm or correct every human answer reported from the external conversation before accepting this response.');error.code='HUMAN_AUTHORITY_CONFIRMATION_REQUIRED';throw error;}for(const candidate of authorityCandidates){if(!Object.hasOwn(confirmations,candidate.temporaryKey)){const error=new Error(`Human-authority candidate ${candidate.temporaryKey} has not been confirmed.`);error.code='HUMAN_AUTHORITY_CONFIRMATION_REQUIRED';error.candidateKey=candidate.temporaryKey;throw error;}const supplied=confirmations[candidate.temporaryKey],submitted=object(supplied)&&Object.hasOwn(supplied,'value')?supplied.value:supplied;if(JSON.stringify(submitted)!==JSON.stringify(candidate.value)){const error=new Error(`Correction to ${candidate.label||candidate.temporaryKey} changes human authority and requires a replacement prompt before this proposal can be accepted.`);error.code='HUMAN_AUTHORITY_CORRECTION_REQUIRES_REPLACEMENT';error.candidateKey=candidate.temporaryKey;error.correctedValue=clone(submitted);throw error;}}}
   if(proposal.responseType!=='DATA_PROPOSAL'){const evidenceIds=commitEvidence(next,proposal);let type,status,details={evidenceIds};if(proposal.responseType==='HUMAN_INPUT_REQUIRED'){type='ACCEPTED_HUMAN_QUESTION_SET';status='QUESTIONS_CREATED';for(const request of proposal.humanInputRequests){next.projectData.humanInputRequests.push({requestId:workflow.allocateInfrastructureId(next,'HUMAN-INPUT-REQUEST','humanInputRequests'),temporaryKey:request.temporaryKey,jobId:next.job.JOB_ID,stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),question:request.question,whyRequired:request.whyRequired,affectedStageFields:clone(request.affectedStageFields),affectedRecords:clone(request.affectedRecords),answerType:request.answerType,allowedValues:clone(request.allowedValues),blocking:request.blocking!==false,status:'OPEN',evidenceIds:clone(evidenceIds),createdAt:stamp});}}else if(proposal.responseType==='BLOCKED'){type='ACCEPTED_BLOCKER_EVENT';status='BLOCKER_ACCEPTED';const blockerIds=[];for(const item of proposal.unresolved.filter(x=>x.blocking!==false)){const id=workflow.allocateId(next,'blockers');const fields={BLOCKER_ID:id,MISSING_ITEM_TYPE:item.kind,MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:item.description,AFFECTED_REQUIREMENTS:hash.stableStringify(item.affectedRecords||[]),AFFECTED_TESTS:'NONE',AFFECTED_ARTIFACTS:hash.stableStringify(item.affectedStageFields||[]),WHY_WORK_CANNOT_CONTINUE:item.whyBlocking,ATTEMPTED_RESOLUTIONS:'NONE',DOWNSTREAM_WORK_STOPPED:`STAGE ${String(stage).padStart(2,'0')}`,OWNER:'UNASSIGNED',STATUS:'OPEN',RESOLUTION_EVIDENCE:evidenceIds.length?hash.stableStringify(evidenceIds):'NONE',CLOSURE:'OPEN',REEVALUATION:'REQUIRED',REQUIRED_REVALIDATION:'REQUIRED'};const blocker={id,stage,active:true,fields,...fields,evidenceRefs:clone(evidenceIds),source:'APPLICATION_DISPOSITION',rawResponseId:proposal.rawResponseId};blocker.contentSha256=hash.contentRecordSha256(blocker,'BLOCKER_ID');blocker.recordSha256=hash.recordSha256(blocker);blocker.sha256=blocker.recordSha256;next.projectData.blockers.push(blocker);blockerIds.push(id);}details.blockerIds=blockerIds;}else{type='ACCEPTED_EXECUTION_FAILURE';status='EXECUTION_FAILURE_ACCEPTED';const failureId=workflow.allocateInfrastructureId(next,'EXECUTION-FAILURE','executionFailures');next.projectData.executionFailures.push({failureId,stage,jobId:next.job.JOB_ID,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),status:'OPEN',unresolved:clone(proposal.unresolved),warnings:clone(proposal.warnings),evidenceIds:clone(evidenceIds),createdAt:stamp});details.failureId=failureId;}const d=disposition(next,type,{stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,validationId:proposal.validationId,proposalId,receiptId:proposal.receiptId,details});proposal.status=status;proposal.reviewedAt=stamp;proposal.reviewedBy=operator;proposal.reviewNote=reviewNote;validation.status=type;if(raw){raw.status=type;raw.dispositionId=d.dispositionId;}next.stages[stage].acceptedControlEventIds.push(d.dispositionId);if(receipt){receipt.acceptedCanonicalChangeId='NONE';receipt.completionState=type;receipt.evidenceIds=clone(evidenceIds);receipt.nextRequiredVerificationStage=type==='ACCEPTED_HUMAN_QUESTION_SET'?`STAGE ${String(stage).padStart(2,'0')} HUMAN INPUT`:`STAGE ${String(stage).padStart(2,'0')} BLOCKED`;}if(proposal.transportBindingRequired||proposal.envelope?.operationReservationId)finishReservation(next,promptRecordFor(next,{instructionId:proposal.promptId}),'ACCEPTED');workflow.recalculate(next);return {project:next,acceptedChange:null,manifest:null,disposition:d,receipt,idempotent:false};}
-  const priorCommitted=workflow.acceptedChanges(next,stage).length>0;const changeId=workflow.allocateInfrastructureId(next,'ACCEPTED-CHANGE','acceptedChanges');if(priorCommitted){for(const [collection,items] of Object.entries(proposal.canonicalRecords)){const policy=schema.RECORD_SCHEMAS[collection]?.commitPolicy;if(policy==='REPLACE_CURRENT_STAGE_SET')for(const record of workflow.records(next,collection,{stage,active:true})){record.active=false;record.validity='SUPERSEDED';record.supersededBy=changeId;workflow.refreshRecordHashes(record,collection);}}if(proposal.envelope.operation===schema.SEMANTIC_STAGE_OPERATIONS[stage]?.reconcileOperation)supersedeSemanticReconciliation(next,proposal,changeId);}if(impact.affected.length)workflow.invalidateDownstream(next,stage,changeId,'Accepted canonical response revised upstream work.');
+  const priorCommitted=workflow.acceptedChanges(next,stage).length>0;const changeId=workflow.allocateInfrastructureId(next,'ACCEPTED-CHANGE','acceptedChanges');
+  // Apply the exact record set that was shown and bound into confirmation.
+  // Old fields, evidence and raw responses remain available in saved history.
+  for(const item of impact.replaces){if(!schema.RECORD_SCHEMAS[item.kind])continue;const record=next.projectData[item.kind].find(row=>workflow.recordId(row,item.kind)===item.id);if(record){record.active=false;record.validity='SUPERSEDED';record.supersededBy=changeId;workflow.refreshRecordHashes(record,item.kind);}}
+  if(priorCommitted&&proposal.envelope.operation===schema.SEMANTIC_STAGE_OPERATIONS[stage]?.reconcileOperation)supersedeSemanticReconciliation(next,proposal,changeId);
+  workflow.invalidateScopedObservationDependents(next,stage,impact.affected.find(item=>Number(item.stage)===stage)?.work||[],changeId);
+  if(impact.affected.length)workflow.invalidateDownstream(next,stage,changeId,'Accepted canonical response revised upstream work.');
   const replacedChanges=new Set(impact.replaces.filter(item=>item.kind==='accepted response').map(item=>item.id));
   for(const prior of next.projectData.acceptedChanges.filter(row=>replacedChanges.has(row.changeId))){prior.invalidatedBy=changeId;prior.supersededBy=changeId;}
-  if(replacedChanges.size){
+  if(impact.replaces.length){
     for(const confirmation of safe(next.projectData.stageConfirmations).filter(row=>Number(row.stage)===stage&&!row.invalidatedBy)){confirmation.invalidatedBy=changeId;}
     next.stages[stage].acceptedDataChangeIds=safe(next.stages[stage].acceptedDataChangeIds).filter(id=>!replacedChanges.has(id));
   }

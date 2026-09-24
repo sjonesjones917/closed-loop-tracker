@@ -6,6 +6,7 @@ export function scalarFor(def,name,overrides={}){
   if(def.valueType==='INTEGER')return 1;
   if(def.valueType==='NUMBER')return 1;
   if(def.valueType==='STRING_ARRAY'||def.valueType==='REFERENCE_ARRAY')return ['fixture'];
+  if(String(name).toUpperCase()==='EXPECTED_VARIANCE_CONTRACT')return {dimensions:['requirement-truth'],allowedVariance:'No variance in requirement truth.'};
   if(def.valueType==='OBJECT')return {};
   const upper=String(name).toUpperCase();
   if(upper.includes('ARTIFACT_REQUIREMENTS'))return 'NONE';
@@ -22,7 +23,7 @@ export function scalarFor(def,name,overrides={}){
   return `fixture-${String(name).toLowerCase()}`;
 }
 export function recordProposal(schema,collection,{tempKey,targetId,relationships={},overrides={},evidenceRef='evidence-1'}={}){
-  const def=schema.RECORD_SCHEMAS[collection],fields=collection==='tests'?{VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}}:{};
+  const def=schema.RECORD_SCHEMAS[collection],fields=collection==='tests'?{EXPECTED_VARIANCE_CONTRACT:{dimensions:['requirement-truth'],allowedVariance:'No variance in requirement truth.'},VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}}:{};
   for(const name of def.required){const fd=def.fieldDefinitions[name];if(fd?.producer===schema.PRODUCER.AGENT)fields[name]=scalarFor(fd,name,overrides);}
   for(const [name,value] of Object.entries(overrides))if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=value;
   return {tempKey:targetId?undefined:(tempKey||`${collection}-1`),targetId:targetId||undefined,fields,relationships,evidenceRefs:evidenceRef?[evidenceRef]:[]};
