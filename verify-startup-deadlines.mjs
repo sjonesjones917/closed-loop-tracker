@@ -42,7 +42,7 @@ await check('VERIFIER-CONSUMER-INTERACTION','Every browser operator control wait
   for(const action of ['click','fill']){
    let release,actions=0;const held=new Promise(resolve=>{release=resolve;}),blocked=Symbol('waiting');
    const e=environment({controlledLoad:async(context,paint)=>{context.document.readyState='complete';paint();await held;}});e.run();await flush();
-   const button={disabled:false,parentElement:null,scrollIntoView(){},click(){actions++;},dispatchEvent(){actions++;},value:''};e.nodes.set('test-control',button);
+   const button={disabled:false,parentElement:null,getBoundingClientRect(){return {top:0,left:0,bottom:44,right:180,width:180,height:44};},scrollIntoView(){},click(){actions++;},dispatchEvent(){actions++;},value:''};e.nodes.set('test-control',button);
    const source=fs.readFileSync(file,'utf8');let extracted='';
    for(const name of functions){const start=kind==='driver'?source.lastIndexOf('async function '+name+'('):source.indexOf('async function '+name+'(');assert(start>=0);const next=source.indexOf('\n',start);let end=source.indexOf('\nasync function ',start+1);if(kind==='driver')end=source.indexOf('\n  async function ',start+1);assert(end>start);extracted+=source.slice(start,end)+'\n';}
    const evaluate=async(...args)=>{const result=vm.runInContext(args.at(-1),e.context);await flush();await e.advance(0);return result;},wait=async(_cdp,expression)=>{if(!await evaluate(expression))throw blocked;return true;};

@@ -11,7 +11,13 @@ const run=args=>{
 };
 for(const [fault,oracle] of [
  ['obsolete-recovery-control','HISTORY_CONTROL_STATE_ORACLE'],
- ['overlapping-complete-exports','UI_EXPORT_DUPLICATE_ORACLE']
+ ['overlapping-complete-exports','UI_EXPORT_DUPLICATE_ORACLE'],
+ ['obsolete-storage-health-oracle','STORAGE_HEALTH_BROWSER_ORACLE'],
+ ['incorrect-storage-persistence','STORAGE_HEALTH_BROWSER_ORACLE'],
+ ['forced-operator-scroll','DRIVER_VIEW_PRESERVATION_ORACLE'],
+ ['repeat-pre-ingestion-read','JOURNEY_READ_BOUNDARY_ORACLE'],
+ ['stale-post-ingestion-state','Accept did not commit exactly one response'],
+ ['repeat-post-ingestion-read','JOURNEY_CONTINUATION_READ_ORACLE']
 ]){
  const injected=run(['--fault='+fault]);console.error(JSON.stringify({fault,phase:'injected',...injected}));
  assert.notEqual(injected.exitCode,0,'The intended action-control fault escaped detection: '+fault);
