@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+const {createBrowserReadiness}=await import(process.env.OPERATOR_DRIVER_MODULE||'./operator-browser-driver.mjs');
 
 // Execute the real UI bindings with a deliberately delayed storage boundary.
 // The oracle is the operator contract: one action, immediate duplicate lockout,
@@ -24,6 +25,28 @@ if(process.argv.includes('--fault=incorrect-storage-persistence')){
 }
 const workflowActionCall=source.slice(source.indexOf('function workflow(')).match(/\$\{(nextActionMarkup\([^}]+\))\}/)?.[1];
 const cases=[];
+// A deliberately blocked startup must let the browser verifier observe the
+// destination document before application interactivity. Normal navigation
+// still waits for the interactive application boundary.
+{
+ let loader='L0',interactiveWaits=0;
+ const cdp={async send(method){
+  if(method==='Page.getFrameTree')return {frameTree:{frame:{loaderId:loader}}};
+  if(method==='Page.navigate'){loader=loader==='L0'?'L1':'L2';return {loaderId:loader};}
+  throw new Error('Unexpected CDP command '+method);
+ }};
+ const wait=async(read,description)=>{
+  if(description==='The destination document did not arrive'){const value=await read();assert.equal(value,true);return true;}
+  if(description==='The application did not become interactive'){interactiveWaits++;return true;}
+  throw new Error('Unexpected readiness wait '+description);
+ };
+ const readiness=createBrowserReadiness(cdp,async()=>true,{timeout:1000,wait});
+ await readiness.navigate('Page.navigate',{url:'http://fixture.invalid/'},{waitForInteractive:false});
+ assert.equal(interactiveWaits,0,'BLOCKED_STARTUP_NAVIGATION_ORACLE: blocked-startup observation was forced through interactive readiness');
+ await readiness.navigate('Page.navigate',{url:'http://fixture.invalid/'});
+ assert.equal(interactiveWaits,1,'Normal navigation stopped enforcing application interactivity.');
+ cases.push({caseId:'BROWSER-BLOCKED-STARTUP-DOCUMENT-BOUNDARY',result:'PASS'});
+}
 // Execute the browser driver's actual activation path. Supplied rectangles
 // prove its branch decisions, not real-browser layout. Browser gates retain
 // their independent layout/scroll/visibility oracles.

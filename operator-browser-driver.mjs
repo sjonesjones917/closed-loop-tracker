@@ -46,7 +46,7 @@ export function createBrowserReadiness(cdp,evaluate,{timeout=90000,wait=until}={
     requireActive();
     if(result.errorText)throw new Error(result.errorText);
     await wait(async()=>{requireActive();const destination=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;requireActive();return Boolean(destination&&destination!==previous&&(!result.loaderId||destination===result.loaderId));},'The destination document did not arrive',timeout);
-    requireActive();await idle(options);
+    requireActive();if(options.waitForInteractive!==false)await idle(options);
     },'The destination navigation did not complete',timeout);
   }
   async function restoreEntry(entryId){
