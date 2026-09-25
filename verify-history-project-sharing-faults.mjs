@@ -9,6 +9,8 @@ for(const [suite,fault,oracle] of [
  ['verify-history-canonical-sharing.mjs','duplicate-canonical-content','HISTORY_CANONICAL_CAPACITY_ORACLE'],
  ['verify-history-canonical-sharing.mjs','repeat-import-shared-content','HISTORY_IMPORT_SHARED_CONTENT_ORACLE'],
  ['verify-history-canonical-sharing.mjs','repeat-completed-adjudication','HISTORY_ADJUDICATION_COST_ORACLE'],
+ ['verify-history-canonical-sharing.mjs','repeat-recalculation-adjudication','HISTORY_RECALCULATION_ADJUDICATION_COST_ORACLE'],
+ ['verify-history-canonical-sharing.mjs','share-custom-recalculation','HISTORY_RECALCULATION_CUSTOM_ORACLE'],
  ['verify-history-canonical-sharing.mjs','retain-failed-adjudication','HISTORY_ADJUDICATION_EXCEPTION_ORACLE'],
  ['verify-history-canonical-sharing.mjs','retain-completed-adjudication','HISTORY_ADJUDICATION_FRESH_ORACLE'],
  ['verify-history-canonical-sharing.mjs','repeat-input-scope','HISTORY_INPUT_SCOPE_COST_ORACLE'],

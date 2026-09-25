@@ -21,6 +21,8 @@ const faults={
  ]}
 };
 const engineFaults={
+ 'share-custom-recalculation':{before:'const sharedProjection=evaluateGate===installed?.gate&&nextAction===installed?.operationalNextAction;',after:'const sharedProjection=true;'},
+ 'repeat-recalculation-adjudication':{before:'if(sharedProjection)withCompletedStageAdjudications(project,()=>withInputScopeEvaluation(projectStages));',after:'if(false)withCompletedStageAdjudications(project,()=>withInputScopeEvaluation(projectStages));'},
  'retain-failed-adjudication':{before:'try{return action();}finally{completedStageAdjudications.delete(project);}',after:'const result=action();completedStageAdjudications.delete(project);return result;'},
  'repeat-completed-adjudication':{before:'if(evaluation?.records){',after:'if(false){'},
  'retain-completed-adjudication':{before:'finally{completedStageAdjudications.delete(project);}',after:'finally{/* disposable retained-result fault */}'},
@@ -43,6 +45,11 @@ observedEngineSource=observedEngineSource.replace(adjudicationProbeAnchor,'globa
 const stageProbeAnchor='ensure(p);const b=e0.gate(stage,p),rr=';
 assert.equal(observedEngineSource.split(stageProbeAnchor).length-1,1);
 observedEngineSource=observedEngineSource.replace(stageProbeAnchor,'ensure(p);globalThis.__historyCompatibilityStage?.(stage,p);const b=e0.gate(stage,p),rr=');
+// Expose the existing base projection only in this disposable verifier realm.
+// Production's public wrapper deliberately owns its installed gate callbacks.
+const projectionProbeAnchor='globalThis.closedLoopWorkflowEngine=Object.freeze({stageContext,';
+assert.equal(observedEngineSource.split(projectionProbeAnchor).length-1,1);
+observedEngineSource=observedEngineSource.replace(projectionProbeAnchor,'globalThis.__historyRecalculateKernel=recalculate;'+projectionProbeAnchor);
 const make=()=>{
  let implementation=source.replace(anchor,`maxCompressedProjectBytes:${capacity}`);
  if(faults[faultMode])for(const fault of faults[faultMode].changes||[faults[faultMode]]){assert.equal(implementation.split(fault.before).length-1,1);implementation=implementation.replace(fault.before,fault.after);}
@@ -129,6 +136,62 @@ engine.gate(scoped.activeStage,scoped);
 assert.equal(freshProjections.length,projectionCounts.size,'HISTORY_INPUT_SCOPE_EXCEPTION_ORACLE: a failed validation must discard all cached input projections before retry');
 delete r.runtime.__historyInputProjection;
 cases.push({caseId:'HISTORY-INPUT-SCOPE-FAILED-EVALUATION',result:'PASS',retryRecomputedAllProjections:true});
+// Recalculation projects all reachable gates from the same canonical records.
+// It must not repeat complete-inventory adjudication for every stage consumer.
+const recalculated=copy(accepted);let recalculationAdjudications=0;
+r.runtime.__historyAdjudication=()=>{recalculationAdjudications++;};
+engine.recalculate(recalculated);
+console.error(JSON.stringify({caseId:'HISTORY-RECALCULATION-ADJUDICATION-COST',adjudications:recalculationAdjudications,completedStages:Object.values(recalculated.stages).filter(stage=>stage.status==='COMPLETE').length}));
+assert.equal(recalculationAdjudications,1,'HISTORY_RECALCULATION_ADJUDICATION_COST_ORACLE: one synchronous stage projection must adjudicate its immutable result inventory once, not once per gate');
+cases.push({caseId:'HISTORY-RECALCULATION-ADJUDICATION-COST',result:'PASS',adjudications:recalculationAdjudications});
+const inventoryNames=['verification','deterministicResults','meaningResults','adversarialResults','representationInspections','preflightRecords','confirmationRecords','processAudits','productAudits','regressionExecutions','products'];
+const inventory=project=>Object.fromEntries(inventoryNames.map(name=>[name,copy(project.projectData[name]||[])]));
+const stageProjection=project=>{const stages=copy(project.stages);for(const stage of Object.values(stages))if(stage.gate?.checkedAt){assert.ok(Number.isFinite(Date.parse(stage.gate.checkedAt)),'Gate checks require a real timestamp.');delete stage.gate.checkedAt;}return stages;};
+const beforeRecalculationInventory=inventory(recalculated),beforeStageProjection=stageProjection(recalculated);
+recalculationAdjudications=0;engine.recalculate(recalculated);
+assert.equal(recalculationAdjudications,1,'HISTORY_RECALCULATION_FRESH_ORACLE: every separate recalculation must freshly adjudicate the actual canonical inventory');
+assert.deepEqual(inventory(recalculated),beforeRecalculationInventory,'Projection must preserve canonical result records.');
+assert.deepEqual(stageProjection(recalculated),beforeStageProjection,'Unchanged canonical inputs must preserve stage projection.');
+recalculated.projectData.stageConfirmations[0].confirmed=false;
+recalculationAdjudications=0;engine.recalculate(recalculated);
+assert.equal(recalculationAdjudications,1,'HISTORY_RECALCULATION_FRESH_ORACLE: unchanged IDs/revision do not authorize a stale receipt');
+assert.notEqual(recalculated.stages[1].status,'COMPLETE','Removing current confirmation must block downstream progression.');
+recalculated.projectData.stageConfirmations[0].confirmed=true;
+r.runtime.__historyCompatibilityStage=stage=>{if(stage===2)throw new Error('INJECTED_RECALCULATION_ADJUDICATION_FAILURE');};
+assert.throws(()=>engine.recalculate(recalculated),/INJECTED_RECALCULATION_ADJUDICATION_FAILURE/);
+delete r.runtime.__historyCompatibilityStage;
+recalculationAdjudications=0;engine.recalculate(recalculated);
+assert.equal(recalculationAdjudications,1,'HISTORY_RECALCULATION_EXCEPTION_ORACLE: retry must discard failed stage-projection adjudication');
+assert.deepEqual(stageProjection(recalculated),beforeStageProjection,'Corrected confirmation and retry must restore the matching complete projection.');
+assert.deepEqual(inventory(recalculated),beforeRecalculationInventory);
+delete r.runtime.__historyAdjudication;
+cases.push({caseId:'HISTORY-RECALCULATION-FRESH-AND-FAILED-EVALUATION',result:'PASS',unchangedIdentityFresh:true,changedConfirmationBlocks:true,exceptionRetryFresh:true,canonicalInventoryPreserved:true});
+// A custom evaluator may change a payload between reads, unlike the installed
+// synchronous projection. Neither unchanged IDs nor an outer calculation may
+// authorize reusing its earlier digest. Exercise the actual existing kernel.
+const custom=copy(accepted),customReads=[];
+engine.recordHumanInputVersion(custom,['JOB_TITLE'],'SYNTHETIC_VERIFIER');
+const customPayload=custom.projectData.inputVersions.at(-1).payload;
+r.runtime.__historyInputProjection=payload=>customReads.push(payload.JOB_TITLE);
+let customCalled=false;
+r.runtime.__historyRecalculateKernel(custom,{
+ evaluateGate:(stage,project)=>{
+  customCalled=true;engine.inputVersionForStage(project,stage);
+  customPayload.JOB_TITLE='Custom evaluator changed the actual retained payload';
+  customReads.length=0;engine.inputVersionForStage(project,stage);
+  assert.ok(customReads.includes(customPayload.JOB_TITLE),'HISTORY_RECALCULATION_CUSTOM_ORACLE: a custom evaluator must re-read changed payloads within its calculation');
+  return {complete:false,blocked:true,reasons:['Controlled custom evaluation stops progression.']};
+ },
+ nextAction:()=>({actionType:'BLOCKED',heading:'Controlled custom evaluation'})
+});
+assert.equal(customCalled,true,'The custom evaluator must actually execute.');
+delete r.runtime.__historyInputProjection;
+const customContinuation=copy(accepted);let customAdjudications=0;
+r.runtime.__historyAdjudication=()=>customAdjudications++;
+r.runtime.__historyRecalculateKernel(customContinuation,{nextAction:(project,stage)=>engine.operationalNextAction(project,stage)});
+assert.ok(customAdjudications>1,'HISTORY_RECALCULATION_CUSTOM_ORACLE: custom continuation callbacks remain outside the installed projection reuse contract');
+delete r.runtime.__historyAdjudication;
+cases.push({caseId:'HISTORY-RECALCULATION-CUSTOM-CALLBACKS',result:'PASS',changedPayloadRead:true,customContinuationAdjudications:customAdjudications});
 const history=await store.historyList(p.job.JOB_ID);
 assert.ok(history.retainedFileBytes<=history.limits.maxRetainedFileBytes,'The distinct retained-content limit remains binding.');
 cases.push({caseId:'HISTORY-CANONICAL-PROGRESSION',result:'PASS',changes,checkpoints:history.entries.length,compressedProjectBytes:history.compressedProjectBytes,retainedFileBytes:history.retainedFileBytes});

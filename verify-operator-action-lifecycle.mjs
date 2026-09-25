@@ -12,6 +12,11 @@ if(process.argv.includes('--fault=obsolete-recovery-control')){
  assert(source.includes(before),'Recovery control fault anchor is missing');
  source=source.replace(before,'undo.disabled=!previous;');
 }
+if(process.argv.includes('--fault=overlapping-complete-exports')){
+ const before='if(operatorActionInFlight)return operatorActionInFlight.promise;';
+ assert(source.includes(before),'Complete-export duplicate fault anchor is missing');
+ source=source.replace(before,"if(operatorActionInFlight&&label!=='Creating complete backup')return operatorActionInFlight.promise;");
+}
 const workflowActionCall=source.slice(source.indexOf('function workflow(')).match(/\$\{(nextActionMarkup\([^}]+\))\}/)?.[1];
 const cases=[];
 function node(id){return {id,disabled:false,hidden:true,textContent:'',isConnected:true,attrs:{},setAttribute(k,v){this.attrs[k]=String(v);},removeAttribute(k){delete this.attrs[k];},getAttribute(k){return this.attrs[k]??null;},focus(){},classList:{contains(){return false;},add(){},remove(){}},querySelector(){return null;}};}
@@ -27,6 +32,7 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
     historyAvailable:available=>{historyState={jobId:current.job.JOB_ID,entries:[],sessions:{},redo:[],undoId:available?'PREVIOUS-COMPLETE-VERSION':null};paintHistory();},
     select:stage=>{current={job:{JOB_ID:'DISPOSABLE-UI'},activeStage:stage,revision:0};},
     install:fn=>{addNew=fn;savePromptRecord=fn;render=()=>wire();},
+    exports:fn=>{downloadProjectPackage=fn;render=()=>wire();},
     history:available=>{projectStore={HISTORY_LIMITS:{maxCheckpoints:2048}};historyState={entries:[],undoId:available?'SAVED-PREVIOUS':null};historyBrowseState=null;recoveryProjects=[];quarantinedProjects=[];paintHistory();},
     action:fn=>runOperatorAction('Restoring version',fn),
     markup:(action,stage=1)=>{
@@ -58,6 +64,25 @@ for(const stage of [1]){
   assert.equal(nodes.get('#save-prompt').disabled,false,`Stage ${stage}: successful completion left controls disabled.`);
   assert.equal(nodes.get('#app-operation-status').hidden,true,`Stage ${stage}: completed action still appears to run.`);
   cases.push({caseId:'UI-SHARED-ACTION-DUPLICATE',fixtureStage:stage,operation:'SAVE_INSTRUCTION',repeatedClicks:2,executions:entered,result:'PASS'});
+}
+// The complete-export and backup controls share the same pending UI action.
+// A second disabled control is not another queued operator request. Once that
+// action finishes, a newly activated backup remains a separate valid action.
+{
+ const exportKinds=[];let releaseExport;
+ const held=new Promise(resolve=>releaseExport=resolve);
+ context.ui.select(1);context.ui.exports(async kind=>{exportKinds.push(kind);if(kind==='export')await held;});context.ui.bind();
+ const first=nodes.get('#export-project').onclick(),duplicate=nodes.get('#header-backup-project').onclick();
+ await paint();
+ assert.deepEqual(exportKinds,['export'],'UI_EXPORT_DUPLICATE_ORACLE: two in-flight controls must execute one operator action');
+ assert.equal(nodes.get('#export-project').disabled,true,'Complete export must remain disabled while it is pending.');
+ assert.equal(nodes.get('#header-backup-project').disabled,true,'Backup must remain disabled while complete export owns the action.');
+ releaseExport();await Promise.all([first,duplicate]);await paint();
+ assert.deepEqual(exportKinds,['export'],'UI_EXPORT_DUPLICATE_ORACLE: a blocked backup must not silently queue after export');
+ const second=nodes.get('#header-backup-project').onclick();await paint();await second;await paint();
+ assert.deepEqual(exportKinds,['export','backup'],'A new backup action must execute after the earlier export completes.');
+ assert.equal(nodes.get('#header-backup-project').disabled,false,'Completed backup must release its control.');
+ cases.push({caseId:'UI-COMPLETE-EXPORT-CROSS-CONTROL-DUPLICATE',result:'PASS',simultaneousActivations:2,simultaneousExecutions:1,subsequentBackupExecuted:true});
 }
 let failures=0;
 context.ui.install(async()=>{failures++;throw new Error('Injected storage failure');});

@@ -1065,6 +1065,10 @@ function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction
   ensureShape(project);
   project.job.INPUT_SET_HASH_OR_MANIFEST=intakeCoverageManifest(project).manifestSha256;
   project.job.CURRENT_HASH_REVIEW_ID=deriveArtifactIdentity(project).value.HASH_REVIEW_ID;
+  // Reuse belongs only to the installed gate and continuation owners.
+  // Caller-supplied callbacks may change adjudication inputs during traversal.
+  const sharedProjection=evaluateGate===installed?.gate&&nextAction===installed?.operationalNextAction;
+  const projectStages=()=>{
   let previousComplete=true;
   for(let stage=1;stage<=30;stage++){
     let state=project.stages[stage];
@@ -1091,6 +1095,11 @@ function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction
     project.stages[stage].derivedData=derivedData;
     previousComplete=project.stages[stage].status==='COMPLETE';
   }
+  };
+  // A receipt belongs only to this synchronous traversal. Each gate still
+  // receives fresh mutable shells; exceptions discard every private receipt.
+  if(sharedProjection)withCompletedStageAdjudications(project,()=>withInputScopeEvaluation(projectStages));
+  else projectStages();
   const completed=Object.values(project.stages).filter(state=>state.status==='COMPLETE').length;
   const currentStage=completed===30?30:Math.max(1,Object.values(project.stages).find(state=>state.status!=='COMPLETE')?.number||30);
   const current=project.stages[currentStage];

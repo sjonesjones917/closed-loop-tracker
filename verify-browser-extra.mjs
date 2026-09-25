@@ -519,9 +519,18 @@ async function main(){
     await navigateAndWait(cdp,'Page.reload');await waitExpr(cdp,`closedLoopAppReady===true&&typeof __releaseDiagnostics==='function'`,30000);
     // The actual complete-export and backup handlers must finish while the
     // diagnostic persistence/estimate call is deliberately still unresolved.
-    await evalValue(cdp,`(()=>{const click=HTMLAnchorElement.prototype.click;globalThis.__diagnosticsDownloads=[];HTMLAnchorElement.prototype.click=function(){if(this.download)__diagnosticsDownloads.push(this.download);return click.call(this);};globalThis.__diagnosticsExportsDone=false;Promise.all([document.querySelector('#export-project').onclick(),document.querySelector('#header-backup-project').onclick()]).finally(()=>{HTMLAnchorElement.prototype.click=click;__diagnosticsExportsDone=true;});})()`);
+    await evalValue(cdp,`(()=>{const click=HTMLAnchorElement.prototype.click;globalThis.__diagnosticsDownloads=[];HTMLAnchorElement.prototype.click=function(){if(this.download)__diagnosticsDownloads.push(this.download);return click.call(this);};globalThis.__diagnosticsExportsDone=false;globalThis.__diagnosticsDuplicateIgnored=false;globalThis.__diagnosticsExportError=null;
+      (async()=>{
+        const first=document.querySelector('#export-project').onclick();
+        const duplicate=document.querySelector('#header-backup-project').onclick();
+        await Promise.all([first,duplicate]);
+        __diagnosticsDuplicateIgnored=__diagnosticsDownloads.length===1;
+        // A pending UI operation owns its controls. The second independent
+        // export begins only after it settles; optional health remains pending.
+        await document.querySelector('#header-backup-project').onclick();
+      })().catch(error=>{__diagnosticsExportError=String(error?.message||error);}).finally(()=>{HTMLAnchorElement.prototype.click=click;__diagnosticsExportsDone=true;});})()`);
     await waitExpr(cdp,`__diagnosticsExportsDone===true`,30000);
-    assert(await evalValue(cdp,`__diagnosticsCalls===1&&__diagnosticsDownloads.length===2&&/complete project backup exported/.test(document.querySelector('#app-live-status').textContent)`),'Pending diagnostics stalled an export, duplicated health work or reported export failure.');
+    assert(await evalValue(cdp,`__diagnosticsCalls===1&&__diagnosticsDuplicateIgnored===true&&__diagnosticsExportError===null&&__diagnosticsDownloads.length===2&&/complete project backup exported/.test(document.querySelector('#app-live-status').textContent)`),'DIAGNOSTICS_UI_SEQUENCE_ORACLE: pending diagnostics must not delay successive exports, repeat a pending UI operation, or report export failure.');
     await click(cdp,'[data-view="Project"]');
     await evalValue(cdp,`(async()=>{const input=document.querySelector('[data-job="JOB_TITLE"]');for(let parent=input.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;input.value='Unsaved diagnostic recovery draft';input.focus();input.setSelectionRange(3,11);globalThis.__diagnosticsInput=input;globalThis.__diagnosticsRenders=0;document.addEventListener('closed-loop-rendered',()=>__diagnosticsRenders++);globalThis.__diagnosticsProject=await closedLoopProjectStore.readProject('STARTUP-BROWSER-0');__releaseDiagnostics();})()`);
     await waitExpr(cdp,failHealth?`document.querySelector('#storage-status').textContent==='Storage status unavailable.'`:`/^Storage: (persistent|not persistent)/.test(document.querySelector('#storage-status').textContent)`,30000);

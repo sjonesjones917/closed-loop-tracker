@@ -600,8 +600,8 @@
       "requirementId": "DEF-9",
       "sourceLocation": "Current user task section 8, DEF-9",
       "responsibleProductionCode": {
-        "file": "project-store.js; hash.js",
-        "symbol": "operationalPatches/assertOperationalChange; canonicalChunks key ordering"
+        "file": "project-store.js; hash.js; workflow-engine.js",
+        "symbol": "operationalPatches/assertOperationalChange; canonicalChunks key ordering; recalculate stage projection with withCompletedStageAdjudications and withInputScopeEvaluation"
       },
       "observableExpectedBehavior": "Reproduce and correct: Operation latency is excessive, unmeasured, or unreported.",
       "requiredEvidence": [
@@ -633,7 +633,8 @@
         "Project and record hashing, prompt/context identities, artifact byte comparisons, history snapshots, backups, transaction CAS",
         "Unicode scalar key ordering including supplementary characters and malformed surrogates",
         "Ownership, revision, mixed-version, retained-history, byte-identity fault probes",
-        "Full real-browser operator journey and measured operation distributions"
+        "Full real-browser operator journey and measured operation distributions",
+        "One synchronous installed-gate stage projection reuses only unchanged canonical result/input adjudication; every subsequent calculation or failed retry recomputes it, with custom evaluators outside the reuse contract."
       ],
       "continuedEvidence": {
         "runId": 35494646672,
