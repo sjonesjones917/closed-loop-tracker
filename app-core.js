@@ -313,7 +313,7 @@ async function runNativeStage22Tests(){
   try{
     const staged=[];for(const item of items){const test=engine.records(next,'tests').find(test=>engine.recordId(test,'tests')===item.testId),inputs=await nativeTestInputs(test,next),result=await globalThis.closedLoopTestRuntime.executeTest(test,inputs.artifactPayload,inputs.canonicalPayload,{transferInputBuffers:true});if(result?.status==='EXECUTION_FAILED')throw new Error(`${item.testId}: ${result.failure?.message||'deterministic execution failed'}`);staged.push({testId:item.testId,result,inputArtifacts:inputs.identities});}
     for(const item of staged)engine.recordApplicationDeterministicResult(next,{testId:item.testId,productId,runtimeResult:item.result,inputArtifacts:item.inputArtifacts});
-    await persistReplacement(next,{expectedProjectRevision});announce(`automatic verification complete: ${staged.length} test${staged.length===1?'':'s'} executed`);if(current.job.JOB_ID===jobId)render();
+    await persistReplacement(next,{expectedProjectRevision});announce(`automatic verification complete: ${staged.length} test${staged.length===1?'':'s'} executed`);if(current.job.JOB_ID===jobId){render();focusAfterAction($('#next-required-action'));}
   }catch(error){announce('automatic verification blocked');reportActionFailure(error.existingProjectsUnchanged===false?error:`Automatic verification did not commit any partial result: ${error.message||error}`);}
 }
 async function downloadExecutionPackage(){return exportStageFiles();}

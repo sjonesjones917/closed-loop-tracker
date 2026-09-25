@@ -8,8 +8,12 @@ const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),frame
 function element(id,rect={top:120,bottom:164,left:0,right:300,width:300,height:44}){return {id,tagName:'BUTTON',disabled:false,hidden:false,textContent:'',isConnected:true,parentElement:null,attrs:{},className:'',classList:{add(){},remove(){},contains(){return false;}},getBoundingClientRect:()=>rect,focus(options){calls.push({type:'focus',id,options,disabled:this.disabled});},scrollIntoView(options){calls.push({type:'scroll',id,options});},setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k];},removeAttribute(k){delete this.attrs[k];},querySelector(){return null;}};}
 for(const id of ['project-picker','new-project','import-project','import-file','app','app-operation-status','operation-label','app-live-status','operation-error','save-prompt'])nodes.set('#'+id,element(id));
 nodes.get('#operation-error').tagName='DIV';nodes.get('#operation-error').hidden=true;
-const c=createVerifierRuntime({console,URL,URLSearchParams,Blob,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),innerHeight:852,innerWidth:393,window:{innerHeight:852,innerWidth:393,scrollX:0,scrollY:0},CSS:{escape:value=>value},document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s==='[data-human-answer]'?humanFields:[...nodes.values()].filter(x=>x.tagName==='BUTTON'),dispatchEvent(){}}});
-vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`globalThis.ui={answers:async()=>{const previous={current,ingestion};current={projectData:{humanInputRequests:[]}};ingestion={answerHumanInput(){throw Object.assign(new Error('Correct the required answer.'),{requestId:'REQUIRED-ANSWER'});}};try{await saveHumanAnswers();}finally{({current,ingestion}=previous);}},capture:fn=>{captureCurrentView=fn;},focus:focusAfterAction,run:runOperatorAction,fail:reportActionFailure,announce,retry:async()=>{const previous={current,savePromptRecord,render,selectedOperation};current={job:{JOB_ID:'FOCUS-DISPOSABLE'},activeStage:1};savePromptRecord=async()=>{};render=()=>{};selectedOperation=()=> 'COMPLETE';try{await prepareReplacementAttempt();await Promise.resolve();}finally{({current,savePromptRecord,render,selectedOperation}=previous);}},accept:async()=>{const previous={current,recordMobileOperation,render,replacementReview};current={job:{JOB_ID:'FOCUS-ACCEPT',CURRENT_STAGE:'STAGE 01'},activeStage:1,activeView:'Workflow',projectData:{generatedPrompts:[]},stages:{1:{gate:{complete:false}}}};recordMobileOperation=async()=>{};render=()=>{};replacementReview={};try{await finishAcceptedProposal({proposalId:'P1',rawResponseId:'R1',stage:1,continuationInstructionId:null});}finally{({current,recordMobileOperation,render,replacementReview}=previous);}}};})();`,c,{filename:'app-core.js'});
+const c=createVerifierRuntime({console,Event,dispatchEvent(){},URL,URLSearchParams,Blob,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),innerHeight:852,innerWidth:393,window:{innerHeight:852,innerWidth:393,scrollX:0,scrollY:0},CSS:{escape:value=>value},document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s==='[data-human-answer]'?humanFields:[...nodes.values()].filter(x=>x.tagName==='BUTTON'),dispatchEvent(){}}});
+vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`globalThis.ui={native:async fixture=>{
+ const previous={current,engine,nativeStage22Tests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
+ current=fixture.project;engine=fixture.engine;nativeStage22Tests=()=>fixture.items;nativeTestInputs=fixture.inputs;persistReplacement=async next=>{await fixture.commit(next);current=next;};render=fixture.render;globalThis.closedLoopTestRuntime=fixture.runtime;
+ try{return await runNativeStage22Tests();}finally{({current,engine,nativeStage22Tests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
+},answers:async()=>{const previous={current,ingestion};current={projectData:{humanInputRequests:[]}};ingestion={answerHumanInput(){throw Object.assign(new Error('Correct the required answer.'),{requestId:'REQUIRED-ANSWER'});}};try{await saveHumanAnswers();}finally{({current,ingestion}=previous);}},capture:fn=>{captureCurrentView=fn;},focus:focusAfterAction,run:runOperatorAction,fail:reportActionFailure,announce,retry:async()=>{const previous={current,savePromptRecord,render,selectedOperation};current={job:{JOB_ID:'FOCUS-DISPOSABLE'},activeStage:1};savePromptRecord=async()=>{};render=()=>{};selectedOperation=()=> 'COMPLETE';try{await prepareReplacementAttempt();await Promise.resolve();}finally{({current,savePromptRecord,render,selectedOperation}=previous);}},accept:async()=>{const previous={current,recordMobileOperation,render,replacementReview};current={job:{JOB_ID:'FOCUS-ACCEPT',CURRENT_STAGE:'STAGE 01'},activeStage:1,activeView:'Workflow',projectData:{generatedPrompts:[]},stages:{1:{gate:{complete:false}}}};recordMobileOperation=async()=>{};render=()=>{};replacementReview={};try{await finishAcceptedProposal({proposalId:'P1',rawResponseId:'R1',stage:1,continuationInstructionId:null});}finally{({current,recordMobileOperation,render,replacementReview}=previous);}}};})();`,c,{filename:'app-core.js'});
 async function paint(){for(let i=0;i<3;i++){frames.splice(0).forEach(fn=>fn());await Promise.resolve();}}
 const target=element('visible-next-control');c.ui.focus(target);
 assert.deepEqual(calls.filter(x=>x.type==='scroll'),[],'FOCUS_VISIBLE_ORACLE: an already visible next action must not scroll.');
@@ -132,6 +136,44 @@ try{
  cases.push({caseId:'FOCUS-HUMAN-ANSWER-ERROR-CALLER',result:'PASS'});
 }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-HUMAN-ANSWER-ERROR-CALLER',result:'FAIL',error:String(error.stack||error)});}
 finally{humanFields=[];nodes.delete('[data-human-answer="REQUIRED-ANSWER"]');calls.length=0;}
+// Native application results bypass external proposal acceptance. Their own
+// committed completion must nevertheless expose the resulting next action,
+// after the worker, required persistence, unlocking, and later layout frames.
+// State shape comes from the authoritative blank-state builder; runtime and
+// storage completion are held here to isolate the production UI authority.
+for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(file,'utf8'),c,{filename:file});
+for(const count of [1,3])for(const outcome of ['success','runtime-failure','commit-failure']){
+ frames.length=0;calls.length=0;
+ const project=c.closedLoopCore.createBlankState('NATIVE-FOCUS-'+count+'-'+outcome);
+ const rect={top:920,bottom:1121,width:373,height:201},next=element('next-required-action',rect);next.tagName='DIV';nodes.set('#next-required-action',next);
+ next.scrollIntoView=options=>{calls.push({type:'scroll',id:next.id,options});const distance=Math.max(0,rect.bottom-c.innerHeight);rect.top-=distance;rect.bottom-=distance;};
+ c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:next.id,options});rect.top-=options.top;rect.bottom-=options.top;};
+ let releaseWorker,releaseCommit,executed=0,commits=0,renders=0,recorded=0;
+ const worker=new Promise(resolve=>releaseWorker=resolve),commit=new Promise(resolve=>releaseCommit=resolve);
+ const items=Array.from({length:count},(_,i)=>({testId:'NATIVE-'+i}));
+ const fixture={project,items,engine:{records:()=>items,recordId:item=>item.testId,recordApplicationDeterministicResult(){recorded++;}},inputs:async()=>({artifactPayload:{},canonicalPayload:{},identities:[]}),runtime:{async executeTest(){executed++;await worker;return outcome==='runtime-failure'?{status:'EXECUTION_FAILED',failure:{message:'Injected runtime failure'}}:{status:'COMPLETE',determination:'SATISFIED'};}},async commit(){commits++;await commit;if(outcome==='commit-failure')throw new Error('Injected checkpoint failure');},render(){renders++;}};
+ try{
+  c.ui.capture(async()=>{});
+  const operation=c.ui.run('Running registered application tests',()=>c.ui.native(fixture));await paint();
+  assert.equal(calls.some(x=>x.type==='focus'&&x.id===next.id),false,'Native-result placement cannot precede execution.');
+  releaseWorker();for(let i=0;i<24;i++)await Promise.resolve();await paint();
+  if(outcome!=='runtime-failure')assert.equal(calls.some(x=>x.type==='focus'&&x.id===next.id),false,'Native-result placement cannot precede its required commit.');
+  releaseCommit();await operation;
+  if(outcome==='success'){
+   // Geometry changes after the first post-completion placement frame.
+   frames.splice(0).forEach(fn=>fn());await Promise.resolve();rect.top=651.21875;rect.bottom=852.21875;await paint();
+   assert.equal(renders,1);assert.equal(commits,1);assert.equal(recorded,count);assert.equal(executed,count);
+   assert.equal(calls.filter(x=>x.type==='focus').at(-1)?.id,next.id,'NATIVE_RESULT_NEXT_ACTION_ORACLE: committed native results must expose the required next action.');
+   assert.ok(rect.top>=0&&rect.bottom<=c.innerHeight,'NATIVE_RESULT_NEXT_ACTION_ORACLE: the next action must remain visible after layout settles.');
+   assert.ok(calls.filter(x=>x.type==='residual-scroll').every(x=>x.options.top>=0),'Native-result forward progress cannot move upward.');
+  }else{
+   await paint();assert.equal(renders,0);assert.equal(calls.filter(x=>x.type==='focus').at(-1)?.id,'operation-error','A failed native operation must expose recovery, not successful next-action feedback.');
+   assert.equal(commits,outcome==='runtime-failure'?0:1);
+  }
+  cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',count,outcome,result:'PASS',actualBrowser:false,executed,commits,renders});
+ }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',count,outcome,result:'FAIL',error:String(error.stack||error)});}
+ finally{releaseWorker();releaseCommit();frames.length=0;calls.length=0;nodes.delete('#next-required-action');delete c.window.scrollBy;}
+}
 c.ui.fail(new Error('Disposable storage failure'));assert.equal(nodes.get('#operation-error').hidden,false,'OPERATION_ERROR_ORACLE: a failed operation must have a visible report independent of optional tutorial content.');assert.equal(nodes.get('#operation-error').textContent,'Disposable storage failure');assert.equal(nodes.get('#app-live-status').textContent,'Disposable storage failure');c.ui.announce('Retry started');assert.equal(nodes.get('#operation-error').hidden,true);cases.push({caseId:'FOCUS-VISIBLE-FAILURE-AND-RETRY',result:'PASS'});
 console.log(JSON.stringify({schema:'closed-loop-focus-observations/1',productionSourceSha256:createHash('sha256').update(source).digest('hex'),synthetic:true,actualBrowser:false,scope:'Production focus and shared operation lifecycle with controlled geometry/frame boundaries. These cases do not establish physical device acceptance or every cross-stage forward-scroll postcondition.',cases},null,2));
 
