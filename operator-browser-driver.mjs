@@ -26,7 +26,7 @@ async function until(read,description,timeout=90000){
     while(true){
       requireActive();
       try{const value=await read();requireActive();if(value)return value;}
-      catch(error){requireActive();last=error;}
+      catch(error){requireActive();if(error.verifierTerminal===true)throw error;last=error;}
       await new Promise(resolve=>{retryTimer=setTimeout(resolve,80);});
     }
   },description,timeout);}
@@ -37,25 +37,48 @@ async function until(read,description,timeout=90000){
 // CDP can acknowledge navigation while the previous document is still ready.
 export function createBrowserReadiness(cdp,evaluate,{timeout=90000,wait=until}={}){
   const interactive=`globalThis.closedLoopAppReady===true&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true'`;
-  async function idle({allowStartupFailure=false}={}){return wait(()=>evaluate(allowStartupFailure?`(${interactive})||Boolean(globalThis.closedLoopAppError)`:interactive),'The application did not become interactive',timeout);}
+  const snapshot=`({ready:Boolean(${interactive}),error:globalThis.closedLoopAppError?String(globalThis.closedLoopAppError):null,documentState:document.readyState,url:location.href,appPresent:Boolean(document.querySelector('#app')),appInert:Boolean(document.querySelector('#app')?.hasAttribute('inert')),appBusy:document.querySelector('#app')?.getAttribute('aria-busy')||null,recoveryMessage:document.querySelector('#startup-detail')?.textContent||document.querySelector('#storage-status')?.textContent||''})`;
+  const failure=(error,trace)=>{if(error&&typeof error==='object')error.verifierObservation={...trace};return error;};
+  async function idle({allowStartupFailure=false,__trace=null}={}){
+    const trace=__trace||{lastCompletedPhase:'NONE'};trace.phase='WAIT_INTERACTIVE';
+    try{return await wait(async()=>{
+      const observed=await evaluate(snapshot);
+      // Boolean observations remain supported by the existing injected wait
+      // adapters. Real CDP evaluations return the complete document snapshot.
+      trace.startup=observed;
+      if(observed?.error){
+        if(allowStartupFailure)return true;
+        throw Object.assign(new Error('Application startup failed: '+observed.error),{code:'BROWSER_STARTUP_FAILED',verifierTerminal:true});
+      }
+      return observed===true||observed?.ready===true;
+    },'The application did not become interactive',timeout);}
+    catch(error){throw failure(error,trace);}
+  }
   async function navigate(method,params={},options={}){
-    return verifierDeadline(async requireActive=>{
+    const trace={method,phase:'READ_PREVIOUS_DOCUMENT',lastCompletedPhase:'NONE'};
+    options={...options,__trace:trace};
+    try{return await verifierDeadline(async requireActive=>{
     const previous=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;
     requireActive();
+    trace.previousLoader=previous;trace.lastCompletedPhase='READ_PREVIOUS_DOCUMENT';trace.phase='REQUEST_NAVIGATION';
     const result=await cdp.send(method,params);
     requireActive();
+    trace.lastCompletedPhase='REQUEST_NAVIGATION';trace.phase='WAIT_DESTINATION_DOCUMENT';trace.requestedLoader=result.loaderId||null;
     if(result.errorText)throw new Error(result.errorText);
-    await wait(async()=>{requireActive();const destination=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;requireActive();return Boolean(destination&&destination!==previous&&(!result.loaderId||destination===result.loaderId));},'The destination document did not arrive',timeout);
-    requireActive();if(options.waitForInteractive!==false)await idle(options);
-    },'The destination navigation did not complete',timeout);
+    await wait(async()=>{requireActive();const destination=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;requireActive();trace.destinationLoader=destination;return Boolean(destination&&destination!==previous&&(!result.loaderId||destination===result.loaderId));},'The destination document did not arrive',timeout);
+    requireActive();trace.lastCompletedPhase='DESTINATION_DOCUMENT';if(options.waitForInteractive!==false)await idle(options);
+    },'The destination navigation did not complete',timeout);}
+    catch(error){throw failure(error,trace);}
   }
   async function restoreEntry(entryId){
-    return verifierDeadline(async requireActive=>{
+    const trace={entryId,phase:'REQUEST_HISTORY',lastCompletedPhase:'NONE'};
+    try{return await verifierDeadline(async requireActive=>{
     await cdp.send('Page.navigateToHistoryEntry',{entryId});
-    requireActive();
-    await wait(async()=>{requireActive();const state=await cdp.send('Page.getNavigationHistory');requireActive();return state.entries[state.currentIndex]?.id===entryId;},'The destination history entry did not arrive',timeout);
-    requireActive();await idle();
-    },'The destination history traversal did not complete',timeout);
+    requireActive();trace.lastCompletedPhase='REQUEST_HISTORY';trace.phase='WAIT_HISTORY_DESTINATION';
+    await wait(async()=>{requireActive();const state=await cdp.send('Page.getNavigationHistory');requireActive();trace.destinationEntry=state.entries[state.currentIndex]?.id;return trace.destinationEntry===entryId;},'The destination history entry did not arrive',timeout);
+    requireActive();trace.lastCompletedPhase='HISTORY_DESTINATION';await idle({__trace:trace});
+    },'The destination history traversal did not complete',timeout);}
+    catch(error){throw failure(error,trace);}
   }
   return {idle,navigate,restoreEntry};
 }

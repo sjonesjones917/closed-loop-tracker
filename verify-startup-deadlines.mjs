@@ -126,7 +126,7 @@ await check('IO-STARTUP-CORE','An app script with an unavailable prerequisite st
 // failures. The outer watchdog observes a missing timeout without hanging CI.
 async function boundedObservation(operation){
  let timer;
- try{return await Promise.race([operation.then(value=>({outcome:'PASS',value}),error=>({outcome:error.code==='VERIFIER_TIMEOUT'?'TIMEOUT':'FAIL',code:error.code,message:error.message})),new Promise(resolve=>{timer=setTimeout(()=>resolve({outcome:'UNSETTLED'}),100);})]);}
+ try{return await Promise.race([operation.then(value=>({outcome:'PASS',value}),error=>({outcome:error.code==='VERIFIER_TIMEOUT'?'TIMEOUT':'FAIL',code:error.code,message:error.message,observation:error.verifierObservation})),new Promise(resolve=>{timer=setTimeout(()=>resolve({outcome:'UNSETTLED'}),100);})]);}
  finally{clearTimeout(timer);}
 }
 await check('VERIFIER-BOUNDED-READ','A pending browser observation terminates as TIMEOUT at its declared gate budget; a late answer cannot turn it into success or start another read.',async()=>{
@@ -148,8 +148,34 @@ await check('VERIFIER-BOUNDED-NAVIGATION','A pending destination lookup or navig
   const outcome=await boundedObservation(operation),callsAtTimeout=[...calls];release({frameTree:{frame:{loaderId:'previous'}},loaderId:'destination'});await flush();
   assert.equal(outcome.outcome,'TIMEOUT','VERIFIER_NAVIGATION_DEADLINE_ORACLE: '+heldMethod+' escaped its gate deadline');
   assert.deepEqual(calls,callsAtTimeout,'VERIFIER_NAVIGATION_DEADLINE_ORACLE: a late answer started further navigation work');
+  const expectedPhase=heldMethod==='Page.getFrameTree'?'READ_PREVIOUS_DOCUMENT':heldMethod==='Page.navigate'?'REQUEST_NAVIGATION':'REQUEST_HISTORY';
+  assert.equal(outcome.observation?.phase,expectedPhase,'VERIFIER_FAILURE_PHASE_ORACLE: timeout must identify the unresolved browser phase');
+  assert.equal(outcome.observation?.lastCompletedPhase,heldMethod==='Page.navigate'?'READ_PREVIOUS_DOCUMENT':'NONE','VERIFIER_FAILURE_PHASE_ORACLE: preserve the last completed phase');
   observations.push({heldMethod,outcome,calls,disposableBudgetMs:20,outerWatchdogMs:100});
  }
+ for(const phase of ['WAIT_DESTINATION_DOCUMENT','WAIT_HISTORY_DESTINATION','WAIT_INTERACTIVE']){
+  let release,frames=0;const pending=new Promise(resolve=>{release=resolve;}),calls=[];
+  const cdp={async send(method){calls.push(method);if(method==='Page.getFrameTree'){frames++;return phase==='WAIT_DESTINATION_DOCUMENT'&&frames>1?pending:{frameTree:{frame:{loaderId:frames===1?'previous':'destination'}}};}if(method==='Page.getNavigationHistory')return pending;return {};}};
+  const readiness=readinessFactory(cdp,async()=>pending,{timeout:20});
+  const operation=phase==='WAIT_HISTORY_DESTINATION'?readiness.restoreEntry(7):readiness.navigate('Page.reload');
+  const outcome=await boundedObservation(operation),callsAtTimeout=[...calls];release(phase==='WAIT_HISTORY_DESTINATION'?{entries:[{id:7}],currentIndex:0}:phase==='WAIT_DESTINATION_DOCUMENT'?{frameTree:{frame:{loaderId:'destination'}}}:true);await flush();
+  assert.equal(outcome.outcome,'TIMEOUT','VERIFIER_NAVIGATION_DEADLINE_ORACLE');
+  assert.equal(outcome.observation?.phase,phase,'VERIFIER_FAILURE_PHASE_ORACLE');
+  assert.equal(outcome.observation?.lastCompletedPhase,phase==='WAIT_HISTORY_DESTINATION'?'REQUEST_HISTORY':phase==='WAIT_INTERACTIVE'?'DESTINATION_DOCUMENT':'REQUEST_NAVIGATION','VERIFIER_FAILURE_PHASE_ORACLE');
+  assert.deepEqual(calls,callsAtTimeout,'VERIFIER_NAVIGATION_DEADLINE_ORACLE');observations.push({phase,outcome,calls});
+ }
  return observations;
+});
+await check('VERIFIER-STARTUP-FAILURE-EVIDENCE','An observed startup failure fails the gate with its actual state and recovery message; it must not become an unexplained timeout. Explicit failure observation remains available and a corrected startup progresses.',async()=>{
+ const e=environment({loadError:'Controlled IndexedDB upgrade is blocked. Close other application tabs, then reload.'});e.run();await flush();e.context.document.readyState='complete';
+ const evaluate=async expression=>vm.runInContext(expression,e.context),readiness=readinessFactory({},evaluate,{timeout:20});
+ const failed=await boundedObservation(readiness.idle());
+ assert.equal(failed.code,'BROWSER_STARTUP_FAILED','VERIFIER_STARTUP_FAILURE_EVIDENCE_ORACLE: a visible startup error must retain its cause instead of timing out');
+ assert.match(failed.observation?.startup?.error||'',/Controlled IndexedDB upgrade is blocked/,'VERIFIER_STARTUP_FAILURE_EVIDENCE_ORACLE');
+ assert.equal(failed.observation?.phase,'WAIT_INTERACTIVE','VERIFIER_FAILURE_PHASE_ORACLE');
+ assert.equal(await readiness.idle({allowStartupFailure:true}),true,'Deliberate blocked-startup observation must remain possible');
+ const valid=environment();valid.run();await flush();valid.context.document.readyState='complete';
+ assert.equal(await readinessFactory({},async expression=>vm.runInContext(expression,valid.context),{timeout:20}).idle(),true,'Corrected startup must progress');
+ return {failed,explicitFailureObservation:'PASS',correctedStartup:'PASS',syntheticDocument:true};
 });
 if(!cases.length)throw new Error('No selected startup cases');console.log(JSON.stringify({schema:'closed-loop-startup-deadlines/1',syntheticDom:true,controlledLoadBoundary:true,physicalBrowser:false,appSha256:crypto.createHash('sha256').update(appSource).digest('hex'),htmlSha256:crypto.createHash('sha256').update(html).digest('hex'),cases},null,2));if(cases.some(x=>x.status!=='PASS'))process.exitCode=1;
