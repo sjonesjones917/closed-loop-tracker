@@ -21,7 +21,8 @@
         "Affected downstream browser/recovery verification where applicable",
         "Finalized operator-action focus is deferred until controls unlock and remains authoritative through settled layout geometry",
         "verify-workflow-focus.mjs exercises error-target precedence, post-unlock placement and subsequent layout phases; verify-browser-extra.mjs asserts actual viewport/focus after settled invalid-input and committed-import paths.",
-        "FOCUS-NATIVE-RESULT-COMPLETION executes runNativeStage22Tests through runOperatorAction with held worker and persistence boundaries, success/failure and later-frame geometry; IO-MUT-NATIVE-RESULT-NEXT-ACTION must detect removal of committed-result placement. Existing complete operator journey retains real-browser acceptance."
+        "FOCUS-NATIVE-RESULT-COMPLETION executes runNativeStage22Tests through runOperatorAction with held worker and persistence boundaries, success/failure and later-frame geometry; IO-MUT-NATIVE-RESULT-NEXT-ACTION must detect removal of committed-result placement. Existing complete operator journey retains real-browser acceptance.",
+        "verify-delivery-transfer-boundary.mjs asserts the saved and rendered continuation, required delivery controls, retained-version immutability and no duplicate transfer. DELIVERY_NEXT_ACTION_ORACLE and DELIVERY_RENDERED_ACTION_ORACLE detect targeted premature-completion and stale-cache faults. Real-browser control visibility and settled geometry remain required in the existing complete operator journey."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -40,6 +41,20 @@
           "post-unlock and later-frame layout"
         ],
         "scope": "UI completion placement; native test execution, result authority, storage and history semantics remain governed by their existing production owners and downstream gates."
+      },
+      "deliveryContinuationDependencyClosure": {
+        "authority": "workflow-engine.js:recalculate -> installed operationalNextAction/next -> app-core.js:currentNextAction/displayedStageAction/nextActionMarkup/deliveryObservationMarkup",
+        "membershipProof": "Every recalculate projection delegates to its installed or explicit continuation callback. The canonical selected-stage UI reads the same policy directly, as other selected stages already do; it does not trust an obsolete retained action. Delivery controls apply when the actual current authorized transfer lacks attributable receipt evidence, including after the final stage gate passes.",
+        "operationClasses": [
+          "initial PENDING/SUCCEEDED/FAILED/UNKNOWN transfer receipt",
+          "appended SUCCEEDED/FAILED/UNKNOWN completion",
+          "attributed RECEIVED/NOT_RECEIVED/UNKNOWN observation",
+          "reload",
+          "retained version with obsolete action projection",
+          "restoration before transfer, after transfer and after observation",
+          "retry with retained external-transfer allowance"
+        ],
+        "scope": "Current action derivation and display; no change to stage completion rules, delivery authorization, receipt evidence basis, immutable recovery data, or physical-device acceptance."
       }
     },
     {
@@ -55,7 +70,8 @@
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
         "Affected downstream browser/recovery verification where applicable",
-        "FOCUS-NATIVE-RESULT-COMPLETION executes runNativeStage22Tests through runOperatorAction with held worker and persistence boundaries, success/failure and later-frame geometry; IO-MUT-NATIVE-RESULT-NEXT-ACTION must detect removal of committed-result placement. Existing complete operator journey retains real-browser acceptance."
+        "FOCUS-NATIVE-RESULT-COMPLETION executes runNativeStage22Tests through runOperatorAction with held worker and persistence boundaries, success/failure and later-frame geometry; IO-MUT-NATIVE-RESULT-NEXT-ACTION must detect removal of committed-result placement. Existing complete operator journey retains real-browser acceptance.",
+        "verify-delivery-transfer-boundary.mjs asserts the saved and rendered continuation, required delivery controls, retained-version immutability and no duplicate transfer. DELIVERY_NEXT_ACTION_ORACLE and DELIVERY_RENDERED_ACTION_ORACLE detect targeted premature-completion and stale-cache faults. Real-browser control visibility and settled geometry remain required in the existing complete operator journey."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -74,6 +90,20 @@
           "post-unlock and later-frame layout"
         ],
         "scope": "UI completion placement; native test execution, result authority, storage and history semantics remain governed by their existing production owners and downstream gates."
+      },
+      "deliveryContinuationDependencyClosure": {
+        "authority": "workflow-engine.js:recalculate -> installed operationalNextAction/next -> app-core.js:currentNextAction/displayedStageAction/nextActionMarkup/deliveryObservationMarkup",
+        "membershipProof": "Every recalculate projection delegates to its installed or explicit continuation callback. The canonical selected-stage UI reads the same policy directly, as other selected stages already do; it does not trust an obsolete retained action. Delivery controls apply when the actual current authorized transfer lacks attributable receipt evidence, including after the final stage gate passes.",
+        "operationClasses": [
+          "initial PENDING/SUCCEEDED/FAILED/UNKNOWN transfer receipt",
+          "appended SUCCEEDED/FAILED/UNKNOWN completion",
+          "attributed RECEIVED/NOT_RECEIVED/UNKNOWN observation",
+          "reload",
+          "retained version with obsolete action projection",
+          "restoration before transfer, after transfer and after observation",
+          "retry with retained external-transfer allowance"
+        ],
+        "scope": "Current action derivation and display; no change to stage completion rules, delivery authorization, receipt evidence basis, immutable recovery data, or physical-device acceptance."
       }
     },
     {

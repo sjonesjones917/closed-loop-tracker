@@ -13,14 +13,26 @@ const engine=globalThis.closedLoopWorkflowEngine,h=globalThis.closedLoopHash;
 const source=fs.readFileSync('verify-full-cycle.mjs','utf8'),anchor=source.indexOf('engine.recordDeliveryAttempt(p');
 assert.ok(anchor>0);
 const capture=path.join(os.tmpdir(),`delivery-transfer-${process.pid}.json`),script=path.resolve(`.delivery-transfer-${process.pid}.mjs`);
-fs.writeFileSync(script,source.slice(0,anchor)+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify(p));process.exit(0);`);
-let fixture;
-try{execFileSync(process.execPath,[script],{stdio:'pipe',timeout:480000,maxBuffer:64*1024*1024});fixture=JSON.parse(fs.readFileSync(capture,'utf8'));}
+// Capture historical context bytes when their authoritative producer creates
+// each instruction. They cannot be regenerated from a later project version.
+const captureContext=`
+const retainedContextFiles=new Map(),fixturePromptOwner=globalThis.closedLoopPromptEngine;
+function retainContext(record,project){for(const file of fixturePromptOwner.materializePromptContextFiles(record,project))retainedContextFiles.set(file.sha256,file);}
+globalThis.closedLoopPromptEngine=Object.freeze({...fixturePromptOwner,
+  buildPromptRecord(...args){const record=fixturePromptOwner.buildPromptRecord(...args);retainContext(record,args[0]);return record;},
+  reserveAndBuildPromptRecord(...args){const result=fixturePromptOwner.reserveAndBuildPromptRecord(...args);retainContext(result.prompt,args[0]);return result;}
+});
+`;
+const fixturePrefix=source.slice(0,anchor).replace('const core=globalThis.closedLoopCore',captureContext+'const core=globalThis.closedLoopCore');
+assert.ok(fixturePrefix.includes(captureContext),'The lifecycle fixture must capture context at generation time.');
+fs.writeFileSync(script,fixturePrefix+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,files:[candidateBytes,productBytes].map(bytes=>Array.from(bytes)),contextFiles:[...retainedContextFiles.values()]}));process.exit(0);`);
+let fixture,fixtureFiles,fixtureContextFiles;
+try{execFileSync(process.execPath,[script],{stdio:'pipe',timeout:480000,maxBuffer:64*1024*1024});const generated=JSON.parse(fs.readFileSync(capture,'utf8'));fixture=generated.project;fixtureFiles=generated.files;fixtureContextFiles=generated.contextFiles;}
 finally{fs.rmSync(script,{force:true});fs.rmSync(capture,{force:true});}
 const value=engine.recordValue,id=(r,c)=>engine.recordId(r,c),fresh=()=>structuredClone(fixture),cases=[],faults=[];
 const deliveryId=p=>id(engine.recordsForCurrentScope(p,'deliveryRecords').at(-1),'deliveryRecords');
 const attempt=(p,options={})=>engine.recordDeliveryAttempt(p,{deliveryId:deliveryId(p),commandId:'CONTROLLED-TRANSFER-1',...options});
-function check(name,run){process.stderr.write('delivery: '+name+'\n');try{run();cases.push({name,result:'PASS'});}catch(error){cases.push({name,result:'FAIL',message:error.message});}process.stderr.write('delivery: '+cases.at(-1).result+' '+name+'\n');}
+function check(name,run){process.stderr.write('delivery: '+name+'\n');try{run();cases.push({name,result:'PASS'});}catch(error){cases.push({name,result:'FAIL',message:error.message,underlying:error.actual?.message||null,stack:error.stack});}process.stderr.write('delivery: '+cases.at(-1).result+' '+name+'\n');}
 
 // A valid authorized project must be able to retain its application-owned
 // transfer receipt before the browser side effect. Use the persistence
@@ -33,17 +45,30 @@ function receiptPersistenceOracle(runtimeEngine,runtimeStore,copy=structuredClon
     const p=copy(control),first=runtimeEngine.recordDeliveryAttempt(p,{commandId:'CONTROLLED-TRANSFER-1',result});runtimeEngine.recalculate(p);
     const integrity=runtimeStore.validateProjectIntegrity(p);
     assert.equal(integrity.valid,true,'DELIVERY_RECEIPT_PERSISTENCE_ORACLE: '+result+': '+integrity.issues.join(' | '));
-    assert.equal(runtimeEngine.deliveryTransferPrecondition(p).deliveryId,deliveryId(p),'A receipt must not invalidate its own delivery authorization.');
+    const expectedAction=result==='FAILED'?'EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS':'RECORD_DELIVERY_EVIDENCE';
+    assert.equal(p.job.NEXT_REQUIRED_ACTION.actionType,expectedAction,'DELIVERY_NEXT_ACTION_ORACLE: the stored next action must retain the required operation after '+result+'.');
+    const authorizedId=runtimeEngine.recordId(runtimeEngine.recordsForCurrentScope(p,'deliveryRecords').at(-1),'deliveryRecords');
+    assert.equal(runtimeEngine.deliveryTransferPrecondition(p).deliveryId,authorizedId,'A receipt must not invalidate its own delivery authorization.');
     if(result==='PENDING')for(const outcome of ['SUCCEEDED','FAILED','UNKNOWN']){
       const completed=copy(p),before=JSON.stringify(first),receipt=runtimeEngine.completeDeliveryAttempt(completed,{attemptId:id(first,'deliveryAttempts'),result:outcome});runtimeEngine.recalculate(completed);
       const final=runtimeStore.validateProjectIntegrity(completed);
       assert.equal(final.valid,true,'DELIVERY_RECEIPT_PERSISTENCE_ORACLE: '+outcome+' completion: '+final.issues.join(' | '));
+      assert.equal(completed.job.NEXT_REQUIRED_ACTION.actionType,outcome==='FAILED'?'EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS':'RECORD_DELIVERY_EVIDENCE','DELIVERY_NEXT_ACTION_ORACLE: a completed transfer must retain its evidence operation after '+outcome+'.');
       assert.equal(JSON.stringify(completed.projectData.deliveryAttempts[0]),before,'Completion mutated the retained initial receipt.');
       assert.equal(value(receipt,'PREVIOUS_ATTEMPT_ID'),id(first,'deliveryAttempts'),'Completion lost its exact predecessor.');
     }
   }
 }
 check('authorized transfer receipts remain durably valid through every result',()=>receiptPersistenceOracle(engine,globalThis.closedLoopProjectStore));
+check('the continuation oracle detects premature completion after the final stage gate',()=>{
+  const source=fs.readFileSync('workflow-engine.js','utf8'),before='project.job.NEXT_REQUIRED_ACTION=nextAction(project,currentStage);';
+  assert.equal(source.split(before).length-1,1,'The continuation fault must alter exactly one projection owner.');
+  const injected=source.replace(before,"project.job.NEXT_REQUIRED_ACTION=completed===30?actionEnvelope(project,currentStage,{actionType:'COMPLETE',heading:'Workflow complete',explanation:'Preserve the completed workflow and exact release evidence.',primaryButton:null}):nextAction(project,currentStage);");
+  const fault=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':injected}});
+  assert.throws(()=>receiptPersistenceOracle(fault.engine,fault.store,fault.copy),/DELIVERY_NEXT_ACTION_ORACLE: a completed transfer.*SUCCEEDED/,'DELIVERY_NEXT_ACTION_FAULT_ORACLE: premature completion was not detected.');
+  assert.equal(fs.readFileSync('workflow-engine.js','utf8'),source);
+  faults.push({faultId:'DELIVERY-PREMATURE-TERMINAL-COMPLETION',file:'workflow-engine.js',originalSha256:h.sha256Text(source),injectedSha256:h.sha256Text(injected),caughtBy:'DELIVERY_NEXT_ACTION_ORACLE',result:'DETECTED',sourceRestored:true});
+});
 check('the persistence oracle detects an invalid initial receipt and preserves strict reference validation',()=>{
   const source=fs.readFileSync('workflow-engine.js','utf8'),before='COMMAND_ID:commandId,HUMAN_DELIVERY_AUTHORIZATION_ID:intentId';
   assert.equal(source.split(before).length-1,1,'The receipt fault must alter exactly one constructor.');
@@ -76,13 +101,112 @@ check('a negative or uncertain human outcome does not establish delivery',()=>{f
 // Execute the real UI transfer function. The disposable store is the fault
 // boundary here; this evidence does not claim actual browser file transport.
 const appSource=fs.readFileSync('app-core.js','utf8');
+function actionView(project,source=appSource){
+  const api={project,engine,schema:globalThis.closedLoopWorkflowSchema,core:globalThis.closedLoopCore};
+  const context=createVerifierRuntime({api,console,URL,Blob,crypto:globalThis.crypto,structuredClone:value=>structuredClone(value),document:{currentScript:null,querySelector:()=>({value:'',focus(){},setAttribute(){},removeAttribute(){},addEventListener(){}})}});
+  vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
+    engine=api.engine;schema=api.schema;core=api.core;current=api.project;
+    globalThis.actionView={action:displayedStageAction(current.activeStage),html:nextActionMarkup(true,current.activeStage)};
+  })();`,context);
+  return context.actionView;
+}
+function deliveryViewOracle(project,expected='RECORD_DELIVERY_EVIDENCE',source=appSource){
+  const before=structuredClone(project),view=actionView(project,source);
+  assert.equal(view.action.actionType,expected,'DELIVERY_RENDERED_ACTION_ORACLE: the selected version must expose its actual remaining operation.');
+  for(const control of ['delivery-observed-outcome','delivery-observation','record-delivery-evidence'])assert.equal(view.html.includes('id="'+control+'"'),expected==='RECORD_DELIVERY_EVIDENCE','DELIVERY_RENDERED_ACTION_ORACLE: the required delivery control is missing or incorrectly retained: '+control);
+  assert.deepEqual(project,before,'Displaying a retained version must not rewrite its canonical data or saved projection.');
+}
+check('retained successful transfer exposes its required observation despite an obsolete saved action',()=>{
+  const p=fresh();p.activeStage=globalThis.closedLoopWorkflowSchema.STAGE_COUNT;attempt(p,{result:'SUCCEEDED'});engine.recalculate(p);
+  // Obsolete completion classification emitted by the pre-repair kernel.
+  // Retained versions must remain immutable while current controls derive from
+  // that version's actual transfer and evidence records.
+  p.job.NEXT_REQUIRED_ACTION={...p.job.NEXT_REQUIRED_ACTION,actionType:'COMPLETE',primaryButton:null};
+  deliveryViewOracle(p);
+});
+check('the rendered-action oracle rejects trusting an obsolete retained projection',()=>{
+  const p=fresh();p.activeStage=globalThis.closedLoopWorkflowSchema.STAGE_COUNT;attempt(p,{result:'SUCCEEDED'});engine.recalculate(p);
+  p.job.NEXT_REQUIRED_ACTION={...p.job.NEXT_REQUIRED_ACTION,actionType:'COMPLETE',primaryButton:null};
+  const before='return engine.operationalNextAction(current,canonicalCurrentStage());';
+  assert.equal(appSource.split(before).length-1,1,'The retained-action fault must alter exactly one display owner.');
+  const injected=appSource.replace(before,'return current.job.NEXT_REQUIRED_ACTION;');
+  assert.throws(()=>deliveryViewOracle(p,'RECORD_DELIVERY_EVIDENCE',injected),/DELIVERY_RENDERED_ACTION_ORACLE/);
+  deliveryViewOracle(p);
+  assert.equal(fs.readFileSync('app-core.js','utf8'),appSource);
+  faults.push({faultId:'DELIVERY-TRUST-OBSOLETE-SAVED-ACTION',file:'app-core.js',originalSha256:h.sha256Text(appSource),injectedSha256:h.sha256Text(injected),caughtBy:'DELIVERY_RENDERED_ACTION_ORACLE',result:'DETECTED',sourceRestored:true});
+});
+check('receipt outcomes retain the required controls across reload without asserting physical delivery',()=>{
+  for(const outcome of ['RECEIVED','NOT_RECEIVED','UNKNOWN']){
+    let p=fresh();p.activeStage=globalThis.closedLoopWorkflowSchema.STAGE_COUNT;
+    const receipt=attempt(p,{result:'SUCCEEDED'}),retained=JSON.stringify(receipt);
+    engine.recalculate(p);deliveryViewOracle(p);
+    const completed=Object.values(p.stages).filter(stage=>stage.status==='COMPLETE').length;
+    assert.equal(completed,globalThis.closedLoopWorkflowSchema.STAGE_COUNT,'Successful controlled transfer completes the stage gates before attributed delivery is established.');
+    const result=engine.recordDeliveryEvidence(p,{attemptId:id(receipt,'deliveryAttempts'),outcome,observation:'Synthetic operator checked the authorized destination.',operatorLabel:'SYNTHETIC-OPERATOR'});
+    assert.equal(result.epistemicBasis,'HUMAN_OBSERVATION');
+    p=JSON.parse(JSON.stringify(p));engine.recalculate(p);
+    const expected=outcome==='RECEIVED'?'COMPLETE':'RECORD_DELIVERY_EVIDENCE';
+    assert.equal(p.job.NEXT_REQUIRED_ACTION.actionType,expected);deliveryViewOracle(p,expected);
+    assert.equal(JSON.stringify(p.projectData.deliveryAttempts[0]),retained,'An observation or reload rewrote the retained transfer receipt.');
+    assert.equal(Object.values(p.stages).filter(stage=>stage.status==='COMPLETE').length,completed,'An observation must not conflate stage completion with attributed delivery.');
+  }
+});
+process.stderr.write('delivery: restore transfer and observation versions without replaying delivery\n');
+let restorationPhase='build disposable persistence';
+try{
+  const r=projectStoreRuntime(),jobId=fixture.job.JOB_ID,versions=[];
+  let p=r.copy(fixture);p.activeStage=r.runtime.closedLoopWorkflowSchema.STAGE_COUNT;
+  // Supply the producer's saved bytes at the historical custody boundary.
+  // The real storage writer still hashes, stores and verifies every file.
+  for(const file of fixtureContextFiles)assert.equal(h.sha256Text(file.text),file.sha256,'Captured prompt context bytes must match their original identity.');
+  r.runtime.closedLoopPromptEngine=Object.freeze({...r.runtime.closedLoopPromptEngine,materializePromptContextFiles:record=>r.copy((record.contextManifest?.promptContext?.attachments||[]).map(required=>{
+    const file=fixtureContextFiles.find(file=>file.sha256===required.sha256&&file.byteSize===required.byteSize);
+    assert.ok(file,'The lifecycle producer did not retain an authorized historical context file.');return file;
+  }))});
+  const files=await Promise.all(fixtureFiles.map(async bytes=>{const blob=new Blob([Uint8Array.from(bytes)]);return {blob,sha256:await h.sha256Bytes(blob)};}));
+  for(const artifact of r.engine.records(p,'artifacts')){
+    const file=files.find(file=>file.sha256===r.engine.recordValue(artifact,'SHA256'));
+    assert.ok(file,'The lifecycle builder must provide every retained artifact’s exact bytes.');
+    await r.store.putArtifact({artifactId:r.engine.recordId(artifact,'artifacts'),jobId,filename:r.engine.recordValue(artifact,'FILENAME'),mediaType:r.engine.recordValue(artifact,'MEDIA_TYPE'),blob:file.blob});
+  }
+  restorationPhase='save the authorized lifecycle fixture';
+  p=await r.store.writeProject(p,{expectedProjectRevision:0,createOnly:true});
+  await r.store.beginHistorySession('DELIVERY-CONTINUATION');
+  async function retain(expected){versions.push({id:(await r.store.historyList(jobId)).activeId,project:JSON.parse(JSON.stringify(p)),expected});}
+  await retain('EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS');
+  let next=r.copy(p);r.engine.recordDeliveryAttempt(next,{commandId:'HISTORY-CONTROLLED-TRANSFER',result:'SUCCEEDED'});
+  restorationPhase='save successful transfer';
+  p=await r.store.writeProject(next,{expectedProjectRevision:p.revision});await retain('RECORD_DELIVERY_EVIDENCE');
+  next=r.copy(p);const receipt=r.engine.records(next,'deliveryAttempts').at(-1);
+  r.engine.recordDeliveryEvidence(next,{attemptId:r.engine.recordId(receipt,'deliveryAttempts'),outcome:'RECEIVED',observation:'Synthetic receipt of the exact controlled transfer.',operatorLabel:'SYNTHETIC-OPERATOR'});
+  restorationPhase='save attributed observation';
+  p=await r.store.writeProject(next,{expectedProjectRevision:p.revision});await retain('COMPLETE');
+  for(const point of [...versions].reverse().concat(versions)){
+    restorationPhase='restore '+point.expected;
+    p=(await r.store.restoreCheckpoint(jobId,point.id,{expectedProjectRevision:p.revision})).project;
+    const reloaded=JSON.parse(JSON.stringify(await r.store.readProject(jobId)));
+    assert.deepEqual(reloaded.projectData,point.project.projectData,'Restoration must retain the matching transfer/evidence history without replaying a command.');
+    assert.deepEqual(reloaded.stages,point.project.stages,'Restoration mixed stage completion across delivery versions.');
+    assert.equal(reloaded.job.NEXT_REQUIRED_ACTION.actionType,point.expected);
+    restorationPhase='render '+point.expected;deliveryViewOracle(reloaded,point.expected);
+    for(const artifact of r.engine.records(p,'artifacts')){
+      const stored=await r.store.getArtifact(r.engine.recordId(artifact,'artifacts'));
+      assert.equal(await h.sha256Bytes(stored.blob),r.engine.recordValue(artifact,'SHA256'));
+    }
+    restorationPhase='reject repeated transfer '+point.expected;
+    await assert.rejects(r.store.assertRecoveryTransfer(p),error=>error.code==='RETAINED_TRANSFER_LIMIT_REACHED','Restoration must not authorize a duplicate external transfer.');
+  }
+  cases.push({name:'restore transfer and observation versions without replaying delivery',result:'PASS',versions:versions.length,restores:versions.length*2,environment:'Production persistence with shared transaction adapter; no physical delivery asserted'});
+}catch(error){cases.push({name:'restore transfer and observation versions without replaying delivery',result:'FAIL',message:error.message,phase:restorationPhase,stack:error.stack});}
+process.stderr.write('delivery: '+cases.at(-1).result+' restore transfer and observation versions without replaying delivery\n');
 async function uiCase(name,{priorAttempt=false,failSave=false,failTransfer=false,staleBeforeTransfer=false}={}){
   process.stderr.write('delivery: '+name+'\n');
   try{
-    let persisted=fresh(),exports=0,errors=[],saves=0;
+    let persisted=fresh(),exports=0,errors=[],saves=0,rendered='';
     if(priorAttempt)attempt(persisted);
     const api={
-      engine,project:structuredClone(persisted),
+      engine,schema:globalThis.closedLoopWorkflowSchema,core:globalThis.closedLoopCore,project:structuredClone(persisted),
+      render:html=>{rendered=html;},
       read:async()=>{const p=structuredClone(persisted);if(staleBeforeTransfer)engine.invalidateDownstream(p,28,'Concurrent correction');return p;},
       persist:async p=>{saves++;if(failSave)throw new Error('Injected storage write failure');const next=structuredClone(p);next.revision++;engine.recalculate(next);const integrity=globalThis.closedLoopProjectStore.validateProjectIntegrity(next);assert.equal(integrity.valid,true,'DELIVERY_UI_RECEIPT_PERSISTENCE_ORACLE: '+integrity.issues.join(' | '));persisted=next;return structuredClone(persisted);},
       transfer:()=>{assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'PENDING','The transfer began before a pending receipt was committed.');exports++;if(failTransfer)throw new Error('Injected browser transfer failure');},
@@ -93,18 +217,18 @@ async function uiCase(name,{priorAttempt=false,failSave=false,failTransfer=false
     // in that same realm; the shared runtime supports this explicit override.
     const context=createVerifierRuntime({api,console,URL,Blob,crypto:globalThis.crypto,structuredClone:value=>structuredClone(value),setTimeout,clearTimeout,document:{currentScript:null,querySelector:()=>({focus(){},setAttribute(){},removeAttribute(){},addEventListener(){}})},requestAnimationFrame:fn=>fn()});
     vm.runInContext(appSource.slice(0,appSource.indexOf('globalThis.closedLoopAppReady=false;'))+`
-      engine=api.engine;current=api.project;current.activeStage=30;
+      engine=api.engine;schema=api.schema;core=api.core;current=api.project;current.activeStage=30;
       projectStore={readProject:api.read,assertRecoveryTransfer:async project=>engine.deliveryTransferPrecondition(project)};
       persistReplacement=async p=>{current=await api.persist(p);};
       verifiedCanonicalArtifact=async artifactId=>({blob:new Blob(['synthetic transfer']),filename:artifactId});
-      downloadBlob=api.transfer;render=()=>{};announce=()=>{};reportActionFailure=api.error;
+      downloadBlob=api.transfer;render=()=>api.render(nextActionMarkup(true,current.activeStage));announce=()=>{};reportActionFailure=api.error;
       focusAfterAction=()=>{};
       globalThis.runTransfer=exportAuthorizedArtifacts;
     })();`,context);
     await context.runTransfer();
     if(priorAttempt||failSave||staleBeforeTransfer){assert.equal(exports,0);assert.ok(errors.length);}
-    else if(failTransfer){assert.equal(exports,1,JSON.stringify(errors));assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'UNKNOWN');assert.ok(errors.length);}
-    else{assert.ok(exports>0,JSON.stringify(errors));assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'SUCCEEDED');assert.deepEqual(errors,[]);assert.equal(engine.deliveryAttemptState(persisted,engine.records(persisted,'deliveryAttempts').at(-1)).status,'ATTEMPTED');}
+    else if(failTransfer){assert.equal(exports,1,JSON.stringify(errors));assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'UNKNOWN');assert.ok(errors.length);assert.ok(rendered.includes('id="delivery-observed-outcome"'),'An uncertain transfer must offer attributable observation.');}
+    else{assert.ok(exports>0,JSON.stringify(errors));assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'SUCCEEDED');assert.deepEqual(errors,[]);assert.equal(engine.deliveryAttemptState(persisted,engine.records(persisted,'deliveryAttempts').at(-1)).status,'ATTEMPTED');assert.ok(rendered.includes('id="delivery-observed-outcome"'),'A successful export must expose the delivery-evidence control.');}
     cases.push({name,result:'PASS',exports,saves,environment:'Actual app function with disposable storage and transfer boundary'});
   }catch(error){cases.push({name,result:'FAIL',message:error.message});}
   process.stderr.write('delivery: '+cases.at(-1).result+' '+name+'\n');

@@ -28,7 +28,11 @@ const label=k=>String(k||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replaceAll('_
 const stageDisplayTitle=d=>Number(d?.number)===16?'CORRECT THE ROOT CAUSE':d?.title||'';
 const statusClass=v=>{const s=String(v||'').trim().toUpperCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');if(!s)return '';if(['REJECTED','VIOLATED','FAILED','DEFECTIVE','UNAUTHORIZED','NOT AUTHORIZED'].includes(s))return 'danger';if(s.startsWith('NOT ')||['BLOCKED','UNKNOWN','UNDETERMINED','PENDING','IN PROGRESS','NOT STARTED'].includes(s))return 'warn';if(['ACCEPTED','AUTHORIZED','SATISFIED','COMPLETE','READY','SUCCESS','CONVERGED','CONFIRMED'].includes(s))return 'success';return '';};
 function canonicalCurrentStage(){return Math.max(1,Math.min(30,Number(String(current?.job?.CURRENT_STAGE||'').match(/\d+/)?.[0]||current?.activeStage||1)));}
-function currentNextAction(){const value=current?.job?.NEXT_REQUIRED_ACTION;if(value&&typeof value==='object'&&!Array.isArray(value))return value;return {actionType:'SELECT_RESPONSE_JSON_FILE',heading:'Next required action',explanation:String(value||'No next action recorded.'),primaryButton:null,secondaryAction:null,filesToSend:[],filesToWithhold:[],expectedReturnFiles:[],operatorChecks:[],blockingReason:null,canonicalStateChanged:false,acceptedChange:null,downstreamInvalidated:[],newPromptRequired:false};}
+function currentNextAction(){
+ // A retained version may contain an older derived action. Read the shared
+ // policy without rewriting that version's saved data or replaying a command.
+ return engine.operationalNextAction(current,canonicalCurrentStage());
+}
 function displayedStageAction(n){
  const stage=Number(n||canonicalCurrentStage()),lock=stageLocked(stage);
  if(stage!==canonicalCurrentStage()&&lock)return {actionType:'BLOCKED',heading:'This stage is not ready',explanation:`${lock} Complete the prerequisite stages in order. Do not send a prompt or select a response file for this stage yet.`,primaryButton:null,secondaryAction:null,filesToSend:[],filesToWithhold:[],expectedReturnFiles:[],blockingReason:lock,canonicalStateChanged:false,acceptedChange:null,downstreamInvalidated:[],newPromptRequired:false};

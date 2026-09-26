@@ -73051,14 +73051,14 @@
       ],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-09852d85a8e2de15f8a15fbd663018f4",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks first and appended transfer receipts with the production integrity validator, retained receipt immutability, authorization, retries, failure outcomes and the actual controller at a disposable transfer boundary. DELIVERY_RECEIPT_PERSISTENCE_ORACLE detects the targeted malformed-initial-receipt fault. Exact-source full CI, real-browser transfer and deployed acceptance remain required.",
+      "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks durable receipts, retained receipt immutability, authorization, retries and failure outcomes; the stored and rendered continuation after the final stage gate; attributed positive/negative/unknown observations; reload and retained-version restoration with exact artifact hashes and no duplicate external transfer. Its actual UI controller uses a disposable transfer boundary. Targeted faults must be detected by DELIVERY_RECEIPT_PERSISTENCE_ORACLE, DELIVERY_NEXT_ACTION_ORACLE and DELIVERY_RENDERED_ACTION_ORACLE. Exact-source full CI, real-browser continuation and deployed acceptance remain required.",
       "productionOwners": [
-        "workflow-engine.js:recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
-        "app-core.js:exportAuthorizedArtifacts",
-        "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers"
+        "workflow-engine.js:recalculate/operationalNextAction/next/recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
+        "app-core.js:currentNextAction/displayedStageAction/nextActionMarkup/deliveryObservationMarkup/exportAuthorizedArtifacts/recordCurrentDeliveryEvidence",
+        "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers/restoreCheckpoint"
       ],
       "unresolvedRequirements": [
-        "Execute the complete operator journey through authorized artifact retrieval and compare downloaded bytes at the final candidate and deployment.",
+        "Execute the complete operator journey through authorized artifact retrieval, downloaded-byte comparison and attributable delivery observation at the final candidate and deployment.",
         "Preserve the distinction between application-observed transfer and genuinely attributed receipt or physical-device evidence."
       ]
     },
@@ -152076,14 +152076,14 @@
       ],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-2b0f0cefee59e16f87cbcac572fe2cfb",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks first and appended transfer receipts with the production integrity validator, retained receipt immutability, authorization, retries, failure outcomes and the actual controller at a disposable transfer boundary. DELIVERY_RECEIPT_PERSISTENCE_ORACLE detects the targeted malformed-initial-receipt fault. Exact-source full CI, real-browser transfer and deployed acceptance remain required.",
+      "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks durable receipts, retained receipt immutability, authorization, retries and failure outcomes; the stored and rendered continuation after the final stage gate; attributed positive/negative/unknown observations; reload and retained-version restoration with exact artifact hashes and no duplicate external transfer. Its actual UI controller uses a disposable transfer boundary. Targeted faults must be detected by DELIVERY_RECEIPT_PERSISTENCE_ORACLE, DELIVERY_NEXT_ACTION_ORACLE and DELIVERY_RENDERED_ACTION_ORACLE. Exact-source full CI, real-browser continuation and deployed acceptance remain required.",
       "productionOwners": [
-        "workflow-engine.js:recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
-        "app-core.js:exportAuthorizedArtifacts",
-        "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers"
+        "workflow-engine.js:recalculate/operationalNextAction/next/recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
+        "app-core.js:currentNextAction/displayedStageAction/nextActionMarkup/deliveryObservationMarkup/exportAuthorizedArtifacts/recordCurrentDeliveryEvidence",
+        "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers/restoreCheckpoint"
       ],
       "unresolvedRequirements": [
-        "Execute the complete operator journey through authorized artifact retrieval and compare downloaded bytes at the final candidate and deployment.",
+        "Execute the complete operator journey through authorized artifact retrieval, downloaded-byte comparison and attributable delivery observation at the final candidate and deployment.",
         "Preserve the distinction between application-observed transfer and genuinely attributed receipt or physical-device evidence."
       ]
     },
@@ -205041,5 +205041,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "9c38d74b15318ca0cd28ad837282a7e950af603318d7a010916254aaf29d6491"
+  "manifestSha256": "d78b10c2024ed2b37de571742e2564511185fb8be170365d093566beb4a23bcb"
 }

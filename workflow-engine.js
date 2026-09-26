@@ -1108,7 +1108,9 @@ function recalculate(project,{evaluateGate=gate,nextAction=operationalNextAction
   const projectOpenBlockers=openBlockers(project);
   project.job.CURRENT_STATE=operationState(project,currentStage,completed===schema.STAGE_COUNT);
   project.job.CURRENT_BLOCKERS=projectOpenBlockers.map(record=>recordId(record,'blockers'));
-  project.job.NEXT_REQUIRED_ACTION=completed===30?actionEnvelope(project,currentStage,{actionType:'COMPLETE',heading:'Workflow complete',explanation:'Preserve the completed workflow and exact release evidence.',primaryButton:null}):nextAction(project,currentStage);
+  // Passing every stage gate does not discharge a remaining terminal operation.
+  // The installed continuation policy owns both progression and completion.
+  project.job.NEXT_REQUIRED_ACTION=nextAction(project,currentStage);
   project.job.LATEST_EVIDENCE_REFERENCE=recordId(recordsForCurrentScope(project,'evidenceRecords').at(-1),'evidenceRecords')||null;
   project.job.JOB_RECORD_STATUS=project.stages[1].status==='COMPLETE'?'COMPLETE':project.stages[1].status==='BLOCKED'?'BLOCKED':'INCOMPLETE';
   project.job.STATUS_EVIDENCE=project.stages[1].gate?.reasons?.join('; ')||'Stage 01 canonical evidence is complete.';

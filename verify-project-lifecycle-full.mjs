@@ -216,9 +216,13 @@ for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=f
 // Replay the complete production UI owner, without starting browser storage.
 // Diagnostic lists must use the existing lazy disclosure and page controls.
 {
+  // This case isolates bounded diagnostic rendering. Inject the policy result
+  // at its read-only boundary; a fabricated saved job action is not current
+  // workflow evidence and must not override the production continuation owner.
+  const diagnosticPolicy={action:null};
   const runtime=lifecycleContext({...inactiveMobileAcceptance,crypto:globalThis.crypto,URL,structuredClone,console,
     document:{currentScript:null,querySelector:()=>({}),querySelectorAll:()=>[]},closedLoopCore:core,closedLoopWorkflowSchema:globalThis.closedLoopWorkflowSchema,
-    closedLoopWorkflowEngine:engine});
+    closedLoopWorkflowEngine:{...engine,operationalNextAction:(project,stage)=>diagnosticPolicy.action||engine.operationalNextAction(project,stage)}});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;
     globalThis.ui={select:p=>{current=p;projects=[p];detailViews.clear();},accepted:acceptedStageMarkup,
@@ -253,9 +257,9 @@ for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=f
   const snapshot=JSON.stringify(p);runtime.ui.accepted(6);assert(JSON.stringify(p)===snapshot,'Rendering diagnostics changed canonical state.');
   p.stages[30].gate.reasons=[];runtime.ui.select(p);
   assert(runtime.ui.accepted(30).includes('Completion gate is satisfied by current canonical evidence.'),'A satisfied gate lost its success notice.');
-  p.stages[1].gate.reasons=['Human confirmation required'];p.job.CURRENT_STAGE='STAGE 01';p.job.NEXT_REQUIRED_ACTION={actionType:'CONFIRM_STAGE_ONE_INTENT'};runtime.ui.select(p);
+  p.stages[1].gate.reasons=['Human confirmation required'];p.job.CURRENT_STAGE='STAGE 01';diagnosticPolicy.action={actionType:'CONFIRM_STAGE_ONE_INTENT'};runtime.ui.select(p);
   assert(runtime.ui.accepted(1).includes('Stage 01 is waiting for your confirmation.')&&!runtime.ui.entries().some(([,entry])=>entry.title==='Completion gate is not satisfied.'),'Stage 01 confirmation lost its direct human action.');
-  const explanation=reasons.join(' ')+'ACTION-EXACT-TAIL';p.job.NEXT_REQUIRED_ACTION={actionType:'BLOCKED',heading:'Verification timing or target is blocked',explanation};runtime.ui.select(p);
+  const explanation=reasons.join(' ')+'ACTION-EXACT-TAIL';diagnosticPolicy.action={actionType:'BLOCKED',heading:'Verification timing or target is blocked',explanation};runtime.ui.select(p);
   const next=runtime.ui.next();assert(!next.includes('ACTION-EXACT-TAIL')&&runtime.ui.entries().some(([,entry])=>entry.kind==='text'&&entry.title==='Action details'&&entry.value===explanation),'Accumulated action explanation bypassed the bounded shared text disclosure.');
   console.log(JSON.stringify({storageRegression:'view:collapsed-diagnostic-lists',passed:true,stages:30,completeReasons:603,longReasonPreserved:true}));
 }
