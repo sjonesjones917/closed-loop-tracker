@@ -7,6 +7,7 @@ import {pathToFileURL} from 'node:url';
 const {createBrowserReadiness:readinessFactory}=await import(pathToFileURL(path.resolve(process.env.BROWSER_READINESS_SOURCE||'operator-browser-driver.mjs')));
 const boundedWait=async(fn)=>{for(let i=0;i<6;i++){const value=await fn();if(value)return value;}throw new Error('Controlled destination never became ready');};
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 const appSource=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),html=fs.readFileSync(process.env.HTML_SOURCE||'index.html','utf8');
 const cases=[],prefixes=process.argv.filter(x=>x.startsWith('--case-prefix=')).map(x=>x.slice(14)),flush=async()=>{for(let i=0;i<32;i++)await Promise.resolve();};
 function startupGuardAuthorization(source=html){
@@ -30,6 +31,55 @@ function environment({loadError=null,core=true,controlledLoad=null}={}){
  return {run,emit,advance,context,nodes,timers,logs,observed:()=>({loadCalls,reloads,appBusy:nodes.get('app').getAttribute('aria-busy'),appInert:nodes.get('app').hasAttribute('inert'),startupHidden:nodes.get('app-startup-status').hidden,recoveryVisible:Boolean(nodes.get('startup-retry')&&!nodes.get('startup-retry').hidden),ready:context.closedLoopAppReady===true,error:context.closedLoopAppError||null})};
 }
 async function check(caseId,expected,fn){if(prefixes.length&&!prefixes.some(x=>caseId.startsWith(x)))return;const row={caseId,expected};cases.push(row);try{row.actual=await fn();row.status='PASS';}catch(error){row.actual={error:String(error.stack||error),observed:error.actual??null};row.status='FAIL';}}
+
+// Execute the actual browser gate's fixture setup, not a second handwritten
+// artifact schema. This adapter captures version-one rows; native schema
+// migration, blocked-tab recovery and interactive layout remain browser proof.
+async function browserUpgradeFixture(held){
+ const source=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8'),start=source.indexOf('  const upgradeRow='),end=source.indexOf('  for(const held of [false,true]){',start),injectionStart=source.indexOf('    const injection=',end),injectionEnd=source.indexOf('    await navigateAndWait(upgradeCdp',injectionStart);
+ assert(start>=0&&end>start&&injectionStart>end&&injectionEnd>injectionStart,'Browser upgrade fixture owners must be available');
+ const r=projectStoreRuntime({sourceOverrides:process.env.STORE_SOURCE?{'project-store.js':fs.readFileSync(process.env.STORE_SOURCE,'utf8')}:{}});let injected;
+ const setup=createVerifierRuntime({held,cdp:{},evalValue:async(_cdp,expression)=>vm.runInContext(expression,r.runtime),upgradeCdp:{send:async(method,params)=>{assert.equal(method,'Page.addScriptToEvaluateOnNewDocument');injected=params.source;return {identifier:'controlled-injection'};}}});
+ const upgradeRow=await vm.runInContext('(async()=>{'+source.slice(start,end)+source.slice(injectionStart,injectionEnd)+'return upgradeRow;})()',setup);
+ const requests=[],db={createObjectStore(name){const rows=new Map();r.rows.set(name,rows);return {put(row){rows.set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,r.copy(row));}};},close(){}};
+ const replay=createVerifierRuntime({indexedDB:{open(name,version){assert.equal(name,'closed-loop-reliability');assert.equal(version,1);const request={result:db};requests.push(request);return request;}}});
+ vm.runInContext(injected,replay);assert.equal(requests.length,1);requests[0].onupgradeneeded();requests[0].onsuccess();
+ return {...r,upgradeRow,source};
+}
+await check('VERIFIER-UPGRADE-FIXTURE-CUSTODY','Both upgrade paths begin with valid version-one artifact custody; session-start recovery preserves exact bytes and rejects one corrupt identity without replacing retained history.',async()=>{
+ const observed=[];
+ for(const held of [false,true]){
+  const r=await browserUpgradeFixture(held),jobId=r.upgradeRow.jobId;let checkpoint,error;
+  try{checkpoint=await r.store.saveCheckpoint(jobId,{sessionId:'UPGRADE-SESSION'});}catch(cause){error=cause;}
+  assert(checkpoint&&!error,'UPGRADE_FIXTURE_CUSTODY_ORACLE: the supposedly valid legacy fixture cannot preserve session start: '+String(error?.code||error));
+  const files=await r.store.listArtifacts(jobId),file=files[0];assert.equal(files.length,1);
+  assert.equal(await file.blob.text(),'exact version-one bytes');assert.equal(file.byteSize,file.blob.size);assert.equal(file.sha256,crypto.createHash('sha256').update(await file.blob.text()).digest('hex'));
+  const historyBefore=JSON.stringify(await r.store.historyList(jobId)),rejections=[];
+  for(const violation of ['missing-size','wrong-digest','changed-bytes']){
+   const damaged={...file};if(violation==='missing-size')delete damaged.byteSize;if(violation==='wrong-digest')damaged.sha256='0'.repeat(64);if(violation==='changed-bytes')damaged.blob=new Blob(['corrupted version-one bytes']);
+   r.rows.get('artifacts').set(file.artifactId,r.copy(damaged));
+   await assert.rejects(r.store.saveCheckpoint(jobId,{sessionId:'DAMAGED-UPGRADE'}),error=>error.code==='HISTORY_FILE_INTEGRITY_FAILED','UPGRADE_CORRUPTION_REJECTION_ORACLE: corrupt custody must block a new checkpoint');
+   assert.equal(JSON.stringify(await r.store.historyList(jobId)),historyBefore,'Failed custody must not change retained history');rejections.push(violation);r.rows.get('artifacts').set(file.artifactId,r.copy(file));
+  }
+  assert(await r.store.saveCheckpoint(jobId,{sessionId:'CORRECTED-UPGRADE'}));observed.push({held,byteSize:file.byteSize,sha256:file.sha256,sessionStart:true,rejections,corrected:true});
+ }
+ return {observed,nativeIndexedDb:false,actualBrowserFixture:true,actualHistoryOwner:true};
+});
+await check('VERIFIER-UPGRADE-INTERACTIVE-ORACLE','An upgrade gate passes only for an interactive application, never for an explicit startup failure, pending startup or inert application with intact database rows.',async()=>{
+ const observed=[];
+ for(const [state,ready,inert,error,expected] of [['failed',false,true,'CONTROLLED_UPGRADE_STARTUP_FAILURE',false],['pending',false,true,null,false],['inert',true,true,null,false],['busy',true,false,null,false],['absent',true,false,null,false],['document-pending',true,false,null,false],['missing-quarantine',true,false,null,false],['missing-checkpoint',true,false,null,false],['interactive',true,false,null,true]]){
+  const r=await browserUpgradeFixture(false),anchor=r.source.indexOf('  const upgradeRow='),start=r.source.indexOf('    const proof=',anchor),end=r.source.indexOf('\n    assert(Object.values(proof)',start);assert(start>anchor&&end>start);
+  const project=await r.store.readProject(r.upgradeRow.jobId);await r.store.saveCheckpoint(project.job.JOB_ID,{sessionId:'UPGRADE-ORACLE'});
+  await assert.rejects(r.store.readProject('UPGRADE-CORRUPT'),error=>error.code==='PROJECT_HASH_MISMATCH');
+  if(state==='missing-quarantine'){const [quarantined]=await r.store.listQuarantinedProjects();r.rows.get('meta').delete(quarantined.key);}
+  r.runtime.closedLoopProjectStore={...r.store,openDatabase:async()=>({version:2}),listProjectSummaries:async()=>[{job:{JOB_ID:project.job.JOB_ID},revision:project.revision}],...(state==='missing-checkpoint'?{historyList:async()=>({entries:[],sessions:{}})}:{})};
+  Object.assign(r.runtime,{closedLoopAppReady:ready,closedLoopAppError:error,document:{readyState:state==='document-pending'?'loading':'complete',querySelector:()=>state==='absent'?null:({hasAttribute:name=>name==='inert'&&inert,getAttribute:()=>state==='busy'?'true':null})}});
+  const context=createVerifierRuntime({upgradeRow:r.upgradeRow,upgradeCdp:{},evalValue:async(_cdp,expression)=>vm.runInContext(expression,r.runtime)});
+  const proof=await vm.runInContext('(async()=>{'+r.source.slice(start,end)+'return proof;})()',context),accepted=Object.values(proof).every(Boolean);
+  assert.equal(accepted,expected,'UPGRADE_INTERACTIVE_ORACLE: '+state+' application was misclassified: '+JSON.stringify(proof));observed.push({state,accepted,proof});
+ }
+ return {observed,actualBrowserOracle:true,syntheticDocument:true};
+});
 
 await check('VERIFIER-LAYOUT-QUIESCENCE','A browser action is observed only after the destination layout has settled, including a later animation-frame geometry change.',async()=>{
  const source=fs.readFileSync(process.env.BROWSER_READINESS_SOURCE||'operator-browser-driver.mjs','utf8'),start=source.lastIndexOf('async function idle('),end=source.indexOf('\n  async function ',start+1);assert(start>=0&&end>start);
