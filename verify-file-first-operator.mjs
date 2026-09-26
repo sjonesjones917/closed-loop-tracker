@@ -2,7 +2,9 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {stage04AcceptanceFixture} from './test-fixtures.mjs';
+import {stage04AcceptanceFixture,accumulatedStage04Fixture,evidence,stageHandoffRecoveryProof,scalarFor,recordProposal,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
+import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
 
@@ -377,4 +379,61 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.notEqual(downloads.at(-1).promptIdentity.instructionId,priorProofPrompt,'An old Stage 06 instruction still omits the closed proof contract.');
   assert.equal(stored.projectData.generatedPrompts.at(-1).contextManifest.proofExpressionContractVersion,'closed-loop-proof-expression/1');
   console.log(JSON.stringify({returnedFileRevisionRecovery:true,retainedBytesPreserved:true,newerWorkPreserved:true,correctionManifestExported:true}));
+}
+
+// Replay actual UI preparation/export and production backup restoration.
+{
+const r=projectStoreRuntime(),t=r.runtime,s=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
+const extract=(a,b)=>s.slice(s.indexOf(a),s.indexOf(b,s.indexOf(a)+a.length));
+t.fixtureRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:r.engine,prompts:r.prompts,ingestion:r.ingestion,store:r.store};
+await vm.runInContext([evidence,stage04AcceptanceFixture,accumulatedStage04Fixture].map(f=>f.toString()).join('\n')+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
+const initial=await r.store.writeProject(t.fixture,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
+bindAcceptanceUi(r,initial,null);
+Object.assign(t,{schema:t.closedLoopWorkflowSchema,recordValue:r.engine.recordValue,stageContinuationErrors:new Map(),stagePlanItems:(stage,operation)=>r.engine.stageTestExecutionPlan(t.current,{stage,operation}).items,displayedStageAction:stage=>r.engine.operationalNextAction(t.current,stage),announce(){},reportActionFailure(e){throw e;},downloadBlob(blob,filename){t.downloads.push({blob,filename});},downloads:[],$:()=>null});
+vm.runInContext(extract('function canonicalCurrentStage(','function displayedStageAction(')+extract('function stageOperations(','// A saved response may be inspected independently.')+extract('async function savePromptRecord(','function promptTransportFilename(')+extract('let promptExportInFlight=','async function exportPromptContext(')+extract('function selectStageContinuation(','async function materializeProject('),t);
+const snapshots={initial};
+t.current=await t.restoreStageContinuation(initial,{throwOnFailure:true});snapshots.startup=r.copy(t.current);
+await t.exportStageFiles();snapshots.exported=r.copy(t.current);
+const backup=await r.store.exportPackage(initial.job.JOB_ID);snapshots.backup=await r.store.readProject(initial.job.JOB_ID);
+snapshots.restored=await r.store.importPackage(backup);
+
+ const hash=t.closedLoopHash,proof=stageHandoffRecoveryProof(initial,snapshots.backup,snapshots.restored,hash);
+ for(const [key,value]of Object.entries(proof))if(typeof value==='boolean')assert.equal(value,true,'HANDOFF_PRESERVATION_ORACLE: '+key);
+ assert.equal(snapshots.startup.projectData.generatedPrompts.length,initial.projectData.generatedPrompts.length+1,'HANDOFF_CURRENT_INSTRUCTION_ORACLE: stale scope must get a new current instruction');
+ const current=t.currentPromptRecord(4),reservation=t.current.projectData.operationReservations.find(row=>r.engine.recordId(row,'operationReservations')===current.operationReservationId);
+ assert.equal(r.engine.recordValue(reservation,'STATUS'),'EXPORTED','HANDOFF_RECEIPT_ORACLE: export must record its successful transfer');
+ const browser=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8'),oracle=browser.match(/  assert\(accumulatedRoundTrip[\s\S]*?;\n/)?.[0];
+ assert(oracle,'HANDOFF_BROWSER_ORACLE: the real browser assertion must exist');
+ const accumulatedRoundTrip={...proof,instructionVerified:true,canonicalUnchanged:snapshots.backup.projectSha256===initial.projectSha256,tailPreserved:true,restoredDigest:true,singleStagePackage:true};
+ try{vm.runInNewContext(oracle,{accumulatedRoundTrip,assert,JSON});}catch(error){throw new Error('HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: a valid current-instruction/export/restore sequence must pass the actual browser oracle: '+error.message);}
+
+ for(const [fault,violate]of [
+  ['accepted-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}],
+  ['retained-instruction-bytes',p=>{p.projectData.generatedPrompts[0].prompt+=' CORRUPTION';}],
+  ['retained-history',p=>{p.projectData.history[0].eventType='CORRUPTION';}],
+  ['restored-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}]
+ ]){
+  const exported=r.copy(snapshots.backup),restored=r.copy(snapshots.restored);
+  if(fault.startsWith('restored'))violate(restored);else {violate(exported);violate(restored);}
+  const bad={...accumulatedRoundTrip,...stageHandoffRecoveryProof(initial,exported,restored,hash)};
+  assert.throws(()=>vm.runInNewContext(oracle,{accumulatedRoundTrip:bad,assert,JSON}),/changed exact retained data/,'HANDOFF_BROWSER_CORRUPTION_ORACLE: '+fault);
+ }
+ console.log(JSON.stringify({caseId:'HANDOFF_BROWSER_VALID_TRANSITION',result:'PASS',actualBrowser:false,attempts:2,responseCharacters:128,beforePrompts:initial.projectData.generatedPrompts.length,afterPrompts:snapshots.backup.projectData.generatedPrompts.length,proof}));
+ t.current=await r.store.readProject(initial.job.JOB_ID);await t.savePromptRecord(4);
+ const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=[scalarFor,recordProposal,evidence,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n'),runtimeBindings='const runtime=fixtureRuntime;';
+  console.log('nonbrowser:large-history-execution-package');
+  const executionContext=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}
+    const store=closedLoopProjectStore,p=await store.readProject('PROBE-5922'),prompt=p.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1),manifest=runtime.prompts.promptFileManifest(prompt),text=JSON.stringify(stage04AcceptanceEnvelope(runtime,p,prompt));
+    const staged=await store.stageResponseFile({jobId:p.job.JOB_ID,stage:4,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce});
+    const prepared=runtime.ingestion.prepare(p,{stage:4,text,promptRecord:prompt,transport:staged});if(!prepared.validation.valid)throw new Error('Execution context fixture response failed: '+JSON.stringify(prepared.validation.issues));
+    const rejected=runtime.ingestion.reject(prepared.project,prepared.proposal.proposalId,{requestCorrection:true,reason:'é🙂'.repeat(70000)+'EXECUTION-CONTEXT-TAIL'}),replacement=rejected.project.projectData.generatedPrompts.find(row=>row.instructionId===rejected.replacementPromptId);
+    await store.persistPromptContextFiles(replacement,rejected.project);const mutationConfirmation=store.mutationImpact(p,rejected.project);if(mutationConfirmation.requiresConfirmation){let blocked=false;try{await store.writeProject(rejected.project,{expectedProjectRevision:p.revision,incrementRevision:true});}catch(error){blocked=error.code==='MUTATION_CONFIRMATION_REQUIRED';}if(!blocked||(await store.readProject(p.job.JOB_ID)).projectSha256!==p.projectSha256)throw new Error('HANDOFF_CORRECTION_CONFIRMATION_ORACLE: correction must preserve current work until exact impact confirmation.');}const saved=await store.writeProject(rejected.project,{expectedProjectRevision:p.revision,incrementRevision:true,mutationConfirmation}),file=await store.readPromptContextFile(replacement,p.job.JOB_ID);
+    return {contextBytes:file.byteSize,tailPreserved:(await file.blob.text()).includes('EXECUTION-CONTEXT-TAIL'),revision:saved.revision};
+  })()`);
+  assert(executionContext.contextBytes>262144&&executionContext.tailPreserved,'The accumulated execution fixture did not persist the exact large correction context: '+JSON.stringify(executionContext));
+  const largeExecution=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,hash=closedLoopHash,before=await store.readProject('PROBE-5922'),nativeRead=Blob.prototype.arrayBuffer;let sourceReadBytes=0,largestRead=0,result;Blob.prototype.arrayBuffer=function(){sourceReadBytes+=this.size;largestRead=Math.max(largestRead,this.size);return nativeRead.call(this);};try{result=await store.createExecutionPackage({jobId:before.job.JOB_ID,stage:4,operation:'COMPLETE'});}finally{Blob.prototype.arrayBuffer=nativeRead;}const archiveBytes=new Uint8Array(await result.blob.arrayBuffer()),members=(${readStoreArchive.toString()})(archiveBytes),files=new Map(members.map(member=>[member.canonicalPath,member.bytes])),manifest=JSON.parse(new TextDecoder().decode(files.get('manifest.json'))),{packageManifestSha256,...body}=manifest,sourceBytes=manifest.members.reduce((sum,file)=>sum+file.byteSize,0),after=await store.readProject(before.job.JOB_ID),contexts=manifest.members.filter(file=>file.role==='PROMPT_CONTEXT');return {packageVerified:hash.sha256Value(body)===packageManifestSha256&&await hash.sha256Bytes(archiveBytes)===result.packageSha256,instructionVerified:await hash.sha256Bytes(files.get('instruction.txt'))===manifest.instructionFullTextSha256,contextVerified:(await Promise.all(contexts.map(async file=>files.get(file.canonicalPath)?.byteLength===file.byteSize&&await hash.sha256Bytes(files.get(file.canonicalPath))===file.sha256))).every(Boolean),contextFiles:contexts.length,sourceBytes,sourceReadBytes,largestRead,canonicalUnchanged:after.projectSha256===before.projectSha256};})()`);
+  assert(largeExecution.packageVerified&&largeExecution.instructionVerified&&largeExecution.contextVerified&&largeExecution.contextFiles>0&&largeExecution.largestRead<=65536&&largeExecution.sourceReadBytes<=largeExecution.sourceBytes*4&&largeExecution.canonicalUnchanged,'Accumulated execution package changed exact bytes, canonical state, or reread its file sources: '+JSON.stringify(largeExecution));
+  console.log(JSON.stringify({largeExecutionPackage:{...largeExecution,fixture:executionContext}}));
+
+
 }

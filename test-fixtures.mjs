@@ -77,6 +77,24 @@ export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAG
   project.activeStage=4;project.activeView='Workflow';return project;
 }
 
+// Export may prepare a current instruction and record its receipt. Those
+// operational changes must not replace accepted work or rewrite retained bytes.
+// Backup restoration must recover the exact post-export project data.
+export function stageHandoffRecoveryProof(before,exported,restored,hash){
+  const stable=value=>JSON.stringify(value,(_key,row)=>row&&typeof row==='object'&&!Array.isArray(row)?Object.fromEntries(Object.keys(row).sort().map(key=>[key,row[key]])):row);
+  const equal=(a,b)=>hash.sha256Text(stable(a))===hash.sha256Text(stable(b));
+  const preparation=new Set(['generatedPrompts','operationReservations','history','allocationReceipts','idCounters','eventSequence']);
+  const accepted=p=>Object.fromEntries(Object.entries(p.projectData).filter(([key])=>!preparation.has(key)));
+  const promptBytes=p=>Object.fromEntries(Object.entries(p).filter(([key])=>key!=='invalidatedBy'));
+  const retained=(before.projectData.generatedPrompts||[]).every(prior=>{
+    const after=exported.projectData.generatedPrompts.find(row=>row.instructionId===prior.instructionId);
+    return after&&equal(promptBytes(prior),promptBytes(after));
+  });
+  const prefix=family=>equal(before.projectData[family]||[],(exported.projectData[family]||[]).slice(0,(before.projectData[family]||[]).length));
+  const authoredStages=p=>Object.fromEntries(Object.entries(p.stages).map(([stage,row])=>[stage,row.agentData||{}]));
+  return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
+}
+
 // Isolated downstream fixtures supply their authored prerequisites directly.
 // Import the review through production ingestion so those fixtures cannot use
 // a bare author/raw ID as proof authority. The full-cycle test also authors the
