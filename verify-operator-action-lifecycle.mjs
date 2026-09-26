@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 const {createBrowserReadiness}=await import(process.env.OPERATOR_DRIVER_MODULE||'./operator-browser-driver.mjs');
 
 // Execute the real UI bindings with a deliberately delayed storage boundary.
@@ -338,5 +339,58 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
  for(const label of ['Canonical State Changed','Accepted Change','Downstream Invalidated','New Prompt Required'])assert.ok(markup.includes(label),`Required outcome accounting was removed: ${label}`);
  assert.ok(markup.includes('Advanced action details'),'Audit disclosure must be retained');
  cases.push({caseId:'UI-WORKFLOW-PRIMARY-'+actionType,stage,control:id,uniqueControl:true,beforeLongDetails:true,result:'PASS'});
+}
+// Replay the browser gate's actual selected-file setup through the production
+// binding, filename policy, recovery artifact custody and import owner. The
+// transport below is synthetic; layout and native worker delivery stay in CI.
+{
+ const browserSource=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8');
+ const marker="console.log('extra:delayed-import-activity-preserves-layout');",start=browserSource.indexOf(marker),end=browserSource.indexOf("console.log('extra:native-worker-owned-inputs');",start);
+ assert.ok(start>=0&&end>start,'The actual delayed-import browser case is required.');
+ const setup=browserSource.slice(start,end).match(/await evalValue\(cdp,`([\s\S]*?)`\);/)?.[1];
+ assert.ok(setup,'The delayed-import browser setup expression is required.');
+ const observe=browserSource.slice(start,end).match(/const activityProof=await evalValue\(cdp,`([\s\S]*?)`\);/)?.[1];
+ assert.ok(observe,'The actual delayed-import browser observation is required.');
+ const r=projectStoreRuntime(),p=await r.store.writeProject(r.core.createBlankState('STARTUP-BROWSER-0'),{expectedProjectRevision:0,createOnly:true});
+ const activityNodes=new Map(['app','app-operation-status','operation-label','app-live-status','operation-error','storage-status','import-file','project-picker','import-project'].map(id=>['#'+id,{...node(id),value:'',hasAttribute(key){return key in this.attrs;},getBoundingClientRect(){return {top:0,bottom:24,left:0,right:180,width:180,height:24};}}]));
+ const delivered=[],requests=[],pending=new Map();let sequence=0,selected;
+ class Worker{
+  postMessage(message){requests.push(message);this.onmessage({data:{operationId:'UNRELATED',buildIdentity:message.buildIdentity,ok:true}});void r.store.importPackage(message.args[0]).then(project=>this.onmessage({data:{...message,ok:true,project}}),error=>this.onmessage({data:{...message,ok:false,error}}));}
+ }
+ const worker=new Worker();worker.onmessage=event=>{delivered.push(event.data);const request=pending.get(event.data.operationId);if(!request)return;pending.delete(event.data.operationId);event.data.ok?request.resolve(event.data.project):request.reject(event.data.error);};
+ class DataTransfer{constructor(){this.files=[];this.items={add:file=>{assert.ok(file instanceof File,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: a browser file selection requires a File.');this.files.push(file);}};}}
+ const facade={...r.store,importPackage:async blob=>{selected=(await r.store.listArtifacts(p.job.JOB_ID)).find(row=>row.lineage?.selectionKind==='backup-import');return new Promise((resolve,reject)=>{const operationId='IMPORT-'+(++sequence);pending.set(operationId,{resolve,reject});worker.postMessage({method:'IMPORT_PACKAGE',operationId,buildIdentity:'ACTIVITY-TEST',args:[blob]});});}};
+ Object.assign(r.runtime,{File,DataTransfer,Worker,history:{state:null},document:{currentScript:null,querySelector:s=>activityNodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[activityNodes.get('#import-file')]:[]},getComputedStyle:()=>({display:'block',visibility:'visible'}),requestAnimationFrame:fn=>setTimeout(fn,0),closedLoopProjectStore:facade,__activityProject:p});r.runtime.window=r.runtime;
+ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
+  core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;projectStore=closedLoopProjectStore;current=__activityProject;projects=[current];
+  captureCurrentView=async()=>{};refreshHistory=async()=>{};writeBrowserEntry=()=>{};loadAcceptanceSession=async()=>{};refreshProjectStorage=async()=>{};recordCommittedBoundary=async()=>{};selectSavedView=()=>null;applySavedView=()=>{};render=()=>wire();wire();
+ })();`,r.runtime,{filename:'app-core.js:delayed-import-control'});
+ try{
+  await vm.runInContext(setup,r.runtime);
+  for(let i=0;i<200&&typeof r.runtime.__releaseActivityReply!=='function'&&!r.runtime.__activityDone;i++)await new Promise(resolve=>setTimeout(resolve,5));
+  const observation={requests:requests.length,held:typeof r.runtime.__releaseActivityReply==='function',done:r.runtime.__activityDone,notice:activityNodes.get('#app-live-status').textContent};
+  if(requests.length)assert.ok(delivered.length===1&&delivered[0].operationId==='UNRELATED','DELAYED_IMPORT_CORRELATION_ORACLE: the delay must hold the selected import response and pass unrelated replies through.');
+  assert.ok(observation.requests===1&&observation.held&&!observation.done,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: the browser loading case must reach one valid pending import through its actual file binding: '+JSON.stringify(observation));
+  assert.ok(selected&&selected.filename&&selected.byteSize===r.runtime.__activityPackage.size,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: the selected backup must retain its filename and exact bytes.');
+  assert.equal(selected.sha256,await r.runtime.closedLoopHash.sha256Bytes(r.runtime.__activityPackage));
+  await new Promise(resolve=>setTimeout(resolve,1510));
+  assert.equal(activityNodes.get('#storage-status').getAttribute('aria-busy'),'true','DELAYED_IMPORT_LOADING_ORACLE: a pending import past the threshold must show storage activity.');
+  assert.equal(activityNodes.get('#app-operation-status').hidden,false,'DELAYED_IMPORT_LOADING_ORACLE: a pending import past the threshold must show operator progress.');
+  assert.equal(activityNodes.get('#import-file').disabled,true,'DELAYED_IMPORT_LOADING_ORACLE: a pending import must retain its control lock.');
+  assert.ok(Object.values(await vm.runInContext(observe,r.runtime)).every(Boolean),'DELAYED_IMPORT_LAYOUT_ORACLE: settled valid progress must pass the actual browser observation.');
+  const status=activityNodes.get('#storage-status'),originalBox=status.getBoundingClientRect;let samples=0;
+  status.getBoundingClientRect=()=>({...originalBox(),width:++samples<2?180:200});
+  const shifted=await vm.runInContext(observe,r.runtime);
+  assert.equal(shifted.width,false,'DELAYED_IMPORT_LAYOUT_ORACLE: the observation must reject a layout shift on a later frame.');
+  status.getBoundingClientRect=originalBox;
+  r.runtime.__restoreActivityWorker();r.runtime.__releaseActivityReply();r.runtime.__releaseActivityReply();await r.runtime.__activityImport;
+  assert.equal(activityNodes.get('#storage-status').hasAttribute('aria-busy'),false,'Completed import must clear storage progress.');
+  assert.equal(activityNodes.get('#app-operation-status').hidden,true,'Completed import must clear operator progress.');
+  assert.equal(activityNodes.get('#import-file').disabled,false,'Completed import must release its control.');
+  assert.equal(activityNodes.get('#import-file').value,'','Completed import must clear the selected control.');
+  assert.match(activityNodes.get('#app-live-status').textContent,/project package imported and reloaded/,'Import must explicitly report completion.');
+  assert.equal(delivered.filter(message=>message.operationId===requests[0].operationId).length,1,'DELAYED_IMPORT_RELEASE_ORACLE: a held import response must be delivered exactly once.');
+  cases.push({caseId:'UI-DELAYED-IMPORT-BROWSER-SELECTION',result:'PASS',actualBrowser:false,requests:requests.length,selectedFilename:selected.filename,selectedByteSize:selected.byteSize,selectedSha256:selected.sha256,importReplies:1,unrelatedReplies:1,lateLayoutShiftRejected:true});
+ }finally{r.runtime.__restoreActivityWorker?.();r.runtime.__releaseActivityReply?.();if(r.runtime.__activityImport)await r.runtime.__activityImport;}
 }
 console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',cases},null,2));
