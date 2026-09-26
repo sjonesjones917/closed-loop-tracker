@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
@@ -67,7 +68,24 @@ const workflows=fs.readdirSync('.github/workflows').filter(name=>name.endsWith('
 assert(workflows.length===1&&workflows[0]==='pages.yml','Repository must retain exactly one Pages workflow.');
 assert(workflowSource.includes('node verify-semantic-invariant.mjs'),'Semantic false-acceptance invariant is not in CI.');
 assert(workflowSource.includes('verify-browser.mjs')&&workflowSource.includes('verify-browser-extra.mjs'),'Chromium acceptance is not in CI.');
-assert(workflowSource.includes('Exact deployed-byte verification')&&workflowSource.includes('run: node verify-live.mjs'),'Exact deployed-byte verification is not in CI.');
+function assertDeployedByteVerification(source){
+  const step=source.match(/^      - name: Exact deployed-byte verification\n(?:(?!      - ).*(?:\n|$))*/m)?.[0]||'';
+  const command=step.match(/^(?:\s*run:\s*|\s*)node verify-live\.mjs(?:\s[^\n]*)?$/m)?.[0]||'';
+  assert(command,'DEPLOYED_BYTE_COMMAND_ORACLE: exact deployed-byte verification is not in CI.');
+  if(command.includes('|'))assert(/^\s*set -euo pipefail\s*$/m.test(step),'DEPLOYED_BYTE_PIPELINE_ORACLE: logging must preserve verification failure.');
+}
+assertDeployedByteVerification(workflowSource);
+const inlineDeployedStep='      - name: Exact deployed-byte verification\n        run: node verify-live.mjs\n';
+assertDeployedByteVerification(inlineDeployedStep);
+const deployedByteWiringFaults=[];
+for(const [fault,source,oracle] of [
+  ['missing-command',workflowSource.replace('node verify-live.mjs','node missing-verification.mjs'),'DEPLOYED_BYTE_COMMAND_ORACLE'],
+  ['hidden-pipeline-failure',workflowSource.replace(/(name: Exact deployed-byte verification\n\s*run: \|\n\s*)set -euo pipefail/,'$1set -eu'),'DEPLOYED_BYTE_PIPELINE_ORACLE']
+]){
+  let rejection='';try{assertDeployedByteVerification(source);}catch(error){rejection=error.message;}
+  assert(rejection.startsWith(oracle),`${fault} was not rejected by ${oracle}.`);
+  assertDeployedByteVerification(workflowSource);deployedByteWiringFaults.push({fault,oracle,result:'DETECTED',restored:'PASS'});
+}
 
 const engineSource=fs.readFileSync('workflow-engine.js','utf8');
 const ingestionTestSource=fs.readFileSync('verify-ingestion.mjs','utf8');
@@ -129,4 +147,4 @@ for(const [name,count] of Object.entries(zeroAcceptanceCounters))assert(count===
 const coverageMetrics={fieldOwnershipCoverage:fieldOwnershipMetric,applicationDerivationCoverage:applicationDerivationMetric,typedRelationshipCoverage:typedRelationshipMetric,acceptedAgentValueExtractionCoverage:acceptedAgentValueExtractionMetric,acceptedRelationshipProvenanceCoverage:acceptedRelationshipProvenanceMetric,currentScopeSelectorCoverage:currentScopeSelectorMetric,exactReqRunTestCoverage:exactReqRunTestMetric,applicableCurrentRegressionSuccess:applicableCurrentRegressionMetric,mandatoryEvidenceChainCoverage:mandatoryEvidenceChainMetric,releaseArtifactIdentityCoverage:releaseArtifactIdentityMetric};
 assert(Object.values(coverageMetrics).every(metric=>metric.denominator>0),'No coverage metric may publish 100% from an empty denominator.');
 
-console.log(JSON.stringify({fieldOwnershipCoverage,applicationDerivationCoverage,typedRelationshipCoverage,acceptedAgentValueExtractionCoverage,acceptedRelationshipProvenanceCoverage,currentScopeSelectorCoverage,exactReqRunTestCoverage,applicableCurrentRegressionSuccess,mandatoryEvidenceChainCoverage,releaseArtifactIdentityCoverage,coverageMetrics,...zeroAcceptanceCounters,canonicalFieldCount:fieldRows.length,applicationFieldCount:applicationRows.length,agentFieldCount:agentRows.length,typedRelationshipCount:relationshipRows.length,currentScopeIdentityCount:scopeKeys.length,appendOnlyCollectionCount:appendOnlyCollections.length,stageCount:core.STAGE_COUNT,singlePagesWorkflow:true,applicationTestExecutorCount:engine.applicationTestCapabilities().length,centralAdjudication:true},null,2));
+console.log(JSON.stringify({fieldOwnershipCoverage,applicationDerivationCoverage,typedRelationshipCoverage,acceptedAgentValueExtractionCoverage,acceptedRelationshipProvenanceCoverage,currentScopeSelectorCoverage,exactReqRunTestCoverage,applicableCurrentRegressionSuccess,mandatoryEvidenceChainCoverage,releaseArtifactIdentityCoverage,coverageMetrics,...zeroAcceptanceCounters,canonicalFieldCount:fieldRows.length,applicationFieldCount:applicationRows.length,agentFieldCount:agentRows.length,typedRelationshipCount:relationshipRows.length,currentScopeIdentityCount:scopeKeys.length,appendOnlyCollectionCount:appendOnlyCollections.length,stageCount:core.STAGE_COUNT,singlePagesWorkflow:true,applicationTestExecutorCount:engine.applicationTestCapabilities().length,centralAdjudication:true,deployedByteWiringFaults},null,2));

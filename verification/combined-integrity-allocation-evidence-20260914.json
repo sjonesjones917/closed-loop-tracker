@@ -1,0 +1,240 @@
+{
+  "schema": "closed-loop-combined-integration-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "integratedParents": [
+    "23feca86677578f450e4e5bba0d794ede19e763a",
+    "26b5900c5d656710fcbee1a97c1e91401a8bf9c1"
+  ],
+  "sourceFiles": [
+    {
+      "path": "app-core.js",
+      "sha256": "74a0c5b68053af921a2ebe66c10a396a1a79337ec567ca39c69ae815307fe969"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "ef6838609b90304d09b0c99413044bc0e9783c88346ef392f9193cacbb62cd52"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "d3b3f949afda18662cd0ea6c200cec85e9ce5a5bd1573e73cc230ef91559e921"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "76a19a4a8b0c5e36eb2ee115ab84536a32cd09ab9005b4bcb8f855c2e2694852"
+    },
+    {
+      "path": "verify-filename-transports.mjs",
+      "sha256": "7612f7270b9a06ee1d1ddf2d85207cde37b2017afeab35fdef2aecea573430ed"
+    },
+    {
+      "path": "verify-integrity-recovery-faults.mjs",
+      "sha256": "ce3b7bfeec96653a8c9c78b31c4a0ad18226fc0e98840c92743820c867548288"
+    }
+  ],
+  "verification": {
+    "handoffAndByteComparison": {
+      "synthetic": true,
+      "actualBrowser": false,
+      "environment": "Node production modules with lifecycle transaction adapter",
+      "artifactBytes": 25,
+      "cases": [
+        {
+          "name": "Picker path handling rejects unsafe paths before changing them and retains valid relative-path spelling",
+          "result": "PASS"
+        },
+        {
+          "name": "Individual instruction exports retain valid Unicode and use the same pinned filename normalizer as consolidated handoffs",
+          "result": "PASS"
+        },
+        {
+          "name": "Release auditing compares selected File bytes with persisted Blob bytes and rejects a same-size byte mismatch",
+          "result": "PASS"
+        },
+        {
+          "name": "The stage ZIP contains the manifest-bound NFC path, original filename, and exact file bytes",
+          "result": "PASS"
+        },
+        {
+          "name": "Whole-version reversal and forward restoration retain original filename, canonical identity, and exact bytes",
+          "result": "PASS"
+        },
+        {
+          "name": "Restoration rejects stale handoffs and regenerates a Unicode-safe package for the active version",
+          "result": "PASS"
+        },
+        {
+          "name": "Backup restoration from exported bytes preserves Unicode identities, complete History and exact file bytes",
+          "result": "PASS"
+        },
+        {
+          "name": "A cached project cannot export a handoff after an independent revision changes its authoritative stored version",
+          "result": "PASS"
+        },
+        {
+          "name": "A change committed while file bytes are being assembled prevents release of the stale handoff",
+          "result": "PASS"
+        },
+        {
+          "name": "A cached project cannot supply agent-facing context after its authoritative stored data becomes corrupt",
+          "result": "PASS"
+        }
+      ]
+    },
+    "targetedFaults": {
+      "synthetic": true,
+      "actualBrowser": false,
+      "method": "Targeted in-memory production faults followed by replay against the unmodified implementation",
+      "results": [
+        {
+          "suite": "verify-quarantine-recovery.mjs",
+          "fault": "quarantine-files",
+          "result": "DETECTED",
+          "restoredImplementation": "PASS"
+        },
+        {
+          "suite": "verify-filename-transports.mjs",
+          "fault": "handoff-race",
+          "result": "DETECTED",
+          "restoredImplementation": "PASS"
+        },
+        {
+          "suite": "verify-filename-transports.mjs",
+          "fault": "stored-byte-comparison",
+          "result": "DETECTED",
+          "restoredImplementation": "PASS"
+        }
+      ]
+    },
+    "quarantine": {
+      "synthetic": true,
+      "actualBrowser": false,
+      "environment": "Production modules and actual UI load owner with lifecycle transaction adapter and independent Node cryptography/graph decoding",
+      "testedCorruptedFileBytes": 15,
+      "cases": [
+        {
+          "name": "Corrupt project and actual file bytes are preserved together before the canonical row is quarantined",
+          "result": "PASS"
+        },
+        {
+          "name": "Restoring a valid complete version cannot overwrite the separate quarantined file evidence",
+          "result": "PASS"
+        },
+        {
+          "name": "Independent decryption and graph decoding reproduce the damaged stored row, original metadata and exact available file bytes",
+          "result": "PASS"
+        },
+        {
+          "name": "Quarantine evidence cannot masquerade as a validated project backup or activate damaged data",
+          "result": "PASS"
+        },
+        {
+          "name": "Controlled quarantine deletion is atomic and idempotent and leaves active projects, files and retained History intact",
+          "result": "PASS"
+        },
+        {
+          "name": "Invalid canonical encoding and interrupted quarantine preserve original state; session startup checkpoints other valid projects and records the quarantined starting state",
+          "result": "PASS"
+        },
+        {
+          "name": "Reload startup opens an independent valid project and exposes History when the selected project fails integrity",
+          "result": "PASS"
+        }
+      ]
+    },
+    "projectAllocation": {
+      "synthetic": true,
+      "actualBrowser": false,
+      "environment": "Node production runtime with transactional test adapter",
+      "cases": [
+        {
+          "name": "Project creation atomically retains canonical identity, command receipt, and initial recovery checkpoint; exact retry returns the same project",
+          "result": "PASS"
+        },
+        {
+          "name": "Independently authorized projects reserve distinct monotonic allocations in the registered global namespace",
+          "result": "PASS"
+        },
+        {
+          "name": "Interrupted creation leaves project, allocation sequence, receipts, and recovery history uncommitted; retry succeeds",
+          "result": "PASS"
+        },
+        {
+          "name": "Backup restoration retains completed creation identity and exact-retry protection without creating a second project",
+          "result": "PASS"
+        }
+      ]
+    },
+    "executionAllocation": {
+      "synthetic": true,
+      "actualBrowser": false,
+      "environment": "Node production runtime with transactional test adapter",
+      "cases": [
+        {
+          "name": "Instruction preview uses the canonical identity algorithm without mutating the project",
+          "result": "PASS"
+        },
+        {
+          "name": "Instruction, package, and reservation are committed with their allocation receipts",
+          "result": "PASS"
+        },
+        {
+          "name": "Exact prompt registration retry neither reallocates identities nor appends receipts",
+          "result": "PASS"
+        },
+        {
+          "name": "Restoration recovers the exact saved identities and receipts without reallocating",
+          "result": "PASS"
+        }
+      ]
+    },
+    "responseRetry": {
+      "synthetic": true,
+      "actualBrowser": false,
+      "environment": "Actual UI commit/continuation functions with production runtime and transactional test adapter",
+      "cases": [
+        {
+          "name": "Rejected response retains rejection and saves a fresh correctly bound instruction without accepting work",
+          "result": "PASS"
+        }
+      ]
+    },
+    "responseRetryFault": {
+      "synthetic": true,
+      "actualBrowser": false,
+      "cases": [
+        {
+          "fault": "COMPARE_WITH_CANDIDATE_REVISION",
+          "oracle": "RETRY_COMMIT_ORACLE",
+          "result": "DETECTED"
+        }
+      ],
+      "restoredImplementation": "PASS"
+    }
+  },
+  "affectedIntegration": {
+    "suite": "verify-project-lifecycle.mjs",
+    "exitCode": 0,
+    "result": "PASS",
+    "scope": "Combined quarantine, handoff, canonical allocation and retry mechanisms before the final stored-Blob audit correction. That correction is exercised by the filename and byte-comparison suite."
+  },
+  "deploymentContract": {
+    "suite": "verify-deployment-manifest.mjs",
+    "exitCode": 0,
+    "result": "PASS"
+  },
+  "storedBlobAuditDefect": {
+    "sourceSha256": "c56a0d43d72e03c8ae205df2494c21d1737b2e6586a96e4bbbde0bdf48c2f948",
+    "sequence": [
+      "Register a file through canonical artifact registration",
+      "Read the exact stored Blob",
+      "Select an identical named File for release auditing"
+    ],
+    "expected": "Accept exact matching bytes using the canonical filename identity",
+    "actualBefore": "UNSAFE_FILENAME: filename is empty, because persisted Blobs have no File.name",
+    "failure": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Got unwanted rejection: STORED_BLOB_AUDIT_ORACLE: byte comparison must use stored artifact metadata rather than assume a persisted Blob retains a File name\nActual message: \"UNSAFE_FILENAME: filename is empty.\"\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-filename-transports.mjs:18:125 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: TypeError: UNSAFE_FILENAME: filename is empty.\n      at Object.normalizeFilename (hash.js:256:17)\n      at logicalFilePath (evalmachine.<anonymous>:1:147)\n      at digestFile (evalmachine.<anonymous>:1:109)\n      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n      at async Object.auditedSelections (evalmachine.<anonymous>:1:584)\n      at async file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-filename-transports.mjs:18:170\n      at async waitForActual (node:assert:646:5)\n      at async strict.doesNotReject (node:assert:789:33)\n      at async file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-filename-transports.mjs:18:125,\n  expected: undefined,\n  operator: 'doesNotReject',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n",
+    "repair": "Hash stored Blob bytes without passing the Blob through filename intake; keep exact selected-file identity and byte comparison gates"
+  },
+  "browserRetest": "PENDING",
+  "physicalDeviceAcceptance": false,
+  "applicationComplete": false
+}

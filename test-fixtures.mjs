@@ -6,6 +6,7 @@ export function scalarFor(def,name,overrides={}){
   if(def.valueType==='INTEGER')return 1;
   if(def.valueType==='NUMBER')return 1;
   if(def.valueType==='STRING_ARRAY'||def.valueType==='REFERENCE_ARRAY')return ['fixture'];
+  if(String(name).toUpperCase()==='EXPECTED_VARIANCE_CONTRACT')return {dimensions:['requirement-truth'],allowedVariance:'No variance in requirement truth.'};
   if(def.valueType==='OBJECT')return {};
   const upper=String(name).toUpperCase();
   if(upper.includes('ARTIFACT_REQUIREMENTS'))return 'NONE';
@@ -22,7 +23,7 @@ export function scalarFor(def,name,overrides={}){
   return `fixture-${String(name).toLowerCase()}`;
 }
 export function recordProposal(schema,collection,{tempKey,targetId,relationships={},overrides={},evidenceRef='evidence-1'}={}){
-  const def=schema.RECORD_SCHEMAS[collection],fields=collection==='tests'?{VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}}:{};
+  const def=schema.RECORD_SCHEMAS[collection],fields=collection==='tests'?{EXPECTED_VARIANCE_CONTRACT:{dimensions:['requirement-truth'],allowedVariance:'No variance in requirement truth.'},VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}}:{};
   for(const name of def.required){const fd=def.fieldDefinitions[name];if(fd?.producer===schema.PRODUCER.AGENT)fields[name]=scalarFor(fd,name,overrides);}
   for(const [name,value] of Object.entries(overrides))if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=value;
   return {tempKey:targetId?undefined:(tempKey||`${collection}-1`),targetId:targetId||undefined,fields,relationships,evidenceRefs:evidenceRef?[evidenceRef]:[]};
@@ -76,6 +77,24 @@ export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAG
   project.activeStage=4;project.activeView='Workflow';return project;
 }
 
+// Export may prepare a current instruction and record its receipt. Those
+// operational changes must not replace accepted work or rewrite retained bytes.
+// Backup restoration must recover the exact post-export project data.
+export function stageHandoffRecoveryProof(before,exported,restored,hash){
+  const stable=value=>JSON.stringify(value,(_key,row)=>row&&typeof row==='object'&&!Array.isArray(row)?Object.fromEntries(Object.keys(row).sort().map(key=>[key,row[key]])):row);
+  const equal=(a,b)=>hash.sha256Text(stable(a))===hash.sha256Text(stable(b));
+  const preparation=new Set(['generatedPrompts','operationReservations','history','allocationReceipts','idCounters','eventSequence']);
+  const accepted=p=>Object.fromEntries(Object.entries(p.projectData).filter(([key])=>!preparation.has(key)));
+  const promptBytes=p=>Object.fromEntries(Object.entries(p).filter(([key])=>key!=='invalidatedBy'));
+  const retained=(before.projectData.generatedPrompts||[]).every(prior=>{
+    const after=exported.projectData.generatedPrompts.find(row=>row.instructionId===prior.instructionId);
+    return after&&equal(promptBytes(prior),promptBytes(after));
+  });
+  const prefix=family=>equal(before.projectData[family]||[],(exported.projectData[family]||[]).slice(0,(before.projectData[family]||[]).length));
+  const authoredStages=p=>Object.fromEntries(Object.entries(p.stages).map(([stage,row])=>[stage,row.agentData||{}]));
+  return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
+}
+
 // Isolated downstream fixtures supply their authored prerequisites directly.
 // Import the review through production ingestion so those fixtures cannot use
 // a bare author/raw ID as proof authority. The full-cycle test also authors the
@@ -88,7 +107,7 @@ export function reviewProofFixture(runtime,project){
  const prepared=engine.preparePromptContext(project,6,{operation:'PROOF_REVIEW'}),prompt=prompts.buildPromptRecord(6,project,prepared.options);project.projectData.generatedPrompts.push(prompt);
  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage:6,operation:'PROOF_REVIEW',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'fixture-proof-review',overrides:{REVIEW_QUESTION:'Does the controlled prerequisite proof suffice?',FINDING:'The observation-backed proposition requires accepted current evidence of the exact proposition.',REASONING:'Every current required test and expression is included; no alternate weaker branch is permitted.',RESULT:'ACCEPTED'}})]},evidence:[evidence('downstream-fixture-proof-review')],unresolved:[],warnings:[],attachments:[]};
  const proposal=ingestion.prepare(project,{stage:6,text:JSON.stringify(envelope),promptRecord:prompt});if(!proposal.validation.valid)throw new Error('Fixture proof review failed intake: '+JSON.stringify(proposal.validation.issues));
- Object.assign(project,ingestion.commit(proposal.project,proposal.proposal.proposalId,{operator:'DOWNSTREAM_FIXTURE'}).project);
+ Object.assign(project,ingestion.commit(proposal.project,proposal.proposal.proposalId,{operator:'DOWNSTREAM_FIXTURE',replacementConfirmation:ingestion.acceptanceImpact(proposal.project,proposal.proposal.proposalId)}).project);
  // These focused tests retain their explicit, already-controlled prerequisites.
  project.stages=priorStages;
 }

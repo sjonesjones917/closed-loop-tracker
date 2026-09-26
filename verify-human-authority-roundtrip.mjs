@@ -1,9 +1,11 @@
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion;
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 
@@ -48,9 +50,9 @@ function fixture(jobId){
 {
   const {project,proposal}=fixture('JOB-HUMAN-AUTHORITY-RETURNED-ATTACHMENT');
   const committed=ingestion.commit(project,proposal.proposalId,{operator:'TEST',humanAuthorityConfirmations:{'human-answer-1':'Field technicians'}});
-  engine.registerArtifactBytes(committed.project,{stage:1,artifactId:'ARTIFACT-RETURNED-STAGE01',filename:'agent-output.txt',mediaType:'text/plain',byteSize:12,sha256:'a'.repeat(64),role:'RETURNED_ATTACHMENT',lineage:{rawResponseId:proposal.rawResponseId,attachmentSlotId:'RETURNED-SLOT-1'}});
+  engine.registerArtifactBytes(committed.project,{stage:1,artifactId:artifactFixtureId(engine,committed.project,'ARTIFACT-RETURNED-STAGE01'),filename:'agent-output.txt',mediaType:'text/plain',byteSize:12,sha256:'a'.repeat(64),role:'RETURNED_ATTACHMENT',lineage:{rawResponseId:proposal.rawResponseId,attachmentSlotId:'RETURNED-SLOT-1'}});
   const liveManifest=engine.intakeCoverageManifest(committed.project);
-  assert(!liveManifest.units.some(unit=>unit.artifactId==='ARTIFACT-RETURNED-STAGE01'),'A Stage 01 agent-returned attachment was retroactively classified as user-supplied raw input.');
+  assert(!liveManifest.units.some(unit=>unit.artifactId===artifactFixtureId(engine,committed.project,'ARTIFACT-RETURNED-STAGE01')),'A Stage 01 agent-returned attachment was retroactively classified as user-supplied raw input.');
   const accounting=engine.evaluateIntakeAccounting(committed.project);
   assert(accounting.complete,`A Stage 01 returned attachment made the accepted semantic intake stale: ${accounting.reasons.join(' | ')}`);
 }

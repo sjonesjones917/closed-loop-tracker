@@ -1,0 +1,82 @@
+{
+  "schema": "closed-loop-runtime-host-closure/1",
+  "candidate": "repair/complete-conformance-continuation-20260914",
+  "parentRegister": "verification/current-task-requirement-register.json",
+  "composition": "Add these rows to the mandatory denominator. No earlier row is removed or promoted by this supplement.",
+  "sourceRevision": "5804711a2e59c7872b0997a8a325bbd1c516fe17",
+  "sourceTree": "96cdf83d584f680aae57ad497a92fbfcd76b6632",
+  "controllingSpecification": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"
+  },
+  "rows": [
+    {
+      "requirementId": "HARNESS-BYTE-DEADLINE-HOST-CLOSURE",
+      "sourceLocation": "User sections 7 (shared authority and every consumer), 8 (specific failing regression and positive counterpart), 11 (complete integrated CI); UX-016 and UX-017",
+      "responsibleProductionCode": {
+        "file": "hash.js",
+        "symbol": "readWithDeadline/sha256Bytes",
+        "consumer": "verify-test-runtime.mjs:appContext and nativeTestInputs fixture"
+      },
+      "observableExpectedBehavior": "The verifier supplies the real timer host services used by the production byte-read deadline. It exercises input limits, immutable-owner binding, duplicate-binding read sharing, and worker isolation without removing production deadlines, replacing their output, or monkeypatching VM creation.",
+      "requiredEvidence": [
+        "node verify-test-runtime.mjs fails on the original source with setTimeout is not defined in hash.js:readWithDeadline",
+        "The same named regression executes successfully after explicit host dependency provision",
+        "Other affected VM consumers execute with their intended negative and positive assertions intact",
+        "Complete unchanged candidate CI"
+      ],
+      "applicableStages": "All operations using the shared byte-read boundary; native input handler exercised at Stage 22",
+      "applicableOperations": [
+        "verified file read",
+        "native test input allocation",
+        "worker execution",
+        "shared-byte consumer verification"
+      ],
+      "status": "UNVERIFIED",
+      "classification": "VERIFIER_DEPENDENCY_DEFECT",
+      "reproduction": {
+        "runId": 35243504806,
+        "jobId": 105277669166,
+        "localCommand": "node verify-test-runtime.mjs",
+        "rawOutput": "verification/runtime-host-closure/test-runtime-before.log",
+        "expected": "Successful byte verification and immutable-owner/one-buffer-per-artifact assertions",
+        "actual": "ReferenceError: setTimeout is not defined from hash.js:185 before assertions finish",
+        "exitCode": 1
+      }
+    },
+    {
+      "requirementId": "HARNESS-BACKUP-PARSER-AUTHORITY-CLOSURE",
+      "sourceLocation": "User sections 7 (authority and all consumers), 8 (targeted negative/positive evidence), 11 (CI); UX-016 and recovery byte fidelity",
+      "responsibleProductionCode": {
+        "file": "project-store.js",
+        "symbol": "readPackageJson",
+        "consumer": "verify-backup-json-stream.mjs:runtime",
+        "dependency": "hash.js:readWithDeadline"
+      },
+      "observableExpectedBehavior": "The streaming backup parser verifier executes the authored hash deadline dependency, with explicit timer services, while preserving exact byte/Unicode/JSON checks, malformed-input rejection, and implementation-fault detection.",
+      "requiredEvidence": [
+        "Original node verify-backup-json-stream.mjs rejects with ReferenceError: hash is not defined",
+        "Same command completes with exact independent JSON and compressed-byte assertions",
+        "Span-scan and malformed-container injected faults detected",
+        "Complete integrated candidate CI"
+      ],
+      "applicableStages": "Every stage using saved project/history backups",
+      "applicableOperations": [
+        "backup export",
+        "backup import",
+        "checkpoint read",
+        "restoration"
+      ],
+      "status": "UNVERIFIED",
+      "classification": "VERIFIER_DEPENDENCY_DEFECT",
+      "reproduction": {
+        "sourceRevision": "5804711a2e59c7872b0997a8a325bbd1c516fe17",
+        "command": "node verify-backup-json-stream.mjs",
+        "exitCode": 1,
+        "rawOutput": "verification/runtime-host-closure/backup-parser-before.log",
+        "expected": "Production streaming parser completes its existing positive and negative checks",
+        "actual": "Extracted parser calls the omitted hash authority and throws before checks complete"
+      }
+    }
+  ]
+}

@@ -1,0 +1,2900 @@
+{
+  "schema": "closed-loop-current-task-requirement-overlay/1",
+  "candidate": "repair/complete-conformance-continuation-20260914",
+  "baseRegister": "verification/current-task-requirement-register.json",
+  "sourceInstruction": "Current user task as restated 2026-09-19; current definitions supersede earlier numbered user rows without deleting their historical text.",
+  "rule": "For duplicate current-user IDs, these rows are the controlling current-task definitions. Base rows remain historical and are not removed. Coverage reconciles each controlling current-user ID once.",
+  "statusBaseline": "UNVERIFIED",
+  "rows": [
+    {
+      "requirementId": "UX-001",
+      "sourceLocation": "Current user task section 9 E, UX-001",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "reportActionFailure + runOperatorAction finalization + focusAfterAction; saveHumanAnswers corrective-control binding"
+      },
+      "observableExpectedBehavior": "After every state change, the correct next action is visible after layout settles, with no prohibited upward movement.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "Finalized operator-action focus is deferred until controls unlock and remains authoritative through settled layout geometry",
+        "verify-workflow-focus.mjs exercises error-target precedence, post-unlock placement and subsequent layout phases; verify-browser-extra.mjs asserts actual viewport/focus after settled invalid-input and committed-import paths.",
+        "FOCUS-NATIVE-RESULT-COMPLETION executes runNativeStage22Tests through runOperatorAction with held worker and persistence boundaries, success/failure and later-frame geometry; IO-MUT-NATIVE-RESULT-NEXT-ACTION must detect removal of committed-result placement. Existing complete operator journey retains real-browser acceptance.",
+        "verify-delivery-transfer-boundary.mjs asserts the saved and rendered continuation, required delivery controls, retained-version immutability and no duplicate transfer. DELIVERY_NEXT_ACTION_ORACLE and DELIVERY_RENDERED_ACTION_ORACLE detect targeted premature-completion and stale-cache faults. Real-browser control visibility and settled geometry remain required in the existing complete operator journey."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "nativeResultDependencyClosure": {
+        "authority": "app-core.js:runNativeStage22Tests -> persistReplacement -> render -> focusAfterAction -> runOperatorAction finalization",
+        "membershipProof": "wire binds run-native-tests only to runNativeStage22Tests; nativeStage22Tests admits the current Stage 22 APPLICATION_DETERMINISTIC executable plan items with supported Test IR and a current product. Other application commands have their own existing completion callers.",
+        "operationClasses": [
+          "one pending native test",
+          "multiple pending native tests",
+          "runtime failure before commit",
+          "persistence failure",
+          "successful atomic commit",
+          "post-unlock and later-frame layout"
+        ],
+        "scope": "UI completion placement; native test execution, result authority, storage and history semantics remain governed by their existing production owners and downstream gates."
+      },
+      "deliveryContinuationDependencyClosure": {
+        "authority": "workflow-engine.js:recalculate -> installed operationalNextAction/next -> app-core.js:currentNextAction/displayedStageAction/nextActionMarkup/deliveryObservationMarkup",
+        "membershipProof": "Every recalculate projection delegates to its installed or explicit continuation callback. The canonical selected-stage UI reads the same policy directly, as other selected stages already do; it does not trust an obsolete retained action. Delivery controls apply when the actual current authorized transfer lacks attributable receipt evidence, including after the final stage gate passes.",
+        "operationClasses": [
+          "initial PENDING/SUCCEEDED/FAILED/UNKNOWN transfer receipt",
+          "appended SUCCEEDED/FAILED/UNKNOWN completion",
+          "attributed RECEIVED/NOT_RECEIVED/UNKNOWN observation",
+          "reload",
+          "retained version with obsolete action projection",
+          "restoration before transfer, after transfer and after observation",
+          "retry with retained external-transfer allowance"
+        ],
+        "scope": "Current action derivation and display; no change to stage completion rules, delivery authorization, receipt evidence basis, immutable recovery data, or physical-device acceptance."
+      }
+    },
+    {
+      "requirementId": "UX-002",
+      "sourceLocation": "Current user task section 9 E, UX-002",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Completing a stage's operator work brings the next required reading or action into view.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "FOCUS-NATIVE-RESULT-COMPLETION executes runNativeStage22Tests through runOperatorAction with held worker and persistence boundaries, success/failure and later-frame geometry; IO-MUT-NATIVE-RESULT-NEXT-ACTION must detect removal of committed-result placement. Existing complete operator journey retains real-browser acceptance.",
+        "verify-delivery-transfer-boundary.mjs asserts the saved and rendered continuation, required delivery controls, retained-version immutability and no duplicate transfer. DELIVERY_NEXT_ACTION_ORACLE and DELIVERY_RENDERED_ACTION_ORACLE detect targeted premature-completion and stale-cache faults. Real-browser control visibility and settled geometry remain required in the existing complete operator journey."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "nativeResultDependencyClosure": {
+        "authority": "app-core.js:runNativeStage22Tests -> persistReplacement -> render -> focusAfterAction -> runOperatorAction finalization",
+        "membershipProof": "wire binds run-native-tests only to runNativeStage22Tests; nativeStage22Tests admits the current Stage 22 APPLICATION_DETERMINISTIC executable plan items with supported Test IR and a current product. Other application commands have their own existing completion callers.",
+        "operationClasses": [
+          "one pending native test",
+          "multiple pending native tests",
+          "runtime failure before commit",
+          "persistence failure",
+          "successful atomic commit",
+          "post-unlock and later-frame layout"
+        ],
+        "scope": "UI completion placement; native test execution, result authority, storage and history semantics remain governed by their existing production owners and downstream gates."
+      },
+      "deliveryContinuationDependencyClosure": {
+        "authority": "workflow-engine.js:recalculate -> installed operationalNextAction/next -> app-core.js:currentNextAction/displayedStageAction/nextActionMarkup/deliveryObservationMarkup",
+        "membershipProof": "Every recalculate projection delegates to its installed or explicit continuation callback. The canonical selected-stage UI reads the same policy directly, as other selected stages already do; it does not trust an obsolete retained action. Delivery controls apply when the actual current authorized transfer lacks attributable receipt evidence, including after the final stage gate passes.",
+        "operationClasses": [
+          "initial PENDING/SUCCEEDED/FAILED/UNKNOWN transfer receipt",
+          "appended SUCCEEDED/FAILED/UNKNOWN completion",
+          "attributed RECEIVED/NOT_RECEIVED/UNKNOWN observation",
+          "reload",
+          "retained version with obsolete action projection",
+          "restoration before transfer, after transfer and after observation",
+          "retry with retained external-transfer allowance"
+        ],
+        "scope": "Current action derivation and display; no change to stage completion rules, delivery authorization, receipt evidence basis, immutable recovery data, or physical-device acceptance."
+      }
+    },
+    {
+      "requirementId": "UX-003",
+      "sourceLocation": "Current user task section 9 E, UX-003",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "reportActionFailure + runOperatorAction finalization + focusAfterAction; saveHumanAnswers corrective-control binding"
+      },
+      "observableExpectedBehavior": "Auto-scroll moves downward for forward progress and upward only for explicit return, correction, or retry, landing on the required element.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "verify-workflow-focus.mjs exercises error-target precedence, post-unlock placement and subsequent layout phases; verify-browser-extra.mjs asserts actual viewport/focus after settled invalid-input and committed-import paths.",
+        "FOCUS-NATIVE-RESULT-COMPLETION executes runNativeStage22Tests through runOperatorAction with held worker and persistence boundaries, success/failure and later-frame geometry; IO-MUT-NATIVE-RESULT-NEXT-ACTION must detect removal of committed-result placement. Existing complete operator journey retains real-browser acceptance."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "nativeResultDependencyClosure": {
+        "authority": "app-core.js:runNativeStage22Tests -> persistReplacement -> render -> focusAfterAction -> runOperatorAction finalization",
+        "membershipProof": "wire binds run-native-tests only to runNativeStage22Tests; nativeStage22Tests admits the current Stage 22 APPLICATION_DETERMINISTIC executable plan items with supported Test IR and a current product. Other application commands have their own existing completion callers.",
+        "operationClasses": [
+          "one pending native test",
+          "multiple pending native tests",
+          "runtime failure before commit",
+          "persistence failure",
+          "successful atomic commit",
+          "post-unlock and later-frame layout"
+        ],
+        "scope": "UI completion placement; native test execution, result authority, storage and history semantics remain governed by their existing production owners and downstream gates."
+      }
+    },
+    {
+      "requirementId": "UX-004",
+      "sourceLocation": "Current user task section 9 E, UX-004",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Saving project information confirms ingestion and directs the operator to the next required operation.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-005",
+      "sourceLocation": "Current user task section 9 E, UX-005",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Each stage's required exports are produced as one file by one operator action in a target-mobile-compatible format, with stage/version isolation enforced before assembly.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-006",
+      "sourceLocation": "Current user task section 9 E, UX-006",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "workflow consolidated stage-package action rendering"
+      },
+      "observableExpectedBehavior": "Separate per-artifact export controls replaced by UX-005 are removed rather than retained beside the consolidated control.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "Browser recovery and operator verifiers exercise only the consolidated stage-package action and reject legacy export controls"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-007",
+      "sourceLocation": "Current user task section 9 E, UX-007",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Instruction text appears once per view with no duplicated instruction text on any stage.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-008",
+      "sourceLocation": "Current user task section 9 E, UX-008",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Instruction state text derives from actual attempt/revision state; first generation is original and regenerated state is not hard-coded.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-009",
+      "sourceLocation": "Current user task section 9 E, UX-009",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "When instructions have actually been regenerated, the operator is told at the point of use.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-010",
+      "sourceLocation": "Current user task section 9 E, UX-010",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Language is concise and imperative and removes redundant text, controls, confirmations, and non-actionable information.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-011",
+      "sourceLocation": "Current user task section 9 E, UX-011",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "reportActionFailure + importProjectPackageFile post-commit classification"
+      },
+      "observableExpectedBehavior": "Required decisions, useful status, actionable errors, and recovery remain visible while codes/internal IDs/diagnostics/advanced tools are behind details or advanced controls.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "verify-primary-error-information.mjs exercises committed import, exact retained bytes, independent-state preservation, public recovery outcome, rejected import and matching post-commit fault injection; verify-io-boundary-faults.mjs detects targeted reversals; verify-browser-extra.mjs requires real committed-import and settled visible-error observations."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-012",
+      "sourceLocation": "Current user task section 9 E, UX-012",
+      "responsibleProductionCode": {
+        "file": "app-core.js + response-ingestion.js",
+        "symbol": "acceptPendingProposal / showReplacementReview / confirmReplacement + acceptanceImpact"
+      },
+      "observableExpectedBehavior": "Confirmations are in-page and scrolled into view; no popup, modal, alert, or browser confirmation dialog is used.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "Acceptance-specific replacement/invalidation impact must be the exact in-page confirmation authority; generic storage mutation impact remains an internal CAS guard."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-013",
+      "sourceLocation": "Current user task section 9 E, UX-013",
+      "responsibleProductionCode": {
+        "file": "app-core.js + project-store.js",
+        "symbol": "keepCurrentProgress / captureCurrentView / selectSavedView / rebaseHistoryView"
+      },
+      "observableExpectedBehavior": "History restoration restores the recorded view and does not automatically advance to another stage.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "Cancellation creates a distinct durable saved view while the prior unaccepted candidate checkpoint remains restorable with its recorded view."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-014",
+      "sourceLocation": "Current user task section 9 E, UX-014",
+      "responsibleProductionCode": {
+        "file": "app-core.js + response-ingestion.js",
+        "symbol": "confirmReplacement / finishAcceptedProposal / acceptanceImpact"
+      },
+      "observableExpectedBehavior": "After acceptance succeeds, the next required operation is in view and concise Undo is available.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "Acceptance commits only after the exact confirmed semantic impact is rechecked, then moves to the next required operation with recovery preserved."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-015",
+      "sourceLocation": "Current user task section 9 F, UX-015",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Any operation exceeding the configured D-1 threshold shows a small clearly visible loading/progress indicator, including export, response import, restoration, and pending operations.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-016",
+      "sourceLocation": "Current user task section 9 F, UX-016",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Startup has a unique informative startup view distinct from operation loading.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-017",
+      "sourceLocation": "Current user task section 9 F, UX-017",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Every load terminates visibly in success or actionable failure with recovery access; no indicator runs indefinitely.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-018",
+      "sourceLocation": "Current user task section 9 F, UX-018",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Loading indicators appear only while genuinely loading and are not shown for crashed, stalled, or broken states.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-019",
+      "sourceLocation": "Current user task section 9 F, UX-019",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Controls are disabled while their operation is in flight and repeated activation cannot duplicate execution or enqueue a second operation.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-020",
+      "sourceLocation": "Current user task section 9 F, UX-020",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "reportActionFailure + importProjectPackageFile post-commit classification"
+      },
+      "observableExpectedBehavior": "Completion, failure, and recovery feedback is explicit in every case.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable",
+        "verify-primary-error-information.mjs exercises committed import, exact retained bytes, independent-state preservation, public recovery outcome, rejected import and matching post-commit fault injection; verify-io-boundary-faults.mjs detects targeted reversals; verify-browser-extra.mjs requires real committed-import and settled visible-error observations."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "UX-021",
+      "sourceLocation": "Current user task section 9 F, UX-021",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "requirement-specific authority traced by permanent verifiers"
+      },
+      "observableExpectedBehavior": "Operation latency is measured and reported across the workflow and automatable computation, assembly, and coordination are application-owned.",
+      "requiredEvidence": [
+        "Executed behavioral case on exact candidate source",
+        "Raw output bound to source SHA/run identity",
+        "Fault injection proving the relevant gate detects its intended violation",
+        "Affected downstream browser/recovery verification where applicable"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-1",
+      "sourceLocation": "Current user task section 8, DEF-1",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Saving project information produces no confirmation, no ingestion feedback, and no advance to the next required operation.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-2",
+      "sourceLocation": "Current user task section 8, DEF-2",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Instruction text is duplicated within and across views; inspect every stage.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-3",
+      "sourceLocation": "Current user task section 8, DEF-3",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Instruction display asserts a regenerated state unconditionally; first generation must be original.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-4",
+      "sourceLocation": "Current user task section 8, DEF-4",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: True regenerated instructions lack an operator-visible indicator.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-5",
+      "sourceLocation": "Current user task section 8, DEF-5",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Each stage requires three separate export actions instead of one consolidated file action.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-6",
+      "sourceLocation": "Current user task section 8, DEF-6",
+      "responsibleProductionCode": {
+        "file": "app-core.js + project-store.js",
+        "symbol": "registerStageFiles / keepCurrentProgress / History restore pendingMutation"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Changing project input after Stage 1 completed crashes or fails without rollback confirmation/effective change.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure",
+        "Cancelled Stage-1 input correction remains unaccepted, current progress is preserved, and the exact prior correction candidate remains recoverable through History."
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-7",
+      "sourceLocation": "Current user task section 8, DEF-7",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Operations including export and response import lack threshold-governed loading feedback.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-8",
+      "sourceLocation": "Current user task section 8, DEF-8",
+      "responsibleProductionCode": {
+        "file": "app-core.js and shared production dependencies",
+        "symbol": "defect-specific authority established by reproduction"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Application lacks a startup view while loading.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-9",
+      "sourceLocation": "Current user task section 8, DEF-9",
+      "responsibleProductionCode": {
+        "file": "project-store.js; hash.js; workflow-engine.js",
+        "symbol": "operationalPatches/assertOperationalChange; canonicalChunks key ordering; recalculate stage projection with withCompletedStageAdjudications and withInputScopeEvaluation"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Operation latency is excessive, unmeasured, or unreported.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "production",
+      "reproduction": {
+        "sourceCommit": "488175ebb0ddb3d23a7667ae3039e83202691462",
+        "runId": 35444451773,
+        "artifactId": 10586602720,
+        "rawArtifact": "operator-evidence/journey.json",
+        "actual": "Complete operator journey exhausted its existing 60-minute budget at Stage 17, sequence 77. The same path failed in run 5892. Exact-source persistence profiling identifies repeated subtree hashing and key-comparator traversal.",
+        "commands": [
+          "node verify-complete-operator-journey.mjs",
+          "node ../profile-current-persistence.mjs"
+        ]
+      },
+      "authorityTrace": "Measured project-store.readProject verifies canonical bytes, then saveCheckpoint asks prepareHistoryCommit to hash the same private, unchanged object again. Closure: saveCheckpoint callers, History/session start, drafts, retention, backup, restore, corruption and concurrent-head checks. Reuse only the digest from that private verified read; public write options cannot seed it.",
+      "dependencyClosure": [
+        "Operational raw-response capture, validation, rejection, reservations and execution journals",
+        "Project and record hashing, prompt/context identities, artifact byte comparisons, history snapshots, backups, transaction CAS",
+        "Unicode scalar key ordering including supplementary characters and malformed surrogates",
+        "Ownership, revision, mixed-version, retained-history, byte-identity fault probes",
+        "Full real-browser operator journey and measured operation distributions",
+        "One synchronous installed-gate stage projection reuses only unchanged canonical result/input adjudication; every subsequent calculation or failed retry recomputes it, with custom evaluators outside the reuse contract."
+      ],
+      "continuedEvidence": {
+        "runId": 35494646672,
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "artifactId": 10601578260,
+        "actual": "The complete browser journey was interrupted by its configured 60-minute process limit during Stage 25. Completed driver timings expose growing import, acceptance and export latency. The run did not reach its final application-latency collection. Production latency, test-budget interruption and incomplete latency evidence are classified separately while profiling."
+      }
+    },
+    {
+      "requirementId": "DEF-10",
+      "sourceLocation": "Current user task section 8, DEF-10",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "runOperatorAction finalization + focusAfterAction layout-quiescence authority"
+      },
+      "observableExpectedBehavior": "Reproduce and correct: Next-action visibility fails after layout settling beyond the originally reproduced case; the complete post-layout invariant must hold.",
+      "requiredEvidence": [
+        "Inputs and exact operation sequence",
+        "Baseline failing invariant on exact defective source",
+        "Corrected same-path execution",
+        "Permanent regression demonstrated to detect the failure",
+        "Finalized operator-action focus is deferred until controls unlock and remains authoritative through settled layout geometry"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROHIBITION-REPAIR-TRANSPORT",
+      "sourceLocation": "Current user task section 2 \u2014 No repair-transport artifacts",
+      "responsibleProductionCode": {
+        "file": "repository candidate tree; verify.mjs",
+        "symbol": "repairTransportPatterns / walkRepairTransport"
+      },
+      "observableExpectedBehavior": "No transfer scripts, digest applicators, encoded repair payloads, patch appliers, or repair staging files remain in the candidate tree.",
+      "requiredEvidence": [
+        "Exact candidate tree scan",
+        "Injected prohibited transport fixture rejected",
+        "Full exact-revision CI"
+      ],
+      "applicableStages": "REPOSITORY_WIDE",
+      "applicableOperations": "ALL",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "D-1",
+      "sourceLocation": "Current user task section 6, D-1",
+      "responsibleProductionCode": "operator decision and responsible production owner",
+      "observableExpectedBehavior": "Use one configurable loading threshold default from 1000\u20132000 ms, measure raw workflow latency, and submit threshold plus measured distribution for operator confirmation.",
+      "requiredEvidence": [
+        "Exact outstanding decision and evidence for operator confirmation"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "D-2",
+      "sourceLocation": "Current user task section 6, D-2",
+      "responsibleProductionCode": "operator decision and responsible production owner",
+      "observableExpectedBehavior": "Do not modify contract text; any proposed change must identify its motivating requirement and remain operator-reserved.",
+      "requiredEvidence": [
+        "Exact outstanding decision and evidence for operator confirmation"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "D-3",
+      "sourceLocation": "Current user task section 6, D-3",
+      "responsibleProductionCode": "operator decision and responsible production owner",
+      "observableExpectedBehavior": "Preserve approved visuals except where the controlling specification or numbered requirement requires a change; approval remains operator-reserved.",
+      "requiredEvidence": [
+        "Exact outstanding decision and evidence for operator confirmation"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "D-4",
+      "sourceLocation": "Current user task section 6, D-4",
+      "responsibleProductionCode": "operator decision and responsible production owner",
+      "observableExpectedBehavior": "Use specified definitions/defaults; otherwise record unresolved ambiguity and candidate readings without silent selection.",
+      "requiredEvidence": [
+        "Exact outstanding decision and evidence for operator confirmation"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-11",
+      "sourceLocation": "Current user task sections 3, 4A, 8, 9A/B/D/E and 10; controlling specification operator-next-action and semantic-review transition requirements",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "selectedOperation / selectedRun / finishAcceptedProposal lane-selection authority"
+      },
+      "observableExpectedBehavior": "After a committed response changes the authoritative next operation or run, stale pre-acceptance UI lane selections cannot override that new state. Saving or exporting the next instruction uses the current derived operation and current applicable run; any explicitly created continuation becomes the new selection.",
+      "requiredEvidence": [
+        "Run-5889 actual-browser reproduction",
+        "Permanent actual-control regression spanning a multi-operation stage",
+        "Fault injection that preserves a stale operation/run selection and is rejected",
+        "Affected prompt, acceptance, recovery, and browser verification on the exact repaired candidate"
+      ],
+      "applicableStages": "ALL_MULTI_OPERATION_OR_RUN_SCOPED_STAGES",
+      "applicableOperations": "ACCEPT_RESPONSE -> NEXT_REQUIRED_EXTERNAL_OPERATION_OR_RUN",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "PRODUCTION",
+          "sourceSha": "d823127d508a1506aa4d6eb550c5d6847939572e",
+          "runId": 35413700912,
+          "case": "verify-browser-extra.mjs stage03-duplicate-response-recovery",
+          "actual": "After Stage 02 COMPLETE acceptance, the saved next instruction did not bind SEARCH_ADEQUACY_REVIEW."
+        },
+        {
+          "classification": "VERIFIER_CAUSAL_REFUTATION",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "runId": 35419893155,
+          "case": "verify-browser-extra.mjs stage03-duplicate-response-recovery causal trace",
+          "actual": "The verifier assigned JOB_ID text to #project-picker even though the production selector values are numeric project indices; the resulting empty selection coerced to projects[0]. Independent production semantic replay derived SEARCH_ADEQUACY_REVIEW, and verify-post-acceptance-lane-selection.mjs passed while detecting stale operation/run faults."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-001",
+      "sourceLocation": "Current user task sections 4B, 9 UX-011, 10 and 11; controlling specification visible-interface verification discipline",
+      "responsibleProductionCode": {
+        "file": "verify-browser.mjs",
+        "symbol": "Stage 02 acceptance synchronization oracle"
+      },
+      "observableExpectedBehavior": "The browser verifier synchronizes on completion of the actual acceptance action, rejects any unexpected replacement confirmation, then inspects canonical source state and its application-assigned SOURCE_ID. It does not use an internal identifier as the synchronization primitive.",
+      "requiredEvidence": [
+        "Run-5889 raw failure",
+        "Repaired browser verifier succeeds while canonical SOURCE_ID remains hidden from ordinary operator text"
+      ],
+      "applicableStages": "2",
+      "applicableOperations": "ACCEPT_RESPONSE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "d823127d508a1506aa4d6eb550c5d6847939572e",
+          "runId": 35413700912,
+          "case": "verify-browser.mjs",
+          "actual": "Timed out waiting for document.body.innerText.includes('SOURCE-') although the operator journey accepted Stage 02 without rendering that internal ID."
+        },
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "runId": 35419893155,
+          "case": "verify-browser.mjs Stage 02 canonical source state oracle",
+          "actual": "Verifier read SOURCE_ID from source.SOURCE_ID/source.id although canonical records store SOURCE_ID in record.fields and workflow-engine recordId is the shared authority."
+        },
+        {
+          "classification": "PRODUCTION",
+          "sourceSha": "004e53e11f4ae6b46d0279ace8b201353e633831",
+          "runId": 35426991714,
+          "case": "verify-browser.mjs Stage 02 acceptance synchronization oracle",
+          "actual": "Acceptance requested unnecessary replacement confirmation because migration audit archives and untouched legacy templates were counted as active downstream work. Exact-source regression reproduced the defect; improved browser synchronization exposes it directly. Earlier SOURCE_ID harness defects remain separate."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-002",
+      "sourceLocation": "Current user task section 4C shared verifier-runtime factory requirement and section 11 fault-detection requirements",
+      "responsibleProductionCode": {
+        "file": "verifier-runtime.mjs and VM verifier consumers",
+        "symbol": "shared verifier runtime factory"
+      },
+      "observableExpectedBehavior": "Every Node VM verifier consumes one shared runtime factory that supplies timers, RAF, AbortController/AbortSignal, crypto and the production canonical-hash API, Blob/File, URL, text codecs, and storage defaults without overwriting explicit fixture overrides. Factory-provided structuredClone returns values native to the verifier realm so production canonical hashing and plain-object checks behave the same way they do in the application.",
+      "requiredEvidence": [
+        "Failing current-source reproduction of missing AbortController",
+        "Factory contract regression",
+        "Consumer scan proving no independent vm.createContext authority remains",
+        "Affected mobile-operation and downstream conformance suites",
+        "Failing run-5890 reproduction of foreign-realm structuredClone output rejected by production canonical hashing",
+        "Realm-local structuredClone contract regression and targeted host-realm fault injection",
+        "Direct VM evaluator scan including createContext, runInNewContext and runInThisContext",
+        "Actual Node-host plain-object, structured-clone, hash, RAF, File, URL and storage behavior",
+        "Missing RAF and foreign-realm fault rejection",
+        "Default factory supplies its own realm-native production hash API without every consumer having to seed it"
+      ],
+      "applicableStages": "VERIFICATION_INFRASTRUCTURE",
+      "applicableOperations": "ALL_VM_VERIFIER_EXECUTION",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "d823127d508a1506aa4d6eb550c5d6847939572e",
+          "case": "verify-mobile-operation-observations.mjs local exact-source reproduction",
+          "actual": "Capability probe failed with 'AbortController is not defined'; verifier context reported typeof AbortController === 'undefined'."
+        },
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "7d9727ce5cbbfe92baf40149acf008cc8aaa4dae",
+          "runId": 35418782785,
+          "case": "verify-final-product-timing.mjs in Physical iPhone release-tag governance",
+          "actual": "Factory-provided host structuredClone returned a foreign-realm proposal scope; production hash.js correctly rejected it as a non-plain object at $."
+        },
+        {
+          "classification": "VERIFIER_REPAIR_PROOF",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "case": "verify-verifier-runtime.mjs + verify-mobile-operation-observations.mjs local exact-source replay",
+          "actual": "Shared verifier runtime passed its contract; all discovered VM consumers used the factory and mobile operation observations passed. Integrated run 5891 also passed all pre-browser gates."
+        }
+      ],
+      "mandatory": true,
+      "dependencyClosure": [
+        "verifier-runtime.mjs isolated and Node-host realms",
+        "Every root and nested VM verifier including runInThisContext and runInNewContext consumers",
+        "Generated child-program consumers",
+        "Factory contract and targeted platform/realm fault injection",
+        "All existing workflow verification consumers"
+      ],
+      "reproduction": {
+        "sourceCommit": "488175ebb0ddb3d23a7667ae3039e83202691462",
+        "classification": "verifier",
+        "commands": [
+          "node ../reproduce-runtime-authority-gap.mjs",
+          "node ../reproduce-runtime-host-realm.mjs"
+        ],
+        "failedInvariants": [
+          "VERIFIER_RUNTIME_SINGLE_FACTORY_ORACLE",
+          "VERIFIER_HOST_REALM_ORACLE",
+          "VERIFIER_RUNTIME_HASH_CLOSEDLOOPHASH_ORACLE"
+        ]
+      },
+      "additionalReproductions": [
+        {
+          "workingTree": "Complete integrated local repair before startup fixture correction",
+          "command": "node verify-conformance-regressions.mjs",
+          "failingSuite": "verify-operator-feedback.mjs",
+          "actual": "TypeError: Cannot set properties of null (setting closedLoopHash)",
+          "classification": "verifier",
+          "cause": "The startup verifier overrides the VM globalThis with null before the factory initializes its required hash API.",
+          "affectedConsumers": [
+            "verify-operator-feedback.mjs success and failure fixtures"
+          ],
+          "requiredRetest": "Execute both actual production startup paths after removing the invalid override; keep production code unchanged."
+        }
+      ]
+    },
+    {
+      "requirementId": "DEF-12",
+      "sourceLocation": "Current user task sections 3, 4A, 4C, 9C/D/E UX-013 and 10; controlling specification History destination and retained unaccepted-candidate restoration requirements",
+      "responsibleProductionCode": {
+        "file": "app-core.js + project-store.js",
+        "symbol": "restoreHistoryVersion / selectSavedView / projectStore.restoreCheckpoint rebase authority"
+      },
+      "observableExpectedBehavior": "Selecting an application-History project/version is navigation state, not a workflow draft. Choosing a retained checkpoint must not capture the selector into the current view, create an intervening checkpoint that repaints the selector, or rewrite the requested restore destination. Restoring a retained unaccepted correction must reactivate its in-page replacement confirmation without accepting it.",
+      "requiredEvidence": [
+        "Run-5891 and run-5892 actual-browser reproduction",
+        "Permanent regression proving an already-rebased restore result is consumed exactly once",
+        "Targeted fault injection that forces a second history-view rebase and is detected",
+        "Real-browser restore of the retained unaccepted file correction followed by cancellation/acceptance checks"
+      ],
+      "applicableStages": "ALL_HISTORY_RESTORABLE_STAGES",
+      "applicableOperations": "HISTORY_SELECT -> HISTORY_RESTORE; CANCEL_UNCONFIRMED -> RESTORE_UNCONFIRMED",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "PRODUCTION",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "runId": 35419893155,
+          "case": "verify-browser-recovery.mjs retained file-correction restore",
+          "actual": "After selecting the retained pending checkpoint and activating History restore, #replacement-confirmation was absent. The checkpoint artifact itself contained pendingMutation, proving the recovery point was retained but the actual browser navigation path did not reactivate it."
+        },
+        {
+          "classification": "REGRESSION_BASELINE",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "case": "verify-file-correction-recovery.mjs HISTORY_NAVIGATION_DRAFT_ORACLE",
+          "actual": "The exact defective source serialized #history-project and #history-version as workflow drafts; the invariant regression failed before the production repair."
+        },
+        {
+          "classification": "PRODUCTION",
+          "sourceSha": "004e53e11f4ae6b46d0279ace8b201353e633831",
+          "runId": 35426991714,
+          "case": "verify-browser-recovery.mjs retained unaccepted file-correction History restore",
+          "actual": "Run 5892 again retained and selected the checkpoint but did not reactivate #replacement-confirmation. Inspection of the restore authority found app-core rebasing result.view again after project-store.restoreCheckpoint had already returned the destination view rebased to the activated revision; the repair removes that duplicate ownership and adds a fault that fails if it returns."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-003",
+      "sourceLocation": "Current user task sections 4B/4C, 10, 11 and 13; controlling specification actual-control operator-journey discipline",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs",
+        "symbol": "project selector navigation helper"
+      },
+      "observableExpectedBehavior": "The browser verifier must select projects through the actual #project-picker option value corresponding to the intended visible project and verify the resulting active project before exercising stage behavior. It must not write a JOB_ID into a selector whose production values are numeric project indices.",
+      "requiredEvidence": [
+        "Run-5891 raw failure and project-picker value trace",
+        "Repaired actual-browser verifier selects the intended project then derives SEARCH_ADEQUACY_REVIEW for incomplete source discovery"
+      ],
+      "applicableStages": "ALL",
+      "applicableOperations": "PROJECT_SELECTION -> STAGE_OPERATOR_PATH",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "dbfb256b04e59948f0a6f74ae6a16cf9e5a1bce5",
+          "runId": 35419893155,
+          "case": "verify-browser-extra.mjs stage03-duplicate-response-recovery",
+          "actual": "Verifier called fill(#project-picker, JOB_ID). Production option values are numeric project indices, so the value became empty and Number(\"\") selected projects[0], causing the test to inspect a different project and report COMPLETE instead of SEARCH_ADEQUACY_REVIEW."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-004",
+      "sourceLocation": "Current user task sections 4A, 4C, 10, 11; specification 10.1, 17.2, 25",
+      "responsibleProductionCode": "verify-browser-extra.mjs; test-fixtures.mjs; project-store.js:createExecutionPackage",
+      "observableExpectedBehavior": "A corrected response echoes the exact exported package prompt identity, reservation, package, nonce and scope; the browser verifier checks the authoritative handoff-container fields and actual instruction bytes, without confusing that container with a prompt-file manifest.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification",
+        "Run-5892 raw failure",
+        "Focused corrected manifest-identity assertion",
+        "Integrated actual-browser correction/retry path on the repaired candidate"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Exported instruction and context -> corrected response -> proposal -> acceptance -> reload",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "VERIFIER",
+          "sourceSha": "004e53e11f4ae6b46d0279ace8b201353e633831",
+          "runId": 35426991714,
+          "case": "verify-browser-extra.mjs correction-instruction-to-accepted-proposition-persistence",
+          "actual": "The package integrity assertion accepted manifest.instruction.bodySha256, but the later corrected-envelope assertion compared against manifest.instruction.sha256 only. The current manifest exposes bodySha256, so the verifier produced a false exact-instruction mismatch."
+        }
+      ],
+      "mandatory": true,
+      "failureClassification": "verifier",
+      "authorityTrace": [
+        "project-store.js:createExecutionPackage exports instruction.bodySha256 and promptIdentity.bodySha256 covering exact instruction bytes",
+        "verify-browser-extra.mjs compared corrected response with absent combined-manifest instruction.sha256",
+        "The plain prompt-file manifest uses instruction.sha256; its checks remain valid and must not change"
+      ],
+      "dependencyClosure": {
+        "operations": [
+          "export corrected instruction package",
+          "correct rejected response",
+          "revalidate exact transport identity"
+        ],
+        "consumers": [
+          "verify-browser-extra.mjs",
+          "verify-prompt-file-identity.mjs",
+          "verify-returned-slot-authority.mjs"
+        ],
+        "productionAlreadyCorrect": "Local reproduction from real ZIP bytes independently hashed instruction bytes; manifest bodySha256 and corrected response bodySha256 matched, reservation matched, but the exact browser assertion failed against absent instruction.sha256."
+      }
+    },
+    {
+      "requirementId": "CI-5892-ACCEPTANCE",
+      "sourceLocation": "Current user task sections 4E, 9B, 9E UX-010/014, 10; specification 17.7/12, 35.1, 39.7",
+      "responsibleProductionCode": "app-core.js:acceptPendingProposal/persistReplacement; project-store.js:mutationImpact; verify-browser.mjs",
+      "observableExpectedBehavior": "A valid initial response accepts through the required controls and commits its canonical records once. A required replacement confirmation is exercised explicitly; ordinary consumption of the current proposal is not misclassified as replacement of accepted work.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Rejected proposal -> new current instruction -> valid source response -> acceptance",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "production",
+      "authorityTrace": [
+        "verify-browser.mjs initial source acceptance timeout",
+        "app-core.js:acceptPendingProposal prepares in-page replacement review",
+        "response-ingestion.js:acceptanceImpact treats arbitrary projectData arrays as active work and compares draft text with only the current template",
+        "workflow-engine.js:invalidateDownstream only invalidates governed canonical/infrastructure families; migration archives are retained",
+        "project-store.js:replaceProject atomically preserves the unaccepted candidate while review is unanswered"
+      ],
+      "dependencyClosure": {
+        "operations": [
+          "initial DATA_PROPOSAL acceptance",
+          "replacement acceptance",
+          "cancellation",
+          "stale re-confirmation",
+          "upstream invalidation",
+          "restoration",
+          "duplicate submission"
+        ],
+        "stages": "All applicable stage/operation contracts; draft classification generated from every stage definition",
+        "consumers": [
+          "response-ingestion.js:acceptanceImpact/assertAcceptanceConfirmation/prepareAcceptanceCandidate/commit",
+          "workflow-engine.js:invalidateDownstream",
+          "app-core.js:acceptPendingProposal/showReplacementReview/confirmReplacement",
+          "project-store.js:replaceProject/restoreCheckpoint",
+          "verify-browser.mjs",
+          "verify-ui-acceptance-impact.mjs",
+          "verify-acceptance-active-work.mjs",
+          "verify-acceptance-boundary-faults.mjs"
+        ],
+        "retainedData": "Audit-only migration payloads and untouched templates are not affected operational work; authored drafts and active pending work remain protected.",
+        "derivedVersusAuthored": "Archive contents remain exact. Draft work is classified semantically without rewriting original legacy bytes. No contract or visual changes."
+      },
+      "reproduction": {
+        "sourceCommit": "004e53e11f4ae6b46d0279ace8b201353e633831",
+        "command": "node verify-acceptance-active-work.mjs",
+        "expected": "No replacement confirmation for initial acceptance with no affected authored work",
+        "actual": "ACTIVE_WORK_IMPACT_ORACLE failed: migration archives and untouched legacy templates were reported as affected work",
+        "ciRunId": 35426991714,
+        "ciJobId": 105854566283
+      }
+    },
+    {
+      "requirementId": "PROTOCOL-SINGLE-MUTATION-AUTHORITY",
+      "sourceLocation": "Current user task sections 2",
+      "responsibleProductionCode": "Repository candidate update authority",
+      "observableExpectedBehavior": "Only the existing candidate branch is mutable; no additional branch, fork or parallel repair line.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Every repository mutation",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-WORKFLOW-PREWRITE",
+      "sourceLocation": "Current user task sections 2",
+      "responsibleProductionCode": "Repository candidate update authority; .github/workflows/pages.yml",
+      "observableExpectedBehavior": "Before every candidate write, the complete workflow-file set is exactly .github/workflows/pages.yml.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Every repository mutation",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-READ-ONLY-CI",
+      "sourceLocation": "Current user task sections 2",
+      "responsibleProductionCode": ".github/workflows/pages.yml",
+      "observableExpectedBehavior": "CI and bots publish artifacts and status only; they never commit or push candidate, production, workflow, or evidence changes and no Action changes workflow files.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "CI and artifact publication",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "infrastructure",
+      "reproduction": {
+        "sourceCommit": "488175ebb0ddb3d23a7667ae3039e83202691462",
+        "sourcePath": ".github/workflows/pages.yml",
+        "sourceSha256": "2f6a27d4bceb92292fef6bdd03f59af7c1d3908df46f70f352ac9c0587696916",
+        "failedInvariant": "CI_READ_ONLY_REPOSITORY_ORACLE",
+        "actual": "The publish-status job has contents:write permission and conditionally pushes release/challenge tags."
+      },
+      "authorityTrace": [
+        "User task section 2 permits bots to publish artifacts and status only",
+        "The workflow publication job grants repository write permission and contains git push",
+        "Specification section 46 sets prerequisites for release tagging but does not require a CI author",
+        "CI retains eligibility/evidence publication; the authorized repository connection owns any later tag creation"
+      ],
+      "dependencyClosure": [
+        "pages.yml publish-status permissions, eligibility reporting and tag step",
+        "verify-mobile-release-governance.mjs workflow policy and injected faults",
+        "verify-final-acceptance.mjs publication wiring",
+        "verify-v3-definition-of-done.mjs governance consumer",
+        "Existing used-challenge read and rejection remain mandatory"
+      ],
+      "interpretation": "Applied the broader current-task rule to all repository refs, including tags; deployment remains the explicitly authorized Pages workflow action. No controlling specification text is changed."
+    },
+    {
+      "requirementId": "PROTOCOL-NO-TRANSPORT-STAGING",
+      "sourceLocation": "Current user task sections 2",
+      "responsibleProductionCode": "Repository candidate update authority",
+      "observableExpectedBehavior": "No transport scripts, encoded payloads, patch appliers, staging files, mutation workflows, self-removing workflows, or transport-sized intermediate commits enter the candidate.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Every repair revision",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-FROZEN-RUN",
+      "sourceLocation": "Current user task sections 0, 2, 3",
+      "responsibleProductionCode": "Repository candidate update authority",
+      "observableExpectedBehavior": "A candidate head with executing CI remains unchanged until that run finishes; no process, history, or tooling change invalidates it.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Candidate CI execution",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-NO-TRIGGER-COMMIT",
+      "sourceLocation": "Current user task sections 2, 3",
+      "responsibleProductionCode": "Repository candidate update authority",
+      "observableExpectedBehavior": "An unchanged SHA is rerun through Actions; every new candidate SHA represents a substantive complete repair.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "CI retry",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-CAS-PUBLISH",
+      "sourceLocation": "Current user task sections 2",
+      "responsibleProductionCode": "Repository candidate update authority",
+      "observableExpectedBehavior": "Construct and locally verify the complete semantic delta against the exact live candidate head, reread it, and publish once with compare-and-swap; a moved head aborts publication and requires recomputation.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Candidate publication",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-NO-HISTORY-REWRITE",
+      "sourceLocation": "Current user task sections 2, 16",
+      "responsibleProductionCode": "Repository candidate update authority",
+      "observableExpectedBehavior": "No history rewrite or squash occurs before exact candidate convergence and independent main verification.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Integration and history management",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-CAUSE-BEFORE-REPAIR",
+      "sourceLocation": "Current user task sections 3, 4A, 4E, 10",
+      "responsibleProductionCode": "Failure classification and affected production/verifier owners",
+      "observableExpectedBehavior": "Preserve raw failure output, classify production/verifier/infrastructure/evidence ownership, express a failing behavioral invariant, trace earliest authority and enumerate the complete dependency closure before production edits.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Every discovered failure",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-COMPLETE-REVISION",
+      "sourceLocation": "Current user task sections 3, 10",
+      "responsibleProductionCode": "Affected production, consumers, harness and permanent regressions",
+      "observableExpectedBehavior": "Each substantive repair revision closes the production authority, every affected consumer and harness, permanent regression, injected-fault detection and requirement-register change before push.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Every repair revision",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-FROZEN-GREEN",
+      "sourceLocation": "Current user task sections 3",
+      "responsibleProductionCode": "Repository candidate update authority",
+      "observableExpectedBehavior": "After full CI passes, freeze the candidate; reconcile evidence against that exact SHA, merge normally and let main independently rebuild, deploy and live-verify.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Successful candidate CI -> integration -> deployment",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-DEFER-PREFLIGHT",
+      "sourceLocation": "Current user task sections 16",
+      "responsibleProductionCode": ".github/workflows/pages.yml",
+      "observableExpectedBehavior": "Do not add a canonical preflight runner while this candidate is open unless a reproduced failure requires it.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Current open candidate",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "PROTOCOL-LAYOUT-ORACLE",
+      "sourceLocation": "Current user task sections 4B, 9E UX-001, 11",
+      "responsibleProductionCode": "Browser viewport verifiers and app-core.js:focusAfterAction",
+      "observableExpectedBehavior": "Visibility and permitted movement are checked after layout quiescence over applicable operation/state classes; targeted layout faults must fail the real-browser oracle.",
+      "requiredEvidence": [
+        "Named executed case against exact source",
+        "Expected outcome defined before execution",
+        "Raw untruncated output identified by SHA and run",
+        "Relevant single-fault detection and repaired positive control",
+        "Affected downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Every applicable UI state change",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true
+    },
+    {
+      "requirementId": "VER-006",
+      "sourceLocation": "Current user task sections 4A, 4C, 4E, 10, 11",
+      "responsibleProductionCode": "test-project-store-runtime.mjs:projectStoreRuntime; app-core.js:acceptedContinuation/rebaseAcceptedLaneSelection/persistReplacement",
+      "observableExpectedBehavior": "Every VM consumer of the actual persistence UI owner runs with its actual continuation dependencies and can exercise acceptance, confirmation and recovery without harness ReferenceErrors. Deliberately skipped confirmation fails at the intended confirmation oracle.",
+      "requiredEvidence": [
+        "node verify-ui-acceptance-impact.mjs",
+        "node verify-acceptance-boundary-faults.mjs",
+        "node verify-file-correction-recovery.mjs",
+        "node verify-response-retry-persistence.mjs",
+        "node verify-ui-persistence-preconditions.mjs"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Initial acceptance, confirmed replacement, lane continuation, file correction, retry and persistence",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "verifier",
+      "authorityTrace": [
+        "Actual persistReplacement calls acceptedContinuation and rebaseAcceptedLaneSelection since candidate head 004e53e11f4ae6b46d0279ace8b201353e633831",
+        "Existing verify-ui-acceptance-impact extracts persistReplacement but never installs those helpers",
+        "Shared projectStoreRuntime supplies the same actual dependencies to all persistence UI consumers"
+      ],
+      "reproduction": {
+        "sourceCommit": "004e53e11f4ae6b46d0279ace8b201353e633831",
+        "unchangedFiles": [
+          "app-core.js",
+          "verify-ui-acceptance-impact.mjs",
+          "test-project-store-runtime.mjs"
+        ],
+        "command": "node verify-ui-acceptance-impact.mjs",
+        "actual": "ReferenceError: acceptedContinuation is not defined",
+        "relatedFault": "skip-complete-confirmation failed for the same unrelated ReferenceError"
+      },
+      "dependencyClosure": [
+        "verify-ui-acceptance-impact.mjs",
+        "verify-file-correction-recovery.mjs",
+        "verify-response-retry-persistence.mjs",
+        "verify-response-retry-fault.mjs",
+        "verify-ui-persistence-preconditions.mjs",
+        "verify-acceptance-active-work.mjs",
+        "verify-acceptance-boundary-faults.mjs"
+      ]
+    },
+    {
+      "requirementId": "DEF-13",
+      "sourceLocation": "Current user task 9C, 9D, UX-013; controlling specification recovery and navigation requirements",
+      "responsibleProductionCode": "app-core.js:paintHistory/refreshHistory/captureCurrentView; verify-browser-recovery.mjs",
+      "observableExpectedBehavior": "A selected retained History destination remains selected across asynchronous view persistence, scroll and repaint until the operator changes or restores it. Restoring the saved unconfirmed file-correction view restores that exact candidate without accepting it.",
+      "requiredEvidence": [
+        "Falling regression against current app-core.js",
+        "Actual History action and persistence pipeline",
+        "Browser replay of file correction -> reload -> cancellation -> History restoration",
+        "Targeted destination-reset fault and repaired control"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "History selection, scroll, repaint, save view, restore unconfirmed candidate",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "production",
+      "reproduction": {
+        "sourceCommit": "004e53e11f4ae6b46d0279ace8b201353e633831",
+        "ciRunId": 35426991714,
+        "artifactId": 10580697721,
+        "rawArtifact": "recovery-browser-evidence/recovery.json",
+        "actual": "After cancelling a file correction and restoring its saved History destination, replacement-confirmation is absent.",
+        "command": "node verify-history-selection-capture.mjs",
+        "failedInvariant": "HISTORY_DESTINATION_RETENTION_ORACLE"
+      },
+      "authorityTrace": [
+        "A saved unconfirmed file correction survived reload, but selecting it in History restored another view",
+        "History selection is excluded from workflow drafts, correctly",
+        "Asynchronous captureCurrentView invokes refreshHistory -> paintHistory, which rebuilds the dropdown with shown.activeId and discards the chosen destination before activation",
+        "Keep transient History destination separate from saved workflow drafts; recheck it against the displayed project and retained entries; clear after successful activation"
+      ],
+      "dependencyClosure": [
+        "paintHistory",
+        "refreshHistory",
+        "captureCurrentView",
+        "History project selection",
+        "restoreHistoryVersion success/failure",
+        "native history restoration",
+        "verify-history-selection-capture.mjs",
+        "verify-history-selection-fault.mjs",
+        "verify-file-correction-recovery.mjs",
+        "verify-browser-recovery.mjs"
+      ]
+    },
+    {
+      "requirementId": "CI-5892-JOURNEY-TIMEOUT",
+      "sourceLocation": "Current user task DEF-9, UX-021, sections 13-15",
+      "responsibleProductionCode": "app-core.js operation lifecycle; project-store.js; operator-browser-driver.mjs; verify-complete-operator-journey.mjs",
+      "observableExpectedBehavior": "The complete valid project journey terminates through the actual application controls within the declared support limits; operation latency is measured and excessive application-owned work is corrected at its causal authority.",
+      "requiredEvidence": [
+        "Raw complete-journey artifact",
+        "Causal profiling distinguishing application and verifier overhead",
+        "Complete valid operator journey and latency samples after repair"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Whole-project progression with accumulated history",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "infrastructure interruption; independently reproduced production latency and evidence loss are tracked as DEF-9 and EVID-003",
+      "reproduction": {
+        "sourceCommit": "004e53e11f4ae6b46d0279ace8b201353e633831",
+        "ciRunId": 35426991714,
+        "artifactId": 10580697721,
+        "rawArtifact": "operator-evidence/journey.json",
+        "actual": "60-minute workflow command interrupted the complete journey at Stage 17 COMPARE; stages after the interruption were not executed."
+      },
+      "continuedEvidence": {
+        "sourceCommit": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "ciRunId": 35494646672,
+        "artifactId": 10601578260,
+        "actual": "The existing 60-minute process budget terminated a progressing real-browser journey during Stage 25 after completed Stage 24. The same workflow budget is expanded; no acceptance case is omitted or weakened."
+      }
+    },
+    {
+      "requirementId": "VER-005",
+      "sourceLocation": "Current user task sections 4B, 10, 11 and 13; controlling specification real-interface acceptance verification discipline",
+      "responsibleProductionCode": {
+        "file": "verify-browser.mjs",
+        "symbol": "Stage 02 post-acceptance synchronization"
+      },
+      "observableExpectedBehavior": "After the actual acceptance control finishes, the verifier distinguishes direct commit from an unexpected confirmation and then asserts the authoritative stored result. A polling expression over a derived/internal ID is not allowed to hide the actual state transition outcome.",
+      "requiredEvidence": [
+        "Run-5892 raw polling timeout",
+        "Focused verifier source/syntax check",
+        "Integrated actual-browser Stage 02 acceptance path"
+      ],
+      "applicableStages": "2",
+      "applicableOperations": "ACCEPT_RESPONSE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [
+        {
+          "classification": "PRODUCTION",
+          "sourceSha": "004e53e11f4ae6b46d0279ace8b201353e633831",
+          "runId": 35426991714,
+          "case": "verify-browser.mjs post-acceptance SOURCE_ID poll",
+          "actual": "Acceptance requested unnecessary replacement confirmation because migration audit archives and untouched legacy templates were counted as active downstream work. Exact-source regression reproduced the defect; improved browser synchronization exposes it directly. Earlier SOURCE_ID harness defects remain separate."
+        }
+      ],
+      "mandatory": true
+    },
+    {
+      "requirementId": "DEF-14",
+      "sourceLocation": "Current task 9C draft preservation; 9F UX-020; specification recovery requirements",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "saveFileSelection/captureView/applySavedView"
+      },
+      "observableExpectedBehavior": "Selecting or replacing a response file preserves the current operator drafts in both the rendered view and its durable checkpoint. A later staging failure leaves those drafts and the prior accepted project available.",
+      "requiredEvidence": [
+        "Exact-current-source failing behavioral regression",
+        "Complete authority and consumer closure",
+        "Targeted fault caught by the intended oracle",
+        "Restored implementation passes focused and downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "File selection/reselection, staging failure, reload and History restoration",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "production",
+      "reproduction": {
+        "sourceCommit": "488175ebb0ddb3d23a7667ae3039e83202691462",
+        "runId": 35444451773,
+        "failedInvariant": "FILE_SELECTION_DRAFT_RETENTION_ORACLE"
+      },
+      "authorityTrace": [
+        "Browser correction draft survives inline failure only if still present before failure",
+        "saveFileSelection captures and durably saves the current view with the selected file",
+        "Its success render rebuilds all workflow controls with defaults and does not reapply captured drafts",
+        "Reapply the exact newly saved view without restoring scroll or accepting work"
+      ],
+      "dependencyClosure": [
+        "All response-file selections at every applicable stage/operation/run",
+        "Text, checkbox and multiple-select drafts",
+        "Durable file-selection descriptor and checkpoint",
+        "Inline validation/storage errors",
+        "Reload and History restore",
+        "verify-browser-extra.mjs correction-storage-failure journey"
+      ]
+    },
+    {
+      "requirementId": "EVID-001",
+      "sourceLocation": "Current task 4D, 14 and 15",
+      "responsibleProductionCode": {
+        "file": ".github/workflows/pages.yml; verify-final-acceptance.mjs",
+        "symbol": "verify-live and workflow_dispatch publication artifact capture"
+      },
+      "observableExpectedBehavior": "Deployed byte and operator verification preserve raw observations and failures as immutable SHA/run-bound CI artifacts. Artifact publication does not modify source.",
+      "requiredEvidence": [
+        "Exact-current-source failing behavioral regression",
+        "Complete authority and consumer closure",
+        "Targeted fault caught by the intended oracle",
+        "Restored implementation passes focused and downstream verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Main deployment and workflow_dispatch verification",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "evidence",
+      "reproduction": {
+        "sourceCommit": "488175ebb0ddb3d23a7667ae3039e83202691462",
+        "command": "Inspect exact-current pages.yml verify-live and publish-status artifact steps",
+        "actual": "Live journey verification has no raw artifact archive; successful main run 34792415256 has no deployed operator-journey artifact."
+      },
+      "dependencyClosure": [
+        "Existing pages.yml only",
+        "verify-live byte proof and browser/recovery/complete operator journey",
+        "publish-status workflow_dispatch same paths",
+        "Publication-wiring regression/fault tests",
+        "Download and inspect actual deployed artifacts after the main build"
+      ]
+    },
+    {
+      "requirementId": "VER-007",
+      "sourceLocation": "Current task 4E and 14; deployed-byte verification gate",
+      "responsibleProductionCode": {
+        "file": "verify-definition-of-done-invariants.mjs; .github/workflows/pages.yml",
+        "symbol": "Exact deployed-byte verification command-wiring oracle"
+      },
+      "observableExpectedBehavior": "The verifier recognizes the existing deployed-byte command in valid inline or block YAML run forms, and rejects removal of that command or loss of failure propagation through its logging pipeline.",
+      "requiredEvidence": [
+        "Preserved failing definition-of-done output on the integrated candidate",
+        "Valid inline and block command fixtures accepted",
+        "Missing command and missing pipefail fixtures rejected by the intended oracle",
+        "Definition-of-done suite and affected downstream suite pass"
+      ],
+      "applicableStages": "DEPLOYMENT",
+      "applicableOperations": "Main exact deployed-byte verification",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "verifier",
+      "reproduction": {
+        "sourceCommit": "488175ebb0ddb3d23a7667ae3039e83202691462",
+        "workingTree": "Integrated uncommitted repair with deployed evidence capture",
+        "command": "node verify-definition-of-done.mjs",
+        "actual": "Exact deployed-byte verification is not in CI.",
+        "rawOutputSha256": "ebd32292e24208423ca5c92506759509e3cdf4d253bea0681db35223048519c9"
+      },
+      "authorityTrace": [
+        "Raw byte proof capture changes YAML run from inline to block without removing verification",
+        "Definition-of-done matches the literal inline syntax",
+        "Recognize the command within its named step and check logging pipeline failure propagation"
+      ],
+      "dependencyClosure": [
+        "verify-definition-of-done-invariants.mjs",
+        "verify-definition-of-done.mjs",
+        "verify-final-acceptance.mjs",
+        "pages.yml verify-live job"
+      ]
+    },
+    {
+      "requirementId": "DEF-15",
+      "sourceLocation": [
+        "Controlling specification section 34.2 canonical ID allocation",
+        "Current task sections 4A, 10 and 11"
+      ],
+      "responsibleProductionCode": [
+        {
+          "file": "workflow-engine.js",
+          "symbol": "allocateRecordIdentity / appendArtifactBytes"
+        },
+        {
+          "file": "app-core.js",
+          "symbol": "storeArtifactFile / registerStageFiles / selectReturnedSlotFile"
+        },
+        {
+          "file": "response-ingestion.js",
+          "symbol": "bindAttachmentSlots / commit"
+        },
+        {
+          "file": "project-store.js",
+          "symbol": "writeProject / writeOperationalProject / putArtifact"
+        }
+      ],
+      "observableExpectedBehavior": "Every newly canonical artifact occurrence uses the registered closed-loop-id/1 allocator with one matching immutable receipt, correct project namespace, retry binding and atomic persisted authority. Raw selected files remain unaccepted until their required acceptance operation.",
+      "requiredEvidence": [
+        "Actual input-file intake and returned-file mapping through production handlers and browser controls",
+        "Authoritative allocation identity and receipts; exact stored bytes; restoration and independent equal-content occurrences",
+        "Rejected cross-project, conflicting retry, missing/forged receipt and interrupted persistence cases",
+        "Targeted allocator-bypass fault rejected by permanent regression"
+      ],
+      "applicableStages": "Every stage and operation accepting artifacts; input, returned output, product and delivery artifact paths",
+      "applicableOperations": [
+        "FILE_INTAKE",
+        "RETURNED_FILE_MAPPING",
+        "RESPONSE_ACCEPTANCE",
+        "REEXECUTION",
+        "RESTORE",
+        "BACKUP_IMPORT"
+      ],
+      "status": "UNVERIFIED",
+      "classification": "production",
+      "reproduction": {
+        "sourceRevision": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "command": "node reproduce-current-creation-authority.mjs",
+        "rawOutput": "current-canonical-file-intake-baseline.log",
+        "actual": "Actual registerStageFiles commits JOB-\u2026-ARTIFACT-UUID identity with no matching allocation receipt; CANONICAL_INTAKE_IDENTITY_ORACLE fails.",
+        "rawOutputSha256": "c48ca424927222eace978814e160ccf65b8898acae506f213979f251f269c532"
+      },
+      "authorityTrace": [
+        "Actual file selection",
+        "storeArtifactFile constructs a random identifier",
+        "registerArtifactBytesBatch/appendArtifactBytes accept caller identity",
+        "Canonical allocator is bypassed",
+        "Persistence commits artifact metadata without a receipt"
+      ],
+      "dependencyClosure": [
+        "Stage-file batch input and product registration",
+        "Returned-file selection, raw-response mapping, canonical evidence relationships and acceptance promotion",
+        "Pending picker recovery identifiers remain separate from canonical record identities",
+        "Committed receipt/counter integrity, concurrency, repeated equal bytes and history restoration",
+        "Every engine-level verifier and authoritative fixture builder that currently supplies a handcrafted artifact identity"
+      ],
+      "mandatory": true,
+      "additionalReproduction": {
+        "command": "node reproduce-returned-file-allocation.mjs",
+        "rawOutput": "current-returned-file-allocation-baseline.log",
+        "rawOutputSha256": "86389d6fdc38c5f33c468390309b9163e7703f8b573c6650e1608a83967aa596",
+        "actual": "The actual returned-file selection handler persists exact bytes and an unaccepted slot mapping, but assigns a noncanonical random artifact ID with no allocation receipt. RETURNED_FILE_IDENTITY_ORACLE fails."
+      },
+      "permanentRegressionCommands": [
+        "node verify-file-intake-allocation.mjs",
+        "node verify-returned-file-allocation.mjs",
+        "node verify-file-allocation-boundaries.mjs",
+        "node verify-creation-presentation-faults.mjs",
+        "node verify-project-lifecycle-full.mjs",
+        "node verify-browser-extra.mjs"
+      ],
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "DEF-16",
+      "sourceLocation": [
+        "Controlling specification sections 34.2 and 35.7",
+        "Acceptance cases 190 and 197",
+        "Current task sections 9C, 10 and 11"
+      ],
+      "responsibleProductionCode": [
+        {
+          "file": "app-core.js",
+          "symbol": "duplicateCurrentProject / archiveCurrentProject / createUniqueJobId / persistNewProject"
+        },
+        {
+          "file": "project-store.js",
+          "symbol": "createProject / prepareCopiedInputs / sameCopiedFileIdentity / writeProjectRow / restoreProjectAllocation"
+        }
+      ],
+      "observableExpectedBehavior": "Every ordinary project-creation path uses one canonical project allocator. Copying valid human inputs succeeds with unset optional fields, preserves the source, gives copied files valid new project identities and exact bytes, and retains a source-bound command/mapping receipt outside both project bodies. An exact retry returns the same copy.",
+      "requiredEvidence": [
+        "Actual Start from copy and archive-last-project controls",
+        "Unset optional fields and valid original file input",
+        "Namespace separation, explicit copied/excluded material, byte mapping, retry/conflicting retry, concurrency and failed commit",
+        "Backup/recovery preserves source, copy and command receipts without incompatible accepted state",
+        "Reject inconsistent source file identity and recheck it immediately before the atomic copy commit; preserve existing recoverable state on rejection"
+      ],
+      "applicableStages": "All active project versions in which project management is permitted",
+      "applicableOperations": [
+        "COPY_PROJECT",
+        "ARCHIVE_LAST_PROJECT",
+        "RETRY",
+        "BACKUP",
+        "RESTORE"
+      ],
+      "status": "UNVERIFIED",
+      "classification": "production",
+      "reproduction": {
+        "sourceRevision": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "command": "node reproduce-current-project-copy-authority.mjs",
+        "rawOutput": "current-canonical-project-copy-baseline.log",
+        "actual": "Actual Start from copy on a project made by createProject throws Cannot canonically hash undefined at $.job.DESIRED_SOURCE_COUNT. The handler also bypasses createProject, using timestamp identity and writeProject directly.",
+        "rawOutputSha256": "fe5189bf7bf91639e54f563fe32361ed870a6dcdd7424ed8d7c6fe8f27c9c0ac"
+      },
+      "authorityTrace": [
+        "Start from copy on a valid newly created source",
+        "duplicateCurrentProject copies every UI field including absent optional values",
+        "createUniqueJobId chooses timestamp JOB identity",
+        "persistNewProject bypasses the canonical project creation owner",
+        "Canonical hashing rejects undefined; no clone command receipt exists"
+      ],
+      "dependencyClosure": [
+        "Copy project and archive-last-project fallback",
+        "Schema-owned reusable human input and supplied file relationships",
+        "Canonical metadata allocation and project creation transaction",
+        "Exact retry, payload conflict, source revision/hash checks",
+        "Source and clone recovery points, backup import and metadata receipts",
+        "Canonical input record, saved human input/file/text metadata, live Blob metadata, clone mapping, preparation and commit-time source identity"
+      ],
+      "mandatory": true,
+      "additionalReproduction": {
+        "command": "node reproduce-current-project-copy-authority.mjs --explicit-optional-null",
+        "rawOutput": "current-canonical-project-copy-identity-baseline.log",
+        "rawOutputSha256": "0ad6365c9257040d43c79bbb2cab35ff7553590c2aedb2ad9227f6163d70b5e1",
+        "actual": "With the optional field explicitly null, creation commits a timestamp-based JOB_ID and no project allocation receipt; CANONICAL_COPY_IDENTITY_ORACLE fails."
+      },
+      "inputCustodyReproduction": {
+        "command": "node reproduce-copy-input-custody.mjs",
+        "rawOutput": "current-copy-input-custody-baseline.log",
+        "rawOutputSha256": "191a24748a928dc01541bc568c98ae88493e77ba216083714299bbb55ebe416e",
+        "actual": "A valid source with an allocated canonical input artifact is copied by the actual handler. The copy retains the source artifact reference but has no stored bytes; COPY_INPUT_CUSTODY_ORACLE fails. The original source remains unchanged."
+      },
+      "archiveFallbackReproduction": {
+        "command": "node reproduce-archive-last-project-allocation.mjs",
+        "rawOutput": "current-archive-last-project-allocation-baseline.log",
+        "rawOutputSha256": "3cdbf6ee5d158aace43345c3648ec5e7d4d139cafbbf878b0b6341332334c6c4",
+        "actual": "The actual archive-last-project handler preserves its source but creates a replacement with a timestamp JOB_ID and no project allocation receipt. ARCHIVE_REPLACEMENT_IDENTITY_ORACLE fails."
+      },
+      "permanentRegressionCommands": [
+        "node verify-copy-creation-authority.mjs",
+        "node verify-archive-creation-authority.mjs",
+        "node verify-copy-transaction.mjs",
+        "node verify-creation-presentation-faults.mjs",
+        "node verify-project-lifecycle-full.mjs",
+        "node verify-browser-extra.mjs"
+      ],
+      "executedEvidence": [],
+      "copySourceIdentityReproduction": {
+        "baseCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "uncommittedSource": true,
+        "sourceFile": "project-store.js",
+        "sourceFileSha256": "6b0760151297ebc4cd29c9c09f4ec8ad32b196d1b0309dc1e0b678d8a3098e11",
+        "command": "node verify-copy-transaction.mjs",
+        "rawOutputSha256": "679f42ace3ae598b0efab2d77b283572619324525cd2621b7539048326e33076",
+        "actual": "COPY_SOURCE_IDENTITY_ORACLE fails because inconsistent stored filename is accepted; the source identity is not fully checked before copying.",
+        "classification": "production",
+        "expected": "The canonical input, retained file metadata and stored bytes must describe one exact source identity before preparation and again before the copy commits."
+      }
+    },
+    {
+      "requirementId": "DEF-17",
+      "sourceLocation": "Current task UX-010 and UX-011",
+      "responsibleProductionCode": [
+        {
+          "file": "app-core.js",
+          "symbol": "header / overview / nextActionMarkup / paintStorageHealth / reportActionFailure / announce / noticeText / runBatchMarkup / testExecutionGuidanceMarkup"
+        }
+      ],
+      "observableExpectedBehavior": "The normal workflow displays the project name, current selected-stage action, useful status, actionable errors and recovery. Internal project/record identifiers, machine state codes and diagnostic storage quantities remain available behind details or advanced controls.",
+      "requiredEvidence": [
+        "Execute actual header and primary action rendering against the invariant",
+        "Browser DOM visibility after layout settles at every required viewport",
+        "Internal diagnostic values remain accessible in existing advanced project/action details",
+        "Targeted exposed-identifier fault detected"
+      ],
+      "applicableStages": "All stages and ordinary views",
+      "applicableOperations": [
+        "NAVIGATION",
+        "STATE_CHANGE",
+        "ACCEPTANCE",
+        "RESTORATION",
+        "ERROR_RECOVERY"
+      ],
+      "status": "UNVERIFIED",
+      "classification": "production",
+      "reproduction": {
+        "sourceRevision": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "command": "node reproduce-primary-diagnostics-visibility.mjs",
+        "rawOutput": "current-primary-diagnostics-baseline.log",
+        "rawOutputSha256": "c4d30862364627ef5ec605923214f0d4f8af3c5af0a7662e6a9091f46562750a",
+        "actual": "The production header writes JOB_ID directly into its permanently visible current-project-summary. PRIMARY_INFORMATION_ORACLE fails. CI viewport artifact also shows the visible identifier, machine state and diagnostic quantities."
+      },
+      "browserEvidence": {
+        "runId": 35452763649,
+        "artifactId": 10587526007,
+        "archiveSha256": "447711295ac3a907a74efaa850d85df3db0847958ce937edf845a70de96d71e7",
+        "viewportImage": "393x852/stage-01.png"
+      },
+      "authorityTrace": [
+        "Ordinary project and workflow rendering",
+        "header and nextActionMarkup include raw internal values in primary text",
+        "Primary presentation uses machine/audit values without the existing advanced-detail boundary",
+        "Shared underlying workflow state remains authoritative; only its presentation requires correction"
+      ],
+      "dependencyClosure": [
+        "Header, overview project summary, selected-stage action summary and current action change diagnostics",
+        "Storage-health useful status versus advanced numeric diagnostics",
+        "Actual browser geometry and no-upward-scroll proof after text wrapping changes",
+        "All UI verifiers that depend on primary text or geometry",
+        "Shared operation error and announcement presentation, restoration of previous feedback, and actionable retry/recovery controls"
+      ],
+      "mandatory": true,
+      "errorPresentationReproduction": {
+        "command": "node reproduce-primary-error-diagnostics.mjs",
+        "rawOutput": "current-primary-error-diagnostics-baseline.log",
+        "rawOutputSha256": "b35b1b7dcccd00dd7d996119cd3b679ded0de4d712ab0eea4cc31c82e7adaf6f",
+        "actual": "A valid ownership rejection from the production artifact store is reported through the actual reportActionFailure owner. Both the primary visible error and its announcement expose the internal artifact identity. PRIMARY_ERROR_INFORMATION_ORACLE fails. The underlying cross-project rejection remains correct."
+      },
+      "permanentRegressionCommands": [
+        "node verify-primary-information.mjs",
+        "node verify-primary-error-information.mjs",
+        "node verify-primary-guidance.mjs",
+        "node verify-creation-presentation-faults.mjs",
+        "node verify-browser.mjs"
+      ],
+      "executedEvidence": [],
+      "guidanceReproduction": {
+        "sourceCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "command": "APP_SOURCE=<exact-head-app-core.js> node verify-primary-guidance.mjs",
+        "rawOutputSha256": "2fea9a575aebba1ad34e9cc8952baaa2d0a774aa3bc57ce7538c97f7dd099be7",
+        "actual": "PRIMARY_GUIDANCE_ORACLE detects internal identities in primary notices, run selectors and test guidance over every registered stage/operation with the authoritative Stage 19 fixture.",
+        "bounds": "Synthetic rendered markup, preceding state constructed through authoritative builders; browser layout verified separately."
+      }
+    },
+    {
+      "requirementId": "DEF-18",
+      "sourceLocation": [
+        "Controlling specification Stage 21; products field ownership and closed field types",
+        "Current task sections 4A, 10, 13 and UX-017"
+      ],
+      "responsibleProductionCode": {
+        "file": "workflow-engine.js; prompt-engine.js; project-store.js",
+        "symbol": "reserveProductExecution; preparePromptContext; reserveAndBuildPromptRecord; writeProject"
+      },
+      "observableExpectedBehavior": "Preparing Stage 21 handoff reserves and durably saves only application-owned product fields; external execution observations remain absent until a valid response is accepted. The handoff exports successfully and the reserved state survives reload and restoration without claiming completed execution.",
+      "requiredEvidence": [
+        "Valid preceding workflow built through authoritative controls/builders",
+        "Persistence before response acceptance",
+        "Absent agent-owned observations in reservation",
+        "Valid external response commits its own observations",
+        "Injected premature observations rejected by ownership oracle"
+      ],
+      "applicableStages": [
+        21
+      ],
+      "applicableOperations": [
+        "First execution",
+        "Repeated execution",
+        "Handoff export",
+        "Persistence",
+        "Reload",
+        "Restoration",
+        "Response acceptance"
+      ],
+      "status": "UNVERIFIED",
+      "mandatory": true,
+      "executedEvidence": [],
+      "failureClassification": "production",
+      "reproduction": {
+        "sourceCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "runId": 35452763649,
+        "jobId": 105922684756,
+        "command": "node verify-complete-operator-journey.mjs",
+        "actual": "Stage 21 export fails: products BASELINE_MATERIALS and EXECUTION_TIMESTAMPS Expected STRING; application reservation authored agent-owned observations.",
+        "rawOutputSha256": "f626d41571f7d9f839f03d20720e2c4ea8333d9eba0fa11b827b94cffb1b8072"
+      },
+      "authorityTrace": [
+        "Export Stage 21 after accepted Stage 20",
+        "Prompt preparation reserves product identity",
+        "reserveProductExecution prepopulates agent-owned material/timestamps",
+        "Persistence enforces STRING definitions and rejects reserved version"
+      ],
+      "dependencyClosure": [
+        "Products ownership and reservation",
+        "Prompt context and exports",
+        "Persistence and recovery",
+        "Response completion and product bytes",
+        "Full lifecycle and complete operator browser journey"
+      ],
+      "permanentRegressionCommands": [
+        "node verify-product-reservation-persistence.mjs",
+        "node verify-creation-presentation-faults.mjs",
+        "node verify-full-cycle.mjs",
+        "node verify-complete-operator-journey.mjs"
+      ]
+    },
+    {
+      "requirementId": "VER-008",
+      "sourceLocation": "Current task sections 4B, 4E, 9B and UX-010/UX-011",
+      "responsibleProductionCode": {
+        "file": "verify-browser.mjs",
+        "symbol": "Browser assertion over operator-visible state"
+      },
+      "observableExpectedBehavior": "Normal operator text excludes internal identifiers while the exact agent-facing instruction retains its required context bindings. The oracle checks the intended text region after actual acceptance and detects an injected primary-text leak.",
+      "requiredEvidence": [
+        "Original CI failure output",
+        "Independent behavior reproduction",
+        "Corrected actual-control browser path",
+        "Targeted oracle fault detection"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": [
+        "Initial acceptance",
+        "Replacement acceptance",
+        "Cancellation",
+        "Next-stage handoff"
+      ],
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "verifier",
+      "reproduction": {
+        "sourceCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "runId": 35452763649,
+        "jobId": 105922684756,
+        "rawOutputSha256": "f626d41571f7d9f839f03d20720e2c4ea8333d9eba0fa11b827b94cffb1b8072"
+      },
+      "authorityTrace": [
+        "Actual first Stage 2 acceptance advances selectedStage to 3",
+        "The required Stage 3 agent prompt contains the accepted source identity",
+        "The failing whole-body text assertion includes the generated-prompt preformatted instruction",
+        "Actual rendering reproduction locates the source identity exclusively in #generated-prompt"
+      ],
+      "dependencyClosure": [
+        "verify-browser.mjs",
+        "First acceptance and actual replacement browser controls",
+        "Primary information visibility",
+        "Agent instruction integrity"
+      ]
+    },
+    {
+      "requirementId": "VER-009",
+      "sourceLocation": "Current task sections 4B, 4E, 9B and UX-010/UX-011",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs",
+        "symbol": "Browser assertion over operator-visible state"
+      },
+      "observableExpectedBehavior": "The initial valid response with no accepted or downstream work commits without replacement confirmation. A real replacement, built from preceding accepted controls, requires an exact in-page confirmation; cancellation preserves accepted work.",
+      "requiredEvidence": [
+        "Original CI failure output",
+        "Independent behavior reproduction",
+        "Corrected actual-control browser path",
+        "Targeted oracle fault detection"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": [
+        "Initial acceptance",
+        "Replacement acceptance",
+        "Cancellation",
+        "Next-stage handoff"
+      ],
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureClassification": "verifier",
+      "reproduction": {
+        "sourceCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+        "runId": 35452763649,
+        "jobId": 105922684756,
+        "rawOutputSha256": "f626d41571f7d9f839f03d20720e2c4ea8333d9eba0fa11b827b94cffb1b8072"
+      },
+      "authorityTrace": [
+        "CI returns to reloaded initial Stage 2 proposal",
+        "No accepted source exists before this proposal",
+        "Verifier waits for replacement confirmation contrary to actual-work policy",
+        "Retained-project acceptance runtime independently proves first acceptance commits once without confirmation"
+      ],
+      "dependencyClosure": [
+        "verify-browser-extra.mjs",
+        "First acceptance and actual replacement browser controls",
+        "Primary information visibility",
+        "Agent instruction integrity"
+      ]
+    },
+    {
+      "requirementId": "VER-010",
+      "sourceLocation": "Current task sections 4A, 4C and 4E; DEF-15 and DEF-17 dependency closure",
+      "responsibleProductionCode": {
+        "file": "test-artifact-fixtures.mjs; verify-full-cycle.mjs; verify-ingestion.mjs; verify-native-proof-journey.mjs; verify-operator-counterpart.mjs; verify-file-first-operator.mjs; verify-stage28-artifact-delivery-intent.mjs",
+        "symbol": "artifactFixtureId; authoritative canonical fixture construction and semantic outcome assertions"
+      },
+      "observableExpectedBehavior": "Positive test fixtures obtain canonical file identities from the production allocator and pass the same identities to every runtime, ingestion, delivery and recovery consumer. Operator feedback assertions require visible acceptance status while exact internal identities remain behind details. Production behavior is independently exercised after correcting a verifier.",
+      "requiredEvidence": [
+        "Preserved original failures",
+        "Production allocation and primary-information negative/fault regressions",
+        "All affected ingestion, full lifecycle, native-proof, counterpart, delivery and wrapper suites executed successfully"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": [
+        "FILE_INTAKE",
+        "RESPONSE_VALIDATION",
+        "ACCEPTANCE",
+        "NATIVE_EXECUTION",
+        "DELIVERY",
+        "RECOVERY"
+      ],
+      "status": "UNVERIFIED",
+      "mandatory": true,
+      "classification": "verifier",
+      "executedEvidence": [],
+      "authorityTrace": [
+        "Canonical allocation and primary information presentation are corrected in production",
+        "Old positive fixtures retain fabricated artifact identifiers or assert an identifier in primary feedback",
+        "Downstream consumers reuse those assumptions in execution and delivery",
+        "The shared canonical fixture builder supplies actual identities; status assertions use the specified visible behavior"
+      ],
+      "dependencyClosure": [
+        "verify-file-first-operator.mjs and its ingestion/schema/semantics/route/definition consumers",
+        "verify-ingestion.mjs and execution-report wrappers",
+        "verify-full-cycle.mjs, native-proof and its fault case, Stage 28 delivery boundary, operator counterpart and its fault case",
+        "All VM fixtures using canonical artifact creation",
+        "Stage 28 order-independence positive fixture must reach its accepted release using allocated canonical product files and the real delivery-candidate freeze; a manually assembled candidate is not a valid positive case."
+      ],
+      "reproductions": [
+        {
+          "rawOutputSha256": "9ca6002e95fed2d496847b4b500cf16fa5d9e9bbe9f3c60c79eab3ca61f54fbf",
+          "command": "Workflow schema/ownership step",
+          "actual": "Primary saved-response assertion expects obsolete OLD-CHANGE identifier"
+        },
+        {
+          "rawOutputSha256": "1c05317c91c467139a2caa9faf0f7af2db0151e9c99366e1948a7384d8ee901d",
+          "command": "node verify-native-proof-journey.mjs with disposable fixture correction",
+          "actual": "A first verifier correction used a helper-local variable outside its scope; corrected consumer reads the actual shared allocation identity"
+        },
+        {
+          "command": "node verify-execution-reports.mjs",
+          "actual": "An ingestion consumer repeats the obsolete primary-feedback assertion",
+          "rawOutputSha256": "ac4b1484f59a6bcb913776a8207c8a0986547f5864480be963e77625a718b183"
+        },
+        {
+          "command": "node verify-ingestion.mjs with disposable fixture migration",
+          "actual": "Remaining dynamically constructed returned artifact identities have no canonical allocation receipt",
+          "rawOutputSha256": "cba9c115b78125842af1167e470f5204c6a24fea8e9014f205a37be9f1e1c8d8"
+        },
+        {
+          "command": "Workflow schema/ownership step",
+          "actual": "The saved-response oracle expects an obsolete OLD-CHANGE identifier in primary feedback.",
+          "rawOutputSha256": "9ca6002e95fed2d496847b4b500cf16fa5d9e9bbe9f3c60c79eab3ca61f54fbf"
+        },
+        {
+          "command": "node reproduce-stage28-positive-allocation.mjs",
+          "classification": "verifier",
+          "actual": "The positive second-file fixture fails the production allocation guard with ARTIFACT_ALLOCATION_REQUIRED; its constructed delivery candidate bypasses the authoritative freeze.",
+          "rawOutputSha256": "54d36764585b0067ef0dfef9e39a0d402d391536462871e8170fd470aca00178"
+        },
+        {
+          "command": "node verify-stage28-artifact-delivery-intent.mjs",
+          "classification": "verifier",
+          "actual": "The multi-file fixture supplied an unsorted selection-set hash; the actual freeze correctly rejected it. The fixture now normalizes the selected set before binding the human decision.",
+          "rawOutputSha256": "146f580d66dbce474d1c5ddd92bfa91c10586dbb3c0566a52a61fe6a8909bf09"
+        }
+      ]
+    },
+    {
+      "requirementId": "DEF-19",
+      "sourceLocation": "Current task sections 9 C, 12, 13; specification sections 35 and 45; run 5895 Stage 21 History limit failure",
+      "responsibleProductionCode": {
+        "file": "project-store.js",
+        "symbol": "prepareHistoryCommit/encodeHistoryProject/encodeCheckpoint/restoreHistoryProject/readCheckpointBody/decodeCheckpoint/readPackageJson/importPackage/exportPackage"
+      },
+      "observableExpectedBehavior": "Meaningful project changes preserve complete recoverable versions within the declared limits while a complete valid 30-stage operator journey remains executable. Repeated unchanged large canonical content must not consume a fresh stored copy for each retained version.",
+      "requiredEvidence": [
+        "Reproduction against 1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "Normative behavioral regression; exact source digest and raw output",
+        "Targeted fault detection and restored successful progression",
+        "Affected file, persistence, recovery, browser and complete workflow verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "production",
+      "startingEvidence": {
+        "runId": 35464029955,
+        "runNumber": 5895,
+        "headSha": "1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "jobId": 105952851977
+      },
+      "dependencyClosure": [
+        "Canonical checkpoints, unchanged views and drafts, prior and active versions",
+        "History byte accounting and unchanged support limits",
+        "Exact-byte decoding, compatible restoration, Undo/Redo and saved History",
+        "Backup export/import including every shared dependency",
+        "Missing/corrupt dependencies, transaction failure, stale revisions and independent sessions",
+        "Complete operator journey, browser recovery and all persistence verifier consumers"
+      ],
+      "authorityTrace": [
+        "Complete browser journey cannot create the next Stage 21 handoff: History limit reached.",
+        "Prompt reservation persists a meaningful canonical revision.",
+        "writeProject prepares a complete checkpoint before its atomic canonical commit.",
+        "prepareHistoryCommit shares equal project digests only; changed revisions encode repeated complete canonical bodies.",
+        "Checkpoint serialization and content custody, restored by readCheckpointBody/decodeCheckpoint and transported by exportPackage/importPackage."
+      ],
+      "verificationNotes": [
+        {
+          "owner": "verifier",
+          "failure": "A local added assertion compared uncompressed unique recovery contents against the disposable compressed-snapshot budget.",
+          "basis": "The diagnostic fixture retained different derived evidence strings for different input versions; the compressed snapshot limit and retained-content limit are distinct existing limits.",
+          "correction": "Check each declared limit separately and retain the progression/exact-restoration oracle against the defective source."
+        },
+        {
+          "owner": "production",
+          "failure": "Affected lifecycle case import:replay-saved-projections-without-fabricating-gates rejected newly prepared retained content before its atomic import commit.",
+          "correction": "Pass the already verified pending recovery byte set into the same prepareHistoryCommit authority; the transaction still commits the full dependency set once."
+        },
+        {
+          "owner": "infrastructure",
+          "failure": "verify-verifier-runtime.mjs could not create its temporary fault fixture because /tmp is absent in this workspace.",
+          "correction": "Set TMPDIR to the existing writable workspace temporary directory for execution. No production or verifier source change."
+        }
+      ],
+      "permanentRegressions": [
+        {
+          "file": "verify-history-canonical-sharing.mjs",
+          "cases": [
+            "HISTORY-CANONICAL-PROGRESSION",
+            "HISTORY-CANONICAL-EXACT-RESTORATION",
+            "HISTORY-CANONICAL-EXPORTED-BYTES",
+            "HISTORY-CANONICAL-MISSING-CONTENT",
+            "HISTORY-CANONICAL-CORRUPT-CONTENT",
+            "HISTORY-CANONICAL-ATOMIC-FAILURE"
+          ]
+        },
+        {
+          "file": "verify-history-project-sharing-faults.mjs",
+          "fault": "duplicate-canonical-content",
+          "expectedFailureOracle": "HISTORY_CANONICAL_CAPACITY_ORACLE"
+        },
+        {
+          "file": "verify-history-project-references.mjs",
+          "case": "HISTORY-REFERENCE-LEGACY-INLINE-BACKUP"
+        },
+        {
+          "file": "verify-backup-json-stream.mjs",
+          "case": "Canonical recovery values use the same bounded decoder without interpreting a value named artifacts as backup transport"
+        },
+        {
+          "file": "verify-project-lifecycle-full.mjs",
+          "case": "import:replay-saved-projections-without-fabricating-gates"
+        }
+      ],
+      "reproductionSourceSha256": "1f4a8c95eb44ddb4ac51e9da6f0050730dd97d58f4bc7e933df7a7c28a231a03",
+      "testedMechanismScope": "Disposable compressed-snapshot budget and synthetic human-input corrections. Does not establish production byte capacity, physical-device acceptance, or complete browser progression."
+    },
+    {
+      "requirementId": "VER-011",
+      "sourceLocation": "Current task sections 4 C, 4 E, 10; specification sections 25 and 34.2",
+      "responsibleProductionCode": {
+        "file": "verify-mobile-stage-action.mjs",
+        "symbol": "fileCustody/paged artifact retrieval/backup byte comparison"
+      },
+      "observableExpectedBehavior": "The browser fixture carries the artifact identity returned by the canonical allocator through Files pagination, individual download and backup restoration, and independently compares every intended artifact byte.",
+      "requiredEvidence": [
+        "Reproduction against 1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "Normative behavioral regression; exact source digest and raw output",
+        "Targeted fault detection and restored successful progression",
+        "Affected file, persistence, recovery, browser and complete workflow verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "runId": 35464029955,
+        "runNumber": 5895,
+        "headSha": "1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "jobId": 105952851977
+      },
+      "dependencyClosure": [
+        "Current canonical identity and error presentation authorities",
+        "Every assertion and downstream byte comparison in the affected browser verifier",
+        "Retest actual production behavior through the existing browser controls"
+      ]
+    },
+    {
+      "requirementId": "VER-012",
+      "sourceLocation": "Current task UX-011, UX-012, UX-020 and sections 4 B, 4 E",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs",
+        "symbol": "inline application failure controls"
+      },
+      "observableExpectedBehavior": "After an invalid control activation, the browser checks the actual visible actionable error after layout settles, its focus and in-page presentation, without tying the result to an obsolete DOM parent.",
+      "requiredEvidence": [
+        "Reproduction against 1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "Normative behavioral regression; exact source digest and raw output",
+        "Targeted fault detection and restored successful progression",
+        "Affected file, persistence, recovery, browser and complete workflow verification"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "runId": 35464029955,
+        "runNumber": 5895,
+        "headSha": "1a3dd8c7a5a011b11953d1cfc6fbba062e4ad63c",
+        "jobId": 105952851977
+      },
+      "dependencyClosure": [
+        "Current canonical identity and error presentation authorities",
+        "Every assertion and downstream byte comparison in the affected browser verifier",
+        "Retest actual production behavior through the existing browser controls"
+      ]
+    },
+    {
+      "requirementId": "DEF-20",
+      "sourceLocation": "Current task section 9 A: execution and handoff binding; sections 9 B, 10 and 13",
+      "responsibleProductionCode": {
+        "file": "app-core.js; prompt-engine.js; workflow-engine.js; project-store.js",
+        "symbol": "savePromptRecord/currentPromptRecord; reserveAndBuildPromptRecord; preparePromptContext/operationScope; replaceProject"
+      },
+      "observableExpectedBehavior": "Preparing an external handoff through its normal control commits one instruction bound to the active project, operation, reserved targets and revision. That instruction remains current after its durable commit and reload, exports its exact permitted bytes, and does not require another attempt merely because reservation populated a previously unset target.",
+      "requiredEvidence": [
+        "Exact-current-source failing regression through the production UI save and persistence owners",
+        "Saved record, runtime scope, reservation and exported bytes agree before and after reload",
+        "Generated cases covering applicable reserved target and reviewer/run scope classes",
+        "Targeted incorrect binding fault detected; affected prompt, ingestion, persistence, recovery and full browser workflow gates"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Every external operation whose handoff reserves or selects target/context identities",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "production",
+      "startingEvidence": {
+        "runId": 35489533969,
+        "runNumber": 5896,
+        "headSha": "ee5f27dec37a889d2e4f472f3d594b31d2753315",
+        "jobId": 106021961609,
+        "artifactId": 10599636857,
+        "case": "Complete operator journey, Stage 21 export after accepted Stage 20 baseline",
+        "actual": "The generated prompt was not committed with its controlling reservation revision."
+      },
+      "authorityTrace": [
+        "Stage 21 Export stage files invokes savePromptRecord",
+        "reserveAndBuildPromptRecord reserves a product and binds the instruction/reservation to its exact target",
+        "persistReplacement commits the valid project",
+        "currentPromptRecord independently recomputes a target from accepted state, obtains null, and rejects the valid reserved product",
+        "The existing workflow-engine.assertOperationScope already distinguishes INPUT_CURRENT, TARGET_RESERVED and IMMUTABLE_REFERENCE and is the shared policy consumers must use"
+      ],
+      "dependencyClosure": [
+        "Every currentPromptRecord consumer: instruction display, save/retry, consolidated export and response preparation",
+        "Every registered operation scope class: current inputs, reserved versions, reserved record identities, immutable run/reviewer references",
+        "Revision, project and activation identity checks remain enforced; stale/invalid/completed targets remain rejected by shared scope policy",
+        "Exact handoff file bytes and manifest binding; reload, History restoration and continued acceptance",
+        "Existing prompt, ingestion, full-cycle, reservation sequence, persistence, browser and recovery gates"
+      ]
+    },
+    {
+      "requirementId": "VER-013",
+      "sourceLocation": "Current task sections 4 B, 4 C, 4 E, 9 C, 9 F, 10 and 13",
+      "responsibleProductionCode": {
+        "file": "operator-browser-driver.mjs; verify-browser.mjs; verify-browser-extra.mjs; verify-mobile-stage-action.mjs; app-core.js",
+        "symbol": "shared browser readiness, click/fill/file consumers, reload/direct navigation/history traversal; startClosedLoopApp/initializeHistoryNavigation"
+      },
+      "observableExpectedBehavior": "All browser operator actions wait for completed startup and an interactive destination. New-document navigation waits for the new document; native history waits for the requested entry and restoration. Readiness of the previous document or entry cannot release controls.",
+      "requiredEvidence": [
+        "Actual startup held during saved-view restoration rejects premature verifier interaction, then permits interaction when startup completes",
+        "A navigation check rejects prior-document readiness and binds to the destination document",
+        "Targeted early-interaction faults are detected and restored checks pass",
+        "Fresh real-browser response-file selection, validation and acceptance after reload",
+        "Every affected basic, extra, mobile and shared-driver consumer is exercised against held startup and delayed navigation",
+        "Native multi-entry history traversal rejects readiness from the prior entry",
+        "VERIFIER-LAYOUT-QUIESCENCE and targeted EARLY-LAYOUT-OBSERVATION fault"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Startup, navigation, reload, file selection and subsequent operator controls",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "runId": 35489533969,
+        "runNumber": 5896,
+        "headSha": "ee5f27dec37a889d2e4f472f3d594b31d2753315",
+        "jobId": 106021961609,
+        "actual": "Stage 5 RECONCILE_REQUIREMENT_SET after reload: Select the authoritative response JSON file first.",
+        "causalStatus": "Both early-interaction and prior-document checks reproduce against the unchanged verifier. The file-loss association awaits fresh real-browser replay."
+      },
+      "authorityTrace": [
+        "Startup marks the application inert until load and saved-view restoration finish",
+        "The first render calls paintOperatorAction and can remove aria-busy while startup remains inert",
+        "waitForIdle inspected aria-busy alone and scripted file selection could run through inert controls",
+        "Saved-view restoration can replace the file draft before validation",
+        "Navigation waits can also observe the old document before replacement"
+      ],
+      "dependencyClosure": [
+        "Basic, extra and mobile verifier clicks, fills, file selection and stage navigation",
+        "Shared operator driver and its viewport, complete-journey, capability and recovery consumers",
+        "Reload and ordinary fixture/direct navigation wait for the destination document",
+        "Native history traversal waits for the requested entry without assuming a new document",
+        "Successful startup, explicit startup-failure inspections, blocked upgrades and held diagnostics",
+        "Actual production startup and confirmation behavior independently tested; no production change to accommodate a verifier defect",
+        "Shared browser idle waits for completed fonts and stable destination geometry, not a fixed number of frames; the later-frame movement regression fails the previous driver."
+      ],
+      "continuedEvidence": {
+        "runId": 35494646672,
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "cases": [
+          "VERIFIER-CONSUMER-INTERACTION",
+          "VERIFIER-CONSUMER-NAVIGATION",
+          "VERIFIER-HISTORY-DESTINATION"
+        ],
+        "actual": "Basic/mobile actions admit inert startup; basic/mobile fixture navigation and shared-driver reload/direct navigation admit the prior document; shared-driver native traversal admits the prior entry."
+      },
+      "harnessCorrection": "The controlled animation-frame fixture must flush the font-readiness microtask before advancing its synthetic frame clock; the first revised-harness run reported an unsettled await. The actual browser driver did not fail in that Node-only case."
+    },
+    {
+      "requirementId": "DEF-21",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbol": "workflow/nextActionMarkup/stagePurposeMarkup/testExecutionGuidanceMarkup/exportStageFiles"
+      },
+      "observableExpectedBehavior": "Expose one consolidated handoff control for the selected stage operation; supporting instruction or purpose panels must not repeat that action or offer handoff controls for application-only work. No separate per-artifact handoff downloads remain in the workflow; individual canonical file retrieval remains available in Files.",
+      "requiredEvidence": [
+        "Exact defective-source regression with named behavioral oracle",
+        "Targeted implementation or reporting fault detected; repaired source passes",
+        "Affected renderer, transport, acceptance, recovery and reporting checks",
+        "Fresh complete candidate CI and exact deployed workflow"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "production",
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "classification": "production",
+        "caseId": "STAGE_HANDOFF_SINGLE_CONTROL_ORACLE",
+        "actual": "Selecting accepted Stage 01 after the authoritative unchanged-confirmation fixture renders both Export stage files and Download verification package. Both call exportStageFiles."
+      },
+      "authorityTrace": [
+        "Inspect a previously accepted stage in the active version",
+        "workflow calls nextActionMarkup and stagePurposeMarkup",
+        "nextActionMarkup owns the selected-stage action",
+        "stagePurposeMarkup independently derives an extra export from stagePlanItems, which is not the current operator action",
+        "Both controls invoke the same consolidated export; no persistence or package-byte authority change is needed",
+        "testExecutionGuidanceMarkup separately renders handoff.send as per-artifact download buttons, even though the same permitted bytes belong to the current consolidated package"
+      ],
+      "dependencyClosure": [
+        "All registered stages and operations under selection and re-execution",
+        "Preview, accepted, pending and application-only operation views",
+        "Primary action, stage purpose and execution guidance renderers",
+        "Normal Files view retrieval remains a separate operation",
+        "Actual browser export/download counts and instruction presentation",
+        "Existing renderer regression/fault consumers and requirement overlay",
+        "Stage 22/23/24 actual finished-product file handoffs from the existing complete prerequisite sequence"
+      ]
+    },
+    {
+      "requirementId": "VER-014",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": "test-app-markup.mjs; verify-file-first-operator.mjs; verify-primary-guidance.mjs; verify-complete-operator-journey.mjs",
+        "symbol": "actual rendered instruction and handoff presentation oracles"
+      },
+      "observableExpectedBehavior": "Each instruction appears once in each view for every applicable stage and operation. A targeted duplicated-instruction implementation fault must cause the behavioral oracle to fail.",
+      "requiredEvidence": [
+        "Exact defective-source regression with named behavioral oracle",
+        "Targeted implementation or reporting fault detected; repaired source passes",
+        "Affected renderer, transport, acceptance, recovery and reporting checks",
+        "Fresh complete candidate CI and exact deployed workflow"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "classification": "verifier",
+        "caseId": "UX-007-DUPLICATED-INSTRUCTION-FAULT",
+        "actual": "The existing file-first operator verifier exited successfully when the instruction preview expression was duplicated in the actual renderer in memory."
+      },
+      "authorityTrace": [
+        "Rendered instruction text",
+        "workflow() in app-core.js",
+        "verify-file-first-operator.mjs currently lacks an occurrence oracle",
+        "Actual browser complete operator journey needs the corresponding rendered-content assertion"
+      ],
+      "dependencyClosure": [
+        "Instruction preview in applicable stages and operation classes",
+        "Initial preview, saved original, regenerated instruction, completed-stage selection",
+        "Superseded export controls and one-file transport assertions in the same view",
+        "Existing fault runner and existing complete browser journey",
+        "Requirement register addition"
+      ]
+    },
+    {
+      "requirementId": "VER-015",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": "verify-v3-definition-of-done.mjs; verify-final-acceptance.mjs; .github/workflows/pages.yml",
+        "symbol": "executed intake metric derivation and status publication consistency"
+      },
+      "observableExpectedBehavior": "The existing status publisher derives its intake evidence from actual executed cases, reconciles those facts, and preserves the truthful acceptance-status artifact, including outstanding unproved requirements.",
+      "requiredEvidence": [
+        "Exact defective-source regression with named behavioral oracle",
+        "Targeted implementation or reporting fault detected; repaired source passes",
+        "Affected renderer, transport, acceptance, recovery and reporting checks",
+        "Fresh complete candidate CI and exact deployed workflow"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "evidence",
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "classification": "evidence",
+        "caseId": "STATUS_PUBLISHER_EXECUTED_INTAKE_CONSISTENCY",
+        "actual": "The unchanged publisher throws Conflicting executed metric evidence: stage01RequiredFileInspectionAccounting because three aggregate metrics are STATIC_INSPECTION_ONLY/null while the directly executed intake and obligation cases pass."
+      },
+      "authorityTrace": [
+        "Existing Stage 01 and obligation verifiers execute their behavioral cases",
+        "verify-v3-definition-of-done executes Stage 01 but constructs three related metrics from static source searches and excludes them from its executed metric IDs",
+        "pages.yml independently derives successful booleans from those executed reports",
+        "The required consistency check detects a contradiction and throws before writing closed-loop-acceptance.json"
+      ],
+      "dependencyClosure": [
+        "Stage 01 required-file inspection accounting, accepted semantic mapping and Stage 04 obligation accounting metric derivation",
+        "Existing status-publication consistency check and final acceptance gate",
+        "False/missing executed observations remain non-passing; unexecuted broader metrics remain unknown",
+        "The actual underlying intake and omission-rejection suites independently rerun",
+        "Permanent reporting regression and targeted false/unknown metric fault detection"
+      ]
+    },
+    {
+      "requirementId": "VER-016",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": "verify-browser-extra.mjs; verify-semantic-review-acceptance.mjs; app-core.js",
+        "symbol": "acceptProofResponse; acceptance confirmation replay; acceptPendingProposal/confirmReplacement"
+      },
+      "observableExpectedBehavior": "A browser verifier requesting replacement acceptance must operate the visible in-page confirmation and wait for its successful commit; merely opening the confirmation must not be treated as acceptance. Original acceptance still completes without an unnecessary second confirmation.",
+      "requiredEvidence": [
+        "Reproduce the exact Stage 05 reconciliation class through actual production acceptance owners",
+        "The original verifier helper fails while accepted progress remains preserved",
+        "Repaired helper clicks required confirmation exactly once and valid progression succeeds",
+        "Fresh browser operator replay and affected acceptance/recovery gates",
+        "Normative regression executed against the exact defective source",
+        "Actual production owner exercised with valid and single-violation controls",
+        "Targeted injected fault detected and restored checks pass",
+        "Focused and affected downstream checks, followed by complete exact-revision CI"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "verifier",
+      "startingEvidence": {
+        "runId": 35494646672,
+        "runNumber": 5897,
+        "jobId": 106035365482,
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "actual": "Stage 05 RECONCILE_REQUIREMENT_SET: timeout waiting for its promptId to appear in acceptedChanges after accept-proposal",
+        "causalStatus": "The permanent actual-handler regression reproduces the exact Stage 05 reconciliation failure on 66ce722852108fa0efcb68c1417ee42977c8c999. Production retains accepted progress and exposes confirmation; the unchanged browser helper omits that operator action."
+      },
+      "authorityTrace": [
+        "The Stage 05 reconciliation response validates and exposes proposal review",
+        "The browser verifier clicks accept-proposal",
+        "Production may require replacement confirmation before committing the accepted result",
+        "acceptProofResponse currently waits for committed data without consuming that confirmation",
+        "Both semantic acceptance impact and the persistence owner can require confirmation; the verifier must consume the actual visible confirmation rather than independently predict that none is needed.",
+        "Stage 5 RECONCILE_REQUIREMENT_SET replaces current applicability and review work",
+        "The persistence impact correctly requires in-page confirmation even when semantic acceptance impact alone has no affected rows",
+        "acceptProofResponse clicks the first acceptance control and waits for a commit without following the confirmation control"
+      ],
+      "dependencyClosure": [
+        "Every acceptance consumer in the affected browser verifier",
+        "Original responses, rejected review findings, reconciliation replacements, confirmation and successful continuation",
+        "Actual production acceptance handler and retained rejection history",
+        "Targeted omitted-confirmation verifier fault and fresh browser replay",
+        "Every response class consumed by acceptProofResponse",
+        "First acceptance and replacement acceptance with dynamic impact",
+        "Reconciliation after rejected review, cancellation and unchanged unconfirmed progress",
+        "Production confirmation and durable commit independently retested"
+      ]
+    },
+    {
+      "requirementId": "INF-001",
+      "sourceLocation": "Current task sections 4 B\u2013E, 9 E\u2013F, 10\u201315; controlling specification sections 43\u201350",
+      "responsibleProductionCode": {
+        "file": ".github/workflows/pages.yml",
+        "symbol": "test job and existing complete operator journey execution budgets"
+      },
+      "observableExpectedBehavior": "The existing read-only CI and deployed verification paths permit the complete required operator journey to finish or report its actual failure. A verifier deadline cannot stand in for evidence of the remaining stages.",
+      "requiredEvidence": [
+        "CI 5897 immutable interruption report and raw log",
+        "The fresh final revision completes every required stage and recovery operation",
+        "Exact main rebuild and deployed verification complete independently"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "infrastructure",
+      "startingEvidence": {
+        "runId": 35494646672,
+        "runNumber": 5897,
+        "jobId": 106035365482,
+        "artifactId": 10601578260,
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "actual": "Configured 60m journey deadline interrupted Stage 25 at sequence 118; 24 completed stages and 92 recorded operations do not establish completion."
+      },
+      "authorityTrace": [
+        "The fresh operator journey progresses through actual controls and file transport",
+        "The existing shell timeout terminates it at Stage 25 before the complete workflow and backup checks",
+        "The saved SIGTERM observation distinguishes interruption from an observed application failure"
+      ],
+      "dependencyClosure": [
+        "The existing PR/main test job budget",
+        "All existing complete operator journey invocations, including deployed and authenticated re-verification paths",
+        "Immutable journey reports, logs and source identity",
+        "Final complete workflow remains fresh; no partial journey is accepted"
+      ],
+      "configuredVerificationLimits": {
+        "completeJourneyMinutes": 90,
+        "testJobMinutes": 180,
+        "reason": "The observed 60-minute verifier deadline terminated a progressing journey before the required full proof. Assertions and stage/operation coverage remain mandatory; a longer verification budget makes no performance or completion claim."
+      }
+    },
+    {
+      "requirementId": "VER-017",
+      "sourceLocation": "Current task sections 9 F UX-021, 13 and 15; DEF-9 dependency closure",
+      "responsibleProductionCode": {
+        "file": "app-core.js; verify-complete-operator-journey.mjs; verify-operator-feedback.mjs",
+        "symbol": "recordOperationLatency / operationLatencyEvidence / journey latency collection"
+      },
+      "observableExpectedBehavior": "Preserve actual completed-operation latency observations across the required reload and bounded application sample-window rollover. Do not overwrite prior observations, double-count repeated reads, or silently treat a missed sample window as complete evidence.",
+      "requiredEvidence": [
+        "Exact-source reproduction losing pre-reload observations",
+        "Observed latency collection across reload and sample-window rollover",
+        "Targeted overwrite and missing-window faults rejected; repaired collection passes",
+        "Fresh complete candidate and deployed workflow latency observations",
+        "Executed rolling-window reconstruction and injected missing-identity fault",
+        "Complete fresh browser workflow with incremental immutable telemetry and distinct document sessions"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "All measured operator, storage, startup and restoration operations",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "evidence",
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "actual": "The existing complete journey reloads during Stage 5, reads application latency only at completion/finally, and replaces its report with the current bounded in-memory sample window."
+      },
+      "authorityTrace": [
+        "Application records completed-operation samples in a bounded per-load buffer",
+        "Required journey reload creates a new application runtime and buffer",
+        "Journey report reads only the final runtime window",
+        "Sequential session-bound observation identities and incremental collection preserve observed samples without expanding product retention"
+      ],
+      "dependencyClosure": [
+        "Production latency observation metadata only; configurable threshold and bounded sample retention remain unchanged",
+        "Existing journey captures at operation boundaries and before reload",
+        "Existing feedback verifier exercises actual telemetry and collector owners with reload and rollover",
+        "Immutable partial/final journey evidence retains completed observations; unfinished operations remain unmeasured"
+      ]
+    },
+    {
+      "requiredEvidence": [
+        "Normative regression executed against the exact defective source",
+        "Actual production owner exercised with valid and single-violation controls",
+        "Targeted injected fault detected and restored checks pass",
+        "Focused and affected downstream checks, followed by complete exact-revision CI"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "requirementId": "DEF-24",
+      "sourceLocation": "Controlling specification section 15, CURRENT_BLOCKERS, NEXT_REQUIRED_ACTION and INPUT_SET_CONTENTS; section 39.2",
+      "responsibleProductionCode": {
+        "file": "workflow-schema.js; workflow-engine.js; response-ingestion.js",
+        "symbol": "jobFieldDefinition -> JOB_FIELDS/FIELD_REGISTRY; recalculate; validateValue and Stage 1 commit projection"
+      },
+      "observableExpectedBehavior": "The canonical Job contracts accept the structured blockers and next action produced by the application and the exact string accepted and projected from Stage 1 intake. They reject incompatible values without changing field ownership.",
+      "failureOwner": "production",
+      "authorityTrace": [
+        "The loaded Job registry declares both structured application values as STRING and the accepted intake string as OBJECT",
+        "The production typed validator rejects the real derived values and accepts unstructured prose for the application fields",
+        "jobFieldDefinition authors the metadata consumed by JOB_FIELDS and the derived FIELD_REGISTRY"
+      ],
+      "dependencyClosure": [
+        "All specification section 15 Job fields and their field-registry projections",
+        "Application-derived blocker identifiers and structured primary actions",
+        "Actual Stage 1 response validation, committed Job projection and exact intake bytes",
+        "Schema, ingestion, full-cycle, prompt, persistence and browser consumers"
+      ],
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "cases": [
+          "JOB-TYPED-DERIVATION-CURRENT_BLOCKERS",
+          "JOB-TYPED-DERIVATION-NEXT_REQUIRED_ACTION",
+          "JOB-INTAKE-PROJECTION"
+        ],
+        "actual": "The real committed intake is unchanged and valid at Stage 1, but the Job contract rejects it; application-produced structured values are also rejected."
+      }
+    },
+    {
+      "requiredEvidence": [
+        "Normative regression executed against the exact defective source",
+        "Actual production owner exercised with valid and single-violation controls",
+        "Targeted injected fault detected and restored checks pass",
+        "Focused and affected downstream checks, followed by complete exact-revision CI"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "ALL_APPLICABLE",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "requirementId": "DEF-22",
+      "sourceLocation": "Controlling specification section 38, confirmationRecords; section 34 collection policies",
+      "responsibleProductionCode": {
+        "file": "workflow-schema.js; workflow-engine.js; response-ingestion.js",
+        "symbol": "RECORD_SCHEMAS.confirmationRecords -> DURABLE_OBJECT_REGISTRY; recordUnchangedConfirmation; operation collection and field ownership validation"
+      },
+      "observableExpectedBehavior": "Confirmation records expose the required APPEND_SCOPED lifecycle policy while every confirmation fact remains application-owned. Exact application retries preserve the record, and external responses cannot author confirmations.",
+      "failureOwner": "production",
+      "authorityTrace": [
+        "Independent section 38 table comparison finds the confirmation family declares APPLICATION_DERIVED instead of APPEND_SCOPED",
+        "The existing application command already derives confirmation records and preserves exact retry identity",
+        "The authored family policy feeds the durable registry; external collection and field ownership remain independently enforced"
+      ],
+      "dependencyClosure": [
+        "Every canonical-family policy in section 38",
+        "Stage 19 application confirmation, exact retry and retained records",
+        "All external operation collection allowlists and confirmation field ownership",
+        "Downstream baseline, release, full-cycle and persistence gates"
+      ],
+      "startingEvidence": {
+        "headSha": "66ce722852108fa0efcb68c1417ee42977c8c999",
+        "case": "CONFIRMATION-APPEND-CONTRACT",
+        "actual": "The loaded production policy differs from the specification. Actual application retry and otherwise-valid external-response rejection controls pass."
+      }
+    },
+    {
+      "requirementId": "DEF-23",
+      "sourceLocation": "Current task sections 9 C, 9 D, UX-015, UX-017\u2013UX-020, and 10; controlling specification persistence and navigation clauses",
+      "responsibleProductionCode": {
+        "file": "app-core.js",
+        "symbols": [
+          "restoreHistoryVersion",
+          "paintOperatorAction",
+          "setControlDisabled",
+          "initializeHistoryNavigation:preserveView",
+          "captureCurrentView",
+          "runOperatorAction",
+          "writeBrowserEntry"
+        ]
+      },
+      "observableExpectedBehavior": "Restoration claims its controls immediately, includes queued durable view work in loading and latency, preserves admitted departing drafts, keeps the recorded destination view unchanged during the wait, refuses activation after a required departing checkpoint fails, and releases loading and controls with truthful completion, interruption or actionable failure.",
+      "requiredEvidence": [
+        "Exact-source red reproduction of pending feedback, failed departing checkpoints, and destination-view preservation",
+        "Actual production navigation and persistence regression including retained draft bytes",
+        "Targeted implementation faults rejected for their intended violations",
+        "Affected action, startup, history, concurrency, recovery and full browser gates",
+        "RESTORATION-OWNED-ACTION-CHECKPOINT-FAILURE",
+        "RESTORATION-OWNED-ACTION-BEFORE-FIRST-FRAME",
+        "RESTORATION-OWNED-NAVIGATION-BEFORE-FIRST-FRAME",
+        "RESTORATION-OWNED-FIRST-FRAME-CHECKPOINT-FAILURE"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": [
+        "native history traversal",
+        "History restore",
+        "Undo",
+        "Redo",
+        "saved-version direct link",
+        "queued and interrupted restoration",
+        "pending operator action",
+        "departing draft checkpoint"
+      ],
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "production",
+      "authorityTrace": [
+        "Native history requests restoration while captureCurrentView has admitted a durable departing-view save",
+        "restoreHistoryVersion awaits that promise before starting its restoration loading interval or claiming controls",
+        "The same await discards a checkpoint rejection and then activates another version",
+        "initializeHistoryNavigation preserveView sees restoringHistory as false during the pending wait, writes departing drafts into the destination native entry, and admits another save that can make the restore stale against its own revision.",
+        "Shared paintOperatorAction/setControlDisabled must use pending restoration ownership; captureCurrentView must remain allowed to finish departure work",
+        "A failed required checkpoint must propagate through restoration failure before activation",
+        "runOperatorAction checks only another operator action, allowing a separate action to execute while the pending restoration owns the version transition.",
+        "captureCurrentView defers reading the latest queued draft until the first save resolves, then discards the admitted update when native history has moved to a different entry.",
+        "After a failed native restore, captureCurrentView and preserveView still bind displayed departing content to history.state, which already points at the rejected destination.",
+        "A completed restore updates current to its committed version but skips rendering when superseded; if the newer destination then fails, no authoritative presentation of that committed version is applied.",
+        "A background captureCurrentView operation bypasses withStorageActivity entirely, so its pending duration is neither indicated nor recorded until a separate operator wrapper happens to own it."
+      ],
+      "dependencyClosure": [
+        "All restoration waiting phases: prior restoration, owned pending action, admitted capture and explicit departing capture",
+        "Immediate disabled controls, delayed loading, final or interrupted latency and outcome",
+        "Preserve existing suppression of native-path changes while an owned action completes",
+        "Preserve coalesced latest drafts and view/file selections; do not mark restoringHistory early for ordinary draft waits",
+        "Prevent new view-capture events from associating departing content with the pending destination",
+        "Rapid successive destinations, stale-tab rejection, checkpoint failure, recovery/retry, exact retained versions and artifact bytes",
+        "Whole-source and extracted-owner VM consumers; real-browser recovery journey",
+        "The shared operator action authority suppresses any separate activation while restoration owns controls; no deferred execution is enqueued.",
+        "Snapshot departing drafts at admission and retain the latest coalesced view through native-entry changes; restoration waits for the entire admitted capture chain, including failed and retried captures.",
+        "Bind captured content to the browser entry actually displayed by the application, independently from a pending or failed native destination; edits after failure remain recoverable without rewriting the destination entry.",
+        "After rapid traversal, the visible project and view must match the last successfully committed restoration even when the final requested destination fails. Recheck sequence after asynchronous session/history reads before rendering or announcing success.",
+        "The admitted durable draft/view drain uses the existing storage-activity and latency authority, including its success and failure cleanup. Background draft typing remains coalesced rather than disabling the editor per keystroke.",
+        "Already admitted action capture before its first frame, during initial checkpoint and final checkpoint; handled capture failures still prevent unsafe restoration.",
+        "Native entry writes from an already owned stage, operation or run navigation preserve the existing Back/Forward path while restoration is pending."
+      ]
+    },
+    {
+      "requirementId": "DEF-25",
+      "sourceLocation": "Current task sections 9 A, 9 D, UX-005, UX-001; controlling specification operation and context contracts",
+      "responsibleProductionCode": {
+        "file": "app-core.js; workflow-engine.js; verify-file-first-operator.mjs; verify-browser-extra.mjs",
+        "symbol": "displayedStageAction / nextActionMarkup / operation selection / exportStageFiles"
+      },
+      "observableExpectedBehavior": "A permitted explicitly selected stage operation owns its displayed next action, generated instruction, single exported handoff and response contract in the active version. Selection alone preserves accepted work and prerequisites; it cannot silently export another suggested operation. Application or human operations never generate an external handoff.",
+      "requiredEvidence": [
+        "SELECTED_OPERATION_HANDOFF_ORACLE fails against exact defective source",
+        "Operation-class matrix across applicable stages, completed and pending states, with selected and suggested operations differing",
+        "Exported manifest, instruction and returned-response identity agree with the selected operation",
+        "Selection bypass fault detected; actual Stage 1 and Stage 2 review/correction browser paths complete"
+      ],
+      "applicableStages": "ALL_APPLICABLE",
+      "applicableOperations": "Selection, re-execution, handoff generation/export, response validation, acceptance, navigation and restoration",
+      "status": "UNVERIFIED",
+      "executedEvidence": [],
+      "mandatory": true,
+      "failureOwner": "production",
+      "authorityTrace": [
+        "Operation picker stores an allowed explicit selection",
+        "Instruction preview consumes that selection",
+        "Displayed next action instead obtains an operation from whole-stage progress",
+        "Primary export handler overwrites the explicit selection with that displayed operation",
+        "Package and response contract consequently belong to a different operation"
+      ],
+      "dependencyClosure": [
+        "Displayed stage action and primary handoff share selected-operation authority",
+        "Retain suggestion defaults when no explicit operation is selected",
+        "Retain stage locks and executor-class restrictions",
+        "Use the selected run/context and current version when exporting",
+        "Preserve accepted results while requesting a permitted repeated operation",
+        "Browser review/correction consumers and permanent selection/transport regression with injected fault"
+      ]
+    }
+  ],
+  "currentReview": {
+    "head": "0998bbfa5b225e992b9e044f484543cffa89c0cb",
+    "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+    "specificationBytes": 309472,
+    "baseRows": 4343,
+    "overlayRows": 85,
+    "duplicateBaseIds": [
+      "UX-001",
+      "UX-002",
+      "UX-003",
+      "UX-004",
+      "UX-005",
+      "UX-006",
+      "UX-007",
+      "UX-008",
+      "UX-009",
+      "UX-010",
+      "UX-011",
+      "UX-012",
+      "UX-013",
+      "UX-014",
+      "UX-015",
+      "UX-016",
+      "UX-017",
+      "UX-018",
+      "UX-019",
+      "UX-020",
+      "DEF-1",
+      "DEF-2",
+      "DEF-3",
+      "DEF-4",
+      "DEF-5",
+      "DEF-6",
+      "DEF-7",
+      "DEF-8",
+      "DEF-9",
+      "DEF-10",
+      "D-1",
+      "D-2",
+      "D-3",
+      "D-4",
+      "DEF-11",
+      "DEF-12",
+      "DEF-13"
+    ],
+    "uncoveredLiteralMandatoryLines": [],
+    "baseStatuses": {
+      "UNVERIFIED": 4343
+    },
+    "overlayStatuses": {
+      "UNVERIFIED": 85
+    },
+    "independentSemanticReviewEstablished": false,
+    "sourceTextChanged": false,
+    "reviewBasis": "Read controlling source and current task; independently checked literal mandatory-line coverage and reviewed all current user groups and prohibitions. Semantic independent actor review remains unestablished.",
+    "mandatoryUnionRows": 4391
+  }
+}

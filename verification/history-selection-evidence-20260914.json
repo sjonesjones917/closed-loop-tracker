@@ -1,0 +1,72 @@
+{
+  "schema": "closed-loop-focused-repair-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "reproduction": {
+    "sourceCommit": "2123e2bb81ad86be5eb2a730b0aac17f6b573f16",
+    "testedMergeCommit": "5ebdf273f629322226ccb3bdc002e3aa02c4ad0d",
+    "workflowRun": 34859874306,
+    "jobId": 104028949107,
+    "environment": "GitHub Actions Chromium, Node 22.23.2, browser emulation; not a physical iPhone",
+    "sequence": [
+      "Accept a response and replacement",
+      "Restore an earlier checkpoint",
+      "Create a different continuation",
+      "Select the retained replacement in History",
+      "Restore selected version"
+    ],
+    "expected": "Restore the selected retained version as a whole",
+    "actual": "Saving the departing view repainted the History picker before the handler read it, replacing the selected destination with the active alternative"
+  },
+  "repair": {
+    "productionCode": [
+      "app-core.js:bindAction",
+      "app-core.js:paintHistory"
+    ],
+    "behavior": "Capture the selected History destination synchronously on activation, before asynchronous view checkpointing; restore that exact destination. Redo also captures the chosen destination before asynchronous work."
+  },
+  "executed": {
+    "historySelectionCases": {
+      "synthetic": true,
+      "actualBrowser": false,
+      "environment": "Actual History binding and action pipeline with production persistence and transactional test adapter",
+      "cases": [
+        {
+          "name": "Captured selection restores its complete retained project despite intervening History repaint",
+          "target": "Accepted continuation",
+          "result": "PASS"
+        },
+        {
+          "name": "Captured selection restores its complete retained project despite intervening History repaint",
+          "target": "Initial work",
+          "result": "PASS"
+        }
+      ]
+    },
+    "fault": "The former late-selection implementation is rejected with HISTORY_SELECTION_ORACLE; the corrected handler passes."
+  },
+  "browserResultsAtReproduction": {
+    "passed": [
+      "Unicode file bytes persisted and backed up",
+      "Selected unvalidated response survives reload and restoration",
+      "Ordinary selection across all 30 stages preserves data",
+      "Replacement execution preserves accepted and pending work",
+      "Cancellation and unanswered confirmation survive reload",
+      "Confirmed replacement commits once with pending dependent invalidation",
+      "Five native retained-entry jumps restore whole data and artifact bytes",
+      "Undo and Redo",
+      "Prior continuation retained after branching"
+    ],
+    "failed": [
+      "History activation of selected alternative",
+      "48M-character project action exceeded idle wait after navigating all 30 stages",
+      "Complete operator journey exceeded 10 minutes after reaching Stage 14",
+      "Provenance control browser assertion",
+      "Disposable fork with renamed job rejects incompatible allocation receipts"
+    ]
+  },
+  "completeOperatorJourney": false,
+  "exactDeploymentVerified": false,
+  "physicalDeviceAcceptance": false,
+  "applicationComplete": false
+}

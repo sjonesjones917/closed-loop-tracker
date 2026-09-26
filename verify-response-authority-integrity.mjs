@@ -1,0 +1,43 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {recordProposal,evidence} from './test-fixtures.mjs';
+
+// Synthetic canonical contexts isolate the production response boundary. This
+// runs the actual prompt generator, parser, validator, proposal and commit code;
+// it is not evidence of a full external-agent or physical-device journey.
+globalThis.dispatchEvent=()=>{};
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
+const {closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion,closedLoopHash:hash}=globalThis;
+const results=[];
+async function check(name,operation){try{await operation();results.push({name,result:'PASS'});}catch(error){results.push({name,result:'FAIL',message:String(error.stack||error)});}}
+function blindFixture(stage){
+ const project=core.createBlankState('RESPONSE-AUTHORITY-'+stage);engine.ensureShape(project);project.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve literal returned observations and their exact source provenance.';engine.recalculate(project);
+ for(let prior=1;prior<stage;prior++){project.stages[prior].status='COMPLETE';project.stages[prior].gate={complete:true};}
+ Object.assign(project.job,{CURRENT_BASELINE_ID:'BASELINE-INTEGRITY',CURRENT_PRODUCT_ID:'PRODUCT-INTEGRITY',CURRENT_PRODUCT_VERSION:'PRODUCT-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TESTS-v001'});
+ for(const [family,id,fields,owner] of [['products','PRODUCT-INTEGRITY',{PRODUCT_ID:'PRODUCT-INTEGRITY',BASELINE_ID:'BASELINE-INTEGRITY',PRODUCT_VERSION:'PRODUCT-v001'},21],['baselines','BASELINE-INTEGRITY',{BASELINE_ID:'BASELINE-INTEGRITY'},20],['freshContexts','CONTEXT-INTEGRITY',{CONTEXT_ID:'CONTEXT-INTEGRITY'},stage]]){
+  const row={id,active:true,stage:owner,fields,completionState:'COMPLETED',scope:{productId:'PRODUCT-INTEGRITY',baselineId:'BASELINE-INTEGRITY',productVersion:'PRODUCT-v001'}};engine.refreshRecordHashes(row,family);project.projectData[family].push(row);
+ }
+ const prompt=prompts.buildPromptRecord(stage,project,{operation:'COMPLETE',scope:{contextId:'CONTEXT-INTEGRITY'}});project.projectData.generatedPrompts.push(prompt);
+ const manifest=prompts.promptFileManifest(prompt),alias=prompt.contextManifest.blindAliasMap.find(entry=>entry.kind==='PRODUCT_ID')?.alias;assert.ok(alias,'Production prompt did not issue the blind alias.');
+ const family=stage===23?'meaningResults':'adversarialResults',field=stage===23?'OBSERVED_MEANING':'ACTUAL_RESULT';
+ const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage,operation:prompt.operation,promptIdentity:manifest.promptIdentity,scope:manifest.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{},records:{[family]:[recordProposal(schema,family,{tempKey:'result',overrides:{[field]:alias},relationships:{PRODUCT_ID:{recordId:alias}}})]},evidence:[{...evidence('literal'),description:alias,content:alias,location:alias,notes:alias}],unresolved:[],warnings:[{code:'LITERAL_OBSERVATION',message:alias,path:'/evidence/0/content'}],attachments:[]};
+ return {project,prompt,envelope,alias,family,field};
+}
+function prepare(fixture,envelope=fixture.envelope){const text=JSON.stringify(envelope),prepared=ingestion.prepare(fixture.project,{stage:envelope.stage,promptRecord:fixture.prompt,text});assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));assert.equal(prepared.rawRecord.completeRawResponse,text);assert.equal(prepared.rawRecord.sha256,hash.sha256Text(text));return prepared;}
+for(const stage of [23,24]){
+ const fixture=blindFixture(stage),{alias,family,field}=fixture;
+ await check(`Stage ${stage}: literal canonical observation retains alias-looking text`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.canonicalRecords[family][0].fields[field],alias);});
+ await check(`Stage ${stage}: typed relationship alone resolves the blind reference`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.canonicalRecords[family][0].relationships.PRODUCT_ID,'PRODUCT-INTEGRITY');assert.equal(prepared.proposal.envelope.scope.productId,'PRODUCT-INTEGRITY');assert.equal(prepared.proposal.envelope.records[family][0].relationships.PRODUCT_ID.recordId,'PRODUCT-INTEGRITY');});
+ for(const key of ['description','content','location','notes'])await check(`Stage ${stage}: evidence ${key} is literal data`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.envelope.evidence[0][key],alias);});
+ await check(`Stage ${stage}: warning messages are not reference slots`,()=>{assert.equal(prepare(fixture).proposal.warnings[0].message,alias);});
+ await check(`Stage ${stage}: human-reported nested values cannot be rewritten`,()=>{const envelope=structuredClone(fixture.envelope);envelope.humanAuthorityCandidates=[{temporaryKey:'candidate',label:'Literal answer',value:{value:alias,list:[alias,{text:alias}]},authorityClass:'HUMAN',claimedConversationBasis:'A synthetic reported answer, not confirmed human authority.',externalResponsePointer:'/humanAuthorityCandidates/0/value',affectedStageFields:[],affectedRecords:[]}];assert.deepEqual(prepare(fixture,envelope).proposal.humanAuthorityCandidates[0].value,envelope.humanAuthorityCandidates[0].value);});
+ await check(`Stage ${stage}: blocked reason is not changed to canonical identity`,()=>{const envelope=structuredClone(fixture.envelope);envelope.responseType='BLOCKED';envelope.records={};envelope.unresolved=[{temporaryKey:'blocker',kind:'MISSING_EVIDENCE',description:alias,whyBlocking:alias,affectedStageFields:[],affectedRecords:[],blocking:true}];const prepared=prepare(fixture,envelope);assert.equal(prepared.proposal.unresolved[0].description,alias);assert.equal(prepared.proposal.unresolved[0].whyBlocking,alias);});
+ await check(`Stage ${stage}: temporary response keys are never canonicalized`,()=>{const envelope=structuredClone(fixture.envelope);envelope.records[family][0].tempKey=alias;assert.equal(prepare(fixture,envelope).proposal.canonicalRecords[family][0].temporaryKey,alias);});
+ await check(`Stage ${stage}: unchanged observations have exact source hashes and no normalizer`,()=>{const prepared=prepare(fixture),pointer=`/records/${family}/0/fields/${field}`,entry=prepared.proposal.changes.find(row=>row.jsonPointer===pointer);assert.ok(entry);assert.equal(entry.rawValueHash,hash.sha256Value(alias));assert.equal(entry.normalizerUsed,null);assert.equal(entry.origin,'AGENT_VALUE');assert.equal(entry.normalizedValue,alias);});
+ await check(`Stage ${stage}: reference provenance hashes the raw alias object`,()=>{const prepared=prepare(fixture),pointer=`/records/${family}/0/relationships/PRODUCT_ID`,entry=prepared.proposal.changes.find(row=>row.jsonPointer===pointer);assert.ok(entry);assert.equal(entry.rawValueHash,hash.sha256Value({recordId:alias}));assert.equal(entry.normalizedValue,'PRODUCT-INTEGRITY');assert.equal(entry.origin,'APPLICATION_RELATIONSHIP_RESOLUTION');});
+ await check(`Stage ${stage}: accepted records and extraction manifest preserve literal meaning`,()=>{const prepared=prepare(fixture),committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_BOUNDARY_TEST'});const record=committed.project.projectData[family].find(row=>row.sourceProposalId===prepared.proposal.proposalId);assert.equal(record.fields[field],alias);const mapping=committed.manifest.entries.find(row=>row.jsonPointer===`/records/${family}/0/fields/${field}`);assert.equal(mapping.rawValueHash,hash.sha256Value(alias));assert.equal(mapping.normalizedValue,alias);assert.equal(mapping.normalizerUsed,null);});
+}
+const report={responseAuthorityIntegrity:results.every(row=>row.result==='PASS')?'PASS':'FAIL',syntheticCanonicalContexts:true,productionPromptAndIngestion:true,cases:results.length,passed:results.filter(row=>row.result==='PASS').length,failed:results.filter(row=>row.result==='FAIL').length,results};
+const reportPath=process.argv.find(value=>value.startsWith('--authority-report='))?.slice('--authority-report='.length);if(reportPath)fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));assert.equal(report.failed,0,`${report.failed} response authority regressions failed.`);

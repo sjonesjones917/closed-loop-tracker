@@ -1,0 +1,20 @@
+{
+  "schema": "closed-loop-conformance-evidence/1",
+  "requirement": "The semantic-review acceptance verifier must execute the production action lifecycle with the same timer primitives that lifecycle requires.",
+  "sourceCandidate": "repair/complete-conformance-continuation-20260914",
+  "ciDiscovery": {
+    "runId": 35174157740,
+    "jobId": 105052050061,
+    "failure": "ReferenceError: clearTimeout is not defined",
+    "suite": "verify-semantic-review-acceptance.mjs"
+  },
+  "repairCommit": "b9322193717191cf7269f43d382434dd805a0f4d",
+  "repair": "Expose clearTimeout in the verifier VM alongside setTimeout; production action lifecycle remains unchanged.",
+  "focusedRepositoryWorkflow": {
+    "runId": 35175250402,
+    "jobId": 105055430624,
+    "result": "PASS"
+  },
+  "completionClaim": false,
+  "fullCiRequired": true
+}

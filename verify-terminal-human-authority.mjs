@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 class Event { constructor(type){ this.type=type; } }
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Blob,structuredClone,performance:{now:()=>0},setTimeout,clearTimeout,URL,Event,dispatchEvent:()=>true};
 context.globalThis=context;
-vm.createContext(context);
+createVerifierRuntime(context);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),context,{filename:file});
 const core=context.closedLoopCore,engine=context.closedLoopWorkflowEngine;
 const project=core.createBlankState('JOB-TERMINAL-AUTHORITY-REGRESSION');

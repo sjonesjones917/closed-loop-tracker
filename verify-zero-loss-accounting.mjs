@@ -1,8 +1,9 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const assert=(x,m)=>{if(!x)throw new Error(m);};
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,schema=globalThis.closedLoopWorkflowSchema,hash=globalThis.closedLoopHash;
 const project=core.createBlankState('JOB-ZERO-LOSS');
 Object.assign(project.job,{JOB_TITLE:'Zero loss fixture',JOB_OWNER:'Human owner',EXACT_USER_OBJECTIVE_VERBATIM:'Build exactly what the user requested.\nNever forget project information.',EXPLICIT_USER_REQUIREMENTS:'The user supplies project information once.\nStage 04 must reuse Stage 01 and Stage 03.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001'});

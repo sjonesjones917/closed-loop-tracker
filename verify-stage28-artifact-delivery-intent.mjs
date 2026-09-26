@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,13 +8,34 @@ import {execFileSync} from 'node:child_process';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']) vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']) createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const {closedLoopWorkflowEngine:engine}=globalThis;
 const tmp=fs.mkdtempSync(path.join(process.cwd(),'.stage28-fixture-'));
 const snapshotPath=path.join(tmp,'stage27-ready.json');
 const instrumentedPath=path.join(process.cwd(),`.stage28-full-cycle-${process.pid}.mjs`);
-const fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
-const stage28Boundary="engine.verifyArtifactIdentity(p,[{artifactId:'ARTIFACT-PRODUCT'";
+let fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
+// Build the multi-file positive case through the same canonical file, product,
+// selection, freeze, inspection and release owners as the lifecycle itself.
+// No artifact or frozen candidate is assembled by editing internal record fields.
+const intakeAnchor="verifyArtifactRegistrationBatch('current-product',21,{productId});";
+assert.equal(fullCycleSource.split(intakeAnchor).length,2,'The canonical product-file intake boundary must be unique.');
+fullCycleSource=fullCycleSource.replace(intakeAnchor,intakeAnchor+`
+const additionalProductBytes=new TextEncoder().encode('Additional exact product output'),additionalProductId=artifactFixtureId(engine,p,'STAGE28-SECOND-PRODUCT');
+engine.registerArtifactBytes(p,{stage:21,artifactId:additionalProductId,filename:'second-product.txt',mediaType:'text/plain',byteSize:additionalProductBytes.byteLength,sha256:hash.sha256Text(new TextDecoder().decode(additionalProductBytes)),lineage:{productId}});
+const deliveryArtifactIds=[...engine.recordValue(engine.recordsForCurrentScope(p,'products').at(-1),'GENERATED_ARTIFACT_INVENTORY')].sort();
+for(const artifactId of deliveryArtifactIds)engine.assertArtifactAllocation(p,artifactId);
+`);
+const singleSelection=fullCycleSource.split('\n').find(line=>line.startsWith('const deliverySelection='));
+assert.ok(singleSelection,'The lifecycle delivery selection must be available.');
+const multipleSelection=singleSelection
+ .replaceAll("[artifactFixtureId(engine,p,'PRODUCT-OUTPUT')]",'deliveryArtifactIds')
+ .replace('representationInspections:[recordProposal','representationInspections:deliveryArtifactIds.map((artifactId,index)=>recordProposal')
+ .replace("tempKey:'inspect'","tempKey:'inspect-'+index")
+ .replace("recordId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT')",'recordId:artifactId')
+ .replace('}})]}});complete(25);','}}))}});complete(25);');
+assert.notEqual(multipleSelection,singleSelection,'The multi-file lifecycle case was not constructed.');
+fullCycleSource=fullCycleSource.replace(singleSelection,multipleSelection);
+const stage28Boundary="engine.verifyArtifactIdentity(p,[{";
 const boundaryIndex=fullCycleSource.indexOf(stage28Boundary);
 assert.ok(boundaryIndex>0,'The full-cycle Stage 28 boundary could not be located for isolated fixture instrumentation.');
 const instrumented=fullCycleSource.slice(0,boundaryIndex)+`fs.writeFileSync(${JSON.stringify(snapshotPath)},JSON.stringify(p));console.log('STAGE28_READY_FIXTURE');process.exit(0);\n`+fullCycleSource.slice(boundaryIndex);
@@ -67,6 +89,7 @@ for (const [id,mutate] of [
 // Repaired execution through the same production mechanisms completes Stage 28 while authorization remains a later terminal fact.
 {
   const p=fresh(),c=context(p),created=engine.verifyArtifactIdentity(p,c.files,c.files);assert.equal(created.length,c.ids.length);const decision=engine.captureDeliveryIntent(p,{value:validIntent(c),operatorLabel:'STAGE28_VERIFIER'});assert.ok(decision);assert.equal(engine.gate(28,p).complete,true,'The repaired Stage 28 mechanism did not progress after exact identity plus destination-bound human intent.');assert.equal(p.release.authorization,'NOT AUTHORIZED','Stage 28 collapsed delivery intent into Stage 30 authorization.');
+  const summary=p.stages[28].derivedData;assert.match(summary.HASH_REVIEW_ID,/^HASH_REVIEW-[A-F0-9]{64}$/,'The completed identity review lacks its application-owned hash-review identity.');assert.equal(p.job.CURRENT_HASH_REVIEW_ID,summary.HASH_REVIEW_ID);assert.equal(summary.ARTIFACT_HASH_RECORDS,c.ids.length);assert.equal(summary.TOTAL_EXACT_HASH_MATCHES,c.ids.length);assert.equal(summary.TOTAL_HASH_MISMATCHES,0);assert.equal(summary.TOTAL_UNKNOWN_HASH_COMPARISONS,0);assert.equal(summary.ALL_RELEASE_HASHES_EQUAL_AUDITED_HASHES,true);assert.equal(summary.AUTHORIZATION_EVIDENCE,engine.recordId(decision,'humanDecisions'));const reloaded=structuredClone(p);engine.recalculate(reloaded);assert.equal(reloaded.job.CURRENT_HASH_REVIEW_ID,summary.HASH_REVIEW_ID,'Reload changed the identity review.');
   const duplicate=engine.captureDeliveryIntent(p,{value:validIntent(c),operatorLabel:'STAGE28_VERIFIER'});assert.ok(duplicate);assert.equal(engine.gate(28,p).complete,false,'Two current delivery-intent decisions were treated as one unambiguous authorization scope.');rejected.push('duplicate-current-delivery-intent');
 }
 
@@ -79,9 +102,12 @@ for (const [id,mutate] of [
 
 // Artifact matching is keyed by canonical identity, not picker order.
 {
-  const p=fresh(),c=context(p),baseArtifact=engine.records(p,'artifacts').find(r=>engine.recordId(r,'artifacts')===c.ids[0]),second=structuredClone(baseArtifact),secondId='ARTIFACT-STAGE28-SECOND',secondName='stage28-second.bin',secondHash='b'.repeat(64);second.id=secondId;second.fields={...second.fields,ARTIFACT_ID:secondId,FILENAME:secondName,BYTE_SIZE:7,SHA256:secondHash};Object.assign(second,second.fields);engine.refreshRecordHashes(second,'artifacts');p.projectData.artifacts.push(second);
-  const candidate=engine.currentDeliveryCandidate(p);candidate.fields.ARTIFACT_IDS=[c.ids[0],secondId];candidate.ARTIFACT_IDS=candidate.fields.ARTIFACT_IDS;candidate.fields.AUTHORIZED_FILENAMES=[c.nameMap[c.ids[0]],secondName];candidate.AUTHORIZED_FILENAMES=candidate.fields.AUTHORIZED_FILENAMES;candidate.fields.BYTE_LENGTHS=[String(c.sizeMap[c.ids[0]]),'7'];candidate.BYTE_LENGTHS=candidate.fields.BYTE_LENGTHS;candidate.fields.SHA256_VALUES=[c.hashMap[c.ids[0]],secondHash];candidate.SHA256_VALUES=candidate.fields.SHA256_VALUES;engine.refreshRecordHashes(candidate,'deliveryCandidateSets');engine.recalculate(p);
-  const expanded=context(p),created=engine.verifyArtifactIdentity(p,expanded.files,[...expanded.files].reverse());assert.equal(created.length,2,'Order-independent Stage 28 identity did not create both exact identities.');assert.equal(created.every(r=>engine.recordValue(r,'AUTHORIZATION')==='AUTHORIZED'),true,'Reversed picker order changed exact artifact authorization.');
+  const p=fresh(),expanded=context(p);
+  assert.ok(expanded.ids.length>1,'The canonical preceding lifecycle must produce a multi-file candidate.');
+  for(const artifactId of expanded.ids)engine.assertArtifactAllocation(p,artifactId);
+  const created=engine.verifyArtifactIdentity(p,expanded.files,[...expanded.files].reverse());
+  assert.equal(created.length,expanded.ids.length,'Order-independent Stage 28 identity did not create every exact identity.');
+  assert.equal(created.every(r=>engine.recordValue(r,'AUTHORIZATION')==='AUTHORIZED'),true,'Reversed picker order changed exact artifact authorization.');
 }
 
 console.log(JSON.stringify({stage28:'PASS',applicationStage:28,intentionalInvalidFixturesRejected:rejected,noIdentityMutationOnRejectedByteFixtures:true,applicationByteRehashRequired:true,exactCandidateMappingRequired:true,orderIndependentIdentity:true,destinationBoundIntentGate:true,trustedTimedValidityGate:true,ambiguousDuplicateIntentBlocked:true,candidateSemanticDriftRejected:true,identityScopeDriftRejected:true,stage28DoesNotAuthorizeDelivery:true,repairedPathProgressed:true,fullCycleFixtureReachedStage27:true,isolatedDisposableProjects:true}));

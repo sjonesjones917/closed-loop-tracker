@@ -28,13 +28,14 @@ permissions:
 
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: false
+  # Verify the latest PR revision promptly; main deployments remain serialized.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -59,6 +60,32 @@ jobs:
           for file in *.js *.mjs; do
             node --check "$file"
           done
+
+      - name: Acceptance viewport regression and targeted layout fault
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node build-test-project.mjs
+          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log
+
+      - name: Preserve acceptance viewport observations
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: acceptance-viewport-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            acceptance-viewport-evidence/acceptance-viewport.json
+            acceptance-viewport-evidence/*/stage-*.png
+            acceptance-viewport-evidence/*/downloads/
+            /tmp/acceptance-viewport.log
+          if-no-files-found: warn
 
       - name: Deployment manifest, build identity, and reproducibility
         run: |
@@ -131,6 +158,8 @@ jobs:
         run: |
           set -euo pipefail
           node verify-all-stage-prompts.mjs
+          node verify-stage-context-boundary.mjs
+          node verify-handoff-metadata-boundary.mjs
           node verify-stage-prompts-complete.mjs
           node verify-user-prompt-invariants.mjs
 
@@ -146,6 +175,8 @@ jobs:
         run: |
           set -euo pipefail
           node verify-ingestion.mjs
+          node verify-execution-reports.mjs
+          node verify-backup-json-stream.mjs
 
       - name: Workflow, gates, and full cycle
         run: |
@@ -170,9 +201,13 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
 
+      - name: Build static application for operator verification
+        run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+
       - name: Local Chromium operator path
         env:
           BROWSER: /usr/bin/google-chrome
+          STATIC_SITE_ROOT: _site
         run: |
           set -euo pipefail
           if [ ! -x "$BROWSER" ]; then
@@ -180,14 +215,15 @@ jobs:
             export BROWSER
           fi
           test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          python3 -m http.server 4173 --directory _site >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           run_browser_verifier() {
             script="$1"
+            budget="${2:-10m}"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -196,12 +232,52 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-human-stage-walkthrough.mjs
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
+
+      - name: Preserve complete operator journey evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            recovery-browser-evidence/recovery.json
+            recovery-browser-evidence/stage-*.png
+            recovery-browser-evidence/downloads/
+            operator-evidence/journey.json
+            operator-evidence/stage-*.png
+            operator-evidence/downloads/
+            mobile-capability-evidence/capability.json
+            mobile-capability-evidence/stage-*.png
+            mobile-capability-evidence/downloads/
+      # Run the direct operator replay before the longer fault matrix. Both
+      # remain mandatory; failed or unexecuted checks still block deployment.
+      - name: Shared production faults, bounded sequences, and executed observations
+        run: |
+          set -euo pipefail
+          node verify-conformance-regressions.mjs > /tmp/conformance-regressions.json
+      - name: Preserve executed regression evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: conformance-regressions-${{ github.sha }}
+          path: /tmp/conformance-regressions.json
+          if-no-files-found: warn
+
+      - name: Preserve the exact browser-verified Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: _site
 
   deploy:
     name: Deploy exact verified bytes
@@ -214,20 +290,7 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22'
-      - name: Rebuild retained fixture from verified source
-        run: node build-test-project.mjs
-      - name: Build static application
-        run: |
-          set -euo pipefail
-          node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
-        with:
-          path: _site
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
@@ -237,7 +300,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 180
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
     steps:
@@ -248,7 +311,9 @@ jobs:
       - name: Rebuild retained fixture used by deployment
         run: node build-test-project.mjs
       - name: Exact deployed-byte verification
-        run: node verify-live.mjs
+        run: |
+          set -euo pipefail
+          node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log
       - name: Deployed Chromium operator path
         run: |
           set -euo pipefail
@@ -256,9 +321,10 @@ jobs:
           test -n "$BROWSER"
           run_browser_verifier() {
             script="$1"
+            budget="${2:-10m}"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -267,9 +333,28 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
+
+      - name: Preserve deployed operator evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            operator-evidence/
+            recovery-browser-evidence/
+            mobile-capability-evidence/
+            /tmp/verify-*.mjs.*.log
+            /tmp/deployed-byte-proof.log
+          retention-days: 90
+          if-no-files-found: warn
 
   publish-status:
     name: Publish machine acceptance status
@@ -280,7 +365,7 @@ jobs:
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -296,9 +381,10 @@ jobs:
           test -n "$BROWSER"
           run_browser_verifier() {
             script="$1"
+            budget="${2:-10m}"
             for attempt in 1 2 3; do
               log="/tmp/mobile-${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s 10m node "$script" 2>&1 | tee "$log"; then
+              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
                 return 0
               fi
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
@@ -307,9 +393,26 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-mobile-stage-action.mjs
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
+          BROWSER_VERIFY_RESULT=0
+          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          test "$BROWSER_VERIFY_RESULT" = 0
+      - name: Preserve reverified deployed operator evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reverified-deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            operator-evidence/
+            recovery-browser-evidence/
+            mobile-capability-evidence/
+            /tmp/mobile-verify-*.mjs.*.log
+          retention-days: 90
+          if-no-files-found: warn
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:
@@ -439,7 +542,7 @@ jobs:
             realThirtyStageProjectAcceptance:false,
             fullProductionMaturity:false,
             jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobileAcceptance.physicalIPhoneJobResult},
-            nextProofStep:finalAcceptancePublication?'Create the release tag for this exact accepted commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
+            nextProofStep:finalAcceptancePublication?'Use the authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag for this commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
             proofSources:{
               ownership:'verify.mjs',
               canonicalDataRoutes:'verify-data-route-closure.mjs',
@@ -480,7 +583,7 @@ jobs:
           report.finalAcceptancePublication=finalGate.accepted;
           report.releaseTagEligible=finalGate.accepted;
           report.visualBaselineEvidence=visualBaseline;
-          report.nextProofStep=finalGate.accepted?'Create the release tag for this exact accepted commit.':finalGate.blockers.map(item=>`${item.requiredActor}: ${item.code} (${item.path})`).join('; ');
+          report.nextProofStep=finalGate.accepted?'Use the authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag for this commit.':finalGate.blockers.map(item=>`${item.requiredActor}: ${item.code} (${item.path})`).join('; ');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
           fs.appendFileSync(process.env.GITHUB_OUTPUT,[
@@ -500,24 +603,8 @@ jobs:
           set -euo pipefail
           echo "::notice title=Release tag blocked::Final Section 49 and actor acceptance is not proven for ${GITHUB_SHA}; see closed-loop-acceptance.json blockers. No release tag was created."
           test "${{ steps.acceptance.outputs.final_acceptance }}" = false
-      - name: Create release tag only after deployed and actual-iPhone proof
+      - name: Record release tag eligibility for authorized repository connection
         if: steps.acceptance.outputs.final_acceptance == 'true'
         run: |
           set -euo pipefail
-          TAG="acceptance-${GITHUB_SHA::12}"
-          CHALLENGE="$(node -e "const r=require('./closed-loop-acceptance.json');const c=String(r.mobileAcceptanceChallenge||'').toLowerCase();if(!/^[0-9a-f]{32,}$/.test(c))process.exit(2);process.stdout.write(c);")"
-          CHALLENGE_TAG="mobile-acceptance-challenge-$CHALLENGE"
-          git config user.name closed-loop-release
-          git config user.email closed-loop-release@users.noreply.github.com
-          test -z "$(git ls-remote --tags origin "refs/tags/$CHALLENGE_TAG" | awk '{print $1}')"
-          EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
-          if [ -n "$EXISTING" ]; then
-            test "$EXISTING" = "$GITHUB_SHA"
-          fi
-          git tag "$CHALLENGE_TAG" "$GITHUB_SHA"
-          if [ -z "$EXISTING" ]; then
-            git tag "$TAG" "$GITHUB_SHA"
-            git push origin "refs/tags/$CHALLENGE_TAG" "refs/tags/$TAG"
-          else
-            git push origin "refs/tags/$CHALLENGE_TAG"
-          fi
+          echo "::notice title=Release tag eligible::Recheck closed-loop-acceptance.json through the authorized repository connection, consume its unused challenge marker, and publish the tag for ${GITHUB_SHA}."
