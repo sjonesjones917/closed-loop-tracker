@@ -620,11 +620,20 @@ async function main(){
     await store.persistPromptContextFiles(p.projectData.generatedPrompts[0],p);
     const saved=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true,selectProject:false}),actual=await store.readProject(p.job.JOB_ID),rows=await store.listArtifacts(p.job.JOB_ID);
     const shared=rows.length===1,preserved=JSON.stringify(actual.projectData.generatedPrompts)===JSON.stringify(p.projectData.generatedPrompts),identity=saved.projectSha256===actual.projectSha256;
-    const row=rows[0],db=await store.openDatabase(),damage=db.transaction('artifacts','readwrite'),damaged=new Promise((resolve,reject)=>{damage.oncomplete=resolve;damage.onabort=damage.onerror=()=>reject(damage.error);});damage.objectStore('artifacts').put({...row,byteSize:row.byteSize+1});await damaged;
-    let rejected=false;try{await store.writeProject(actual,{expectedProjectRevision:actual.revision,selectProject:false});}catch(error){rejected=error.code==='PROMPT_CONTEXT_INTEGRITY_FAILED';}
-    const unchanged=(await store.readProject(p.job.JOB_ID)).projectSha256===saved.projectSha256;
+    const row=rows[0],historyBefore=JSON.stringify(await store.historyList(p.job.JOB_ID)),db=await store.openDatabase(),damage=db.transaction('artifacts','readwrite'),damaged=new Promise((resolve,reject)=>{damage.oncomplete=resolve;damage.onabort=damage.onerror=()=>reject(damage.error);});damage.objectStore('artifacts').put({...row,byteSize:row.byteSize+1});await damaged;
+    let rejected=false,unchanged=false;
+    try{
+      try{await store.writeProject(actual,{expectedProjectRevision:actual.revision,selectProject:false});}catch(error){rejected=error.code==='PROMPT_CONTEXT_INTEGRITY_FAILED';}
+      unchanged=(await store.readProject(p.job.JOB_ID)).projectSha256===saved.projectSha256;
+    }finally{
+      // Removal promises recovery, so its checkpoint must see the original
+      // verified bytes after this disposable fault, even if an assertion fails.
+      const repair=db.transaction('artifacts','readwrite'),repaired=new Promise((resolve,reject)=>{repair.oncomplete=resolve;repair.onabort=repair.onerror=()=>reject(repair.error);});repair.objectStore('artifacts').put(row);await repaired;
+    }
+    const restored=await store.getArtifact(row.artifactId),faultRestored=restored?.byteSize===row.byteSize&&restored.sha256===row.sha256&&await closedLoopHash.sha256Bytes(restored.blob)===row.sha256;
+    const historyUnchanged=JSON.stringify(await store.historyList(p.job.JOB_ID))===historyBefore;
     await store.removeProject(p.job.JOB_ID);
-    return {shared,preserved,identity,rejected,unchanged};
+    return {shared,preserved,identity,rejected,unchanged,faultRestored,historyUnchanged};
   })()`);
   assert(Object.values(contextSaveProof).every(Boolean),'Worker save reused context verification or changed historical bytes: '+JSON.stringify(contextSaveProof));
   console.log(JSON.stringify({promptContextReadSnapshot:contextReadProof,promptContextWorkerSave:contextSaveProof}));
