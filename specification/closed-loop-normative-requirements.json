@@ -73051,7 +73051,16 @@
       ],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-09852d85a8e2de15f8a15fbd663018f4",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks first and appended transfer receipts with the production integrity validator, retained receipt immutability, authorization, retries, failure outcomes and the actual controller at a disposable transfer boundary. DELIVERY_RECEIPT_PERSISTENCE_ORACLE detects the targeted malformed-initial-receipt fault. Exact-source full CI, real-browser transfer and deployed acceptance remain required.",
+      "productionOwners": [
+        "workflow-engine.js:recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
+        "app-core.js:exportAuthorizedArtifacts",
+        "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers"
+      ],
+      "unresolvedRequirements": [
+        "Execute the complete operator journey through authorized artifact retrieval and compare downloaded bytes at the final candidate and deployment.",
+        "Preserve the distinction between application-observed transfer and genuinely attributed receipt or physical-device evidence."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-a1fc0ba5dce2a21712e905ca48d2ac4e",
@@ -152067,7 +152076,16 @@
       ],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-2b0f0cefee59e16f87cbcac572fe2cfb",
       "currentDisposition": "IMPLEMENTED_UNPROVEN",
-      "currentDispositionReason": "Module and candidate test files are mapped. This mechanical extraction does not establish requirement-specific behavioral, mutation, operator, or physical evidence."
+      "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks first and appended transfer receipts with the production integrity validator, retained receipt immutability, authorization, retries, failure outcomes and the actual controller at a disposable transfer boundary. DELIVERY_RECEIPT_PERSISTENCE_ORACLE detects the targeted malformed-initial-receipt fault. Exact-source full CI, real-browser transfer and deployed acceptance remain required.",
+      "productionOwners": [
+        "workflow-engine.js:recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
+        "app-core.js:exportAuthorizedArtifacts",
+        "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers"
+      ],
+      "unresolvedRequirements": [
+        "Execute the complete operator journey through authorized artifact retrieval and compare downloaded bytes at the final candidate and deployment.",
+        "Preserve the distinction between application-observed transfer and genuinely attributed receipt or physical-device evidence."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-5ab808067e6378712fdf66fd611cd0ca",
@@ -205023,5 +205041,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "c2b3bc55f6693278eee0b2b912dff31ec1987dd4b5d9b9ede6dde2c65305a69c"
+  "manifestSha256": "9c38d74b15318ca0cd28ad837282a7e950af603318d7a010916254aaf29d6491"
 }

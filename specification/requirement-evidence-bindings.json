@@ -406,6 +406,40 @@
           "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
         ]
       }
+    },
+    {
+      "normativeRequirementId": "NREQ-09852d85a8e2de15f8a15fbd663018f4",
+      "sourceLineSha256": "3983a2525e84904999db4ad2736a7123d3fab1ae778436be32d8ee3c69dbcc95",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
+          "app-core.js:exportAuthorizedArtifacts",
+          "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers"
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks first and appended transfer receipts with the production integrity validator, retained receipt immutability, authorization, retries, failure outcomes and the actual controller at a disposable transfer boundary. DELIVERY_RECEIPT_PERSISTENCE_ORACLE detects the targeted malformed-initial-receipt fault. Exact-source full CI, real-browser transfer and deployed acceptance remain required.",
+        "unresolvedRequirements": [
+          "Execute the complete operator journey through authorized artifact retrieval and compare downloaded bytes at the final candidate and deployment.",
+          "Preserve the distinction between application-observed transfer and genuinely attributed receipt or physical-device evidence."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-2b0f0cefee59e16f87cbcac572fe2cfb",
+      "sourceLineSha256": "05ca64624a7aaea68ebf39e54872074cca802558eab9e801e5cc69690e112e13",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
+          "app-core.js:exportAuthorizedArtifacts",
+          "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers"
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks first and appended transfer receipts with the production integrity validator, retained receipt immutability, authorization, retries, failure outcomes and the actual controller at a disposable transfer boundary. DELIVERY_RECEIPT_PERSISTENCE_ORACLE detects the targeted malformed-initial-receipt fault. Exact-source full CI, real-browser transfer and deployed acceptance remain required.",
+        "unresolvedRequirements": [
+          "Execute the complete operator journey through authorized artifact retrieval and compare downloaded bytes at the final candidate and deployment.",
+          "Preserve the distinction between application-observed transfer and genuinely attributed receipt or physical-device evidence."
+        ]
+      }
     }
   ]
 }
