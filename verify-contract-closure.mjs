@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
+import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 function loadSchema(source=fs.readFileSync('workflow-schema.js','utf8')){
@@ -48,6 +49,26 @@ function verify(source){
   assert.equal(schema.STAGE_OPERATION_REGISTRY['1:COMPLETE'].minimumInputBindingBasis,'EXTERNALLY_SUPPORTED','External operations must declare the minimum accepted input-binding basis.');
   assert.equal(schema.STAGE_OPERATION_REGISTRY['30:CALCULATE_TERMINAL'].minimumInputBindingBasis,'APPLICATION_OBSERVED','Application commands bind application-observed inputs.');
 
+  const declarations=[
+    ...Object.entries(schema.JOB_FIELDS).map(([name,definition])=>({key:`JOB.${name}`,path:`/job/${name}`,definition,relationship:null})),
+    ...Object.entries(schema.STAGE_FIELDS).flatMap(([stage,fields])=>Object.entries(fields).map(([name,definition])=>({key:`STAGE.${stage}.${name}`,path:`/stages/${stage}/${name}`,definition,relationship:null}))),
+    ...Object.entries(schema.RECORD_SCHEMAS).flatMap(([family,record])=>Object.entries(record.fieldDefinitions).map(([name,definition])=>({key:`RECORD.${family}.${name}`,path:`/projectData/${family}/*/${name}`,definition,relationship:record.relationships?.[name]||null})))
+  ];
+  const expectedKeys=declarations.map(({key})=>key).sort();
+  assert.equal(new Set(expectedKeys).size,expectedKeys.length,'FIELD_REGISTRY_UNIVERSE_ORACLE: declared fields must have unique identities.');
+  const expectedSet=new Set(expectedKeys),actualKeys=Object.keys(schema.FIELD_REGISTRY);
+  const missing=expectedKeys.filter(key=>!Object.hasOwn(schema.FIELD_REGISTRY,key)),unexpected=actualKeys.filter(key=>!expectedSet.has(key));
+  assert.equal(missing.length+unexpected.length,0,`FIELD_REGISTRY_UNIVERSE_ORACLE: missing ${JSON.stringify(missing)}; undeclared ${JSON.stringify(unexpected)}.`);
+  for(const {key,path,definition,relationship} of declarations){
+    const contract=schema.FIELD_REGISTRY[key];
+    assert.equal(contract.path,path,`FIELD_REGISTRY_BINDING_ORACLE: ${key} must address its declared field.`);
+    assert.equal(contract.producer,definition.producer,`FIELD_REGISTRY_BINDING_ORACLE: ${key} producer must match its authoritative declaration.`);
+    assert.equal(contract.valueType,definition.valueType,`FIELD_REGISTRY_BINDING_ORACLE: ${key} type must match its authoritative declaration.`);
+    assert.equal(contract.nullable,Boolean(definition.nullable),`FIELD_REGISTRY_BINDING_ORACLE: ${key} nullability must match its authoritative declaration.`);
+    assert.deepEqual([...contract.enumValues],[...(definition.enumValues||[])],`FIELD_REGISTRY_BINDING_ORACLE: ${key} enum must match its authoritative declaration.`);
+    if(key.startsWith('RECORD.'))assert.equal(contract.relationshipTarget,relationship,`FIELD_REGISTRY_BINDING_ORACLE: ${key} relationship must match its authoritative declaration.`);
+  }
+  assert.equal(new Set(declarations.map(({key})=>schema.FIELD_REGISTRY[key].path)).size,declarations.length,'FIELD_REGISTRY_BINDING_ORACLE: field paths must be unique.');
   const producerSets={HUMAN:0,HUMAN_DECISION:0,AGENT:0,APPLICATION:0};
   for(const [key,contract] of Object.entries(schema.FIELD_REGISTRY)){
     for(const property of REQUIRED_FIELD_PROPERTIES)assert.ok(Object.prototype.hasOwnProperty.call(contract,property),`${key} missing field contract property ${property}.`);
@@ -56,8 +77,7 @@ function verify(source){
     assert.ok(schema.normalizerRegistry.entries[contract.normalizerIdentity],`${key} references undefined normalizer ${contract.normalizerIdentity}.`);
     assert.ok(schema.derivationRegistry.entries[contract.derivationIdentity],`${key} references undefined derivation ${contract.derivationIdentity}.`);
   }
-  assert.equal(Object.values(producerSets).reduce((a,b)=>a+b,0),Object.keys(schema.FIELD_REGISTRY).length,'Producer partitions must be exhaustive.');
-  assert.equal(new Set(Object.keys(schema.FIELD_REGISTRY)).size,Object.keys(schema.FIELD_REGISTRY).length,'Field registry paths must be unique.');
+  assert.equal(Object.values(producerSets).reduce((a,b)=>a+b,0),declarations.length,'Producer partitions must cover the complete declared field universe.');
   assert.equal(schema.FIELD_REGISTRY['RECORD.unknownFamily.UNKNOWN_FIELD'],undefined,'Unknown field must fail closed.');
 
   for(const field of ['VERIFICATION_PHASE','EARLIEST_EXECUTABLE_STAGE','REQUIRED_BY_STAGE','PER_RUN_REQUIRED','FINAL_PRODUCT_REQUIRED','DELIVERY_REQUIRED','TARGET_AVAILABILITY_CONDITION'])assert.ok(schema.RECORD_SCHEMAS.tests.fieldDefinitions[field],`tests.${field} is required.`);
@@ -74,7 +94,14 @@ function verify(source){
   assert.equal(schema.identityAssuranceSatisfies('UNKNOWN_PURPOSE','SELF_ASSERTED').allowed,false,'Unknown human-decision purpose must reject.');
   assert.equal(schema.identityAssuranceSatisfies('BASELINE_AUTHORIZATION','NONE').allowed,false,'Identity assurance below the registered minimum must reject.');
 
-  return {contractClosure:'PASS',stageOperations:66,durableFamilies:Object.keys(schema.DURABLE_OBJECT_REGISTRY).length,fieldContracts:Object.keys(schema.FIELD_REGISTRY).length,normalizers:Object.keys(schema.normalizerRegistry.entries).length,derivations:Object.keys(schema.derivationRegistry.entries).length,attachmentSlotContract:true,identityAssuranceContract:true};
+  return {contractClosure:'PASS',stageOperations:66,durableFamilies:Object.keys(schema.DURABLE_OBJECT_REGISTRY).length,fieldContracts:Object.keys(schema.FIELD_REGISTRY).length,normalizers:Object.keys(schema.normalizerRegistry.entries).length,derivations:Object.keys(schema.derivationRegistry.entries).length,attachmentSlotContract:true,identityAssuranceContract:true,fieldRegistryProof:{
+    expected:'Every declared Job, stage and canonical-record field occurs once in the registry and retains its declared path, producer, type, nullability, enum and record relationship target.',
+    universeDefinition:'All current JOB_FIELDS, STAGE_FIELDS and RECORD_SCHEMAS.fieldDefinitions; independent of the FIELD_REGISTRY entries being checked.',
+    includedIds:expectedKeys,excludedIds:[],numerator:declarations.length,denominator:expectedKeys.length,
+    partitions:Object.fromEntries(['JOB.','STAGE.','RECORD.'].map(prefix=>[prefix,expectedKeys.filter(key=>key.startsWith(prefix)).length])),
+    scope:'Declared-field registry completeness and binding only. This does not establish every specification field, nested-object contract, operation behavior, browser acceptance or physical-device acceptance.',
+    result:'PASS'
+  }};
 }
 
 const source=fs.readFileSync('workflow-schema.js','utf8');
@@ -85,4 +112,26 @@ assert.throws(()=>verify(source.replace("const normalizerId=key=>{if(!key)return
 assert.throws(()=>verify(source.replace("const derivationId=key=>{if(!key)return NO_DERIVATION_ID;","const derivationId=key=>{if(!key)return 'closed-loop-derivation/missing/1';")),/undefined derivation/,'Undefined derivation mutation must fail.');
 assert.throws(()=>verify(source.replace("mappingAuthority:'ATTACHMENT_SLOT_ID'","mappingAuthority:'FILENAME'")),/Expected values to be strictly equal|ATTACHMENT_SLOT_ID/,'Filename-authoritative attachment mapping mutation must fail.');
 assert.throws(()=>verify(source.replace("minimumIdentityAssurance:'SELF_ASSERTED'","minimumIdentityAssurance:'AUTHENTICATED'")),/Current baseline authority must permit/,'Identity-assurance minimum mutation must fail.');
-console.log(JSON.stringify(result));
+// Specification 14.5: every declared field occurs exactly once in the closed
+// registry. Removing an entry cannot shrink the verifier's expected universe.
+const registryFaults=[];
+for(const prefix of ['JOB.','STAGE.','RECORD.'])for(const [fault,mutation,oracle] of [
+  ['missing','delete entries[key];','FIELD_REGISTRY_UNIVERSE_ORACLE'],
+  ['undeclared',"entries[key+'.UNREGISTERED_FIELD']=entries[key];",'FIELD_REGISTRY_UNIVERSE_ORACLE'],
+  ['aliased-path',"entries[key]={...entries[key],path:entries[Object.keys(entries).find(other=>other!==key)].path};",'FIELD_REGISTRY_BINDING_ORACLE'],
+  ['wrong-producer',"entries[key]={...entries[key],producer:entries[key].producer==='APPLICATION'?'AGENT':'APPLICATION'};",'FIELD_REGISTRY_BINDING_ORACLE'],
+  ['wrong-type',"entries[key]={...entries[key],valueType:entries[key].valueType==='BOOLEAN'?'STRING':'BOOLEAN'};",'FIELD_REGISTRY_BINDING_ORACLE'],
+  ['wrong-nullability','entries[key]={...entries[key],nullable:!entries[key].nullable};','FIELD_REGISTRY_BINDING_ORACLE'],
+  ['wrong-enum',"entries[key]={...entries[key],enumValues:[...entries[key].enumValues,'UNREGISTERED_ENUM_VALUE']};",'FIELD_REGISTRY_BINDING_ORACLE'],
+  ...(prefix==='RECORD.'?[['wrong-relationship',"entries[key]={...entries[key],relationshipTarget:entries[key].relationshipTarget?'unregisteredFamily':'requirements'};",'FIELD_REGISTRY_BINDING_ORACLE']]:[])
+]){
+  const faultSource=source+`\n;(()=>{const s=globalThis.closedLoopWorkflowSchema,entries={...s.FIELD_REGISTRY};const key=Object.keys(entries).find(key=>key.startsWith(${JSON.stringify(prefix)}));if(!key)throw new Error('Registry fault target missing');${mutation}globalThis.closedLoopWorkflowSchema=Object.freeze({...s,FIELD_REGISTRY:Object.freeze(entries)});})();`;
+  let rejected=null;
+  try{verify(faultSource);}catch(error){rejected=error;}
+  assert.ok(rejected?.message.startsWith(oracle),'FIELD_REGISTRY_FAULT_DETECTION_ORACLE: '+fault+' '+prefix+' must fail for its intended invariant; actual '+(rejected?.message||'PASS'));
+  registryFaults.push({fault:fault+'-'+prefix,oracle,result:'DETECTED',diagnostic:rejected.message});
+}
+assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source,'FIELD_REGISTRY_SOURCE_UNCHANGED_ORACLE');
+const restored=verify(source);
+assert.deepEqual(restored,result,'FIELD_REGISTRY_RESTORED_ORACLE');
+console.log(JSON.stringify({...result,registryFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));
