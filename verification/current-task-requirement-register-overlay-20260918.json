@@ -1630,21 +1630,19 @@
       ],
       "currentRepair": {
         "classification": "verifier/evidence",
-        "baseSha": "9259d5f5570ad7b5f583ed716d993f509dbcbc88",
-        "runId": 36284170609,
-        "cause": "Aggregate verifier retained all results until process completion, leaving an empty artifact on cancellation; a passing primary-error verifier emitted multiple JSON documents that the aggregator rejected.",
+        "baseSha": "1d7334e63c6701baa31a5229e28f1987e51c6599",
+        "runId": 36293950859,
+        "cause": "Aggregate step was skipped after the browser failure, but its always() upload demanded nonexistent output and failed. Eligibility must follow whether the aggregate actually executed, while missing evidence from an executed gate remains an error.",
         "closure": [
-          "Primary-error one-document reporting contract",
-          "Existing aggregate child exit/report classification",
-          "Incremental atomic report and raw stdout/stderr retention",
-          "Failure, timeout, interruption, unexecuted cases and process-group cleanup",
-          "Existing workflow artifact upload"
+          "Existing aggregate step identity",
+          "Actual success/failure/cancelled/skipped/unstarted outcome eligibility",
+          "Raw artifact paths and missing-executed-evidence error",
+          "Existing final-acceptance wiring regression and4 targeted faults"
         ],
         "requiredProof": [
-          "Actual passing primary-error cases through aggregate reader",
-          "Disposable runner cases and targeted implementation faults",
-          "Interrupted run retains completed results and raw output",
-          "Final required CI artifact"
+          "Defective-source eligibility regression",
+          "Five-outcome truth table and4 caught faults",
+          "Read-back artifact inspection at published SHA"
         ]
       }
     },
@@ -2700,12 +2698,37 @@
         "Aggregate child and parent deadlines, interruption cleanup, incremental evidence and explicit pending cases"
       ],
       "configuredVerificationLimits": {
-        "completeJourneyMinutes": 90,
+        "completeJourneyMinutes": 120,
         "testJobMinutes": 360,
-        "reason": "Run5925 spent31m57s before Chromium,95m15s in Chromium, then53m18s in the aggregate before cancellation near the former180m job limit. The complete aggregate remained unverified. Its independent180m deadline and per-child20m limits now fit after the measured browser workload, with final evidence preservation. No application assertion, stage or mandatory gate was removed.",
+        "reason": "Run5926/36293950859 at1d7334e63c6701baa31a5229e28f1987e51c6599 completed all30 stages and a backup import but the90m shell deadline interrupted final verification. The same application source completed the browser step in run5925. All3 existing complete-journey invocations now use a finite120m limit. The redundant post-import export is replaced by an independently fresh stored-state read; all original outcome assertions remain. Full browser proof is still required at the published revision.",
         "aggregateMinutes": 180,
         "aggregateChildMinutes": 20,
         "aggregateStepMinutes": 185
+      },
+      "currentRepair": {
+        "classification": "verifier/infrastructure",
+        "baseSha": "1d7334e63c6701baa31a5229e28f1987e51c6599",
+        "runId": 36293950859,
+        "invariant": "Every required journey check finishes or reports its actual phase within a hard deadline; observation must not add an unused whole-history export.",
+        "authorityTrace": [
+          "Run5926 SIGTERM at90m after30 completed stages",
+          "Final round trip imports actual downloaded bytes, then formerly requested another full export only to read restored state",
+          "Shared saved({backup:true}) branch invokes project export; fresh saved() observes durable state without that extra action",
+          "All candidate and deployed journey invocations share the finite deadline and preserved phase report"
+        ],
+        "closure": [
+          "Final backup control sequence and exact-input-byte observation",
+          "Fresh restored state, accepted-count and all30-stage assertions",
+          "Completed-stage selection and final-proof phase reporting",
+          "All3 existing workflow invocation budgets",
+          "Existing lifecycle regression and I/O fault matrix"
+        ],
+        "requiredProof": [
+          "Defective-source final roundtrip regression",
+          "Three targeted verifier faults and restored gate",
+          "Existing feedback, lifecycle, governance and final-acceptance checks",
+          "Complete required browser journey at published SHA"
+        ]
       }
     },
     {

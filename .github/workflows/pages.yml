@@ -236,7 +236,9 @@ jobs:
           run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
+          # Run5926 reached all30 stages and imported its backup before the90m
+          # deadline cut off final proof. Keep a finite budget with headroom.
+          run_browser_verifier verify-complete-operator-journey.mjs 120m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -262,12 +264,13 @@ jobs:
       # Run the direct operator replay before the longer fault matrix. Both
       # remain mandatory; failed or unexecuted checks still block deployment.
       - name: Shared production faults, bounded sequences, and executed observations
+        id: conformance
         timeout-minutes: 185
         run: |
           set -euo pipefail
           node verify-conformance-regressions.mjs > /tmp/conformance-regressions.json
       - name: Preserve executed regression evidence
-        if: always()
+        if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: conformance-regressions-${{ github.sha }}
@@ -339,7 +342,7 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 120m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -399,7 +402,7 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 90m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 120m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1

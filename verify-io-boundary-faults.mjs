@@ -5,13 +5,16 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
-const files=['project-store.js','hash.js','app-core.js','index.html','operator-browser-driver.mjs','verify-browser-extra.mjs'];
+const files=['project-store.js','hash.js','app-core.js','index.html','operator-browser-driver.mjs','verify-browser-extra.mjs','verify-complete-operator-journey.mjs'];
 const originals=new Map(files.map(file=>[file,fs.readFileSync(file,'utf8')]));
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-io-faults-'));
 const events=[];
 function execute(test,args=[],env={}){const command=[process.execPath,test,...args],r=spawnSync(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout:30000,maxBuffer:16*1024*1024});const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;}
 function replaceOne(source,before,after){assert.equal(source.split(before).length-1,1,'Fault anchor must identify exactly one production location');return source.replace(before,after);}
 const faults=[
+ {id:'VER-MUT-REPEAT-FINAL-BACKUP',file:'verify-complete-operator-journey.mjs',env:'OPERATOR_JOURNEY_SOURCE',test:'verify-operator-action-lifecycle.mjs',caseId:null,oracle:'FINAL_BACKUP_OBSERVATION_ORACLE',apply:s=>replaceOne(s,'const restored=await saved();assert.equal(restored.job.JOB_ID','const restored=await saved({backup:true});assert.equal(restored.job.JOB_ID')},
+ {id:'VER-MUT-STALE-FINAL-BACKUP-READ',file:'verify-complete-operator-journey.mjs',env:'OPERATOR_JOURNEY_SOURCE',test:'verify-operator-action-lifecycle.mjs',caseId:null,oracle:'FINAL_BACKUP_OBSERVATION_ORACLE',apply:s=>replaceOne(s,'const restored=await saved();assert.equal(restored.job.JOB_ID','const restored=before;assert.equal(restored.job.JOB_ID')},
+ {id:'VER-MUT-LOST-FINAL-BACKUP-PHASE',file:'verify-complete-operator-journey.mjs',env:'OPERATOR_JOURNEY_SOURCE',test:'verify-operator-action-lifecycle.mjs',caseId:null,oracle:'FINAL_BACKUP_PHASE_ORACLE',apply:s=>replaceOne(s,"report.currentOperation={phase:'FINAL_BACKUP_IMPORT',stage,sequence};preserveReport();",'')},
  {id:'VER-MUT-HANDOFF-ACCEPTED-BYTES',file:'verify-browser-extra.mjs',env:'BROWSER_EXTRA_SOURCE',test:'verify-file-first-operator.mjs',caseId:null,oracle:'HANDOFF_BROWSER_CORRUPTION_ORACLE',apply:s=>replaceOne(s,'accumulatedRoundTrip.acceptedDataUnchanged&&','')},
  {id:'VER-MUT-HANDOFF-RESTORED-BYTES',file:'verify-browser-extra.mjs',env:'BROWSER_EXTRA_SOURCE',test:'verify-file-first-operator.mjs',caseId:null,oracle:'HANDOFF_BROWSER_CORRUPTION_ORACLE',apply:s=>replaceOne(s,'accumulatedRoundTrip.restoredProjectDataExact&&','')},
  {id:'IO-MUT-HANDOFF-EXPORT-RECEIPT',file:'app-core.js',env:'APP_SOURCE',test:'verify-file-first-operator.mjs',caseId:null,oracle:'HANDOFF_RECEIPT_ORACLE',apply:s=>replaceOne(s,'async function recordInstructionExport(record){','async function recordInstructionExport(record){return;')},

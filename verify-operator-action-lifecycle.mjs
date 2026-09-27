@@ -208,6 +208,29 @@ for(const stage of [1]){
   assert.equal(nodes.get('#app-operation-status').hidden,true,`Stage ${stage}: completed action still appears to run.`);
   cases.push({caseId:'UI-SHARED-ACTION-DUPLICATE',fixtureStage:stage,operation:'SAVE_INSTRUCTION',repeatedClicks:2,executions:entered,result:'PASS'});
 }
+// Execute the actual final backup/restore sequence with fixed, small bytes.
+// Export once, import those bytes through the control, then observe fresh saved
+// state. A second whole-History export is not a read and adds no acceptance proof.
+{
+ const journey=fs.readFileSync(process.env.OPERATOR_JOURNEY_SOURCE||'verify-complete-operator-journey.mjs','utf8');
+ const functionStart=journey.indexOf('async function verifyFinalBackupRoundTrip(');
+ const start=functionStart>=0?functionStart:journey.indexOf('  const before=await saved({backup:true}),backup=snapshot.file;');
+ const end=functionStart>=0?journey.indexOf('\nasync function ingest(',start):journey.indexOf('  await captureOperationLatency();assert.equal(report.operationLatency.thresholdMs',start);
+ assert.ok(start>=0&&end>start,'The actual final backup round trip must be executable.');
+ const sequence=journey.slice(start,end)+(functionStart>=0?'\nawait verifyFinalBackupRoundTrip();':'');
+ const bytes=Buffer.from('fixed exported backup bytes'),snapshot={file:{bytes,sha256:'verified-backup-digest'}},report={},phases=[];
+ const project={job:{JOB_ID:'ROUNDTRIP'},projectData:{acceptedChanges:[{changeId:'accepted'}]},stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:'COMPLETE'}]))};
+ let exported=0,imported=false,reads=0;
+ const saved=async({backup=false}={})=>{if(backup)exported++;else{assert.equal(imported,true,'Restore observation must follow the import control');reads++;}return structuredClone(project);};
+ const browser={selectFiles:async(selector,files)=>{assert.equal(selector,'#import-file');assert.deepEqual(files[0].bytes,bytes,'BACKUP_INPUT_BYTES_ORACLE: restore must select the actual exported bytes');imported=true;}};
+ const engine={gate:(n,p)=>({complete:p.stages[n].status==='COMPLETE'})};
+ await Function('saved','browser','snapshot','report','assert','engine','preserveReport','stage','sequence','return (async()=>{'+sequence+'})();')(saved,browser,snapshot,report,assert,engine,()=>phases.push(report.currentOperation?.phase),31,133);
+ assert.equal(exported,1,'FINAL_BACKUP_OBSERVATION_ORACLE: restored state must be read without exporting the complete history again');
+ assert.equal(reads,1,'FINAL_BACKUP_OBSERVATION_ORACLE: verify a fresh post-import stored project');
+ assert.deepEqual(report.backupRestore,{selectedSha256:snapshot.file.sha256,stagesPreserved:30});
+ assert.deepEqual(phases,['FINAL_BACKUP_EXPORT','FINAL_BACKUP_IMPORT','FINAL_BACKUP_VERIFY'],'FINAL_BACKUP_PHASE_ORACLE: an interruption must identify the actual final operation');
+ cases.push({caseId:'FINAL-BACKUP-OBSERVATION',result:'PASS',actualBrowser:false,exports:exported,freshReads:reads,phases});
+}
 // The complete-export and backup controls share the same pending UI action.
 // A second disabled control is not another queued operator request. Once that
 // action finishes, a newly activated backup remains a separate valid action.

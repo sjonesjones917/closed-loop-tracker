@@ -89,10 +89,33 @@ function assertPublicationWiring(source){
   assert.ok(live.includes('node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log'),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: retain raw deployed-byte proof');
 }
 assertPublicationWiring(workflow);
+function assertRegressionEvidenceEligibility(source){
+ const match=source.match(/      - name: Preserve executed regression evidence\n([\s\S]*?)(?=\n      - name:|\n  [a-z])/);assert.ok(match,'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: existing evidence step is missing');
+ const condition=match[1].match(/        if: (.+)/)?.[1];assert.ok(condition,'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: evidence eligibility must be explicit');
+ const evaluate=Function('always','steps','return ('+condition+');');
+ for(const outcome of ['success','failure','cancelled','skipped',''])assert.equal(evaluate(()=>true,{conformance:{outcome}}),['success','failure','cancelled'].includes(outcome),'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: '+(outcome||'unstarted'));
+ assert.match(source,/name: Shared production faults, bounded sequences, and executed observations\n        id: conformance\n/,'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: predicate must bind the actual aggregate step');
+ assert.match(match[1],/if-no-files-found: error/,'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: missing executed evidence must fail');
+}
+assertRegressionEvidenceEligibility(workflow);
+const regressionEvidenceFaults=[];
+for(const [id,before,after] of [
+ ['skipped-archive',"if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')",'if: always()'],
+ ['lost-failure-archive'," || steps.conformance.outcome == 'failure'",''],
+ ['lost-cancelled-archive'," || steps.conformance.outcome == 'cancelled'",''],
+ ['silent-missing-evidence','          if-no-files-found: error\n\n      - name: Preserve the exact browser-verified Pages artifact','          if-no-files-found: warn\n\n      - name: Preserve the exact browser-verified Pages artifact']
+]){
+ assert.ok(workflow.includes(before),'Missing evidence eligibility fault anchor: '+id);
+ assert.throws(()=>assertRegressionEvidenceEligibility(workflow.replace(before,after)),/REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE/);assertRegressionEvidenceEligibility(workflow);regressionEvidenceFaults.push({fault:id,result:'DETECTED',restored:'PASS'});
+}
+const journeyInvocations=[...workflow.matchAll(/run_browser_verifier verify-complete-operator-journey\.mjs (\d+)m/g)];
+assert.equal(journeyInvocations.length,3,'Every candidate, main and re-verification journey remains required.');
+assert.ok(journeyInvocations.every(match=>Number(match[1])===120),'All existing complete journeys require the same finite120m execution budget.');
+
 for(const token of ['node verify-final-acceptance.mjs','const finalGate=evaluateFinalAcceptance(report,{visualBaseline})','report.finalAcceptancePublication=finalGate.accepted','report.releaseTagEligible=finalGate.accepted',"if: steps.acceptance.outputs.final_acceptance == 'true'"])assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')));
 const artifactFaults=[];
 for(const prefix of ['deployed','reverified-deployed']){
  const token='name: '+prefix+'-operator-journeys-${{ github.sha }}-${{ github.run_id }}';
  assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),/DEPLOYED_JOURNEY_ARTIFACT_ORACLE/);assertPublicationWiring(workflow);artifactFaults.push({fault:'remove-'+prefix+'-archive',oracle:'DEPLOYED_JOURNEY_ARTIFACT_ORACLE',result:'DETECTED',restored:'PASS'});
 }
-console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,artifactFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));
+console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));
