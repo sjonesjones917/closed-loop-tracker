@@ -113,6 +113,8 @@ function verifyComparisonReplacement(stage){
 const recoveryCompatibilityCases=[];
 function verifyRecoveryCompatibility(stage){
   const originalDigest=hash.sha256Value(p),shared=engine.clone(p),separate=engine.clone(p);
+  const projectionIntegrity=closedLoopProjectStore.validateProjectIntegrity(p);
+  assert(projectionIntegrity.valid,'HISTORY_FULL_CYCLE_PROJECTION_ORACLE: the saved lifecycle boundary must pass the same projection validation used by backup and History restoration at '+stage+': '+projectionIntegrity.issues.join(' | '));
   const separateCheck=project=>Object.values(project.stages||{}).filter(value=>value.status==='COMPLETE').every(value=>engine.gate(Number(value.number),project).complete);
   const expected=separateCheck(separate),actual=engine.completedStageCompatibility(shared);
   assert(actual===expected,'HISTORY_FULL_CYCLE_GATE_EQUIVALENCE_ORACLE: shared adjudication changed completed-stage compatibility at '+stage);
@@ -141,7 +143,7 @@ function verifyRecoveryCompatibility(stage){
     changedResultRejected=true;break;
   }
   assert(hash.sha256Value(p)===originalDigest,'Disposable compatibility checks changed the real lifecycle fixture.');
-  recoveryCompatibilityCases.push({caseId:'HISTORY-FULL-CYCLE-COMPATIBILITY-'+stage,stage,result:'PASS',independentStageEvaluationMatched:true,canonicalStateMatched:true,changedResultRejected});
+  recoveryCompatibilityCases.push({caseId:'HISTORY-FULL-CYCLE-COMPATIBILITY-'+stage,stage,result:'PASS',independentStageEvaluationMatched:true,canonicalStateMatched:true,projectionIntegrityVerified:true,changedResultRejected});
 }
 const iterationComparisonGateCases=[];
 function verifyIterationComparisonGate(stage){

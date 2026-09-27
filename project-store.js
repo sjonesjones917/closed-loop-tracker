@@ -535,8 +535,13 @@ async function beginHistorySession(sessionId){
   return checkpoints;
 }
 function assertRecoveryCompatibility(project){
-  const engine=globalThis.closedLoopWorkflowEngine,checked=clone(project);
-  if(!engine.completedStageCompatibility(checked))throw storageError('The saved completion records do not belong to one compatible project version. The current version is preserved.','HISTORY_VERSION_INCOMPATIBLE');
+  // The complete saved projection must agree with its canonical version, not
+  // only stages labelled COMPLETE. Otherwise an older permissive import can
+  // re-enter through History, Undo/Redo or a nested backup checkpoint.
+  try{assertProjectIntegrity(project);}catch(error){
+    if(error.code!=='PROJECT_INTEGRITY_FAILED')throw error;
+    throw Object.assign(storageError('The saved project projection does not match its canonical records. The current version and saved history are preserved. Restore a compatible backup.','HISTORY_VERSION_INCOMPATIBLE'),{issues:error.issues});
+  }
 }
 async function readRetainedCheckpoint(jobId,checkpointId,state=null){
   const manifest=state||await metaGet(historyKey(jobId));
@@ -1197,11 +1202,11 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
   if(project?.schema!=='closed-loop-project/3'||project?.workflow!=='mobile-closed-loop/30'||Number(project?.stageCount)!==30||Object.keys(project?.stages||{}).length!==30)throw Object.assign(new Error('Imported project identity or stage count is invalid.'),{existingProjectsUnchanged:true});
   if(body.projectSchema!==project.schema||body.workflow!==project.workflow||body.responseSchema!==schemaApi?.RESPONSE_SCHEMA)throw Object.assign(new Error('Package schema manifest does not match the embedded project.'),{existingProjectsUnchanged:true});
   if(!id)throw Object.assign(new Error('Imported project has no JOB_ID.'),{existingProjectsUnchanged:true});
-  // A backup retains the exact saved projection as audit data. Opening it uses
-  // the same application recalculation as opening an existing project. Cached
-  // stage labels cannot confer authority; canonical records, current release
-  // determination and artifact custody still undergo their full checks here.
-  try{assertProjectIntegrity(project,{verifyCachedProjection:false});}catch(error){throw Object.assign(error,{existingProjectsUnchanged:true});}
+  // A package hash proves byte identity, not agreement with canonical records.
+  // Validate saved projections before activation; do not commit contradictory
+  // state and defer its rejection to the subsequent History/view refresh.
+  // Validation recalculates a disposable copy and preserves the source bytes.
+  try{assertProjectIntegrity(project);}catch(error){throw Object.assign(error,{existingProjectsUnchanged:true});}
   const packageArtifacts=Array.isArray(body.artifacts)?body.artifacts:[],artifactIds=packageArtifacts.map(a=>String(a?.artifactId||''));if(artifactIds.some(x=>!x)||new Set(artifactIds).size!==artifactIds.length)throw Object.assign(new Error('Package artifacts contain a missing or duplicate artifact identity.'),{existingProjectsUnchanged:true});
   const verifiedArtifacts=[],verifiedByteDigests=new WeakMap();
   for(const a of packageArtifacts){if(a.jobId!==undefined&&String(a.jobId)!==id)throw Object.assign(new Error(`Artifact ${a.artifactId} belongs to a different JOB_ID than the package project.`),{existingProjectsUnchanged:true});const source=fileContents.get(a),artifactBlob=source?await base64BlobToBlob(source.blob,a.mediaType):base64ToBlob(a.base64,a.mediaType);fileContents.delete(a);if(artifactBlob.size!==Number(a.byteSize))throw Object.assign(new Error(`Artifact ${a.artifactId} byte size mismatch.`),{existingProjectsUnchanged:true});const digest=await historyBlobSha256(artifactBlob,verifiedByteDigests);if(digest!==a.sha256)throw Object.assign(new Error(`Artifact ${a.artifactId} hash mismatch.`),{existingProjectsUnchanged:true});const {base64,...metadata}=a;verifiedArtifacts.push({...clone(metadata),jobId:id,blob:artifactBlob});}

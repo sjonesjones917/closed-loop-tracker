@@ -5,6 +5,8 @@ import vm from 'node:vm';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 const mutation=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),faults={
  'mixed-versions':{id:'RESTORE-INCOMPATIBLE-VERSIONS',file:'project-store.js',before:'const next=clone(saved.project);',after:'const next={...clone(saved.project),projectData:clone(prior.projectData)};'},
+ 'import-projection':{id:'IMPORT-PROJECTION-INTEGRITY',file:'project-store.js',before:'try{assertProjectIntegrity(project);}catch(error){throw Object.assign(error,{existingProjectsUnchanged:true});}',after:'try{assertProjectIntegrity(project,{verifyCachedProjection:false});}catch(error){throw Object.assign(error,{existingProjectsUnchanged:true});}'},
+ 'history-projection':{id:'HISTORY-PROJECTION-INTEGRITY',file:'project-store.js',before:'try{assertProjectIntegrity(project);}catch(error){\n    if(error.code',after:'try{assertProjectIntegrity(project,{verifyCachedProjection:false});}catch(error){\n    if(error.code'},
  'mutate-retained':{id:'MUTATE-RETAINED-CHECKPOINT',file:'project-store.js',before:"meta.put({key:historyKey(state.jobId),value:state,updatedAt:now()});await updateRecoveryCatalog(meta,state);fault('during-history-write');",after:"if(state.entries.length>1){const previous=await request(meta.get(snapshotKey(state.jobId,state.entries[0].id)));previous.value.blob=new Blob(['deliberately mutated retained checkpoint']);meta.put(previous);}meta.put({key:historyKey(state.jobId),value:state,updatedAt:now()});await updateRecoveryCatalog(meta,state);fault('during-history-write');"}
 };
 if(mutation&&!faults[mutation])throw new Error('Unknown deliberate mutation.');
@@ -94,5 +96,81 @@ for(const interruption of [false,true]){
   await r.store.removeProject(jobId,{expectedProjectRevision:project.revision});assert.equal(await r.store.readProject(jobId),null,'Corrected custody must permit removal');
  }
  record('Browser context fault restores exact custody before recoverable cleanup',{interruption,actualBrowserExpression:true,nativeIndexedDB:false,proof:proof||null,faultWrites:writes.length});
+}
+// Specification 14.8 and 35.5: a correctly hashed container does not make a
+// projection that contradicts canonical records valid. Reject before activation;
+// removing that one violation must restore the exact compatible project and History.
+{
+ const target=projectStoreRuntime({fault:faults[mutation]}),{store,core,engine,copy}=target;
+ let source=core.createBlankState('PROJECTION-INTEGRITY-RESTORE');engine.ensureShape(source);
+ source.projectData.rawResponses.push(copy({rawResponseId:'RAW-PROJECTION',stage:1,completeRawResponse:'Exact original é🙂 AUDIT-TAIL'}));
+ engine.recalculate(source);source=await store.writeProject(source,{expectedProjectRevision:0,createOnly:true});
+ const original=copy(source);delete original.projectSha256;
+ const packageFor=async project=>{const body={schema:'closed-loop-project-package/1',projectSchema:project.schema,workflow:project.workflow,responseSchema:target.runtime.closedLoopWorkflowSchema.RESPONSE_SCHEMA,project,artifacts:[],packageManifest:{jobId:project.job.JOB_ID,projectSha256:store.projectSha256(project),artifactCount:0,artifacts:[]},exportedAt:'2026-09-13T00:00:00.000Z'},packageSha256=target.runtime.closedLoopHash.sha256Value(copy(body));return new Response(new Blob([JSON.stringify({...body,packageSha256})]).stream().pipeThrough(new CompressionStream('gzip'))).blob();};
+ const historyBefore=await store.historyList(source.job.JOB_ID),receiptBefore=await store.metaGet('lastVerifiedImport');
+ for(const violation of ['current-stage','completion','derived-data']){
+  const project=copy(original);
+  if(violation==='current-stage')project.job.CURRENT_STAGE='STAGE 30';
+  if(violation==='completion')project.stages[1].status='COMPLETE';
+  if(violation==='derived-data')project.stages[1].derivedData.STAGE_DECISION='PASS';
+  const blob=await packageFor(project),sourceBytes=new Uint8Array(await blob.arrayBuffer());
+  await assert.rejects(store.importPackage(blob),error=>error.code==='PROJECT_INTEGRITY_FAILED'&&error.existingProjectsUnchanged===true&&error.issues.some(issue=>issue.includes(violation==='current-stage'?'CURRENT_STAGE':violation==='completion'?'Stage 1 status':'Stage 1 derivedData')),'IMPORT_PROJECTION_INTEGRITY_ORACLE: '+violation+' must be rejected before activation');
+  assert.deepEqual(await store.readProject(source.job.JOB_ID),source,'Rejected projection changed canonical work');
+  assert.deepEqual(await store.historyList(source.job.JOB_ID),historyBefore,'Rejected projection changed recovery points');
+  assert.deepEqual(await store.metaGet('lastVerifiedImport'),receiptBefore,'Rejected projection recorded successful import');
+  assert.deepEqual(new Uint8Array(await blob.arrayBuffer()),sourceBytes,'Rejected source bytes must remain available unchanged');
+  record('Reject contradictory '+violation+' before backup activation',{oracle:'IMPORT_PROJECTION_INTEGRITY_ORACLE'});
+ }
+ // Reconstruct the retained state an older permissive import could create.
+ // All bytes/hashes agree; only the projection contradicts the canonical data.
+ // View reads and every activation mode must reject it without changing work.
+ for(const violation of ['current-stage','derived-data']){
+  const old=projectStoreRuntime({fault:faults[mutation]}),project=old.copy(original),jobId=project.job.JOB_ID;
+  const compatible=await old.store.writeProject(project,{expectedProjectRevision:0,createOnly:true}),savedRow=old.copy(old.rows.get('projects').get(jobId)),badRow=old.copy(savedRow);
+  if(violation==='current-stage')badRow.project.job.CURRENT_STAGE='STAGE 30';
+  else badRow.project.stages[1].derivedData.STAGE_DECISION='PASS';
+  badRow.projectSha256=old.store.projectSha256(badRow.project);old.rows.get('projects').set(jobId,badRow);
+  const checkpoint=await old.store.saveCheckpoint(jobId,{expectedProjectRevision:compatible.revision,label:'Older incompatible projection'});
+  old.rows.get('projects').set(jobId,savedRow);
+  const retained=await old.store.historyList(jobId);
+  await assert.rejects(old.store.readHistoryView(jobId,checkpoint),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: contradictory '+violation+' became a usable view');
+  for(const mode of ['HISTORY','UNDO','REDO'])await assert.rejects(old.store.restoreCheckpoint(jobId,checkpoint,{expectedProjectRevision:compatible.revision,mode}),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: '+mode+' activated contradictory '+violation);
+  assert.deepEqual(await old.store.readProject(jobId),compatible,'Rejected History changed the active version');
+  assert.deepEqual(await old.store.historyList(jobId),retained,'Rejected History changed retained versions');
+  // A valid active version must not hide an incompatible earlier checkpoint
+  // inside an otherwise correctly hashed full backup.
+  await old.store.saveCheckpoint(jobId,{expectedProjectRevision:compatible.revision,label:'Compatible active version'});
+  const backup=await old.store.exportPackage(jobId),destination=projectStoreRuntime();
+  await assert.rejects(destination.store.importPackage(backup),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: backup accepted an incompatible retained checkpoint');
+  assert.equal(await destination.store.readProject(jobId),null);
+  record('Reject retained '+violation+' through view, History, Undo, Redo and nested backup import',{oracle:'HISTORY_PROJECTION_INTEGRITY_ORACLE'});
+ }
+ const exact=project=>{const value=copy(project);for(const key of ['projectSha256','historyActivationId','restoredCandidates'])delete value[key];value.revision=original.revision;return value;};
+ let restored=await store.importPackage(await packageFor(original));
+ assert.deepEqual(exact(restored),original,'Compatible legacy import lost saved data');
+ assert.ok(await store.readHistoryView(source.job.JOB_ID),'Committed import has no readable History view');
+ for(const entry of (await store.historyList(source.job.JOB_ID)).entries){restored=(await store.restoreCheckpoint(source.job.JOB_ID,entry.id,{expectedProjectRevision:restored.revision})).project;assert.deepEqual(exact(restored),original,'Legacy backup recovery changed saved data');}
+ const backup=await store.exportPackage(source.job.JOB_ID),fresh=projectStoreRuntime();
+ const reimported=await fresh.store.importPackage(backup);
+ assert.deepEqual(exact(reimported),original,'Exporting and restoring retained History changed saved data');
+ assert.ok(await fresh.store.readHistoryView(source.job.JOB_ID),'Reimported History view is unavailable');
+ record('Compatible legacy backup restores exact data, readable views, retained checkpoints and re-exported History',{oracle:'IMPORT_PROJECTION_INTEGRITY_ORACLE',realIndexedDB:false});
+}
+// Replay the exact bounded browser case through the production import handler,
+// saved-view selector and header. DOM/storage adapters prove logic here; native
+// file intake and rendered geometry still require the existing Chromium gate.
+{
+ const ui=projectStoreRuntime(),{runtime,store,core,engine,copy}=ui,nodes=new Map(),node=selector=>{if(!nodes.has(selector))nodes.set(selector,{textContent:'',dataset:{},style:{},files:[],value:'',innerHTML:'',classList:{add(){}},setAttribute(){},insertAdjacentHTML(_position,value){this.innerHTML+=value;}});return nodes.get(selector);};
+ let prior=core.createBlankState('PRIOR-BACKUP-UI');engine.ensureShape(prior);engine.recalculate(prior);prior=await store.writeProject(prior,{expectedProjectRevision:0,createOnly:true});
+ Object.assign(runtime,{projectStore:store,core,engine,schema:runtime.closedLoopWorkflowSchema,current:prior,projects:[prior],clone:copy,views:['Overview','Project','Workflow'],projectIsArchived:()=>false,projectDisplayName:project=>project.job.JOB_TITLE||project.job.JOB_ID,esc:value=>String(value),$:node,document:{querySelector:node},File,DataTransfer:class{constructor(){this.files=[];this.items={add:file=>this.files.push(file)};}},withStorageActivity:async(_label,operation)=>operation(),takeBackupPassphrase:()=>null,requestBackupPassword:()=>false,loadAcceptanceSession:async()=>{},recordMobileBackupRestore:async()=>{},refreshProjectStorage:async()=>{},announce:message=>{node('#app-live-status').textContent=message;},pendingBackupAction:null,replacementReview:null,replacementReviewFromSavedView:()=>null,operationSelection:{},runSelection:{},fileSelectionDrafts:{},applySavedView:()=>{},operatorActionInFlight:null,focusAfterAction:()=>{}});
+ const app=fs.readFileSync('app-core.js','utf8'),browser=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8');
+ vm.runInContext(app.slice(app.indexOf('let actionFailureNotice='),app.indexOf('const storageActivities='))+app.slice(app.indexOf('async function importProjectPackageFile('),app.indexOf('let pendingBackupAction='))+app.slice(app.indexOf('function selectSavedView('),app.indexOf('function applySavedView('))+['completion','header'].map(name=>app.split('\n').find(line=>line.startsWith('function '+name+'('))).join('\n'),runtime);
+ runtime.render=()=>runtime.header();runtime.recordCommittedBoundary=()=>store.saveCheckpoint(runtime.current.job.JOB_ID,{expectedProjectRevision:runtime.current.revision});
+ node('#import-file').onchange=({target})=>runtime.importProjectPackageFile(target.files[0],{recordSelection:false});runtime.header();
+ const expression=browser.match(/const projectionRestore=await evalValue\(cdp,`([\s\S]*?)`\);/)?.[1];assert.ok(expression,'The actual browser projection case is required');
+ const proof=await vm.runInContext(expression,runtime);
+ assert.ok(proof.rejected&&proof.rejectedSourcePreserved&&proof.rejectionVisible,'IMPORT_PROJECTION_INTEGRITY_ORACLE: browser case failed pre-commit rejection '+JSON.stringify(proof));
+ assert.ok(proof.restored&&proof.originalPreserved&&proof.currentStage==='STAGE 01'&&!proof.fabricatedCompletion&&proof.historyReadable&&proof.successVisible&&proof.progress==='0/30 complete'&&proof.selected&&proof.tailPreserved,'IMPORT_PROJECTION_RESTORE_ORACLE: browser case failed usable restoration '+JSON.stringify(proof));
+ record('Browser backup projection sequence through actual import, saved-view and header owners',{actualBrowserExpression:true,nativeIndexedDB:false,proof});
 }
 console.log(JSON.stringify({synthetic:true,environment:'Node VM; production store with the existing lifecycle transaction adapter',realIndexedDB:false,physicalDevice:false,cases},null,2));

@@ -410,15 +410,18 @@ await storageRegression('export:concurrent-save-keeps-snapshot-identity',async()
 });
 await storageRegression('import:replay-saved-projections-without-fabricating-gates',async()=>{
   const saved=await storageRuntime.makeStored('SAVED-PROJECTION'),original=storageRead(saved);delete original.projectSha256;
-  original.job.CURRENT_STAGE='STAGE 30';original.stages[1].status='COMPLETE';original.stages[1].derivedData=storageRead({STAGE_DECISION:'PASS',historicalCalculation:'PRESERVE'});
   original.projectData.rawResponses.push(storageRead({rawResponseId:'RAW-PROJECTION',completeRawResponse:'Original response é🙂 EXACT-TAIL',stage:1}));
+  storageRuntime.engine.recalculate(original);
   const row=storageRows.get('projects').get(saved.job.JOB_ID);
   storageRows.get('projects').set(saved.job.JOB_ID,{...row,project:original,projectSha256:storageRuntime.projectStore.projectSha256(original)});
-  // This fixture represents a legacy saved project from before recovery was introduced.
+  // A compatible legacy project may predate History. Contradictory projections
+  // are separate rejection cases in verify-recoverable-history, never audit-only
+  // values left in the active stage authority.
   storageRows.get('meta').delete('recovery:'+saved.job.JOB_ID);
   const backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);
   const restored=await storageRuntime.projectStore.importPackage(backup),comparison=storageRead(restored);delete comparison.projectSha256;delete comparison.historyActivationId;delete comparison.restoredCandidates;comparison.revision=original.revision;
   assert(storageRuntime.projectStore.projectSha256(comparison)===storageRuntime.projectStore.projectSha256(original),'Restore rewrote original records or their saved audit projection.');
+  assert(await storageRuntime.projectStore.readHistoryView(saved.job.JOB_ID),'A committed backup must have a readable saved History view.');
   const displayed=storageRuntime.ensureState(restored);
   assert(displayed.job.CURRENT_STAGE==='STAGE 01'&&displayed.stages[1].status!=='COMPLETE','Restored cached completion fabricated a passed stage.');
   assert(displayed.projectData.rawResponses.at(-1).completeRawResponse.endsWith('é🙂 EXACT-TAIL'),'Restoring a saved projection lost exact raw history.');
@@ -426,7 +429,7 @@ await storageRegression('import:replay-saved-projections-without-fabricating-gat
 await storageRegression('import:saved-projection-does-not-bypass-record-or-release-checks',async()=>{
   const saved=await storageRuntime.makeStored('IMPORT-PROJECTION-NEGATIVES');
   for(const kind of ['record','release']){
-    const project=storageRead(saved);delete project.projectSha256;project.job.CURRENT_STAGE='STAGE 30';
+    const project=storageRead(saved);delete project.projectSha256;
     if(kind==='record')project.projectData.requirements.push(storageRead({id:'REQ-INVALID',fields:{REQ_ID:'REQ-INVALID',OBLIGATION:17}}));
     else project.projectData.releaseRecords.push(storageRead({id:'RELEASE-FORGED',active:true,fields:{RELEASE_ID:'RELEASE-FORGED',DETERMINATION:'ACCEPTED'}}));
     const body={schema:'closed-loop-project-package/1',projectSchema:project.schema,workflow:project.workflow,responseSchema:'closed-loop-stage-response/3',project,artifacts:[],packageManifest:{jobId:saved.job.JOB_ID,artifactCount:0,artifacts:[],projectSha256:storageRuntime.projectStore.projectSha256(project)},exportedAt:'2026-09-13T00:00:00.000Z'};

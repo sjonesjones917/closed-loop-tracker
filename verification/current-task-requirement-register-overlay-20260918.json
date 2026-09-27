@@ -2221,10 +2221,66 @@
         {
           "file": "verify-project-lifecycle-full.mjs",
           "case": "import:replay-saved-projections-without-fabricating-gates"
+        },
+        {
+          "file": "verify-recoverable-history.mjs",
+          "cases": [
+            "IMPORT_PROJECTION_INTEGRITY_ORACLE",
+            "HISTORY_PROJECTION_INTEGRITY_ORACLE",
+            "IMPORT_PROJECTION_RESTORE_ORACLE"
+          ]
+        },
+        {
+          "file": "verify-recovery-faults.mjs",
+          "faults": [
+            "import-projection",
+            "history-projection"
+          ]
+        },
+        {
+          "file": "verify-browser-extra.mjs",
+          "case": "backup-projection-validation-and-ui-restore"
+        },
+        {
+          "file": "verify-full-cycle.mjs",
+          "case": "HISTORY_FULL_CYCLE_PROJECTION_ORACLE",
+          "scope": "Actual persistence projection validation at each existing full-cycle recovery boundary, including the completed final stage; fixture data remains unchanged."
         }
       ],
       "reproductionSourceSha256": "1f4a8c95eb44ddb4ac51e9da6f0050730dd97d58f4bc7e933df7a7c28a231a03",
-      "testedMechanismScope": "Disposable compressed-snapshot budget and synthetic human-input corrections. Does not establish production byte capacity, physical-device acceptance, or complete browser progression."
+      "testedMechanismScope": "Disposable compressed-snapshot budget and synthetic human-input corrections. Does not establish production byte capacity, physical-device acceptance, or complete browser progression.",
+      "projectionCompatibility": {
+        "normativeRequirementIds": [
+          "NREQ-7e8184135f02b2506542a2e27b82ea40",
+          "NREQ-5fe399cb17e5ef4e71d7789bc46f9694"
+        ],
+        "productionAuthority": "project-store.js validateProjectIntegrity/assertRecoveryCompatibility/importPackage/readCheckpointBody",
+        "expectedBehavior": "Before activation, saved projections must agree with their canonical records. Reject a contradictory backup or retained checkpoint without changing active work or retained history. Preserve the rejected source bytes. A compatible legacy backup restores exact authored data, readable views and complete retained History without recalculating the active version during display refresh.",
+        "stageMembershipProof": "validateProjectIntegrity checks every stage from 1 through schema.STAGE_COUNT, plus application-derived job fields. The projection rule is shared by every checkpoint root and package project; it does not depend on a selected stage or movement distance.",
+        "operationClosure": [
+          "BACKUP_IMPORT",
+          "SAVED_VIEW_READ",
+          "HISTORY_RESTORE",
+          "UNDO",
+          "REDO",
+          "NATIVE_HISTORY_RESTORE",
+          "NESTED_BACKUP_HISTORY",
+          "BACKUP_REEXPORT"
+        ],
+        "negativeClasses": [
+          "correctly hashed backup with contradictory current-stage projection",
+          "correctly hashed backup with fabricated completion label",
+          "correctly hashed backup with contradictory derived stage data",
+          "retained checkpoint with a contradictory projection behind a compatible active version"
+        ],
+        "positiveClasses": [
+          "compatible legacy backup without a History manifest",
+          "complete backup with retained checkpoints",
+          "unchanged authored bytes across restore activation metadata",
+          "visible rejection followed by successful import and usable saved view"
+        ],
+        "verifierCorrection": "The former positive browser/lifecycle fixture overwrote derived fields to contradict canonical records, demanded activation, then recalculated a read clone. That did not prove a usable restored view and conflicts with specification 14.8. Its whole-project comparison also counted new historyActivationId/restoredCandidates as lost data. Positive fixtures now arise from authoritative recalculation; independent negative cases enforce pre-activation rejection."
+      }
     },
     {
       "requirementId": "VER-011",

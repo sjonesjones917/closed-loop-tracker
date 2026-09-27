@@ -671,9 +671,30 @@ async function main(){
 
   // Large context assembly and read bounds execute in verify-project-lifecycle-full.mjs.
 
-  console.log('extra:older-derived-projection-ui-restore');
-  const projectionRestore=await evalValue(cdp,`(async()=>{const p=closedLoopCore.createBlankState('SAVED-PROJECTION-BROWSER');closedLoopWorkflowEngine.ensureShape(p);closedLoopWorkflowEngine.recalculate(p);p.job.CURRENT_STAGE='STAGE 30';p.stages[1].status='COMPLETE';p.stages[1].derivedData={STAGE_DECISION:'PASS',historicalCalculation:'KEEP'};p.projectData.rawResponses.push({rawResponseId:'RAW-OLD-PROJECTION',stage:1,completeRawResponse:'Exact original é🙂 AUDIT-TAIL'});const originalHash=closedLoopProjectStore.projectSha256(p),body={schema:'closed-loop-project-package/1',projectSchema:p.schema,workflow:p.workflow,responseSchema:closedLoopWorkflowSchema.RESPONSE_SCHEMA,project:p,artifacts:[],packageManifest:{jobId:p.job.JOB_ID,projectSha256:originalHash,artifactCount:0,artifacts:[]},exportedAt:'2026-09-13T00:00:00.000Z'},packageSha256=closedLoopHash.sha256Value(body),blob=await new Response(new Blob([JSON.stringify({...body,packageSha256})]).stream().pipeThrough(new CompressionStream('gzip'))).blob(),input=document.querySelector('#import-file'),transfer=new DataTransfer();transfer.items.add(new File([blob],'saved-projection.closed-loop.json.gz',{type:'application/gzip'}));input.files=transfer.files;await input.onchange({target:input});const restored=await closedLoopProjectStore.readProject(p.job.JOB_ID);if(!restored)return {restored:false};const compare=structuredClone(restored);compare.revision=p.revision;const unchanged=closedLoopProjectStore.projectSha256(compare)===originalHash;closedLoopWorkflowEngine.recalculate(restored);return {restored:true,originalPreserved:unchanged,currentStage:restored.job.CURRENT_STAGE,fabricatedCompletion:restored.stages[1].status==='COMPLETE',selected:(document.querySelector('#current-project-summary')?.dataset?.projectId===p.job.JOB_ID),tailPreserved:restored.projectData.rawResponses.at(-1).completeRawResponse.endsWith('AUDIT-TAIL')};})()`);
-  assert(projectionRestore.restored&&projectionRestore.originalPreserved&&projectionRestore.currentStage==='STAGE 01'&&!projectionRestore.fabricatedCompletion&&projectionRestore.selected&&projectionRestore.tailPreserved,'UI restore rejected saved derived results or treated them as completion authority: '+JSON.stringify(projectionRestore));
+  console.log('extra:backup-projection-validation-and-ui-restore');
+  const projectionRestore=await evalValue(cdp,`(async()=>{
+    const store=closedLoopProjectStore,p=closedLoopCore.createBlankState('SAVED-PROJECTION-BROWSER');
+    closedLoopWorkflowEngine.ensureShape(p);
+    p.projectData.rawResponses.push({rawResponseId:'RAW-OLD-PROJECTION',stage:1,completeRawResponse:'Exact original é🙂 AUDIT-TAIL'});
+    closedLoopWorkflowEngine.recalculate(p);
+    const originalHash=store.projectSha256(p),priorId=await store.metaGet('selectedProject'),prior=priorId?await store.readProject(priorId):null;
+    const packageFor=async project=>{const body={schema:'closed-loop-project-package/1',projectSchema:project.schema,workflow:project.workflow,responseSchema:closedLoopWorkflowSchema.RESPONSE_SCHEMA,project,artifacts:[],packageManifest:{jobId:project.job.JOB_ID,projectSha256:store.projectSha256(project),artifactCount:0,artifacts:[]},exportedAt:'2026-09-13T00:00:00.000Z'},packageSha256=closedLoopHash.sha256Value(body);return new Response(new Blob([JSON.stringify({...body,packageSha256})]).stream().pipeThrough(new CompressionStream('gzip'))).blob();};
+    const importThroughControl=async blob=>{const input=document.querySelector('#import-file'),transfer=new DataTransfer();transfer.items.add(new File([blob],'saved-projection.closed-loop.json.gz',{type:'application/gzip'}));input.files=transfer.files;await input.onchange({target:input});};
+    const invalid=structuredClone(p);invalid.stages[1].status='COMPLETE';
+    const rejectedSource=await packageFor(invalid),rejectedDigest=await closedLoopHash.sha256Bytes(rejectedSource);
+    await importThroughControl(rejectedSource);
+    const rejectedNotice=document.querySelector('#app-live-status')?.textContent||'';
+    const rejected=await store.readProject(p.job.JOB_ID)===null&&(await store.metaGet('selectedProject'))===priorId&&(!prior||(await store.readProject(priorId)).projectSha256===prior.projectSha256);
+    const rejectedSourcePreserved=await closedLoopHash.sha256Bytes(rejectedSource)===rejectedDigest;
+    await importThroughControl(await packageFor(p));
+    const restored=await store.readProject(p.job.JOB_ID),notice=document.querySelector('#app-live-status')?.textContent||'';
+    if(!restored)return {rejected,rejectedNotice,restored:false,notice};
+    const compare=structuredClone(restored);for(const key of ['projectSha256','historyActivationId','restoredCandidates'])delete compare[key];compare.revision=p.revision;
+    const savedView=await store.readHistoryView(p.job.JOB_ID);
+    return {rejected,rejectedSourcePreserved,rejectionVisible:/inconsistent/i.test(rejectedNotice)&&/retry|restore/i.test(rejectedNotice)&&/History/.test(rejectedNotice),restored:true,originalPreserved:store.projectSha256(compare)===originalHash,currentStage:restored.job.CURRENT_STAGE,fabricatedCompletion:restored.stages[1].status==='COMPLETE',historyReadable:Boolean(savedView),successVisible:/project package imported and reloaded/i.test(notice)&&!/could not refresh/i.test(notice),progress:document.querySelector('#progress-label')?.textContent,selected:document.querySelector('#current-project-summary')?.dataset?.projectId===p.job.JOB_ID,tailPreserved:restored.projectData.rawResponses.at(-1).completeRawResponse.endsWith('AUDIT-TAIL')};
+  })()`);
+  assert(projectionRestore.rejected&&projectionRestore.rejectedSourcePreserved&&projectionRestore.rejectionVisible,'IMPORT_PROJECTION_INTEGRITY_ORACLE: UI activated a contradictory backup or lost its rejection: '+JSON.stringify(projectionRestore));
+  assert(projectionRestore.restored&&projectionRestore.originalPreserved&&projectionRestore.currentStage==='STAGE 01'&&!projectionRestore.fabricatedCompletion&&projectionRestore.historyReadable&&projectionRestore.successVisible&&projectionRestore.progress==='0/30 complete'&&projectionRestore.selected&&projectionRestore.tailPreserved,'IMPORT_PROJECTION_RESTORE_ORACLE: compatible backup did not restore exact data and a usable view: '+JSON.stringify(projectionRestore));
   console.log(JSON.stringify({savedProjectionRestore:projectionRestore}));
 
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
