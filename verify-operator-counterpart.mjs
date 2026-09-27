@@ -6,7 +6,24 @@ import assert from 'node:assert/strict';
 import {responseFixture,OBJECTIVE,OUTPUT,CANDIDATE} from './operator-journey-fixtures.mjs';
 globalThis.dispatchEvent=()=>true;
 const injectedFault=process.env.CLRT_COUNTERPART_FAULT||null;
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){let source=fs.readFileSync(file,'utf8');if(file==='workflow-engine.js'&&injectedFault==='fractional-stability')source=source.replace('const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);','return stability; const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);');if(file==='workflow-engine.js'&&injectedFault==='missing-defect-gate')source=source.replace('if(facts.anyViolation&&!recordsForIteration','if(false&&facts.anyViolation&&!recordsForIteration');if(file==='workflow-engine.js'&&injectedFault==='partial-verification-completes-operation'){const before="if(out.has('VERIFY')){const matrix=verificationMatrix(project,selectedIteration);";assert(source.includes(before),'Partial verification fault anchor is missing');source=source.replace(before,"if(false&&out.has('VERIFY')){const matrix=verificationMatrix(project,selectedIteration);");}createVerifierRuntime.loadScript(globalThis,source,{filename:file});}
+const counterpartFaults={
+  'fractional-stability':{from:'const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);',to:'return stability; const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);'},
+  'missing-defect-gate':{from:'if(defectRequired&&!defectIds.length)',to:'if(false&&defectRequired&&!defectIds.length)'},
+  'unrelated-defect-reason':{from:"' has prohibited variance or a violated result without a DEFECT_IDS handoff.'",to:"' has an unrelated prerequisite failure.'"},
+  'partial-verification-completes-operation':{from:"if(out.has('VERIFY')){const matrix=verificationMatrix(project,selectedIteration);",to:"if(false&&out.has('VERIFY')){const matrix=verificationMatrix(project,selectedIteration);"}
+};
+assert(!injectedFault||counterpartFaults[injectedFault],'COUNTERPART_FAULT_ID_ORACLE: unknown fault');
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
+  let source=fs.readFileSync(file,'utf8');
+  if(file==='workflow-engine.js'&&injectedFault){
+    const fault=counterpartFaults[injectedFault];
+    assert.equal(source.split(fault.from).length-1,1,'COUNTERPART_FAULT_ANCHOR_ORACLE: exactly one current owning condition is required');
+    const mutated=source.replace(fault.from,fault.to);
+    assert.notEqual(mutated,source,'COUNTERPART_FAULT_APPLIED_ORACLE: injection must change executable source');
+    source=mutated;
+  }
+  createVerifierRuntime.loadScript(globalThis,source,{filename:file});
+}
 const engine=closedLoopWorkflowEngine,schema=closedLoopWorkflowSchema,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
 let p=closedLoopCore.createBlankState('COUNTERPART-CONTRACT-PREFLIGHT');p.job.JOB_TITLE='Complete operator journey';p.job.EXACT_USER_OBJECTIVE_VERBATIM=OBJECTIVE;engine.ensureShape(p);engine.recalculate(p);
 const value=engine.recordValue,id=engine.recordId,latest=family=>engine.recordsForCurrentScope(p,family).at(-1),cases=[];
@@ -52,7 +69,10 @@ for(let stage=1;stage<=stageLimit;stage++){
     const invalid=engine.clone(p);invalid.projectData.defects=[];
     const rejected=engine.gate(13,invalid);
     assert.equal(rejected.complete,false,'An observed initial violation without an evidence-linked defect must be rejected');
-    assert(rejected.reasons.some(reason=>reason.includes('current evidence-linked defect')),'Rejection must identify the missing defect, not an unrelated gate');
+    const comparison=engine.evaluateCrossRunComparison(invalid),missing=Object.values(comparison.comparisonAnalysis).filter(row=>row.defectRequired&&!row.defectIds.length);
+    assert(missing.length>0,'COUNTERPART_MISSING_DEFECT_FIXTURE_ORACLE: the otherwise valid comparison must require its removed defect');
+    assert(missing.every(row=>rejected.reasons.some(reason=>reason.includes(row.comparisonId)&&reason.includes('DEFECT_IDS')&&/without|missing/i.test(reason))),
+      'COUNTERPART_DEFECT_REASON_ORACLE: rejection must identify the missing defect handoff for the affected comparison; '+JSON.stringify(rejected.reasons));
     assert.equal(engine.gate(13,p).complete,true,'The otherwise valid comparison must progress when its defect is restored');
     assert.equal(engine.gate(11,p).complete,true,'Recording a failure must preserve the completed initial run batch');
     cases.push({stage:13,caseId:'initial-violation-defect-rejection-and-correction',rejectionReasons:rejected.reasons,result:'PASS'});
