@@ -964,7 +964,22 @@
           ],
           "requiredRetest": "Execute both actual production startup paths after removing the invalid override; keep production code unchanged."
         }
-      ]
+      ],
+      "currentRepair": {
+        "classification": "verifier",
+        "baseSha": "9259d5f5570ad7b5f583ed716d993f509dbcbc88",
+        "runId": 36284170609,
+        "cause": "Two browser-oracle replays in verify-file-first-operator.mjs created VM contexts directly instead of using the shared verifier-runtime factory.",
+        "closure": [
+          "Both valid and fault-injected handoff browser-oracle consumers",
+          "Existing verifier-runtime contract and file-first operator regression"
+        ],
+        "requiredProof": [
+          "Shared-runtime contract",
+          "Valid handoff and deliberately corrupted handoff oracles",
+          "Required exact-head CI"
+        ]
+      }
     },
     {
       "requirementId": "DEF-12",
@@ -1612,7 +1627,26 @@
         "publish-status workflow_dispatch same paths",
         "Publication-wiring regression/fault tests",
         "Download and inspect actual deployed artifacts after the main build"
-      ]
+      ],
+      "currentRepair": {
+        "classification": "verifier/evidence",
+        "baseSha": "9259d5f5570ad7b5f583ed716d993f509dbcbc88",
+        "runId": 36284170609,
+        "cause": "Aggregate verifier retained all results until process completion, leaving an empty artifact on cancellation; a passing primary-error verifier emitted multiple JSON documents that the aggregator rejected.",
+        "closure": [
+          "Primary-error one-document reporting contract",
+          "Existing aggregate child exit/report classification",
+          "Incremental atomic report and raw stdout/stderr retention",
+          "Failure, timeout, interruption, unexecuted cases and process-group cleanup",
+          "Existing workflow artifact upload"
+        ],
+        "requiredProof": [
+          "Actual passing primary-error cases through aggregate reader",
+          "Disposable runner cases and targeted implementation faults",
+          "Interrupted run retains completed results and raw output",
+          "Final required CI artifact"
+        ]
+      }
     },
     {
       "requirementId": "VER-007",
@@ -2662,12 +2696,16 @@
         "The existing PR/main test job budget",
         "All existing complete operator journey invocations, including deployed and authenticated re-verification paths",
         "Immutable journey reports, logs and source identity",
-        "Final complete workflow remains fresh; no partial journey is accepted"
+        "Final complete workflow remains fresh; no partial journey is accepted",
+        "Aggregate child and parent deadlines, interruption cleanup, incremental evidence and explicit pending cases"
       ],
       "configuredVerificationLimits": {
         "completeJourneyMinutes": 90,
-        "testJobMinutes": 180,
-        "reason": "The observed 60-minute verifier deadline terminated a progressing journey before the required full proof. Assertions and stage/operation coverage remain mandatory; a longer verification budget makes no performance or completion claim."
+        "testJobMinutes": 360,
+        "reason": "Run5925 spent31m57s before Chromium,95m15s in Chromium, then53m18s in the aggregate before cancellation near the former180m job limit. The complete aggregate remained unverified. Its independent180m deadline and per-child20m limits now fit after the measured browser workload, with final evidence preservation. No application assertion, stage or mandatory gate was removed.",
+        "aggregateMinutes": 180,
+        "aggregateChildMinutes": 20,
+        "aggregateStepMinutes": 185
       }
     },
     {

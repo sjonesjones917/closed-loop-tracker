@@ -35,7 +35,7 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -262,6 +262,7 @@ jobs:
       # Run the direct operator replay before the longer fault matrix. Both
       # remain mandatory; failed or unexecuted checks still block deployment.
       - name: Shared production faults, bounded sequences, and executed observations
+        timeout-minutes: 185
         run: |
           set -euo pipefail
           node verify-conformance-regressions.mjs > /tmp/conformance-regressions.json
@@ -270,8 +271,10 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: conformance-regressions-${{ github.sha }}
-          path: /tmp/conformance-regressions.json
-          if-no-files-found: warn
+          path: |
+            conformance-regression-evidence/
+            /tmp/conformance-regressions.json
+          if-no-files-found: error
 
       - name: Preserve the exact browser-verified Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -19,9 +19,8 @@ async function verifyImportFaultBoundary(){
   assert.ok(a>=0&&b>a,'The actual baseline injection is required.');
   Object.assign(r.runtime,{backup,jobId:p.job.JOB_ID});
   const observed=await vm.runInContext(`(async()=>{const store=closedLoopProjectStore,nativeImport=store.importPackage,nativeReadHistoryView=store.readHistoryView;${browserSource.slice(a,b)}await store.importPackage(backup);await store.readHistoryView(jobId);return {importCommitted,injected,frozen:Object.isFrozen(store)};})()`,r.runtime);
-  console.log(JSON.stringify({caseId:'IMPORT-FAULT-COMMIT-BOUNDARY',actual:observed}));
   assert.ok(observed.importCommitted&&observed.injected,'IMPORT_FAULT_BOUNDARY_ORACLE: the browser gate did not observe the committed import or inject its required post-commit failure.');
-  return;
+  return {caseId:'IMPORT-FAULT-COMMIT-BOUNDARY',actual:observed};
  }
  const end=browserSource.indexOf('\nasync function main(',start);
  assert.ok(end>start,'The browser injection boundary is required.');
@@ -59,9 +58,10 @@ async function verifyImportFaultBoundary(){
   assert.equal(fault.observation.injected,true);
  }finally{fault.restore();}
  assert.equal(Worker.prototype.postMessage,oldPost);assert.equal(IDBObjectStore.prototype.get,oldGet);assert.equal(worker.listeners.size,0);
- console.log(JSON.stringify({caseId:'IMPORT-FAULT-COMMIT-BOUNDARY',result:'PASS',matchingCommitRequired:true,precommitReadPreserved:true,unrelatedReadsPreserved:true,restored:true}));
+ return {caseId:'IMPORT-FAULT-COMMIT-BOUNDARY',result:'PASS',matchingCommitRequired:true,precommitReadPreserved:true,unrelatedReadsPreserved:true,restored:true};
 }
-if(process.argv.includes('--import-fault-only')){await verifyImportFaultBoundary();process.exit(0);}
+if(process.argv.includes('--import-fault-only')){console.log(JSON.stringify(await verifyImportFaultBoundary()));process.exit(0);}
+const cases=[];
 
 const revision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const r=projectStoreRuntime(),a=await r.store.createProject({commandId:'PRIMARY-ERROR-A'}),b=await r.store.createProject({commandId:'PRIMARY-ERROR-B'});
@@ -75,7 +75,7 @@ Object.assign(r.runtime,{$:selector=>selector==='#operation-error'?report:null,a
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),start=app.indexOf('let actionFailureNotice='),end=app.indexOf('const storageActivities=',start);
 vm.runInContext(app.slice(start,end),r.runtime,{filename:'app-core.js:reportActionFailure'});
 vm.runInContext('reportActionFailure(error)',r.runtime);
-console.log(JSON.stringify({sourceRevision:revision,productionSourceSha256:createHash('sha256').update(app).digest('hex'),requirement:'UX-011',environment:'Node shared verifier runtime; actual artifact store and error presentation owner',expected:'The actionable error remains visible while its internal artifact identity and diagnostic explanation are available behind details.',actualPrimaryError:report.textContent,actualAnnouncement:announcements,internalArtifactId:artifactId,rejectedOwnershipCode:error.code},null,2));
+cases.push({sourceRevision:revision,productionSourceSha256:createHash('sha256').update(app).digest('hex'),requirement:'UX-011',environment:'Node shared verifier runtime; actual artifact store and error presentation owner',expected:'The actionable error remains visible while its internal artifact identity and diagnostic explanation are available behind details.',actualPrimaryError:report.textContent,actualAnnouncement:announcements,internalArtifactId:artifactId,rejectedOwnershipCode:error.code});
 assert.equal(report.hidden,false,'The actionable error must remain visible.');
 assert.equal(report.textContent.includes(artifactId),false,'PRIMARY_ERROR_INFORMATION_ORACLE: internal identities must stay behind details in failure and recovery feedback.');
 
@@ -102,7 +102,7 @@ report.diagnosticMarkup='';
 await r.runtime.importProjectPackageFile(backup,{recordSelection:false});
 const committed=await store.readProject(original.job.JOB_ID),restored=(await store.listArtifacts(original.job.JOB_ID)).find(file=>file.artifactId===fileId);
 const importObservation={caseId:'IMPORT-COMMITTED-REFRESH-FEEDBACK',sourceRevision:revision,productionSourceSha256:createHash('sha256').update(app).digest('hex'),environment:'Shared synthetic transactional store; actual import and reporter; not browser evidence',commitAdvanced:committed.revision>original.revision,committedProjectSelected:r.runtime.current.revision===committed.revision&&r.runtime.current.job.JOB_ID===committed.job.JOB_ID,bytesRestored:await restored.blob.text()==='Exact import recovery bytes é🙂',independentProjectPreserved:(await store.readProject(b.job.JOB_ID)).projectSha256===independent.projectSha256,publicMessage:report.textContent,announcement:announcements.at(-1)};
-console.log(JSON.stringify(importObservation,null,2));
+cases.push(importObservation);
 assert.ok(importObservation.commitAdvanced&&importObservation.committedProjectSelected&&importObservation.bytesRestored&&importObservation.independentProjectPreserved,'Import transaction and exact bytes must survive a refresh failure.');
 assert.match(report.textContent,/imported and saved/i,'IMPORT_COMMITTED_FEEDBACK_ORACLE: report the committed import, not generic failure.');
 assert.match(report.textContent,/reload/i,'IMPORT_COMMITTED_FEEDBACK_ORACLE: name recovery without reissuing import.');
@@ -114,6 +114,7 @@ await r.runtime.importProjectPackageFile(new Blob(['invalid package']),{recordSe
 assert.equal(r.runtime.current,selectedBefore,'Pre-commit rejection changed the selected project.');
 assert.equal((await store.readProject(original.job.JOB_ID)).projectSha256,beforeRejected.projectSha256,'Pre-commit rejection changed committed data.');
 assert.doesNotMatch(report.textContent,/imported and saved/i,'Rejected import must not claim commit.');
-console.log(JSON.stringify({caseId:'IMPORT-REJECTED-PRESERVES-COMMIT',result:'PASS',message:report.textContent}));
+cases.push({caseId:'IMPORT-REJECTED-PRESERVES-COMMIT',result:'PASS',message:report.textContent});
 
-await verifyImportFaultBoundary();
+cases.push(await verifyImportFaultBoundary());
+console.log(JSON.stringify({primaryErrorInformation:'PASS',cases},null,2));

@@ -405,7 +405,7 @@ snapshots.restored=await r.store.importPackage(backup);
  const browser=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8'),oracle=browser.match(/  assert\(accumulatedRoundTrip[\s\S]*?;\n/)?.[0];
  assert(oracle,'HANDOFF_BROWSER_ORACLE: the real browser assertion must exist');
  const accumulatedRoundTrip={...proof,instructionVerified:true,canonicalUnchanged:snapshots.backup.projectSha256===initial.projectSha256,tailPreserved:true,restoredDigest:true,singleStagePackage:true};
- try{vm.runInNewContext(oracle,{accumulatedRoundTrip,assert,JSON});}catch(error){throw new Error('HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: a valid current-instruction/export/restore sequence must pass the actual browser oracle: '+error.message);}
+ try{createVerifierRuntime.loadScript(createVerifierRuntime({accumulatedRoundTrip,assert,JSON}),oracle);}catch(error){throw new Error('HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: a valid current-instruction/export/restore sequence must pass the actual browser oracle: '+error.message);}
 
  for(const [fault,violate]of [
   ['accepted-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}],
@@ -416,7 +416,7 @@ snapshots.restored=await r.store.importPackage(backup);
   const exported=r.copy(snapshots.backup),restored=r.copy(snapshots.restored);
   if(fault.startsWith('restored'))violate(restored);else {violate(exported);violate(restored);}
   const bad={...accumulatedRoundTrip,...stageHandoffRecoveryProof(initial,exported,restored,hash)};
-  assert.throws(()=>vm.runInNewContext(oracle,{accumulatedRoundTrip:bad,assert,JSON}),/changed exact retained data/,'HANDOFF_BROWSER_CORRUPTION_ORACLE: '+fault);
+  assert.throws(()=>createVerifierRuntime.loadScript(createVerifierRuntime({accumulatedRoundTrip:bad,assert,JSON}),oracle),/changed exact retained data/,'HANDOFF_BROWSER_CORRUPTION_ORACLE: '+fault);
  }
  console.log(JSON.stringify({caseId:'HANDOFF_BROWSER_VALID_TRANSITION',result:'PASS',actualBrowser:false,attempts:2,responseCharacters:128,beforePrompts:initial.projectData.generatedPrompts.length,afterPrompts:snapshots.backup.projectData.generatedPrompts.length,proof}));
  t.current=await r.store.readProject(initial.job.JOB_ID);await t.savePromptRecord(4);
