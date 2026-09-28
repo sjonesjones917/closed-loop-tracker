@@ -4,6 +4,10 @@ import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 const digest=path=>createHash('sha256').update(fs.readFileSync(path)).digest('hex');
 const originalSourceSha256=digest('project-store.js'),originalEngineSha256=digest('workflow-engine.js'),results=[];
+// This limit covers a complete fixed-fixture control: twelve retained views,
+// backup round-trip, missing dependencies, and exact-byte corruption checks.
+// Keep a hard child deadline inside the aggregate's twenty-minute gate bound.
+const CHILD_TIMEOUT_MS=3*60*1000;
 for(const [suite,fault,oracle] of [
  ['verify-history-view-cost.mjs','repeat-verified-project-hash','HISTORY_HASH_PASS_ORACLE'],
  ['verify-history-canonical-sharing.mjs','duplicate-canonical-content','HISTORY_CANONICAL_CAPACITY_ORACLE'],
@@ -25,7 +29,7 @@ for(const [suite,fault,oracle] of [
  ['verify-history-project-references.mjs','skip-project-body-byte-check','HISTORY_REFERENCE_BYTE_ORACLE'],
  ['verify-history-project-references.mjs','skip-selected-version-binding','HISTORY_SELECTED_VERSION_ORACLE']
 ]){
- const run=args=>{const command=[process.execPath,suite,...args],startedAt=new Date().toISOString(),actual=spawnSync(command[0],command.slice(1),{encoding:'utf8',maxBuffer:64*1024*1024,timeout:120000,killSignal:'SIGKILL'});return {command,startedAt,finishedAt:new Date().toISOString(),exitCode:actual.status,signal:actual.signal,outcome:actual.error?.code==='ETIMEDOUT'?'TIMEOUT':actual.status===0?'PASS':'FAIL',error:actual.error?{code:actual.error.code,message:actual.error.message}:null,stdout:actual.stdout||'',stderr:actual.stderr||''};};
+ const run=args=>{const command=[process.execPath,suite,...args],startedAt=new Date().toISOString(),actual=spawnSync(command[0],command.slice(1),{encoding:'utf8',maxBuffer:64*1024*1024,timeout:CHILD_TIMEOUT_MS,killSignal:'SIGKILL'});return {command,startedAt,finishedAt:new Date().toISOString(),timeoutMs:CHILD_TIMEOUT_MS,exitCode:actual.status,signal:actual.signal,outcome:actual.error?.code==='ETIMEDOUT'?'TIMEOUT':actual.status===0?'PASS':'FAIL',error:actual.error?{code:actual.error.code,message:actual.error.message}:null,stdout:actual.stdout||'',stderr:actual.stderr||''};};
  const injected=run(['--fault='+fault]);console.error(JSON.stringify({suite,fault,phase:'injected',...injected}));
  assert.notEqual(injected.exitCode,0,'Implementation fault escaped detection: '+fault);
  assert.ok(injected.stderr.includes(oracle),'Implementation fault failed for an unrelated reason: '+fault+'\n'+injected.stderr);

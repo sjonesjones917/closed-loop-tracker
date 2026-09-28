@@ -3,18 +3,20 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {projectStoreRuntime,storageBroadcastNetwork} from './test-project-store-runtime.mjs';
 const source = fs.readFileSync(process.env.STORE_SOURCE || 'project-store.js','utf8');
 const cases=[];
 const prefixes=process.argv.filter(x=>x.startsWith('--case-prefix=')).map(x=>x.slice(14));
 const selected=id=>!prefixes.length||prefixes.some(prefix=>id.startsWith(prefix));
 const flush=async()=>{for(let n=0;n<24;n++)await Promise.resolve();};
-function environment({worker=false}={}){
+function environment({worker=false,broadcast=null}={}){
  let clock=0,next=1;const timers=new Map(),opens=[],transactions=[],workers=[];
  const events={opens:0,abortCalls:0,closed:0,writes:0,workerTerminated:0},errors=[];
  const setTimeout=(fn,delay=0)=>{const id=next++;timers.set(id,{fn,at:clock+Number(delay)});return id;};
  const clearTimeout=id=>timers.delete(id);
  const advance=async ms=>{const end=clock+ms;while(true){const due=[...timers].filter(([,x])=>x.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!due)break;clock=due[1].at;timers.delete(due[0]);due[1].fn();await flush();}clock=end;await flush();};
  const context=createVerifierRuntime({Blob,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,AbortController,URL,URLSearchParams,Uint8Array,ArrayBuffer,structuredClone,crypto:crypto.webcrypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console:{log(){},error(...x){errors.push(x.map(String).join(' '));}},navigator:{storage:{persist:async()=>true,estimate:async()=>({usage:0,quota:1024})}},Event:class Event{},dispatchEvent(){}});
+ if(broadcast)context.BroadcastChannel=broadcast.Channel;
  if(worker){context.document={currentScript:{src:'https://fixture.invalid/project-store.js?v=FIXTURE-BUILD'}};context.Worker=class{constructor(url){this.url=url;this.messages=[];workers.push(this);}postMessage(message){this.messages.push(message);}terminate(){events.workerTerminated++;}};vm.runInContext(fs.readFileSync('workbook.js','utf8'),context,{filename:'workbook.js'});}
  vm.runInContext(fs.readFileSync(process.env.HASH_SOURCE||'hash.js','utf8'),context,{filename:'hash.js'});
  if(worker)for(const file of ['workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
@@ -54,6 +56,63 @@ await check('IO-WORKER-CONTROL','An acknowledged worker result settles once and 
 await check('IO-WORKER-ABSENT','A silent worker is terminated, then a confirmed absent commit receipt rejects without automatically repeating execution.',async()=>{const e=environment({worker:true}),r=e.settle(e.store.writeProject({job:{JOB_ID:'PENDING'}})),w=e.workers[0];await e.advance(600000);assert.equal(e.events.workerTerminated,1,'IO_WORKER_DEADLINE_ORACLE');assert.equal(r.state,'PENDING','Outcome must wait for durable receipt reconciliation');await deliverStorage(e,r);assert.equal(r.state,'REJECTED');assert.equal(r.existingProjectsUnchanged,true);assert.equal(w.messages.length,1);w.onmessage({data:{operationId:w.messages[0].operationId,buildIdentity:'FIXTURE-BUILD',ok:true,project:{revision:999}}});await flush();assert.equal(r.state,'REJECTED');return {result:r,events:e.events};});
 await check('IO-WORKER-UNCONFIRMED','When durable outcome read-back is itself unavailable, report an unconfirmed outcome rather than rollback or success.',async()=>{const e=environment({worker:true}),r=e.settle(e.store.writeProject({job:{JOB_ID:'UNKNOWN'}}));await e.advance(630000);assert.equal(r.state,'REJECTED','IO_WORKER_UNCONFIRMED_ORACLE');assert.equal(r.code,'STORAGE_OUTCOME_UNCONFIRMED');assert.equal(r.existingProjectsUnchanged,false);assert.equal(e.events.workerTerminated,1);return {result:r,events:e.events};});
 await check('IO-WORKER-COMMITTED','A timed-out worker with a matching durable receipt resolves the verified committed project without resubmitting the command.',async()=>{const e=environment({worker:true}),p=e.context.closedLoopCore.createBlankState('WORKER-RECEIPT');e.context.closedLoopWorkflowEngine.ensureShape(p);e.context.closedLoopWorkflowEngine.recalculate(p);p.revision=7;const digest=e.store.projectSha256(p),r=e.settle(e.store.writeProject(p)),w=e.workers[0],m=w.messages[0],rows=new Map([['meta:storageOperation:'+m.operationId,{value:{operationId:m.operationId,jobId:p.job.JOB_ID,revision:7,projectSha256:digest}}],['projects:'+p.job.JOB_ID,{project:p,revision:7,projectSha256:digest}]]);await e.advance(600000);assert.equal(e.events.workerTerminated,1,'IO_WORKER_COMMIT_RECOVERY_ORACLE');await deliverStorage(e,r,rows);assert.equal(r.state,'RESOLVED');assert.equal(r.value.projectSha256,digest);assert.equal(r.value.revision,7);assert.equal(w.messages.length,1);return {state:r.state,revision:r.value.revision,projectSha256:digest,events:e.events};});
+for(const bytes of ['valid','missing','corrupt'])await check('IO-WORKER-CUSTODY-'+bytes,'A successful worker reply establishes byte custody only by reading and verifying the receiving context’s stored files.',async()=>{
+ const broadcast=storageBroadcastNetwork(),e=environment({worker:true,broadcast}),engine=e.context.closedLoopWorkflowEngine,p=e.context.closedLoopCore.createBlankState('WORKER-BYTES-'+bytes);engine.ensureShape(p);
+ const artifactId=engine.allocateId(p,'artifacts',{commandId:'WORKER-FILE',idempotencyKey:'file'}),blob=new Blob(['verified bytes']),sha256=await e.context.closedLoopHash.sha256Bytes(blob);
+ engine.registerArtifactBytes(p,{stage:1,artifactId,filename:'file.txt',byteSize:blob.size,sha256,mediaType:'text/plain'});engine.recalculate(p);
+ const identity={jobId:p.job.JOB_ID,artifactId,filename:'file.txt',byteSize:blob.size,sha256},r=e.settle(e.store.writeProject(p)),w=e.workers[0],m=w.messages[0];
+ w.onmessage({data:{operationId:m.operationId,buildIdentity:'FIXTURE-BUILD',ok:true,project:p}});
+ const rows=new Map();if(bytes!=='missing')rows.set('artifacts:'+artifactId,{...identity,blob:bytes==='valid'?blob:new Blob(['wrong bytes'])});
+ await deliverStorage(e,r,rows);
+ assert.equal(r.state,'RESOLVED','IO_WORKER_CUSTODY_SETTLEMENT_ORACLE');
+ assert.equal(e.store.artifactCustodyState(identity),bytes==='valid'?'TRUE':'UNKNOWN','IO_WORKER_CUSTODY_ORACLE: metadata-only worker success cannot establish custody; matching actual bytes must establish it.');
+ const sender=new broadcast.Channel('closed-loop-reliability');sender.postMessage({type:'PROJECT_CHANGED',jobId:p.job.JOB_ID,contextId:new URL(w.url).searchParams.get('storeContext')});broadcast.flush();sender.close();
+ assert.equal(e.store.artifactCustodyState(identity),bytes==='valid'?'TRUE':'UNKNOWN','IO_WORKER_OWN_NOTIFICATION_ORACLE: a delayed worker notification must preserve its window’s verified result.');
+ assert.equal(w.messages.length,1,'IO_WORKER_CUSTODY_ORACLE: verification must not repeat the write.');
+ return {input:bytes,state:r.state,custody:e.store.artifactCustodyState(identity),workerRequests:w.messages.length};
+});
+await check('IO-CUSTODY-NOTIFICATIONS','Own completed writes preserve verified bytes; another storage context invalidates them; deletion publishes the changed file.',async()=>{
+ const network=storageBroadcastNetwork(),r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{BroadcastChannel:network.Channel}}),p=r.core.createBlankState('NOTIFICATION-BYTES');r.engine.ensureShape(p);
+ const artifactId=r.engine.allocateId(p,'artifacts',{commandId:'LOCAL-FILE',idempotencyKey:'file'}),row=await r.store.putArtifact({artifactId,jobId:p.job.JOB_ID,filename:'file.txt',blob:new Blob(['verified bytes'])});
+ r.engine.registerArtifactBytes(p,{stage:1,artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});
+ const identity={jobId:p.job.JOB_ID,artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256};
+ network.hold=true;await r.store.writeProject(p,{expectedProjectRevision:0});network.flush();
+ assert.equal(r.store.artifactCustodyState(identity),'TRUE','IO_OWN_NOTIFICATION_CUSTODY_ORACLE');
+ const other=new network.Channel('closed-loop-reliability'),messages=[];other.addEventListener('message',event=>messages.push(event.data));
+ other.postMessage({type:'PROJECT_CHANGED',jobId:p.job.JOB_ID});network.flush();
+ assert.equal(r.store.artifactCustodyState(identity),'UNKNOWN','IO_FOREIGN_NOTIFICATION_CUSTODY_ORACLE');
+ await r.store.getArtifact(artifactId);assert.equal(r.store.artifactCustodyState(identity),'TRUE');
+ await r.store.deleteArtifact(artifactId,p.job.JOB_ID);network.flush();
+ assert.equal(r.store.artifactCustodyState(identity),'UNKNOWN');
+ assert(messages.some(message=>message.jobId===p.job.JOB_ID&&message.artifactId===artifactId),'IO_FILE_DELETION_NOTIFICATION_ORACLE');
+ other.close();return {ownWrite:'verified',foreignChange:'invalidated',deletionNotification:true};
+});
+await check('IO-CUSTODY-IMPORT','Import returns with its restored actual files verified in the context that will calculate subsequent workflow actions.',async()=>{
+ const network=storageBroadcastNetwork(),r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{BroadcastChannel:network.Channel}}),p=r.core.createBlankState('IMPORTED-BYTES');r.engine.ensureShape(p);
+ const artifactId=r.engine.allocateId(p,'artifacts',{commandId:'IMPORT-FILE',idempotencyKey:'file'}),row=await r.store.putArtifact({artifactId,jobId:p.job.JOB_ID,filename:'file.txt',blob:new Blob(['retained bytes'])});
+ r.engine.registerArtifactBytes(p,{stage:1,artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});
+ await r.store.writeProject(p,{expectedProjectRevision:0});const backup=await r.store.exportPackage(p.job.JOB_ID);await r.store.deleteArtifact(artifactId,p.job.JOB_ID);
+ const restored=await r.store.importPackage(backup);network.flush();
+ const identity={jobId:p.job.JOB_ID,artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256};
+ assert.equal(restored.job.JOB_ID,p.job.JOB_ID);assert.equal(r.store.artifactCustodyState(identity),'TRUE','IO_IMPORT_CUSTODY_ORACLE');return {imported:true,verified:true};
+});
+await check('IO-CUSTODY-DELETION-NOTIFICATION','Removing actual stored bytes informs other contexts before their old custody can authorize further work.',async()=>{
+ const network=storageBroadcastNetwork(),r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{BroadcastChannel:network.Channel}}),other=new network.Channel('closed-loop-reliability'),messages=[];
+ other.addEventListener('message',event=>messages.push(event.data));
+ await r.store.putArtifact({artifactId:'REMOVED',jobId:'REMOVAL',filename:'file.txt',blob:new Blob(['bytes'])});network.flush();messages.length=0;
+ await r.store.deleteArtifact('REMOVED','REMOVAL');network.flush();
+ assert(messages.some(message=>message.jobId==='REMOVAL'&&message.artifactId==='REMOVED'),'IO_FILE_DELETION_NOTIFICATION_ORACLE');other.close();return {deletionNotification:true};
+});
+await check('IO-CUSTODY-INTERRUPTED-READ','A file read invalidated by another context cannot restore stale verified custody when its hash finishes later.',async()=>{
+ const network=storageBroadcastNetwork(),r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{BroadcastChannel:network.Channel}});
+ let held=false,release,started;const entered=new Promise(resolve=>started=resolve),wait=new Promise(resolve=>release=resolve);
+ class DelayedBlob extends Blob{slice(...args){const part=super.slice(...args),read=part.arrayBuffer.bind(part);part.arrayBuffer=async()=>{if(held){started();await wait;}return read();};return part;}}
+ const row=await r.store.putArtifact({artifactId:'IN-FLIGHT',jobId:'CHANGED',filename:'file.txt',blob:new DelayedBlob(['bytes'])}),identity={jobId:row.jobId,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256};
+ held=true;const reading=r.store.getArtifact(row.artifactId);await entered;
+ // One deliberate external storage transition, after the read began.
+ r.rows.get('artifacts').delete(row.artifactId);const other=new network.Channel('closed-loop-reliability');other.postMessage({type:'PROJECT_CHANGED',jobId:row.jobId});network.flush();release();await reading;
+ assert.equal(r.store.artifactCustodyState(identity),'UNKNOWN','IO_INTERRUPTED_CUSTODY_ORACLE: an invalidated read cannot reinstate deleted file custody.');other.close();return {staleRead:'rejected',custody:'UNKNOWN'};
+});
 if(!cases.length)throw new Error('No selected deadline cases');
 console.log(JSON.stringify({schema:'closed-loop-storage-deadline-regression/1',syntheticNativeEvents:true,physicalBrowser:false,sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),declaredIoDeadlineMs:30000,cases},null,2));
 if(cases.some(x=>x.status!=='PASS'))process.exitCode=1;

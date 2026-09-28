@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,storageBroadcastNetwork} from './test-project-store-runtime.mjs';
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
 // History is exercised by verify-recoverable-history and the browser recovery gate.
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
@@ -782,20 +782,23 @@ for(const failHealth of [false,true])await storageRegression('diagnostics:startu
 
 // Execute both contexts of the same production owner and simulate a lost worker
 // acknowledgement after its real transaction logic commits to the test database.
-let dropWorkerReply=false,workerExecutions=0;
+const workerNotifications=storageBroadcastNetwork();
+let dropWorkerReply=false,workerExecutions=0,lastStorageWorker;
 class StoreWorkerFixture{
   constructor(url){
     this.stopped=false;let listener;
-    const worker=lifecycleContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,DataView,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,URL,URLSearchParams,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true,location:new URL(url),openStorageTransaction:storageRuntime.openStorageTransaction,addEventListener:(type,callback)=>{if(type==='message')listener=callback;},postMessage:message=>{if(this.stopped)return;if(dropWorkerReply){dropWorkerReply=false;this.onerror?.({message:'CONTROLLED_LOST_COMMITTED_REPLY'});}else this.onmessage?.({data:storageRead(message)});}});
+    const worker=lifecycleContext({...inactiveMobileAcceptance,BroadcastChannel:workerNotifications.Channel,Blob,Uint8Array,ArrayBuffer,DataView,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,URL,URLSearchParams,crypto:globalThis.crypto,btoa,atob,setTimeout,console,Event:globalThis.Event,dispatchEvent:()=>true,location:new URL(url),openStorageTransaction:storageRuntime.openStorageTransaction,addEventListener:(type,callback)=>{if(type==='message')listener=callback;},postMessage:message=>{if(this.stopped)return;if(dropWorkerReply){dropWorkerReply=false;this.onerror?.({message:'CONTROLLED_LOST_COMMITTED_REPLY'});}else this.onmessage?.({data:storageRead(message)});}});
     const parseWorkerJson=vm.runInContext('text=>JSON.parse(text)',worker);
     worker.workerRead=value=>storageRead(value,parseWorkerJson);
     worker.importScripts=(...urls)=>{for(const url of urls){const file=String(url).split('?')[0];vm.runInContext(fs.readFileSync(file,'utf8'),worker,{filename:file});}};
     vm.runInContext(storageSource.replace('Promise.resolve(req.result)','Promise.resolve(workerRead(req.result))'),worker);
+    this.store=worker.closedLoopProjectStore;lastStorageWorker=this;
     this.deliver=message=>listener({data:storageRead(message,parseWorkerJson)});
   }
   postMessage(message){workerExecutions++;this.deliver(message);}
   terminate(){this.stopped=true;}
 }
+storageRuntime.BroadcastChannel=workerNotifications.Channel;
 storageRuntime.document={currentScript:{src:'https://example.test/project-store.js?v=WORKER-REGRESSION'}};storageRuntime.URL=URL;storageRuntime.URLSearchParams=URLSearchParams;storageRuntime.Worker=StoreWorkerFixture;
 vm.runInContext(storageSource,storageRuntime);storageRuntime.projectStore=storageRuntime.closedLoopProjectStore;
 await storageRegression('storage-worker:same-authorities-and-cas',async()=>{
@@ -804,6 +807,29 @@ await storageRegression('storage-worker:same-authorities-and-cas',async()=>{
   const saved=await storageRuntime.projectStore.readProject(p.job.JOB_ID);assert(saved.projectSha256===p.projectSha256&&saved.revision===p.revision,'Worker changed canonical digest or revision.');
   let error;try{await storageRuntime.projectStore.writeProject(p,{expectedProjectRevision:p.revision-1});}catch(e){error=e;}
   assert(error?.code==='STALE_PROJECT_REVISION'&&error.existingProjectsUnchanged===true,'Worker lost the revision-conflict rejection.');
+});
+await storageRegression('storage-worker:verified-file-state-survives-own-notifications',async()=>{
+  const p=await storageRuntime.makeStored('WORKER-CUSTODY'),engine=storageRuntime.closedLoopWorkflowEngine;
+  const artifactId=engine.allocateId(p,'artifacts',{commandId:'WORKER-BYTES',idempotencyKey:'file'});
+  const row=await lastStorageWorker.store.putArtifact({artifactId,jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['real worker bytes'])});
+  engine.registerArtifactBytes(p,{stage:1,artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});
+  const identity={jobId:p.job.JOB_ID,artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256};
+  assert(storageRuntime.projectStore.artifactCustodyState(identity)==='UNKNOWN','Worker bytes must not be treated as verified by the window before read-back.');
+  workerNotifications.flush();workerNotifications.hold=true;
+  try{
+    const saved=await storageRuntime.projectStore.writeProject(p,{expectedProjectRevision:p.revision});
+    assert(storageRuntime.projectStore.artifactCustodyState(identity)==='TRUE','WORKER_RETURN_CUSTODY_ORACLE: a committed project must return with its actual current files verified in the receiving context.');
+    workerNotifications.flush();
+    assert(storageRuntime.projectStore.artifactCustodyState(identity)==='TRUE','OWN_NOTIFICATION_CUSTODY_ORACLE: a delayed notification of this window’s completed write must not erase its verified files.');
+    const backup=await storageRuntime.projectStore.exportPackage(saved.job.JOB_ID);
+    await storageRuntime.projectStore.deleteArtifact(artifactId,saved.job.JOB_ID);
+    const restored=await storageRuntime.projectStore.importPackage(backup);workerNotifications.flush();
+    assert(restored.job.JOB_ID===saved.job.JOB_ID&&storageRuntime.projectStore.artifactCustodyState(identity)==='TRUE','WORKER_IMPORT_CUSTODY_ORACLE: restored exact files must be verified before the import returns.');
+    const other=new StoreWorkerFixture('https://example.test/project-store.js?v=WORKER-REGRESSION&storeWorker=1');
+    await other.store.deleteArtifact(artifactId,saved.job.JOB_ID);workerNotifications.flush();
+    assert(storageRuntime.projectStore.artifactCustodyState(identity)==='UNKNOWN','FOREIGN_FILE_CHANGE_CUSTODY_ORACLE: another context’s deletion must invalidate prior verified custody.');
+    other.terminate();
+  }finally{workerNotifications.hold=false;workerNotifications.flush();}
 });
 await storageRegression('storage-worker:commit-survives-lost-reply',async()=>{
   dropWorkerReply=true;const p=await vm.runInContext(`makeStored('WORKER-LOST-REPLY')`,storageRuntime);

@@ -1,4 +1,4 @@
-import {bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {bindArtifactFixture,projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,bindAcceptanceUi,storageBroadcastNetwork} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -80,6 +80,39 @@ for(let stage=1;stage<=stageLimit;stage++){
     assert.doesNotThrow(()=>hash.sha256Value(p),`Stage ${stage} ${action.actionType} must remain persistable after every operation`);
   }
   assert.equal(engine.gate(stage,p).complete,true,JSON.stringify({stage,reasons:engine.gate(stage,p).reasons}));
+  if(stage===22){
+    // First response after application-owned verification, using the same
+    // durable staging and acceptance controls as the browser journey. The
+    // small actual files come from preceding fixture operations, not metadata.
+    const network=storageBroadcastNetwork(),r=projectStoreRuntime({environment:{BroadcastChannel:network.Channel}}),{runtime,store,copy}=r;
+    await restoreArtifactFixture(store,await captureArtifactFixture(byteStore,p.job.JOB_ID));
+    const input=copy(p);for(const prompt of input.projectData.generatedPrompts)await store.persistPromptContextFiles(prompt,input);
+    await store.writeProject(input,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+    const saved=await store.readProject(p.job.JOB_ID);saved.activeStage=stage+1;saved.activeView='Workflow';
+    const failures=bindAcceptanceUi(r,saved,'NONE'),ui=fs.readFileSync('app-core.js','utf8');
+    const extract=(start,end)=>{const a=ui.indexOf(start),b=ui.indexOf(end,a+start.length);assert.ok(a>=0&&b>a,'Actual response control owner must exist.');return ui.slice(a,b);};
+    Object.assign(runtime,{recordValue:r.engine.recordValue,schema:runtime.closedLoopWorkflowSchema,recordMobileValidation:async()=>{},saveRequiredContinuation:async()=>null,selectStageContinuation:()=>{}});
+    vm.runInContext(extract('function canonicalCurrentStage(','function displayedStageAction(')+extract('function stageOperations(','// A saved response may be inspected independently.')+extract('async function savePromptRecord(','function promptTransportFilename(')+extract('async function prepareStageResponseFile(','async function prepareStageResponseFallback('),runtime);
+    await runtime.savePromptRecord(saved.activeStage);
+    const prompt=runtime.currentPromptRecord(saved.activeStage),request=responseFixture({schema:runtime.schema,engine:r.engine,prompt,manifest:r.prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});
+    runtime.responseAttemptPrompt=()=>prompt;runtime.responsePromptRecord=()=>prompt;runtime.proposalVersionCurrent=()=>false;
+    const acceptedBefore=runtime.current.projectData.acceptedChanges.length,file=new Blob([JSON.stringify(request)],{type:'application/json'});Object.defineProperty(file,'name',{value:'response.json'});
+    await runtime.prepareStageResponseFile(file);network.flush();
+    console.error(JSON.stringify({caseId:'first-response-after-native-verification',failureCodes:failures.map(e=>e.code||e.message),affected:runtime.replacementReview?.impact?.affected||[],priorStageStatus:runtime.current.stages[stage].status}));
+    assert.equal(Boolean(runtime.replacementReview),false,'INITIAL_RESPONSE_PRESERVES_PROGRESS_ORACLE: first response staging must not request replacement or invalidate completed prerequisites.');
+    assert.equal(failures.length,0,'INITIAL_RESPONSE_PRESERVES_PROGRESS_ORACLE: '+failures.map(e=>e.message).join('|'));
+    assert.equal(runtime.current.projectData.acceptedChanges.length,acceptedBefore,'INITIAL_RESPONSE_PRESERVES_PROGRESS_ORACLE: validation alone cannot accept work.');
+    assert.equal(runtime.current.stages[stage].status,'COMPLETE','INITIAL_RESPONSE_PRESERVES_PROGRESS_ORACLE: completed verification must remain complete.');
+    const proposal=runtime.current.projectData.responseProposals.find(row=>row.stage===saved.activeStage&&row.status==='PENDING_OPERATOR_REVIEW');
+    assert.ok(proposal,'INITIAL_RESPONSE_PRESERVES_PROGRESS_ORACLE: valid response must reach proposal review.');
+    const acceptFailures=bindAcceptanceUi(r,runtime.current,proposal.proposalId);await runtime.accept();network.flush();
+    assert.equal(acceptFailures.length,0,'INITIAL_RESPONSE_ACCEPTANCE_ORACLE: '+acceptFailures.map(e=>e.message).join('|'));
+    assert.equal(Boolean(runtime.replacementReview),false,'INITIAL_RESPONSE_ACCEPTANCE_ORACLE: initial acceptance must preserve its prerequisites.');
+    const reloaded=await store.readProject(p.job.JOB_ID);
+    assert.equal(reloaded.projectData.acceptedChanges.length,acceptedBefore+1,'INITIAL_RESPONSE_ACCEPTANCE_ORACLE: one explicit acceptance must commit once.');
+    assert.equal(r.engine.gate(stage,reloaded).complete,true,'INITIAL_RESPONSE_ACCEPTANCE_ORACLE: durable acceptance must preserve verified prerequisites.');
+    p=structuredClone(reloaded);cases.push({stage:saved.activeStage,operation:prompt.operation,caseId:'first-response-after-native-verification',result:'PASS'});
+  }
   if(stage===13){
     const invalid=engine.clone(p);invalid.projectData.defects=[];
     const rejected=engine.gate(13,invalid);

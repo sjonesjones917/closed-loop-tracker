@@ -116013,15 +116013,7 @@
         "path": "specification/recovery-user-instruction-20260914.txt",
         "line": 23
       },
-      "responsibleProductionCode": {
-        "candidateOwners": [
-          "response-ingestion.js",
-          "workflow-engine.js",
-          "project-store.js",
-          "app-core.js"
-        ],
-        "symbolResolution": "UNVERIFIED"
-      },
+      "responsibleProductionCode": "project-store.js: observeArtifactCustody / observeProjectArtifactCustody / requestStoreWorker / notifyProjectChange / importPackage / deleteArtifact; app-core.js:persistReplacement / prepareStageResponseFile",
       "observableExpectedBehavior": "Selecting a stage, generating instructions, or receiving a response must not itself replace accepted work or reset subsequent progress. Validate a response before offering acceptance. Keep a valid replacement as a candidate until the required confirmation and successful commit.",
       "requiredEvidence": [
         "Executed behavior derived from this exact requirement across each applicable stage and operation",
@@ -116032,7 +116024,27 @@
       "applicableOperations": "ALL_APPLICABLE",
       "status": "UNVERIFIED",
       "executedEvidence": [],
-      "mandatory": true
+      "mandatory": true,
+      "currentRepair": {
+        "classification": "production",
+        "invariant": "A first response reaches unaccepted proposal review without resetting completed prerequisites; verified file custody belongs to the receiving storage context and remains valid only until an actual external invalidation.",
+        "dependencyClosure": [
+          "Canonical and operational worker replies",
+          "Delayed own-writer notifications, including worker-to-window delivery",
+          "Foreign changes and file deletion",
+          "Interrupted byte reads",
+          "Backup import and History restoration",
+          "All stage gates and mutation-impact calculations that require actual current artifact bytes"
+        ],
+        "requiredProof": [
+          "verify-operator-counterpart.mjs:first-response-after-native-verification and subsequent full workflow",
+          "verify-project-lifecycle-full.mjs:storage-worker:verified-file-state-survives-own-notifications",
+          "verify-storage-deadlines.mjs:IO-WORKER-CUSTODY-* and IO-CUSTODY-*",
+          "verify-io-boundary-faults.mjs:targeted custody faults and healthy restored-source checks",
+          "Existing browser complete-operator and recovery journeys at the published revision"
+        ],
+        "status": "UNVERIFIED"
+      }
     },
     {
       "requirementId": "RECOVERY:USER-024",
@@ -122856,7 +122868,7 @@
     {
       "requirementId": "TASK-B-002",
       "sourceLocation": "Current user task section 6.B, clause 2",
-      "responsibleProductionCode": "response-ingestion.js:validate/acceptProposal; workflow-engine.js:mutationImpact; project-store.js:atomicProjectMutation; app-core.js:persistReplacement",
+      "responsibleProductionCode": "project-store.js: observeArtifactCustody / observeProjectArtifactCustody / requestStoreWorker / notifyProjectChange / importPackage / deleteArtifact; app-core.js:persistReplacement / prepareStageResponseFile",
       "observableExpectedBehavior": "Selecting, generating instructions or receiving a response does not replace accepted work or reset progress.",
       "requiredEvidence": [
         "Exact source binding and raw executed observation",
@@ -122868,7 +122880,27 @@
       "applicableOperations": "ALL_APPLICABLE",
       "status": "UNVERIFIED",
       "executedEvidence": [],
-      "mandatory": true
+      "mandatory": true,
+      "currentRepair": {
+        "classification": "production",
+        "invariant": "A first response reaches unaccepted proposal review without resetting completed prerequisites; verified file custody belongs to the receiving storage context and remains valid only until an actual external invalidation.",
+        "dependencyClosure": [
+          "Canonical and operational worker replies",
+          "Delayed own-writer notifications, including worker-to-window delivery",
+          "Foreign changes and file deletion",
+          "Interrupted byte reads",
+          "Backup import and History restoration",
+          "All stage gates and mutation-impact calculations that require actual current artifact bytes"
+        ],
+        "requiredProof": [
+          "verify-operator-counterpart.mjs:first-response-after-native-verification and subsequent full workflow",
+          "verify-project-lifecycle-full.mjs:storage-worker:verified-file-state-survives-own-notifications",
+          "verify-storage-deadlines.mjs:IO-WORKER-CUSTODY-* and IO-CUSTODY-*",
+          "verify-io-boundary-faults.mjs:targeted custody faults and healthy restored-source checks",
+          "Existing browser complete-operator and recovery journeys at the published revision"
+        ],
+        "status": "UNVERIFIED"
+      }
     },
     {
       "requirementId": "TASK-B-003",
@@ -125155,7 +125187,7 @@
         "path": "verification/conformance-20260917/requirements.json",
         "location": "operator section 6.C paragraph 8"
       },
-      "responsibleProductionCode": "project-store.js:restoreCheckpoint/commitHistory; app-core.js:runOperatorAction",
+      "responsibleProductionCode": "project-store.js: observeArtifactCustody / observeProjectArtifactCustody / requestStoreWorker / notifyProjectChange / importPackage / deleteArtifact; app-core.js:persistReplacement / prepareStageResponseFile",
       "observableExpectedBehavior": "Authorization, concurrency, execution records and duplicate protection remain enforced; independent work in another tab/session is not silently overwritten.",
       "requiredEvidence": "Named executed positive and otherwise-valid single-violation cases derived from the controlling requirement; exact actual UI/file-transport observations where applicable; before/after source identities; raw untruncated output; affected downstream replay. Synthetic evidence must be labeled and does not establish real-project, independent-human, or physical-device acceptance.",
       "applicableStages": "Every stage to which the source requirement applies, derived from the actual workflow stage and dependency registries, including first and final stages.",
@@ -125181,7 +125213,27 @@
       ],
       "status": "UNVERIFIED",
       "mandatory": true,
-      "executedEvidence": []
+      "executedEvidence": [],
+      "currentRepair": {
+        "classification": "production",
+        "invariant": "A first response reaches unaccepted proposal review without resetting completed prerequisites; verified file custody belongs to the receiving storage context and remains valid only until an actual external invalidation.",
+        "dependencyClosure": [
+          "Canonical and operational worker replies",
+          "Delayed own-writer notifications, including worker-to-window delivery",
+          "Foreign changes and file deletion",
+          "Interrupted byte reads",
+          "Backup import and History restoration",
+          "All stage gates and mutation-impact calculations that require actual current artifact bytes"
+        ],
+        "requiredProof": [
+          "verify-operator-counterpart.mjs:first-response-after-native-verification and subsequent full workflow",
+          "verify-project-lifecycle-full.mjs:storage-worker:verified-file-state-survives-own-notifications",
+          "verify-storage-deadlines.mjs:IO-WORKER-CUSTODY-* and IO-CUSTODY-*",
+          "verify-io-boundary-faults.mjs:targeted custody faults and healthy restored-source checks",
+          "Existing browser complete-operator and recovery journeys at the published revision"
+        ],
+        "status": "UNVERIFIED"
+      }
     },
     {
       "requirementId": "C-DELAYED-EXTERNAL",
@@ -125725,7 +125777,23 @@
       ],
       "status": "UNVERIFIED",
       "mandatory": true,
-      "executedEvidence": []
+      "executedEvidence": [],
+      "currentRepair": {
+        "classification": "verifier",
+        "owner": "verify-history-project-sharing-faults.mjs: bounded child supervisor",
+        "invariant": "Every deliberate history-sharing violation is rejected by its intended oracle, and the complete unmodified control finishes all progression, backup, dependency and exact-byte corruption assertions within a documented hard execution budget.",
+        "dependencyClosure": [
+          "All injected and healthy child executions in the existing history-sharing fault matrix",
+          "The existing conformance aggregate retains its independent whole-gate timeout",
+          "The fixed history-sharing control retains all twelve views and every byte-integrity assertion"
+        ],
+        "requiredProof": [
+          "verify-history-project-sharing.mjs: complete healthy fixed-fixture control",
+          "verify-history-project-sharing-faults.mjs: all intended fault rejections and restored-source controls",
+          "verify-conformance-regressions.mjs: timeout classification, raw-output preservation and source-restoration checks"
+        ],
+        "status": "UNVERIFIED"
+      }
     },
     {
       "requirementId": "TEST-MUTATIONS",
