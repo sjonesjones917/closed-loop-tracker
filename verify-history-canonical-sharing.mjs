@@ -42,9 +42,9 @@ if(engineFaults[faultMode]){const fault=engineFaults[faultMode];assert.equal(obs
 const adjudicationProbeAnchor='for(const collection of collections)copy.projectData[collection]=safe(project?.projectData?.[collection]).map(record=>clone(record));';
 assert.equal(observedEngineSource.split(adjudicationProbeAnchor).length-1,1);
 observedEngineSource=observedEngineSource.replace(adjudicationProbeAnchor,'globalThis.__historyAdjudication?.(project);'+adjudicationProbeAnchor);
-const stageProbeAnchor='ensure(p);const b=e0.gate(stage,p),rr=';
+const stageProbeAnchor='ensure(p);const b=e0.gate(stage,p),';
 assert.equal(observedEngineSource.split(stageProbeAnchor).length-1,1);
-observedEngineSource=observedEngineSource.replace(stageProbeAnchor,'ensure(p);globalThis.__historyCompatibilityStage?.(stage,p);const b=e0.gate(stage,p),rr=');
+observedEngineSource=observedEngineSource.replace(stageProbeAnchor,'ensure(p);globalThis.__historyCompatibilityStage?.(stage,p);const b=e0.gate(stage,p),');
 // Expose the existing base projection only in this disposable verifier realm.
 // Production's public wrapper deliberately owns its installed gate callbacks.
 const projectionProbeAnchor='globalThis.closedLoopWorkflowEngine=Object.freeze({stageContext,';

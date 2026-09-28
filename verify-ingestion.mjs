@@ -1,6 +1,6 @@
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
+import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import './verify-reservation-contract.mjs';
@@ -71,16 +71,20 @@ function fixtureBuildPrompt(stage,p,options={operation:fixturePromptOperation(st
   }
   if(stage===12){
     const scope={...engine.currentScope(p),...references};
-    for(const [family,fields] of [['requirements',{REQ_ID:'SYNTHETIC-REQ',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',APPLICABILITY:'APPLICABLE'}],['tests',{TEST_ID:'SYNTHETIC-TEST',REQ_ID:'SYNTHETIC-REQ',TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}}]]){
+    for(const [family,fields] of [['requirements',{REQ_ID:'SYNTHETIC-REQ',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',APPLICABILITY:'APPLICABLE'}],['tests',{TEST_ID:'SYNTHETIC-TEST',REQ_ID:'SYNTHETIC-REQ',TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}}]]){
       const id=fields[schema.RECORD_SCHEMAS[family].idField],row={id,stage:schema.RECORD_SCHEMAS[family].stage,active:true,scope,fields,...fields,relationships:family==='tests'?{REQ_ID:'SYNTHETIC-REQ'}:{}};engine.refreshRecordHashes(row,family);p.projectData[family].push(row);
     }
+    const candidate=engine.records(p,'candidateFreezes').find(row=>engine.recordId(row,'candidateFreezes')===references.candidateId),iteration=engine.records(p,'iterations').find(row=>engine.recordId(row,'iterations')===references.iterationId);
+    if(!candidate||!iteration)throw new Error('Controlled verification fixture requires canonical candidate and iteration.');
+    candidate.scope={...scope,iterationId:null,runId:null};candidate.fields.STATUS=candidate.STATUS='FROZEN';engine.refreshRecordHashes(candidate,'candidateFreezes');
+    iteration.scope={...scope,runId:null};iteration.fields.CANDIDATE_ID=iteration.CANDIDATE_ID=references.candidateId;engine.refreshRecordHashes(iteration,'iterations');
     const run=engine.records(p,'runs').find(row=>engine.recordId(row,'runs')===references.runId);run.scope=scope;run.fields.ITERATION_ID=references.iterationId;run.fields.EXECUTION_STATUS='COMPLETED';run.completionState='COMPLETED';engine.refreshRecordHashes(run,'runs');
   }
   return prompts.buildPromptRecord(stage,p,engine.preparePromptContext(p,stage,{...options,scope:references}).options);
 }
 function fixturePromptOperation(stage){
   if(stage===17||stage===19)return 'COMPARE';
-  return schema.STAGE_CONTRACTS[stage].operations.find(operation=>schema.operationContract(stage,operation).executorClass==='EXTERNAL_AGENT')||null;
+  return schema.STAGE_CONTRACTS[stage].operations.find(operation=>{const contract=schema.operationContract(stage,operation);return contract.executorClass==='EXTERNAL_AGENT'&&!contract.deferredSubjectFamily;})||null;
 }
 function fixturePromptOptions(stage,operation=fixturePromptOperation(stage)){
   const required=schema.operationContract(stage,operation)?.scopeRequirements||[];
@@ -131,7 +135,7 @@ function validEnvelope(p,stage,promptRecord){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
-    const fields=collection==='tests'?{VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}}:{};
+    const fields=['tests','regressions','failureTests'].includes(collection)?Object.fromEntries(schema.TIMING_SCHEDULE_CONTRACT.scalarFields.map(key=>[key,recordProposal(schema,collection).fields[key]])):{};
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
     records[collection]=[{tempKey:'record-1',fields,relationships:collection==='verification'?{REQ_ID:{recordId:'SYNTHETIC-REQ'},TEST_ID:{recordId:'SYNTHETIC-TEST'},RUN_ID:{recordId:promptRecord.scope.runId}}:{},evidenceRefs:['evidence-1']}];
@@ -159,7 +163,7 @@ for(const operation of ['COMPLETE','RECONCILE_VERIFICATION_SUITE'])for(const [ph
   const p=project(`JOB-TIMING-${operation}-${phase}`);preparePromptPrerequisites(p,6);
   const pr=prompts.buildPromptRecord(6,p,engine.preparePromptContext(p,6,{operation}).options);p.projectData.generatedPrompts.push(pr);
   const e=validEnvelope(p,6,pr);e.stageData={};
-  const fields={TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'Future declared target',TOOLS:'Review',PROCEDURE:'Inspect the actual target',EXPECTED_RESULT:'Established',FAILURE_CONDITION:'Not established',EVIDENCE_TO_PRESERVE:'Review report',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:due,REQUIRED_BY_STAGE:due,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:true,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}};
+  const fields={TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'Future declared target',TOOLS:'Review',PROCEDURE:'Inspect the actual target',EXPECTED_RESULT:'Established',FAILURE_CONDITION:'Not established',EVIDENCE_TO_PRESERVE:'Review report',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:due,REQUIRED_BY_STAGE:due,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:true,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}};
   e.records={tests:[{tempKey:'timing-test',fields,relationships:{},evidenceRefs:['evidence-1']}]};
   const raw=JSON.stringify(e),result=ingestion.prepare(p,{stage:6,text:raw,promptRecord:pr});
   if(result.validation.valid||!result.validation.issues.some(x=>x.code==='INVALID_TEST_TIMING'))throw new Error(`${operation} accepted contradictory ${phase} timing instead of regenerating a correction.`);
@@ -512,7 +516,7 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
 {
   const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);
   if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
-  const def=schema.RECORD_SCHEMAS.tests,fields={VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}};
+  const def=schema.RECORD_SCHEMAS.tests,fields={VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}};
   for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
   fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='FIXTURE_EXTERNAL_TOOL';fields.EXECUTABLE_KIND='NONE';fields.ARTIFACT_REQUIREMENTS='fixture.js';
   e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};

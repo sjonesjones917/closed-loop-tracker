@@ -1,3 +1,5 @@
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {canonicalFixtureRecord,reviewApplicabilityFixture} from './test-fixtures.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -90,7 +92,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_REQUIREMENTS_VERSION:'REQS-1',CURRENT_TEST_SUITE_VERSION:'TESTS-1'});
   p.activeStage=6;const scope=engine.currentScope(p);
   p.projectData.requirements.push({...record('requirements',4,{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-INLINE'),scope});
-  const t={...record('tests',6,{REQ_ID:'REQ-INLINE',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'The future generated output',STATUS:'READY',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}},'TEST-INLINE'),scope,evidenceRefs:['EVIDENCE-INLINE']};
+  const t={...record('tests',6,{REQ_ID:'REQ-INLINE',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'The future generated output',STATUS:'READY',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}},'TEST-INLINE'),scope,evidenceRefs:['EVIDENCE-INLINE']};
   p.projectData.tests.push(t);
   const ev={...record('evidenceRecords',6,{ATTACHMENT_ID:'UNKNOWN',CONTENT:'Design reasoning preserved inline.',STATUS:'PRESERVED'},'EVIDENCE-INLINE'),scope};p.projectData.evidenceRecords.push(ev);
   for(const missing of ['UNKNOWN','NONE','NOT APPLICABLE','PENDING','UNASSIGNED','',null]){
@@ -107,16 +109,19 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Only a current, independently reviewed applicability decision can reduce coverage.
 {
- const p=project('JOB-APPLICABLE-COVERAGE');Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'S1',CURRENT_REQUIREMENTS_VERSION:'R1',CURRENT_TEST_SUITE_VERSION:'T1'});const scope=engine.currentScope(p);
- p.projectData.requirements.push({...record('requirements',4,{MANDATORY_OPTIONAL_STATUS:'MANDATORY'},'REQ-NA'),scope});
- p.projectData.propositions.push({...record('propositions',4,{REQUIREMENT_ID:'REQ-NA'},'PROP-NA'),scope});
- p.projectData.applicabilityRecords.push({...record('applicabilityRecords',5,{SUBJECT_ID:'PROP-NA',SELECTED_APPLICABILITY:'NOT_APPLICABLE'},'APP-NA'),scope});
+ const p=project('JOB-APPLICABLE-COVERAGE');Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'S1',CURRENT_RESEARCH_VERSION:'RESEARCH1',CURRENT_REQUIREMENTS_VERSION:'R1'});
+ const runtime={engine,schema,prompts,ingestion};
+ for(let stage=1;stage<6;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
+ const req=canonicalFixtureRecord(runtime,p,'requirements',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',OBLIGATION:'Controlled optional applicability.',STATUS:'ACTIVE'});
+ const prop=canonicalFixtureRecord(runtime,p,'propositions',{REQUIREMENT_ID:req.id,PROPOSITION_TEXT:'Controlled obligation applies.'});
+ canonicalFixtureRecord(runtime,p,'applicabilityRecords',{SUBJECT_ID:prop.id,PROPOSED_APPLICABILITY:'NOT_APPLICABLE',SELECTED_APPLICABILITY:'NOT_APPLICABLE',REASONING:'The controlled review establishes that the applicability condition is absent.'});
  assert(engine.mandatoryRequirements(p).length===1,'Unreviewed applicability reduced mandatory coverage.');
- const review={...record('semanticReviews',5,{REVIEWED_RECORD_IDS:['APP-NA'],AUTHOR_CONTEXT_ID:'AUTHOR',REVIEWER_CONTEXT_ID:'REVIEWER',INDEPENDENCE_DETERMINATION:'APPLICATION_ESTABLISHED',RESULT:'ACCEPTED',ACCEPTED_DISPOSITION:'ACCEPTED',RECONCILIATION_STATUS:'COMPLETE'},'REVIEW-NA'),scope};p.projectData.semanticReviews.push(review);
+ reviewApplicabilityFixture(runtime,p);
  assert(engine.mandatoryRequirements(p).length===0,'Reviewed NOT_APPLICABLE requirement still counted as missing test coverage.');
- review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID='AUTHOR';
+ const review=p.projectData.semanticReviews.at(-1),reviewer=engine.recordValue(review,'REVIEWER_CONTEXT_ID');
+ review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID=engine.recordValue(review,'AUTHOR_CONTEXT_ID');
  assert(engine.mandatoryRequirements(p).length===1,'Self-review reduced mandatory coverage.');
- review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID='REVIEWER';review.scope={...scope,requirementsVersion:'OLD'};
+ review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID=reviewer;review.scope={...review.scope,requirementsVersion:'OLD'};
  assert(engine.mandatoryRequirements(p).length===1,'Stale review reduced current mandatory coverage.');
 }
 
@@ -126,7 +131,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_REQUIREMENTS_VERSION:'REQS-1',CURRENT_TEST_SUITE_VERSION:'TESTS-1',CURRENT_ITERATION:'ITERATION-1',CURRENT_CANDIDATE_ID:'CANDIDATE-1'});
   const scope=engine.currentScope(p);
   for(const [id,phase,stage] of [['RUN','PREPRODUCT_ITERATION',12],['FINAL','FINAL_PRODUCT_MEANING',23]]){
-    p.projectData.tests.push({...record('tests',6,{REQ_ID:'REQ-1',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:id+'-REPORT',STATUS:'READY',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,PER_RUN_REQUIRED:id==='RUN',FINAL_PRODUCT_REQUIRED:id==='FINAL',DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}},'TEST-'+id),scope});
+    p.projectData.tests.push({...record('tests',6,{REQ_ID:'REQ-1',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:id+'-REPORT',STATUS:'READY',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,PER_RUN_REQUIRED:id==='RUN',FINAL_PRODUCT_REQUIRED:id==='FINAL',DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}},'TEST-'+id),scope});
   }
   for(const [stage,operation] of [[12,'COMPLETE'],[17,'VERIFY'],[19,'VERIFY']]){
     const handoff=engine.executionHandoff(p,{stage,operation});
@@ -402,16 +407,24 @@ assert(schema.TEST_IR.version==='closed-loop-test-spec/1','Test IR version chang
 assert(schema.TEST_IR.capability==='CLOSED_LOOP_TEST_IR','Test IR capability changed.');
 assert(schema.TEST_IR.operations.includes('PARSE_JSON')&&schema.TEST_IR.operations.includes('BYTE_COMPARE'),'Required generic Test IR operations are missing.');
 assert(!schema.TEST_IR.operations.some(op=>/JAVASCRIPT|PYTHON|SHELL/i.test(op)),'Unsafe arbitrary-code Test IR operation registered.');
-assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),'Stage 19 operation contract is incomplete.');
+assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM','EXECUTE_FAILURE_TEST','EXECUTE_REGRESSION']),'Stage 19 operation contract is incomplete.');
 {
-  const p=project('JOB-NATIVE-STAGE22-NO-AGENT');
-  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE',CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});
-  const scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Native deterministic proposition',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-NATIVE-22');
-  const native=record('tests',6,{REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true},EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'},'TEST-NATIVE-22');
-  req.scope=scope;native.scope=scope;p.projectData.requirements.push(req);p.projectData.tests.push(native);
+  const r=projectStoreRuntime(),engine=r.engine,schema=r.runtime.closedLoopWorkflowSchema,runtime={engine,schema},p=r.core.createBlankState('JOB-NATIVE-STAGE22-NO-AGENT');engine.ensureShape(p);
+  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001'});
+  const req=canonicalFixtureRecord(runtime,p,'requirements',{OBLIGATION:'Native deterministic proposition',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'});
+  const native=canonicalFixtureRecord(runtime,p,'tests',{REQ_ID:req.id,TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'},EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'});
+  assert(engine.finalProductTestSelection(p,22).reasons.length,'A product pointer without bytes authorized Stage 22.');
+  const product=canonicalFixtureRecord(runtime,p,'products',{STATUS:'COMPLETED',PRODUCT_VERSION:'PRODUCT-v001',GENERATED_ARTIFACT_INVENTORY:[],FAILURES:'NONE',DEVIATIONS:'NONE'});product.completionState='COMPLETED';
+  Object.assign(p.job,{CURRENT_PRODUCT_ID:product.id,CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});
+  const blob=new Blob(['Native Stage22 exact bytes']),artifactId=engine.allocateId(p,'artifacts',{payload:r.copy({purpose:'STAGE22_NATIVE'})}),sha256=await r.runtime.closedLoopHash.sha256Bytes(blob);
+  engine.registerArtifactBytes(p,r.copy({stage:21,artifactId,filename:'native-stage22.txt',mediaType:'text/plain',byteSize:blob.size,sha256,lineage:{productId:product.id}}));
+  product.fields.GENERATED_ARTIFACT_INVENTORY=product.GENERATED_ARTIFACT_INVENTORY=[artifactId];engine.refreshRecordHashes(product,'products');
+  native.fields.EXECUTABLE_INPUT_BINDINGS=native.EXECUTABLE_INPUT_BINDINGS=r.copy({PRODUCT:artifactId});engine.refreshRecordHashes(native,'tests');
+  await r.store.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:'native-stage22.txt',mediaType:'text/plain'});
+  assert(engine.finalProductTestSelection(p,22).tests.length===1,'Canonical byte-backed Stage22 test was not selected.');
   const nativeGate=engine.gate(22,p);
   assert(!nativeGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Native-only Stage 22 still requires an external accepted response.');
-  native.fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';native.fields.REQUIRED_CAPABILITY='external deterministic tool';
+  native.fields.EXECUTION_MODE=native.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';native.fields.REQUIRED_CAPABILITY=native.REQUIRED_CAPABILITY='external deterministic tool';engine.refreshRecordHashes(native,'tests');
   const externalGate=engine.gate(22,p);
   assert(externalGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Stage 22 stopped requiring an accepted response when an external deterministic executor is required.');
 }

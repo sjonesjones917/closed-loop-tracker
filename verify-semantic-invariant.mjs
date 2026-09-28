@@ -1,9 +1,10 @@
+import {reviewProofFixture,canonicalFixtureRecord} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,hash=globalThis.closedLoopHash;
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITER-1',candidateId:'CAND-1'};
@@ -121,20 +122,38 @@ for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependency
 // A declared observation class cannot be supplied by an unsupported bare claim.
 {const q=core.createBlankState('JOB-PROOF-EVIDENCE');engine.ensureShape(q);q.projectData.propositions.push({id:'PROP-E',active:true,fields:{PROPOSITION_ID:'PROP-E'}});q.projectData.observationRecords.push({id:'OBS-E',active:true,fields:{OBSERVATION_ID:'OBS-E',EPISTEMIC_BASIS:'SELF_ASSERTED',FRESHNESS_STATUS:'CURRENT'}});q.projectData.entailmentReviews.push({id:'ENT-E',active:true,fields:{OBSERVATION_ID:'OBS-E',TARGET_PROPOSITION_ID:'PROP-E',ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:'ESTABLISHES'}});const node={type:'LEAF',propositionId:'PROP-E',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};assert(engine.evaluateProofExpression(q,'PARENT',node).truthValue==='UNKNOWN','Self-asserted observation acquired proof authority.');q.projectData.observationRecords[0].fields.EPISTEMIC_BASIS='EXTERNALLY_SUPPORTED';assert(engine.evaluateProofExpression(q,'PARENT',node).truthValue==='UNKNOWN','Observation without source evidence acquired proof authority.');}
 
-// Independent truth-table vectors for the three closed operators, with exact
-// observation/evidence targets. Missing, stale and contradictory evidence stays UNKNOWN.
+// Independent truth-table vectors for all three operators. Each complete
+// expression and its explicit timing is reviewed through production intake.
 {
- const q=core.createBlankState('JOB-PROOF-TRUTH-TABLE');Object.assign(q.job,{CURRENT_INPUT_VERSION:scope.inputVersion,CURRENT_SOURCE_SET_VERSION:scope.sourceSetVersion,CURRENT_REQUIREMENTS_VERSION:scope.requirementsVersion,CURRENT_TEST_SUITE_VERSION:scope.testSuiteVersion,CURRENT_INSTRUCTION_VERSION:scope.instructionVersion,CURRENT_ITERATION:scope.iterationId});engine.ensureShape(q);
- const leafFor=id=>({type:'LEAF',propositionId:id,truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'});
- for(const [id,relation]of [['TRUE','ESTABLISHES'],['FALSE','REFUTES'],['UNKNOWN',null]]){
-  q.projectData.propositions.push({id,active:true,scope:{...scope},fields:{PROPOSITION_ID:id}});
-  if(relation){q.projectData.evidenceRecords.push({id:'E-'+id,active:true,scope:{...scope},fields:{EVIDENCE_ID:'E-'+id,STATUS:'PRESERVED'}});q.projectData.observationRecords.push({id:'O-'+id,active:true,scope:{...scope},evidenceRefs:['E-'+id],fields:{OBSERVATION_ID:'O-'+id,EPISTEMIC_BASIS:'EXTERNALLY_SUPPORTED',FRESHNESS_STATUS:'CURRENT',RAW_OR_NATIVE_PROVENANCE:'FIXTURE-OBSERVATION-'+id}});q.projectData.entailmentReviews.push({id:'R-'+id,active:true,scope:{...scope},fields:{OBSERVATION_ID:'O-'+id,TARGET_PROPOSITION_ID:id,ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:relation}});}
+ const schema=closedLoopWorkflowSchema,runtime={engine,schema,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion};
+ const q=core.createBlankState('JOB-PROOF-TRUTH-TABLE');Object.assign(q.job,{CURRENT_INPUT_VERSION:scope.inputVersion,CURRENT_SOURCE_SET_VERSION:scope.sourceSetVersion,CURRENT_REQUIREMENTS_VERSION:scope.requirementsVersion,CURRENT_TEST_SUITE_VERSION:scope.testSuiteVersion});engine.ensureShape(q);
+ const record=(family,fields,options={})=>canonicalFixtureRecord(runtime,q,family,fields,options),req=record('requirements',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}),subjects={};
+ const timing={VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:6,REQUIRED_BY_STAGE:6,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}};
+ for(const [label,relation]of [['TRUE','ESTABLISHES'],['FALSE','REFUTES'],['UNKNOWN',null]]){
+  const subject=record('propositions',{REQUIREMENT_ID:req.id,PROPOSITION_TEXT:label,STATUS:'CURRENT'},{relationships:{REQUIREMENT_ID:req.id}});subjects[label]=subject.id;
+  if(relation){const evidence=record('evidenceRecords',{STATUS:'PRESERVED'}),observation=record('observationRecords',{EPISTEMIC_BASIS:'EXTERNALLY_SUPPORTED',FRESHNESS_STATUS:'CURRENT',RAW_OR_NATIVE_PROVENANCE:'FIXTURE-OBSERVATION-'+label});observation.evidenceRefs=[evidence.id];engine.refreshRecordHashes(observation,'observationRecords');record('entailmentReviews',{OBSERVATION_ID:observation.id,TARGET_PROPOSITION_ID:subject.id,ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:relation});}
  }
- const cases=[['TRUE','TRUE','TRUE','TRUE'],['TRUE','FALSE','FALSE','TRUE'],['TRUE','UNKNOWN','UNKNOWN','TRUE'],['FALSE','FALSE','FALSE','FALSE'],['FALSE','UNKNOWN','FALSE','UNKNOWN'],['UNKNOWN','UNKNOWN','UNKNOWN','UNKNOWN']];
- for(const [a,b,all,any]of cases)for(const inputs of [[a,b],[b,a]])for(const [type,expected]of [['ALL_OF',all],['ANY_OF',any]])assert(engine.evaluateProofExpression(q,'PARENT',{type,children:inputs.map(leafFor)}).truthValue===expected,type+' truth table failed for '+inputs);
- for(const [inputs,expected]of [[['TRUE','TRUE','UNKNOWN'],'TRUE'],[['TRUE','FALSE','FALSE'],'FALSE'],[['TRUE','UNKNOWN','FALSE'],'UNKNOWN'],[['UNKNOWN','UNKNOWN','UNKNOWN'],'UNKNOWN'],[['FALSE','FALSE','UNKNOWN'],'FALSE']])assert(engine.evaluateProofExpression(q,'PARENT',{type:'AT_LEAST_K',k:2,children:inputs.map(leafFor)}).truthValue===expected,'Threshold proof truth table failed for '+inputs);
- q.projectData.observationRecords[0].fields.FRESHNESS_STATUS='EXPIRED';assert(engine.evaluateProofExpression(q,'PARENT',leafFor('TRUE')).truthValue==='UNKNOWN','Expired observation supplied proof.');q.projectData.observationRecords[0].fields.FRESHNESS_STATUS='CURRENT';q.projectData.entailmentReviews.push({id:'CONTRADICTION',active:true,scope:{...scope},fields:{OBSERVATION_ID:'O-TRUE',TARGET_PROPOSITION_ID:'TRUE',ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:'REFUTES'}});assert(engine.evaluateProofExpression(q,'PARENT',leafFor('TRUE')).truthValue==='UNKNOWN','Contradictory sufficient observations supplied proof.');
+ const leafFor=label=>({type:'LEAF',propositionId:subjects[label],truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT',proposedTiming:timing}),vectors=[];
+ const add=(node,expected,label)=>{const parent=record('propositions',{REQUIREMENT_ID:req.id,PROPOSITION_TEXT:label,STATUS:'CURRENT'},{relationships:{REQUIREMENT_ID:req.id}});record('proofExpressions',{TARGET_PROPOSITION_ID:parent.id,PROPOSED_EXPRESSION:node,NORMALIZED_EXPRESSION:node,SEMANTIC_RATIONALE:'The exact operator combines independently preserved observations.'},{relationships:{TARGET_PROPOSITION_ID:parent.id}});vectors.push({node,expected,label,parentId:parent.id});return vectors.at(-1);};
+ const pairs=[['TRUE','TRUE','TRUE','TRUE'],['TRUE','FALSE','FALSE','TRUE'],['TRUE','UNKNOWN','UNKNOWN','TRUE'],['FALSE','FALSE','FALSE','FALSE'],['FALSE','UNKNOWN','FALSE','UNKNOWN'],['UNKNOWN','UNKNOWN','UNKNOWN','UNKNOWN']];
+ for(const [a,b,all,any]of pairs)for(const inputs of [[a,b],[b,a]])for(const [type,expected]of [['ALL_OF',all],['ANY_OF',any]])add({type,children:inputs.map(leafFor)},expected,type+' '+inputs);
+ for(const [inputs,expected]of [[['TRUE','TRUE','UNKNOWN'],'TRUE'],[['TRUE','FALSE','FALSE'],'FALSE'],[['TRUE','UNKNOWN','FALSE'],'UNKNOWN'],[['UNKNOWN','UNKNOWN','UNKNOWN'],'UNKNOWN'],[['FALSE','FALSE','UNKNOWN'],'FALSE']])add({type:'AT_LEAST_K',k:2,children:inputs.map(leafFor)},expected,'Threshold '+inputs);
+ const single=add(leafFor('TRUE'),'TRUE','Single current observation');
+ for(let n=1;n<=5;n++){q.stages[n].status='COMPLETE';q.stages[n].gate={complete:true};}reviewProofFixture(runtime,q);q.job.CURRENT_STAGE='STAGE 06';
+ for(const v of vectors){assert(engine.deriveLeafTimingSchedule(q,v.parentId).resolved,'Truth table fixture omitted its reviewed timing.');assert(engine.evaluateProofExpression(q,v.parentId,v.node).truthValue===v.expected,v.label+' truth table failed.');}
+ const reviewedAll=vectors.find(v=>v.node.type==='ALL_OF'&&v.expected==='FALSE'&&v.node.children.some(leaf=>leaf.propositionId===subjects.TRUE));
+ const substituted={...reviewedAll.node,type:'ANY_OF'};
+ assert(engine.evaluateProofExpression(q,reviewedAll.parentId,substituted).truthValue==='UNKNOWN','REVIEWED_EXPRESSION_IDENTITY_ORACLE: an unreviewed operator acquired the reviewed parent schedule.');
+ assert(engine.evaluateStageProofTruth(q,reviewedAll.parentId,substituted,6)==='UNKNOWN','REVIEWED_EXPRESSION_IDENTITY_ORACLE: stage proof accepted an unreviewed operator.');
+ const observation=q.projectData.observationRecords.find(row=>engine.recordValue(row,'RAW_OR_NATIVE_PROVENANCE')==='FIXTURE-OBSERVATION-TRUE');
+ const expectUnknown=label=>assert(engine.evaluateProofExpression(q,single.parentId,single.node).truthValue==='UNKNOWN',label);
+ observation.fields.FRESHNESS_STATUS='EXPIRED';expectUnknown('Expired observation supplied proof.');observation.fields.FRESHNESS_STATUS='CURRENT';
+ observation.fields.EPISTEMIC_BASIS='SELF_ASSERTED';expectUnknown('Self-asserted observation supplied proof.');observation.fields.EPISTEMIC_BASIS='EXTERNALLY_SUPPORTED';
+ const preserved=observation.evidenceRefs;observation.evidenceRefs=[];expectUnknown('Missing source evidence supplied proof.');observation.evidenceRefs=preserved;
+ const provenance=observation.fields.RAW_OR_NATIVE_PROVENANCE;observation.fields.RAW_OR_NATIVE_PROVENANCE='';expectUnknown('Missing observation provenance supplied proof.');observation.fields.RAW_OR_NATIVE_PROVENANCE=provenance;
+ assert(engine.evaluateProofExpression(q,single.parentId,single.node).truthValue==='TRUE','Restored valid current evidence did not restore proof.');
+ record('entailmentReviews',{OBSERVATION_ID:observation.id,TARGET_PROPOSITION_ID:subjects.TRUE,ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:'REFUTES'});expectUnknown('Contradictory sufficient observations supplied proof.');
  const cycle={type:'ALL_OF',children:[]};cycle.children.push(cycle);assert(!engine.validateProofExpression(cycle).valid,'Cyclic object graph entered proof normalization.');let deep=leafFor('UNKNOWN');for(let i=0;i<34;i++)deep={type:'ALL_OF',children:[deep]};assert(!engine.validateProofExpression(deep).valid,'Proof depth limit was ignored.');
- q.projectData.proofObligations.push({id:'OBLIGATION-SELF',active:true,scope:{...scope},fields:{PROPOSITION_ID:'PARENT'}});const prerequisite={type:'LEAF',proofObligationId:'OBLIGATION-SELF',truthExtraction:'PROOF_OBLIGATION',evidenceClasses:['ACCEPTED_PROOF_REVIEW'],scopeBinding:'CURRENT'};assert(!engine.validateProofExpression(prerequisite,{project:q,targetPropositionId:'PARENT'}).valid,'Circular prerequisite proof was accepted.');
- console.log(JSON.stringify({closedProofTruthTables:true,currentEvidenceRequired:true,proofCyclesAndResourceBounds:true}));
+ const obligation=record('proofObligations',{PROPOSITION_ID:single.parentId}),prerequisite={type:'LEAF',proofObligationId:obligation.id,truthExtraction:'PROOF_OBLIGATION',evidenceClasses:['ACCEPTED_PROOF_REVIEW'],scopeBinding:'CURRENT'};assert(!engine.validateProofExpression(prerequisite,{project:q,targetPropositionId:single.parentId}).valid,'Circular prerequisite proof was accepted.');
+ console.log(JSON.stringify({closedProofTruthTables:true,vectors:vectors.length,currentEvidenceRequired:true,reviewedTimingRequired:true,proofCyclesAndResourceBounds:true}));
 }

@@ -277,6 +277,13 @@ assert.equal(hash.sha256Value(pending.project),pendingHash,'Rejection changed th
 const passed=accept(review(['ACCEPTED','ACCEPTED']));
 assert.equal(passed.stages[5].gate.complete,true,'A complete valid independent review no longer passes.');
 assert.equal(prompts.buildPromptRecord(6,passed,{operation:'COMPLETE'}).stage,6);
+const malformedReviewCases=[];
+for(const field of ['REVIEWED_RECORD_IDS','REVIEWED_HASHES'])for(const [label,value]of [['missing',undefined],['null',null],['string','untrusted'],['object',{}],['non-string-member',[1]]]){
+ const q=structuredClone(passed);for(const row of q.projectData.semanticReviews.filter(row=>row.stage===5)){if(value===undefined){delete row.fields[field];delete row[field];}else row.fields[field]=row[field]=structuredClone(value);}
+ let actual;assert.doesNotThrow(()=>{actual=engine.evaluateApplicability(q,propositionId);},'MALFORMED_REVIEW_ORACLE: malformed review crashed evaluation.');
+ assert.equal(actual,'UNKNOWN','MALFORMED_REVIEW_ORACLE: malformed review authorized applicability.');malformedReviewCases.push({field,case:label,actual});
+}
+
 assert.equal(closedLoopProjectStore.validateProjectIntegrity(passed,{verifyDerived:false}).valid,true);
 
 // Proof-review correction uses the same continuation and independence rule.
@@ -330,4 +337,4 @@ engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.raw
 assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));

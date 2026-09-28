@@ -1,3 +1,4 @@
+import {bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -7,6 +8,8 @@ import {responseFixture,OBJECTIVE,OUTPUT,CANDIDATE} from './operator-journey-fix
 globalThis.dispatchEvent=()=>true;
 const injectedFault=process.env.CLRT_COUNTERPART_FAULT||null;
 const counterpartFaults={
+  'missing-candidate-bytes':{skipFixtureFile:'CANDIDATE-FILE'},
+  'missing-product-bytes':{skipFixtureFile:'PRODUCT-FILE'},
   'fractional-stability':{from:'const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);',to:'return stability; const snapshot=clone(stability),denominator=Number(snapshot.runCount||0);'},
   'missing-defect-gate':{from:'if(defectRequired&&!defectIds.length)',to:'if(false&&defectRequired&&!defectIds.length)'},
   'unrelated-defect-reason':{from:"' has prohibited variance or a violated result without a DEFECT_IDS handoff.'",to:"' has an unrelated prerequisite failure.'"},
@@ -15,7 +18,7 @@ const counterpartFaults={
 assert(!injectedFault||counterpartFaults[injectedFault],'COUNTERPART_FAULT_ID_ORACLE: unknown fault');
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
   let source=fs.readFileSync(file,'utf8');
-  if(file==='workflow-engine.js'&&injectedFault){
+  if(file==='workflow-engine.js'&&injectedFault&&counterpartFaults[injectedFault].from){
     const fault=counterpartFaults[injectedFault];
     assert.equal(source.split(fault.from).length-1,1,'COUNTERPART_FAULT_ANCHOR_ORACLE: exactly one current owning condition is required');
     const mutated=source.replace(fault.from,fault.to);
@@ -24,9 +27,14 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
   }
   createVerifierRuntime.loadScript(globalThis,source,{filename:file});
 }
+const byteStore=await bindArtifactFixture([]);
 const engine=closedLoopWorkflowEngine,schema=closedLoopWorkflowSchema,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
 let p=closedLoopCore.createBlankState('COUNTERPART-CONTRACT-PREFLIGHT');p.job.JOB_TITLE='Complete operator journey';p.job.EXACT_USER_OBJECTIVE_VERBATIM=OBJECTIVE;engine.ensureShape(p);engine.recalculate(p);
 const value=engine.recordValue,id=engine.recordId,latest=family=>engine.recordsForCurrentScope(p,family).at(-1),cases=[];
+async function retainFixtureFile(label,filename,text){
+  if(counterpartFaults[injectedFault]?.skipFixtureFile===label)return;
+  await byteStore.putArtifact({jobId:p.job.JOB_ID,artifactId:artifactFixtureId(engine,p,label),filename,mediaType:'text/plain',blob:new Blob([text],{type:'text/plain'})});
+}
 // Fixture preflight only. Actual interface and file transport acceptance remains
 // the separate verify-complete-operator-journey.mjs browser execution.
 const stageLimit=Number(process.env.CLRT_COUNTERPART_STAGE_LIMIT||30);
@@ -37,7 +45,7 @@ for(let stage=1;stage<=stageLimit;stage++){
     if(process.env.CLRT_COUNTERPART_PROGRESS)console.error(JSON.stringify({counterpartStage:stage,action:action.actionType,operation:action.operation}));
     if(stage===28&&!latest('artifactIdentities')){const row={artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),name:'result.txt',size:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT),byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'SYNTHETIC-BYTE-COMPARISON',artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),byteSize:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT)}};engine.verifyArtifactIdentity(p,[row],[row]);}
     else if(action.actionType==='CONFIRM_STAGE_ONE_INTENT'){const change=engine.acceptedChanges(p,1).at(-1);engine.recordStageConfirmation(p,1,true,'Synthetic confirmation','SYNTHETIC',{acceptedChangeId:change.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION});}
-    else if(action.actionType==='FREEZE_CANDIDATE'){if(!engine.records(p,'artifacts',{active:false}).some(row=>engine.recordId(row,'artifacts')===artifactFixtureId(engine,p,'CANDIDATE-FILE')))engine.registerArtifactBytes(p,{stage,artifactId:artifactFixtureId(engine,p,'CANDIDATE-FILE'),filename:'production-instruction.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(CANDIDATE),sha256:hash.sha256Text(CANDIDATE)});const decision=engine.recordRegisteredHumanDecision(p,{stage,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value([artifactFixtureId(engine,p,'CANDIDATE-FILE')]),value:[artifactFixtureId(engine,p,'CANDIDATE-FILE')],operatorLabel:'SYNTHETIC'});engine.freezeCandidate(p,{stage,artifactIds:[artifactFixtureId(engine,p,'CANDIDATE-FILE')],selectionDecisionId:id(decision,'humanDecisions')});}
+    else if(action.actionType==='FREEZE_CANDIDATE'){await retainFixtureFile('CANDIDATE-FILE','production-instruction.txt',CANDIDATE);if(!engine.records(p,'artifacts',{active:false}).some(row=>engine.recordId(row,'artifacts')===artifactFixtureId(engine,p,'CANDIDATE-FILE')))engine.registerArtifactBytes(p,{stage,artifactId:artifactFixtureId(engine,p,'CANDIDATE-FILE'),filename:'production-instruction.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(CANDIDATE),sha256:hash.sha256Text(CANDIDATE)});const decision=engine.recordRegisteredHumanDecision(p,{stage,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value([artifactFixtureId(engine,p,'CANDIDATE-FILE')]),value:[artifactFixtureId(engine,p,'CANDIDATE-FILE')],operatorLabel:'SYNTHETIC'});engine.freezeCandidate(p,{stage,artifactIds:[artifactFixtureId(engine,p,'CANDIDATE-FILE')],selectionDecisionId:id(decision,'humanDecisions')});}
     else if(action.actionType==='RESERVE_RUN_BATCH')engine.reserveRunBatch(p,{stage});
     else if(action.actionType==='BEGIN_UNCHANGED_CONFIRMATION')engine.beginUnchangedConfirmationIteration(p,{candidateId:id(latest('candidateFreezes'),'candidateFreezes')});
     else if(action.actionType==='CALCULATE_CONVERGENCE')engine.recordConvergence(p);
@@ -56,12 +64,19 @@ for(let stage=1;stage<=stageLimit;stage++){
     else if(action.actionType==='RECORD_DELIVERY_EVIDENCE')engine.recordDeliveryEvidence(p,{attemptId:id(latest('deliveryAttempts'),'deliveryAttempts'),outcome:'RECEIVED',observation:'Synthetic receipt for fixture contract preflight only.',operatorLabel:'SYNTHETIC'});
     else if(['SELECT_RESPONSE_JSON_FILE','AI_REVIEW','EXTERNAL_AGENT_TOOL','CONTINUE_AGENT_CONVERSATION','EXTERNAL_SYSTEM'].includes(action.actionType)){
       const {prompt}=prompts.reserveAndBuildPromptRecord(p,stage,{operation:action.operation||schema.STAGE_CONTRACTS[stage].operations[0]});const request=responseFixture({schema,engine,prompt,manifest:prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt),omitTerminalLF:stage===11&&!cases.some(row=>row.stage===11)}),files=[];
-      if(stage===21){const slot=prompts.promptFileManifest(prompt).attachmentSlots.find(item=>item.role==='FINISHED_PRODUCT'&&item.required);assert.ok(slot,'Stage 21 must issue its required finished-product slot.');request.attachments=[{attachmentSlotId:slot.attachmentSlotId,role:slot.role,temporaryKey:'product-file',filename:'result.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT),required:true}];request.evidence[0].attachmentRef={tempKey:'product-file'};files.push({artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),name:'result.txt',type:'text/plain',size:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT),attachmentSlotId:ingestion.attachmentSlotPlan(p,request,prompt)[0].attachmentSlotId});}
+      if(stage===21){const slot=prompts.promptFileManifest(prompt).attachmentSlots.find(item=>item.role==='FINISHED_PRODUCT'&&item.required);assert.ok(slot,'Stage 21 must issue its required finished-product slot.');request.attachments=[{attachmentSlotId:slot.attachmentSlotId,role:slot.role,temporaryKey:'product-file',filename:'result.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT),required:true}];request.evidence[0].attachmentRef={tempKey:'product-file'};await retainFixtureFile('PRODUCT-FILE','result.txt',OUTPUT);files.push({artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),name:'result.txt',type:'text/plain',size:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT),attachmentSlotId:ingestion.attachmentSlotPlan(p,request,prompt)[0].attachmentSlotId});}
       const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(request),promptRecord:prompt,files,transport:{packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC'}).project;cases.push({stage,operation:prompt.operation,result:'PASS'});
       if(prompt.operation==='VERIFY'){const scope=prompt.scope,iterationId=scope.iterationId||scope.confirmationIterationId,runs=engine.records(p,'runs').filter(row=>String(engine.recordValue(row,'ITERATION_ID')||row.scope?.iterationId||'')===iterationId),verified=new Set(engine.records(p,'verification').filter(row=>(row.scope?.iterationId||row.scope?.confirmationIterationId)===iterationId).map(row=>String(engine.recordValue(row,'RUN_ID')||''))),remaining=runs.filter(row=>!verified.has(id(row,'runs')));if(remaining.length)assert.equal(engine.operationalNextAction(p,stage).operation,'VERIFY','ITERATION_PARTIAL_VERIFY_ORACLE: every bound run must be verified before the workflow advances');}
 
     }else throw new Error('No progressing fixture command: '+JSON.stringify(action));
     engine.recalculate(p);
+    for(const artifact of engine.records(p,'artifacts')){
+      if(value(artifact,'AVAILABILITY')!=='BYTES_PERSISTED_AND_VERIFIED')continue;
+      const identity={jobId:p.job.JOB_ID,artifactId:id(artifact,'artifacts'),filename:value(artifact,'FILENAME'),byteSize:value(artifact,'BYTE_SIZE'),sha256:value(artifact,'SHA256')};
+      assert.equal(globalThis.closedLoopProjectStore?.artifactCustodyState?.(identity),'TRUE','COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE: every retained artifact marked stored and verified must have matching actual bytes. '+JSON.stringify({stage,action:action.actionType,identity,source:artifact.source,storage:value(artifact,'STORAGE_REFERENCE')}));
+      const stored=await byteStore.getArtifact(identity.artifactId,{jobId:identity.jobId});
+      assert(stored&&stored.byteSize===identity.byteSize&&await hash.sha256Bytes(stored.blob)===identity.sha256,'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE: the stored byte length and digest must match the canonical artifact.');
+    }
     assert.doesNotThrow(()=>hash.sha256Value(p),`Stage ${stage} ${action.actionType} must remain persistable after every operation`);
   }
   assert.equal(engine.gate(stage,p).complete,true,JSON.stringify({stage,reasons:engine.gate(stage,p).reasons}));

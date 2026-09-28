@@ -1,3 +1,4 @@
+import {bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -22,6 +23,7 @@ assert.equal(fullCycleSource.split(intakeAnchor).length,2,'The canonical product
 fullCycleSource=fullCycleSource.replace(intakeAnchor,intakeAnchor+`
 const additionalProductBytes=new TextEncoder().encode('Additional exact product output'),additionalProductId=artifactFixtureId(engine,p,'STAGE28-SECOND-PRODUCT');
 engine.registerArtifactBytes(p,{stage:21,artifactId:additionalProductId,filename:'second-product.txt',mediaType:'text/plain',byteSize:additionalProductBytes.byteLength,sha256:hash.sha256Text(new TextDecoder().decode(additionalProductBytes)),lineage:{productId}});
+await byteStore.putArtifact({jobId:p.job.JOB_ID,artifactId:additionalProductId,filename:'second-product.txt',mediaType:'text/plain',blob:new Blob([additionalProductBytes])});
 const deliveryArtifactIds=[...engine.recordValue(engine.recordsForCurrentScope(p,'products').at(-1),'GENERATED_ARTIFACT_INVENTORY')].sort();
 for(const artifactId of deliveryArtifactIds)engine.assertArtifactAllocation(p,artifactId);
 `);
@@ -38,13 +40,14 @@ fullCycleSource=fullCycleSource.replace(singleSelection,multipleSelection);
 const stage28Boundary="engine.verifyArtifactIdentity(p,[{";
 const boundaryIndex=fullCycleSource.indexOf(stage28Boundary);
 assert.ok(boundaryIndex>0,'The full-cycle Stage 28 boundary could not be located for isolated fixture instrumentation.');
-const instrumented=fullCycleSource.slice(0,boundaryIndex)+`fs.writeFileSync(${JSON.stringify(snapshotPath)},JSON.stringify(p));console.log('STAGE28_READY_FIXTURE');process.exit(0);\n`+fullCycleSource.slice(boundaryIndex);
+const instrumented=fullCycleSource.slice(0,boundaryIndex)+`fs.writeFileSync(${JSON.stringify(snapshotPath)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID)}));console.log('STAGE28_READY_FIXTURE');process.exit(0);\n`+fullCycleSource.slice(boundaryIndex);
 fs.writeFileSync(instrumentedPath,instrumented);
 let fixtureOutput='';
-try{fixtureOutput=execFileSync(process.execPath,[instrumentedPath],{encoding:'utf8',maxBuffer:64*1024*1024});}finally{fs.rmSync(instrumentedPath,{force:true});}
+try{fixtureOutput=execFileSync(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024});}finally{fs.rmSync(instrumentedPath,{force:true});}
 assert.match(fixtureOutput,/STAGE28_READY_FIXTURE/,'The full-cycle production mechanism did not reach the exact Stage 27-ready fixture.');
 assert.ok(fs.existsSync(snapshotPath),'The instrumented full-cycle production mechanism did not preserve its Stage 27-ready fixture.');
-const source=JSON.parse(fs.readFileSync(snapshotPath,'utf8'));
+const captured=JSON.parse(fs.readFileSync(snapshotPath,'utf8')),source=captured.project;
+await bindArtifactFixture(captured.artifacts);
 fs.rmSync(tmp,{recursive:true,force:true});
 
 function fresh(){const p=structuredClone(source);engine.ensureShape(p);engine.recalculate(p);assert.equal(engine.gate(27,p).complete,true,'The isolated Stage 28 fixture is not actually Stage 27-ready.');return p;}

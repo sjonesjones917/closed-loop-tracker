@@ -1,4 +1,5 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {recordProposal,canonicalFixtureRecord} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
@@ -26,13 +27,18 @@ function baseProject(){
 function rootCause(scope=CURRENT_SCOPE,overrides={}){return record('rootCauses',14,{DEFECT_ID:'DEFECT-STAGE18',CATEGORY:'INSTRUCTION',LAYER_TRACE:'User input -> source/research -> requirement -> instruction -> execution -> observed output',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'The production instruction first introduced the behavior that caused the preserved material failure.',EVIDENCE:'Backward trace over preserved canonical Stage 13 comparison, verification, instruction, requirement, research, source, run, and artifact evidence.',DOWNSTREAM_INVALIDATION:'Stage 15 regression definition/execution and Stage 16 correction are required before any corrected rerun.',...overrides},'RCA-STAGE18',scope);}
 function withCurrentRca(){const base=baseProject();base.p.projectData.rootCauses.push(rootCause());return base;}
 function addRegression(p,{result='VIOLATED',withExecution=true,withEvidence=true}={}){
+  // This isolated gate fixture supplies a real canonical per-run timing target.
+  // The full-cycle verifier separately establishes these through the controls.
+  const fixture=(family,fields,options={})=>canonicalFixtureRecord({engine,schema},p,family,fields,options);
+  const candidate=fixture('candidateFreezes',{STATUS:'FROZEN'});p.job.CURRENT_CANDIDATE_ID=candidate.id;
+  const iteration=fixture('iterations',{CANDIDATE_ID:candidate.id},{stage:10});p.job.CURRENT_ITERATION=iteration.id;
+  fixture('runs',{ITERATION_ID:iteration.id,CANDIDATE_ID:candidate.id},{stage:11});
   p.stages[14].status='COMPLETE';p.stages[14].gate={complete:true,blocked:false,reasons:[]};
   p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE18-REGRESSION',stage:15,status:'COMMITTED',responseType:'DATA_PROPOSAL',scope:{...CURRENT_SCOPE}});
-  const regression=record('regressions',15,{DEFECT_ID:'DEFECT-STAGE18',REQ_ID:'REQ-STAGE18',FAILURE_FIXTURE:'fixture://stage18/confirmed-material-failure-v1',FIXTURE_IDENTITY_HASH:'sha256:'+'a'.repeat(64),REPRODUCTION_PROCEDURE:'Run the preserved failing fixture against the exact pre-correction candidate and evaluate the controlled failure condition.',DETECTION_METHOD:'Compare the controlled observed result with the mandatory expected condition.',PRE_CORRECTION_RESULT:'VIOLATED',PRE_CORRECTION_EVIDENCE:'EVIDENCE-STAGE18-PRE',CORRECTION:'Stage 16 must correct the earliest defective instruction layer; Stage 15 does not claim correction success.',POST_CORRECTION_RESULT:'',POST_CORRECTION_EVIDENCE:'',PERMANENT_TEST_LOCATION:'verification/regressions/stage18-confirmed-material-failure',APPLICABILITY:'APPLICABLE',ACTIVE_RETIRED_STATE:'ACTIVE',RETIREMENT_AUTHORITY:'NONE'},'REG-STAGE18');
-  p.projectData.regressions.push(regression);
+  const regression=fixture('regressions',{...recordProposal(schema,'regressions').fields,DEFECT_ID:'DEFECT-STAGE18',REQ_ID:'REQ-STAGE18',FAILURE_FIXTURE:'fixture://stage18/confirmed-material-failure-v1',FIXTURE_IDENTITY_HASH:'sha256:'+'a'.repeat(64),REPRODUCTION_PROCEDURE:'Run the preserved failing fixture against the exact pre-correction candidate and evaluate the controlled failure condition.',DETECTION_METHOD:'Compare the controlled observed result with the mandatory expected condition.',PRE_CORRECTION_RESULT:'VIOLATED',PRE_CORRECTION_EVIDENCE:'EVIDENCE-STAGE18-PRE',CORRECTION:'Stage 16 must correct the earliest defective instruction layer; Stage 15 does not claim correction success.',POST_CORRECTION_RESULT:'',POST_CORRECTION_EVIDENCE:'',PERMANENT_TEST_LOCATION:'verification/regressions/stage18-confirmed-material-failure',APPLICABILITY:'APPLICABLE',ACTIVE_RETIRED_STATE:'ACTIVE',RETIREMENT_AUTHORITY:'NONE'});
   let evidence=null,execution=null;
   if(withEvidence){evidence=record('evidenceRecords',15,{KIND:'REGRESSION_EXECUTION',AUTHORITY_TYPE:'APPLICATION',DESCRIPTION:'Actual pre-correction regression execution observation.',CONTENT:'The preserved fixture executed against the pre-correction candidate and reproduced the controlled failure.',STATUS:'PRESERVED'},'EVIDENCE-STAGE18-PRE');p.projectData.evidenceRecords.push(evidence);}
-  if(withExecution){execution=record('regressionExecutions',15,{REG_ID:'REG-STAGE18',PHASE:'PRE_CORRECTION',RESULT:result},'REG-EXEC-STAGE18-PRE');if(withEvidence)execution.evidenceRefs=['EVIDENCE-STAGE18-PRE'];p.projectData.regressionExecutions.push(execution);}
+  if(withExecution){execution=record('regressionExecutions',15,{REG_ID:regression.id,PHASE:'PRE_CORRECTION',RESULT:result},'REG-EXEC-STAGE18-PRE');if(withEvidence)execution.evidenceRefs=['EVIDENCE-STAGE18-PRE'];p.projectData.regressionExecutions.push(execution);}
   return {regression,evidence,execution};
 }
 

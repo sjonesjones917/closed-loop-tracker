@@ -41,7 +41,18 @@ function verifySourceCommit(){
   assert(cp.spawnSync('git',['merge-base','--is-ancestor',sourceCommit,'HEAD'],{stdio:'ignore'}).status===0,'Specification source commit is not reachable from current canonical main.');
   const shown=cp.spawnSync('git',['show',`${sourceCommit}:${SPEC_PATH}`],{encoding:null,maxBuffer:64*1024*1024});
   assert(shown.status===0,'Specification is absent from the recorded source commit.');
-  assert(Buffer.compare(Buffer.from(shown.stdout),sourceBytes)===0,'Recorded source commit does not contain the current exact specification bytes.');
+  const clarifications=readJson('specification/requirement-evidence-bindings.json').approvedClarifications||[];
+  let pinnedBytes=sourceBytes;
+  if(clarifications.length){
+    const lines=sourceText.split('\n'),excluded=new Set();
+    for(const c of clarifications){
+      assert(c.approval&&sha256(Buffer.from(lines.slice(c.startLine-1,c.startLine-1+c.lineCount).join('\n')+'\n'))===c.textSha256,'Approved source amendment bytes differ.');
+      for(let i=c.startLine-1;i<c.startLine-1+c.lineCount;i++){assert(!excluded.has(i),'Approved source amendments overlap.');excluded.add(i);}
+    }
+    pinnedBytes=Buffer.from(lines.filter((_,i)=>!excluded.has(i)).join('\n'));
+    assert(clarifications.every(c=>sha256(pinnedBytes)===c.baseSpecificationSha256),'Approved source amendment changes unrelated controlling text.');
+  }
+  assert(Buffer.compare(Buffer.from(shown.stdout),pinnedBytes)===0,'Recorded source commit does not contain the exact pinned base specification bytes.');
   return {checked:true};
 }
 const sourceCommitEvidence=verifySourceCommit();

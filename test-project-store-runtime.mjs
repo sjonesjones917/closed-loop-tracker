@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -5,7 +6,10 @@ import {createVerifierRuntime} from './verifier-runtime.mjs';
 // The existing lifecycle suite's transaction adapter, extracted for recovery
 // regressions. This is explicitly not a browser or an IndexedDB implementation.
 export function projectStoreRuntime({fault=null,sourceOverrides={}}={}){
- const rows=new Map();
+ // Opening the production database creates every declared object store.
+ // Keep empty stores present too, so an otherwise read-only transaction
+ // cannot appear to mutate state merely by materializing an empty adapter map.
+ const rows=new Map([['projects',new Map()],['artifacts',new Map()],['meta',new Map()]]);
  const runtime=createVerifierRuntime({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console,Event:class Event{},dispatchEvent(){}});
  const parse=vm.runInContext('(text)=>JSON.parse(text)',runtime);
  // Preserve undefined properties and shared references just as structured clone
@@ -44,4 +48,20 @@ runtime.captureCurrentView=async()=>store.saveCheckpoint(runtime.current.job.JOB
 let source=fs.readFileSync('app-core.js','utf8');if(skipConfirmation){for(const before of ['if(impact?.requiresConfirmation&&mutationConfirmation?.confirmationKey!==impact.confirmationKey)','if(semanticImpact?.requiresConfirmation){']){assert(source.includes(before));source=source.replace(before,before.endsWith('{')?'if(false){':'if(false)');}}const extract=(start,end)=>{const a=source.indexOf(start);assert(a>=0);return source.slice(a,source.indexOf(end,a+start.length));};
 vm.runInContext(extract('async function persistReplacement(','async function save(')+extract('function humanAuthorityConfirmationValues(','async function rejectPendingProposal(')+'\nglobalThis.accept=acceptPendingProposal;globalThis.confirm=confirmReplacement;',runtime);
  return failures;
+}
+
+// Crossing a verifier process boundary preserves the bytes that the lifecycle
+// actually stored. JSON metadata alone cannot establish artifact custody.
+export async function captureArtifactFixture(store,jobId){
+ const rows=await store.listArtifacts(jobId),artifacts=[];
+ for(const row of rows){const bytes=Buffer.from(await row.blob.arrayBuffer());if(bytes.length!==row.byteSize||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw new Error('Artifact fixture capture does not match stored byte identity.');artifacts.push({...row,blob:undefined,bytesBase64:bytes.toString('base64')});}
+ return artifacts;
+}
+export async function restoreArtifactFixture(store,artifacts){
+ if(!Array.isArray(artifacts))throw new Error('Artifact fixture bytes are missing.');
+ for(const row of artifacts){const bytes=Buffer.from(row.bytesBase64,'base64');if(bytes.length!==row.byteSize||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw new Error('Artifact fixture restoration does not match captured byte identity.');await store.putArtifact({...row,blob:new Blob([bytes],{type:row.mediaType})});const restored=await store.getArtifact(row.artifactId);if(!restored||restored.sha256!==row.sha256||restored.byteSize!==row.byteSize)throw new Error('Artifact fixture bytes were not restored through the storage authority.');}
+}
+export async function bindArtifactFixture(artifacts,runtime=globalThis){
+ const store=projectStoreRuntime().store;await restoreArtifactFixture(store,artifacts);
+ runtime.closedLoopProjectStore=Object.freeze({...runtime.closedLoopProjectStore,artifactCustodyState:identity=>store.artifactCustodyState(identity)});return store;
 }

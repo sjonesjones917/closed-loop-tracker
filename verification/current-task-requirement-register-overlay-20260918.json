@@ -471,7 +471,7 @@
       "sourceLocation": "Current user task section 9 F, UX-020",
       "responsibleProductionCode": {
         "file": "app-core.js",
-        "symbol": "reportActionFailure + importProjectPackageFile post-commit classification"
+        "symbol": "actionOutcomeNeedsVerification + reportActionFailure + reportResponseFailure + save + runNativeStage22Tests + runNativeDeferredTest + importProjectPackageFile post-commit classification"
       },
       "observableExpectedBehavior": "Completion, failure, and recovery feedback is explicit in every case.",
       "requiredEvidence": [
@@ -479,13 +479,25 @@
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
         "Affected downstream browser/recovery verification where applicable",
-        "verify-primary-error-information.mjs exercises committed import, exact retained bytes, independent-state preservation, public recovery outcome, rejected import and matching post-commit fault injection; verify-io-boundary-faults.mjs detects targeted reversals; verify-browser-extra.mjs requires real committed-import and settled visible-error observations."
+        "verify-primary-error-information.mjs exercises committed import, exact retained bytes, independent-state preservation, public recovery outcome, rejected import and matching post-commit fault injection; verify-io-boundary-faults.mjs detects targeted reversals; verify-browser-extra.mjs requires real committed-import and settled visible-error observations.",
+        "verify-action-finalization.mjs executes both native execution controls and save through the shared action lifecycle with confirmed rejection, unconfirmed storage outcome, committed view-refresh failure and successful completion. Public feedback and technical details must not claim rollback or non-commit after a committed or unconfirmed write. verify-io-boundary-faults.mjs injects direct-policy bypass, deferred error metadata loss, and false rollback diagnostics into each affected caller; the unchanged implementation must pass afterward."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
       "status": "UNVERIFIED",
       "executedEvidence": [],
-      "mandatory": true
+      "mandatory": true,
+      "postCommitFeedbackDependencyClosure": {
+        "authority": "Application save/native controllers -> persistReplacement outcome -> shared actionOutcomeNeedsVerification -> general and response error renderers",
+        "operationClasses": [
+          "confirmed rejection before commit",
+          "unconfirmed storage acknowledgement",
+          "failure after committed state change",
+          "successful completion"
+        ],
+        "membershipProof": "Both native handlers and save report through reportActionFailure; response handlers use reportResponseFailure. Both reporters use the same active-action project identity/digest and explicit storage-outcome flag. Existing committed-import classification remains specific to its proven outcome.",
+        "evidenceScope": "Synthetic controlled execution/persistence boundaries invoking actual application controllers; separate existing storage, browser and recovery gates remain required."
+      }
     },
     {
       "requirementId": "UX-021",

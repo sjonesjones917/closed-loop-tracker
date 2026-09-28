@@ -59,11 +59,12 @@ workflow.ensureShape(state);
 const manifest=prompts.intakeCoverageManifest(state);
 state.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',extractedStatements:[{statementKey:'S'+index,text:unit.rawValueText||unit.label,statementClass:'CONTEXT'}]}))});
 state.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
-let generatedOperations=0;
+let generatedOperations=0,conditionalRejections=0;
 for(let stage=1;stage<=schema.STAGE_COUNT;stage++){
   if(stage>1){state.stages[stage-1].status='COMPLETE';state.stages[stage-1].gate={complete:true};}
   for(const operation of schema.STAGE_CONTRACTS[stage].operations){
     const contract=schema.operationContract(stage,operation),scope=Object.fromEntries(contract.scopeRequirements.map(key=>[key,key==='projectRevision'?0:key.toUpperCase()+'-FILE-TEST']));
+    if(contract.deferredSubjectFamily){assert.throws(()=>prompts.buildPromptRecord(stage,state,{operation,scope}),error=>error?.code==='DEFERRED_EXECUTION_UNAVAILABLE','An unbound conditional operation must not generate a response-file handoff.');conditionalRejections++;continue;}
     if(contract.executorClass!=='EXTERNAL_AGENT'){let blocked=false;try{prompts.buildPromptRecord(stage,state,{operation,scope});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}assert(blocked,`Stage ${stage} ${operation} must not generate an external response-file prompt.`);continue;}
     const record=prompts.buildPromptRecord(stage,state,{operation,scope});
     assertResponseFileInstruction(record.prompt);
@@ -88,7 +89,7 @@ assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('
 console.log(JSON.stringify({
   fileFirstResponseContract:'PASS',
   generatedStages:schema.STAGE_COUNT,
-  generatedOperations,
+  generatedOperations,conditionalRejections,
   promptOutputMutationsDetected:4,
   primaryResponseFileSelection:true,
   durableByteStaging:true,

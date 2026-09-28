@@ -1,3 +1,4 @@
+import {bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
 import fs from 'node:fs';
@@ -47,13 +48,16 @@ const fixtureAnchor='engine.recordDeliveryAttempt(p';
 const fixtureIndex=fullCycleSource.indexOf(fixtureAnchor);
 assert.ok(fixtureIndex>0,'The full-cycle production mechanism did not expose its terminal-ready boundary.');
 const instrumentedPath=path.join(process.cwd(),`.stage30-full-cycle-${process.pid}.mjs`);
-fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify(p));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex));
+fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID)}));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex));
 let fixtureOutput='';
-try{fixtureOutput=execFileSync(process.execPath,[instrumentedPath],{encoding:'utf8',maxBuffer:64*1024*1024});}
+try{fixtureOutput=execFileSync(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024});}
 finally{fs.rmSync(instrumentedPath,{force:true});}
 assert.match(fixtureOutput,new RegExp(fixtureMarker));
 assert.ok(fs.existsSync(fixturePath),'The disposable Stage 30 fixture was not captured.');
-const sourceProject=JSON.parse(fs.readFileSync(fixturePath,'utf8'));
+const captured=JSON.parse(fs.readFileSync(fixturePath,'utf8')),sourceProject=captured.project;
+assert.equal(engine.terminalPrerequisites(sourceProject).complete,false,'JSON metadata alone must not preserve byte custody.');
+await bindArtifactFixture(captured.artifacts);
+assert.equal(engine.terminalPrerequisites(sourceProject).complete,true,'Exact restored bytes must restore terminal readiness.');
 fs.rmSync(fixturePath,{force:true});
 const fresh=()=>{const p=structuredClone(sourceProject);engine.ensureShape(p);return p;};
 const refresh=(p,family,record)=>engine.refreshRecordHashes(record,family);

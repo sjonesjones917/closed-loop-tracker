@@ -25,7 +25,7 @@ const alphabet=['EXPORTED','ORPHANED','RESUMED','RESPONSE_STAGED',...terminal,'U
 const bindingFields=['OPERATION_RESERVATION_ID','JOB_ID','STAGE','OPERATION','TARGET_SLOT','PACKAGE_ID','PROMPT_ID','SCOPE','EXPECTED_REVISION','RESERVATION_REVISION','CHALLENGE_NONCE','IDEMPOTENCY_KEY','PAYLOAD_HASH'];
 const binding=record=>JSON.stringify(Object.fromEntries(bindingFields.map(key=>[key,engine.recordValue(record,key)])));
 const value=(record,key)=>engine.recordValue(record,key);
-const maxDepth=5,results=[];
+const maxDepth=5,results=[],conditionalUnavailable=[];
 for(const contract of contracts){
   const seed=closedLoopCore.createBlankState(`DISPOSABLE-RESERVATION-${contract.stage}-${contract.operation}`);engine.ensureShape(seed);
   // These are isolated scope fixtures, not completed operator work. Allocate
@@ -43,6 +43,7 @@ for(const contract of contracts){
   }
   const scope=engine.operationScope(seed,contract.stage,contract.operation,references,{reserveTargets:true});
   const input={stage:contract.stage,operation:contract.operation,scope:{...scope,projectRevision:0},expectedRevision:0,packageId:'SYNTHETIC-PACKAGE',promptId:'SYNTHETIC-PROMPT',owningTabInstance:'TAB-A',payload:{request:'original'}};
+  if(contract.deferredSubjectFamily){assert.throws(()=>engine.reserveOperation(seed,input),error=>error?.code==='DEFERRED_EXECUTION_UNAVAILABLE','Unbound conditional work must not reserve a slot.');conditionalUnavailable.push({stage:contract.stage,operation:contract.operation,result:'REJECTED_UNBOUND'});continue;}
   const initial=engine.reserveOperation(seed,input),id=engine.recordId(initial,'operationReservations'),originalBinding=binding(initial);
   const reservation=p=>p.projectData.operationReservations.find(record=>engine.recordId(record,'operationReservations')===id);
   assert.equal(value(initial,'RESERVATION_REVISION'),1);
@@ -87,10 +88,10 @@ for(const contract of contracts){
   assert.notEqual(engine.recordId(replacement,'operationReservations'),id);assert.equal(value(replacement,'STATUS'),'RESERVED');assert.equal(cancelled.revision,2);
   results.push({stage:contract.stage,operation:contract.operation,scopeDimensions:contract.scopeRequirements,statesExplored:seen.size,acceptedPaths,rejected,liveSlotConflict:'REJECTED_WITHOUT_MUTATION',staleReplacement:'REJECTED_WITHOUT_MUTATION',currentReplacement:'RESERVED_ONCE',observations});
 }
-assert.equal(results.length,contracts.length);assert.ok(results.length>0);
+assert.equal(results.length+conditionalUnavailable.length,contracts.length);assert.ok(results.length>0);
 const faultResults=[];
 if(!faultId)for(const [id,fault]of Object.entries(faults)){
   const run=spawnSync(process.execPath,[import.meta.filename,'--fault='+id],{encoding:'utf8',maxBuffer:1024*1024});
   assert.notEqual(run.status,0,`Fault survived: ${id}`);assert.match(run.stderr,new RegExp(fault.oracle),`Unrelated failure under ${id}`);faultResults.push({fault:id,oracle:fault.oracle,result:'DETECTED'});
 }
-console.log(JSON.stringify({schema:'closed-loop-reservation-scope-sequences/1',synthetic:true,actualBrowser:false,environment:'Node production reservation engine; isolated metadata-state fixtures',bounds:{maxDepth,alphabet,operationCount:results.length,stages:[...new Set(results.map(row=>row.stage))],equivalence:'Fixed binding per registered operation; reservation status and trace depth',assumptions:['Synthetic scope tokens exercise reservation identity; they do not establish workflow prerequisites.','ACCEPTED here is a reservation metadata state, not a committed response or completed stage.','Atomic persistence, response acceptance, restoration, external execution and browser behavior require their separate gates.']},implementationFaults:faultResults,results},null,2));
+console.log(JSON.stringify({schema:'closed-loop-reservation-scope-sequences/1',synthetic:true,actualBrowser:false,environment:'Node production reservation engine; isolated metadata-state fixtures',bounds:{maxDepth,alphabet,operationCount:results.length,stages:[...new Set(results.map(row=>row.stage))],equivalence:'Fixed binding per registered operation; reservation status and trace depth',assumptions:['Synthetic scope tokens exercise reservation identity; they do not establish workflow prerequisites.','ACCEPTED here is a reservation metadata state, not a committed response or completed stage.','Atomic persistence, response acceptance, restoration, external execution and browser behavior require their separate gates.']},implementationFaults:faultResults,conditionalUnavailable,boundConditionalEvidence:'verify-due-stage-timing.mjs: actual bound reservation, file response acceptance, binding and terminal transition cases',results},null,2));

@@ -43,6 +43,8 @@ const expected=Object.freeze({
   30:['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE']
 });
 
+// Approved Section 32.4A adds conditional reuse after each definition owner.
+for(const [operation,family]of [['EXECUTE_FAILURE_TEST','failureTests'],['EXECUTE_REGRESSION','regressions']])for(const stage of globalThis.closedLoopCore.STAGES.map(row=>row.number).filter(n=>n>schema.RECORD_SCHEMAS[family].stage))expected[stage].push(operation);
 assert.deepEqual(schema.STAGE_OPERATIONS,expected,'Stage-operation set is not the closed controlling set.');
 for(let stage=1;stage<=30;stage++){
   assert.deepEqual(schema.STAGE_CONTRACTS[stage].operations,expected[stage],`Stage ${stage} contract operations drifted.`);

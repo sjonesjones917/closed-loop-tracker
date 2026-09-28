@@ -23,7 +23,9 @@ export function scalarFor(def,name,overrides={}){
   return `fixture-${String(name).toLowerCase()}`;
 }
 export function recordProposal(schema,collection,{tempKey,targetId,relationships={},overrides={},evidenceRef='evidence-1'}={}){
-  const def=schema.RECORD_SCHEMAS[collection],fields=collection==='tests'?{EXPECTED_VARIANCE_CONTRACT:{dimensions:['requirement-truth'],allowedVariance:'No variance in requirement truth.'},VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{currentCandidate:true}}:{};
+  const def=schema.RECORD_SCHEMAS[collection],fields=['tests','regressions'].includes(collection)?{EXPECTED_VARIANCE_CONTRACT:{dimensions:['requirement-truth'],allowedVariance:'No variance in requirement truth.'},VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}}:{};
+  if(collection==='failureTests')Object.assign(fields,{VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:def.stage,REQUIRED_BY_STAGE:def.stage,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}});
+  if(collection!=='tests')delete fields.EXPECTED_VARIANCE_CONTRACT;
   for(const name of def.required){const fd=def.fieldDefinitions[name];if(fd?.producer===schema.PRODUCER.AGENT)fields[name]=scalarFor(fd,name,overrides);}
   for(const [name,value] of Object.entries(overrides))if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=value;
   return {tempKey:targetId?undefined:(tempKey||`${collection}-1`),targetId:targetId||undefined,fields,relationships,evidenceRefs:evidenceRef?[evidenceRef]:[]};
@@ -95,19 +97,30 @@ export function stageHandoffRecoveryProof(before,exported,restored,hash){
   return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
 }
 
+// Bounded canonical records for logic fixtures use the production identity,
+// application field defaults and hash authorities. They are synthetic evidence.
+export function canonicalFixtureRecord({engine,schema},project,collection,fields,{scope={},relationships={},stage=schema.RECORD_SCHEMAS[collection].stage}={}){
+ const def=schema.RECORD_SCHEMAS[collection],id=engine.allocateId(project,collection,{payload:engine.clone(fields)}),values=engine.clone({...engine.applicationInitialFields(collection),...fields,[def.idField]:id});
+ const row=engine.clone({id,stage,active:true,scope:{...engine.currentScope(project),...scope},relationships,fields:values,...values,source:'CONTROLLED_CANONICAL_TARGET_FIXTURE'});
+ engine.refreshRecordHashes(row,collection);project.projectData[collection].push(row);return row;
+}
+
 // Isolated downstream fixtures supply their authored prerequisites directly.
 // Import the review through production ingestion so those fixtures cannot use
 // a bare author/raw ID as proof authority. The full-cycle test also authors the
 // complete suite through production ingestion and checks every prerequisite.
-export function reviewProofFixture(runtime,project){
- const {engine,prompts,ingestion,schema}=runtime;
- const priorStages=engine.clone(project.stages),author=engine.preparePromptContext(project,6,{operation:'COMPLETE'}),authorPrompt=prompts.buildPromptRecord(6,project,author.options);
+function reviewSemanticFixture(runtime,project,stage){
+ const {engine,prompts,ingestion,schema}=runtime,reviewOperation=stage===6?'PROOF_REVIEW':'SEMANTIC_REVIEW';
+ const priorStages=engine.clone(project.stages),author=engine.preparePromptContext(project,stage,{operation:'COMPLETE'}),authorPrompt=prompts.buildPromptRecord(stage,project,author.options);
  project.projectData.generatedPrompts.push(authorPrompt);
- project.projectData.acceptedChanges.push({changeId:'FIXTURE-AUTHORED-PROOF',stage:6,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPLETE',promptId:authorPrompt.instructionId,scope:authorPrompt.scope,source:'CONTROLLED_DOWNSTREAM_PREREQUISITE_FIXTURE'});
- const prepared=engine.preparePromptContext(project,6,{operation:'PROOF_REVIEW'}),prompt=prompts.buildPromptRecord(6,project,prepared.options);project.projectData.generatedPrompts.push(prompt);
- const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage:6,operation:'PROOF_REVIEW',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'fixture-proof-review',overrides:{REVIEW_QUESTION:'Does the controlled prerequisite proof suffice?',FINDING:'The observation-backed proposition requires accepted current evidence of the exact proposition.',REASONING:'Every current required test and expression is included; no alternate weaker branch is permitted.',RESULT:'ACCEPTED'}})]},evidence:[evidence('downstream-fixture-proof-review')],unresolved:[],warnings:[],attachments:[]};
- const proposal=ingestion.prepare(project,{stage:6,text:JSON.stringify(envelope),promptRecord:prompt});if(!proposal.validation.valid)throw new Error('Fixture proof review failed intake: '+JSON.stringify(proposal.validation.issues));
+ project.projectData.acceptedChanges.push({changeId:'FIXTURE-AUTHORED-REVIEW-'+stage+'-'+project.projectData.acceptedChanges.length,stage,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPLETE',promptId:authorPrompt.instructionId,scope:authorPrompt.scope,source:'CONTROLLED_DOWNSTREAM_PREREQUISITE_FIXTURE'});
+ const prepared=engine.preparePromptContext(project,stage,{operation:reviewOperation}),prompt=prompts.buildPromptRecord(stage,project,prepared.options);project.projectData.generatedPrompts.push(prompt);
+ const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage,operation:reviewOperation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'fixture-proof-review',overrides:{REVIEW_QUESTION:'Does the controlled prerequisite proof suffice?',FINDING:'The observation-backed proposition requires accepted current evidence of the exact proposition.',REASONING:'Every current required test and expression is included; no alternate weaker branch is permitted.',RESULT:'ACCEPTED'}})]},evidence:[evidence('downstream-fixture-proof-review')],unresolved:[],warnings:[],attachments:[]};
+ const proposal=ingestion.prepare(project,{stage,text:JSON.stringify(envelope),promptRecord:prompt});if(!proposal.validation.valid)throw new Error('Fixture proof review failed intake: '+JSON.stringify(proposal.validation.issues));
  Object.assign(project,ingestion.commit(proposal.project,proposal.proposal.proposalId,{operator:'DOWNSTREAM_FIXTURE',replacementConfirmation:ingestion.acceptanceImpact(proposal.project,proposal.proposal.proposalId)}).project);
  // These focused tests retain their explicit, already-controlled prerequisites.
  project.stages=priorStages;
 }
+
+export function reviewProofFixture(runtime,project){return reviewSemanticFixture(runtime,project,6);}
+export function reviewApplicabilityFixture(runtime,project){return reviewSemanticFixture(runtime,project,5);}

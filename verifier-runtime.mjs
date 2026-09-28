@@ -3,7 +3,31 @@ import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 import {Blob as NodeBlob, File as NodeFile} from 'node:buffer';
 import {performance as nodePerformance} from 'node:perf_hooks';
+import {Worker as NodeWorker} from 'node:worker_threads';
 const verifierHashSource=readFileSync(new URL('./hash.js',import.meta.url),'utf8');
+
+// The optional native-execution fixture uses a real isolated Node worker and
+// the production worker entry. This adapts browser messaging only; it does not
+// replace the Test IR evaluator or invent a successful execution result.
+export function isolatedVerifierWorkerClass(){
+ const factoryUrl=import.meta.url,entryUrl=new URL('./test-worker.js',import.meta.url).href;
+ return class IsolatedVerifierWorker{
+  constructor(url){
+   if(!/(^|\/)test-worker\.js(?:\?|$)/.test(String(url)))throw new Error('Unexpected verifier worker entry.');
+   this.worker=new NodeWorker(`(async()=>{
+    const {parentPort,workerData}=require('node:worker_threads'),fs=require('node:fs');
+    const {createVerifierRuntime}=await import(workerData.factoryUrl);
+    const seed={location:{search:workerData.query},postMessage:value=>parentPort.postMessage(value),addEventListener:(type,handler)=>{if(type==='message')parentPort.on('message',data=>handler({data}));}};seed.self=seed;
+    const context=createVerifierRuntime(seed);
+    seed.importScripts=(...names)=>{for(const name of names){const file=new URL(name,workerData.entryUrl);if(!['hash.js','test-runtime.js'].some(allowed=>file.pathname.endsWith('/'+allowed)))throw new Error('Unregistered worker bootstrap dependency.');file.search='';createVerifierRuntime.loadScript(context,fs.readFileSync(file,'utf8'),{filename:file.pathname});}};
+    createVerifierRuntime.loadScript(context,fs.readFileSync(new URL(workerData.entryUrl),'utf8'),{filename:'test-worker.js'});
+   })().catch(error=>{throw error;});`,{eval:true,workerData:{factoryUrl,entryUrl,query:String(url).includes('?')?'?'+String(url).split('?').slice(1).join('?'):''}});
+   this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.({message:error.message}));
+  }
+  postMessage(message,transfer){this.worker.postMessage(message,transfer);}
+  terminate(){return this.worker.terminate();}
+ };
+}
 
 function memoryStorage(){
   const values=new Map();

@@ -1,5 +1,6 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
 import {stage04AcceptanceFixture} from './test-fixtures.mjs';
@@ -12,7 +13,7 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 }
 const core=closedLoopCore,schema=closedLoopWorkflowSchema,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion;
 const project=stage04AcceptanceFixture({core,schema,engine,prompts,ingestion},'JOB-CONTEXT-BOUNDARY');
-const failures=[];let pairs=0,operations=0;
+const failures=[];let pairs=0,operations=0,unboundConditionalRejections=0;
 for(const definition of core.STAGES){
   const stage=definition.number;
   for(const previous of core.STAGES.filter(item=>item.number<stage)){project.stages[previous.number].status='COMPLETE';project.stages[previous.number].gate={complete:true};}
@@ -21,10 +22,14 @@ for(const definition of core.STAGES){
   for(const operation of schema.STAGE_CONTRACTS[stage].operations){
     const registration=schema.STAGE_OPERATION_REGISTRY[`${stage}:${operation}`],scope=Object.fromEntries((schema.operationContract(stage,operation)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-BOUNDARY']));
     if(registration.executorClass!=='EXTERNAL_AGENT')continue;
+    if(registration.deferredSubjectFamily){
+      assert.throws(()=>prompts.buildPromptRecord(stage,candidate,{operation,scope}),error=>error.code==='DEFERRED_EXECUTION_UNAVAILABLE','An unbound conditional operation must not issue a handoff.');
+      unboundConditionalRejections++;continue;
+    }
     const prompt=prompts.buildPromptRecord(stage,candidate,{operation,scope}),serialized=JSON.stringify(prompt);
     for(const target of later)if(serialized.includes(`PRIVATE_FUTURE_INFORMATION_${stage}_${target.number}`))failures.push({stage,operation,leakedStage:target.number});
     operations++;
   }
 }
-console.log(JSON.stringify({case:'all-stage-future-context-boundary',sourceRevision:process.env.BASELINE_COMMIT||'working tree',fixture:'synthetic context selection; prerequisite UI progression is verified separately',stagePairs:pairs,externalOperations:operations,failures},null,2));
+console.log(JSON.stringify({case:'all-stage-future-context-boundary',sourceRevision:process.env.BASELINE_COMMIT||'working tree',fixture:'synthetic context selection; prerequisite UI progression is verified separately',stagePairs:pairs,externalOperations:operations,unboundConditionalRejections,boundConditionalEvidence:'verify-due-stage-timing.mjs: selected-stage native/external execution and future-input rejection',failures},null,2));
 if(failures.length)throw new Error(`Subsequent-stage information escaped in ${failures.length} stage/operation boundaries.`);

@@ -50,7 +50,7 @@ const semantic={
   29:['complete evidence graph for every mandatory requirement','Do not fabricate a link'],
   30:['append-only defect and regression history','Do not rewrite history']
 };
-let promptsChecked=0;
+let promptsChecked=0,conditionalRejections=0;
 for(let stage=1;stage<=30;stage++){
   const contract=schema.STAGE_CONTRACTS[stage];
   for(const operation of contract.operations){
@@ -63,6 +63,7 @@ for(let stage=1;stage<=30;stage++){
       if(!blocked)throw new Error(`Stage ${stage} ${operation} is ${reg?.executorClass||'non-external'} but generated an external-agent prompt.`);
       continue;
     }
+    if(reg.deferredSubjectFamily){let rejected=false;try{prompts.buildPromptRecord(stage,p,{operation,scope});}catch(error){rejected=error?.code==='DEFERRED_EXECUTION_UNAVAILABLE';}if(!rejected)throw new Error('Unbound conditional operation generated a handoff: '+stage+'/'+operation);conditionalRejections++;continue;}
     const prompt=prompts.buildPromptRecord(stage,p,{operation,scope}).prompt;
     promptsChecked++;
     for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);
@@ -84,4 +85,4 @@ const browserWalk=spawnSync(process.execPath,['verify-human-stage-walkthrough.mj
 if(browserWalk.status!==0)throw new Error(`Sequential browser stage walkthrough failed.\n${browserWalk.stdout||''}\n${browserWalk.stderr||''}`);
 const browserProof=JSON.parse(String(browserWalk.stdout||'{}'));
 if(browserProof.stages!==30||browserProof.oneTimeSupply!==true)throw new Error('Sequential browser stage walkthrough did not establish all 30 stages and one-time project input reuse.');
-console.log(JSON.stringify({promptsChecked,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:true,browserPromptsChecked:browserProof.prompts,promptVisual:browserProof.promptVisual},null,2));
+console.log(JSON.stringify({promptsChecked,conditionalRejections,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:true,browserPromptsChecked:browserProof.prompts,promptVisual:browserProof.promptVisual},null,2));

@@ -239,7 +239,8 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   const runtime=createVerifierRuntime({...inactiveMobileAcceptance,operatorActionInFlight:null,responseActionFailure:null,closedLoopPromptEngine:{version:saved.promptEngineVersion},current,Blob,Uint8Array,TextDecoder,queueMicrotask,safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>renders++,detailViews:new Map(),wireDetails:()=>{},document:{createElement:()=>({content:{firstElementChild:{}}})},esc:String,details:()=>'', $:selector=>selector==='#validation-report'?{focus(){},querySelectorAll:()=>[],replaceWith:()=>inlineReplacements++}:{focus(){}},alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,closedLoopHash:{sha256Text:sha},projectStore:{removeStagedResponseFile:async options=>removedStages.push(options),stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
   const helpers=app.slice(app.indexOf('function promptMatches'),app.indexOf('function operationMarkup'));
   const handler=app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('));
-  vm.runInContext(helpers+'\n'+app.slice(app.indexOf('function reportResponseFailure'),app.indexOf('function proposalMarkup'))+'\n'+handler+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
+  const failurePolicy=app.slice(app.indexOf('const UNCONFIRMED_ACTION_OUTCOME_MESSAGE='),app.indexOf('function reportActionFailure('));
+  vm.runInContext(failurePolicy+'\n'+helpers+'\n'+app.slice(app.indexOf('function reportResponseFailure'),app.indexOf('function proposalMarkup'))+'\n'+handler+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
   await runtime.selectResponse(new Blob([text],{type:'application/json'}));
   assert.equal(dialogs.length,0,`Response reselection raised a blocking popup instead of preserving the pending proposal: ${dialogs.join(' | ')}`);
   assert.equal(staged,1,'Saved response attempt was rejected before byte staging.');
@@ -280,8 +281,8 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.closedLoopWorkflowEngine.recalculate(runtime.current);runtime.current.stages[4].status='COMPLETE';runtime.current.stages[4].gate={complete:true};
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(p=>Number(p.stage)===Number(n)&&!p.invalidatedBy&&Number(p.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   runtime.persistReplacement=async next=>{runtime.current=next;};
-  const reporterStart=app.indexOf('function reportActionFailure(');
-  vm.runInContext(app.slice(reporterStart,app.indexOf('\nfunction ',reporterStart+1)),runtime);
+  const reporterStart=app.indexOf('const UNCONFIRMED_ACTION_OUTCOME_MESSAGE=');
+  vm.runInContext(app.slice(reporterStart,app.indexOf('const storageActivities=',reporterStart)),runtime);
   vm.runInContext(app.slice(app.indexOf('async function savePromptRecord('),app.indexOf('function promptTransportFilename('))+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
   let exported;
   await runtime.exportAttempt(record=>{exported=record;downloaded++;});
@@ -294,6 +295,16 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   assert.equal(runtime.current.projectData.freshContexts.length,1,'Manifest/instruction export must not duplicate context records.');
   assert.equal(runtime.current.revision,8);
   assert.equal(dialogs.length,0);
+  runtime.engine=runtime.closedLoopWorkflowEngine;runtime.safe=runtime.engine.safe;runtime.clone=vm.runInContext('(value)=>JSON.parse(JSON.stringify(value))',runtime);runtime.structuredClone=runtime.clone;runtime.current=runtime.clone(runtime.current);
+  for(const key of ['verificationScheduleVersion','targetAvailabilityContractVersion','proofExpressionContractVersion']){
+    runtime.current.stages[4].status='COMPLETE';runtime.current.stages[4].gate={complete:true};
+    const prior=runtime.current.projectData.generatedPrompts.at(-1),priorId=prior.instructionId;delete prior.contextManifest[key];
+    let upgraded;await runtime.exportAttempt(record=>{upgraded=record;});
+    assert(upgraded&&upgraded.instructionId!==priorId,'STAGE5_CONTRACT_REFRESH_ORACLE: stale '+key+' remained controlling: '+notice.textContent);
+    const count=runtime.current.projectData.generatedPrompts.length;await runtime.exportAttempt(record=>assert.equal(record.instructionId,upgraded.instructionId));
+    assert.equal(runtime.current.projectData.generatedPrompts.length,count,'STAGE5_CONTRACT_REFRESH_ORACLE: a current reviewed contract churned on export.');
+  }
+
   assert.doesNotMatch(app,/id="fresh-context-id"|id="add-fresh-context"/,'Routine workflow must not ask the human to name/register application contexts.');
   runtime.current=runtime.closedLoopCore.createBlankState('JOB-REVIEWER-NEXT-ACTION');runtime.current.activeStage=9;Object.assign(runtime.current.job,{CURRENT_SOURCE_SET_VERSION:'SYNTHETIC-SOURCES',CURRENT_RESEARCH_VERSION:'SYNTHETIC-RESEARCH',CURRENT_REQUIREMENTS_VERSION:'SYNTHETIC-REQUIREMENTS',CURRENT_TEST_SUITE_VERSION:'SYNTHETIC-TESTS',CURRENT_INSTRUCTION_VERSION:'SYNTHETIC-INSTRUCTIONS'});runtime.current.job.CURRENT_STAGE='STAGE 09';runtime.closedLoopWorkflowEngine.ensureShape(runtime.current);runtime.current.stages[8].status='COMPLETE';runtime.current.stages[8].gate={complete:true};
   const nextAction=runtime.closedLoopWorkflowEngine.operationalNextAction(runtime.current,9);
@@ -365,7 +376,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
   assert.equal(failures.length,0,`Historical Stage 06 instruction upgrade failed: ${failures.join(' | ')}`);
   assert.notEqual(downloads.at(-1).promptIdentity.instructionId,downloads[0].promptIdentity.instructionId);
-  assert.equal(stored.projectData.generatedPrompts.at(-1).contextManifest.verificationScheduleVersion,'closed-loop-verification-schedule/1');
+  assert.equal(stored.projectData.generatedPrompts.at(-1).contextManifest.verificationScheduleVersion,runtime.closedLoopWorkflowSchema.TIMING_SCHEDULE_CONTRACT.schema);
   const count=stored.projectData.generatedPrompts.length;
   await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
   assert.equal(stored.projectData.generatedPrompts.length,count,'Repeated manifest export created another attempt.');
@@ -377,7 +388,18 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
   assert.equal(failures.length,0,'Historical proof-contract instruction upgrade failed.');
   assert.notEqual(downloads.at(-1).promptIdentity.instructionId,priorProofPrompt,'An old Stage 06 instruction still omits the closed proof contract.');
-  assert.equal(stored.projectData.generatedPrompts.at(-1).contextManifest.proofExpressionContractVersion,'closed-loop-proof-expression/1');
+  assert.equal(stored.projectData.generatedPrompts.at(-1).contextManifest.proofExpressionContractVersion,engine.PROOF_EXPRESSION_CONTRACT.schema);
+  stored.stages[5].status='COMPLETE';stored.stages[5].gate={complete:true};runtime.current.stages[5].status='COMPLETE';runtime.current.stages[5].gate={complete:true};
+  const priorConditionPrompt=downloads.at(-1).promptIdentity.instructionId;
+  delete stored.projectData.generatedPrompts.at(-1).contextManifest.targetAvailabilityContractVersion;
+  delete runtime.current.projectData.generatedPrompts.at(-1).contextManifest.targetAvailabilityContractVersion;
+  await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
+  assert.equal(failures.length,0,'Historical target-condition instruction upgrade failed.');
+  assert.notEqual(downloads.at(-1).promptIdentity.instructionId,priorConditionPrompt,'A stale condition contract remained controlling.');
+  assert.equal(stored.projectData.generatedPrompts.at(-1).contextManifest.targetAvailabilityContractVersion,runtime.closedLoopWorkflowSchema.TARGET_CONDITION_CONTRACT.schema);
+  const completeContractCount=stored.projectData.generatedPrompts.length;
+  await runtime.exportAttempt(record=>downloads.push(prompts.promptFileManifest(record)));
+  assert.equal(stored.projectData.generatedPrompts.length,completeContractCount,'A current complete contract generated another attempt.');
   console.log(JSON.stringify({returnedFileRevisionRecovery:true,retainedBytesPreserved:true,newerWorkPreserved:true,correctionManifestExported:true}));
 }
 

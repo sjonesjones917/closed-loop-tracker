@@ -116,7 +116,7 @@ for(let stage=1;stage<=30;stage++){
     const scope=Object.fromEntries(op.scopeRequirements.map(key=>[key,availableScope[key]||engine.currentScope(state)[key]||key.toUpperCase()+'-ROUTE']));
     for(const key of op.scopeRequirements)assert(scope[key]!==undefined,`Fixture missing required scope ${key} for Stage ${stage}/${operation}.`);
     let record;
-    try{record=prompts.buildPromptRecord(stage,state,{operation,scope});}catch(error){assert(schema.STAGE_OPERATION_REGISTRY[`${stage}:${operation}`].acceptsExternalResponse===false&&error.code==='NON_EXTERNAL_OPERATION',`Stage ${stage}/${operation} unexpectedly failed prompt generation: ${error.message}`);record=null;}
+    try{record=prompts.buildPromptRecord(stage,state,{operation,scope});}catch(error){assert((schema.STAGE_OPERATION_REGISTRY[`${stage}:${operation}`].deferredSubjectFamily&&error.code==='DEFERRED_EXECUTION_UNAVAILABLE')||(schema.STAGE_OPERATION_REGISTRY[`${stage}:${operation}`].acceptsExternalResponse===false&&error.code==='NON_EXTERNAL_OPERATION'),`Stage ${stage}/${operation} unexpectedly failed prompt generation: ${error.message}`);record=null;}
     if(record){
       const manifest=record.contextManifest?.readCollections||{};
       for(const collection of op.readCollections){
