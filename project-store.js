@@ -795,6 +795,10 @@ async function prepareProjectWrite(project,options={}){
   next.revision=(options.incrementRevision??true)?revision+1:revision;
   const engine=globalThis.closedLoopWorkflowEngine;engine.ensureShape(next);
   engine.reconcileReservationRevisions(next);
+  // A canonical change can introduce a newly accepted target file. The prior
+  // read verifies only the old version; derive this version from its own bytes
+  // before both checkpoint preparation and the commit-time integrity check.
+  await observeProjectArtifactCustody(next);
   engine.recalculate(next);assertMutationConfirmation(prior,project,options.mutationConfirmation,next);assertProjectIntegrity(next);
   await persistProjectPromptFiles(next);
   const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,artifactRows:options.creation?.artifacts||null});

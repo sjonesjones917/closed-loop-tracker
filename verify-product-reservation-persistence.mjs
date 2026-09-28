@@ -3,12 +3,15 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {responseFixture,OUTPUT} from './operator-journey-fixtures.mjs';
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file==='workflow-engine.js'&&process.env.ENGINE_SOURCE?process.env.ENGINE_SOURCE:file,'utf8'),{filename:file});
 const {buildUnchangedConfirmationFixture}=await import('./stage19-fixture.mjs');
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,store=globalThis.closedLoopProjectStore;
 const durable=projectStoreRuntime(),durableStore=durable.store,promptSnapshots=[];
+const phase=name=>console.error(JSON.stringify({suite:'verify-product-reservation-persistence',phase:name}));
+phase('baseline-fixture-start');
 const {p,cand19,artifactPayloads}=buildUnchangedConfirmationFixture('JOB-PRODUCT-RESERVATION-PERSISTENCE',{onPrompt:(record,project)=>promptSnapshots.push({record:engine.clone(record),project:engine.clone(project)})});
 const artifactIds=engine.recordValue(engine.records(p,'candidateFreezes').find(row=>engine.recordId(row,'candidateFreezes')===cand19),'COMPONENT_MANIFEST').map(row=>row.artifactId);
 const decision=engine.recordRegisteredHumanDecision(p,{stage:20,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:cand19,value:'AUTHORIZED',operatorLabel:'SYNTHETIC_VERIFIER'});
@@ -27,6 +30,7 @@ const after=store.validateProjectIntegrity(p);
 const report={synthetic:true,actualBrowser:false,expected:'A reserved product is persistable before a response and contains no agent-authored execution observations',before,after,prematureAgentFields:authored};
 assert.deepEqual(authored,[],'PRODUCT_RESERVATION_OWNERSHIP_ORACLE: reservation must not invent external execution observations.');
 assert.equal(after.valid,true,'PRODUCT_RESERVATION_PERSISTENCE_ORACLE: the Stage 21 reservation must satisfy the same durable schema as its completed state.');
+phase('baseline-and-reservation-validated');
 
 for(const snapshot of promptSnapshots){await durableStore.persistPromptContextFiles(durable.copy(snapshot.record),durable.copy(snapshot.project));snapshot.project=null;}
 for(const payload of artifactPayloads){
@@ -45,6 +49,7 @@ assert.ok(!reversed.project.projectData.products.some(row=>engine.recordId(row,'
 const restored=await durableStore.restoreCheckpoint(saved.job.JOB_ID,checkpointReserved,{expectedProjectRevision:reversed.project.revision});
 assert.ok(restored.project.projectData.products.some(row=>engine.recordId(row,'products')===productId),'PRODUCT_RESERVATION_RECOVERY_ORACLE');
 assert.deepEqual(new Uint8Array(await (await durableStore.getArtifact(artifactPayloads[0].artifactId)).blob.arrayBuffer()),artifactPayloads[0].bytes);
+phase('reservation-recovery-complete');
 report.durableCases=['Persist the baseline before product reservation','Persist and reload the reserved product before response acceptance','Restore the earlier baseline without a later reservation','Restore the matching reserved version and exact baseline bytes'].map(name=>({name,result:'PASS'}));
 // A valid prerequisite is insufficient unless the normal save path leaves a
 // current, exportable instruction after reservation and durable commit.
@@ -89,6 +94,7 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  const exportedReservation=uiEngine.records(runtime.current,'operationReservations').find(row=>uiEngine.recordId(row,'operationReservations')===committed.operationReservationId);
  assert.equal(uiEngine.recordValue(exportedReservation,'STATUS'),'EXPORTED','ONE_FILE_HANDOFF_ORACLE: record the completed export once.');
  report.exportAction={caseId:'ONE_FILE_HANDOFF_ORACLE',result:'PASS',downloads:downloads.length,filename:downloads[0].filename,exactInstructionBytes:true,manifestIdentity:true,reservationStatus:'EXPORTED'};
+ phase('export-control-complete');
  const revision=runtime.current.revision;assert.equal((await runtime.savePromptRecord(21)).instructionId,committed.instructionId,'HANDOFF_EXACT_RETRY_ORACLE');assert.equal(runtime.current.revision,revision);
  const healthy=runtime.current;
  const target=project=>uiEngine.records(project,'products').find(row=>uiEngine.recordId(row,'products')===committed.scope.productId);
@@ -107,5 +113,51 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
   report.currentBindingCases.push({caseId,expected:'Reject an incompatible handoff; accept its unchanged valid version',result:'PASS'});
  }
  report.durableCases.push(...['The actual handoff control commits a current instruction after restoring its valid prerequisites','The committed instruction remains current on reload and exports its exact reserved target','Repeating the save retains its exact instruction without a new revision'].map(name=>({name,result:'PASS'})));
+ // A verified product response must commit through the same persistence owner
+ // as its reservation. A successful in-memory ingestion is not a saved result.
+ const current=runtime.current,request=responseFixture({schema,engine:uiEngine,prompt:committed,manifest:actualManifest,contextFiles:actualManifest.contextFiles.map(file=>({bytes:Buffer.from(actualMembers.get(file.path))})),instructionBytes:Buffer.from(actualMembers.get('instruction.txt'))});
+ const slot=actualManifest.attachmentSlots.find(item=>item.role==='FINISHED_PRODUCT'&&item.required),blob=new Blob([OUTPUT],{type:'text/plain'}),sha256=await runtime.closedLoopHash.sha256Bytes(blob),pending=durable.copy(current);
+ const artifactId=uiEngine.allocateId(pending,'artifacts',{payload:durable.copy({purpose:'PRODUCT_ACCEPTANCE_PERSISTENCE'})});
+ request.attachments=[{attachmentSlotId:slot.attachmentSlotId,role:slot.role,temporaryKey:'finished-product',filename:'result.txt',mediaType:'text/plain',byteSize:blob.size,sha256,required:true}];request.evidence[0].attachmentRef={tempKey:'finished-product'};
+ await durableStore.putArtifact({artifactId,jobId:pending.job.JOB_ID,blob,filename:'result.txt',mediaType:'text/plain'});
+ const prepared=durable.ingestion.prepare(pending,{stage:21,text:JSON.stringify(request),promptRecord:committed,files:durable.copy([{artifactId,name:'result.txt',type:'text/plain',size:blob.size,sha256,attachmentSlotId:slot.attachmentSlotId}]),transport:durable.copy({authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:committed.packageId,operationReservationId:committed.operationReservationId,challengeNonce:committed.challengeNonce})});
+ assert.equal(prepared.validation.valid,true,'PRODUCT_ACCEPTANCE_FIXTURE_ORACLE: '+JSON.stringify(prepared.validation.issues));
+ const staged=await durableStore.writeProject(prepared.project,{operational:true,expectedProjectRevision:current.revision,expectedStateSha256:current.projectSha256});
+ phase('valid-response-staged');
+ const acceptedCount=staged.projectData.acceptedChanges.length;
+ const assertAccepted=(r,failures)=>{
+  assert.equal(failures.length,0,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: a valid response with verified product bytes failed to commit: '+failures.map(error=>error.message).join(' | '));
+  assert.equal(r.runtime.current.projectData.acceptedChanges.length,acceptedCount+1,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: acceptance did not commit exactly once.');
+  assert.equal(r.engine.gate(21,r.runtime.current).complete,true,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: the matching accepted product and bytes did not complete their stage.');
+ };
+ // Replay the same valid, bounded case in an isolated shared runtime with one
+ // implementation fault. The production files and healthy store stay intact.
+ const productionSource=fs.readFileSync('project-store.js','utf8'),faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:'  await observeProjectArtifactCustody(next);',after:'  // Injected fault: derive the new version using only prior-version custody.'}});
+ for(const [name,rows] of durable.rows)faulted.rows.set(name,new Map([...rows].map(([key,row])=>[key,faulted.copy(row)])));
+ const faultFailures=bindAcceptanceUi(faulted,faulted.copy(staged),prepared.proposal.proposalId);
+ await faulted.runtime.accept();if(faulted.runtime.replacementReview)await faulted.runtime.confirm();
+ assert.throws(()=>assertAccepted(faulted,faultFailures),/PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE/,'The normative acceptance oracle must detect omitted candidate-byte verification.');
+ assert.ok(faultFailures.some(error=>error.code==='PROJECT_INTEGRITY_FAILED'&&/deterministic recalculation/.test(error.message)),'The injected fault must reproduce the classified save failure.');
+ assert.equal((await faulted.store.readProject(staged.job.JOB_ID)).projectData.acceptedChanges.length,acceptedCount,'A rejected acceptance must preserve accepted work.');
+ assert.equal(fs.readFileSync('project-store.js','utf8'),productionSource,'The injected runtime fault must not change production source.');
+ report.acceptanceFault={caseId:'omit-candidate-byte-verification',detectedBy:'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE',errors:faultFailures.map(error=>({code:error.code,message:error.message})),sourceRestored:true,result:'PASS'};
+ phase('candidate-custody-fault-detected');
+ const failures=bindAcceptanceUi(durable,staged,prepared.proposal.proposalId);
+ await runtime.accept();if(runtime.replacementReview)await runtime.confirm();assertAccepted(durable,failures);
+ phase('product-acceptance-committed');
+ const accepted=await durableStore.readProject(staged.job.JOB_ID),acceptedCheckpoint=(await durableStore.historyList(staged.job.JOB_ID)).activeId;
+ assert.equal(accepted.projectData.acceptedChanges.length,acceptedCount+1,'PRODUCT_ACCEPTANCE_RELOAD_ORACLE');
+ for(const phase of ['FINAL_PRODUCT_DETERMINISTIC','FINAL_PRODUCT_MEANING','FINAL_PRODUCT_ADVERSARIAL'])assert.equal(uiEngine.verificationPhaseTargetAvailability(accepted,phase),'TRUE','PRODUCT_ACCEPTANCE_RELOAD_ORACLE: '+phase);
+ assert.deepEqual(Buffer.from(await (await durableStore.getArtifact(artifactId)).blob.arrayBuffer()),Buffer.from(OUTPUT),'PRODUCT_ACCEPTANCE_BYTES_ORACLE');
+ const prior=await durableStore.restoreCheckpoint(staged.job.JOB_ID,checkpointBefore,{expectedProjectRevision:accepted.revision});
+ assert.equal(uiEngine.recordsForCurrentScope(prior.project,'products').length,0,'PRODUCT_ACCEPTANCE_RESTORE_ORACLE: the earlier version must not inherit the product.');
+ const recovered=await durableStore.restoreCheckpoint(staged.job.JOB_ID,acceptedCheckpoint,{expectedProjectRevision:prior.project.revision});
+ assert.deepEqual(recovered.project.projectData.acceptedChanges,accepted.projectData.acceptedChanges,'PRODUCT_ACCEPTANCE_RESTORE_ORACLE: restore the matching acceptance records.');
+ assert.equal(uiEngine.gate(21,recovered.project).complete,true,'PRODUCT_ACCEPTANCE_RESTORE_ORACLE');
+ for(const phase of ['FINAL_PRODUCT_DETERMINISTIC','FINAL_PRODUCT_MEANING','FINAL_PRODUCT_ADVERSARIAL'])assert.equal(uiEngine.verificationPhaseTargetAvailability(recovered.project,phase),'TRUE','PRODUCT_ACCEPTANCE_RESTORE_ORACLE: '+phase);
+ assert.deepEqual(Buffer.from(await (await durableStore.getArtifact(artifactId)).blob.arrayBuffer()),Buffer.from(OUTPUT),'PRODUCT_ACCEPTANCE_RESTORE_BYTES_ORACLE');
+ phase('accepted-product-reload-and-restoration-complete');
+ report.acceptance={caseId:'PRODUCT_ACCEPTANCE_PERSISTENCE',acceptedBefore:acceptedCount,acceptedAfter:accepted.projectData.acceptedChanges.length,reload:true,restoration:true,exactBytes:true,faultDetected:true};
+ report.durableCases.push({name:'Accept the reviewed product response with its exact stored bytes through the production UI and persistence owners',result:'PASS'});
 }
 console.log(JSON.stringify(report,null,2));
