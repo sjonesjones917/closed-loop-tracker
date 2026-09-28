@@ -18,7 +18,8 @@ for(const [fault,oracle] of [
  ['forced-operator-scroll','DRIVER_VIEW_PRESERVATION_ORACLE'],
  ['repeat-pre-ingestion-read','JOURNEY_READ_BOUNDARY_ORACLE'],
  ['stale-post-ingestion-state','Accept did not commit exactly one response'],
- ['repeat-post-ingestion-read','JOURNEY_CONTINUATION_READ_ORACLE']
+ ['repeat-post-ingestion-read','JOURNEY_CONTINUATION_READ_ORACLE'],
+ ['detached-workflow-decision','JOURNEY_RUNTIME_AUTHORITY_ORACLE']
 ]){
  let injected;
  let faultDriver=null;

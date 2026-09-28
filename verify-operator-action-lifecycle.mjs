@@ -130,9 +130,9 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
   journey=journey.replace(before,'const before=await saved(),count=before.projectData.acceptedChanges.length');
  }
  if(process.argv.includes('--fault=stale-post-ingestion-state')){
-  const before='const after=await saved();assert.equal(after.projectData.acceptedChanges.length,count+1';
+  const before='const observation=await saved({workflow:true}),after=observation.project;';
   assert.equal(journey.split(before).length-1,1,'Post-ingestion observation fault anchor is missing');
-  journey=journey.replace(before,'const after=before;assert.equal(after.projectData.acceptedChanges.length,count+1');
+  journey=journey.replace(before,'const observation={project:before,workflow:[]},after=observation.project;');
  }
  const start=journey.indexOf('async function ingest('),end=journey.indexOf('async function external(',start);
  assert.ok(start>=0&&end>start,'The actual journey ingestion verifier is required.');
@@ -140,16 +140,16 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
   const request={jobId:invalid?'WRONG-PROJECT':'READ-BOUNDARY',operation:'COMPLETE',attachments:[]};
   const stored={job:{JOB_ID:'READ-BOUNDARY'},revision:4,projectData:{acceptedChanges:[{changeId:'PREVIOUS'}],rawResponses:[],responseValidations:[]}};
   const before=structuredClone(stored),report={operations:[]};let reads=0,selected;
-  const saved=async()=>{reads++;return structuredClone(stored);};
+  const saved=async({workflow=false}={})=>{reads++;const project=structuredClone(stored);return workflow?{project,workflow:[{stage:1,revision:project.revision}]}:project;};
   const browser={selectFiles:async(_selector,files)=>{selected=files[0].bytes;},
    click:async selector=>{
     if(selector==='#process-response-file'&&invalid)stored.projectData.responseValidations.push({valid:false});
     if(selector==='#accept-proposal'){stored.projectData.acceptedChanges.push({changeId:'ACCEPTED'});stored.projectData.rawResponses.push({completeRawResponse:selected.toString()});stored.revision++;}
-   },exists:async selector=>selector==='#accept-proposal',evaluate:async()=>{throw new Error('Unexpected browser fallback in the valid fixture.');}};
-  const ingest=Function('saved','browser','stage','report','assert','digest',journey.slice(start,end)+';return ingest;')(
-   saved,browser,1,report,assert,bytes=>context.closedLoopHash.sha256Text(bytes.toString()));
+   },exists:async selector=>selector==='#accept-proposal',evaluate:async()=>({validation:'Controlled failed acceptance',operation:'Controlled diagnostic'})};
+  const ingest=Function('saved','browser','stage','report','assert','digest','preserveReport',journey.slice(start,end)+';return ingest;')(
+   saved,browser,1,report,assert,bytes=>context.closedLoopHash.sha256Text(bytes.toString()),()=>{});
   const observedAfter=await ingest(request,{invalid,...(reuse?{observedBefore:before}:{})});
-  if(!invalid)assert.deepEqual(observedAfter,stored,'JOURNEY_POST_OBSERVATION_ORACLE: continuation receives the independently verified post-action project');
+  if(!invalid){assert.deepEqual(observedAfter.project,stored,'JOURNEY_POST_OBSERVATION_ORACLE: continuation receives the independently verified post-action project');assert.equal(observedAfter.workflow[0].revision,stored.revision,'JOURNEY_POST_OBSERVATION_ORACLE: decisions belong to the same post-action version');}
   assert.equal(reads,reuse?1:2,'JOURNEY_READ_BOUNDARY_ORACLE: an unchanged pre-operation snapshot must not trigger another complete project read; the post-action observation is always fresh');
   assert.deepEqual(before.projectData.acceptedChanges,[{changeId:'PREVIOUS'}],'Pre-operation observations must remain unchanged.');
   assert.equal(report.operations.length,invalid?0:1,'The actual verifier must still distinguish rejection from committed acceptance.');
@@ -163,9 +163,14 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
 {
  let journey=fs.readFileSync(process.env.OPERATOR_JOURNEY_SOURCE||'verify-complete-operator-journey.mjs','utf8');
  if(process.argv.includes('--fault=repeat-post-ingestion-read')){
-  const before='const p=nextObservedProject||await saved(),gate=engine.gate(stage,p)';
+  const before='const observed=nextObservedWorkflow||await saved({workflow:true})';
   assert.equal(journey.split(before).length-1,1,'Continuation observation fault anchor is missing');
-  journey=journey.replace(before,'const p=await saved(),gate=engine.gate(stage,p)');
+  journey=journey.replace(before,'const observed=await saved({workflow:true})');
+ }
+ if(process.argv.includes('--fault=detached-workflow-decision')){
+  const before='p=observed.project,{gate,action}=observed.workflow[0]';
+  assert.equal(journey.split(before).length-1,1,'Workflow runtime fault anchor is missing');
+  journey=journey.replace(before,'p=observed.project,gate=engine.gate(stage,p),action=engine.operationalNextAction(p,stage)');
  }
  const start=journey.indexOf('  for(stage=1;stage<=30;stage++){'),end=journey.indexOf('  for(const selected of ',start);
  assert.ok(start>=0&&end>start,'The complete existing operator loop is required.');
@@ -174,11 +179,14 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
   const state=()=>({activeStage:selected,revision,projectData:{acceptedChanges:[...complete]},stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:complete.has(i+1)?'COMPLETE':'READY'}]))});
   const browser={fill:async(selector,value)=>{if(selector==='#stage-picker')selected=Number(value);},settle:async()=>{},visible:async()=>true,
    inspect:async()=>({synthetic:true}),reload:async()=>{},click:async selector=>{if(selector==='#confirm-stage-one'){complete.add(selected);revision++;}}};
-  const saved=async()=>{reads++;return structuredClone(state());};
-  const engine={gate:(stage,p)=>({complete:p.stages[stage].status==='COMPLETE',reasons:[]}),
+  const owner={gate:(stage,p)=>({complete:p.stages[stage].status==='COMPLETE',reasons:[]}),
    operationalNextAction:(p,stage)=>({actionType:p.stages[stage].status==='COMPLETE'?'COMPLETE':mode==='application-command'?'CONFIRM_STAGE_ONE_INTENT':'EXTERNAL_AGENT_TOOL'}),
    recordValue:()=>true,recordsForCurrentScope:()=>[{}]};
-  const external=async()=>{complete.add(selected);revision++;report.operations.push({stage:selected});return mode==='external-without-observation'?null:structuredClone(state());};
+  const detachedDecision=()=>assert.fail('JOURNEY_RUNTIME_AUTHORITY_ORACLE: JSON alone cannot re-establish the observed application workflow or artifact custody.');
+  const engine={...owner,gate:detachedDecision,operationalNextAction:detachedDecision};
+  const observation=()=>{const project=structuredClone(state());return {project,workflow:[{stage:selected,gate:owner.gate(selected,project),action:owner.operationalNextAction(project,selected)}]};};
+  const saved=async({workflow=false}={})=>{reads++;return workflow?observation():structuredClone(state());};
+  const external=async()=>{complete.add(selected);revision++;report.operations.push({stage:selected});return mode==='external-without-observation'?null:observation();};
   const run=Function('browser','engine','saved','external','report','assert','inspectPresentation','verifyCompletedStageProjection','preserveReport','captureOperationLatency','schema','console','mode',
    'return (async()=>{let stage=1,sequence=0,reloaded=mode!=="reload";'+journey.slice(start,end)+';return sequence;})();');
   await run(browser,engine,saved,external,report,assert,async()=>{},(p,stage)=>{assert.equal(p.stages[stage].status,'COMPLETE');return {verified:true};},()=>{},async()=>{},{},{log(){}},mode);
@@ -221,13 +229,13 @@ for(const stage of [1]){
  const bytes=Buffer.from('fixed exported backup bytes'),snapshot={file:{bytes,sha256:'verified-backup-digest'}},report={},phases=[];
  const project={job:{JOB_ID:'ROUNDTRIP'},projectData:{acceptedChanges:[{changeId:'accepted'}]},stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:'COMPLETE'}]))};
  let exported=0,imported=false,reads=0;
- const saved=async({backup=false}={})=>{if(backup)exported++;else{assert.equal(imported,true,'Restore observation must follow the import control');reads++;}return structuredClone(project);};
+ const workflow=Object.keys(project.stages).map(stage=>({stage:Number(stage),gate:{complete:true},action:{actionType:'COMPLETE'}}));
+ const saved=async({backup=false,workflow:includeWorkflow=false,stages=[]}={})=>{if(backup)exported++;else{assert.equal(imported,true,'Restore observation must follow the import control');reads++;}if(includeWorkflow)assert.deepEqual(stages,workflow.map(row=>row.stage));return includeWorkflow?{project:structuredClone(project),workflow:structuredClone(workflow)}:structuredClone(project);};
  const browser={selectFiles:async(selector,files)=>{assert.equal(selector,'#import-file');assert.deepEqual(files[0].bytes,bytes,'BACKUP_INPUT_BYTES_ORACLE: restore must select the actual exported bytes');imported=true;}};
- const engine={gate:(n,p)=>({complete:p.stages[n].status==='COMPLETE'})};
- await Function('saved','browser','snapshot','report','assert','engine','preserveReport','stage','sequence','return (async()=>{'+sequence+'})();')(saved,browser,snapshot,report,assert,engine,()=>phases.push(report.currentOperation?.phase),31,133);
+ await Function('saved','browser','snapshot','report','assert','schema','preserveReport','stage','sequence','return (async()=>{'+sequence+'})();')(saved,browser,snapshot,report,assert,{STAGE_COUNT:30},()=>phases.push(report.currentOperation?.phase),31,133);
  assert.equal(exported,1,'FINAL_BACKUP_OBSERVATION_ORACLE: restored state must be read without exporting the complete history again');
  assert.equal(reads,1,'FINAL_BACKUP_OBSERVATION_ORACLE: verify a fresh post-import stored project');
- assert.deepEqual(report.backupRestore,{selectedSha256:snapshot.file.sha256,stagesPreserved:30});
+ assert.deepEqual(report.backupRestore,{selectedSha256:snapshot.file.sha256,stagesPreserved:30,workflow});
  assert.deepEqual(phases,['FINAL_BACKUP_EXPORT','FINAL_BACKUP_IMPORT','FINAL_BACKUP_VERIFY'],'FINAL_BACKUP_PHASE_ORACLE: an interruption must identify the actual final operation');
  cases.push({caseId:'FINAL-BACKUP-OBSERVATION',result:'PASS',actualBrowser:false,exports:exported,freshReads:reads,phases});
 }

@@ -43,7 +43,7 @@ async function inspectPresentation(driver,caseId,instruction){
   const observed=await driver.evaluate('('+observeWorkflowDOM.toString()+')()');
   const result=assertWorkflowPresentation(observed,{caseId,instruction});report.presentationCases.push(result);if(driver===browser)await captureOperationLatency(driver);return result;
 }
-async function saved({backup=false}={}){await captureOperationLatency();if(!backup)return browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
+async function saved({backup=false,workflow=false,stages=[stage]}={}){await captureOperationLatency();if(!backup)return workflow?browser.readWorkflow(stages):browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
 async function boundStage30BrowserRecovery(project){
   const jobId=String(project?.job?.JOB_ID||''),revision=Number(project?.revision),projectSha256=String(project?.projectSha256||'');
   assert.ok(jobId&&Number.isInteger(revision)&&/^[a-f0-9]{64}$/.test(projectSha256),'Bounded Stage 30 browser fixture requires the exact current stored project identity.');
@@ -71,7 +71,7 @@ async function verifyFinalBackupRoundTrip(){
   report.currentOperation={phase:'FINAL_BACKUP_VERIFY',stage,sequence};preserveReport();
   // Read the freshly restored stored state. Exporting it again is a separate
   // expensive operator action and contributes no assertion to this round trip.
-  const restored=await saved();assert.equal(restored.job.JOB_ID,before.job.JOB_ID);assert.equal(restored.projectData.acceptedChanges.length,before.projectData.acceptedChanges.length);assert.ok(Array.from({length:30},(_,i)=>engine.gate(i+1,restored).complete).every(Boolean));report.backupRestore={selectedSha256:backup.sha256,stagesPreserved:30};
+  const observed=await saved({workflow:true,stages:Array.from({length:schema.STAGE_COUNT},(_,index)=>index+1)}),restored=observed.project;assert.equal(restored.job.JOB_ID,before.job.JOB_ID);assert.equal(restored.projectData.acceptedChanges.length,before.projectData.acceptedChanges.length);assert.ok(observed.workflow.every(row=>row.gate.complete),'Every restored stage must pass in the runtime that verified its saved artifact bytes.');report.backupRestore={selectedSha256:backup.sha256,stagesPreserved:observed.workflow.length,workflow:observed.workflow};
 }
 async function ingest(request,{invalid=false,observedBefore=null}={}){
   // The caller may pass its just-read pre-operation state; no state is reused
@@ -81,10 +81,10 @@ async function ingest(request,{invalid=false,observedBefore=null}={}){
   if(invalid){const after=await saved();assert.equal(after.projectData.acceptedChanges.length,count,'Invalid response changed accepted work');assert.ok(after.projectData.responseValidations.some(row=>row.valid===false),'Invalid response did not preserve its rejection');return;}
   if(request.attachments.length){const slots=await browser.evaluate(`[...document.querySelectorAll('[data-returned-slot]')].map(node=>node.dataset.returnedSlot)`);assert.equal(slots.length,request.attachments.length);for(const slot of slots)await browser.selectFiles(`[data-returned-slot="${slot}"]`,[{filename:'result.txt',bytes:Buffer.from(OUTPUT)}]);await browser.click('#validate-returned-files');}
   if(!(await browser.exists('#accept-proposal'))){await browser.evaluate(`document.querySelectorAll('#validation-report details:not([open])>summary').forEach(node=>node.click())`);throw new Error('Valid response did not expose proposal review: '+await browser.evaluate(`document.querySelector('#validation-report')?.innerText||document.querySelector('#stage-workflow')?.innerText||document.body.innerText`));}
-  await browser.click('#accept-proposal');if(await browser.exists('#accept-replacement'))await browser.click('#accept-replacement');const after=await saved();
+  await browser.click('#accept-proposal');if(await browser.exists('#accept-replacement'))await browser.click('#accept-replacement');const observation=await saved({workflow:true}),after=observation.project;
   if(after.projectData.acceptedChanges.length!==count+1){report.acceptanceFailure={stage,operation:request.operation,acceptedBefore:count,acceptedAfter:after.projectData.acceptedChanges.length,feedback:await browser.evaluate(`({validation:document.querySelector('#validation-report')?.textContent,operation:document.querySelector('#operation-error')?.textContent})`)};preserveReport();}
   assert.equal(after.projectData.acceptedChanges.length,count+1,'Accept did not commit exactly one response: '+JSON.stringify(report.acceptanceFailure));assert.ok(after.projectData.rawResponses.some(row=>row.completeRawResponse===bytes.toString()),'The selected response bytes were not retained exactly');
-  report.operations.push({stage,operation:request.operation,responseSha256:digest(bytes),acceptedChangeId:after.projectData.acceptedChanges.at(-1).changeId,revision:after.revision});return after;
+  report.operations.push({stage,operation:request.operation,responseSha256:digest(bytes),acceptedChangeId:after.projectData.acceptedChanges.at(-1).changeId,revision:after.revision});return observation;
 }
 async function external(){
   const exportControl=await browser.exists('#next-export-prompt-file')?'#next-export-prompt-file':await browser.exists('#download-execution-package')?'#download-execution-package':null;
@@ -132,9 +132,9 @@ try{
   }
   await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Complete operator journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');assert.equal(await browser.evaluate(`document.querySelector('[data-view="Workflow"]')?.getAttribute('aria-selected')==='true'`),true,'Saving project information did not advance to Workflow.');assert.equal(await browser.visible('#next-required-action'),true,'Saving project information did not place the next required action in the viewport.');assert.equal(await browser.visible('#next-required-action #next-export-prompt-file'),true,'The actual Stage 01 export control is not inside the visible next-action region.');await saved();
   for(stage=1;stage<=30;stage++){
-    await browser.fill('#stage-picker',stage);const start=report.operations.length;let nextObservedProject=null;
+    await browser.fill('#stage-picker',stage);const start=report.operations.length;let nextObservedWorkflow=null;
     for(let steps=0;steps<80;steps++){
-      assert.ok(++sequence<=240,'Bound of 240 operator actions exceeded');await browser.settle();assert.equal(await browser.visible('#next-required-action'),true,`Stage ${stage}: the next required action was not visible before operator action ${sequence}.`);const p=nextObservedProject||await saved(),gate=engine.gate(stage,p),action=engine.operationalNextAction(p,stage);nextObservedProject=null;
+      assert.ok(++sequence<=240,'Bound of 240 operator actions exceeded');await browser.settle();assert.equal(await browser.visible('#next-required-action'),true,`Stage ${stage}: the next required action was not visible before operator action ${sequence}.`);const observed=nextObservedWorkflow||await saved({workflow:true}),p=observed.project,{gate,action}=observed.workflow[0];assert.equal(observed.workflow[0].stage,stage);nextObservedWorkflow=null;
       await inspectPresentation(browser,'operator-stage-'+stage+'-sequence-'+sequence);
       if(gate.complete&&!(stage===30&&action.actionType!=='COMPLETE')){report.stages.push({stage,result:'PASS',projection:verifyCompletedStageProjection(p,stage,schema),view:await browser.inspect(stage),operations:report.operations.length-start});break;}
       report.currentOperation={phase:'STAGE_OPERATOR_ACTION',stage,sequence,action:action.actionType,operation:action.operation,startedAt:new Date().toISOString()};preserveReport();
@@ -146,9 +146,9 @@ try{
       if(action.actionType==='EXPORT_PRE_DELIVERY_CHECKPOINT'){await boundStage30BrowserRecovery(p);const [file]=await browser.download('#export-pre-delivery-checkpoint');report.preDeliveryBackup={sha256:file.sha256,byteSize:file.bytes.length};continue;}
       const controls={CONFIRM_STAGE_ONE_INTENT:'#confirm-stage-one',FREEZE_CANDIDATE:'#freeze-candidate',RESERVE_RUN_BATCH:'#reserve-run-batch',BEGIN_UNCHANGED_CONFIRMATION:'#begin-unchanged-confirmation',FREEZE_BASELINE:'#freeze-baseline',RESERVE_PRODUCT_EXECUTION:'#reserve-product-execution',FREEZE_DELIVERY_CANDIDATE:'#freeze-delivery-candidate',RUN_APP_TESTS:'#run-native-tests',CALCULATE_CONVERGENCE:'#calculate-stage18-convergence',CALCULATE_UNCHANGED_CONFIRMATION:'#calculate-stage19-confirmation',CALCULATE_RELEASE:'#calculate-stage27-release',BUILD_EVIDENCE_CHAINS:'#build-evidence-chains',CALCULATE_TERMINAL:'#calculate-stage30-terminal'};
       if(controls[action.actionType]){if(action.actionType==='FREEZE_CANDIDATE'){assert.equal(engine.recordValue(engine.recordsForCurrentScope(p,'instructions').at(-1),'INSTRUCTION_TEXT'),CANDIDATE);await browser.selectFiles('#stage-files',[{filename:'production-instruction.txt',bytes:Buffer.from(CANDIDATE)}]);}await browser.click(controls[action.actionType]);report.operations.push({stage,command:action.actionType});}
-      else if(['EXTERNAL_AGENT_TOOL','AI_REVIEW','EXTERNAL_SYSTEM','CONTINUE_AGENT_CONVERSATION','SELECT_RESPONSE_JSON_FILE'].includes(action.actionType))nextObservedProject=await external();
+      else if(['EXTERNAL_AGENT_TOOL','AI_REVIEW','EXTERNAL_SYSTEM','CONTINUE_AGENT_CONVERSATION','SELECT_RESPONSE_JSON_FILE'].includes(action.actionType))nextObservedWorkflow=await external();
       else throw new Error(`Stage ${stage} has no progressing operator action: ${JSON.stringify(action)}`);
-      if(stage===5&&!reloaded){nextObservedProject=null;const before=await saved();await captureOperationLatency();await browser.reload();const after=await saved();assert.deepEqual(after.projectData,before.projectData);assert.deepEqual(after.stages,before.stages);reloaded=true;await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);await captureOperationLatency();}
+      if(stage===5&&!reloaded){nextObservedWorkflow=null;const before=await saved();await captureOperationLatency();await browser.reload();const after=await saved();assert.deepEqual(after.projectData,before.projectData);assert.deepEqual(after.stages,before.stages);reloaded=true;await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);await captureOperationLatency();}
     }
     assert.ok(report.stages.some(row=>row.stage===stage),`Stage ${stage} did not finish within 80 actions`);
   }

@@ -82,6 +82,25 @@ export function createBrowserReadiness(cdp,evaluate,{timeout=90000,wait=until}={
   }
   return {idle,navigate,restoreEntry};
 }
+// Workflow decisions depend on the application's verified artifact custody.
+// Observe them with the stored version in its owning runtime, before JSON
+// crosses CDP. The observer performs no workflow command or canonical write.
+export function createWorkflowObservation(evaluate){
+  return async function observe(stages=[]){
+    assert.ok(Array.isArray(stages)&&stages.every(Number.isInteger)&&new Set(stages).size===stages.length,'Workflow observation requires distinct integer stages.');
+    const result=await evaluate(`(async()=>{
+      const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,schema=closedLoopWorkflowSchema;
+      const id=history.state?.jobId||await store.metaGet('selectedProject'),project=await store.readProject(id),stages=${JSON.stringify(stages)};
+      if(!project?.job?.JOB_ID||project.job.JOB_ID!==id)throw new Error('WORKFLOW_OBSERVATION_PROJECT_MISMATCH');
+      if(stages.some(stage=>stage<1||stage>schema.STAGE_COUNT))throw new Error('WORKFLOW_OBSERVATION_INVALID_STAGE');
+      const workflow=stages.map(stage=>({stage,gate:engine.gate(stage,project),action:engine.operationalNextAction(project,stage)}));
+      return {project,workflow};
+    })()`);
+    assert.ok(result?.project?.job?.JOB_ID&&Array.isArray(result.workflow),'The application did not return a stored workflow observation.');
+    assert.deepEqual(result.workflow.map(row=>row.stage),stages,'Workflow observations must preserve the requested stage identities.');
+    return result;
+  };
+}
 class Connection{
   constructor(url){this.ws=new WebSocket(url);this.pending=new Map();this.events=[];this.sequence=0;this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=event=>{const message=JSON.parse(event.data),waiting=this.pending.get(message.id);if(waiting){this.pending.delete(message.id);clearTimeout(waiting.timer);message.error?waiting.reject(new Error(message.error.message)):waiting.resolve(message.result);}else this.events.push(message);};}
   async send(method,params={}){await this.ready;const id=++this.sequence;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(id);reject(new Error(`Browser command timed out: ${method}`));},90000);this.pending.set(id,{resolve,reject,timer});this.ws.send(JSON.stringify({id,method,params}));});}
@@ -118,12 +137,14 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
   async function project(){if(!(await evaluate(`document.querySelector('#project-actions-toggle')?.closest('details')?.open`)))await click('#project-actions-toggle');const [file]=await download('#export-project'),decoded=JSON.parse(gunzipSync(file.bytes).toString('utf8'));assert.equal(decoded.schema,'closed-loop-project-package/1');assert.ok(decoded.project?.job?.JOB_ID);return {project:decoded.project,package:decoded,file};}
   // Observe stored results without adding another whole-History backup action
   // to every ordinary control interaction. Required exports still use downloads.
-  async function readProject(){const started=performance.now();await idle();const result=await evaluate(`(async()=>{const store=closedLoopProjectStore,id=history.state?.jobId||await store.metaGet('selectedProject');return store.readProject(id);})()`);assert.ok(result?.job?.JOB_ID);events.push({operation:'observeStoredProject',jobId:result.job.JOB_ID,revision:result.revision,projectSha256:result.projectSha256,elapsedMs:performance.now()-started,projectBytes:Buffer.byteLength(JSON.stringify(result))});return result;}
+  const observeWorkflow=createWorkflowObservation(evaluate);
+  async function readWorkflow(stages=[]){const started=performance.now();await idle();const result=await observeWorkflow(stages),project=result.project;events.push({operation:'observeStoredProject',jobId:project.job.JOB_ID,revision:project.revision,projectSha256:project.projectSha256,elapsedMs:performance.now()-started,projectBytes:Buffer.byteLength(JSON.stringify(project)),workflow:result.workflow.map(row=>({stage:row.stage,complete:row.gate.complete,action:row.action.actionType}))});return result;}
+  async function readProject(){return (await readWorkflow()).project;}
   async function inspect(stage){await idle();const result=await evaluate(`(()=>{const body=document.documentElement,controls=[...document.querySelectorAll('button,input,select,textarea')].filter(node=>node.getBoundingClientRect().height&&getComputedStyle(node).visibility!=='hidden'),sizes=controls.map(node=>({id:node.id,label:node.getAttribute('aria-label')||node.textContent||node.labels?.[0]?.textContent||'',width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height}));return {width:innerWidth,height:innerHeight,horizontalOverflow:Math.max(0,body.scrollWidth-innerWidth),action:document.querySelector('#next-required-action')?.innerText||'',controls:sizes,liveStatus:Boolean(document.querySelector('[role="status"]')),activeElement:document.activeElement?.id||''};})()`);assert.ok(result.horizontalOverflow<=1,`Stage ${stage}: horizontal overflow ${result.horizontalOverflow}px`);assert.ok(result.liveStatus,`Stage ${stage}: missing live status`);const picture=await page.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(directory,`stage-${String(stage).padStart(2,'0')}.png`),Buffer.from(picture.data,'base64'));return result;}
   async function reload(){await readiness.navigate('Page.reload',{ignoreCache:true});await idle();events.push({operation:'reload'});}
   async function navigationHistory(){return page.send('Page.getNavigationHistory');}
   async function restoreEntry(entryId){await readiness.restoreEntry(entryId);await idle();events.push({operation:'browserHistoryTraversal',entryId});}
   async function openUrl(destination){await readiness.navigate('Page.navigate',{url:destination});await idle();events.push({operation:'directLink',url:destination});}
   async function close(){try{page.close();root.close();}finally{child.kill('SIGKILL');}}
-  await idle();return {click,fill,selectFiles,download,project,readProject,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
+  await idle();return {click,fill,selectFiles,download,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
 }

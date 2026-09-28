@@ -916,7 +916,8 @@
         "Direct VM evaluator scan including createContext, runInNewContext and runInThisContext",
         "Actual Node-host plain-object, structured-clone, hash, RAF, File, URL and storage behavior",
         "Missing RAF and foreign-realm fault rejection",
-        "Default factory supplies its own realm-native production hash API without every consumer having to seed it"
+        "Default factory supplies its own realm-native production hash API without every consumer having to seed it",
+        "The existing product-reservation persistence gate exercises browser workflow observation against its actual stored accepted product, reload and matching checkpoint restoration; JSON-only host evaluation is rejected by the runtime-custody oracle. The existing action lifecycle and recovery/I/O fault gates preserve fresh observation, final backup and stage-selection boundaries."
       ],
       "applicableStages": "VERIFICATION_INFRASTRUCTURE",
       "applicableOperations": "ALL_VM_VERIFIER_EXECUTION",
@@ -948,7 +949,8 @@
         "Every root and nested VM verifier including runInThisContext and runInNewContext consumers",
         "Generated child-program consumers",
         "Factory contract and targeted platform/realm fault injection",
-        "All existing workflow verification consumers"
+        "All existing workflow verification consumers",
+        "operator-browser-driver.mjs:createWorkflowObservation and readWorkflow; complete operator journey stage dispatch and final backup restoration; lifecycle observation adapters and their recovery/I/O fault consumers"
       ],
       "reproduction": {
         "sourceCommit": "488175ebb0ddb3d23a7667ae3039e83202691462",

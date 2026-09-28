@@ -5,6 +5,7 @@ import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
 import {responseFixture,OUTPUT} from './operator-journey-fixtures.mjs';
+import {createWorkflowObservation} from './operator-browser-driver.mjs';
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file==='workflow-engine.js'&&process.env.ENGINE_SOURCE?process.env.ENGINE_SOURCE:file,'utf8'),{filename:file});
 const {buildUnchangedConfirmationFixture}=await import('./stage19-fixture.mjs');
@@ -148,14 +149,42 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  const accepted=await durableStore.readProject(staged.job.JOB_ID),acceptedCheckpoint=(await durableStore.historyList(staged.job.JOB_ID)).activeId;
  assert.equal(accepted.projectData.acceptedChanges.length,acceptedCount+1,'PRODUCT_ACCEPTANCE_RELOAD_ORACLE');
  for(const phase of ['FINAL_PRODUCT_DETERMINISTIC','FINAL_PRODUCT_MEANING','FINAL_PRODUCT_ADVERSARIAL'])assert.equal(uiEngine.verificationPhaseTargetAvailability(accepted,phase),'TRUE','PRODUCT_ACCEPTANCE_RELOAD_ORACLE: '+phase);
+ // A journey must observe the complete next action in the runtime that has
+ // verified this version's files. JSON metadata alone omits required evidence
+ // and can incorrectly block native final-product verification.
+ runtime.history={state:{jobId:accepted.job.JOB_ID}};
+ const json=value=>JSON.parse(JSON.stringify(value));
+ const observeWorkflow=createWorkflowObservation(async expression=>json(await vm.runInContext(expression,runtime)));
+ const expectedEvidence=new Map([[23,'Independent meaning review'],[24,'Adversarial challenge evidence']]);
+ const assertObservation=(observed,expected,{productAvailable=true}={})=>{
+  assert.equal(observed.project.job.JOB_ID,expected.job.JOB_ID,'OPERATOR_RUNTIME_VERSION_ORACLE');
+  assert.equal(observed.project.revision,expected.revision,'OPERATOR_RUNTIME_VERSION_ORACLE');
+  assert.equal(observed.project.projectSha256,expected.projectSha256,'OPERATOR_RUNTIME_VERSION_ORACLE');
+  for(const row of observed.workflow){
+   const expectedAction=uiEngine.operationalNextAction(expected,row.stage);
+   assert.deepEqual(row.action,json(expectedAction),'OPERATOR_RUNTIME_CUSTODY_ORACLE: observe the complete current action with its actual verified files and required evidence.');
+   const {checkedAt:actualTime,...actualGate}=row.gate,{checkedAt:expectedTime,...expectedGate}=uiEngine.gate(row.stage,expected);
+   assert.deepEqual(actualGate,json(expectedGate),'OPERATOR_RUNTIME_CUSTODY_ORACLE: stage completion and blocking reasons must belong to the same stored version and byte custody.');
+   if(productAvailable&&expectedEvidence.has(row.stage))assert.ok(row.action.expectedReturnFiles.some(file=>file.kind==='EVIDENCE'&&file.filenameOrPattern===expectedEvidence.get(row.stage)),'OPERATOR_RUNTIME_EVIDENCE_ORACLE: preserve the declared final-review evidence requirement.');
+  }
+ };
+ const observed=await observeWorkflow([22,23,24]);assertObservation(observed,accepted);
+ // One deliberate harness fault: recompute the observed decisions after only
+ // project JSON crosses into the host runtime, which has no verified bytes.
+ const detached=json(observed);detached.workflow=detached.workflow.map(({stage})=>({stage,gate:engine.gate(stage,detached.project),action:engine.operationalNextAction(detached.project,stage)}));
+ assert.throws(()=>assertObservation(detached,accepted),/OPERATOR_RUNTIME_CUSTODY_ORACLE/,'A metadata-only workflow evaluation must fail the same complete-action oracle.');
+ assertObservation(await observeWorkflow([22,23,24]),accepted);
+ report.workflowObservation={caseId:'OPERATOR_RUNTIME_CUSTODY',synthetic:true,actualBrowser:false,stages:[22,23,24],currentVersion:true,completeActions:true,requiredReviewEvidence:true,metadataOnlyFaultDetected:true,healthySourceRechecked:true};
  assert.deepEqual(Buffer.from(await (await durableStore.getArtifact(artifactId)).blob.arrayBuffer()),Buffer.from(OUTPUT),'PRODUCT_ACCEPTANCE_BYTES_ORACLE');
  const prior=await durableStore.restoreCheckpoint(staged.job.JOB_ID,checkpointBefore,{expectedProjectRevision:accepted.revision});
  assert.equal(uiEngine.recordsForCurrentScope(prior.project,'products').length,0,'PRODUCT_ACCEPTANCE_RESTORE_ORACLE: the earlier version must not inherit the product.');
+ const earlierObservation=await observeWorkflow([21,23,24]);assertObservation(earlierObservation,prior.project,{productAvailable:false});assert.equal(earlierObservation.workflow[0].gate.complete,false,'OPERATOR_RUNTIME_VERSION_ORACLE: an earlier version must not inherit later product acceptance.');
  const recovered=await durableStore.restoreCheckpoint(staged.job.JOB_ID,acceptedCheckpoint,{expectedProjectRevision:prior.project.revision});
  assert.deepEqual(recovered.project.projectData.acceptedChanges,accepted.projectData.acceptedChanges,'PRODUCT_ACCEPTANCE_RESTORE_ORACLE: restore the matching acceptance records.');
  assert.equal(uiEngine.gate(21,recovered.project).complete,true,'PRODUCT_ACCEPTANCE_RESTORE_ORACLE');
  for(const phase of ['FINAL_PRODUCT_DETERMINISTIC','FINAL_PRODUCT_MEANING','FINAL_PRODUCT_ADVERSARIAL'])assert.equal(uiEngine.verificationPhaseTargetAvailability(recovered.project,phase),'TRUE','PRODUCT_ACCEPTANCE_RESTORE_ORACLE: '+phase);
  assert.deepEqual(Buffer.from(await (await durableStore.getArtifact(artifactId)).blob.arrayBuffer()),Buffer.from(OUTPUT),'PRODUCT_ACCEPTANCE_RESTORE_BYTES_ORACLE');
+ const recoveredObservation=await observeWorkflow([22,23,24]);assertObservation(recoveredObservation,recovered.project);report.workflowObservation.restoration=true;report.workflowObservation.earlierVersionDidNotInheritProduct=true;
  phase('accepted-product-reload-and-restoration-complete');
  report.acceptance={caseId:'PRODUCT_ACCEPTANCE_PERSISTENCE',acceptedBefore:acceptedCount,acceptedAfter:accepted.projectData.acceptedChanges.length,reload:true,restoration:true,exactBytes:true,faultDetected:true};
  report.durableCases.push({name:'Accept the reviewed product response with its exact stored bytes through the production UI and persistence owners',result:'PASS'});
