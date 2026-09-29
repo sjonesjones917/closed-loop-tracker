@@ -125849,7 +125849,39 @@
           "verify-history-project-sharing-faults.mjs: all intended fault rejections and restored-source controls",
           "verify-conformance-regressions.mjs: timeout classification, raw-output preservation and source-restoration checks"
         ],
-        "status": "UNVERIFIED"
+        "status": "UNVERIFIED",
+        "creationPresentationFaultMatrix": {
+          "classification": "verifier",
+          "owners": [
+            "verify-conformance-regressions.mjs: executeGate / runSequence / runner contracts",
+            "verify-creation-presentation-faults.mjs: injected and restored child orchestration"
+          ],
+          "invariant": "Every injected or healthy child terminates within its declared finite deadline; completed rejection cites its intended oracle. Timeout, signal, unrelated failure, or interruption cannot count as detected product failure. Raw output, completed results, and the current child survive matrix interruption.",
+          "sourceRequirements": [
+            "Current controlling task sections 4E, 4F, 10, 11 and 15",
+            "TEST-GATE-PAIRS",
+            "TEST-MUTATIONS"
+          ],
+          "authorityTrace": [
+            "CI conformance aggregate supervises the composite matrix",
+            "The matrix runs nineteen disposable production-source faults and seven restored full suites",
+            "Shared child supervision retains raw streams and enforces deadlines and cancellation",
+            "The matrix retains case progress and requires completed intended-oracle rejection"
+          ],
+          "dependencyClosure": [
+            "Both callers of the existing executeGate supervisor",
+            "All nineteen existing fault definitions without changing their violations or behavioral oracles",
+            "All seven existing complete healthy controls",
+            "Aggregate report parsing, timeout classification, finite per-gate budget, process-group cancellation and CI artifact retention"
+          ],
+          "requiredProof": [
+            "Existing runner contract: valid rejection, unrelated rejection, timeout after oracle output, interruption after completed child, and declared composite budget",
+            "Targeted supervisor faults are each rejected by the corresponding contract oracle",
+            "Complete creation/presentation fault matrix detects every original fault and passes every original healthy control",
+            "Full required CI at the published candidate SHA"
+          ],
+          "status": "UNVERIFIED"
+        }
       }
     },
     {

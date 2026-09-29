@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {spawnSync} from 'node:child_process';
+import {executeGate,CREATION_MATRIX_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 
 const cases=[
  {id:'duplicated-instruction-preview',file:'app-core.js',env:'APP_SOURCE',suite:'verify-file-first-operator.mjs',oracle:'INSTRUCTION_ONCE_ORACLE',before:'${esc(prompt.slice(0,DATA_VIEW_LIMITS.promptCharacters))}',after:'${esc(prompt.slice(0,DATA_VIEW_LIMITS.promptCharacters))}\n${esc(prompt.slice(0,DATA_VIEW_LIMITS.promptCharacters))}'},
@@ -26,21 +26,46 @@ const cases=[
  {id:'primary-action-identifier',file:'app-core.js',env:'APP_SOURCE',suite:'verify-primary-guidance.mjs',oracle:'PRIMARY_GUIDANCE_ORACLE',before:'return esc(readable)+(readable===text?',after:'return esc(text)+(readable===text?'}
 ];
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'creation-presentation-faults-')),results=[];
-const run=(suite,env={})=>{const child=spawnSync(process.execPath,[suite],{env:{...process.env,...env},encoding:'utf8',maxBuffer:64*1024*1024});return {command:['node',suite],exitCode:child.status,signal:child.signal,stdout:child.stdout||'',stderr:child.stderr||''};};
+// Every child is independently bounded. The shared supervisor captures streams
+// as they arrive, terminates descendants, and never treats TIMEOUT as rejection.
+const childTimeoutMs=Math.min(10*60*1000,Number(process.env.CREATION_FAULT_CHILD_TIMEOUT_MS)||10*60*1000);
+assert.ok(Number.isFinite(childTimeoutMs)&&childTimeoutMs>0,'A finite child deadline is required.');
+const evidenceDirectory=path.resolve(process.env.CREATION_FAULT_EVIDENCE_DIRECTORY||'conformance-regression-evidence/creation-presentation-faults');
+const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT');
+process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
+const aggregateDeadline=setTimeout(()=>controller.abort('AGGREGATE_TIMEOUT'),CREATION_MATRIX_TIMEOUT_MS);
+const report={synthetic:true,actualBrowser:false,expected:'Each deliberate ownership, identity, custody, receipt, or information-display violation is caught by its behavioral oracle; original sources pass afterward.',results,pending:cases.map(item=>item.id),running:null,complete:false,outcome:'RUNNING'};
+const persist=()=>{fs.mkdirSync(evidenceDirectory,{recursive:true});const file=path.join(evidenceDirectory,'report.json'),temporary=file+'.partial';fs.writeFileSync(temporary,JSON.stringify(report,null,2)+'\n');fs.renameSync(temporary,file);};
+const run=async(name,suite,env={})=>{
+ report.running={name,suite,startedAt:new Date().toISOString()};persist();
+ process.stderr.write(JSON.stringify({phase:'START',...report.running})+'\n');
+ const observed=await executeGate({name,args:[suite]},{directory:evidenceDirectory,env,signal:controller.signal,timeoutMs:childTimeoutMs,requireJson:false});
+ process.stderr.write(JSON.stringify({phase:'FINISH',name,suite,outcome:observed.outcome,exitCode:observed.exitCode,signal:observed.signal})+'\n');
+ return observed;
+};
+persist();
 try{
  for(const item of cases){
   const source=fs.readFileSync(item.file,'utf8');assert.ok(source.includes(item.before),'Fault anchor is absent: '+item.id);
   const changed=item.mutate?item.mutate(source):source.replace(item.before,item.after);assert.notEqual(changed,source,'Fault was not injected: '+item.id);
   const temporary=path.join(directory,item.id+'.js');fs.writeFileSync(temporary,changed);
-  const observed=run(item.suite,{[item.env]:temporary});
-  const detected=observed.exitCode!==0&&(observed.stdout+observed.stderr).includes(item.oracle);
-  results.push({id:item.id,expectedOracle:item.oracle,detected,...observed});
+  const observed=await run(item.id,item.suite,{[item.env]:temporary});
+  const detected=observed.outcome==='FAIL'&&observed.exitCode===1&&!observed.signal&&!observed.error&&!observed.reason&&(observed.stdout+observed.stderr).includes(item.oracle);
+  results.push({id:item.id,expectedOracle:item.oracle,detected,...observed});report.pending.shift();report.running=null;persist();
   assert.ok(detected,'Fault escaped or failed for an unrelated reason: '+item.id+'\n'+observed.stdout+'\n'+observed.stderr);
  }
- for(const suite of [...new Set(cases.map(item=>item.suite))]){
-  const observed=run(suite);results.push({restoredSuite:suite,...observed});assert.equal(observed.exitCode,0,'Restored source failed: '+suite+'\n'+observed.stdout+'\n'+observed.stderr);
+ report.pending=[...new Set(cases.map(item=>item.suite))];persist();
+ for(const suite of [...report.pending]){
+  const observed=await run('restored-'+path.basename(suite),suite);results.push({restoredSuite:suite,...observed});report.pending.shift();report.running=null;persist();
+  assert.equal(observed.outcome,'PASS','Restored source failed: '+suite+'\n'+observed.stdout+'\n'+observed.stderr);
  }
+ report.complete=true;report.outcome='PASS';
+}catch(error){
+ report.outcome=controller.signal.reason==='AGGREGATE_TIMEOUT'||results.some(row=>row.outcome==='TIMEOUT')?'TIMEOUT':'FAIL';
+ report.failure=String(error.stack||error);process.stderr.write(report.failure+'\n');process.exitCode=report.outcome==='TIMEOUT'?124:1;
 }finally{
- fs.rmSync(directory,{recursive:true,force:true});
- console.log(JSON.stringify({synthetic:true,actualBrowser:false,expected:'Each deliberate ownership, identity, custody, receipt, or information-display violation is caught by its behavioral oracle; original sources pass afterward.',results},null,2));
+ clearTimeout(aggregateDeadline);
+ process.removeListener('SIGTERM',onTerm);process.removeListener('SIGINT',onInt);
+ fs.rmSync(directory,{recursive:true,force:true});persist();
+ console.log(JSON.stringify(report,null,2));
 }
