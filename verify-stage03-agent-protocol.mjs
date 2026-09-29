@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']) vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']) createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
@@ -24,7 +25,7 @@ function project(){
   p.projectData.sources=[{id:'SOURCE-000001',recordId:'SOURCE-000001',active:true,stage:2,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'},fields:{SOURCE_ID:'SOURCE-000001',TITLE:'Controlled source',SOURCE_TYPE:'OFFICIAL_STANDARD',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',CONTROLLING_STATE:'CONTROLLING'}}];
   return p;
 }
-function savePrompt(p){const pr={...prompts.buildPromptRecord(3,p,{operation:'COMPLETE'}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);return pr;}
+function savePrompt(p){const pr={...prompts.buildPromptRecord(3,p,engine.preparePromptContext(p,3,{operation:'COMPLETE'}).options),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);return pr;}
 function envelope(p,pr){return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:3,operation:'COMPLETE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:'2',EXACT_PORTION_EXAMINED:'Complete controlled source',FINDING_CLASSIFICATION:'SECOND_COMPLETE_PASS_SATURATED',SOURCE_EVIDENCE:'Controlled source evidence',SATURATION_STATUS:'SATURATED'},relationships:{SOURCE_ID:{recordId:'SOURCE-000001'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'SOURCE_RESEARCH',description:'Controlled source research evidence',authorityType:'EXTERNAL_SOURCE',sourceRef:{recordId:'SOURCE-000001'},location:'Controlled source',content:'Complete research evidence'}],unresolved:[],warnings:[],attachments:[]};}
 
 assert(schema.STAGE_FIELDS[3].SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED.valueType==='BOOLEAN','Stage 03 second-pass completion must be BOOLEAN.');

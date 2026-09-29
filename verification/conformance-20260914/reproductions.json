@@ -1,0 +1,272 @@
+[
+  {
+    "defectId": "DUPLICATE-OPERATOR-ACTION",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-operator-action-lifecycle.mjs",
+    "operationSequence": [
+      "Hold saveInstruction storage boundary",
+      "Activate the same binding twice before completion"
+    ],
+    "expected": "One operation with conspicuous pending state; controls recover after success or failure",
+    "actualAtStart": "Two operations started",
+    "responsibleOwner": "app-core.js: shared action binding",
+    "status": "PRODUCTION_CORRECTED; INTEGRATED_BROWSER_REPLAY_PENDING"
+  },
+  {
+    "defectId": "EARLIER-DERIVED-AUTHORITY-INVALIDATED",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-shared-contract-faults.mjs",
+    "operationSequence": [
+      "Create independent stage-owner authority sentinels",
+      "Invalidate from Stage 18 or later"
+    ],
+    "expected": "Only records owned by later stages are invalidated",
+    "actualAtStart": "Stage 18 convergence authority was invalidated by a Stage 18 change; release and byte identities were also erased by later changes",
+    "responsibleOwner": "workflow-engine.js: invalidateDownstream",
+    "status": "PRODUCTION_CORRECTED; AFFECTED TERMINAL SUITE PASS"
+  },
+  {
+    "defectId": "STALE-NEW-RESERVATION",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-operation-sequences.mjs",
+    "operationSequence": [
+      "Reserve payload A at revision 0",
+      "Cancel reservation",
+      "Reserve different payload B with expected revision 0"
+    ],
+    "expected": "Reject the stale writer without mutation; accept after revision refresh",
+    "actualAtStart": "Different payload reserved despite stale expected revision",
+    "responsibleOwner": "workflow-engine.js: reserveOperation; prompt-engine.js consumer",
+    "status": "PRODUCTION_CORRECTED; GENERATED REGRESSION PASS"
+  },
+  {
+    "defectId": "FABRICATED-MOBILE-RECEIPTS",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-mobile-operation-observations.mjs",
+    "operationSequence": [
+      "Populate arrays and ready-store values in a disposable VM without executing operations",
+      "Capture mobile acceptance receipts"
+    ],
+    "expected": "Zero executed-operation receipts",
+    "actualAtStart": "16 passing receipts fabricated",
+    "responsibleOwner": "app-core.js: mobile acceptance observers; verify-mobile-acceptance-evidence.mjs: acceptance boundary",
+    "baselineFailureLog": "mobile-receipt-baseline-failure.log",
+    "status": "PRODUCTION_CORRECTED; SYNTHETIC REGRESSION PASS; PHYSICAL RUN NOT PERFORMED"
+  },
+  {
+    "defectId": "UNEXECUTED-ACCEPTANCE-METRICS",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-v3-definition-of-done.mjs",
+    "operationSequence": [
+      "Generate Section 49 acceptance metrics without executing the claimed cases"
+    ],
+    "expected": "No conformance claim from source-text matches, candidate mappings or literal zero values",
+    "actualAtStart": "Source checks produced 100% and 26 zero-count metrics were literal zeros",
+    "responsibleOwner": "verify-v3-definition-of-done.mjs; specification governance generator",
+    "status": "UNSUPPORTED CLAIMS REMOVED; COMPLETE REQUIREMENT EVIDENCE STILL REQUIRED"
+  },
+  {
+    "defectId": "EMPTY-OR-UNBOUND-EVIDENCE-CHAIN-SET",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-stage29-evidence-chain-checkpoint.mjs",
+    "operationSequence": [
+      "Evaluate a project with no established mandatory-requirement universe",
+      "Evaluate a disposable completed chain with each current release/hash-review/product/baseline binding removed or changed"
+    ],
+    "expected": "No complete current evidence-chain set and no 100% coverage from an unreviewed empty universe or missing current binding",
+    "actualAtStart": "Empty set completed with 100%; absent bindings could satisfy the set",
+    "responsibleOwner": "workflow-engine.js: currentEvidenceChainSet, calculateEvidenceChains and deriveEvidenceChains",
+    "status": "CORRECTED; FOCUSED NEGATIVE-AND-REPAIRED CASES PASS"
+  },
+  {
+    "defectId": "MISSING-STAGE-PROJECTIONS-AND-CONTRACT-TYPES",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "stage-projection-verification.mjs; verify-full-cycle.mjs",
+    "operationSequence": [
+      "Enumerate Section 37 required fields independently of workbook.js",
+      "Complete each synthetic workflow stage through its production mechanisms",
+      "Compare every application-owned completion value with its declared contract"
+    ],
+    "expected": "Every mandatory field exists in the shared contract; completed stages expose correctly typed application-owned values and current identities",
+    "actualAtStart": "Missing Stage 01/02 contract fields; missing Stage 10/25/28/29/30 summaries; arrays, counters and flags declared as incompatible strings or integers; Stage 28 did not establish CURRENT_HASH_REVIEW_ID",
+    "responsibleOwner": "workbook.js and workflow-schema.js static declarations; workflow-engine.js deriveStageData, deriveArtifactIdentity and derivation consumers",
+    "status": "CORRECTED; INTEGRATED PROJECTION REPLAY IN PROGRESS; NOT OPERATOR-JOURNEY EVIDENCE"
+  },
+  {
+    "defectId": "TERMINAL-SELF-INVALIDATION",
+    "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+    "fixture": "verify-shared-contract-faults.mjs#INVALIDATION-FROM-30",
+    "operationSequence": [
+      "Create stage-owner authority sentinels",
+      "Invalidate downstream from Stage 30",
+      "Inspect authority validity and activity as well as invalidatedBy"
+    ],
+    "expected": "No later stage exists; current Stage 30 delivery authority is preserved",
+    "actualAtStart": "The outer invalidation consumer withdrew the Stage 30 delivery record at its own boundary",
+    "responsibleOwner": "workflow-engine.js: controlling invalidation consumer",
+    "status": "CORRECTED; TARGETED IMPLEMENTATION-FAULT REPLAY ADDED"
+  },
+  {
+    "id": "DELIVERY-TRANSFER-BOUNDARY",
+    "sourceCommit": "9dc12d19a7a7d8987155ec42a95016309424ecc7",
+    "specificationSections": [
+      "36.11",
+      "36.12",
+      "38"
+    ],
+    "productionOwners": [
+      "workflow-engine.js:recordDeliveryAttempt/recordDeliveryEvidence",
+      "app-core.js:exportAuthorizedArtifacts/recordCurrentDeliveryEvidence",
+      "workflow-schema.js:deliveryAttempts/evidenceRecords"
+    ],
+    "inputs": "Disposable production-lifecycle project with all prerequisites through Stage 30 authorization; one permitted browser transfer.",
+    "sequence": [
+      "Invoke transfer using only its authorization ID",
+      "Repeat with a distinct command identity",
+      "Offer unrelated human evidence",
+      "Exercise failed storage, a concurrent correction, and an interrupted transfer"
+    ],
+    "expected": "Destination and channel derive from current intent; verify scope, bytes, allowance and persist pending identity before external transfer; retries preserve identity; append outcomes; require specifically bound evidence at its actual basis.",
+    "actualBefore": "Default receipt destination/channel were blank; repeated transfers reused a content fingerprint; count checks occurred after export; unrelated HUMAN_OBSERVATION evidence marked an attempt delivered; no direct UI delivery observation entry existed.",
+    "evidenceBefore": "delivery-boundary-before.json",
+    "evidenceAfter": "delivery-boundary-after.json",
+    "verification": "verify-delivery-transfer-boundary.mjs; 16 executed cases. Synthetic lifecycle and VM storage/transfer fault boundaries, not actual browser or physical-device acceptance.",
+    "beforeEvidenceQualification": "The withdrawn-authorization case already rejected correctly; its original diagnostic-message assertion was overly narrow and is retained in the before report. The added UI cases were executed after the engine regressions and repair."
+  },
+  {
+    "id": "PRE_DELIVERY_CHECKPOINT_CUSTODY",
+    "sourceCommit": "33762b653f8c77d344477e088fd35c7d19050cf8",
+    "inputs": "Otherwise-valid complete lifecycle through evidence-chain construction; replace one exported receipt identity at a time.",
+    "operationSequence": [
+      "createPreDeliveryCheckpoint",
+      "recordPreDeliveryCheckpointExport",
+      "operationalNextAction stage 30"
+    ],
+    "expected": "Exact checkpoint/package/hash binding, immutable prior custody receipt, correct exported project digest, and reachable export control.",
+    "actual": "Six of seven cases failed; the existing upstream invalidation case already rejected correctly.",
+    "regression": "verify-checkpoint-boundary.mjs",
+    "beforeEvidence": "checkpoint-before.json",
+    "afterEvidence": "checkpoint-after.json",
+    "status": "REPAIRED_LOCAL_BROWSER_PENDING"
+  },
+  {
+    "id": "NATIVE_PROOF_CONTINUATION",
+    "sourceCommit": "874e0aa29b9bf52f4d2c4036f9ecf14b763bb240",
+    "inputs": "Otherwise-valid complete lifecycle using a real executed Test IR comparison for the current final product.",
+    "operationSequence": [
+      "author final native test",
+      "accept independent proof review",
+      "execute native byte comparison",
+      "record native result",
+      "evaluate Stage 22 and continue through 30"
+    ],
+    "expected": "Passing native evidence with current accepted equivalent mapping establishes the linked proposition and permits valid progression.",
+    "actual": "Native comparison passed but Stage 22 remained blocked with missing proposition proof.",
+    "regression": "verify-native-proof-journey.mjs",
+    "beforeEvidence": "native-proof-before.json",
+    "afterEvidence": "native-proof-after.json",
+    "status": "REPAIRED_LOCAL_BROWSER_PENDING"
+  },
+  {
+    "id": "RETURNED_PRODUCT_ATTACHMENT_LINEAGE",
+    "sourceCommit": "874e0aa29b9bf52f4d2c4036f9ecf14b763bb240",
+    "inputs": "Otherwise-valid Stage 21 product response plus exactly mapped verified product.bin metadata.",
+    "operationSequence": [
+      "reserve production",
+      "ingest response with attachment",
+      "map exact returned file",
+      "accept proposal",
+      "evaluate Stage 21 and continue through 30"
+    ],
+    "expected": "Accepted returned product bytes enter the exact reserved product inventory and satisfy product byte custody.",
+    "actual": "Accepted file was registered without product lineage and Stage 21 could not complete.",
+    "regression": "verify-product-attachment-journey.mjs",
+    "beforeEvidence": "product-attachment-before.json",
+    "afterEvidence": "product-attachment-after.json",
+    "status": "REPAIRED_LOCAL_BROWSER_PENDING"
+  },
+  {
+    "id": "STAGE10-EXTERNAL-RESPONSE-DEAD-END",
+    "sourceCommit": "dd08fc650b8f082d7ab1a299e35f200ed810b9c7",
+    "specificationSections": [
+      "13",
+      "37 Stage 10"
+    ],
+    "inputs": "Clean synthetic operator project completed through Stage 9 using accepted responses and required reviews. No Stage 10 external response exists.",
+    "operationSequence": [
+      "Complete Stage 9",
+      "Request the next Stage 10 action",
+      "Attempt the offered external-response operation"
+    ],
+    "expected": "Offer the application-owned FREEZE_CANDIDATE command without an external response prerequisite.",
+    "actual": "SELECT_RESPONSE_JSON_FILE; prompt generation fails because COMPLETE is not valid at Stage 10.",
+    "regression": "verify-full-cycle.mjs: Stage 9 to Stage 10 action assertion; verify-complete-operator-journey.mjs",
+    "beforeFailure": "file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:12\nconst assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='REFERENCE_ARRAY','Evidence-chain evidence identities must remain plural references.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must remain plural.');let p=core.createBlankState('JOB-FULL-CYCLE');Object.assign(p.job,{JOB_TITLE:'Full lifecycle proof',EXACT_USER_OBJECTIVE_VERBATIM:'Prove one complete closed-loop lifecycle.',EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_INPUT_VERSION:'INPUT-v001'});engine.ensureShape(p);engine.recalculate(p);\n                                 ^\n\nError: After Stage 9, Stage 10 must offer its application-owned freeze command without requiring an external response.\n    at assert (file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:12:34)\n    at file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-full-cycle.mjs:128:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:643:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n\nNode.js v24.19.0\n",
+    "status": "PRODUCTION_CORRECTED; INTEGRATED_BROWSER_REPLAY_PENDING"
+  },
+  {
+    "id": "INITIAL-FAILURE-CANNOT-BE-PERSISTED",
+    "sourceCommit": "b275123ef57cc56c920027ff85051519c8e7e2f6",
+    "specificationSections": [
+      "34.1",
+      "37 Stage 12",
+      "37 Stage 13"
+    ],
+    "inputs": "Nine exact VERIFIED\\n outputs and one VERIFIED output missing its required terminal LF.",
+    "operationSequence": [
+      "Complete Stages 1\u201311 through the interface",
+      "Validate the Stage 12 verification response",
+      "Accept the response"
+    ],
+    "expected": "Persist the ten determinations and continue to comparison and root-cause repair.",
+    "actual": "Canonical serialization rejects floating agreementRate 0.9, leaving acceptance uncommitted.",
+    "browserEvidence": {
+      "workflowRun": 34807669030,
+      "job": 103862609737,
+      "source": "PR source b275123ef57cc56c920027ff85051519c8e7e2f6",
+      "completedStages": 11,
+      "failedStage": 12
+    },
+    "regression": "verify-operator-counterpart.mjs: persistability after each operation; verify-counterpart-faults.mjs: fractional-stability",
+    "status": "REPAIRED_LOCAL; BROWSER_REPLAY_PENDING"
+  },
+  {
+    "id": "INITIAL-COMPARISON-BLOCKS-ROOT-CAUSE",
+    "sourceCommit": "b275123ef57cc56c920027ff85051519c8e7e2f6",
+    "specificationSections": [
+      "32.3",
+      "37 Stages 11\u201317"
+    ],
+    "inputs": "One evidenced failed initial run with correctness-affecting variance.",
+    "operationSequence": [
+      "Complete ten initial executions",
+      "Accept verification",
+      "Record the comparison and evidence-linked defect",
+      "Continue to root-cause analysis"
+    ],
+    "expected": "Keep the executed initial batch complete; require the comparison defect and allow Stage 14.",
+    "actual": "Initial variance retroactively made Stage 11 incomplete and comparison rejected the known violation.",
+    "regression": "verify-operator-counterpart.mjs: initial-violation-defect-rejection-and-correction",
+    "status": "REPAIRED_LOCAL; BROWSER_REPLAY_PENDING"
+  },
+  {
+    "id": "INCOMPLETE-EXPORTED-ITERATION-CONTEXT",
+    "sourceCommit": "b275123ef57cc56c920027ff85051519c8e7e2f6",
+    "specificationSections": [
+      "17",
+      "32.3",
+      "37 Stages 13\u201319"
+    ],
+    "inputs": "An external counterpart using only actual exported prompt/manifest/context, with a permanent regression carried into a corrected and unchanged iteration.",
+    "operationSequence": [
+      "Reserve Stage 13 prompt on a new project",
+      "Export corrected-iteration verification",
+      "Export unchanged-confirmation verification",
+      "Resolve all referenced regressions and candidate identities from the handoff"
+    ],
+    "expected": "Initialize infrastructure and include the applicable permanent regression and reused candidate identities.",
+    "actual": "Missing blindAliasMaps initialization; permanent regressions excluded by their original iteration; confirmation prompt loses the reused candidate.",
+    "regression": "verify-operator-counterpart.mjs; verify-complete-operator-journey.mjs",
+    "status": "REPAIRED_LOCAL; BROWSER_REPLAY_PENDING"
+  }
+]

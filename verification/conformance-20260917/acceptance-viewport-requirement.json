@@ -1,0 +1,38 @@
+{
+  "schema": "closed-loop-conformance-register-addendum/1",
+  "candidate": "repair/complete-conformance-continuation-20260914",
+  "sourceRevision": "96ffe212e44a05000269f65f476c5d4e7efead16",
+  "parentRegister": "verification/current-task-requirement-register.json",
+  "composition": "Add this mandatory row to the existing specification and task register denominator. No existing obligation is removed. No suite total substitutes for requirement-specific executed evidence.",
+  "rows": [
+    {
+      "requirementId": "ACCEPTANCE-CONTINUATION-VIEWPORT",
+      "sourceLocation": "Operator UX-001, UX-002, UX-003, UX-012, UX-013; controlling specification 39.11 and 39.12",
+      "responsibleProductionCode": [
+        {"file":"index.html","symbols":["body overflow declaration","#screen > .next-action-summary"]},
+        {"file":"app-core.js","symbols":["render","updateWorkflowActionInset","focusAfterAction","finishAcceptedProposal"]}
+      ],
+      "observableExpectedBehavior": "After response acceptance or a required continuation, the sole next-action summary and its actual enabled control remain visible and unobscured without an upward forward-progress scroll. Explicit correction, retry and return may scroll upward. History restores its recorded view.",
+      "requiredEvidence": [
+        "Reproduce export, wrong-project response, retry, valid response and acceptance with real controls and downloaded bytes.",
+        "Verify all required viewport sizes using geometry and hit testing without a test-driver corrective scroll.",
+        "Inject the hidden-overflow scroll-container fault and require the viewport oracle to reject it; restore production layout and require success.",
+        "Run complete operator and affected recovery/browser journeys on the integrated revision."
+      ],
+      "applicableStages": "Every stage and operation selected under the authoritative workflow rules; the focused reproducer covers the initial acceptance boundary and the complete journey supplies downstream coverage.",
+      "applicableOperations": ["initial execution","response validation","retry","acceptance","continuation","replacement","restoration","browser navigation"],
+      "status": "UNVERIFIED",
+      "executedEvidence": []
+    }
+  ],
+  "reproduction": {
+    "runId":35248619577,
+    "artifactId":10509464705,
+    "artifact":"operator-journeys-f956bf1436ebbbb6bba7f617944fca508b65bcc1-35248619577",
+    "path":"operator-evidence/journey.json",
+    "actualFailure":{"stage":1,"sequence":3,"message":"AssertionError [ERR_ASSERTION]: Stage 1: the next required action was not visible before operator action 3.\n\nfalse !== true\n\n    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete-operator-journey.mjs:80:82"},
+    "actualFailureView":{"stage":"1","width":393,"height":852,"scrollY":4307,"action":"Confirm the Stage 1 result\n\nStage 01 · Current state: READY_FOR_NEXT_OPERATION\nWho acts: Human operator\n\nConfirm represented intent","rect":{"x":10,"y":-3457.875,"width":373,"height":177,"top":-3457.875,"right":383,"bottom":-3280.875,"left":10},"active":"next-required-action","loading":null}
+  },
+  "executionLimitation":{"environment":"Local container Chromium","observed":"127.0.0.1 is blocked. Your organization does not allow you to view this site.","disposition":"No browser policy was modified. Use the repository GitHub Actions browser runner; local rejection is not an application defect or browser PASS."},
+  "completionClaim":false
+}

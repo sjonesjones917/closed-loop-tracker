@@ -1,0 +1,1279 @@
+{
+  "schema": "closed-loop-integration-replay/1",
+  "environment": "Node 24.19.0, synthetic fixtures and production modules; no physical device or external independence claimed",
+  "sourceProductionTree": "7962370d9bb8641101715e4bcd92a5b5fa8e775e",
+  "publishedSourceCommit": "383ae5c0fcec4b95f375359dcc6c4a3198ab7fa4",
+  "reports": {
+    "fullCycle": {
+      "stagesCompleted": 30,
+      "automaticExternalContinuations": true,
+      "completedRunsNotRepeated": true,
+      "compositeIterationOperationHandoffs": true,
+      "clarificationCycles": 1,
+      "confirmedDefects": 1,
+      "correctedIterationRuns": 10,
+      "unchangedConfirmationRuns": 10,
+      "verificationTripleCoverage": 1,
+      "release": "ACCEPTED",
+      "artifactIdentity": true,
+      "evidenceChains": true,
+      "reloadIntegrity": true,
+      "artifactBatchEquivalence": [
+        {
+          "snapshot": "initial-intake",
+          "stage": 1,
+          "members": 66,
+          "exactCanonicalEquality": true
+        },
+        {
+          "snapshot": "frozen-candidate",
+          "stage": 10,
+          "members": 5,
+          "exactCanonicalEquality": true
+        },
+        {
+          "snapshot": "current-product",
+          "stage": 21,
+          "members": 5,
+          "exactCanonicalEquality": true
+        },
+        {
+          "snapshot": "authorized-terminal",
+          "stage": 21,
+          "members": 5,
+          "exactCanonicalEquality": true
+        }
+      ],
+      "stageProjectionCases": [
+        {
+          "caseId": "completed-stage-01-projection",
+          "stage": 1,
+          "result": "PASS",
+          "checkedFields": [
+            "JOB_ID",
+            "DATE_OPENED",
+            "INPUT_SET_VERSION",
+            "INPUT_SET_HASH_OR_MANIFEST",
+            "JOB_RECORD_STATUS",
+            "STATUS_EVIDENCE",
+            "SEMANTIC_CHALLENGE_STATUS",
+            "HUMAN_CONFIRMATION_RECEIPTS"
+          ]
+        },
+        {
+          "caseId": "completed-stage-02-projection",
+          "stage": 2,
+          "result": "PASS",
+          "checkedFields": [
+            "SOURCE_SET_VERSION",
+            "SOURCE_RECORDS",
+            "SOURCE_CONFLICT_RECORDS",
+            "UNRESOLVED_CONTROLLING_CONFLICTS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE",
+            "SOURCE_SEARCH_CONTRACT_ID",
+            "SEARCH_ADEQUACY_REVIEW_ID"
+          ]
+        },
+        {
+          "caseId": "completed-stage-03-projection",
+          "stage": 3,
+          "result": "PASS",
+          "checkedFields": [
+            "RESEARCH_VERSION",
+            "SOURCE_RESEARCH_RECORDS",
+            "CANDIDATE_REQUIREMENT_RECORDS",
+            "ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-04-projection",
+          "stage": 4,
+          "result": "PASS",
+          "checkedFields": [
+            "REQUIREMENTS_VERSION",
+            "REQUIREMENT_RECORDS",
+            "ATOMICITY_REVIEW_RESULTS",
+            "TOTAL_REQUIREMENTS",
+            "MANDATORY_REQUIREMENTS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-05-projection",
+          "stage": 5,
+          "result": "PASS",
+          "checkedFields": [
+            "INPUT_REQUIREMENTS_VERSION",
+            "OUTPUT_REQUIREMENTS_VERSION",
+            "REQUIREMENT_DEFECT_RECORDS",
+            "UNRESOLVED_CONFLICTS",
+            "MISSING_PREREQUISITES",
+            "MANDATORY_BLOCKERS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-06-projection",
+          "stage": 6,
+          "result": "PASS",
+          "checkedFields": [
+            "TEST_SUITE_VERSION",
+            "TEST_RECORDS",
+            "COVERAGE_RECORDS",
+            "TOTAL_ACTIVE_MANDATORY_REQUIREMENTS",
+            "ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST",
+            "MANDATORY_TEST_COVERAGE",
+            "BLOCKED_MANDATORY_REQUIREMENTS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-05-projection",
+          "stage": 5,
+          "result": "PASS",
+          "checkedFields": [
+            "INPUT_REQUIREMENTS_VERSION",
+            "OUTPUT_REQUIREMENTS_VERSION",
+            "REQUIREMENT_DEFECT_RECORDS",
+            "UNRESOLVED_CONFLICTS",
+            "MISSING_PREREQUISITES",
+            "MANDATORY_BLOCKERS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-06-projection",
+          "stage": 6,
+          "result": "PASS",
+          "checkedFields": [
+            "TEST_SUITE_VERSION",
+            "TEST_RECORDS",
+            "COVERAGE_RECORDS",
+            "TOTAL_ACTIVE_MANDATORY_REQUIREMENTS",
+            "ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST",
+            "MANDATORY_TEST_COVERAGE",
+            "BLOCKED_MANDATORY_REQUIREMENTS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-07-projection",
+          "stage": 7,
+          "result": "PASS",
+          "checkedFields": [
+            "MUTATION_SUITE_VERSION",
+            "FAILURE_TEST_RECORDS",
+            "ACTIVE_REQUIREMENTS",
+            "REQUIREMENTS_WITH_AT_LEAST_ONE_FAILURE_TEST",
+            "FAILURE_TEST_COVERAGE",
+            "INVALID_FIXTURES_ACCEPTED",
+            "DEFECTIVE_VALIDATORS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-08-projection",
+          "stage": 8,
+          "result": "PASS",
+          "checkedFields": [
+            "DRAFT_INSTRUCTION_VERSION",
+            "INSTRUCTION_TRACE_RECORDS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-09-projection",
+          "stage": 9,
+          "result": "PASS",
+          "checkedFields": [
+            "INPUT_INSTRUCTION_VERSION",
+            "OUTPUT_INSTRUCTION_VERSION",
+            "PREFLIGHT_REVIEWER_ID",
+            "REVIEW_CONTEXT_INDEPENDENT_FROM_AUTHOR",
+            "SENTENCE_REVIEW_RECORDS",
+            "PREFLIGHT_ITERATION_RECORDS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-10-projection",
+          "stage": 10,
+          "result": "PASS",
+          "checkedFields": [
+            "CANDIDATE_ID",
+            "ITERATION_ID",
+            "FREEZE_DATE",
+            "FROZEN_COMPONENT_RECORDS",
+            "TOOL_CONFIGURATION_RECORDS",
+            "ALL_REQUIRED_COMPONENTS_PRESENT",
+            "ALL_FROZEN_COMPONENT_BYTES_HASHED",
+            "ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS",
+            "CHANGES_ALLOWED_DURING_BATCH",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-11-projection",
+          "stage": 11,
+          "result": "PASS",
+          "checkedFields": [
+            "ITERATION_ID",
+            "CANDIDATE_ID",
+            "RUN_RECORDS",
+            "FRESH_CONTEXTS_CREATED",
+            "RUNS_RECEIVING_EXACT_PACKAGE",
+            "CONTAMINATED_RUNS",
+            "OUTPUTS_SAVED_SEPARATELY",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-12-projection",
+          "stage": 12,
+          "result": "PASS",
+          "checkedFields": [
+            "ITERATION_ID",
+            "REQUIREMENTS_VERSION",
+            "TEST_SUITE_VERSION",
+            "VERIFICATION_RECORDS",
+            "ACTIVE_MANDATORY_REQUIREMENTS",
+            "RUNS",
+            "EXPECTED_MANDATORY_RECORDS",
+            "ACTUAL_MANDATORY_RECORDS",
+            "MISSING_RECORDS",
+            "SATISFIED_RECORDS",
+            "VIOLATED_RECORDS",
+            "UNDETERMINED_RECORDS",
+            "SELF_VALIDATED_RECORDS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-13-projection",
+          "stage": 13,
+          "result": "PASS",
+          "checkedFields": [
+            "ITERATION_ID",
+            "COMPARISON_VERSION",
+            "REQUIREMENT_COMPARISON_RECORDS",
+            "REQUIREMENTS_SATISFIED_BY_ALL_TEN",
+            "REQUIREMENTS_WITH_AT_LEAST_ONE_VIOLATION",
+            "REQUIREMENTS_WITH_AT_LEAST_ONE_UNDETERMINED",
+            "CORRECTNESS_AFFECTING_DISAGREEMENTS",
+            "PROHIBITED_OUTPUT_VARIANCES",
+            "INCONCLUSIVE_TESTS",
+            "REPEATED_FAILURE_GROUPS",
+            "UNIQUE_FAILURES",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-14-projection",
+          "stage": 14,
+          "result": "PASS",
+          "checkedFields": [
+            "ROOT_CAUSE_ANALYSIS_VERSION",
+            "DEFECT_ROOT_CAUSE_RECORDS",
+            "TOTAL_MATERIAL_DEFECTS",
+            "CONFIRMED_ROOT_CAUSES",
+            "UNDETERMINED_ROOT_CAUSES",
+            "BLOCKED_ANALYSES",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-15-projection",
+          "stage": 15,
+          "result": "PASS",
+          "checkedFields": [
+            "INPUT_TEST_SUITE_VERSION",
+            "OUTPUT_TEST_SUITE_VERSION",
+            "REGRESSION_FIXTURE_VERSION",
+            "REGRESSION_RECORDS",
+            "CONFIRMED_DEFECTS",
+            "CONFIRMED_DEFECTS_WITH_REGRESSION_TEST",
+            "PRE_CORRECTION_FAILURES_PROVEN",
+            "UNCONVERTED_CONFIRMED_DEFECTS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-16-projection",
+          "stage": 16,
+          "result": "PASS",
+          "checkedFields": [
+            "CHANGE_SET_ID",
+            "TRIGGERING_DEFECT_IDS",
+            "RCA_VERSION",
+            "DATE",
+            "ARTIFACT_CHANGE_RECORDS",
+            "INSTRUCTION_CHANGED",
+            "IF_EXECUTION_ONLY_DEFECT_WAS_INSTRUCTION_PRESERVED",
+            "PREFLIGHT_REPEATED_IF_CHANGED",
+            "ARTIFACTS_CHANGED",
+            "NEW_VERSIONS_CREATED",
+            "IN_PLACE_MODIFICATIONS",
+            "DOWNSTREAM_VERIFICATIONS_INVALIDATED",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-17-projection",
+          "stage": 17,
+          "result": "PASS",
+          "checkedFields": [
+            "PREVIOUS_ITERATION_ID",
+            "NEW_ITERATION_ID",
+            "PREVIOUS_CANDIDATE_ID",
+            "NEW_CANDIDATE_ID",
+            "CHANGESET_ID",
+            "NEW_FROZEN_VERSIONS",
+            "OLD_CONVERSATIONS_CONTINUED",
+            "TEN_NEW_CONTEXTS_CREATED",
+            "RUN_NAMESPACE",
+            "IDENTICAL_PACKAGE_CONFIRMED_FOR_ALL_RUNS",
+            "PRIOR_OUTPUTS_WITHHELD",
+            "EXECUTE_COMPLETED",
+            "VERIFY_COMPLETED",
+            "COMPARE_COMPLETED",
+            "ROOT_CAUSE_COMPLETED",
+            "REGRESSION_TESTS_ADDED",
+            "CORRECTIONS_COMPLETED",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-18-projection",
+          "stage": 18,
+          "result": "PASS",
+          "checkedFields": [
+            "ITERATION_ID",
+            "METRICS_VERSION",
+            "TOTAL_MANDATORY_REQUIREMENTS",
+            "MANDATORY_REQUIREMENTS_WITH_COMPLETE_SPECIFICATION_AND_APPLICABILITY",
+            "MANDATORY_REQUIREMENT_COVERAGE",
+            "MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_APPLICABLE_VERIFICATION",
+            "MANDATORY_VERIFICATION_COVERAGE",
+            "TOTAL_STILL_APPLICABLE_REGRESSION_TESTS",
+            "SUCCESSFUL_REGRESSION_TESTS",
+            "REGRESSION_TEST_SUCCESS",
+            "CRITICAL_DEFECTS",
+            "MAJOR_DEFECTS",
+            "MANDATORY_UNRESOLVED_UNKNOWNS",
+            "KNOWN_CORRECTNESS_AFFECTING_CONTRADICTIONS",
+            "KNOWN_CORRECTNESS_AFFECTING_AMBIGUITIES",
+            "UNEXPLAINED_CORRECTNESS_AFFECTING_EXECUTION_VARIANCE",
+            "ALL_CONDITIONS_SIMULTANEOUSLY_TRUE",
+            "FAILED_CONDITIONS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-19-projection",
+          "stage": 19,
+          "result": "PASS",
+          "checkedFields": [
+            "SOURCE_CONVERGED_ITERATION",
+            "CONFIRMATION_ITERATION_ID",
+            "ZERO_CHANGE_AUDIT",
+            "TEN_NEW_CONTEXTS_CREATED",
+            "SAME_FROZEN_PACKAGE_USED",
+            "RUNS_COMPLETED",
+            "COMPLETE_TEST_SUITE_RUN",
+            "ALL_REGRESSION_TESTS_RUN",
+            "CROSS_RUN_COMPARISON_COMPLETED",
+            "NEW_CRITICAL_DEFECTS",
+            "NEW_MAJOR_DEFECTS",
+            "NEW_REQUIREMENTS_DISCOVERED",
+            "INJECTED_DEFECTS_NOT_DETECTED",
+            "NEW_CORRECTNESS_AFFECTING_VARIANCE",
+            "CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED",
+            "REQUIRED_RETURN_STAGE",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-20-projection",
+          "stage": 20,
+          "result": "PASS",
+          "checkedFields": [
+            "BASELINE_ID",
+            "BASELINE_APPROVAL_DATE",
+            "SUPPORTING_CONFIRMATION_ITERATION",
+            "APPROVED_VERSIONS",
+            "BASELINE_FILE_RECORDS",
+            "UNCHANGED_CONFIRMATION_SUCCEEDED",
+            "ALL_APPROVED_COMPONENTS_PRESENT",
+            "ALL_IMMUTABLE_FILES_HASHED",
+            "ANY_CHANGED_COMPONENT_RETAINS_BASELINE_STATUS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-21-projection",
+          "stage": 21,
+          "result": "PASS",
+          "checkedFields": [
+            "PRODUCT_ID",
+            "PRODUCT_VERSION",
+            "BASELINE_ID",
+            "EXECUTION_ID",
+            "OUTPUT_FILE_RECORDS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-22-projection",
+          "stage": 22,
+          "result": "PASS",
+          "checkedFields": [
+            "PRODUCT_ID",
+            "PRODUCT_VERSION",
+            "PRODUCT_HASHES_BEFORE_TEST",
+            "TEST_SUITE_VERSION",
+            "VALIDATOR_VERSION",
+            "DETERMINISTIC_TEST_RESULTS",
+            "APPLICABLE_MANDATORY_DETERMINISTIC_TESTS",
+            "EXECUTED",
+            "SATISFIED",
+            "VIOLATED",
+            "UNDETERMINED",
+            "MISSING_TEST_RESULTS",
+            "PRODUCT_REJECTED_BY_MANDATORY_FAILURE",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-23-projection",
+          "stage": 23,
+          "result": "PASS",
+          "checkedFields": [
+            "PRODUCT_ID",
+            "PRODUCT_VERSION",
+            "REQUIREMENTS_VERSION",
+            "MEANING_RUBRIC_VERSION",
+            "EVALUATOR_ID",
+            "EVALUATOR_INDEPENDENT_FROM_GENERATOR",
+            "MEANING_REQUIREMENT_RECORDS",
+            "ACTIVE_MEANING_REQUIREMENTS",
+            "MEANING_RECORDS_COMPLETED",
+            "SATISFIED",
+            "VIOLATED",
+            "UNDETERMINED",
+            "UNSUPPORTED_BARE_CONCLUSIONS",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-24-projection",
+          "stage": 24,
+          "result": "PASS",
+          "checkedFields": [
+            "PRODUCT_ID",
+            "PRODUCT_VERSION",
+            "ADVERSARIAL_REVIEW_VERSION",
+            "REVIEWER_ID",
+            "REVIEWER_INDEPENDENT",
+            "ADVERSARIAL_CHECK_RECORDS",
+            "ATTACKS_EXECUTED",
+            "MANDATORY_DEFECTS_FOUND",
+            "CRITICAL_DEFECTS_FOUND",
+            "MAJOR_DEFECTS_FOUND",
+            "UNDETERMINED_ATTACKS",
+            "REGRESSIONS_FOUND",
+            "RETURN_TO_ROOT_CAUSE_REQUIRED",
+            "STAGE_DECISION",
+            "DECISION_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-25-projection",
+          "stage": 25,
+          "result": "PASS",
+          "checkedFields": [
+            "PRODUCT_ID",
+            "PRODUCT_VERSION",
+            "REPRESENTATION_REVIEW_VERSION",
+            "APPROVED_BASELINE_ID",
+            "DELIVERY_CANDIDATE_SET_ID",
+            "DELIVERY_ARTIFACT_INVENTORY",
+            "TRANSFORMATION_CHAIN_RECORDS",
+            "PAGE_OR_VIEW_INSPECTION_RECORDS",
+            "PACKAGE_INSPECTION_RECORDS",
+            "TOTAL_DELIVERY_ARTIFACTS",
+            "TOTAL_PAGES_OR_VIEWS_REQUIRED",
+            "TOTAL_PAGES_OR_VIEWS_INSPECTED",
+            "TOTAL_PACKAGED_FILES_REQUIRED",
+            "TOTAL_PACKAGED_FILES_OPENED_OR_TESTED",
+            "UNRESOLVED_CRITICAL_DEFECTS",
+            "UNRESOLVED_MAJOR_DEFECTS",
+            "UNRESOLVED_REPRESENTATION_UNKNOWNS",
+            "FINAL_REPRESENTATION_DETERMINATION"
+          ]
+        },
+        {
+          "caseId": "completed-stage-26-projection",
+          "stage": 26,
+          "result": "PASS",
+          "checkedFields": [
+            "PRODUCT_ID",
+            "PRODUCT_VERSION",
+            "BASELINE_ID",
+            "REVIEW_VERSION",
+            "MISSING_EVIDENCE_LINKS",
+            "RECONCILIATION_DEFECT_IDS",
+            "RECONCILIATION_BLOCKER_IDS"
+          ]
+        },
+        {
+          "caseId": "completed-stage-27-projection",
+          "stage": 27,
+          "result": "PASS",
+          "checkedFields": [
+            "RELEASE_GATE_ID",
+            "DATE_AND_TIME",
+            "PRODUCT_ID",
+            "PRODUCT_VERSION",
+            "BASELINE_ID",
+            "RECONCILED_REVIEW_VERSION",
+            "TOTAL_MANDATORY_REQUIREMENTS",
+            "MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE",
+            "MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED",
+            "MANDATORY_REQUIREMENTS_NOT_ESTABLISHED",
+            "TOTAL_MANDATORY_VALIDATORS",
+            "MANDATORY_VALIDATORS_SUCCEEDED",
+            "MANDATORY_VALIDATORS_FAILED",
+            "MANDATORY_VALIDATORS_UNDETERMINED_OR_NOT_RUN",
+            "UNRESOLVED_CRITICAL_DEFECTS",
+            "UNRESOLVED_MAJOR_DEFECTS",
+            "BLOCKING_REQUIREMENT_IDS",
+            "VIOLATED_REQUIREMENT_IDS",
+            "FAILED_TEST_IDS",
+            "UNDETERMINED_OR_MISSING_TEST_IDS",
+            "UNRESOLVED_DEFECT_IDS",
+            "BLOCKER_IDS",
+            "SELECTED_RELEASE_STATE",
+            "CONTROLLING_DECISION_RULE",
+            "CONTROLLING_REASON",
+            "AFFIRMATIVE_EVIDENCE"
+          ]
+        },
+        {
+          "caseId": "completed-stage-28-projection",
+          "stage": 28,
+          "result": "PASS",
+          "checkedFields": [
+            "HASH_REVIEW_ID",
+            "DELIVERY_CANDIDATE_SET_ID",
+            "RELEASE_GATE_ID",
+            "RELEASE_GATE_STATE",
+            "HASH_ALGORITHM",
+            "HASH_TOOL_AND_VERSION",
+            "ARTIFACT_HASH_RECORDS",
+            "TOTAL_ARTIFACTS_REQUIRED_FOR_RELEASE",
+            "TOTAL_ARTIFACTS_WITH_AUDITED_HASH",
+            "TOTAL_ARTIFACTS_REHASHED_IMMEDIATELY_BEFORE_DELIVERY",
+            "TOTAL_EXACT_HASH_MATCHES",
+            "TOTAL_HASH_MISMATCHES",
+            "TOTAL_UNKNOWN_HASH_COMPARISONS",
+            "ALL_RELEASE_HASHES_EQUAL_AUDITED_HASHES",
+            "ANY_POST_REVIEW_MODIFICATION",
+            "DELIVERY_AUTHORIZATION",
+            "AUTHORIZATION_EVIDENCE",
+            "AUTHORIZATION_DATE_AND_TIME"
+          ]
+        },
+        {
+          "caseId": "completed-stage-29-projection",
+          "stage": 29,
+          "result": "PASS",
+          "checkedFields": [
+            "EVIDENCE_CHAIN_VERSION",
+            "JOB_ID",
+            "PRODUCT_ID",
+            "PRODUCT_VERSION",
+            "BASELINE_ID",
+            "RELEASE_GATE_ID",
+            "HASH_REVIEW_ID",
+            "MANDATORY_REQUIREMENT_EVIDENCE_CHAIN_RECORDS",
+            "TOTAL_MANDATORY_REQUIREMENTS",
+            "TOTAL_MANDATORY_REQUIREMENTS_WITH_COMPLETE_CHAINS",
+            "TOTAL_MANDATORY_REQUIREMENTS_WITH_INCOMPLETE_CHAINS",
+            "TOTAL_MANDATORY_REQUIREMENTS_WITH_UNKNOWN_CHAIN_LINKS",
+            "MANDATORY_EVIDENCE_CHAIN_COVERAGE",
+            "ALL_MANDATORY_EVIDENCE_CHAINS_COMPLETE",
+            "INCOMPLETE_CHAIN_REQ_IDS",
+            "UNKNOWN_CHAIN_REQ_IDS",
+            "FINAL_EVIDENCE_CHAIN_DETERMINATION"
+          ]
+        },
+        {
+          "caseId": "completed-stage-30-projection",
+          "stage": 30,
+          "result": "PASS",
+          "checkedFields": [
+            "DEFECT_REGISTRY_VERSION",
+            "REGRESSION_REGISTRY_VERSION",
+            "PRE_DELIVERY_CHECKPOINT_ID",
+            "DELIVERY_ID",
+            "DELIVERY_STATE",
+            "DELIVERY_RECORD_HASH",
+            "DELIVERY_ATTEMPT_RECORDS",
+            "REGISTRY_IS_APPEND_ONLY",
+            "DEFECT_RECORDS",
+            "REGRESSION_RECORDS",
+            "FUTURE_BASELINE_REGRESSION_EXECUTION_RECORDS",
+            "TOTAL_DEFECT_RECORDS",
+            "TOTAL_CONFIRMED_DEFECTS_WITH_REGRESSION_TESTS",
+            "TOTAL_ACTIVE_REGRESSION_TESTS",
+            "TOTAL_RETIRED_REGRESSION_TESTS",
+            "DEFECT_RECORDS_MISSING_REQUIRED_FIELDS",
+            "CONFIRMED_DEFECTS_MISSING_REGRESSION_TESTS",
+            "FINAL_REGISTRY_DETERMINATION"
+          ]
+        }
+      ]
+    },
+    "counterpart": {
+      "counterpartContracts": "PASS",
+      "stages": 30,
+      "cases": [
+        {
+          "stage": 1,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 2,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 2,
+          "operation": "SEARCH_ADEQUACY_REVIEW",
+          "result": "PASS"
+        },
+        {
+          "stage": 3,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 4,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 5,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 5,
+          "operation": "SEMANTIC_REVIEW",
+          "result": "PASS"
+        },
+        {
+          "stage": 6,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 6,
+          "operation": "PROOF_REVIEW",
+          "result": "PASS"
+        },
+        {
+          "stage": 7,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 8,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 9,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 11,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 12,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 13,
+          "operation": "COMPARE",
+          "result": "PASS"
+        },
+        {
+          "stage": 13,
+          "caseId": "initial-violation-defect-rejection-and-correction",
+          "rejectionReasons": [
+            "Comparison violation requires a current evidence-linked defect for REQ-huicdc6cq0h6r8632jd7o7ccolel25tj."
+          ],
+          "result": "PASS"
+        },
+        {
+          "stage": 14,
+          "operation": "ROOT_CAUSE",
+          "result": "PASS"
+        },
+        {
+          "stage": 15,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 16,
+          "operation": "CORRECT",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "COMPARE",
+          "result": "PASS"
+        },
+        {
+          "stage": 17,
+          "operation": "REGRESSION",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "EXECUTE_RUN",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "COMPARE",
+          "result": "PASS"
+        },
+        {
+          "stage": 19,
+          "operation": "REGRESSION_VERIFY",
+          "result": "PASS"
+        },
+        {
+          "stage": 21,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 23,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 24,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 25,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        },
+        {
+          "stage": 26,
+          "operation": "COMPLETE",
+          "result": "PASS"
+        }
+      ],
+      "sourceCommit": null,
+      "injectedFault": null,
+      "actualBrowserJourney": false,
+      "externalOutputs": "SYNTHETIC",
+      "persistenceCheckedAfterEveryOperation": true
+    },
+    "counterpartFaults": {
+      "counterpartFaultDetection": "PASS",
+      "cases": [
+        {
+          "fault": "fractional-stability",
+          "throughStage": 12,
+          "exitCode": 1,
+          "detectedBy": "must remain persistable after every operation",
+          "result": "PASS"
+        },
+        {
+          "fault": "missing-defect-gate",
+          "throughStage": 13,
+          "exitCode": 1,
+          "detectedBy": "An observed initial violation without an evidence-linked defect must be rejected",
+          "result": "PASS"
+        },
+        {
+          "fault": "partial-verification-completes-operation",
+          "throughStage": 17,
+          "exitCode": 1,
+          "detectedBy": "ITERATION_PARTIAL_VERIFY_ORACLE",
+          "result": "PASS"
+        }
+      ],
+      "injection": "Disposable VM production source; repository implementation stays unchanged.",
+      "synthetic": true
+    },
+    "finalProductTiming": {
+      "finalProductTiming": "PASS",
+      "stagesChecked": [
+        22,
+        23,
+        24
+      ],
+      "perRunTestsExcluded": true,
+      "futureTestsNotPremature": true,
+      "propositionDeferralWithoutFalseSatisfaction": true,
+      "missingTimingBlocks": true,
+      "missingTargetBlocks": true,
+      "repairedPathProgressed": true,
+      "checks": 21,
+      "stage06SchedulingContextPublished": true
+    },
+    "historyContracts": {
+      "synthetic": true,
+      "environment": "Node VM production modules and lifecycle transaction adapter",
+      "realIndexedDB": false,
+      "cases": [
+        {
+          "name": "Every selected stage excludes all subsequent-stage sentinels, including copied records and forged projection marker",
+          "selectedStages": 30,
+          "comparedStagePairs": 900,
+          "basis": "Synthetic context-boundary sentinels; not full stage execution",
+          "result": "PASS"
+        },
+        {
+          "name": "All selected-stage job metadata excludes later version pointers and global completion",
+          "result": "PASS"
+        },
+        {
+          "name": "Every semantic author/reviewer operation prepares its selected-stage scope independently of later execution scopes",
+          "operations": 19,
+          "result": "PASS"
+        },
+        {
+          "name": "Restored pending candidate stays unaccepted; retained bytes revalidate locally; new abandoned-operation response rejects",
+          "result": "PASS"
+        },
+        {
+          "name": "Restored unvalidated file progresses only through its saved exact-byte permission; an arriving response stays stale",
+          "result": "PASS"
+        },
+        {
+          "name": "Unconfirmed and stale-confirmation mutations reject; exact confirmed change commits",
+          "result": "PASS"
+        },
+        {
+          "name": "Pending correction restores and imports as an unconfirmed exact candidate with a fresh confirmation binding",
+          "result": "PASS"
+        },
+        {
+          "name": "Consolidated stage export includes the same authoritative response scope and profile as its instruction manifest",
+          "result": "PASS"
+        }
+      ],
+      "implementationFaults": [
+        {
+          "id": "BYPASS-CONTEXT-PROJECTION",
+          "result": "DETECTED",
+          "restored": "PASS"
+        },
+        {
+          "id": "INHERIT-LATER-EXECUTION-SCOPE",
+          "result": "DETECTED",
+          "restored": "PASS"
+        },
+        {
+          "id": "INHERIT-GLOBAL-PROMPT-ITERATION",
+          "result": "DETECTED",
+          "restored": "PASS"
+        },
+        {
+          "id": "SKIP-PERSISTENCE-CONFIRMATION",
+          "result": "DETECTED",
+          "restored": "PASS"
+        }
+      ]
+    },
+    "crossRunComparison": {
+      "controllerStage": "17",
+      "applicationStage": "13",
+      "crossRunComparison": "PASS",
+      "requiredRunCount": 10,
+      "requiredTupleCount": 10,
+      "expectedVarianceContractBound": true,
+      "applicationOwnedAggregateFacts": true,
+      "stabilityArithmetic": {
+        "tenOfTen": 1,
+        "nineOfTen": 0.9,
+        "violationCountExact": true,
+        "undeterminedCountExact": true,
+        "closedAgreementUniverse": true
+      },
+      "prohibitedVarianceDefectHandoffEnforced": true,
+      "unknownVarianceBlocked": true,
+      "undeterminedTruthBlocked": true,
+      "violatedTruthRoutedForward": true,
+      "noRunOrEvidenceDiscarded": true,
+      "isolatedDisposableProject": true,
+      "closureVersion": "closed-loop-stage13-cross-run-closure/1"
+    },
+    "releaseGovernance": {
+      "mobileReleaseGovernance": "PASS",
+      "actualIPhoneRequiredForTag": true,
+      "deployedChromiumAloneInsufficient": true,
+      "androidSubstitutionRejected": true,
+      "missingEvidenceBlocks": true,
+      "selfAssertionRejected": true,
+      "canonicalOriginBound": true,
+      "exactTargetBindingVerified": true,
+      "singleUseChallengeVerified": true,
+      "challengeCaseNormalizationVerified": true,
+      "expiredChallengeRejected": true,
+      "canonicalTrustedTimeSyntaxEnforced": true,
+      "substituteIosBrowserRejected": true,
+      "mobileCapabilityProbeRequired": true,
+      "missingCapabilityBlocks": true,
+      "unknownCapabilityBlocks": true,
+      "unregisteredCapabilityRejected": true,
+      "requiredOperatorPathReceiptCoverage": true,
+      "authenticatedEvidenceBridgeAcceptsValidProof": true,
+      "absentEvidenceRemainsBlocked": true,
+      "partialSubmissionRejected": true,
+      "usedChallengeRejectedAcrossCaseVariants": true,
+      "workflowExecutesStrictEvidenceEvaluator": true,
+      "unconditionalTagMutationDetected": true,
+      "falseAcceptanceTagRegressionCovered": true
+    }
+  },
+  "browserLimitation": "verify-stage-prompts-complete reaches its browser subprocess, but Chrome/Chromium is unavailable locally. Browser proof remains pending normal CI.",
+  "fixtureCorrections": [
+    "Accepted record fixtures use current stage-projected record scope; an authoring prompt preview correctly reserves a new output version.",
+    "Prompt fixtures supply only their operation-registered dimensions and required input versions.",
+    "Downstream scope keys must be absent, rather than placeholder-null.",
+    "Preparation-scope fault targets the current authoritative operationScope call and still fails for PREPARATION_SCOPE_ORACLE."
+  ],
+  "syntaxFailureClosed": {
+    "runId": 34871208544,
+    "error": "duplicate exportStarted declaration in the mobile verifier",
+    "currentAllScriptSyntax": "PASS"
+  },
+  "productionCompletionClaim": false
+}

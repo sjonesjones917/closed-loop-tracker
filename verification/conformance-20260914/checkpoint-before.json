@@ -1,0 +1,44 @@
+{
+  "checkpointBoundary": "FAIL",
+  "basis": "SYNTHETIC_PRODUCTION_LIFECYCLE",
+  "specificationSections": [
+    "36.11",
+    "38"
+  ],
+  "cases": [
+    {
+      "name": "checkpoint preserves the exact exported project digest",
+      "result": "FAIL",
+      "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'cf78f507ac68fc2289eb5018aab10c97b064100d9753aca46edaf154c4be3bd0'\n- 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n"
+    },
+    {
+      "name": "wrong checkpointId is rejected; exact binding progresses",
+      "result": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "wrong packageId is rejected; exact binding progresses",
+      "result": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "wrong packageSha256 is rejected; exact binding progresses",
+      "result": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "export appends custody and does not rewrite the generated receipt",
+      "result": "FAIL",
+      "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ '{\"id\":\"CHECKPOINT-000001\",\"stage\":29,\"createdAt\":\"2026-09-14T03:37:58.291Z\",\"updatedAt\":\"2026-09-14T03:37:58.293Z\",\"active\":false,\"source\":\"APPLICATION_DERIVATION\",\"scope\":{\"inputVersion\":\"INPUT-v002\",\"sourceSetVersion\":null,\"requirementsVersion\":\"REQUIREMENTS-v001\",\"testSuiteVersion\":\"TEST-SUITE-v001\",\"instructionVersion\":\"INSTRUCTION-v001\",\"iterationId\":\"ITERATION-000003\",\"candidateId\":\"CANDIDATE-000002\",\"baselineId\":\"BASELINE-000001\",\"productId\":\"PRODUCT-000001\",\"productVersion\":\"PRODUCT-v001\",\"deliveryCandidateSetId\":\"DELIVERY-CANDIDATE-000001\",\"releaseId\":\"RELEASE-000001\",\"hashReviewId\":\"HASH_REVIEW-67B0DB1A57CB759BE0EE191723C41E945A1F486A5943A8A670266E442C9F8190\",\"evidenceChainVersion\":\"EVIDENCE-CHAIN-EEF033E1C5F2B5F90DDDA939F5A55911\",\"projectRevision\":1},\"fields\":{\"CHECKPOINT_ID\":\"CHECKPOINT-000001\",\"PACKAGE_ID\":\"ACTUAL-PACKAGE\",\"PACKAGE_SHA256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"PROJECT_REVISION\":1,\"PROJECT_SHA256\":\"cf78f507ac68fc2289eb5018aab10c97b064100d9753aca46edaf154c4be3bd0\",\"ARTIFACT_MANIFEST_SHA256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"CUSTODY_STATE\":\"BACKUP_PACKAGE_GENERATED\",\"EXTERNAL_EVIDENCE_IDS\":[],\"RESTORE_EVIDENCE_IDS\":[],\"SCOPE\":{\"inputVersion\":\"INPUT-v002\",\"sourceSetVersion\":null,\"requirementsVersion\":\"REQUIREMENTS-v001\",\"testSuiteVersion\":\"TEST-SUITE-v001\",\"instructionVersion\":\"INSTRUCTION-v001\",\"iterationId\":\"ITERATION-000003\",\"candidateId\":\"CANDIDATE-000002\",\"baselineId\":\"BASELINE-000001\",\"productId\":\"PRODUCT-000001\",\"productVersion\":\"PRODUCT-v001\",\"deliveryCandidateSetId\":\"DELIVERY-CANDIDATE-000001\",\"releaseId\":\"RELEASE-000001\",\"hashReviewId\":\"HASH_REVIEW-67B0DB1A57CB759BE0EE191723C41E945A1F486A5943A8A670266E442C9F8190\",\"evidenceChainVersion\":\"EVIDENCE-CHAIN-EEF033E1C5F2B5F90DDDA939F5A55911\",\"projectRevision\":1},\"STATUS\":\"SUPERSEDED\"},\"CHECKPOINT_ID\":\"CHECKPOINT-000001\",\"PACKAGE_ID\":\"ACTUAL-PACKAGE\",\"PACKAGE_SHA256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"PROJECT_REVISION\":1,\"PROJECT_SHA256\":\"cf78f507ac68fc2289eb5018aab10c97b064100d9753aca46edaf154c4be3bd0\",\"ARTIFACT_MANIFEST_SHA256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"CUSTODY_STATE\":\"BACKUP_PACKAGE_GENERATED\",\"EXTERNAL_EVIDENCE_IDS\":[],\"RESTORE_EVIDENCE_IDS\":[],\"SCOPE\":{\"inputVersion\":\"INPUT-v002\",\"sourceSetVersion\":null,\"requirementsVersion\":\"REQUIREMENTS-v001\",\"testSuiteVersion\":\"TEST-SUITE-v001\",\"instructionVersion\":\"INSTRUCTION-v001\",\"iterationId\":\"ITERATION-000003\",\"candidateId\":\"CANDIDATE-000002\",\"baselineId\":\"BASELINE-000001\",\"productId\":\"PRODUCT-000001\",\"productVersion\":\"PRODUCT-v001\",\"deliveryCandidateSetId\":\"DELIVERY-CANDIDATE-000001\",\"releaseId\":\"RELEASE-000001\",\"hashReviewId\":\"HASH_REVIEW-67B0DB1A57CB759BE0EE191723C41E945A1F486A5943A8A670266E442C9F8190\",\"evidenceChainVersion\":\"EVIDENCE-CHAIN-EEF033E1C5F2B5F90DDDA939F5A55911\",\"projectRevision\":1},\"STATUS\":\"SUPERSEDED\",\"contentSha256\":\"0162f5a45b8d36ce56df7c3bda9cab2e7832f1d5e474d35924370d58108b6fd7\",\"recordSha256\":\"0b14e3c4f1709da5f471e6eb6a6a452dc78a98290851007a45d3b1cd9a22c533\",\"sha256\":\"0b14e3c4f1709da5f471e6eb6a6a452dc78a98290851007a45d3b1cd9a22c533\",\"validity\":\"SUPERSEDED\",\"invalidatedBy\":\"EXPORT-EXPORT-17C6C7D7AD9E96F5DC27\"}'\n- '{\"id\":\"CHECKPOINT-000001\",\"stage\":29,\"createdAt\":\"2026-09-14T03:37:58.291Z\",\"updatedAt\":\"2026-09-14T03:37:58.291Z\",\"active\":true,\"source\":\"APPLICATION_DERIVATION\",\"scope\":{\"inputVersion\":\"INPUT-v002\",\"sourceSetVersion\":null,\"requirementsVersion\":\"REQUIREMENTS-v001\",\"testSuiteVersion\":\"TEST-SUITE-v001\",\"instructionVersion\":\"INSTRUCTION-v001\",\"iterationId\":\"ITERATION-000003\",\"candidateId\":\"CANDIDATE-000002\",\"baselineId\":\"BASELINE-000001\",\"productId\":\"PRODUCT-000001\",\"productVersion\":\"PRODUCT-v001\",\"deliveryCandidateSetId\":\"DELIVERY-CANDIDATE-000001\",\"releaseId\":\"RELEASE-000001\",\"hashReviewId\":\"HASH_REVIEW-67B0DB1A57CB759BE0EE191723C41E945A1F486A5943A8A670266E442C9F8190\",\"evidenceChainVersion\":\"EVIDENCE-CHAIN-EEF033E1C5F2B5F90DDDA939F5A55911\",\"projectRevision\":1},\"fields\":{\"CHECKPOINT_ID\":\"CHECKPOINT-000001\",\"PACKAGE_ID\":\"ACTUAL-PACKAGE\",\"PACKAGE_SHA256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"PROJECT_REVISION\":1,\"PROJECT_SHA256\":\"cf78f507ac68fc2289eb5018aab10c97b064100d9753aca46edaf154c4be3bd0\",\"ARTIFACT_MANIFEST_SHA256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"CUSTODY_STATE\":\"BACKUP_PACKAGE_GENERATED\",\"EXTERNAL_EVIDENCE_IDS\":[],\"RESTORE_EVIDENCE_IDS\":[],\"SCOPE\":{\"inputVersion\":\"INPUT-v002\",\"sourceSetVersion\":null,\"requirementsVersion\":\"REQUIREMENTS-v001\",\"testSuiteVersion\":\"TEST-SUITE-v001\",\"instructionVersion\":\"INSTRUCTION-v001\",\"iterationId\":\"ITERATION-000003\",\"candidateId\":\"CANDIDATE-000002\",\"baselineId\":\"BASELINE-000001\",\"productId\":\"PRODUCT-000001\",\"productVersion\":\"PRODUCT-v001\",\"deliveryCandidateSetId\":\"DELIVERY-CANDIDATE-000001\",\"releaseId\":\"RELEASE-000001\",\"hashReviewId\":\"HASH_REVIEW-67B0DB1A57CB759BE0EE191723C41E945A1F486A5943A8A670266E442C9F8190\",\"evidenceChainVersion\":\"EVIDENCE-CHAIN-EEF033E1C5F2B5F90DDDA939F5A55911\",\"projectRevision\":1},\"STATUS\":\"CURRENT\"},\"CHECKPOINT_ID\":\"CHECKPOINT-000001\",\"PACKAGE_ID\":\"ACTUAL-PACKAGE\",\"PACKAGE_SHA256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"PROJECT_REVISION\":1,\"PROJECT_SHA256\":\"cf78f507ac68fc2289eb5018aab10c97b064100d9753aca46edaf154c4be3bd0\",\"ARTIFACT_MANIFEST_SHA256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"CUSTODY_STATE\":\"BACKUP_PACKAGE_GENERATED\",\"EXTERNAL_EVIDENCE_IDS\":[],\"RESTORE_EVIDENCE_IDS\":[],\"SCOPE\":{\"inputVersion\":\"INPUT-v002\",\"sourceSetVersion\":null,\"requirementsVersion\":\"REQUIREMENTS-v001\",\"testSuiteVersion\":\"TEST-SUITE-v001\",\"instructionVersion\":\"INSTRUCTION-v001\",\"iterationId\":\"ITERATION-000003\",\"candidateId\":\"CANDIDATE-000002\",\"baselineId\":\"BASELINE-000001\",\"productId\":\"PRODUCT-000001\",\"productVersion\":\"PRODUCT-v001\",\"deliveryCandidateSetId\":\"DELIVERY-CANDIDATE-000001\",\"releaseId\":\"RELEASE-000001\",\"hashReviewId\":\"HASH_REVIEW-67B0DB1A57CB759BE0EE191723C41E945A1F486A5943A8A670266E442C9F8190\",\"evidenceChainVersion\":\"EVIDENCE-CHAIN-EEF033E1C5F2B5F90DDDA939F5A55911\",\"projectRevision\":1},\"STATUS\":\"CURRENT\",\"contentSha256\":\"0162f5a45b8d36ce56df7c3bda9cab2e7832f1d5e474d35924370d58108b6fd7\",\"recordSha256\":\"1d8568938b11e15edd4d23939cd9654b44a0296db42ecfca303ff5e96b79b741\",\"sha256\":\"1d8568938b11e15edd4d23939cd9654b44a0296db42ecfca303ff5e96b79b741\"}'\n"
+    },
+    {
+      "name": "upstream correction prevents exporting a stale checkpoint",
+      "result": "PASS"
+    },
+    {
+      "name": "complete chain exposes a checkpoint export control before terminal authorization",
+      "result": "FAIL",
+      "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'BLOCKED'\n- 'EXPORT_PRE_DELIVERY_CHECKPOINT'\n"
+    }
+  ]
+}

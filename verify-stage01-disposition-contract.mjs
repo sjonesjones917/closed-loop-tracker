@@ -1,6 +1,7 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const e=globalThis.closedLoopWorkflowEngine,c=globalThis.closedLoopCore,p=globalThis.closedLoopPromptEngine;
 const exact=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'];assert.deepEqual([...e.INTAKE_ACCOUNTING_DISPOSITIONS],exact);
 const x=c.createBlankState('JOB-STAGE01-DISPOSITIONS-R2');Object.assign(x.job,{JOB_TITLE:'Stage 01 disposition contract',JOB_OWNER:'Operator',EXACT_USER_OBJECTIVE_VERBATIM:'Account every raw input unit.',EXPLICIT_USER_REQUIREMENTS:'Inaccessible required material must block completion.',SUPPLIED_MATERIALS_INVENTORY:'NONE',CURRENT_INPUT_VERSION:'INPUT-v001'});x.projectData.userEntered={constraint:'Do not omit raw input.'};e.ensureShape(x);const m=e.intakeCoverageManifest(x);

@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
@@ -26,7 +27,7 @@ Object.assign(project.job,{
   EXPLICIT_USER_REQUIREMENTS:'Preserve every supplied project requirement. Stage 04 must reuse the complete Stage 01 and Stage 03 results.',
   PROHIBITED_ACTIONS:'Do not ask the user to reattach, restate, summarize, or retype captured project information.',
   CURRENT_INPUT_VERSION:'INPUT-v001',
-  CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001'
+  CURRENT_RESEARCH_VERSION:'RESEARCH-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001'
 });
 project.projectData.userEntered={
   productConstraint:'The prompt box must retain its established dimensions.',
@@ -106,6 +107,7 @@ project.projectData.candidateRequirements=[{
   fields:{CANDIDATE_REQ_ID:'CANDIDATE-REQ-000001',SOURCE_ID:'SOURCE-000001',SOURCE_LOCATION:'Applicable section',CANDIDATE_OBLIGATION:'Candidate external obligation retained from Stage 03.',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',EVIDENCE:'SOURCE-000001'},
   relationships:{SOURCE_ID:'SOURCE-000001'},evidenceRefs:[]
 }];
+for(const row of [...project.projectData.research,...project.projectData.candidateRequirements])row.scope.researchVersion='RESEARCH-v001';
 project.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'APPLICABLE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',UNRESOLVED_CONTROLLING_CONFLICTS:'NONE'};
 project.stages[2].status='COMPLETE';
 project.stages[2].gate={complete:true,blocked:false,reasons:[]};

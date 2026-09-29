@@ -1,0 +1,1379 @@
+{
+  "schema": "closed-loop-requirement-evidence-bindings/1",
+  "specificationSha256": "a610714d14a6cff6386fc432f071e90507910d844ded7f32d87e110ade88cc8c",
+  "requirements": [
+    {
+      "normativeRequirementId": "NREQ-081a506fd55bb12e9c1e6822bed626a3",
+      "sourceLineSha256": "ebac8a6c62fe2e31a283a2fcda233c3b1ef7a81330920b6e23baccbb86c6bb7d",
+      "fields": {
+        "productionOwners": [
+          "workflow-schema.js:recordSchema/rec",
+          "workflow-engine.js:allocateRecordIdentity/allocateId/allocateInfrastructureId/validateAllocationReceipts",
+          "project-store.js:writeProjectRow/writeOperationalProject",
+          "prompt-engine.js:buildPromptRecord/reserveAndBuildPromptRecord/packageIdForPrompt",
+          "project-store.js:createProject/restoreProjectAllocation",
+          "app-core.js:addNew/persistReplacement/currentPromptRecord"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/allocation-repair-evidence-20260914.json",
+            "scope": "65 canonical record families and registered infrastructure allocator paths, synthetic production runtime and transaction adapter; other identity producers remain open"
+          },
+          {
+            "path": "verification/integrated-repair-evidence-20260914.json",
+            "scope": "Synthetic transactional project creation; instruction/package allocation and receipts; rejection retry through actual UI commit function; exact integrated browser replay pending"
+          }
+        ],
+        "unresolvedRequirements": [
+          "Close remaining artifact and derived identity producers, clone remapping and project-copy paths; obtain complete integrated browser and exact deployment evidence."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Shared record/infrastructure allocators, new-project allocation and execution instruction/package allocation have focused synthetic evidence. Remaining identity consumers, clone remapping, complete browser journeys and exact deployment evidence remain open."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-0fc9b83ea9eb5b2014fea8af11d5000e",
+      "sourceLineSha256": "1b89bbb61b574d59308a14c2fff6523bc0795490327df5ad7c0726418cf64981",
+      "fields": {
+        "productionOwners": [
+          "workflow-schema.js:recordSchema/rec",
+          "workflow-engine.js:allocateRecordIdentity/allocateId/allocateInfrastructureId/validateAllocationReceipts",
+          "project-store.js:writeProjectRow/writeOperationalProject",
+          "prompt-engine.js:buildPromptRecord/reserveAndBuildPromptRecord/packageIdForPrompt",
+          "project-store.js:createProject/restoreProjectAllocation",
+          "app-core.js:addNew/persistReplacement/currentPromptRecord"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/allocation-repair-evidence-20260914.json",
+            "scope": "65 canonical record families and registered infrastructure allocator paths, synthetic production runtime and transaction adapter; other identity producers remain open"
+          },
+          {
+            "path": "verification/integrated-repair-evidence-20260914.json",
+            "scope": "Synthetic transactional project creation; instruction/package allocation and receipts; rejection retry through actual UI commit function; exact integrated browser replay pending"
+          }
+        ],
+        "unresolvedRequirements": [
+          "Close remaining artifact and derived identity producers, clone remapping and project-copy paths; obtain complete integrated browser and exact deployment evidence."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Shared record/infrastructure allocators, new-project allocation and execution instruction/package allocation have focused synthetic evidence. Remaining identity consumers, clone remapping, complete browser journeys and exact deployment evidence remain open."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-f254e026ab8f45c6963a38ee35cdd4ba",
+      "sourceLineSha256": "bf1b38a9717f2dc8d71712f8b88aa054e1a14590c8b7521da832b5a00bf3a162",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:encryptedPackage/decryptPackage/exportPackage/importPackage",
+          "app-core.js:downloadProjectPackage/importProjectPackageFile/requestBackupPassword"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/encrypted-backup-evidence-20260914.json",
+            "scope": "Specified cryptography, tamper rejection, known credential prohibition, complete exact-byte recovery and History under the recorded synthetic workload"
+          }
+        ],
+        "unresolvedRequirements": [
+          "Exact integrated browser and deployed operator evidence; physical iPhone Safari; larger encrypted workloads and complete classification-policy coverage"
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production cryptography and recovery evidence exists; required complete operator and device acceptance remain open."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-01764243de7807d20da1c57df07f98a2",
+      "sourceLineSha256": "8cf7bcf332a5ee6afe0b77074b0a79ade7ac871a7c254bd415144aba782ce3c8",
+      "fields": {
+        "productionOwners": [
+          "hash.js:pinnedNFC/defaultCaseFold/confusableSkeleton/normalizeFilenameSet",
+          "workflow-engine.js:appendArtifactBytes",
+          "response-ingestion.js:validateEnvelope",
+          "project-store.js:createExecutionPackage",
+          "app-core.js:logicalFilePath/registerStageFiles"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/unicode-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-cbdfb0c4ac8a74238425d4be1e4b89c4",
+      "sourceLineSha256": "98d695a317286c18a62be82712b6c154c9a3d7f53166af2e8dacee24078047ba",
+      "fields": {
+        "productionOwners": [
+          "hash.js:pinnedNFC/defaultCaseFold/confusableSkeleton/normalizeFilenameSet",
+          "workflow-engine.js:appendArtifactBytes",
+          "response-ingestion.js:validateEnvelope",
+          "project-store.js:createExecutionPackage",
+          "app-core.js:logicalFilePath/registerStageFiles"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/unicode-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a10c0c999e95845c5195f2a2426b6975",
+      "sourceLineSha256": "addfda5423eab25d4cdf9105d69ff59f624ee17ee001b1535457407fd79c291f",
+      "fields": {
+        "productionOwners": [
+          "app-core.js:persistReplacement",
+          "project-store.js:writeProjectRow/writeOperationalProject"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/ui-persistence-repair-evidence-20260914.json",
+            "scope": "Executed focused production-module regressions; exact integrated browser and deployment retest remains required"
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused executed regression evidence is recorded; complete applicable operation, browser, deployment and device evidence remains open.",
+        "unresolvedRequirements": [
+          "Complete applicable stage/operation and exact deployment evidence; do not infer full application conformance from these focused tests."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-7e417b328764aaf6033114c36450ef9c",
+      "sourceLineSha256": "3619f23235cc05813afe6cc14e8b3c6bd0c21c2287c1ba55a122940bbb825575",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-44fd18cf9801f02c34f8820d2a3acb34",
+      "sourceLineSha256": "181bd4aea5c7e09f56f867fb7d529d47438355724b31e4bf00bb5c7128e651af",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-664f5c5b72efea7443b8f478ff4973df",
+      "sourceLineSha256": "33d455eee89d7cde335678250c76bf42f19e93c04faa5a3888ccfed3204d7ee2",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-568c874e5bc2e40448edcbe19d2fb8f4",
+      "sourceLineSha256": "095d24ce48579186a655917f2def7d87e403882161ab5f38739cdcaca514b793",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e27f616490036d42b6051729088d2fc7",
+      "sourceLineSha256": "4dbf8a7971fad5fa52cff83fbf9d5e07e499c98631bef6504e80a03c8fe40282",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "sourceLineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:readProject/quarantine/listQuarantinedProjects/exportQuarantinedProject/removeQuarantinedProject/createExecutionPackage",
+          "app-core.js:materializeProject/normalize/quarantineMarkup/refreshHistory"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/integrity-recovery-repair-evidence-20260914.json",
+            "scope": "Actual production code with transaction adapter; corruption, exact bytes, valid restoration, protected export, controlled deletion, startup and stale/concurrent handoff regressions. Browser counterpart added but not yet executed."
+          }
+        ],
+        "unresolvedRequirements": [
+          "Complete exact deployed operator and physical-device evidence; full independently auditable clone remains open."
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "Focused production and fault cases pass. Full operation and final deployment acceptance is not established."
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-f5b781f739a3864b480e98a609ccede0",
+      "sourceLineSha256": "bc8834174cb46c9c7fe99684f9b2fa6e1292083652b8c00bc1ced0cd7b03c139",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-2974199511a3c8777230c9d07391bb03",
+      "sourceLineSha256": "a9ed390e004b8e816649062f489ed2e90bee25c510634a6f33c07f77d443926d",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5d9437925e6a03826f1baf6c63a9acd4",
+      "sourceLineSha256": "a57c192e13a5105d0a1505fab3e7f3985c8aa7f59a3d621ff69a6fb136585b78",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e81cac1f3702fd9a4ab19e8133d95b6b",
+      "sourceLineSha256": "ee6ba0ee4f31199a2197f64a9c366fc171f81df3420cd49aebeec957219eacdc",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1f0a32e57245fa6656030020008c31dc",
+      "sourceLineSha256": "d9520145740edda4fb5db9431f2ecf029bdc9a757edf1a5979c3fb1466c22f58",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recordHumanInputVersion/invalidateStageForAuthorityChange",
+          "project-store.js:mutationImpact/prepareProjectWrite",
+          "app-core.js:registerStageFiles/persistReplacement"
+        ],
+        "executedEvidence": [
+          {
+            "path": "verification/file-correction-recovery-evidence-20260914.json",
+            "scope": "Synthetic production input-file correction, exact candidate byte retention, accepted input and pending subsequent operation invalidation, matching whole-version restoration; this does not establish all-stage completion."
+          }
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The shared correction owner has focused behavior and targeted fault evidence. Complete operation and deployment evidence remains required.",
+        "unresolvedRequirements": [
+          "Complete all-stage, all-operation and failure-path evidence, including exact deployed browser and physical-device acceptance."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-09852d85a8e2de15f8a15fbd663018f4",
+      "sourceLineSha256": "3983a2525e84904999db4ad2736a7123d3fab1ae778436be32d8ee3c69dbcc95",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recalculate/operationalNextAction/next/recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
+          "app-core.js:currentNextAction/displayedStageAction/nextActionMarkup/deliveryObservationMarkup/exportAuthorizedArtifacts/recordCurrentDeliveryEvidence",
+          "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers/restoreCheckpoint"
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks durable receipts, retained receipt immutability, authorization, retries and failure outcomes; the stored and rendered continuation after the final stage gate; attributed positive/negative/unknown observations; reload and retained-version restoration with exact artifact hashes and no duplicate external transfer. Its actual UI controller uses a disposable transfer boundary. Targeted faults must be detected by DELIVERY_RECEIPT_PERSISTENCE_ORACLE, DELIVERY_NEXT_ACTION_ORACLE and DELIVERY_RENDERED_ACTION_ORACLE. Exact-source full CI, real-browser continuation and deployed acceptance remain required.",
+        "unresolvedRequirements": [
+          "Execute the complete operator journey through authorized artifact retrieval, downloaded-byte comparison and attributable delivery observation at the final candidate and deployment.",
+          "Preserve the distinction between application-observed transfer and genuinely attributed receipt or physical-device evidence."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-2b0f0cefee59e16f87cbcac572fe2cfb",
+      "sourceLineSha256": "05ca64624a7aaea68ebf39e54872074cca802558eab9e801e5cc69690e112e13",
+      "fields": {
+        "productionOwners": [
+          "workflow-engine.js:recalculate/operationalNextAction/next/recordDeliveryAttempt/completeDeliveryAttempt/deliveryTransferPrecondition",
+          "app-core.js:currentNextAction/displayedStageAction/nextActionMarkup/deliveryObservationMarkup/exportAuthorizedArtifacts/recordCurrentDeliveryEvidence",
+          "project-store.js:validateProjectIntegrity/assertRecoveryTransfer/reconcileRecoveryTransfers/restoreCheckpoint"
+        ],
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The existing verify-delivery-transfer-boundary.mjs gate checks durable receipts, retained receipt immutability, authorization, retries and failure outcomes; the stored and rendered continuation after the final stage gate; attributed positive/negative/unknown observations; reload and retained-version restoration with exact artifact hashes and no duplicate external transfer. Its actual UI controller uses a disposable transfer boundary. Targeted faults must be detected by DELIVERY_RECEIPT_PERSISTENCE_ORACLE, DELIVERY_NEXT_ACTION_ORACLE and DELIVERY_RENDERED_ACTION_ORACLE. Exact-source full CI, real-browser continuation and deployed acceptance remain required.",
+        "unresolvedRequirements": [
+          "Execute the complete operator journey through authorized artifact retrieval, downloaded-byte comparison and attributable delivery observation at the final candidate and deployment.",
+          "Preserve the distinction between application-observed transfer and genuinely attributed receipt or physical-device evidence."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1b25964ca659327d24191510b245e7ec",
+      "sourceLineSha256": "3666ae25c2b215af1a8d37038d5e52ed2dedbe31bb6dd517e36331496930a73c",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- VERIFICATION_PHASE: PREPRODUCT_ITERATION, FINAL_PRODUCT_DETERMINISTIC, FINAL_PRODUCT_MEANING, FINAL_PRODUCT_ADVERSARIAL, FINAL_REPRESENTATION, DELIVERY_IDENTITY, EVIDENCE_CLOSURE, REGISTRY_CLOSURE, or TERMINAL_DELIVERY; Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-11d63ed76830d3e08e4b2d44673fe212",
+      "sourceLineSha256": "595c8c7b2129f6ef9466a1300a2e89a99141b1d387beabd5cb79ec99972c723a",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- EARLIEST_EXECUTABLE_STAGE; Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-ef0078c7b3377a489acdcdd4a3731669",
+      "sourceLineSha256": "480fedbcc7e6dc8220bed64d5b432d39fa53043f3b2c056f9cfa94231b32ce10",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- REQUIRED_BY_STAGE; Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-9ac0d1ea13bf3666b9e027c65cd10756",
+      "sourceLineSha256": "ffdad45701443b95a538baef2b3f6e63c3d5fc2676b4f311a013677ba991bda1",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- PER_RUN_REQUIRED; Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e884eea4674ce893cb2aa062e22caaf6",
+      "sourceLineSha256": "1ca4118d67de1128a0e7401651b5e75b003240f3eb77025bdefc3e151a5267e8",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- FINAL_PRODUCT_REQUIRED; Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e6833735de2b208cf0d6141212abd922",
+      "sourceLineSha256": "05690f5c4bd7d6e27233a311f6e89a5973185b706f6057a6f9b6b4da3dc70f6a",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- DELIVERY_REQUIRED; Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-8fd9b9e97514c5eafc609fafed4e7ff1",
+      "sourceLineSha256": "06a367ebdf75cbb327195a049e09074c3ce74c4640b21e8af35a3b01415a0d2f",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- TARGET_AVAILABILITY_CONDITION. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-c5a1fcaa9a3ae27294d96a9b8d81f3e9",
+      "sourceLineSha256": "e602e6e71fc5a4f68acfadf722f89e68af70626dbe978de992740e90a9cee928",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "The application derives DUE_NOW only when the current stage is at least EARLIEST_EXECUTABLE_STAGE, the target-availability condition is TRUE, the obligation is current and applicable, and the current stage is at or beyond its REQUIRED_BY_STAGE. UNKNOWN target availability blocks only when the obligation could be due. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-0cdd16eab673f9f947badd22aadb36f8",
+      "sourceLineSha256": "788403e3d4ed95f4a558a873193241fba3b256cccad56dca4a5f888e960de186",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "Stages 12, 13, 18, and 19 evaluate only current applicable PREPRODUCT_ITERATION obligations whose PER_RUN_REQUIRED value is TRUE and that are due by the relevant stage. Final-product, representation, delivery, evidence-closure, registry-closure, and terminal-delivery obligations do not block Stage 18 or Stage 19 before their targets exist, and Stages 12, 13, 18, and 19 MUST NOT require product-only, representation-only, delivery-only, or terminal-only propositions before their targets exist. They remain preserved as future required obligations and become due at their declared stages. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-6a142ca68ed12ae90fa26155eac94735",
+      "sourceLineSha256": "327f0b5e7063582d5069ef8ec6a518bdaabcb4edcd8b7385fe912b7c4c906b86",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "A deferred target-dependent test becomes due no earlier than the first stage where its target exists and no later than REQUIRED_BY_STAGE. It is never required before the target exists and is never represented as executed before actual execution. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-b1f0ecea1009257a9e24d8f4054563b0",
+      "sourceLineSha256": "aa02eec728c0f2f08e4e8aadd14437264e614eb7d3f46acd6f70b4ee78d88f89",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- AGENT owns normalized proposition meaning; APPLICATION owns identity, requirement relationship, verification phase, due-stage fields, scope, version, hash, and status. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-6104908aa4c7e1bdab837ab033b7f72c",
+      "sourceLineSha256": "ac5d79d154062bb977082286c99d8cd9d2ff291472cd6971473e2aa154ba3ef7",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "- APPLICATION owns every field, including verification phase, due-stage fields, evidence requirements, allowed epistemic bases, activation leaves, dependencies, expression, satisfaction state, and blockers. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1ccf83c0b565d2c7c794739e4e7663b7",
+      "sourceLineSha256": "98968946a61348b7b55d642aca710b1fd5fb6cc4cf8e241dcdced93927c9c762",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord",
+          "workflow-schema.js:DEFERRED_EXECUTION_OPERATIONS/deferredExecutionFamily/validateDeferredReceiptShape",
+          "workflow-engine.js:deferredExecutionPlan/deferredTargetIdentities/executeDeferredNative/normalizeDeferredReceipt/acceptedReviewIndependence/appendArtifactBytes",
+          "prompt-engine.js:contextManifest/transportedBody",
+          "response-ingestion.js:validateEnvelope/planProposal/commit",
+          "project-store.js:validateProjectIntegrity",
+          "app-core.js:runNativeDeferredTest/nativeTestInputs/stageOperations",
+          "workflow-engine.js:selectedStageIteration/regressionExecutionSelection/stageContext"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs",
+          "verify-stage-operation-registry.mjs",
+          "verify-prompt-file-identity.mjs",
+          "verify-all-stage-prompts.mjs",
+          "verify-data-route-closure.mjs",
+          "verify-primary-guidance.mjs",
+          "verify-production-baseline-authority.mjs",
+          "verify-product-reservation-persistence.mjs",
+          "verify-stage-context-boundary.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "A field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them.",
+          "Section32.4A: actual isolated worker execution and external file-bound evidence; one execution/receipt for concurrent exact retry; rejected stale or abandoned results and subsequent-stage inputs; distinct pre/post-correction input identities; accepted review provenance, file ownership and closed durable receipt objects remain coherent.",
+          "Starting a corrected or unchanged-confirmation iteration preserves earlier applicable regression proof; an empty new iteration cannot reuse that proof. The selected-stage and explicit-iteration paths agree, and invalidated original targets remain blocked. verify-due-stage-timing.mjs injects latest-iteration selection; stage19-fixture.mjs and verify-full-cycle.mjs assert the actual begin-confirmation boundary."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The exact operator-approved Sections16.1A and32.4A and their shared timing/execution/receipt consumers are implemented in the integrated preparation. Permanent regressions cover actual isolated native execution, external file-bound receipt acceptance, unchanged definitions, pre/post-correction inputs, scope, duplicate activation, abandoned operations, persistence shape, review provenance and product/evidence ownership. Run-specific results remain outside source. Full candidate, browser, recovery, deployment and final row evidence are not yet established; no PASS claim.",
+        "unresolvedRequirements": [
+          "Complete focused and affected integration verification, exact published-candidate browser/recovery CI, deployment acceptance, and final executed-evidence reconciliation."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-38cc440932653f635d781450303b4f7f",
+      "sourceLineSha256": "1db316a71dc2448a80a5abb0ae07393cd982b0bf696721d2dc7eef04e848b671",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "Every canonical test declares VERIFICATION_PHASE, EARLIEST_EXECUTABLE_STAGE, REQUIRED_BY_STAGE, PER_RUN_REQUIRED, FINAL_PRODUCT_REQUIRED, DELIVERY_REQUIRED, and TARGET_AVAILABILITY_CONDITION. The application validates these values against the test role and proof obligation and derives when execution is due. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-2eb7c4bf653b73a37d70235ed1d7232f",
+      "sourceLineSha256": "e17646186ec1f8340a0aa22c12af7e8a95fa2c010b83c0eb9c6ec9cb31974fab",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-schema.js / workflow-engine.js / response-ingestion.js / project-store.js",
+        "productionOwners": [
+          "workflow-schema.js:TIMING_SCHEDULE_CONTRACT/TARGET_CONDITION_CONTRACT/validateVerificationTiming/validateTargetAvailabilityCondition",
+          "workflow-engine.js:testDueState/verificationPhaseTargetAvailability/evaluateTargetAvailabilityCondition/deriveLeafTimingSchedule/activationExpressionState/buildProofReviewSnapshot",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "prompt-engine.js:responseContractDescriptor/buildPromptRecord",
+          "project-store.js:observeArtifactCustody/artifactCustodyState/withVerifiedRecoveryCustody",
+          "app-core.js:savePromptRecord"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-semantic-review-acceptance.mjs",
+          "verify-semantic-operation-boundaries.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-file-first-operator.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-response-authority-integrity.mjs",
+          "verify-contract-closure.mjs"
+        ],
+        "observableExpectedBehavior": "Every current applicable release-bearing proposition has exactly one current PROOF_OBLIGATION_ID identifying its proof expression, required leaves, evidence classes, allowed epistemic bases, artifacts, dependencies, freshness, independence, verification timing, current satisfaction, blockers, and scope hash. Optional, advisory, stale, historical, or unregistered results cannot satisfy it. Apply the exact operator-approved Section 16.1A representation and condition grammar; never supply missing success defaults or treat future leaves as executed.",
+        "requiredEvidence": [
+          "Strict scalar and closed-condition positive/negative cases, all nine canonical phase targets, exact stored-byte verification and corrupted/missing-byte rejection.",
+          "Mixed ALL_OF/ANY_OF/AT_LEAST_K schedules, recursive prerequisite paths, duplicate-reference paths, cycles, wrong scope, early Stage05 activation and independent review.",
+          "Authoring/intake/precommit rejection, stale contract and review invalidation, correction/confirmation, repeated export, durable restoration and complete valid lifecycle.",
+          "Targeted ownership, timing, condition, byte-custody, future-truth, review-identity, prerequisite and activation faults must fail the intended oracle; source restored afterward.",
+          "Exact candidate CI browser/recovery/operator paths and main deployment proof remain required; synthetic local cases do not substitute for them."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "TIMING_SCHEDULE_CONTRACT.scalarFields and VERIFICATION_PHASE_VALUES define scalar/phase classes; RECORD_SCHEMAS tests/regressions/failureTests (when deferred) declare authored timing, propositions/proofObligations declare application timing. Normalized proof-node target kinds and actual record-stage/operation registries determine leaf, prerequisite, activation, target and stage membership. Boundary cases are first permitted stage, each earliest/due boundary, final stage, missing target, restored version and changed governing revision.",
+          "classes": [
+            "test/regression/deferred-test scalar declarations",
+            "test/non-test/recursive prerequisite/activation leaf schedules",
+            "LEAF/ALL_OF/ANY_OF/AT_LEAST_K expressions",
+            "nine canonical phase target classes",
+            "initial/repeated/stale/corrected/confirmed/cancelled/restored operations"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The approved timing closure has permanent case and owning-symbol mappings. Run-specific results remain outside source, bound to exact source hashes and gate IDs. Final integrated browser, recovery, deployment and row-by-row executed-evidence reconciliation are pending.",
+        "unresolvedRequirements": [
+          "Final exact-candidate evidence reconciliation, required browser/recovery CI and deployment acceptance.",
+          "Deferred failure/regression execution: Section32.4 requires later execution, but the closed Sections14.6/38 do not define its later-stage operation and receipt binding. Proposed D-2 clarification is not approved or applied. Complete dependency closure remains pending."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-c5c82a5cce0d08af43e0c6cb6e8cebd4",
+      "sourceLineSha256": "f02028d8dacf0143942bc92bb656b076f45c504b34b3099cd353fe2be1a5ab21",
+      "fields": {
+        "responsibleImplementationOwner": "workflow-engine.js / workflow-schema.js / response-ingestion.js",
+        "productionOwners": [
+          "workflow-engine.js:testDueState/failureTestTimingState/regressionExecutionSelection/acceptedOperationSet/coverageMetrics/evaluateIteration/confirmationDetermination/adjudicationGate",
+          "workflow-schema.js:validateVerificationTiming/operationContract",
+          "response-ingestion.js:validateEnvelope/planProposal",
+          "workflow-schema.js:DEFERRED_EXECUTION_OPERATIONS/deferredExecutionFamily/validateDeferredReceiptShape",
+          "workflow-engine.js:deferredExecutionPlan/deferredTargetIdentities/executeDeferredNative/normalizeDeferredReceipt/acceptedReviewIndependence/appendArtifactBytes",
+          "prompt-engine.js:contextManifest/transportedBody",
+          "response-ingestion.js:validateEnvelope/planProposal/commit",
+          "project-store.js:validateProjectIntegrity",
+          "app-core.js:runNativeDeferredTest/nativeTestInputs/stageOperations",
+          "workflow-engine.js:selectedStageIteration/regressionExecutionSelection/stageContext"
+        ],
+        "deterministicTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs",
+          "verify-corrected-iteration.mjs",
+          "verify-contract-closure.mjs",
+          "verify-stage-operation-registry.mjs",
+          "verify-prompt-file-identity.mjs",
+          "verify-all-stage-prompts.mjs",
+          "verify-data-route-closure.mjs",
+          "verify-primary-guidance.mjs",
+          "verify-production-baseline-authority.mjs",
+          "verify-product-reservation-persistence.mjs",
+          "verify-stage-context-boundary.mjs"
+        ],
+        "mutationTestIds": [
+          "verify-due-stage-timing.mjs",
+          "verify-full-cycle.mjs"
+        ],
+        "observableExpectedBehavior": "A failure or regression test is executed only when its target exists and its current EARLIEST_EXECUTABLE_STAGE has been reached. Its REQUIRED_BY_STAGE may not precede target availability. A not-yet-due test remains registered and visible as future work but does not falsely block a prior convergence stage.",
+        "requiredEvidence": [
+          "Future definitions remain registered, cannot be represented as executed, and do not block prior convergence.",
+          "Invalid schedules and unknown targets at the deadline block progression with the responsible subject identified.",
+          "Current due executions use a defined capable route, isolated fixture, exact target and current scope; acceptance and restoration preserve the matching execution evidence.",
+          "Regression tests fail against the exact defective production source; targeted timing bypasses are caught by the intended invariant.",
+          "Section32.4A: actual isolated worker execution and external file-bound evidence; one execution/receipt for concurrent exact retry; rejected stale or abandoned results and subsequent-stage inputs; distinct pre/post-correction input identities; accepted review provenance, file ownership and closed durable receipt objects remain coherent.",
+          "Starting a corrected or unchanged-confirmation iteration preserves earlier applicable regression proof; an empty new iteration cannot reuse that proof. The selected-stage and explicit-iteration paths agree, and invalidated original targets remain blocked. verify-due-stage-timing.mjs injects latest-iteration selection; stage19-fixture.mjs and verify-full-cycle.mjs assert the actual begin-confirmation boundary."
+        ],
+        "applicableStagesAndOperations": {
+          "membershipProof": "Membership follows each registered definition family, accepted timing phase, required flags and actual execution stage. Tests cover every declared VERIFICATION_PHASE_VALUES class before its deadline, first-stage and confirmation boundaries, the final-stage deadline, invalid fields and preserved registry identity. Approved Section32.4A defines conditional combinations after the actual owning family stage; the registry and selected execution stage derive membership. Isolated native cases cover the first conditional failure/regression stages and final stage, with external acceptance in the complete product journey.",
+          "classes": [
+            "immediate versus deferred failure tests",
+            "per-run versus later-target regression tests",
+            "future, executable, due and unavailable targets",
+            "initial, repeated, corrected, restored and stale execution"
+          ]
+        },
+        "currentDisposition": "IMPLEMENTED_UNPROVEN",
+        "currentDispositionReason": "The exact operator-approved Sections16.1A and32.4A and their shared timing/execution/receipt consumers are implemented in the integrated preparation. Permanent regressions cover actual isolated native execution, external file-bound receipt acceptance, unchanged definitions, pre/post-correction inputs, scope, duplicate activation, abandoned operations, persistence shape, review provenance and product/evidence ownership. Run-specific results remain outside source. Full candidate, browser, recovery, deployment and final row evidence are not yet established; no PASS claim.",
+        "unresolvedRequirements": [
+          "Complete focused and affected integration verification, exact published-candidate browser/recovery CI, deployment acceptance, and final executed-evidence reconciliation."
+        ]
+      }
+    }
+  ],
+  "approvedClarifications": [
+    {
+      "sectionId": "16.1A",
+      "startLine": 1283,
+      "lineCount": 64,
+      "textSha256": "663bcecb63373e545f9fc6d71df6541292ca8e21f847c480f4992521a8934b75",
+      "baseSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+      "baseRequirementCount": 3856,
+      "baseRequirementIdsSha256": "54e553bafb5b615a343fd398e7b91ce02a1b62552338f8ce2d4b885441172f0e",
+      "approvedProposalSha256": "967d215ed11fbc2c989b1d30ef387aa30669a95350b5d22dd4efa5905b6fb163",
+      "approval": "Operator reply \"Do it now.\" at 2026-09-27T18:14:54-05:00; recorded in PR #1242 CONVERGENCE CHECKPOINT comment 5767653687. Applies the exact proposed Section 16.1A; heading Markdown delimiters removed for this plain-text specification.",
+      "normativeRequirementIds": [
+        "NREQ-1b25964ca659327d24191510b245e7ec",
+        "NREQ-11d63ed76830d3e08e4b2d44673fe212",
+        "NREQ-ef0078c7b3377a489acdcdd4a3731669",
+        "NREQ-9ac0d1ea13bf3666b9e027c65cd10756",
+        "NREQ-e884eea4674ce893cb2aa062e22caaf6",
+        "NREQ-e6833735de2b208cf0d6141212abd922",
+        "NREQ-8fd9b9e97514c5eafc609fafed4e7ff1",
+        "NREQ-c5a1fcaa9a3ae27294d96a9b8d81f3e9",
+        "NREQ-0cdd16eab673f9f947badd22aadb36f8",
+        "NREQ-6a142ca68ed12ae90fa26155eac94735",
+        "NREQ-b1f0ecea1009257a9e24d8f4054563b0",
+        "NREQ-6104908aa4c7e1bdab837ab033b7f72c",
+        "NREQ-1ccf83c0b565d2c7c794739e4e7663b7",
+        "NREQ-38cc440932653f635d781450303b4f7f",
+        "NREQ-2eb7c4bf653b73a37d70235ed1d7232f"
+      ]
+    },
+    {
+      "sectionId": "32.4A",
+      "startLine": 2872,
+      "lineCount": 22,
+      "textSha256": "6ffd49b71206b0211120754d2a97ea08e7e1e8d75ba225a085d7ea21f244c833",
+      "baseSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+      "previousSpecificationSha256": "f04dde1404437d31fcab3bfb6e85257e54abcfde3ea20642a07ea39b4d5acfc2",
+      "baseRequirementCount": 3856,
+      "baseRequirementIdsSha256": "54e553bafb5b615a343fd398e7b91ce02a1b62552338f8ce2d4b885441172f0e",
+      "approvedProposalSha256": "6172a96bfba61d039a177c2c490d29778b46016cf151a6c9b4b11f99af61eda7",
+      "approval": "Operator instruction at 2026-09-27T21:19:33-05:00, in direct response to this exact proposal: stop requesting operator decisions and do the work. Recorded in PR1242 comment5767653687. Applies Section32.4A; Markdown heading delimiters removed.",
+      "normativeRequirementIds": [
+        "NREQ-c5c82a5cce0d08af43e0c6cb6e8cebd4",
+        "NREQ-d135d2e2e26f8f7b33988b0ec83e3912",
+        "NREQ-e62887ec3aaf5cadb120405041cd899a",
+        "NREQ-1ccf83c0b565d2c7c794739e4e7663b7"
+      ]
+    }
+  ]
+}

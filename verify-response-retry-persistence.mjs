@@ -1,0 +1,38 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+const r=projectStoreRuntime(),{core,engine,prompts,ingestion,store,copy,runtime}=r;
+let project=core.createBlankState('REJECTED-RESPONSE-RETRY');engine.ensureShape(project);project.job.EXACT_USER_OBJECTIVE_VERBATIM='Produce the requested output from the current project information.';engine.recalculate(project);
+project=await store.writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+const draft=copy(project),prompt=prompts.reserveAndBuildPromptRecord(draft,1).prompt;
+project=await store.writeProject(draft,{expectedProjectRevision:project.revision});
+const schema=runtime.closedLoopWorkflowSchema,envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:'WRONG-PROJECT',stage:1,operation:prompt.operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,scope:prompt.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'missing-output',kind:'MISSING_CAPABILITY',description:'Synthetic unavailable external output',whyBlocking:'The output has not been observed.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+const rejected=ingestion.prepare(project,{stage:1,text:JSON.stringify(envelope),promptRecord:prompt,expectedCommittedRevision:project.revision});
+assert.equal(rejected.validation.valid,false);project=await store.writeProject(rejected.project,{expectedProjectRevision:project.revision,expectedStateSha256:project.projectSha256,operational:true});
+const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
+const extract=(start,end)=>source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start)+start.length));
+runtime.selectedProject=project;
+vm.runInContext(`let current=selectedProject,projects=[current],replacementReview=null,acceptanceSession=null;
+const projectStore=closedLoopProjectStore,ingestion=closedLoopResponseIngestion,clone=structuredClone,TAB_INSTANCE_ID='SYNTHETIC-RETRY-UI';
+const captureCurrentView=async()=>{},captureView=()=>({activeStage:current.activeStage,activeView:current.activeView}),withStorageActivity=async(label,work)=>work(),unloadInactiveProjects=()=>{},mobileSessionCurrent=()=>false,recordCommittedBoundary=async()=>{},render=()=>{};
+${extract('async function persistReplacement(','async function save(')}
+${extract('async function saveRequiredContinuation(','async function ')}
+globalThis.retryUI={continue:saveRequiredContinuation,current:()=>current};`,runtime);
+const revision=project.revision;
+await assert.doesNotReject(()=>runtime.retryUI.continue(1),'RETRY_COMMIT_ORACLE: a rejection must save its replacement instruction against the pre-command revision');
+const saved=runtime.retryUI.current(),replacement=saved.projectData.generatedPrompts.at(-1);
+assert.equal(saved.revision,revision+1);assert.notEqual(replacement.instructionId,prompt.instructionId);
+assert.equal(replacement.reservationRevision,saved.revision);assert.equal(saved.projectData.acceptedChanges.length,0);
+assert.equal(engine.recordValue(saved.projectData.operationReservations.find(row=>engine.recordId(row,'operationReservations')===prompt.operationReservationId),'STATUS'),'REJECTED');
+assert.equal(engine.recordValue(saved.projectData.operationReservations.find(row=>engine.recordId(row,'operationReservations')===replacement.operationReservationId),'STATUS'),'RESERVED');
+const corrected={...envelope,jobId:saved.job.JOB_ID,promptIdentity:{instructionId:replacement.instructionId,bodySha256:replacement.bodySha256,contractSha256:replacement.contractSha256,contextSignature:replacement.contextSignature},packageId:replacement.packageId,operationReservationId:replacement.operationReservationId,challengeNonce:replacement.challengeNonce,scope:replacement.scope};
+const prepared=ingestion.prepare(saved,{stage:1,text:JSON.stringify(corrected),promptRecord:replacement,expectedCommittedRevision:saved.revision,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:replacement.packageId,operationReservationId:replacement.operationReservationId,challengeNonce:replacement.challengeNonce}});
+assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));
+const validated=await store.writeProject(prepared.project,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256,operational:true});
+assert.equal(validated.projectData.acceptedChanges.length,0);
+const accepted=ingestion.commit(validated,prepared.proposal.proposalId);
+const committed=await store.writeProject(accepted.project,{expectedProjectRevision:validated.revision});
+assert.equal(committed.projectData.responseProposals.find(row=>row.proposalId===prepared.proposal.proposalId).status,'BLOCKER_ACCEPTED');
+assert.equal(committed.projectData.rawResponses.find(row=>row.rawResponseId===rejected.rawRecord.rawResponseId).status,'VALIDATION_FAILED');
+console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Actual UI commit/continuation functions with production runtime and transactional test adapter',cases:[{name:'Rejected response retains rejection and saves a fresh correctly bound instruction without accepting work',result:'PASS'}]},null,2));

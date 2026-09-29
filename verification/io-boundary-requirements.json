@@ -1,0 +1,174 @@
+{
+  "schema": "closed-loop-io-boundary-register/1",
+  "sourceRevision": "78fe29f9da6f8663d9750345483de5ef4728a473",
+  "rows": [
+    {
+      "requirementId": "IO-OPEN",
+      "sourceLocation": "User \u00a7\u00a73 D-1, 6 UX-014 through UX-020, 7\u20138; controlling specification durable mutation and interrupted operation contract",
+      "productionOwner": "project-store.js:openDatabase",
+      "observableExpectedBehavior": "A silent or blocked native open terminates within a declared finite deadline; only one pending native open exists; late upgrade/success cannot mutate schema or activate an expired operation.",
+      "requiredEvidence": [
+        "IO-OPEN-*",
+        "paired valid control",
+        "targeted production fault",
+        "actual browser operator replay"
+      ],
+      "applicableStages": "All stages where this shared boundary is invoked",
+      "applicableOperations": [
+        "startup",
+        "read",
+        "save",
+        "acceptance",
+        "checkpoint",
+        "restoration",
+        "export",
+        "import"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "IO-REQUEST",
+      "sourceLocation": "User \u00a7\u00a73 D-1, 6 UX-014 through UX-020, 7\u20138; controlling specification durable mutation and interrupted operation contract",
+      "productionOwner": "project-store.js:request",
+      "observableExpectedBehavior": "A silent native read rejects and attempts transaction abort; late callbacks cannot resume the abandoned continuation; no unverified application-wide rollback is claimed.",
+      "requiredEvidence": [
+        "IO-REQUEST-*",
+        "paired valid control",
+        "targeted production fault",
+        "actual browser operator replay"
+      ],
+      "applicableStages": "All stages where this shared boundary is invoked",
+      "applicableOperations": [
+        "startup",
+        "read",
+        "save",
+        "acceptance",
+        "checkpoint",
+        "restoration",
+        "export",
+        "import"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "IO-COMMIT",
+      "sourceLocation": "User \u00a7\u00a73 D-1, 6 UX-014 through UX-020, 7\u20138; controlling specification durable mutation and interrupted operation contract",
+      "productionOwner": "project-store.js:complete/importPackage",
+      "observableExpectedBehavior": "A missing transaction acknowledgement terminates as an explicit unconfirmed outcome unless atomic receipt readback establishes it. Never change UNKNOWN into existingProjectsUnchanged:true.",
+      "requiredEvidence": [
+        "IO-TRANSACTION-*",
+        "paired valid control",
+        "targeted production fault",
+        "actual browser operator replay"
+      ],
+      "applicableStages": "All stages where this shared boundary is invoked",
+      "applicableOperations": [
+        "startup",
+        "read",
+        "save",
+        "acceptance",
+        "checkpoint",
+        "restoration",
+        "export",
+        "import"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "IO-CURSOR",
+      "sourceLocation": "User \u00a7\u00a73 D-1, 6 UX-014 through UX-020, 7\u20138; controlling specification durable mutation and interrupted operation contract",
+      "productionOwner": "project-store.js:listProjectSummaries",
+      "observableExpectedBehavior": "A silent project cursor and its completion promise terminate visibly with no detached rejection.",
+      "requiredEvidence": [
+        "IO-CURSOR-*",
+        "paired valid control",
+        "targeted production fault",
+        "actual browser operator replay"
+      ],
+      "applicableStages": "All stages where this shared boundary is invoked",
+      "applicableOperations": [
+        "startup",
+        "read",
+        "save",
+        "acceptance",
+        "checkpoint",
+        "restoration",
+        "export",
+        "import"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "IO-WORKER",
+      "sourceLocation": "User \u00a7\u00a73 D-1, 6 UX-014 through UX-020, 7\u20138; controlling specification durable mutation and interrupted operation contract",
+      "productionOwner": "project-store.js:requestStoreWorker/recoverWorkerOperation",
+      "observableExpectedBehavior": "An unresponsive storage worker is terminated within its declared bound; durable receipts are reconciled before reporting the outcome; late replies cannot alter the restored version.",
+      "requiredEvidence": [
+        "IO-WORKER-*",
+        "paired valid control",
+        "targeted production fault",
+        "actual browser operator replay"
+      ],
+      "applicableStages": "All stages where this shared boundary is invoked",
+      "applicableOperations": [
+        "startup",
+        "read",
+        "save",
+        "acceptance",
+        "checkpoint",
+        "restoration",
+        "export",
+        "import"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "IO-BYTES",
+      "sourceLocation": "User \u00a7\u00a73 D-1, 6 UX-014 through UX-020, 7\u20138; controlling specification durable mutation and interrupted operation contract",
+      "productionOwner": "hash.js:sha256Bytes; project-store.js:package read/write boundaries",
+      "observableExpectedBehavior": "A stalled byte read or compression/crypto promise rejects by a declared deadline before the awaiting code can commit or export incomplete bytes.",
+      "requiredEvidence": [
+        "IO-BYTES-*",
+        "paired valid control",
+        "targeted production fault",
+        "actual browser operator replay"
+      ],
+      "applicableStages": "All stages where this shared boundary is invoked",
+      "applicableOperations": [
+        "startup",
+        "read",
+        "save",
+        "acceptance",
+        "checkpoint",
+        "restoration",
+        "export",
+        "import"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "IO-STARTUP",
+      "sourceLocation": "User \u00a7\u00a73 D-1, 6 UX-014 through UX-020, 7\u20138; controlling specification durable mutation and interrupted operation contract",
+      "productionOwner": "app-core.js:startClosedLoopApp/retainedProjectForBuild",
+      "observableExpectedBehavior": "Startup errors stop busy indication and expose recovery; retained-resource fetch has a finite abortable deadline; expired work cannot be reported complete.",
+      "requiredEvidence": [
+        "IO-STARTUP-*",
+        "paired valid control",
+        "targeted production fault",
+        "actual browser operator replay"
+      ],
+      "applicableStages": "All stages where this shared boundary is invoked",
+      "applicableOperations": [
+        "startup",
+        "read",
+        "save",
+        "acceptance",
+        "checkpoint",
+        "restoration",
+        "export",
+        "import"
+      ],
+      "status": "UNVERIFIED"
+    }
+  ]
+}

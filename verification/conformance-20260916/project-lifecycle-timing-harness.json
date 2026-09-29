@@ -1,0 +1,20 @@
+{
+  "schema": "closed-loop-conformance-evidence/1",
+  "requirement": "The project lifecycle verifier must execute the production startup block with the production timing-owner dependencies required by that block.",
+  "sourceCandidate": "repair/complete-conformance-continuation-20260914",
+  "independentReproduction": {
+    "environment": "Preserved PR source executed under Node VM",
+    "failure": "ReferenceError: operationClock is not defined",
+    "suite": "verify-project-lifecycle.mjs",
+    "trigger": "verify-infrastructure-route-closure.mjs"
+  },
+  "repairCommit": "58f9c8e03f8b8d86655c7e49c5c846d9f3619082",
+  "repair": "Expose operationClock and recordOperationLatency in the lifecycle verifier startup VM; production startup code is unchanged.",
+  "focusedRepositoryWorkflow": {
+    "runId": 35175437247,
+    "jobId": 105056004535,
+    "result": "PASS"
+  },
+  "completionClaim": false,
+  "fullCiRequired": true
+}

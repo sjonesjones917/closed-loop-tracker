@@ -1,0 +1,211 @@
+{
+  "schema": "closed-loop-context-provenance-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "baseCommit": "2123e2bb81ad86be5eb2a730b0aac17f6b573f16",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "Linux Node VM with production context and prompt owners",
+    "synthetic": true,
+    "actualBrowser": false
+  },
+  "sourceFiles": [
+    {
+      "path": "workflow-engine.js",
+      "sha256": "8e47e10062af5c2f3ee04669594b4e433237f5a4122b0cc7039c61af3d67ccbd"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "99f4ce9081090767300694ef7421d1d2b9f74d4f3a867411190a61bac8af7456"
+    },
+    {
+      "path": "verify-context-provenance.mjs",
+      "sha256": "ac8b6eb356152f578abbbfb1bfafad25873fb1d58a01d331e38f1ccb08ec97b2"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "1fd5728cb3a07b7e96b1d0f88c8e0b479168d2c3be3827e35a4d3c54c3dbfa93"
+    },
+    {
+      "path": "verify-acceptance-boundary-faults.mjs",
+      "sha256": "9f108021096957f67a1ce3caa6335d24950521eb82b032826b6b82d86a62a770"
+    }
+  ],
+  "reproducedFailures": [
+    {
+      "name": "indirect later-stage provenance",
+      "sha256": "ac027f31ee866d02484efde39c4b8870039635929d7f22cad701f9569940a722",
+      "output": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: PROVENANCE_CONTEXT_ORACLE: subsequent-stage material escaped through an earlier summary or its provenance\n\ntrue !== false\n\n    at file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-context-provenance.mjs:14:9\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:643:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: true,\n  expected: false,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n"
+    },
+    {
+      "name": "later correction version selected for earlier stage",
+      "sha256": "111cc3c3758398676644daef0f05263a56faa3633c3bc73f9c7562dbeb7fb1e9",
+      "output": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: GOVERNING_VERSION_CONTEXT_ORACLE: earlier context inherited a later correction version\n+ actual - expected\n\n+ 'SOURCE-SET-v002'\n- 'SOURCE-SET-v001'\n                 ^\n\n    at file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-context-provenance.mjs:28:62\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:643:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: 'SOURCE-SET-v002',\n  expected: 'SOURCE-SET-v001',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n"
+    },
+    {
+      "name": "later scoped clarification removes valid prompt prerequisites",
+      "sha256": "9beb195d9ed8d1152adcca2a8babd0ad95881398bea4937ae20c253ced622cd4",
+      "output": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: PROMPT_PREREQUISITE_SCOPE_ORACLE: a later clarification removed permitted upstream source material from the generated handoff\n    at file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-context-provenance.mjs:35:8\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:643:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n"
+    }
+  ],
+  "executedCases": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "scope": "Context-projection unit states; not complete operator or external-output evidence",
+    "cases": [
+      {
+        "name": "Declared production provenance and nested summary sources exclude later material for every applicable stage pair",
+        "result": "PASS",
+        "stages": 30,
+        "orderedPairs": 435,
+        "provenanceFields": [
+          "sourceProposalId",
+          "rawResponseId",
+          "acceptedChangeId",
+          "sourceAcceptedChangeId",
+          "extractionManifestId"
+        ]
+      },
+      {
+        "name": "Selected contexts recover permitted governing versions and matching records after later corrections",
+        "result": "PASS",
+        "versionCases": 127
+      },
+      {
+        "name": "Generated agent-facing context retains compatible prerequisite material after a scoped clarification",
+        "result": "PASS",
+        "selectedStage": 3,
+        "operation": "COMPLETE",
+        "sourceStage": 2
+      }
+    ]
+  },
+  "implementationFaults": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "cases": [
+      {
+        "fault": "limited-provenance",
+        "result": "DETECTED",
+        "restored": "PASS",
+        "report": {
+          "synthetic": true,
+          "actualBrowser": false,
+          "scope": "Context-projection unit states; not complete operator or external-output evidence",
+          "cases": [
+            {
+              "name": "Declared production provenance and nested summary sources exclude later material for every applicable stage pair",
+              "result": "PASS",
+              "stages": 30,
+              "orderedPairs": 435,
+              "provenanceFields": [
+                "sourceProposalId",
+                "rawResponseId",
+                "acceptedChangeId",
+                "sourceAcceptedChangeId",
+                "extractionManifestId"
+              ]
+            },
+            {
+              "name": "Selected contexts recover permitted governing versions and matching records after later corrections",
+              "result": "PASS",
+              "versionCases": 127
+            },
+            {
+              "name": "Generated agent-facing context retains compatible prerequisite material after a scoped clarification",
+              "result": "PASS",
+              "selectedStage": 3,
+              "operation": "COMPLETE",
+              "sourceStage": 2
+            }
+          ]
+        }
+      },
+      {
+        "fault": "global-version",
+        "result": "DETECTED",
+        "restored": "PASS",
+        "report": {
+          "synthetic": true,
+          "actualBrowser": false,
+          "scope": "Context-projection unit states; not complete operator or external-output evidence",
+          "cases": [
+            {
+              "name": "Declared production provenance and nested summary sources exclude later material for every applicable stage pair",
+              "result": "PASS",
+              "stages": 30,
+              "orderedPairs": 435,
+              "provenanceFields": [
+                "sourceProposalId",
+                "rawResponseId",
+                "acceptedChangeId",
+                "sourceAcceptedChangeId",
+                "extractionManifestId"
+              ]
+            },
+            {
+              "name": "Selected contexts recover permitted governing versions and matching records after later corrections",
+              "result": "PASS",
+              "versionCases": 127
+            },
+            {
+              "name": "Generated agent-facing context retains compatible prerequisite material after a scoped clarification",
+              "result": "PASS",
+              "selectedStage": 3,
+              "operation": "COMPLETE",
+              "sourceStage": 2
+            }
+          ]
+        }
+      },
+      {
+        "fault": "global-prompt-input",
+        "result": "DETECTED",
+        "restored": "PASS",
+        "report": {
+          "synthetic": true,
+          "actualBrowser": false,
+          "scope": "Context-projection unit states; not complete operator or external-output evidence",
+          "cases": [
+            {
+              "name": "Declared production provenance and nested summary sources exclude later material for every applicable stage pair",
+              "result": "PASS",
+              "stages": 30,
+              "orderedPairs": 435,
+              "provenanceFields": [
+                "sourceProposalId",
+                "rawResponseId",
+                "acceptedChangeId",
+                "sourceAcceptedChangeId",
+                "extractionManifestId"
+              ]
+            },
+            {
+              "name": "Selected contexts recover permitted governing versions and matching records after later corrections",
+              "result": "PASS",
+              "versionCases": 127
+            },
+            {
+              "name": "Generated agent-facing context retains compatible prerequisite material after a scoped clarification",
+              "result": "PASS",
+              "selectedStage": 3,
+              "operation": "COMPLETE",
+              "sourceStage": 2
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "allExternalPromptPressure": {
+    "result": "PASS",
+    "outputSha256": "ad92cfa5bc27619d3c68c637a226d8dd456605871fcf67677b25f76d052a8555",
+    "output": "{\"allExternalOperationPressure\":[{\"stage\":1,\"operation\":\"COMPLETE\",\"instructionBytes\":28635,\"contextFiles\":1},{\"stage\":1,\"operation\":\"SEMANTIC_CHALLENGE\",\"instructionBytes\":25386,\"contextFiles\":1},{\"stage\":1,\"operation\":\"RECONCILE_INTAKE\",\"instructionBytes\":29190,\"contextFiles\":1},{\"stage\":2,\"operation\":\"COMPLETE\",\"instructionBytes\":53112,\"contextFiles\":1},{\"stage\":2,\"operation\":\"SEARCH_ADEQUACY_REVIEW\",\"instructionBytes\":34657,\"contextFiles\":1},{\"stage\":2,\"operation\":\"RECONCILE_SOURCE_SEARCH\",\"instructionBytes\":55217,\"contextFiles\":1},{\"stage\":3,\"operation\":\"COMPLETE\",\"instructionBytes\":44373,\"contextFiles\":1},{\"stage\":3,\"operation\":\"SEMANTIC_CHALLENGE\",\"instructionBytes\":31939,\"contextFiles\":1},{\"stage\":3,\"operation\":\"RECONCILE_RESEARCH\",\"instructionBytes\":46030,\"contextFiles\":1},{\"stage\":4,\"operation\":\"COMPLETE\",\"instructionBytes\":57020,\"contextFiles\":1},{\"stage\":4,\"operation\":\"DISPOSITION_CHALLENGE\",\"instructionBytes\":41999,\"contextFiles\":1},{\"stage\":4,\"operation\":\"ATOMICITY_CHALLENGE\",\"instructionBytes\":41917,\"contextFiles\":1},{\"stage\":4,\"operation\":\"RECONCILE_REQUIREMENTS\",\"instructionBytes\":58698,\"contextFiles\":1},{\"stage\":5,\"operation\":\"COMPLETE\",\"instructionBytes\":39351,\"contextFiles\":1},{\"stage\":5,\"operation\":\"SEMANTIC_REVIEW\",\"instructionBytes\":32534,\"contextFiles\":1},{\"stage\":5,\"operation\":\"RECONCILE_REQUIREMENT_SET\",\"instructionBytes\":41350,\"contextFiles\":1},{\"stage\":6,\"operation\":\"COMPLETE\",\"instructionBytes\":60757,\"contextFiles\":1},{\"stage\":6,\"operation\":\"PROOF_REVIEW\",\"instructionBytes\":44047,\"contextFiles\":1},{\"stage\":6,\"operation\":\"RECONCILE_VERIFICATION_SUITE\",\"instructionBytes\":62757,\"contextFiles\":1},{\"stage\":7,\"operation\":\"COMPLETE\",\"instructionBytes\":37988,\"contextFiles\":1},{\"stage\":7,\"operation\":\"EXECUTE_FAILURE_TEST\",\"instructionBytes\":37970,\"contextFiles\":1},{\"stage\":8,\"operation\":\"COMPLETE\",\"instructionBytes\":44861,\"contextFiles\":1},{\"stage\":9,\"operation\":\"COMPLETE\",\"instructionBytes\":39977,\"contextFiles\":1},{\"stage\":11,\"operation\":\"EXECUTE_RUN\",\"instructionBytes\":38183,\"contextFiles\":1},{\"stage\":12,\"operation\":\"VERIFY\",\"instructionBytes\":31842,\"contextFiles\":1},{\"stage\":13,\"operation\":\"COMPARE\",\"instructionBytes\":40617,\"contextFiles\":1},{\"stage\":14,\"operation\":\"ROOT_CAUSE\",\"instructionBytes\":39395,\"contextFiles\":1},{\"stage\":15,\"operation\":\"COMPLETE\",\"instructionBytes\":39765,\"contextFiles\":1},{\"stage\":15,\"operation\":\"EXECUTE_REGRESSION\",\"instructionBytes\":39846,\"contextFiles\":1},{\"stage\":16,\"operation\":\"CORRECT\",\"instructionBytes\":37291,\"contextFiles\":1},{\"stage\":17,\"operation\":\"EXECUTE_RUN\",\"instructionBytes\":37409,\"contextFiles\":1},{\"stage\":17,\"operation\":\"VERIFY\",\"instructionBytes\":37800,\"contextFiles\":1},{\"stage\":17,\"operation\":\"COMPARE\",\"instructionBytes\":38554,\"contextFiles\":1},{\"stage\":17,\"operation\":\"ROOT_CAUSE\",\"instructionBytes\":41615,\"contextFiles\":1},{\"stage\":17,\"operation\":\"REGRESSION\",\"instructionBytes\":42336,\"contextFiles\":1},{\"stage\":17,\"operation\":\"CORRECT\",\"instructionBytes\":39796,\"contextFiles\":1},{\"stage\":19,\"operation\":\"EXECUTE_RUN\",\"instructionBytes\":37285,\"contextFiles\":1},{\"stage\":19,\"operation\":\"VERIFY\",\"instructionBytes\":37700,\"contextFiles\":1},{\"stage\":19,\"operation\":\"COMPARE\",\"instructionBytes\":38975,\"contextFiles\":1},{\"stage\":19,\"operation\":\"REGRESSION_VERIFY\",\"instructionBytes\":35409,\"contextFiles\":1},{\"stage\":21,\"operation\":\"COMPLETE\",\"instructionBytes\":37668,\"contextFiles\":1},{\"stage\":22,\"operation\":\"EXECUTE_EXTERNAL_TEST\",\"instructionBytes\":35765,\"contextFiles\":1},{\"stage\":23,\"operation\":\"COMPLETE\",\"instructionBytes\":29960,\"contextFiles\":1},{\"stage\":24,\"operation\":\"COMPLETE\",\"instructionBytes\":28609,\"contextFiles\":1},{\"stage\":25,\"operation\":\"COMPLETE\",\"instructionBytes\":38184,\"contextFiles\":1},{\"stage\":26,\"operation\":\"COMPLETE\",\"instructionBytes\":44142,\"contextFiles\":1},{\"stage\":26,\"operation\":\"SEMANTIC_REVIEW\",\"instructionBytes\":44228,\"contextFiles\":1},{\"stage\":26,\"operation\":\"RECONCILE\",\"instructionBytes\":44097,\"contextFiles\":1},{\"stage\":27,\"operation\":\"ADVISORY_REVIEW\",\"instructionBytes\":33375,\"contextFiles\":1},{\"stage\":29,\"operation\":\"INVESTIGATE_MISSING_EVIDENCE\",\"instructionBytes\":38283,\"contextFiles\":1}]}\n{\n  \"all30StageProceduresExplicit\": true,\n  \"allStageOperationsExplicit\": true,\n  \"currentUserAuthorityInEveryGeneratedPrompt\": true,\n  \"upstreamReadContractsAudited\": true,\n  \"stage4CompletePriorData\": true,\n  \"noGenericFallback\": true,\n  \"visualsPreserved\": true\n}\n"
+  },
+  "limitations": [
+    "Context units and pressure checks do not establish complete operator journeys or exact deployed acceptance.",
+    "Required reserved operation scope dimensions and remaining profile conformance remain open.",
+    "No physical iPhone, approved visual baseline or independent real external project evidence is established."
+  ],
+  "applicationComplete": false
+}

@@ -1,0 +1,331 @@
+{
+  "schema": "closed-loop-operational-repair-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "candidateParent": "0b7aef6c39bb2c83c13e05fd8198ee372407c612",
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "synthetic": true,
+  "actualBrowser": false,
+  "physicalDeviceAcceptance": false,
+  "applicationCompletion": false,
+  "reproduction": {
+    "sourceCommit": "0b7aef6c39bb2c83c13e05fd8198ee372407c612",
+    "synthetic": true,
+    "actualBrowser": false,
+    "environment": "Node VM production modules and the repository transaction adapter",
+    "fixtureStage": 1,
+    "operation": "COMPLETE",
+    "responseType": "BLOCKED",
+    "sequence": [
+      "Persist blank project",
+      "Reserve and persist exact instruction",
+      "Capture raw response and persist through the application write mechanism",
+      "Validate response and persist",
+      "Accept response disposition and persist"
+    ],
+    "expected": {
+      "afterStagingRevision": 2,
+      "afterValidationRevision": 2,
+      "afterAcceptanceRevision": 3
+    },
+    "actual": {
+      "reservationRevision": 2,
+      "afterStagingRevision": 3,
+      "afterValidationRevision": 4,
+      "afterAcceptanceRevision": 5,
+      "validationValid": true,
+      "proposalStatus": "BLOCKER_ACCEPTED"
+    },
+    "outcome": "DEFECT_REPRODUCED",
+    "stagedFileCheckpoint": {
+      "outcome": "DEFECT_REPRODUCED",
+      "message": "Cannot canonically hash undefined at $[0].lineage.stagedResponse.blob."
+    }
+  },
+  "executedReports": [
+    {
+      "logName": "operational-test.log",
+      "sha256": "67e85c31e7bc903acad4d9a8c44fdc67299306c633d292e133c8a4672eeedae8",
+      "result": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node VM production store transaction adapter",
+        "cases": [
+          {
+            "name": "Raw staging persists exact bytes in META without changing the canonical row or reservation revision",
+            "result": "PASS"
+          },
+          {
+            "name": "Validated response and reservation status survive reload at their exact reservation revision",
+            "result": "PASS"
+          },
+          {
+            "name": "Stale same-revision events and canonical or reservation-identity mutations are rejected",
+            "result": "PASS"
+          },
+          {
+            "name": "Canonical revision changes reject prior responses; injected operational and checkpoint failures preserve the pending state",
+            "result": "PASS"
+          },
+          {
+            "name": "Exact validation and unchanged save retries retain their original identities and revision",
+            "result": "PASS"
+          },
+          {
+            "name": "Acceptance commits once and retires pending metadata atomically",
+            "result": "PASS"
+          },
+          {
+            "name": "Complete restore and exported-byte import keep pending proposals unaccepted and byte-compatible",
+            "result": "PASS"
+          },
+          {
+            "name": "Corrupted pending metadata is quarantined exactly and its complete retained version remains restorable",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "logName": "operational-fault-test.log",
+      "sha256": "2aa8d890e7f1a8a90488ef2d3ac6af2053d83a43ed77d638e42a765a9b90fca5",
+      "result": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "method": "Targeted in-memory faults in the production modules; each original implementation is re-executed after the fault case.",
+        "results": [
+          {
+            "fault": "ownership",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "fault": "revision",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "fault": "canonical",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "logName": "history-contracts-current.log",
+      "sha256": "57016551144833f22fca7a73a0dc267574ad187d4f60ffa781f7da409774e58f",
+      "result": {
+        "synthetic": true,
+        "environment": "Node VM production modules and lifecycle transaction adapter",
+        "realIndexedDB": false,
+        "cases": [
+          {
+            "name": "Every selected stage excludes all subsequent-stage sentinels, including copied records and forged projection marker",
+            "selectedStages": 30,
+            "comparedStagePairs": 900,
+            "basis": "Synthetic context-boundary sentinels; not full stage execution",
+            "result": "PASS"
+          },
+          {
+            "name": "All selected-stage job metadata excludes later version pointers and global completion",
+            "result": "PASS"
+          },
+          {
+            "name": "Every semantic author/reviewer operation prepares its selected-stage scope independently of later execution scopes",
+            "operations": 19,
+            "result": "PASS"
+          },
+          {
+            "name": "Restored pending candidate stays unaccepted; retained bytes revalidate locally; new abandoned-operation response rejects",
+            "result": "PASS"
+          },
+          {
+            "name": "Restored unvalidated file progresses only through its saved exact-byte permission; an arriving response stays stale",
+            "result": "PASS"
+          },
+          {
+            "name": "Unconfirmed and stale-confirmation mutations reject; exact confirmed change commits",
+            "result": "PASS"
+          },
+          {
+            "name": "Pending correction restores and imports as an unconfirmed exact candidate with a fresh confirmation binding",
+            "result": "PASS"
+          },
+          {
+            "name": "Consolidated stage export includes the same authoritative response scope and profile as its instruction manifest",
+            "result": "PASS"
+          }
+        ],
+        "implementationFaults": [
+          {
+            "id": "BYPASS-CONTEXT-PROJECTION",
+            "result": "DETECTED",
+            "restored": "PASS"
+          },
+          {
+            "id": "INHERIT-LATER-EXECUTION-SCOPE",
+            "result": "DETECTED",
+            "restored": "PASS"
+          },
+          {
+            "id": "INHERIT-GLOBAL-PROMPT-ITERATION",
+            "result": "DETECTED",
+            "restored": "PASS"
+          },
+          {
+            "id": "SKIP-PERSISTENCE-CONFIRMATION",
+            "result": "DETECTED",
+            "restored": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "logName": "recoverable-current.log",
+      "sha256": "12ea522e8096d3223b0876977d24ac50fa2732ca4be85bebe0c0481472950ef6",
+      "result": {
+        "synthetic": true,
+        "environment": "Node VM; production store with the existing lifecycle transaction adapter",
+        "realIndexedDB": false,
+        "physicalDevice": false,
+        "cases": [
+          {
+            "name": "Restore complete project and exact non-text bytes",
+            "result": "PASS"
+          },
+          {
+            "name": "Delayed response or stale tab cannot write after restore",
+            "result": "PASS"
+          },
+          {
+            "name": "Redo restores saved continuation without executing commands",
+            "result": "PASS"
+          },
+          {
+            "name": "New continuation retains previous alternative",
+            "result": "PASS"
+          },
+          {
+            "name": "Repeated arbitrary multi-entry restoration preserves session start and alternatives",
+            "restores": 6,
+            "result": "PASS"
+          },
+          {
+            "name": "Rejected missing-snapshot without partial activation",
+            "result": "PASS"
+          },
+          {
+            "name": "Rejected corrupt-snapshot without partial activation",
+            "result": "PASS"
+          },
+          {
+            "name": "Rejected wrong-version without partial activation",
+            "result": "PASS"
+          },
+          {
+            "name": "Rejected missing-file without partial activation",
+            "result": "PASS"
+          },
+          {
+            "name": "Rejected corrupt-file without partial activation",
+            "result": "PASS"
+          },
+          {
+            "name": "Rejected interrupted without partial activation",
+            "result": "PASS"
+          },
+          {
+            "name": "Rejected write-failure without partial activation",
+            "result": "PASS"
+          },
+          {
+            "name": "Exported backup bytes restore complete History and artifacts in a fresh store",
+            "result": "PASS"
+          },
+          {
+            "name": "Checkpoint or commit failure preserves recovery: before-history-checkpoint",
+            "result": "PASS"
+          },
+          {
+            "name": "Checkpoint or commit failure preserves recovery: during-history-write",
+            "result": "PASS"
+          },
+          {
+            "name": "Checkpoint or commit failure preserves recovery: before-transaction-commit",
+            "result": "PASS"
+          }
+        ]
+      }
+    }
+  ],
+  "additionalExecutedChecks": [
+    {
+      "logName": "lifecycle-noop-repair.log",
+      "sha256": "8a0d6602713347f39146060c57898e693b225d901130fb0d67d3ada38f117bde",
+      "completionMarkerObserved": true,
+      "limitation": "Focused runs during the repair; exact integrated CI remains required."
+    },
+    {
+      "logName": "file-first-integrated.log",
+      "sha256": "cd44d46bd0dfd60ac8530543cab988ce7f9dc4b18cea54390c88a99a735f3a2c",
+      "completionMarkerObserved": true,
+      "limitation": "Focused runs during the repair; exact integrated CI remains required."
+    },
+    {
+      "logName": "verify-current.log",
+      "sha256": "006630ea9c0f50b8701ab29548545b3bc2175e9b073325e9fef1d7932c502035",
+      "completionMarkerObserved": true,
+      "limitation": "Focused runs during the repair; exact integrated CI remains required."
+    },
+    {
+      "logName": "full-cycle-current.log",
+      "sha256": "0d082548c684dac377130e1b0d11e5f7e640df538db5947f22fa5c10530509c1",
+      "completionMarkerObserved": true,
+      "limitation": "Focused runs during the repair; exact integrated CI remains required."
+    }
+  ],
+  "currentSourceFiles": [
+    {
+      "path": "app-core.js",
+      "sha256": "b2dad9e1d822a82fa71152563fb8079619aad17aa2a79db8c100aec3002cb570"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "4fca1dca8bb18bd64ab6f20e5cf014f2e33d83de02a9ea09e7efc1ed40740dfe"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "7471a93c986240d501e1ebce89473634ea45e240fb8fb2e5fba50a183b9b6336"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "c15553daf881cd4818317be63fa68c0c853846f5df2234548ba27bef5705223f"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "74c21ee601ff72a73d4e0d69e5afe1f913470659d3fdc0eb5862ee8f5c151f32"
+    },
+    {
+      "path": "verify-operational-persistence.mjs",
+      "sha256": "16770765038c32a7b4d78b196ba6fb0412c383a33797ae20b30259d29b7f5eab"
+    },
+    {
+      "path": "verify-operational-faults.mjs",
+      "sha256": "7efebdf47519457fd18934e59efaa3d0524fe749c89d25f29f07c8caa3735301"
+    }
+  ],
+  "remainingCoverage": [
+    "All applicable stages and operations through actual interface and file transport",
+    "Exact integrated CI, deployed source/resource identities and operator acceptance",
+    "Physical iPhone Safari, visual baseline and real-project external observations",
+    "Full normative coverage and independent semantic omission review"
+  ],
+  "mechanisms": {
+    "canonicalAuthority": "Existing PROJECTS row; canonical revisions advance on canonical commits.",
+    "pendingAuthority": "META response operations: hash-bound closed patches over one exact canonical row; accepted work and reservation identities cannot be changed by operational writes.",
+    "concurrency": "Canonical revision plus complete active-state hash and recovery generation checks; current checks also cover same-revision pending operations.",
+    "recovery": "The same complete checkpoint mechanism captures pending work, bytes and view without accepting it. Restoration does not execute the original commands.",
+    "storageFailure": "Checkpoint, operational write and commit failures preserve prior active state. Corrupt pending metadata is preserved in quarantine.",
+    "idempotency": "Exact pending validation and unchanged save retries keep their identities and revision."
+  }
+}

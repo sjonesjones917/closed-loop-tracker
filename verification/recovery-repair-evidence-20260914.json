@@ -1,0 +1,293 @@
+{
+  "schema": "closed-loop-recovery-repair-evidence/1",
+  "recordedAt": "2026-09-14",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "candidateParent": "2570cbdcf24067ee841d36be7a2de7143f05cec1",
+  "sourceIdentity": "Exact file hashes below; working changes on the candidate parent. CI must bind the integrated revision separately.",
+  "sourceFiles": [
+    {
+      "path": "app-core.js",
+      "sha256": "4707fc706ff959919b04188b2baba9e97db69fc328843e214ebe32046ecea358"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "30cb82365b3ad1caf674cad7b46216c374b840d4d327a318726d68b5ff71c00e"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "510cf1f13e4d51631d39dc3e69611720d647f050d688bfb166055b7e88aa3739"
+    },
+    {
+      "path": "verify-history-project-lifecycle.mjs",
+      "sha256": "10d60b260dca97a4efc28279bdbbc7b594d4c13f83a1fc9b1c6e534f852e462a"
+    },
+    {
+      "path": "verify-history-retention.mjs",
+      "sha256": "f2f1d8a30c4640068e4de5ea8c06b6af84458687aab231fd93cce941945cfe52"
+    },
+    {
+      "path": "verify-history-contracts.mjs",
+      "sha256": "f757bb9619438c776779d72a3b9cf6fba82fb40a53a1eb6b8251a027f27e4ac8"
+    },
+    {
+      "path": "verify-recoverable-history.mjs",
+      "sha256": "3ea935a9d2528406fafb964687e0e972815d833fd65fdc5fa762dfa9404b6f0e"
+    },
+    {
+      "path": "verify-recovery-faults.mjs",
+      "sha256": "c3b2e8fff3abacd0b7dab64cd86a3a198c88a4fee3945c0a418e4c14fd4617f9"
+    },
+    {
+      "path": "verify-history-navigation.mjs",
+      "sha256": "38cc8e790145744fb1815e177b80d491ae28bed0b4f148ffc196d37df0c3b915"
+    },
+    {
+      "path": "verify-project-lifecycle.mjs",
+      "sha256": "adb309423a4ff1492af5c6c8a03aa053a0f00b398cee6b2046f8a205f4356bcc"
+    }
+  ],
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "synthetic": true,
+  "actualBrowser": false,
+  "physicalDeviceAcceptance": false,
+  "applicationCompletion": false,
+  "environment": {
+    "runtime": "v24.19.0",
+    "persistence": "Production project-store.js in the existing Node VM transaction adapter; this is not real IndexedDB evidence."
+  },
+  "reports": [
+    {
+      "log": "retention-test.log",
+      "sha256": "886c73b0268d2dbc6a53a82a56e0badb2ec4f05e96dff0530268eef75e77b2c6",
+      "report": {
+        "synthetic": true,
+        "environment": "Node VM production persistence and lifecycle transaction adapter",
+        "actualBrowser": false,
+        "configuredLimits": {
+          "maxCheckpoints": 2048,
+          "maxCompressedProjectBytes": 536870912,
+          "maxRetainedFileBytes": 1073741824
+        },
+        "productionCheckpointLimitTested": true,
+        "testedWorkload": {
+          "checkpoints": 2048,
+          "compressedProjectBytes": 16812053,
+          "retainedFileBytes": 0,
+          "backupBytes": 16383168
+        },
+        "fullByteCapacityTested": false,
+        "cases": [
+          {
+            "name": "Configured checkpoint limit blocks the next save without discarding any retained point",
+            "result": "PASS",
+            "checkpoints": 2048
+          },
+          {
+            "name": "Session start remains restorable with the complete configured history",
+            "result": "PASS"
+          },
+          {
+            "name": "Backup at the checkpoint limit restores every promised entry and its session start",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "log": "recovery-fault-test.log",
+      "sha256": "dbb9eb935d0e2e8d7dbc2ae17e28b54288f6f62459625da292cbefb0bcff06d6",
+      "report": {
+        "synthetic": true,
+        "environment": "Disposable Node module instances; production source file remains unchanged",
+        "implementationFaults": [
+          {
+            "fault": "mixed-versions",
+            "result": "DETECTED",
+            "expectedFailure": "AssertionError|HISTORY_VERSION_INCOMPATIBLE",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "fault": "mutate-retained",
+            "result": "DETECTED",
+            "expectedFailure": "HISTORY_SNAPSHOT_INTEGRITY_FAILED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "fault": "refuse-removed",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "fault": "skip-file-inventory",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "log": "navigation-test.log",
+      "sha256": "f5b4b01530b508f372d90c37eeb00c7c92c6edf5318ddd292c18aed429458813",
+      "report": {
+        "synthetic": true,
+        "environment": "Real application navigation functions and production persistence with lifecycle adapter; minimal view/history boundary doubles",
+        "actualBrowser": false,
+        "cases": [
+          {
+            "name": "View capture accepts ordinary form controls and preserves subpixel scroll position",
+            "result": "PASS"
+          },
+          {
+            "name": "All registered stage selections preserve active project data",
+            "result": "PASS"
+          },
+          {
+            "name": "Destination-based restoration preserves native path across multi-entry jumps",
+            "result": "PASS"
+          },
+          {
+            "name": "Undo and Redo cross view-only checkpoints to reverse the last project change",
+            "result": "PASS"
+          },
+          {
+            "name": "Rapid traversal aborts abandoned restore and activates the final destination",
+            "result": "PASS"
+          },
+          {
+            "name": "Native traversal reconciles an owned pending commit before restoring without adding history entries",
+            "result": "PASS"
+          },
+          {
+            "name": "A later draft arriving during a pending checkpoint is saved before navigation continues",
+            "result": "PASS"
+          },
+          {
+            "name": "Response, audited and delivery selections retain exact bytes through navigation and full restoration without acceptance",
+            "result": "PASS"
+          },
+          {
+            "name": "Corrupt selected bytes are rejected and restored bytes progress",
+            "result": "PASS"
+          },
+          {
+            "name": "Exported backup bytes recover unvalidated selections and their exact files in fresh persistence",
+            "result": "PASS"
+          },
+          {
+            "name": "Checkpoint failure preserves the prior selected files and accepted work",
+            "result": "PASS"
+          },
+          {
+            "name": "An unavailable saved-version link keeps current data and usable History",
+            "result": "PASS"
+          },
+          {
+            "name": "Saved-version startup completes within its existing loading action without self-wait",
+            "result": "PASS"
+          },
+          {
+            "name": "Stale tab cannot restore over independent work",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "log": "history-contracts-test.log",
+      "sha256": "9e6b91dfd1eb575d509d0e41138a60fcba7db48c22041b5d5662f3cb4695037f",
+      "report": {
+        "synthetic": true,
+        "environment": "Node VM production modules and lifecycle transaction adapter",
+        "realIndexedDB": false,
+        "cases": [
+          {
+            "name": "Every selected stage excludes all subsequent-stage sentinels, including copied records and forged projection marker",
+            "selectedStages": 30,
+            "comparedStagePairs": 900,
+            "basis": "Synthetic context-boundary sentinels; not full stage execution",
+            "result": "PASS"
+          },
+          {
+            "name": "Restored pending candidate stays unaccepted; retained bytes revalidate locally; new abandoned-operation response rejects",
+            "result": "PASS"
+          },
+          {
+            "name": "Unconfirmed and stale-confirmation mutations reject; exact confirmed change commits",
+            "result": "PASS"
+          }
+        ],
+        "implementationFaults": [
+          {
+            "id": "BYPASS-CONTEXT-PROJECTION",
+            "result": "DETECTED",
+            "restored": "PASS"
+          },
+          {
+            "id": "SKIP-PERSISTENCE-CONFIRMATION",
+            "result": "DETECTED",
+            "restored": "PASS"
+          }
+        ]
+      }
+    }
+  ],
+  "regressions": [
+    {
+      "defect": "A backup containing the maximum retained checkpoints could not be imported.",
+      "sequence": [
+        "Create a project through the production store.",
+        "Save checkpoints through the configured limit of 2048.",
+        "Export all retained history.",
+        "Import the exact backup into a fresh store."
+      ],
+      "expected": "Restore the complete active state and all retained versions without consuming an extra checkpoint.",
+      "observedBeforeRepair": "HISTORY_LIMIT_REACHED during import while adding checkpoint 2049.",
+      "regression": "verify-history-retention.mjs",
+      "correction": "Activate the compatible retained active version; preserve its view separately without overwriting the immutable snapshot.",
+      "result": "PASS at the actual configured checkpoint limit."
+    },
+    {
+      "defect": "Files added without a canonical project mutation could be omitted from the application-session start.",
+      "sequence": [
+        "Create a project.",
+        "Persist a file without changing its canonical project data.",
+        "Begin the application session.",
+        "Restore the recorded start."
+      ],
+      "expected": "The recorded session start contains the exact file bytes.",
+      "regression": "verify-history-project-lifecycle.mjs --fault=skip-file-inventory",
+      "correction": "Checkpoint comparison includes the exact artifact inventory.",
+      "result": "Injected prior mechanism detected; restored implementation passes."
+    },
+    {
+      "defect": "Removed projects had no recoverable activation or cross-project History access.",
+      "sequence": [
+        "Record project state and exact file bytes.",
+        "Remove the project.",
+        "Choose its saved version in History."
+      ],
+      "expected": "Restore the compatible project and exact files; leave independent projects unchanged.",
+      "regression": "verify-history-project-lifecycle.mjs",
+      "correction": "Durable recovery catalog, atomic removal checkpoint and receipt, and verified restoration without an active project row.",
+      "result": "Production transaction model passes; actual interface verification remains required."
+    }
+  ],
+  "limits": {
+    "maxCheckpoints": 2048,
+    "maxCompressedProjectBytes": 536870912,
+    "maxRetainedFileBytes": 1073741824,
+    "testedCheckpointCount": 2048,
+    "testedCompressedProjectBytes": 16812053,
+    "testedRetainedFileBytesInCapacityCase": 0,
+    "testedBackupBytes": 16383168,
+    "fullByteCapacityTested": false,
+    "storageQuotaDependent": true
+  },
+  "openEvidence": [
+    "Exact integrated CI and actual-browser operator journeys",
+    "Exact deployed revision and resource identities",
+    "Physical iPhone Safari acceptance and approved visual baseline",
+    "Real-project external-output evidence",
+    "Full mandatory requirement coverage and independent omission review"
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "schema": "closed-loop-canonical-boundary-register/1",
+  "sourceRevision": "78fe29f9da6f8663d9750345483de5ef4728a473",
+  "controllingSpecification": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9"
+  },
+  "contractTextModified": false,
+  "rows": [
+    {
+      "requirementId": "CANON-ARRAY-INDEX",
+      "sourceLocation": "specification/closed-loop-reliability-controlling-implementation-specification.txt: canonical-json/1 array order and non-JSON rejection contract; user section 7",
+      "productionOwner": "hash.js:canonicalChunks",
+      "observableExpectedBehavior": "Reject an array with an enumerable own name that is not its exact canonical decimal array index. Never omit a substantive extra property from a successful canonical preimage. Ordinary dense arrays retain their exact ordered preimage.",
+      "requiredEvidence": [
+        "CB-ARRAY-EXTRA-*",
+        "CB-ARRAY-VALID-*",
+        "CB-MUT-INDEX"
+      ],
+      "applicableStages": "Every stage and operation hashing canonical structured data, including response ingestion, execution identities, project snapshots and backup/restoration.",
+      "applicableOperations": [
+        "canonicalization",
+        "hashing",
+        "acceptance",
+        "checkpoint",
+        "backup",
+        "restoration"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "CANON-ARRAY-ACCESSOR",
+      "sourceLocation": "specification/closed-loop-reliability-controlling-implementation-specification.txt: canonical-json/1 implementation-object rejection; user sections 7-8",
+      "productionOwner": "hash.js:canonicalChunks array traversal",
+      "observableExpectedBehavior": "Reject getter/setter-backed array elements without invoking accessors. Repeated canonicalization and streamed hashing of the same invalid object must reject instead of executing code or producing different successful preimages.",
+      "requiredEvidence": [
+        "CB-ARRAY-ACCESSOR-*",
+        "CB-MUT-ACCESSOR"
+      ],
+      "applicableStages": "Every stage and operation using the shared canonical hash authority.",
+      "applicableOperations": [
+        "canonicalization",
+        "streamed hashing",
+        "checkpoint",
+        "backup",
+        "restoration"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "CANON-ARRAY-SYMBOL",
+      "sourceLocation": "specification/closed-loop-reliability-controlling-implementation-specification.txt: closed JSON hash-preimage and implementation-object rejection contract; user section 7",
+      "productionOwner": "hash.js:canonicalChunks common object admission",
+      "observableExpectedBehavior": "Reject symbol-keyed properties for arrays just as for ordinary objects rather than silently dropping non-JSON data. Dense JSON arrays remain valid.",
+      "requiredEvidence": [
+        "CB-ARRAY-SYMBOL-*",
+        "CB-MUT-SYMBOL"
+      ],
+      "applicableStages": "All canonical structured-data hashing consumers.",
+      "applicableOperations": [
+        "canonicalization",
+        "hashing",
+        "checkpoint",
+        "backup",
+        "restoration"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "DATE-FOUR-DIGIT-YEAR",
+      "sourceLocation": "specification/closed-loop-reliability-controlling-implementation-specification.txt: section 17.11 and mandatory test 219; user section 7",
+      "productionOwner": "hash.js:validCalendarDate/normalizeDateTime",
+      "observableExpectedBehavior": "Accept valid four-digit Gregorian dates including years 0000 through 0099, reject invalid month/day/leap combinations, and normalize instants without remapping those years to 1900 through 1999. Date-only values remain date-only and original external offset input is preserved.",
+      "requiredEvidence": [
+        "CB-DATE-*",
+        "CB-INSTANT-*",
+        "CB-MUT-CALENDAR",
+        "CB-MUT-EPOCH"
+      ],
+      "applicableStages": "All stages and transports whose registered date-time normalizer consumes date-only or external instant values.",
+      "applicableOperations": [
+        "validation",
+        "normalization",
+        "ingestion",
+        "export",
+        "restoration"
+      ],
+      "status": "UNVERIFIED"
+    },
+    {
+      "requirementId": "DATE-UTC-RANGE",
+      "sourceLocation": "specification/closed-loop-reliability-controlling-implementation-specification.txt: section 17.11 requires RFC3339 UTC uppercase Z exactly three fraction digits; RFC3339 four-digit year grammar",
+      "productionOwner": "hash.js:normalizeDateTime",
+      "observableExpectedBehavior": "Reject an offset instant whose UTC normalization would require a year outside the four-digit RFC3339 domain. Do not report a successful RFC3339 normalization containing an expanded signed six-digit year.",
+      "requiredEvidence": [
+        "CB-INSTANT-RANGE-*",
+        "CB-MUT-RANGE"
+      ],
+      "applicableStages": "Every stage accepting an external instant through the registered normalizer.",
+      "applicableOperations": [
+        "validation",
+        "normalization",
+        "ingestion"
+      ],
+      "status": "UNVERIFIED"
+    }
+  ]
+}

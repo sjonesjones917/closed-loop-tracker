@@ -1,0 +1,90 @@
+{
+  "deliveryTransferBoundary": "PASS",
+  "basis": "SYNTHETIC_PRODUCTION_LIFECYCLE",
+  "specificationSections": [
+    "36.11",
+    "36.12",
+    "38"
+  ],
+  "cases": [
+    {
+      "name": "default transfer uses the authorized destination and channel",
+      "result": "PASS"
+    },
+    {
+      "name": "exact command retry is idempotent and a new transfer consumes a new allowance",
+      "result": "PASS"
+    },
+    {
+      "name": "pending transfer consumes its allowance before any export",
+      "result": "PASS"
+    },
+    {
+      "name": "command identity cannot be reused with different input",
+      "result": "PASS"
+    },
+    {
+      "name": "completion appends a receipt and preserves the pending receipt",
+      "result": "PASS"
+    },
+    {
+      "name": "unrelated human observation cannot establish delivery",
+      "result": "PASS"
+    },
+    {
+      "name": "direct human observation binds exact transfer and preserves its actual basis",
+      "result": "PASS"
+    },
+    {
+      "name": "interrupted transfer remains unresolved after reload until an observation is supplied",
+      "result": "PASS"
+    },
+    {
+      "name": "completion evidence cannot reuse a withdrawn authorization",
+      "result": "PASS"
+    },
+    {
+      "name": "failure outcome cannot be changed by retry",
+      "result": "PASS"
+    },
+    {
+      "name": "a negative or uncertain human outcome does not establish delivery",
+      "result": "PASS"
+    },
+    {
+      "name": "UI checks the exhausted transfer allowance before exporting",
+      "result": "PASS",
+      "exports": 0,
+      "saves": 0,
+      "environment": "Actual app function with disposable storage and transfer boundary"
+    },
+    {
+      "name": "UI exports nothing when the pending receipt cannot be saved",
+      "result": "PASS",
+      "exports": 0,
+      "saves": 1,
+      "environment": "Actual app function with disposable storage and transfer boundary"
+    },
+    {
+      "name": "UI checks a concurrent upstream correction immediately before transfer",
+      "result": "PASS",
+      "exports": 0,
+      "saves": 2,
+      "environment": "Actual app function with disposable storage and transfer boundary"
+    },
+    {
+      "name": "UI preserves uncertainty after an interrupted browser transfer",
+      "result": "PASS",
+      "exports": 1,
+      "saves": 2,
+      "environment": "Actual app function with disposable storage and transfer boundary"
+    },
+    {
+      "name": "UI records authorization, transfer, and completion evidence separately",
+      "result": "PASS",
+      "exports": 1,
+      "saves": 2,
+      "environment": "Actual app function with disposable storage and transfer boundary"
+    }
+  ]
+}

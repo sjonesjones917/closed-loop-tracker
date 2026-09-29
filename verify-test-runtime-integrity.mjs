@@ -1,0 +1,85 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {webcrypto, createHash} from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
+
+const context = {console, crypto:webcrypto, TextEncoder, TextDecoder, Uint8Array, ArrayBuffer, DataView, URL, setTimeout, clearTimeout, Date, Math, Promise};
+context.globalThis = context;
+createVerifierRuntime(context);
+for (const file of ['hash.js', 'test-runtime.js']) vm.runInContext(fs.readFileSync(new URL(file, import.meta.url), 'utf8'), context, {filename:file});
+const runtime = context.closedLoopTestRuntime;
+const literal = value => ({literal:value});
+const reference = (stepRef, output='value') => ({stepRef, output});
+const plain = value => JSON.parse(JSON.stringify(value));
+const dag = (steps, result) => ({version:runtime.SPEC_VERSION, languageVersion:runtime.TEST_IR_LANGUAGE_VERSION, operationRegistryVersion:runtime.OPERATION_REGISTRY_VERSION, operationRegistrySha256:runtime.OPERATION_REGISTRY_SHA256, steps:steps.map((step,index)=>({stepId:`S${String(index+1).padStart(3,'0')}`, ...step})), result:result||reference(`S${String(steps.length).padStart(3,'0')}`, 'assertion')});
+const eq = (actual, expected, extra={}) => ({op:'ASSERT_EQ', inputs:{actual, expected:literal(expected), ...extra}});
+const execute = (spec, extra={}) => runtime.execute({spec, artifacts:{}, canonicalBindings:{}, metadata:{bindings:{}}, ...extra});
+const csvConfig = {delimiter:literal(','), header:literal(false), quote:literal('"'), newline:literal('AUTO'), encoding:literal('UTF-8')};
+const csv = (text, expected, config={}) => dag([{op:'PARSE_CSV', inputs:{text:literal(text), ...csvConfig, ...config}}, eq(reference('S001'), expected)]);
+const json = (text, path, expected) => dag([{op:'PARSE_JSON',inputs:{text:literal(text)}}, {op:'SELECT_JSON_PATH',inputs:{value:reference('S001'),path:literal(path)}}, eq(reference('S002','selection'),expected)]);
+const xml = (text, path, expected) => dag([{op:'PARSE_XML',inputs:{text:literal(text)}}, {op:'SELECT_XML',inputs:{value:reference('S001'),path:literal(path)}}, eq(reference('S002','selection'),expected)]);
+const passed = async spec => {assert.equal(runtime.validateSpec(spec).valid,true,JSON.stringify(runtime.validateSpec(spec).issues));const result=await execute(spec);assert.equal(result.determination,'SATISFIED',JSON.stringify(result));return result;};
+const invalid = spec => {const result=runtime.validateSpec(spec);assert.equal(result.valid,false,'Invalid Test IR passed ingestion: '+JSON.stringify(spec));};
+const cases=[];
+async function check(name, operation) {try {await operation();cases.push({name,result:'PASS'});}catch(error){cases.push({name,result:'FAIL',message:String(error.stack||error)});}}
+
+await check('D01 complete objects are compared without member-name unwrapping', async()=>{
+ const actual={value:5,unit:'m'},expected={value:5,unit:'s'},result=await execute(dag([eq(literal(actual),expected)]));
+ assert.equal(result.determination,'VIOLATED');assert.deepEqual(plain(result.actual),actual);
+});
+await check('D01 selectors address the supplied object, not its value member',()=>passed(dag([{op:'SELECT_JSON_PATH',inputs:{value:literal({value:{approved:true},approved:false}),path:literal('$.approved')}},eq(reference('S001','selection'),false)])));
+await check('D01 canonical transport wrappers are unwrapped only at the binding boundary',async()=>{
+ const spec=dag([{op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'SOURCE'}}},{op:'SELECT_JSON_PATH',inputs:{value:reference('S001','artifact'),path:literal('$.approved')}},eq(reference('S002','selection'),false)]);
+ const result=await execute(spec,{canonicalBindings:{SOURCE:{value:{value:{approved:true},approved:false}}},metadata:{bindings:{SOURCE:{kind:'CANONICAL_VALUE',canonicalKey:'SOURCE'}}}});assert.equal(result.determination,'SATISFIED');
+});
+await check('D02 parsed objects cannot supply a terminal determination',()=>invalid(dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}}],reference('S001'))));
+await check('D02 artifact literals cannot forge a terminal determination',()=>invalid(dag([{op:'LOAD_ARTIFACT',inputs:{binding:literal({determination:'SATISFIED'})}}],reference('S001','artifact'))));
+await check('D02 only registered assertion output ports are terminal results',()=>invalid(dag([{op:'COUNT',inputs:{value:literal([])}}],reference('S001','count'))));
+await check('D03 an early violation remains a violation when a later result is unexecuted',async()=>{const result=await execute(dag([eq(literal(1),2),eq(literal(true),true)]));assert.equal(result.determination,'VIOLATED');assert.equal(result.actual,1);assert.equal(result.observations.length,1);});
+await check('D03 selecting an earlier pass cannot mask a later violation',async()=>{const result=await execute(dag([eq(literal(true),true),eq(literal(1),2)],reference('S001','assertion')));assert.equal(result.determination,'VIOLATED');assert.equal(result.actual,1);});
+for(const op of ['PARSE_JSON','PARSE_CSV','PARSE_XML']) await check(`D04 ${op} rejects non-string literals`,()=>invalid(dag([{op,inputs:{text:literal(123),...(op==='PARSE_CSV'?csvConfig:{})}},eq(reference('S001'),null)])));
+await check('D04 malformed step collections return validation failures instead of throwing',()=>{for(const steps of [null,{},'not steps',123])invalid({...dag([eq(literal(true),true)]),steps});});
+await check('D04 serialization cannot coerce unsupported literals into valid data',()=>{for(const value of [NaN,Infinity,-0,undefined])invalid(dag([eq(literal(value),null)]));});
+for(const path of ['$..a','$[?(@.x)]','$[0:2]','$[1,2]']) await check(`D05 selector ${path} fails ingestion`,()=>invalid(dag([{op:'SELECT_JSON_PATH',inputs:{value:literal({a:1}),path:literal(path)}},eq(reference('S001','selection'),1)])));
+for(const [name,value] of [['direction','SIDEWAYS'],['domain','ARBITRARY']])await check(`D06 SORT ${name} rejects unknown enum values`,()=>invalid(dag([{op:'SORT',inputs:{value:literal([2,1]),[name]:literal(value)}},eq(reference('S001'),[1,2])])));
+await check('D06 equality rejects unknown numeric modes',()=>invalid(dag([eq(literal(1),1,{numericMode:literal('FLOATING_GUESS')})])));
+await check('D07 approximate comparisons require an explicit tolerance',()=>invalid(dag([eq(literal('1'),'2',{numericMode:literal('APPROXIMATE')})])));
+for(const key of ['absTol','relTol','absoluteTolerance','relativeTolerance'])await check(`D08 ${key} must not be negative`,()=>invalid(dag([eq(literal('1'),'2',{numericMode:literal('APPROXIMATE'),[key]:literal('-10')})])));
+await check('D08 contradictory tolerance aliases are rejected',()=>invalid(dag([eq(literal('1'),'2',{numericMode:literal('APPROXIMATE'),absTol:literal('0'),absoluteTolerance:literal('10')})])));
+await check('Approximate decimal arithmetic still accepts a declared exact tolerance',()=>passed(dag([eq(literal({numberType:'DECIMAL',value:'0.30000000000000004'}),{numberType:'DECIMAL',value:'0.3'},{numericMode:literal('APPROXIMATE'),absTol:literal('0.000000000001')})])));
+for(const index of [0,1,10])await check(`D09 JSON array index ${index} selects the exact element`,()=>passed(json(JSON.stringify(Array.from({length:12},(_,i)=>i)),`$[${index}]`,index)));
+await check('D09 indexes outside exact safe-integer representation are rejected',()=>invalid(json('[]','$[9007199254740993]',null)));
+await check('D10 escaped apostrophes in bracket names retain exact identity',()=>passed(json(JSON.stringify({"a'b":7}),"$['a\\'b']",7)));
+await check('D10 escaped backslashes in bracket names retain exact identity',()=>passed(json(JSON.stringify({'a\\b':9}),"$['a\\\\b']",9)));
+await check('D11 object wildcard order follows the original JSON document',()=>passed(json('{"2":"two","1":"one","a":"letter"}','$.*',['two','one','letter'])));
+await check('D11 nested object order survives selection',()=>passed(json('{"nested":{"2":"two","1":"one"}}','$.nested.*',['two','one'])));
+for(const [pattern,flags] of [['^(a)\\1$',''],['^\\p{Letter}+$','u'],['(?=a)a',''],['(?<named>a)','']])await check(`D12 prohibited regex ${pattern} is rejected`,()=>{assert.ok(runtime.validateRegex(pattern,flags).length>0);invalid(dag([{op:'ASSERT_MATCH',inputs:{actual:literal('aa'),pattern:literal(pattern),flags:literal(flags)}}]));});
+await check('D12 escaped literal backslashes do not become backreferences',()=>{assert.deepEqual(plain(runtime.validateRegex('^\\\\1$')),[]);});
+await check('D13 XML mixed-content text preserves document order',()=>passed(xml('<r>A<b>B</b>C</r>','/r/text()',['ABC'])));
+for(const text of ['<r a=">"/>',"<r a='>'/>"])await check(`D14 quoted greater-than characters are legal: ${text}`,()=>passed(xml(text,'/r/@a',['>'])));
+for(const text of ['junk<r/>','<r/>junk','<r>&</r>','<r>&#0;</r>','<r>&#xD800;</r>','<r a="1"b="2"/>','<r a="<"/>','<r><!--a--b--></r>','<r>]]></r>','<![CDATA[x]]><r/>','< r/>','<r/ >'])await check(`D15 malformed XML is rejected: ${text}`,async()=>{await assert.rejects(()=>execute(xml(text,'/r/text()',[])),error=>/XML/.test(error.code||''));});
+await check('D15 legal XML references and CDATA are preserved',()=>passed(xml('<r>A&#x1F9EA;<![CDATA[&<>]]>Z</r>','/r/text()',['A🧪&<>Z'])));
+await check('D16 inherited names are not XML attributes',()=>passed(xml('<r/>','/r/@constructor',[])));
+await check('D16 __proto__ remains an ordinary literal XML attribute',()=>passed(xml('<r __proto__="literal"/>','/r/@__proto__',['literal'])));
+for(const index of ['0','00','9007199254740993'])await check(`D17 XML index ${index} fails ingestion`,()=>invalid(xml('<r><x/></r>',`/r/x[${index}]/text()`,[])));
+await check('D18 a final quoted empty CSV record is not lost',()=>passed(csv('""',[['']])));
+await check('D18 a final quoted empty CSV data row survives a header',()=>passed(csv('h\n""',[{h:''}],{header:literal(true)})));
+await check('D18 CSV final delimiters and empty rows remain distinct',()=>passed(csv('a,\n\n""',[['a',''],[''],['']])));
+await check('D19 content after a closing CSV quote is rejected',async()=>{await assert.rejects(()=>execute(csv('"a"x,b',[['ax','b']])),error=>error.code==='MALFORMED_CSV');});
+await check('D20 supplementary Unicode CSV delimiters work',()=>passed(csv('a🧪b',[['a','b']],{delimiter:literal('🧪')})));
+await check('D20 supplementary Unicode CSV quotes work',()=>passed(csv('🧪a,b🧪,c',[['a,b','c']],{quote:literal('🧪')})));
+await check('D20 doubled supplementary Unicode CSV quotes work',()=>passed(csv('🧪a🧪🧪b🧪',[['a🧪b']],{quote:literal('🧪')})));
+await check('CSV quoted newlines and doubled quotes preserve literal text',()=>passed(csv('"a\nb","c""d"',[['a\nb','c"d']])));
+await check('Parsed data with a determination property is not labelled assertion evidence',async()=>{const result=await passed(dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}},eq(reference('S001'),{determination:'SATISFIED'})]));assert.equal(result.observations[0].kind,'OBJECT');});
+await check('Corrected registry digests are reproducible and superseded executable identities fail closed',()=>{
+ const registry=JSON.parse(fs.readFileSync(new URL('verification/runtime-integrity-registry.json',import.meta.url),'utf8'));
+ for(const item of registry.registryDigests){context.registryDescriptorJson=JSON.stringify(item.descriptor);const descriptor=vm.runInContext('JSON.parse(registryDescriptorJson)',context);assert.equal(context.closedLoopHash.sha256Value(descriptor),item.sha256);assert.equal(runtime[item.constant],item.sha256);assert.notEqual(item.previousSha256,item.sha256);}
+ const previous=registry.registryDigests.find(item=>item.constant==='OPERATION_REGISTRY_SHA256').previousSha256;
+ invalid({...dag([eq(literal(true),true)]),operationRegistrySha256:previous});
+});
+const report={verifyTestRuntimeIntegrity:cases.every(item=>item.result==='PASS')?'PASS':'FAIL',runtimeSourceSha256:createHash('sha256').update(fs.readFileSync(new URL('test-runtime.js',import.meta.url))).digest('hex'),cases:cases.length,passed:cases.filter(item=>item.result==='PASS').length,failed:cases.filter(item=>item.result==='FAIL').length,results:cases};
+const reportPath=process.argv.find(value=>value.startsWith('--integrity-report='))?.slice('--integrity-report='.length);
+if(reportPath)fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
+console.log(JSON.stringify(report));
+assert.equal(report.failed,0,`${report.failed} native runtime integrity regressions failed.`);

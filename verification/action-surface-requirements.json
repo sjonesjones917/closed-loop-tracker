@@ -1,0 +1,42 @@
+{
+  "requirements": [
+    {
+      "requirementId": "OPERATOR-ACTION-VISIBILITY-AFTER-ACCEPTANCE",
+      "sourceLocation": "Current task sections 6.E UX-001, UX-002, UX-003, UX-013; recorded Chromium journey run 35181891289",
+      "responsibleProductionCode": [
+        {
+          "file": "app-core.js",
+          "symbols": [
+            "nextActionMarkup",
+            "render",
+            "focusAfterAction",
+            "finishAcceptedProposal"
+          ]
+        },
+        {
+          "file": "index.html",
+          "symbols": [
+            "#next-required-action"
+          ]
+        }
+      ],
+      "observableExpectedBehavior": "After acceptance or any forward operation, the current stage action remains fully visible and operable without an upward programmatic scroll. Inspecting preceding accepted evidence must not move the only required control outside the viewport. No stage-specific or history-distance special case.",
+      "requiredEvidence": [
+        "Real Chromium complete operator journey through accepted response and all applicable subsequent operations",
+        "Measured viewport rectangles, hit testing and scroll position before/after; existing direction oracle retained",
+        "Fault removing persistent action surface must reproduce hidden next-action failure"
+      ],
+      "applicableStages": "All applicable selected stages in active project version",
+      "applicableOperations": [
+        "initial execution",
+        "acceptance",
+        "repeated execution",
+        "continuation",
+        "navigation",
+        "restoration"
+      ],
+      "status": "UNVERIFIED",
+      "evidence": []
+    }
+  ]
+}

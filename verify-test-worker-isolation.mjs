@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const encoder=new TextEncoder();
 const workerSource=fs.readFileSync(new URL('./test-worker.js',import.meta.url),'utf8');
@@ -9,7 +10,7 @@ const runtimeSource=fs.readFileSync(new URL('./test-runtime.js',import.meta.url)
 const hashSource=fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8');
 let listener=null;const messages=[];let bootstrapOpen=true;
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,URLSearchParams,setTimeout,clearTimeout,Date,Math,Promise,location:{search:''},fetch:async()=>({ok:true}),XMLHttpRequest:function(){},WebSocket:function(){},EventSource:function(){},eval,Function,addEventListener(type,fn){if(type==='message')listener=fn;},postMessage(message){messages.push(message);},importScripts(...urls){assert.equal(bootstrapOpen,true);for(const url of urls){const file=String(url).split('?')[0];if(file==='hash.js')vm.runInContext(hashSource,context,{filename:'hash.js'});else if(file==='test-runtime.js')vm.runInContext(runtimeSource,context,{filename:'test-runtime.js'});else throw new Error(`unexpected bootstrap script ${file}`);}}};
-context.self=context;context.globalThis=context;vm.createContext(context);vm.runInContext(workerSource,context,{filename:'test-worker.js'});bootstrapOpen=false;assert.equal(typeof listener,'function');
+context.self=context;context.globalThis=context;createVerifierRuntime(context);vm.runInContext(workerSource,context,{filename:'test-worker.js'});bootstrapOpen=false;assert.equal(typeof listener,'function');
 await assert.rejects(()=>context.fetch('https://example.invalid'),/Network access is unavailable/);for(const [name,args] of [['XMLHttpRequest',[]],['WebSocket',['wss://example.invalid']],['EventSource',['https://example.invalid']],['importScripts',['evil.js']],['eval',['1+1']],['Function',['return 1']]])assert.throws(()=>context[name](...args),/unavailable/i);
 const spec={version:'closed-loop-test-spec/1',languageVersion:context.closedLoopTestRuntime.TEST_IR_LANGUAGE_VERSION,operationRegistryVersion:context.closedLoopTestRuntime.OPERATION_REGISTRY_VERSION,operationRegistrySha256:context.closedLoopTestRuntime.OPERATION_REGISTRY_SHA256,steps:[{stepId:'S001',op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'PRODUCT'}}},{stepId:'S002',op:'READ_BYTES',inputs:{artifact:{stepRef:'S001',output:'artifact'}}},{stepId:'S003',op:'DECODE_UTF8',inputs:{bytes:{stepRef:'S002',output:'bytes'}}},{stepId:'S004',op:'ASSERT_EQ',inputs:{actual:{stepRef:'S003',output:'text'},expected:{literal:'worker-ok'}}}],result:{stepRef:'S004',output:'assertion'}};
 const bindings={PRODUCT:'ART-WORKER'};const metadata={testId:'TEST-WORKER',bindings};

@@ -1,0 +1,27 @@
+{
+  "schema": "closed-loop-lifecycle-source-repair/1",
+  "baseHead": "7df7add251fa87c40d87f92eb5641f10a5161a26",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "contractTextModified": false,
+  "mandatoryCiModified": false,
+  "temporaryPublisherRemoved": true,
+  "changes": [
+    {
+      "path": "verify-project-lifecycle.mjs",
+      "before": "7eb4e441c270e178e34830aaf42b25bc69e95ccbeea73d09f34f9e9c63d2e388",
+      "after": "c30f18e51f068970f9eaf10adf86dcb1ad8b97d22106de1ad01dbc9cd4d16386"
+    },
+    {
+      "path": "verify-project-lifecycle-full.mjs",
+      "before": "0c1adb5346de8d6173809e35d74ef4c63e29d69abfa779d2d6eab66751b3abbb",
+      "after": "8f87dc2d94d2c8b76576362fdb3b079549423f1df004dbc95c6c00dfedab948b"
+    },
+    {
+      "path": "verification/current-task-requirement-register.json",
+      "before": "246033ee441516405c9b443b4e1a17747a05aea066d9f34d08856cb8d73b3d4a",
+      "after": "9f7b3b744100944519aaaec1be72a30cb4dae83213dc8f0b91535a5d03b5283e"
+    }
+  ],
+  "registerRows": 4343,
+  "completeCandidateVerificationRequired": true
+}

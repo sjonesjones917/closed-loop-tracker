@@ -1,0 +1,43 @@
+{
+  "schema": "closed-loop-repair-evidence/1",
+  "candidate": "repair/complete-conformance-continuation-20260914",
+  "requirementId": "ACCEPTANCE-CONTINUATION-VIEWPORT",
+  "register": "verification/conformance-20260917/acceptance-viewport-requirement.json",
+  "status": "UNVERIFIED",
+  "productionOwner": "index.html: authored body overflow-x declaration",
+  "sourceRevisionBeforeRepair": "0cbe147d706cfd0621eb845c96905aed03d9aa24",
+  "reproduction": {
+    "command": "node verify-acceptance-viewport.mjs",
+    "workflowRunId": 35256818832,
+    "testedMergeCommit": "561a9443d1893001e1843c3cb5a6d0e8f37e33cb",
+    "artifactId": 10512677013,
+    "artifactName": "acceptance-viewport-561a9443d1893001e1843c3cb5a6d0e8f37e33cb-35256818832",
+    "artifactSha256": "25a9398afa95b94a064f70a6d4f3e36bf4cc81e5af3b7b2e79a9d1dbc11b71d5",
+    "rawOutputMember": "tmp/acceptance-viewport.log",
+    "rawObservationsMember": "home/runner/work/closed-loop-tracker/closed-loop-tracker/acceptance-viewport-evidence/acceptance-viewport.json",
+    "expected": "The sole next-action summary and its enabled actual control remain fully visible and unobscured after acceptance, without an explicit upward forward-progress scroll.",
+    "actual": "The production path failed while reading the response panel, after accepted response, and after restoring its original layout at all required viewports. Full observations and errors are retained in the artifact, not replaced by this explanation."
+  },
+  "authorityAnalysis": {
+    "authoredNotDerived": true,
+    "cause": "body overflow-x:hidden creates a body scrolling container; the viewport scrolls instead. The existing sticky header and next-action summary consequently move outside the viewport.",
+    "correction": "Change the authored body overflow-x declaration from hidden to clip. Keep horizontal clipping without a body scroll container. Preserve the existing grid, control text, stage selection, history machinery and forward-scroll prohibition.",
+    "experimentalControl": "The diagnostic changed only body overflow-x to clip, without a scroll call. It recorded the action and its actual control inside each viewport with unobscured hit testing. A separate flex variant was unnecessary and is not included in the repair.",
+    "diagnosticObservations": [
+      {"caseId":"ACCEPTANCE-VIEWPORT-320x568","variant":"BODY_CLIP","scrollY":4228,"summaryTop":341,"summaryBottom":518,"controlTop":462,"controlBottom":506,"controlUnobscured":true,"viewportHeight":568,"headerBottom":340.84375,"documentOverflow":0},
+      {"caseId":"ACCEPTANCE-VIEWPORT-393x852","variant":"BODY_CLIP","scrollY":3473,"summaryTop":311,"summaryBottom":488,"controlTop":432,"controlBottom":476,"controlUnobscured":true,"viewportHeight":852,"headerBottom":310.46875,"documentOverflow":0},
+      {"caseId":"ACCEPTANCE-VIEWPORT-1280x800","variant":"BODY_CLIP","scrollY":1971,"summaryTop":182,"summaryBottom":337,"controlTop":280,"controlBottom":324,"controlUnobscured":true,"viewportHeight":800,"headerBottom":-1782.109375,"documentOverflow":-15}
+    ],
+    "diagnosticIsFullRepairAcceptance": false,
+    "regeneration": "The normal build-static-site.mjs pipeline rebuilds the deployed HTML and its resource identity from the repaired authored index.html. No derived deployment file is patched."
+  },
+  "requiredAfterRepair": [
+    "Replay the full focused actual-controls path on the committed production declaration.",
+    "Require production PASS, body-hidden-overflow mutant rejection, restored-production PASS at every required viewport.",
+    "Complete every existing integrated CI and browser/recovery/operator gate on the unchanged final candidate.",
+    "Reconcile all mandatory register rows before merge; deploy and verify exact merged resources afterward."
+  ],
+  "physicalIPhoneAcceptance": false,
+  "approvedVisualBaselineAcceptance": false,
+  "completionClaim": false
+}

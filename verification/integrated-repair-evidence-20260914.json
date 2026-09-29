@@ -1,0 +1,291 @@
+{
+  "schema": "closed-loop-integrated-repair-evidence/1",
+  "recordedAt": "2026-09-14T12:59:22.598054+00:00",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "repairBaseCommit": "bfc0cfec9cd375200aab144a4b0dd428e56c03fc",
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "environment": "Node 24.19.0 Linux; production runtime and explicitly synthetic transactional adapter",
+  "applicationComplete": false,
+  "physicalDeviceAcceptance": false,
+  "productionFiles": [
+    {
+      "path": "app-core.js",
+      "sha256": "4b36cc708176283f9b1228432e140acb6a81504bdf2f71b93a9cd6da7ee31f94"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "482c7c1c96e8e328bc1860ce885d4524c254d23a92ea2dd229334debcd1360df"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "2ffd1a72e3a6909661f4a64522f59807285a331baf044afe6417e408d69accf9"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "7197b597dd89cedd0e8f7f413cf46f6042e48f77eb24ff954ea824f817670119"
+    },
+    {
+      "path": "verify-execution-identity-allocation.mjs",
+      "sha256": "6b8a67f527d7808d6d6b2318a6448f8998a0e0f6ef852f745a9706af79d6c78a"
+    },
+    {
+      "path": "verify-project-identity-allocation.mjs",
+      "sha256": "3f9750a6db67d40e18e8f49488f09a051f28673554e8a7609472bcb4f637be35"
+    },
+    {
+      "path": "verify-response-retry-persistence.mjs",
+      "sha256": "8f66b73c9815036cf82717510835b889719ab094a5dda7c79e5a9daabd429733"
+    },
+    {
+      "path": "verify-response-retry-fault.mjs",
+      "sha256": "25a077d12611d489ede238c61141211921e1e43e3568f5b4d4fd85fcfd211621"
+    }
+  ],
+  "browserFailure": {
+    "workflowRunId": 34842805308,
+    "headCommit": "bfc0cfec9cd375200aab144a4b0dd428e56c03fc",
+    "testedMergeCommit": "ced7e0dd4c22264cffa2cea98627b3609701236c",
+    "jobId": 103971485998,
+    "artifactId": 10347721562,
+    "environment": "Ubuntu 24.04.5, Node 22.23.2, headless Google Chrome with emulated mobile viewport; no physical iPhone",
+    "sequence": [
+      "Create project",
+      "Save objective and title",
+      "Export stage files",
+      "Select response.json with deliberately wrong JOB_ID",
+      "Stage and validate response",
+      "Prepare and export replacement attempt",
+      "Select corrected response",
+      "Stage and validate response"
+    ],
+    "expected": "Retain rejection, reserve a fresh instruction, and validate the corrected response for review without accepting it.",
+    "actual": "The rejected reservation remained the current export; automatic continuation failed with Project changed before its checkpoint could be prepared.",
+    "responsibleProduction": "app-core.js:persistReplacement used the advanced candidate revision as the stored revision expectation; currentPromptRecord did not require a preserving reservation state.",
+    "regression": "verify-response-retry-persistence.mjs",
+    "integratedBrowserReplay": "PENDING"
+  },
+  "executedReports": [
+    {
+      "name": "execution-identity-after",
+      "sha256": "9b3e2f1226402f62994a9363be252909c7f98a4f9f61f54fad5ef6f1a2d7c3dd",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node production runtime with transactional test adapter",
+        "cases": [
+          {
+            "name": "Instruction preview uses the canonical identity algorithm without mutating the project",
+            "result": "PASS"
+          },
+          {
+            "name": "Instruction, package, and reservation are committed with their allocation receipts",
+            "result": "PASS"
+          },
+          {
+            "name": "Exact prompt registration retry neither reallocates identities nor appends receipts",
+            "result": "PASS"
+          },
+          {
+            "name": "Restoration recovers the exact saved identities and receipts without reallocating",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "project-identity-after",
+      "sha256": "eced2604c4353934381dadb9912bab6a36d7e572a44ee5c326698317509a3c2a",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node production runtime with transactional test adapter",
+        "cases": [
+          {
+            "name": "Project creation atomically retains canonical identity, command receipt, and initial recovery checkpoint; exact retry returns the same project",
+            "result": "PASS"
+          },
+          {
+            "name": "Independently authorized projects reserve distinct monotonic allocations in the registered global namespace",
+            "result": "PASS"
+          },
+          {
+            "name": "Interrupted creation leaves project, allocation sequence, receipts, and recovery history uncommitted; retry succeeds",
+            "result": "PASS"
+          },
+          {
+            "name": "Backup restoration retains completed creation identity and exact-retry protection without creating a second project",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response-retry-after",
+      "sha256": "123f7294cbb775cd1f5abf2a21375536284e30953961b51e22a83700f0b2ccf1",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Actual UI commit/continuation functions with production runtime and transactional test adapter",
+        "cases": [
+          {
+            "name": "Rejected response retains rejection and saves a fresh correctly bound instruction without accepting work",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response-retry-fault",
+      "sha256": "dc55f42c6d10671c0b9ec0c84da9a2b4dbbb86ab5658461d4e93946cc72ce640",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "cases": [
+          {
+            "fault": "COMPARE_WITH_CANDIDATE_REVISION",
+            "oracle": "RETRY_COMMIT_ORACLE",
+            "result": "DETECTED"
+          }
+        ],
+        "restoredImplementation": "PASS"
+      }
+    },
+    {
+      "name": "allocation-after",
+      "sha256": "62c799c85aba29411562b6fc49c1a2e696715a223014d4da5ac2c082311829f8",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Node production runtime and transaction adapter",
+        "registeredFamilies": 65,
+        "cases": [
+          {
+            "name": "All registered canonical families use the specified 160-bit SHA-256/base32hex algorithm and distinct project namespaces",
+            "result": "PASS"
+          },
+          {
+            "name": "Exact command retries retain their original allocation; conflicting retries reject and independent equal-content actions remain distinct",
+            "result": "PASS"
+          },
+          {
+            "name": "A collision with an existing different allocation increments only the collision counter",
+            "result": "PASS"
+          },
+          {
+            "name": "Infrastructure identities share the canonical allocator and preserve project separation",
+            "result": "PASS"
+          },
+          {
+            "name": "Committed receipts restore with their complete version and never enter agent-facing stage context",
+            "result": "PASS"
+          },
+          {
+            "name": "The commit transaction rejects mutation of an existing allocation receipt without changing active or retained state",
+            "result": "PASS"
+          },
+          {
+            "name": "A different continuation after restoration cannot reuse the abandoned continuation\u2019s newly allocated identity",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "navigation-after",
+      "sha256": "f5b4b01530b508f372d90c37eeb00c7c92c6edf5318ddd292c18aed429458813",
+      "report": {
+        "synthetic": true,
+        "environment": "Real application navigation functions and production persistence with lifecycle adapter; minimal view/history boundary doubles",
+        "actualBrowser": false,
+        "cases": [
+          {
+            "name": "View capture accepts ordinary form controls and preserves subpixel scroll position",
+            "result": "PASS"
+          },
+          {
+            "name": "All registered stage selections preserve active project data",
+            "result": "PASS"
+          },
+          {
+            "name": "Destination-based restoration preserves native path across multi-entry jumps",
+            "result": "PASS"
+          },
+          {
+            "name": "Undo and Redo cross view-only checkpoints to reverse the last project change",
+            "result": "PASS"
+          },
+          {
+            "name": "Rapid traversal aborts abandoned restore and activates the final destination",
+            "result": "PASS"
+          },
+          {
+            "name": "Native traversal reconciles an owned pending commit before restoring without adding history entries",
+            "result": "PASS"
+          },
+          {
+            "name": "A later draft arriving during a pending checkpoint is saved before navigation continues",
+            "result": "PASS"
+          },
+          {
+            "name": "Response, audited and delivery selections retain exact bytes through navigation and full restoration without acceptance",
+            "result": "PASS"
+          },
+          {
+            "name": "Corrupt selected bytes are rejected and restored bytes progress",
+            "result": "PASS"
+          },
+          {
+            "name": "Exported backup bytes recover unvalidated selections and their exact files in fresh persistence",
+            "result": "PASS"
+          },
+          {
+            "name": "Checkpoint failure preserves the prior selected files and accepted work",
+            "result": "PASS"
+          },
+          {
+            "name": "An unavailable saved-version link keeps current data and usable History",
+            "result": "PASS"
+          },
+          {
+            "name": "Saved-version startup completes within its existing loading action without self-wait",
+            "result": "PASS"
+          },
+          {
+            "name": "Stale tab cannot restore over independent work",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "action-after",
+      "sha256": "9d36bae9713aefc02944c6a82e328350c002df2575eb0a9cf4eb67ac1f6f4301",
+      "report": {
+        "schema": "closed-loop-executed-cases/1",
+        "synthetic": true,
+        "environment": "Node VM with delayed operation and frame boundary",
+        "scope": "Shared action binding only; this is not stage-by-stage or file-transport acceptance.",
+        "cases": [
+          {
+            "caseId": "UI-SHARED-ACTION-DUPLICATE",
+            "fixtureStage": 1,
+            "operation": "SAVE_INSTRUCTION",
+            "repeatedClicks": 2,
+            "executions": 1,
+            "result": "PASS"
+          },
+          {
+            "caseId": "UI-ACTION-FAILURE-RETRY",
+            "result": "PASS"
+          }
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "Local passing cases do not establish complete operator acceptance or application completion.",
+    "All browser failures require replay against the integrated candidate.",
+    "Other canonical identity producers and complete clone remapping remain open.",
+    "Physical iPhone, approved visual baseline, and actual external-project evidence remain unestablished."
+  ]
+}

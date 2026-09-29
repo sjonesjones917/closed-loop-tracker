@@ -1,9 +1,10 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
 if(!core||!schema||!engine||!prompts)throw new Error('Prompt audit runtime failed to load.');
 const p=core.createBlankState('JOB-PROMPT-CLOSURE');
@@ -49,19 +50,20 @@ const semantic={
   29:['complete evidence graph for every mandatory requirement','Do not fabricate a link'],
   30:['append-only defect and regression history','Do not rewrite history']
 };
-let promptsChecked=0;
+let promptsChecked=0,conditionalRejections=0;
 for(let stage=1;stage<=30;stage++){
   const contract=schema.STAGE_CONTRACTS[stage];
   for(const operation of contract.operations){
     const op=schema.operationContract(stage,operation);
     for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
-    const scope={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
+    const scope=Object.fromEntries(op.scopeRequirements.map(key=>[key,key.toUpperCase()+'-AUDIT']));
     const reg=schema.STAGE_OPERATION_REGISTRY[`${stage}:${operation}`];
     if(reg?.executorClass!=='EXTERNAL_AGENT'){
       let blocked=false;try{prompts.buildPromptRecord(stage,p,{operation,scope});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}
       if(!blocked)throw new Error(`Stage ${stage} ${operation} is ${reg?.executorClass||'non-external'} but generated an external-agent prompt.`);
       continue;
     }
+    if(reg.deferredSubjectFamily){let rejected=false;try{prompts.buildPromptRecord(stage,p,{operation,scope});}catch(error){rejected=error?.code==='DEFERRED_EXECUTION_UNAVAILABLE';}if(!rejected)throw new Error('Unbound conditional operation generated a handoff: '+stage+'/'+operation);conditionalRejections++;continue;}
     const prompt=prompts.buildPromptRecord(stage,p,{operation,scope}).prompt;
     promptsChecked++;
     for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);
@@ -83,4 +85,4 @@ const browserWalk=spawnSync(process.execPath,['verify-human-stage-walkthrough.mj
 if(browserWalk.status!==0)throw new Error(`Sequential browser stage walkthrough failed.\n${browserWalk.stdout||''}\n${browserWalk.stderr||''}`);
 const browserProof=JSON.parse(String(browserWalk.stdout||'{}'));
 if(browserProof.stages!==30||browserProof.oneTimeSupply!==true)throw new Error('Sequential browser stage walkthrough did not establish all 30 stages and one-time project input reuse.');
-console.log(JSON.stringify({promptsChecked,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:true,browserPromptsChecked:browserProof.prompts,promptVisual:browserProof.promptVisual},null,2));
+console.log(JSON.stringify({promptsChecked,conditionalRejections,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:true,browserPromptsChecked:browserProof.prompts,promptVisual:browserProof.promptVisual},null,2));

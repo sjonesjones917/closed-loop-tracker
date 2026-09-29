@@ -1,0 +1,38 @@
+{
+  "checkpointBoundary": "PASS",
+  "basis": "SYNTHETIC_PRODUCTION_LIFECYCLE",
+  "specificationSections": [
+    "36.11",
+    "38"
+  ],
+  "cases": [
+    {
+      "name": "checkpoint preserves the exact exported project digest",
+      "result": "PASS"
+    },
+    {
+      "name": "wrong checkpointId is rejected; exact binding progresses",
+      "result": "PASS"
+    },
+    {
+      "name": "wrong packageId is rejected; exact binding progresses",
+      "result": "PASS"
+    },
+    {
+      "name": "wrong packageSha256 is rejected; exact binding progresses",
+      "result": "PASS"
+    },
+    {
+      "name": "export appends custody and does not rewrite the generated receipt",
+      "result": "PASS"
+    },
+    {
+      "name": "upstream correction prevents exporting a stale checkpoint",
+      "result": "PASS"
+    },
+    {
+      "name": "complete chain exposes a checkpoint export control before terminal authorization",
+      "result": "PASS"
+    }
+  ]
+}

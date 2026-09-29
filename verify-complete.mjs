@@ -1,9 +1,13 @@
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {canonicalFixtureRecord,reviewApplicabilityFixture} from './test-fixtures.mjs';
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore,hash=globalThis.closedLoopHash;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer modules failed to load.');
 const assert=(value,message)=>{if(!value)throw new Error(message);};
@@ -16,7 +20,7 @@ function deliveryCandidate(p,artifactIds,filenames){
   artifactIds.forEach((id,index)=>p.projectData.artifacts.push(record('artifacts',21,{FILENAME:filenames[index],BYTE_SIZE:index+1,SHA256:String.fromCharCode(97+index),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},id)));
   p.projectData.deliveryCandidateSets.push(candidate);p.job.CURRENT_DELIVERY_CANDIDATE_SET_ID=candidate.id;return candidate;
 }
-function prompt(p,stage){const r={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}
+function prompt(p,stage){const r={...prompts.buildPromptRecord(stage,p,engine.preparePromptContext(p,stage).options),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}
 function acceptStage1Fixture(p){
   const stage=1,pr=prompt(p,stage),manifest=pr.contextManifest.intakeCoverageManifest;
   const capture={schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Accepted Stage 01 prerequisite fixture preserves current human authority.',extractedStatements:[{statementKey:'STAGE1-'+String(index+1),text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
@@ -88,7 +92,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_REQUIREMENTS_VERSION:'REQS-1',CURRENT_TEST_SUITE_VERSION:'TESTS-1'});
   p.activeStage=6;const scope=engine.currentScope(p);
   p.projectData.requirements.push({...record('requirements',4,{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-INLINE'),scope});
-  const t={...record('tests',6,{REQ_ID:'REQ-INLINE',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'The future generated output',STATUS:'READY',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}},'TEST-INLINE'),scope,evidenceRefs:['EVIDENCE-INLINE']};
+  const t={...record('tests',6,{REQ_ID:'REQ-INLINE',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'The future generated output',STATUS:'READY',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}},'TEST-INLINE'),scope,evidenceRefs:['EVIDENCE-INLINE']};
   p.projectData.tests.push(t);
   const ev={...record('evidenceRecords',6,{ATTACHMENT_ID:'UNKNOWN',CONTENT:'Design reasoning preserved inline.',STATUS:'PRESERVED'},'EVIDENCE-INLINE'),scope};p.projectData.evidenceRecords.push(ev);
   for(const missing of ['UNKNOWN','NONE','NOT APPLICABLE','PENDING','UNASSIGNED','',null]){
@@ -105,16 +109,19 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Only a current, independently reviewed applicability decision can reduce coverage.
 {
- const p=project('JOB-APPLICABLE-COVERAGE');Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'S1',CURRENT_REQUIREMENTS_VERSION:'R1',CURRENT_TEST_SUITE_VERSION:'T1'});const scope=engine.currentScope(p);
- p.projectData.requirements.push({...record('requirements',4,{MANDATORY_OPTIONAL_STATUS:'MANDATORY'},'REQ-NA'),scope});
- p.projectData.propositions.push({...record('propositions',4,{REQUIREMENT_ID:'REQ-NA'},'PROP-NA'),scope});
- p.projectData.applicabilityRecords.push({...record('applicabilityRecords',5,{SUBJECT_ID:'PROP-NA',SELECTED_APPLICABILITY:'NOT_APPLICABLE'},'APP-NA'),scope});
+ const p=project('JOB-APPLICABLE-COVERAGE');Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'S1',CURRENT_RESEARCH_VERSION:'RESEARCH1',CURRENT_REQUIREMENTS_VERSION:'R1'});
+ const runtime={engine,schema,prompts,ingestion};
+ for(let stage=1;stage<6;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
+ const req=canonicalFixtureRecord(runtime,p,'requirements',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',OBLIGATION:'Controlled optional applicability.',STATUS:'ACTIVE'});
+ const prop=canonicalFixtureRecord(runtime,p,'propositions',{REQUIREMENT_ID:req.id,PROPOSITION_TEXT:'Controlled obligation applies.'});
+ canonicalFixtureRecord(runtime,p,'applicabilityRecords',{SUBJECT_ID:prop.id,PROPOSED_APPLICABILITY:'NOT_APPLICABLE',SELECTED_APPLICABILITY:'NOT_APPLICABLE',REASONING:'The controlled review establishes that the applicability condition is absent.'});
  assert(engine.mandatoryRequirements(p).length===1,'Unreviewed applicability reduced mandatory coverage.');
- const review={...record('semanticReviews',5,{REVIEWED_RECORD_IDS:['APP-NA'],AUTHOR_CONTEXT_ID:'AUTHOR',REVIEWER_CONTEXT_ID:'REVIEWER',INDEPENDENCE_DETERMINATION:'APPLICATION_ESTABLISHED',RESULT:'ACCEPTED',ACCEPTED_DISPOSITION:'ACCEPTED',RECONCILIATION_STATUS:'COMPLETE'},'REVIEW-NA'),scope};p.projectData.semanticReviews.push(review);
+ reviewApplicabilityFixture(runtime,p);
  assert(engine.mandatoryRequirements(p).length===0,'Reviewed NOT_APPLICABLE requirement still counted as missing test coverage.');
- review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID='AUTHOR';
+ const review=p.projectData.semanticReviews.at(-1),reviewer=engine.recordValue(review,'REVIEWER_CONTEXT_ID');
+ review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID=engine.recordValue(review,'AUTHOR_CONTEXT_ID');
  assert(engine.mandatoryRequirements(p).length===1,'Self-review reduced mandatory coverage.');
- review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID='REVIEWER';review.scope={...scope,requirementsVersion:'OLD'};
+ review.fields.REVIEWER_CONTEXT_ID=review.REVIEWER_CONTEXT_ID=reviewer;review.scope={...review.scope,requirementsVersion:'OLD'};
  assert(engine.mandatoryRequirements(p).length===1,'Stale review reduced current mandatory coverage.');
 }
 
@@ -124,7 +131,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-1',CURRENT_REQUIREMENTS_VERSION:'REQS-1',CURRENT_TEST_SUITE_VERSION:'TESTS-1',CURRENT_ITERATION:'ITERATION-1',CURRENT_CANDIDATE_ID:'CANDIDATE-1'});
   const scope=engine.currentScope(p);
   for(const [id,phase,stage] of [['RUN','PREPRODUCT_ITERATION',12],['FINAL','FINAL_PRODUCT_MEANING',23]]){
-    p.projectData.tests.push({...record('tests',6,{REQ_ID:'REQ-1',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:id+'-REPORT',STATUS:'READY',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,PER_RUN_REQUIRED:id==='RUN',FINAL_PRODUCT_REQUIRED:id==='FINAL',DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true}},'TEST-'+id),scope});
+    p.projectData.tests.push({...record('tests',6,{REQ_ID:'REQ-1',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'Independent review',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:id+'-REPORT',STATUS:'READY',VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,PER_RUN_REQUIRED:id==='RUN',FINAL_PRODUCT_REQUIRED:id==='FINAL',DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}},'TEST-'+id),scope});
   }
   for(const [stage,operation] of [[12,'COMPLETE'],[17,'VERIFY'],[19,'VERIFY']]){
     const handoff=engine.executionHandoff(p,{stage,operation});
@@ -135,7 +142,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Invalid canonical relationship is rejected before mutation.
 {
-  const p=project('JOB-BAD-REL'),stage=3;p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);
+  const p=project('JOB-BAD-REL'),stage=3;p.job.CURRENT_SOURCE_SET_VERSION='SYNTHETIC-SOURCES';p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);
   const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
   assert(!prepared.validation.valid&&prepared.validation.issues.some(x=>x.code==='UNRESOLVED_RELATIONSHIP'),'Invalid relationship was not rejected.');
@@ -173,9 +180,16 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(stageOneConfirmationSource.includes("displayedStageAction(n).actionType!=='CONFIRM_STAGE_ONE_INTENT'"),'Stage 01 confirmation control is not driven by the canonical next-action state.');
   assert(!stageOneConfirmationSource.includes('isRetainedTestProject'),'Retained/imported project origin still suppresses a mandatory Stage 01 confirmation control.');
   assert(appSource.includes("CONFIRM_STAGE_ONE_INTENT:'Human operator'"),'Stage 01 confirmation next action is not assigned to the human operator.');
-  assert(appSource.includes("acceptedChangeId:latest.changeId,inputVersion:next.job.CURRENT_INPUT_VERSION"),'Stage 01 confirmation click is not explicitly bound to the current accepted change and input version.');
-  assert(appSource.includes("nextActionMarkup(displayedStageAction(n).actionType==='CONFIRM_STAGE_ONE_INTENT',n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
-  assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage:1,reason:'User Job Input changed after Stage 01 completion.'"),'User Job Input edits do not reopen Stage 01.');
+  const seeded=project('JOB-ACTUAL-INTENT-CONTROL');engine.recordHumanInputVersion(seeded,['EXACT_USER_OBJECTIVE_VERBATIM']);const accepted=acceptStage1Fixture(seeded),acceptedInput=accepted.job.CURRENT_INPUT_VERSION;
+  accepted.projectData.userEntered.clarifications.push({stage:core.STAGES[1].number,operation:schema.STAGE_CONTRACTS[core.STAGES[1].number].operations[0],answer:'Scoped later clarification.'});engine.recordHumanInputVersion(accepted,['CLARIFICATION']);engine.recalculate(accepted);
+  const ui={current:accepted,engine,clone:structuredClone,render:()=>{},announce:()=>{},reportActionFailure:error=>{throw error;},$:()=>({value:'SYNTHETIC'}),canonicalCurrentStage:()=>2,focusAfterAction:()=>{},requestAnimationFrame:fn=>fn(),document:{querySelector:()=>null,querySelectorAll:()=>[{dataset:{job:'EXACT_USER_OBJECTIVE_VERBATIM'},type:'text',value:'Changed exact deliverable.'}]}};
+  ui.persistReplacement=async next=>{ui.current=next;};
+  const confirmStart=appSource.indexOf('async function confirmStageOne('),confirmEnd=appSource.indexOf('async function savePromptRecord(',confirmStart);await createVerifierRuntime.loadScript(createVerifierRuntime(ui),appSource.slice(confirmStart,confirmEnd)+'\nconfirmStageOne();');
+  const confirmed=ui.current.projectData.stageConfirmations.at(-1);assert(confirmed.acceptedChangeId===engine.acceptedChanges(ui.current,1).at(-1).changeId&&confirmed.inputVersion===acceptedInput&&engine.gate(1,ui.current).complete,'The actual intent confirmation control did not bind the accepted change and its compatible input version.');
+  const saveStart=appSource.indexOf('async function saveJob('),saveEnd=appSource.indexOf('async function saveHumanStageFields(',saveStart);await createVerifierRuntime.loadScript(createVerifierRuntime(ui),appSource.slice(saveStart,saveEnd)+'\nsaveJob();');
+  assert(!engine.gate(1,ui.current).complete&&engine.acceptedChanges(ui.current,1).length===0,'Saving changed project inputs through the actual UI did not invalidate the prior intake acceptance.');
+  assert(appSource.includes("nextActionMarkup(true,n)"),'Stage 01 confirmation is not surfaced as the primary next action in Workflow.');
+
   assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.'"),'Completed human-decision stages are not reopened when their authority changes.');
   assert(!appSource.includes("invalidateDownstream(next,1,id,'User Job Input changed after Stage 01 completion.'"),'User Job Input edits still preserve stale Stage 01 acceptance.');
   assert(!appSource.includes("invalidateDownstream(next,stage,id,'Human-owned stage input changed after completion.'"),'Human stage edits still preserve stale current-stage acceptance.');
@@ -284,18 +298,18 @@ console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,no
 
 // Refining one accepted run restores only that reservation and preserves unrelated accepted lanes.
 {
- let p=project('JOB-SCOPED-ACCEPTED-REFINEMENT'),stage=11;const bytes=new TextEncoder().encode('refinement-candidate');engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-REFINE',filename:'refine.bin',mediaType:'application/octet-stream',byteSize:bytes.byteLength,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'});const refineSelection=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(['ARTIFACT-REFINE']),value:['ARTIFACT-REFINE'],operatorLabel:'VERIFY'}),frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-REFINE'],selectionDecisionId:engine.recordId(refineSelection,'humanDecisions'),operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');
+ let p=project('JOB-SCOPED-ACCEPTED-REFINEMENT'),stage=11;const bytes=new TextEncoder().encode('refinement-candidate');engine.registerArtifactBytes(p,{stage:10,artifactId:artifactFixtureId(engine,p,'ARTIFACT-REFINE'),filename:'refine.bin',mediaType:'application/octet-stream',byteSize:bytes.byteLength,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'});const refineSelection=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value([artifactFixtureId(engine,p,'ARTIFACT-REFINE')]),value:[artifactFixtureId(engine,p,'ARTIFACT-REFINE')],operatorLabel:'VERIFY'}),frozen=engine.freezeCandidate(p,{stage:10,artifactIds:[artifactFixtureId(engine,p,'ARTIFACT-REFINE')],selectionDecisionId:engine.recordId(refineSelection,'humanDecisions'),operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');
  const slots=engine.reserveRunBatch(p,{stage,iterationId,count:10});for(const slot of slots){const run=engine.records(p,'runs').find(r=>engine.recordId(r,'runs')===slot.runId);assert(engine.recordValue(run,'CANDIDATE_ID')===candidateId,'Scoped refinement fixture did not reserve the canonical iteration candidate.');}
  const acceptLane=(slot,label)=>{p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true,blocked:false,reasons:[]};const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:slot.runId,contextId:slot.contextId}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const fields={FRESH_CONTEXT_RECORD:slot.contextId,CONTAMINATION_CHECK:'NONE',TOOL_CONFIGURATION:'CONTROLLED',EXECUTION_STATUS:'COMPLETED',COMPLETE_OUTPUT:`output-${label}`};const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{runs:[{targetId:slot.runId,fields,relationships:{},evidenceRefs:['lane-evidence']}]},evidence:[{temporaryKey:'lane-evidence',kind:'WORKFLOW_EVIDENCE',description:'lane evidence',location:'fixture',content:`lane-${label}`}],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert(prepared.validation.valid,`Scoped lane ${label} rejected: ${JSON.stringify(prepared.validation.issues)}`);const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'});p=committed.project;return committed.acceptedChange;};
  const changeA=acceptLane(slots[0],'A'),changeB=acceptLane(slots[1],'B');const runBBefore=engine.records(p,'runs',{active:true}).find(r=>engine.recordId(r,'runs')===slots[1].runId);assert(runBBefore?.status==='COMPLETED','Run B was not completed before refinement.');
  engine.invalidateAcceptedResponse(p,{stage,rawResponseId:changeA.rawResponseId,reason:'Run A needs a more complete answer.',operatorLabel:'VERIFY'});engine.recalculate(p);
  const runA=engine.records(p,'runs',{active:true}).find(r=>engine.recordId(r,'runs')===slots[0].runId),runB=engine.records(p,'runs',{active:true}).find(r=>engine.recordId(r,'runs')===slots[1].runId);assert(engine.recordValue(runA,'EXECUTION_STATUS')==='RESERVED'&&runA?.status!=='COMPLETED','Refined Run A reservation was not restored.');assert(runB?.status==='COMPLETED','Unrelated Run B was invalidated by Run A refinement.');assert(!changeB.invalidatedBy&&engine.acceptedChanges(p,stage).some(c=>c.changeId===changeB.changeId),'Unrelated accepted Run B change was invalidated.');assert(p.projectData.generatedPrompts.some(x=>x.scope?.runId===slots[1].runId&&!x.invalidatedBy),'Unrelated Run B prompt was invalidated.');
 }
-assert(fs.readFileSync('app-core.js','utf8').includes('No accepted response matches the selected operation/run scope.'),'Refinement UI does not target the selected operation/run scope.');
+assert(fs.readFileSync('app-core.js','utf8').includes('No accepted response matches this operation.'),'Refinement UI does not target the selected operation/run scope.');
 
 // Operator recovery: exact run-batch reservation is idempotent and partial batches fail closed.
 {
- const p=project('JOB-RUN-BATCH-IDEMPOTENT');engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-IDEMPOTENT',filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'});const idempotentSelection=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(['ARTIFACT-IDEMPOTENT']),value:['ARTIFACT-IDEMPOTENT'],operatorLabel:'VERIFY'}),frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-IDEMPOTENT'],selectionDecisionId:engine.recordId(idempotentSelection,'humanDecisions'),operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');
+ const p=project('JOB-RUN-BATCH-IDEMPOTENT');engine.registerArtifactBytes(p,{stage:10,artifactId:artifactFixtureId(engine,p,'ARTIFACT-IDEMPOTENT'),filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'});const idempotentSelection=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value([artifactFixtureId(engine,p,'ARTIFACT-IDEMPOTENT')]),value:[artifactFixtureId(engine,p,'ARTIFACT-IDEMPOTENT')],operatorLabel:'VERIFY'}),frozen=engine.freezeCandidate(p,{stage:10,artifactIds:[artifactFixtureId(engine,p,'ARTIFACT-IDEMPOTENT')],selectionDecisionId:engine.recordId(idempotentSelection,'humanDecisions'),operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');
  const first=engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10}),events=p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length;
  const second=engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});
  assert(first.length===10&&second.length===10&&engine.records(p,'runs',{stage:11}).length===10&&engine.records(p,'freshContexts',{stage:11}).length===10,'Repeated run-batch reservation allocated duplicate slots.');assert(p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length===events,'Idempotent reservation created another reservation event.');
@@ -393,16 +407,24 @@ assert(schema.TEST_IR.version==='closed-loop-test-spec/1','Test IR version chang
 assert(schema.TEST_IR.capability==='CLOSED_LOOP_TEST_IR','Test IR capability changed.');
 assert(schema.TEST_IR.operations.includes('PARSE_JSON')&&schema.TEST_IR.operations.includes('BYTE_COMPARE'),'Required generic Test IR operations are missing.');
 assert(!schema.TEST_IR.operations.some(op=>/JAVASCRIPT|PYTHON|SHELL/i.test(op)),'Unsafe arbitrary-code Test IR operation registered.');
-assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),'Stage 19 operation contract is incomplete.');
+assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM','EXECUTE_FAILURE_TEST','EXECUTE_REGRESSION']),'Stage 19 operation contract is incomplete.');
 {
-  const p=project('JOB-NATIVE-STAGE22-NO-AGENT');
-  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE',CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});
-  const scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Native deterministic proposition',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-NATIVE-22');
-  const native=record('tests',6,{REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{phaseTarget:true},EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'},'TEST-NATIVE-22');
-  req.scope=scope;native.scope=scope;p.projectData.requirements.push(req);p.projectData.tests.push(native);
+  const r=projectStoreRuntime(),engine=r.engine,schema=r.runtime.closedLoopWorkflowSchema,runtime={engine,schema},p=r.core.createBlankState('JOB-NATIVE-STAGE22-NO-AGENT');engine.ensureShape(p);
+  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001'});
+  const req=canonicalFixtureRecord(runtime,p,'requirements',{OBLIGATION:'Native deterministic proposition',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'});
+  const native=canonicalFixtureRecord(runtime,p,'tests',{REQ_ID:req.id,TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'},EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'});
+  assert(engine.finalProductTestSelection(p,22).reasons.length,'A product pointer without bytes authorized Stage 22.');
+  const product=canonicalFixtureRecord(runtime,p,'products',{STATUS:'COMPLETED',PRODUCT_VERSION:'PRODUCT-v001',GENERATED_ARTIFACT_INVENTORY:[],FAILURES:'NONE',DEVIATIONS:'NONE'});product.completionState='COMPLETED';
+  Object.assign(p.job,{CURRENT_PRODUCT_ID:product.id,CURRENT_PRODUCT_VERSION:'PRODUCT-v001'});
+  const blob=new Blob(['Native Stage22 exact bytes']),artifactId=engine.allocateId(p,'artifacts',{payload:r.copy({purpose:'STAGE22_NATIVE'})}),sha256=await r.runtime.closedLoopHash.sha256Bytes(blob);
+  engine.registerArtifactBytes(p,r.copy({stage:21,artifactId,filename:'native-stage22.txt',mediaType:'text/plain',byteSize:blob.size,sha256,lineage:{productId:product.id}}));
+  product.fields.GENERATED_ARTIFACT_INVENTORY=product.GENERATED_ARTIFACT_INVENTORY=[artifactId];engine.refreshRecordHashes(product,'products');
+  native.fields.EXECUTABLE_INPUT_BINDINGS=native.EXECUTABLE_INPUT_BINDINGS=r.copy({PRODUCT:artifactId});engine.refreshRecordHashes(native,'tests');
+  await r.store.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:'native-stage22.txt',mediaType:'text/plain'});
+  assert(engine.finalProductTestSelection(p,22).tests.length===1,'Canonical byte-backed Stage22 test was not selected.');
   const nativeGate=engine.gate(22,p);
   assert(!nativeGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Native-only Stage 22 still requires an external accepted response.');
-  native.fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';native.fields.REQUIRED_CAPABILITY='external deterministic tool';
+  native.fields.EXECUTION_MODE=native.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';native.fields.REQUIRED_CAPABILITY=native.REQUIRED_CAPABILITY='external deterministic tool';engine.refreshRecordHashes(native,'tests');
   const externalGate=engine.gate(22,p);
   assert(externalGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Stage 22 stopped requiring an accepted response when an external deterministic executor is required.');
 }

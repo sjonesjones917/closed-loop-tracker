@@ -1,0 +1,176 @@
+{
+  "schema": "closed-loop-integrity-recovery-repair-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "repairBaseCommit": "8bc9cfae0057c9d72728fa6be22b9e978900a738",
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "reproductions": [
+    {
+      "sequence": [
+        "Save valid project and exact artifact bytes",
+        "Checkpoint that complete version",
+        "Corrupt stored project and artifact bytes",
+        "Read project to trigger integrity quarantine",
+        "Restore valid checkpoint"
+      ],
+      "expected": "The damaged row and file bytes remain separate from the restored valid state.",
+      "actualBefore": "Quarantine preserved the project row but omitted artifact bytes.",
+      "failure": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: QUARANTINE_FILES_ORACLE: original file bytes must be captured before restoring another version\n    at file:///workspace/scratch/ec4ac78ce440/quarantine-baseline/verify-quarantine-recovery.mjs:10:8\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n"
+    },
+    {
+      "sequence": [
+        "Cache active project in a tab",
+        "Commit an independent revision",
+        "Export the cached handoff"
+      ],
+      "expected": "Reject the stale handoff before releasing files.",
+      "actualBefore": "Export succeeded for the outdated in-memory project.",
+      "failure": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Missing expected rejection: HANDOFF_ACTIVE_VERSION_ORACLE\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-filename-transports.mjs:22:177 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: undefined,\n  expected: [Function (anonymous)],\n  operator: 'rejects',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n"
+    }
+  ],
+  "quarantineVerification": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "environment": "Production modules and actual UI load owner with lifecycle transaction adapter and independent Node cryptography/graph decoding",
+    "testedCorruptedFileBytes": 15,
+    "cases": [
+      {
+        "name": "Corrupt project and actual file bytes are preserved together before the canonical row is quarantined",
+        "result": "PASS"
+      },
+      {
+        "name": "Restoring a valid complete version cannot overwrite the separate quarantined file evidence",
+        "result": "PASS"
+      },
+      {
+        "name": "Independent decryption and graph decoding reproduce the damaged stored row, original metadata and exact available file bytes",
+        "result": "PASS"
+      },
+      {
+        "name": "Quarantine evidence cannot masquerade as a validated project backup or activate damaged data",
+        "result": "PASS"
+      },
+      {
+        "name": "Controlled quarantine deletion is atomic and idempotent and leaves active projects, files and retained History intact",
+        "result": "PASS"
+      },
+      {
+        "name": "Invalid canonical encoding and interrupted quarantine preserve original state; session startup checkpoints other valid projects and records the quarantined starting state",
+        "result": "PASS"
+      },
+      {
+        "name": "Reload startup opens an independent valid project and exposes History when the selected project fails integrity",
+        "result": "PASS"
+      }
+    ]
+  },
+  "handoffVerification": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "environment": "Node production modules with lifecycle transaction adapter",
+    "artifactBytes": 25,
+    "cases": [
+      {
+        "name": "Picker path handling rejects unsafe paths before changing them and retains valid relative-path spelling",
+        "result": "PASS"
+      },
+      {
+        "name": "Individual instruction exports retain valid Unicode and use the same pinned filename normalizer as consolidated handoffs",
+        "result": "PASS"
+      },
+      {
+        "name": "The stage ZIP contains the manifest-bound NFC path, original filename, and exact file bytes",
+        "result": "PASS"
+      },
+      {
+        "name": "Whole-version reversal and forward restoration retain original filename, canonical identity, and exact bytes",
+        "result": "PASS"
+      },
+      {
+        "name": "Restoration rejects stale handoffs and regenerates a Unicode-safe package for the active version",
+        "result": "PASS"
+      },
+      {
+        "name": "Backup restoration from exported bytes preserves Unicode identities, complete History and exact file bytes",
+        "result": "PASS"
+      },
+      {
+        "name": "A cached project cannot export a handoff after an independent revision changes its authoritative stored version",
+        "result": "PASS"
+      },
+      {
+        "name": "A change committed while file bytes are being assembled prevents release of the stale handoff",
+        "result": "PASS"
+      },
+      {
+        "name": "A cached project cannot supply agent-facing context after its authoritative stored data becomes corrupt",
+        "result": "PASS"
+      }
+    ]
+  },
+  "faultVerification": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "method": "Targeted in-memory production faults followed by replay against the unmodified implementation",
+    "results": [
+      {
+        "suite": "verify-quarantine-recovery.mjs",
+        "fault": "quarantine-files",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      },
+      {
+        "suite": "verify-filename-transports.mjs",
+        "fault": "handoff-race",
+        "result": "DETECTED",
+        "restoredImplementation": "PASS"
+      }
+    ]
+  },
+  "sourceFiles": [
+    {
+      "path": "project-store.js",
+      "sha256": "b66a1c0ae7b29033b2b1fe3bb77e341c72042fc3624ca5f3989199403a7eeca4"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "1a3bd9af035f44dcf57c5628078430a0e1e9f6bbd30025b6616c95003d391024"
+    },
+    {
+      "path": "verify-quarantine-recovery.mjs",
+      "sha256": "55584f57f9f90bb14970f7f4fb441f0a3f66f5939cbf1300336a73f76c3b8e1a"
+    },
+    {
+      "path": "verify-filename-transports.mjs",
+      "sha256": "e7e591a3c8f14adee8fd9b40bcf8666cffbd44be62872d736538a94eba4b735e"
+    },
+    {
+      "path": "verify-integrity-recovery-faults.mjs",
+      "sha256": "c73d3c689353410d95d968143693c4d4683c847c370a4437bf70d41b15a035d3"
+    },
+    {
+      "path": "verify-browser-recovery.mjs",
+      "sha256": "51a57760b0f0d20c4ffc21fb36b9ce7cdd43f92e57b76f7916df9639931845e7"
+    }
+  ],
+  "limits": {
+    "quarantineRetention": "No automatic eviction; subject to IndexedDB quota. A failed quarantine transaction leaves existing data unchanged. Controlled deletion removes only the selected damaged evidence.",
+    "quarantineEvidence": "Protected inspection format, not an activatable project backup. Preserves stored row and available file bytes; does not manufacture missing or repaired bytes.",
+    "historyLimits": "2048 checkpoints/project, 512 MiB compressed project snapshots, 1 GiB retained file bytes, subject to available storage. Byte capacities remain unqualified.",
+    "testedCorruptedFileBytes": 15
+  },
+  "browserRetest": "PENDING",
+  "independentHumanReview": false,
+  "physicalDeviceAcceptance": false,
+  "applicationComplete": false,
+  "unresolved": [
+    "Exact final deployed browser and physical iPhone acceptance",
+    "Full independently auditable clone command and receipt",
+    "Full disclosure/classification controls and all supported corrupted value/file formats",
+    "Complete semantic requirement coverage and all mandatory operator journeys"
+  ],
+  "affectedIntegration": {
+    "suite": "verify-project-lifecycle.mjs",
+    "result": "PASS",
+    "environment": "Node 24.19.0, production modules and lifecycle transaction adapter"
+  }
+}

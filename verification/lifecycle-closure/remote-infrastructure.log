@@ -1,0 +1,18 @@
+{
+  "infrastructureRouteClosure": "PASS",
+  "infrastructureFamilies": 14,
+  "rawFirstCapture": true,
+  "validationAndProposalPersistence": true,
+  "precommitRevalidation": true,
+  "receiptPersistence": true,
+  "extractionManifestProvenance": true,
+  "promptContextManifestRoute": true,
+  "versionRoute": true,
+  "authorityPartitionsSeparated": true,
+  "wholeProjectPartitionPersistence": true,
+  "currentScopeRoute": true,
+  "persistenceIntegrityRoute": true,
+  "structuredOperatorActionRoute": true,
+  "executableIngestionSuite": true,
+  "executableLifecycleSuite": true
+}

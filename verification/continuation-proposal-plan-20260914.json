@@ -1,0 +1,126 @@
+{
+  "schema": "closed-loop-proposal-plan-continuation/1",
+  "startingCommit": "000fe352ad9ee0ba223702c804952c1bc6eedf30",
+  "implementationSha256": "836d16309e9c9a37944bd1f09b0e23c3dae934872d73774035eb6ffb08dcf71a",
+  "relatedWork": {
+    "pullRequest": 1241,
+    "head": "030c42e15cecbeb05ad03a693b09e03b3b83cd07",
+    "use": "Reviewed successor proposal-plan check; reproduced on the integrated continuation; adapted to the existing application allocator and added preserved-response-byte comparison. Separate recovery architecture was not merged."
+  },
+  "reproduction": {
+    "baselineExitCode": 1,
+    "actual": "Altered requirement field committed after response validation.",
+    "oracle": "PROPOSAL_PLAN_ORACLE",
+    "inputAndSequence": "verify-proposal-plan-integrity.mjs: accepted synthetic Stage 01\u201303 prerequisites, prepare a valid Stage 04 response, alter one planned value, attempt commit.",
+    "expected": "Reject changed candidate and preserve current project; removing violation permits acceptance."
+  },
+  "correction": "Reparse exact retained response bytes, compare normalized envelope, reproduce the complete plan using original response-bound allocation receipts, compare fields, relationships, provenance and derived values before commit.",
+  "focusedVerification": {
+    "proposalPlanIntegrity": "PASS",
+    "synthetic": true,
+    "environment": "Production workflow and ingestion with synthetic Stage 01\u201304 prerequisites; no browser or external-actor claim",
+    "cases": [
+      {
+        "name": "agent-field",
+        "rejected": true,
+        "repairedAccepted": true
+      },
+      {
+        "name": "application-owned-stage-field",
+        "rejected": true,
+        "repairedAccepted": true
+      },
+      {
+        "name": "relationship",
+        "rejected": true,
+        "repairedAccepted": true
+      },
+      {
+        "name": "provenance",
+        "rejected": true,
+        "repairedAccepted": true
+      },
+      {
+        "name": "evidence-content",
+        "rejected": true,
+        "repairedAccepted": true
+      },
+      {
+        "name": "allocation-identity",
+        "rejected": true,
+        "repairedAccepted": true
+      },
+      {
+        "name": "otherwise-valid-envelope",
+        "rejected": true,
+        "repairedAccepted": true
+      },
+      {
+        "name": "bypassed-precommit-implementation",
+        "detected": true
+      }
+    ]
+  },
+  "affectedIntegration": [
+    {
+      "command": "node verify-full-cycle.mjs",
+      "exitCode": 0,
+      "stdoutSha256": "0d082548c684dac377130e1b0d11e5f7e640df538db5947f22fa5c10530509c1",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output": "RY_VALIDATORS_SUCCEEDED\",\n        \"MANDATORY_VALIDATORS_FAILED\",\n        \"MANDATORY_VALIDATORS_UNDETERMINED_OR_NOT_RUN\",\n        \"UNRESOLVED_CRITICAL_DEFECTS\",\n        \"UNRESOLVED_MAJOR_DEFECTS\",\n        \"BLOCKING_REQUIREMENT_IDS\",\n        \"VIOLATED_REQUIREMENT_IDS\",\n        \"FAILED_TEST_IDS\",\n        \"UNDETERMINED_OR_MISSING_TEST_IDS\",\n        \"UNRESOLVED_DEFECT_IDS\",\n        \"BLOCKER_IDS\",\n        \"SELECTED_RELEASE_STATE\",\n        \"CONTROLLING_DECISION_RULE\",\n        \"CONTROLLING_REASON\",\n        \"AFFIRMATIVE_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-28-projection\",\n      \"stage\": 28,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"HASH_REVIEW_ID\",\n        \"DELIVERY_CANDIDATE_SET_ID\",\n        \"RELEASE_GATE_ID\",\n        \"RELEASE_GATE_STATE\",\n        \"HASH_ALGORITHM\",\n        \"HASH_TOOL_AND_VERSION\",\n        \"ARTIFACT_HASH_RECORDS\",\n        \"TOTAL_ARTIFACTS_REQUIRED_FOR_RELEASE\",\n        \"TOTAL_ARTIFACTS_WITH_AUDITED_HASH\",\n        \"TOTAL_ARTIFACTS_REHASHED_IMMEDIATELY_BEFORE_DELIVERY\",\n        \"TOTAL_EXACT_HASH_MATCHES\",\n        \"TOTAL_HASH_MISMATCHES\",\n        \"TOTAL_UNKNOWN_HASH_COMPARISONS\",\n        \"ALL_RELEASE_HASHES_EQUAL_AUDITED_HASHES\",\n        \"ANY_POST_REVIEW_MODIFICATION\",\n        \"DELIVERY_AUTHORIZATION\",\n        \"AUTHORIZATION_EVIDENCE\",\n        \"AUTHORIZATION_DATE_AND_TIME\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-29-projection\",\n      \"stage\": 29,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"EVIDENCE_CHAIN_VERSION\",\n        \"JOB_ID\",\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"BASELINE_ID\",\n        \"RELEASE_GATE_ID\",\n        \"HASH_REVIEW_ID\",\n        \"MANDATORY_REQUIREMENT_EVIDENCE_CHAIN_RECORDS\",\n        \"TOTAL_MANDATORY_REQUIREMENTS\",\n        \"TOTAL_MANDATORY_REQUIREMENTS_WITH_COMPLETE_CHAINS\",\n        \"TOTAL_MANDATORY_REQUIREMENTS_WITH_INCOMPLETE_CHAINS\",\n        \"TOTAL_MANDATORY_REQUIREMENTS_WITH_UNKNOWN_CHAIN_LINKS\",\n        \"MANDATORY_EVIDENCE_CHAIN_COVERAGE\",\n        \"ALL_MANDATORY_EVIDENCE_CHAINS_COMPLETE\",\n        \"INCOMPLETE_CHAIN_REQ_IDS\",\n        \"UNKNOWN_CHAIN_REQ_IDS\",\n        \"FINAL_EVIDENCE_CHAIN_DETERMINATION\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-30-projection\",\n      \"stage\": 30,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"DEFECT_REGISTRY_VERSION\",\n        \"REGRESSION_REGISTRY_VERSION\",\n        \"PRE_DELIVERY_CHECKPOINT_ID\",\n        \"DELIVERY_ID\",\n        \"DELIVERY_STATE\",\n        \"DELIVERY_RECORD_HASH\",\n        \"DELIVERY_ATTEMPT_RECORDS\",\n        \"REGISTRY_IS_APPEND_ONLY\",\n        \"DEFECT_RECORDS\",\n        \"REGRESSION_RECORDS\",\n        \"FUTURE_BASELINE_REGRESSION_EXECUTION_RECORDS\",\n        \"TOTAL_DEFECT_RECORDS\",\n        \"TOTAL_CONFIRMED_DEFECTS_WITH_REGRESSION_TESTS\",\n        \"TOTAL_ACTIVE_REGRESSION_TESTS\",\n        \"TOTAL_RETIRED_REGRESSION_TESTS\",\n        \"DEFECT_RECORDS_MISSING_REQUIRED_FIELDS\",\n        \"CONFIRMED_DEFECTS_MISSING_REGRESSION_TESTS\",\n        \"FINAL_REGISTRY_DETERMINATION\"\n      ]\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "node verify-response-retry-persistence.mjs",
+      "exitCode": 0,
+      "stdoutSha256": "123f7294cbb775cd1f5abf2a21375536284e30953961b51e22a83700f0b2ccf1",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output": "{\n  \"synthetic\": true,\n  \"actualBrowser\": false,\n  \"environment\": \"Actual UI commit/continuation functions with production runtime and transactional test adapter\",\n  \"cases\": [\n    {\n      \"name\": \"Rejected response retains rejection and saves a fresh correctly bound instruction without accepting work\",\n      \"result\": \"PASS\"\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "node verify-history-contracts.mjs",
+      "exitCode": 0,
+      "stdoutSha256": "57016551144833f22fca7a73a0dc267574ad187d4f60ffa781f7da409774e58f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output": "{\n  \"synthetic\": true,\n  \"environment\": \"Node VM production modules and lifecycle transaction adapter\",\n  \"realIndexedDB\": false,\n  \"cases\": [\n    {\n      \"name\": \"Every selected stage excludes all subsequent-stage sentinels, including copied records and forged projection marker\",\n      \"selectedStages\": 30,\n      \"comparedStagePairs\": 900,\n      \"basis\": \"Synthetic context-boundary sentinels; not full stage execution\",\n      \"result\": \"PASS\"\n    },\n    {\n      \"name\": \"All selected-stage job metadata excludes later version pointers and global completion\",\n      \"result\": \"PASS\"\n    },\n    {\n      \"name\": \"Every semantic author/reviewer operation prepares its selected-stage scope independently of later execution scopes\",\n      \"operations\": 19,\n      \"result\": \"PASS\"\n    },\n    {\n      \"name\": \"Restored pending candidate stays unaccepted; retained bytes revalidate locally; new abandoned-operation response rejects\",\n      \"result\": \"PASS\"\n    },\n    {\n      \"name\": \"Restored unvalidated file progresses only through its saved exact-byte permission; an arriving response stays stale\",\n      \"result\": \"PASS\"\n    },\n    {\n      \"name\": \"Unconfirmed and stale-confirmation mutations reject; exact confirmed change commits\",\n      \"result\": \"PASS\"\n    },\n    {\n      \"name\": \"Pending correction restores and imports as an unconfirmed exact candidate with a fresh confirmation binding\",\n      \"result\": \"PASS\"\n    },\n    {\n      \"name\": \"Consolidated stage export includes the same authoritative response scope and profile as its instruction manifest\",\n      \"result\": \"PASS\"\n    }\n  ],\n  \"implementationFaults\": [\n    {\n      \"id\": \"BYPASS-CONTEXT-PROJECTION\",\n      \"result\": \"DETECTED\",\n      \"restored\": \"PASS\"\n    },\n    {\n      \"id\": \"INHERIT-LATER-EXECUTION-SCOPE\",\n      \"result\": \"DETECTED\",\n      \"restored\": \"PASS\"\n    },\n    {\n      \"id\": \"INHERIT-GLOBAL-PROMPT-ITERATION\",\n      \"result\": \"DETECTED\",\n      \"restored\": \"PASS\"\n    },\n    {\n      \"id\": \"SKIP-PERSISTENCE-CONFIRMATION\",\n      \"result\": \"DETECTED\",\n      \"restored\": \"PASS\"\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "node verify-semantic-review-acceptance.mjs",
+      "exitCode": 0,
+      "stdoutSha256": "5ce355fbd6709d8d1dbdd56d0b8a3a00371a90673aa989920394067844e438a1",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output": "{\"semanticReviewAcceptance\":\"PASS\",\"orphanAuditIsNotLiveAttempt\":true,\"requestedReviewPreservesAcceptedProgress\":true,\"pendingReviewIsSeparatelyActionable\":true,\"semanticReviewStages\":[1,2,3,4,5,6],\"pendingProposalsPreserved\":true,\"recordedOperationSelectionPreserved\":true,\"commandGatesUseCurrentOwner\":true,\"automaticNextInstruction\":true,\"explicitLegacyRecovery\":true,\"restorationDoesNotExecuteCorrection\":true,\"reconciliationThenIndependentReview\":true,\"invalidResultsRejected\":true,\"mixedFindingsCannotPass\":true,\"negativeFindingsRouteToCorrection\":true,\"legacyEvidencePreserved\":true,\"validReviewUnlocksStage6\":true}\n"
+    },
+    {
+      "command": "node verify-human-authority-roundtrip.mjs",
+      "exitCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output": ""
+    },
+    {
+      "command": "node verify-reservation-contract.mjs",
+      "exitCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output": ""
+    }
+  ],
+  "retryFaultVerification": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "cases": [
+      {
+        "fault": "COMPARE_WITH_CANDIDATE_REVISION",
+        "oracle": "RETRY_COMMIT_ORACLE",
+        "result": "DETECTED"
+      }
+    ],
+    "restoredImplementation": "PASS"
+  },
+  "limits": [
+    "Synthetic external responses and minimal transaction/UI adapters; no independent external-actor, real-project or physical-iPhone claim.",
+    "Complete required CI against the published integrated candidate and exact deployment acceptance remain required.",
+    "Manifest semantic coverage and required device/visual evidence remain open."
+  ],
+  "applicationComplete": false
+}

@@ -1280,6 +1280,70 @@ Stages 12, 13, 18, and 19 evaluate only current applicable PREPRODUCT_ITERATION 
 
 A deferred target-dependent test becomes due no earlier than the first stage where its target exists and no later than REQUIRED_BY_STAGE. It is never required before the target exists and is never represented as executed before actual execution.
 
+16.1A Closed timing representation and derivation
+
+For a test, regression, or deferred failure test, the seven timing fields in Section 16.1 describe that record's execution. `VERIFICATION_PHASE` is one of the nine Section 16.1 values; stage values are integers naming existing stages, `REQUIRED_BY_STAGE` is not before `EARLIEST_EXECUTABLE_STAGE`, and the three required flags are booleans. No missing timing value receives an implicit success, phase, stage, or boolean default.
+
+For a proposition and its single current proof obligation, the seven fields occur in each entry of an application-owned `TIMING_ENTRIES` array. The array represents the leaf schedule of the accepted normalized proof expression; it is not a scalar aggregation. Each entry has exactly these fields:
+
+| Field | Contract |
+|---|---|
+| `LEAF_PATH` | Nonempty canonical JSON Pointer locating a leaf in the normalized expression. |
+| `SOURCE_KIND` | `TEST`, `PROPOSITION`, `APPLICABILITY`, or `PROOF_OBLIGATION`. |
+| `SOURCE_ID` | Application-resolved canonical reference to the leaf's declared target family. |
+| `VERIFICATION_PHASE` | One Section 16.1 phase. |
+| `EARLIEST_EXECUTABLE_STAGE` | Existing stage integer. |
+| `REQUIRED_BY_STAGE` | Existing stage integer, at least the earliest stage. |
+| `PER_RUN_REQUIRED` | Boolean; true only for a preproduct per-run obligation. |
+| `FINAL_PRODUCT_REQUIRED` | Boolean; true only for a final-product or final-representation obligation. |
+| `DELIVERY_REQUIRED` | Boolean; true only for a delivery-identity, evidence-closure, registry-closure, or terminal-delivery obligation. |
+| `TARGET_AVAILABILITY_CONDITION` | Closed condition defined below. |
+
+All these entry fields and the containing array are APPLICATION-owned. Entries are ordered by normalized leaf path and source identity. A test leaf receives exactly the validated timing of its current accepted test. A prerequisite leaf expands the current accepted prerequisite schedule with its path prefixed by the referencing leaf path; cycles, unresolved references, and incompatible scope block acceptance. Repeated references remain separately traceable to their expression paths.
+
+A non-test leaf that has no referenced schedule must carry an explicit `proposedTiming` object in the proposed proof expression. That object has exactly the seven Section 16.1 fields. The author may propose it; the application validates its types, target references, phase, stage availability and scope, and the independent proof review required by the owning operation must cover its timing and target. For an activation obligation needed before Stage 6, the existing applicability/review operation must establish that contract at the earliest knowable stage under the same independence rules; its timing cannot depend on first completing the stage that it gates. Only that accepted, application-normalized result can populate `TIMING_ENTRIES`. A proposal alone cannot establish target availability or current proof authority.
+
+Until the relevant current independently reviewed proof contract exists, the application's timing state is unresolved: `TIMING_ENTRIES` is empty and no timing-dependent completion or satisfaction is claimed. Stage 6 cannot complete with an empty, missing, ambiguous, unbound, or unreviewed required schedule. The proposition and corresponding current proof obligation expose the same derived schedule identity. A schedule or governing revision change invalidates affected current results and prompts through the existing dependency and confirmation mechanisms.
+
+This per-leaf representation is the meaning of “declares” for composite propositions and proof obligations in Section 16.1 and “verification phase, due-stage fields” in Section 38.1. It preserves the exactly-one-current-proof-obligation rule. It does not add a second scheduling store or executor.
+
+**Closed target-availability condition**
+
+A condition is one of the following exact JSON object forms. Unknown keys, coercions, empty child arrays, arbitrary code, implicit references, and unregistered families are invalid.
+
+```json
+{"type":"PHASE_TARGET"}
+{"type":"CURRENT_RECORD","family":"<registered canonical family>","recordId":"<canonical ID>"}
+{"type":"VERIFIED_ARTIFACT_BYTES","artifactId":"<canonical artifact ID>"}
+{"type":"ALL_OF","children":["<condition>","<condition>"]}
+{"type":"ANY_OF","children":["<condition>","<condition>"]}
+{"type":"AT_LEAST_K","k":1,"children":["<condition>","<condition>"]}
+```
+
+The quoted placeholders in the examples stand for typed values or child objects; they are not literal accepted condition strings. Operator children are one or more conditions. `k` is an integer from one through the number of children. Family and reference contracts come from the current closed canonical registry. References must be present in the permitted current context and resolve within the entry's project and version; agents cannot allocate or override identities.
+
+`CURRENT_RECORD` is TRUE only for a resolved, active, compatible current-scope record. `VERIFIED_ARTIFACT_BYTES` additionally requires current custody of the exact registered bytes with matching size and digest. An affirmatively established absence or incompatibility is FALSE. Unreadable, unresolved, stale, corrupted, or unverifiable required evidence is UNKNOWN. A nonempty pointer alone never proves existence or verified bytes. The three operator forms use the Section 29.13 three-valued truth tables, without negation.
+
+`PHASE_TARGET` uses the entry's phase and resolves the following current targets through canonical relationships:
+
+| Phase | Required target identity |
+|---|---|
+| `PREPRODUCT_ITERATION` | For a per-run entry: the current frozen candidate, its current bound iteration and the relevant registered run. For a non-per-run entry: its declared canonical subject and prerequisite records in current scope; no future candidate or run is required merely to inspect an earlier-stage subject. |
+| `FINAL_PRODUCT_DETERMINISTIC`, `FINAL_PRODUCT_MEANING`, `FINAL_PRODUCT_ADVERSARIAL` | The current completed product/version and its registered available product artifacts. |
+| `FINAL_REPRESENTATION` | The current frozen delivery-candidate set and its available member artifacts. |
+| `DELIVERY_IDENTITY` | The current release-eligible product and the same bound delivery-candidate set. |
+| `EVIDENCE_CLOSURE` | The current release and completed identity review bound to that candidate set. |
+| `REGISTRY_CLOSURE` | The current project registry bound to the current release, identity review and evidence-chain version. |
+| `TERMINAL_DELIVERY` | The current release, identity review, evidence-chain version and pre-delivery checkpoint bound to the same candidate set. |
+
+Required artifact content must pass the same custody and byte checks as the corresponding normal operation. The field registry records each phase's target families and relationship bindings. Earliest execution cannot precede creation of the required target under the actual workflow operation contracts. An explicit condition may require additional current records or artifacts; it cannot remove the phase's mandatory target bindings. Availability is the conjunction of the phase target and the explicit condition.
+
+Due evaluation is per entry, using Section 16.1's stage, applicability and availability rules. A future leaf remains scheduled and is never treated as TRUE or as executed. Proof truth continues to use the accepted expression's `LEAF`, `ALL_OF`, `ANY_OF` or `AT_LEAST_K` structure. Early satisfaction of an alternative does not erase another independently mandatory execution. Missing or UNKNOWN required availability at the required stage is an actionable readiness blocker, not successful or completed execution. No latest/earliest-phase summary substitutes for the leaf schedule.
+
+**Compatibility and recovery**
+
+The new condition and schedule contracts receive distinct registry/contract identities. Existing raw responses and retained checkpoints remain byte-preserved. An older accepted schedule may satisfy current work only after explicit compatibility validation proves the same target and timing meaning. Missing timing or an unregistered old condition form does not silently become current: the application supplies the existing correction/review path and requires confirmation wherever accepted work or dependencies change. Restoration preserves the saved version and its unresolved state; it does not rerun work or invent completed evidence.
+
 16.2 Canonical-family sole-authority rule
 
 Canonical record families are the sole substantive authority for canonical project data. Stage-data fields that correspond to canonical records may contain only: (a) pre-acceptance proposal payloads, (b) immutable canonical ID references, or (c) application-recomputed summaries. Duplicated substantive canonical values in stage data are prohibited. Any summary/reference mismatch fails integrity validation and cannot be resolved by choosing whichever copy is convenient.
@@ -2804,6 +2868,28 @@ One execution cannot establish both pre-correction failure and later post-correc
 A failure or regression test is executed only when its target exists and its current EARLIEST_EXECUTABLE_STAGE has been reached. Its REQUIRED_BY_STAGE may not precede target availability. A not-yet-due test remains registered and visible as future work but does not falsely block a prior convergence stage.
 
 Every negative, mutation, adversarial, storage-failure, parser-hostility, and deliberately invalid fixture executes against isolated disposable state: a test-only project clone, test-only IndexedDB namespace, immutable read-only artifact copy, isolated worker input, or explicitly authorized external sandbox. The suite must prove that no fixture mutated a canonical user project or an unauthorized third-party target. Canonical user projects and third-party systems are never mutation targets unless the exact action is separately authorized and safely bounded.
+
+32.4A Deferred execution operations and receipts
+
+As an explicit extension of the closed stage-operation set in Section 14.6, an existing stage may expose EXECUTE_FAILURE_TEST or EXECUTE_REGRESSION for a current accepted failure-test or regression definition when that stage is later than the definition's owning stage, its EARLIEST_EXECUTABLE_STAGE has been reached, and its current target-availability condition and mandatory phase targets are TRUE. The stage is the selected execution stage in the active project version. This extension does not make subsequent-stage material available to an earlier-stage handoff. The registry contains these conditional combinations; it does not accept arbitrary operation names or infer permissions from a response.
+
+An unknown or unavailable target at REQUIRED_BY_STAGE blocks progression with the responsible definition and recovery/correction action identified. A future definition remains visible and unexecuted. Missing timing, unknown fields, stale scope, missing capability, or missing evidence never supplies a default success. Earlier convergence uses only the due PREPRODUCT_ITERATION obligations whose PER_RUN_REQUIRED is true, without retiring or deleting future definitions.
+
+These operations reuse the existing execution, reservation, response, review, confirmation, and persistence mechanisms. They do not introduce another executor or canonical family. Every deferred definition has an application-resolved EXECUTION_TEST_ID relationship to a current accepted tests record. That record supplies its reviewed execution mode, capability, artifact-input contract and observation contract. The definition supplies its preserved negative fixture, expected rejection or regression outcome, and its own explicit Section 16.1 timing. The executable test and the definition must be compatible in requirement, scope, actual target and expected outcome; unknown compatibility blocks acceptance. A deferred definition cannot reuse an ordinary successful positive observation as evidence that its negative fixture was executed.
+
+The failureTests and regressions FIELD_REGISTRY entries add EXECUTION_TEST_ID as an APPLICATION-owned reference resolved from the response relationship to tests. Author proposals do not allocate its identity or override the referenced test. Changing that reference or the deferred definition requires the existing replacement confirmation and invalidates its affected current execution evidence.
+
+The existing regressionExecutions family also records deferred failure-test execution receipts. Each receipt has exactly one subject relationship: REG_ID to regressions or MUTATION_ID to failureTests. MUTATION_ID is an APPLICATION-owned reference. SUBJECT_SHA256 is an APPLICATION-owned digest of the accepted subject definition including its timing, fixture and execution-test binding. Existing identity, evidence, timestamp, candidate, iteration and product fields remain application-controlled. The receipt's stage and current scope are the actual permitted execution operation's stage and scope, rather than an earlier definition stage.
+
+PHASE is PRE_CORRECTION, POST_CORRECTION, or FAILURE_VALIDATION. FAILURE_VALIDATION is valid only with MUTATION_ID; PRE_CORRECTION and POST_CORRECTION are valid only with REG_ID. The existing RESULT is the application-normalized SATISFIED, VIOLATED, or UNDETERMINED determination. A failure-validation result is SATISFIED only when the actual observation establishes rejection of the bound known-invalid fixture through the required capable route. For regressions, pre-correction failure and post-correction success require distinct executions with distinct recorded input identities; one execution cannot establish both.
+
+Every receipt includes application-normalized TARGET_IDENTITIES and ISOLATION. TARGET_IDENTITIES is an ordered array of closed objects containing family, recordId and recordSha256 for each required canonical target. Artifact entries additionally contain byteSize and sha256; non-artifact entries must not contain those byte fields. Identities are derived from the current phase and explicit target conditions, checked against actual custody where bytes are required, and rechecked at commit. ISOLATION is a closed object with kind and identity. kind is TEST_PROJECT_CLONE, TEST_STORAGE_NAMESPACE, IMMUTABLE_ARTIFACT_COPY, ISOLATED_WORKER_INPUT, or AUTHORIZED_EXTERNAL_SANDBOX. identity names the actual disposable instance or immutable copy used. Native execution records application observations; external execution retains attributable evidence and its actual epistemic basis. Neither an agent statement nor an identifier alone proves isolation or execution.
+
+An externally routed operation accepts only the Section 14.6 response types through its bound reservation and file package. Its writable canonical output is one appended regressionExecutions receipt plus the ordinary supporting evidence records; it cannot replace a definition, modify unrelated results, or change canonical user-project data as the test fixture. Application-native execution writes the same receipt contract directly after the isolated executor completes. A failure or timeout is explicit and preserves the current accepted project and recovery points.
+
+The target slot binds the definition ID and SUBJECT_SHA256, selected stage and operation, current project/version/scope, execution-test identity and hash, required target identities, fixture identity and content digest, and regression phase where applicable. Exact retries retain the existing operation and receipt identity; changed targets or definitions require the normal new reservation and confirmation rules. A delayed or abandoned operation cannot alter a restored version.
+
+Current-stage gates, execution plans, next-action selection, handoffs, convergence, release, terminal checks and History restoration consume this same schedule and receipt authority. When due execution is missing, the existing next-action interface offers the corresponding current-stage execution operation before that stage can complete. Unexecuted future work is never labeled executed or removed from the registry. Old receipts without the newly required binding cannot satisfy current deferred work through implicit migration; retained versions and raw evidence remain intact.
 
 32.5 Regression retirement
 

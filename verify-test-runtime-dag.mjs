@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:webcrypto,Blob};
 context.globalThis=context;
-vm.createContext(context);
+createVerifierRuntime(context);
 vm.runInContext(fs.readFileSync('hash.js','utf8'),context,{filename:'hash.js'});
 vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});
 const runtime=context.closedLoopTestRuntime;

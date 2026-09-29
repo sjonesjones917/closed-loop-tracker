@@ -1,7 +1,8 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-if(!globalThis.closedLoopHash)vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
+if(!globalThis.closedLoopHash)createVerifierRuntime.loadScript(globalThis,fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 const mustReject=(name,fn,pattern)=>{
@@ -12,7 +13,7 @@ const mustReject=(name,fn,pattern)=>{
   return true;
 };
 
-assert(h.version==='closed-loop-hash/7','Stage 02 primitive authority version is not current.');
+assert(h.version==='closed-loop-hash/9','Stage 02 primitive authority version is not current.');
 assert(h.filenameVersion==='closed-loop-filename/1','Filename contract identity is missing.');
 assert(h.trustedTimeVersion==='closed-loop-trusted-time/1','Trusted-time contract identity is missing.');
 assert(h.unicodeContract?.version==='15.1.0','Pinned Unicode version is not 15.1.0.');
@@ -20,6 +21,7 @@ assert(h.unicodeContract?.sourceCommit==='9595f090650e99e3e752b37a7a3866ac8a9199
 assert(h.unicodeContract?.caseFoldingBlobSha1==='69c5c64b4c6a124f4608722db723a9e32667f190','Pinned Unicode CaseFolding data identity is missing.');
 assert(h.assertPinnedUnicodeHost().version==='15.1.0','Pinned host Unicode conformance fixtures did not pass.');
 
+assert(h.normalizeFilename('résumé.txt').canonicalPath==='résumé.txt','Pinned Unicode filename support failed.');
 const filename=h.normalizeFilename('Report-01.JSON');
 assert(filename.rawFilename==='Report-01.JSON','Raw filename was not preserved.');
 assert(filename.displayFilename==='Report-01.JSON','Display filename changed unexpectedly.');
@@ -38,7 +40,7 @@ const filenameMutations=[
   ['control character',()=>h.normalizeFilename('bad\u0000name.txt'),/UNSAFE_FILENAME/],
   ['trailing dot',()=>h.normalizeFilename('bad.'),/UNSAFE_FILENAME/],
   ['trailing space',()=>h.normalizeFilename('bad '),/UNSAFE_FILENAME/],
-  ['unpinned Unicode repertoire',()=>h.normalizeFilename('résumé.txt'),/UNSUPPORTED_UNICODE_FILENAME/]
+  ['Unicode control character',()=>h.normalizeFilename('bad\u0085name.txt'),/UNSAFE_FILENAME/]
 ];
 for(const [name,fn,pattern] of filenameMutations)mustReject(name,fn,pattern);
 

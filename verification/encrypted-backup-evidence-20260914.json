@@ -1,0 +1,126 @@
+{
+  "schema": "closed-loop-encrypted-backup-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "repairBaseCommit": "263938750f55023eaacc43182b1bbc440b5483dc",
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "synthetic": true,
+  "actualBrowser": false,
+  "physicalDeviceAcceptance": false,
+  "applicationComplete": false,
+  "before": {
+    "sourceCommit": "263938750f55023eaacc43182b1bbc440b5483dc",
+    "method": "Exact production modules from the recorded commit in an isolated runtime",
+    "operationSequence": [
+      "Create a clean project",
+      "Persist a disposable credential-classified file",
+      "Save its checkpoint",
+      "Export without a password"
+    ],
+    "expected": "Reject plaintext export; preserve active state and History",
+    "actual": "Plaintext gzip backup was returned; required rejection assertion failed",
+    "failure": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Missing expected rejection: SECRET_EXPORT_ORACLE\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspace/scratch/ec4ac78ce440/encrypted-baseline/verify-encrypted-backups.mjs:8:58 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: undefined,\n  expected: [Function (anonymous)],\n  operator: 'rejects',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n"
+  },
+  "after": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "environment": "Node 24 WebCrypto plus independent node:crypto verification and lifecycle transaction adapter",
+    "testedArtifactBytes": 65539,
+    "encryptedBackupBytes": 39023,
+    "cases": [
+      {
+        "name": "Known credential material blocks plaintext export before reporting success or changing recovery state",
+        "result": "PASS"
+      },
+      {
+        "name": "Independent AES-256-GCM/PBKDF2 verification confirms parameters, ciphertext, tag and manifest-digest AAD",
+        "result": "PASS"
+      },
+      {
+        "name": "Repeated encryption uses fresh salt and IV and produces different ciphertext",
+        "result": "PASS"
+      },
+      {
+        "name": "Missing/wrong passwords and individual KDF, tag, AAD, ciphertext and length modifications reject without partial activation",
+        "result": "PASS"
+      },
+      {
+        "name": "Encrypted exported bytes restore the complete compatible project, exact files and retained History in an empty store",
+        "result": "PASS"
+      },
+      {
+        "name": "A credential file only in retained History still requires an encrypted complete backup",
+        "result": "PASS"
+      },
+      {
+        "name": "A protection-ledger storage failure returns no backup and preserves the prior verified export",
+        "result": "PASS"
+      },
+      {
+        "name": "A repeated salt/IV pair is rejected before producing ciphertext",
+        "result": "PASS"
+      },
+      {
+        "name": "Neither the operator passphrase nor derived key appears in persisted project, artifact metadata or META records",
+        "result": "PASS"
+      }
+    ]
+  },
+  "faults": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "cases": [
+      {
+        "fault": "secret",
+        "oracle": "SECRET_EXPORT_ORACLE",
+        "result": "DETECTED"
+      },
+      {
+        "fault": "history",
+        "oracle": "RETAINED_SECRET_ORACLE",
+        "result": "DETECTED"
+      }
+    ],
+    "restoredImplementation": "PASS"
+  },
+  "lifecycle": {
+    "logSha256": "65209f6b816582dfb970e0f0508511c2e2a414b8928d8f7470e2676001014576",
+    "result": "PASS",
+    "includes": [
+      "bounded source reads",
+      "serialization limits",
+      "concurrent export identity",
+      "import atomicity",
+      "lost worker reply",
+      "worker transaction abort"
+    ]
+  },
+  "sourceFiles": [
+    {
+      "path": "project-store.js",
+      "sha256": "2adbc61c950765709b683b2eebbfcc30013bbbf355e3664b876ea5662e45a593"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "1267903eb3419c558712eb5c0bff864eae5033ca66796814546bccaafb61c973"
+    },
+    {
+      "path": "index.html",
+      "sha256": "00ed6e37d12ecccdfa29f495d09d811cf57f01643c0b00e7db04b53b0ebe4a2f"
+    },
+    {
+      "path": "verify-encrypted-backups.mjs",
+      "sha256": "0e99e7be83e60d1f5ebce082d59484916e5322f22cbc01a6b68a4c61592e6c01"
+    },
+    {
+      "path": "verify-encrypted-backup-faults.mjs",
+      "sha256": "3dcc794db744dbd453486c03e08df61c2f707c2d28c2a20277db6e8debd276fd"
+    }
+  ],
+  "limits": [
+    "WebCrypto whole-payload encryption requires sufficient browser memory; failure returns no package and does not activate project data.",
+    "Executed encrypted artifact workload: 65,539 bytes. Large encrypted payload capacity and physical iPhone Safari remain unverified.",
+    "Declared History limits remain 2048 checkpoints, 512 MiB compressed project snapshots and 1 GiB retained file bytes, subject to browser storage availability.",
+    "Encryption enforces known credential classifications across active state and all retained checkpoints; complete classification/disclosure-policy coverage remains open.",
+    "No complete actual browser or exact deployed revision acceptance is established by these synthetic tests."
+  ]
+}

@@ -1,0 +1,657 @@
+{
+  "schema": "closed-loop-allocation-repair-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "repairBaseCommit": "5076c76974db0439bf667ef65a260099059d0058",
+  "controllingSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "environment": "Node 24.19.0 Linux, production JavaScript in VM, explicit lifecycle transaction adapter",
+  "synthetic": true,
+  "actualBrowser": false,
+  "physicalDeviceAcceptance": false,
+  "applicationComplete": false,
+  "before": {
+    "sourceCommit": "5076c76974db0439bf667ef65a260099059d0058",
+    "sources": [
+      {
+        "path": "workbook.js",
+        "sha256": "cc8eda7edf3c405a434d3e54f4b5a96cc0af16763d454388c0c504f1ba122d8b"
+      },
+      {
+        "path": "hash.js",
+        "sha256": "0f9bcc55b5aa75922e76205f1e994c009192ab3fda7b0456cbbc83910f08f878"
+      },
+      {
+        "path": "workflow-schema.js",
+        "sha256": "1c2e64da7f829e5b3a2c2d800ebd8e3fd13d85acfc192402e52dd9bc84803d12"
+      },
+      {
+        "path": "test-runtime.js",
+        "sha256": "57b23223a00074e9b231a5f27af5437a00ffcbb0473d5e8a831a1600a3bdb432"
+      },
+      {
+        "path": "workflow-engine.js",
+        "sha256": "74c21ee601ff72a73d4e0d69e5afe1f913470659d3fdc0eb5862ee8f5c151f32"
+      }
+    ],
+    "synthetic": true,
+    "actualBrowser": false,
+    "cases": [
+      {
+        "family": "sources",
+        "left": "SOURCE-000001",
+        "right": "SOURCE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "sourceConflicts",
+        "left": "SOURCE-CONFLICT-000001",
+        "right": "SOURCE-CONFLICT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "research",
+        "left": "RESEARCH-000001",
+        "right": "RESEARCH-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "candidateRequirements",
+        "left": "CANDIDATE-REQ-000001",
+        "right": "CANDIDATE-REQ-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "requirements",
+        "left": "REQ-000001",
+        "right": "REQ-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "requirementResolutions",
+        "left": "REQ-RESOLUTION-000001",
+        "right": "REQ-RESOLUTION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "tests",
+        "left": "TEST-000001",
+        "right": "TEST-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "failureTests",
+        "left": "MUTATION-000001",
+        "right": "MUTATION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "instructions",
+        "left": "PRODUCTION-INSTRUCTION-000001",
+        "right": "PRODUCTION-INSTRUCTION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "preflightRecords",
+        "left": "PREFLIGHT-REVIEW-000001",
+        "right": "PREFLIGHT-REVIEW-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "iterations",
+        "left": "ITERATION-000001",
+        "right": "ITERATION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "candidateFreezes",
+        "left": "CANDIDATE-000001",
+        "right": "CANDIDATE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "runs",
+        "left": "RUN-000001",
+        "right": "RUN-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "verification",
+        "left": "VERIFICATION-000001",
+        "right": "VERIFICATION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "comparisons",
+        "left": "COMPARISON-000001",
+        "right": "COMPARISON-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "defects",
+        "left": "DEFECT-000001",
+        "right": "DEFECT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "rootCauses",
+        "left": "RCA-000001",
+        "right": "RCA-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "regressions",
+        "left": "REG-000001",
+        "right": "REG-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "changes",
+        "left": "CHANGESET-000001",
+        "right": "CHANGESET-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "convergenceRecords",
+        "left": "CONVERGENCE-000001",
+        "right": "CONVERGENCE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "confirmationRecords",
+        "left": "CONFIRMATION-000001",
+        "right": "CONFIRMATION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "baselines",
+        "left": "BASELINE-000001",
+        "right": "BASELINE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "products",
+        "left": "PRODUCT-000001",
+        "right": "PRODUCT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "deterministicResults",
+        "left": "DETERMINISTIC-RESULT-000001",
+        "right": "DETERMINISTIC-RESULT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "meaningResults",
+        "left": "MEANING-REVIEW-000001",
+        "right": "MEANING-REVIEW-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "adversarialResults",
+        "left": "ATTACK-000001",
+        "right": "ATTACK-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "representationInspections",
+        "left": "INSPECTION-000001",
+        "right": "INSPECTION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "processAudits",
+        "left": "PROCESS-AUDIT-000001",
+        "right": "PROCESS-AUDIT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "productAudits",
+        "left": "PRODUCT-AUDIT-000001",
+        "right": "PRODUCT-AUDIT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "releaseGateReviews",
+        "left": "GATE-REVIEW-000001",
+        "right": "GATE-REVIEW-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "releaseRecords",
+        "left": "RELEASE-000001",
+        "right": "RELEASE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "artifactIdentities",
+        "left": "ARTIFACT-IDENTITY-000001",
+        "right": "ARTIFACT-IDENTITY-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "evidenceInvestigations",
+        "left": "CHAIN-INVESTIGATION-000001",
+        "right": "CHAIN-INVESTIGATION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "evidenceChains",
+        "left": "CHAIN-000001",
+        "right": "CHAIN-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "instructionTraces",
+        "left": "TRACE-000001",
+        "right": "TRACE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "regressionExecutions",
+        "left": "REG-EXEC-000001",
+        "right": "REG-EXEC-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "blockers",
+        "left": "BLOCKER-000001",
+        "right": "BLOCKER-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "freshContexts",
+        "left": "CONTEXT-000001",
+        "right": "CONTEXT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "evidenceRecords",
+        "left": "EVIDENCE-000001",
+        "right": "EVIDENCE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "artifacts",
+        "left": "ARTIFACT-000001",
+        "right": "ARTIFACT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "propositions",
+        "left": "PROPOSITION-000001",
+        "right": "PROPOSITION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "propositionEquivalenceReviews",
+        "left": "PROP-EQ-000001",
+        "right": "PROP-EQ-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "applicabilityRecords",
+        "left": "APPLICABILITY-000001",
+        "right": "APPLICABILITY-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "proofExpressions",
+        "left": "PROOF-EXPR-000001",
+        "right": "PROOF-EXPR-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "proofObligations",
+        "left": "PROOF-OBLIGATION-000001",
+        "right": "PROOF-OBLIGATION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "observationRecords",
+        "left": "OBSERVATION-000001",
+        "right": "OBSERVATION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "entailmentReviews",
+        "left": "ENTAILMENT-000001",
+        "right": "ENTAILMENT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "environmentDependencies",
+        "left": "DEPENDENCY-000001",
+        "right": "DEPENDENCY-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "operationReservations",
+        "left": "RESERVATION-000001",
+        "right": "RESERVATION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "deliveryRecords",
+        "left": "DELIVERY-000001",
+        "right": "DELIVERY-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "deploymentManifests",
+        "left": "DEPLOYMENT-000001",
+        "right": "DEPLOYMENT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "humanDecisions",
+        "left": "HUMAN-DECISION-000001",
+        "right": "HUMAN-DECISION-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "sourceSearchContracts",
+        "left": "SOURCE-SEARCH-000001",
+        "right": "SOURCE-SEARCH-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "semanticChallenges",
+        "left": "SEMANTIC-CHALLENGE-000001",
+        "right": "SEMANTIC-CHALLENGE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "semanticReviews",
+        "left": "SEMANTIC-REVIEW-000001",
+        "right": "SEMANTIC-REVIEW-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "expectedVarianceContracts",
+        "left": "VARIANCE-CONTRACT-000001",
+        "right": "VARIANCE-CONTRACT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "environmentManifests",
+        "left": "ENVIRONMENT-000001",
+        "right": "ENVIRONMENT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "externalCapabilities",
+        "left": "CAPABILITY-000001",
+        "right": "CAPABILITY-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "materialityReviews",
+        "left": "MATERIALITY-REVIEW-000001",
+        "right": "MATERIALITY-REVIEW-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "commandReceipts",
+        "left": "COMMAND-RECEIPT-000001",
+        "right": "COMMAND-RECEIPT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "backupPolicies",
+        "left": "BACKUP-POLICY-000001",
+        "right": "BACKUP-POLICY-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "backupCheckpoints",
+        "left": "CHECKPOINT-000001",
+        "right": "CHECKPOINT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "deliveryCandidateSets",
+        "left": "DELIVERY-CANDIDATE-000001",
+        "right": "DELIVERY-CANDIDATE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "deliveryAttempts",
+        "left": "DELIVERY-ATTEMPT-000001",
+        "right": "DELIVERY-ATTEMPT-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      },
+      {
+        "family": "mobileAcceptanceRecords",
+        "left": "MOBILE-ACCEPTANCE-000001",
+        "right": "MOBILE-ACCEPTANCE-000001",
+        "expected": "Different project namespaces produce different canonical IDs and allocation receipts",
+        "actual": "COLLISION",
+        "allocationReceipts": 0
+      }
+    ]
+  },
+  "after": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "environment": "Node production runtime and transaction adapter",
+    "registeredFamilies": 65,
+    "cases": [
+      {
+        "name": "All registered canonical families use the specified 160-bit SHA-256/base32hex algorithm and distinct project namespaces",
+        "result": "PASS"
+      },
+      {
+        "name": "Exact command retries retain their original allocation; conflicting retries reject and independent equal-content actions remain distinct",
+        "result": "PASS"
+      },
+      {
+        "name": "A collision with an existing different allocation increments only the collision counter",
+        "result": "PASS"
+      },
+      {
+        "name": "Infrastructure identities share the canonical allocator and preserve project separation",
+        "result": "PASS"
+      },
+      {
+        "name": "Committed receipts restore with their complete version and never enter agent-facing stage context",
+        "result": "PASS"
+      },
+      {
+        "name": "The commit transaction rejects mutation of an existing allocation receipt without changing active or retained state",
+        "result": "PASS"
+      },
+      {
+        "name": "A different continuation after restoration cannot reuse the abandoned continuation\u2019s newly allocated identity",
+        "result": "PASS"
+      }
+    ]
+  },
+  "targetedFaults": {
+    "synthetic": true,
+    "actualBrowser": false,
+    "cases": [
+      {
+        "fault": "namespace",
+        "oracle": "PROJECT_NAMESPACE_ORACLE",
+        "result": "DETECTED"
+      },
+      {
+        "fault": "receipt",
+        "oracle": "RECEIPT_INTEGRITY_ORACLE",
+        "result": "DETECTED"
+      }
+    ],
+    "restoredImplementation": "PASS"
+  },
+  "sourceFiles": [
+    {
+      "path": "workflow-schema.js",
+      "sha256": "4776dc705c71a442b192ed2baa7519564b4196084ecc0e8650d94effb43d07f4"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "2eb58428f23a8314817c58006420a36fdcd40f1f18e22d2e7af91c1be4ea68ef"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "14a7c3e1e918d06819e9d9f4eebbe2579e4833823e67b45e32c5ff3156634aaf"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "46ddfd8d60415893d325a01b5eb2004e61590c7963986d219e8715d33a5c6a72"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "0600e8ca67c0de4a9fb3d9ac0ed1813cb4e6e422b085be6c2abd7794948e09f7"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "2aacef2b05af97a697c9889f0d9f466adbd701b8a0cb74c89e2ce7df3225a97f"
+    },
+    {
+      "path": "verify-canonical-allocation.mjs",
+      "sha256": "8a461274a384b0fc92e1e18f7adc1ac2b446da6d57d046c14e3001400949bcf1"
+    },
+    {
+      "path": "verify-canonical-allocation-faults.mjs",
+      "sha256": "8987c85772a796e40f8a095c7851f45be01468100453e5fe0d7f4371f7f787fe"
+    },
+    {
+      "path": "verify-history-sequences.mjs",
+      "sha256": "ba59568b58448fc282c73782c97d7431ec1fca7dfb615f52de3fa57bdbfb53d9"
+    }
+  ],
+  "scopeLimits": [
+    "This proves the shared canonical-record and registered infrastructure allocators, not every identifier producer in the application.",
+    "Existing accepted identifiers and complete retained versions are preserved.",
+    "Artifact staging, project creation, prompt/package identity producers and full clone remapping still require conformance closure.",
+    "Exact final CI, actual browser journeys, real external outputs, physical iPhone Safari and deployed revision evidence remain outstanding."
+  ]
+}

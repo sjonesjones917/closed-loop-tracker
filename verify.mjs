@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
@@ -6,7 +7,7 @@ globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
 const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json'];
 for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer runtime failed to load.');
 const html=fs.readFileSync('index.html','utf8'),orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
@@ -15,6 +16,10 @@ if(scriptTags.length!==orderedScripts.length)throw new Error('Runtime scripts mu
 const tokens=new Set();orderedScripts.forEach((file,index)=>{if(scriptTags[index]?.split('?')[0]!==file)throw new Error(`Runtime script order mismatch at ${file}.`);if(scriptTags.filter(src=>src.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique.`);const token=new URLSearchParams(scriptTags[index].split('?')[1]||'').get('v');if(!token)throw new Error(`${file} lacks a build token.`);tokens.add(token);});if(tokens.size!==1)throw new Error('Runtime scripts use mixed build tokens.');
 if(fs.existsSync('app.js')||/document\.write\s*\(/.test(html))throw new Error('Dynamic runtime injection remains.');
 for(const file of fs.readdirSync('.'))if(/^\.repair-/.test(file))throw new Error(`Repair scaffolding remains: ${file}`);
+const repairTransportPatterns=[/^apply-.*repair.*\.(?:mjs|js)$/i,/.*repair.*delta.*\.json$/i,/.*repair.*(?:payload|applicator|patch).*$/i];
+const walkRepairTransport=(dir='.')=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>{const relative=dir==='.'?entry.name:`${dir}/${entry.name}`;if(entry.isDirectory())return ['.git','node_modules'].includes(entry.name)?[]:walkRepairTransport(relative);return repairTransportPatterns.some(pattern=>pattern.test(entry.name))?[relative]:[];});
+const repairTransport=walkRepairTransport().sort();
+if(repairTransport.length)throw new Error(`Repair transport artifacts remain: ${repairTransport.join(', ')}`);
 const expected=[
 'Initialize the Job','Build the Source Inventory','Research the Requirements','Compile the Requirement Specification','Resolve the Requirement Set','Build the Verification Suite Before Writing the Production Instruction','Build Failure Tests','Author the Production Instruction','Preflight the Production Instruction','Freeze the Test Candidate','Run Ten Independent Executions','Verify Each Execution Independently','Compare the Ten Executions','Root-Cause Every Defect','Convert Every Confirmed Failure Into a Regression Test','Correct the Root Cause','Re-Run the Complete Ten-Execution Iteration','Continue Until Convergence','Run an Unchanged Confirmation Iteration','Freeze the Production Baseline','Generate the Finished Product','Run Deterministic Verification on the Finished Product','Run Independent Meaning-Based Verification','Run Adversarial Verification','Inspect the Final Representation','Reconcile Process and Product Evidence','Apply the Release Gate','Verify Artifact Identity Before Release','Preserve the Complete Evidence Chain','Preserve Failures Permanently and Close Delivery'];
 if(core.STAGES.length!==30)throw new Error(`Expected exactly 30 stages; found ${core.STAGES.length}.`);
@@ -44,11 +49,12 @@ if(retained.generatedPrompts?.length!==1||retained.outputReceipts?.length!==1)th
 function blank(jobId){const p=core.createBlankState(jobId);p.job.JOB_ID=jobId;p.job.JOB_TITLE='Verification project';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Controlled verification objective';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);for(let stage=1;stage<=30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}return p;}
 function prepareStage4(p){const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Preserved for downstream reuse.',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};return p;}
 function syntheticPromptOptions(stage,p,operation=schema.STAGE_CONTRACTS[stage].operations[0]){const scope={};for(const key of schema.operationContract(stage,operation).scopeRequirements){if(key==='projectRevision')scope[key]=Number(p.revision||0);else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;else if(key==='sourceSetVersion')scope[key]='SOURCE-SET-v001';else if(key==='requirementsVersion')scope[key]='REQUIREMENTS-v001';else if(key==='testSuiteVersion')scope[key]='TEST-SUITE-v001';else if(key==='instructionVersion')scope[key]='INSTRUCTION-v001';else if(key==='iterationId')scope[key]='ITERATION-000001';else if(key==='candidateId')scope[key]='CANDIDATE-000001';else if(key==='runId')scope[key]='RUN-000001';else if(key==='contextId')scope[key]='CONTEXT-000001';else if(key==='baselineId')scope[key]='BASELINE-000001';else if(key==='productId')scope[key]='PRODUCT-000001';else scope[key]=`${key.toUpperCase()}-000001`;}return {operation,scope};}
-const generated=[];let totalOperations=0,externalPromptsVerified=0,nonExternalPromptRejections=0;
+const generated=[];let totalOperations=0,externalPromptsVerified=0,nonExternalPromptRejections=0,conditionalRejections=0;
 for(let stage=1;stage<=30;stage++){
  const p=blank(`JOB-PROMPT-${stage}`);if(stage===4)prepareStage4(p);
  for(const operation of schema.STAGE_CONTRACTS[stage].operations){
   totalOperations++;const registry=schema.STAGE_OPERATION_REGISTRY?.[`${stage}:${operation}`];if(!registry?.executorClass)throw new Error(`Stage ${stage}/${operation} lacks an executor classification.`);const options=syntheticPromptOptions(stage,p,operation);
+  if(registry.deferredSubjectFamily){let rejected=false;try{prompts.buildPromptRecord(stage,p,options);}catch(error){rejected=error?.code==='DEFERRED_EXECUTION_UNAVAILABLE';}if(!rejected)throw new Error('Unbound conditional operation generated a handoff: '+stage+'/'+operation);conditionalRejections++;continue;}
   if(registry.executorClass!=='EXTERNAL_AGENT'){
    let rejected=false;try{prompts.buildPromptRecord(stage,p,options);}catch(error){rejected=error?.code==='NON_EXTERNAL_OPERATION';}
    if(!rejected)throw new Error(`Stage ${stage}/${operation} (${registry.executorClass}) must reject external prompt generation.`);nonExternalPromptRejections++;continue;
@@ -63,7 +69,7 @@ for(let stage=1;stage<=30;stage++){
   }
  }
 }
-if(totalOperations!==66||externalPromptsVerified!==50||nonExternalPromptRejections!==16)throw new Error(`Prompt/executor partition mismatch: ${JSON.stringify({totalOperations,externalPromptsVerified,nonExternalPromptRejections})}`);
+if(totalOperations!==66+conditionalRejections||externalPromptsVerified!==50||nonExternalPromptRejections!==16)throw new Error(`Prompt/executor partition mismatch: ${JSON.stringify({totalOperations,externalPromptsVerified,nonExternalPromptRejections})}`);
 if(new Set(generated).size!==generated.length)throw new Error('External-agent prompts are not operation-specific.');
 const pa=prompts.buildPromptRecord(2,blank('JOB-A'),syntheticPromptOptions(2,blank('JOB-A'),'COMPLETE')).prompt,pb=prompts.buildPromptRecord(2,blank('JOB-B'),syntheticPromptOptions(2,blank('JOB-B'),'COMPLETE')).prompt;if(pa.includes('JOB-B')||pb.includes('JOB-A'))throw new Error('Cross-project prompt contamination detected.');
 
@@ -84,13 +90,13 @@ if(!prepareSource||prepareSource.includes('savePromptRecord(n)'))throw new Error
 for(const token of ['function responsePromptRecord(n,text)','ingestion.captureRaw(current','projectStore.stageResponseFile','projectStore.readStagedResponseFile'])if(!appSourceForStatus.includes(token))throw new Error(`Returned-instruction validation regression missing ${token}.`);
 const statusSource=appSourceForStatus.match(/const statusClass=v=>\{.*?\};/)?.[0];
 if(!statusSource)throw new Error('Status classifier is not inspectable.');
-const statusProbe=vm.runInNewContext(`${statusSource};({notReady:statusClass('NOT READY'),notAuthorized:statusClass('NOT AUTHORIZED'),notComplete:statusClass('NOT COMPLETE'),unauthorized:statusClass('UNAUTHORIZED'),accepted:statusClass('ACCEPTED'),ready:statusClass('READY'),blocked:statusClass('BLOCKED')})`);
+const statusProbe=createVerifierRuntime.loadScript(createVerifierRuntime(),`${statusSource};({notReady:statusClass('NOT READY'),notAuthorized:statusClass('NOT AUTHORIZED'),notComplete:statusClass('NOT COMPLETE'),unauthorized:statusClass('UNAUTHORIZED'),accepted:statusClass('ACCEPTED'),ready:statusClass('READY'),blocked:statusClass('BLOCKED')})`);
 if(statusProbe.notReady!=='warn'||statusProbe.notAuthorized!=='danger'||statusProbe.notComplete!=='warn'||statusProbe.unauthorized!=='danger'||statusProbe.accepted!=='success'||statusProbe.ready!=='success'||statusProbe.blocked!=='warn')throw new Error(`Status presentation polarity is unsafe: ${JSON.stringify(statusProbe)}`);
 const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.readFileSync(f,'utf8')).join('\n');
 if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.stringify(retained)))throw new Error('Unauthorized product content remains.');
 
-console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allOperationsVerified:66,externalPromptsVerified:50,nonExternalPromptRejections:16,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true},null,2));
+console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allOperationsVerified:totalOperations,externalPromptsVerified,nonExternalPromptRejections,conditionalRejections,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true},null,2));
 
 // Practical-100 schema/ownership contract.
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};

@@ -1,0 +1,18 @@
+{
+  "schema":"closed-loop-conformance-register-addendum/1",
+  "parentRegister":"verification/conformance-20260917/requirements.json",
+  "sourceRevision":"0ad870906f696c8ae214fa850c0403c1df2bd3c8",
+  "composition":"Include this mandatory row in the parent register denominator; no prior row is removed.",
+  "rows":[{
+    "requirementId":"RECOVERABLE-REMOVAL-FEEDBACK",
+    "sourceLocation":"operator section 6.B retained-work language; section 6.C recoverable history; UX-009 and UX-019",
+    "productionOwner":"app-core.js:projectManagementMarkup/deleteCurrentProject; project-store.js:removeProjectIndexed/restoreCheckpoint",
+    "observableExpectedBehavior":"The project-removal control describes removal from the active list without asserting permanent erasure. The adjacent explanation and completion feedback identify retained History. Executing removal keeps the recorded complete version restorable, including exact file bytes.",
+    "requiredEvidence":"Execute the authored production renderer and reject any permanent-erasure claim on the removal action. Replay removal and History restoration through actual browser controls, comparing recorded project state and artifact bytes; retain the original failure and corrected raw results.",
+    "applicableStages":"Project management at any selected stage of an ordinary project",
+    "applicableOperations":["remove project","restore removed project","reload"],
+    "status":"UNVERIFIED",
+    "observedSource":"The production button says Permanently delete project while the production explanation and storage operation preserve saved versions and files. Behavioral renderer reproduction is required before the correction."
+  }],
+  "completionClaim":false
+}

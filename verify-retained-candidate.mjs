@@ -1,7 +1,8 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-for(const file of ['workbook.js']) vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js']) createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore;
 if(!core) throw new Error('Workbook runtime failed to load.');
 if(core.STAGES.length!==30) throw new Error(`Retained candidate changed stage count: ${core.STAGES.length}.`);

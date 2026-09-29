@@ -1,0 +1,109 @@
+Bring the existing sjonesjones917/closed-loop-tracker application into conformance with the controlling specification across all 30 stages and every required operation. Include reversible acceptance and recoverable project history as described below.
+
+Find defects, reproduce them, and make the smallest complete corrections needed. Preserve working functionality, existing architecture, and approved visuals. Use the repository’s existing CI, integration, and deployment controls.
+
+Apply these requirements generally. Do not hard-code particular stages, stage ranges, movement distances, or example sequences. Determine behavior from the actual project version, selected stage, operation, prerequisites, dependencies, and affected work.
+
+The deliverable is the working, verified application. Inspection, documentation, tests, and individual repairs support that deliverable; they do not establish completion by themselves.
+
+1. Establish and maintain complete coverage.
+    Record the exact starting commit and controlling specification version. Include the recovery requirements in this instruction in the requirement manifest and acceptance criteria. These requirements replace the earlier restriction that browser history may change only the view.
+    Check the manifest against the entire specification, including prohibitions, failure handling, recovery, and acceptance requirements. Independently review coverage for omissions.
+    For every mandatory requirement, identify the responsible production code, observable expected behavior, required evidence, and current status. Resolve ambiguity using the specification’s definitions and defaults wherever possible. Record unresolved requirements explicitly.
+    Maintain coverage across all 30 stages and every required operation. Include initial execution, repeated execution, earlier-stage execution, replacement acceptance, cancellation, invalidation, restoration, and subsequent continuation wherever each operation applies.
+2. Provide the correct context for every stage and operation.
+    The user may select, inspect, or execute any stage permitted by the specification, including a previously completed stage. Determine the required information and available actions from the selected stage within the active project version.
+    Bind every execution and handoff to the correct project, version, stage, operation, attempt, and revision. Provide the relevant project information, applicable rules, valid prerequisites, and permitted current-stage material needed for that operation.
+    Exclude subsequent-stage information from every agent-facing handoff. Apply this restriction regardless of how many later stages exist, whether they are completed or incomplete, and whether their information is stored in the active version or retained history.
+    Enforce this boundary across prompts, instructions, manifests, file lists, attachments, metadata, summaries, cached context, and consolidated exports. Prevent indirect disclosure through copied content, derived summaries, or shared files.
+    Rebuild stale handoffs when their project version, stage, scope, or governing revision changes. Keep complete restoration backups separate from agent-facing stage handoffs.
+    Apply the same rules after ordinary navigation, re-execution, Undo, Redo, browser-history traversal, and restoration from saved History.
+3. Confirm changes according to their actual effect on accepted work.
+    Treat stage selection, execution, response validation, committed acceptance, and restoration as distinct operations.
+    Selecting a stage, generating instructions, or receiving a response must not itself replace accepted work or reset subsequent progress. Validate a response before offering acceptance. Keep a valid replacement as a candidate until the required confirmation and successful commit.
+    Whenever acceptance would replace an accepted result or invalidate existing progress, show a concise confirmation within the page and automatically scroll it into view. Do not use a popup, modal, browser alert, or browser confirmation dialog.
+    Calculate the complete impact from the actual project state and authoritative dependency rules. Explain what will be replaced, identify the affected stages or steps, and state what must be completed again. Generate this information dynamically. Do not assume a fixed number of affected stages or a contiguous range unless the actual dependencies establish one.
+    Explain that the previous version remains available to restore. Use clear actions such as “Accept replacement” and “Keep current progress.” If no subsequent work is affected, describe only the replacement. Do not describe retained work as permanently erased.
+    If the user cancels or leaves confirmation unanswered, preserve the accepted result and existing progress. Navigation, reload, and restoration must never turn an unconfirmed candidate into an accepted response.
+    Before committing, recheck the candidate, active version, revision, and affected work. Bind confirmation to the exact replacement and consequences shown. If relevant state changes, recompute the impact and obtain updated confirmation.
+    Preserve the previous recoverable version before activating the replacement. Commit the accepted result and required invalidation atomically. Update results, completion status, approvals, accounting, pending operations, generated materials, and delivery readiness consistently.
+    Invalidate all directly and indirectly dependent work required by the specification, including completed, partially completed, and pending work. Preserve independent valid work where the specification establishes its independence.
+    While the replacement version is active, require affected work to be performed and accepted against that version’s upstream state. Prevent incompatible historical responses, approvals, or artifacts from satisfying current requirements.
+    After acceptance succeeds, bring the next required operation into view and provide a concise Undo action. Repeated submission or confirmation of an already committed operation must not accept it twice or repeat invalidation.
+4. Preserve recoverable versions throughout the workflow.
+    Save a complete starting checkpoint when the application session opens, including any project state that already exists. Preserve recoverable versions for meaningful changes throughout the session.
+    Retain the project inputs, responses, prerequisite relationships, acceptance records, progress, drafts, and exact file contents needed to reconstruct each version. Capture relevant drafts and view state before leaving them.
+    Use durable application persistence. Browser history, temporary URLs, file-picker state, and browser memory must not be the only recovery mechanisms. Extend existing persistence only as necessary to provide reliable recovery.
+    Restore each version as a consistent whole. Restoring an earlier accepted result must also restore the matching downstream state that belonged to that version. Restoring a replacement must restore the invalidation and rework requirements belonging to the replacement version.
+    Never combine results, approvals, or completion records from incompatible versions. A restored candidate that had not been accepted must remain unaccepted.
+    Restoration must activate saved state without rerunning the commands that originally produced it. The user must not repeat completed work merely to reconstruct a retained version.
+    If the user returns to an earlier version and makes a different change, preserve the previously saved continuation while creating the new continuation. Keep retained alternatives available through a compact History control. Hide internal identifiers and branching details from the normal workflow.
+    Make Undo, Redo, browser-history restoration, and History restoration use compatible authoritative mechanisms. Recovery must remain available after a notification disappears. Preserve the active version and promised recovery history through reload and required backup restoration.
+    Make restoration atomic. Handle rapid navigation, jumps across multiple entries, interrupted restores, missing or corrupted files, and persistence failures. Do not report successful restoration until its required data is available. Preserve the existing recoverable state when restoration fails.
+    Keep current authorization, concurrency checks, execution records, and duplicate-operation protections in force. Do not silently overwrite independent work in another tab or session. Prevent delayed responses from abandoned operations from changing the restored version.
+    Reconcile pending operations with their actual status. Do not reissue completed external requests, repeat deliveries, or imply that an action outside the application has been undone.
+    Retain recovery to the recorded application-session start within declared and tested support limits. Provide application History when native browser entries are unavailable. Do not silently discard promised recovery points or advertise unlimited retention.
+    If a required checkpoint cannot be saved, report the failure before committing a change that depends on that recovery guarantee.
+5. Make browser navigation and stage selection behave consistently.
+    Distinguish selecting a stage within the active version from returning to a previously recorded project state.
+    Ordinary stage selection must open the selected stage within the active version. It must not implicitly rewind the project merely because the selected stage was previously completed.
+    Associate application-history entries with their saved project versions and views. Browser Back and Forward must activate the version associated with each visited entry and restore the appropriate project, selected stage, and view position.
+    Crossing a recorded acceptance or correction boundary must restore the corresponding working project data, decisions, files, and dependent progress. Changing only the displayed page or status labels does not satisfy this requirement.
+    Support navigation by any available history distance, including repeated Back/Forward presses and direct jumps to retained entries. Determine restoration from the destination entry rather than assuming the user moved one stage or performed a particular sequence.
+    Preserve the remaining Back/Forward path while traversing existing entries. If a new continuation changes the browser’s forward path, retain the previously saved versions in application History.
+    Support the initial application view, reloads, direct links, and supported mobile navigation gestures. A link identifying a saved version must resolve to that version under current access controls. Ordinary stage links must use the active version.
+    Enforce prerequisites within whichever version is active. Restoration may recover approvals that belong to that complete version; it must not bypass requirements by combining incompatible states.
+    Preserve normal browser behavior when navigation reaches an entry outside the application. Do not create artificial history loops that trap the user.
+6. Keep the interface clear, concise, and uncluttered.
+    Preserve the approved visual design. Change layout, wording, and interactions only where necessary to correct defects, support required recovery, or remove unnecessary effort.
+    Use plain language. Remove redundant text, repeated controls, unnecessary confirmations, and information that does not help with the current task. Place codes, internal identifiers, diagnostic details, and advanced tools behind appropriate details or advanced controls.
+    Keep required decisions, useful status, actionable errors, and recovery access visible. Do not expose implementation details merely because the application stores or uses them.
+    Consolidate each stage’s required exports into one user action, using a format compatible with the required file transport. Enforce stage and version isolation before assembling the export. Automate computation, assembly, and coordination that the application can perform for the user.
+    Present information and actions in the order needed. After ordinary workflow actions, bring the next required reading or action into view. Minimize scrolling. Scroll upward when an explicit return, correction, or retry requires it.
+    After saving project information, direct the user to the next required operation. During history restoration, restore the recorded view instead of automatically advancing to another stage.
+    Show a small, clearly visible loading or progress indicator during pending operations and restoration. Prevent duplicate execution from repeated clicks. Provide clear completion, failure, and recovery feedback.
+7. Reproduce actual behavior and repair the responsible production mechanisms.
+    Run the existing automated checks and start a clean project through the actual interface. Preserve failures with their inputs, operation sequence, expected result, actual result, and source revision.
+    Check required mobile file selection, export, storage, restoration, and browser-history capabilities early. Record the environments actually tested. Final physical-device acceptance must apply to the exact final deployed revision.
+    Ensure prompt generation, context selection, response validation, workflow commands, version management, restoration, and persistence use compatible authoritative contracts.
+    Enforce field ownership, stage boundaries, valid transitions, current version and scope, atomic mutation, retry identity, and downstream invalidation in the responsible production code. Correct shared causes and every affected consumer.
+    For every defect: reproduce the failure, establish a regression that detects it, correct the earliest responsible production layer, replay the failed operator path, verify affected downstream paths, and preserve the regression.
+    Make the smallest correction that closes the complete defect across its dependencies. Preserve unrelated working mechanisms and keep the full application scope active throughout the work.
+8. Prove that tests detect their intended failures.
+    Derive expected outcomes from the specification and these requirements independently of the implementation.
+    For every required gate class, create an otherwise valid disposable case containing one deliberate violation. Verify rejection for that specific reason. Remove the violation and verify successful progression.
+    Introduce targeted implementation faults, including bypassed ownership or context validation, skipped confirmation, incomplete invalidation, incorrect byte comparison, mutation of retained history, and restoration of incompatible versions. Verify that relevant tests detect the introduced fault, then restore the implementation.
+    Apply coverage across every applicable stage and transition. Include first and final stages, repeated execution of the same stage, movement between different stages, states with no subsequent work, and states with completed, partially completed, pending, or invalidated dependent work.
+    Cover validation failure, confirmation, cancellation, unanswered confirmation, duplicate submission, stale confirmation, concurrent edits, storage failure, and interrupted commits.
+    Inspect generated content and exported bytes. Verify that required information is present and subsequent-stage information is absent, including after restoration.
+    Compare restored project data, dependency relationships, approvals, and artifact bytes against their recorded checkpoints. Test acceptance reversal, forward restoration, repeated Undo and Redo, multi-entry jumps, different continuations, reloads, direct links, application History, and supported mobile gestures.
+    Verify that complete compatible versions restore correctly, incompatible combinations are rejected, pending confirmations remain unconfirmed, and completed external operations are not repeated.
+    Test retention limits, missing or corrupted saved files, interrupted restoration, concurrent sessions, and delayed responses from abandoned operations.
+    Source-text matches, declared success flags, screenshots alone, and test-file presence do not establish behavioral correctness. Report executed cases and actual results. Review every test category for incomplete stage, operation, and failure-path coverage.
+9. Discover workflow failures automatically.
+    Extend the existing test system with generated operation sequences covering progression, stage selection, history traversal, re-execution, confirmation, cancellation, Undo, Redo, restoration, different continuations, retries, duplicate submissions, stale responses, corrections, reloads, missing or corrupted files, storage failures, and concurrent edits.
+    Generate sequences from the applicable workflow rules and state combinations. Do not limit discovery to a fixed demonstration path or movement distance.
+    Check required invariants after each operation, including coherent active versions, preserved recovery points, stage isolation, valid approvals, and correct dependent-work status. Verify both rejection of invalid work and completion of valid work.
+    Use bounded state exploration for critical revision, confirmation, invalidation, restoration, transaction, and authorization rules. State the explored bounds and assumptions. Reduce discovered failures to reproducible sequences and retain them as regressions.
+10. Exercise complete operator journeys across all 30 stages.
+    Use actual application controls and file transport. Let prerequisite state arise from preceding operations.
+    Exercise instruction and manifest export, required context transfer, response-file ingestion, returned-file mapping, review and acceptance, application-owned commands, persistence, correction, recovery, saved history, and delivery.
+    Include a complete valid project and journeys covering rejected responses followed by correction; re-execution wherever permitted; replacement acceptance; cancellation without lost progress; required invalidation and re-completion; restoration of matching earlier progress; and restoration of the replacement state.
+    Exercise repeated movement among saved versions, different continuations created after restoration, recovery of retained alternatives through History, and return to the recorded session-start checkpoint.
+    Select journey coverage from the application’s actual stages, dependencies, and state transitions. Account for all applicable stages and transition classes without treating a particular example or fixed jump distance as the general rule.
+    Include reload and interrupted-operation recovery, backup export and restoration from exported bytes, recovery of the retained history covered by that backup, final artifact retrieval and byte comparison, and representative workloads and history lengths required by the support contract.
+    Label synthetic evidence accurately. Obtain required real-project evidence separately using actual external outputs. Record independence, human actions, and device observations only to the extent actually established.
+11. Integrate and verify the exact deployment.
+    Run focused and affected integration checks during repairs. Run the complete required CI suite against the integrated candidate before merge.
+    Use normal repository integration and deployment controls. Verify the resulting source revision, deployed resource identities, worker dependencies, and running application.
+    Repeat required operator acceptance against that deployment, including context isolation, replacement confirmation, dependent-work recovery, reversible acceptance, saved-history restoration, and browser navigation.
+    Obtain required physical-iPhone Safari acceptance and visual-baseline evidence for the exact deployed revision. Revalidate affected evidence after subsequent changes.
+12. Apply one completion condition.
+    Claim completion only when every mandatory requirement has its required implementation and evidence, all required checks pass, and required complete operator journeys succeed on the exact deployed version.
+    Any required operation, context boundary, confirmation, transition, recovery path, retained-history guarantee, wording, feedback, or navigation behavior that fails these requirements remains unfinished. Selected passing tests or completed individual stages do not establish application completion.
+    Distinguish application defects from unavailable tools, access, devices, or genuine human-only decisions. An unavailable capability is an execution or verification limitation, not evidence of an application defect.
+    Finish all independent implementation and verification work before requesting necessary assistance. Then identify the exact outstanding requirement, missing capability or decision, and evidence still needed. Missing mandatory evidence prevents an unqualified completion claim.
+
+Return the implemented changes, executed verification results, exact deployed revision if deployment was completed, remaining application defects, and unresolved execution or verification limitations. Report tested environments and recovery limits precisely. Keep functional readiness, physical-device acceptance, and production maturity distinct wherever the specification does.
+
+Deliver the corrected application. Do not substitute an audit, another plan, a patch archive, or an isolated stage repair for the complete requested result.

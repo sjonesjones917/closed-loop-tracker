@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const app=read('./app-core.js');
@@ -29,7 +30,8 @@ export function assertFileFirstResponseContract({appSource=app,promptSource=prom
   assert.match(ingestionSource,/transport:transportRecord/,'Raw response records must preserve the supplied transport basis.');
   assert.match(ingestionSource,/NONAUTHORITATIVE_TEXT_FALLBACK/,'Fallback transport must remain explicitly nonauthoritative.');
   assert.match(ingestionSource,/RESPONSE_FILE_DECODE_HASH_MISMATCH/,'Decoded text must remain bound to exact staged bytes.');
-  assert.match(appSource,/id="export-prompt-file"/,'External work must expose instruction-file export without requiring clipboard use.');
+  assert.match(appSource,/id="next-export-prompt-file"/,'External work must expose the one consolidated stage-file package action.');
+  for(const legacy of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files'])assert.doesNotMatch(appSource,new RegExp('id=\"'+legacy+'\"'),'Superseded per-artifact or duplicate export control remains: '+legacy);
   assert.match(htmlSource,/obtain the authoritative response\.json file for the current instruction/i,'Static operator guidance must identify the authoritative response.json filename and current-instruction binding.');
   assert.match(htmlSource,/Select the exact response\.json file returned by the agent in the application/i,'Static operator guidance must identify the selected response.json file and its external-agent origin.');
   assert.doesNotMatch(htmlSource,/Paste only that final JSON|Parse \/ validate response/,'Static guidance must not require pasted final JSON.');
@@ -48,7 +50,7 @@ function assertResponseFileInstruction(text){
 }
 
 // Exercise the generated instruction for every registered operation in an isolated runtime.
-const runtime=vm.createContext({TextEncoder,TextDecoder,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true});
+const runtime=createVerifierRuntime({TextEncoder,TextDecoder,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true});
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(read('./'+file),runtime,{filename:file});
 const {closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:workflow,closedLoopPromptEngine:prompts}=runtime;
 const state=core.createBlankState('JOB-RESPONSE-FILE-PROMPTS');
@@ -57,11 +59,12 @@ workflow.ensureShape(state);
 const manifest=prompts.intakeCoverageManifest(state);
 state.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',extractedStatements:[{statementKey:'S'+index,text:unit.rawValueText||unit.label,statementClass:'CONTEXT'}]}))});
 state.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
-let generatedOperations=0;
+let generatedOperations=0,conditionalRejections=0;
 for(let stage=1;stage<=schema.STAGE_COUNT;stage++){
   if(stage>1){state.stages[stage-1].status='COMPLETE';state.stages[stage-1].gate={complete:true};}
   for(const operation of schema.STAGE_CONTRACTS[stage].operations){
     const contract=schema.operationContract(stage,operation),scope=Object.fromEntries(contract.scopeRequirements.map(key=>[key,key==='projectRevision'?0:key.toUpperCase()+'-FILE-TEST']));
+    if(contract.deferredSubjectFamily){assert.throws(()=>prompts.buildPromptRecord(stage,state,{operation,scope}),error=>error?.code==='DEFERRED_EXECUTION_UNAVAILABLE','An unbound conditional operation must not generate a response-file handoff.');conditionalRejections++;continue;}
     if(contract.executorClass!=='EXTERNAL_AGENT'){let blocked=false;try{prompts.buildPromptRecord(stage,state,{operation,scope});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}assert(blocked,`Stage ${stage} ${operation} must not generate an external response-file prompt.`);continue;}
     const record=prompts.buildPromptRecord(stage,state,{operation,scope});
     assertResponseFileInstruction(record.prompt);
@@ -86,7 +89,7 @@ assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('
 console.log(JSON.stringify({
   fileFirstResponseContract:'PASS',
   generatedStages:schema.STAGE_COUNT,
-  generatedOperations,
+  generatedOperations,conditionalRejections,
   promptOutputMutationsDetected:4,
   primaryResponseFileSelection:true,
   durableByteStaging:true,

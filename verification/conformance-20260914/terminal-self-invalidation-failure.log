@@ -1,0 +1,19 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: INVALIDATION_ORACLE: deliveryRecords lost activity at its own or a later stage.
+
+false !== true
+
+    at Object.invalidation [as check] (file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-shared-contract-faults.mjs:51:312)
+    at file:///workspace/scratch/32c0fbf1551b/closed-loop-tracker/verify-shared-contract-faults.mjs:79:15 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

@@ -1,0 +1,397 @@
+{
+  "synthetic": true,
+  "actualBrowser": false,
+  "exitCode": 0,
+  "productionFiles": {
+    "project-store.js": "443ac83134fbeae3a6bec3d080d618dff98118b4addb15f1b7bb33feccc81c43",
+    "app-core.js": "dd60f0d00c13a1900f2ea99f0af82aea833132ee1af4b799742207518947d864"
+  },
+  "reports": [
+    {
+      "storageRegression": "database:blocked-upgrade-does-not-queue-startup",
+      "passed": true
+    },
+    {
+      "storageRegression": "database:blocked-upgrade-visible-recovery",
+      "passed": true
+    },
+    {
+      "storageRegression": "view:collapsed-diagnostic-lists",
+      "passed": true,
+      "stages": 30,
+      "completeReasons": 603,
+      "longReasonPreserved": true
+    },
+    {
+      "packageSourceReads": {
+        "complete": {
+          "sourceBytes": 393221,
+          "readBytes": 786442
+        },
+        "execution": {
+          "sourceBytes": 265555,
+          "readBytes": 802805
+        }
+      }
+    },
+    {
+      "storageRegression": "export:one-file-pass-after-integrity-verification",
+      "passed": true
+    },
+    {
+      "storageRegression": "execution-package:bounded-integrity-crc-and-transport-hash-passes",
+      "passed": true
+    },
+    {
+      "storageRegression": "export:one-project-pass-after-snapshot-verification",
+      "passed": true
+    },
+    {
+      "packageBackpressure": {
+        "sourceBytes": 1048577,
+        "readBytesBeforeCompressorRelease": 1155050
+      }
+    },
+    {
+      "storageRegression": "export:compression-backpressure-bounds-source-reads",
+      "passed": true
+    },
+    {
+      "storageRegression": "export:stream-failure-keeps-verified-checkpoint-and-recovers",
+      "passed": true
+    },
+    {
+      "storageRegression": "export:late-source-failure-keeps-verified-checkpoint-and-recovers",
+      "passed": true
+    },
+    {
+      "storageRegression": "export:verified-snapshot-hash-reused",
+      "passed": true
+    },
+    {
+      "storageRegression": "read:revision-metadata-must-match-verified-project",
+      "passed": true
+    },
+    {
+      "storageRegression": "read:legacy-corruption-keeps-hash-mismatch-recovery",
+      "passed": true
+    },
+    {
+      "storageRegression": "export:concurrent-save-keeps-snapshot-identity",
+      "passed": true
+    },
+    {
+      "storageRegression": "import:replay-saved-projections-without-fabricating-gates",
+      "passed": true
+    },
+    {
+      "storageRegression": "import:saved-projection-does-not-bypass-record-or-release-checks",
+      "passed": true
+    },
+    {
+      "accumulatedStage4Read": {
+        "attempts": 100,
+        "encodes": 8243,
+        "characters": 15676442,
+        "digest": "ebf3ee2b6737e45935fa8db7a533b52e7ad76219988d61ce7aeca0ffb033978c"
+      }
+    },
+    {
+      "storageRegression": "accumulation:selected-stage4-read-buffers",
+      "passed": true
+    },
+    {
+      "storageRegression": "diagnostics:complete-exports-do-not-wait-for-health",
+      "passed": true
+    },
+    {
+      "promptContextReadPressure": {
+        "prompts": 64,
+        "uniqueFiles": 1,
+        "artifactReads": 1,
+        "readonlyTransactions": 2
+      }
+    },
+    {
+      "storageRegression": "prompt-context:shared-identities-one-read-snapshot",
+      "passed": true
+    },
+    {
+      "promptContextDistinctPressure": {
+        "references": 258,
+        "uniqueFiles": 129,
+        "artifactReads": 129,
+        "readonlyTransactions": 1
+      }
+    },
+    {
+      "storageRegression": "prompt-context:distinct-identities-bounded-snapshot",
+      "passed": true
+    },
+    {
+      "storageRegression": "prompt-context:fresh-verification-owner",
+      "passed": true
+    },
+    {
+      "storageRegression": "prompt-context:fresh-verification-digest",
+      "passed": true
+    },
+    {
+      "storageRegression": "prompt-context:fresh-verification-size",
+      "passed": true
+    },
+    {
+      "storageRegression": "prompt-context:fresh-verification-contradictory-reference",
+      "passed": true
+    },
+    {
+      "storageRegression": "prompt-context:materialize-shared-missing-bytes-once",
+      "passed": true
+    },
+    {
+      "storageRegression": "prompt-context:missing-history-cannot-use-current-content",
+      "passed": true
+    },
+    {
+      "storageRegression": "prompt-context:historical-eligibility-and-backup-custody",
+      "passed": true
+    },
+    {
+      "artifactRegistrationPressure": {
+        "files": 1,
+        "preCommitRecalculations": 1
+      }
+    },
+    {
+      "storageRegression": "file-intake:bounded-registration:1",
+      "passed": true
+    },
+    {
+      "artifactRegistrationPressure": {
+        "files": 64,
+        "preCommitRecalculations": 1
+      }
+    },
+    {
+      "storageRegression": "file-intake:bounded-registration:64",
+      "passed": true
+    },
+    {
+      "artifactRegistrationPressure": {
+        "files": 65,
+        "preCommitRecalculations": 2
+      }
+    },
+    {
+      "storageRegression": "file-intake:bounded-registration:65",
+      "passed": true
+    },
+    {
+      "artifactRegistrationPressure": {
+        "files": 129,
+        "preCommitRecalculations": 3
+      }
+    },
+    {
+      "storageRegression": "file-intake:bounded-registration:129",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:batch-member-rejection:identity",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:batch-member-rejection:product",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:first-file:project",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:first-file:stage",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:first-file:revision",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:first-file:second-file-failure",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:second-file:project",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:second-file:stage",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:second-file:revision",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:second-file:second-file-failure",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:first-text:project",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:first-text:stage",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:first-text:revision",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:first-text:second-file-failure",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:second-text:project",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:second-text:stage",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:second-text:revision",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:second-text:second-file-failure",
+      "passed": true
+    },
+    {
+      "storageRegression": "file-intake:post-commit-render-failure-keeps-bytes",
+      "passed": true
+    },
+    {
+      "storageRegression": "storage-refresh:navigation-cannot-replace-totals",
+      "passed": true
+    },
+    {
+      "storageRegression": "addNew:preserve-newer-project",
+      "passed": true
+    },
+    {
+      "storageRegression": "duplicateCurrentProject:preserve-newer-project",
+      "passed": true
+    },
+    {
+      "storageRegression": "materializeProject:preserve-newer-project",
+      "passed": true
+    },
+    {
+      "storageRegression": "unloadInactiveProjects:preserve-newer-project",
+      "passed": true
+    },
+    {
+      "storageRegression": "archiveCurrentProject:preserve-newer-project",
+      "passed": true
+    },
+    {
+      "storageRegression": "bulk-write:stale-revision-atomic",
+      "passed": true
+    },
+    {
+      "storageRegression": "create-only:existing-zero-revision",
+      "passed": true
+    },
+    {
+      "storageRegression": "backup:required-canonical-bytes",
+      "passed": true
+    },
+    {
+      "storageRegression": "response-size:reject-before-full-read-preserve-raw",
+      "passed": true
+    },
+    {
+      "storageRegression": "import:incremental-package-decoding",
+      "passed": true
+    },
+    {
+      "storageRegression": "import:json-semantics-and-adversarial-streams",
+      "passed": true
+    },
+    {
+      "storageRegression": "artifact-queries:project-local-without-store-scan",
+      "passed": true
+    },
+    {
+      "storageRegression": "backup:required-prompt-context",
+      "passed": true
+    },
+    {
+      "storageRegression": "import:post-commit-refresh-failure",
+      "passed": true
+    },
+    {
+      "storageRegression": "import:pre-commit-failure-preserves-state",
+      "passed": true
+    },
+    {
+      "storageRegression": "delete:verified-selection-before-async-refresh",
+      "passed": true
+    },
+    {
+      "storageRegression": "startup:retained-refresh-keeps-snapshot-revision",
+      "passed": true
+    },
+    {
+      "storageRegression": "startup:unchanged-build-reuses-retained-project",
+      "passed": true
+    },
+    {
+      "storageRegression": "startup:picker-projection-and-selected-only",
+      "passed": true
+    },
+    {
+      "storageRegression": "diagnostics:startup-slow-health-does-not-block",
+      "passed": true
+    },
+    {
+      "storageRegression": "diagnostics:startup-failed-health-does-not-block",
+      "passed": true
+    },
+    {
+      "storageRegression": "storage-worker:same-authorities-and-cas",
+      "passed": true
+    },
+    {
+      "storageRegression": "storage-worker:commit-survives-lost-reply",
+      "passed": true
+    },
+    {
+      "storageRegression": "storage-worker:atomic-abort-and-import-recovery",
+      "passed": true
+    },
+    {
+      "projectLifecycleControls": true,
+      "compactHeader": true,
+      "mobileProjectActionsVisible": true,
+      "dangerHiddenByDefault": true,
+      "transactionalDeleteRetained": true,
+      "lifecycleMetadataDeleteAtomic": true,
+      "durableAttemptAbandonment": true,
+      "canonicalBlobReverification": true,
+      "applicationCustodyBlocking": true,
+      "custodyFailureRecoveryBehavior": true,
+      "staleDeliveryAuthorizationNotResurrected": true,
+      "perProjectBackupState": true,
+      "zeroLossAcceptanceReduction": true,
+      "queuedHandoffFilesPreserved": true,
+      "exportNavigationGuard": true,
+      "completeExportIdentityAfterNavigation": true,
+      "serializedCompletePackages": true,
+      "completeExportFailureRecovery": true,
+      "unsafeOverrides": 0
+    }
+  ]
+}

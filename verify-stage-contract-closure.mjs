@@ -1,10 +1,11 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-vm.runInThisContext(fs.readFileSync('workbook.js','utf8'),{filename:'workbook.js'});
+createVerifierRuntime.loadScript(globalThis,fs.readFileSync('workbook.js','utf8'),{filename:'workbook.js'});
 
 const core=globalThis.closedLoopCore;
 assert(core,'workbook runtime did not load');

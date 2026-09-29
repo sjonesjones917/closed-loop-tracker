@@ -1,0 +1,14 @@
+hash.js:185
+    const timer=setTimeout(()=>{
+                ^
+
+ReferenceError: setTimeout is not defined
+    at hash.js:185:17
+    at new Promise (<anonymous>)
+    at readWithDeadline (hash.js:182:10)
+    at Object.sha256Bytes (hash.js:197:90)
+    at nativeTestInputs (evalmachine.<anonymous>:19:89)
+    at async file:///mnt/data/closed-loop-tracker/verify-test-runtime.mjs:47:251
+
+Node.js v22.16.0
+exit_code=1

@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+const r=projectStoreRuntime(),{runtime,core,engine,prompts,store,copy}=r,cases=[];
+const source=fs.readFileSync('app-core.js','utf8'),start=source.indexOf('async function persistReplacement('),end=source.indexOf('\nasync function save()',start);
+Object.assign(runtime,{projectStore:store,clone:copy,captureCurrentView:async()=>{},captureView:()=>({}),withStorageActivity:(_label,fn)=>fn(),unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,recordCommittedBoundary:async()=>{},render:()=>{}});vm.runInContext(source.slice(start,end)+'\nglobalThis.persist=persistReplacement;',runtime);
+let p=core.createBlankState('UI-PERSISTENCE');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve the correct precondition revision.';engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});runtime.current=p;runtime.projects=copy([p]);
+const draft=copy(p),reserved=prompts.reserveAndBuildPromptRecord(draft,1,{},{}).prompt;assert.equal(draft.revision,p.revision+1);
+await assert.doesNotReject(async()=>{p=await runtime.persist(draft);},'RESERVATION_UI_COMMIT_ORACLE: the expected stored revision is the source revision, not the candidate revision');assert.equal(p.revision,reserved.reservationRevision);assert.equal((await store.readProject(p.job.JOB_ID)).projectData.generatedPrompts.at(-1).instructionId,reserved.instructionId);cases.push({name:'The real UI persistence owner commits a revision-advancing reservation against its source revision',result:'PASS'});
+const stale=copy(p),independent=copy(p);independent.job.JOB_TITLE='Independent edit';const saved=await store.writeProject(independent,{expectedProjectRevision:p.revision});runtime.current=saved;runtime.projects=copy([saved]);stale.job.JOB_TITLE='Delayed stale edit';await assert.rejects(()=>runtime.persist(stale),error=>error.code==='STALE_PROJECT_REVISION');assert.equal((await store.readProject(p.job.JOB_ID)).job.JOB_TITLE,'Independent edit');cases.push({name:'A stale candidate cannot overwrite independent work even when the UI has loaded the newer revision',result:'PASS'});
+console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Actual app persistence function and production store with lifecycle transaction adapter',cases},null,2));

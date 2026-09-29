@@ -1,0 +1,2196 @@
+{
+  "schema": "closed-loop-user-amendment-requirements/1",
+  "amendmentId": "RECOVERY-20260914-1",
+  "source": "Current conversation: user instruction requiring reversible acceptance and saved project history",
+  "sourceTranscriptionPath": "specification/recovery-user-instruction-20260914.txt",
+  "sourceTranscriptionSha256": "e921bf3acf1153dd0a65f2b577bcd5ecddff25eac441bc863926e402a7c71988",
+  "originalStartingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "amendmentStartingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "baseSpecificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "precedence": "Replaces the earlier restriction that browser history may change only the view. Supplements the entire controlling specification.",
+  "semanticCompletenessReview": "Full substantive instruction transcribed and every nonempty line indexed. Independent semantic omission review is not yet established.",
+  "requirements": [
+    {
+      "requirementId": "USER-001",
+      "sourceLine": 1,
+      "sourceLineSha256": "7db40e4a3cce9867c4e77ba64b718024d1c3b976260cd4f725e0818e8bbc4d74",
+      "mandatory": true,
+      "observableExpectedBehavior": "Bring the existing sjonesjones917/closed-loop-tracker application into conformance with the controlling specification across all 30 stages and every required operation. Include reversible acceptance and recoverable project history as described below.",
+      "productionOwners": [
+        "app-core.js",
+        "workflow-engine.js",
+        "project-store.js",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-003",
+      "sourceLine": 3,
+      "sourceLineSha256": "35ebbb33e14c43ec61b2e271b829f8fa2fbf0887dbd1cc4a89edacb1027e2258",
+      "mandatory": true,
+      "observableExpectedBehavior": "Find defects, reproduce them, and make the smallest complete corrections needed. Preserve working functionality, existing architecture, and approved visuals. Use the repository\u2019s existing CI, integration, and deployment controls.",
+      "productionOwners": [
+        "app-core.js",
+        "workflow-engine.js",
+        "project-store.js",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-005",
+      "sourceLine": 5,
+      "sourceLineSha256": "49a553b224fc9fe16a07c225313d1445ac80ad6a2be1a4e02a59b3a6437ea315",
+      "mandatory": true,
+      "observableExpectedBehavior": "Apply these requirements generally. Do not hard-code particular stages, stage ranges, movement distances, or example sequences. Determine behavior from the actual project version, selected stage, operation, prerequisites, dependencies, and affected work.",
+      "productionOwners": [
+        "app-core.js",
+        "workflow-engine.js",
+        "project-store.js",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-007",
+      "sourceLine": 7,
+      "sourceLineSha256": "37441f1de5d4749e31cfb94aef238ada9f2febf05825e0413f7e10a0e8b8c181",
+      "mandatory": true,
+      "observableExpectedBehavior": "The deliverable is the working, verified application. Inspection, documentation, tests, and individual repairs support that deliverable; they do not establish completion by themselves.",
+      "productionOwners": [
+        "app-core.js",
+        "workflow-engine.js",
+        "project-store.js",
+        ".github/workflows/pages.yml"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-009",
+      "sourceLine": 9,
+      "sourceLineSha256": "86025efdfc661ea121a624911c53b855304db56f0d445235c766afe8e712f938",
+      "mandatory": true,
+      "observableExpectedBehavior": "1. Establish and maintain complete coverage.",
+      "productionOwners": [
+        "generate-specification-governance.mjs",
+        "review-specification-coverage.mjs",
+        "verification/requirement-test-coverage.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-010",
+      "sourceLine": 10,
+      "sourceLineSha256": "20b0ca96edbf87e69125e758125298b1b9713bf376d523a4ec701d398e52ce6b",
+      "mandatory": true,
+      "observableExpectedBehavior": "Record the exact starting commit and controlling specification version. Include the recovery requirements in this instruction in the requirement manifest and acceptance criteria. These requirements replace the earlier restriction that browser history may change only the view.",
+      "productionOwners": [
+        "generate-specification-governance.mjs",
+        "review-specification-coverage.mjs",
+        "verification/requirement-test-coverage.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-011",
+      "sourceLine": 11,
+      "sourceLineSha256": "a9421189a9e8301f2dd7923a149b776435d36bcc7f7d7f56edb5054ce1c876a3",
+      "mandatory": true,
+      "observableExpectedBehavior": "Check the manifest against the entire specification, including prohibitions, failure handling, recovery, and acceptance requirements. Independently review coverage for omissions.",
+      "productionOwners": [
+        "generate-specification-governance.mjs",
+        "review-specification-coverage.mjs",
+        "verification/requirement-test-coverage.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-012",
+      "sourceLine": 12,
+      "sourceLineSha256": "69b02b35c9ce4d37d2677cb7de28a0904f76991e9bb96003ad9dfa3d47a5ff9d",
+      "mandatory": true,
+      "observableExpectedBehavior": "For every mandatory requirement, identify the responsible production code, observable expected behavior, required evidence, and current status. Resolve ambiguity using the specification\u2019s definitions and defaults wherever possible. Record unresolved requirements explicitly.",
+      "productionOwners": [
+        "generate-specification-governance.mjs",
+        "review-specification-coverage.mjs",
+        "verification/requirement-test-coverage.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-013",
+      "sourceLine": 13,
+      "sourceLineSha256": "4ce57cc34731b5ab0a51338d05cf623cb813ae9a964fb93bcc149df84821204d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Maintain coverage across all 30 stages and every required operation. Include initial execution, repeated execution, earlier-stage execution, replacement acceptance, cancellation, invalidation, restoration, and subsequent continuation wherever each operation applies.",
+      "productionOwners": [
+        "generate-specification-governance.mjs",
+        "review-specification-coverage.mjs",
+        "verification/requirement-test-coverage.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-014",
+      "sourceLine": 14,
+      "sourceLineSha256": "d7c99ed8e8a5d86471ba97321f54cffa6b6556423724ca59eeaef64a57e81949",
+      "mandatory": true,
+      "observableExpectedBehavior": "2. Provide the correct context for every stage and operation.",
+      "productionOwners": [
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "project-store.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-015",
+      "sourceLine": 15,
+      "sourceLineSha256": "d76f13876708fa2a30ad484a538f484fbe3cd4e886cc8d81a6a30a2f2649daab",
+      "mandatory": true,
+      "observableExpectedBehavior": "The user may select, inspect, or execute any stage permitted by the specification, including a previously completed stage. Determine the required information and available actions from the selected stage within the active project version.",
+      "productionOwners": [
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "project-store.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-016",
+      "sourceLine": 16,
+      "sourceLineSha256": "5409c4b12c218004025421ddb83b64881491286ac03508222a87af3503d1c7f1",
+      "mandatory": true,
+      "observableExpectedBehavior": "Bind every execution and handoff to the correct project, version, stage, operation, attempt, and revision. Provide the relevant project information, applicable rules, valid prerequisites, and permitted current-stage material needed for that operation.",
+      "productionOwners": [
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "project-store.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        },
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-017",
+      "sourceLine": 17,
+      "sourceLineSha256": "c65092cfa265f96c5cfdf4479bab3f7428b3c6c0fca8584653ff51dc30ddf48c",
+      "mandatory": true,
+      "observableExpectedBehavior": "Exclude subsequent-stage information from every agent-facing handoff. Apply this restriction regardless of how many later stages exist, whether they are completed or incomplete, and whether their information is stored in the active version or retained history.",
+      "productionOwners": [
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "project-store.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        },
+        {
+          "path": "verification/continuation-scope-fixture-replay-20260914.json",
+          "scope": "verify-data-route-closure.mjs: all 66 operation routes; generated prompts for every external operation reject unexpected generation failure and exclude later-stage/stale sentinels. Synthetic fixture evidence only; byte exports and restoration journeys remain separately required.",
+          "sourceRevision": "498035d6fa608d75242fe4112f30784a385c0ee2",
+          "kind": "SYNTHETIC_PRODUCTION_RUNTIME_REGRESSION",
+          "fullRequirementEstablished": false
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-018",
+      "sourceLine": 18,
+      "sourceLineSha256": "23bf5d2f0396aa02a0bc849956436e6c4d76fefef0929a15a51f54f5cfd171bd",
+      "mandatory": true,
+      "observableExpectedBehavior": "Enforce this boundary across prompts, instructions, manifests, file lists, attachments, metadata, summaries, cached context, and consolidated exports. Prevent indirect disclosure through copied content, derived summaries, or shared files.",
+      "productionOwners": [
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "project-store.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-019",
+      "sourceLine": 19,
+      "sourceLineSha256": "9a69637cf37b9c55359cfc413bfccca3385d5e11f0e3bcf9fd317f6dd005b6be",
+      "mandatory": true,
+      "observableExpectedBehavior": "Rebuild stale handoffs when their project version, stage, scope, or governing revision changes. Keep complete restoration backups separate from agent-facing stage handoffs.",
+      "productionOwners": [
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "project-store.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/context-provenance-evidence-20260914.json",
+          "scope": "Focused production context and prompt cases, all stage pairs, governing versions, scoped clarification and targeted faults. Complete applicable operator and deployment evidence remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-020",
+      "sourceLine": 20,
+      "sourceLineSha256": "9bd9c6a199747f856f0edc70ed734e7c7ff330a6cb83ef927b9e2c69516a7da1",
+      "mandatory": true,
+      "observableExpectedBehavior": "Apply the same rules after ordinary navigation, re-execution, Undo, Redo, browser-history traversal, and restoration from saved History.",
+      "productionOwners": [
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "project-store.js",
+        "response-ingestion.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-021",
+      "sourceLine": 21,
+      "sourceLineSha256": "cd1a8305aa3c8b8b23aa2a1fea509ee0b1df78efdb394f4fa8e9de1d8c77d53c",
+      "mandatory": true,
+      "observableExpectedBehavior": "3. Confirm changes according to their actual effect on accepted work.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-022",
+      "sourceLine": 22,
+      "sourceLineSha256": "814936dd2e67ed9a8b51edfa5bb4592cd06996ccf09a59c0aeb52bbeca74ff82",
+      "mandatory": true,
+      "observableExpectedBehavior": "Treat stage selection, execution, response validation, committed acceptance, and restoration as distinct operations.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-023",
+      "sourceLine": 23,
+      "sourceLineSha256": "1df608c9f5f79ab5cd3f7963d2c382d0f407f50420a81e426220a60301e5ff38",
+      "mandatory": true,
+      "observableExpectedBehavior": "Selecting a stage, generating instructions, or receiving a response must not itself replace accepted work or reset subsequent progress. Validate a response before offering acceptance. Keep a valid replacement as a candidate until the required confirmation and successful commit.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        },
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-024",
+      "sourceLine": 24,
+      "sourceLineSha256": "0e57abdcd2a2727dbfb025532c227829fe106a0208645836e6d643cb859c766c",
+      "mandatory": true,
+      "observableExpectedBehavior": "Whenever acceptance would replace an accepted result or invalidate existing progress, show a concise confirmation within the page and automatically scroll it into view. Do not use a popup, modal, browser alert, or browser confirmation dialog.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        },
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-025",
+      "sourceLine": 25,
+      "sourceLineSha256": "02ad20df9ebf100ffaebdee8a0794642a3ff587df42c524ddeed366c539b7894",
+      "mandatory": true,
+      "observableExpectedBehavior": "Calculate the complete impact from the actual project state and authoritative dependency rules. Explain what will be replaced, identify the affected stages or steps, and state what must be completed again. Generate this information dynamically. Do not assume a fixed number of affected stages or a contiguous range unless the actual dependencies establish one.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-026",
+      "sourceLine": 26,
+      "sourceLineSha256": "ec6a511e24e8feee4ceddb1f3739734177dd428237c6e984234e5a1ffb17fc8e",
+      "mandatory": true,
+      "observableExpectedBehavior": "Explain that the previous version remains available to restore. Use clear actions such as \u201cAccept replacement\u201d and \u201cKeep current progress.\u201d If no subsequent work is affected, describe only the replacement. Do not describe retained work as permanently erased.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-027",
+      "sourceLine": 27,
+      "sourceLineSha256": "759c9c78a2d5117fa9655d10c2b916b44fce42a5639e83054c7c7d324cce153c",
+      "mandatory": true,
+      "observableExpectedBehavior": "If the user cancels or leaves confirmation unanswered, preserve the accepted result and existing progress. Navigation, reload, and restoration must never turn an unconfirmed candidate into an accepted response.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-028",
+      "sourceLine": 28,
+      "sourceLineSha256": "682f7f12effa2bec89a8449b4e4cd5752885a9ab7e24a4e94debf1a44f5ac7df",
+      "mandatory": true,
+      "observableExpectedBehavior": "Before committing, recheck the candidate, active version, revision, and affected work. Bind confirmation to the exact replacement and consequences shown. If relevant state changes, recompute the impact and obtain updated confirmation.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        },
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-029",
+      "sourceLine": 29,
+      "sourceLineSha256": "87e9446374a7ca0dbcf97c05b01aa50ae79c09fe2afbc6a8789fa60c8fc8cfa4",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve the previous recoverable version before activating the replacement. Commit the accepted result and required invalidation atomically. Update results, completion status, approvals, accounting, pending operations, generated materials, and delivery readiness consistently.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-030",
+      "sourceLine": 30,
+      "sourceLineSha256": "5410114424a4e7683ee86d16aeec40d52ebefaef93ad2ae07a38504a31d9a8bd",
+      "mandatory": true,
+      "observableExpectedBehavior": "Invalidate all directly and indirectly dependent work required by the specification, including completed, partially completed, and pending work. Preserve independent valid work where the specification establishes its independence.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        },
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-031",
+      "sourceLine": 31,
+      "sourceLineSha256": "b53792d56ceb43db31a44870f7e53e49f42edc54523ed94bb134833aab1d534a",
+      "mandatory": true,
+      "observableExpectedBehavior": "While the replacement version is active, require affected work to be performed and accepted against that version\u2019s upstream state. Prevent incompatible historical responses, approvals, or artifacts from satisfying current requirements.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/complete-acceptance-impact-evidence-20260914.json",
+          "scope": "Focused actual UI-owner, persistence and restored-candidate behavior with five targeted fault detections; complete applicable browser and deployment acceptance remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-032",
+      "sourceLine": 32,
+      "sourceLineSha256": "6a6a569a2eee463abecffae90417a6d70a6574e6b8f9c7b87593272efeffacf4",
+      "mandatory": true,
+      "observableExpectedBehavior": "After acceptance succeeds, bring the next required operation into view and provide a concise Undo action. Repeated submission or confirmation of an already committed operation must not accept it twice or repeat invalidation.",
+      "productionOwners": [
+        "response-ingestion.js",
+        "workflow-engine.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-033",
+      "sourceLine": 33,
+      "sourceLineSha256": "c909e725b880f77679d0bb2815d5bcc359c0eb45421363b69e358967af3f8ee3",
+      "mandatory": true,
+      "observableExpectedBehavior": "4. Preserve recoverable versions throughout the workflow.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-034",
+      "sourceLine": 34,
+      "sourceLineSha256": "d2a89650a801a7f0793c980c31a5f203479b83048a825c452b453ff2e1e1e897",
+      "mandatory": true,
+      "observableExpectedBehavior": "Save a complete starting checkpoint when the application session opens, including any project state that already exists. Preserve recoverable versions for meaningful changes throughout the session.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-035",
+      "sourceLine": 35,
+      "sourceLineSha256": "45a364e052e729b89e232f9201ec116511546cdef304b71449a5398a34fc61a7",
+      "mandatory": true,
+      "observableExpectedBehavior": "Retain the project inputs, responses, prerequisite relationships, acceptance records, progress, drafts, and exact file contents needed to reconstruct each version. Capture relevant drafts and view state before leaving them.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/file-correction-recovery-evidence-20260914.json",
+          "scope": "Focused synthetic input-file replacement and durable unconfirmed candidate recovery; integrated browser replay and complete applicable coverage remain open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-036",
+      "sourceLine": 36,
+      "sourceLineSha256": "c240d98618ba917ac9dae6f36d51d5e3c745ee7c426e3665f271f89c68701735",
+      "mandatory": true,
+      "observableExpectedBehavior": "Use durable application persistence. Browser history, temporary URLs, file-picker state, and browser memory must not be the only recovery mechanisms. Extend existing persistence only as necessary to provide reliable recovery.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-037",
+      "sourceLine": 37,
+      "sourceLineSha256": "ab570e9606936f9d4353e70cf6133aad5c8431f1165570fd0ae5a10429d67ad4",
+      "mandatory": true,
+      "observableExpectedBehavior": "Restore each version as a consistent whole. Restoring an earlier accepted result must also restore the matching downstream state that belonged to that version. Restoring a replacement must restore the invalidation and rework requirements belonging to the replacement version.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-038",
+      "sourceLine": 38,
+      "sourceLineSha256": "408de156d88c9ab4de3523afd4e4818b23a2bc0aca8b46480169c84074a3da22",
+      "mandatory": true,
+      "observableExpectedBehavior": "Never combine results, approvals, or completion records from incompatible versions. A restored candidate that had not been accepted must remain unaccepted.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-039",
+      "sourceLine": 39,
+      "sourceLineSha256": "f1466bc8a387f6462cbb013a18b26df5bc6efa494f6e8dd2e38d6b4c2ed22658",
+      "mandatory": true,
+      "observableExpectedBehavior": "Restoration must activate saved state without rerunning the commands that originally produced it. The user must not repeat completed work merely to reconstruct a retained version.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-040",
+      "sourceLine": 40,
+      "sourceLineSha256": "0830f4552ee9320c84518808e482ea739240ea4891fbe78e9c4e76e50c210f04",
+      "mandatory": true,
+      "observableExpectedBehavior": "If the user returns to an earlier version and makes a different change, preserve the previously saved continuation while creating the new continuation. Keep retained alternatives available through a compact History control. Hide internal identifiers and branching details from the normal workflow.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-041",
+      "sourceLine": 41,
+      "sourceLineSha256": "9026f97f99788e553301254fb1c1c5c2fb841c1d359137a3f97f01e995bf6fb3",
+      "mandatory": true,
+      "observableExpectedBehavior": "Make Undo, Redo, browser-history restoration, and History restoration use compatible authoritative mechanisms. Recovery must remain available after a notification disappears. Preserve the active version and promised recovery history through reload and required backup restoration.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-042",
+      "sourceLine": 42,
+      "sourceLineSha256": "a50367a9bd24957e6fa61c36d5fdf89be3ae7e784f49cfbe6e89f6f6ffb6f63d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Make restoration atomic. Handle rapid navigation, jumps across multiple entries, interrupted restores, missing or corrupted files, and persistence failures. Do not report successful restoration until its required data is available. Preserve the existing recoverable state when restoration fails.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-043",
+      "sourceLine": 43,
+      "sourceLineSha256": "3f4971fdbd76e115fd170739d66973be99b3354eab0938b7d6d9a286f160f3ad",
+      "mandatory": true,
+      "observableExpectedBehavior": "Keep current authorization, concurrency checks, execution records, and duplicate-operation protections in force. Do not silently overwrite independent work in another tab or session. Prevent delayed responses from abandoned operations from changing the restored version.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-044",
+      "sourceLine": 44,
+      "sourceLineSha256": "bf0a61a551cdc7b54cbee6347e7eb4dfed5c3c9191f2c691ec9142a88561bef2",
+      "mandatory": true,
+      "observableExpectedBehavior": "Reconcile pending operations with their actual status. Do not reissue completed external requests, repeat deliveries, or imply that an action outside the application has been undone.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-045",
+      "sourceLine": 45,
+      "sourceLineSha256": "49f55538378a9a30b623872370cb0eaf9b1739663a646089d911fcd20ae8d100",
+      "mandatory": true,
+      "observableExpectedBehavior": "Retain recovery to the recorded application-session start within declared and tested support limits. Provide application History when native browser entries are unavailable. Do not silently discard promised recovery points or advertise unlimited retention.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-046",
+      "sourceLine": 46,
+      "sourceLineSha256": "a4b5663cd6c13cf689a4c93d5bd7022a913d6b340ca672ef95b3e1e08c6a61d8",
+      "mandatory": true,
+      "observableExpectedBehavior": "If a required checkpoint cannot be saved, report the failure before committing a change that depends on that recovery guarantee.",
+      "productionOwners": [
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-047",
+      "sourceLine": 47,
+      "sourceLineSha256": "0e6409bd525e2b2b97b2d13ddf9abf89bf8006085a00eca77fa1f85401f3fbf5",
+      "mandatory": true,
+      "observableExpectedBehavior": "5. Make browser navigation and stage selection behave consistently.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-048",
+      "sourceLine": 48,
+      "sourceLineSha256": "b2fa4a6f716b7e243a21c8b36209384c8e3e3ab403950b6dd902aa5812dc3256",
+      "mandatory": true,
+      "observableExpectedBehavior": "Distinguish selecting a stage within the active version from returning to a previously recorded project state.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-049",
+      "sourceLine": 49,
+      "sourceLineSha256": "3ad0fbf3286a9e52327669368fd52217999cee23281d13199c6d95d6e653874d",
+      "mandatory": true,
+      "observableExpectedBehavior": "Ordinary stage selection must open the selected stage within the active version. It must not implicitly rewind the project merely because the selected stage was previously completed.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-050",
+      "sourceLine": 50,
+      "sourceLineSha256": "12b31a28ec5e30f1914f55ac5dceb8d19f3f43d5860528dabf7f2b799f57ffb7",
+      "mandatory": true,
+      "observableExpectedBehavior": "Associate application-history entries with their saved project versions and views. Browser Back and Forward must activate the version associated with each visited entry and restore the appropriate project, selected stage, and view position.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-051",
+      "sourceLine": 51,
+      "sourceLineSha256": "b7ea6ac655ddcdb6474a5e3746cfe1c7a9be1d92768f2e1491263b90a48dd09e",
+      "mandatory": true,
+      "observableExpectedBehavior": "Crossing a recorded acceptance or correction boundary must restore the corresponding working project data, decisions, files, and dependent progress. Changing only the displayed page or status labels does not satisfy this requirement.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-052",
+      "sourceLine": 52,
+      "sourceLineSha256": "d833a9ab5305adbcf32cd25e2231fc8e41bc811244c7930544c79742a2a8312a",
+      "mandatory": true,
+      "observableExpectedBehavior": "Support navigation by any available history distance, including repeated Back/Forward presses and direct jumps to retained entries. Determine restoration from the destination entry rather than assuming the user moved one stage or performed a particular sequence.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-053",
+      "sourceLine": 53,
+      "sourceLineSha256": "ebfdb0f3f0da2606ca612f8bfa6f17067d50a223c842837f054195d747881453",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve the remaining Back/Forward path while traversing existing entries. If a new continuation changes the browser\u2019s forward path, retain the previously saved versions in application History.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-054",
+      "sourceLine": 54,
+      "sourceLineSha256": "8ca7600876e031de4771426e6fedc7027b1d100d6d7a69e38036ef508e9d9ca9",
+      "mandatory": true,
+      "observableExpectedBehavior": "Support the initial application view, reloads, direct links, and supported mobile navigation gestures. A link identifying a saved version must resolve to that version under current access controls. Ordinary stage links must use the active version.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-055",
+      "sourceLine": 55,
+      "sourceLineSha256": "689737b555eaf1cd8b2ac6336e00a763af2cf53ccd1b0fedd2d31d57609bb476",
+      "mandatory": true,
+      "observableExpectedBehavior": "Enforce prerequisites within whichever version is active. Restoration may recover approvals that belong to that complete version; it must not bypass requirements by combining incompatible states.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-056",
+      "sourceLine": 56,
+      "sourceLineSha256": "677d56cd1dad7e4c734078d107966e0786ef20126abbf414df3105f7980b22eb",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve normal browser behavior when navigation reaches an entry outside the application. Do not create artificial history loops that trap the user.",
+      "productionOwners": [
+        "app-core.js",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-057",
+      "sourceLine": 57,
+      "sourceLineSha256": "c58b8412372fb659fd13cdc6cbeeb5fc3807695b941cbbf08167e4cb917f9528",
+      "mandatory": true,
+      "observableExpectedBehavior": "6. Keep the interface clear, concise, and uncluttered.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-058",
+      "sourceLine": 58,
+      "sourceLineSha256": "78e147933b8f6655a56785ee6bc6d9e97eac42466b21a8515b3ab5c23dd577de",
+      "mandatory": true,
+      "observableExpectedBehavior": "Preserve the approved visual design. Change layout, wording, and interactions only where necessary to correct defects, support required recovery, or remove unnecessary effort.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-059",
+      "sourceLine": 59,
+      "sourceLineSha256": "67fc16561d33a09bafc0f71a222ba8aa7258d42c1a4d3f01efd884d7e8b934a9",
+      "mandatory": true,
+      "observableExpectedBehavior": "Use plain language. Remove redundant text, repeated controls, unnecessary confirmations, and information that does not help with the current task. Place codes, internal identifiers, diagnostic details, and advanced tools behind appropriate details or advanced controls.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-060",
+      "sourceLine": 60,
+      "sourceLineSha256": "f4e9c24026a884ad82665abfab5556769cdb00d08e9ef3b11a15f016c4d568d3",
+      "mandatory": true,
+      "observableExpectedBehavior": "Keep required decisions, useful status, actionable errors, and recovery access visible. Do not expose implementation details merely because the application stores or uses them.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-061",
+      "sourceLine": 61,
+      "sourceLineSha256": "4c0cd6e4a37d1fbf057e3bf03102d3b8a91f7d247e740ceebbb1aad342043e70",
+      "mandatory": true,
+      "observableExpectedBehavior": "Consolidate each stage\u2019s required exports into one user action, using a format compatible with the required file transport. Enforce stage and version isolation before assembling the export. Automate computation, assembly, and coordination that the application can perform for the user.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/continuation-dependent-gates-20260914.json",
+          "scope": "verify-infrastructure-route-closure.mjs and its actual export-handler fixture: automatic scope/context preparation and retry preserve exact instruction identity. Consolidated transport across all operations, mobile behavior and deployed acceptance remain required.",
+          "sourceRevision": "498035d6fa608d75242fe4112f30784a385c0ee2",
+          "kind": "SYNTHETIC_PRODUCTION_RUNTIME_REGRESSION",
+          "fullRequirementEstablished": false
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-062",
+      "sourceLine": 62,
+      "sourceLineSha256": "21a724ee5a59eb738f6801b35e13f4073f0cfddd26e2eae412c238063b714620",
+      "mandatory": true,
+      "observableExpectedBehavior": "Present information and actions in the order needed. After ordinary workflow actions, bring the next required reading or action into view. Minimize scrolling. Scroll upward when an explicit return, correction, or retry requires it.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-063",
+      "sourceLine": 63,
+      "sourceLineSha256": "7ca9bd5e5c61543ab92352a042276923f84ea96132803bd855a73dc5e6a2399f",
+      "mandatory": true,
+      "observableExpectedBehavior": "After saving project information, direct the user to the next required operation. During history restoration, restore the recorded view instead of automatically advancing to another stage.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-064",
+      "sourceLine": 64,
+      "sourceLineSha256": "41c85b321bb963afb908fcf808271dcbe9fd82752ad198b7d7263bfd5ca85aab",
+      "mandatory": true,
+      "observableExpectedBehavior": "Show a small, clearly visible loading or progress indicator during pending operations and restoration. Prevent duplicate execution from repeated clicks. Provide clear completion, failure, and recovery feedback.",
+      "productionOwners": [
+        "app-core.js",
+        "index.html",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-065",
+      "sourceLine": 65,
+      "sourceLineSha256": "feda23328ce694e2ab21495c9e16aacb6a46d4ea93b2e42f52adc77c5a7678e9",
+      "mandatory": true,
+      "observableExpectedBehavior": "7. Reproduce actual behavior and repair the responsible production mechanisms.",
+      "productionOwners": [
+        "workflow-schema.js",
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-066",
+      "sourceLine": 66,
+      "sourceLineSha256": "25ba22eccb8d760c10970a6a676b7c045155bd833a77f7d38399af8505116807",
+      "mandatory": true,
+      "observableExpectedBehavior": "Run the existing automated checks and start a clean project through the actual interface. Preserve failures with their inputs, operation sequence, expected result, actual result, and source revision.",
+      "productionOwners": [
+        "workflow-schema.js",
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-067",
+      "sourceLine": 67,
+      "sourceLineSha256": "1658658140289f59c0939fb30f59693a25c74980f4070ae8a815dc3378388254",
+      "mandatory": true,
+      "observableExpectedBehavior": "Check required mobile file selection, export, storage, restoration, and browser-history capabilities early. Record the environments actually tested. Final physical-device acceptance must apply to the exact final deployed revision.",
+      "productionOwners": [
+        "workflow-schema.js",
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-068",
+      "sourceLine": 68,
+      "sourceLineSha256": "4997d58c6e026b6562187b31338828fc3c6f9aa1701b419fc2fdb12bb2d2acd0",
+      "mandatory": true,
+      "observableExpectedBehavior": "Ensure prompt generation, context selection, response validation, workflow commands, version management, restoration, and persistence use compatible authoritative contracts.",
+      "productionOwners": [
+        "workflow-schema.js",
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-069",
+      "sourceLine": 69,
+      "sourceLineSha256": "e86dba5938f84a73ac72358db82711c63096290921c7a08f7d930f4e79d22fbe",
+      "mandatory": true,
+      "observableExpectedBehavior": "Enforce field ownership, stage boundaries, valid transitions, current version and scope, atomic mutation, retry identity, and downstream invalidation in the responsible production code. Correct shared causes and every affected consumer.",
+      "productionOwners": [
+        "workflow-schema.js",
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-070",
+      "sourceLine": 70,
+      "sourceLineSha256": "4be34675b77caee18fb42e2faf80f774ff186ed78dbb5c2eb4c5970ffab3e759",
+      "mandatory": true,
+      "observableExpectedBehavior": "For every defect: reproduce the failure, establish a regression that detects it, correct the earliest responsible production layer, replay the failed operator path, verify affected downstream paths, and preserve the regression.",
+      "productionOwners": [
+        "workflow-schema.js",
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-071",
+      "sourceLine": 71,
+      "sourceLineSha256": "55c12ac6c23393291f5259e543e80d62cb09162f120627ab54e6922624c3ff06",
+      "mandatory": true,
+      "observableExpectedBehavior": "Make the smallest correction that closes the complete defect across its dependencies. Preserve unrelated working mechanisms and keep the full application scope active throughout the work.",
+      "productionOwners": [
+        "workflow-schema.js",
+        "workflow-engine.js",
+        "prompt-engine.js",
+        "response-ingestion.js",
+        "project-store.js",
+        "app-core.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-072",
+      "sourceLine": 72,
+      "sourceLineSha256": "9cf3617c625eb5bc8ed63741ccf8c84f3690c258c74218dec34eb0ab3f2d2608",
+      "mandatory": true,
+      "observableExpectedBehavior": "8. Prove that tests detect their intended failures.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-073",
+      "sourceLine": 73,
+      "sourceLineSha256": "7b155d396b32366636c8a96141d583fde562c47ccf52c8be1a6c942858b6afbb",
+      "mandatory": true,
+      "observableExpectedBehavior": "Derive expected outcomes from the specification and these requirements independently of the implementation.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-074",
+      "sourceLine": 74,
+      "sourceLineSha256": "d2b94027f94fc99d37a1dedea9853b5bcc33f7d7e94c025c23f1ddfa7fbda14b",
+      "mandatory": true,
+      "observableExpectedBehavior": "For every required gate class, create an otherwise valid disposable case containing one deliberate violation. Verify rejection for that specific reason. Remove the violation and verify successful progression.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-075",
+      "sourceLine": 75,
+      "sourceLineSha256": "8cc552974c3ecc702bd87b3051fa73be7ca62ea9b77790a9c913998978d4a27e",
+      "mandatory": true,
+      "observableExpectedBehavior": "Introduce targeted implementation faults, including bypassed ownership or context validation, skipped confirmation, incomplete invalidation, incorrect byte comparison, mutation of retained history, and restoration of incompatible versions. Verify that relevant tests detect the introduced fault, then restore the implementation.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/acceptance-boundary-evidence-20260914.json",
+          "scope": "Focused synthetic acceptance, requested-review progress, restoration preservation and bounded-memory regressions with targeted faults; full applicable deployment evidence remains open."
+        },
+        {
+          "path": "verification/continuation-scope-fixture-replay-20260914.json",
+          "scope": "verify-shared-contract-faults.mjs: production ownership bypass, skipped invalidation, terminal self-invalidation and length-only byte comparison faults detected, then unmodified implementation passed. Other mandated fault classes and exact deployed journeys require their own evidence.",
+          "sourceRevision": "498035d6fa608d75242fe4112f30784a385c0ee2",
+          "kind": "SYNTHETIC_PRODUCTION_RUNTIME_REGRESSION",
+          "fullRequirementEstablished": false
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-076",
+      "sourceLine": 76,
+      "sourceLineSha256": "4e6f821bf8888de7e661c56887042c45974734d32f94d63467860ae8c48c8426",
+      "mandatory": true,
+      "observableExpectedBehavior": "Apply coverage across every applicable stage and transition. Include first and final stages, repeated execution of the same stage, movement between different stages, states with no subsequent work, and states with completed, partially completed, pending, or invalidated dependent work.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-077",
+      "sourceLine": 77,
+      "sourceLineSha256": "6c54f7b7e1135c8c1372fc7a6931535864d7c178653bb5f3ef4d342e36eaa5c9",
+      "mandatory": true,
+      "observableExpectedBehavior": "Cover validation failure, confirmation, cancellation, unanswered confirmation, duplicate submission, stale confirmation, concurrent edits, storage failure, and interrupted commits.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-078",
+      "sourceLine": 78,
+      "sourceLineSha256": "9bf0f37512d5e0a4fbc09b2c06a78527124fe9233a73e7663639e0853959acf9",
+      "mandatory": true,
+      "observableExpectedBehavior": "Inspect generated content and exported bytes. Verify that required information is present and subsequent-stage information is absent, including after restoration.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-079",
+      "sourceLine": 79,
+      "sourceLineSha256": "cd46bf21ce1a30ec9329043ef630f6ef45e3109c5337d9fd2c8656376d96c359",
+      "mandatory": true,
+      "observableExpectedBehavior": "Compare restored project data, dependency relationships, approvals, and artifact bytes against their recorded checkpoints. Test acceptance reversal, forward restoration, repeated Undo and Redo, multi-entry jumps, different continuations, reloads, direct links, application History, and supported mobile gestures.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-080",
+      "sourceLine": 80,
+      "sourceLineSha256": "2ecdf9ae49330c0d42e6254a1d8ced6a553c461a561612aa36b72151284cb6fc",
+      "mandatory": true,
+      "observableExpectedBehavior": "Verify that complete compatible versions restore correctly, incompatible combinations are rejected, pending confirmations remain unconfirmed, and completed external operations are not repeated.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-081",
+      "sourceLine": 81,
+      "sourceLineSha256": "970c7273f1f0a4c42f6ce8d8d0a4030dbc12f7635919d73bf87ed43fdfe8d02b",
+      "mandatory": true,
+      "observableExpectedBehavior": "Test retention limits, missing or corrupted saved files, interrupted restoration, concurrent sessions, and delayed responses from abandoned operations.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs",
+        "project-store.js"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": [
+        {
+          "path": "verification/operational-repair-evidence-20260914.json",
+          "coverage": "Partial requirement evidence: isolated production persistence, exact reservation revision, pending-state recovery and targeted faults. Full stage/operation, browser and deployed coverage remains open."
+        }
+      ]
+    },
+    {
+      "requirementId": "USER-082",
+      "sourceLine": 82,
+      "sourceLineSha256": "dbd77290d3f37b80a843087f0f8e8caba0780ff484f9986e61e75b5e3863af3f",
+      "mandatory": true,
+      "observableExpectedBehavior": "Source-text matches, declared success flags, screenshots alone, and test-file presence do not establish behavioral correctness. Report executed cases and actual results. Review every test category for incomplete stage, operation, and failure-path coverage.",
+      "productionOwners": [
+        "verify-history-contracts.mjs",
+        "verify-recoverable-history.mjs",
+        "verify-shared-contract-faults.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-083",
+      "sourceLine": 83,
+      "sourceLineSha256": "44c39ea99a1a098b98fd97dcb28b43f7b483c265b89d28a756e152c8b0020563",
+      "mandatory": true,
+      "observableExpectedBehavior": "9. Discover workflow failures automatically.",
+      "productionOwners": [
+        "verify-operation-sequences.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-084",
+      "sourceLine": 84,
+      "sourceLineSha256": "46dc3c9d0480c846dc167acc615ad4133c85c769f6f684c04560dbb2159389bd",
+      "mandatory": true,
+      "observableExpectedBehavior": "Extend the existing test system with generated operation sequences covering progression, stage selection, history traversal, re-execution, confirmation, cancellation, Undo, Redo, restoration, different continuations, retries, duplicate submissions, stale responses, corrections, reloads, missing or corrupted files, storage failures, and concurrent edits.",
+      "productionOwners": [
+        "verify-operation-sequences.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-085",
+      "sourceLine": 85,
+      "sourceLineSha256": "23bf04a7b0abcb89e2f906c525f5ade599526747b136555b75960655c459a3a8",
+      "mandatory": true,
+      "observableExpectedBehavior": "Generate sequences from the applicable workflow rules and state combinations. Do not limit discovery to a fixed demonstration path or movement distance.",
+      "productionOwners": [
+        "verify-operation-sequences.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-086",
+      "sourceLine": 86,
+      "sourceLineSha256": "9c042a0a07be82e7591570a03c5184c5affcfa24ce37f089dab535be03f2afaa",
+      "mandatory": true,
+      "observableExpectedBehavior": "Check required invariants after each operation, including coherent active versions, preserved recovery points, stage isolation, valid approvals, and correct dependent-work status. Verify both rejection of invalid work and completion of valid work.",
+      "productionOwners": [
+        "verify-operation-sequences.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-087",
+      "sourceLine": 87,
+      "sourceLineSha256": "6aa5e3fc2d19b765cb09df8e2b4f6d65b06f47d905cd02d62acd13c325736693",
+      "mandatory": true,
+      "observableExpectedBehavior": "Use bounded state exploration for critical revision, confirmation, invalidation, restoration, transaction, and authorization rules. State the explored bounds and assumptions. Reduce discovered failures to reproducible sequences and retain them as regressions.",
+      "productionOwners": [
+        "verify-operation-sequences.mjs",
+        "verify-conformance-regressions.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-088",
+      "sourceLine": 88,
+      "sourceLineSha256": "9e72ab3d9e43d82bde91a191e838419b33667c6fa48728f0aea686d60e464df0",
+      "mandatory": true,
+      "observableExpectedBehavior": "10. Exercise complete operator journeys across all 30 stages.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser-recovery.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-089",
+      "sourceLine": 89,
+      "sourceLineSha256": "3a4306cc5a2858ac2a5d1839c0cad24f4eab706192c4f3a8f3ee118e95db2ff1",
+      "mandatory": true,
+      "observableExpectedBehavior": "Use actual application controls and file transport. Let prerequisite state arise from preceding operations.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser-recovery.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-090",
+      "sourceLine": 90,
+      "sourceLineSha256": "581923ade8eff41d5d739c0f1b5fb0260e116a773819e84330710b14e5274b31",
+      "mandatory": true,
+      "observableExpectedBehavior": "Exercise instruction and manifest export, required context transfer, response-file ingestion, returned-file mapping, review and acceptance, application-owned commands, persistence, correction, recovery, saved history, and delivery.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser-recovery.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-091",
+      "sourceLine": 91,
+      "sourceLineSha256": "845ad63f1cc723edef84266ff6789e7366d71574535e571c97645a98b3ba1748",
+      "mandatory": true,
+      "observableExpectedBehavior": "Include a complete valid project and journeys covering rejected responses followed by correction; re-execution wherever permitted; replacement acceptance; cancellation without lost progress; required invalidation and re-completion; restoration of matching earlier progress; and restoration of the replacement state.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser-recovery.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-092",
+      "sourceLine": 92,
+      "sourceLineSha256": "095a699a3d1ffd34f436d3e4ecc35511b2c7dbc711ec15a952a72be92c463615",
+      "mandatory": true,
+      "observableExpectedBehavior": "Exercise repeated movement among saved versions, different continuations created after restoration, recovery of retained alternatives through History, and return to the recorded session-start checkpoint.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser-recovery.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-093",
+      "sourceLine": 93,
+      "sourceLineSha256": "9f0658bc418f53af72db5e8d6cdaab1816ec6373bcafb16102fc265305106922",
+      "mandatory": true,
+      "observableExpectedBehavior": "Select journey coverage from the application\u2019s actual stages, dependencies, and state transitions. Account for all applicable stages and transition classes without treating a particular example or fixed jump distance as the general rule.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser-recovery.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-094",
+      "sourceLine": 94,
+      "sourceLineSha256": "491fad32b8f0a75669389720add1dc7f7c50070445242705cf6b7cb1857dce63",
+      "mandatory": true,
+      "observableExpectedBehavior": "Include reload and interrupted-operation recovery, backup export and restoration from exported bytes, recovery of the retained history covered by that backup, final artifact retrieval and byte comparison, and representative workloads and history lengths required by the support contract.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser-recovery.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-095",
+      "sourceLine": 95,
+      "sourceLineSha256": "dd57e0109fa775b6842624bae756a79ad959a86217806514b6f2c7b188c4db9e",
+      "mandatory": true,
+      "observableExpectedBehavior": "Label synthetic evidence accurately. Obtain required real-project evidence separately using actual external outputs. Record independence, human actions, and device observations only to the extent actually established.",
+      "productionOwners": [
+        "verify-complete-operator-journey.mjs",
+        "verify-browser-recovery.mjs",
+        "operator-browser-driver.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-096",
+      "sourceLine": 96,
+      "sourceLineSha256": "75c6d8bea95ecde6f53c75ee7abe5f5267158542f530087a75dc5a9c026b4ea4",
+      "mandatory": true,
+      "observableExpectedBehavior": "11. Integrate and verify the exact deployment.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-live.mjs",
+        "final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-097",
+      "sourceLine": 97,
+      "sourceLineSha256": "a53219cea33f34ddb829e3bffd4b7c6bb5587e12603ab90261fec259e2738f7a",
+      "mandatory": true,
+      "observableExpectedBehavior": "Run focused and affected integration checks during repairs. Run the complete required CI suite against the integrated candidate before merge.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-live.mjs",
+        "final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-098",
+      "sourceLine": 98,
+      "sourceLineSha256": "4d0766a7429f8218e02c7582343efc3a7532c2357124f9cfaa214ae30ae9e899",
+      "mandatory": true,
+      "observableExpectedBehavior": "Use normal repository integration and deployment controls. Verify the resulting source revision, deployed resource identities, worker dependencies, and running application.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-live.mjs",
+        "final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-099",
+      "sourceLine": 99,
+      "sourceLineSha256": "c6c89610c834bc5891851a6e09dab39ff6cc8b62a7c52882520a5a090623c3c0",
+      "mandatory": true,
+      "observableExpectedBehavior": "Repeat required operator acceptance against that deployment, including context isolation, replacement confirmation, dependent-work recovery, reversible acceptance, saved-history restoration, and browser navigation.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-live.mjs",
+        "final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-100",
+      "sourceLine": 100,
+      "sourceLineSha256": "c8170dbfc5641f5b0aea00a61247b1ec22e97f0ad85af357834caac50accd67e",
+      "mandatory": true,
+      "observableExpectedBehavior": "Obtain required physical-iPhone Safari acceptance and visual-baseline evidence for the exact deployed revision. Revalidate affected evidence after subsequent changes.",
+      "productionOwners": [
+        ".github/workflows/pages.yml",
+        "verify-live.mjs",
+        "final-acceptance.mjs"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-101",
+      "sourceLine": 101,
+      "sourceLineSha256": "a5214171ab1fe8d199c192ba3484ff090e8d9fb7d9fb6b6b913c0e9b490159f2",
+      "mandatory": true,
+      "observableExpectedBehavior": "12. Apply one completion condition.",
+      "productionOwners": [
+        "final-acceptance.mjs",
+        "verification/closed-loop-build-state.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-102",
+      "sourceLine": 102,
+      "sourceLineSha256": "cb09e2022bb4b941a391b3e55d13fe03a50cc64f5c7fdd7a490eb70dbe2063b4",
+      "mandatory": true,
+      "observableExpectedBehavior": "Claim completion only when every mandatory requirement has its required implementation and evidence, all required checks pass, and required complete operator journeys succeed on the exact deployed version.",
+      "productionOwners": [
+        "final-acceptance.mjs",
+        "verification/closed-loop-build-state.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-103",
+      "sourceLine": 103,
+      "sourceLineSha256": "25fcd232f9574641d5206b2ada345042273f95da831f0995ccde02e16748490f",
+      "mandatory": true,
+      "observableExpectedBehavior": "Any required operation, context boundary, confirmation, transition, recovery path, retained-history guarantee, wording, feedback, or navigation behavior that fails these requirements remains unfinished. Selected passing tests or completed individual stages do not establish application completion.",
+      "productionOwners": [
+        "final-acceptance.mjs",
+        "verification/closed-loop-build-state.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-104",
+      "sourceLine": 104,
+      "sourceLineSha256": "425c3b1e5728993987e35396bdfeb94668e0af8ecdb8b1d3e41dc1be6c5d1071",
+      "mandatory": true,
+      "observableExpectedBehavior": "Distinguish application defects from unavailable tools, access, devices, or genuine human-only decisions. An unavailable capability is an execution or verification limitation, not evidence of an application defect.",
+      "productionOwners": [
+        "final-acceptance.mjs",
+        "verification/closed-loop-build-state.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-105",
+      "sourceLine": 105,
+      "sourceLineSha256": "c9a24c57094cf3d93731b3478d5173d2222ced72c87c3799f514f3a50df81d55",
+      "mandatory": true,
+      "observableExpectedBehavior": "Finish all independent implementation and verification work before requesting necessary assistance. Then identify the exact outstanding requirement, missing capability or decision, and evidence still needed. Missing mandatory evidence prevents an unqualified completion claim.",
+      "productionOwners": [
+        "final-acceptance.mjs",
+        "verification/closed-loop-build-state.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-107",
+      "sourceLine": 107,
+      "sourceLineSha256": "0dd79fa4b33953a2a2090d1f46e2b5e7137dd9114a662caa8088c32e7c23ccd7",
+      "mandatory": true,
+      "observableExpectedBehavior": "Return the implemented changes, executed verification results, exact deployed revision if deployment was completed, remaining application defects, and unresolved execution or verification limitations. Report tested environments and recovery limits precisely. Keep functional readiness, physical-device acceptance, and production maturity distinct wherever the specification does.",
+      "productionOwners": [
+        "final-acceptance.mjs",
+        "verification/closed-loop-build-state.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    },
+    {
+      "requirementId": "USER-109",
+      "sourceLine": 109,
+      "sourceLineSha256": "49278badbe20ccb59d32e2310591ad1f85ce108a670d494ef525486b625f05ee",
+      "mandatory": true,
+      "observableExpectedBehavior": "Deliver the corrected application. Do not substitute an audit, another plan, a patch archive, or an isolated stage repair for the complete requested result.",
+      "productionOwners": [
+        "final-acceptance.mjs",
+        "verification/closed-loop-build-state.json"
+      ],
+      "requiredEvidence": [
+        "Executed behavior derived from this exact requirement across each applicable stage and operation",
+        "Specific positive and single-violation rejection evidence where applicable",
+        "Exact deployed operator verification where applicable"
+      ],
+      "status": "IMPLEMENTED_IN_PART_OR_UNPROVEN",
+      "executedEvidence": []
+    }
+  ],
+  "sourceTreatment": "Complete substantive user instruction; pre-existing condensed register retained separately and is not controlling."
+}

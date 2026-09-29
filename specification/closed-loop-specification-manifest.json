@@ -1,14 +1,14 @@
 {
   "schema": "closed-loop-specification-manifest/1",
-  "manifestIdentity": "SPEC-MANIFEST-28754f1fc9853b366cd3ce56ad12464c",
-  "generatorVersion": "closed-loop-governance-generator/2",
-  "sourceCommit": "c47f605bc684cc1f31ae67a053dc2be52a37106a",
+  "manifestIdentity": "SPEC-MANIFEST-cc2588bf1882ee297932b5b4bb1651c1",
+  "generatorVersion": "closed-loop-governance-generator/7",
+  "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "repositoryPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "artifactFilename": "closed-loop-reliability-controlling-implementation-specification.txt",
-  "byteLength": 309472,
-  "sha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
-  "physicalLineCount": 5655,
-  "logicalLineCount": 5656,
+  "byteLength": 324306,
+  "sha256": "a610714d14a6cff6386fc432f071e90507910d844ded7f32d87e110ade88cc8c",
+  "physicalLineCount": 5741,
+  "logicalLineCount": 5742,
   "sectionInventory": [
     {
       "sectionId": "0",
@@ -297,6 +297,7 @@
         "NREQ-7410a306e25f7a1c1cc077c6add69bce",
         "NREQ-8ce47a75a2444ce366ab55c6b78fef28",
         "NREQ-b627872eea3e9ef24aaf727cdf070d2f",
+        "NREQ-c19a3b568cee918a41f6b128284f20fa",
         "NREQ-175dfea24035e057e3bb035215f6f30b",
         "NREQ-1413601e9576316528eabd8964c850d6",
         "NREQ-02afecad875803a5e4e3c5e1e1bcc823",
@@ -518,6 +519,7 @@
       "endLine": 449,
       "normativeRequirementIds": [
         "NREQ-d72153098f746d8eb6f60b678d7ebbd4",
+        "NREQ-0fe0693c63b640aac77aa7fa2ad3861d",
         "NREQ-57f8fa829a872f35948a81bd58477291",
         "NREQ-ebadc5f449d2029613a3af4b31f78c6f",
         "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
@@ -915,6 +917,7 @@
       "startLine": 720,
       "endLine": 758,
       "normativeRequirementIds": [
+        "NREQ-a29cbaebc9ee366d2540036bf1ec827f",
         "NREQ-c1ee6106eb5fbc7782cac6771598c8c8",
         "NREQ-eb40d81e46a5d201043f62bae2da0579",
         "NREQ-67535c706f11842f03ef60c777f3701e",
@@ -941,6 +944,7 @@
         "NREQ-075b75ea828e84c22e346dd486a3fe84",
         "NREQ-66c6f4a829db1f6c6308976809f0f8b1",
         "NREQ-e56052bbd89b555ffb19557f76062ac4",
+        "NREQ-99ee2535484ba0e95caa2323930a7183",
         "NREQ-1bcd53bc69aea0e619d0675e069a132b",
         "NREQ-7f4b7b8bf925041cae1558ee42544e01",
         "NREQ-7eb73740b3cc4f98ae94c6ae1522bb5b",
@@ -956,7 +960,8 @@
       "endLine": 766,
       "normativeRequirementIds": [
         "NREQ-a52bb653c745eaad17134f8c1e275907",
-        "NREQ-7813fc69e36539de62cfad532d12d010"
+        "NREQ-7813fc69e36539de62cfad532d12d010",
+        "NREQ-e465e59a7d83b4cc5bf681f77c65e75e"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -1066,6 +1071,7 @@
         "NREQ-2ecfc2e17912e2df9fc0681126ee7ff9",
         "NREQ-d00b42fd17a929d900fad5339de87d2d",
         "NREQ-d690a0c2b528e66093337e3757248907",
+        "NREQ-fcc96a37b767b8653f360a3171c1c490",
         "NREQ-9d419789e282f6c098a2e3cc34f5a003",
         "NREQ-81a8587ad89ef9214b5dafc688298d5e",
         "NREQ-1b945183553656b70790d482170631b3",
@@ -1098,9 +1104,12 @@
       "title": "Additional responsibility boundaries",
       "startLine": 872,
       "endLine": 887,
-      "normativeRequirementIds": [],
-      "disposition": "NONNORMATIVE",
-      "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
+      "normativeRequirementIds": [
+        "NREQ-4d7a9222926561b1117ca35109456dd2",
+        "NREQ-03cda2c8fa184270b91e88b672d659aa"
+      ],
+      "disposition": "COVERED",
+      "nonnormativeReason": null
     },
     {
       "sectionId": "13",
@@ -1434,9 +1443,11 @@
       "title": "Human-origin facts first supplied during an external conversation",
       "startLine": 1166,
       "endLine": 1173,
-      "normativeRequirementIds": [],
-      "disposition": "NONNORMATIVE",
-      "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
+      "normativeRequirementIds": [
+        "NREQ-0a5586532096bb03cdac1adbf68b91be"
+      ],
+      "disposition": "COVERED",
+      "nonnormativeReason": null
     },
     {
       "sectionId": "15",
@@ -1553,10 +1564,35 @@
       "nonnormativeReason": null
     },
     {
+      "sectionId": "16.1A",
+      "title": "Closed timing representation and derivation",
+      "startLine": 1283,
+      "endLine": 1346,
+      "normativeRequirementIds": [
+        "NREQ-1b25964ca659327d24191510b245e7ec",
+        "NREQ-11d63ed76830d3e08e4b2d44673fe212",
+        "NREQ-ef0078c7b3377a489acdcdd4a3731669",
+        "NREQ-9ac0d1ea13bf3666b9e027c65cd10756",
+        "NREQ-e884eea4674ce893cb2aa062e22caaf6",
+        "NREQ-e6833735de2b208cf0d6141212abd922",
+        "NREQ-8fd9b9e97514c5eafc609fafed4e7ff1",
+        "NREQ-c5a1fcaa9a3ae27294d96a9b8d81f3e9",
+        "NREQ-0cdd16eab673f9f947badd22aadb36f8",
+        "NREQ-6a142ca68ed12ae90fa26155eac94735",
+        "NREQ-b1f0ecea1009257a9e24d8f4054563b0",
+        "NREQ-6104908aa4c7e1bdab837ab033b7f72c",
+        "NREQ-1ccf83c0b565d2c7c794739e4e7663b7",
+        "NREQ-38cc440932653f635d781450303b4f7f",
+        "NREQ-2eb7c4bf653b73a37d70235ed1d7232f"
+      ],
+      "disposition": "COVERED",
+      "nonnormativeReason": null
+    },
+    {
       "sectionId": "16.2",
       "title": "Canonical-family sole-authority rule",
-      "startLine": 1283,
-      "endLine": 1288,
+      "startLine": 1347,
+      "endLine": 1352,
       "normativeRequirementIds": [
         "NREQ-1aeb7dd8ae713edac9f8734b2c990510"
       ],
@@ -1566,8 +1602,8 @@
     {
       "sectionId": "17",
       "title": "Response contract",
-      "startLine": 1289,
-      "endLine": 1290,
+      "startLine": 1353,
+      "endLine": 1354,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -1575,8 +1611,8 @@
     {
       "sectionId": "17.1",
       "title": "Envelope",
-      "startLine": 1291,
-      "endLine": 1318,
+      "startLine": 1355,
+      "endLine": 1382,
       "normativeRequirementIds": [
         "NREQ-f5b369e8736ca8921ac71524d7de2038",
         "NREQ-504c5e21f45759bff717ab8f79a36def",
@@ -1607,8 +1643,8 @@
     {
       "sectionId": "17.2",
       "title": "Prompt identity",
-      "startLine": 1319,
-      "endLine": 1327,
+      "startLine": 1383,
+      "endLine": 1391,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -1616,8 +1652,8 @@
     {
       "sectionId": "17.3",
       "title": "Response types",
-      "startLine": 1328,
-      "endLine": 1338,
+      "startLine": 1392,
+      "endLine": 1402,
       "normativeRequirementIds": [
         "NREQ-7f5716a50bee4ab4bfb086a6068a9362",
         "NREQ-59e4125750e21788536c2822af9ed849",
@@ -1631,8 +1667,8 @@
     {
       "sectionId": "17.4",
       "title": "Record identity",
-      "startLine": 1339,
-      "endLine": 1354,
+      "startLine": 1403,
+      "endLine": 1418,
       "normativeRequirementIds": [
         "NREQ-18e68abf726b08a110e0b3b61a1173f6",
         "NREQ-d6cda383f20022313b42975e825bdd70",
@@ -1653,8 +1689,8 @@
     {
       "sectionId": "17.5",
       "title": "Closed-schema rejection",
-      "startLine": 1355,
-      "endLine": 1417,
+      "startLine": 1419,
+      "endLine": 1481,
       "normativeRequirementIds": [
         "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
         "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
@@ -1722,8 +1758,8 @@
     {
       "sectionId": "17.6",
       "title": "Raw-first durable file processing",
-      "startLine": 1418,
-      "endLine": 1446,
+      "startLine": 1482,
+      "endLine": 1510,
       "normativeRequirementIds": [
         "NREQ-f5d29b007a8bbfb3aefd35df6250556f",
         "NREQ-482d1dade304bfeb8ab5bdd67db60db4",
@@ -1750,8 +1786,8 @@
     {
       "sectionId": "17.7",
       "title": "Proposal preconditions",
-      "startLine": 1447,
-      "endLine": 1463,
+      "startLine": 1511,
+      "endLine": 1527,
       "normativeRequirementIds": [
         "NREQ-eedebbb62445bc357690265d3dad39c0",
         "NREQ-5587097e6f38c4ebd63b45acc53049e4",
@@ -1762,7 +1798,9 @@
         "NREQ-b2e5de17c6bcaec94e69e93d4caf51de",
         "NREQ-aa69ede64e4ec4dd91561d63d9c4fa52",
         "NREQ-b0bca81e89ab8b247b9d9cffdb60b0ba",
-        "NREQ-a946d4c1b38c7a4d5adbab21563ff2b5"
+        "NREQ-a946d4c1b38c7a4d5adbab21563ff2b5",
+        "NREQ-d0198bbb827a10ee577feb78634e3866",
+        "NREQ-fdd7816da509684a1c111a399187bb62"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -1770,8 +1808,8 @@
     {
       "sectionId": "17.8",
       "title": "Extraction manifest",
-      "startLine": 1464,
-      "endLine": 1490,
+      "startLine": 1528,
+      "endLine": 1554,
       "normativeRequirementIds": [
         "NREQ-48711e553b4aa28506c32461308ed2c0",
         "NREQ-0502f55f099b025d348899755d3d141a",
@@ -1801,8 +1839,8 @@
     {
       "sectionId": "17.9",
       "title": "File-first response ingestion",
-      "startLine": 1491,
-      "endLine": 1494,
+      "startLine": 1555,
+      "endLine": 1558,
       "normativeRequirementIds": [
         "NREQ-e37f9f88045a9ddc9b4bbce14447f614"
       ],
@@ -1812,9 +1850,10 @@
     {
       "sectionId": "17.10",
       "title": "Attachment-slot contract",
-      "startLine": 1495,
-      "endLine": 1500,
+      "startLine": 1559,
+      "endLine": 1564,
       "normativeRequirementIds": [
+        "NREQ-fc73ddc3ba9934e2d605107adca72254",
         "NREQ-51e872a7a046be9eeb955e757448b228"
       ],
       "disposition": "COVERED",
@@ -1823,8 +1862,8 @@
     {
       "sectionId": "17.11",
       "title": "Date and time contract",
-      "startLine": 1501,
-      "endLine": 1508,
+      "startLine": 1565,
+      "endLine": 1572,
       "normativeRequirementIds": [
         "NREQ-f6e8e2634e9c74e49758b7cd3894f65f",
         "NREQ-da3ad62643d2f4839e89504f38345c21"
@@ -1835,8 +1874,8 @@
     {
       "sectionId": "17.12",
       "title": "Proposal-acceptance modes",
-      "startLine": 1509,
-      "endLine": 1518,
+      "startLine": 1573,
+      "endLine": 1582,
       "normativeRequirementIds": [
         "NREQ-5fd38e249cabfceace66e3488d9bef39",
         "NREQ-be8170916c23d867812a1a5aeef1bcc0",
@@ -1849,8 +1888,8 @@
     {
       "sectionId": "18",
       "title": "Human clarification",
-      "startLine": 1519,
-      "endLine": 1552,
+      "startLine": 1583,
+      "endLine": 1616,
       "normativeRequirementIds": [
         "NREQ-6267763502fe7e50361cd4c0ff7040bd",
         "NREQ-62837ece61b4a46dbf80e04e00e83dad",
@@ -1881,8 +1920,8 @@
     {
       "sectionId": "18.1",
       "title": "External-conversation human-answer capture",
-      "startLine": 1553,
-      "endLine": 1558,
+      "startLine": 1617,
+      "endLine": 1622,
       "normativeRequirementIds": [
         "NREQ-29b2201dc5d00706278bc27c626759d1"
       ],
@@ -1892,8 +1931,8 @@
     {
       "sectionId": "19",
       "title": "Artifact and evidence rules",
-      "startLine": 1559,
-      "endLine": 1560,
+      "startLine": 1623,
+      "endLine": 1624,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -1901,8 +1940,8 @@
     {
       "sectionId": "19.1",
       "title": "Byte authority",
-      "startLine": 1561,
-      "endLine": 1572,
+      "startLine": 1625,
+      "endLine": 1636,
       "normativeRequirementIds": [
         "NREQ-394e7c307a18028cf73081fb2e025ec8",
         "NREQ-ae8ac4951884c4e06554c4f558360423",
@@ -1917,8 +1956,8 @@
     {
       "sectionId": "19.2",
       "title": "Custody honesty",
-      "startLine": 1573,
-      "endLine": 1584,
+      "startLine": 1637,
+      "endLine": 1648,
       "normativeRequirementIds": [
         "NREQ-11ad2b15a3cf7704d0da61a6c08593c9",
         "NREQ-75c15a9f025fa6d767df9ada715f1b44",
@@ -1933,8 +1972,8 @@
     {
       "sectionId": "19.3",
       "title": "No repeated human resupply",
-      "startLine": 1585,
-      "endLine": 1593,
+      "startLine": 1649,
+      "endLine": 1657,
       "normativeRequirementIds": [
         "NREQ-b2a55c4ecb998c5be0931088c1da1397",
         "NREQ-e88a52eae80983f9d011ec1b3d4c5eff",
@@ -1948,8 +1987,8 @@
     {
       "sectionId": "19.4",
       "title": "Large multi-file work",
-      "startLine": 1594,
-      "endLine": 1600,
+      "startLine": 1658,
+      "endLine": 1664,
       "normativeRequirementIds": [
         "NREQ-0b407704c6b296f1c28c8adc1f11eb9a",
         "NREQ-d987b14e7e3e64cf8dc80d4d4826fa5b",
@@ -1961,8 +2000,8 @@
     {
       "sectionId": "19.5",
       "title": "Evidence distinction",
-      "startLine": 1601,
-      "endLine": 1616,
+      "startLine": 1665,
+      "endLine": 1680,
       "normativeRequirementIds": [
         "NREQ-3b3a4fdde03af85a1229ada6fa35a396",
         "NREQ-9a6b52d7a96bad5dc38d664887c4120b",
@@ -1982,8 +2021,8 @@
     {
       "sectionId": "19.6",
       "title": "File-first external handoff",
-      "startLine": 1617,
-      "endLine": 1630,
+      "startLine": 1681,
+      "endLine": 1694,
       "normativeRequirementIds": [
         "NREQ-e66b37762f898564442e0d240c2ee737",
         "NREQ-4254fe3c87d45f74425134dee3532e3a",
@@ -1999,9 +2038,10 @@
     {
       "sectionId": "19.7",
       "title": "closed-loop-handoff-container/1",
-      "startLine": 1631,
-      "endLine": 1642,
+      "startLine": 1695,
+      "endLine": 1706,
       "normativeRequirementIds": [
+        "NREQ-3a4b97bb6d98ee930866832102f1d544",
         "NREQ-5346f0fa42298a807f25886df39b41ca",
         "NREQ-3bd6ddb44410af0ce360674e456fec7a",
         "NREQ-df0939c42dacd8d296ed2fa0847f520e"
@@ -2012,8 +2052,8 @@
     {
       "sectionId": "19.8",
       "title": "Disclosure and package allowlist",
-      "startLine": 1643,
-      "endLine": 1646,
+      "startLine": 1707,
+      "endLine": 1710,
       "normativeRequirementIds": [
         "NREQ-0062ba4fa6e5f163cca70164dd9c5ea6"
       ],
@@ -2023,8 +2063,8 @@
     {
       "sectionId": "19.9",
       "title": "Filename, format, and archive safety",
-      "startLine": 1647,
-      "endLine": 1656,
+      "startLine": 1711,
+      "endLine": 1720,
       "normativeRequirementIds": [
         "NREQ-01764243de7807d20da1c57df07f98a2",
         "NREQ-e42f7e110e7f6798a6a5cb7a44334934"
@@ -2035,8 +2075,8 @@
     {
       "sectionId": "20",
       "title": "Verification execution modes",
-      "startLine": 1657,
-      "endLine": 1673,
+      "startLine": 1721,
+      "endLine": 1737,
       "normativeRequirementIds": [
         "NREQ-232e3d6afe3850d6fb782b0840ed33a0",
         "NREQ-44d0e36315d9a8734eaa3a36e4aa0743",
@@ -2052,8 +2092,8 @@
     {
       "sectionId": "21",
       "title": "Closed Loop Test IR",
-      "startLine": 1674,
-      "endLine": 1675,
+      "startLine": 1738,
+      "endLine": 1739,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -2061,8 +2101,8 @@
     {
       "sectionId": "21.1",
       "title": "Purpose",
-      "startLine": 1676,
-      "endLine": 1682,
+      "startLine": 1740,
+      "endLine": 1746,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -2070,8 +2110,8 @@
     {
       "sectionId": "21.2",
       "title": "Canonical test additions",
-      "startLine": 1683,
-      "endLine": 1709,
+      "startLine": 1747,
+      "endLine": 1773,
       "normativeRequirementIds": [
         "NREQ-c999161135d903d2d37cfadf7ea8542b",
         "NREQ-529b6f9b3c5b7ef1fd478fcbf72db819",
@@ -2096,10 +2136,11 @@
     {
       "sectionId": "21.3",
       "title": "Canonical structure and dataflow",
-      "startLine": 1710,
-      "endLine": 1777,
+      "startLine": 1774,
+      "endLine": 1841,
       "normativeRequirementIds": [
-        "NREQ-5d9d976d449de0753c8c4f1692905b62"
+        "NREQ-5d9d976d449de0753c8c4f1692905b62",
+        "NREQ-ac56cc341e3ff24380bef0ff95da8e45"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -2107,8 +2148,8 @@
     {
       "sectionId": "21.4",
       "title": "Required primitives",
-      "startLine": 1778,
-      "endLine": 1810,
+      "startLine": 1842,
+      "endLine": 1874,
       "normativeRequirementIds": [
         "NREQ-658c71fb2e3992ee94fb6b4ecedc1681",
         "NREQ-9e0ad66ef878f9e97c909997e976cc13",
@@ -2146,8 +2187,8 @@
     {
       "sectionId": "21.5",
       "title": "Prohibited runtime behavior",
-      "startLine": 1811,
-      "endLine": 1827,
+      "startLine": 1875,
+      "endLine": 1891,
       "normativeRequirementIds": [
         "NREQ-b7b0e1583bfaec986d6681628616f94d",
         "NREQ-fb704a73d42766fc421d61bf29fc9fae",
@@ -2168,8 +2209,8 @@
     {
       "sectionId": "21.6",
       "title": "Restricted selectors",
-      "startLine": 1828,
-      "endLine": 1835,
+      "startLine": 1892,
+      "endLine": 1899,
       "normativeRequirementIds": [
         "NREQ-92b870d0d2245e99909d2de6229cf833",
         "NREQ-3773e3c09e77cc4938bda066a930e757",
@@ -2181,8 +2222,8 @@
     {
       "sectionId": "21.7",
       "title": "CSV contract",
-      "startLine": 1836,
-      "endLine": 1848,
+      "startLine": 1900,
+      "endLine": 1912,
       "normativeRequirementIds": [
         "NREQ-92ddad11c3370531a5ecd18751d4bf77",
         "NREQ-6c9dbd622e90fb226f491908cfd50b97",
@@ -2199,8 +2240,8 @@
     {
       "sectionId": "21.8",
       "title": "Text encoding",
-      "startLine": 1849,
-      "endLine": 1853,
+      "startLine": 1913,
+      "endLine": 1917,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -2208,8 +2249,8 @@
     {
       "sectionId": "21.9",
       "title": "Regex",
-      "startLine": 1854,
-      "endLine": 1860,
+      "startLine": 1918,
+      "endLine": 1924,
       "normativeRequirementIds": [
         "NREQ-2b66925ed746f4edc554b6e9df9b98c4",
         "NREQ-6839238c5b7c2ac053fe90b061149fbe"
@@ -2220,8 +2261,8 @@
     {
       "sectionId": "21.10",
       "title": "Numeric semantics",
-      "startLine": 1861,
-      "endLine": 1868,
+      "startLine": 1925,
+      "endLine": 1932,
       "normativeRequirementIds": [
         "NREQ-092f78e488e6282f342b533fa7801e3e",
         "NREQ-49c1165a0f1993e4db5d713a6e83e6d4",
@@ -2235,8 +2276,8 @@
     {
       "sectionId": "21.11",
       "title": "Inputs",
-      "startLine": 1869,
-      "endLine": 1880,
+      "startLine": 1933,
+      "endLine": 1944,
       "normativeRequirementIds": [
         "NREQ-02b9539a860e41f9e27e943922a934e2",
         "NREQ-1955b1bb1e03b84195c1e5d992d14dab",
@@ -2252,8 +2293,8 @@
     {
       "sectionId": "21.12",
       "title": "Format adapters",
-      "startLine": 1881,
-      "endLine": 1886,
+      "startLine": 1945,
+      "endLine": 1950,
       "normativeRequirementIds": [
         "NREQ-47173220891e239ea7406cb0cca8eeee"
       ],
@@ -2263,8 +2304,8 @@
     {
       "sectionId": "21.13",
       "title": "JSON Schema",
-      "startLine": 1887,
-      "endLine": 1891,
+      "startLine": 1951,
+      "endLine": 1955,
       "normativeRequirementIds": [
         "NREQ-173782598cd431ac918fa6fed756bf8d"
       ],
@@ -2274,8 +2315,8 @@
     {
       "sectionId": "21.14",
       "title": "Resource limits",
-      "startLine": 1892,
-      "endLine": 1908,
+      "startLine": 1956,
+      "endLine": 1972,
       "normativeRequirementIds": [
         "NREQ-fd11d32533eded72fb27014d349e4d37",
         "NREQ-562cc3b146ee6968933caa96c0e1e451",
@@ -2295,8 +2336,8 @@
     {
       "sectionId": "21.15",
       "title": "Execution dispositions",
-      "startLine": 1909,
-      "endLine": 1916,
+      "startLine": 1973,
+      "endLine": 1980,
       "normativeRequirementIds": [
         "NREQ-302e3a8509110ac903ccbf5df33442f2",
         "NREQ-5ef09e6a03791167b964394dbb9b515c",
@@ -2310,8 +2351,8 @@
     {
       "sectionId": "21.16",
       "title": "Test IR language and registry identity",
-      "startLine": 1917,
-      "endLine": 1929,
+      "startLine": 1981,
+      "endLine": 1993,
       "normativeRequirementIds": [
         "NREQ-c5c388faca4975e21b73c14bffbcd6a0",
         "NREQ-e6083926e57a07795024b2e33f1fbc2a",
@@ -2328,17 +2369,19 @@
     {
       "sectionId": "21.17",
       "title": "Verification timing fields",
-      "startLine": 1930,
-      "endLine": 1935,
-      "normativeRequirementIds": [],
-      "disposition": "NONNORMATIVE",
-      "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
+      "startLine": 1994,
+      "endLine": 1999,
+      "normativeRequirementIds": [
+        "NREQ-38cc440932653f635d781450303b4f7f"
+      ],
+      "disposition": "COVERED",
+      "nonnormativeReason": null
     },
     {
       "sectionId": "22",
       "title": "Deterministic runtime and worker",
-      "startLine": 1936,
-      "endLine": 1937,
+      "startLine": 2000,
+      "endLine": 2001,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -2346,8 +2389,8 @@
     {
       "sectionId": "22.1",
       "title": "test-runtime.js",
-      "startLine": 1938,
-      "endLine": 1950,
+      "startLine": 2002,
+      "endLine": 2014,
       "normativeRequirementIds": [
         "NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9"
       ],
@@ -2357,8 +2400,8 @@
     {
       "sectionId": "22.2",
       "title": "test-worker.js",
-      "startLine": 1951,
-      "endLine": 1965,
+      "startLine": 2015,
+      "endLine": 2029,
       "normativeRequirementIds": [
         "NREQ-dfdd7bfb57617ffa34f7edc6448b8efa",
         "NREQ-fdfa1e5720eb2d1a75f642d1c0172b1d",
@@ -2376,8 +2419,8 @@
     {
       "sectionId": "22.3",
       "title": "Runtime result",
-      "startLine": 1966,
-      "endLine": 1984,
+      "startLine": 2030,
+      "endLine": 2048,
       "normativeRequirementIds": [
         "NREQ-42c21b952ce94405751eda0c2a8ccbf1",
         "NREQ-670c4952afdbd9bbfd731c44f77584d0",
@@ -2399,8 +2442,8 @@
     {
       "sectionId": "22.4",
       "title": "Native-result authority",
-      "startLine": 1985,
-      "endLine": 2005,
+      "startLine": 2049,
+      "endLine": 2069,
       "normativeRequirementIds": [
         "NREQ-f7f1c1ec121c9325a1e0a092ec997a71",
         "NREQ-ac7c922befffd2b8aca9abb2b086b24f",
@@ -2422,8 +2465,8 @@
     {
       "sectionId": "22.5",
       "title": "External deterministic results",
-      "startLine": 2006,
-      "endLine": 2018,
+      "startLine": 2070,
+      "endLine": 2082,
       "normativeRequirementIds": [
         "NREQ-5593f5ae7124c14de5c9cb15dbf25ca8",
         "NREQ-e2ed622c739e2f6d9363c6e83cd5e405",
@@ -2437,8 +2480,8 @@
     {
       "sectionId": "22.6",
       "title": "Runtime identity and deterministic dataflow evidence",
-      "startLine": 2019,
-      "endLine": 2026,
+      "startLine": 2083,
+      "endLine": 2090,
       "normativeRequirementIds": [
         "NREQ-c1879fc63de504e2efe17be8df27dcae",
         "NREQ-7bb2350ae5c822de251d6fa5684f48ff"
@@ -2449,8 +2492,8 @@
     {
       "sectionId": "23",
       "title": "Single execution-routing authority",
-      "startLine": 2027,
-      "endLine": 2076,
+      "startLine": 2091,
+      "endLine": 2140,
       "normativeRequirementIds": [
         "NREQ-64c4e69f5856eb077acaa76d3c132888",
         "NREQ-38b76d06af894cd7aa0bfaa46c3c8415",
@@ -2492,8 +2535,8 @@
     {
       "sectionId": "23.1",
       "title": "Required routing",
-      "startLine": 2077,
-      "endLine": 2111,
+      "startLine": 2141,
+      "endLine": 2175,
       "normativeRequirementIds": [
         "NREQ-b0fd0ee704899b4c70014d19430937da",
         "NREQ-5ba8088e5ba045d7110e256658291d31",
@@ -2525,8 +2568,8 @@
     {
       "sectionId": "23.2",
       "title": "Stage 06 readiness",
-      "startLine": 2112,
-      "endLine": 2130,
+      "startLine": 2176,
+      "endLine": 2194,
       "normativeRequirementIds": [
         "NREQ-284534b98b5fc01308689353f4138638",
         "NREQ-312efdbd2089dd18f2a0ea2491f2f599",
@@ -2547,8 +2590,8 @@
     {
       "sectionId": "23.3",
       "title": "External-action risk contract",
-      "startLine": 2131,
-      "endLine": 2141,
+      "startLine": 2195,
+      "endLine": 2205,
       "normativeRequirementIds": [
         "NREQ-6a7d7e48357d003e19c720acc3c1b159"
       ],
@@ -2558,8 +2601,8 @@
     {
       "sectionId": "24",
       "title": "Deterministic artifact handoff",
-      "startLine": 2142,
-      "endLine": 2189,
+      "startLine": 2206,
+      "endLine": 2253,
       "normativeRequirementIds": [
         "NREQ-aa1b41ffe88d6525ec6159b6b1bb7a81",
         "NREQ-14cabca0b16e90d5184f1582af4e5753",
@@ -2597,8 +2640,8 @@
     {
       "sectionId": "24.1",
       "title": "File-first handoff fields",
-      "startLine": 2190,
-      "endLine": 2207,
+      "startLine": 2254,
+      "endLine": 2271,
       "normativeRequirementIds": [
         "NREQ-e37583d64c9ef84138b095a056017aac",
         "NREQ-d488835eb5e480c31ad6c216b41d8ca9",
@@ -2611,7 +2654,8 @@
         "NREQ-ad1e39246573d30e8a01562d159421bc",
         "NREQ-cd2e0b41334c1319830464fdbef08819",
         "NREQ-afc67b9dca7a9d3fadb3c4bfcf6ce8e4",
-        "NREQ-aae33509243b5d9ba8e64aa690ba0193"
+        "NREQ-aae33509243b5d9ba8e64aa690ba0193",
+        "NREQ-0633385d1ac3faa034a49bca2fe34de5"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -2619,8 +2663,8 @@
     {
       "sectionId": "24.2",
       "title": "Returned attachment slots",
-      "startLine": 2208,
-      "endLine": 2213,
+      "startLine": 2272,
+      "endLine": 2277,
       "normativeRequirementIds": [
         "NREQ-2376f2220054471b278de6b6f72e8067"
       ],
@@ -2630,8 +2674,8 @@
     {
       "sectionId": "25",
       "title": "Verification packages and artifact retrieval",
-      "startLine": 2214,
-      "endLine": 2258,
+      "startLine": 2278,
+      "endLine": 2322,
       "normativeRequirementIds": [
         "NREQ-2721c5a7047ce4837daf88f34534835f",
         "NREQ-4569cb23f0998046d7a974b195e47a7f",
@@ -2655,7 +2699,8 @@
         "NREQ-ed36036b69448991f17a65932ea99f22",
         "NREQ-38152c7fc91cb2bd1352d15eb664cf3b",
         "NREQ-565340ef17dd5d435a9b60253a2e3680",
-        "NREQ-2dd1db06ef1d50afe2650ffc207183e4"
+        "NREQ-2dd1db06ef1d50afe2650ffc207183e4",
+        "NREQ-53ba467545effc4fc63c93119acaed3c"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -2663,8 +2708,8 @@
     {
       "sectionId": "25.1",
       "title": "Handoff-container contract binding",
-      "startLine": 2259,
-      "endLine": 2262,
+      "startLine": 2323,
+      "endLine": 2326,
       "normativeRequirementIds": [
         "NREQ-10058b3220d8aa7bade4c4dbf7de71fd"
       ],
@@ -2674,8 +2719,8 @@
     {
       "sectionId": "25.2",
       "title": "Reservation and package transaction order",
-      "startLine": 2263,
-      "endLine": 2272,
+      "startLine": 2327,
+      "endLine": 2336,
       "normativeRequirementIds": [
         "NREQ-c8f92d9887c4dfc8c86c4441331e3846",
         "NREQ-785c18addfdad50b324fd96004bc3884",
@@ -2687,8 +2732,8 @@
     {
       "sectionId": "26",
       "title": "Independence evaluation",
-      "startLine": 2273,
-      "endLine": 2295,
+      "startLine": 2337,
+      "endLine": 2359,
       "normativeRequirementIds": [
         "NREQ-6b0ea92de0e49bb298bf7c05dd584f17",
         "NREQ-53107fce2a3a405404129e2e219effb0",
@@ -2705,8 +2750,8 @@
     {
       "sectionId": "26.1",
       "title": "Stage 11",
-      "startLine": 2296,
-      "endLine": 2312,
+      "startLine": 2360,
+      "endLine": 2376,
       "normativeRequirementIds": [
         "NREQ-9db55c6dbe500e68b8639f2470a1319b",
         "NREQ-f8514074d453d8b00b5d4ae84eae543e",
@@ -2728,8 +2773,8 @@
     {
       "sectionId": "26.2",
       "title": "Stage 12",
-      "startLine": 2313,
-      "endLine": 2324,
+      "startLine": 2377,
+      "endLine": 2388,
       "normativeRequirementIds": [
         "NREQ-20c6397550373d28eb5058a6d9bc4c88",
         "NREQ-7ebc6f29563ca656fef5aa9188216a6a",
@@ -2746,8 +2791,8 @@
     {
       "sectionId": "26.3",
       "title": "Stages 23 and 24",
-      "startLine": 2325,
-      "endLine": 2333,
+      "startLine": 2389,
+      "endLine": 2397,
       "normativeRequirementIds": [
         "NREQ-cb8f4a40e000fae2b455e05e4de71830",
         "NREQ-d0659a9eac14494a00d264419efd817d",
@@ -2761,8 +2806,8 @@
     {
       "sectionId": "26.4",
       "title": "Gate consequence",
-      "startLine": 2334,
-      "endLine": 2347,
+      "startLine": 2398,
+      "endLine": 2411,
       "normativeRequirementIds": [
         "NREQ-99884c8fefd21f5a6ba52a3121c70fd6",
         "NREQ-4a3b7a39f7183d2400faff0a0cd021f1",
@@ -2777,8 +2822,8 @@
     {
       "sectionId": "26.5",
       "title": "Independent semantic-review contract",
-      "startLine": 2348,
-      "endLine": 2363,
+      "startLine": 2412,
+      "endLine": 2427,
       "normativeRequirementIds": [
         "NREQ-703c69d350d3da62011c05675d00efef",
         "NREQ-cd5bf8364f5c40ffe96641607787f17b",
@@ -2797,8 +2842,8 @@
     {
       "sectionId": "26.6",
       "title": "Dimensioned independence",
-      "startLine": 2364,
-      "endLine": 2371,
+      "startLine": 2428,
+      "endLine": 2435,
       "normativeRequirementIds": [
         "NREQ-66a7ba350a4bba46bb678f982e931182",
         "NREQ-5f1bc883d00962185e79c37a7d5465b8"
@@ -2809,8 +2854,8 @@
     {
       "sectionId": "27",
       "title": "Blind verification",
-      "startLine": 2372,
-      "endLine": 2399,
+      "startLine": 2436,
+      "endLine": 2463,
       "normativeRequirementIds": [
         "NREQ-19842cd02f840a4a7d0c51d69fb9f1bd",
         "NREQ-c50fa689b1c075418f2fbe811aa5134a",
@@ -2833,8 +2878,8 @@
     {
       "sectionId": "28",
       "title": "Prompt context isolation",
-      "startLine": 2400,
-      "endLine": 2460,
+      "startLine": 2464,
+      "endLine": 2524,
       "normativeRequirementIds": [
         "NREQ-4fe3ebbc713419904b04a6d253575905",
         "NREQ-03f38d98992527a14c3b5931e292a7f6",
@@ -2882,8 +2927,8 @@
     {
       "sectionId": "29",
       "title": "Evidence sufficiency",
-      "startLine": 2461,
-      "endLine": 2477,
+      "startLine": 2525,
+      "endLine": 2541,
       "normativeRequirementIds": [
         "NREQ-448df4814730596863f1e5bae3577e64",
         "NREQ-02555050a65c48419e4ff403b1292eb9",
@@ -2898,8 +2943,8 @@
     {
       "sectionId": "29.1",
       "title": "Byte identity",
-      "startLine": 2478,
-      "endLine": 2487,
+      "startLine": 2542,
+      "endLine": 2551,
       "normativeRequirementIds": [
         "NREQ-39ed3adcb98e31aeb7172a452d5c56a0",
         "NREQ-b807fcc003ec5bc541881c0e919a965a",
@@ -2912,8 +2957,8 @@
     {
       "sectionId": "29.2",
       "title": "Programmatic test",
-      "startLine": 2488,
-      "endLine": 2497,
+      "startLine": 2552,
+      "endLine": 2561,
       "normativeRequirementIds": [
         "NREQ-1f885c83ae6887efc0e25f059e7b2334",
         "NREQ-4dd46adaee772c1ef4330312a9dcbaa8",
@@ -2928,8 +2973,8 @@
     {
       "sectionId": "29.3",
       "title": "Meaning review",
-      "startLine": 2498,
-      "endLine": 2508,
+      "startLine": 2562,
+      "endLine": 2572,
       "normativeRequirementIds": [
         "NREQ-6387c47feb44dc038dce458a608042dc",
         "NREQ-c3a05bd35ec23cba43a4510880003692",
@@ -2943,8 +2988,8 @@
     {
       "sectionId": "29.4",
       "title": "Human inspection",
-      "startLine": 2509,
-      "endLine": 2513,
+      "startLine": 2573,
+      "endLine": 2577,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -2952,8 +2997,8 @@
     {
       "sectionId": "29.5",
       "title": "External system",
-      "startLine": 2514,
-      "endLine": 2518,
+      "startLine": 2578,
+      "endLine": 2582,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -2961,8 +3006,8 @@
     {
       "sectionId": "29.6",
       "title": "Unavailable capability",
-      "startLine": 2519,
-      "endLine": 2522,
+      "startLine": 2583,
+      "endLine": 2586,
       "normativeRequirementIds": [
         "NREQ-83b48e951765077ef8c56eaef9d04790"
       ],
@@ -2972,8 +3017,8 @@
     {
       "sectionId": "29.7",
       "title": "Artifact evidence",
-      "startLine": 2523,
-      "endLine": 2527,
+      "startLine": 2587,
+      "endLine": 2591,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -2981,8 +3026,8 @@
     {
       "sectionId": "29.8",
       "title": "Later artifact loss",
-      "startLine": 2528,
-      "endLine": 2532,
+      "startLine": 2592,
+      "endLine": 2596,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -2990,8 +3035,8 @@
     {
       "sectionId": "29.9",
       "title": "Gate integration",
-      "startLine": 2533,
-      "endLine": 2549,
+      "startLine": 2597,
+      "endLine": 2613,
       "normativeRequirementIds": [
         "NREQ-1c390edf28b76c6f077de1f77378d515",
         "NREQ-b1cd79f8f6c995cbb8fe379f475f2b22",
@@ -3011,9 +3056,10 @@
     {
       "sectionId": "29.10",
       "title": "Activation-proposition proof",
-      "startLine": 2550,
-      "endLine": 2555,
+      "startLine": 2614,
+      "endLine": 2619,
       "normativeRequirementIds": [
+        "NREQ-282ce0f6e3bf215ccb15afd7cdb77fa3",
         "NREQ-0935bdd666f0bb2c7264e51d45ad67ce"
       ],
       "disposition": "COVERED",
@@ -3022,8 +3068,8 @@
     {
       "sectionId": "29.11",
       "title": "Due-stage evidence evaluation",
-      "startLine": 2556,
-      "endLine": 2559,
+      "startLine": 2620,
+      "endLine": 2623,
       "normativeRequirementIds": [
         "NREQ-bf34fdbf7035432eacf5b29a472119a3"
       ],
@@ -3033,9 +3079,10 @@
     {
       "sectionId": "29.12",
       "title": "Universal proposition state and three-valued logic",
-      "startLine": 2560,
-      "endLine": 2565,
+      "startLine": 2624,
+      "endLine": 2629,
       "normativeRequirementIds": [
+        "NREQ-852539ae8a657244366126b11b538c7b",
         "NREQ-586c7239525fc49657cbea6c505f432c"
       ],
       "disposition": "COVERED",
@@ -3044,10 +3091,11 @@
     {
       "sectionId": "29.13",
       "title": "Proposition and proof-expression contract",
-      "startLine": 2566,
-      "endLine": 2575,
+      "startLine": 2630,
+      "endLine": 2639,
       "normativeRequirementIds": [
         "NREQ-5364b9a933b45e3f9e9d3d825b66631e",
+        "NREQ-17e9fcfc6ae15d210aa3de51b9644377",
         "NREQ-2eb7c4bf653b73a37d70235ed1d7232f",
         "NREQ-19b09d8ac32718e4ba1a28318469f8da"
       ],
@@ -3057,8 +3105,8 @@
     {
       "sectionId": "29.14",
       "title": "Observation, entailment, origin, and freshness",
-      "startLine": 2576,
-      "endLine": 2585,
+      "startLine": 2640,
+      "endLine": 2649,
       "normativeRequirementIds": [
         "NREQ-de2163b6823fd4090507dfbc5e73774a",
         "NREQ-9aac96ceeca05a83b61b47e2523c2fdb",
@@ -3071,8 +3119,8 @@
     {
       "sectionId": "29.15",
       "title": "Normative classification, controlled exceptions, severity, and materiality",
-      "startLine": 2586,
-      "endLine": 2597,
+      "startLine": 2650,
+      "endLine": 2661,
       "normativeRequirementIds": [
         "NREQ-0b6fed57abd3fba742e4a4a79c19bcf2",
         "NREQ-ac2d5aec4ee193f2b8bb2b1d3aca83af",
@@ -3085,8 +3133,8 @@
     {
       "sectionId": "30",
       "title": "Contradiction detection",
-      "startLine": 2598,
-      "endLine": 2608,
+      "startLine": 2662,
+      "endLine": 2672,
       "normativeRequirementIds": [
         "NREQ-165abce3e48ae4b7f7a5d7110e8ee11e"
       ],
@@ -3096,8 +3144,8 @@
     {
       "sectionId": "30.1",
       "title": "Verification contradictions",
-      "startLine": 2609,
-      "endLine": 2617,
+      "startLine": 2673,
+      "endLine": 2681,
       "normativeRequirementIds": [
         "NREQ-bd3a88c98f98f22febe14c56f4aeb079",
         "NREQ-08a8e613afe8e13e66df96acc60989f9"
@@ -3108,8 +3156,8 @@
     {
       "sectionId": "30.2",
       "title": "Same-proposition contradictions",
-      "startLine": 2618,
-      "endLine": 2623,
+      "startLine": 2682,
+      "endLine": 2687,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -3117,8 +3165,8 @@
     {
       "sectionId": "30.3",
       "title": "Product contradictions",
-      "startLine": 2624,
-      "endLine": 2631,
+      "startLine": 2688,
+      "endLine": 2695,
       "normativeRequirementIds": [
         "NREQ-9c528e425bc524094900f59471cd2f9b",
         "NREQ-34e95761334f6f2d0db3464fea1f83de"
@@ -3129,8 +3177,8 @@
     {
       "sectionId": "30.4",
       "title": "Artifact contradictions",
-      "startLine": 2632,
-      "endLine": 2641,
+      "startLine": 2696,
+      "endLine": 2705,
       "normativeRequirementIds": [
         "NREQ-1b37154aedf345688393859074b4cd62",
         "NREQ-9b5eadf3591c35781a52ac727995257f",
@@ -3143,8 +3191,8 @@
     {
       "sectionId": "30.5",
       "title": "Baseline/product contradictions",
-      "startLine": 2642,
-      "endLine": 2645,
+      "startLine": 2706,
+      "endLine": 2709,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -3152,8 +3200,8 @@
     {
       "sectionId": "30.6",
       "title": "Release contradictions",
-      "startLine": 2646,
-      "endLine": 2653,
+      "startLine": 2710,
+      "endLine": 2717,
       "normativeRequirementIds": [
         "NREQ-bb1e22ae0e7f0ee2df6ebfde6733d22b",
         "NREQ-698c8f4bff987681cfc3bb8d8b6d49a4",
@@ -3166,8 +3214,8 @@
     {
       "sectionId": "30.7",
       "title": "Release disposition",
-      "startLine": 2654,
-      "endLine": 2662,
+      "startLine": 2718,
+      "endLine": 2726,
       "normativeRequirementIds": [
         "NREQ-9f6fccc2abaa44dd34c1ef29a796ec2c",
         "NREQ-be6b732dc4c63e56ab63a00039971dba",
@@ -3179,8 +3227,8 @@
     {
       "sectionId": "30.8",
       "title": "Gate integration",
-      "startLine": 2663,
-      "endLine": 2675,
+      "startLine": 2727,
+      "endLine": 2739,
       "normativeRequirementIds": [
         "NREQ-31172e91f0e26d4abc4264357b00c55e",
         "NREQ-ff092f8e449734e7c01eb06e4568fd9b",
@@ -3195,8 +3243,8 @@
     {
       "sectionId": "31",
       "title": "Ten-run stability and reliability metrics",
-      "startLine": 2676,
-      "endLine": 2736,
+      "startLine": 2740,
+      "endLine": 2800,
       "normativeRequirementIds": [
         "NREQ-e7dcf30a497ab9a4f1ca4d96d1eb74fc",
         "NREQ-c6ef9702256c53e1ce9615d73d6ba511",
@@ -3244,8 +3292,8 @@
     {
       "sectionId": "31.1",
       "title": "Closed metric universes",
-      "startLine": 2737,
-      "endLine": 2753,
+      "startLine": 2801,
+      "endLine": 2817,
       "normativeRequirementIds": [
         "NREQ-7742eb1861b4fce2dc7c3a7474f0ca0a",
         "NREQ-38ae114de18224612a16b893169b1cac",
@@ -3265,8 +3313,8 @@
     {
       "sectionId": "32",
       "title": "Failure-test and regression semantics",
-      "startLine": 2754,
-      "endLine": 2755,
+      "startLine": 2818,
+      "endLine": 2819,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -3274,8 +3322,8 @@
     {
       "sectionId": "32.1",
       "title": "Stage 06 false-positive analysis",
-      "startLine": 2756,
-      "endLine": 2769,
+      "startLine": 2820,
+      "endLine": 2833,
       "normativeRequirementIds": [
         "NREQ-231885ba46ead935bf919d9f1df68932",
         "NREQ-9abf0310cf3f22a55a867423a0391e42",
@@ -3292,8 +3340,8 @@
     {
       "sectionId": "32.2",
       "title": "Stage 07 completion",
-      "startLine": 2770,
-      "endLine": 2783,
+      "startLine": 2834,
+      "endLine": 2847,
       "normativeRequirementIds": [
         "NREQ-b820dfd35041d54b2f441b39d1bab685",
         "NREQ-dbee71e64104225811e672eb6e6f8741",
@@ -3311,8 +3359,8 @@
     {
       "sectionId": "32.3",
       "title": "Stage 15 regression",
-      "startLine": 2784,
-      "endLine": 2801,
+      "startLine": 2848,
+      "endLine": 2865,
       "normativeRequirementIds": [
         "NREQ-7470076d2a7e03f5bf547c3ac10ce440",
         "NREQ-ba171af2ccc6c2d4e08fd9c17c7415c9",
@@ -3333,8 +3381,8 @@
     {
       "sectionId": "32.4",
       "title": "Due-stage and isolation rule",
-      "startLine": 2802,
-      "endLine": 2807,
+      "startLine": 2866,
+      "endLine": 2871,
       "normativeRequirementIds": [
         "NREQ-c5c82a5cce0d08af43e0c6cb6e8cebd4",
         "NREQ-d135d2e2e26f8f7b33988b0ec83e3912"
@@ -3343,10 +3391,24 @@
       "nonnormativeReason": null
     },
     {
+      "sectionId": "32.4A",
+      "title": "Deferred execution operations and receipts",
+      "startLine": 2872,
+      "endLine": 2893,
+      "normativeRequirementIds": [
+        "NREQ-c5c82a5cce0d08af43e0c6cb6e8cebd4",
+        "NREQ-d135d2e2e26f8f7b33988b0ec83e3912",
+        "NREQ-e62887ec3aaf5cadb120405041cd899a",
+        "NREQ-1ccf83c0b565d2c7c794739e4e7663b7"
+      ],
+      "disposition": "COVERED",
+      "nonnormativeReason": null
+    },
+    {
       "sectionId": "32.5",
       "title": "Regression retirement",
-      "startLine": 2808,
-      "endLine": 2813,
+      "startLine": 2894,
+      "endLine": 2899,
       "normativeRequirementIds": [
         "NREQ-037724ad084b3965984dea9793799411"
       ],
@@ -3356,8 +3418,8 @@
     {
       "sectionId": "33",
       "title": "Stage 16 correction model",
-      "startLine": 2814,
-      "endLine": 2851,
+      "startLine": 2900,
+      "endLine": 2937,
       "normativeRequirementIds": [
         "NREQ-c070ebe40833d0893db26b0741e53d1d",
         "NREQ-d03eed203937406b33ee6f94d272e66b",
@@ -3387,8 +3449,8 @@
     {
       "sectionId": "34",
       "title": "Collection commit semantics",
-      "startLine": 2852,
-      "endLine": 2866,
+      "startLine": 2938,
+      "endLine": 2952,
       "normativeRequirementIds": [
         "NREQ-d156488334b6cd6ead7d6b80edda1adc",
         "NREQ-06622203b5a31cffc587f0e1624a3664",
@@ -3403,8 +3465,8 @@
     {
       "sectionId": "34.1",
       "title": "Canonical serialization portability",
-      "startLine": 2867,
-      "endLine": 2883,
+      "startLine": 2953,
+      "endLine": 2969,
       "normativeRequirementIds": [
         "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
         "NREQ-2bf4248eaeff507c8ae287556074d93b",
@@ -3424,8 +3486,8 @@
     {
       "sectionId": "34.2",
       "title": "Canonical ID allocation",
-      "startLine": 2884,
-      "endLine": 2904,
+      "startLine": 2970,
+      "endLine": 2990,
       "normativeRequirementIds": [
         "NREQ-081a506fd55bb12e9c1e6822bed626a3",
         "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
@@ -3438,9 +3500,10 @@
     {
       "sectionId": "34.3",
       "title": "Registered normalizers and derivations",
-      "startLine": 2905,
-      "endLine": 2912,
+      "startLine": 2991,
+      "endLine": 2998,
       "normativeRequirementIds": [
+        "NREQ-cde34b8d123be8006aa2d49b8cd1c876",
         "NREQ-eecccd22fbd6aba5a9a4e1c77e8d3a41"
       ],
       "disposition": "COVERED",
@@ -3449,8 +3512,8 @@
     {
       "sectionId": "35",
       "title": "Persistence, integrity, concurrency, and backup",
-      "startLine": 2913,
-      "endLine": 2918,
+      "startLine": 2999,
+      "endLine": 3004,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -3458,8 +3521,8 @@
     {
       "sectionId": "35.1",
       "title": "Compare-and-swap",
-      "startLine": 2919,
-      "endLine": 2933,
+      "startLine": 3005,
+      "endLine": 3019,
       "normativeRequirementIds": [
         "NREQ-2782d9ffebe3a79637b31fc8b6b4ecdb",
         "NREQ-f2b99356377ab41376516cc4472310fd",
@@ -3479,8 +3542,8 @@
     {
       "sectionId": "35.2",
       "title": "Integrity",
-      "startLine": 2934,
-      "endLine": 2940,
+      "startLine": 3020,
+      "endLine": 3026,
       "normativeRequirementIds": [
         "NREQ-a5be515530a4736a534a4ca3cd843377",
         "NREQ-7e417b328764aaf6033114c36450ef9c"
@@ -3491,8 +3554,8 @@
     {
       "sectionId": "35.3",
       "title": "Artifact bytes",
-      "startLine": 2941,
-      "endLine": 2951,
+      "startLine": 3027,
+      "endLine": 3037,
       "normativeRequirementIds": [
         "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
         "NREQ-d3216139914fb4c3ec1d54819ee18890",
@@ -3507,8 +3570,8 @@
     {
       "sectionId": "35.4",
       "title": "Storage status",
-      "startLine": 2952,
-      "endLine": 2957,
+      "startLine": 3038,
+      "endLine": 3043,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -3516,8 +3579,8 @@
     {
       "sectionId": "35.5",
       "title": "Complete export and import",
-      "startLine": 2958,
-      "endLine": 2981,
+      "startLine": 3044,
+      "endLine": 3067,
       "normativeRequirementIds": [
         "NREQ-3140c1e4ff7ae54bca60fbc69f817271",
         "NREQ-ac1547d5c66a755d9eee61d9f99a4e76",
@@ -3535,7 +3598,9 @@
         "NREQ-d8364b451e9bacebe247eb7156b4cca1",
         "NREQ-9d24cb0d2daab9f1168e84c503e311d3",
         "NREQ-565a4e32ba059a7f2bb12136d5300025",
-        "NREQ-e930db71215117ddfb5e78fefcfac07c"
+        "NREQ-e930db71215117ddfb5e78fefcfac07c",
+        "NREQ-5fe399cb17e5ef4e71d7789bc46f9694",
+        "NREQ-f3a162780b1c810f1a98f9a34500e0ea"
       ],
       "disposition": "COVERED",
       "nonnormativeReason": null
@@ -3543,8 +3608,8 @@
     {
       "sectionId": "35.6",
       "title": "Reservation and idempotency state machine",
-      "startLine": 2982,
-      "endLine": 2997,
+      "startLine": 3068,
+      "endLine": 3083,
       "normativeRequirementIds": [
         "NREQ-fabbbeb60c27fb96682539f4ecfa9f4d",
         "NREQ-bf30354a6e86f4a8395e7cfb3f4e1411",
@@ -3562,8 +3627,8 @@
     {
       "sectionId": "35.7",
       "title": "Deletion and clone idempotency receipts",
-      "startLine": 2998,
-      "endLine": 3003,
+      "startLine": 3084,
+      "endLine": 3089,
       "normativeRequirementIds": [
         "NREQ-c631efaa9d040dde2eb5c006afa321a6"
       ],
@@ -3573,8 +3638,8 @@
     {
       "sectionId": "35.8",
       "title": "Quarantined-project recovery",
-      "startLine": 3004,
-      "endLine": 3014,
+      "startLine": 3090,
+      "endLine": 3100,
       "normativeRequirementIds": [
         "NREQ-44fd18cf9801f02c34f8820d2a3acb34",
         "NREQ-664f5c5b72efea7443b8f478ff4973df",
@@ -3589,8 +3654,8 @@
     {
       "sectionId": "35.9",
       "title": "Backup custody states",
-      "startLine": 3015,
-      "endLine": 3028,
+      "startLine": 3101,
+      "endLine": 3114,
       "normativeRequirementIds": [
         "NREQ-a9af9685ef7fd2384d28804e32d9141c",
         "NREQ-c2743911b764b82fd6e0d178742228d4",
@@ -3605,8 +3670,8 @@
     {
       "sectionId": "35.10",
       "title": "Unknown extension data",
-      "startLine": 3029,
-      "endLine": 3032,
+      "startLine": 3115,
+      "endLine": 3118,
       "normativeRequirementIds": [
         "NREQ-1096a56af1ea51fc0081ded2d594896f"
       ],
@@ -3616,8 +3681,8 @@
     {
       "sectionId": "35.11",
       "title": "File-first staging recovery",
-      "startLine": 3033,
-      "endLine": 3036,
+      "startLine": 3119,
+      "endLine": 3122,
       "normativeRequirementIds": [
         "NREQ-4bd5b261df7ce905df018a6d95770689"
       ],
@@ -3627,8 +3692,8 @@
     {
       "sectionId": "35.12",
       "title": "Integrity and authentication boundary",
-      "startLine": 3037,
-      "endLine": 3044,
+      "startLine": 3123,
+      "endLine": 3130,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -3636,8 +3701,8 @@
     {
       "sectionId": "36",
       "title": "Invalidation, convergence, release, and evidence graph",
-      "startLine": 3045,
-      "endLine": 3046,
+      "startLine": 3131,
+      "endLine": 3132,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -3645,8 +3710,8 @@
     {
       "sectionId": "36.1",
       "title": "Conservative invalidation",
-      "startLine": 3047,
-      "endLine": 3062,
+      "startLine": 3133,
+      "endLine": 3148,
       "normativeRequirementIds": [
         "NREQ-f5b781f739a3864b480e98a609ccede0",
         "NREQ-2974199511a3c8777230c9d07391bb03",
@@ -3665,8 +3730,8 @@
     {
       "sectionId": "36.2",
       "title": "Shared repeated-iteration evaluator",
-      "startLine": 3063,
-      "endLine": 3087,
+      "startLine": 3149,
+      "endLine": 3173,
       "normativeRequirementIds": [
         "NREQ-3d61fd16d8c67d4de7128f2019b41972",
         "NREQ-770d81b975209d03659d6ec3f13a207b",
@@ -3694,8 +3759,8 @@
     {
       "sectionId": "36.3",
       "title": "Exact verification matrix",
-      "startLine": 3088,
-      "endLine": 3100,
+      "startLine": 3174,
+      "endLine": 3186,
       "normativeRequirementIds": [
         "NREQ-b5c6b482f9c3eeb8d76dd06262ddd791",
         "NREQ-9732ffe47d6f5726e01217bf371a3c0e",
@@ -3712,8 +3777,8 @@
     {
       "sectionId": "36.4",
       "title": "Release",
-      "startLine": 3101,
-      "endLine": 3111,
+      "startLine": 3187,
+      "endLine": 3197,
       "normativeRequirementIds": [
         "NREQ-b726a52652469c5c14b230e8c0855e18",
         "NREQ-9ff31256356fa0aa78b2fae87c722577",
@@ -3727,8 +3792,8 @@
     {
       "sectionId": "36.5",
       "title": "Artifact identity",
-      "startLine": 3112,
-      "endLine": 3130,
+      "startLine": 3198,
+      "endLine": 3216,
       "normativeRequirementIds": [
         "NREQ-ffeb0fd1fd6c48eab443e1b58fec6408",
         "NREQ-2eeb6318105bd61a4118b2d13ff477b1",
@@ -3751,8 +3816,8 @@
     {
       "sectionId": "36.6",
       "title": "Evidence graph",
-      "startLine": 3131,
-      "endLine": 3151,
+      "startLine": 3217,
+      "endLine": 3237,
       "normativeRequirementIds": [
         "NREQ-1b042bcdbe97882c87b994747bc90450",
         "NREQ-24901518e6edd4d26d2e6ed0865b8be6",
@@ -3773,8 +3838,8 @@
     {
       "sectionId": "36.7",
       "title": "Belief explanation",
-      "startLine": 3152,
-      "endLine": 3170,
+      "startLine": 3238,
+      "endLine": 3256,
       "normativeRequirementIds": [
         "NREQ-f5ea5907bb4f24e3719ecfede192bde9",
         "NREQ-41833a72f380444b01185b76973422e7",
@@ -3788,9 +3853,10 @@
     {
       "sectionId": "36.8",
       "title": "Delivery-candidate set",
-      "startLine": 3171,
-      "endLine": 3176,
+      "startLine": 3257,
+      "endLine": 3262,
       "normativeRequirementIds": [
+        "NREQ-37e0f8a89b27894ec5fa57d70f603f9c",
         "NREQ-5655e60dfb0ae3f47ab84c25a9e1379c"
       ],
       "disposition": "COVERED",
@@ -3799,8 +3865,8 @@
     {
       "sectionId": "36.9",
       "title": "Atomic Stage 30 terminal command",
-      "startLine": 3177,
-      "endLine": 3195,
+      "startLine": 3263,
+      "endLine": 3281,
       "normativeRequirementIds": [
         "NREQ-5cb7b5aa165507a437706b329dc40d1f",
         "NREQ-0916933b9c552d8b22c8170bd65d35cd",
@@ -3821,8 +3887,8 @@
     {
       "sectionId": "36.10",
       "title": "Destination-bound delivery authorization",
-      "startLine": 3196,
-      "endLine": 3213,
+      "startLine": 3282,
+      "endLine": 3299,
       "normativeRequirementIds": [
         "NREQ-69e8eb29a77575000e6097063fed59c8",
         "NREQ-e7b553381401fee6fcb4c7e8e798f20f",
@@ -3843,9 +3909,10 @@
     {
       "sectionId": "36.11",
       "title": "Authorized export, delivery attempt, and delivery evidence",
-      "startLine": 3214,
-      "endLine": 3219,
+      "startLine": 3300,
+      "endLine": 3305,
       "normativeRequirementIds": [
+        "NREQ-4eb953c1661f433106baf5f5081f245f",
         "NREQ-09852d85a8e2de15f8a15fbd663018f4"
       ],
       "disposition": "COVERED",
@@ -3854,8 +3921,8 @@
     {
       "sectionId": "36.12",
       "title": "Derived-command self-validity",
-      "startLine": 3220,
-      "endLine": 3225,
+      "startLine": 3306,
+      "endLine": 3311,
       "normativeRequirementIds": [
         "NREQ-a1fc0ba5dce2a21712e905ca48d2ac4e"
       ],
@@ -3865,8 +3932,8 @@
     {
       "sectionId": "37",
       "title": "Exact 30-stage workflow and prompt obligations",
-      "startLine": 3226,
-      "endLine": 3227,
+      "startLine": 3312,
+      "endLine": 3313,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -3874,8 +3941,8 @@
     {
       "sectionId": "37.0",
       "title": "Closed stage-operation registry",
-      "startLine": 3228,
-      "endLine": 3511,
+      "startLine": 3314,
+      "endLine": 3597,
       "normativeRequirementIds": [
         "NREQ-ca1881e2147860bad9fb1f6de8df247f",
         "NREQ-a10b32f05e2c972097d40d0bda5644b8",
@@ -4133,8 +4200,8 @@
     {
       "sectionId": "38",
       "title": "Canonical record families and target ownership",
-      "startLine": 3512,
-      "endLine": 3802,
+      "startLine": 3598,
+      "endLine": 3888,
       "normativeRequirementIds": [
         "NREQ-d4684b9b83e57e9941ccb9859bc500bb",
         "NREQ-fac87128f25234b81622bd25fb16619b",
@@ -4391,8 +4458,8 @@
     {
       "sectionId": "38.1",
       "title": "Additional required canonical families",
-      "startLine": 3803,
-      "endLine": 3947,
+      "startLine": 3889,
+      "endLine": 4033,
       "normativeRequirementIds": [
         "NREQ-def769abdcb1017cb66e4e79e009f53e",
         "NREQ-35e732dd55fb192c7f53158044f18129",
@@ -4521,8 +4588,8 @@
     {
       "sectionId": "38.2",
       "title": "Durable-object completeness checklist",
-      "startLine": 3948,
-      "endLine": 3971,
+      "startLine": 4034,
+      "endLine": 4057,
       "normativeRequirementIds": [
         "NREQ-7f212f425b2ee350bc19afe33575be29",
         "NREQ-53fa6fd2e67bd188048feca45b700bd3",
@@ -4549,8 +4616,8 @@
     {
       "sectionId": "39",
       "title": "Operator interface",
-      "startLine": 3972,
-      "endLine": 3973,
+      "startLine": 4058,
+      "endLine": 4059,
       "normativeRequirementIds": [],
       "disposition": "NONNORMATIVE",
       "nonnormativeReason": "Both independent extraction passes found no normative candidate in this subsection; all exact source lines remain classified in sourceLineCoverage."
@@ -4558,8 +4625,8 @@
     {
       "sectionId": "39.1",
       "title": "Questions every screen answers",
-      "startLine": 3974,
-      "endLine": 3990,
+      "startLine": 4060,
+      "endLine": 4076,
       "normativeRequirementIds": [
         "NREQ-ba5646bb0ea2542bbb7577836b268aff",
         "NREQ-780195ab2f55b55ea7268b20fe6d67b5",
@@ -4582,8 +4649,8 @@
     {
       "sectionId": "39.2",
       "title": "Structured primary action",
-      "startLine": 3991,
-      "endLine": 4028,
+      "startLine": 4077,
+      "endLine": 4114,
       "normativeRequirementIds": [
         "NREQ-7e1c399b55e29313d69cd12726f6faf7",
         "NREQ-1723157f4adf2e217570ad9f45ff6a14",
@@ -4624,8 +4691,8 @@
     {
       "sectionId": "39.3",
       "title": "Primary experiences",
-      "startLine": 4029,
-      "endLine": 4045,
+      "startLine": 4115,
+      "endLine": 4131,
       "normativeRequirementIds": [
         "NREQ-da2b7160add23c8c2f5ace2900bb8426",
         "NREQ-265c5b06d2bffb320043ce7f9d063d3f",
@@ -4646,8 +4713,8 @@
     {
       "sectionId": "39.4",
       "title": "Advanced details",
-      "startLine": 4046,
-      "endLine": 4059,
+      "startLine": 4132,
+      "endLine": 4145,
       "normativeRequirementIds": [
         "NREQ-ee7ba0824c256640b7a92e3b2965a985",
         "NREQ-df8a0b90b5e088126673b3184914872e",
@@ -4667,8 +4734,8 @@
     {
       "sectionId": "39.5",
       "title": "Conversation versus final JSON",
-      "startLine": 4060,
-      "endLine": 4069,
+      "startLine": 4146,
+      "endLine": 4155,
       "normativeRequirementIds": [
         "NREQ-6b6ebad551cf644b479c6a630e4b36cb",
         "NREQ-f4127a1a6977e45212f4a4e282ea863f",
@@ -4683,8 +4750,8 @@
     {
       "sectionId": "39.6",
       "title": "Canonical-change certainty",
-      "startLine": 4070,
-      "endLine": 4080,
+      "startLine": 4156,
+      "endLine": 4166,
       "normativeRequirementIds": [
         "NREQ-4e4473870458b8c23dba903194fc7f51",
         "NREQ-caef6f76a7a59f4986be39673fa87528",
@@ -4699,8 +4766,8 @@
     {
       "sectionId": "39.7",
       "title": "Proposal review",
-      "startLine": 4081,
-      "endLine": 4096,
+      "startLine": 4167,
+      "endLine": 4182,
       "normativeRequirementIds": [
         "NREQ-77e491781ff107f47e11b64e70a7d1d4",
         "NREQ-706ffb7a7d093d362bf1aff8274c30c5",
@@ -4721,8 +4788,8 @@
     {
       "sectionId": "39.8",
       "title": "Provenance navigation",
-      "startLine": 4097,
-      "endLine": 4108,
+      "startLine": 4183,
+      "endLine": 4194,
       "normativeRequirementIds": [
         "NREQ-701ba435b5ada0bcb5e08cb1574c28d1",
         "NREQ-01869202c0904951903702083908de01",
@@ -4739,8 +4806,8 @@
     {
       "sectionId": "39.9",
       "title": "Regression display",
-      "startLine": 4109,
-      "endLine": 4119,
+      "startLine": 4195,
+      "endLine": 4205,
       "normativeRequirementIds": [
         "NREQ-ef5b8322df92b387ee6f73f572cde878",
         "NREQ-1c3881e5d4d4655017caa1cc99e444f8",
@@ -4756,8 +4823,8 @@
     {
       "sectionId": "39.10",
       "title": "Stability display",
-      "startLine": 4120,
-      "endLine": 4130,
+      "startLine": 4206,
+      "endLine": 4216,
       "normativeRequirementIds": [
         "NREQ-4488d339fe5f28f40e121caccb948ae7",
         "NREQ-cd7cfea4b3d1e12d2c58a5cb7a456235",
@@ -4773,8 +4840,8 @@
     {
       "sectionId": "39.11",
       "title": "State/action adjacency",
-      "startLine": 4131,
-      "endLine": 4135,
+      "startLine": 4217,
+      "endLine": 4221,
       "normativeRequirementIds": [
         "NREQ-2dff64415dcf5a48e44d5f255580905f",
         "NREQ-b18adce80b35a38f63fd95debe651ca0"
@@ -4785,8 +4852,8 @@
     {
       "sectionId": "39.12",
       "title": "Mobile and accessibility",
-      "startLine": 4136,
-      "endLine": 4166,
+      "startLine": 4222,
+      "endLine": 4252,
       "normativeRequirementIds": [
         "NREQ-f35f5e08c500a365b190deef7d39bab6",
         "NREQ-a2af6f728dbfd0b97f4e556b7f6f0308",
@@ -4818,8 +4885,8 @@
     {
       "sectionId": "39.13",
       "title": "Identity assurance",
-      "startLine": 4167,
-      "endLine": 4175,
+      "startLine": 4253,
+      "endLine": 4261,
       "normativeRequirementIds": [
         "NREQ-3d38079650f317a3a0c1e0fac17ed7f7",
         "NREQ-644c4f4679317087abf765c80c1f9cd8",
@@ -4833,8 +4900,8 @@
     {
       "sectionId": "39.14",
       "title": "Canonical-action restrictions",
-      "startLine": 4176,
-      "endLine": 4188,
+      "startLine": 4262,
+      "endLine": 4274,
       "normativeRequirementIds": [
         "NREQ-5ede3e960c4c0f17701600b429733843",
         "NREQ-eb587a10937efa9f9e25a28346ba0f4e",
@@ -4852,8 +4919,8 @@
     {
       "sectionId": "39.15",
       "title": "Visual preservation",
-      "startLine": 4189,
-      "endLine": 4203,
+      "startLine": 4275,
+      "endLine": 4289,
       "normativeRequirementIds": [
         "NREQ-588bc9d493f211c4c4097216af9027e9",
         "NREQ-1ba8fac13e8062def23332f98cd5ea6a",
@@ -4872,8 +4939,8 @@
     {
       "sectionId": "39.16",
       "title": "File-first operator flow",
-      "startLine": 4204,
-      "endLine": 4217,
+      "startLine": 4290,
+      "endLine": 4303,
       "normativeRequirementIds": [
         "NREQ-78a512502d0b1818ef3603619f35d5d2",
         "NREQ-6e5bf6d14ead71d8ab5288f40d545e7a",
@@ -4892,8 +4959,8 @@
     {
       "sectionId": "39.17",
       "title": "Safe rendering and navigation",
-      "startLine": 4218,
-      "endLine": 4223,
+      "startLine": 4304,
+      "endLine": 4309,
       "normativeRequirementIds": [
         "NREQ-283520fce71327677e6c9451c76e7dba",
         "NREQ-e0c7ddc2988207df43c7f6ed503ea58c"
@@ -4904,8 +4971,8 @@
     {
       "sectionId": "39.18",
       "title": "Objective visual baseline",
-      "startLine": 4224,
-      "endLine": 4233,
+      "startLine": 4310,
+      "endLine": 4319,
       "normativeRequirementIds": [
         "NREQ-48059371f3a05052c25050f35675791c",
         "NREQ-bd2cc50dfae731477f2f2a15b3806fe1",
@@ -4917,8 +4984,8 @@
     {
       "sectionId": "40",
       "title": "Permanent regression obligations",
-      "startLine": 4234,
-      "endLine": 4313,
+      "startLine": 4320,
+      "endLine": 4399,
       "normativeRequirementIds": [
         "NREQ-e4a47520adccad1cc08b71b2fa705896",
         "NREQ-d4b5dcf4caa03d9ff3fee97458f005dd",
@@ -5001,8 +5068,8 @@
     {
       "sectionId": "41",
       "title": "Mandatory deterministic and behavioral tests",
-      "startLine": 4314,
-      "endLine": 4594,
+      "startLine": 4400,
+      "endLine": 4680,
       "normativeRequirementIds": [
         "NREQ-2bd1d85a957dcebb1adee4e593f21167",
         "NREQ-53b8f1d4937c9991d46f73c77849cede",
@@ -5274,8 +5341,8 @@
     {
       "sectionId": "42",
       "title": "Additional mandatory Test IR tests",
-      "startLine": 4595,
-      "endLine": 4662,
+      "startLine": 4681,
+      "endLine": 4748,
       "normativeRequirementIds": [
         "NREQ-c323c5269f25094fda1ee794ae5c60f5",
         "NREQ-6035095a10bf0ed05d7465d170587602",
@@ -5346,8 +5413,8 @@
     {
       "sectionId": "43",
       "title": "Test the tests",
-      "startLine": 4663,
-      "endLine": 4698,
+      "startLine": 4749,
+      "endLine": 4784,
       "normativeRequirementIds": [
         "NREQ-fcf74facdd1a494b15af4644c8b0aa75",
         "NREQ-11d83df8fd7742ef79e814d0355bcfee",
@@ -5384,8 +5451,8 @@
     {
       "sectionId": "44",
       "title": "Negative test matrix",
-      "startLine": 4699,
-      "endLine": 4825,
+      "startLine": 4785,
+      "endLine": 4911,
       "normativeRequirementIds": [
         "NREQ-3838a9025551b08752837a996a365f46",
         "NREQ-32de14b2739518505272c65693f355ce",
@@ -5514,8 +5581,8 @@
     {
       "sectionId": "45",
       "title": "Browser acceptance",
-      "startLine": 4826,
-      "endLine": 4873,
+      "startLine": 4912,
+      "endLine": 4959,
       "normativeRequirementIds": [
         "NREQ-5cb818c548ae0a4715f39e51f89d7391",
         "NREQ-ddeafefc5caa358ff6c35264823e4a30",
@@ -5569,8 +5636,8 @@
     {
       "sectionId": "45.1",
       "title": "Actual-iPhone Safari acceptance",
-      "startLine": 4874,
-      "endLine": 4915,
+      "startLine": 4960,
+      "endLine": 5001,
       "normativeRequirementIds": [
         "NREQ-6ef3b69138d64ec0e9b815453fd70cc3",
         "NREQ-39403d96d1cdabcc4a5f2cccdd5fed22",
@@ -5613,8 +5680,8 @@
     {
       "sectionId": "45.2",
       "title": "Physical-device evidence binding",
-      "startLine": 4916,
-      "endLine": 4925,
+      "startLine": 5002,
+      "endLine": 5011,
       "normativeRequirementIds": [
         "NREQ-d3bf41354fe976e53ff0b137e19e8362",
         "NREQ-cfbc32dacac87d0687fd83df570a9b47",
@@ -5626,8 +5693,8 @@
     {
       "sectionId": "46",
       "title": "CI, deployment, and governance",
-      "startLine": 4926,
-      "endLine": 4989,
+      "startLine": 5012,
+      "endLine": 5075,
       "normativeRequirementIds": [
         "NREQ-ba1c447253a3cfc3866886ffef9cd16f",
         "NREQ-3898fac9b44e39a453f6e7c9ddbe3c5b",
@@ -5692,8 +5759,8 @@
     {
       "sectionId": "46.1",
       "title": "Deployment origin identity",
-      "startLine": 4990,
-      "endLine": 4993,
+      "startLine": 5076,
+      "endLine": 5079,
       "normativeRequirementIds": [
         "NREQ-453f7a50643565025ba0f7907be7cd17"
       ],
@@ -5703,8 +5770,8 @@
     {
       "sectionId": "46.2",
       "title": "Specification, requirement-trace, and mobile evidence",
-      "startLine": 4994,
-      "endLine": 5012,
+      "startLine": 5080,
+      "endLine": 5098,
       "normativeRequirementIds": [
         "NREQ-51577e079f7fa09093c819926b3274ce",
         "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
@@ -5728,8 +5795,8 @@
     {
       "sectionId": "46.3",
       "title": "Deployment resource, cache, worker, and supply-chain proof",
-      "startLine": 5013,
-      "endLine": 5024,
+      "startLine": 5099,
+      "endLine": 5110,
       "normativeRequirementIds": [
         "NREQ-817bb744852a10b04358237e9c9e572d",
         "NREQ-50ef42498edbfcaa72e7bb2338543fc8",
@@ -5742,8 +5809,8 @@
     {
       "sectionId": "47",
       "title": "Required implementation changes by file",
-      "startLine": 5025,
-      "endLine": 5224,
+      "startLine": 5111,
+      "endLine": 5310,
       "normativeRequirementIds": [
         "NREQ-bbc2c3eb07932ff2ae0392abf3bb21c6",
         "NREQ-bd286da8a99bf98c52c1fd3acdf4eec0",
@@ -5928,8 +5995,8 @@
     {
       "sectionId": "48",
       "title": "Required implementation order",
-      "startLine": 5225,
-      "endLine": 5318,
+      "startLine": 5311,
+      "endLine": 5404,
       "normativeRequirementIds": [
         "NREQ-50a264a2378e61fb84237d9f25bd2798",
         "NREQ-f5ccc75554a20a84bfaccdd43b8d230c",
@@ -6019,8 +6086,8 @@
     {
       "sectionId": "49",
       "title": "Definition of done",
-      "startLine": 5319,
-      "endLine": 5506,
+      "startLine": 5405,
+      "endLine": 5592,
       "normativeRequirementIds": [
         "NREQ-f1817aa6051084af15265b2bbe24bd70",
         "NREQ-72c47328f8a8d7bd9225e1bbeff6f4c5",
@@ -6199,8 +6266,8 @@
     {
       "sectionId": "50",
       "title": "Production maturity",
-      "startLine": 5507,
-      "endLine": 5543,
+      "startLine": 5593,
+      "endLine": 5629,
       "normativeRequirementIds": [
         "NREQ-e8a1f84da62e30541ac2af6a6fcd5dcc",
         "NREQ-3f2cf853efd00db11c37ff5ef32ec342",
@@ -6239,8 +6306,8 @@
     {
       "sectionId": "50.1",
       "title": "Final physical delivery action",
-      "startLine": 5544,
-      "endLine": 5549,
+      "startLine": 5630,
+      "endLine": 5635,
       "normativeRequirementIds": [
         "NREQ-2b0f0cefee59e16f87cbcac572fe2cfb",
         "NREQ-5ab808067e6378712fdf66fd611cd0ca"
@@ -6251,8 +6318,8 @@
     {
       "sectionId": "50.2",
       "title": "Delivery destination binding",
-      "startLine": 5550,
-      "endLine": 5553,
+      "startLine": 5636,
+      "endLine": 5639,
       "normativeRequirementIds": [
         "NREQ-1d5df8b66ef1948b988905d8611833f4"
       ],
@@ -6262,8 +6329,8 @@
     {
       "sectionId": "50.3",
       "title": "Terminal backup ordering",
-      "startLine": 5554,
-      "endLine": 5559,
+      "startLine": 5640,
+      "endLine": 5645,
       "normativeRequirementIds": [
         "NREQ-31c889d7ad82ee2da57ed6c7c458b5ac"
       ],
@@ -6273,8 +6340,8 @@
     {
       "sectionId": "51",
       "title": "Supplied-unverified historical evidence",
-      "startLine": 5560,
-      "endLine": 5612,
+      "startLine": 5646,
+      "endLine": 5698,
       "normativeRequirementIds": [
         "NREQ-b72353386354605a28411d9e0c26536c",
         "NREQ-85cae00e8ea0099d220dac95bcdb024a",
@@ -6305,8 +6372,8 @@
     {
       "sectionId": "52",
       "title": "Final controlling rule",
-      "startLine": 5613,
-      "endLine": 5656,
+      "startLine": 5699,
+      "endLine": 5742,
       "normativeRequirementIds": [
         "NREQ-329292e01c4d27bd95a2323018211a00",
         "NREQ-694a85c490fbd129e6ed6ed5b1d0b901",
@@ -6326,11 +6393,17 @@
         "NREQ-512e979db038e854f7a3b1733fe7f1f5",
         "NREQ-172d9d37dd7334f0158047a3807c174a",
         "NREQ-0f97b7286b3ac9f06727eafb20fd4bca",
+        "NREQ-dbcc70e026ce8731fd94b6768404d53d",
+        "NREQ-6c75dff3cf5a501f1950e061b5e273d1",
         "NREQ-92a22bb6c1550996fd6b9e2add3cf528",
+        "NREQ-2b284adcac76e9ba0178ceefdbb50160",
+        "NREQ-a7ebefcf0c844492e250883fdea1468c",
         "NREQ-1eedad80516eb3d3edefe71e4b8ecf38",
         "NREQ-4f26bce92522aa236e602a143c3e8377",
         "NREQ-4e8e9a9619b05bf68319a6e8a7320be7",
+        "NREQ-e5397f1d43e610dedbe314a830c500bc",
         "NREQ-368199b6ecd5367fc3738049b5b28a04",
+        "NREQ-9a6b6e2aea89f11aeacc8aa72fa01dad",
         "NREQ-725495eafbe7298eccb4791da66c07c1"
       ],
       "disposition": "COVERED",
@@ -6338,14 +6411,14 @@
     }
   ],
   "contractProfileId": "closed-loop-completion-profile/1",
-  "normativeRequirementManifestIdentity": "NRM-28754f1fc9853b366cd3ce56ad12464c",
-  "normativeRequirementManifestSha256": "be4c9e4705522e69adff722b725c706c75e388e26f1fce4e3effb10cca1781cb",
-  "normativeRequirementManifestCanonicalSha256": "1ad90150b378476997b35ee9ea4ca6f91cb29a4caf6a87983d3ff86cabcf05f7",
+  "normativeRequirementManifestIdentity": "NRM-cc2588bf1882ee297932b5b4bb1651c1",
+  "normativeRequirementManifestSha256": "eddf689e21a337c96b87aad935ec7072c9216f04314ec5424ecc7d491a4402c4",
+  "normativeRequirementManifestCanonicalSha256": "e8433cedde4d913c69339820e08f08c268d0a9119caf1eec7a49e5c83534cb21",
   "normativeRequirementManifestPath": "specification/closed-loop-normative-requirements.json",
-  "normativeRequirementCount": 3825,
+  "normativeRequirementCount": 3856,
   "challengeAndReconciliation": {
     "independentReviewerIdentity": "281176bfb12195edbcc5f0801994cb0dbfb200de4c673852a41ddc212f047023",
     "status": "ACCEPTED"
   },
-  "manifestSha256": "fd9387c445d920e109824e161e5644d25fa7eb5b3a2aac8159707aff251bef2c"
+  "manifestSha256": "36c366acac71a47153554291af0598477912f88d5fa9776e4476c5fcb7c494d1"
 }

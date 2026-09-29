@@ -1,10 +1,11 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 
 const core=globalThis.closedLoopCore;
 const hash=globalThis.closedLoopHash;
@@ -127,6 +128,8 @@ function fixture(){
 }
 
 // The repaired runtime must still execute the repository's complete synthetic 30-stage lifecycle.
+process.stderr.write('verify-corrected-iteration: lineage cases complete; starting the complete synthetic 30-stage lifecycle.\n');
 await import('./verify-full-cycle.mjs');
+process.stderr.write('verify-corrected-iteration: complete synthetic lifecycle returned.\n');
 
 console.log('verify-corrected-iteration: PASS');

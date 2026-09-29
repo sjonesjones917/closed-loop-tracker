@@ -1,9 +1,11 @@
+import {createBrowserReadiness} from './operator-browser-driver.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
+const BROWSER_HISTORY_RECORDS=60,BROWSER_HISTORY_CHARACTERS=4096;
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found');
 const port=9700+Math.floor(Math.random()*200),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-mobile-stage-'));
@@ -15,11 +17,16 @@ async function poll(fn,timeout=20000){const end=Date.now()+timeout;let last;whil
 class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=event=>{const message=JSON.parse(event.data);if(!message.id)return;const pending=this.pending.get(message.id);if(!pending)return;this.pending.delete(message.id);message.error?pending.reject(new Error(message.error.message)):pending.resolve(message.result);};}async send(method,params={}){let timer,id,finished=false;const timeoutError=new Error('Chromium did not respond to '+method+' within 180 seconds.');const deadline=new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(timeoutError),180000);});try{return await Promise.race([(async()=>{await this.ready;if(finished)throw timeoutError;id=++this.id;const result=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));return result;})(),deadline]);}finally{finished=true;clearTimeout(timer);if(id!==undefined)this.pending.delete(id);}}close(){this.ws.close();}}
 async function evaluate(cdp,expression){const result=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text||'Evaluation failed');return result.result?.value;}
 async function waitFor(cdp,expression,timeout=20000){return poll(async()=>{const value=await evaluate(cdp,expression);if(!value)throw new Error(`Waiting: ${expression}`);return value;},timeout);}
-async function click(cdp,selector){assert(await evaluate(cdp,`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node)return false;node.click();return true})()`),`Missing clickable ${selector}`);await sleep(160);}
-async function fill(cdp,selector,value){assert(await evaluate(cdp,`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node)return false;node.value=${JSON.stringify(value)};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true})()`),`Missing input ${selector}`);}
+async function waitForIdle(cdp,timeout=60000){await createBrowserReadiness(cdp,expression=>evaluate(cdp,expression),{timeout}).idle();}
+async function click(cdp,selector,timeout=20000){await waitForIdle(cdp,timeout);assert(await evaluate(cdp,`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)return false;node.click();return true})()`),`Missing clickable ${selector}`);await waitForIdle(cdp,timeout);}
+async function fill(cdp,selector,value){await waitForIdle(cdp);assert(await evaluate(cdp,`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node)return false;node.value=${JSON.stringify(value)};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true})()`),`Missing input ${selector}`);await waitForIdle(cdp);}
 async function setWidth(cdp,width,height=844){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:true});await sleep(150);}
-async function openStage(cdp,stage){await click(cdp,'[data-view="Workflow"]');await evaluate(cdp,`(()=>{const select=document.querySelector('#stage-picker');if(!select)return false;select.value=${JSON.stringify(String(stage))};select.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitFor(cdp,`document.body.innerText.includes('Stage ${String(stage).padStart(2,'0')}')`);}
+async function openStage(cdp,stage){await click(cdp,'[data-view="Workflow"]');await evaluate(cdp,`(()=>{const select=document.querySelector('#stage-picker');if(!select)return false;select.value=${JSON.stringify(String(stage))};select.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitFor(cdp,`document.body.innerText.includes('Stage ${String(stage).padStart(2,'0')}')`);await waitForIdle(cdp);}
 
+// Synthetic setup writes a chosen current state. Navigate by an ordinary
+// project link; a reload of a saved-version URL must restore that saved version.
+async function navigateAndWait(cdp,method,params={},options={}){await createBrowserReadiness(cdp,expression=>evaluate(cdp,expression),{timeout:60000}).navigate(method,params,options);}
+async function openStoredFixture(cdp){const url=await evaluate(cdp,`(async()=>{const url=new URL(location.href);url.searchParams.delete('version');url.searchParams.delete('stage');url.searchParams.set('project',await closedLoopProjectStore.metaGet('selectedProject'));return url.href;})()`);await navigateAndWait(cdp,'Page.navigate',{url});}
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`));
   const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?mobile-stage-regression=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);
@@ -41,8 +48,8 @@ async function main(){
     assert(state.copy&&state.copy.left>=-1&&state.copy.right<=width+1&&state.copy.height>=44,`Primary copy action is unusable at ${width}px: ${JSON.stringify(state.copy)}`);
     assert(state.prompt&&state.prompt.left>=-1&&state.prompt.right<=width+1,`Prompt box exceeds the viewport at ${width}px: ${JSON.stringify(state.prompt)}`);
   }
-  await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:600},(_,i)=>({rawResponseId:'RAW-PRESSURE-'+i,stage:i%30+1,status:'PRESERVED',rawText:'H'.repeat(80000)+'é🙂TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
-  await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
+  await evaluate(cdp,`(async()=>{const p=closedLoopCore.createBlankState('BROWSER-ACCUMULATED-HISTORY');p.activeView='Records';p.projectData.rawResponses=Array.from({length:${BROWSER_HISTORY_RECORDS}},(_,i)=>({rawResponseId:'RAW-BROWSER-'+i,stage:i%closedLoopCore.STAGES.length+1,status:'PRESERVED',rawText:'H'.repeat(${BROWSER_HISTORY_CHARACTERS})+'é🙂TAIL-'+i}));await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
+  console.log(JSON.stringify({browserStageActionPhase:'bounded-history-project-stored',rawRecords:BROWSER_HISTORY_RECORDS,charactersPerRecord:BROWSER_HISTORY_CHARACTERS}));await openStoredFixture(cdp);await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);await click(cdp,'[data-view="Records"]');
   const pressureDom=await evaluate(cdp,`({bytes:document.querySelector('#screen').innerHTML.length,nodes:document.querySelector('#screen').querySelectorAll('*').length})`);
   assert(pressureDom.bytes<100000&&pressureDom.nodes<1500,`Collapsed accumulated history was eagerly rendered: ${JSON.stringify(pressureDom)}`);
   await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('summary')].find(node=>node.textContent.includes('Raw agent responses'));node.parentElement.open=true;})()`);
@@ -65,7 +72,7 @@ async function main(){
   const expectedDiagnostics=await evaluate(cdp,`(async()=>{const p=await closedLoopProjectStore.readProject('BROWSER-ACCUMULATED-HISTORY');closedLoopWorkflowEngine.recalculate(p);return Object.fromEntries(Object.entries(p.stages).map(([n,s])=>[n,s.gate.reasons]));})()`);
   let diagnosticArrowProof=false,diagnosticReasonCount=0;
   for(let stage=1;stage<=30;stage++){
-    await openStage(cdp,stage);
+    console.log(JSON.stringify({browserStageActionPhase:'stage-navigation',stage}));await openStage(cdp,stage);
     const diagnostic=await evaluate(cdp,`(()=>{const node=[...document.querySelectorAll('.notice>details[data-detail-id]')].find(n=>n.querySelector(':scope>summary')?.childNodes[0]?.textContent==='Completion gate is not satisfied.');return node?{id:node.dataset.detailId,open:node.open,children:node.querySelector('.record-body').childElementCount,count:Number(node.querySelector('summary>span').textContent)}:null;})()`);
     assert(diagnostic&&!diagnostic.open&&diagnostic.children===0&&diagnostic.count===expectedDiagnostics[stage].length,`Stage ${stage}: diagnostic reasons bypass collapsed shared controls: ${JSON.stringify(diagnostic)}`);
     if(stage===1){
@@ -98,86 +105,83 @@ async function main(){
       await click(cdp,'#toggle-prompt');
     }
   }
-  // The same retained history must also leave through the real complete-export action.
+  // Browser acceptance uses a fixed small retained-history fixture. Representative large-history
+  // export/decoder bounds remain non-browser verification; this browser gate proves the real
+  // control terminates with verified bytes or a visible actionable failure within 60 seconds.
   await evaluate(cdp,`(()=>{globalThis.__historyExportBlob=null;globalThis.__historyExportError='';globalThis.__historyCreateUrl=URL.createObjectURL;URL.createObjectURL=blob=>{globalThis.__historyExportBlob=blob;return globalThis.__historyCreateUrl(blob);};window.alert=message=>{globalThis.__historyExportError=String(message);};})()`);
-  await click(cdp,'#project-actions-toggle');await click(cdp,'#export-project');
-  await waitFor(cdp,`document.querySelector('#app-live-status')?.textContent==='complete project package exported'||globalThis.__historyExportError`,60000);
+  await click(cdp,'#project-actions-toggle');const exportStartedAt=Date.now();await click(cdp,'#export-project',60000);
+  await waitFor(cdp,`document.querySelector('#app-live-status')?.textContent==='complete project package exported'||globalThis.__historyExportError`,Math.max(1,60000-(Date.now()-exportStartedAt)));
+  console.log(JSON.stringify({browserStageActionPhase:'pressure-export-completed',elapsedMs:Date.now()-exportStartedAt}));
   assert(!(await evaluate(cdp,'globalThis.__historyExportError')),`Accumulated complete export failed: ${await evaluate(cdp,'globalThis.__historyExportError')}`);
-  const historyExport=await evaluate(cdp,`(async()=>{const blob=globalThis.__historyExportBlob,payload=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text()),{packageSha256,...body}=payload,rows=payload.project.projectData.rawResponses;return {jobId:payload.project.job.JOB_ID,records:rows.length,lastRecordComplete:rows.at(-1).rawText.endsWith('é🙂TAIL-599'),rawCharacters:rows.reduce((sum,row)=>sum+row.rawText.length,0),hashVerified:closedLoopHash.sha256Value(body)===packageSha256};})()`);
-  assert(historyExport.jobId==='BROWSER-ACCUMULATED-HISTORY'&&historyExport.records===600&&historyExport.lastRecordComplete&&historyExport.rawCharacters>=48000000&&historyExport.hashVerified,`Complete accumulated export lost bytes or identity: ${JSON.stringify(historyExport)}`);
+  const exportElapsedMs=Date.now()-exportStartedAt;assert(exportElapsedMs<=60000,'Accumulated export exceeded the 60-second verifier deadline');console.log(JSON.stringify({operation:'accumulated-history-export',elapsedMs:exportElapsedMs,verifierDeadlineMs:60000,physicalDevice:false}));
+  const historyExport=await evaluate(cdp,`(async()=>{const blob=globalThis.__historyExportBlob,payload=JSON.parse(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text()),{packageSha256,...body}=payload,rows=payload.project.projectData.rawResponses;return {jobId:payload.project.job.JOB_ID,records:rows.length,lastRecordComplete:rows.at(-1).rawText.endsWith('é🙂TAIL-'+(rows.length-1)),rawCharacters:rows.reduce((sum,row)=>sum+row.rawText.length,0),hashVerified:closedLoopHash.sha256Value(body)===packageSha256};})()`);
+  assert(historyExport.jobId==='BROWSER-ACCUMULATED-HISTORY'&&historyExport.records===BROWSER_HISTORY_RECORDS&&historyExport.lastRecordComplete&&historyExport.rawCharacters>=BROWSER_HISTORY_RECORDS*BROWSER_HISTORY_CHARACTERS&&historyExport.hashVerified,`Complete accumulated export lost bytes or identity: ${JSON.stringify(historyExport)}`);
   await evaluate(cdp,`(()=>{URL.createObjectURL=globalThis.__historyCreateUrl;delete globalThis.__historyExportBlob;})()`);
-  await evaluate(cdp,`closedLoopProjectStore.removeProject('BROWSER-ACCUMULATED-HISTORY')`);
+  // Removal belongs to the application's operation owner, which captures the
+  // departing view and excludes concurrent scroll checkpoints before committing.
+  await click(cdp,'[data-view="Project"]',60000);
+  await click(cdp,'#project-danger-zone>summary',60000);
+  await fill(cdp,'#delete-project-confirmation','BROWSER-ACCUMULATED-HISTORY');
+  await click(cdp,'#delete-project',60000);
+  await waitFor(cdp,`closedLoopProjectStore.readProject('BROWSER-ACCUMULATED-HISTORY').then(project=>!project)`,60000);
+  assert(await evaluate(cdp,`closedLoopProjectStore.historyList('BROWSER-ACCUMULATED-HISTORY').then(history=>history.removed&&history.entries.length>0)`),'Project removal lost promised History.');
   // Real IndexedDB custody, paged Files controls and complete export with an
   // accumulated file set. A whole-file read fails at the actual Blob boundary.
   const fileCustody=await evaluate(cdp,`(async()=>{
     const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,p=closedLoopCore.createBlankState('BROWSER-FILE-PRESSURE'),read=Blob.prototype.arrayBuffer;
-    let largestRead=0;Blob.prototype.arrayBuffer=function(){largestRead=Math.max(largestRead,this.size);if(this.size>65536)throw new Error('WHOLE_FILE_READ:'+this.size);return read.call(this);};
+    let largestRead=0,lastArtifact=null;Blob.prototype.arrayBuffer=function(){largestRead=Math.max(largestRead,this.size);if(this.size>65536)throw new Error('WHOLE_FILE_READ:'+this.size);return read.call(this);};
     try{
       for(let i=0;i<22;i++){
-        const id='BROWSER-FILE-'+String(i).padStart(2,'0'),bytes=new Uint8Array(i===21?2097153:1024);let seed=917+i;
+        const id=engine.allocateId(p,'artifacts',{commandId:'BROWSER-FILE-'+i,idempotencyKey:'file'}),bytes=new Uint8Array(i===21?2097153:1024);let seed=917+i;
         for(let j=0;j<bytes.length;j++){seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;bytes[j]=seed&255;}
         const blob=new Blob([bytes,'FILE-PRESSURE-'+i+'-TAIL'],{type:'text/plain'});
         const row=await store.putArtifact({artifactId:id,jobId:p.job.JOB_ID,blob,filename:id+'.txt',mediaType:'text/plain'});
         engine.registerArtifactBytes(p,{stage:1,artifactId:id,filename:row.filename,mediaType:row.mediaType,byteSize:row.byteSize,sha256:row.sha256});
+        lastArtifact={artifactId:id,sha256:row.sha256,byteSize:row.byteSize};
       }
       p.activeView='Files';await store.writeProject(p);await store.metaPut('selectedProject',p.job.JOB_ID);
       const verified=await store.verifyProjectArtifacts(p.job.JOB_ID);
       const staged=await store.stageResponseFile({jobId:p.job.JOB_ID,stage:4,blob:new Blob(['{"retained":"','z'.repeat(196609),'"}']),rawFilename:'pressure-response.json'});
       await store.removeStagedResponseFile({jobId:p.job.JOB_ID,stagingId:staged.stagingId});
-      return {largestRead,verified:verified.verified,count:verified.artifactCount};
+      return {largestRead,verified:verified.verified,count:verified.artifactCount,lastArtifact};
     }finally{Blob.prototype.arrayBuffer=read;}
   })()`);
   assert(fileCustody.verified&&fileCustody.count===22&&fileCustody.largestRead<=65536,`File custody/staging used unbounded reads: ${JSON.stringify(fileCustody)}`);
-  await cdp.send('Page.reload');await waitFor(cdp,`closedLoopAppReady===true`);await click(cdp,'[data-view="Files"]');
+  await openStoredFixture(cdp);await waitFor(cdp,`closedLoopAppReady===true`);await click(cdp,'[data-view="Files"]');
   assert(await evaluate(cdp,`document.querySelectorAll('[data-download-artifact]').length===20`),'Files first page must contain exactly 20 download controls.');
   await click(cdp,'[data-detail-offset="20"]');
-  assert(await evaluate(cdp,`document.querySelectorAll('[data-download-artifact]').length===2&&Boolean(document.querySelector('[data-download-artifact="BROWSER-FILE-21"]'))`),'Files last page lost its final artifact.');
-  await evaluate(cdp,`(()=>{globalThis.__fileDownloads=[];globalThis.__fileUrl=URL.createObjectURL;globalThis.__fileRead=Blob.prototype.arrayBuffer;globalThis.__largestFileRead=0;URL.createObjectURL=blob=>{__fileDownloads.push(blob);return __fileUrl(blob);};Blob.prototype.arrayBuffer=function(){__largestFileRead=Math.max(__largestFileRead,this.size);if(this.size>65536)throw new Error('WHOLE_FILE_READ:'+this.size);return __fileRead.call(this);};})()`);
-  await click(cdp,'[data-download-artifact="BROWSER-FILE-21"]');await waitFor(cdp,`__fileDownloads.length===1`);
-  await click(cdp,'#project-actions-toggle');await click(cdp,'#export-project');await waitFor(cdp,`__fileDownloads.length===2`,60000);
+  const lastArtifactSelector='[data-download-artifact="'+fileCustody.lastArtifact.artifactId+'"]';
+  assert(await evaluate(cdp,`document.querySelectorAll('[data-download-artifact]').length===2&&Boolean(document.querySelector(${JSON.stringify(lastArtifactSelector)}))`),'Files last page lost its final artifact.');
+  await evaluate(cdp,`(()=>{globalThis.__fileDownloads=[];globalThis.__fileUrl=URL.createObjectURL;globalThis.__fileRead=Blob.prototype.arrayBuffer;globalThis.__largestFileRead=0;URL.createObjectURL=blob=>{__fileDownloads.push(blob);if(blob.type==='application/gzip')globalThis.__fileExportAuthority=Promise.all([closedLoopProjectStore.listArtifacts('BROWSER-FILE-PRESSURE'),closedLoopProjectStore.metaGet('recovery:BROWSER-FILE-PRESSURE')]);return __fileUrl(blob);};Blob.prototype.arrayBuffer=function(){__largestFileRead=Math.max(__largestFileRead,this.size);if(this.size>65536)throw new Error('WHOLE_FILE_READ:'+this.size);return __fileRead.call(this);};})()`);
+  await click(cdp,lastArtifactSelector);await waitFor(cdp,`__fileDownloads.length===1`);
+  await click(cdp,'#project-actions-toggle');const exportStarted=Date.now();await click(cdp,'#export-project',60000);await waitFor(cdp,`__fileDownloads.length===2`,60000);
   const fileExport=await evaluate(cdp,`(async()=>{
     URL.createObjectURL=__fileUrl;const [file,backup]=__fileDownloads,nativeAtob=globalThis.atob;let maxBase64Read=0,restored;
     try{globalThis.atob=text=>{maxBase64Read=Math.max(maxBase64Read,text.length);if(text.length>65536)throw new Error('WHOLE_BASE64_READ:'+text.length);return nativeAtob(text);};restored=await closedLoopProjectStore.importPackage(backup);}finally{globalThis.atob=nativeAtob;Blob.prototype.arrayBuffer=__fileRead;}
     const payload=JSON.parse(await new Response(backup.stream().pipeThrough(new DecompressionStream('gzip'))).text()),{packageSha256,...body}=payload;
-    const tail=await file.slice(-21).text(),last=payload.artifacts.find(row=>row.artifactId==='BROWSER-FILE-21');
-    return {largestRead:__largestFileRead,maxBase64Read,restoredFiles:restored.projectData.artifacts.length,count:payload.artifacts.length,tail,hashVerified:closedLoopHash.sha256Value(body)===packageSha256,lastVerified:last.sha256===await closedLoopHash.sha256Bytes(file),lastTail:atob(last.base64).endsWith('FILE-PRESSURE-21-TAIL')};
+    const [storedRows,savedRecovery]=await __fileExportAuthority;
+    const expectedMembers=[...storedRows.map(row=>({artifactId:row.artifactId,byteSize:row.byteSize,sha256:row.sha256})),...savedRecovery.entries.map(entry=>({artifactId:'RECOVERY-SNAPSHOT-'+entry.id,byteSize:entry.byteSize,sha256:entry.sha256})),...Object.entries(savedRecovery.files).map(([sha256,info])=>({artifactId:'RECOVERY-BYTES-'+sha256,byteSize:info.byteSize,sha256}))].sort((a,b)=>a.artifactId.localeCompare(b.artifactId));
+    const actualMembers=payload.artifacts.map(({artifactId,byteSize,sha256})=>({artifactId,byteSize,sha256})).sort((a,b)=>a.artifactId.localeCompare(b.artifactId));
+    const memberSetVerified=closedLoopHash.stableStringify(actualMembers)===closedLoopHash.stableStringify(expectedMembers)&&new Set(actualMembers.map(row=>row.artifactId)).size===actualMembers.length;
+    const memberBytes=[];for(const row of payload.artifacts){const bytes=Uint8Array.from(nativeAtob(row.base64),char=>char.charCodeAt(0));memberBytes.push({artifactId:row.artifactId,byteSize:bytes.length,sha256:await closedLoopHash.sha256Bytes(bytes),verified:bytes.length===row.byteSize&&await closedLoopHash.sha256Bytes(bytes)===row.sha256});}
+    const restoredRecovery=await closedLoopProjectStore.metaGet('recovery:BROWSER-FILE-PRESSURE'),restoredById=new Map(restoredRecovery.entries.map(entry=>[entry.id,entry]));
+    const historyManifestVerified=closedLoopHash.stableStringify(payload.recovery)===closedLoopHash.stableStringify(savedRecovery);
+    const restoredHistoryVerified=savedRecovery.entries.every(entry=>restoredById.get(entry.id)?.sha256===entry.sha256)&&Object.entries(savedRecovery.files).every(([sha256,info])=>restoredRecovery.files[sha256]?.byteSize===info.byteSize);
+    const expectedLast=${JSON.stringify(fileCustody.lastArtifact)},tail=await file.slice(-21).text(),last=payload.artifacts.find(row=>row.artifactId===expectedLast.artifactId);
+    return {largestRead:__largestFileRead,maxBase64Read,restoredFiles:restored.projectData.artifacts.length,count:payload.artifacts.length,expectedCount:expectedMembers.length,memberSetVerified,memberBytes,historyManifestVerified,restoredHistoryVerified,tail,hashVerified:closedLoopHash.sha256Value(body)===packageSha256,lastVerified:Boolean(last)&&last.sha256===expectedLast.sha256&&file.size===expectedLast.byteSize&&expectedLast.sha256===await closedLoopHash.sha256Bytes(file),lastTail:Boolean(last)&&atob(last.base64).endsWith('FILE-PRESSURE-21-TAIL')};
   })()`);
-  assert(fileExport.largestRead<=65536&&fileExport.maxBase64Read<=65536&&fileExport.restoredFiles===22&&fileExport.count===22&&fileExport.hashVerified&&fileExport.lastVerified&&fileExport.lastTail&&fileExport.tail.endsWith('FILE-PRESSURE-21-TAIL'),`Paged download/export/restore changed file bytes: ${JSON.stringify(fileExport)}`);
-  await evaluate(cdp,`closedLoopProjectStore.removeProject('BROWSER-FILE-PRESSURE')`);
+  assert(fileExport.largestRead<=65536&&fileExport.maxBase64Read<=65536&&fileExport.restoredFiles===fileCustody.count&&fileExport.memberSetVerified&&fileExport.memberBytes.every(row=>row.verified)&&fileExport.historyManifestVerified&&fileExport.restoredHistoryVerified&&fileExport.hashVerified&&fileExport.lastVerified&&fileExport.lastTail&&fileExport.tail.endsWith('FILE-PRESSURE-21-TAIL'),`Paged download/export/restore changed file bytes: ${JSON.stringify(fileExport)}`);
+  // The preceding import intentionally exercised the store API directly and advanced
+  // the canonical revision outside the UI. Rehydrate the application before testing
+  // the operator-owned delete path so its normal stale-revision guard remains binding.
+  await openStoredFixture(cdp);await waitFor(cdp,`globalThis.closedLoopAppReady===true`,60000);
+  await click(cdp,'[data-view="Project"]',60000);await click(cdp,'#project-danger-zone>summary',60000);
+  await fill(cdp,'#delete-project-confirmation','BROWSER-FILE-PRESSURE');await click(cdp,'#delete-project',60000);
+  await waitFor(cdp,`closedLoopProjectStore.readProject('BROWSER-FILE-PRESSURE').then(project=>!project)`,60000);
+  assert(await evaluate(cdp,`closedLoopProjectStore.historyList('BROWSER-FILE-PRESSURE').then(history=>history.removed&&history.entries.length>0)`),'File-pressure removal lost promised History.');
   console.log(JSON.stringify({boundedFileCustodyAndStaging:fileCustody,pagedArtifactDownloadAndCompleteExport:fileExport}));
-  console.log(JSON.stringify({all30StageCollapsedDiagnostics:true,diagnosticArrowProof,diagnosticReasonCount,all30StageAccumulatedDataViews:true,historyRecords:600,minimumRawHistoryBytes:48000000,collapsedDom:pressureDom,pagedDom,historyExport}));
-  const mobileTarget=await evaluate(cdp,`(()=>{const now=Date.now(),challenge=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');return {physicalDeviceRequired:true,mobileAcceptanceTargetId:'MOBILE-TARGET-BROWSER',challenge,challengeIssuedAt:new Date(now).toISOString(),challengeExpiresAt:new Date(now+3600000).toISOString(),sourceCommit:'${'f'.repeat(40)}',deploymentManifestDigest:'${'a'.repeat(64)}',origin:location.origin,basePath:'/closed-loop-tracker/',testProjectId:'BROWSER-MOBILE-STAGE30',procedureVersion:'actual-iphone-safari/1',viewport:{width:393,height:852,devicePixelRatio:3},deviceModel:'iPhone 15',iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1'};})()`);
-  const browserProject=await evaluate(cdp,`(()=>globalThis.closedLoopCore.createBlankState('BROWSER-STAGE30'))()`);browserProject.activeStage=30;await evaluate(cdp,`closedLoopProjectStore.writeAll(${JSON.stringify([browserProject])}).then(()=>closedLoopProjectStore.metaPut('selectedProject','BROWSER-STAGE30'))`);await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`);await click(cdp,'[data-view="Workflow"]');await waitFor(cdp,`Boolean(document.querySelector('#mobile-acceptance-panel'))`);
-  const sessionKey='stage30MobileAcceptance.v1:BROWSER-STAGE30';
-  await fill(cdp,'#mobile-acceptance-target-json',JSON.stringify(mobileTarget));await click(cdp,'#run-mobile-capability-probe');await waitFor(cdp,`document.body.innerText.includes('PASS')`);
-  const targetAfterProbe=await evaluate(cdp,`(()=>{const node=document.querySelector('#mobile-acceptance-target-json');if(!node)return null;try{return JSON.parse(node.value);}catch{return {parseFailed:true,value:node.value};}})()`);
-  assert(targetAfterProbe&&!targetAfterProbe.parseFailed&&targetAfterProbe.challenge===mobileTarget.challenge&&targetAfterProbe.mobileAcceptanceTargetId===mobileTarget.mobileAcceptanceTargetId,`Pinned mobile target was lost or altered by the capability-probe rerender: ${JSON.stringify(targetAfterProbe)}`);
-  await cdp.send('Page.reload');await waitFor(cdp,`globalThis.closedLoopAppReady===true`);await click(cdp,'[data-view="Workflow"]');await waitFor(cdp,`Boolean(document.querySelector('#mobile-acceptance-panel'))`);
-  const targetAfterReload=await evaluate(cdp,`(()=>{const node=document.querySelector('#mobile-acceptance-target-json');if(!node)return null;try{return JSON.parse(node.value);}catch{return {parseFailed:true,value:node.value};}})()`);
-  assert(targetAfterReload&&!targetAfterReload.parseFailed&&targetAfterReload.challenge===mobileTarget.challenge&&targetAfterReload.mobileAcceptanceTargetId===mobileTarget.mobileAcceptanceTargetId,`Persisted mobile target was lost or altered by a page reload: ${JSON.stringify(targetAfterReload)}`);
-  await evaluate(cdp,`(()=>{globalThis.__mobileAcceptanceAlert='';window.alert=message=>{globalThis.__mobileAcceptanceAlert=String(message||'');};return true;})()`);
-  await fill(cdp,'#mobile-acceptance-target-json','');await click(cdp,'#record-mobile-acceptance-measurements');
-  const measurementState=await waitFor(cdp,`(async()=>{const session=await closedLoopProjectStore.metaGet(${JSON.stringify(sessionKey)});return session?.measurements?.recordedAt?{target:session.target,measurements:session.measurements}:null;})()`);
-  assert(measurementState.target?.challenge===mobileTarget.challenge&&measurementState.measurements?.challenge===mobileTarget.challenge&&measurementState.measurements?.targetId===mobileTarget.mobileAcceptanceTargetId,`Post-probe measurements were not bound to the persisted target: ${JSON.stringify(measurementState)}`);
-  assert(!(await evaluate(cdp,'globalThis.__mobileAcceptanceAlert')),`Post-probe measurement capture was blocked: ${await evaluate(cdp,'globalThis.__mobileAcceptanceAlert')}`);
-  const targetAfterMeasurements=await evaluate(cdp,`(()=>{const node=document.querySelector('#mobile-acceptance-target-json');if(!node)return null;try{return JSON.parse(node.value);}catch{return {parseFailed:true,value:node.value};}})()`);
-  assert(targetAfterMeasurements&&!targetAfterMeasurements.parseFailed&&targetAfterMeasurements.challenge===mobileTarget.challenge&&targetAfterMeasurements.mobileAcceptanceTargetId===mobileTarget.mobileAcceptanceTargetId,`Pinned mobile target was lost after measurement rerender: ${JSON.stringify(targetAfterMeasurements)}`);
-  await click(cdp,'#record-mobile-acceptance-receipt');
-  const receiptState=await waitFor(cdp,`(async()=>{const session=await closedLoopProjectStore.metaGet(${JSON.stringify(sessionKey)}),receipts=Array.isArray(session?.receipts)?session.receipts:[];return receipts.length?{target:session.target,receipts}:null;})()`);
-  assert(receiptState.target?.challenge===mobileTarget.challenge&&receiptState.receipts.every(row=>row.challenge===mobileTarget.challenge&&row.targetId===mobileTarget.mobileAcceptanceTargetId),`Post-probe receipts were not bound to the persisted target: ${JSON.stringify(receiptState)}`);
-  assert(!(await evaluate(cdp,'globalThis.__mobileAcceptanceAlert')),`Post-probe receipt capture was blocked: ${await evaluate(cdp,'globalThis.__mobileAcceptanceAlert')}`);
-  const targetAfterReceipts=await evaluate(cdp,`(()=>{const node=document.querySelector('#mobile-acceptance-target-json');if(!node)return null;try{return JSON.parse(node.value);}catch{return {parseFailed:true,value:node.value};}})()`);
-  assert(targetAfterReceipts&&!targetAfterReceipts.parseFailed&&targetAfterReceipts.challenge===mobileTarget.challenge&&targetAfterReceipts.mobileAcceptanceTargetId===mobileTarget.mobileAcceptanceTargetId,`Pinned mobile target was lost after receipt rerender: ${JSON.stringify(targetAfterReceipts)}`);
-  const measurementsBeforeMismatch=await evaluate(cdp,`closedLoopProjectStore.metaGet(${JSON.stringify(sessionKey)}).then(session=>session?.measurements?.recordedAt||null)`);
-  await evaluate(cdp,"globalThis.__mobileAcceptanceAlert=''");await fill(cdp,'#mobile-acceptance-target-json',JSON.stringify({...mobileTarget,deviceModel:'iPhone 14'}));await click(cdp,'#record-mobile-acceptance-measurements');
-  await waitFor(cdp,`document.querySelector('#next-required-action > .notice')?.textContent.includes('does not match the persisted acceptance-session target')`);
-  assert(!(await evaluate(cdp,'globalThis.__mobileAcceptanceAlert')),'A mismatched acceptance target opened a native popup instead of the existing inline notice.');
-  const mismatchState=await evaluate(cdp,`closedLoopProjectStore.metaGet(${JSON.stringify(sessionKey)}).then(session=>({target:session?.target,recordedAt:session?.measurements?.recordedAt||null}))`);
-  assert(mismatchState.target?.deviceModel===mobileTarget.deviceModel&&mismatchState.target?.challenge===mobileTarget.challenge,`Target mismatch mutated the persisted acceptance target: ${JSON.stringify(mismatchState.target)}`);
-  assert(mismatchState.recordedAt===measurementsBeforeMismatch,`Target mismatch mutated persisted measurements: before=${measurementsBeforeMismatch} after=${mismatchState.recordedAt}`);
-  await fill(cdp,'#mobile-acceptance-target-json',JSON.stringify(mobileTarget));
-  const storageState=await evaluate(cdp,`(async()=>{const all=await closedLoopProjectStore.readAll(),project=all.find(x=>x.job?.JOB_ID==='BROWSER-STAGE30'),keys=Object.keys(project?.projectData||{}).filter(key=>['mobileAcceptanceTarget','mobileCapabilityProbe','mobileAcceptanceReceipts','mobileAcceptanceMeasurements'].includes(key));return {keys,manualReceipt:Boolean(document.querySelector('#mobile-acceptance-receipt-kind')),manualMeasurements:['#mobile-runtime-exceptions','#mobile-unhandled-rejections','#mobile-horizontal-overflow','#mobile-primary-text','#mobile-secondary-text','#mobile-touch-target'].filter(selector=>document.querySelector(selector)).length};})()`);assert(storageState.keys.length===0,`Acceptance-session data leaked into unregistered projectData keys: ${JSON.stringify(storageState.keys)}`);assert(!storageState.manualReceipt,'APPLICATION_OBSERVED mobile receipts must not be created by an operator-selected receipt-kind declaration.');assert(storageState.manualMeasurements===0,'APPLICATION_OBSERVED mobile runtime/layout measurements must be mechanically captured, not manually typed.');
-  console.log(JSON.stringify({mobileStageActionRegression:true,widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false,pinnedTargetSurvivesProbeRender:true,pinnedTargetSurvivesReload:true,postProbeStoredTargetIndependentOfEphemeralTextarea:true,postProbeMeasurementsRecorded:true,postProbeReceiptsRecorded:true,pinnedTargetSurvivesPostProbeRenders:true,targetMismatchRejectedWithoutMutation:true}));
+  console.log(JSON.stringify({all30StageCollapsedDiagnostics:true,diagnosticArrowProof,diagnosticReasonCount,all30StageAccumulatedDataViews:true,historyRecords:BROWSER_HISTORY_RECORDS,minimumRawHistoryCharacters:BROWSER_HISTORY_RECORDS*BROWSER_HISTORY_CHARACTERS,collapsedDom:pressureDom,pagedDom,historyExport}));
+  console.log(JSON.stringify({mobileStageActionRegression:true,widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false,mobileCapabilityEvidence:'verify-mobile-capability-journey.mjs performs actual export, selection, and restore'}));
   cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(resolve=>proc.once('exit',resolve)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}

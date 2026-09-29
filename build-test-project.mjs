@@ -1,3 +1,4 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
@@ -40,7 +41,7 @@ const activeSource=html+app+prompts+schema+ingestion+fs.readFileSync('workflow-e
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(activeSource+JSON.stringify(project)))throw new Error('Unauthorized product interpretation remains active.');
 if(/human-project\/31|31 operations|Stage 31|Operation 31/i.test(activeSource))throw new Error('A prohibited Stage/Operation 31 remains.');
 
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');
 if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-response/3')throw new Error('Runtime response schema is wrong.');
 

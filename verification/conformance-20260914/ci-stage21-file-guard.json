@@ -1,0 +1,11 @@
+{
+  "runId": 34804608034,
+  "jobId": 103853887209,
+  "branchRevision": "e741224404c043885be5e448668889491234941e",
+  "case": "verify-ingestion.mjs all-stage accepted metadata response loop: Stage 21 without returned attachments",
+  "expected": "Accept valid reserved-product metadata; enforce returned-file lineage only when returned files are present. Stage completion still requires verified product bytes.",
+  "actual": "An unconditional new guard rejected the valid metadata-only Stage 21 response.",
+  "correction": "Apply the guard only when at least one file carries an attachmentSlotId.",
+  "regression": "verify-ingestion.mjs",
+  "afterExitCode": 0
+}

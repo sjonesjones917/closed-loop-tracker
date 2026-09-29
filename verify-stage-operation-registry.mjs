@@ -1,10 +1,11 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const schema=globalThis.closedLoopWorkflowSchema;
 assert.ok(schema,'workflow-schema.js did not load.');
 
@@ -42,6 +43,8 @@ const expected=Object.freeze({
   30:['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE']
 });
 
+// Approved Section 32.4A adds conditional reuse after each definition owner.
+for(const [operation,family]of [['EXECUTE_FAILURE_TEST','failureTests'],['EXECUTE_REGRESSION','regressions']])for(const stage of globalThis.closedLoopCore.STAGES.map(row=>row.number).filter(n=>n>schema.RECORD_SCHEMAS[family].stage))expected[stage].push(operation);
 assert.deepEqual(schema.STAGE_OPERATIONS,expected,'Stage-operation set is not the closed controlling set.');
 for(let stage=1;stage<=30;stage++){
   assert.deepEqual(schema.STAGE_CONTRACTS[stage].operations,expected[stage],`Stage ${stage} contract operations drifted.`);

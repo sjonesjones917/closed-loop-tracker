@@ -1,0 +1,263 @@
+{
+  "schema": "closed-loop-complete-acceptance-impact-evidence/1",
+  "startingCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "baseCommit": "51b83e4b17a8b9f3b64d1c61720a590d158534e1",
+  "specificationSha256": "6ffd7b3ef6c141754d4381c43c33767c3d8f265833f06a7fccb7518bba818bd9",
+  "sourceFiles": [
+    {
+      "path": "app-core.js",
+      "sha256": "16808bb87658cad01acb3e69b9ac1f60fef272b37c5555399aa613e8dd032a1f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "874d7e219ee1f50ed3f922a8beb012783afcf803e98d6d3fc59dfc9f3936f319"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "e420502cfef94b15bd1f1628007c2b1a8d94fb2546f63035701bad5ad77abf1c"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "d04d9b0eae31e19a0ae7e748731bb6164bd58c11c355a7d3d96d6ccbadf27f58"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "3da1deeace894e0c82e5b1fcc18d1e1a3e5fb72e0be29c1467bea75c5760a556"
+    },
+    {
+      "path": "verify-ui-acceptance-impact.mjs",
+      "sha256": "2163211a793f5978f8d56db5d0c3593bd264ee20d714d169a174a0b1a4739f9a"
+    },
+    {
+      "path": "verify-clarification-continuation.mjs",
+      "sha256": "a5fb4ddfe16e98e82197f14433a4cc642cfad3568011b2ce269e81a059baa31a"
+    },
+    {
+      "path": "verify-acceptance-boundary-faults.mjs",
+      "sha256": "403b0b9991f69d6f19fd92f0cce274bbbcac1211d04235d9aa98040d95f37165"
+    },
+    {
+      "path": "verify-complete.mjs",
+      "sha256": "b2da05c6a6afbda474bf43ac0ea9df2b40ba9ffae0315d8f87f0106e1222dbfd"
+    },
+    {
+      "path": "verify-semantic-review-acceptance.mjs",
+      "sha256": "bb7f8bc4d502934f2c0f84ab871e1e4a52b5f9cec4b6b44cb4400bd44de4556b"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "754cc4bf47c7ceba640ac7cf32bb90657f15ce29cf6301bd61c97aa2e17e5706"
+    }
+  ],
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "Linux Node VM; production UI functions and lifecycle transaction adapter",
+    "actualBrowser": false,
+    "synthetic": true
+  },
+  "reproduction": {
+    "input": "Accepted and human-confirmed Stage 01 intake, then a valid replacement for the same operation. No later accepted work is fabricated.",
+    "operations": [
+      "reserve replacement instruction",
+      "validate replacement response",
+      "select acceptance"
+    ],
+    "expected": "One inline confirmation covers the replacement and the approval required by its actual candidate state; active progress is unchanged.",
+    "actualBefore": "The initial confirmation omitted the current approval that the replacement makes stale.",
+    "failure": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: COMPLETE_ACCEPTANCE_IMPACT_ORACLE: confirmation must describe the current approval that will need to be completed again\n    at file:///workspace/scratch/ec4ac78ce440/tracker-candidate/verify-ui-acceptance-impact.mjs:20:99\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v24.19.0\n"
+  },
+  "executedChecks": [
+    {
+      "name": "actual UI replacement, cancellation, restoration and duplicate confirmation",
+      "result": "PASS",
+      "stdoutSha256": "5d4d7643589efe12f66cd2c355cfb198b19db6666b0958fc52faaa49c0bba3dd",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Actual acceptance and persistence UI owners with production ingestion and lifecycle transaction adapter",
+        "cases": [
+          {
+            "name": "The actual UI prepares one confirmation for the accepted response and every affected approval before committing",
+            "result": "PASS"
+          },
+          {
+            "name": "Keeping current progress leaves the accepted result and approval intact",
+            "result": "PASS"
+          },
+          {
+            "name": "Restoring unanswered confirmation recovers an unaccepted candidate and matching prior progress",
+            "result": "PASS"
+          },
+          {
+            "name": "The confirmed candidate commits its exact replacement and requires the affected approval again",
+            "result": "PASS"
+          },
+          {
+            "name": "Repeated confirmation does not accept twice or repeat invalidation",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "targeted implementation faults",
+      "result": "PASS",
+      "stdoutSha256": "bb8088a548d4ab1ef57c8343670ceb1be425a6ea3f61f7184e95daea7647198f",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "method": "Targeted in-memory production faults; source files remain unchanged",
+        "cases": [
+          {
+            "suite": "verify-ui-acceptance-impact.mjs",
+            "fault": "skip-complete-confirmation",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-mutation-impact-projections.mjs",
+            "fault": "stale-projection",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-semantic-review-acceptance.mjs",
+            "fault": "review-request-invalidates",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-clarification-continuation.mjs",
+            "fault": "global-input-gate",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          },
+          {
+            "suite": "verify-clarification-continuation.mjs",
+            "fault": "global-input-selector",
+            "result": "DETECTED",
+            "restoredImplementation": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "source revision compare-and-swap at actual UI persistence owner",
+      "result": "PASS",
+      "stdoutSha256": "256b8b073bed64842a8b7f4597d5999df2e5aa11540ca8d09fdd34b12ea01ed9",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Actual app persistence function and production store with lifecycle transaction adapter",
+        "cases": [
+          {
+            "name": "The real UI persistence owner commits a revision-advancing reservation against its source revision",
+            "result": "PASS"
+          },
+          {
+            "name": "A stale candidate cannot overwrite independent work even when the UI has loaded the newer revision",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "input file correction and durable byte restoration",
+      "result": "PASS",
+      "stdoutSha256": "62a81a8e1dde86ffb3735461c5ed531db77ecd3536114ab9fc2acb844f82add5",
+      "report": {
+        "synthetic": true,
+        "actualBrowser": false,
+        "environment": "Production workflow, persistence and actual UI file-intake owner with lifecycle transaction adapter",
+        "cases": [
+          {
+            "name": "A current human confirmation repairs an incompatible prior confirmation without a redundant replacement decision",
+            "result": "PASS"
+          },
+          {
+            "name": "A file correction keeps accepted input and pending dependent work unchanged and describes its full impact",
+            "result": "PASS"
+          },
+          {
+            "name": "An unconfirmed file correction retains its exact bytes and candidate in durable History",
+            "result": "PASS"
+          },
+          {
+            "name": "Confirming the file correction commits its bytes and complete invalidation together",
+            "result": "PASS"
+          },
+          {
+            "name": "Earlier and replacement versions restore compatible progress and the exact file correction without implicitly accepting the candidate",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "name": "semantic review and real UI acceptance",
+      "result": "PASS",
+      "stdoutSha256": "5ce355fbd6709d8d1dbdd56d0b8a3a00371a90673aa989920394067844e438a1",
+      "report": {
+        "semanticReviewAcceptance": "PASS",
+        "orphanAuditIsNotLiveAttempt": true,
+        "requestedReviewPreservesAcceptedProgress": true,
+        "pendingReviewIsSeparatelyActionable": true,
+        "semanticReviewStages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "pendingProposalsPreserved": true,
+        "recordedOperationSelectionPreserved": true,
+        "commandGatesUseCurrentOwner": true,
+        "automaticNextInstruction": true,
+        "explicitLegacyRecovery": true,
+        "restorationDoesNotExecuteCorrection": true,
+        "reconciliationThenIndependentReview": true,
+        "invalidResultsRejected": true,
+        "mixedFindingsCannotPass": true,
+        "negativeFindingsRouteToCorrection": true,
+        "legacyEvidencePreserved": true,
+        "validReviewUnlocksStage6": true
+      }
+    },
+    {
+      "name": "verify-complete.mjs including executed intent confirmation and project save controls",
+      "result": "PASS",
+      "stdoutSha256": "4fa4681f45f7209870c41b0a2d085f92954a7a7e8a7d95775e0f47ad9cb9668f",
+      "output": "{\n  \"finalRequirementRegression\": true,\n  \"formalStates\": true,\n  \"noStage31\": true,\n  \"invalidRelationshipRejected\": true,\n  \"humanQuestionGate\": true,\n  \"stage8PrerequisiteGate\": true,\n  \"tenRunGate\": true,\n  \"verificationMatrixGate\": true,\n  \"convergenceStrict\": true,\n  \"unchangedConfirmationGate\": true,\n  \"downstreamInvalidation\": true,\n  \"preReleaseIdentityBlocked\": true,\n  \"identityMismatchBlocked\": true,\n  \"evidenceChainNoFabrication\": true,\n  \"acceptedStateStorageRollback\": true\n}\n{\n  \"scopedAcceptedResultRefinement\": true\n}\n{\n  \"stage5RequirementVersionIsolation\": true,\n  \"iterationOperationIsolation\": true,\n  \"currentRegressionClosure\": true,\n  \"stage28CurrentBatch\": true\n}\n{\n  \"reliabilityV2Execution\": true,\n  \"reliabilityV2Independence\": true,\n  \"reliabilityV2Evidence\": true,\n  \"reliabilityV2Contradictions\": true\n}\n{\n  \"stage22ProductHandoff\": true,\n  \"epistemicEffectiveEvidence\": true,\n  \"releaseContradictions\": true\n}\n{\"stage04CapturedInputReuse\":true}\n{\n  \"nativeHandoffNoExternalReturn\": true,\n  \"capabilityNegation\": true,\n  \"stage7AcceptedInvalidBlocks\": true\n}\n{\n  \"reviewerIndependenceAuthority\": true,\n  \"truthfulOperationalMetrics\": true\n}\n{\"specResidualClosure\":\"PASS\",\"testIrOperations\":27}\n{\"dueStageTiming\":\"PASS\",\"preproductDue\":true,\"finalProductExcludedAtStage12\":true,\"finalProductDueAtStage22\":true,\"invalidTimingFailsClosed\":true}\n{\"controllerStage\":\"15\",\"applicationStage\":\"11\",\"tenIndependentRuns\":\"PASS\",\"exactAcceptedRunCount\":10,\"exactDistinctContextCount\":10,\"exactCandidateBinding\":true,\"separateOutputReceipts\":true,\"idempotentBatchReservation\":true,\"exactTenGateEvidence\":\"verify-complete.mjs\",\"promptIsolationEvidence\":\"verify-all-stage-prompts.mjs + verify-stage-prompts-complete.mjs\",\"intentionalInvalidFixturesRejected\":[\"duplicate-external-context-identity\",\"known-context-contamination-and-prohibited-inputs\",\"wrong-candidate-run\",\"fewer-than-ten-current-runs\",\"partial-batch-top-up\"],\"repairedPathProgressed\":true,\"isolatedDisposableProjects\":true}\n{\"controllerStage\":\"16\",\"applicationStage\":\"12\",\"independentVerification\":\"PASS\",\"requiredTupleCount\":10,\"independentVerifierContexts\":10,\"intentionalInvalidFixturesRejected\":[\"generator-verifier-context-reuse\",\"prohibited-verifier-context-leakage\",\"duplicate-current-verification-triple\"],\"repairedPathProgressed\":true,\"isolatedDisposableProject\":true}\n{\"controllerStage\":\"17\",\"applicationStage\":\"13\",\"crossRunComparison\":\"PASS\",\"requiredRunCount\":10,\"requiredTupleCount\":10,\"expectedVarianceContractBound\":true,\"applicationOwnedAggregateFacts\":true,\"stabilityArithmetic\":{\"tenOfTen\":1,\"nineOfTen\":0.9,\"violationCountExact\":true,\"undeterminedCountExact\":true,\"closedAgreementUniverse\":true},\"prohibitedVarianceDefectHandoffEnforced\":true,\"unknownVarianceBlocked\":true,\"undeterminedTruthBlocked\":true,\"violatedTruthRoutedForward\":true,\"noRunOrEvidenceDiscarded\":true,\"isolatedDisposableProject\":true,\"closureVersion\":\"closed-loop-stage13-cross-run-closure/1\"}\n{\"controllerStage\":\"18\",\"applicationStages\":[14,15],\"rootCauseAndRegressions\":\"PASS\",\"currentScopeRcaEnforced\":true,\"staleRcaRejected\":true,\"completeRcaFieldsEnforced\":true,\"duplicateRcaRejected\":true,\"permanentRegressionAppendOnly\":true,\"actualPreCorrectionExecutionRequired\":true,\"canonicalPreCorrectionEvidenceRequired\":true,\"preCorrectionFailureRequired\":true,\"postCorrectionSuccessNotClaimedAtStage15\":true,\"isolatedDisposableProject\":true}\nverify-root-cause-correction: PASS\n{\n  \"stagesCompleted\": 30,\n  \"automaticExternalContinuations\": true,\n  \"completedRunsNotRepeated\": true,\n  \"compositeIterationOperationHandoffs\": true,\n  \"clarificationCycles\": 1,\n  \"confirmedDefects\": 1,\n  \"correctedIterationRuns\": 10,\n  \"unchangedConfirmationRuns\": 10,\n  \"verificationTripleCoverage\": 1,\n  \"release\": \"ACCEPTED\",\n  \"artifactIdentity\": true,\n  \"evidenceChains\": true,\n  \"reloadIntegrity\": true,\n  \"artifactBatchEquivalence\": [\n    {\n      \"snapshot\": \"initial-intake\",\n      \"stage\": 1,\n      \"members\": 66,\n      \"exactCanonicalEquality\": true\n    },\n    {\n      \"snapshot\": \"frozen-candidate\",\n      \"stage\": 10,\n      \"members\": 5,\n      \"exactCanonicalEquality\": true\n    },\n    {\n      \"snapshot\": \"current-product\",\n      \"stage\": 21,\n      \"members\": 5,\n      \"exactCanonicalEquality\": true\n    },\n    {\n      \"snapshot\": \"authorized-terminal\",\n      \"stage\": 21,\n      \"members\": 5,\n      \"exactCanonicalEquality\": true\n    }\n  ],\n  \"stageProjectionCases\": [\n    {\n      \"caseId\": \"completed-stage-01-projection\",\n      \"stage\": 1,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"JOB_ID\",\n        \"DATE_OPENED\",\n        \"INPUT_SET_VERSION\",\n        \"INPUT_SET_HASH_OR_MANIFEST\",\n        \"JOB_RECORD_STATUS\",\n        \"STATUS_EVIDENCE\",\n        \"SEMANTIC_CHALLENGE_STATUS\",\n        \"HUMAN_CONFIRMATION_RECEIPTS\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-02-projection\",\n      \"stage\": 2,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"SOURCE_SET_VERSION\",\n        \"SOURCE_RECORDS\",\n        \"SOURCE_CONFLICT_RECORDS\",\n        \"UNRESOLVED_CONTROLLING_CONFLICTS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\",\n        \"SOURCE_SEARCH_CONTRACT_ID\",\n        \"SEARCH_ADEQUACY_REVIEW_ID\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-03-projection\",\n      \"stage\": 3,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"RESEARCH_VERSION\",\n        \"SOURCE_RESEARCH_RECORDS\",\n        \"CANDIDATE_REQUIREMENT_RECORDS\",\n        \"ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-04-projection\",\n      \"stage\": 4,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"REQUIREMENTS_VERSION\",\n        \"REQUIREMENT_RECORDS\",\n        \"ATOMICITY_REVIEW_RESULTS\",\n        \"TOTAL_REQUIREMENTS\",\n        \"MANDATORY_REQUIREMENTS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-05-projection\",\n      \"stage\": 5,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"INPUT_REQUIREMENTS_VERSION\",\n        \"OUTPUT_REQUIREMENTS_VERSION\",\n        \"REQUIREMENT_DEFECT_RECORDS\",\n        \"UNRESOLVED_CONFLICTS\",\n        \"MISSING_PREREQUISITES\",\n        \"MANDATORY_BLOCKERS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-06-projection\",\n      \"stage\": 6,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"TEST_SUITE_VERSION\",\n        \"TEST_RECORDS\",\n        \"COVERAGE_RECORDS\",\n        \"TOTAL_ACTIVE_MANDATORY_REQUIREMENTS\",\n        \"ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST\",\n        \"MANDATORY_TEST_COVERAGE\",\n        \"BLOCKED_MANDATORY_REQUIREMENTS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-05-projection\",\n      \"stage\": 5,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"INPUT_REQUIREMENTS_VERSION\",\n        \"OUTPUT_REQUIREMENTS_VERSION\",\n        \"REQUIREMENT_DEFECT_RECORDS\",\n        \"UNRESOLVED_CONFLICTS\",\n        \"MISSING_PREREQUISITES\",\n        \"MANDATORY_BLOCKERS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-06-projection\",\n      \"stage\": 6,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"TEST_SUITE_VERSION\",\n        \"TEST_RECORDS\",\n        \"COVERAGE_RECORDS\",\n        \"TOTAL_ACTIVE_MANDATORY_REQUIREMENTS\",\n        \"ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST\",\n        \"MANDATORY_TEST_COVERAGE\",\n        \"BLOCKED_MANDATORY_REQUIREMENTS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-07-projection\",\n      \"stage\": 7,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"MUTATION_SUITE_VERSION\",\n        \"FAILURE_TEST_RECORDS\",\n        \"ACTIVE_REQUIREMENTS\",\n        \"REQUIREMENTS_WITH_AT_LEAST_ONE_FAILURE_TEST\",\n        \"FAILURE_TEST_COVERAGE\",\n        \"INVALID_FIXTURES_ACCEPTED\",\n        \"DEFECTIVE_VALIDATORS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-08-projection\",\n      \"stage\": 8,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"DRAFT_INSTRUCTION_VERSION\",\n        \"INSTRUCTION_TRACE_RECORDS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-09-projection\",\n      \"stage\": 9,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"INPUT_INSTRUCTION_VERSION\",\n        \"OUTPUT_INSTRUCTION_VERSION\",\n        \"PREFLIGHT_REVIEWER_ID\",\n        \"REVIEW_CONTEXT_INDEPENDENT_FROM_AUTHOR\",\n        \"SENTENCE_REVIEW_RECORDS\",\n        \"PREFLIGHT_ITERATION_RECORDS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-10-projection\",\n      \"stage\": 10,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"CANDIDATE_ID\",\n        \"ITERATION_ID\",\n        \"FREEZE_DATE\",\n        \"FROZEN_COMPONENT_RECORDS\",\n        \"TOOL_CONFIGURATION_RECORDS\",\n        \"ALL_REQUIRED_COMPONENTS_PRESENT\",\n        \"ALL_FROZEN_COMPONENT_BYTES_HASHED\",\n        \"ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS\",\n        \"CHANGES_ALLOWED_DURING_BATCH\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-11-projection\",\n      \"stage\": 11,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"ITERATION_ID\",\n        \"CANDIDATE_ID\",\n        \"RUN_RECORDS\",\n        \"FRESH_CONTEXTS_CREATED\",\n        \"RUNS_RECEIVING_EXACT_PACKAGE\",\n        \"CONTAMINATED_RUNS\",\n        \"OUTPUTS_SAVED_SEPARATELY\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-12-projection\",\n      \"stage\": 12,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"ITERATION_ID\",\n        \"REQUIREMENTS_VERSION\",\n        \"TEST_SUITE_VERSION\",\n        \"VERIFICATION_RECORDS\",\n        \"ACTIVE_MANDATORY_REQUIREMENTS\",\n        \"RUNS\",\n        \"EXPECTED_MANDATORY_RECORDS\",\n        \"ACTUAL_MANDATORY_RECORDS\",\n        \"MISSING_RECORDS\",\n        \"SATISFIED_RECORDS\",\n        \"VIOLATED_RECORDS\",\n        \"UNDETERMINED_RECORDS\",\n        \"SELF_VALIDATED_RECORDS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-13-projection\",\n      \"stage\": 13,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"ITERATION_ID\",\n        \"COMPARISON_VERSION\",\n        \"REQUIREMENT_COMPARISON_RECORDS\",\n        \"REQUIREMENTS_SATISFIED_BY_ALL_TEN\",\n        \"REQUIREMENTS_WITH_AT_LEAST_ONE_VIOLATION\",\n        \"REQUIREMENTS_WITH_AT_LEAST_ONE_UNDETERMINED\",\n        \"CORRECTNESS_AFFECTING_DISAGREEMENTS\",\n        \"PROHIBITED_OUTPUT_VARIANCES\",\n        \"INCONCLUSIVE_TESTS\",\n        \"REPEATED_FAILURE_GROUPS\",\n        \"UNIQUE_FAILURES\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-14-projection\",\n      \"stage\": 14,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"ROOT_CAUSE_ANALYSIS_VERSION\",\n        \"DEFECT_ROOT_CAUSE_RECORDS\",\n        \"TOTAL_MATERIAL_DEFECTS\",\n        \"CONFIRMED_ROOT_CAUSES\",\n        \"UNDETERMINED_ROOT_CAUSES\",\n        \"BLOCKED_ANALYSES\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-15-projection\",\n      \"stage\": 15,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"INPUT_TEST_SUITE_VERSION\",\n        \"OUTPUT_TEST_SUITE_VERSION\",\n        \"REGRESSION_FIXTURE_VERSION\",\n        \"REGRESSION_RECORDS\",\n        \"CONFIRMED_DEFECTS\",\n        \"CONFIRMED_DEFECTS_WITH_REGRESSION_TEST\",\n        \"PRE_CORRECTION_FAILURES_PROVEN\",\n        \"UNCONVERTED_CONFIRMED_DEFECTS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-16-projection\",\n      \"stage\": 16,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"CHANGE_SET_ID\",\n        \"TRIGGERING_DEFECT_IDS\",\n        \"RCA_VERSION\",\n        \"DATE\",\n        \"ARTIFACT_CHANGE_RECORDS\",\n        \"INSTRUCTION_CHANGED\",\n        \"IF_EXECUTION_ONLY_DEFECT_WAS_INSTRUCTION_PRESERVED\",\n        \"PREFLIGHT_REPEATED_IF_CHANGED\",\n        \"ARTIFACTS_CHANGED\",\n        \"NEW_VERSIONS_CREATED\",\n        \"IN_PLACE_MODIFICATIONS\",\n        \"DOWNSTREAM_VERIFICATIONS_INVALIDATED\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-17-projection\",\n      \"stage\": 17,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"PREVIOUS_ITERATION_ID\",\n        \"NEW_ITERATION_ID\",\n        \"PREVIOUS_CANDIDATE_ID\",\n        \"NEW_CANDIDATE_ID\",\n        \"CHANGESET_ID\",\n        \"NEW_FROZEN_VERSIONS\",\n        \"OLD_CONVERSATIONS_CONTINUED\",\n        \"TEN_NEW_CONTEXTS_CREATED\",\n        \"RUN_NAMESPACE\",\n        \"IDENTICAL_PACKAGE_CONFIRMED_FOR_ALL_RUNS\",\n        \"PRIOR_OUTPUTS_WITHHELD\",\n        \"EXECUTE_COMPLETED\",\n        \"VERIFY_COMPLETED\",\n        \"COMPARE_COMPLETED\",\n        \"ROOT_CAUSE_COMPLETED\",\n        \"REGRESSION_TESTS_ADDED\",\n        \"CORRECTIONS_COMPLETED\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-18-projection\",\n      \"stage\": 18,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"ITERATION_ID\",\n        \"METRICS_VERSION\",\n        \"TOTAL_MANDATORY_REQUIREMENTS\",\n        \"MANDATORY_REQUIREMENTS_WITH_COMPLETE_SPECIFICATION_AND_APPLICABILITY\",\n        \"MANDATORY_REQUIREMENT_COVERAGE\",\n        \"MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_APPLICABLE_VERIFICATION\",\n        \"MANDATORY_VERIFICATION_COVERAGE\",\n        \"TOTAL_STILL_APPLICABLE_REGRESSION_TESTS\",\n        \"SUCCESSFUL_REGRESSION_TESTS\",\n        \"REGRESSION_TEST_SUCCESS\",\n        \"CRITICAL_DEFECTS\",\n        \"MAJOR_DEFECTS\",\n        \"MANDATORY_UNRESOLVED_UNKNOWNS\",\n        \"KNOWN_CORRECTNESS_AFFECTING_CONTRADICTIONS\",\n        \"KNOWN_CORRECTNESS_AFFECTING_AMBIGUITIES\",\n        \"UNEXPLAINED_CORRECTNESS_AFFECTING_EXECUTION_VARIANCE\",\n        \"ALL_CONDITIONS_SIMULTANEOUSLY_TRUE\",\n        \"FAILED_CONDITIONS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-19-projection\",\n      \"stage\": 19,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"SOURCE_CONVERGED_ITERATION\",\n        \"CONFIRMATION_ITERATION_ID\",\n        \"ZERO_CHANGE_AUDIT\",\n        \"TEN_NEW_CONTEXTS_CREATED\",\n        \"SAME_FROZEN_PACKAGE_USED\",\n        \"RUNS_COMPLETED\",\n        \"COMPLETE_TEST_SUITE_RUN\",\n        \"ALL_REGRESSION_TESTS_RUN\",\n        \"CROSS_RUN_COMPARISON_COMPLETED\",\n        \"NEW_CRITICAL_DEFECTS\",\n        \"NEW_MAJOR_DEFECTS\",\n        \"NEW_REQUIREMENTS_DISCOVERED\",\n        \"INJECTED_DEFECTS_NOT_DETECTED\",\n        \"NEW_CORRECTNESS_AFFECTING_VARIANCE\",\n        \"CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED\",\n        \"REQUIRED_RETURN_STAGE\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-20-projection\",\n      \"stage\": 20,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"BASELINE_ID\",\n        \"BASELINE_APPROVAL_DATE\",\n        \"SUPPORTING_CONFIRMATION_ITERATION\",\n        \"APPROVED_VERSIONS\",\n        \"BASELINE_FILE_RECORDS\",\n        \"UNCHANGED_CONFIRMATION_SUCCEEDED\",\n        \"ALL_APPROVED_COMPONENTS_PRESENT\",\n        \"ALL_IMMUTABLE_FILES_HASHED\",\n        \"ANY_CHANGED_COMPONENT_RETAINS_BASELINE_STATUS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-21-projection\",\n      \"stage\": 21,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"BASELINE_ID\",\n        \"EXECUTION_ID\",\n        \"OUTPUT_FILE_RECORDS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-22-projection\",\n      \"stage\": 22,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"PRODUCT_HASHES_BEFORE_TEST\",\n        \"TEST_SUITE_VERSION\",\n        \"VALIDATOR_VERSION\",\n        \"DETERMINISTIC_TEST_RESULTS\",\n        \"APPLICABLE_MANDATORY_DETERMINISTIC_TESTS\",\n        \"EXECUTED\",\n        \"SATISFIED\",\n        \"VIOLATED\",\n        \"UNDETERMINED\",\n        \"MISSING_TEST_RESULTS\",\n        \"PRODUCT_REJECTED_BY_MANDATORY_FAILURE\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-23-projection\",\n      \"stage\": 23,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"REQUIREMENTS_VERSION\",\n        \"MEANING_RUBRIC_VERSION\",\n        \"EVALUATOR_ID\",\n        \"EVALUATOR_INDEPENDENT_FROM_GENERATOR\",\n        \"MEANING_REQUIREMENT_RECORDS\",\n        \"ACTIVE_MEANING_REQUIREMENTS\",\n        \"MEANING_RECORDS_COMPLETED\",\n        \"SATISFIED\",\n        \"VIOLATED\",\n        \"UNDETERMINED\",\n        \"UNSUPPORTED_BARE_CONCLUSIONS\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-24-projection\",\n      \"stage\": 24,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"ADVERSARIAL_REVIEW_VERSION\",\n        \"REVIEWER_ID\",\n        \"REVIEWER_INDEPENDENT\",\n        \"ADVERSARIAL_CHECK_RECORDS\",\n        \"ATTACKS_EXECUTED\",\n        \"MANDATORY_DEFECTS_FOUND\",\n        \"CRITICAL_DEFECTS_FOUND\",\n        \"MAJOR_DEFECTS_FOUND\",\n        \"UNDETERMINED_ATTACKS\",\n        \"REGRESSIONS_FOUND\",\n        \"RETURN_TO_ROOT_CAUSE_REQUIRED\",\n        \"STAGE_DECISION\",\n        \"DECISION_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-25-projection\",\n      \"stage\": 25,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"REPRESENTATION_REVIEW_VERSION\",\n        \"APPROVED_BASELINE_ID\",\n        \"DELIVERY_CANDIDATE_SET_ID\",\n        \"DELIVERY_ARTIFACT_INVENTORY\",\n        \"TRANSFORMATION_CHAIN_RECORDS\",\n        \"PAGE_OR_VIEW_INSPECTION_RECORDS\",\n        \"PACKAGE_INSPECTION_RECORDS\",\n        \"TOTAL_DELIVERY_ARTIFACTS\",\n        \"TOTAL_PAGES_OR_VIEWS_REQUIRED\",\n        \"TOTAL_PAGES_OR_VIEWS_INSPECTED\",\n        \"TOTAL_PACKAGED_FILES_REQUIRED\",\n        \"TOTAL_PACKAGED_FILES_OPENED_OR_TESTED\",\n        \"UNRESOLVED_CRITICAL_DEFECTS\",\n        \"UNRESOLVED_MAJOR_DEFECTS\",\n        \"UNRESOLVED_REPRESENTATION_UNKNOWNS\",\n        \"FINAL_REPRESENTATION_DETERMINATION\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-26-projection\",\n      \"stage\": 26,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"BASELINE_ID\",\n        \"REVIEW_VERSION\",\n        \"MISSING_EVIDENCE_LINKS\",\n        \"RECONCILIATION_DEFECT_IDS\",\n        \"RECONCILIATION_BLOCKER_IDS\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-27-projection\",\n      \"stage\": 27,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"RELEASE_GATE_ID\",\n        \"DATE_AND_TIME\",\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"BASELINE_ID\",\n        \"RECONCILED_REVIEW_VERSION\",\n        \"TOTAL_MANDATORY_REQUIREMENTS\",\n        \"MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE\",\n        \"MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED\",\n        \"MANDATORY_REQUIREMENTS_NOT_ESTABLISHED\",\n        \"TOTAL_MANDATORY_VALIDATORS\",\n        \"MANDATORY_VALIDATORS_SUCCEEDED\",\n        \"MANDATORY_VALIDATORS_FAILED\",\n        \"MANDATORY_VALIDATORS_UNDETERMINED_OR_NOT_RUN\",\n        \"UNRESOLVED_CRITICAL_DEFECTS\",\n        \"UNRESOLVED_MAJOR_DEFECTS\",\n        \"BLOCKING_REQUIREMENT_IDS\",\n        \"VIOLATED_REQUIREMENT_IDS\",\n        \"FAILED_TEST_IDS\",\n        \"UNDETERMINED_OR_MISSING_TEST_IDS\",\n        \"UNRESOLVED_DEFECT_IDS\",\n        \"BLOCKER_IDS\",\n        \"SELECTED_RELEASE_STATE\",\n        \"CONTROLLING_DECISION_RULE\",\n        \"CONTROLLING_REASON\",\n        \"AFFIRMATIVE_EVIDENCE\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-28-projection\",\n      \"stage\": 28,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"HASH_REVIEW_ID\",\n        \"DELIVERY_CANDIDATE_SET_ID\",\n        \"RELEASE_GATE_ID\",\n        \"RELEASE_GATE_STATE\",\n        \"HASH_ALGORITHM\",\n        \"HASH_TOOL_AND_VERSION\",\n        \"ARTIFACT_HASH_RECORDS\",\n        \"TOTAL_ARTIFACTS_REQUIRED_FOR_RELEASE\",\n        \"TOTAL_ARTIFACTS_WITH_AUDITED_HASH\",\n        \"TOTAL_ARTIFACTS_REHASHED_IMMEDIATELY_BEFORE_DELIVERY\",\n        \"TOTAL_EXACT_HASH_MATCHES\",\n        \"TOTAL_HASH_MISMATCHES\",\n        \"TOTAL_UNKNOWN_HASH_COMPARISONS\",\n        \"ALL_RELEASE_HASHES_EQUAL_AUDITED_HASHES\",\n        \"ANY_POST_REVIEW_MODIFICATION\",\n        \"DELIVERY_AUTHORIZATION\",\n        \"AUTHORIZATION_EVIDENCE\",\n        \"AUTHORIZATION_DATE_AND_TIME\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-29-projection\",\n      \"stage\": 29,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"EVIDENCE_CHAIN_VERSION\",\n        \"JOB_ID\",\n        \"PRODUCT_ID\",\n        \"PRODUCT_VERSION\",\n        \"BASELINE_ID\",\n        \"RELEASE_GATE_ID\",\n        \"HASH_REVIEW_ID\",\n        \"MANDATORY_REQUIREMENT_EVIDENCE_CHAIN_RECORDS\",\n        \"TOTAL_MANDATORY_REQUIREMENTS\",\n        \"TOTAL_MANDATORY_REQUIREMENTS_WITH_COMPLETE_CHAINS\",\n        \"TOTAL_MANDATORY_REQUIREMENTS_WITH_INCOMPLETE_CHAINS\",\n        \"TOTAL_MANDATORY_REQUIREMENTS_WITH_UNKNOWN_CHAIN_LINKS\",\n        \"MANDATORY_EVIDENCE_CHAIN_COVERAGE\",\n        \"ALL_MANDATORY_EVIDENCE_CHAINS_COMPLETE\",\n        \"INCOMPLETE_CHAIN_REQ_IDS\",\n        \"UNKNOWN_CHAIN_REQ_IDS\",\n        \"FINAL_EVIDENCE_CHAIN_DETERMINATION\"\n      ]\n    },\n    {\n      \"caseId\": \"completed-stage-30-projection\",\n      \"stage\": 30,\n      \"result\": \"PASS\",\n      \"checkedFields\": [\n        \"DEFECT_REGISTRY_VERSION\",\n        \"REGRESSION_REGISTRY_VERSION\",\n        \"PRE_DELIVERY_CHECKPOINT_ID\",\n        \"DELIVERY_ID\",\n        \"DELIVERY_STATE\",\n        \"DELIVERY_RECORD_HASH\",\n        \"DELIVERY_ATTEMPT_RECORDS\",\n        \"REGISTRY_IS_APPEND_ONLY\",\n        \"DEFECT_RECORDS\",\n        \"REGRESSION_RECORDS\",\n        \"FUTURE_BASELINE_REGRESSION_EXECUTION_RECORDS\",\n        \"TOTAL_DEFECT_RECORDS\",\n        \"TOTAL_CONFIRMED_DEFECTS_WITH_REGRESSION_TESTS\",\n        \"TOTAL_ACTIVE_REGRESSION_TESTS\",\n        \"TOTAL_RETIRED_REGRESSION_TESTS\",\n        \"DEFECT_RECORDS_MISSING_REQUIRED_FIELDS\",\n        \"CONFIRMED_DEFECTS_MISSING_REGRESSION_TESTS\",\n        \"FINAL_REGISTRY_DETERMINATION\"\n      ]\n    }\n  ]\n}\nverify-corrected-iteration: PASS\n{\"controllerStage\":\"26\",\"applicationStage\":\"25\",\"deliveryCandidateFreeze\":\"PASS\",\"isolatedDisposableProjects\":true,\"mutationSensitive\":true,\"intentionalInvalidFixturesRejected\":[\"missing-human-selection\",\"incomplete-artifact-set\",\"decision-bound-to-wrong-artifact-set\"]}\n{\"operationSpecificScopeClassification\":\"PASS\"}\n"
+    }
+  ],
+  "precedingCI": {
+    "head": "51b83e4b17a8b9f3b64d1c61720a590d158534e1",
+    "mergeRevision": "da1507196bba2ba301be57214d12781d6a7359fe",
+    "runId": 34858367544,
+    "jobId": 104023751568,
+    "passedSteps": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "failedStep": 16,
+    "failureKind": "Outdated source-text assertion in verify-complete.mjs. Replaced with execution of the actual production controls.",
+    "browserExecuted": false,
+    "deploymentCompleted": false
+  },
+  "limitations": [
+    "Focused synthetic evidence, not complete 30-stage operator or exact deployed acceptance.",
+    "The broad local regression run overlapped edits and cannot establish an integrated source-revision pass.",
+    "Physical iPhone, approved visual baseline and real external project evidence remain unestablished.",
+    "Complete applicable operation scope-contract and coverage work remains open."
+  ],
+  "applicationComplete": false
+}

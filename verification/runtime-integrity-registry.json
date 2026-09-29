@@ -1,0 +1,72 @@
+{
+  "schema": "closed-loop-runtime-integrity-registry/1",
+  "sourceCommitBeforeRepair": "f41cd55c9b224c91f3c44977f2ed2e64cd43566f",
+  "canonicalization": "closed-loop-canonical-json/1",
+  "registryDigests": [
+    {
+      "constant": "OPERATION_REGISTRY_SHA256",
+      "previousSha256": "370d3c04ffe55cb21311607833de5311afde8a15e443093abf43425bb44eb393",
+      "sha256": "21b4c97a596fecd7ec5dca7788ded488827ef71c0aee3a041f89bd19d0eede00",
+      "descriptor": {
+        "version": "closed-loop-test-ir-operations/1",
+        "revision": "2026-09-16.integrity.1",
+        "rules": [
+          "named-port data is never unwrapped by member name",
+          "canonical transport wrappers are resolved only at their declared binding boundary",
+          "only registered assertion outputs determine results",
+          "first violated assertion is terminal and cannot be masked by result selection",
+          "literal types, closed options and selector grammar validate before execution",
+          "exact approximate tolerances are explicit, nonnegative and alias-consistent",
+          "parsers preserve the selected complete data and fail closed",
+          "CSV Unicode scalar separators, final empty records and post-quote state are explicit"
+        ]
+      }
+    },
+    {
+      "constant": "JSON_SELECTOR_REGISTRY_SHA256",
+      "previousSha256": "546daaa22cccdbbdb10ba55da859b21b09c852781f42726cd5fb4f8356cd1ee5",
+      "sha256": "dcaae48728eedb33c284b219f258e0fdd09f1b6e645ccb9ce649d0a07373eff9",
+      "descriptor": {
+        "version": "closed-loop-json-selector/1",
+        "revision": "2026-09-16.integrity.1",
+        "rules": [
+          "nonnegative safe-integer indexes",
+          "single-quote and backslash bracket-name escapes",
+          "wildcards preserve parser-recorded document order",
+          "unsupported syntax fails ingestion"
+        ]
+      }
+    },
+    {
+      "constant": "XML_SELECTOR_REGISTRY_SHA256",
+      "previousSha256": "83077fa4cfae3a215852e01728cde32f943c46ae7ba4bc5e845b2347b4a0a903",
+      "sha256": "29c6c2698d789f185619a6e1a3493982f1ac96f4d5416c7e3221f9c63c5c5c79",
+      "descriptor": {
+        "version": "closed-loop-xml-selector/1",
+        "revision": "2026-09-16.integrity.1",
+        "rules": [
+          "absolute child paths with positive safe-integer positions",
+          "attributes are own literal names",
+          "text extraction traverses ordered mixed content",
+          "only nodes produced by the restricted XML parser are selectable",
+          "XML 1.0 legal characters, document structure, entities, quotes and comments are checked"
+        ]
+      }
+    },
+    {
+      "constant": "REGEX_REGISTRY_SHA256",
+      "previousSha256": "dd4585d69d80059a7b284ef1307e2782ab5de81439b3ce0da31aa634de6ab2b8",
+      "sha256": "0533522402875ae03dc4cc859097424e2887d36045a2fd20db11b3feeaccce15",
+      "descriptor": {
+        "version": "closed-loop-regex/1",
+        "revision": "2026-09-16.integrity.1",
+        "rules": [
+          "escape-aware scanning distinguishes literals from forbidden backreferences",
+          "lookaround, named groups, legacy numeric and Unicode property escapes are rejected",
+          "group-aware nested unbounded quantification checks",
+          "pattern, flags, input bytes and worker time remain bounded"
+        ]
+      }
+    }
+  ]
+}
