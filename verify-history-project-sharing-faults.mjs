@@ -9,6 +9,9 @@ const originalSourceSha256=digest('project-store.js'),originalEngineSha256=diges
 // Keep a hard child deadline inside the aggregate's twenty-minute gate bound.
 const CHILD_TIMEOUT_MS=3*60*1000;
 for(const [suite,fault,oracle] of [
+ ['verify-history-project-references.mjs','repeat-import-compatibility','HISTORY_IMPORT_COMPATIBILITY_COST_ORACLE'],
+ ['verify-history-project-references.mjs','share-import-compatibility-inventory','HISTORY_IMPORT_COMPATIBILITY_INVENTORY_ORACLE'],
+ ['verify-history-project-references.mjs','retain-import-compatibility','HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE'],
  ['verify-history-view-cost.mjs','repeat-verified-project-hash','HISTORY_HASH_PASS_ORACLE'],
  ['verify-history-canonical-sharing.mjs','duplicate-canonical-content','HISTORY_CANONICAL_CAPACITY_ORACLE'],
  ['verify-history-canonical-sharing.mjs','repeat-import-shared-content','HISTORY_IMPORT_SHARED_CONTENT_ORACLE'],

@@ -228,15 +228,16 @@ for(const stage of [1]){
  const sequence=journey.slice(start,end)+(functionStart>=0?'\nawait verifyFinalBackupRoundTrip();':'');
  const bytes=Buffer.from('fixed exported backup bytes'),snapshot={file:{bytes,sha256:'verified-backup-digest'}},report={},phases=[];
  const project={job:{JOB_ID:'ROUNDTRIP'},projectData:{acceptedChanges:[{changeId:'accepted'}]},stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:'COMPLETE'}]))};
- let exported=0,imported=false,reads=0;
+ let exported=0,imported=false,reads=0,bounded=false;
  const workflow=Object.keys(project.stages).map(stage=>({stage:Number(stage),gate:{complete:true},action:{actionType:'COMPLETE'}}));
- const saved=async({backup=false,workflow:includeWorkflow=false,stages=[]}={})=>{if(backup)exported++;else{assert.equal(imported,true,'Restore observation must follow the import control');reads++;}if(includeWorkflow)assert.deepEqual(stages,workflow.map(row=>row.stage));return includeWorkflow?{project:structuredClone(project),workflow:structuredClone(workflow)}:structuredClone(project);};
- const browser={selectFiles:async(selector,files)=>{assert.equal(selector,'#import-file');assert.deepEqual(files[0].bytes,bytes,'BACKUP_INPUT_BYTES_ORACLE: restore must select the actual exported bytes');imported=true;}};
- await Function('saved','browser','snapshot','report','assert','schema','preserveReport','stage','sequence','return (async()=>{'+sequence+'})();')(saved,browser,snapshot,report,assert,{STAGE_COUNT:30},()=>phases.push(report.currentOperation?.phase),31,133);
+ const saved=async({backup=false,workflow:includeWorkflow=false,stages=[]}={})=>{if(backup){assert.equal(bounded,true,'FINAL_BACKUP_FIXTURE_BOUND_ORACLE: accumulated journey views must not become the final browser backup workload');exported++;}else{assert.equal(imported,true,'Restore observation must follow the import control');reads++;}if(includeWorkflow)assert.deepEqual(stages,workflow.map(row=>row.stage));return includeWorkflow?{project:structuredClone(project),workflow:structuredClone(workflow)}:structuredClone(project);};
+ const browser={readProject:async()=>structuredClone(project),selectFiles:async(selector,files)=>{assert.equal(selector,'#import-file');assert.deepEqual(files[0].bytes,bytes,'BACKUP_INPUT_BYTES_ORACLE: restore must select the actual exported bytes');imported=true;}};
+ const boundStage30BrowserRecovery=async current=>{assert.deepEqual(current,project,'Bounding the browser history must use the actual completed project, preserving every stage.');bounded=true;};
+ await Function('saved','browser','snapshot','report','assert','schema','preserveReport','stage','sequence','boundStage30BrowserRecovery','return (async()=>{'+sequence+'})();')(saved,browser,snapshot,report,assert,{STAGE_COUNT:30},()=>phases.push(report.currentOperation?.phase),31,133,boundStage30BrowserRecovery);
  assert.equal(exported,1,'FINAL_BACKUP_OBSERVATION_ORACLE: restored state must be read without exporting the complete history again');
  assert.equal(reads,1,'FINAL_BACKUP_OBSERVATION_ORACLE: verify a fresh post-import stored project');
  assert.deepEqual(report.backupRestore,{selectedSha256:snapshot.file.sha256,stagesPreserved:30,workflow});
- assert.deepEqual(phases,['FINAL_BACKUP_EXPORT','FINAL_BACKUP_IMPORT','FINAL_BACKUP_VERIFY'],'FINAL_BACKUP_PHASE_ORACLE: an interruption must identify the actual final operation');
+ assert.deepEqual(phases,['FINAL_BACKUP_FIXTURE','FINAL_BACKUP_EXPORT','FINAL_BACKUP_IMPORT','FINAL_BACKUP_VERIFY'],'FINAL_BACKUP_PHASE_ORACLE: an interruption must identify the actual final operation');
  cases.push({caseId:'FINAL-BACKUP-OBSERVATION',result:'PASS',actualBrowser:false,exports:exported,freshReads:reads,phases});
 }
 // The complete-export and backup controls share the same pending UI action.

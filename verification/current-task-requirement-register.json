@@ -122693,7 +122693,26 @@
           "sourceLocation": "operator section 5 DEF-9",
           "observableExpectedBehavior": "Operation latency is measured and reported; reproduced unnecessary computational/assembly work is removed at its owner."
         }
-      ]
+      ],
+      "currentRepair": {
+        "classification": "production; associated browser-fixture accumulation is verifier-owned",
+        "invariant": "Restore every retained checkpoint and its exact files without repeating deterministic compatibility validation for identical verified project and file inventories within one immutable import. Revalidate each distinct inventory, each new import, and each ordinary History read.",
+        "responsibleAuthority": "project-store.js: importPackage / decodeCheckpoint / assertRecoveryCompatibility",
+        "dependencyClosure": [
+          "Complete backup imports in the window and storage worker",
+          "Canonical project and file-inventory identity, snapshot hashes, view and draft bindings",
+          "Fresh imports, repeat imports, failed imports, current-session History / Undo / Redo",
+          "Browser final backup fixture after completed-stage presentation; all 30 restored stage gates remain required"
+        ],
+        "requiredProof": [
+          "verify-history-project-references.mjs:HISTORY-IMPORT-COMPATIBILITY-COST / FRESHNESS / INVENTORIES",
+          "verify-history-project-sharing-faults.mjs: repeat, cross-inventory and retained-import projection faults",
+          "verify-operator-action-lifecycle.mjs: FINAL-BACKUP-OBSERVATION",
+          "verify-io-boundary-faults.mjs: VER-MUT-ACCUMULATED-FINAL-BACKUP",
+          "Existing integrity, recovery, persistence, lifecycle and browser journeys at the published revision"
+        ],
+        "status": "UNVERIFIED"
+      }
     },
     {
       "requirementId": "TASK-A-001",
@@ -123189,7 +123208,26 @@
       "applicableOperations": "ALL_APPLICABLE",
       "status": "UNVERIFIED",
       "executedEvidence": [],
-      "mandatory": true
+      "mandatory": true,
+      "currentRepair": {
+        "classification": "production; associated browser-fixture accumulation is verifier-owned",
+        "invariant": "Restore every retained checkpoint and its exact files without repeating deterministic compatibility validation for identical verified project and file inventories within one immutable import. Revalidate each distinct inventory, each new import, and each ordinary History read.",
+        "responsibleAuthority": "project-store.js: importPackage / decodeCheckpoint / assertRecoveryCompatibility",
+        "dependencyClosure": [
+          "Complete backup imports in the window and storage worker",
+          "Canonical project and file-inventory identity, snapshot hashes, view and draft bindings",
+          "Fresh imports, repeat imports, failed imports, current-session History / Undo / Redo",
+          "Browser final backup fixture after completed-stage presentation; all 30 restored stage gates remain required"
+        ],
+        "requiredProof": [
+          "verify-history-project-references.mjs:HISTORY-IMPORT-COMPATIBILITY-COST / FRESHNESS / INVENTORIES",
+          "verify-history-project-sharing-faults.mjs: repeat, cross-inventory and retained-import projection faults",
+          "verify-operator-action-lifecycle.mjs: FINAL-BACKUP-OBSERVATION",
+          "verify-io-boundary-faults.mjs: VER-MUT-ACCUMULATED-FINAL-BACKUP",
+          "Existing integrity, recovery, persistence, lifecycle and browser journeys at the published revision"
+        ],
+        "status": "UNVERIFIED"
+      }
     },
     {
       "requirementId": "TASK-C-007",
@@ -123257,7 +123295,26 @@
       "applicableOperations": "ALL_APPLICABLE",
       "status": "UNVERIFIED",
       "executedEvidence": [],
-      "mandatory": true
+      "mandatory": true,
+      "currentRepair": {
+        "classification": "production; associated browser-fixture accumulation is verifier-owned",
+        "invariant": "Restore every retained checkpoint and its exact files without repeating deterministic compatibility validation for identical verified project and file inventories within one immutable import. Revalidate each distinct inventory, each new import, and each ordinary History read.",
+        "responsibleAuthority": "project-store.js: importPackage / decodeCheckpoint / assertRecoveryCompatibility",
+        "dependencyClosure": [
+          "Complete backup imports in the window and storage worker",
+          "Canonical project and file-inventory identity, snapshot hashes, view and draft bindings",
+          "Fresh imports, repeat imports, failed imports, current-session History / Undo / Redo",
+          "Browser final backup fixture after completed-stage presentation; all 30 restored stage gates remain required"
+        ],
+        "requiredProof": [
+          "verify-history-project-references.mjs:HISTORY-IMPORT-COMPATIBILITY-COST / FRESHNESS / INVENTORIES",
+          "verify-history-project-sharing-faults.mjs: repeat, cross-inventory and retained-import projection faults",
+          "verify-operator-action-lifecycle.mjs: FINAL-BACKUP-OBSERVATION",
+          "verify-io-boundary-faults.mjs: VER-MUT-ACCUMULATED-FINAL-BACKUP",
+          "Existing integrity, recovery, persistence, lifecycle and browser journeys at the published revision"
+        ],
+        "status": "UNVERIFIED"
+      }
     },
     {
       "requirementId": "TASK-C-011",

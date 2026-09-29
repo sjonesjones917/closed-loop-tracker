@@ -6,6 +6,9 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 const mode=process.argv.find(x=>x.startsWith('--fault='))?.slice(8),source=fs.readFileSync('project-store.js','utf8');
 const faults={
+ 'repeat-import-compatibility':{id:'REPEAT_IMPORT_COMPATIBILITY',file:'project-store.js',before:'if(!validatedProjections?.has(projectionKey)){',after:'if(true){'},
+ 'share-import-compatibility-inventory':{id:'SHARE_IMPORT_COMPATIBILITY_INVENTORY',file:'project-store.js',before:'JSON.stringify([body.projectSha256,historyArtifactsSha256(artifacts)])',after:'JSON.stringify([body.projectSha256])'},
+ 'retain-import-compatibility':{id:'RETAIN_IMPORT_COMPATIBILITY',file:'project-store.js',before:'validatedProjections=new Set();',after:'validatedProjections=(globalThis.__retainedImportProjections ||= new Set());'},
  'repeat-import-root-digest':{id:'REPEAT_IMPORT_ROOT_DIGEST',file:'project-store.js',before:'({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));',after:'verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);'},
  'repeat-import-byte-hash':{id:'REPEAT_IMPORT_BYTE_HASH',file:'project-store.js',before:'if(!verifiedByteDigests)return hash.sha256Bytes(blob);',after:'if(true)return hash.sha256Bytes(blob);'},
  'trust-import-declared-byte-hash':{id:'TRUST_IMPORT_DECLARED_BYTE_HASH',file:'project-store.js',before:'const digest=await historyBlobSha256(artifactBlob,verifiedByteDigests);',after:'const digest=a.sha256;verifiedByteDigests.set(artifactBlob,Promise.resolve(digest));'},
@@ -21,12 +24,15 @@ const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifie
 const make=()=>{
  assert.equal(source.split(validationAnchor).length-1,1);
  const observed=source.replace(validationAnchor,"globalThis.__verifiedHistoryRoots?.push({checkpointId:entry.id,snapshotSha256:entry.sha256});globalThis.__historyDigestWatch={data:project.projectData,visits:0};"+validationAnchor+"globalThis.__historyDigestReads?.push({checkpointId:entry.id,visits:globalThis.__historyDigestWatch.visits});delete globalThis.__historyDigestWatch;");
- const residencyAnchor='checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests);if(entry.id===incoming.activeId)';
+ const residencyAnchor='checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);if(entry.id===incoming.activeId)';
  assert.equal(observed.split(residencyAnchor).length-1,1);
- const measured=observed.replace(residencyAnchor,'checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests);globalThis.__historyRootResidency?.push([...validatedRoots.values()].filter(root=>root?.project).length);if(entry.id===incoming.activeId)');
+ const measured=observed.replace(residencyAnchor,'checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);globalThis.__historyRootResidency?.push([...validatedRoots.values()].filter(root=>root?.project).length);if(entry.id===incoming.activeId)');
  const inputAnchor='fileContents.delete(a);';
  assert.equal(measured.split(inputAnchor).length-1,1);
- const withBytes=measured.replace(inputAnchor,inputAnchor+'globalThis.__archiveImportByteObjects?.push(artifactBlob);');
+ const compatibilityAnchor='withVerifiedRecoveryCustody(artifacts,()=>assertRecoveryCompatibility(body.project));';
+ assert.equal(measured.split(compatibilityAnchor).length-1,1);
+ const withCompatibility=measured.replace(compatibilityAnchor,'globalThis.__historyCompatibilityChecks?.push({projectSha256:body.projectSha256,artifactManifestSha256:historyArtifactsSha256(artifacts)});'+compatibilityAnchor);
+ const withBytes=withCompatibility.replace(inputAnchor,inputAnchor+'globalThis.__archiveImportByteObjects?.push(artifactBlob);');
  const hashSource=fs.readFileSync('hash.js','utf8'),hashAnchor='async function sha256Bytes(bytes){';
  assert.equal(hashSource.split(hashAnchor).length-1,1);
  const traversalAnchor='const frame=stack.at(-1),input=frame.value,path=frame.path;';assert.equal(hashSource.split(traversalAnchor).length-1,1);
@@ -140,8 +146,14 @@ const exported=await r.store.exportPackage(p.job.JOB_ID),archive=JSON.parse(gunz
 assert.ok(Array.isArray(archive.artifacts));archive.artifacts.reverse();delete archive.packageSha256;
 const reordered={...archive,packageSha256:r.runtime.closedLoopHash.sha256Value(r.copy(archive))};
 const reorderedBlob=new Blob([gzipSync(Buffer.from(JSON.stringify(reordered)))],{type:'application/gzip'});
-const fresh=make();fresh.runtime.__verifiedHistoryRoots=[];fresh.runtime.__historyBlobHashes=[];fresh.runtime.__archiveImportByteObjects=[];
+const fresh=make();fresh.runtime.__verifiedHistoryRoots=[];fresh.runtime.__historyBlobHashes=[];fresh.runtime.__archiveImportByteObjects=[];fresh.runtime.__historyCompatibilityChecks=[];
 const imported=await fresh.store.importPackage(reorderedBlob);
+const compatibilityChecks=Array.from(fresh.runtime.__historyCompatibilityChecks),compatibilityStates=new Set(compatibilityChecks.map(row=>JSON.stringify(row)));
+console.error(JSON.stringify({caseId:'HISTORY-IMPORT-COMPATIBILITY-COST',checks:compatibilityChecks.length,distinctStates:compatibilityStates.size,retainedViews:archive.recovery.entries.length}));
+assert.ok(compatibilityChecks.length>0);
+assert.equal(compatibilityChecks.length,compatibilityStates.size,'HISTORY_IMPORT_COMPATIBILITY_COST_ORACLE: importing saved views of the same verified project and exact file inventory must reuse its completed compatibility validation; each view still requires its own byte, identity and file-selection checks');
+delete fresh.runtime.__historyCompatibilityChecks;
+emit('HISTORY-IMPORT-COMPATIBILITY-COST',{checks:compatibilityChecks.length,distinctStates:compatibilityStates.size,retainedViews:archive.recovery.entries.length});
 const importByteObjects=Array.from(fresh.runtime.__archiveImportByteObjects),importHashCalls=Array.from(fresh.runtime.__historyBlobHashes),perObjectHashes=importByteObjects.map(blob=>importHashCalls.filter(value=>value===blob).length);
 assert.ok(importByteObjects.length>0);
 console.error(JSON.stringify({caseId:'HISTORY-IMPORT-VERIFIED-BYTE-COST',archiveObjects:importByteObjects.length,actualHashCalls:perObjectHashes.reduce((a,b)=>a+b,0),maxHashesPerObject:Math.max(...perObjectHashes)}));
@@ -177,6 +189,31 @@ emit('HISTORY-IMPORT-ROOT-VALIDATION-COST',{validations:rootObservations.length,
 assert.deepEqual(r.copy(imported.projectData),p.projectData);
 for(let i=0;i<f.children.length;i++)assert.deepEqual(r.copy(await fresh.store.readHistoryView(p.job.JOB_ID,f.children[i])),f.views[i]);
 emit('HISTORY-REFERENCE-REORDERED-BACKUP-CLOSURE',{exportedBytes:exported.size,exportedSha256:sha(Buffer.from(await exported.arrayBuffer())),importedBytes:reorderedBlob.size,importedSha256:sha(Buffer.from(await reorderedBlob.arrayBuffer())),freshStore:true});
+// A later import and an ordinary History read must establish their own proof.
+fresh.runtime.__historyCompatibilityChecks=[];
+await fresh.store.importPackage(reorderedBlob);
+assert.equal(fresh.runtime.__historyCompatibilityChecks.length,compatibilityStates.size,'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: completed projection receipts must not survive into another import');
+fresh.runtime.__historyCompatibilityChecks=[];
+for(const child of f.children)await fresh.store.readHistoryView(p.job.JOB_ID,child);
+assert.equal(fresh.runtime.__historyCompatibilityChecks.length,f.children.length,'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: ordinary History reads must validate the current stored bytes anew');
+delete fresh.runtime.__historyCompatibilityChecks;
+emit('HISTORY-IMPORT-COMPATIBILITY-FRESHNESS',{reimportChecks:compatibilityStates.size,independentHistoryChecks:f.children.length});
+// A canonical version can retain different file inventories in different
+// views. Construct both through the real store and preserve each exact view.
+const inventory=await fixture(make(),'HISTORY-COMPATIBILITY-INVENTORIES'),inventoryStore=inventory.r.store;
+const selectedBytes=new Blob(['Exact retained file selection.']);
+await inventoryStore.putArtifact({artifactId:'INVENTORY-SELECTION',jobId:inventory.p.job.JOB_ID,filename:'selected.txt',mediaType:'text/plain',blob:selectedBytes});
+const selectedView=inventory.r.copy({activeView:'Workflow',activeStage:1,scrollY:15});
+const selectedId=await inventoryStore.saveCheckpoint(inventory.p.job.JOB_ID,{expectedProjectRevision:inventory.p.revision,view:selectedView});
+const inventoryBackup=await inventoryStore.exportPackage(inventory.p.job.JOB_ID),inventoryReader=make();inventoryReader.runtime.__historyCompatibilityChecks=[];
+const inventoryProject=await inventoryReader.store.importPackage(inventoryBackup),inventoryChecks=Array.from(inventoryReader.runtime.__historyCompatibilityChecks);
+assert.equal(new Set(inventoryChecks.map(row=>row.projectSha256)).size,1);
+assert.equal(inventoryChecks.length,2,'HISTORY_IMPORT_COMPATIBILITY_INVENTORY_ORACLE: the same project with two exact saved file inventories requires two independently completed validations');
+assert.equal(new Set(inventoryChecks.map(row=>row.artifactManifestSha256)).size,2,'HISTORY_IMPORT_COMPATIBILITY_INVENTORY_ORACLE: each distinct verified file inventory must bind its own projection receipt');
+assert.deepEqual(inventory.r.copy(await inventoryReader.store.readHistoryView(inventoryProject.job.JOB_ID,selectedId)),selectedView);
+const selectedFile=await inventoryReader.store.getArtifact('INVENTORY-SELECTION');assert.equal(await selectedFile.blob.text(),await selectedBytes.text());
+assert.deepEqual(inventory.r.copy(await inventoryReader.store.readHistoryView(inventoryProject.job.JOB_ID,inventory.children[0])),inventory.views[0]);
+emit('HISTORY-IMPORT-COMPATIBILITY-INVENTORIES',{projects:1,distinctInventories:2,checks:inventoryChecks.length,exactFileAndViewsPreserved:true});
 // Dependencies may be encountered before their full roots. Reordering the
 // complete manifest must preserve every version and must not revalidate roots.
 archive.recovery.entries.reverse();delete archive.packageSha256;

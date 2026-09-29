@@ -44,7 +44,7 @@ async function inspectPresentation(driver,caseId,instruction){
   const result=assertWorkflowPresentation(observed,{caseId,instruction});report.presentationCases.push(result);if(driver===browser)await captureOperationLatency(driver);return result;
 }
 async function saved({backup=false,workflow=false,stages=[stage]}={}){await captureOperationLatency();if(!backup)return workflow?browser.readWorkflow(stages):browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
-async function boundStage30BrowserRecovery(project){
+async function boundStage30BrowserRecovery(project,purpose='PRE_DELIVERY'){
   const jobId=String(project?.job?.JOB_ID||''),revision=Number(project?.revision),projectSha256=String(project?.projectSha256||'');
   assert.ok(jobId&&Number.isInteger(revision)&&/^[a-f0-9]{64}$/.test(projectSha256),'Bounded Stage 30 browser fixture requires the exact current stored project identity.');
   const before=await browser.evaluate(`closedLoopProjectStore.historyList(${JSON.stringify(jobId)})`);
@@ -61,9 +61,18 @@ async function boundStage30BrowserRecovery(project){
   assert.equal(observed.revision,revision,'Bounded Stage 30 browser fixture changed the canonical project revision.');
   assert.equal(observed.projectSha256,projectSha256,'Bounded Stage 30 browser fixture changed canonical project bytes.');
   assert.equal(observed.historyEntries,1,'Bounded Stage 30 browser fixture must retain exactly one fresh recovery root.');
-  report.stage30BrowserFixture={basis:'CURRENT_CANONICAL_PROJECT_FROM_PRECEDING_REAL_BROWSER_CONTROLS',beforeHistoryEntries:before.entries.length,afterHistoryEntries:observed.historyEntries,compressedProjectBytes:observed.compressedProjectBytes,retainedFileBytes:observed.retainedFileBytes,projectRevision:revision,projectSha256};preserveReport();
+  const fixture={purpose,basis:'CURRENT_CANONICAL_PROJECT_FROM_PRECEDING_REAL_BROWSER_CONTROLS',beforeHistoryEntries:before.entries.length,afterHistoryEntries:observed.historyEntries,compressedProjectBytes:observed.compressedProjectBytes,retainedFileBytes:observed.retainedFileBytes,projectRevision:revision,projectSha256};
+  (report.boundedBrowserHistoryFixtures??=[]).push(fixture);
+  if(purpose==='PRE_DELIVERY')report.stage30BrowserFixture=fixture;
+  preserveReport();return fixture;
 }
 async function verifyFinalBackupRoundTrip(){
+  report.currentOperation={phase:'FINAL_BACKUP_FIXTURE',stage,sequence};preserveReport();
+  // Completed-stage presentation adds saved views after the pre-delivery
+  // bound. Keep this real-file control check independent of that accumulated
+  // History workload. All canonical stages and actual files remain unchanged;
+  // the existing non-browser recovery gates prove larger retained histories.
+  report.finalBackupBrowserFixture=await boundStage30BrowserRecovery(await browser.readProject(),'FINAL_BACKUP');
   report.currentOperation={phase:'FINAL_BACKUP_EXPORT',stage,sequence};preserveReport();
   const before=await saved({backup:true}),backup=snapshot.file;
   report.currentOperation={phase:'FINAL_BACKUP_IMPORT',stage,sequence};preserveReport();
