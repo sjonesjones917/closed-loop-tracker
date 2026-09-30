@@ -5,6 +5,9 @@ import assert from 'node:assert/strict';
 import {executeGate,CREATION_MATRIX_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 
 const cases=[
+ {id:'primary-capability-test-identifier',file:'app-core.js',env:'APP_SOURCE',suite:'verify-verification-routing.mjs',oracle:'CAPABILITY_GUIDANCE_ORACLE',before:'${esc(labels.get(test.testId))}',after:'${esc(test.testId)}'},
+ {id:'primary-capability-review-identifier',file:'app-core.js',env:'APP_SOURCE',suite:'verify-verification-routing.mjs',oracle:'CAPABILITY_REVIEW_ORACLE',before:'${esc(labels.get(draft.report.request.testId))}',after:'${esc(draft.report.request.testId)}'},
+ {id:'primary-capability-evidence-open',file:'app-core.js',env:'APP_SOURCE',suite:'verify-verification-routing.mjs',oracle:'CAPABILITY_DISCLOSURE_ORACLE',before:"details('Readiness evidence and action boundaries',draft.report)",after:"details('Readiness evidence and action boundaries',draft.report,true)"},
  {id:'duplicated-instruction-preview',file:'app-core.js',env:'APP_SOURCE',suite:'verify-file-first-operator.mjs',oracle:'INSTRUCTION_ONCE_ORACLE',before:'${esc(prompt.slice(0,DATA_VIEW_LIMITS.promptCharacters))}',after:'${esc(prompt.slice(0,DATA_VIEW_LIMITS.promptCharacters))}\n${esc(prompt.slice(0,DATA_VIEW_LIMITS.promptCharacters))}'},
  {id:'instruction-repeated-outside-preview',file:'app-core.js',env:'APP_SOURCE',suite:'verify-file-first-operator.mjs',oracle:'INSTRUCTION_ONCE_ORACLE',before:'<div class="prompt-toolbar">',after:'<pre>${esc(prompt.slice(0,DATA_VIEW_LIMITS.promptCharacters))}</pre><div class="prompt-toolbar">'},
  {id:'repeated-stage-package-control',file:'app-core.js',env:'APP_SOURCE',suite:'verify-primary-guidance.mjs',oracle:'STAGE_HANDOFF_SINGLE_CONTROL_ORACLE',before:'${stagePurposeMarkup(n)}',after:'${stagePurposeMarkup(n)}<button id="download-execution-package" type="button">Download verification package</button>'},

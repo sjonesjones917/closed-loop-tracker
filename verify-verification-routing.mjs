@@ -104,12 +104,22 @@ const f=t.routingFixture('EXTERNAL_SYSTEM');
 const initial=await r.store.writeProject(f.p,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));
 bindAcceptanceUi(r,initial,null);
 const controls=new Map();Object.assign(t,{$:selector=>controls.get(selector)||null,recordValue:e.recordValue,downloads:[],downloadBlob:(blob,filename)=>t.downloads.push({blob,filename}),esc:value=>String(value).replace(/[<>&"]/g,'_'),details:(_label,value)=>JSON.stringify(value),stagePlanItems:(stage,operation)=>e.stageTestExecutionPlan(t.current,{stage,operation}).items,reportActionFailure:error=>{throw error;}});
-const source=fs.readFileSync('app-core.js','utf8'),extract=(a,b)=>{const start=source.indexOf(a),end=source.indexOf(b,start+a.length);assert(start>=0&&end>start);return source.slice(start,end);};
-vm.runInContext(extract('function logicalFilePath(','async function registerStageFiles(')+extract('let capabilityEvidenceDraft=','function testExecutionGuidanceMarkup(')+extract('function nativeStage22Tests(','async function runNativeDeferredTest('),t);
+const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),extract=(a,b)=>{const start=source.indexOf(a),end=source.indexOf(b,start+a.length);assert(start>=0&&end>start);return source.slice(start,end);};
+vm.runInContext('let detailSequence=0;const detailViews=new Map();'+extract('function details(','function noticeText(')+extract('function logicalFilePath(','async function registerStageFiles(')+extract('let capabilityEvidenceDraft=','function testExecutionGuidanceMarkup(')+extract('function nativeStage22Tests(','async function runNativeDeferredTest('),t);
+await check('Readiness selection keeps internal identities in bindings and advanced details',()=>{
+ const html=t.externalCapabilityMarkup(e.testExecutionPlan(t.current).items),options=[...html.matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)];
+ assert.equal(options.length,1);assert.equal(options[0][1],f.test.id,'The selected request must retain its exact canonical test binding.');
+ assert.ok(!options[0][2].includes(f.test.id)&&!options[0][2].includes(e.recordValue(f.test,'REQUIRED_CAPABILITY')),'CAPABILITY_GUIDANCE_ORACLE: primary selection must hide internal test and capability identifiers.');
+ assert.match(options[0][2],/Evidence needed/,'The operator must still see the readiness state.');
+});
 await check('Operator report upload, confirmation, and save survive a production storage reload',async()=>{
  controls.set('#capability-test',{value:f.test.id});t.downloadCapabilityRequest();const template=JSON.parse(await t.downloads[0].blob.text());assert.equal(template.request.testId,f.test.id);
  const report=t.completedReport(t.current,f.test),file=new Blob([JSON.stringify(report)],{type:'application/json'});Object.defineProperty(file,'name',{value:'readiness.json'});
- await t.selectCapabilityEvidence(file);assert.match(t.externalCapabilityMarkup(e.testExecutionPlan(t.current).items),/capability-confirm/);
+ await t.selectCapabilityEvidence(file);const html=t.externalCapabilityMarkup(e.testExecutionPlan(t.current).items);assert.match(html,/capability-confirm/);
+ const review=html.match(/<strong>(Review[^<]*)<\/strong>/)?.[1];assert.ok(review&&!review.includes(f.test.id),'CAPABILITY_REVIEW_ORACLE: the authorization heading must identify the external test without exposing its internal ID.');
+ assert.ok(!/<details\b[^>]*\bopen\b/.test(html),'CAPABILITY_DISCLOSURE_ORACLE: raw report and capability identifiers must start behind closed details.');
+ for(const value of [report.environment,report.action.target,report.request.purpose,report.action.expectedEffect,report.action.maximumCost,report.validUntil])assert.ok(html.includes(t.esc(value)),'Required authorization context must remain visible.');
+ assert.equal(vm.runInContext("[...detailViews.values()].find(row=>row.title==='Readiness evidence and action boundaries').value.request.testId",t),f.test.id,'Advanced evidence must retain the exact request identity.');
  await assert.rejects(()=>t.registerCapabilityEvidence(),/confirm/);
  controls.set('#capability-operator',{value:'UI_FIXTURE_OPERATOR'});controls.set('#capability-confirm',{checked:true});await t.registerCapabilityEvidence();
  const persisted=await r.store.readProject(t.current.job.JOB_ID);assert.equal(plan(persisted,f.test).capabilityReady,true);

@@ -28,10 +28,18 @@ for(const [width,height] of [[320,568],[1280,800]]){
    await browser.openUrl(fixture.url);
    if(mode==='EXTERNAL_SYSTEM'){
     assert.equal(await browser.exists('#download-capability-request'),true,'Blocked external tests must offer registration.');
+    const selector=await browser.evaluate(`Array.from(document.querySelector('#capability-test').options,option=>({value:option.value,text:option.textContent}))`);
+    assert.equal(selector.length,1);assert.equal(selector[0].value,fixture.testId,'The readiness selector must retain the exact test binding.');
+    assert.ok(!selector[0].text.includes(fixture.testId),'CAPABILITY_GUIDANCE_ORACLE: internal test IDs must not appear in the normal selector.');
+    assert.match(selector[0].text,/Evidence needed/);
     const [download]=await browser.download('#download-capability-request'),request=JSON.parse(download.bytes.toString());assert.equal(request.request.testId,fixture.testId);assert(Object.values(request.checks).every(check=>check.status==='UNKNOWN'));
     const completed=await browser.evaluate(`(async()=>{${completedReport.toString()}const p=await closedLoopProjectStore.readProject(${JSON.stringify(fixture.jobId)}),test=p.projectData.tests.find(row=>row.id===${JSON.stringify(fixture.testId)});return completedReport(p,test);})()`);
     await browser.selectFiles('#capability-evidence-file',[{filename:'readiness.json',bytes:Buffer.from(JSON.stringify(completed))}]);
     assert.equal(await browser.exists('#capability-confirm'),true,'Uploading the report must display an explicit authorization review.');
+    const review=await browser.evaluate(`(()=>{const section=document.querySelector('#external-capability-evidence');return {heading:section.querySelector('.notice strong')?.textContent,body:section.querySelector('.notice')?.textContent,openDetails:section.querySelectorAll('details[open]').length};})()`);
+    assert.ok(review.heading&&!review.heading.includes(fixture.testId),'CAPABILITY_REVIEW_ORACLE: review headings must keep internal IDs behind details.');
+    assert.equal(review.openDetails,0,'CAPABILITY_DISCLOSURE_ORACLE: the raw report must initially be collapsed.');
+    for(const value of [completed.environment,completed.action.target,completed.request.purpose,completed.action.expectedEffect,completed.action.maximumCost,completed.validUntil])assert.ok(review.body.includes(String(value)),'Authorization context must remain visible before confirmation.');
     assert.equal(await browser.evaluate(`document.querySelector('#capability-confirm').checked`),false,'Authorization cannot default to true.');
     await browser.fill('#capability-operator','SYNTHETIC_BROWSER_OPERATOR');await browser.click('#capability-confirm');await browser.click('#register-capability-evidence');
     await browser.reload();
