@@ -125,7 +125,7 @@ body{font-size:16px}
 .startup-status:not([hidden])~#app,.startup-status:not([hidden])~.operation-status,.startup-status:not([hidden])~#operation-error{visibility:hidden}
 #operation-error{font-size:16px;line-height:1.45;position:fixed;top:0;left:0;right:0;z-index:46;margin:0;padding:max(14px,env(safe-area-inset-top)) 16px 14px;max-height:45vh;overflow:auto;overscroll-behavior:contain;box-shadow:0 3px 12px rgba(21,24,23,.16)}
 #operation-error button{display:block;min-height:44px;margin-top:8px}
-.prompt-heading-row{display:flex;align-items:center;justify-content:space-between;gap:8px;scroll-margin-top:calc(var(--workflow-content-inset,0px) + 8px)}
+.prompt-heading-row{display:flex;align-items:center;justify-content:space-between;gap:8px;scroll-margin-top:var(--workflow-content-inset,0px)}
 .prompt-heading-row .section-title{margin-bottom:0}.prompt-heading-row button{flex:0 0 auto;min-height:44px}
 #prompt-heading,#proposal-heading,details.record-card>summary{scroll-margin-top:calc(var(--workflow-content-inset,0px) + 8px)}
 /* Keep one actionable summary visible throughout the selected workflow view.
