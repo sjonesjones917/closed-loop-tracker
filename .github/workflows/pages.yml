@@ -93,6 +93,31 @@ jobs:
             node --check "$file"
           done
 
+      - name: Verification routing and capability evidence
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          node verify-verification-routing.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node build-static-site.mjs --out _routing_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+          python3 -m http.server 4173 --directory _routing_site >/tmp/verification-routing-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs
+
+      - name: Preserve verification routing observations
+        if: always() && steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: verification-routing-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            verification-routing-browser-evidence/routing.json
+            verification-routing-browser-evidence/*/stage-*.png
+          if-no-files-found: warn
+
       - name: Startup and scrolling at phone and desktop sizes
         if: steps.reuse.outputs.reused != 'true'
         env:
