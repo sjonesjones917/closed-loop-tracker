@@ -12,6 +12,7 @@ for(const [width,height] of [[320,568],[1280,800]]){
   browser=await createOperatorBrowser({directory:path.join(directory,String(width)),width,height});
   const original=await browser.evaluate(`(async()=>{const p=await closedLoopProjectStore.createProject();const url=new URL(location.href);url.searchParams.delete('version');url.searchParams.set('project',p.job.JOB_ID);url.searchParams.set('view','Project');return {id:p.job.JOB_ID,revision:p.revision,sha256:p.projectSha256,url:url.href};})()`);
   await browser.openUrl(original.url);
+  await browser.click('[data-view="Project"]');
   const winner=await browser.evaluate(`(async()=>{const store=closedLoopProjectStore,p=await store.readProject(${JSON.stringify(original.id)});p.newerSavedWork='PRESERVE';const saved=await store.writeProject(p,{expectedProjectRevision:p.revision});return {sha256:saved.projectSha256,revision:saved.revision,activeId:(await store.historyList(p.job.JOB_ID)).activeId};})()`);
   const draft='Unsaved draft retained from the older tab';
   await browser.fill('#job-EXACT_USER_OBJECTIVE_VERBATIM',draft);

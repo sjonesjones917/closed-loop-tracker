@@ -111,7 +111,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: stale-view-${{ github.sha }}-${{ github.run_id }}
-          path: stale-view-browser-evidence/
+          path: |
+            stale-view-browser-evidence/stale-view.json
+            stale-view-browser-evidence/*/stage-*.png
           if-no-files-found: warn
 
       - name: Verification routing and capability evidence
