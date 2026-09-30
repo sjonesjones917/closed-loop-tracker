@@ -69,7 +69,7 @@ const UNCONFIRMED_ACTION_OUTCOME_MESSAGE='The action did not finish and the save
 function actionOutcomeNeedsVerification(error=null){return error?.existingProjectsUnchanged===false||(operatorActionInFlight&&((current?.job?.JOB_ID||null)!==operatorActionInFlight.jobId||(current?.projectSha256||null)!==operatorActionInFlight.projectSha256));}
 function addNoticeDismiss(report){
  if(report?.id!=='operation-error'||typeof document.createElement!=='function')return;
- const button=document.createElement('button');button.type='button';button.textContent='Dismiss message';button.onclick=()=>{report.hidden=true;actionFailureNotice=null;scheduleWorkflowActionInset();};report.append(button);scheduleWorkflowActionInset();
+ const button=document.createElement('button');button.type='button';button.textContent='Dismiss message';button.onclick=()=>{report.hidden=true;actionFailureNotice=null;paintOperationStatus();scheduleWorkflowActionInset();};report.append(button);paintOperationStatus();scheduleWorkflowActionInset();
 }
 function reportActionFailure(error){
  if(error?.code==='MUTATION_REVIEW_SHOWN')return;
@@ -109,7 +109,7 @@ function paintOperationStatus(){
   const status=$('#app-operation-status'),text=$('#operation-label');
   const storage=[...storageActivities.values()].find(entry=>entry.visible);
   const label=operatorActionInFlight?(operatorActionInFlight.visible?operatorActionInFlight.label:null):historyRestoreController?(historyRestoreVisible?'Restoring project and verifying saved files…':null):storage?.label;
-  if(status)status.hidden=!label||$('#app-startup-status')?.hidden===false;
+  if(status)status.hidden=!label||$('#app-startup-status')?.hidden===false||$('#operation-error')?.hidden===false;
   if(text&&label)text.textContent=label;
 }
 function paintOperatorAction(){
