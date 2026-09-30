@@ -571,14 +571,39 @@ async function historyList(jobId){
   const state=await metaGet(historyKey(jobId));
   return state?{...state,undoId:historyUndoId(state),files:undefined,limits:HISTORY_LIMITS}:{schema:HISTORY_SCHEMA,jobId:String(jobId),entries:[],sessions:{},activeId:null,generation:0,redo:[],limits:HISTORY_LIMITS};
 }
-async function saveCheckpoint(jobId,{expectedProjectRevision,view=null,label='Saved view',sessionId=null,operationId=null}={}){
+async function saveCheckpoint(jobId,{expectedProjectRevision,expectedStateSha256=null,view=null,label='Saved view',sessionId=null,operationId=null}={}){
   // Scroll/draft checkpoints use the existing transaction owner off the UI
   // thread; only the small view and resulting checkpoint identity cross it.
-  if(useStoreWorker())return requestStoreWorker('SAVE_CHECKPOINT',[jobId,{expectedProjectRevision,view,label,sessionId}]);
+  if(useStoreWorker())return requestStoreWorker('SAVE_CHECKPOINT',[jobId,{expectedProjectRevision,expectedStateSha256,view,label,sessionId}]);
   const project=await readProject(jobId);if(!project)throw storageError('The project is unavailable.','HISTORY_PROJECT_MISSING');
-  if(expectedProjectRevision!==undefined&&Number(project.revision)!==Number(expectedProjectRevision))throw storageError('Project changed before its view could be saved.','STALE_PROJECT_REVISION');
-  const prepared=await prepareHistoryCommit(project,project,{label,view,sessionId,verifiedRead:{project,digest:project.projectSha256}}),tx=await openTransaction([PROJECTS,META],'readwrite');
-  try{const row=await projectRowWithOperations(tx,jobId);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);recordWorkerCommit(tx,operationId,project,project.projectSha256,prepared.state.activeId);await complete(tx);return prepared.state.activeId;}catch(error){try{tx.abort();}catch{}throw error;}
+  let checkpointProject=project,checkpointDigest=project.projectSha256,prepared,checkpointId;
+  if((expectedProjectRevision!==undefined&&Number(project.revision)!==Number(expectedProjectRevision))||(expectedStateSha256&&project.projectSha256!==expectedStateSha256)){
+    // A stale tab may preserve its unsubmitted view against its exact retained
+    // source. This does not activate that source or overwrite newer project data.
+    const state=await metaGet(historyKey(jobId)),source=expectedStateSha256&&state?.entries.findLast(entry=>entry.projectSha256===expectedStateSha256);
+    if(!view||!source)throw storageError('Project changed before its view could be saved.','STALE_PROJECT_REVISION');
+    const saved=await readRetainedCheckpoint(jobId,source.id,state);
+    if(Number(saved.project.revision)!==Number(expectedProjectRevision))throw storageError('The draft does not identify its original project revision.','HISTORY_VERSION_MISMATCH');
+    const files=[...saved.artifacts],byId=new Map(files.map(row=>[row.artifactId,row]));
+    for(const selection of Object.values(view.fileSelections||{}))for(const file of selection.files||[]){
+      if(byId.has(file.artifactId))continue;
+      const row=await getArtifact(file.artifactId);
+      if(!row||row.jobId!==String(jobId))throw storageError('A departing draft file is unavailable.','HISTORY_FILE_INTEGRITY_FAILED');
+      files.push(row);byId.set(row.artifactId,row);
+    }
+    checkpointProject=saved.project;checkpointDigest=saved.projectSha256;
+    prepared=await prepareHistoryCommit(saved.project,saved.project,{label,view,artifactRows:files,baseState:{...state,activeId:source.id,activeProjectSha256:saved.projectSha256,activeViewOverride:null},verifiedRead:{project:saved.project,digest:saved.projectSha256}});
+    checkpointId=prepared.state.activeId;
+    // Only append recovery contents. Selection, revision, Undo/Redo, sessions,
+    // transfer receipts and the active view remain owned by the newer version.
+    const appended=prepared.state;
+    prepared.state={...state,entries:appended.entries,files:appended.files,compressedProjectBytes:appended.compressedProjectBytes,retainedFileBytes:appended.retainedFileBytes,generation:appended.generation};
+  }else{
+    prepared=await prepareHistoryCommit(project,project,{label,view,sessionId,verifiedRead:{project,digest:project.projectSha256}});
+    checkpointId=prepared.state.activeId;
+  }
+  const tx=await openTransaction([PROJECTS,META],'readwrite');
+  try{const row=await projectRowWithOperations(tx,jobId);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);recordWorkerCommit(tx,operationId,checkpointProject,checkpointDigest,checkpointId);await complete(tx);return checkpointId;}catch(error){try{tx.abort();}catch{}throw error;}
 }
 async function beginHistorySession(sessionId){
   if(!sessionId)throw new Error('Application session identity is required.');

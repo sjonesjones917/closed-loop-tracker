@@ -700,14 +700,15 @@ function paintHistory(){
 async function captureCurrentView(){
  if(!current||!projectStore?.saveCheckpoint||restoringHistory)return;
  const snapshot={jobId:current.job.JOB_ID,revision:current.revision,view:captureView(),entryId:displayedHistoryEntryId},last=pendingViewCaptures.at(-1);
- if(last&&last.jobId===snapshot.jobId&&last.revision===snapshot.revision&&last.entryId===snapshot.entryId)pendingViewCaptures[pendingViewCaptures.length-1]=snapshot;else pendingViewCaptures.push(snapshot);
+ snapshot.projectSha256=current.projectSha256;
+ if(last&&last.jobId===snapshot.jobId&&last.revision===snapshot.revision&&last.projectSha256===snapshot.projectSha256&&last.entryId===snapshot.entryId)pendingViewCaptures[pendingViewCaptures.length-1]=snapshot;else pendingViewCaptures.push(snapshot);
  if(capturingViewPromise)return capturingViewPromise;
  const owner=operatorActionInFlight;
  const capture=withStorageActivity('Saving draft and view',async()=>{
   while(pendingViewCaptures.length){
-   const {jobId,revision,view,entryId}=pendingViewCaptures.shift(),signature=globalThis.closedLoopHash.sha256Value({jobId,revision,entryId:entryId||null,view});if(signature===savedViewSignature)continue;
-   const checkpointId=await projectStore.saveCheckpoint(jobId,{expectedProjectRevision:revision,view,label:'Saved view',sessionId:APPLICATION_SESSION_ID});
-   if(current.job.JOB_ID!==jobId||current.revision!==revision)continue;
+   const {jobId,revision,projectSha256,view,entryId}=pendingViewCaptures.shift(),signature=globalThis.closedLoopHash.sha256Value({jobId,revision,projectSha256:projectSha256||null,entryId:entryId||null,view});if(signature===savedViewSignature)continue;
+   const checkpointId=await projectStore.saveCheckpoint(jobId,{expectedProjectRevision:revision,expectedStateSha256:projectSha256,view,label:'Saved view',sessionId:APPLICATION_SESSION_ID});
+   if(current.job.JOB_ID!==jobId||current.revision!==revision||current.projectSha256!==projectSha256)continue;
    if(displayedBrowserEntry()?.entryId===entryId)writeBrowserEntry(checkpointId,view,{replace:true});
    savedDraftView=view;savedViewSignature=signature;await refreshHistory();
   }

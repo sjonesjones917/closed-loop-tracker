@@ -9,7 +9,7 @@ const hash=globalThis.closedLoopHash;
 export const manifestName='closed-loop-deployment-manifest.json';
 export const runtimePaths=['index.html','workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','TEST_PROJECT.json','.nojekyll'];
 export const fullTestSteps=[
-  'Verified artifact reuse checks','Syntax','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
+  'Verified artifact reuse checks','Syntax','Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
   'Acceptance viewport regression and targeted layout fault','Deployment manifest, build identity, and reproducibility',
   'Physical iPhone release-tag governance','Schema, ownership, and single-architecture proof',
   'Complete 30-stage canonical data-route closure','Migration and v3 contracts',

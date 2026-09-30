@@ -93,6 +93,27 @@ jobs:
             node --check "$file"
           done
 
+      - name: Stale project navigation and draft preservation
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-stale-view-navigation.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node build-static-site.mjs --out _stale_view_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+          python3 -m http.server 4173 --directory _stale_view_site >/tmp/stale-view-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 5m node verify-stale-view-browser.mjs
+
+      - name: Preserve stale project navigation observations
+        if: always() && steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stale-view-${{ github.sha }}-${{ github.run_id }}
+          path: stale-view-browser-evidence/
+          if-no-files-found: warn
+
       - name: Verification routing and capability evidence
         if: steps.reuse.outputs.reused != 'true'
         env:
@@ -323,6 +344,9 @@ jobs:
             done
           }
           BROWSER_VERIFY_RESULT=0
+          # Exercise lifecycle and recovery controls before the long journey.
+          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
@@ -330,8 +354,6 @@ jobs:
           # deadline cut off final proof. Keep a finite budget with headroom.
           run_browser_verifier verify-complete-operator-journey.mjs 120m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
           test "$BROWSER_VERIFY_RESULT" = 0
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
