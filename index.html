@@ -115,13 +115,19 @@ body{font-size:16px}
 @media(max-width:420px){.app .stage-picker-display{font-size:16px!important}}
 
 .data-text-page{max-height:60vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit} [data-detail-page],[data-detail-download]{min-height:44px;min-width:44px}
-#storage-status[aria-busy="true"]{position:relative;color:transparent}
-#storage-status[aria-busy="true"]::after{content:attr(data-operation);position:absolute;inset:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
-.operation-status{position:sticky;top:0;z-index:20;padding:14px 16px;background:var(--accent);color:white;font-size:16px;font-weight:700;line-height:1.4;border-bottom:2px solid var(--ink)}
+.operation-status{position:fixed;top:0;left:0;right:0;z-index:45;padding:max(14px,env(safe-area-inset-top)) 16px 14px;background:var(--accent);color:white;font-size:16px;font-weight:700;line-height:1.4;border-bottom:2px solid var(--ink)}
 .operation-status[hidden]{display:none}
-.startup-status{position:sticky;top:0;z-index:21;padding:14px 16px;background:var(--surface);border-bottom:2px solid var(--ink);display:flex;gap:8px;flex-direction:column}
-.startup-status strong{font-weight:800}.startup-status span{color:var(--muted)}.startup-status.danger{border-color:var(--danger);background:var(--danger-soft)}
+.startup-status{position:fixed;inset:0;z-index:60;padding:24px;background:var(--panel);display:flex;gap:16px;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:auto;overscroll-behavior:contain}
+.startup-status>*{max-width:32rem}.startup-status strong{font-size:24px;font-weight:800}.startup-status span{color:var(--muted)}.startup-status.danger{background:var(--danger-soft)}
 .startup-status[hidden]{display:none}
+.startup-status button{min-height:44px;padding:8px 16px}
+/* Preserve layout for saved-view restoration, but show only one startup page. */
+.startup-status:not([hidden])~#app,.startup-status:not([hidden])~.operation-status,.startup-status:not([hidden])~#operation-error{visibility:hidden}
+#operation-error{font-size:16px;line-height:1.45;position:fixed;top:0;left:0;right:0;z-index:46;margin:0;padding:max(14px,env(safe-area-inset-top)) 16px 14px;max-height:45vh;overflow:auto;overscroll-behavior:contain;box-shadow:0 3px 12px rgba(21,24,23,.16)}
+#operation-error button{display:block;min-height:44px;margin-top:8px}
+.prompt-heading-row{display:flex;align-items:center;justify-content:space-between;gap:8px;scroll-margin-top:calc(var(--workflow-content-inset,0px) + 8px)}
+.prompt-heading-row .section-title{margin-bottom:0}.prompt-heading-row button{flex:0 0 auto;min-height:44px}
+#prompt-heading,#proposal-heading,details.record-card>summary{scroll-margin-top:calc(var(--workflow-content-inset,0px) + 8px)}
 /* Keep one actionable summary visible throughout the selected workflow view.
    Details remain ordinary content; no copied controls or stage-specific offsets. */
 #screen > .next-action-summary{position:sticky;top:var(--workflow-action-inset,0px);z-index:12;align-self:start;background:#fbfefd;scroll-margin-top:var(--workflow-action-inset,0px)}

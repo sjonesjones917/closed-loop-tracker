@@ -14,7 +14,7 @@ const restorationFaults=[
  ['owned-checkpoint','RESTORATION-OWNED-FIRST-FRAME-CHECKPOINT-FAILURE','if(pendingOwner?.captureFailure)throw pendingOwner.captureFailure;','void pendingOwner;'],
  ['early-capture-suppression','RESTORATION-OWNED-ACTION-BEFORE-FIRST-FRAME','await preceding;await pendingUi;','if(pendingUi)restoringHistory=true;await preceding;await pendingUi;'],
  ['native-path-mutation','RESTORATION-OWNED-NAVIGATION-BEFORE-FIRST-FRAME','if(historyRestoreController&&!restored)return null;','if(false)return null;'],
- ['pending-view-event','RESTORATION-PENDING-DESTINATION-VIEW','if(!current||operatorActionInFlight||historyRestoreController||restoringHistory)return;','if(!current||operatorActionInFlight||restoringHistory)return;'],
+ ['pending-view-event','RESTORATION-PENDING-DESTINATION-VIEW','const canPreserveView=()=>Boolean(current&&!operatorActionInFlight&&!historyRestoreController&&!restoringHistory);','const canPreserveView=()=>Boolean(current&&!operatorActionInFlight&&!restoringHistory);'],
  ['separate-action','RESTORATION-EXCLUSIVE-UI-AUTHORITY','if(historyRestoreController)return historyRestoreTail;','void historyRestoreController;'],
  ['latest-draft-dropped','RESTORATION-ADMITTED-LATEST-DRAFT','const snapshot={jobId:current.job.JOB_ID,revision:current.revision,view:captureView(),entryId:displayedHistoryEntryId}', 'if(capturingViewPromise)return capturingViewPromise;const snapshot={jobId:current.job.JOB_ID,revision:current.revision,view:captureView(),entryId:displayedHistoryEntryId}'],
  ['popstate-departure-drop','RESTORATION-POPSTATE-DEPARTURE-DRAFT','const pendingCapture=captureCurrentView();void restoreHistoryVersion(', 'const pendingCapture=Promise.resolve();void restoreHistoryVersion('],
@@ -54,7 +54,18 @@ if(selectedCase){
  const retainViews=async()=>{const retained=[];for(const entry of (await store.historyList(jobId)).entries)retained.push({checkpointId:entry.id,view:await store.readHistoryView(jobId,entry.id)});return retained;};
  const holdCapture=({fail=false}={})=>{const entered=deferred(),held=deferred(),captures=[];let first=true;ui.storeOverride({...store,saveCheckpoint:async(...args)=>{if(first){first=false;entered.resolve();await held.promise;}if(fail)throw Object.assign(new Error('Unable to save the departing view'),{code:'CONTROLLED_CHECKPOINT_FAILURE'});const id=await store.saveCheckpoint(...args);captures.push({id,view:copy(args[1]?.view)});return id;}});return {entered:entered.promise,release:held.resolve,captures};};
  let expected,actual,passed=false;
- if(selectedCase==='RESTORATION-WAIT-FEEDBACK'){
+ if(selectedCase==='VIEW-SCROLL-COALESCING'){
+  expected='A continuous scroll saves only its final view; page departure flushes a pending position and draft immediately.';
+  const captures=[];ui.storeOverride({...store,saveCheckpoint:async(...args)=>{captures.push(copy(args[1]?.view));return store.saveCheckpoint(...args);}});
+  formNodes[1].value='Draft retained through scrolling';
+  for(let i=1;i<=120;i++){runtime.window.scrollY=i;windowListeners.get('scroll')();}
+  const writesDuringGesture=captures.length;await new Promise(resolve=>setTimeout(resolve,230));await ui.capturePersist();
+  const writesAfterGesture=captures.length,first=copy(await store.readHistoryView(jobId));
+  runtime.window.scrollY=999;windowListeners.get('scroll')();windowListeners.get('pagehide')();await ui.capturePersist();
+  const departed=copy(await store.readHistoryView(jobId));
+  actual={writesDuringGesture,writesAfterGesture,first,departed};
+  passed=writesDuringGesture===0&&writesAfterGesture===1&&first.scrollY==='120'&&departed.scrollY==='999'&&departed.drafts['#response-note'].value===formNodes[1].value;
+ }else if(selectedCase==='RESTORATION-WAIT-FEEDBACK'){
   expected='Restoration claims controls immediately, shows loading beyond the configured threshold, retains the admitted departing draft and activates the exact destination before releasing controls.';
   const hold=holdCapture();formNodes[1].value='Preserve this departing draft';const write=ui.capturePersist();await hold.entered;const destination=moveTo(firstId),restore=outcome(ui.restore(firstId,{traversal:true,view:destination.state.view}));await settle();const immediate=state();await new Promise(resolve=>setTimeout(resolve,thresholdMs+50));const waiting=state();hold.release();await write;const result=await restore,finished=state(),retained=await retainViews(),latency=runtime.closedLoopOperationLatencyEvidence().samples.filter(sample=>sample.kind==='restoration').at(-1);
   actual={immediate,waiting,finished,result,latency,retainedDraft:retained.some(row=>row.view?.drafts?.['#response-note']?.value==='Preserve this departing draft')};
@@ -83,7 +94,7 @@ if(selectedCase){
   actual={executions,result,currentPreserved:JSON.stringify(before)===JSON.stringify(await store.readProject(jobId)),historyPreserved:JSON.stringify(historyBefore)===JSON.stringify(await store.historyList(jobId)),draft:formNodes[1].value,finished:state()};passed=executions===0&&result.outcome==='FAILED'&&actual.currentPreserved&&actual.historyPreserved&&actual.draft==='Uncommitted first-frame draft'&&actual.finished.errorVisible;
  }else if(selectedCase==='RESTORATION-PENDING-DESTINATION-VIEW'){
   expected='Scroll events during pending restoration cannot change the recorded destination or admit a later departing view after the restoration owns navigation.';
-  const hold=holdCapture();formNodes[1].value='A departing draft is not the destination view';const write=ui.capturePersist();await hold.entered;const destination=moveTo(firstId),restore=outcome(ui.restore(firstId,{traversal:true,view:destination.state.view}));await settle();runtime.window.scrollY=17;windowListeners.get('scroll')();const during=copy(entries[cursor]);hold.release();await write;const result=await restore,retained=await retainViews();
+  const hold=holdCapture();formNodes[1].value='A departing draft is not the destination view';const write=ui.capturePersist();await hold.entered;const destination=moveTo(firstId),restore=outcome(ui.restore(firstId,{traversal:true,view:destination.state.view}));await settle();runtime.window.scrollY=17;windowListeners.get('scroll')();await new Promise(resolve=>setTimeout(resolve,230));const during=copy(entries[cursor]);hold.release();await write;const result=await restore,retained=await retainViews();
   actual={destination,during,after:copy(entries[cursor]),result,title:ui.current().job.JOB_TITLE,lateDepartureRetained:retained.some(row=>row.view?.drafts?.['#response-note']?.value==='A departing draft is not the destination view'&&row.view.scrollY==='17')};
   passed=JSON.stringify(destination)===JSON.stringify(during)&&JSON.stringify(destination)===JSON.stringify(actual.after)&&result.outcome==='RESTORED'&&actual.title==='First retained data'&&!actual.lateDepartureRetained;
  }else if(selectedCase==='RESTORATION-EXCLUSIVE-UI-AUTHORITY'){
@@ -112,7 +123,7 @@ if(selectedCase){
   const retained=await vm.runInContext(expression,runtime);actual={retained:retained||null,titleDraftSelector,latestDraft};passed=retained?.view?.drafts?.[titleDraftSelector]?.value===latestDraft;
  }else if(selectedCase==='RESTORATION-FAILED-DESTINATION-PRESERVATION'){
   expected='After failed native restoration, edits remain durably bound to the still-displayed version; the rejected destination entry and its retained view stay intact.';
-  const destination=moveTo(firstId),retainedBefore=await store.readHistoryView(jobId,firstId);ui.storeOverride({...store,restoreCheckpoint:async()=>{throw Object.assign(new Error('A controlled unavailable restoration read'),{code:'CONTROLLED_RESTORE_READ_FAILURE'});}});const result=await outcome(ui.restore(firstId,{view:destination.state.view,traversal:true}));ui.storeOverride(store);formNodes[1].value='Current draft edited after failed Back';runtime.window.scrollY=19;windowListeners.get('scroll')();await ui.capturePersist();
+  const destination=moveTo(firstId),retainedBefore=await store.readHistoryView(jobId,firstId);ui.storeOverride({...store,restoreCheckpoint:async()=>{throw Object.assign(new Error('A controlled unavailable restoration read'),{code:'CONTROLLED_RESTORE_READ_FAILURE'});}});const result=await outcome(ui.restore(firstId,{view:destination.state.view,traversal:true}));ui.storeOverride(store);formNodes[1].value='Current draft edited after failed Back';runtime.window.scrollY=19;windowListeners.get('scroll')();await new Promise(resolve=>setTimeout(resolve,230));await ui.capturePersist();
   actual={result,currentTitle:ui.current().job.JOB_TITLE,destinationBefore:destination,destinationAfter:copy(entries[cursor]),retainedView:await store.readHistoryView(jobId),targetViewUnchanged:JSON.stringify(retainedBefore)===JSON.stringify(await store.readHistoryView(jobId,firstId)),finished:state()};
   passed=result.code==='CONTROLLED_RESTORE_READ_FAILURE'&&actual.currentTitle==='Second retained data'&&JSON.stringify(destination)===JSON.stringify(actual.destinationAfter)&&actual.targetViewUnchanged&&actual.retainedView?.drafts?.['#response-note']?.value===formNodes[1].value&&actual.finished.errorVisible;
  }else if(selectedCase==='RESTORATION-RAPID-FAILED-DESTINATION-COHERENCE'){
