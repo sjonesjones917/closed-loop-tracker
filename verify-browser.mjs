@@ -16,7 +16,14 @@ async function poll(fn,timeout=15000){const end=Date.now()+timeout;let last;whil
 class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.events=[];this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=this.pending.get(m.id);if(!p)return;this.pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}else this.events.push(m);};}async send(method,params={}){let timer,id,finished=false;const timeoutError=new Error('Chromium did not respond to '+method+' within 180 seconds.');const deadline=new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(timeoutError),180000);});try{return await Promise.race([(async()=>{await this.ready;if(finished)throw timeoutError;id=++this.id;const result=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));return result;})(),deadline]);}finally{finished=true;clearTimeout(timer);if(id!==undefined)this.pending.delete(id);}}close(){this.ws.close();}}
 const assert=(x,m)=>{if(!x)throw new Error(m);};
 async function evalValue(cdp,expression){const r=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'Evaluation failed');return r.result?.value;}
-async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
+async function waitExpr(cdp,expression,timeout=12000){
+ try{return await poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
+ catch(error){
+  const geometry=await evalValue(cdp,`(()=>({viewport:{width:innerWidth,height:innerHeight,y:scrollY},nodes:['#generated-prompt','#prompt-heading','#collapse-prompt','#toggle-prompt','#prompt-top-jump','#prompt-bottom-jump','#operation-error','#next-required-action','.app-header','.view-tabs'].map(selector=>{const e=document.querySelector(selector);if(!e)return {selector,missing:true};const r=e.getBoundingClientRect();return {selector,hidden:e.hidden,top:r.top,bottom:r.bottom,height:r.height,scrollTop:e.scrollTop,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight};})}))()`).catch(()=>null);
+  if(geometry)error.message+='\nObserved browser geometry: '+JSON.stringify(geometry);throw error;
+ }
+}
+async function startupScrollScreenshot(cdp,name){const shot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(os.tmpdir(),'startup-scroll-'+name+'.png'),Buffer.from(shot.data,'base64'));}
 async function waitForSavedPrompt(cdp){
   await waitExpr(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.dataset?.projectId,stage=Number(document.querySelector('#stage-picker')?.value);if(!id||!stage)return false;const project=await closedLoopProjectStore.readProject(id);return Boolean(project?.projectData.generatedPrompts.some(record=>Number(record.stage)===stage&&!record.invalidatedBy&&record.instructionId&&record.bodySha256&&record.prompt&&record.promptEngineVersion===closedLoopPromptEngine.version&&Number(record.scope?.projectRevision)===Number(project.revision)));})()`);
 }
@@ -55,6 +62,7 @@ async function main(){
   await setWidth(cdp,width,height);
   const startup=await evalValue(cdp,`(()=>{const screen=document.querySelector('#app-startup-status'),app=document.querySelector('#app'),r=screen.getBoundingClientRect();return {visible:!screen.hidden&&getComputedStyle(screen).visibility==='visible',coversViewport:r.top===0&&r.left===0&&r.width>=innerWidth&&r.height>=innerHeight,shellHidden:getComputedStyle(app).visibility==='hidden',inert:app.hasAttribute('inert'),busy:app.getAttribute('aria-busy')==='true',ready:globalThis.closedLoopAppReady===true};})()`);
   assert(startup.visible&&startup.coversViewport&&startup.shellHidden&&startup.inert&&startup.busy&&!startup.ready,'STARTUP_SCREEN_ORACLE: competing app placeholders are visible during startup: '+JSON.stringify({width,startup}));
+  await startupScrollScreenshot(cdp,width+'-loading');
  }
  await cdp.send('Fetch.continueRequest',{requestId:pendingRuntime.requestId});await cdp.send('Fetch.disable');
  await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
@@ -92,6 +100,7 @@ async function main(){
   assert(Math.abs(afterError.y-beforeError.y)<=1&&Math.abs(afterError.top-beforeError.top)<=1,'ERROR_SCROLL_ORACLE: showing a save error moved the visible content: '+JSON.stringify({width,beforeError,afterError}));
   await waitExpr(cdp,`document.querySelector('#prompt-top-jump')?.hidden===false`);await click(cdp,'#prompt-top-jump');
   await waitExpr(cdp,`(()=>{const button=document.querySelector('#collapse-prompt'),heading=document.querySelector('#prompt-heading .section-title');return [button,heading].every(e=>{if(!e||e.hidden)return false;const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&e.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2));});})()`);
+  await startupScrollScreenshot(cdp,width+'-collapse-with-error');
   await click(cdp,'#collapse-prompt');assert(await evalValue(cdp,`!document.querySelector('#generated-prompt').classList.contains('expanded')&&document.querySelector('#toggle-prompt').getAttribute('aria-expanded')==='false'`),'TOP_COLLAPSE_ORACLE: the exposed control failed to collapse the preview');
   await click(cdp,'#operation-error button');
   await click(cdp,'#toggle-prompt');

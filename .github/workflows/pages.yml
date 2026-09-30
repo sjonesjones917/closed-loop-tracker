@@ -98,6 +98,7 @@ jobs:
             acceptance-viewport-evidence/*/downloads/
             /tmp/acceptance-viewport.log
             /tmp/startup-scroll.log
+            /tmp/startup-scroll-*.png
           if-no-files-found: warn
 
       - name: Deployment manifest, build identity, and reproducibility
