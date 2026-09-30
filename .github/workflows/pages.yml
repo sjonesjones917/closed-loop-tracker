@@ -68,7 +68,8 @@ jobs:
           set -euo pipefail
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
-          node build-test-project.mjs
+          # Use the retained fixture already in this commit for fast UI feedback.
+          # The following viewport gate still regenerates and validates it.
           node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
           python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
           SERVER_PID=$!
@@ -82,6 +83,8 @@ jobs:
           set -euo pipefail
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
+          node build-test-project.mjs
+          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
           python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
