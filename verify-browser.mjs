@@ -83,13 +83,26 @@ async function main(){
  // The up arrow must reveal a usable collapse control, including beneath sticky UI.
  for(const [width,height] of [[320,568],[393,852],[1280,800]]){
   await setWidth(cdp,width,height);await positionNode(cdp,'#generated-prompt','center');
+  // Exercise the actual asynchronous History-error owner while scrolled.
+  // Failing before the checkpoint commit must not move the visible content.
+  await waitForIdle(cdp);
+  const beforeError=await evalValue(cdp,`(()=>{globalThis.__closedLoopStorageFault='before-history-checkpoint';scrollBy(0,12);return {y:scrollY,top:document.querySelector('#generated-prompt').getBoundingClientRect().top};})()`);
+  await waitExpr(cdp,`document.querySelector('#operation-error')?.hidden===false`);
+  const afterError=await evalValue(cdp,`(()=>{delete globalThis.__closedLoopStorageFault;return {y:scrollY,top:document.querySelector('#generated-prompt').getBoundingClientRect().top};})()`);
+  assert(Math.abs(afterError.y-beforeError.y)<=1&&Math.abs(afterError.top-beforeError.top)<=1,'ERROR_SCROLL_ORACLE: showing a save error moved the visible content: '+JSON.stringify({width,beforeError,afterError}));
   await waitExpr(cdp,`document.querySelector('#prompt-top-jump')?.hidden===false`);await click(cdp,'#prompt-top-jump');
   await waitExpr(cdp,`(()=>{const button=document.querySelector('#collapse-prompt'),heading=document.querySelector('#prompt-heading .section-title');return [button,heading].every(e=>{if(!e||e.hidden)return false;const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&e.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2));});})()`);
   await click(cdp,'#collapse-prompt');assert(await evalValue(cdp,`!document.querySelector('#generated-prompt').classList.contains('expanded')&&document.querySelector('#toggle-prompt').getAttribute('aria-expanded')==='false'`),'TOP_COLLAPSE_ORACLE: the exposed control failed to collapse the preview');
+  await click(cdp,'#operation-error button');
   await click(cdp,'#toggle-prompt');
  }
  await setWidth(cdp,393);
  await positionNode(cdp,'#generated-prompt','sliver');await waitExpr(cdp,`(()=>{const t=document.querySelector('#prompt-top-jump'),b=document.querySelector('#prompt-bottom-jump');return Boolean(t?.hidden&&b?.hidden);})()`);await evalValue(cdp,`(()=>{document.querySelector('#toggle-prompt')?.scrollIntoView({block:'end'});return true})()`);await sleep(120);await click(cdp,'#toggle-prompt');assert(await evalValue(cdp,`(()=>{const n=document.querySelector('#generated-prompt');return Boolean(n&&!n.classList.contains('expanded')&&n.scrollHeight>n.clientHeight+1);})()`),'Prompt preview did not return to the bounded compact state.');assert(await evalValue(cdp,`(()=>{const t=document.querySelector('#prompt-top-jump'),b=document.querySelector('#prompt-bottom-jump');return Boolean(t?.hidden&&b?.hidden);})()`),'Prompt scroll controls remained visible after collapsing the preview.');await waitExpr(cdp,`(()=>{const toolbar=document.querySelector('#generated-prompt')?.parentElement?.querySelector('.prompt-toolbar');return toolbar&&Math.abs(toolbar.getBoundingClientRect().bottom-innerHeight)<=8;})()`);const collapsedAnchor=await evalValue(cdp,`(()=>{const t=document.querySelector('#generated-prompt')?.parentElement?.querySelector('.prompt-toolbar');if(!t)return null;const r=t.getBoundingClientRect();return {toolbarBottom:r.bottom,viewportBottom:innerHeight,pageBottom:scrollY+innerHeight,documentBottom:document.documentElement.scrollHeight};})()`);assert(collapsedAnchor&&Math.abs(collapsedAnchor.toolbarBottom-collapsedAnchor.viewportBottom)<=8,`Collapsed prompt end was not anchored to the viewport: ${JSON.stringify(collapsedAnchor)}`);assert(collapsedAnchor.pageBottom<collapsedAnchor.documentBottom-20,`Collapse left the viewport at the page bottom instead of the message end: ${JSON.stringify(collapsedAnchor)}`);
+ if(process.argv.includes('--startup-scroll-only')){
+  const exceptions=cdp.events.filter(event=>event.method==='Runtime.exceptionThrown');assert(exceptions.length===0,'Startup/scroll checks raised an uncaught browser exception: '+JSON.stringify(exceptions));
+  const targets=await cdp.send('Target.getTargets');assert(targets.targetInfos.some(target=>target.type==='worker'&&target.url.includes('project-store.js')&&target.url.includes('storeWorker=1')),'The existing storage worker did not start.');
+  console.log(JSON.stringify({browserVerified:true,scope:'startup-scroll',viewports:[[320,568],[393,852],[1280,800]],startupScreen:true,collapseAfterUpArrow:true,errorWithoutPageJump:true,storageWorkerPresent:true,runtimeErrors:0}));cdp.close();return;
+ }
  await click(cdp,'#save-prompt');await waitForSavedPrompt(cdp);
  retained=await activeProject(cdp);let promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(promptRecord?.instructionId&&promptRecord?.sha256,'Saved prompt identity missing.');
  // Malformed response preserves raw/validation and does not mutate canonical sources.

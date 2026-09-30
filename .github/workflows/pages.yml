@@ -61,7 +61,7 @@ jobs:
             node --check "$file"
           done
 
-      - name: Acceptance viewport regression and targeted layout fault
+      - name: Startup, scrolling, and acceptance viewport regression
         env:
           BROWSER: /usr/bin/google-chrome
         run: |
@@ -73,6 +73,7 @@ jobs:
           python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 10m node verify-browser.mjs --startup-scroll-only 2>&1 | tee /tmp/startup-scroll.log
           timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log
 
       - name: Preserve acceptance viewport observations
@@ -85,6 +86,7 @@ jobs:
             acceptance-viewport-evidence/*/stage-*.png
             acceptance-viewport-evidence/*/downloads/
             /tmp/acceptance-viewport.log
+            /tmp/startup-scroll.log
           if-no-files-found: warn
 
       - name: Deployment manifest, build identity, and reproducibility

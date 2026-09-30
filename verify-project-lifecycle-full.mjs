@@ -764,16 +764,19 @@ await storageRegression('startup:picker-projection-and-selected-only',async()=>{
 });
 for(const failHealth of [false,true])await storageRegression('diagnostics:startup-'+(failHealth?'failed':'slow')+'-health-does-not-block',async()=>{
   let release,entered,renders=0;const held=new Promise(resolve=>release=resolve),reached=new Promise(resolve=>entered=resolve);
-  const originalNavigator=storageRuntime.navigator,originalRender=storageRuntime.render,originalOpen=storageRuntime.openStorageTransaction,originalDocument=storageRuntime.document;
+  const originalNavigator=storageRuntime.navigator,originalRender=storageRuntime.render,originalOpen=storageRuntime.openStorageTransaction,originalDocument=storageRuntime.document,originalHistory=storageRuntime.initializeHistoryNavigation;
   const fields=['persistent','usage','quota'].map(key=>({dataset:{storageHealth:key},textContent:'UNKNOWN'}));
   storageRuntime.document={querySelectorAll:()=>fields};storageRuntime.render=()=>{renders++;};
+  // History owns the initial restored render. A separate pre-History render
+  // would display a transient unsaved screen and duplicate expensive markup.
+  storageRuntime.initializeHistoryNavigation=async()=>{storageRuntime.render();};
   storageRuntime.navigator={storage:{persist:async()=>{entered();await held;return true;},estimate:async()=>({usage:123,quota:456})}};
   storageRuntime.openStorageTransaction=async(...args)=>{const tx=await originalOpen(...args),objectStore=tx.objectStore;tx.objectStore=name=>{const object=objectStore(name),get=object.get;return {...object,get:key=>{if(failHealth&&name==='meta'&&key==='lastCommittedRevision')throw new Error('CONTROLLED_HEALTH_METADATA_FAILURE');return get(key);}};};return tx;};
   let error,finished=false;const loading=vm.runInContext('load()',storageRuntime).then(()=>{finished=true;},e=>{error=e;});
   await reached;await new Promise(resolve=>setTimeout(resolve,0));const beforeHealth={renders,finished};
   const selected=storageRuntime.current;selected.activeView='Workflow';selected.activeStage=4;
   release();await loading;await new Promise(resolve=>setTimeout(resolve,0));
-  storageRuntime.navigator=originalNavigator;storageRuntime.render=originalRender;storageRuntime.openStorageTransaction=originalOpen;storageRuntime.document=originalDocument;
+  storageRuntime.navigator=originalNavigator;storageRuntime.render=originalRender;storageRuntime.openStorageTransaction=originalOpen;storageRuntime.document=originalDocument;storageRuntime.initializeHistoryNavigation=originalHistory;
   assert(beforeHealth.renders===1&&beforeHealth.finished,`Optional health check blocked startup: ${JSON.stringify(beforeHealth)}.`);
   assert(!error&&renders===1&&storageRuntime.current===selected&&selected.activeStage===4,'Late health completion failed startup, re-rendered the form, or reset navigation.');
   if(failHealth)assert(/unavailable/i.test(storageRuntime.elements['#storage-status'].textContent),'Failed diagnostics did not report their unavailable status.');
@@ -835,6 +838,25 @@ await storageRegression('storage-worker:commit-survives-lost-reply',async()=>{
   dropWorkerReply=true;const p=await vm.runInContext(`makeStored('WORKER-LOST-REPLY')`,storageRuntime);
   const saved=await storageRuntime.projectStore.readProject(p.job.JOB_ID);
   assert(saved.revision===p.revision&&saved.projectSha256===p.projectSha256,'Lost worker reply was treated as rollback or repeated the committed mutation.');
+});
+for(const lostReply of [false,true])await storageRegression('storage-worker:checkpoint-'+(lostReply?'lost-reply':'acknowledged'),async()=>{
+  const p=await storageRuntime.makeStored('WORKER-VIEW-'+lostReply),before=workerExecutions,view={activeView:'Workflow',activeStage:1,scrollY:537,drafts:{'stage-output':{value:'Unaccepted draft é🙂'}}};
+  dropWorkerReply=lostReply;
+  const id=await storageRuntime.projectStore.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,view});
+  assert(typeof id==='string'&&id,'Checkpoint worker must return a saved-view identity, not a project object.');
+  assert(workerExecutions===before+1,'A view checkpoint ran on the UI thread or repeated after a lost reply.');
+  const restored=await storageRuntime.projectStore.readHistoryView(p.job.JOB_ID,id),saved=await storageRuntime.projectStore.readProject(p.job.JOB_ID);
+  assert(storageRuntime.closedLoopHash.sha256Value(restored)===storageRuntime.closedLoopHash.sha256Value(storageRead(view)),'Worker checkpoint lost the draft or scroll position.');
+  assert(saved.revision===p.revision&&saved.projectSha256===p.projectSha256,'Saving a view modified canonical project data.');
+});
+await storageRegression('storage-worker:checkpoint-rejections-are-atomic',async()=>{
+  const p=await storageRuntime.makeStored('WORKER-VIEW-FAILURE'),state=await storageRuntime.projectStore.historyList(p.job.JOB_ID);
+  let stale;try{await storageRuntime.projectStore.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision-1});}catch(error){stale=error;}
+  assert(stale?.code==='STALE_PROJECT_REVISION'&&stale.existingProjectsUnchanged===true,'Worker checkpoint accepted a stale revision.');
+  storageRuntime.__closedLoopStorageFault='during-history-write';let failed;
+  try{await storageRuntime.projectStore.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,view:{activeView:'Records',activeStage:1,scrollY:99,drafts:{}}});}catch(error){failed=error;}finally{delete storageRuntime.__closedLoopStorageFault;}
+  assert(failed?.code==='INJECTED_STORAGE_FAILURE'&&failed.existingProjectsUnchanged===true,'An aborted History write was acknowledged.');
+  assert(JSON.stringify(await storageRuntime.projectStore.historyList(p.job.JOB_ID))===JSON.stringify(state),'A rejected checkpoint partially changed History.');
 });
 await storageRegression('storage-worker:atomic-abort-and-import-recovery',async()=>{
   storageRuntime.__closedLoopStorageFault='before-transaction-commit';let error;
