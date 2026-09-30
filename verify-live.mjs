@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {validateSite} from './verified-site.mjs';
 
 const base=process.env.PAGE_URL;
 if(!base)throw new Error('PAGE_URL is required');
@@ -12,9 +13,11 @@ if(deploymentUrl.origin!==canonicalOrigin)throw new Error(`Unexpected deployment
 if(deploymentUrl.pathname!==canonicalBasePath)throw new Error(`Unexpected deployment base path: ${deploymentUrl.pathname}`);
 if(deploymentUrl.username||deploymentUrl.password||deploymentUrl.search||deploymentUrl.hash)throw new Error('Deployment URL contains prohibited credentials, query, or fragment.');
 
-const expectedDir=path.resolve('.verify-live-site');
-execFileSync(process.execPath,['build-static-site.mjs','--out',expectedDir,'--source-commit',process.env.GITHUB_SHA||'LOCAL_UNCOMMITTED','--workflow-run',process.env.GITHUB_RUN_ID||'LOCAL'],{stdio:'inherit'});
-const manifest=JSON.parse(fs.readFileSync(path.join(expectedDir,'closed-loop-deployment-manifest.json'),'utf8'));
+const retainedSite=process.env.VERIFIED_SITE_DIR;
+const expectedDir=path.resolve(retainedSite||'.verify-live-site');
+if(!retainedSite)execFileSync(process.execPath,['build-static-site.mjs','--out',expectedDir,'--source-commit',process.env.GITHUB_SHA||'LOCAL_UNCOMMITTED','--workflow-run',process.env.GITHUB_RUN_ID||'LOCAL'],{stdio:'inherit'});
+const manifest=validateSite(expectedDir);
+if(manifest.sourceCommit!==(process.env.GITHUB_SHA||'LOCAL_UNCOMMITTED')||String(manifest.workflowRunIdentity)!==String(process.env.GITHUB_RUN_ID||'LOCAL'))throw new Error('Expected artifact belongs to a different source commit or workflow run.');
 if(manifest.canonicalOrigin!==canonicalOrigin||manifest.canonicalHost!==deploymentUrl.host||manifest.canonicalBasePath!==canonicalBasePath)throw new Error('Built deployment manifest does not bind the canonical deployed origin.');
 if(manifest.noCrossOriginRedirect!==true||manifest.permittedRuntimeOrigin!=='SAME_ORIGIN_ONLY')throw new Error('Built deployment manifest does not close the runtime origin/redirect policy.');
 const deployed=[...manifest.runtimeResources.map(resource=>resource.path),'closed-loop-deployment-manifest.json'];
@@ -47,7 +50,7 @@ for(const identity of ['mobile-closed-loop/30','closed-loop-project/3','closed-l
 for(const control of ['PENDING_OPERATOR_REVIEW','ACCEPTED_DATA_CHANGE','RUN_APP_TESTS','worker-src \'self\'']){
   if(!active.includes(control))throw new Error(`Required deployed control is missing: ${control}`);
 }
-fs.rmSync(expectedDir,{recursive:true,force:true});
+if(!retainedSite)fs.rmSync(expectedDir,{recursive:true,force:true});
 
 console.log(JSON.stringify({
   liveSourceIdentity:true,

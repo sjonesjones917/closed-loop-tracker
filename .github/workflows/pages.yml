@@ -22,6 +22,8 @@ on:
 
 permissions:
   contents: read
+  actions: read
+  pull-requests: read
   pages: write
   id-token: write
   statuses: write
@@ -36,11 +38,40 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    outputs:
+      verified_artifact_name: ${{ steps.verified.outputs.artifact_name }}
+      verification_run_id: ${{ steps.reuse.outputs.run_id || github.run_id }}
+      verification_source_commit: ${{ steps.reuse.outputs.tested_commit || github.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+
+      - name: Verified artifact reuse checks
+        run: node verify-verified-site.mjs
+
+      - name: Find completed PR verification for this main commit
+        id: candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs select
+      - name: Download the passing PR artifact
+        if: steps.candidate.outputs.artifact_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
+          run-id: ${{ steps.candidate.outputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: _verified-pr
+      - name: Verify matching source and promote tested runtime files
+        id: reuse
+        if: steps.candidate.outputs.artifact_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs reuse
 
       - name: Capture exact PR source workspace
         if: github.event_name == 'pull_request'
@@ -55,6 +86,7 @@ jobs:
           retention-days: 1
 
       - name: Syntax
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           for file in *.js *.mjs; do
@@ -62,6 +94,7 @@ jobs:
           done
 
       - name: Startup and scrolling at phone and desktop sizes
+        if: steps.reuse.outputs.reused != 'true'
         env:
           BROWSER: /usr/bin/google-chrome
         run: |
@@ -77,6 +110,7 @@ jobs:
           timeout --signal=TERM --kill-after=10s 10m node verify-browser.mjs --startup-scroll-only 2>&1 | tee /tmp/startup-scroll.log
 
       - name: Acceptance viewport regression and targeted layout fault
+        if: steps.reuse.outputs.reused != 'true'
         env:
           BROWSER: /usr/bin/google-chrome
         run: |
@@ -91,7 +125,7 @@ jobs:
           timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log
 
       - name: Preserve acceptance viewport observations
-        if: always()
+        if: always() && steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: acceptance-viewport-${{ github.sha }}-${{ github.run_id }}
@@ -105,11 +139,13 @@ jobs:
           if-no-files-found: warn
 
       - name: Deployment manifest, build identity, and reproducibility
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-deployment-manifest.mjs
 
       - name: Physical iPhone release-tag governance
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-mobile-acceptance-target.mjs
@@ -120,6 +156,7 @@ jobs:
           node verify-mobile-release-governance.mjs
 
       - name: Schema, ownership, and single-architecture proof
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node build-test-project.mjs
@@ -152,12 +189,14 @@ jobs:
           NODE
 
       - name: Complete 30-stage canonical data-route closure
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-data-route-closure.mjs
           node verify-infrastructure-route-closure.mjs
 
       - name: Migration and v3 contracts
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-v3-migration.mjs
@@ -165,6 +204,7 @@ jobs:
           node verify-spec3-contract.mjs
 
       - name: Stage 01 raw intake and semantic accounting
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-stage01-intake-closure.mjs
@@ -172,6 +212,7 @@ jobs:
           node verify-zero-loss-accounting.mjs
 
       - name: Stage 04 obligation accounting and prompt completeness
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-all-stage-prompts.mjs
@@ -181,6 +222,7 @@ jobs:
           node verify-user-prompt-invariants.mjs
 
       - name: Test IR validation, security, and deterministic runtime
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-test-runtime-v3.mjs
@@ -189,6 +231,7 @@ jobs:
           node verify-hash.mjs
 
       - name: Raw-first ingestion and negative cases
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-ingestion.mjs
@@ -196,6 +239,7 @@ jobs:
           node verify-backup-json-stream.mjs
 
       - name: Workflow, gates, and full cycle
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-complete.mjs
@@ -208,20 +252,24 @@ jobs:
           node verify-v3-definition-of-done.mjs
 
       - name: Project lifecycle and application-owned controls
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-project-lifecycle.mjs
 
       - name: Prompt semantics and leakage
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
 
       - name: Build static application for operator verification
+        if: steps.reuse.outputs.reused != 'true'
         run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
 
       - name: Local Chromium operator path
+        if: steps.reuse.outputs.reused != 'true'
         env:
           BROWSER: /usr/bin/google-chrome
           STATIC_SITE_ROOT: _site
@@ -264,7 +312,7 @@ jobs:
           trap - EXIT
 
       - name: Preserve complete operator journey evidence
-        if: always()
+        if: always() && steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
@@ -281,13 +329,14 @@ jobs:
       # Run the direct operator replay before the longer fault matrix. Both
       # remain mandatory; failed or unexecuted checks still block deployment.
       - name: Shared production faults, bounded sequences, and executed observations
+        if: steps.reuse.outputs.reused != 'true'
         id: conformance
         timeout-minutes: 185
         run: |
           set -euo pipefail
           node verify-conformance-regressions.mjs > /tmp/conformance-regressions.json
       - name: Preserve executed regression evidence
-        if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
+        if: always() && steps.reuse.outputs.reused != 'true' && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: conformance-regressions-${{ github.sha }}
@@ -295,6 +344,20 @@ jobs:
             conformance-regression-evidence/
             /tmp/conformance-regressions.json
           if-no-files-found: error
+
+      # This is reached only after full verification or proven reuse of the
+      # identical Git tree and runtime bytes from a fully passing PR attempt.
+      - name: Seal verified deployment artifact
+        id: verified
+        run: node verified-site.mjs seal
+      - name: Preserve verified site for merge and live verification
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ steps.verified.outputs.artifact_name }}
+          path: _verified-site/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Preserve the exact browser-verified Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -326,13 +389,19 @@ jobs:
     timeout-minutes: 180
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+      VERIFIED_SITE_DIR: _verified-site/site
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Rebuild retained fixture used by deployment
-        run: node build-test-project.mjs
+      - name: Download the exact verified deployment files
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ needs.test.outputs.verified_artifact_name }}
+          path: _verified-site
+      - name: Restore the verified retained fixture
+        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
       - name: Exact deployed-byte verification
         run: |
           set -euo pipefail
@@ -442,6 +511,8 @@ jobs:
           TEST_RESULT: ${{ needs.test.result }}
           DEPLOY_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.deploy.result }}
           LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
+          VERIFICATION_RUN_ID: ${{ needs.test.outputs.verification_run_id }}
+          VERIFICATION_SOURCE_COMMIT: ${{ needs.test.outputs.verification_source_commit }}
           MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
           MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
           VISUAL_BASELINE_EVIDENCE_JSON: ${{ inputs.visual_baseline_evidence_json || '' }}
@@ -493,6 +564,7 @@ jobs:
           const finalAcceptancePublication=false;
           const report={
             commit:process.env.GITHUB_SHA,
+            verificationSource:{runId:process.env.VERIFICATION_RUN_ID,sourceCommit:process.env.VERIFICATION_SOURCE_COMMIT},
             workflow:'mobile-closed-loop/30',
             contractProfileId:'closed-loop-completion-profile/1',
             projectSchema:'closed-loop-project/3',
