@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
-const {createBrowserReadiness:readinessFactory}=await import(pathToFileURL(path.resolve(process.env.BROWSER_READINESS_SOURCE||'operator-browser-driver.mjs')));
+const {createBrowserReadiness:readinessFactory,activateOperatorControl}=await import(pathToFileURL(path.resolve(process.env.BROWSER_READINESS_SOURCE||'operator-browser-driver.mjs')));
 const boundedWait=async(fn)=>{for(let i=0;i<6;i++){const value=await fn();if(value)return value;}throw new Error('Controlled destination never became ready');};
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
@@ -92,18 +92,22 @@ await check('VERIFIER-CONSUMER-INTERACTION','Every browser operator control wait
   for(const action of ['click','fill']){
    let release,actions=0;const held=new Promise(resolve=>{release=resolve;}),blocked=Symbol('waiting');
    const e=environment({controlledLoad:async(context,paint)=>{context.document.readyState='complete';paint();await held;}});e.run();await flush();
-   const button={disabled:false,parentElement:null,getBoundingClientRect(){return {top:0,left:0,bottom:44,right:180,width:180,height:44};},scrollIntoView(){},click(){actions++;},dispatchEvent(){actions++;},value:''};e.nodes.set('test-control',button);
+   const button={disabled:false,parentElement:null,getBoundingClientRect(){return {top:0,left:0,bottom:44,right:180,width:180,height:44};},contains:node=>node===button,scrollIntoView(){},click(){actions++;},dispatchEvent(){actions++;},value:''};e.nodes.set('test-control',button);
+   const inputEvents=[],cdp={async send(method,params){assert.equal(method,'Input.dispatchMouseEvent','VERIFIER_CONSUMER_POINTER_ORACLE');inputEvents.push(params);if(params.type==='mouseReleased')actions++;}};
+   e.context.document.elementFromPoint=()=>button;
+   e.context.getComputedStyle=()=>({display:'block',visibility:'visible',opacity:'1'});
    const source=fs.readFileSync(file,'utf8');let extracted='';
    for(const name of functions){const start=kind==='driver'?source.lastIndexOf('async function '+name+'('):source.indexOf('async function '+name+'(');assert(start>=0);const next=source.indexOf('\n',start);let end=source.indexOf('\nasync function ',start+1);if(kind==='driver')end=source.indexOf('\n  async function ',start+1);assert(end>start);extracted+=source.slice(start,end)+'\n';}
    const evaluate=async(...args)=>{const result=vm.runInContext(args.at(-1),e.context);await flush();await e.advance(0);return result;},wait=async(_cdp,expression)=>{if(!await evaluate(expression))throw blocked;return true;};
-   Object.assign(e.context,{evalValue:evaluate,evaluate,waitExpr:wait,waitFor:wait,events:[],assert:(v,m)=>assert.ok(v,m),until:async fn=>{if(!await fn())throw blocked;return true;}});e.context.assert.equal=assert.equal;
+   Object.assign(e.context,{activateOperatorControl,page:cdp,evalValue:evaluate,evaluate,waitExpr:wait,waitFor:wait,events:[],assert:(v,m)=>assert.ok(v,m),until:async fn=>{if(!await fn())throw blocked;return true;}});e.context.assert.equal=assert.equal;
    e.context.createBrowserReadiness=(cdp,evaluate,options)=>readinessFactory(cdp,evaluate,{...options,wait:e.context.until});e.context.readiness=e.context.createBrowserReadiness({},evaluate);
    vm.runInContext(extracted,e.context);
-   const invoke=()=>kind==='driver'?e.context[action]('#test-control','draft'):e.context[action]({},'#test-control','draft');
+   const invoke=()=>kind==='driver'?e.context[action]('#test-control','draft'):e.context[action](cdp,'#test-control','draft');
    try{await invoke();}catch(error){if(error!==blocked)throw error;}
    const before={...e.observed(),actions};release();await flush();
    await invoke();const after={...e.observed(),actions};
-   observed.push({file,action,before,after});
+   if(action==='click')assert.deepEqual(inputEvents.map(event=>event.type),['mousePressed','mouseReleased'],'VERIFIER_CONSUMER_POINTER_ORACLE');
+   observed.push({file,action,before,after,inputEvents});
   }
  }
  const failed=observed.filter(row=>row.before.actions!==0||row.after.actions===0);

@@ -48,9 +48,8 @@ const cases=[];
  assert.equal(interactiveWaits,1,'Normal navigation stopped enforcing application interactivity.');
  cases.push({caseId:'BROWSER-BLOCKED-STARTUP-DOCUMENT-BOUNDARY',result:'PASS'});
 }
-// Execute the browser driver's actual activation path. Supplied rectangles
-// prove its branch decisions, not real-browser layout. Browser gates retain
-// their independent layout/scroll/visibility oracles.
+// Execute the actual shared activation policy with supplied DOM observations.
+// This proves decision/dispatch logic; real-browser layout remains mandatory.
 {
  let driver=fs.readFileSync(process.env.OPERATOR_DRIVER_SOURCE||'operator-browser-driver.mjs','utf8');
  if(process.argv.includes('--fault=forced-operator-scroll')){
@@ -60,6 +59,8 @@ const cases=[];
  }
  const start=driver.indexOf('async function click(selector)'),end=driver.indexOf('async function fill(',start);
  assert.ok(start>=0&&end>start,'The actual browser-driver control activation is required.');
+ const helperStart=driver.indexOf('export async function activateOperatorControl('),helperEnd=driver.indexOf('// This starts its own disposable CI browser.',helperStart);
+ const helper=helperStart<0?'':driver.slice(helperStart,helperEnd).replace('export async function','async function');
  const rect=(top,left=24,width=180,height=44)=>({top,left,width,height,bottom:top+height,right:left+width});
  for(const specimen of [
   {name:'visible centre',box:rect(310),scroll:false},
@@ -69,24 +70,61 @@ const cases=[];
   {name:'partly below',box:rect(825),scroll:true},
   {name:'partly left',box:rect(310,-8),scroll:true},
   {name:'partly right',box:rect(310,380),scroll:true},
-  {name:'inside closed disclosure',box:rect(210),disclosure:true,scroll:false}
+  {name:'inside closed disclosure',box:rect(210),disclosure:true,scroll:false},
+  {name:'display none',box:rect(310),display:'none',reject:true},
+  {name:'visibility hidden',box:rect(310),visibility:'hidden',reject:true},
+  {name:'zero area',box:rect(310,24,0,0),reject:true},
+  {name:'obstructed control',box:rect(310),obscured:true,reject:true},
+  {name:'disabled control',box:rect(310),disabled:true,reject:true},
+  {name:'inert control',box:rect(310),inert:true,reject:true},
+  {name:'layout hides revealed control',box:rect(900),hideAfterReveal:true,reject:true}
  ]){
-  const moves=[],events=[];let clicks=0,opened=!specimen.disclosure;
-  const disclosure={tagName:'DETAILS',open:false,parentElement:null,querySelector(){return {click(){opened=true;disclosure.open=true;}};}};
-  const target={disabled:false,parentElement:specimen.disclosure?disclosure:null,
-    getBoundingClientRect(){assert.ok(opened,'Visibility is measured after opening the target disclosure.');return specimen.box;},
-    scrollIntoView(options){moves.push({...options});},click(){clicks++;}};
-  const dom=createVerifierRuntime({document:{querySelector:()=>target},innerHeight:852,innerWidth:393,getComputedStyle:()=>({visibility:'visible',display:'block'})});
-  const click=Function('idle','evaluate','events','performance','assert',driver.slice(start,end)+';return click;')(
-    async()=>{},async expression=>vm.runInContext(expression,dom),events,performance,assert);
-  await click('#current-action');
-  assert.equal(clicks,1,'DRIVER_ACTIVATION_ORACLE: one selected control must be activated exactly once');
-  assert.equal(moves.length,specimen.scroll?1:0,'DRIVER_VIEW_PRESERVATION_ORACLE: activating an already visible control must not manufacture a new view: '+specimen.name);
-  if(specimen.scroll)assert.deepEqual(moves,[{block:'nearest',inline:'nearest'}],'DRIVER_VIEW_PRESERVATION_ORACLE: a necessary reveal must not recenter the complete view');
-  assert.equal(events.length,1,'One actual driver activation must retain one event.');
-  cases.push({caseId:'DRIVER-VIEW-PRESERVATION',class:specimen.name,result:'PASS',actualBrowser:false,scrollRequests:moves.length,activations:clicks});
+  const moves=[],events=[],inputEvents=[];let clicks=0,directClicks=0,opened=!specimen.disclosure,box={...specimen.box},pendingReveal=false,hidden=false;
+  const summary={disabled:false,parentElement:null,getBoundingClientRect:()=>rect(100),contains:n=>n===summary,click(){opened=true;disclosure.open=true;directClicks++;}};
+  const disclosure={tagName:'DETAILS',open:false,parentElement:null,querySelector(){return summary;}};
+  const target={disabled:Boolean(specimen.disabled),parentElement:specimen.disclosure?disclosure:null,contains:n=>n===target,closest:()=>specimen.inert?{}:null,
+   getBoundingClientRect(){assert.ok(opened,'Visibility is measured after opening the target disclosure.');return box;},
+   scrollIntoView(options){moves.push({...options});pendingReveal=true;},click(){clicks++;directClicks++;}};
+  const currentNode=()=>specimen.disclosure&&!disclosure.open?summary:target;
+  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured?{}:currentNode()},innerHeight:852,innerWidth:393,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
+  const idle=async()=>{if(pendingReveal){box=rect(Math.max(0,Math.min(852-box.height,box.top)),Math.max(0,Math.min(393-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);pendingReveal=false;}};
+  const page={send:async(method,params)=>{assert.equal(method,'Input.dispatchMouseEvent','DRIVER_POINTER_AUTHORITY_ORACLE');inputEvents.push(params);if(params.type==='mouseReleased'){if(specimen.disclosure&&!disclosure.open){opened=true;disclosure.open=true;}else clicks++;}}};
+  const click=Function('idle','evaluate','events','performance','assert','page',helper+driver.slice(start,end)+';return click;')(idle,async expression=>vm.runInContext(expression,dom),events,performance,assert,page);
+  let rejection=null;try{await click('#current-action');}catch(error){rejection=error;}
+  if(specimen.reject){
+   assert.equal(clicks,0,'DRIVER_INTERACTABILITY_ORACLE: hidden or obstructed control was activated: '+specimen.name);
+   assert.ok(rejection?.message.startsWith('DRIVER_INTERACTABILITY_ORACLE'),'DRIVER_INTERACTABILITY_ORACLE: rejection must identify the unavailable control: '+specimen.name);
+   assert.equal(events.length,0,'DRIVER_INTERACTABILITY_ORACLE: rejected activation was recorded as success');
+   assert.equal(inputEvents.length,0,'DRIVER_INTERACTABILITY_ORACLE: rejected activation sent input');
+  }else{
+   if(rejection)throw rejection;
+   assert.equal(clicks,1,'DRIVER_ACTIVATION_ORACLE: one selected control must be activated exactly once');
+   assert.equal(directClicks,0,'DRIVER_POINTER_AUTHORITY_ORACLE: a DOM click is not native operator input');
+   assert.equal(inputEvents.length,specimen.disclosure?4:2,'DRIVER_POINTER_AUTHORITY_ORACLE: each activation needs one press/release pair');
+   for(let index=0;index<inputEvents.length;index+=2){assert.equal(inputEvents[index].type,'mousePressed');assert.equal(inputEvents[index+1].type,'mouseReleased');assert.equal(inputEvents[index].x,inputEvents[index+1].x);assert.equal(inputEvents[index].y,inputEvents[index+1].y);}
+   assert.equal(moves.length,specimen.scroll?1:0,'DRIVER_VIEW_PRESERVATION_ORACLE: activating an already visible control must not manufacture a new view: '+specimen.name);
+   if(specimen.scroll)assert.deepEqual(moves,[{block:'nearest',inline:'nearest'}],'DRIVER_VIEW_PRESERVATION_ORACLE: a necessary reveal must not recenter the complete view');
+   assert.equal(events.length,1,'One actual driver activation must retain one event.');
+  }
+  cases.push({caseId:'DRIVER-VIEW-PRESERVATION',class:specimen.name,result:'PASS',actualBrowser:false,scrollRequests:moves.length,activations:clicks,nativeInputEvents:inputEvents.length,rejection:rejection?.message||null});
  }
 }
+
+// Run each existing caller's function with a controlled shared-policy boundary.
+// A copied DOM-click implementation cannot satisfy this caller contract.
+for(const file of ['verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs']){
+ const source=fs.readFileSync(file,'utf8'),start=source.indexOf('async function click(cdp,'),end=source.indexOf('\nasync function ',start+5);
+ assert.ok(start>=0&&end>start,'DRIVER_CONSUMER_ORACLE: missing caller '+file);
+ const invocations=[],cdp={fixture:file};
+ const policy=async(channel,evaluate,idle,selector)=>{assert.equal(channel,cdp);await idle();assert.equal(await evaluate('CONTROLLED_QUERY'),'CONTROLLED_RESULT');invocations.push(selector);};
+ const evaluate=async(channel,expression)=>{assert.equal(channel,cdp);return expression==='CONTROLLED_QUERY'?'CONTROLLED_RESULT':true;};
+ const click=Function('activateOperatorControl','evalValue','evaluate','waitForIdle','assert',source.slice(start,end)+';return click;')(policy,evaluate,evaluate,async()=>{},assert);
+ await click(cdp,'#controlled-target');
+ assert.deepEqual(invocations,['#controlled-target'],'DRIVER_CONSUMER_ORACLE: '+file+' must use the shared observed pointer activation');
+ cases.push({caseId:'DRIVER-CONSUMER-AUTHORITY',consumer:file,result:'PASS',actualBrowser:false});
+}
+
+if(process.argv.includes('--driver-activation-only')){console.log(JSON.stringify({operatorActivation:'PASS',cases,actualBrowser:false}));process.exit(0);}
 
 function node(id){return {id,disabled:false,hidden:true,textContent:'',isConnected:true,attrs:{},setAttribute(k,v){this.attrs[k]=String(v);},removeAttribute(k){delete this.attrs[k];},getAttribute(k){return this.attrs[k]??null;},focus(){},classList:{contains(){return false;},add(){},remove(){}},querySelector(){return null;}};}
 const nodes=new Map(['project-picker','new-project','export-project','header-backup-project','import-project','import-file','save-prompt','app-operation-status','operation-label','app-live-status','app','storage-status','history-undo','project-history'].map(id=>['#'+id,node(id)]));

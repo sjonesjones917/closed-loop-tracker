@@ -20,6 +20,13 @@ const coverageMetric=(metricId,passed,total,includedIds,excluded=[])=>{
   assert(ids.length===total,`${metricId} closed-universe IDs do not reconcile with denominator ${total}.`);
   return Object.freeze({metricId,derivationVersion:'closed-loop-definition-of-done-metrics/2',universeDefinition:`Exact verifier-owned closed universe for ${metricId}`,numerator:passed,denominator:total,includedIds:ids,excludedIds:Array.isArray(excluded)?excluded:[],scopeHash:globalThis.closedLoopHash.sha256Value({metricId,includedIds:ids,excludedIds:excluded}),evidenceReferences:['verify-definition-of-done.mjs'],value:passed/total,disposition:passed===total?'SATISFIED':'VIOLATED'});
 };
+// Source text can identify inspection targets, but cannot measure behavioral
+// success or count accepted invalid operations. Preserve unknown evidence.
+function sourceInspectionMetric(metricId,proofs,evidenceReferences){
+  const includedIds=proofs.map(([id])=>id);
+  return Object.freeze({metricId,derivationVersion:'closed-loop-static-inspection/1',universeDefinition:'Source references inspected for this metric; an executed behavioral universe has not been established by this inspection.',numerator:0,denominator:includedIds.length,includedIds,excludedIds:[],scopeHash:globalThis.closedLoopHash.sha256Value(includedIds),evidenceReferences,value:null,disposition:'UNKNOWN',evidenceBasis:'STATIC_SOURCE_INSPECTION_ONLY',applicationConformanceEstablished:false,sourceInspection:{matched:proofs.filter(([,present])=>present).length,total:proofs.length}});
+}
+function unobservedZeroCounts(names){return Object.fromEntries(names.map(name=>[name,null]));}
 const producers=new Set(Object.values(schema.PRODUCER));
 const fieldRows=[];
 for(const [name,def] of Object.entries(schema.JOB_FIELDS))fieldRows.push({kind:'job',owner:name,def});
@@ -99,24 +106,24 @@ for(const token of ['evaluateEvidenceContract','evaluateResultConsistency','effe
 const scopeKeys=[...new Set(Object.values(schema.SCOPE_REQUIREMENTS||{}).flat())];
 const scopeKeyProofs=scopeKeys.map(key=>ingestionTestSource.includes(`'${key}'`)||ingestionTestSource.includes(`"${key}"`));
 assert(ingestionTestSource.includes('scopeNegative')&&ingestionTestSource.includes("code==='STALE_SCOPE'"),'Stale-scope mutation matrix is not executable.');
-const currentScopeSelectorMetric=coverageMetric('CURRENT_SCOPE_SELECTOR_COVERAGE',scopeKeyProofs.filter(Boolean).length,scopeKeyProofs.length,scopeKeys);
+const currentScopeSelectorMetric=sourceInspectionMetric('CURRENT_SCOPE_SELECTOR_COVERAGE',scopeKeys.map((key,index)=>[key,scopeKeyProofs[index]]),['verify-ingestion.mjs:source inspection']);
 const currentScopeSelectorCoverage=currentScopeSelectorMetric.value;
-assert(currentScopeSelectorCoverage===1,'Current-scope selector coverage is not 100%.');
+
 
 const verificationMatrixProofs=[['verification-key',engineSource.includes('verificationKey(record)')],['expected-count',engineSource.includes('expectedVerificationCount:matrix.expected.length')],['matrix-coverage',engineSource.includes('verificationCoverage:matrix.coverage')],['stage12-nonempty-regression',completeTestSource.includes('Stage 12 completed without verification triples.')],['full-cycle-triple-coverage',fullCycleSource.includes('verificationTripleCoverage:engine.coverageMetrics(reloaded).verificationCoverage')]];
-const exactReqRunTestMetric=coverageMetric('REQ_RUN_TEST_COVERAGE',verificationMatrixProofs.filter(([,ok])=>ok).length,verificationMatrixProofs.length,verificationMatrixProofs.map(([id])=>id));
+const exactReqRunTestMetric=sourceInspectionMetric('REQ_RUN_TEST_COVERAGE',verificationMatrixProofs,['workflow-engine.js:source inspection','verify-complete.mjs:source inspection','verify-full-cycle.mjs:source inspection']);
 const exactReqRunTestCoverage=exactReqRunTestMetric.value;
-assert(exactReqRunTestCoverage===1,'Exact REQ × RUN × TEST coverage proof is incomplete.');
+
 
 const regressionProofs=[['effective-regression-satisfied',engineSource.includes("effectiveRegressionDetermination(project,r).determination==='SATISFIED'")],['stale-regression-rejected',completeTestSource.includes('A stale regression success resolved a current material defect.')],['current-regression-closure',completeTestSource.includes('currentRegressionClosure:true')],['post-correction-full-cycle',fullCycleSource.includes("PHASE:'POST_CORRECTION',RESULT:'SATISFIED'")],['unchanged-confirmation-full-cycle',fullCycleSource.includes("PHASE:'UNCHANGED_CONFIRMATION',RESULT:'SATISFIED'")]];
-const applicableCurrentRegressionMetric=coverageMetric('APPLICABLE_CURRENT_REGRESSION_SUCCESS',regressionProofs.filter(([,ok])=>ok).length,regressionProofs.length,regressionProofs.map(([id])=>id));
+const applicableCurrentRegressionMetric=sourceInspectionMetric('APPLICABLE_CURRENT_REGRESSION_SUCCESS',regressionProofs,['workflow-engine.js:source inspection','verify-complete.mjs:source inspection','verify-full-cycle.mjs:source inspection']);
 const applicableCurrentRegressionSuccess=applicableCurrentRegressionMetric.value;
-assert(applicableCurrentRegressionSuccess===1,'Applicable current regression-success proof is incomplete.');
+
 
 const evidenceChainProofs=[['construct-evidence-chains',engineSource.includes('function constructEvidenceChains(project)')],['effective-determination',engineSource.includes('effective=effectiveDetermination(collection,result,test,project)')],['evidence-contract',engineSource.includes('contract=evaluateEvidenceContract(test,result,null,project)')],['nonsatisfied-result-missing',engineSource.includes("if(effective!=='SATISFIED')missing.push('NON_SATISFIED_EFFECTIVE_RESULT:'+tid)")],['evidence-sufficiency',engineSource.includes('sufficiency=evaluateEvidenceSufficiency(project,{requirement,test,result})')],['insufficient-evidence-missing',engineSource.includes("if(!contract.sufficient||!sufficiency.sufficient)missing.push('INSUFFICIENT_EVIDENCE:'+tid)")],['full-cycle-construction',fullCycleSource.includes('engine.constructEvidenceChains(p)')],['full-cycle-stage29-gate',fullCycleSource.includes("evidenceChains:engine.gate(29,reloaded).complete")],['missing-links-not-invented',completeTestSource.includes('Missing evidence-chain links remain missing; the application does not invent them.')],['missing-links-fabrication-regression',completeTestSource.includes('Missing evidence links were fabricated as complete.')]];
-const mandatoryEvidenceChainMetric=coverageMetric('MANDATORY_EVIDENCE_CHAIN_STRUCTURAL_COVERAGE',evidenceChainProofs.filter(([,ok])=>ok).length,evidenceChainProofs.length,evidenceChainProofs.map(([id])=>id));
+const mandatoryEvidenceChainMetric=sourceInspectionMetric('MANDATORY_EVIDENCE_CHAIN_STRUCTURAL_COVERAGE',evidenceChainProofs,['workflow-engine.js:source inspection','verify-complete.mjs:source inspection','verify-full-cycle.mjs:source inspection']);
 const mandatoryEvidenceChainCoverage=mandatoryEvidenceChainMetric.value;
-assert(mandatoryEvidenceChainCoverage===1,'Mandatory evidence-chain coverage proof is incomplete.');
+
 
 const artifactIdentityProofsFor=(stage28Source=stage28TestSource)=>[
   ['current-stage27-release-bound',engineSource.includes('Artifact identity verification requires the current bound Stage 27 ACCEPTED release.')],
@@ -134,17 +141,17 @@ const artifactIdentityProofsFor=(stage28Source=stage28TestSource)=>[
 const artifactIdentityProofs=artifactIdentityProofsFor();
 const stage28FixtureMutation=stage28TestSource.replace("rejected.push('metadata-only-byte-claim')","rejected.push('metadata-only-byte-claim-removed')");
 assert(artifactIdentityProofsFor(stage28FixtureMutation).some(([id,ok])=>id==='permanent-stage28-invalid-fixture'&&!ok),'The release-artifact identity metric did not detect intentional removal of a required Stage 28 invalid fixture.');
-const releaseArtifactIdentityMetric=coverageMetric('RELEASE_ARTIFACT_IDENTITY_COVERAGE',artifactIdentityProofs.filter(([,ok])=>ok).length,artifactIdentityProofs.length,artifactIdentityProofs.map(([id])=>id));
+const releaseArtifactIdentityMetric=sourceInspectionMetric('RELEASE_ARTIFACT_IDENTITY_COVERAGE',artifactIdentityProofs,['workflow-engine.js:source inspection','verify-stage28-artifact-delivery-intent.mjs:source inspection']);
 const releaseArtifactIdentityCoverage=releaseArtifactIdentityMetric.value;
-assert(releaseArtifactIdentityCoverage===1,'Release artifact identity coverage proof is incomplete.');
+
 
 const appendOnlyCollections=Object.entries(schema.RECORD_SCHEMAS).filter(([,def])=>def.commitPolicy===schema.COLLECTION_POLICIES.APPEND_ONLY).map(([name])=>name);
 assert(appendOnlyCollections.length>0,'No append-only canonical collections were discovered.');
 const zeroProofs={unauthorizedFieldMutationsAccepted:ingestionTestSource.includes("negative('agent application field'")&&ingestionTestSource.includes('FIELD_OWNERSHIP_VIOLATION'),canonicalMutationsBeforeAcceptance:ingestionTestSource.includes('mutated canonical state before operator acceptance')&&fullCycleSource.includes('mutated before acceptance'),partialCommitsAfterInjectedFailure:completeTestSource.includes('Storage failure during accepted-state persistence did not roll back exact prior state.')&&browserExtraSource.includes('Injected IndexedDB project-write failure produced a partial commit.'),staleProposalsAccepted:ingestionTestSource.includes('Proposal stale after project revision change was accepted.')&&ingestionTestSource.includes("error.code==='STALE_PROPOSAL'"),crossProjectRelationshipsAccepted:ingestionTestSource.includes("negative('cross-project response'")&&ingestionTestSource.includes("negativeAt('unresolved relationship'")&&ingestionTestSource.includes('UNRESOLVED_RELATIONSHIP'),historicalScopeSatisfyingCurrentGates:completeTestSource.includes('Historical scope satisfied current selector.')&&completeTestSource.includes('Unscoped historical record satisfied current selector.')&&completeTestSource.includes('Partially scoped historical record satisfied current selector.'),unmatchedDeliveryFilesAuthorized:engineSource.includes('Audited and delivery artifact counts differ from the current delivery candidate.')&&engineSource.includes('Artifact identity is not the exact candidate artifact-to-filename mapping.')&&engineSource.includes('Delivery filenames do not match the authorized candidate filenames.'),appendOnlyHistoryRewritesAccepted:appendOnlyCollections.every(name=>schema.RECORD_SCHEMAS[name].appendOnly!==false)&&ingestionTestSource.includes('Non-reserved collection accepted targetId update semantics.'),favorableAgentVerdictsOverridingContradictoryObservations:semanticTestSource.includes('contradictory/missing evidence state was accepted')&&semanticTestSource.includes('semanticFalseAcceptanceInvariant:true'),structurallyInsufficientEvidenceProducingMandatorySatisfaction:completeTestSource.includes('Prose satisfied a byte test.')&&semanticTestSource.includes('semanticFalseAcceptanceInvariant:true'),externallySupportedUnestablishedIndependenceTreatedAsProven:semanticTestSource.includes('Self-asserted verifier identity became release-grade evidence')&&semanticTestSource.includes('releaseGradeIndependence:true')};
-const zeroAcceptanceCounters=Object.fromEntries(Object.entries(zeroProofs).map(([name,proved])=>[name,proved?0:1]));
-for(const [name,count] of Object.entries(zeroAcceptanceCounters))assert(count===0,`${name} is not proven to be zero.`);
+const zeroAcceptanceCounters=unobservedZeroCounts(Object.keys(zeroProofs));
+// Executed suites must establish these counters; source matches cannot do so.
 
 const coverageMetrics={fieldOwnershipCoverage:fieldOwnershipMetric,applicationDerivationCoverage:applicationDerivationMetric,typedRelationshipCoverage:typedRelationshipMetric,acceptedAgentValueExtractionCoverage:acceptedAgentValueExtractionMetric,acceptedRelationshipProvenanceCoverage:acceptedRelationshipProvenanceMetric,currentScopeSelectorCoverage:currentScopeSelectorMetric,exactReqRunTestCoverage:exactReqRunTestMetric,applicableCurrentRegressionSuccess:applicableCurrentRegressionMetric,mandatoryEvidenceChainCoverage:mandatoryEvidenceChainMetric,releaseArtifactIdentityCoverage:releaseArtifactIdentityMetric};
 assert(Object.values(coverageMetrics).every(metric=>metric.denominator>0),'No coverage metric may publish 100% from an empty denominator.');
 
-console.log(JSON.stringify({fieldOwnershipCoverage,applicationDerivationCoverage,typedRelationshipCoverage,acceptedAgentValueExtractionCoverage,acceptedRelationshipProvenanceCoverage,currentScopeSelectorCoverage,exactReqRunTestCoverage,applicableCurrentRegressionSuccess,mandatoryEvidenceChainCoverage,releaseArtifactIdentityCoverage,coverageMetrics,...zeroAcceptanceCounters,canonicalFieldCount:fieldRows.length,applicationFieldCount:applicationRows.length,agentFieldCount:agentRows.length,typedRelationshipCount:relationshipRows.length,currentScopeIdentityCount:scopeKeys.length,appendOnlyCollectionCount:appendOnlyCollections.length,stageCount:core.STAGE_COUNT,singlePagesWorkflow:true,applicationTestExecutorCount:engine.applicationTestCapabilities().length,centralAdjudication:true,deployedByteWiringFaults},null,2));
+console.log(JSON.stringify({fieldOwnershipCoverage,applicationDerivationCoverage,typedRelationshipCoverage,acceptedAgentValueExtractionCoverage,acceptedRelationshipProvenanceCoverage,currentScopeSelectorCoverage,exactReqRunTestCoverage,applicableCurrentRegressionSuccess,mandatoryEvidenceChainCoverage,releaseArtifactIdentityCoverage,coverageMetrics,...zeroAcceptanceCounters,zeroInvariantSourceInspection:zeroProofs,canonicalFieldCount:fieldRows.length,applicationFieldCount:applicationRows.length,agentFieldCount:agentRows.length,typedRelationshipCount:relationshipRows.length,currentScopeIdentityCount:scopeKeys.length,appendOnlyCollectionCount:appendOnlyCollections.length,stageCount:core.STAGE_COUNT,singlePagesWorkflow:true,applicationTestExecutorCount:engine.applicationTestCapabilities().length,centralAdjudication:true,deployedByteWiringFaults},null,2));

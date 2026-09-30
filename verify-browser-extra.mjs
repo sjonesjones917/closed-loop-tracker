@@ -1,4 +1,4 @@
-import {createBrowserReadiness} from './operator-browser-driver.mjs';
+import {createBrowserReadiness,activateOperatorControl} from './operator-browser-driver.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {createHash} from 'node:crypto';
 import {spawn} from 'node:child_process';
@@ -43,7 +43,7 @@ async function assertInlineError(cdp,message){
  assert(result.stable>=2&&result.visible&&result.inView&&result.focused&&result.text.includes(message),'Actionable in-page error must remain visible and focused after layout settles: '+JSON.stringify(result));
  return result;
 }
-async function click(cdp,selector){await waitForIdle(cdp);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled)return false;e.click();return true})()`);assert(ok,`Missing or disabled clickable ${selector}`);await waitForIdle(cdp);}
+async function click(cdp,selector){return activateOperatorControl(cdp,expression=>evalValue(cdp,expression),()=>waitForIdle(cdp),selector);}
 async function selectProjectByJobId(cdp,jobId){
  await waitForIdle(cdp);
  const values=await evalValue(cdp,`Array.from(document.querySelector('#project-picker')?.options||[]).map(option=>option.value)`);
@@ -204,7 +204,7 @@ async function main(){
   await click(cdp,'[data-view=\"Project\"]');await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;return true;})()`);await click(cdp,'#duplicate-project');await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.includes('— copy')`);
   const copied=await activeProject(cdp);assert(copied.job.JOB_ID!==renamedJob,'Start from copy reused JOB_ID.');assert((copied.projectData?.acceptedChanges||[]).length===0&&(copied.projectData?.rawResponses||[]).length===0&&(copied.projectData?.artifacts||[]).length===0,'Start from copy carried workflow truth into new project.');assert(copied.job.CURRENT_STAGE==='STAGE 01'&&String(copied.stages?.[1]?.status||'')!=='COMPLETE'&&Object.values(copied.stages||{}).filter(x=>Number(x.number)>1).every(x=>x.status==='NOT STARTED'),'Start from copy carried progressed workflow state beyond the Stage 01 reset event.');
   const copiedJob=copied.job.JOB_ID;await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;return true;})()`);await click(cdp,'#archive-project');await waitExpr(cdp,`!(document.querySelector('#current-project-summary')?.dataset?.projectId===${JSON.stringify(copiedJob)})`);assert(!(await evalValue(cdp,`Array.from(document.querySelector('#project-picker')?.options||[]).some(o=>o.textContent.includes(${JSON.stringify(copiedJob)}))`)),'Archived project remained in active project selector.');
-  await click(cdp,'[data-view=\"Project\"]');await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const a=Array.from(document.querySelectorAll('[data-restore-project]')).find(x=>x.dataset.restoreProject===${JSON.stringify(copiedJob)});if(!a)return false;a.click();return true;})()`);await waitExpr(cdp,`(document.querySelector('#current-project-summary')?.dataset?.projectId===${JSON.stringify(copiedJob)})`);
+  await click(cdp,'[data-view=\"Project\"]');await click(cdp,'[data-restore-project='+JSON.stringify(copiedJob)+']');await waitExpr(cdp,`(document.querySelector('#current-project-summary')?.dataset?.projectId===${JSON.stringify(copiedJob)})`);
   await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const cards=Array.from(d.querySelectorAll('details.record-card'));const storage=cards.find(x=>x.textContent.includes('Storage & integrity'));if(storage)storage.open=true;return true;})()`);await click(cdp,'#verify-stored-files');await waitExpr(cdp,`document.querySelector('#app-live-status')?.textContent?.includes('stored artifact bytes verified')`);
   await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const z=document.querySelector('#project-danger-zone');if(!z)return false;z.open=true;return true;})()`);await fill(cdp,'#delete-project-confirmation',copiedJob);await waitExpr(cdp,`document.querySelector('#delete-project')&&!document.querySelector('#delete-project').disabled`);await click(cdp,'#delete-project');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>!all.some(p=>p.job?.JOB_ID===${JSON.stringify(copiedJob)}))`,12000);assert(!(await evalValue(cdp,`closedLoopProjectStore.listArtifacts(${JSON.stringify(copiedJob)}).then(x=>x.length)`)),'Deleted project left artifact Blob rows behind.');
 

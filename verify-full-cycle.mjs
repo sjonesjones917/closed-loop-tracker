@@ -1,4 +1,4 @@
-import {spawnSync} from 'node:child_process';
+import {runVerifierSync,detectedFault} from './verify-conformance-regressions.mjs';
 import {projectStoreRuntime,captureArtifactFixture} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -22,9 +22,9 @@ const timingInjectedFaults=[];
 if(!timingFault&&(!process.argv.includes('--timing-only')||process.argv.includes('--timing-fault-matrix'))){
  const original=fs.readFileSync('workflow-engine.js','utf8'),directory='conformance-regression-evidence/timing-faults';fs.mkdirSync(directory,{recursive:true});
  for(const fault of timingFaultDefinitions){
-  const started=Date.now(),child=spawnSync(process.execPath,[process.argv[1],'--timing-only','--timing-fault='+fault.id],{encoding:'utf8',timeout:120000,killSignal:'SIGKILL',maxBuffer:32*1024*1024}),raw=String(child.stdout||'')+String(child.stderr||'');
+  const started=Date.now(),child=runVerifierSync(process.execPath,[import.meta.filename,'--timing-only','--timing-fault='+fault.id],{encoding:'utf8',timeout:120000,killSignal:'SIGKILL',maxBuffer:32*1024*1024}),raw=String(child.stdout||'')+String(child.stderr||'');
   fs.writeFileSync(directory+'/'+fault.id+'.stdout.log',child.stdout||'');fs.writeFileSync(directory+'/'+fault.id+'.stderr.log',child.stderr||'');
-  const result={id:fault.id,oracle:fault.oracle,status:child.error?.code==='ETIMEDOUT'?'TIMEOUT':child.status!==0&&raw.includes(fault.oracle)?'DETECTED':'NOT_DETECTED',exitCode:child.status,signal:child.signal,durationMs:Date.now()-started};
+  const result={id:fault.id,oracle:fault.oracle,status:child.error?.code==='ETIMEDOUT'?'TIMEOUT':detectedFault(child,fault.oracle)?'DETECTED':'NOT_DETECTED',exitCode:child.status,signal:child.signal,durationMs:Date.now()-started};
   fs.writeFileSync(directory+'/'+fault.id+'.json',JSON.stringify(result,null,2)+'\n');timingInjectedFaults.push(result);
   if(result.status!=='DETECTED')throw new Error('TIMING_FAULT_DETECTION_ORACLE: '+JSON.stringify(result)+'\n'+raw);
  }

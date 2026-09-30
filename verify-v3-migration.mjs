@@ -1,8 +1,8 @@
+import {runVerifierSync,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
-import {spawnSync} from 'node:child_process';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const fault=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8)||null;
@@ -85,9 +85,9 @@ const profileless=context.closedLoopCore.createBlankState('JOB-PREPROFILE');dele
 
 const faults=[];
 if(!fault)for(const [injected,oracle] of [['foreign-observation','MIGRATION_EXTENSION_PRESERVATION_ORACLE'],['lost-extension','MIGRATION_EXTENSION_PRESERVATION_ORACLE'],['rewritten-raw-response','MIGRATION_RAW_RESPONSE_BYTES_ORACLE']]){
-  const run=spawnSync(process.execPath,[import.meta.filename,'--fault='+injected],{encoding:'utf8',timeout:60000,killSignal:'SIGKILL',maxBuffer:1024*1024});
+  const run=runVerifierSync(process.execPath,[import.meta.filename,'--fault='+injected],{encoding:'utf8',timeout:60000,killSignal:'SIGKILL',maxBuffer:1024*1024});
   assert.equal(run.error,undefined,'Migration fault gate timed out or could not execute');
-  assert.notEqual(run.status,0,'Undetected migration fault: '+injected);
+  assertDetectedFault(run,oracle,'Undetected migration fault: '+injected);
   assert.ok(run.stderr.includes(oracle),'Migration fault failed for an unrelated reason: '+run.stderr);
   faults.push({fault:injected,oracle,result:'DETECTED',exitCode:run.status,stdout:run.stdout,stderr:run.stderr});
 }

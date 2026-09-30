@@ -50,6 +50,25 @@ try{
    browser=await createOperatorBrowser({directory:path.join(directory,`${width}x${height}`),width,height});
    await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Acceptance viewport regression');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');
    await observe(browser,row,'After Save');
+   // Ordinary navigation uses native pointer events and retains the active version.
+   const beforeNavigation=await browser.readProject();
+   await browser.evaluate(`globalThis.__acceptancePointerEvents=[];document.addEventListener('click',event=>{if(event.target.closest?.('[data-view]'))globalThis.__acceptancePointerEvents.push({trusted:event.isTrusted,view:event.target.closest('[data-view]').dataset.view});},{capture:true});`);
+   await browser.click('[data-view="Project"]');await browser.click('[data-view="Workflow"]');
+   await observe(browser,row,'After ordinary Workflow navigation');
+   const navigation=await browser.evaluate('globalThis.__acceptancePointerEvents');
+   assert.deepEqual(navigation.map(event=>event.view),['Project','Workflow'],'DRIVER_POINTER_AUTHORITY_ORACLE: navigation did not activate the selected controls');
+   assert.ok(navigation.every(event=>event.trusted),'DRIVER_POINTER_AUTHORITY_ORACLE: programmatic DOM activation is not pointer input');
+   const afterNavigation=await browser.readProject();assert.equal(afterNavigation.projectSha256,beforeNavigation.projectSha256,'Ordinary navigation changed the active project version');
+   // One otherwise valid target becomes unclickable. The driver must reject it
+   // before an operation starts; restore exact style before continuing.
+   const controlStyle=await browser.evaluate(`document.querySelector('#next-export-prompt-file').getAttribute('style')`);
+   try{
+    await browser.evaluate(`document.querySelector('#next-export-prompt-file').style.visibility='hidden'`);
+    let rejectedReason=null;await assert.rejects(browser.click('#next-export-prompt-file'),error=>{rejectedReason=String(error.message);return rejectedReason.startsWith('DRIVER_INTERACTABILITY_ORACLE');});
+    row.faults.push({fault:'HIDDEN_OPERATOR_CONTROL',detected:true,actualError:rejectedReason});
+   }finally{await browser.evaluate(`(()=>{const node=document.querySelector('#next-export-prompt-file'),value=${JSON.stringify(controlStyle)};if(value===null)node.removeAttribute('style');else node.setAttribute('style',value);})()`);}
+   await observe(browser,row,'After restoring operator control');
+
    // Move to an actual later workflow panel; the distance comes from its DOM
    // geometry, not a stage-specific pixel offset. No scroll after observation.
    await browser.evaluate(`document.querySelector('#response-heading').scrollIntoView({block:'center'});new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);

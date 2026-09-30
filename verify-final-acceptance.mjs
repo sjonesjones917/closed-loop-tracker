@@ -62,6 +62,33 @@ function checkIntakeReporting(source){
  return cases;
 }
 const intakeMetricCases=checkIntakeReporting(intakeSource),intakeMetricFaults=[];
+// Exercise the actual metadata reporter's derivation with all source tokens
+// present and absent. Neither observation executes a behavioral case.
+const definitionSource=fs.readFileSync('verify-definition-of-done-invariants.mjs','utf8');
+function verifySourceInspectionReporting(source){
+ const start=source.indexOf('function sourceInspectionMetric('),end=source.indexOf('const producers=',start);assert.ok(start>=0&&end>start);
+ const context=createVerifierRuntime();
+ createVerifierRuntime.loadScript(context,source.slice(start,end),{filename:'definition-of-done:report-derivation'});
+ for(const present of [true,false]){
+  const metric=context.sourceInspectionMetric('CONTROLLED_SOURCE_INSPECTION',[['scope',present],['ownership',present]],['source-only fixture']);
+  assert.equal(metric.value,null,'STATIC_EVIDENCE_ORACLE: source tokens are not executed coverage');
+  assert.equal(metric.disposition,'UNKNOWN','STATIC_EVIDENCE_ORACLE: unexecuted behavior is unknown');
+  assert.equal(metric.applicationConformanceEstablished,false,'STATIC_EVIDENCE_ORACLE: no whole-application claim');
+  assert.equal(metric.sourceInspection.matched,present?2:0);
+  const counts=context.unobservedZeroCounts(['invalidWorkAccepted']);
+  assert.equal(counts.invalidWorkAccepted,null,'STATIC_ZERO_COUNT_ORACLE: no executions means unknown, not zero');
+ }
+}
+verifySourceInspectionReporting(definitionSource);
+const staticEvidenceFaults=[];
+for(const [fault,before,after,oracle] of [
+ ['source-match-as-execution',"evidenceReferences,value:null,disposition:'UNKNOWN'","evidenceReferences,value:1,disposition:'SATISFIED'",'STATIC_EVIDENCE_ORACLE'],
+ ['unobserved-count-as-zero','names.map(name=>[name,null])','names.map(name=>[name,0])','STATIC_ZERO_COUNT_ORACLE']
+]){
+ assert.equal(definitionSource.split(before).length,2,'STATIC_EVIDENCE_FAULT_ANCHOR_ORACLE: '+fault);
+ assert.throws(()=>verifySourceInspectionReporting(definitionSource.replace(before,after)),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith(oracle),'STATIC_EVIDENCE_FAULT_DETECTION_ORACLE: '+fault);
+ verifySourceInspectionReporting(definitionSource);staticEvidenceFaults.push({fault,result:'DETECTED',restored:'PASS'});
+}
 for(const [id,before,after] of [
  ['executed-observation-discarded',"'STAGE_01_REQUIRED_FILE_INSPECTION_ACCOUNTING'","'UNEXECUTED_INSPECTION'"],
  ['missing-file-inspection-masked','actualStage01.missingInspectionClaimRejected===true','true'],
@@ -102,20 +129,26 @@ const regressionEvidenceFaults=[];
 for(const [id,before,after] of [
  ['skipped-archive',"if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')",'if: always()'],
  ['lost-failure-archive'," || steps.conformance.outcome == 'failure'",''],
- ['lost-cancelled-archive'," || steps.conformance.outcome == 'cancelled'",''],
- ['silent-missing-evidence','          if-no-files-found: error\n\n      - name: Preserve the exact browser-verified Pages artifact','          if-no-files-found: warn\n\n      - name: Preserve the exact browser-verified Pages artifact']
+ ['lost-cancelled-archive'," || steps.conformance.outcome == 'cancelled'",'']
 ]){
  assert.ok(workflow.includes(before),'Missing evidence eligibility fault anchor: '+id);
  assert.throws(()=>assertRegressionEvidenceEligibility(workflow.replace(before,after)),/REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE/);assertRegressionEvidenceEligibility(workflow);regressionEvidenceFaults.push({fault:id,result:'DETECTED',restored:'PASS'});
 }
+// Mutate the named evidence step itself. Its following step has no authority
+// over whether missing execution evidence is rejected.
+const evidenceStep=workflow.match(/      - name: Preserve executed regression evidence\n([\s\S]*?)(?=\n      - name:|\n  [a-z])/)[0];
+assert.ok(evidenceStep.includes('if-no-files-found: error'),'Missing evidence eligibility fault anchor: silent-missing-evidence');
+const silentMissingEvidence=workflow.replace(evidenceStep,evidenceStep.replace('if-no-files-found: error','if-no-files-found: warn'));
+assert.throws(()=>assertRegressionEvidenceEligibility(silentMissingEvidence),/REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE/);
+assertRegressionEvidenceEligibility(workflow);regressionEvidenceFaults.push({fault:'silent-missing-evidence',result:'DETECTED',restored:'PASS'});
 const journeyInvocations=[...workflow.matchAll(/run_browser_verifier verify-complete-operator-journey\.mjs (\d+)m/g)];
 assert.equal(journeyInvocations.length,3,'Every candidate, main and re-verification journey remains required.');
 assert.ok(journeyInvocations.every(match=>Number(match[1])===120),'All existing complete journeys require the same finite120m execution budget.');
 
-for(const token of ['node verify-final-acceptance.mjs','const finalGate=evaluateFinalAcceptance(report,{visualBaseline})','report.finalAcceptancePublication=finalGate.accepted','report.releaseTagEligible=finalGate.accepted',"if: steps.acceptance.outputs.final_acceptance == 'true'"])assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')));
+for(const token of ['node verify-final-acceptance.mjs','const finalGate=evaluateFinalAcceptance(report,{visualBaseline})','report.finalAcceptancePublication=finalGate.accepted','report.releaseTagEligible=finalGate.accepted',"if: steps.acceptance.outputs.final_acceptance == 'true'"])assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),error=>error.code==='ERR_ASSERTION');
 const artifactFaults=[];
 for(const prefix of ['deployed','reverified-deployed']){
  const token='name: '+prefix+'-operator-journeys-${{ github.sha }}-${{ github.run_id }}';
  assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),/DEPLOYED_JOURNEY_ARTIFACT_ORACLE/);assertPublicationWiring(workflow);artifactFaults.push({fault:'remove-'+prefix+'-archive',oracle:'DEPLOYED_JOURNEY_ARTIFACT_ORACLE',result:'DETECTED',restored:'PASS'});
 }
-console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));
+console.log(JSON.stringify({finalAcceptanceGate:'PASS',coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,staticEvidenceFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {runtimePaths,manifestName,fullTestSteps,digest,validateSite,assertPassedRun,assertReceipt,promoteSite,sealSite} from './verified-site.mjs';
 
 const root=process.cwd(),temporary=fs.mkdtempSync(path.join(root,'.verify-artifact-'));
@@ -115,6 +115,33 @@ try{
   assert.deepEqual(fs.readFileSync(path.join(promoted,'app-core.js')),fs.readFileSync(path.join(site,'app-core.js')),'Failed promotion must not overwrite the last intact artifact.');
 
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
+  const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
+  assert.equal((testWorkflow.match(/^          node build-test-project\.mjs$/gm)||[]).length,1,'CI_DUPLICATE_FIXTURE_ORACLE: retained fixture verification runs once');
+  const conformancePosition=testWorkflow.indexOf('name: Shared production faults, bounded sequences, and executed observations');
+  for(const name of ['Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes','Acceptance viewport regression and targeted layout fault','Local Chromium operator path'])assert.ok(conformancePosition>=0&&testWorkflow.indexOf('name: '+name)>conformancePosition,'CI_PROOF_ORDER_ORACLE: non-browser proof precedes '+name);
+  // Exercise the actual shell functions, including pipefail. A connection
+  // diagnostic from an earlier phase must not excuse a later assertion failure.
+  const browserFunctions=[...workflow.matchAll(/^          run_browser_verifier\(\) \{\n[\s\S]*?^          \}/gm)].map(match=>match[0]);
+  assert.equal(browserFunctions.length,3,'BROWSER_GATE_WIRING_ORACLE');
+  const retryFixture=path.join(temporary,'retry-fixture');fs.mkdirSync(retryFixture);
+  fs.writeFileSync(path.join(retryFixture,'failure.mjs'),"import fs from 'node:fs';const p='attempts';const n=fs.existsSync(p)?Number(fs.readFileSync(p,'utf8'))+1:1;fs.writeFileSync(p,String(n));if(n===1){console.error('Earlier diagnostic: ECONNREFUSED 127.0.0.1:9222');console.error('AssertionError: CONTROLLED_BROWSER_ASSERTION');process.exitCode=1;}else console.log('Would pass after retry');\n");
+  fs.writeFileSync(path.join(retryFixture,'healthy.mjs'),"console.log('healthy browser-boundary control');\n");
+  const executeBrowserFunction=(source,fixture)=>spawnSync('bash',['-c','set -euo pipefail\n'+source.replaceAll('/tmp/','./')+'\nrun_browser_verifier '+fixture+' 2s'],{cwd:retryFixture,encoding:'utf8',timeout:5000,killSignal:'SIGKILL'});
+  for(const [index,source] of browserFunctions.entries()){
+    fs.rmSync(path.join(retryFixture,'attempts'),{force:true});
+    const failed=executeBrowserFunction(source,'failure.mjs');
+    assert.equal(failed.error,undefined,'BROWSER_GATE_EXECUTION_ORACLE');
+    assert.equal(failed.signal,null,'BROWSER_GATE_EXECUTION_ORACLE');
+    assert.equal(failed.status,1,'BROWSER_GATE_FAILURE_ORACLE: an assertion must remain a failed gate');
+    assert.equal(fs.readFileSync(path.join(retryFixture,'attempts'),'utf8'),'1','BROWSER_GATE_RETRY_ORACLE: no unclassified retry');
+    assert.match(failed.stdout,/CONTROLLED_BROWSER_ASSERTION/,'BROWSER_GATE_RAW_FAILURE_ORACLE');
+    const healthy=executeBrowserFunction(source,'healthy.mjs');assert.equal(healthy.status,0,healthy.stderr);
+    const fault=source.replace(' | tee "$log"',' | tee "$log" || true');assert.notEqual(fault,source,'BROWSER_GATE_FAULT_ANCHOR_ORACLE');
+    fs.rmSync(path.join(retryFixture,'attempts'),{force:true});
+    const masked=executeBrowserFunction(fault,'failure.mjs');
+    assert.throws(()=>assert.equal(masked.status,1,'BROWSER_GATE_FAILURE_ORACLE'),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('BROWSER_GATE_FAILURE_ORACLE'),'BROWSER_GATE_FAULT_DETECTION_ORACLE');
+    cases.push('browser-gate-'+index+'-failure-retained-and-masking-fault-detected');
+  }
   for(const name of fullTestSteps){
     const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     const step=workflow.match(new RegExp('^      - name: '+escaped+'\\n(?:(?!      - ).*(?:\\n|$))*','m'))?.[0];

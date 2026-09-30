@@ -63,5 +63,6 @@ const boundRuntime=boundContext.closedLoopTestRuntime,boundResult=await boundRun
 for(const mutation of [{runtimeBuildIdentity:'OTHER-BUILD'},{testWorkerSha256:'0'.repeat(64)},{workerProtocolVersion:'UNKNOWN'}]){replyOverride=mutation;const rejected=await boundRuntime.executeTest(test,{PRODUCT:{bytes:new Uint8Array([1])}},{},{Worker:BoundWorker});assert.equal(rejected.status,'EXECUTION_FAILED','A worker result with mismatched build/digest/protocol was accepted.');}
 console.log(JSON.stringify({asyncWorkerBuildIdentityRetained:true,workerDigestRetained:true,mismatchedWorkerResultRejected:true}));
 await import('./verify-test-ir-port-types.mjs');
+await import('./verify-test-runtime-dag.mjs');
 console.log(JSON.stringify({genericTestIr:true,stage04CanonicalInputBoundary:true,stage04UpstreamClosureFixture:true,testIrPortTypeRegressionExecuted:true},null,2));
 console.log('verify-test-runtime: PASS');

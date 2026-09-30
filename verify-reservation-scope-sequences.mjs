@@ -1,8 +1,8 @@
+import {runVerifierSync,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {spawnSync} from 'node:child_process';
 
 // Section 35.6 supplies these oracles. The registry supplies only the domain
 // of operations and binding dimensions, never the expected test outcome.
@@ -91,7 +91,7 @@ for(const contract of contracts){
 assert.equal(results.length+conditionalUnavailable.length,contracts.length);assert.ok(results.length>0);
 const faultResults=[];
 if(!faultId)for(const [id,fault]of Object.entries(faults)){
-  const run=spawnSync(process.execPath,[import.meta.filename,'--fault='+id],{encoding:'utf8',maxBuffer:1024*1024});
-  assert.notEqual(run.status,0,`Fault survived: ${id}`);assert.match(run.stderr,new RegExp(fault.oracle),`Unrelated failure under ${id}`);faultResults.push({fault:id,oracle:fault.oracle,result:'DETECTED'});
+  const run=runVerifierSync(process.execPath,[import.meta.filename,'--fault='+id],{encoding:'utf8',maxBuffer:1024*1024});
+  assertDetectedFault(run,fault.oracle,`Fault survived: ${id}`);assert.match(run.stderr,new RegExp(fault.oracle),`Unrelated failure under ${id}`);faultResults.push({fault:id,oracle:fault.oracle,result:'DETECTED'});
 }
 console.log(JSON.stringify({schema:'closed-loop-reservation-scope-sequences/1',synthetic:true,actualBrowser:false,environment:'Node production reservation engine; isolated metadata-state fixtures',bounds:{maxDepth,alphabet,operationCount:results.length,stages:[...new Set(results.map(row=>row.stage))],equivalence:'Fixed binding per registered operation; reservation status and trace depth',assumptions:['Synthetic scope tokens exercise reservation identity; they do not establish workflow prerequisites.','ACCEPTED here is a reservation metadata state, not a committed response or completed stage.','Atomic persistence, response acceptance, restoration, external execution and browser behavior require their separate gates.']},implementationFaults:faultResults,conditionalUnavailable,boundConditionalEvidence:'verify-due-stage-timing.mjs: actual bound reservation, file response acceptance, binding and terminal transition cases',results},null,2));

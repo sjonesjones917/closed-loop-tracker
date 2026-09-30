@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {executeGate,CREATION_MATRIX_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
+import {executeGate,detectedFault,CREATION_MATRIX_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 
 const cases=[
  {id:'primary-capability-test-identifier',file:'app-core.js',env:'APP_SOURCE',suite:'verify-verification-routing.mjs',oracle:'CAPABILITY_GUIDANCE_ORACLE',before:'${esc(labels.get(test.testId))}',after:'${esc(test.testId)}'},
@@ -53,7 +53,7 @@ try{
   const changed=item.mutate?item.mutate(source):source.replace(item.before,item.after);assert.notEqual(changed,source,'Fault was not injected: '+item.id);
   const temporary=path.join(directory,item.id+'.js');fs.writeFileSync(temporary,changed);
   const observed=await run(item.id,item.suite,{[item.env]:temporary});
-  const detected=observed.outcome==='FAIL'&&observed.exitCode===1&&!observed.signal&&!observed.error&&!observed.reason&&(observed.stdout+observed.stderr).includes(item.oracle);
+  const detected=detectedFault(observed,item.oracle);
   results.push({id:item.id,expectedOracle:item.oracle,detected,...observed});report.pending.shift();report.running=null;persist();
   assert.ok(detected,'Fault escaped or failed for an unrelated reason: '+item.id+'\n'+observed.stdout+'\n'+observed.stderr);
  }

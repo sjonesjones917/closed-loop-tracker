@@ -1,7 +1,7 @@
+import {runVerifierSync,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
 globalThis.dispatchEvent=()=>{};
@@ -28,6 +28,6 @@ for(const [name,mutate] of [
  assert.equal(ingestion.commit(prepared.project,prepared.proposal.proposalId).acceptedChange.status,'COMMITTED','Removing the violation did not restore acceptance');cases.push({name,rejected:true,repairedAccepted:true});
 }
 if(process.env.CLOSED_LOOP_PROPOSAL_PLAN_FAULT!=='1'){
- const fault=cp.spawnSync(process.execPath,[import.meta.filename],{encoding:'utf8',env:{...process.env,CLOSED_LOOP_PROPOSAL_PLAN_FAULT:'1'},maxBuffer:8*1024*1024});assert.notEqual(fault.status,0,'Bypassed precommit comparison escaped detection');assert.match(fault.stderr,/PROPOSAL_PLAN_ORACLE/,'Fault failed for an unrelated reason');cases.push({name:'bypassed-precommit-implementation',detected:true});
+ const fault=runVerifierSync(process.execPath,[import.meta.filename],{encoding:'utf8',env:{...process.env,CLOSED_LOOP_PROPOSAL_PLAN_FAULT:'1'},maxBuffer:8*1024*1024});assertDetectedFault(fault,'PROPOSAL_PLAN_ORACLE','Bypassed precommit comparison escaped detection');assert.match(fault.stderr,/PROPOSAL_PLAN_ORACLE/,'Fault failed for an unrelated reason');cases.push({name:'bypassed-precommit-implementation',detected:true});
 }
 console.log(JSON.stringify({proposalPlanIntegrity:'PASS',synthetic:true,environment:'Production workflow and ingestion with synthetic Stage 01–04 prerequisites; no browser or external-actor claim',cases},null,2));

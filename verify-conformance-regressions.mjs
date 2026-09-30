@@ -3,17 +3,152 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
 import assert from 'node:assert/strict';
-import {spawn,execFileSync} from 'node:child_process';
+import {spawn,spawnSync,execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-const suites=['verify-job-confirmation-contract.mjs','verify-reconciliation-confirmation.mjs','verify-verifier-runtime.mjs','verify-file-intake-allocation.mjs','verify-returned-file-allocation.mjs','verify-file-allocation-boundaries.mjs','verify-copy-creation-authority.mjs','verify-archive-creation-authority.mjs','verify-copy-transaction.mjs','verify-product-reservation-persistence.mjs','verify-primary-information.mjs','verify-primary-error-information.mjs','verify-primary-guidance.mjs','verify-creation-presentation-faults.mjs','verify-post-acceptance-lane-selection.mjs','verify-storage-deadlines.mjs','verify-byte-deadlines.mjs',
-  'verify-action-finalization.mjs','verify-io-boundary-faults.mjs','verify-startup-deadlines.mjs','verify-canonical-boundaries.mjs','verify-canonical-boundary-faults.mjs','verify-workflow-focus.mjs','verify-removal-feedback.mjs','verify-proposal-plan-integrity.mjs','verify-required-operation-scope.mjs','verify-exact-progress.mjs','verify-exact-progress-fault.mjs','verify-recovery-control-fault.mjs','verify-history-selection-capture.mjs','verify-history-selection-fault.mjs','verify-context-provenance.mjs','verify-ui-acceptance-impact.mjs','verify-acceptance-active-work.mjs','verify-package-response-identity.mjs','verify-clarification-continuation.mjs','verify-acceptance-boundary-faults.mjs','verify-mutation-impact-projections.mjs','verify-response-selection-status.mjs','verify-file-selection-drafts.mjs','verify-file-correction-recovery.mjs','verify-file-correction-faults.mjs','verify-history-view-cost.mjs','verify-history-project-sharing.mjs','verify-history-canonical-sharing.mjs','verify-history-project-references.mjs','verify-history-project-sharing-faults.mjs','verify-quarantine-recovery.mjs','verify-integrity-recovery-faults.mjs','verify-ui-persistence-preconditions.mjs','verify-filename-transports.mjs','verify-unicode-filenames.mjs','verify-unicode-faults.mjs','verify-encrypted-backups.mjs','verify-encrypted-backup-faults.mjs','verify-canonical-allocation.mjs','verify-canonical-allocation-faults.mjs','verify-operational-persistence.mjs','verify-operational-faults.mjs','verify-recoverable-history.mjs','verify-history-contracts.mjs','verify-history-sequences.mjs','verify-history-navigation.mjs','verify-history-project-lifecycle.mjs','verify-history-retention.mjs','verify-recovery-faults.mjs','verify-operator-action-lifecycle.mjs','verify-operator-feedback.mjs','verify-shared-contract-faults.mjs','verify-operation-sequences.mjs','verify-mobile-operation-observations.mjs','verify-mobile-receipt-boundary.mjs','verify-delivery-transfer-boundary.mjs','verify-checkpoint-boundary.mjs','verify-native-proof-journey.mjs','verify-native-proof-fault.mjs','verify-product-attachment-journey.mjs','verify-operator-counterpart.mjs','verify-counterpart-faults.mjs','verify-execution-identity-allocation.mjs','verify-project-identity-allocation.mjs','verify-response-retry-persistence.mjs','verify-response-retry-fault.mjs','verify-operator-control-state-fault.mjs','verify-reservation-scope-sequences.mjs'];
-const verifierRuntimeConsumers=fs.readdirSync('.').filter(path=>/\.mjs$/.test(path)&&fs.readFileSync(path,'utf8').includes("from './verifier-runtime.mjs'"));
-const sources=[...new Set(['.github/workflows/pages.yml','verify-conformance-regressions.mjs','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs',...verifierRuntimeConsumers,...suites])];
+// Direct invariant checks precede composed matrices and full lifecycle fixtures.
+// This changes failure discovery order; every existing suite still executes.
+const suites=[
+ "verify-job-confirmation-contract.mjs",
+ "verify-reconciliation-confirmation.mjs",
+ "verify-verifier-runtime.mjs",
+ "verify-file-intake-allocation.mjs",
+ "verify-returned-file-allocation.mjs",
+ "verify-file-allocation-boundaries.mjs",
+ "verify-copy-creation-authority.mjs",
+ "verify-archive-creation-authority.mjs",
+ "verify-copy-transaction.mjs",
+ "verify-primary-information.mjs",
+ "verify-primary-error-information.mjs",
+ "verify-post-acceptance-lane-selection.mjs",
+ "verify-storage-deadlines.mjs",
+ "verify-byte-deadlines.mjs",
+ "verify-action-finalization.mjs",
+ "verify-startup-deadlines.mjs",
+ "verify-canonical-boundaries.mjs",
+ "verify-canonical-boundary-faults.mjs",
+ "verify-workflow-focus.mjs",
+ "verify-removal-feedback.mjs",
+ "verify-proposal-plan-integrity.mjs",
+ "verify-required-operation-scope.mjs",
+ "verify-exact-progress.mjs",
+ "verify-exact-progress-fault.mjs",
+ "verify-recovery-control-fault.mjs",
+ "verify-history-selection-capture.mjs",
+ "verify-history-selection-fault.mjs",
+ "verify-context-provenance.mjs",
+ "verify-ui-acceptance-impact.mjs",
+ "verify-acceptance-active-work.mjs",
+ "verify-package-response-identity.mjs",
+ "verify-clarification-continuation.mjs",
+ "verify-mutation-impact-projections.mjs",
+ "verify-response-selection-status.mjs",
+ "verify-file-selection-drafts.mjs",
+ "verify-file-correction-recovery.mjs",
+ "verify-file-correction-faults.mjs",
+ "verify-history-view-cost.mjs",
+ "verify-history-project-references.mjs",
+ "verify-quarantine-recovery.mjs",
+ "verify-integrity-recovery-faults.mjs",
+ "verify-ui-persistence-preconditions.mjs",
+ "verify-filename-transports.mjs",
+ "verify-unicode-filenames.mjs",
+ "verify-unicode-faults.mjs",
+ "verify-encrypted-backups.mjs",
+ "verify-encrypted-backup-faults.mjs",
+ "verify-canonical-allocation.mjs",
+ "verify-canonical-allocation-faults.mjs",
+ "verify-operational-persistence.mjs",
+ "verify-operational-faults.mjs",
+ "verify-recoverable-history.mjs",
+ "verify-history-contracts.mjs",
+ "verify-history-sequences.mjs",
+ "verify-history-navigation.mjs",
+ "verify-history-project-lifecycle.mjs",
+ "verify-history-retention.mjs",
+ "verify-operator-action-lifecycle.mjs",
+ "verify-operator-feedback.mjs",
+ "verify-shared-contract-faults.mjs",
+ "verify-operation-sequences.mjs",
+ "verify-mobile-operation-observations.mjs",
+ "verify-mobile-receipt-boundary.mjs",
+ "verify-execution-identity-allocation.mjs",
+ "verify-project-identity-allocation.mjs",
+ "verify-response-retry-persistence.mjs",
+ "verify-response-retry-fault.mjs",
+ "verify-operator-control-state-fault.mjs",
+ "verify-reservation-scope-sequences.mjs",
+ "verify-product-reservation-persistence.mjs",
+ "verify-primary-guidance.mjs",
+ "verify-creation-presentation-faults.mjs",
+ "verify-io-boundary-faults.mjs",
+ "verify-acceptance-boundary-faults.mjs",
+ "verify-history-project-sharing.mjs",
+ "verify-history-canonical-sharing.mjs",
+ "verify-history-project-sharing-faults.mjs",
+ "verify-recovery-faults.mjs",
+ "verify-delivery-transfer-boundary.mjs",
+ "verify-checkpoint-boundary.mjs",
+ "verify-native-proof-journey.mjs",
+ "verify-native-proof-fault.mjs",
+ "verify-product-attachment-journey.mjs",
+ "verify-operator-counterpart.mjs",
+ "verify-counterpart-faults.mjs"];
+function conformanceSources(){
+ const verifierRuntimeConsumers=fs.readdirSync('.').filter(path=>/\.mjs$/.test(path)&&fs.readFileSync(path,'utf8').includes("from './verifier-runtime.mjs'"));
+ return [...new Set(['.github/workflows/pages.yml','verify-conformance-regressions.mjs','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs',...verifierRuntimeConsumers,...suites])];
+}
 
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const CHILD_TIMEOUT_MS=20*60*1000,AGGREGATE_TIMEOUT_MS=180*60*1000,KILL_GRACE_MS=5000;
 const MAX_OUTPUT_BYTES=64*1024*1024;
 export const CREATION_MATRIX_TIMEOUT_MS=40*60*1000;
+let synchronousGateNumber=0;
+// Synchronous fault matrices run inside the existing process-group supervisor.
+// Preserve every child result before its caller classifies a deliberate failure.
+export function runVerifierSync(command,args,options={}){
+ const timeout=options.timeout??CHILD_TIMEOUT_MS;
+ assert.ok(Number.isFinite(timeout)&&timeout>0,'VERIFIER_CHILD_DEADLINE_ORACLE');
+ const directory=path.resolve(options.evidenceDirectory||process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY||'conformance-regression-evidence/child-processes');
+ fs.mkdirSync(directory,{recursive:true});
+ const prefix=path.join(directory,process.pid+'-'+String(++synchronousGateNumber).padStart(4,'0')+'-'+crypto.randomUUID());
+ const startedAt=new Date().toISOString();
+ const result=spawnSync(command,args,{encoding:'utf8',maxBuffer:MAX_OUTPUT_BYTES,...options,timeout,killSignal:'SIGKILL'});
+ const receipt={command:[command,...args],startedAt,finishedAt:new Date().toISOString(),timeoutMs:timeout,exitCode:result.status,signal:result.signal,outcome:result.error?.code==='ETIMEDOUT'?'TIMEOUT':result.status===0&&!result.error&&!result.signal?'PASS':'FAIL',error:result.error?{code:result.error.code,message:result.error.message}:null,stdout:result.stdout||'',stderr:result.stderr||''};
+ receipt.stdoutSha256=sha(receipt.stdout);receipt.stderrSha256=sha(receipt.stderr);
+ fs.writeFileSync(prefix+'.stdout.log',receipt.stdout);fs.writeFileSync(prefix+'.stderr.log',receipt.stderr);saveReport(prefix+'.json',receipt);
+ return {...result,startedAt,finishedAt:receipt.finishedAt,timeoutMs:timeout,outcome:receipt.outcome,evidencePath:prefix+'.json'};
+}
+function failureDiagnostic(text){
+ const errors=[...String(text||'').matchAll(/^([A-Za-z_$][\w$.]*Error|Error)(?: \[[^\]\n]+\])?: ([^\n]*)/gm)],terminal=errors.at(-1);
+ if(terminal)return {hasError:true,aggregate:terminal[1]==='AggregateError',message:['Error','AssertionError'].includes(terminal[1])?terminal[2]:''};
+ return {hasError:false,message:(String(text||'').trim().split('\n').at(-1)||'').match(/^[A-Z][A-Z0-9_]*_ORACLE(?::.*)?$/)?.[0]||''};
+}
+export function detectedFault(result,oracle,{caseId=null}={}){
+ const exitCode=Object.hasOwn(result,'exitCode')?result.exitCode:result.status;
+ // Node may print source lines containing an oracle before an unrelated
+ // ReferenceError. Match the actual terminal diagnostic, never source excerpts,
+ // success output, or earlier progress messages.
+ const terminal=failureDiagnostic(result.stderr),diagnostics=caseId?[]:[terminal.message];
+ if(terminal.hasError&&!terminal.message&&!terminal.aggregate)return false;
+ if(caseId||terminal.aggregate||!terminal.hasError&&!terminal.message){
+  try{
+   const report=JSON.parse(String(result.stdout||''));
+   for(const row of [...(Array.isArray(report.cases)?report.cases:[]),...(Array.isArray(report.results)?report.results:[])]){
+    if((row.status||row.result)!=='FAIL')continue;
+    const diagnostic=failureDiagnostic(row.actual?.error||row.error||row.failure);
+    if(terminal.aggregate&&!diagnostic.message)return false;
+    if(!caseId||row.caseId===caseId)diagnostics.push(diagnostic.message);
+   }
+  }catch{/* A missing or malformed report supplies no fault evidence. */}
+ }
+ const matches=diagnostic=>oracle instanceof RegExp?new RegExp(oracle.source,oracle.flags.replace(/[gy]/g,'')).test(diagnostic):typeof oracle==='string'&&oracle.length>0&&diagnostic.includes(oracle);
+ if(caseId&&terminal.message&&!matches(terminal.message))return false;
+ const matched=diagnostics.some(matches);
+ return exitCode===1&&!result.signal&&!result.error&&!result.reason&&(!result.outcome||result.outcome==='FAIL')&&matched;
+}
+export function assertDetectedFault(result,oracle,label='injected fault',options={}){
+ assert.ok(detectedFault(result,oracle,options),'FAULT_RESULT_CLASSIFICATION_ORACLE: '+label+' must finish with exit 1 and its specific oracle, without timeout, signal, or execution error. '+JSON.stringify({exitCode:result.exitCode??result.status,signal:result.signal,error:result.error?.code,reason:result.reason,outcome:result.outcome,oracle:String(oracle),evidencePath:result.evidencePath})+'\n'+String(result.stderr||''));
+}
 function saveReport(file,report){
  fs.mkdirSync(path.dirname(file),{recursive:true});
  const temporary=file+'.partial';fs.writeFileSync(temporary,JSON.stringify(report,null,2)+'\n');fs.renameSync(temporary,file);
@@ -66,10 +201,78 @@ async function runSequence(gates,{directory,reportFile,report={},timeoutMs=AGGRE
   report.interruption=controller.signal.reason||null;persist();return report;
  }finally{clearTimeout(deadline);signal?.removeEventListener('abort',relay);}
 }
+function verifyLifecycleFaultDispatch(directory){
+ const source=fs.readFileSync('verify-full-cycle.mjs','utf8');
+ const start=source.indexOf('const timingFaultDefinitions='),end=source.indexOf('globalThis.Event=',start);
+ assert.ok(start>=0&&end>start,'FAULT_EXECUTION_OWNER_FIXTURE_ORACLE');
+ const prelude=source.slice(start,end),results=[];
+ function execute(label,body,imported){
+  const folder=path.join(directory,label);fs.mkdirSync(folder,{recursive:true});
+  const owner=path.join(folder,'renamed-lifecycle.mjs'),launcher=path.join(folder,'importing-verifier.mjs'),trace=path.join(folder,'caller-entries.log');
+  fs.writeFileSync(owner,`import fs from 'node:fs';\nimport {runVerifierSync,detectedFault} from ${JSON.stringify(import.meta.url)};\n`+body.replace("'conformance-regression-evidence/timing-faults'",JSON.stringify(path.join(folder,'faults')))+`\nif(timingFault)throw new Error(timingFault.oracle);console.log(JSON.stringify({faults:timingInjectedFaults}));\n`);
+  fs.writeFileSync(launcher,`import fs from 'node:fs';fs.appendFileSync(${JSON.stringify(trace)},'entered\\n');await import(${JSON.stringify(new URL('file://'+owner).href)});\n`);
+  const child=runVerifierSync(process.execPath,[imported?launcher:owner],{timeout:15000,evidenceDirectory:folder});
+  assert.equal(child.status,0,'FAULT_EXECUTION_OWNER_CONTROL_ORACLE: '+child.stderr);
+  const callerEntries=fs.existsSync(trace)?fs.readFileSync(trace,'utf8').trim().split('\n').length:0;
+  return {label,imported,callerEntries,expectedCallerEntries:imported?1:0,child,report:JSON.parse(child.stdout)};
+ }
+ function check(observation){assert.equal(observation.callerEntries,observation.expectedCallerEntries,'FAULT_EXECUTION_OWNER_ORACLE: a shared verifier fault must execute its owner without rerunning the importing caller');}
+ for(const imported of [false,true]){const result=execute(imported?'imported':'direct',prelude,imported);check(result);results.push(result);}
+ const before="runVerifierSync(process.execPath,[import.meta.filename,'--timing-only'",after="runVerifierSync(process.execPath,[process.argv[1],'--timing-only'";
+ assert.equal(prelude.split(before).length,2,'FAULT_EXECUTION_OWNER_MUTATION_ANCHOR_ORACLE');
+ const mutant=execute('wrong-caller',prelude.replace(before,after),true);
+ assert.throws(()=>check(mutant),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('FAULT_EXECUTION_OWNER_ORACLE'),'FAULT_EXECUTION_OWNER_MUTATION_DETECTED_ORACLE');
+ const restored=execute('restored',prelude,true);check(restored);
+ return {basis:'Actual lifecycle dispatch prelude; disposable child failures. Production timing invariants execute separately.',results,mutant,restored};
+}
 async function verifyRunnerContract(){
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-runner-contract-')),cases=[];
  const gate=(name,code)=>({name,args:['--input-type=module','-e',code]});
  try{
+  const importProbe=runVerifierSync(process.execPath,['--input-type=module','-e',`import fs from 'node:fs';const original=fs.readFileSync,reads=[];fs.readFileSync=function(file,...args){if(typeof file==='string'&&file.endsWith('.mjs'))reads.push(file);return original.call(this,file,...args);};await import(${JSON.stringify(import.meta.url)});fs.readFileSync=original;console.log(JSON.stringify({reads}));`],{timeout:5000,evidenceDirectory:directory});
+  assert.equal(importProbe.status,0,'HELPER_IMPORT_EXECUTION_ORACLE: '+importProbe.stderr);
+  assert.deepEqual(JSON.parse(importProbe.stdout).reads,[],'HELPER_IMPORT_IO_ORACLE: importing child supervision must not scan unrelated verifier files');
+  cases.push({case:'helper-import-does-not-enumerate-project-sources',importProbe});
+  cases.push({case:'shared-lifecycle-faults-execute-their-owner',...verifyLifecycleFaultDispatch(directory)});
+  const expected='CONTROLLED_ASSERTION_ORACLE';
+  const rejection={status:1,signal:null,stderr:'AssertionError: '+expected,stdout:''};
+  const faultOutcomes=[];
+  for(const [name,changes,wanted] of [
+   ['specific-rejection',{},true],['success',{status:0},false],['other-exit',{status:7},false],
+   ['signal',{status:null,signal:'SIGKILL'},false],['timeout',{status:null,error:{code:'ETIMEDOUT'}},false],
+   ['execution-error',{error:{code:'EIO'}},false],['interruption',{reason:'SIGTERM'},false],
+   ['declared-timeout',{outcome:'TIMEOUT'},false],['different-oracle',{stderr:'AssertionError: OTHER_ORACLE'},false],
+   ['oracle-only-in-source',{stderr:"assert.equal(undefinedValue,1,'"+expected+"');\nReferenceError: undefinedValue is not defined"},false],
+   ['oracle-only-in-success-output',{stdout:expected,stderr:'Error: unrelated failure'},false],
+   ['earlier-oracle-before-crash',{stderr:'Error: '+expected+'\nReferenceError: unrelated crash'},false],
+   ['explicit-failure-marker',{stderr:expected+': controlled failed case'},true],
+   ['structured-assertion',{stderr:'',stdout:JSON.stringify({cases:[{caseId:'case',status:'FAIL',actual:{error:'AssertionError: '+expected}}]})},true],
+   ['structured-unrelated-crash',{stderr:'',stdout:JSON.stringify({cases:[{caseId:'case',status:'FAIL',actual:{error:"assert(value,'"+expected+"');\nReferenceError: value is not defined"}}]})},false],
+   ['structured-passing-case',{stderr:'',stdout:JSON.stringify({cases:[{caseId:'case',status:'PASS',actual:{error:'AssertionError: '+expected}}]})},false]
+  ]){const observed={...rejection,...changes};assert.equal(detectedFault(observed,expected),wanted,'FAULT_RESULT_CLASSIFICATION_ORACLE: '+name);faultOutcomes.push({name,wanted,observed});}
+  cases.push({case:'fault-detection-requires-completed-specific-rejection',results:faultOutcomes});
+  const distinctCases={status:1,stderr:'',stdout:JSON.stringify({cases:[{caseId:'intended',status:'FAIL',actual:{error:'ReferenceError: fixture crashed'}},{caseId:'other',status:'FAIL',actual:{error:'AssertionError: '+expected}}]})};
+  assert.equal(detectedFault(distinctCases,expected,{caseId:'intended'}),false,'FAULT_NAMED_CASE_ORACLE: another failed case cannot supply the intended rejection');
+  assert.equal(detectedFault(distinctCases,expected,{caseId:'other'}),true,'FAULT_NAMED_CASE_CONTROL_ORACLE');
+  assert.equal(detectedFault({...distinctCases,stderr:'AssertionError: unrelated fixture finalization failure'},expected,{caseId:'other'}),false,'FAULT_TERMINAL_DIAGNOSTIC_ORACLE: a matching report cannot mask a different terminal assertion');
+  cases.push({case:'fault-diagnostic-is-bound-to-the-requested-case',input:distinctCases});
+  const aggregate={status:1,stderr:'AggregateError: reported cases failed',stdout:JSON.stringify({cases:[{caseId:'intended',status:'FAIL',error:'AssertionError: '+expected}]})};
+  assert.equal(detectedFault(aggregate,expected,{caseId:'intended'}),true,'FAULT_AGGREGATE_ASSERTION_ORACLE');
+  assert.equal(detectedFault({...aggregate,stdout:distinctCases.stdout},expected,{caseId:'other'}),false,'FAULT_AGGREGATE_CRASH_ORACLE: a mixed crash/assertion aggregate is not isolated fault detection');
+  assert.equal(detectedFault({...aggregate,stdout:'{}'},expected),false,'FAULT_AGGREGATE_REPORT_ORACLE');
+  cases.push({case:'aggregate-errors-require-actual-failed-case-diagnostics',input:aggregate});
+  const stalledFault=runVerifierSync(process.execPath,['--input-type=module','-e',`console.error(${JSON.stringify(expected)});setInterval(()=>{},1000)`],{timeout:250,evidenceDirectory:directory});
+  assert.equal(stalledFault.outcome,'TIMEOUT','FAULT_CHILD_TIMEOUT_ORACLE');
+  assert.ok(stalledFault.stderr.includes(expected),'FAULT_CHILD_LAST_PHASE_ORACLE');
+  assert.equal(detectedFault(stalledFault,expected),false,'FAULT_CHILD_TIMEOUT_NOT_DETECTION_ORACLE');
+  const healthyChild=runVerifierSync(process.execPath,['--input-type=module','-e',"console.log('healthy control')"],{timeout:3000,evidenceDirectory:directory});
+  assert.equal(healthyChild.status,0,'FAULT_CHILD_HEALTHY_CONTROL_ORACLE');
+  for(const child of [stalledFault,healthyChild]){const saved=JSON.parse(fs.readFileSync(child.evidencePath,'utf8'));assert.equal(saved.stdout,child.stdout,'FAULT_CHILD_RAW_OUTPUT_ORACLE');assert.equal(saved.stderr,child.stderr,'FAULT_CHILD_RAW_OUTPUT_ORACLE');assert.equal(saved.exitCode,child.status,'FAULT_CHILD_EXIT_STATUS_ORACLE');}
+  cases.push({case:'bounded-synchronous-child-evidence',stalledFault,healthyChild});
+  const unrelatedCrash=runVerifierSync(process.execPath,['--input-type=module','-e',`import assert from 'node:assert/strict';assert.equal(undefinedValue,1,${JSON.stringify(expected)});`],{timeout:3000,evidenceDirectory:directory});
+  assert.equal(unrelatedCrash.status,1);assert.ok(unrelatedCrash.stderr.includes(expected));
+  assert.equal(detectedFault(unrelatedCrash,expected),false,'FAULT_DIAGNOSTIC_ORACLE: a source excerpt is not the failing assertion');
+  cases.push({case:'unrelated-crash-with-oracle-in-source',result:unrelatedCrash});
   for(const [name,code,expected]of [
    ['valid',"console.log(JSON.stringify({case:'valid',result:'PASS'}))",'PASS'],
    ['nonzero',"console.log(JSON.stringify({declared:'PASS'}));process.exitCode=7",'FAIL'],
@@ -124,13 +327,13 @@ async function verifyCreationMatrixContract(){
  const fixture=path.join(directory,'fixture.mjs'),sourceFile=path.join(directory,'source.js');
  fs.writeFileSync(sourceFile,'const retained = true;\n');
  try{
-  for(const mode of ['specific-rejection','stalled-after-oracle','unrelated-rejection','interrupted-after-completed-child']){
-   fs.writeFileSync(fixture,`if(${JSON.stringify(mode)}==='interrupted-after-completed-child'&&String(process.env.MATRIX_FAULT_SOURCE).includes('interrupted-')){console.error('last-phase: interrupted-child');setInterval(()=>{},1000);setTimeout(()=>process.exit(99),6000);}else if(process.env.MATRIX_FAULT_SOURCE){console.error('last-phase: injected-child');console.error(${JSON.stringify(mode==='unrelated-rejection'?'OTHER_REJECTION':'CONTROLLED_MATRIX_REJECTION')});${mode==='stalled-after-oracle'?"setInterval(()=>{},1000);setTimeout(()=>process.exit(99),6000);":"process.exitCode=1;"}}else{console.log(JSON.stringify({healthy:true}));}\n`);
+  for(const mode of ['specific-rejection','stalled-after-oracle','unrelated-rejection','source-excerpt-rejection','interrupted-after-completed-child']){
+   fs.writeFileSync(fixture,`if(${JSON.stringify(mode)}==='interrupted-after-completed-child'&&String(process.env.MATRIX_FAULT_SOURCE).includes('interrupted-')){console.error('last-phase: interrupted-child');setInterval(()=>{},1000);setTimeout(()=>process.exit(99),6000);}else if(process.env.MATRIX_FAULT_SOURCE){console.error('last-phase: injected-child');if(${JSON.stringify(mode)}==='source-excerpt-rejection'){console.error("assert(missingValue,'CONTROLLED_MATRIX_REJECTION');");throw new ReferenceError('missingValue is not defined');}console.error(${JSON.stringify('Error: '+(mode==='unrelated-rejection'?'OTHER_REJECTION':'CONTROLLED_MATRIX_REJECTION'))});${mode==='stalled-after-oracle'?"setInterval(()=>{},1000);setTimeout(()=>process.exit(99),6000);":"process.exitCode=1;"}}else{if(${JSON.stringify(mode)}==='specific-rejection')await new Promise(resolve=>setTimeout(resolve,250));console.log(JSON.stringify({healthy:true}));}\n`);
    const cases=[{id:'controlled-'+mode,file:sourceFile,env:'MATRIX_FAULT_SOURCE',suite:fixture,oracle:'CONTROLLED_MATRIX_REJECTION',before:'true',after:'false'}];
    if(mode==='interrupted-after-completed-child'){cases[0].id='completed-child';cases.push({...cases[0],id:'interrupted-child'});}
    const matrix=path.join(directory,mode+'.mjs');
-   fs.writeFileSync(matrix,"process.env.CREATION_FAULT_CHILD_TIMEOUT_MS="+JSON.stringify(mode==='interrupted-after-completed-child'?'5000':'150')+";process.env.CREATION_FAULT_EVIDENCE_DIRECTORY="+JSON.stringify(path.join(directory,'evidence-'+mode))+";\n"+original.slice(0,start)+'const cases='+JSON.stringify(cases)+';\n'+original.slice(end));
-   const observed=await executeGate({name:'creation-'+mode,args:[matrix]},{directory,timeoutMs:mode==='interrupted-after-completed-child'?800:2500,killGraceMs:50});
+   fs.writeFileSync(matrix,"process.env.CREATION_FAULT_CHILD_TIMEOUT_MS="+JSON.stringify(mode==='interrupted-after-completed-child'?'5000':mode==='stalled-after-oracle'?'750':'3000')+";process.env.CREATION_FAULT_EVIDENCE_DIRECTORY="+JSON.stringify(path.join(directory,'evidence-'+mode))+";\n"+original.slice(0,start)+'const cases='+JSON.stringify(cases)+';\n'+original.slice(end));
+   const observed=await executeGate({name:'creation-'+mode,args:[matrix]},{directory,timeoutMs:mode==='interrupted-after-completed-child'?800:5000,killGraceMs:50});
    results.push({mode,observed});
    if(mode==='specific-rejection'){
     assert.equal(observed.outcome,'PASS','CREATION_MATRIX_SPECIFIC_REJECTION_ORACLE');
@@ -168,16 +371,16 @@ async function verifyCreationMatrixFaults(){
  try{
   for(const [name,before,after,oracle] of [
    ['missing-child-deadline','timeoutMs:childTimeoutMs,','', 'CREATION_MATRIX_TIMEOUT_ORACLE'],
-   ['timeout-counted-as-rejection',"observed.outcome==='FAIL'&&observed.exitCode===1&&!observed.signal&&!observed.error&&!observed.reason&&",'', 'CREATION_MATRIX_TIMEOUT_ORACLE'],
+   ['timeout-counted-as-rejection','detectedFault(observed,item.oracle)','observed.stderr.includes(item.oracle)', 'CREATION_MATRIX_TIMEOUT_ORACLE'],
    ['lost-incremental-evidence','const persist=()=>{','const persist=()=>{return;', 'CREATION_MATRIX_INCREMENTAL_EVIDENCE_ORACLE'],
    ['lost-parent-interruption','signal:controller.signal,','', 'CREATION_MATRIX_LAST_PHASE_ORACLE'],
-   ['unrelated-rejection-accepted','(observed.stdout+observed.stderr).includes(item.oracle)','true', 'CREATION_MATRIX_REJECTION_REASON_ORACLE']
+   ['unrelated-rejection-accepted','detectedFault(observed,item.oracle)','observed.exitCode===1', 'CREATION_MATRIX_REJECTION_REASON_ORACLE']
   ]){
    assert.equal(original.split(before).length,2,'Unique matrix fault anchor required: '+name);
    const file=path.join(directory,name+'.mjs');fs.writeFileSync(file,original.replace(before,after));
    const observed=await executeGate({name,args:[fileURLToPath(import.meta.url),'--creation-matrix-contract-only']},{directory,env:{CREATION_MATRIX_SOURCE:file},timeoutMs:12000,killGraceMs:50});
    assert.equal(observed.outcome,'FAIL','CREATION_MATRIX_FAULT_DETECTION_ORACLE: '+name);
-   assert.ok(observed.stderr.includes(oracle),'CREATION_MATRIX_FAULT_SPECIFICITY_ORACLE: '+name);
+   assertDetectedFault(observed,oracle,'CREATION_MATRIX_FAULT_SPECIFICITY_ORACLE: '+name);
    results.push({name,oracle,result:'DETECTED',observed});
   }
   assert.equal(fs.readFileSync('verify-creation-presentation-faults.mjs','utf8'),original,'CREATION_MATRIX_SOURCE_RESTORED_ORACLE');
@@ -187,6 +390,13 @@ async function verifyCreationMatrixFaults(){
 async function verifyRunnerFaults(){
  const original=fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-runner-fault-')),faults=[];
  const mutations=[
+  ['accept-any-fault-exit','return exitCode===1&&!result.signal','return exitCode!==0&&!result.signal','FAULT_RESULT_CLASSIFICATION_ORACLE: other-exit'],
+  ['accept-fault-execution-error','&&!result.error&&!result.reason','&&!result.reason','FAULT_RESULT_CLASSIFICATION_ORACLE: execution-error'],
+  ['accept-fault-interruption','&&!result.reason&&(!result.outcome','&&(!result.outcome','FAULT_RESULT_CLASSIFICATION_ORACLE: interruption'],
+  ['ignore-fault-oracle',"||result.outcome==='FAIL')&&matched;","||result.outcome==='FAIL');",'FAULT_RESULT_CLASSIFICATION_ORACLE: different-oracle'],
+  ['accept-source-text-as-oracle','diagnostic.includes(oracle)','String(result.stdout+result.stderr).includes(oracle)','FAULT_RESULT_CLASSIFICATION_ORACLE: oracle-only-in-success-output'],
+  ['ignore-terminal-diagnostic'," if(caseId&&terminal.message&&!matches(terminal.message))return false;",'', 'FAULT_TERMINAL_DIAGNOSTIC_ORACLE'],
+  ['source-scan-on-helper-import','let synchronousGateNumber=0;','conformanceSources();\nlet synchronousGateNumber=0;', 'HELPER_IMPORT_IO_ORACLE'],
   ['ignore-composite-budget','timeoutMs:gate.timeoutMs??childTimeoutMs','timeoutMs:childTimeoutMs','RUNNER_COMPOSITE_BUDGET_ORACLE'],
   ['ignore-child-exit','exitCode===0&&!error','!error','RUNNER_OUTCOME_ORACLE: nonzero'],
   ['accept-malformed-report',"&&!reportError?'PASS'","?'PASS'",'RUNNER_OUTCOME_ORACLE: malformed'],
@@ -203,7 +413,7 @@ async function verifyRunnerFaults(){
    const mutant=path.join(directory,name+'.mjs');fs.writeFileSync(mutant,implementation.replace(before,after)+original.slice(implementation.length));
    const result=await executeGate({name,args:[mutant,'--runner-contract-only','--fault-probe']},{directory,timeoutMs:10000,killGraceMs:50});
    assert.equal(result.outcome,'FAIL','RUNNER_FAULT_DETECTION_ORACLE: '+name);
-   assert.ok(result.stderr.includes(oracle),'RUNNER_FAULT_SPECIFICITY_ORACLE: '+name+'\n'+result.stderr);
+   assertDetectedFault(result,oracle,'RUNNER_FAULT_SPECIFICITY_ORACLE: '+name);
    faults.push({fault:name,oracle,result:'DETECTED',execution:result});
   }
   assert.equal(fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),original,'RUNNER_SOURCE_RESTORED_ORACLE');
@@ -220,6 +430,7 @@ if(process.argv.includes('--creation-matrix-contract-only')){
 }else{
  const directory=path.resolve('conformance-regression-evidence'),reportFile=path.join(directory,'report.json');
  const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+ const sources=conformanceSources();
  const sourceFiles=sources.map(path=>({path,sha256:sha(fs.readFileSync(path))})),workingTreeChanges=execFileSync('git',['status','--porcelain','--',...sources],{encoding:'utf8'}).trim();
  const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT');
  process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);

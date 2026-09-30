@@ -93,99 +93,6 @@ jobs:
             node --check "$file"
           done
 
-      - name: Stale project navigation and draft preservation
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stale-view-navigation.mjs
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-static-site.mjs --out _stale_view_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _stale_view_site >/tmp/stale-view-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 5m node verify-stale-view-browser.mjs
-
-      - name: Preserve stale project navigation observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: stale-view-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            stale-view-browser-evidence/stale-view.json
-            stale-view-browser-evidence/*/stage-*.png
-          if-no-files-found: warn
-
-      - name: Verification routing and capability evidence
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          node verify-verification-routing.mjs
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-static-site.mjs --out _routing_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _routing_site >/tmp/verification-routing-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs
-
-      - name: Preserve verification routing observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: verification-routing-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            verification-routing-browser-evidence/routing.json
-            verification-routing-browser-evidence/*/stage-*.png
-          if-no-files-found: warn
-
-      - name: Startup and scrolling at phone and desktop sizes
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          # Use the retained fixture already in this commit for fast UI feedback.
-          # The following viewport gate still regenerates and validates it.
-          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 10m node verify-browser.mjs --startup-scroll-only 2>&1 | tee /tmp/startup-scroll.log
-
-      - name: Acceptance viewport regression and targeted layout fault
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-test-project.mjs
-          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log
-
-      - name: Preserve acceptance viewport observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: acceptance-viewport-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            acceptance-viewport-evidence/acceptance-viewport.json
-            acceptance-viewport-evidence/*/stage-*.png
-            acceptance-viewport-evidence/*/downloads/
-            /tmp/acceptance-viewport.log
-            /tmp/startup-scroll.log
-            /tmp/startup-scroll-*.png
-          if-no-files-found: warn
-
       - name: Deployment manifest, build identity, and reproducibility
         if: steps.reuse.outputs.reused != 'true'
         run: |
@@ -312,6 +219,117 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
 
+      # Complete non-browser proof before browser acceptance (specification 46).
+      # Every gate remains mandatory; failures retain their raw evidence.
+      - name: Shared production faults, bounded sequences, and executed observations
+        id: conformance
+        if: steps.reuse.outputs.reused != 'true'
+        timeout-minutes: 185
+        run: |
+          set -euo pipefail
+          node verify-conformance-regressions.mjs > /tmp/conformance-regressions.json
+      - name: Preserve executed regression evidence
+        if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: conformance-regressions-${{ github.sha }}
+          path: |
+            conformance-regression-evidence/
+            /tmp/conformance-regressions.json
+          if-no-files-found: error
+
+      - name: Stale project navigation and draft preservation
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-stale-view-navigation.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node build-static-site.mjs --out _stale_view_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+          python3 -m http.server 4173 --directory _stale_view_site >/tmp/stale-view-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 5m node verify-stale-view-browser.mjs
+
+      - name: Preserve stale project navigation observations
+        if: always() && steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stale-view-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            stale-view-browser-evidence/stale-view.json
+            stale-view-browser-evidence/*/stage-*.png
+          if-no-files-found: warn
+
+      - name: Verification routing and capability evidence
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          node verify-verification-routing.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node build-static-site.mjs --out _routing_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+          python3 -m http.server 4173 --directory _routing_site >/tmp/verification-routing-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs
+
+      - name: Preserve verification routing observations
+        if: always() && steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: verification-routing-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            verification-routing-browser-evidence/routing.json
+            verification-routing-browser-evidence/*/stage-*.png
+          if-no-files-found: warn
+
+      - name: Startup and scrolling at phone and desktop sizes
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          # Use the retained fixture already in this commit for fast UI feedback.
+          # The following viewport gate still regenerates and validates it.
+          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 10m node verify-browser.mjs --startup-scroll-only 2>&1 | tee /tmp/startup-scroll.log
+
+      - name: Acceptance viewport regression and targeted layout fault
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
+          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log
+
+      - name: Preserve acceptance viewport observations
+        if: always() && steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: acceptance-viewport-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            acceptance-viewport-evidence/acceptance-viewport.json
+            acceptance-viewport-evidence/*/stage-*.png
+            acceptance-viewport-evidence/*/downloads/
+            /tmp/acceptance-viewport.log
+            /tmp/startup-scroll.log
+            /tmp/startup-scroll-*.png
+          if-no-files-found: warn
+
       - name: Build static application for operator verification
         if: steps.reuse.outputs.reused != 'true'
         run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
@@ -334,16 +352,11 @@ jobs:
           run_browser_verifier() {
             script="$1"
             budget="${2:-10m}"
-            for attempt in 1 2 3; do
-              log="/tmp/${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
-                return 0
-              fi
-              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
-                return 1
-              fi
-              test "$attempt" -lt 3 || return 1
-            done
+            log="/tmp/${script}.log"
+            # A failed gate stays failed. Startup readiness is bounded in the
+            # browser driver; classified infrastructure failures may be rerun
+            # explicitly against the unchanged SHA after their logs are read.
+            timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"
           }
           BROWSER_VERIFY_RESULT=0
           # Exercise lifecycle and recovery controls before the long journey.
@@ -375,25 +388,6 @@ jobs:
             mobile-capability-evidence/capability.json
             mobile-capability-evidence/stage-*.png
             mobile-capability-evidence/downloads/
-      # Run the direct operator replay before the longer fault matrix. Both
-      # remain mandatory; failed or unexecuted checks still block deployment.
-      - name: Shared production faults, bounded sequences, and executed observations
-        id: conformance
-        if: steps.reuse.outputs.reused != 'true'
-        timeout-minutes: 185
-        run: |
-          set -euo pipefail
-          node verify-conformance-regressions.mjs > /tmp/conformance-regressions.json
-      - name: Preserve executed regression evidence
-        if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: conformance-regressions-${{ github.sha }}
-          path: |
-            conformance-regression-evidence/
-            /tmp/conformance-regressions.json
-          if-no-files-found: error
-
       - name: Preserve the exact browser-verified Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
@@ -463,16 +457,11 @@ jobs:
           run_browser_verifier() {
             script="$1"
             budget="${2:-10m}"
-            for attempt in 1 2 3; do
-              log="/tmp/${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
-                return 0
-              fi
-              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
-                return 1
-              fi
-              test "$attempt" -lt 3 || return 1
-            done
+            log="/tmp/${script}.log"
+            # A failed gate stays failed. Startup readiness is bounded in the
+            # browser driver; classified infrastructure failures may be rerun
+            # explicitly against the unchanged SHA after their logs are read.
+            timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"
           }
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
@@ -523,16 +512,11 @@ jobs:
           run_browser_verifier() {
             script="$1"
             budget="${2:-10m}"
-            for attempt in 1 2 3; do
-              log="/tmp/mobile-${script}.${attempt}.log"
-              if timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"; then
-                return 0
-              fi
-              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
-                return 1
-              fi
-              test "$attempt" -lt 3 || return 1
-            done
+            log="/tmp/${script}.log"
+            # A failed gate stays failed. Startup readiness is bounded in the
+            # browser driver; classified infrastructure failures may be rerun
+            # explicitly against the unchanged SHA after their logs are read.
+            timeout --signal=TERM --kill-after=10s "$budget" node "$script" 2>&1 | tee "$log"
           }
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1

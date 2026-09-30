@@ -78,4 +78,5 @@ for(const kind of ['deferred','product','save'])for(const phase of ['before-comm
  assert.equal(nodes.get('#save-prompt').disabled,false);assert.equal(nodes.get('#app-operation-status').hidden,true);
 });
 console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM running production application controller with held persistence boundary; not a browser or physical-device observation',cases},null,2));
-process.exitCode=cases.some(c=>c.result==='FAIL')?1:0;
+const failed=cases.filter(c=>c.result==='FAIL');
+if(failed.length)throw new AggregateError(failed.map(c=>new Error(c.error)),'Action finalization assertions failed');

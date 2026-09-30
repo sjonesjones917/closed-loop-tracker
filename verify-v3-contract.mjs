@@ -1,4 +1,5 @@
 import './verify-test-ir-port-types.mjs';
+import {runVerifierSync} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
@@ -128,6 +129,21 @@ assert.match(workflow,/localChromiumAcceptance\s*:\s*process\.env\.TEST_RESULT\s
 assert.doesNotMatch(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy byte identity must not be hard-coded');
 assert.doesNotMatch(workflow,/(?:deployedChromiumAcceptance|liveBrowserVerification)\s*:\s*true/,'deployed browser acceptance must not be hard-coded');
 
+// These existing behavioral regressions were previously only read as source,
+// or had no execution path. Keep them inside the existing contract gate.
+const executedContractProofs=[];
+for(const [file,marker,expected] of [
+ ['verify-stage-operation-registry.mjs','stageOperationRegistry','PASS'],
+ ['verify-capability-readiness.mjs','capabilityReadyClosedConjunction',true],
+ ['verify-state-release-contract.mjs','releasePrecedence','PASS'],
+ ['verify-stage01-disposition-contract.mjs','stage01DispositionContract','PASS'],
+ ['verify-terminal-human-authority.mjs','terminalHumanAuthority','PASS']
+]){
+ const result=runVerifierSync(process.execPath,[file],{encoding:'utf8',timeout:60000});
+ assert.equal(result.status,0,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file+'\n'+result.stderr);
+ const report=JSON.parse(result.stdout);assert.equal(report[marker],expected,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file);
+ executedContractProofs.push({file,report,evidencePath:result.evidencePath});
+}
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
   projectSchema:'closed-loop-project/3',
@@ -136,7 +152,8 @@ console.log(JSON.stringify({
   packageSchema:'closed-loop-verification-package/1',
   stageCount:30,
   runtimeOperations:requiredRuntimeOps.length,
-  centralizedLimits:requiredLimits.length
+  centralizedLimits:requiredLimits.length,
+  executedContractProofs
 }));
 await import('./verify-stage-contract-closure.mjs');
 await import('./verify-stage27-release-binding.mjs');

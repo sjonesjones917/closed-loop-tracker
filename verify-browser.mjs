@@ -1,4 +1,4 @@
-import {createBrowserReadiness} from './operator-browser-driver.mjs';
+import {createBrowserReadiness,activateOperatorControl} from './operator-browser-driver.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
@@ -29,7 +29,7 @@ async function waitForSavedPrompt(cdp){
   await waitExpr(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.dataset?.projectId,stage=Number(document.querySelector('#stage-picker')?.value);if(!id||!stage)return false;const project=await closedLoopProjectStore.readProject(id);return Boolean(project?.projectData.generatedPrompts.some(record=>Number(record.stage)===stage&&!record.invalidatedBy&&record.instructionId&&record.bodySha256&&record.prompt&&record.promptEngineVersion===closedLoopPromptEngine.version&&Number(record.scope?.projectRevision)===Number(project.revision)));})()`);
 }
 async function waitForIdle(cdp,timeout=60000){await createBrowserReadiness(cdp,expression=>evalValue(cdp,expression),{timeout}).idle();}
-async function click(cdp,selector){await waitForIdle(cdp);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled)return false;e.click();return true})()`);assert(ok,`Missing or disabled clickable ${selector}`);await waitForIdle(cdp);}
+async function click(cdp,selector){return activateOperatorControl(cdp,expression=>evalValue(cdp,expression),()=>waitForIdle(cdp),selector);}
 async function fill(cdp,selector,value){await waitForIdle(cdp);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);assert(ok,`Missing input ${selector}`);await waitForIdle(cdp);}
 async function selectResponseFile(cdp,text,filename='response.json'){
   await waitForIdle(cdp);
