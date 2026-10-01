@@ -110,26 +110,35 @@ class Connection{
 // Share the operator activation policy across all CDP journey consumers.
 // Geometry is observed after any required reveal; native input performs the hit.
 export async function activateOperatorControl(cdp,evaluate,idle,selector){
- const select=`const target=document.querySelector(${JSON.stringify(selector)});if(!target)return {missing:true};let disclosure=null,closedCount=0;for(let p=target.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS'&&!p.open){disclosure=p;closedCount++;}const node=disclosure?disclosure.querySelector(':scope > summary'):target;if(!node)return {missing:true};`;
- await idle();let previousClosedCount=Infinity;
+ const select=`const target=document.querySelector(${JSON.stringify(selector)});if(!target)return {missing:true};let disclosure=null,closedCount=0;for(let p=target.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS'&&!p.open){const summary=p.querySelector(':scope > summary');if(summary!==target&&!summary?.contains(target)){disclosure=p;closedCount++;}}const node=disclosure?disclosure.querySelector(':scope > summary'):target;if(!node)return {missing:true};`;
+ // Interactivity can precede queued focus placement and responsive layout.
+ // All callers must observe settled geometry before revealing or hitting a
+ // control, including callers whose idle predicate only checks app readiness.
+ const settleLayout=async()=>assert.ok(await evaluate(`new Promise(resolve=>{let previous='',stable=0,frames=0;const sample=()=>{const geometry=(()=>{${select}const rect=node.getBoundingClientRect();return [globalThis.scrollX||0,globalThis.scrollY||0,rect.top,rect.left,rect.width,rect.height];})();if(geometry.missing)return resolve(true);const current=JSON.stringify(geometry);stable=current===previous?stable+1:0;previous=current;frames++;if(frames>=4&&stable>=2)return resolve(true);if(frames>=120)return resolve(false);requestAnimationFrame(sample);};requestAnimationFrame(sample);})`),'DRIVER_LAYOUT_QUIESCENCE_ORACLE: control geometry did not settle '+selector);
+ await idle();await settleLayout();let previousClosedCount=Infinity;
  for(;;){
   const reveal=await evaluate(`(()=>{${select}if(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]'))return {disabled:true};const rect=node.getBoundingClientRect();if(rect.top<0||rect.left<0||rect.bottom>innerHeight||rect.right>innerWidth)node.scrollIntoView({block:'nearest',inline:'nearest'});return {closedCount};})()`);
   assert.ok(reveal&&!reveal.missing&&!reveal.disabled,'DRIVER_INTERACTABILITY_ORACLE: missing, disabled, or inert control '+selector);
-  await idle();
+  await idle();await settleLayout();
   const observe=()=>evaluate(`(()=>{${select}const rect=node.getBoundingClientRect(),style=getComputedStyle(node),x=(Math.max(0,rect.left)+Math.min(innerWidth,rect.right))/2,y=(Math.max(0,rect.top)+Math.min(innerHeight,rect.bottom))/2,front=document.elementFromPoint(x,y);return {closedCount,x,y,disabled:Boolean(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]')),visible:style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&Number(style.opacity)!==0&&rect.width>0&&rect.height>0&&x>=0&&y>=0&&x<innerWidth&&y<innerHeight,unobscured:Boolean(front&&(front===node||node.contains(front)))};})()`);
   let observed=await observe();
   // A sticky header can cover an in-viewport control after scrolling or resize.
-  // Make one ordinary reveal attempt, then require the real hit target again.
+  // Center first, then use the viewport end if a tall sticky panel still covers
+  // the center. Each reveal must settle and pass the real hit test.
   if(observed?.visible&&!observed.disabled&&!observed.unobscured){
    await evaluate(`(()=>{${select}node.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});return true;})()`);
-   await idle();observed=await observe();
+   await idle();await settleLayout();observed=await observe();
+  }
+  if(observed?.visible&&!observed.disabled&&!observed.unobscured){
+   await evaluate(`(()=>{${select}node.scrollIntoView({block:'end',inline:'nearest',behavior:'instant'});return true;})()`);
+   await idle();await settleLayout();observed=await observe();
   }
   assert.ok(observed&&!observed.missing&&!observed.disabled&&observed.visible&&observed.unobscured,'DRIVER_INTERACTABILITY_ORACLE: control is hidden or obstructed '+selector+' '+JSON.stringify(observed));
   assert.ok(observed.closedCount===0||observed.closedCount<previousClosedCount,'DRIVER_DISCLOSURE_ORACLE: the selected disclosure did not open');
   await cdp.send('Input.dispatchMouseEvent',{type:'mousePressed',x:observed.x,y:observed.y,button:'left',buttons:1,clickCount:1});
   await cdp.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:observed.x,y:observed.y,button:'left',buttons:0,clickCount:1});
-  if(observed.closedCount===0){await idle();return observed;}
-  previousClosedCount=observed.closedCount;await idle();
+  if(observed.closedCount===0){await idle();await settleLayout();return observed;}
+  previousClosedCount=observed.closedCount;await idle();await settleLayout();
  }
 }
 

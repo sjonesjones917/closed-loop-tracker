@@ -66,12 +66,16 @@ const cases=[];
   {name:'visible centre',box:rect(310),scroll:false},
   {name:'visible at top edge',box:rect(0),scroll:false},
   {name:'visible at bottom edge',box:rect(808),scroll:false},
+  {name:'pending focus before activation',box:rect(310),frameMotion:true,pendingFocus:true,scroll:true},
   {name:'partly above',box:rect(-12),scroll:true},
   {name:'partly below',box:rect(825),scroll:true},
   {name:'partly left',box:rect(310,-8),scroll:true},
   {name:'partly right',box:rect(310,380),scroll:true},
   {name:'inside closed disclosure',box:rect(210),disclosure:true,scroll:false},
+  {name:'closed disclosure summary',box:rect(100),disclosure:true,summaryTarget:true,scroll:false},
   {name:'covered by sticky header',box:rect(70),obscuredUntilReveal:true,scroll:true},
+  {name:'sticky header reveal on later frames',box:rect(70),obscuredUntilReveal:true,frameMotion:true,scroll:true},
+  {name:'sticky panel covers viewport center',box:rect(70),obscuredUntilReveal:true,centerCovered:true,scroll:true},
   {name:'display none',box:rect(310),display:'none',reject:true},
   {name:'visibility hidden',box:rect(310),visibility:'hidden',reject:true},
   {name:'zero area',box:rect(310,24,0,0),reject:true},
@@ -80,17 +84,24 @@ const cases=[];
   {name:'inert control',box:rect(310),inert:true,reject:true},
   {name:'layout hides revealed control',box:rect(900),hideAfterReveal:true,reject:true}
  ]){
-  const moves=[],events=[],inputEvents=[];let clicks=0,directClicks=0,opened=!specimen.disclosure,box={...specimen.box},pendingReveal=false,hidden=false;
+  const moves=[],events=[],inputEvents=[];let clicks=0,directClicks=0,opened=!specimen.disclosure,box={...specimen.box},pendingReveal=false,hidden=false,revealBlock;
+  let focusFrames=specimen.pendingFocus?2:0,revealFrames=0,layoutFrames=0;
   const summary={disabled:false,parentElement:null,getBoundingClientRect:()=>rect(100),contains:n=>n===summary,click(){opened=true;disclosure.open=true;directClicks++;}};
   const disclosure={tagName:'DETAILS',open:false,parentElement:null,querySelector(){return summary;}};
-  const target={disabled:Boolean(specimen.disabled),parentElement:specimen.disclosure?disclosure:null,contains:n=>n===target,closest:()=>specimen.inert?{}:null,
+  if(specimen.summaryTarget)summary.parentElement=disclosure;
+  const control={disabled:Boolean(specimen.disabled),parentElement:specimen.disclosure?disclosure:null,contains:n=>n===control,closest:()=>specimen.inert?{}:null,
    getBoundingClientRect(){assert.ok(opened,'Visibility is measured after opening the target disclosure.');return box;},
-   scrollIntoView(options){moves.push({...options});pendingReveal=true;},click(){clicks++;directClicks++;}};
-  const currentNode=()=>specimen.disclosure&&!disclosure.open?summary:target;
+   scrollIntoView(options){moves.push({...options});revealBlock=options.block;pendingReveal=true;revealFrames=2;},click(){clicks++;directClicks++;}};
+  const target=specimen.summaryTarget?summary:control;
+  const currentNode=()=>specimen.summaryTarget||specimen.disclosure&&!disclosure.open?summary:target;
   let covered=Boolean(specimen.obscuredUntilReveal);
-  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured||covered?{}:currentNode()},innerHeight:852,innerWidth:393,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
-  const idle=async()=>{if(pendingReveal){box=rect(Math.max(0,Math.min(852-box.height,box.top)),Math.max(0,Math.min(393-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);covered=false;pendingReveal=false;}};
-  const page={send:async(method,params)=>{assert.equal(method,'Input.dispatchMouseEvent','DRIVER_POINTER_AUTHORITY_ORACLE');inputEvents.push(params);if(params.type==='mouseReleased'){if(specimen.disclosure&&!disclosure.open){opened=true;disclosure.open=true;}else clicks++;}}};
+  const finishReveal=()=>{box=rect(specimen.centerCovered&&revealBlock==='end'?852-box.height:specimen.obscuredUntilReveal?310:Math.max(0,Math.min(852-box.height,box.top)),Math.max(0,Math.min(393-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);covered=Boolean(specimen.centerCovered&&revealBlock!=='end');pendingReveal=false;};
+  // Interactivity does not settle a prior action's deferred focus or a reveal.
+  // These controls move only on later browser frames, just as the native case.
+  const animationFrame=callback=>setTimeout(()=>{layoutFrames++;if(focusFrames){focusFrames--;box=rect(focusFrames?900:930,box.left,box.width,box.height);}if(pendingReveal&&--revealFrames===0)finishReveal();callback(performance.now());},0);
+  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured||covered?{}:currentNode()},innerHeight:852,innerWidth:393,scrollX:0,scrollY:0,requestAnimationFrame:animationFrame,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
+  const idle=async()=>{if(pendingReveal&&!specimen.frameMotion)finishReveal();};
+  const page={send:async(method,params)=>{assert.equal(method,'Input.dispatchMouseEvent','DRIVER_POINTER_AUTHORITY_ORACLE');assert.ok(!focusFrames&&!pendingReveal,'DRIVER_LAYOUT_SETTLEMENT_ORACLE: native activation preceded deferred focus or reveal completion: '+specimen.name);inputEvents.push(params);if(params.type==='mouseReleased'){if(specimen.summaryTarget){disclosure.open=!disclosure.open;opened=disclosure.open;clicks++;}else if(specimen.disclosure&&!disclosure.open){opened=true;disclosure.open=true;}else clicks++;}}};
   const click=Function('idle','evaluate','events','performance','assert','page',helper+driver.slice(start,end)+';return click;')(idle,async expression=>vm.runInContext(expression,dom),events,performance,assert,page);
   let rejection=null;try{await click('#current-action');}catch(error){rejection=error;}
   if(specimen.reject){
@@ -99,16 +110,19 @@ const cases=[];
    assert.equal(events.length,0,'DRIVER_INTERACTABILITY_ORACLE: rejected activation was recorded as success');
    assert.equal(inputEvents.length,0,'DRIVER_INTERACTABILITY_ORACLE: rejected activation sent input');
   }else{
+   if(specimen.centerCovered)assert.equal(rejection,null,'DRIVER_STICKY_REVEAL_ORACLE: a sticky panel covering the viewport center must allow an ordinary reveal below it');
    if(rejection)throw rejection;
+   if(specimen.summaryTarget){assert.equal(clicks,1,'DRIVER_SUMMARY_TOGGLE_ORACLE: the requested summary must toggle exactly once');assert.equal(disclosure.open,true,'DRIVER_SUMMARY_TOGGLE_ORACLE: the requested opening was immediately reversed');}
    assert.equal(clicks,1,'DRIVER_ACTIVATION_ORACLE: one selected control must be activated exactly once');
    assert.equal(directClicks,0,'DRIVER_POINTER_AUTHORITY_ORACLE: a DOM click is not native operator input');
-   assert.equal(inputEvents.length,specimen.disclosure?4:2,'DRIVER_POINTER_AUTHORITY_ORACLE: each activation needs one press/release pair');
+   assert.equal(inputEvents.length,specimen.disclosure&&!specimen.summaryTarget?4:2,'DRIVER_POINTER_AUTHORITY_ORACLE: each activation needs one press/release pair');
    for(let index=0;index<inputEvents.length;index+=2){assert.equal(inputEvents[index].type,'mousePressed');assert.equal(inputEvents[index+1].type,'mouseReleased');assert.equal(inputEvents[index].x,inputEvents[index+1].x);assert.equal(inputEvents[index].y,inputEvents[index+1].y);}
-   assert.equal(moves.length,specimen.scroll?1:0,'DRIVER_VIEW_PRESERVATION_ORACLE: activating an already visible control must not manufacture a new view: '+specimen.name);
+   assert.equal(moves.length,specimen.centerCovered?2:specimen.scroll?1:0,'DRIVER_VIEW_PRESERVATION_ORACLE: activating an already visible control must not manufacture a new view: '+specimen.name);
+   if(specimen.centerCovered)assert.deepEqual(moves,[{block:'center',inline:'nearest',behavior:'instant'},{block:'end',inline:'nearest',behavior:'instant'}],'DRIVER_STICKY_REVEAL_ORACLE: the native hit must follow bounded ordinary viewport reveals');
    if(specimen.scroll&&!specimen.obscuredUntilReveal)assert.deepEqual(moves,[{block:'nearest',inline:'nearest'}],'DRIVER_VIEW_PRESERVATION_ORACLE: an ordinary viewport reveal must not recenter the complete view');
    assert.equal(events.length,1,'One actual driver activation must retain one event.');
   }
-  cases.push({caseId:'DRIVER-VIEW-PRESERVATION',class:specimen.name,result:'PASS',actualBrowser:false,scrollRequests:moves.length,activations:clicks,nativeInputEvents:inputEvents.length,rejection:rejection?.message||null});
+  cases.push({caseId:'DRIVER-VIEW-PRESERVATION',class:specimen.name,result:'PASS',actualBrowser:false,scrollRequests:moves.length,layoutFrames,activations:clicks,nativeInputEvents:inputEvents.length,rejection:rejection?.message||null});
  }
 }
 
