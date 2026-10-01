@@ -275,6 +275,9 @@ async function main(){
   let noImportRejected=false;try{assertRoundTrip(beforeImport);}catch(error){noImportRejected=error.message.startsWith('PACKAGE_IMPORT_RESULT_ORACLE:');}
   assert(noImportRejected,'PACKAGE_IMPORT_ORACLE_FAULT: The pre-import project passed as an imported result.');
   assert(all.filter(p=>p.job?.JOB_ID==='JOB-20260823144121').length===1,'Successful import duplicated retained project.');
+  // Export opened Project actions; close its popover through the operator
+  // control before navigating to a tab that the open menu can cover.
+  if(await evalValue(cdp,`Boolean(document.querySelector('.project-action-menu')?.open)`))await click(cdp,'#project-actions-toggle');
 
   console.log('extra:artifact-logical-paths');
   await openStage(cdp,1);
