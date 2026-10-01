@@ -124,3 +124,28 @@ function reviewSemanticFixture(runtime,project,stage){
 
 export function reviewProofFixture(runtime,project){return reviewSemanticFixture(runtime,project,6);}
 export function reviewApplicabilityFixture(runtime,project){return reviewSemanticFixture(runtime,project,5);}
+
+// Otherwise valid Test IR cases at the advertised support limits. Each invalid
+// variant changes one value and exceeds only the named limit.
+export function testIrLimitFixtures(runtime){
+ const limits=runtime.LIMITS,make=steps=>({version:runtime.SPEC_VERSION,steps}),clone=value=>structuredClone(value),encode=text=>new TextEncoder().encode(text);
+ const read=[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'}];
+ const artifact=text=>({artifacts:{PRODUCT:{artifactId:'ART-LIMIT',filename:'limit.txt',bytes:encode(text)}},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-LIMIT'}}}});
+ let jsonValue=true;for(let n=0;n<limits.maxSelectorDepth;n++)jsonValue={x:jsonValue};
+ const json=make([...clone(read),{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.'+Array(limits.maxSelectorDepth).fill('x').join('.')},{op:'ASSERT_EQ',value:true}]);
+ const jsonOver=clone(json);jsonOver.steps[4].path+='.x';
+ // Keep the selected element empty: added text would independently exceed the
+ // parsed-structure depth limit at the current selector boundary.
+ const xml=make([...clone(read),{op:'PARSE_XML'},{op:'SELECT_XML',path:'/'+Array(limits.maxSelectorDepth).fill('n').join('/')},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]);
+ const xmlOver=clone(xml);xmlOver.steps[4].path+='/n';
+ const bytePattern='é'.repeat(Math.floor(limits.maxRegexPatternBytes/2))+'a'.repeat(limits.maxRegexPatternBytes%2),characterPattern='a'.repeat(limits.maxRegexLength);
+ if(bytePattern.length+1>limits.maxRegexLength||encode(characterPattern+'a').length>limits.maxRegexPatternBytes)throw new Error('TEST_IR_LIMIT_FIXTURE_INDEPENDENCE_ORACLE: current regex bounds need independent byte and character fixtures.');
+ const regex=pattern=>make([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_MATCH',pattern,flags:'u'}]);
+ const canonical=value=>({canonicalBindings:{VALUE:{value}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});
+ return [
+  {caseId:'JSON_SELECTOR_DEPTH',control:json,invalid:jsonOver,expectedIssue:'operation SELECT_JSON_PATH has invalid path.',execution:artifact(JSON.stringify(jsonValue)),limit:limits.maxSelectorDepth},
+  {caseId:'XML_SELECTOR_DEPTH',control:xml,invalid:xmlOver,expectedIssue:'operation SELECT_XML has invalid path.',execution:artifact('<n>'.repeat(limits.maxSelectorDepth-1)+'<n/>'+'</n>'.repeat(limits.maxSelectorDepth-1)),limit:limits.maxSelectorDepth},
+  {caseId:'REGEX_PATTERN_BYTES',control:regex(bytePattern),invalid:regex(bytePattern+'a'),expectedIssue:'Regex pattern exceeds the registered byte limit.',execution:canonical(bytePattern),limit:limits.maxRegexPatternBytes,controlBytes:encode(bytePattern).length,invalidBytes:encode(bytePattern+'a').length,invalidCharacters:(bytePattern+'a').length},
+  {caseId:'REGEX_PATTERN_CHARACTERS',control:regex(characterPattern),invalid:regex(characterPattern+'a'),expectedIssue:'Regex pattern exceeds the registered byte limit.',execution:canonical(characterPattern),limit:limits.maxRegexLength,controlCharacters:characterPattern.length,invalidCharacters:characterPattern.length+1,invalidBytes:encode(characterPattern+'a').length}
+ ];
+}

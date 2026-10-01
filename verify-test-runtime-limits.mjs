@@ -1,3 +1,4 @@
+import {testIrLimitFixtures} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -6,7 +7,8 @@ import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};context.globalThis=context;createVerifierRuntime(context);
 vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),context,{filename:'hash.js'});
-vm.runInContext(fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8'),context,{filename:'test-runtime.js'});
+const runtimeSource=fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8');
+vm.runInContext(runtimeSource,context,{filename:'test-runtime.js'});
 const runtime=context.closedLoopTestRuntime;const encoder=new TextEncoder();
 assert.equal(context.closedLoopHash?.canonicalizationVersion,'closed-loop-canonical-json/1','Test IR verifier must load the shared canonical hash authority before the runtime.');
 const spec=steps=>({version:'closed-loop-test-spec/1',steps});
@@ -37,13 +39,36 @@ await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODU
 const largeCollection=Array(runtime.LIMITS.maxCollectionItems+1).fill(0);
 await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'COUNT'},{op:'ASSERT_EQ',value:0}]),artifacts:{PRODUCT:binding('ART-PRODUCT',encoder.encode(JSON.stringify(largeCollection)))},metadata:metadata(['PRODUCT'])}),'COLLECTION_LIMIT');
 
-const tooDeepJsonPath='$.'+Array(runtime.LIMITS.maxSelectorDepth+1).fill('x').join('.');
-assert.equal(runtime.validateSpec(spec([{op:'SELECT_JSON_PATH',path:tooDeepJsonPath},{op:'ASSERT_EQ',value:true}])).valid,false);
-const tooDeepXmlPath='/'+Array(runtime.LIMITS.maxSelectorDepth+1).fill('x').join('/');
-assert.equal(runtime.validateSpec(spec([{op:'SELECT_XML',path:tooDeepXmlPath},{op:'ASSERT_EQ',value:true}])).valid,false);
-
-const longPattern='a'.repeat(runtime.LIMITS.maxRegexPatternBytes+1);
-assert.equal(runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:longPattern}])).valid,false);
+const limitFixtures=testIrLimitFixtures(runtime);
+function verifyLimitValidation(implementation){
+ const cases=[];
+ for(const row of limitFixtures){
+  const oracle='TEST_IR_LIMIT_'+row.caseId+'_ORACLE',bindings=row.execution.metadata.bindings;
+  const control=implementation.validateSpec(row.control,bindings);assert.equal(control.valid,true,oracle+': the at-limit control must be valid: '+JSON.stringify(control.issues));
+  const rejected=implementation.validateSpec(row.invalid,bindings);assert.equal(rejected.valid,false,oracle+': the one-limit violation was accepted');
+  assert.ok(rejected.issues.length>0&&rejected.issues.every(issue=>String(issue).includes(row.expectedIssue)),oracle+': rejection must cite only the intended limit: '+JSON.stringify(rejected.issues));
+  assert.equal(implementation.validateSpec(row.control,bindings).valid,true,oracle+': removing the violation restores a valid case');
+  cases.push({caseId:row.caseId,limit:row.limit,issues:Array.from(rejected.issues),controlValid:true,result:'PASS'});
+ }
+ return cases;
+}
+const limitValidationCases=verifyLimitValidation(runtime);
+for(const row of limitFixtures){const result=await runtime.execute({spec:row.control,...row.execution});assert.equal(result.determination,'SATISFIED','TEST_IR_LIMIT_CONTROL_EXECUTION_ORACLE: '+row.caseId);}
+const limitFaults=[];
+for(const [fault,before,after,caseId]of [
+ ['json-selector-depth',"if(parts.length>LIMITS.maxSelectorDepth)fail('SELECTOR_LIMIT','JSON selector exceeds the registered depth limit.');",'', 'JSON_SELECTOR_DEPTH'],
+ ['xml-selector-depth',"if(raw.length>LIMITS.maxSelectorDepth)fail('SELECTOR_LIMIT','XML selector exceeds the registered depth limit.');",'', 'XML_SELECTOR_DEPTH'],
+ ['regex-byte-limit','byteLength(pattern)>LIMITS.maxRegexPatternBytes||','false||','REGEX_PATTERN_BYTES'],
+ ['regex-character-limit','||pattern.length>LIMITS.maxRegexLength','','REGEX_PATTERN_CHARACTERS']
+]){
+ assert.equal(runtimeSource.split(before).length,2,'Unique Test IR limit fault required: '+fault);
+ const altered=createVerifierRuntime({console,crypto:webcrypto});
+ createVerifierRuntime.loadScript(altered,fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),{filename:'hash.js'});
+ createVerifierRuntime.loadScript(altered,runtimeSource.replace(before,after),{filename:'test-runtime.js'});
+ assert.throws(()=>verifyLimitValidation(altered.closedLoopTestRuntime),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('TEST_IR_LIMIT_'+caseId+'_ORACLE'),'TEST_IR_LIMIT_FAULT_DETECTION_ORACLE: '+fault);
+ limitFaults.push({fault,caseId,result:'DETECTED'});
+}
+verifyLimitValidation(runtime);
 const regexInput='a'.repeat(runtime.LIMITS.maxRegexInputBytes+1);
 await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'TEXT'},{op:'ASSERT_MATCH',pattern:'a+'}]),canonicalBindings:{TEXT:{value:regexInput}},metadata:{bindings:{TEXT:{kind:'CANONICAL_VALUE',canonicalKey:'TEXT'}}}}),'REGEX_INPUT_LIMIT');
 
@@ -53,12 +78,14 @@ await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODU
 const xmlText='<root>'+Array(runtime.LIMITS.maxXmlNodes+1).fill('<n/>').join('')+'</root>';
 await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_XML'},{op:'SELECT_XML',path:'/root/n'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]),artifacts:{PRODUCT:binding('ART-XML',encoder.encode(xmlText))},metadata:metadata(['PRODUCT'])}),'XML_NODE_LIMIT');
 
+const closedControl=spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:true}]);
+assert.equal(runtime.validateSpec(closedControl).valid,true,'CLOSED_TEST_IR_CONTROL_ORACLE');
 const forbidden=[
-  {version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:true,javascript:'return true'}]},
-  {version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:true,python:'pass'}]},
-  {version:'closed-loop-test-spec/1',steps:[{op:'SHELL',command:'echo no'},{op:'ASSERT_EQ',value:true}]}
+ ...['javascript','python'].map(field=>({field,candidate:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:true,[field]:'arbitrary source'}]),issue:'unknown property '+field})),
+ {field:'operation',candidate:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'SHELL',value:true}]),issue:'unknown operation'}
 ];
-for(const candidate of forbidden)assert.equal(runtime.validateSpec(candidate).valid,false,'arbitrary executable source must be impossible');
+for(const row of forbidden){const result=runtime.validateSpec(row.candidate);assert.equal(result.valid,false,'CLOSED_TEST_IR_REJECTION_ORACLE: '+row.field);assert.ok(result.issues.some(issue=>String(issue).toLowerCase().includes(row.issue.toLowerCase())),'CLOSED_TEST_IR_REASON_ORACLE: '+row.field);}
+
 
 const bytes=encoder.encode('hash authority');
 const hashResult=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:createHash('sha256').update(bytes).digest('hex')}]),artifacts:{PRODUCT:binding('ART-HASH',bytes)},metadata:metadata(['PRODUCT'])});
@@ -76,4 +103,4 @@ assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.cod
 
 await import('./verify-test-runtime-integrity.mjs');
 
-console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(runtime.LIMITS).sort(),totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,oneArtifact:true,multiArtifact:true,arbitraryCodeImpossible:true,resourceEnvelopeBoundaries}));
+console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(runtime.LIMITS).sort(),totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,oneArtifact:true,multiArtifact:true,arbitraryCodeImpossible:true,resourceEnvelopeBoundaries,limitValidationCases,limitFaults}));
