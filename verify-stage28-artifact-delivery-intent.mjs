@@ -85,7 +85,9 @@ for (const [id,mutate] of [
   ['missing-destination',value=>{delete value.destination;}],
   ['wrong-artifact-set',value=>{value.artifactIds=[];}],
   ['invalid-transfer-count',value=>{value.permittedTransferCount=0;}],
-  ['untrusted-validity-time',value=>{value.validityCondition='Before a timed expiry';value.validityTimeBasis='DEVICE_REPORTED';}]
+  ['untrusted-validity-time',value=>{value.validityCondition='Before a timed expiry';value.validityTimeBasis='DEVICE_REPORTED';}],
+  ['unverified-time-contract-name',value=>{value.validityCondition='Before a timed expiry';value.validityTimeBasis='VERIFIED_EXTERNAL';value.attestationContractId='UNREGISTERED-CONTRACT';}],
+  ['unverified-time-system-claim',value=>{value.validityCondition='Before a timed expiry';value.validityTimeBasis='VERIFIED_EXTERNAL';value.attributableExternalSystem=true;}]
 ]){
   const p=fresh(),c=context(p);engine.verifyArtifactIdentity(p,c.files,c.files);const value=validIntent(c);mutate(value);const decision=engine.captureDeliveryIntent(p,{value,operatorLabel:'STAGE28_VERIFIER'});assert.ok(decision,'The human decision command failed to preserve the exact attempted human intent.');assert.equal(engine.gate(28,p).complete,false,`${id} incorrectly satisfied Stage 28.`);assert.equal(p.release.authorization,'NOT AUTHORIZED',`${id} incorrectly authorized delivery.`);rejected.push(id);
 }
