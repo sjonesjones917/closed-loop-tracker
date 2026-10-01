@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
-const revision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const revision=execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),r=projectStoreRuntime();
 const project=await r.store.createProject({commandId:'PRIMARY-OPERATOR-INFORMATION'});project.job.JOB_TITLE='Current project';
 const nodes=Object.fromEntries(['current-project-summary','progress-label','progress-bar','project-picker','view-tabs'].map(id=>['#'+id,{textContent:'',innerHTML:'',style:{},dataset:{}}]));

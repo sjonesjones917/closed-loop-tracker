@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -6,7 +7,7 @@ import {runtimePaths,manifestName,fullTestSteps,digest,validateSite,assertPassed
 
 const root=process.cwd(),temporary=fs.mkdtempSync(path.join(root,'.verify-artifact-'));
 const cases=[];
-function rejects(name,operation,expected){assert.throws(operation,expected);cases.push(name);}
+async function rejects(name,operation,expected){await assert.rejects(async()=>await operation(),expected);cases.push(name);}
 const repository='test-owner/test-repo',headSha='a'.repeat(40),workflowId=42;
 const run={id:123,run_attempt:1,event:'pull_request',status:'completed',conclusion:'success',repository:{full_name:repository},head_repository:{full_name:repository},head_sha:headSha,workflow_id:workflowId,path:'.github/workflows/pages.yml'};
 const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))}];
@@ -23,54 +24,54 @@ try{
     ['wrong-repository',v=>{v.repository.full_name='someone/else';}],
     ['fork-run',v=>{v.head_repository.full_name='someone/else';}],
     ['wrong-workflow',v=>{v.workflow_id=999;}]
-  ]){const altered=clone(run);change(altered);rejects(name,()=>assertPassedRun(altered,jobs,bindings),/verification|workflow/);}
+  ]){const altered=clone(run);change(altered);(await rejects(name,()=>assertPassedRun(altered,jobs,bindings),/verification|workflow/));}
   for(const conclusion of ['failure','skipped',null]){
     const altered=clone(jobs);altered[0].steps[3].conclusion=conclusion;
-    rejects(`unpassed-required-step-${conclusion}`,()=>assertPassedRun(run,altered,bindings),/did not pass/);
+    (await rejects(`unpassed-required-step-${conclusion}`,()=>assertPassedRun(run,altered,bindings),/did not pass/));
   }
-  rejects('missing-required-step',()=>assertPassedRun(run,[{...jobs[0],steps:jobs[0].steps.slice(1)}],bindings),/did not pass/);
-  rejects('duplicate-test-job',()=>assertPassedRun(run,[...jobs,...jobs],bindings),/Required test job/);
+  (await rejects('missing-required-step',()=>assertPassedRun(run,[{...jobs[0],steps:jobs[0].steps.slice(1)}],bindings),/did not pass/));
+  (await rejects('duplicate-test-job',()=>assertPassedRun(run,[...jobs,...jobs],bindings),/Required test job/));
 
   const workspace=path.join(temporary,'workspace');fs.mkdirSync(path.join(workspace,'.github/workflows'),{recursive:true});
   for(const name of [...runtimePaths,'build-static-site.mjs','.github/workflows/pages.yml'])fs.copyFileSync(path.join(root,name),path.join(workspace,name));
-  const git=(...args)=>execFileSync('git',args,{cwd:workspace,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+  const git=(...args)=>execFileSync('git',args,{timeout:30000,killSignal:'SIGKILL',cwd:workspace,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
   git('init','-q');git('add','.');git('-c','user.name=Verification fixture','-c','user.email=fixture@example.invalid','commit','-qm','Tested source');
   const testedCommit=git('rev-parse','HEAD'),tree=git('rev-parse','HEAD^{tree}');
   const site=path.join(temporary,'site'),bundle=path.join(temporary,'bundle');
-  execFileSync(process.execPath,['build-static-site.mjs','--out',site,'--source-commit',testedCommit,'--workflow-run','123'],{cwd:workspace,stdio:'pipe'});
+  (await checkedVerifier(process.execPath,['build-static-site.mjs','--out',site,'--source-commit',testedCommit,'--workflow-run','123'],{cwd:workspace,stdio:'pipe'}));
   const context={repository,event:'pull_request',commit:testedCommit,headSha,runId:'123',runAttempt:1};
-  const receipt=sealSite({cwd:workspace,directory:site,bundleDirectory:bundle,context});
+  const receipt=(await sealSite({cwd:workspace,directory:site,bundleDirectory:bundle,context}));
   const manifest=validateSite(path.join(bundle,'site'));
   const receiptBindings={run,repository,headSha,sourceCommit:testedCommit,sourceTree:tree,workflowDigest:digest(fs.readFileSync(path.join(workspace,'.github/workflows/pages.yml')))};
   assertReceipt(receipt,manifest,receiptBindings);cases.push('sealed-reproducible-artifact');
   for(const [field,value] of [['runId','999'],['runAttempt',2],['sourceCommit','b'.repeat(40)],['sourceTree','b'.repeat(40)],['workflowFileSha256','0'.repeat(64)],['manifestDigest','0'.repeat(64)]]){
-    rejects(`wrong-receipt-${field}`,()=>assertReceipt({...receipt,[field]:value},manifest,receiptBindings),/mismatch|differs|belong/);
+    (await rejects(`wrong-receipt-${field}`,()=>assertReceipt({...receipt,[field]:value},manifest,receiptBindings),/mismatch|differs|belong/));
   }
   const corrupt=path.join(temporary,'corrupt');fs.cpSync(site,corrupt,{recursive:true});
   fs.appendFileSync(path.join(corrupt,'app-core.js'),'\n/* changed */');
-  rejects('changed-runtime-bytes',()=>validateSite(corrupt),/Changed verified runtime/);
+  (await rejects('changed-runtime-bytes',()=>validateSite(corrupt),/Changed verified runtime/));
   fs.copyFileSync(path.join(site,'app-core.js'),path.join(corrupt,'app-core.js'));
   fs.writeFileSync(path.join(corrupt,'unexpected.js'),'');
-  rejects('unmanifested-file',()=>validateSite(corrupt),/unexpected/);fs.unlinkSync(path.join(corrupt,'unexpected.js'));
+  (await rejects('unmanifested-file',()=>validateSite(corrupt),/unexpected/));fs.unlinkSync(path.join(corrupt,'unexpected.js'));
   fs.unlinkSync(path.join(corrupt,'.nojekyll'));
-  rejects('missing-hidden-runtime-file',()=>validateSite(corrupt),/missing/);
+  (await rejects('missing-hidden-runtime-file',()=>validateSite(corrupt),/missing/));
   fs.copyFileSync(path.join(site,'.nojekyll'),path.join(corrupt,'.nojekyll'));
   const badManifest=clone(manifest);badManifest.sourceCommit='b'.repeat(40);fs.writeFileSync(path.join(corrupt,manifestName),JSON.stringify(badManifest));
-  rejects('changed-manifest',()=>validateSite(corrupt),/manifest digest/);
+  (await rejects('changed-manifest',()=>validateSite(corrupt),/manifest digest/));
   fs.copyFileSync(path.join(site,manifestName),path.join(corrupt,manifestName));
   fs.unlinkSync(path.join(corrupt,'app-core.js'));fs.symlinkSync(path.join(site,'app-core.js'),path.join(corrupt,'app-core.js'));
-  rejects('symlink-runtime',()=>validateSite(corrupt),/regular files/);
+  (await rejects('symlink-runtime',()=>validateSite(corrupt),/regular files/));
 
   git('-c','user.name=Verification fixture','-c','user.email=fixture@example.invalid','commit','--allow-empty','-qm','Merged identical source');
   const mainCommit=git('rev-parse','HEAD'),promoted=path.join(temporary,'promoted');
   assert.notEqual(mainCommit,testedCommit);assert.equal(git('rev-parse','HEAD^{tree}'),tree);
-  promoteSite({cwd:workspace,verifiedDirectory:site,outputDirectory:promoted,commit:mainCommit,runId:'456'});
+  (await promoteSite({cwd:workspace,verifiedDirectory:site,outputDirectory:promoted,commit:mainCommit,runId:'456'}));
   const promotedManifest=validateSite(promoted);
   for(const name of runtimePaths)assert.deepEqual(fs.readFileSync(path.join(site,name)),fs.readFileSync(path.join(promoted,name)));
   assert.equal(promotedManifest.sourceCommit,mainCommit);assert.equal(promotedManifest.workflowRunIdentity,'456');
   const expectedManifest=clone(manifest);expectedManifest.sourceCommit=mainCommit;expectedManifest.workflowRunIdentity='456';expectedManifest.manifestDigest=promotedManifest.manifestDigest;
   assert.deepEqual(promotedManifest,expectedManifest);cases.push('different-merge-commit-identical-runtime-only-provenance-changed');
-  sealSite({cwd:workspace,directory:promoted,bundleDirectory:path.join(temporary,'main-bundle'),context:{...context,event:'push',commit:mainCommit,runId:'456',headSha:mainCommit,reusedFrom:{runId:'123',sourceTree:tree}}});
+  (await sealSite({cwd:workspace,directory:promoted,bundleDirectory:path.join(temporary,'main-bundle'),context:{...context,event:'push',commit:mainCommit,runId:'456',headSha:mainCommit,reusedFrom:{runId:'123',sourceTree:tree}}}));
   cases.push('promoted-main-artifact-reproducible');
 
   // Exercise the actual selection/reuse CLI against a recorded-shape GitHub
@@ -89,29 +90,29 @@ try{
     [prefix+'/git/commits/'+testedCommit]:{sha:testedCommit,tree:{sha:tree},parents:[{sha:headSha}]}
   };
   const fixtureEnv={...process.env,GH_TOKEN:'synthetic-fixture-token',GITHUB_REPOSITORY:repository,GITHUB_SHA:mainCommit,GITHUB_RUN_ID:'456',GITHUB_RUN_ATTEMPT:'1',GITHUB_EVENT_NAME:'push',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_PATH:eventFile,GITHUB_OUTPUT:outputFile,VERIFY_API_FIXTURE:responseFile};
-  const runCLI=mode=>execFileSync(process.execPath,['--import',shim,path.join(root,'verified-site.mjs'),mode],{cwd:workspace,env:fixtureEnv,stdio:'pipe',encoding:'utf8'});
+  const runCLI=async mode=>(await checkedVerifier(process.execPath,['--import',shim,path.join(root,'verified-site.mjs'),mode],{cwd:workspace,env:fixtureEnv,stdio:'pipe',encoding:'utf8'}));
   const writeResponses=()=>fs.writeFileSync(responseFile,JSON.stringify(responses));
-  writeResponses();runCLI('select');
+  writeResponses();(await runCLI('select'));
   assert.match(fs.readFileSync(outputFile,'utf8'),/artifact_id=789/);
   fs.cpSync(bundle,path.join(workspace,'_verified-pr'),{recursive:true});
-  runCLI('reuse');assert.match(fs.readFileSync(outputFile,'utf8'),/reused=true/);
+  (await runCLI('reuse'));assert.match(fs.readFileSync(outputFile,'utf8'),/reused=true/);
   for(const name of runtimePaths)assert.deepEqual(fs.readFileSync(path.join(workspace,'_site',name)),fs.readFileSync(path.join(site,name)));
   cases.push('main-selects-and-reuses-passing-artifact-through-actual-CLI-mocked-API');
   fs.writeFileSync(outputFile,'');responses[prefix+'/git/commits/'+testedCommit].tree.sha='b'.repeat(40);writeResponses();
-  assert.match(runCLI('reuse'),/Full verification is required/);assert.doesNotMatch(fs.readFileSync(outputFile,'utf8'),/reused=true/);
+  assert.match((await runCLI('reuse')),/Full verification is required/);assert.doesNotMatch(fs.readFileSync(outputFile,'utf8'),/reused=true/);
   cases.push('changed-merge-tree-falls-back-to-full-checks');
   responses[prefix+'/git/commits/'+testedCommit].tree.sha=tree;
   responses[prefix+'/actions/runs/123'].run_attempt=2;writeResponses();
-  rejects('changed-run-attempt-during-download',()=>runCLI('reuse'),/attempt changed/);
+  (await rejects('changed-run-attempt-during-download',async ()=>(await runCLI('reuse')),/attempt changed/));
   responses[prefix+'/actions/runs/123'].run_attempt=1;
   responses[prefix+'/actions/runs/123/artifacts'].artifacts[0].expired=true;writeResponses();fs.writeFileSync(outputFile,'');
-  assert.match(runCLI('select'),/No complete reusable PR artifact/);assert.equal(fs.existsSync(path.join(workspace,'.verified-candidate.json')),false);assert.equal(fs.readFileSync(outputFile,'utf8'),'');
+  assert.match((await runCLI('select')),/No complete reusable PR artifact/);assert.equal(fs.existsSync(path.join(workspace,'.verified-candidate.json')),false);assert.equal(fs.readFileSync(outputFile,'utf8'),'');
   cases.push('expired-artifact-falls-back-to-full-checks');
 
   fs.appendFileSync(path.join(workspace,'app-core.js'),'\n/* untested source */');
-  rejects('dirty-source',()=>promoteSite({cwd:workspace,verifiedDirectory:site,outputDirectory:promoted,commit:mainCommit,runId:'456'}),/tracked source changes/);
+  (await rejects('dirty-source',async ()=>(await promoteSite({cwd:workspace,verifiedDirectory:site,outputDirectory:promoted,commit:mainCommit,runId:'456'})),/tracked source changes/));
   git('add','app-core.js');git('-c','user.name=Verification fixture','-c','user.email=fixture@example.invalid','commit','-qm','Changed main runtime');
-  rejects('changed-merged-source',()=>promoteSite({cwd:workspace,verifiedDirectory:site,outputDirectory:promoted,commit:git('rev-parse','HEAD'),runId:'456'}),/differs/);
+  (await rejects('changed-merged-source',async ()=>(await promoteSite({cwd:workspace,verifiedDirectory:site,outputDirectory:promoted,commit:git('rev-parse','HEAD'),runId:'456'})),/differs/));
   assert.deepEqual(fs.readFileSync(path.join(promoted,'app-core.js')),fs.readFileSync(path.join(site,'app-core.js')),'Failed promotion must not overwrite the last intact artifact.');
 
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');

@@ -1,4 +1,4 @@
-import {runVerifierSync,assertDetectedFault} from './verify-conformance-regressions.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,11 +11,11 @@ if(intakeFault)assert.ok(['raw-json-copy','validation-json-copy'].includes(intak
 // Run in a bounded heap so another whole-project JSON round trip cannot hide
 // behind the much larger memory allowance of a developer workstation.
 if(!process.argv.includes('--bounded-heap')){
-  const result=runVerifierSync(process.execPath,['--max-old-space-size=512','--expose-gc',import.meta.filename,'--bounded-heap',...(intakeFault?['--fault='+intakeFault]:[])],{encoding:'utf8',timeout:120000});
+  const result=(await runVerifier(process.execPath,['--max-old-space-size=512','--expose-gc',import.meta.filename,'--bounded-heap',...(intakeFault?['--fault='+intakeFault]:[])],{encoding:'utf8',timeout:120000}));
   assert.equal(result.status,0,`Large proposal acceptance failed:\n${result.stdout}\n${result.stderr}`);
   process.stdout.write(result.stdout);
   if(!intakeFault)for(const fault of ['raw-json-copy','validation-json-copy']){
-    const broken=runVerifierSync(process.execPath,['--max-old-space-size=512','--expose-gc',import.meta.filename,'--bounded-heap','--fault='+fault],{encoding:'utf8',timeout:120000});
+    const broken=(await runVerifier(process.execPath,['--max-old-space-size=512','--expose-gc',import.meta.filename,'--bounded-heap','--fault='+fault],{encoding:'utf8',timeout:120000}));
     assertDetectedFault(broken,'INTAKE_HISTORY_ALLOCATION_ORACLE','Intake allocation fault went undetected: '+fault);
     assert.match(broken.stderr,/INTAKE_HISTORY_ALLOCATION_ORACLE/,'The intake fault failed for an unrelated reason');
     console.log(JSON.stringify({caseId:'INTAKE-PRESERVED-HISTORY-BOUNDARY',fault,result:'DETECTED',sourceMutation:false,command:['node','--max-old-space-size=512','--expose-gc','verify-proposal-acceptance-memory.mjs','--bounded-heap','--fault='+fault],exitCode:broken.status,stdout:broken.stdout,stderr:broken.stderr}));

@@ -1,5 +1,5 @@
 import './verify-test-ir-port-types.mjs';
-import {runVerifierSync} from './verify-conformance-regressions.mjs';
+import {runVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
@@ -139,7 +139,7 @@ for(const [file,marker,expected] of [
  ['verify-stage01-disposition-contract.mjs','stage01DispositionContract','PASS'],
  ['verify-terminal-human-authority.mjs','terminalHumanAuthority','PASS']
 ]){
- const result=runVerifierSync(process.execPath,[file],{encoding:'utf8',timeout:60000});
+ const result=(await runVerifier(process.execPath,[file],{encoding:'utf8',timeout:60000}));
  assert.equal(result.status,0,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file+'\n'+result.stderr);
  const report=JSON.parse(result.stdout);assert.equal(report[marker],expected,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file);
  executedContractProofs.push({file,report,evidencePath:result.evidencePath});

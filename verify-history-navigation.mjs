@@ -1,4 +1,4 @@
-import {runVerifierSync,assertDetectedFault} from './verify-conformance-regressions.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -174,12 +174,12 @@ assert.equal(runtime.history.state.view.drafts['#response-note'].value,formNodes
 ui.renderOverride(()=>{});note('Ordinary project-link startup restores drafts after the final control render');
 const stale=copy(ui.current()),external=copy(await store.readProject(jobId));external.job.JOB_TITLE='Independent tab work';await store.writeProject(external,{expectedProjectRevision:external.revision});await assert.rejects(ui.restore(startId,{traversal:true}),error=>error.code==='STALE_PROJECT_REVISION');assert.equal((await store.readProject(jobId)).job.JOB_TITLE,'Independent tab work');assert.equal(ui.current().revision,stale.revision);note('Stale tab cannot restore over independent work');
 if(process.env.CLOSED_LOOP_STARTUP_DRAFT_FAULT!=='1'){
- const fault=runVerifierSync(process.execPath,[import.meta.filename],{encoding:'utf8',env:{...process.env,CLOSED_LOOP_STARTUP_DRAFT_FAULT:'1'},timeout:120000,killSignal:'SIGKILL',maxBuffer:8*1024*1024});
+ const fault=(await runVerifier(process.execPath,[import.meta.filename],{encoding:'utf8',env:{...process.env,CLOSED_LOOP_STARTUP_DRAFT_FAULT:'1'},timeout:120000,killSignal:'SIGKILL',maxBuffer:8*1024*1024}));
  assertDetectedFault(fault,'STARTUP_DRAFT_ORACLE','Bypassed final draft restoration was not detected');assert.match(fault.stderr,/STARTUP_DRAFT_ORACLE/,'Fault failed for an unrelated reason');note('Deliberately skipped final draft restoration is detected by the navigation regression');
 }
 if(process.env.CLOSED_LOOP_STARTUP_DRAFT_FAULT!=='1'){
  const namedCases=[...new Set([...fs.readFileSync(import.meta.filename,'utf8').matchAll(/selectedCase==='([A-Z][A-Z0-9-]+)'/g)].map(match=>match[1]))];
- for(const caseId of namedCases){const result=runVerifierSync(process.execPath,[import.meta.filename,'--case='+caseId],{encoding:'utf8',timeout:120000,killSignal:'SIGKILL',maxBuffer:8*1024*1024});assert.equal(result.status,0,result.stderr);cases.push({caseId,result:'PASS',raw:{command:['node','verify-history-navigation.mjs','--case='+caseId],exitCode:result.status,stdout:result.stdout,stderr:result.stderr}});}
- for(const [fault,caseId] of restorationFaults){const result=runVerifierSync(process.execPath,[import.meta.filename,'--case='+caseId,'--fault='+fault],{encoding:'utf8',timeout:120000,killSignal:'SIGKILL',maxBuffer:8*1024*1024});assertDetectedFault(result,caseId+'_ORACLE','Undetected restoration fault '+fault);assert.ok(result.stderr.includes(caseId+'_ORACLE'),'Restoration fault failed for an unrelated reason: '+result.stderr);cases.push({caseId,fault,result:'DETECTED',restoredImplementation:'PASS',raw:{command:['node','verify-history-navigation.mjs','--case='+caseId,'--fault='+fault],exitCode:result.status,stdout:result.stdout,stderr:result.stderr}});}
+ for(const caseId of namedCases){const result=(await runVerifier(process.execPath,[import.meta.filename,'--case='+caseId],{encoding:'utf8',timeout:120000,killSignal:'SIGKILL',maxBuffer:8*1024*1024}));assert.equal(result.status,0,result.stderr);cases.push({caseId,result:'PASS',raw:{command:['node','verify-history-navigation.mjs','--case='+caseId],exitCode:result.status,stdout:result.stdout,stderr:result.stderr}});}
+ for(const [fault,caseId] of restorationFaults){const result=(await runVerifier(process.execPath,[import.meta.filename,'--case='+caseId,'--fault='+fault],{encoding:'utf8',timeout:120000,killSignal:'SIGKILL',maxBuffer:8*1024*1024}));assertDetectedFault(result,caseId+'_ORACLE','Undetected restoration fault '+fault);assert.ok(result.stderr.includes(caseId+'_ORACLE'),'Restoration fault failed for an unrelated reason: '+result.stderr);cases.push({caseId,fault,result:'DETECTED',restoredImplementation:'PASS',raw:{command:['node','verify-history-navigation.mjs','--case='+caseId,'--fault='+fault],exitCode:result.status,stdout:result.stdout,stderr:result.stderr}});}
 }
 console.log(JSON.stringify({synthetic:true,environment:'Real application navigation functions and production persistence with lifecycle adapter; minimal view/history boundary doubles',actualBrowser:false,cases},null,2));

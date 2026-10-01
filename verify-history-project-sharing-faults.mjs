@@ -1,4 +1,4 @@
-import {runVerifierSync,assertDetectedFault} from './verify-conformance-regressions.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -32,8 +32,8 @@ for(const [suite,fault,oracle] of [
  ['verify-history-project-references.mjs','skip-project-body-byte-check','HISTORY_REFERENCE_BYTE_ORACLE'],
  ['verify-history-project-references.mjs','skip-selected-version-binding','HISTORY_SELECTED_VERSION_ORACLE']
 ]){
- const run=args=>{const command=[process.execPath,suite,...args],startedAt=new Date().toISOString(),actual=runVerifierSync(command[0],command.slice(1),{encoding:'utf8',maxBuffer:64*1024*1024,timeout:CHILD_TIMEOUT_MS,killSignal:'SIGKILL'});return {command,startedAt,finishedAt:new Date().toISOString(),timeoutMs:CHILD_TIMEOUT_MS,exitCode:actual.status,signal:actual.signal,outcome:actual.error?.code==='ETIMEDOUT'?'TIMEOUT':actual.status===0?'PASS':'FAIL',error:actual.error?{code:actual.error.code,message:actual.error.message}:null,stdout:actual.stdout||'',stderr:actual.stderr||''};};
- const injected=run(['--fault='+fault]);console.error(JSON.stringify({suite,fault,phase:'injected',...injected}));
+ const run=async args=>{const command=[process.execPath,suite,...args],startedAt=new Date().toISOString(),actual=(await runVerifier(command[0],command.slice(1),{encoding:'utf8',maxBuffer:64*1024*1024,timeout:CHILD_TIMEOUT_MS,killSignal:'SIGKILL'}));return {command,startedAt,finishedAt:new Date().toISOString(),timeoutMs:CHILD_TIMEOUT_MS,exitCode:actual.status,signal:actual.signal,outcome:actual.error?.code==='ETIMEDOUT'?'TIMEOUT':actual.status===0?'PASS':'FAIL',error:actual.error?{code:actual.error.code,message:actual.error.message}:null,stdout:actual.stdout||'',stderr:actual.stderr||''};};
+ const injected=(await run(['--fault='+fault]));console.error(JSON.stringify({suite,fault,phase:'injected',...injected}));
  assertDetectedFault(injected,oracle,'Implementation fault escaped detection: '+fault);
  assert.ok(injected.stderr.includes(oracle),'Implementation fault failed for an unrelated reason: '+fault+'\n'+injected.stderr);
  assert.equal(digest('project-store.js'),originalSourceSha256,'A disposable fault changed the production store.');
@@ -46,7 +46,7 @@ for(const [suite,fault,oracle] of [
 // repeating the identical healthy fixture after every in-memory mutant adds no
 // additional state or operation coverage.
 for(const suite of controlSuites){
- const command=[process.execPath,suite],run=runVerifierSync(command[0],command.slice(1),{encoding:'utf8',maxBuffer:64*1024*1024,timeout:CHILD_TIMEOUT_MS,killSignal:'SIGKILL'});
+ const command=[process.execPath,suite],run=(await runVerifier(command[0],command.slice(1),{encoding:'utf8',maxBuffer:64*1024*1024,timeout:CHILD_TIMEOUT_MS,killSignal:'SIGKILL'}));
  assert.equal(run.status,0,'Restored implementation did not return to green: '+suite+'\n'+run.stderr);
  healthyControls.push({suite,command,result:'PASS',exitCode:run.status,signal:run.signal,startedAt:run.startedAt,finishedAt:run.finishedAt,stdout:run.stdout,stderr:run.stderr,evidencePath:run.evidencePath});
 }

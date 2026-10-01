@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -51,6 +52,6 @@ assert(validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'
 let valid=envelope(capture);validation=ingestion.validateEnvelope(p,valid,{stage:1,promptRecord:prompt,rawSha256:hash.sha256Value(valid),files:[]});
 assert(!validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'),`Stage 01 ingestion rejected repaired intake accounting: ${JSON.stringify(validation.issues)}`);
 
-const humanAuthorityRoundTrip=JSON.parse(execFileSync(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'}));
+const humanAuthorityRoundTrip=JSON.parse((await checkedVerifier(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'})));
 assert(humanAuthorityRoundTrip.humanAuthorityRoundTrip==='PASS'&&humanAuthorityRoundTrip.atomicCoAcceptanceStable===true&&humanAuthorityRoundTrip.unrelatedMutationFailsClosed===true&&humanAuthorityRoundTrip.returnedAttachmentNotRawInput===true,'Integrated Stage 01 human-authority regression did not report every repaired-path proof.');
 console.log(JSON.stringify({stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,legacyCaptureRejected:true,missingPassOneRejected:true,missingPassTwoRejected:true,incompleteChallengeCategoriesRejected:true,humanAuthorityRoundTripIntegrated:true}));

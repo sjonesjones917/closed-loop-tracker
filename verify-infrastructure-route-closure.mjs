@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
@@ -66,8 +67,8 @@ assert(app.includes('NEXT_REQUIRED_ACTION')&&app.includes('currentNextAction'),`
 assert(!/projectData\.[A-Za-z0-9_]+\.push\([^)]*canonical/i.test(app),`UI contains a suspicious direct canonical collection write.`);
 
 // Execute the real ingestion and lifecycle suites so static contracts cannot masquerade as route proof.
-execFileSync(process.execPath,[new URL('./verify-ingestion.mjs',import.meta.url).pathname],{stdio:'pipe'});
-const lifecycleOutput=execFileSync(process.execPath,[new URL('./verify-project-lifecycle.mjs',import.meta.url).pathname],{stdio:'pipe',encoding:'utf8'});
+(await checkedVerifier(process.execPath,[new URL('./verify-ingestion.mjs',import.meta.url).pathname],{stdio:'pipe'}));
+const lifecycleOutput=(await checkedVerifier(process.execPath,[new URL('./verify-project-lifecycle.mjs',import.meta.url).pathname],{stdio:'pipe',encoding:'utf8'}));
 const lifecycleReports=lifecycleOutput.split('\n').flatMap(line=>{try{return [JSON.parse(line)];}catch{return [];}});
 assert(lifecycleReports.some(report=>report.projectLifecycleControls===true)&&lifecycleReports.filter(report=>report.storageRegression).every(report=>report.passed===true),'Lifecycle verification did not reach its complete executed result.');
 

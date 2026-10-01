@@ -1,3 +1,4 @@
+import {runVerifier,checkedVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -32,14 +33,14 @@ assert(committedSpec.sha256===sha256(sourceBytes),'Committed specification manif
 assert(committedSpec.byteLength===sourceBytes.length,'Committed specification manifest byte length is wrong.');
 assert(committedSpec.sourceCommit===sourceCommit,'Committed specification source commit is wrong.');
 
-function verifySourceCommit(){
+async function verifySourceCommit(){
   if(process.env.GITHUB_ACTIONS!=='true')return {checked:false};
-  const shallow=cp.execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
+  const shallow=cp.execFileSync('git',['rev-parse','--is-shallow-repository'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim()==='true';
   const fetchArgs=shallow?['fetch','--no-tags','--unshallow','origin','main']:['fetch','--no-tags','origin','main'];
-  const fetched=cp.spawnSync('git',fetchArgs,{stdio:'ignore'});
-  assert(fetched.status===0,'Unable to fetch complete canonical main history.');
-  assert(cp.spawnSync('git',['merge-base','--is-ancestor',sourceCommit,'HEAD'],{stdio:'ignore'}).status===0,'Specification source commit is not reachable from current canonical main.');
-  const shown=cp.spawnSync('git',['show',`${sourceCommit}:${SPEC_PATH}`],{encoding:null,maxBuffer:64*1024*1024});
+  const fetched=(await runVerifier('git',fetchArgs,{encoding:'utf8',timeout:120000}));
+  assert(fetched.status===0&&!fetched.error&&!fetched.signal,'Unable to fetch complete canonical main history. '+fetched.stderr);
+  assert(cp.spawnSync('git',['merge-base','--is-ancestor',sourceCommit,'HEAD'],{timeout:30000,killSignal:'SIGKILL',stdio:'ignore'}).status===0,'Specification source commit is not reachable from current canonical main.');
+  const shown=cp.spawnSync('git',['show',`${sourceCommit}:${SPEC_PATH}`],{timeout:30000,killSignal:'SIGKILL',encoding:null,maxBuffer:64*1024*1024});
   assert(shown.status===0,'Specification is absent from the recorded source commit.');
   const clarifications=readJson('specification/requirement-evidence-bindings.json').approvedClarifications||[];
   let pinnedBytes=sourceBytes;
@@ -55,7 +56,7 @@ function verifySourceCommit(){
   assert(Buffer.compare(Buffer.from(shown.stdout),pinnedBytes)===0,'Recorded source commit does not contain the exact pinned base specification bytes.');
   return {checked:true};
 }
-const sourceCommitEvidence=verifySourceCommit();
+const sourceCommitEvidence=(await verifySourceCommit());
 
 for(const runtimePath of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html','TEST_PROJECT.json']){
   if(!fs.existsSync(runtimePath))continue;
@@ -72,14 +73,14 @@ function copyWorkspace(target){
     return !relative.split(path.sep).some(part=>part==='.git'||part==='node_modules'||part==='_site')&&!relative.startsWith(path.join('verification','controller-ci-proof'));
   }});
 }
-function runCore(workspace){
+async function runCore(workspace){
   const beforeSpec=fs.readFileSync(path.join(workspace,SPEC_MANIFEST_PATH));
   const beforeNormative=fs.readFileSync(path.join(workspace,NORMATIVE_MANIFEST_PATH));
-  const result=cp.spawnSync(process.execPath,[CORE_PATH],{
+  const result=(await runVerifier(process.execPath,[CORE_PATH],{
     cwd:workspace,
     env:{...process.env,SOURCE_COMMIT:sourceCommit,GITHUB_ACTIONS:'false'},
     encoding:'utf8',maxBuffer:256*1024*1024
-  });
+  }));
   const afterSpec=fs.readFileSync(path.join(workspace,SPEC_MANIFEST_PATH));
   const afterNormative=fs.readFileSync(path.join(workspace,NORMATIVE_MANIFEST_PATH));
   return {result,beforeSpec,beforeNormative,afterSpec,afterNormative,changed:!beforeSpec.equals(afterSpec)||!beforeNormative.equals(afterNormative)};
@@ -90,7 +91,7 @@ try{
   const validationRoot=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-governance-validation-'));
   temporaryRoots.push(validationRoot);
   copyWorkspace(validationRoot);
-  const validation=runCore(validationRoot);
+  const validation=(await runCore(validationRoot));
   if(validation.result.status!==0)throw new Error(`Independent governance validation failed:\n${validation.result.stdout||''}\n${validation.result.stderr||''}`);
   assert(!validation.changed,'Governance verifier would rewrite committed manifests instead of validating them.');
   assert(fs.readFileSync(SPEC_MANIFEST_PATH).equals(committedSpecBytes),'Governance validation modified the committed specification manifest.');
@@ -104,7 +105,7 @@ try{
   mutation.sha256='0'.repeat(64);
   fs.writeFileSync(mutationPath,JSON.stringify(mutation,null,2)+'\n');
   const mutatedBytes=fs.readFileSync(mutationPath);
-  const mutationRun=runCore(mutationRoot);
+  const mutationRun=(await runCore(mutationRoot));
   assert(mutationRun.result.status===0,'Intentional committed-manifest mutation did not reach the rewrite-detection boundary.');
   assert(mutationRun.changed,'Intentional committed-manifest mutation was not detected by byte comparison.');
   let mutationRejected=false;
@@ -112,8 +113,8 @@ try{
   assert(mutationRejected,'Intentional committed-manifest mutation was not rejected.');
   assert(mutatedBytes.equals(mutationRun.beforeSpec),'Intentional mutation fixture changed before validation began.');
 
-  cp.execFileSync(process.execPath,['verify-v3-migration.mjs'],{stdio:'pipe'});
-  cp.execFileSync(process.execPath,['verify-response-contract-profile.mjs'],{stdio:'pipe'});
+  (await checkedVerifier(process.execPath,['verify-v3-migration.mjs'],{stdio:'pipe'}));
+  (await checkedVerifier(process.execPath,['verify-response-contract-profile.mjs'],{stdio:'pipe'}));
 
   const coreReport=JSON.parse((validation.result.stdout||'').trim());
   console.log(JSON.stringify({

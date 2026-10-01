@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {runVerifierSync} from './verify-conformance-regressions.mjs';
+import {runVerifier} from './verify-conformance-regressions.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const original=fs.readFileSync('hash.js','utf8'),sourceSha256=sha(original);
@@ -18,10 +18,10 @@ const faults=[
  {id:'CB-MUT-RANGE',before:"  if(instant.getUTCFullYear()<0||instant.getUTCFullYear()>9999)throw new TypeError('INVALID_DATE_TIME: normalized UTC year is outside the four-digit RFC 3339 domain.');\n",after:'',oracle:'CB-INSTANT-RANGE-UPPER',control:'CB-INSTANT-9'}
 ];
 const results=[];
-function execute(sourcePath,prefixes=[]){
+async function execute(sourcePath,prefixes=[]){
   const command=[process.execPath,'verify-canonical-boundaries.mjs',...prefixes.map(prefix=>'--case-prefix='+prefix)];
   const startedAt=new Date().toISOString();
-  const run=runVerifierSync(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,CANONICAL_BOUNDARY_HASH_SOURCE:sourcePath},timeout:60000,maxBuffer:32*1024*1024});
+  const run=(await runVerifier(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,CANONICAL_BOUNDARY_HASH_SOURCE:sourcePath},timeout:60000,maxBuffer:32*1024*1024}));
   const receipt={command,sourcePath,sourceSha256:sha(fs.readFileSync(sourcePath)),startedAt,finishedAt:new Date().toISOString(),exitCode:run.status,signal:run.signal,stdout:run.stdout||'',stderr:run.stderr||''};
   let report;try{report=JSON.parse(receipt.stdout);}catch(error){throw new Error('Boundary runner did not return executed-case evidence: '+receipt.stderr,{cause:error});}
   return {receipt,report};
@@ -40,20 +40,20 @@ try{
   // rejects that result even while the neighboring healthy control still passes.
   const fault=faults[0],unrelated=path.join(directory,'unrelated-crash.js');
   fs.writeFileSync(unrelated,original.replace(fault.before,"if(keys.some(key=>/[\\uD800-\\uDBFF]/.test(key)))throw new ReferenceError('CONTROLLED_UNRELATED_CRASH');keys.sort();"));
-  const crashed=execute(unrelated,[fault.oracle,fault.control]);
+  const crashed=(await execute(unrelated,[fault.oracle,fault.control]));
   assert.throws(()=>assertIsolatedRejection(crashed,fault),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('BOUNDARY_FAULT_CLASSIFICATION_ORACLE'));
   classificationFault={fault:'unrelated-crash-reported-as-value-mismatch',result:'REJECTED',raw:crashed.receipt};
   for(const fault of faults){
     assert.equal(original.split(fault.before).length-1,1,`${fault.id}: production injection point is missing or ambiguous`);
     const mutant=path.join(directory,fault.id+'.js');fs.writeFileSync(mutant,original.replace(fault.before,fault.after));
-    const injected=execute(mutant,[fault.oracle,fault.control]);
+    const injected=(await execute(mutant,[fault.oracle,fault.control]));
     assertIsolatedRejection(injected,fault);
-    const restored=execute(path.resolve('hash.js'),[fault.oracle,fault.control]);
+    const restored=(await execute(path.resolve('hash.js'),[fault.oracle,fault.control]));
     assert.equal(restored.receipt.exitCode,0,`${fault.id}: unmodified production did not restore the same cases to green`);
     assert.ok(restored.report.results.every(row=>row.status==='PASS'));
     results.push({faultId:fault.id,expectedFailureCase:fault.oracle,validControlCase:fault.control,result:'DETECTED',injected:injected.receipt,restored:restored.receipt});
   }
-  const completeRestored=execute(path.resolve('hash.js'));
+  const completeRestored=(await execute(path.resolve('hash.js')));
   assert.equal(completeRestored.receipt.exitCode,0,'Full restored boundary suite failed');
   assert.equal(sha(fs.readFileSync('hash.js')),sourceSha256,'Disposable mutations changed the production authority');
   console.log(JSON.stringify({schema:'closed-loop-canonical-boundary-faults/1',sourceSha256,testSha256:sha(fs.readFileSync('verify-canonical-boundaries.mjs')),synthetic:true,actualBrowser:false,contractTextModified:false,method:'Each independently named disposable production mutation must fail its intended observable, leave a valid control passing, and return the same cases to green on unmodified production. All raw child outputs are retained.',classificationFault,results,completeRestored:completeRestored.receipt},null,2));

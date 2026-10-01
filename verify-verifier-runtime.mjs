@@ -1,4 +1,4 @@
-import {runVerifierSync,assertDetectedFault} from './verify-conformance-regressions.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import os from 'node:os';
@@ -61,7 +61,7 @@ await new Promise(resolve=>host.requestAnimationFrame(resolve));
 host.localStorage.setItem('host-proof','retained');assert.equal(host.localStorage.getItem('host-proof'),'retained','VERIFIER_HOST_STORAGE_ORACLE');host.localStorage.removeItem('host-proof');
 const override=()=>123,seed={setTimeout:override};assert.equal(createVerifierRuntime(seed).setTimeout,override,'VERIFIER_EXPLICIT_OVERRIDE_ORACLE');
 
-const consumers=[...new Set(execFileSync('git',['ls-files','--cached','--others','--exclude-standard','*.mjs'],{encoding:'utf8'}).trim().split('\n'))].filter(name=>fs.existsSync(name)&&!['verifier-runtime.mjs','verify-verifier-runtime.mjs'].includes(name));
+const consumers=[...new Set(execFileSync('git',['ls-files','--cached','--others','--exclude-standard','*.mjs'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim().split('\n'))].filter(name=>fs.existsSync(name)&&!['verifier-runtime.mjs','verify-verifier-runtime.mjs'].includes(name));
 const independent=consumers.filter(name=>/vm\.(?:createContext|runInNewContext|runInThisContext)\(/.test(fs.readFileSync(name,'utf8')));
 assert.deepEqual(independent,[],'VERIFIER_RUNTIME_SINGLE_FACTORY_ORACLE');
 const faults=[];
@@ -79,11 +79,11 @@ if(!process.argv.includes('--fault-probe')){
   for(const mutation of mutations){
    assert.ok(mutation.before&&original.split(mutation.before).length===2,'Unique runtime fault anchor required.');
    const file=path.join(directory,mutation.name+'.mjs');fs.writeFileSync(file,original.replace(mutation.before,mutation.after));
-   const run=runVerifierSync(process.execPath,['verify-verifier-runtime.mjs','--fault-probe'],{encoding:'utf8',env:{...process.env,VERIFIER_RUNTIME_SOURCE:file},maxBuffer:8*1024*1024});
+   const run=(await runVerifier(process.execPath,['verify-verifier-runtime.mjs','--fault-probe'],{encoding:'utf8',env:{...process.env,VERIFIER_RUNTIME_SOURCE:file},maxBuffer:8*1024*1024}));
    assertDetectedFault(run,mutation.oracle,'Undetected verifier runtime fault: '+mutation.name);assert.ok(run.stderr.includes(mutation.oracle),run.stderr);
    faults.push({fault:mutation.name,oracle:mutation.oracle,result:'DETECTED',exitCode:run.status,stdout:run.stdout,stderr:run.stderr});
   }
-  const restored=runVerifierSync(process.execPath,['verify-verifier-runtime.mjs','--fault-probe'],{encoding:'utf8',env:{...process.env,VERIFIER_RUNTIME_SOURCE:path.resolve('verifier-runtime.mjs')},maxBuffer:8*1024*1024});
+  const restored=(await runVerifier(process.execPath,['verify-verifier-runtime.mjs','--fault-probe'],{encoding:'utf8',env:{...process.env,VERIFIER_RUNTIME_SOURCE:path.resolve('verifier-runtime.mjs')},maxBuffer:8*1024*1024}));
   assert.equal(restored.status,0,restored.stderr);faults.push({restoredImplementation:'PASS',stdout:restored.stdout,stderr:restored.stderr});
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
 }

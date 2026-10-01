@@ -1,10 +1,11 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {selectExecutionReport} from './execution-report.mjs';
 
 // Use the real producer, including its later independent reports. The former
 // last-object consumer loses this attachment proof despite successful tests.
-const stdout = execFileSync(process.execPath, ['verify-ingestion.mjs'], {encoding:'utf8',maxBuffer:64*1024*1024,timeout:120000,killSignal:'SIGKILL'});
+const stdout = (await checkedVerifier(process.execPath, ['verify-ingestion.mjs'], {encoding:'utf8',maxBuffer:64*1024*1024,timeout:120000,killSignal:'SIGKILL'}));
 let reports;
 assert.doesNotThrow(() => { reports = stdout.trim().split(/\n(?=\{)/).map(text => JSON.parse(text)); }, 'EXECUTION_REPORT_STREAM_ORACLE: completed observations must remain readable JSON; progress messages belong on stderr.');
 const slots = selectExecutionReport(stdout, 'attachmentSlotMapping');

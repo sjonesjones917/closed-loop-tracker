@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
@@ -15,7 +16,7 @@ if(deploymentUrl.username||deploymentUrl.password||deploymentUrl.search||deploym
 
 const retainedSite=process.env.VERIFIED_SITE_DIR;
 const expectedDir=path.resolve(retainedSite||'.verify-live-site');
-if(!retainedSite)execFileSync(process.execPath,['build-static-site.mjs','--out',expectedDir,'--source-commit',process.env.GITHUB_SHA||'LOCAL_UNCOMMITTED','--workflow-run',process.env.GITHUB_RUN_ID||'LOCAL'],{stdio:'inherit'});
+if(!retainedSite)(await checkedVerifier(process.execPath,['build-static-site.mjs','--out',expectedDir,'--source-commit',process.env.GITHUB_SHA||'LOCAL_UNCOMMITTED','--workflow-run',process.env.GITHUB_RUN_ID||'LOCAL'],{stdio:'inherit'}));
 const manifest=validateSite(expectedDir);
 if(manifest.sourceCommit!==(process.env.GITHUB_SHA||'LOCAL_UNCOMMITTED')||String(manifest.workflowRunIdentity)!==String(process.env.GITHUB_RUN_ID||'LOCAL'))throw new Error('Expected artifact belongs to a different source commit or workflow run.');
 if(manifest.canonicalOrigin!==canonicalOrigin||manifest.canonicalHost!==deploymentUrl.host||manifest.canonicalBasePath!==canonicalBasePath)throw new Error('Built deployment manifest does not bind the canonical deployed origin.');

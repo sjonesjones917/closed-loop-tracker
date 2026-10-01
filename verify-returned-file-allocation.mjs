@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
-const sourceRevision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const sourceRevision=execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
 const r=projectStoreRuntime(),{runtime,store,engine,prompts,ingestion,copy}=r;
 const hash=runtime.closedLoopHash,schema=runtime.closedLoopWorkflowSchema;
 let project=await store.createProject({commandId:'RETURNED-FILE-ALLOCATION-REPRODUCTION'});

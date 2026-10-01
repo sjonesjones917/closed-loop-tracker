@@ -3,13 +3,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {runVerifierSync,assertDetectedFault} from './verify-conformance-regressions.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
 const files=['project-store.js','hash.js','app-core.js','index.html','operator-browser-driver.mjs','verify-browser-extra.mjs','verify-complete-operator-journey.mjs'];
 const originals=new Map(files.map(file=>[file,fs.readFileSync(file,'utf8')]));
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-io-faults-'));
 const events=[];
-function execute(test,args=[],env={}){const command=[process.execPath,test,...args],r=runVerifierSync(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout:30000,maxBuffer:16*1024*1024});const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;}
+async function execute(test,args=[],env={}){const command=[process.execPath,test,...args],r=(await runVerifier(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout:30000,maxBuffer:16*1024*1024}));const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;}
 function replaceOne(source,before,after){assert.equal(source.split(before).length-1,1,'Fault anchor must identify exactly one production location');return source.replace(before,after);}
 const faults=[
  {id:'VER-MUT-ACCUMULATED-FINAL-BACKUP',file:'verify-complete-operator-journey.mjs',env:'OPERATOR_JOURNEY_SOURCE',test:'verify-operator-action-lifecycle.mjs',caseId:null,oracle:'FINAL_BACKUP_FIXTURE_BOUND_ORACLE',apply:s=>replaceOne(s,"report.finalBackupBrowserFixture=await boundStage30BrowserRecovery(await browser.readProject(),'FINAL_BACKUP');",'')},
@@ -76,9 +76,9 @@ const faults=[
 ];
 const results=[];
 try{
- for(const test of [...new Set(faults.map(f=>f.test))]){const r=execute(test);assert.equal(r.status,0,'The unchanged valid implementation must pass '+test);}
- for(const fault of faults){const content=fault.apply(originals.get(fault.file)),filename=path.join(directory,fault.id+path.extname(fault.file));fs.writeFileSync(filename,content);const args=!fault.caseId||fault.test==='verify-action-finalization.mjs'?[]:['--case-prefix='+fault.caseId];const r=execute(fault.test,args,{[fault.env]:filename});assert.equal(r.status,1,'Fault was not rejected: '+fault.id);if(fault.caseId){const body=JSON.parse(r.stdout),row=body.cases.find(c=>c.caseId===fault.caseId);assert(row,'Named oracle case did not execute');assert.equal(row.status||row.result,'FAIL','Named case did not detect '+fault.id);}if(fault.oracle)assertDetectedFault(r,fault.oracle,'Rejection must cite the intended behavior oracle: '+fault.id,{caseId:fault.caseId});results.push({faultId:fault.id,owner:fault.id.startsWith('VER-')?'verifier':'production',file:fault.file,originalSha256:sha(originals.get(fault.file)),injectedSha256:sha(content),caughtBy:fault.caseId,result:'PASS'});fs.unlinkSync(filename);}
+ for(const test of [...new Set(faults.map(f=>f.test))]){const r=(await execute(test));assert.equal(r.status,0,'The unchanged valid implementation must pass '+test);}
+ for(const fault of faults){const content=fault.apply(originals.get(fault.file)),filename=path.join(directory,fault.id+path.extname(fault.file));fs.writeFileSync(filename,content);const args=!fault.caseId||fault.test==='verify-action-finalization.mjs'?[]:['--case-prefix='+fault.caseId];const r=(await execute(fault.test,args,{[fault.env]:filename}));assert.equal(r.status,1,'Fault was not rejected: '+fault.id);if(fault.caseId){const body=JSON.parse(r.stdout),row=body.cases.find(c=>c.caseId===fault.caseId);assert(row,'Named oracle case did not execute');assert.equal(row.status||row.result,'FAIL','Named case did not detect '+fault.id);}if(fault.oracle)assertDetectedFault(r,fault.oracle,'Rejection must cite the intended behavior oracle: '+fault.id,{caseId:fault.caseId});results.push({faultId:fault.id,owner:fault.id.startsWith('VER-')?'verifier':'production',file:fault.file,originalSha256:sha(originals.get(fault.file)),injectedSha256:sha(content),caughtBy:fault.caseId,result:'PASS'});fs.unlinkSync(filename);}
  for(const [file,original]of originals)assert.equal(fs.readFileSync(file,'utf8'),original,'Fault injection altered retained production source');
- for(const test of [...new Set(faults.map(f=>f.test))])assert.equal(execute(test).status,0,'Restored implementation must return to green: '+test);
+ for(const test of [...new Set(faults.map(f=>f.test))])assert.equal((await execute(test)).status,0,'Restored implementation must return to green: '+test);
  console.log(JSON.stringify({schema:'closed-loop-executed-io-faults/1',syntheticPlatformBoundaries:true,scope:'Actual production functions under one targeted fault per disposable source; not browser or physical-device proof.',faults:results,rawRuns:events,sourceRestored:true},null,2));
 }catch(error){console.log(JSON.stringify({faults:results,rawRuns:events,failure:String(error.stack||error)},null,2));process.exitCode=1;}finally{fs.rmSync(directory,{recursive:true,force:true});}
