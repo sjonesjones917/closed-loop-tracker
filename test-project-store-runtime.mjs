@@ -29,7 +29,7 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
  const parse=vm.runInContext('(text)=>JSON.parse(text)',runtime);
  // Preserve undefined properties and shared references just as structured clone
  // does. JSON cloning would hide invalid durable-view fields in these tests.
- const copy=value=>{const seen=new Map();const visit=item=>{if(item===null||typeof item!=='object'||item instanceof Blob)return item;if(seen.has(item))return seen.get(item);const result=parse(Array.isArray(item)?'[]':'{}');seen.set(item,result);for(const key of Object.keys(item))result[key]=visit(item[key]);return result;};return visit(value);};
+ const copy=value=>{const seen=new Map();const visit=item=>{if(item===null||typeof item!=='object'||item instanceof Blob)return item;if(seen.has(item))return seen.get(item);const result=parse(Array.isArray(item)?'[]':'{}');seen.set(item,result);for(const key of Object.keys(item))Object.defineProperty(result,key,{value:visit(item[key]),enumerable:true,writable:true,configurable:true});return result;};return visit(value);};
  runtime.structuredClone=copy;
  runtime.openStorageTransaction=async(names,mode)=>{
   const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map([...(rows.get(name)||[])].map(([key,value])=>[key,copy(value)]))]));let aborted=false;

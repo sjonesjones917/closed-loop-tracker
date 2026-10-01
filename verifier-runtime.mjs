@@ -98,7 +98,7 @@ export function createVerifierRuntime(seed={},options){
         if(tag==='[object File]'&&typeof File==='function'){const out=new File([value],value.name,{type:value.type,lastModified:value.lastModified});seen.set(value,out);return out;}
         if(tag==='[object Error]'){const C=typeof globalThis[value.name]==='function'?globalThis[value.name]:Error,out=new C(value.message);seen.set(value,out);out.name=value.name;if(value.stack)out.stack=value.stack;return out;}
         if(tag!=='[object Object]')throw new TypeError('Unsupported value in verifier structuredClone: '+tag);
-        const out={};seen.set(value,out);for(const key of Object.keys(value))out[key]=clone(value[key],seen);return out;
+        const out={};seen.set(value,out);for(const key of Object.keys(value))Object.defineProperty(out,key,{value:clone(value[key],seen),enumerable:true,writable:true,configurable:true});return out;
       };
       return (value,options)=>{if(options?.transfer?.length)throw new TypeError('Transfer lists are not supported by verifier structuredClone.');return clone(value);};
     })()`,{filename:'verifier-runtime:structuredClone'});

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {execFileSync,spawnSync} from 'node:child_process';
 const {createVerifierRuntime}=await import(process.env.VERIFIER_RUNTIME_SOURCE?pathToFileURL(path.resolve(process.env.VERIFIER_RUNTIME_SOURCE)).href:'./verifier-runtime.mjs');
 
@@ -41,6 +42,24 @@ assert.equal(typeof context.closedLoopHash?.sha256Value,'function','VERIFIER_RUN
 assert.equal(context.closedLoopHash.sha256Value(createVerifierRuntime.loadScript(context,'({b:2,a:1})')),context.closedLoopHash.sha256Value(createVerifierRuntime.loadScript(context,'({a:1,b:2})')),'VERIFIER_RUNTIME_HASH_DETERMINISM_ORACLE');
 assert.equal(createVerifierRuntime.loadScript(context,'Object.getPrototypeOf(structuredClone({scope:{projectRevision:1}}))===Object.prototype'),true,'VERIFIER_RUNTIME_STRUCTURED_CLONE_REALM_ORACLE');
 assert.match(createVerifierRuntime.loadScript(context,"closedLoopHash.sha256Value(structuredClone({scope:{projectRevision:1}}))"),/^[0-9a-f]{64}$/,'VERIFIER_RUNTIME_STRUCTURED_CLONE_CANONICAL_HASH_ORACLE');
+
+// Prototype-named JSON members are data. Neither verifier clone may invoke
+// Object.prototype's setter and change a supported canonical value.
+const cloneInput=JSON.parse('{"__proto__":{"retained":true},"scope":{"projectRevision":1}}');
+const cloneExpected=JSON.stringify(globalThis.structuredClone(cloneInput));
+const persistenceRuntime=projectStoreRuntime();
+for(const [name,clone,runtime] of [
+ ['runtime',value=>context.structuredClone(value),context],
+ ['persistence',value=>persistenceRuntime.copy(value),persistenceRuntime.runtime]
+]){
+ const actual=clone(cloneInput);
+ assert.equal(Object.hasOwn(actual,'__proto__'),true,'VERIFIER_COPY_OWN_PROPERTY_ORACLE: '+name);
+ assert.equal(JSON.stringify(actual),cloneExpected,'VERIFIER_COPY_OWN_PROPERTY_ORACLE: '+name);
+ runtime.cloneResult=actual;
+ assert.equal(createVerifierRuntime.loadScript(runtime,'Object.getPrototypeOf(cloneResult)===Object.prototype'),true,'VERIFIER_COPY_OWN_PROPERTY_ORACLE: '+name);
+ assert.doesNotThrow(()=>runtime.closedLoopHash.sha256Value(actual),'VERIFIER_COPY_CANONICAL_ORACLE: '+name);
+ delete runtime.cloneResult;
+}
 
 // A VM consumer may explicitly pass Node's native builtin. Its results must
 // still belong to the application's realm, exactly as browser-local clones do.
