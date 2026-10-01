@@ -20,6 +20,39 @@ function prepare(project,stage,operation,content){
   const prepared=ingestion.prepare(project,{stage,promptRecord:prompt,text,transport});if(prepared.validation.valid)assert.equal(engine.operationalNextAction(prepared.project,stage).actionType,'REVIEW_PROPOSAL',`Stage ${stage} replaced a pending proposal with another instruction.`);return {...prepared,text};
 }
 function accept(prepared){assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));const impact=ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId);if(impact.requiresConfirmation)assert.throws(()=>ingestion.commit(prepared.project,prepared.proposal.proposalId),error=>error.code==='REPLACEMENT_CONFIRMATION_REQUIRED');return ingestion.commit(prepared.project,prepared.proposal.proposalId,{replacementConfirmation:impact}).project;}
+// Specification9.6: an explicit INAPPLICABLE disposition always requires
+// a separate challenge; the author cannot approve that reduction itself.
+for(const dispositionSource of ['evidence','requirement']){
+const dispositionProject=stage04AcceptanceFixture(runtime,'JOB-INAPPLICABLE-CHALLENGE-'+dispositionSource);
+const inapplicablePrepared=prepare(dispositionProject,4,'COMPLETE',prompt=>{
+ const envelope=stage04AcceptanceEnvelope(runtime,dispositionProject,prompt),item=envelope.evidence.find(row=>row.kind==='OBLIGATION_DISPOSITION');
+ assert.ok(item,'INAPPLICABLE_SETUP_ORACLE: an independently identifiable disposition is required.');
+ if(dispositionSource==='requirement')envelope.records.requirements[0].fields.APPLICABILITY='INAPPLICABLE';
+ else{const content=JSON.parse(item.content);content.disposition='inapplicable';content.reason='The compiler proposes that this supplied context is outside the current requirement scope.';item.content=JSON.stringify(content);}
+ return envelope;
+});
+const inapplicableAccepted=accept(inapplicablePrepared);
+assert.equal(engine.gate(4,inapplicableAccepted).complete,false,'INAPPLICABLE_CHALLENGE_ORACLE: the compiler approved its own inapplicable disposition.');
+assert.equal(engine.operationalNextAction(inapplicableAccepted,4).operation,'DISPOSITION_CHALLENGE','INAPPLICABLE_CONTINUATION_ORACLE');
+const dispositionReviewed=accept(prepare(inapplicableAccepted,4,'DISPOSITION_CHALLENGE',()=>({records:{semanticChallenges:[recordProposal(schema,'semanticChallenges',{tempKey:'independent-disposition-review',overrides:{FINDINGS:'The explicitly identified disposition is consistent with the supplied context.',DISPOSITION:'ACCEPTED',REASONING:'The independent reviewer compared the exact authored disposition and governing context.'}})]}})));
+assert.equal(engine.gate(4,dispositionReviewed).complete,true,'INAPPLICABLE_REVIEW_COMPLETION_ORACLE');
+}
+
+// Combining two distinct application obligation IDs is a mechanical merge
+// trigger. Semantic equivalence must be assessed by the independent challenger.
+const mergeProject=stage04AcceptanceFixture(runtime,'JOB-MERGED-OBLIGATIONS');
+const mergedPrepared=prepare(mergeProject,4,'COMPLETE',prompt=>{
+ const envelope=stage04AcceptanceEnvelope(runtime,mergeProject,prompt),index=envelope.evidence.findIndex(row=>row.kind==='OBLIGATION_DISPOSITION');
+ assert.ok(index>=0,'MERGE_SETUP_ORACLE');
+ const second=JSON.parse(envelope.evidence[index].content).obligationId;
+ envelope.records.requirements[0].fields.USER_INPUT_RELATIONSHIP+=' '+second;envelope.evidence.splice(index,1);return envelope;
+});
+const mergedAccepted=accept(mergedPrepared);
+assert.equal(engine.gate(4,mergedAccepted).complete,false,'MERGED_OBLIGATION_CHALLENGE_ORACLE: a compiler approved its own merge.');
+assert.equal(engine.operationalNextAction(mergedAccepted,4).operation,'ATOMICITY_CHALLENGE','MERGED_OBLIGATION_CONTINUATION_ORACLE');
+const mergeReviewed=accept(prepare(mergedAccepted,4,'ATOMICITY_CHALLENGE',()=>({records:{semanticChallenges:[recordProposal(schema,'semanticChallenges',{tempKey:'independent-merge-review',overrides:{FINDINGS:'The independent reviewer assessed the merged obligation identities and exact source context.',DISPOSITION:'ACCEPTED',REASONING:'The semantic equivalence decision is recorded in the independent review context.'}})]}})));
+assert.equal(engine.gate(4,mergeReviewed).complete,true,'MERGED_OBLIGATION_REVIEW_COMPLETION_ORACLE');
+
 const browserAcceptanceCases=[];
 async function replayBrowserAcceptance(prepared,{helperSource=fs.readFileSync('verify-browser-extra.mjs','utf8'),fault=false}={}){
  const response=JSON.parse(prepared.text),app=application(prepared.project,response.operation,{stage:response.stage}),clicks=[];let confirmationShown=false;
@@ -337,4 +370,4 @@ engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.raw
 assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',inapplicableDispositionRequiresIndependentReview:true,mergedObligationsRequireIndependentReview:true,malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
