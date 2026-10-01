@@ -446,7 +446,12 @@ console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidenc
   assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 filename metadata incorrectly became a file-transfer contract.');
   assert(!Object.prototype.hasOwnProperty.call(handoff,'conversationMaterials'),'Stage 04 still exposes the obsolete filename-derived conversation-material handoff.');
   const next=engine.operationalNextAction(p,4);
-  assert(!/design-input\.pdf|attach|provide the original|send the stage 04 instruction with/i.test(next),'Stage 04 next action still re-requests previously supplied material.');
+  const assertCapturedInputAction=action=>assert(!/design-input\.pdf|provide the original|send the stage 04 instruction with/i.test(JSON.stringify(action)),'STAGE04_ACTION_REUSE_ORACLE: Stage 04 next action re-requests previously supplied material.');
+  assertCapturedInputAction(next);
+  let forbiddenActionRejected=false;
+  try{assertCapturedInputAction({...next,explanation:'Send the Stage 04 instruction with design-input.pdf.'});}catch(error){forbiddenActionRejected=error.message.startsWith('STAGE04_ACTION_REUSE_ORACLE:');}
+  assert(forbiddenActionRejected,'STAGE04_ACTION_ORACLE_FAULT: an original-material request escaped the next-action assertion.');
+  assertCapturedInputAction(next);
   const appSource=fs.readFileSync('app-core.js','utf8');
   assert(!appSource.includes('Send the Stage 04 instruction with the required material.'),'Stage 04 UI still contains the repeated attachment instruction.');
 }
