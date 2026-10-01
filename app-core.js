@@ -777,7 +777,7 @@ async function initializeHistoryNavigation(){
  try{if(entry){if(entry.jobId===current.job.JOB_ID&&entry.checkpointId===historyState.activeId){displayedHistoryEntryId=entry.entryId;const restoredEntryView=selectSavedView(entry.view)||entry.view;render();applySavedView(restoredEntryView);}else await restoreHistoryVersion(entry.checkpointId,{jobId:entry.jobId,view:entry.view,traversal:true});}
  else if(version){if(!jobId)throw new Error('A saved-version link must identify its project.');await restoreHistoryVersion(version,{jobId,traversal:true});writeBrowserEntry(version,captureView(),{replace:true});}
  else{
-  if(jobId){const loaded=await projectStore.readProject(jobId);if(!loaded)throw new Error('This project link is unavailable in the current browser.');current=loaded;}
+  if(jobId){const loaded=await projectStore.readProject(jobId);if(!loaded)throw new Error('This project link is unavailable in the current browser.');current=loaded;const index=projects.findIndex(project=>project.job.JOB_ID===jobId);if(index<0)projects.unshift(current);else projects[index]=current;}
   let retainedView=await projectStore.readHistoryView?.(current.job.JOB_ID);if(retainedView)retainedView=selectSavedView(retainedView)||retainedView;
   const stage=Number(url.searchParams.get('stage'));if(stage>=1&&stage<=schema.STAGE_COUNT){if(stage!==current.activeStage&&retainedView)retainedView.drafts={};current.activeStage=stage;current.activeView='Workflow';}
   render();applySavedView(retainedView);
