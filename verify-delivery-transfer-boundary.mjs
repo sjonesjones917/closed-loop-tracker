@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -6,6 +7,12 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime,restoreArtifactFixture,bindArtifactFixture} from './test-project-store-runtime.mjs';
+
+// Validate the fault target before building the lifecycle fixture. A stale
+// target is a verifier setup failure, not a delivery behavior failure.
+const appSource=fs.readFileSync('app-core.js','utf8');
+const retainedActionFaultTarget='return presentationAction(canonicalCurrentStage());';
+assert.equal(appSource.split(retainedActionFaultTarget).length-1,1,'The retained-action fault must alter exactly one display owner.');
 
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
@@ -27,7 +34,7 @@ const fixturePrefix=source.slice(0,anchor).replace('const core=globalThis.closed
 assert.ok(fixturePrefix.includes(captureContext),'The lifecycle fixture must capture context at generation time.');
 fs.writeFileSync(script,fixturePrefix+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),contextFiles:[...retainedContextFiles.values()]}));process.exit(0);`);
 let fixture,fixtureContextFiles,fixtureArtifacts;
-try{execFileSync(process.execPath,[script],{stdio:'pipe',timeout:600000,maxBuffer:64*1024*1024});const generated=JSON.parse(fs.readFileSync(capture,'utf8'));fixture=generated.project;fixtureArtifacts=generated.artifacts;fixtureContextFiles=generated.contextFiles;}
+try{(await checkedVerifier(process.execPath,[script],{stdio:'pipe',timeout:600000,maxBuffer:64*1024*1024}));const generated=JSON.parse(fs.readFileSync(capture,'utf8'));fixture=generated.project;fixtureArtifacts=generated.artifacts;fixtureContextFiles=generated.contextFiles;}
 finally{fs.rmSync(script,{force:true});fs.rmSync(capture,{force:true});}
 await bindArtifactFixture(fixtureArtifacts);
 const value=engine.recordValue,id=(r,c)=>engine.recordId(r,c),fresh=()=>structuredClone(fixture),cases=[],faults=[];
@@ -101,7 +108,6 @@ await check('a negative or uncertain human outcome does not establish delivery',
 
 // Execute the real UI transfer function. The disposable store is the fault
 // boundary here; this evidence does not claim actual browser file transport.
-const appSource=fs.readFileSync('app-core.js','utf8');
 function actionView(project,source=appSource){
   const api={project,engine,schema:globalThis.closedLoopWorkflowSchema,core:globalThis.closedLoopCore};
   const context=createVerifierRuntime({api,console,URL,Blob,crypto:globalThis.crypto,structuredClone:value=>structuredClone(value),document:{currentScript:null,querySelector:()=>({value:'',focus(){},setAttribute(){},removeAttribute(){},addEventListener(){}})}});
@@ -128,10 +134,8 @@ await check('retained successful transfer exposes its required observation despi
 await check('the rendered-action oracle rejects trusting an obsolete retained projection',()=>{
   const p=fresh();p.activeStage=globalThis.closedLoopWorkflowSchema.STAGE_COUNT;attempt(p,{result:'SUCCEEDED'});engine.recalculate(p);
   p.job.NEXT_REQUIRED_ACTION={...p.job.NEXT_REQUIRED_ACTION,actionType:'COMPLETE',primaryButton:null};
-  const before='return engine.operationalNextAction(current,canonicalCurrentStage());';
-  assert.equal(appSource.split(before).length-1,1,'The retained-action fault must alter exactly one display owner.');
-  const injected=appSource.replace(before,'return current.job.NEXT_REQUIRED_ACTION;');
-  assert.throws(()=>deliveryViewOracle(p,'RECORD_DELIVERY_EVIDENCE',injected),/DELIVERY_RENDERED_ACTION_ORACLE/);
+  const injected=appSource.replace(retainedActionFaultTarget,'return current.job.NEXT_REQUIRED_ACTION;');
+  assert.throws(()=>deliveryViewOracle(p,'RECORD_DELIVERY_EVIDENCE',injected),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('DELIVERY_RENDERED_ACTION_ORACLE'));
   deliveryViewOracle(p);
   assert.equal(fs.readFileSync('app-core.js','utf8'),appSource);
   faults.push({faultId:'DELIVERY-TRUST-OBSOLETE-SAVED-ACTION',file:'app-core.js',originalSha256:h.sha256Text(appSource),injectedSha256:h.sha256Text(injected),caughtBy:'DELIVERY_RENDERED_ACTION_ORACLE',result:'DETECTED',sourceRestored:true});
