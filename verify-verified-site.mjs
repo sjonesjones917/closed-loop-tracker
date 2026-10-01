@@ -1,7 +1,8 @@
-import {checkedVerifier} from './verify-conformance-regressions.mjs';
+import {checkedVerifier,runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {runtimePaths,manifestName,fullTestSteps,digest,validateSite,assertPassedRun,assertReceipt,promoteSite,sealSite} from './verified-site.mjs';
 
@@ -120,6 +121,21 @@ try{
   assert.equal((testWorkflow.match(/^          node build-test-project\.mjs$/gm)||[]).length,1,'CI_DUPLICATE_FIXTURE_ORACLE: retained fixture verification runs once');
   const conformancePosition=testWorkflow.indexOf('name: Shared production faults, bounded sequences, and executed observations');
   for(const name of ['Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes','Acceptance viewport regression and targeted layout fault','Local Chromium operator path'])assert.ok(conformancePosition>=0&&testWorkflow.indexOf('name: '+name)>conformancePosition,'CI_PROOF_ORDER_ORACLE: non-browser proof precedes '+name);
+  // Execute the early prompt entry point with the actual child-launch boundary
+  // rejecting its former transitive browser call. The later browser gate still
+  // owns the independently executable walkthrough and all its assertions.
+  const proofGuard=path.join(temporary,'proof-order-guard.mjs');
+  fs.writeFileSync(proofGuard,"import childProcess from 'node:child_process';import {syncBuiltinESMExports} from 'node:module';const original=childProcess.spawn;childProcess.spawn=function(command,args,options){if(args?.some(value=>String(value).includes('verify-human-stage-walkthrough.mjs')))throw new Error('CI_TRANSITIVE_PROOF_ORDER_ORACLE: browser launched before non-browser proof');return original.call(this,command,args,options);};syncBuiltinESMExports();\n");
+  const promptEntry=path.join(root,'verify-stage-prompts-complete.mjs'),promptControl=await runVerifier(process.execPath,['--import',proofGuard,promptEntry],{cwd:root});
+  assert.equal(promptControl.status,0,'CI_TRANSITIVE_PROOF_ORDER_ORACLE: '+promptControl.stderr);
+  const promptProof=JSON.parse(promptControl.stdout);assert.equal(promptProof.stagesChecked,30);assert.equal(promptProof.browserStageWalkthrough,false);
+  const earlyBrowser=path.join(temporary,'early-browser.mjs');
+  fs.writeFileSync(earlyBrowser,`await import(${JSON.stringify(pathToFileURL(promptEntry).href)});const {runVerifier}=await import(${JSON.stringify(pathToFileURL(path.join(root,'verify-conformance-regressions.mjs')).href)});await runVerifier(process.execPath,['verify-human-stage-walkthrough.mjs']);\n`);
+  const violation=await runVerifier(process.execPath,['--import',proofGuard,earlyBrowser],{cwd:root});
+  assertDetectedFault(violation,'CI_TRANSITIVE_PROOF_ORDER_ORACLE','early transitive browser launch');
+  const browserStep=testWorkflow.slice(testWorkflow.indexOf('name: Local Chromium operator path'));
+  assert.match(browserStep,/run_browser_verifier verify-human-stage-walkthrough\.mjs \|\| BROWSER_VERIFY_RESULT=1/,'The mandatory browser walkthrough must retain exit propagation in its later gate.');
+  cases.push('non-browser-prompt-entry-rejects-transitive-browser-launch');
   // Exercise the actual shell functions, including pipefail. A connection
   // diagnostic from an earlier phase must not excuse a later assertion failure.
   const browserFunctions=[...workflow.matchAll(/^          run_browser_verifier\(\) \{\n[\s\S]*?^          \}/gm)].map(match=>match[0]);
