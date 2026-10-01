@@ -314,6 +314,25 @@ export async function verifyNestedChildCleanup(directory){
  return {case:'nested-descendants-stop-before-return',cases};
 }
 
+async function verifyCounterpartRestoredBudget(directory){
+ const folder=path.join(directory,'counterpart-restored-budget');fs.mkdirSync(folder);
+ const ready=path.join(folder,'full-journey-ready'),release=path.join(folder,'full-journey-complete');
+ const source=fs.readFileSync('verify-counterpart-faults.mjs','utf8').replace("from './verify-conformance-regressions.mjs'","from "+JSON.stringify(import.meta.url));
+ const matrix=path.join(folder,'matrix.mjs'),clock=path.join(folder,'clock.mjs');
+ fs.writeFileSync(matrix,source);fs.writeFileSync(path.join(folder,'workflow-engine.js'),'Controlled unchanged source for the supervision contract.\n');
+ // Advance the owning deadline only after the full child is ready. The same
+ // elapsed-work checkpoint exceeds the partial-fault budget, but remains
+ // inside the existing full-suite budget. No real five-minute sleep is needed.
+ fs.writeFileSync(clock,`import fs from 'node:fs';const later=setTimeout,repeat=setInterval;globalThis.setTimeout=(callback,ms,...args)=>{if(ms<300000)return later(callback,ms,...args);const timer=repeat(()=>{if(!fs.existsSync(${JSON.stringify(ready)}))return;clearInterval(timer);if(ms<=300001)callback(...args);else fs.writeFileSync(${JSON.stringify(release)},'complete');},10);return timer;};\n`);
+ const oracles={'missing-candidate-bytes':'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE','missing-product-bytes':'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE','fractional-stability':'must remain persistable after every operation','missing-defect-gate':'An observed initial violation without an evidence-linked defect must be rejected','unrelated-defect-reason':'COUNTERPART_DEFECT_REASON_ORACLE','partial-verification-completes-operation':'ITERATION_PARTIAL_VERIFY_ORACLE'};
+ fs.writeFileSync(path.join(folder,'verify-operator-counterpart.mjs'),`import fs from 'node:fs';import assert from 'node:assert/strict';const fault=process.env.CLRT_COUNTERPART_FAULT;if(fault)assert.fail(${JSON.stringify(oracles)}[fault]);assert.equal(process.env.CLRT_COUNTERPART_STAGE_LIMIT,'30');fs.writeFileSync(${JSON.stringify(ready)},'ready');await new Promise(resolve=>{const timer=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(timer);resolve();}},10);});console.log(JSON.stringify({counterpartContracts:'PASS',stages:30,controlledElapsedMs:300001}));\n`);
+ const observed=await executeGate({name:'counterpart-restored-budget',args:['--import',clock,matrix]},{directory:folder,cwd:folder,timeoutMs:15000,env:{VERIFIER_CHILD_EVIDENCE_DIRECTORY:path.join(folder,'children')}});
+ assert.equal(observed.outcome,'PASS','COUNTERPART_RESTORED_BUDGET_ORACLE: the full healthy journey must retain its full-suite supervision budget. '+observed.stderr);
+ assert.equal(observed.report.cases.length,6,'COUNTERPART_RESTORED_BUDGET_ORACLE: every injected fault still executes');
+ assert.equal(JSON.parse(observed.report.restoredRun.stdout).controlledElapsedMs,300001,'COUNTERPART_RESTORED_BUDGET_ORACLE: the healthy child must complete beyond the partial-fault deadline');
+ return {case:'counterpart-full-journey-keeps-full-suite-budget',controlledClock:true,actualCounterpartJourney:false,observed};
+}
+
 async function verifyRunnerContract(){
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-runner-contract-')),cases=[];
  const gate=(name,code)=>({name,args:['--input-type=module','-e',code]});
@@ -439,6 +458,7 @@ async function verifyRunnerContract(){
   assert.equal(stopped.outcome,'FAIL','RUNNER_FAILURE_ORACLE');assert.equal(stopped.results.length,1,'RUNNER_FAIL_FAST_ORACLE');assert.deepEqual(stopped.pending,['must-not-run'],'RUNNER_FAIL_FAST_ORACLE');
   cases.push({case:'failure-stops-without-claiming-pending-proof',result:stopped});
   cases.push({case:'shared-lifecycle-faults-execute-their-owner',...(await verifyLifecycleFaultDispatch(directory))});
+  cases.push(await verifyCounterpartRestoredBudget(directory));
   return {runnerContract:'PASS',cases};
  }catch(error){
   const evidenceDirectory=path.resolve('conformance-regression-evidence/runner-contract-failures',path.basename(directory));

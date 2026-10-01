@@ -18,7 +18,9 @@ for(const [fault,stage,expected] of [
   assert(result.stderr.includes(expected),`${fault} failed for an unrelated reason: ${result.stderr}`);
   cases.push({fault,owner:fault.startsWith('missing-')&&fault.endsWith('-bytes')?'verifier':'production',throughStage:stage,exitCode:result.status,detectedBy:expected,result:'PASS',stdout:result.stdout,stderr:result.stderr});
 }
-const restored=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',timeout:300000,killSignal:'SIGKILL',maxBuffer:8*1024*1024,env:{...process.env,CLRT_COUNTERPART_FAULT:'',CLRT_COUNTERPART_STAGE_LIMIT:'30'}}));
+// The restored control traverses all30 stages, so retain the same finite
+// full-suite supervision budget as its independent conformance entry point.
+const restored=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',killSignal:'SIGKILL',maxBuffer:8*1024*1024,env:{...process.env,CLRT_COUNTERPART_FAULT:'',CLRT_COUNTERPART_STAGE_LIMIT:'30'}}));
 assert.equal(restored.error,null,'The restored journey must finish within its hard timeout.');
 assert.equal(restored.status,0,restored.stderr);
 assert.equal(JSON.parse(restored.stdout).counterpartContracts,'PASS');
