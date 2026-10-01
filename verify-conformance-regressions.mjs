@@ -90,7 +90,6 @@ const suites=[
  "verify-checkpoint-boundary.mjs",
  "verify-native-proof-journey.mjs",
  "verify-native-proof-fault.mjs",
- "verify-product-attachment-journey.mjs",
  "verify-operator-counterpart.mjs",
  "verify-counterpart-faults.mjs"];
 function conformanceSources(){

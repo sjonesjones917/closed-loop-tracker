@@ -1,4 +1,5 @@
 import {runVerifier,detectedFault} from './verify-conformance-regressions.mjs';
+import {assertProductAttachmentJourney} from './verify-product-attachment-journey.mjs';
 import {projectStoreRuntime,captureArtifactFixture} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -498,5 +499,6 @@ assert(workflowPresentationCases.every(row=>row.result==='PASS'),'WORKFLOW_PRESE
 for(const [collection,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of p.projectData[collection]||[]){if(record.recordSha256)assert(record.recordSha256===hash.recordSha256(record),`${collection} ${engine.recordId(record,collection)} has a stale recordSha256.`);if(record.contentSha256)assert(record.contentSha256===hash.contentRecordSha256(record,definition.idField),`${collection} ${engine.recordId(record,collection)} has a stale contentSha256.`);}
 
 // The final release must retain the same independently reviewed leaf schedule.
+assertProductAttachmentJourney(fullCycleReport.productAttachmentJourney);
 fullCycleReport.canonicalVerificationTiming={specificationSections:['16.1A','21.17','38.1'],...assertCurrentLeafSchedule(p,'CANONICAL_TIMING_ORACLE'),result:'PASS'};
 console.log(JSON.stringify(fullCycleReport,null,2));
