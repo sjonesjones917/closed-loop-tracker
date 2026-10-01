@@ -116,7 +116,14 @@ export async function activateOperatorControl(cdp,evaluate,idle,selector){
   const reveal=await evaluate(`(()=>{${select}if(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]'))return {disabled:true};const rect=node.getBoundingClientRect();if(rect.top<0||rect.left<0||rect.bottom>innerHeight||rect.right>innerWidth)node.scrollIntoView({block:'nearest',inline:'nearest'});return {closedCount};})()`);
   assert.ok(reveal&&!reveal.missing&&!reveal.disabled,'DRIVER_INTERACTABILITY_ORACLE: missing, disabled, or inert control '+selector);
   await idle();
-  const observed=await evaluate(`(()=>{${select}const rect=node.getBoundingClientRect(),style=getComputedStyle(node),x=(Math.max(0,rect.left)+Math.min(innerWidth,rect.right))/2,y=(Math.max(0,rect.top)+Math.min(innerHeight,rect.bottom))/2,front=document.elementFromPoint(x,y);return {closedCount,x,y,disabled:Boolean(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]')),visible:style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&Number(style.opacity)!==0&&rect.width>0&&rect.height>0&&x>=0&&y>=0&&x<innerWidth&&y<innerHeight,unobscured:Boolean(front&&(front===node||node.contains(front)))};})()`);
+  const observe=()=>evaluate(`(()=>{${select}const rect=node.getBoundingClientRect(),style=getComputedStyle(node),x=(Math.max(0,rect.left)+Math.min(innerWidth,rect.right))/2,y=(Math.max(0,rect.top)+Math.min(innerHeight,rect.bottom))/2,front=document.elementFromPoint(x,y);return {closedCount,x,y,disabled:Boolean(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]')),visible:style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&Number(style.opacity)!==0&&rect.width>0&&rect.height>0&&x>=0&&y>=0&&x<innerWidth&&y<innerHeight,unobscured:Boolean(front&&(front===node||node.contains(front)))};})()`);
+  let observed=await observe();
+  // A sticky header can cover an in-viewport control after scrolling or resize.
+  // Make one ordinary reveal attempt, then require the real hit target again.
+  if(observed?.visible&&!observed.disabled&&!observed.unobscured){
+   await evaluate(`(()=>{${select}node.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});return true;})()`);
+   await idle();observed=await observe();
+  }
   assert.ok(observed&&!observed.missing&&!observed.disabled&&observed.visible&&observed.unobscured,'DRIVER_INTERACTABILITY_ORACLE: control is hidden or obstructed '+selector+' '+JSON.stringify(observed));
   assert.ok(observed.closedCount===0||observed.closedCount<previousClosedCount,'DRIVER_DISCLOSURE_ORACLE: the selected disclosure did not open');
   await cdp.send('Input.dispatchMouseEvent',{type:'mousePressed',x:observed.x,y:observed.y,button:'left',buttons:1,clickCount:1});

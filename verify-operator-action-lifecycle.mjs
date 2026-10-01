@@ -71,6 +71,7 @@ const cases=[];
   {name:'partly left',box:rect(310,-8),scroll:true},
   {name:'partly right',box:rect(310,380),scroll:true},
   {name:'inside closed disclosure',box:rect(210),disclosure:true,scroll:false},
+  {name:'covered by sticky header',box:rect(70),obscuredUntilReveal:true,scroll:true},
   {name:'display none',box:rect(310),display:'none',reject:true},
   {name:'visibility hidden',box:rect(310),visibility:'hidden',reject:true},
   {name:'zero area',box:rect(310,24,0,0),reject:true},
@@ -86,8 +87,9 @@ const cases=[];
    getBoundingClientRect(){assert.ok(opened,'Visibility is measured after opening the target disclosure.');return box;},
    scrollIntoView(options){moves.push({...options});pendingReveal=true;},click(){clicks++;directClicks++;}};
   const currentNode=()=>specimen.disclosure&&!disclosure.open?summary:target;
-  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured?{}:currentNode()},innerHeight:852,innerWidth:393,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
-  const idle=async()=>{if(pendingReveal){box=rect(Math.max(0,Math.min(852-box.height,box.top)),Math.max(0,Math.min(393-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);pendingReveal=false;}};
+  let covered=Boolean(specimen.obscuredUntilReveal);
+  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured||covered?{}:currentNode()},innerHeight:852,innerWidth:393,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
+  const idle=async()=>{if(pendingReveal){box=rect(Math.max(0,Math.min(852-box.height,box.top)),Math.max(0,Math.min(393-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);covered=false;pendingReveal=false;}};
   const page={send:async(method,params)=>{assert.equal(method,'Input.dispatchMouseEvent','DRIVER_POINTER_AUTHORITY_ORACLE');inputEvents.push(params);if(params.type==='mouseReleased'){if(specimen.disclosure&&!disclosure.open){opened=true;disclosure.open=true;}else clicks++;}}};
   const click=Function('idle','evaluate','events','performance','assert','page',helper+driver.slice(start,end)+';return click;')(idle,async expression=>vm.runInContext(expression,dom),events,performance,assert,page);
   let rejection=null;try{await click('#current-action');}catch(error){rejection=error;}
@@ -103,7 +105,7 @@ const cases=[];
    assert.equal(inputEvents.length,specimen.disclosure?4:2,'DRIVER_POINTER_AUTHORITY_ORACLE: each activation needs one press/release pair');
    for(let index=0;index<inputEvents.length;index+=2){assert.equal(inputEvents[index].type,'mousePressed');assert.equal(inputEvents[index+1].type,'mouseReleased');assert.equal(inputEvents[index].x,inputEvents[index+1].x);assert.equal(inputEvents[index].y,inputEvents[index+1].y);}
    assert.equal(moves.length,specimen.scroll?1:0,'DRIVER_VIEW_PRESERVATION_ORACLE: activating an already visible control must not manufacture a new view: '+specimen.name);
-   if(specimen.scroll)assert.deepEqual(moves,[{block:'nearest',inline:'nearest'}],'DRIVER_VIEW_PRESERVATION_ORACLE: a necessary reveal must not recenter the complete view');
+   if(specimen.scroll&&!specimen.obscuredUntilReveal)assert.deepEqual(moves,[{block:'nearest',inline:'nearest'}],'DRIVER_VIEW_PRESERVATION_ORACLE: an ordinary viewport reveal must not recenter the complete view');
    assert.equal(events.length,1,'One actual driver activation must retain one event.');
   }
   cases.push({caseId:'DRIVER-VIEW-PRESERVATION',class:specimen.name,result:'PASS',actualBrowser:false,scrollRequests:moves.length,activations:clicks,nativeInputEvents:inputEvents.length,rejection:rejection?.message||null});
