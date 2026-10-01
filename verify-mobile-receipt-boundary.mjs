@@ -23,6 +23,7 @@ reject('PROBE-API-FLAGS-ONLY',e=>{delete e.mobileCapabilityProbe.observations;},
 reject('PROBE-MISSING-EXPORTED-BACKUP',e=>{delete e.mobileCapabilityProbe.observations.backupRestore;},'MOBILE_CAPABILITY_BACKUP_OBSERVATION_REQUIRED');
 reject('PROBE-WRONG-PROJECT',e=>{e.mobileCapabilityProbe.testProjectId='OTHER';},'MOBILE_CAPABILITY_BINDING_MISMATCH');
 reject('BACKUP-DIGEST-DIFFERS',e=>{e.exportedProjectDigest='0'.repeat(64);},'EXPORTED_PROJECT_RECEIPT_MISMATCH');
+reject('UNVERIFIED-EXTERNAL-ATTESTATION',e=>{e.evidenceBasis='VERIFIED_EXTERNAL';e.attestationContractId='UNREGISTERED-PHYSICAL-DEVICE-CONTRACT';},'MOBILE_ATTESTATION_UNVERIFIED');
 const source=fs.readFileSync('verify-mobile-acceptance-evidence.mjs','utf8');
 const fault=source.split('\n').filter(line=>!line.includes("issue(errors,'RECEIPT_OBSERVATION_REQUIRED'")&&!line.includes("issue(errors,'RECEIPT_OPERATION_EVIDENCE_INVALID'")).join('\n');
 assert.notEqual(fault,source,'Observation-validation fault was not applied.');

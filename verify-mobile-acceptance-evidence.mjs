@@ -137,6 +137,9 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(evidence.mobileAcceptanceEvidenceId))issue(errors,'EVIDENCE_ID_REQUIRED','mobileAcceptanceEvidenceId is required.');
   if(evidence.physicalDeviceAssertion!==true)issue(errors,'PHYSICAL_DEVICE_ASSERTION_REQUIRED','Evidence must contain the performer physical-device assertion.');
   if(!ACCEPTABLE_PHYSICAL_EVIDENCE_BASES.includes(evidence.evidenceBasis))issue(errors,'EVIDENCE_BASIS_INSUFFICIENT','Physical-device evidence basis must be HUMAN_OBSERVATION or VERIFIED_EXTERNAL.');
+  // No physical-device attestation verifier is registered in this runtime.
+  // A submitted label or contract name cannot establish verified authority.
+  if(evidence.evidenceBasis==='VERIFIED_EXTERNAL')issue(errors,'MOBILE_ATTESTATION_UNVERIFIED','Verified external physical-device evidence requires a registered attestation-verification contract.');
   if(!NONEMPTY(evidence.performer))issue(errors,'PERFORMER_REQUIRED','Evidence performer identity is required.');
   if(!NONEMPTY(evidence.identityAssurance))issue(errors,'IDENTITY_ASSURANCE_REQUIRED','Evidence performer identity assurance is required.');
   if(!NONEMPTY(evidence.iosVersion))issue(errors,'IOS_VERSION_REQUIRED','Reported iOS version is required.');
