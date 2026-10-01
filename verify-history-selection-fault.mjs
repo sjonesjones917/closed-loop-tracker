@@ -1,7 +1,7 @@
 import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 const cases=[];
-for(const [name,oracle] of [['late-history-selection','HISTORY_SELECTION_ORACLE'],['reset-selected-destination','HISTORY_DESTINATION_RETENTION_ORACLE']]){
+for(const [name,oracle] of [['late-history-selection','HISTORY_SELECTION_ORACLE'],['reset-selected-destination','HISTORY_DESTINATION_RETENTION_ORACLE'],['close-recovery-disclosures','HISTORY_RECOVERY_DISCLOSURE_ORACLE']]){
  const fault=(await runVerifier(process.execPath,['verify-history-selection-capture.mjs','--fault='+name],{encoding:'utf8'}));
  assertDetectedFault(fault,oracle,'The History destination fault was not detected: '+name);
  assert.match(fault.stderr,new RegExp(oracle),'The test failed for an unrelated reason');
