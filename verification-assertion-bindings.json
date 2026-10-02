@@ -999,6 +999,42 @@
       ],
       "scope": "Actual current independently reviewed Stage02 search contract requires exact application-owned retained report/capability/operator bindings. Missing/unknown/stale/corrupt bindings fail closed; actual selected Blob readback and canonical UTF8 report receipts carry truthful externally supported or operator-confirmed authority. This does not prove an actual external live source search or model search judgment.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a56263f8ca87f003eb82d8ce2a013284",
+      "sourceLineSha256": "e41bb8f3aff8227ca6cedc91fdee53e2377804ac618e0f3689c0006c991b1324",
+      "checkIds": [
+        "registry.fields"
+      ],
+      "scope": "Every independently enumerated current Job, stage, canonical-record and closed metadata receipt declaration occurs exactly once in FIELD_REGISTRY, retaining its declared path, producer, type, nullability, enum and relationship target. This declaration-to-registry assertion does not prove all specification-named fields, every field semantic or runtime behavior.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-15bcea4db7a052db7fc4f619dac3acae",
+      "sourceLineSha256": "8f783f3abb717dd6595fdae0cbdca60be63eb6811d3af69ae7080ee5dc471392",
+      "checkIds": [
+        "registry.operations"
+      ],
+      "scope": "Every declared stage-operation has the required operation properties and references its exact declared scope contract; the declared universe includes the independently counted approved original and deferred operation combinations. This metadata closure does not prove all completion, retry, independence, executor or writable-family behavior.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-ca1881e2147860bad9fb1f6de8df247f",
+      "sourceLineSha256": "ccc9b3058a78c02cbaea965817c67e6f022d1602c478d095f33b303cc5c4d252",
+      "checkIds": [
+        "registry.scopes"
+      ],
+      "scope": "The declared STAGE_OPERATION_REGISTRY and STAGE_OPERATION_SCOPE_MATRIX have identical exact combination identities and required-dimension bindings, including the independently expected terminal and confirmation shapes. This assertion does not prove all response, input, completion, retry or runtime rejection behavior.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2eda4f41b65187dddb96d68135a7fe03",
+      "sourceLineSha256": "9f17c9ed52cdf954526c0eaf20c02170ead62ce057357d34d0aa505ebb1be380",
+      "checkIds": [
+        "registry.durable"
+      ],
+      "scope": "Every declared canonical RECORD_SCHEMAS family has exactly one DURABLE_OBJECT_REGISTRY contract, including the independently required listed canonical families. This canonical-family declaration closure does not establish all nested durable objects, their lifecycle behavior or all specification-required families.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     }
   ],
   "contractRefs": [

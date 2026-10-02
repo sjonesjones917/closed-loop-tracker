@@ -87,9 +87,28 @@ try{
   await assert.rejects(collectVerificationEvidence({directory:path.join(directory,'empty'),runMissing:false}),/missing required current receipt/);
   producerControls.push({caseId:'missing-current-producer-receipt',accepted:false,result:'DETECTED'});
   const evidenceDirectory=path.join(directory,'conforming','receipts'),evidencePath=path.join(evidenceDirectory,'evidence.json');
-  const genuine=aggregateExecutedEvidence(new Map([[suite,good.receipt]]),evidenceFingerprint());genuine.evidenceSha256=sha(genuine);
+  const registryRequirements=[['NREQ-a56263f8ca87f003eb82d8ce2a013284','registry.fields'],['NREQ-15bcea4db7a052db7fc4f619dac3acae','registry.operations'],['NREQ-ca1881e2147860bad9fb1f6de8df247f','registry.scopes'],['NREQ-2eda4f41b65187dddb96d68135a7fe03','registry.durable']];
+  const beforeRegistry=aggregateExecutedEvidence(new Map([[suite,good.receipt]]),evidenceFingerprint());
+  for(const [id,checkId]of registryRequirements){
+    const row=beforeRegistry.normativeRequirementTrace.find(row=>row.normativeRequirementId===id);
+    assert.equal(row.disposition,'UNKNOWN','NORMATIVE_LINK_ORACLE: a static registry binding was treated as executed proof.');
+    assert(row.missingAssertionIds.includes(checkId));assert.equal(row.executedAssertions.length,0);
+    assert.equal(row.implementationClassification,null,'NORMATIVE_CLASSIFICATION_ORACLE: missing execution determined implementation or external-capability status.');
+  }
+  const unlinked=beforeRegistry.normativeRequirementTrace.find(row=>row.scopeBindings.length===0);
+  assert(unlinked);assert.equal(unlinked.implementationClassification,null,'NORMATIVE_CLASSIFICATION_ORACLE: absent links were classified as impossible to verify.');
+  assert.equal(unlinked.implementationEvidenceDisposition,'INSUFFICIENT_CURRENT_EVIDENCE_TO_CLASSIFY_IMPLEMENTATION');
+  const registrySuite='verify-contract-closure.mjs',registryReceipt=await executeEvidenceProducer(registrySuite,{directory:evidenceDirectory,evidenceDirectory:path.join(directory,'registry-runner')});
+  const genuine=aggregateExecutedEvidence(new Map([[suite,good.receipt],[registrySuite,registryReceipt]]),evidenceFingerprint());genuine.evidenceSha256=sha(genuine);
+  for(const [id,checkId]of registryRequirements){
+    const row=genuine.normativeRequirementTrace.find(row=>row.normativeRequirementId===id);
+    assert.equal(row.disposition,'QUALIFIED_EXECUTED_ASSERTION_EVIDENCE','NORMATIVE_LINK_ORACLE: actual registry execution was omitted from its exact requirement trace.');
+    assert.deepEqual(row.executedAssertions.map(assertion=>assertion.checkId),[checkId]);
+    assert.equal(row.implementationClassification,'implemented but insufficiently tested');
+  }
+  const normativeRegistryLinkageControl={result:'PASS',exactQualifiedLinks:registryRequirements.map(([normativeRequirementId,checkId])=>({normativeRequirementId,checkId})),absentExecutionRemainsUnknown:true,unlinkedImplementationStatusUndetermined:true,fullClauseConformanceClaimed:false};
   fs.writeFileSync(evidencePath,JSON.stringify(genuine));
-  assert.equal(readExecutedEvidence(evidencePath).receiptCount,1,'Actual conforming producer evidence did not reach the real report consumer.');
+  assert.equal(readExecutedEvidence(evidencePath).receiptCount,2,'Actual conforming producer evidence did not reach the real report consumer.');
   const tampered=structuredClone(genuine);tampered.metrics.currentScopeSelectorCoverage={...tampered.metrics.currentScopeSelectorCoverage,numerator:1,denominator:1,value:1,disposition:'SATISFIED'};
   delete tampered.evidenceSha256;tampered.evidenceSha256=sha(tampered);fs.writeFileSync(evidencePath,JSON.stringify(tampered));
   assert.throws(()=>readExecutedEvidence(evidencePath),/aggregated metrics\/populations do not derive/,'A rewritten summary with a matching checksum bypassed actual receipt derivation.');
@@ -99,5 +118,5 @@ try{
   assert.equal(empty.zeroCounts.staleProposalsAccepted,null,'Absent negative execution was published as zero accepted violations.');
   const saved=metricCatalog.closedMetricUniverseCoverage.checkIds;metricCatalog.closedMetricUniverseCoverage.checkIds=[];
   try{assert.throws(()=>aggregateExecutedEvidence(new Map(),evidenceFingerprint()),/empty\/duplicate metric universe/);}finally{metricCatalog.closedMetricUniverseCoverage.checkIds=saved;}
-  console.log(JSON.stringify({executedEvidenceProtection:'PASS',producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
+  console.log(JSON.stringify({executedEvidenceProtection:'PASS',producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,normativeRegistryLinkageControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
 }finally{fs.rmSync(directory,{recursive:true,force:true});}
