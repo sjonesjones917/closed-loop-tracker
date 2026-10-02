@@ -143,7 +143,11 @@ export function aggregateExecutedEvidence(receipts,fingerprint){
     const linked=binding.checkIds.filter(id=>observations.has(id)).map(id=>observations.get(id));
     return {...binding,disposition:linked.length===binding.checkIds.length?'QUALIFIED_EXECUTED_ASSERTION_EVIDENCE':'UNKNOWN',executedAssertions:linked.map(row=>({checkId:row.checkId,suite:row.suite,boundary:row.boundary,expected:row.expected,observed:row.observed,receiptSha256:row.receiptSha256})),fullClauseConformanceEstablished:false};
   });
-  return {schema:'closed-loop-executed-verification-evidence/1',fingerprint,receiptCount:receipts.size,observationCount:observations.size,receiptReferences:receiptRefs,metrics,zeroCounts,negativePopulations,normativeRequirementTrace,contractRequirementTrace,sourceInspectionIsBehavioralProof:false};
+  // The handoff contract is JSON. Optional properties absent from an executed
+  // observation stay absent; explicit nulls remain null. Return the exact value
+  // that is persisted so a genuine report round trip cannot differ merely
+  // because an in-memory optional member was undefined before serialization.
+  return JSON.parse(JSON.stringify({schema:'closed-loop-executed-verification-evidence/1',fingerprint,receiptCount:receipts.size,observationCount:observations.size,receiptReferences:receiptRefs,metrics,zeroCounts,negativePopulations,normativeRequirementTrace,contractRequirementTrace,sourceInspectionIsBehavioralProof:false}));
 }
 export function readExecutedEvidence(file,fingerprint=evidenceFingerprint()){
   const evidence=readJson(file),{evidenceSha256,...payload}=evidence;
