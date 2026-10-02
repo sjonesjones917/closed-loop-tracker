@@ -5,9 +5,25 @@ import assert from 'node:assert/strict';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {buildUnchangedConfirmationFixture} from './stage19-fixture.mjs';
+import {reservedReleasePrerequisiteFixture} from './test-release-semantic-fixture.mjs';
 createVerifierRuntime(globalThis);globalThis.Event=class Event{};globalThis.dispatchEvent=()=>true;
 for(const file of['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const engine=closedLoopWorkflowEngine,hash=closedLoopHash,observations=[];
+// A supported intake can finish without any clarification. Stage projection
+// must retain that absence so the actual review binds the canonical subject.
+const narrowRuntime={core:closedLoopCore,schema:closedLoopWorkflowSchema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion};
+const noClarifications=reservedReleasePrerequisiteFixture(narrowRuntime,'DISCOVERY-NO-CLARIFICATION-REGRESSION');
+assert.equal(Object.hasOwn(noClarifications.projectData.userEntered,'clarifications'),false);
+assert.equal(Object.hasOwn(engine.stageContext(noClarifications,19).projectData.userEntered,'clarifications'),false,'DISCOVERY_INTAKE_PRESENCE_ORACLE: stage context manufactured a missing property');
+const explicitEmpty=engine.clone(noClarifications);explicitEmpty.projectData.userEntered.clarifications=[];
+assert.equal(Object.hasOwn(engine.stageContext(explicitEmpty,19).projectData.userEntered,'clarifications'),true);
+assert.deepEqual(engine.stageContext(explicitEmpty,19).projectData.userEntered.clarifications,[]);
+assert.equal(engine.semanticReviewCompletion(noClarifications,19).complete,true,'DISCOVERY_INTAKE_PRESENCE_ORACLE: exact reserved review became stale');
+const presenceSource=fs.readFileSync('workflow-engine.js','utf8'),presenceAnchor="if(Array.isArray(input.clarifications))input.clarifications=input.clarifications.filter(row=>permitted(row,'humanInputAnswers'));";
+assert.equal(presenceSource.split(presenceAnchor).length-1,1);
+const defectivePresence=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':presenceSource.replace(presenceAnchor,"input.clarifications=safe(input.clarifications).filter(row=>permitted(row,'humanInputAnswers'));")}});
+assert.throws(()=>reservedReleasePrerequisiteFixture({...defectivePresence,schema:defectivePresence.runtime.closedLoopWorkflowSchema},'DISCOVERY-NO-CLARIFICATION-DEFECTIVE'),error=>error.code==='ERR_ASSERTION'&&error.message.includes('RELEASE_SEMANTIC_PREREQUISITE_ORACLE: Stage 19'),'DISCOVERY_INTAKE_PRESENCE_ORACLE: former projection was not rejected at actual review completion');
+observations.push({checkId:'S19-NO-CLARIFICATION-CURRENT-REVIEW',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2424','specification/closed-loop-reliability-controlling-implementation-specification.txt:3495'],boundary:'reserved intake without clarification -> final stage19 instruction -> accepted independent review -> current canonical completion',scopeLimit:'Real reserved prompt/ingestion/review authority in an isolated prerequisite fixture; no full prior execution or external-model claim.',expected:{missingPropertyPreserved:true,explicitEmptyPreserved:true,currentReviewComplete:true,formerProjectionRejectedAtReview:true},observed:{missingPropertyPreserved:!Object.hasOwn(engine.stageContext(noClarifications,19).projectData.userEntered,'clarifications'),explicitEmptyPreserved:Object.hasOwn(engine.stageContext(explicitEmpty,19).projectData.userEntered,'clarifications'),currentReviewComplete:engine.semanticReviewCompletion(noClarifications,19).complete,formerProjectionRejectedAtReview:true},passed:true});
 const {p,cand19,reqId}=buildUnchangedConfirmationFixture('DISCOVERY-CHALLENGE-REGRESSION');
 assert.equal(engine.semanticReviewCompletion(p,19).complete,true,'DISCOVERY_CURRENT_REVIEW_ORACLE: independently accepted challenge did not complete');
 assert.equal(engine.gate(19,p).complete,true);

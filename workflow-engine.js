@@ -1941,7 +1941,7 @@ function stageContext(project,stage){
   for(const definition of core.STAGES){const state=project.stages?.[definition.number];context.stages[definition.number]=definition.number<=number?{...state}:core.blankStage?core.blankStage(definition):{number:definition.number,status:'NOT STARTED',agentData:{},acceptedData:{},humanData:{},derivedData:{},authorizedFiles:[]};}
   delete context.restoredCandidates;
   context.release={gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]};
-  const input={...project.projectData?.userEntered};input.clarifications=safe(input.clarifications).filter(row=>permitted(row,'humanInputAnswers'));
+  const input={...project.projectData?.userEntered};if(Array.isArray(input.clarifications))input.clarifications=input.clarifications.filter(row=>permitted(row,'humanInputAnswers'));
   const artifactIds=new Set(safe(context.projectData.artifacts).map(row=>recordId(row,'artifacts')));
   for(const key of ['suppliedArtifactFiles','suppliedArtifactText'])if(input[key])input[key]=Object.fromEntries(Object.entries(input[key]).filter(([id,row])=>artifactIds.has(String(row.artifactId||id))));
   context.projectData.userEntered=input;
