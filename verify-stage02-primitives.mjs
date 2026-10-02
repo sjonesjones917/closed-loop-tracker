@@ -67,14 +67,16 @@ for(const [name,fn,pattern] of timeMutations)mustReject(name,fn,pattern);
 assert(h.evaluateTrustedTimeEvidence({basis:'DEVICE_REPORTED'}).trusted===false,'Device time was promoted to trusted external time.');
 assert(h.evaluateTrustedTimeEvidence({basis:'SOURCE_ASSERTED'}).trusted===false,'Source-asserted time was promoted to trusted external time.');
 mustReject('fabricated VERIFIED_EXTERNAL',()=>h.evaluateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL'}),/VERIFIED_EXTERNAL requires/);
-const verified=h.evaluateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL',attestationContractId:'RFC3161-TEST-CONTRACT'});
-assert(verified.trusted===true&&verified.attestationContractId==='RFC3161-TEST-CONTRACT','Registered trusted-time attestation was not accepted.');
+for(const claim of [
+  {attestationContractId:'RFC3161-TEST-CONTRACT'},
+  {attributableExternalSystem:true}
+])mustReject('unverified trusted-time claim',()=>h.evaluateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL',...claim}),/TRUSTED_TIME_UNVERIFIED/);
 
 // Test-the-tests: prove each gate rejects an intentionally invalid state, then prove the repaired state progresses.
 assert(filenameMutations.length===10&&timeMutations.length===7,'Stage 02 mutation universes changed unexpectedly.');
 assert(h.normalizeFilename('repaired.txt').canonicalPath==='repaired.txt','Filename mutation repair did not progress.');
 assert(h.normalizeDateTime('2026-09-03T12:34:56.000Z').normalized==='2026-09-03T12:34:56.000Z','Time mutation repair did not progress.');
-assert(h.evaluateTrustedTimeEvidence({basis:'VERIFIED_EXTERNAL',attributableExternalSystem:true}).trusted===true,'Trusted-time mutation repair did not progress.');
+assert(h.evaluateTrustedTimeEvidence({basis:'SOURCE_ASSERTED'}).trusted===false,'An unverified external time claim must remain untrusted.');
 
 console.log(JSON.stringify({
   stage02PrimitiveProof:'PASS',

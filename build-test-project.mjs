@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -46,9 +47,9 @@ if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workf
 if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-response/3')throw new Error('Runtime response schema is wrong.');
 
 // Run independent fixed-oracle regressions in clean processes so production declarations cannot serve as their own oracle.
-execFileSync(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'});
-execFileSync(process.execPath,['verify-stage03-source-research.mjs'],{stdio:'inherit'});
-execFileSync(process.execPath,['verify-semantic-operation-boundaries.mjs'],{stdio:'inherit'});
-execFileSync(process.execPath,['verify-stage30-terminal-mobile-boundary.mjs'],{stdio:'inherit'});
+(await checkedVerifier(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'}));
+(await checkedVerifier(process.execPath,['verify-stage03-source-research.mjs'],{stdio:'inherit'}));
+(await checkedVerifier(process.execPath,['verify-semantic-operation-boundaries.mjs'],{stdio:'inherit'}));
+(await checkedVerifier(process.execPath,['verify-stage30-terminal-mobile-boundary.mjs'],{stdio:'inherit'}));
 
 console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true,stage30TerminalBoundary:true},null,2));

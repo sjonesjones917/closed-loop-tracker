@@ -1,3 +1,4 @@
+import {runVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import cp from 'node:child_process';
@@ -36,16 +37,16 @@ function validateSingleLedger(paths){
   assert(ledgers.length===1&&ledgers[0]===STATE_PATH,`Exactly one controller ledger is permitted at ${STATE_PATH}; found ${ledgers.join(', ')||'NONE'}.`);
 }
 
-function proveAncestor(commit){
+async function proveAncestor(commit){
   if(process.env.GITHUB_ACTIONS!=='true')return true;
   if(!historyPrepared){
-    const shallow=cp.execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
+    const shallow=cp.execFileSync('git',['rev-parse','--is-shallow-repository'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim()==='true';
     const args=shallow?['fetch','--no-tags','--unshallow','origin','main']:['fetch','--no-tags','origin','main'];
-    const fetch=cp.spawnSync('git',args,{stdio:'ignore'});
-    assert(fetch.status===0,'Unable to fetch canonical main history for ledger ancestry verification.');
+    const fetch=(await runVerifier('git',args,{encoding:'utf8',timeout:120000}));
+    assert(fetch.status===0&&!fetch.error&&!fetch.signal,'Unable to fetch canonical main history for ledger ancestry verification. '+fetch.stderr);
     historyPrepared=true;
   }
-  return cp.spawnSync('git',['merge-base','--is-ancestor',commit,'HEAD'],{stdio:'ignore'}).status===0;
+  return cp.spawnSync('git',['merge-base','--is-ancestor',commit,'HEAD'],{timeout:30000,killSignal:'SIGKILL',stdio:'ignore'}).status===0;
 }
 
 
@@ -118,7 +119,7 @@ async function resolveRunnerEvidence(runId,commit){
 function assertCurrentSource(commit){
   if(sourceCache.has(commit))return;
   const git=args=>{
-    const result=cp.spawnSync('git',args,{encoding:'utf8'});
+    const result=cp.spawnSync('git',args,{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'});
     assert(result.status===0,'Cannot bind DONE evidence to the current git source.');
     return result.stdout.trim();
   };
@@ -145,10 +146,10 @@ function commandScripts(command,registered){
   });
 }
 
-function replayNodeScript(script,cwd=process.cwd(),timeout=600000){
+async function replayNodeScript(script,cwd=process.cwd(),timeout=600000){
   const file=path.resolve(cwd,script),root=fs.realpathSync(cwd)+path.sep;
   assert(fs.existsSync(file)&&fs.lstatSync(file).isFile()&&fs.realpathSync(file).startsWith(root),`Execution claim script is missing or not a regular repository file: ${script}.`);
-  const execution=cp.spawnSync(process.execPath,[file],{cwd,encoding:'utf8',shell:false,timeout,maxBuffer:128*1024*1024});
+  const execution=(await runVerifier(process.execPath,[file],{cwd,encoding:'utf8',shell:false,timeout,maxBuffer:128*1024*1024}));
   assert(!execution.error&&execution.signal===null&&execution.status===0,
     `Recorded PASS contradicted by replay: node ${script}; exit=${execution.status}; signal=${execution.signal}; ${(execution.stderr||execution.error?.message||'').slice(-2000)}`);
   return {command:`node ${script}`,exitCode:execution.status,stdoutSha256:sha256(execution.stdout||''),stderrSha256:sha256(execution.stderr||'')};
@@ -175,7 +176,7 @@ async function verifyExecutionClaims(entry){
   for(const runId of runIds)await resolveRunnerEvidence(runId,entry.endCommit);
   for(const script of scripts){
     const key=`${entry.endCommit}:${script}`;
-    if(!replayCache.has(key))replayCache.set(key,replayNodeScript(script));
+    if(!replayCache.has(key))replayCache.set(key,(await replayNodeScript(script)));
     observedExecutions.push({stage:entry.stage,commit:entry.endCommit,runIds:[...runIds],...replayCache.get(key)});
   }
   // Reject source changes made by a verifier as well as changes made before it.
@@ -237,7 +238,7 @@ async function validateLedger(state,mutation=null){
   assert(s.specificationSha256===specManifest.sha256,'Build-state specification manifest mismatch.');
   assert(s.specificationByteLength===specBytes.length&&s.specificationByteLength===specManifest.byteLength,'Build-state specification byte length mismatch.');
   assert(s.specificationSourceCommit===specManifest.sourceCommit,'Build-state specification source commit mismatch.');
-  assert(isSha(s.specificationSourceCommit)&&proveAncestor(s.specificationSourceCommit),'Build-state specification source commit is not reachable from current HEAD.');
+  assert(isSha(s.specificationSourceCommit)&&(await proveAncestor(s.specificationSourceCommit)),'Build-state specification source commit is not reachable from current HEAD.');
   assert(isSha(s.startingMainCommit),'Build-state starting main commit is invalid.');
   assert(isSha(s.lastObservedMainCommit),'Build-state last observed main commit is invalid.');
   assert(s.stages&&typeof s.stages==='object'&&!Array.isArray(s.stages),'Build-state stages map missing.');
@@ -263,7 +264,7 @@ async function validateLedger(state,mutation=null){
       // and replay its registered commands; never execute ledger text in a shell.
       await verifyExecutionClaims(entry);
       assert(entry.directEvidenceReviewed===true,`Stage ${key} lacks its review attestation.`);
-      assert(proveAncestor(entry.endCommit),`Stage ${key} ending commit is not reachable from current HEAD.`);
+      assert((await proveAncestor(entry.endCommit)),`Stage ${key} ending commit is not reachable from current HEAD.`);
       doneCount++;
     }
     if(entry.status==='NOT_STARTED'){
@@ -339,18 +340,18 @@ try{
   // Use JSON-safe source text so the child really exits 0/1, not a syntax error.
   fs.writeFileSync(path.join(temp,'verify-pass.mjs'),'console.log("observed success");\n');
   fs.writeFileSync(path.join(temp,'verify-fail.mjs'),'console.error("deliberate regression failure");process.exit(1);\n');
-  const passed=replayNodeScript('verify-pass.mjs',temp);
+  const passed=(await replayNodeScript('verify-pass.mjs',temp));
   assert(passed.exitCode===0&&passed.stdoutSha256===sha256('observed success\n'),'Actual passing process result was not retained.');
-  let rejected=false;try{replayNodeScript('verify-fail.mjs',temp);}catch(error){rejected=error.message.includes('exit=1')&&error.message.includes('deliberate regression failure');}
+  let rejected=false;try{(await replayNodeScript('verify-fail.mjs',temp));}catch(error){rejected=error.message.includes('exit=1')&&error.message.includes('deliberate regression failure');}
   assert(rejected,'A recorded PASS masked a real failing child process.');
-  rejected=false;try{replayNodeScript('verify-missing.mjs',temp);}catch(error){rejected=error.message.includes('missing or not a regular');}
+  rejected=false;try{(await replayNodeScript('verify-missing.mjs',temp));}catch(error){rejected=error.message.includes('missing or not a regular');}
   assert(rejected,'Missing execution script did not fail closed.');
 }finally{fs.rmSync(temp,{recursive:true,force:true});}
 const sourceTemp=fs.mkdtempSync(path.join(os.tmpdir(),'ledger-source-regression-'));
 const originalCwd=process.cwd();
 let sourceBindingNegativeCases=0;
 try{
-  const git=args=>cp.execFileSync('git',args,{cwd:sourceTemp,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+  const git=args=>cp.execFileSync('git',args,{timeout:30000,killSignal:'SIGKILL',cwd:sourceTemp,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
   git(['init','--initial-branch=main']);
   fs.writeFileSync(path.join(sourceTemp,'verify-fixture.mjs'),'// original verification fixture\n');
   git(['add','.']);

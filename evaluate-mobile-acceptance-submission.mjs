@@ -107,7 +107,7 @@ export function evaluateMobileAcceptanceSubmission({targetJson='',evidenceJson='
   };
 }
 
-async function deployedExpected(){
+export async function deployedExpected(){
   const sourceCommit=process.env.GITHUB_SHA||'';
   if(!/^[0-9a-f]{40}$/.test(sourceCommit))throw new Error('GITHUB_SHA must identify the exact deployed commit.');
   const cacheKey=encodeURIComponent(process.env.GITHUB_RUN_ID||Date.now());
@@ -119,6 +119,7 @@ async function deployedExpected(){
   const manifest=await response.json();
   if(manifest?.schema!=='closed-loop-deployment-manifest/1')throw new Error('Deployed manifest schema is invalid.');
   if(manifest?.sourceCommit!==sourceCommit)throw new Error('Deployed manifest source commit does not match GITHUB_SHA.');
+  if(!NONEMPTY(manifest.buildIdentity))throw new Error('Deployed manifest build identity is missing.');
   const digest=manifest?.manifestDigest?.digest;
   if(!/^[0-9a-f]{64}$/.test(digest||''))throw new Error('Deployed manifest digest is missing or invalid.');
   if(!Array.isArray(manifest.runtimeResources)||manifest.runtimeResources.length===0)throw new Error('Deployed manifest runtime resource set is empty.');
@@ -139,6 +140,8 @@ async function deployedExpected(){
   }
   return {
     sourceCommit,
+    buildIdentity:manifest.buildIdentity,
+    runtimeResources:manifest.runtimeResources,
     deploymentManifestDigest:digest,
     origin:MOBILE_ACCEPTANCE_ORIGIN,
     basePath:MOBILE_ACCEPTANCE_BASE_PATH,

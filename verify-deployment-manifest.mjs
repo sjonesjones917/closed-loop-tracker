@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -14,7 +15,7 @@ const root=process.cwd();
 const first=path.join(root,'.verify-deployment-a');
 const second=path.join(root,'.verify-deployment-b');
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
-const build=out=>execFileSync(process.execPath,['build-static-site.mjs','--out',out,'--source-commit','TEST-COMMIT','--workflow-run','TEST-RUN'],{stdio:'pipe'});
+const build=async out=>(await checkedVerifier(process.execPath,['build-static-site.mjs','--out',out,'--source-commit','TEST-COMMIT','--workflow-run','TEST-RUN'],{stdio:'pipe'}));
 const runtimeScriptSources=html=>[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
 function verifyRuntimeUrlBindings(html,manifest){
   const sources=runtimeScriptSources(html);
@@ -37,7 +38,7 @@ try{
   if(canonical({[bmp]:1,[astral]:2})!==`{"${bmp}":1,"${astral}":2}`)throw new Error('Shared deployment-manifest canonicalizer does not order object keys by unsigned Unicode scalar sequence.');
   if(canonical({'2':'two','10':'ten',a:'aye'})!=='{"10":"ten","2":"two","a":"aye"}')throw new Error('Shared deployment-manifest canonicalizer allows JavaScript integer-like key enumeration to override canonical scalar ordering.');
   let rejectedSurrogate=false;try{canonical({'\uD800':1});}catch{rejectedSurrogate=true;}if(!rejectedSurrogate)throw new Error('Shared deployment-manifest canonicalizer accepted an unpaired surrogate key.');
-  build(first);build(second);
+  (await build(first));(await build(second));
   const manifestBytesA=fs.readFileSync(path.join(first,'closed-loop-deployment-manifest.json'));
   const manifestBytesB=fs.readFileSync(path.join(second,'closed-loop-deployment-manifest.json'));
   if(!manifestBytesA.equals(manifestBytesB))throw new Error('Two clean builds did not produce the same deployment manifest.');

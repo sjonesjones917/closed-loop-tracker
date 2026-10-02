@@ -1,4 +1,4 @@
-import {createBrowserReadiness} from './operator-browser-driver.mjs';
+import {createBrowserReadiness,activateOperatorControl} from './operator-browser-driver.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -18,7 +18,7 @@ class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new M
 async function evaluate(cdp,expression){const result=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text||'Evaluation failed');return result.result?.value;}
 async function waitFor(cdp,expression,timeout=20000){return poll(async()=>{const value=await evaluate(cdp,expression);if(!value)throw new Error(`Waiting: ${expression}`);return value;},timeout);}
 async function waitForIdle(cdp,timeout=60000){await createBrowserReadiness(cdp,expression=>evaluate(cdp,expression),{timeout}).idle();}
-async function click(cdp,selector,timeout=20000){await waitForIdle(cdp,timeout);assert(await evaluate(cdp,`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)return false;node.click();return true})()`),`Missing clickable ${selector}`);await waitForIdle(cdp,timeout);}
+async function click(cdp,selector,timeout=20000){return activateOperatorControl(cdp,expression=>evaluate(cdp,expression),()=>waitForIdle(cdp,timeout),selector);}
 async function fill(cdp,selector,value){await waitForIdle(cdp);assert(await evaluate(cdp,`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node)return false;node.value=${JSON.stringify(value)};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true})()`),`Missing input ${selector}`);await waitForIdle(cdp);}
 async function setWidth(cdp,width,height=844){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:true});await sleep(150);}
 async function openStage(cdp,stage){await click(cdp,'[data-view="Workflow"]');await evaluate(cdp,`(()=>{const select=document.querySelector('#stage-picker');if(!select)return false;select.value=${JSON.stringify(String(stage))};select.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitFor(cdp,`document.body.innerText.includes('Stage ${String(stage).padStart(2,'0')}')`);await waitForIdle(cdp);}

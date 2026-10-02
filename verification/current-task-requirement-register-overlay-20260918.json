@@ -287,7 +287,7 @@
       "sourceLocation": "Current user task section 9 E, UX-011",
       "responsibleProductionCode": {
         "file": "app-core.js",
-        "symbol": "reportActionFailure + importProjectPackageFile post-commit classification"
+        "symbol": "reportActionFailure + importProjectPackageFile post-commit classification + externalCapabilityMarkup"
       },
       "observableExpectedBehavior": "Required decisions, useful status, actionable errors, and recovery remain visible while codes/internal IDs/diagnostics/advanced tools are behind details or advanced controls.",
       "requiredEvidence": [
@@ -295,7 +295,8 @@
         "Raw output bound to source SHA/run identity",
         "Fault injection proving the relevant gate detects its intended violation",
         "Affected downstream browser/recovery verification where applicable",
-        "verify-primary-error-information.mjs exercises committed import, exact retained bytes, independent-state preservation, public recovery outcome, rejected import and matching post-commit fault injection; verify-io-boundary-faults.mjs detects targeted reversals; verify-browser-extra.mjs requires real committed-import and settled visible-error observations."
+        "verify-primary-error-information.mjs exercises committed import, exact retained bytes, independent-state preservation, public recovery outcome, rejected import and matching post-commit fault injection; verify-io-boundary-faults.mjs detects targeted reversals; verify-browser-extra.mjs requires real committed-import and settled visible-error observations.",
+        "verify-verification-routing.mjs and verify-verification-routing-browser.mjs assert that external-readiness controls preserve canonical test bindings and visible authorization context while internal test/capability identifiers and the raw report remain behind closed details; verify-creation-presentation-faults.mjs injects selector, review-heading and open-disclosure violations."
       ],
       "applicableStages": "ALL_APPLICABLE",
       "applicableOperations": "ALL_APPLICABLE",
@@ -1882,7 +1883,7 @@
       "responsibleProductionCode": [
         {
           "file": "app-core.js",
-          "symbol": "header / overview / nextActionMarkup / paintStorageHealth / reportActionFailure / announce / noticeText / runBatchMarkup / testExecutionGuidanceMarkup"
+          "symbol": "header / overview / nextActionMarkup / paintStorageHealth / reportActionFailure / announce / noticeText / runBatchMarkup / testExecutionGuidanceMarkup / externalCapabilityMarkup"
         }
       ],
       "observableExpectedBehavior": "The normal workflow displays the project name, current selected-stage action, useful status, actionable errors and recovery. Internal project/record identifiers, machine state codes and diagnostic storage quantities remain available behind details or advanced controls.",
@@ -1926,7 +1927,8 @@
         "Storage-health useful status versus advanced numeric diagnostics",
         "Actual browser geometry and no-upward-scroll proof after text wrapping changes",
         "All UI verifiers that depend on primary text or geometry",
-        "Shared operation error and announcement presentation, restoration of previous feedback, and actionable retry/recovery controls"
+        "Shared operation error and announcement presentation, restoration of previous feedback, and actionable retry/recovery controls",
+        "External-readiness selection, report review, exact request binding, visible authorization context and collapsed raw evidence, for every external-test execution mode and applicable stage/operation."
       ],
       "mandatory": true,
       "errorPresentationReproduction": {
@@ -1940,7 +1942,9 @@
         "node verify-primary-error-information.mjs",
         "node verify-primary-guidance.mjs",
         "node verify-creation-presentation-faults.mjs",
-        "node verify-browser.mjs"
+        "node verify-browser.mjs",
+        "node verify-verification-routing.mjs",
+        "node verify-verification-routing-browser.mjs"
       ],
       "executedEvidence": [],
       "guidanceReproduction": {

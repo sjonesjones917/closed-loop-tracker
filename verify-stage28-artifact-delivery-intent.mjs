@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import {bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -43,7 +44,7 @@ assert.ok(boundaryIndex>0,'The full-cycle Stage 28 boundary could not be located
 const instrumented=fullCycleSource.slice(0,boundaryIndex)+`fs.writeFileSync(${JSON.stringify(snapshotPath)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID)}));console.log('STAGE28_READY_FIXTURE');process.exit(0);\n`+fullCycleSource.slice(boundaryIndex);
 fs.writeFileSync(instrumentedPath,instrumented);
 let fixtureOutput='';
-try{fixtureOutput=execFileSync(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024});}finally{fs.rmSync(instrumentedPath,{force:true});}
+try{fixtureOutput=(await checkedVerifier(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024}));}finally{fs.rmSync(instrumentedPath,{force:true});}
 assert.match(fixtureOutput,/STAGE28_READY_FIXTURE/,'The full-cycle production mechanism did not reach the exact Stage 27-ready fixture.');
 assert.ok(fs.existsSync(snapshotPath),'The instrumented full-cycle production mechanism did not preserve its Stage 27-ready fixture.');
 const captured=JSON.parse(fs.readFileSync(snapshotPath,'utf8')),source=captured.project;
@@ -84,7 +85,9 @@ for (const [id,mutate] of [
   ['missing-destination',value=>{delete value.destination;}],
   ['wrong-artifact-set',value=>{value.artifactIds=[];}],
   ['invalid-transfer-count',value=>{value.permittedTransferCount=0;}],
-  ['untrusted-validity-time',value=>{value.validityCondition='Before a timed expiry';value.validityTimeBasis='DEVICE_REPORTED';}]
+  ['untrusted-validity-time',value=>{value.validityCondition='Before a timed expiry';value.validityTimeBasis='DEVICE_REPORTED';}],
+  ['unverified-time-contract-name',value=>{value.validityCondition='Before a timed expiry';value.validityTimeBasis='VERIFIED_EXTERNAL';value.attestationContractId='UNREGISTERED-CONTRACT';}],
+  ['unverified-time-system-claim',value=>{value.validityCondition='Before a timed expiry';value.validityTimeBasis='VERIFIED_EXTERNAL';value.attributableExternalSystem=true;}]
 ]){
   const p=fresh(),c=context(p);engine.verifyArtifactIdentity(p,c.files,c.files);const value=validIntent(c);mutate(value);const decision=engine.captureDeliveryIntent(p,{value,operatorLabel:'STAGE28_VERIFIER'});assert.ok(decision,'The human decision command failed to preserve the exact attempted human intent.');assert.equal(engine.gate(28,p).complete,false,`${id} incorrectly satisfied Stage 28.`);assert.equal(p.release.authorization,'NOT AUTHORIZED',`${id} incorrectly authorized delivery.`);rejected.push(id);
 }

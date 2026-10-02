@@ -3,6 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {testIrLimitFixtures} from './test-fixtures.mjs';
 
 const source=fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8');
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};
@@ -19,6 +20,15 @@ const test=(spec,bindings={PRODUCT:{kind:'ARTIFACT',artifactId:'ART-PRODUCT'}})=
   EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_SPEC:spec,EXECUTABLE_INPUT_BINDINGS:bindings
 });
 const spec=steps=>({version:'closed-loop-test-spec/1',steps});
+const scalarSpec=assertion=>spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},assertion]);
+const scalarControl=scalarSpec({op:'ASSERT_EQ',value:true});
+assert.equal(runtime.validateSpec(scalarControl).valid,true,'TEST_IR_SCALAR_CONTROL_ORACLE');
+function rejectOnly(candidate,expected,oracle){
+ const result=runtime.validateSpec(candidate);
+ assert.equal(result.valid,false,oracle+': violation accepted');
+ assert.ok(result.issues.length>0&&result.issues.every(issue=>expected.test(issue)),oracle+': unrelated rejection: '+JSON.stringify(result.issues));
+ return result;
+}
 
 assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');
 assert.equal(runtime.EXECUTABLE_KIND,'TEST_IR');
@@ -33,10 +43,9 @@ for(const operation of [
 
 const unknown=runtime.validateSpec(spec([{op:'SHELL',command:'rm -rf /'},{op:'ASSERT_EQ',value:true}]));
 assert.equal(unknown.valid,false);assert.match(unknown.issues.join(' '),/unknown operation/i);
-const unknownProperty=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:true,javascript:'return true'}]));
+const unknownProperty=runtime.validateSpec(scalarSpec({op:'ASSERT_EQ',value:true,javascript:'return true'}));
 assert.equal(unknownProperty.valid,false);assert.match(unknownProperty.issues.join(' '),/unknown property javascript/i);
-const wrongVersion=runtime.validateSpec({version:'closed-loop-test-spec/2',steps:[{op:'ASSERT_EQ',value:true}]});
-assert.equal(wrongVersion.valid,false);
+rejectOnly({...scalarControl,version:'closed-loop-test-spec/2'},/Unsupported Test IR version/,'TEST_IR_VERSION_ORACLE');
 const noAssertion=runtime.validateSpec(spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'}]));
 assert.equal(noAssertion.valid,false);assert.match(noAssertion.issues.join(' '),/assertion/i);
 
@@ -78,7 +87,9 @@ const xmlWildcardSpec=spec([
 ]);
 const xmlWildcardResult=await runtime.execute({spec:xmlWildcardSpec,artifacts:{PRODUCT:artifact('ART-XML-WILDCARD','<root><item>a</item><other>b</other></root>')},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-XML-WILDCARD'}}}});
 assert.equal(xmlWildcardResult.determination,'SATISFIED','closed-loop-xml-selector/1 must support the element wildcard *');
-assert.equal(runtime.validateSpec(spec([{op:'PARSE_XML'},{op:'SELECT_XML',path:'//item'},{op:'ASSERT_EQ',value:1}])).valid,false);
+const unsupportedXmlPath=structuredClone(xmlSpec);unsupportedXmlPath.steps[4].path='//item';
+assert.equal(runtime.validateSpec(xmlSpec).valid,true,'TEST_IR_XML_PATH_CONTROL_ORACLE');
+rejectOnly(unsupportedXmlPath,/operation SELECT_XML has invalid path/,'TEST_IR_XML_PATH_ORACLE');
 
 const byteBindings={LEFT:{kind:'ARTIFACT',artifactId:'ART-L'},RIGHT:{kind:'ARTIFACT',artifactId:'ART-R'}};
 const byteSpec=spec([{op:'LOAD_ARTIFACT',binding:'LEFT'},{op:'READ_BYTES'},{op:'BYTE_COMPARE',binding:'RIGHT'},{op:'ASSERT_EQ',value:true}]);
@@ -89,9 +100,9 @@ assert.equal(unequalBytes.determination,'VIOLATED');
 
 const integer=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUES'},{op:'SUM'},{op:'ASSERT_EQ',value:6}]),canonicalBindings:{VALUES:{value:[1,2,3]}},metadata:{bindings:{VALUES:{kind:'CANONICAL_VALUE',canonicalKey:'VALUES'}}}});
 assert.equal(integer.determination,'SATISFIED');
-const unsafeEquality=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:0.1}]));
+const unsafeEquality=runtime.validateSpec(scalarSpec({op:'ASSERT_EQ',value:0.1}));
 assert.equal(unsafeEquality.valid,false);assert.match(unsafeEquality.issues.join(' '),/typed DECIMAL/i);
-const missingTolerance=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:{numberType:'DECIMAL',value:'0.1'},numericMode:'APPROXIMATE'}]));
+const missingTolerance=runtime.validateSpec(scalarSpec({op:'ASSERT_EQ',value:{numberType:'DECIMAL',value:'0.1'},numericMode:'APPROXIMATE'}));
 assert.equal(missingTolerance.valid,false);assert.match(missingTolerance.issues.join(' '),/tolerance/i);
 const approximate=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:{numberType:'DECIMAL',value:'0.3'},numericMode:'APPROXIMATE',absTol:'0.000000000001'}]),canonicalBindings:{VALUE:{value:{numberType:'DECIMAL',value:'0.30000000000000004'}}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});
 assert.equal(approximate.determination,'SATISFIED');
@@ -106,10 +117,18 @@ assert.equal(dangerousRegex.valid,false);assert.match(dangerousRegex.issues.join
 assert.equal(runtime.validateRegex('(ab)+').length,0);
 assert.equal(runtime.validateRegex('(?:ab)+').length,0);
 assert.ok(runtime.validateRegex('(?=ab)').length>0);
-const hugeRegex='a'.repeat(runtime.LIMITS.maxRegexPatternBytes+1);
-assert.equal(runtime.validateSpec(spec([{op:'ASSERT_MATCH',pattern:hugeRegex}])).valid,false);
-const tooManySteps=spec(Array(runtime.LIMITS.maxSteps+1).fill(null).map(()=>({op:'ASSERT_EQ',value:true})));
-assert.equal(runtime.validateSpec(tooManySteps).valid,false);
+const patternLimitCases=[];
+for(const row of testIrLimitFixtures(runtime).filter(row=>row.caseId.startsWith('REGEX_PATTERN_'))){
+ assert.equal(runtime.validateSpec(row.control).valid,true,'TEST_IR_LIMIT_'+row.caseId+'_CONTROL_ORACLE');
+ rejectOnly(row.invalid,/Regex pattern exceeds the registered byte limit/,'TEST_IR_LIMIT_'+row.caseId+'_ORACLE');
+ patternLimitCases.push({caseId:row.caseId,limit:row.limit,result:'PASS'});
+}
+const atStepLimit=spec([...Array.from({length:runtime.LIMITS.maxSteps-1},()=>({op:'LOAD_ARTIFACT',binding:'VALUE'})),{op:'ASSERT_EQ',value:true}]);
+assert.equal(runtime.validateSpec(atStepLimit).valid,true,'TEST_IR_STEP_LIMIT_CONTROL_ORACLE');
+const tooManySteps=structuredClone(atStepLimit);tooManySteps.steps.unshift({op:'LOAD_ARTIFACT',binding:'VALUE'});
+rejectOnly(tooManySteps,new RegExp(`exceeds the ${runtime.LIMITS.maxSteps}-step limit`),'TEST_IR_STEP_LIMIT_ORACLE');
+const stepLimitResult=await runtime.execute({spec:atStepLimit,canonicalBindings:{VALUE:{value:true}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});
+assert.equal(stepLimitResult.determination,'SATISFIED','TEST_IR_STEP_LIMIT_EXECUTION_ORACLE');
 
 const normalized=runtime.normalizeSpec(jsonSpec);
 const hashA=await runtime.sha256Canonical(normalized);
@@ -136,5 +155,5 @@ console.log(JSON.stringify({
   inputLimit:runtime.LIMITS.maxTotalInputBytes,
   workerTimeoutMs:runtime.LIMITS.workerTimeoutMs,
   json:true,csv:true,xml:true,xmlWildcard:true,byteCompare:true,integerExact:true,approximateTolerance:true,
-  unknownOperationRejected:true,unknownPropertyRejected:true,arbitraryCodeRejected:true,timeoutNoPartialResult:true
+  unknownOperationRejected:true,unknownPropertyRejected:true,arbitraryCodeRejected:true,timeoutNoPartialResult:true,patternLimitCases,stepCountBoundary:true
 }));

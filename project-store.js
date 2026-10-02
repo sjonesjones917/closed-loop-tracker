@@ -84,10 +84,17 @@ const projectSha256=project=>hash.sha256Value(canonicalProject(project));
 const storageError=(message,code)=>Object.assign(new Error(message),{code});
 let operationWorker=null;
 const workerRequests=new Map();
-function recordWorkerCommit(tx,operationId,project,digest){if(operationId)tx.objectStore(META).put({key:'storageOperation:'+operationId,value:{operationId,jobId:projectIdentity(project),revision:project.revision,projectSha256:digest},updatedAt:now()});}
+function recordWorkerCommit(tx,operationId,project,digest,checkpointId=null){if(operationId)tx.objectStore(META).put({key:'storageOperation:'+operationId,value:{operationId,jobId:projectIdentity(project),revision:project.revision,projectSha256:digest,...(checkpointId?{checkpointId}:{})},updatedAt:now()});}
 async function clearWorkerCommit(operationId){try{const tx=await openTransaction(META,'readwrite');tx.objectStore(META).delete('storageOperation:'+operationId);await complete(tx);}catch{/* An unacknowledged minimal receipt remains recoverable. */}}
 async function recoverWorkerOperation(pending,error){
-  try{const receipt=await metaGet('storageOperation:'+pending.operationId);if(receipt){const project=await readProject(receipt.jobId);if(!project||Number(project.revision)<Number(receipt.revision))throw Object.assign(storageError('The operation committed, but its project is no longer available at that revision. Reload the current stored state.','COMMITTED_PROJECT_UNAVAILABLE'),{existingProjectsUnchanged:false});await clearWorkerCommit(pending.operationId);pending.resolve(project);return;}pending.reject(Object.assign(error,{existingProjectsUnchanged:true}));}
+  try{const receipt=await metaGet('storageOperation:'+pending.operationId);if(receipt){
+    if(pending.method==='SAVE_CHECKPOINT'){
+      if(receipt.operationId!==pending.operationId||receipt.jobId!==pending.jobId||!receipt.checkpointId)throw storageError('The saved-view receipt does not match this operation.','HISTORY_VERSION_MISMATCH');
+      const saved=await readRetainedCheckpoint(receipt.jobId,receipt.checkpointId);
+      if(saved.projectSha256!==receipt.projectSha256||Number(saved.project.revision)!==Number(receipt.revision))throw storageError('The saved view does not match its committed project.','HISTORY_VERSION_MISMATCH');
+      await clearWorkerCommit(pending.operationId);pending.resolve(receipt.checkpointId);return;
+    }
+    const project=await readProject(receipt.jobId);if(!project||Number(project.revision)<Number(receipt.revision))throw Object.assign(storageError('The operation committed, but its project is no longer available at that revision. Reload the current stored state.','COMMITTED_PROJECT_UNAVAILABLE'),{existingProjectsUnchanged:false});await clearWorkerCommit(pending.operationId);pending.resolve(project);return;}pending.reject(Object.assign(error,{existingProjectsUnchanged:true}));}
   catch(recoveryError){pending.reject(Object.assign(storageError(`The storage outcome could not be confirmed. Reload and verify the stored project before retrying: ${recoveryError.message||recoveryError}`,'STORAGE_OUTCOME_UNCONFIRMED'),{existingProjectsUnchanged:false}));}
 }
 function requestStoreWorker(method,args){
@@ -95,9 +102,14 @@ function requestStoreWorker(method,args){
     const url=new URL(STORE_SCRIPT_URL);url.searchParams.set('storeWorker','1');url.searchParams.set('storeContext',STORE_CONTEXT_ID);const worker=new Worker(url.href);operationWorker=worker;
     const lost=event=>{if(operationWorker!==worker)return;operationWorker=null;worker.terminate();const pending=[...workerRequests.values()];workerRequests.clear();for(const entry of pending){clearTimeout(entry.timer);void recoverWorkerOperation(entry,storageError(event?.message||'Storage worker stopped before returning its result.','STORAGE_WORKER_STOPPED'));}};
     worker.onerror=lost;worker.onmessageerror=lost;
-    worker.onmessage=event=>{if(operationWorker!==worker)return;const message=event.data||{},pending=workerRequests.get(message.operationId);if(!pending)return;if(message.buildIdentity!==STORE_BUILD_ID){lost({message:'Storage worker build identity mismatch.'});return;}workerRequests.delete(message.operationId);clearTimeout(pending.timer);if(message.ok){void observeProjectArtifactCustody(message.project).then(()=>{void clearWorkerCommit(message.operationId);pending.resolve(message.project);},error=>recoverWorkerOperation(pending,error));}else void recoverWorkerOperation(pending,Object.assign(new Error(message.error?.message||'Storage operation failed.'),message.error));};
+    worker.onmessage=event=>{if(operationWorker!==worker)return;const message=event.data||{},pending=workerRequests.get(message.operationId);if(!pending)return;if(message.buildIdentity!==STORE_BUILD_ID){lost({message:'Storage worker build identity mismatch.'});return;}workerRequests.delete(message.operationId);clearTimeout(pending.timer);if(message.ok){
+      if(pending.method==='SAVE_CHECKPOINT'){
+        if(typeof message.checkpointId!=='string'||!message.checkpointId){void recoverWorkerOperation(pending,storageError('Storage worker returned an invalid saved-view identity.','INVALID_STORAGE_WORKER_RESULT'));return;}
+        void clearWorkerCommit(message.operationId);pending.resolve(message.checkpointId);return;
+      }
+      void observeProjectArtifactCustody(message.project).then(()=>{void clearWorkerCommit(message.operationId);pending.resolve(message.project);},error=>recoverWorkerOperation(pending,error));}else void recoverWorkerOperation(pending,Object.assign(new Error(message.error?.message||'Storage operation failed.'),message.error));};
   }
-  const operationId=crypto.randomUUID(),worker=operationWorker;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{if(workerRequests.has(operationId)&&operationWorker===worker)worker.onerror({message:`Storage worker did not return within ${STORAGE_WORKER_TIMEOUT_MS} ms. Its durable commit receipt is being checked before retry is permitted.`});},STORAGE_WORKER_TIMEOUT_MS);workerRequests.set(operationId,{operationId,resolve,reject,timer});try{worker.postMessage({operationId,method,args,buildIdentity:STORE_BUILD_ID,fault:globalThis.__closedLoopStorageFault||null});}catch(error){clearTimeout(timer);workerRequests.delete(operationId);reject(Object.assign(error,{existingProjectsUnchanged:true}));}});
+  const operationId=crypto.randomUUID(),worker=operationWorker;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{if(workerRequests.has(operationId)&&operationWorker===worker)worker.onerror({message:`Storage worker did not return within ${STORAGE_WORKER_TIMEOUT_MS} ms. Its durable commit receipt is being checked before retry is permitted.`});},STORAGE_WORKER_TIMEOUT_MS);workerRequests.set(operationId,{operationId,method,jobId:method==='SAVE_CHECKPOINT'?String(args[0]):null,resolve,reject,timer});try{worker.postMessage({operationId,method,args,buildIdentity:STORE_BUILD_ID,fault:globalThis.__closedLoopStorageFault||null});}catch(error){clearTimeout(timer);workerRequests.delete(operationId);reject(Object.assign(error,{existingProjectsUnchanged:true}));}});
 }
 const useStoreWorker=()=>Boolean(STORE_SCRIPT_URL&&typeof Worker==='function');
 const runSynchronousMutator=(mutator,next,before)=>{const result=mutator(next,before);if(result&&typeof result.then==='function')throw storageError('Project transaction mutators must be synchronous. Complete asynchronous work before opening the canonical IndexedDB transaction.','ASYNC_TRANSACTION_MUTATOR');return result;};
@@ -559,11 +571,39 @@ async function historyList(jobId){
   const state=await metaGet(historyKey(jobId));
   return state?{...state,undoId:historyUndoId(state),files:undefined,limits:HISTORY_LIMITS}:{schema:HISTORY_SCHEMA,jobId:String(jobId),entries:[],sessions:{},activeId:null,generation:0,redo:[],limits:HISTORY_LIMITS};
 }
-async function saveCheckpoint(jobId,{expectedProjectRevision,view=null,label='Saved view',sessionId=null}={}){
+async function saveCheckpoint(jobId,{expectedProjectRevision,expectedStateSha256=null,view=null,label='Saved view',sessionId=null,operationId=null}={}){
+  // Scroll/draft checkpoints use the existing transaction owner off the UI
+  // thread; only the small view and resulting checkpoint identity cross it.
+  if(useStoreWorker())return requestStoreWorker('SAVE_CHECKPOINT',[jobId,{expectedProjectRevision,expectedStateSha256,view,label,sessionId}]);
   const project=await readProject(jobId);if(!project)throw storageError('The project is unavailable.','HISTORY_PROJECT_MISSING');
-  if(expectedProjectRevision!==undefined&&Number(project.revision)!==Number(expectedProjectRevision))throw storageError('Project changed before its view could be saved.','STALE_PROJECT_REVISION');
-  const prepared=await prepareHistoryCommit(project,project,{label,view,sessionId,verifiedRead:{project,digest:project.projectSha256}}),tx=await openTransaction([PROJECTS,META],'readwrite');
-  try{const row=await projectRowWithOperations(tx,jobId);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);await complete(tx);return prepared.state.activeId;}catch(error){try{tx.abort();}catch{}throw error;}
+  let checkpointProject=project,checkpointDigest=project.projectSha256,prepared,checkpointId;
+  if((expectedProjectRevision!==undefined&&Number(project.revision)!==Number(expectedProjectRevision))||(expectedStateSha256&&project.projectSha256!==expectedStateSha256)){
+    // A stale tab may preserve its unsubmitted view against its exact retained
+    // source. This does not activate that source or overwrite newer project data.
+    const state=await metaGet(historyKey(jobId)),source=expectedStateSha256&&state?.entries.findLast(entry=>entry.projectSha256===expectedStateSha256);
+    if(!view||!source)throw storageError('Project changed before its view could be saved.','STALE_PROJECT_REVISION');
+    const saved=await readRetainedCheckpoint(jobId,source.id,state);
+    if(Number(saved.project.revision)!==Number(expectedProjectRevision))throw storageError('The draft does not identify its original project revision.','HISTORY_VERSION_MISMATCH');
+    const files=[...saved.artifacts],byId=new Map(files.map(row=>[row.artifactId,row]));
+    for(const selection of Object.values(view.fileSelections||{}))for(const file of selection.files||[]){
+      if(byId.has(file.artifactId))continue;
+      const row=await getArtifact(file.artifactId);
+      if(!row||row.jobId!==String(jobId))throw storageError('A departing draft file is unavailable.','HISTORY_FILE_INTEGRITY_FAILED');
+      files.push(row);byId.set(row.artifactId,row);
+    }
+    checkpointProject=saved.project;checkpointDigest=saved.projectSha256;
+    prepared=await prepareHistoryCommit(saved.project,saved.project,{label,view,artifactRows:files,baseState:{...state,activeId:source.id,activeProjectSha256:saved.projectSha256,activeViewOverride:null},verifiedRead:{project:saved.project,digest:saved.projectSha256}});
+    checkpointId=prepared.state.activeId;
+    // Only append recovery contents. Selection, revision, Undo/Redo, sessions,
+    // transfer receipts and the active view remain owned by the newer version.
+    const appended=prepared.state;
+    prepared.state={...state,entries:appended.entries,files:appended.files,compressedProjectBytes:appended.compressedProjectBytes,retainedFileBytes:appended.retainedFileBytes,generation:appended.generation};
+  }else{
+    prepared=await prepareHistoryCommit(project,project,{label,view,sessionId,verifiedRead:{project,digest:project.projectSha256}});
+    checkpointId=prepared.state.activeId;
+  }
+  const tx=await openTransaction([PROJECTS,META],'readwrite');
+  try{const row=await projectRowWithOperations(tx,jobId);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);recordWorkerCommit(tx,operationId,checkpointProject,checkpointDigest,checkpointId);await complete(tx);return checkpointId;}catch(error){try{tx.abort();}catch{}throw error;}
 }
 async function beginHistorySession(sessionId){
   if(!sessionId)throw new Error('Application session identity is required.');
@@ -1489,7 +1529,9 @@ function archiveMigrationPayload(project,archive){if(!project||typeof project!==
 function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(const key of LEGACY_KEYS)try{storage.removeItem(key);}catch{}}
 
 const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB)try{await migrateLegacy();globalThis.closedLoopLegacyMigrationError=null;}catch(error){globalThis.closedLoopLegacyMigrationError=String(error?.stack||error);console.error('Legacy migration failed without deleting the preserved legacy payload; application startup will continue.',error);}return true;})();
-if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;const project=message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId});globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,project});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
+if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE','SAVE_CHECKPOINT'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;
+  const result=message.method==='SAVE_CHECKPOINT'?{checkpointId:await saveCheckpoint(message.args[0],{...message.args[1],operationId:message.operationId})}:{project:message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId})};
+  globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,...result});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
 globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{

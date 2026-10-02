@@ -678,13 +678,35 @@ function observationValue(value,type){
   if(value&&typeof value==='object')return {kind:'OBJECT',keys:Object.keys(value).slice(0,50)};
   return {kind:typeof value,value};
 }
+// Snapshot JSON values without coercion so the receipt hashes the value executed.
+// Null-prototype copies also preserve plain objects received across JS realms.
+function snapshotCanonicalValue(value,seen=new Set(),depth=1){
+  if(value===null||typeof value!=='object')return value;
+  if(depth>LIMITS.maxParsedDepth||seen.has(value))fail('INVALID_CANONICAL_VALUE','Canonical value is cyclic or too deeply nested.');
+  const prototype=Object.getPrototypeOf(value);
+  if(!Array.isArray(value)&&prototype!==null&&Object.getPrototypeOf(prototype)!==null)fail('INVALID_CANONICAL_VALUE','Canonical value must contain plain JSON objects.');
+  if(Object.getOwnPropertySymbols(value).length)fail('INVALID_CANONICAL_VALUE','Canonical value cannot contain symbol properties.');
+  const copy=Array.isArray(value)?new Array(value.length):Object.create(null);seen.add(value);
+  for(const key of Object.keys(value)){const property=Object.getOwnPropertyDescriptor(value,key);if(!property||!hasOwn(property,'value'))fail('INVALID_CANONICAL_VALUE','Canonical value cannot contain accessors.');Object.defineProperty(copy,key,{value:snapshotCanonicalValue(property.value,seen,depth+1),enumerable:true,writable:true,configurable:true});}
+  seen.delete(value);return copy;
+}
 async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
+  canonicalBindings=Object.fromEntries(Object.entries(canonicalBindings).map(([name,entry])=>{if(!entry||typeof entry!=='object'||!hasOwn(entry,'value'))fail('INVALID_CANONICAL_BINDING',`Canonical binding ${name} must have its explicit transport value.`);return [name,{...entry,value:snapshotCanonicalValue(entry.value)}];}));
   const normalized=normalizeSpec(spec);const check=validateDagSpec(normalized,metadata.bindings);if(!check.valid)fail('INVALID_TEST_IR',check.issues.join(' '));
   const bindingCheck=validateBindings(metadata.bindings||Object.fromEntries([...Object.keys(artifacts),...Object.keys(canonicalBindings)].map(key=>[key,{kind:hasOwn(artifacts,key)?'ARTIFACT':'CANONICAL_VALUE',artifactId:hasOwn(artifacts,key)?String(artifacts[key]?.artifactId||key):undefined,canonicalKey:hasOwn(canonicalBindings,key)?key:undefined}])));if(!bindingCheck.valid)fail('INVALID_BINDINGS',bindingCheck.issues.join(' '));
   const inputViews=new Map();let totalInputBytes=0;for(const artifact of Object.values(artifacts||{})){const bytes=bytesFrom(artifact);if(!bytes)continue;let views=inputViews.get(bytes.buffer);if(!views){views=new Set();inputViews.set(bytes.buffer,views);}const view=`${bytes.byteOffset}:${bytes.byteLength}`;if(!views.has(view)){views.add(view);totalInputBytes+=bytes.byteLength;}}
   const envelope=validateResourceEnvelope({totalInputBytes});if(!envelope.valid)fail('INPUT_BYTE_LIMIT',envelope.issues.join(' '));
-  const observations=[],outputs=new Map(),inputArtifactIds=[],inputArtifactSha256Values=[];let decisiveResult=null;
+  const observations=[],outputs=new Map(),inputArtifactIds=[],inputArtifactSha256Values=[],inputCanonicalIdentities=[];let decisiveResult=null;
   for(const [bindingName,artifact] of Object.entries(artifacts||{})){const bytes=bytesFrom(artifact);if(!bytes)continue;const calculated=await sha256(bytes);if(artifact?.sha256&&String(artifact.sha256).toLowerCase()!==calculated)fail('ARTIFACT_HASH_MISMATCH',`Artifact ${artifact.artifactId||bindingName} bytes do not match its declared SHA-256.`);inputArtifactIds.push(String(artifact?.artifactId||bindingName));inputArtifactSha256Values.push(calculated);}
+  for(const [bindingName,entry] of Object.entries(canonicalBindings||{})){
+    const binding=metadata.bindings?.[bindingName];
+    if(binding&&binding.kind!=='CANONICAL_VALUE'||hasOwn(artifacts,bindingName))fail('INVALID_BINDINGS',`Canonical input ${bindingName} conflicts with its declared binding kind.`);
+    if(!entry||typeof entry!=='object'||!hasOwn(entry,'value'))fail('MISSING_CANONICAL_VALUE',`Canonical input ${bindingName} has no value.`);
+    const canonicalKey=String(binding?.canonicalKey||entry.canonicalKey||bindingName),valueSha256=await sha256Canonical(entry.value);
+    if(entry.canonicalKey&&entry.canonicalKey!==canonicalKey)fail('CANONICAL_IDENTITY_MISMATCH',`Canonical input ${bindingName} has the wrong identity.`);
+    if([binding?.valueSha256,entry.valueSha256].some(expected=>expected&&String(expected).toLowerCase()!==valueSha256))fail('CANONICAL_HASH_MISMATCH',`Canonical input ${bindingName} changed from its bound value.`);
+    inputCanonicalIdentities.push({bindingName,canonicalKey,valueSha256});
+  }
   for(const step of normalized.steps){
     const inputs=Object.fromEntries(Object.entries(step.inputs).map(([name,ref])=>[name,resolveDagInput(ref,outputs,artifacts,canonicalBindings)]));const inputIssues=resolvedInputIssues(step,inputs);if(inputIssues.length)fail('INVALID_INPUT_TYPE',inputIssues.join(' '));let out;
     switch(step.op){
@@ -717,7 +739,7 @@ async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
   const selectedResult=decisiveResult||normalized.result,selected=outputs.get(selectedResult.stepRef);if(!selected||!hasOwn(selected,selectedResult.output))fail('RESULT_OUTPUT_UNAVAILABLE','The selected Test IR result output was not produced.');const resultValue=selected[selectedResult.output];
   const normalizedDagSha256=await sha256Canonical(normalized),determination=resultValue?.determination||STATUS.UNDETERMINED;
   const usedJsonSelector=normalized.steps.some(step=>step.op==='SELECT_JSON_PATH'),usedXmlSelector=normalized.steps.some(step=>step.op==='SELECT_XML'),usedRegex=normalized.steps.some(step=>step.op==='REGEX'||step.op==='ASSERT_MATCH');
-  return {testId:metadata.testId||null,testSpecVersion:SPEC_VERSION,testSpecSha256:normalizedDagSha256,normalizedDagSha256,testIrLanguageVersion:TEST_IR_LANGUAGE_VERSION,operationRegistryVersion:OPERATION_REGISTRY_VERSION,operationRegistrySha256:OPERATION_REGISTRY_SHA256,jsonSelectorRegistryVersion:usedJsonSelector?JSON_SELECTOR_REGISTRY_VERSION:null,jsonSelectorRegistrySha256:usedJsonSelector?JSON_SELECTOR_REGISTRY_SHA256:null,xmlSelectorRegistryVersion:usedXmlSelector?XML_SELECTOR_REGISTRY_VERSION:null,xmlSelectorRegistrySha256:usedXmlSelector?XML_SELECTOR_REGISTRY_SHA256:null,regexRegistryVersion:usedRegex?REGEX_REGISTRY_VERSION:null,regexRegistrySha256:usedRegex?REGEX_REGISTRY_SHA256:null,selectedResultStepId:selectedResult.stepRef,selectedResultPort:selectedResult.output,status:'COMPLETE',determination,expected:resultValue?.expected??null,actual:resultValue?.actual??resultValue,observations,evidence:[{kind:'APPLICATION_NATIVE_RUNTIME_OBSERVATION',testSpecSha256:normalizedDagSha256,inputArtifactIds:[...new Set(inputArtifactIds)],inputArtifactSha256Values:[...new Set(inputArtifactSha256Values)]}],executorVersion:VERSION,runtimeVersion:VERSION,inputArtifactIds:[...new Set(inputArtifactIds)],inputArtifactSha256Values:[...new Set(inputArtifactSha256Values)]};
+  return {testId:metadata.testId||null,testSpecVersion:SPEC_VERSION,testSpecSha256:normalizedDagSha256,normalizedDagSha256,testIrLanguageVersion:TEST_IR_LANGUAGE_VERSION,operationRegistryVersion:OPERATION_REGISTRY_VERSION,operationRegistrySha256:OPERATION_REGISTRY_SHA256,jsonSelectorRegistryVersion:usedJsonSelector?JSON_SELECTOR_REGISTRY_VERSION:null,jsonSelectorRegistrySha256:usedJsonSelector?JSON_SELECTOR_REGISTRY_SHA256:null,xmlSelectorRegistryVersion:usedXmlSelector?XML_SELECTOR_REGISTRY_VERSION:null,xmlSelectorRegistrySha256:usedXmlSelector?XML_SELECTOR_REGISTRY_SHA256:null,regexRegistryVersion:usedRegex?REGEX_REGISTRY_VERSION:null,regexRegistrySha256:usedRegex?REGEX_REGISTRY_SHA256:null,selectedResultStepId:selectedResult.stepRef,selectedResultPort:selectedResult.output,status:'COMPLETE',determination,expected:resultValue?.expected??null,actual:resultValue?.actual??resultValue,observations,evidence:[{kind:'APPLICATION_NATIVE_RUNTIME_OBSERVATION',testSpecSha256:normalizedDagSha256,inputArtifactIds,inputArtifactSha256Values,inputCanonicalIdentities}],executorVersion:VERSION,runtimeVersion:VERSION,inputArtifactIds,inputArtifactSha256Values,inputCanonicalIdentities};
 }
 
 function workerUrl(){

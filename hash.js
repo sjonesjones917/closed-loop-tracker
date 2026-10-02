@@ -315,11 +315,13 @@ function normalizeDateTime(value){
   const normalized=instant.toISOString();
   return Object.freeze({version:TRUSTED_TIME_VERSION,kind:'INSTANT',original:input,normalized,timeBasis:'DEVICE_REPORTED'});
 }
-function evaluateTrustedTimeEvidence({basis='NONE',attestationContractId=null,attributableExternalSystem=false}={}){
+function evaluateTrustedTimeEvidence({basis='NONE'}={}){
   const normalizedBasis=String(basis||'NONE');
   if(normalizedBasis==='VERIFIED_EXTERNAL'){
-    if(!String(attestationContractId||'').trim()&&!attributableExternalSystem)throw new TypeError('TRUSTED_TIME_UNVERIFIED: VERIFIED_EXTERNAL requires a registered attestation contract or accepted attributable external-system time authority.');
-    return Object.freeze({version:TRUSTED_TIME_VERSION,basis:'VERIFIED_EXTERNAL',trusted:true,attestationContractId:attestationContractId||null,attributableExternalSystem:Boolean(attributableExternalSystem)});
+    // This runtime has no registered attestation verifier or accepted external
+    // time-record route. A supplied contract name or authority flag is a claim,
+    // not verified evidence, and cannot authorize a time-limited action.
+    throw new TypeError('TRUSTED_TIME_UNVERIFIED: VERIFIED_EXTERNAL requires a registered attestation contract or accepted attributable external-system time authority.');
   }
   if(!['DEVICE_REPORTED','SOURCE_ASSERTED','EXTERNALLY_SUPPORTED','SELF_ASSERTED','NONE'].includes(normalizedBasis))throw new TypeError('TRUSTED_TIME_BASIS_UNKNOWN');
   return Object.freeze({version:TRUSTED_TIME_VERSION,basis:normalizedBasis,trusted:false,attestationContractId:null,attributableExternalSystem:false});

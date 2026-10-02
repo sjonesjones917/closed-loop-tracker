@@ -6,7 +6,7 @@ const assert=(v,m)=>{if(!v)throw new Error(m);};
 const setEq=(a,e,label)=>{a=[...new Set(a||[])].sort();e=[...new Set(e||[])].sort();assert(JSON.stringify(a)===JSON.stringify(e),`${label}: expected [${e.join(', ')}], got [${a.join(', ')}].`);};
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file==='workflow-engine.js'&&process.env.ENGINE_SOURCE||file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion;
 assert(core&&schema&&engine&&prompts&&ingestion,'Specification-grounded route oracle runtime failed to load.');
 assert(core.STAGE_COUNT===30&&core.STAGES.length===30,'The controlling workflow must contain exactly 30 stages.');
@@ -82,7 +82,18 @@ for(let stage=1;stage<=30;stage++){
 }
 assert(promptsBuilt===50,`Route oracle expected 50 external-agent prompts; got ${promptsBuilt}.`);assert(nonExternalPromptRejections===16,`Route oracle expected 16 non-external prompt rejections; got ${nonExternalPromptRejections}.`);
 const terminal=new Set(['releaseGateReviews','evidenceInvestigations']);for(const [c,writers] of producers){if(terminal.has(c))continue;const readers=consumers.get(c)||[];for(const w of writers)assert(readers.some(r=>r.stage>w.stage||(r.stage===w.stage&&r.operation!==w.operation))||w.stage===30,`${c} written at ${w.stage}/${w.operation} has no later oracle retrieval.`);}
-for(const f of ['rawResponses','responseValidations','responseProposals','outputReceipts','extractionManifests','generatedPrompts','acceptedChanges'])assert(Array.isArray(state.projectData[f]),`Infrastructure family ${f} is missing.`);assert(state.projectData.generatedPrompts.every(p=>p.contextManifest!==undefined||true),'generatedPrompts is the canonical prompt/context manifest family.');
+for(const f of ['rawResponses','responseValidations','responseProposals','outputReceipts','extractionManifests','generatedPrompts','acceptedChanges'])assert(Array.isArray(state.projectData[f]),`Infrastructure family ${f} is missing.`);
+// Exercise canonical registration with a real prompt; previews above do not
+// populate generatedPrompts. Capture the expected manifest before registration.
+const retained=core.createBlankState('JOB-ROUTE-PROMPT-RETENTION');
+engine.ensureShape(retained);
+const generated=prompts.buildPromptRecord(1,{...retained,revision:retained.revision+1},{operation:'COMPLETE'});
+assert(generated.contextManifest,'CANONICAL_PROMPT_MANIFEST_ORACLE: generated prompt lacks its context manifest.');
+const expectedManifest=JSON.stringify(generated.contextManifest);
+engine.registerGeneratedPrompt(retained,generated);
+assert(retained.projectData.generatedPrompts.length===1,'CANONICAL_PROMPT_MANIFEST_ORACLE: registration must retain exactly one prompt.');
+const savedPrompt=retained.projectData.generatedPrompts[0];
+assert(savedPrompt.instructionId===generated.instructionId&&savedPrompt.contextManifest&&JSON.stringify(savedPrompt.contextManifest)===expectedManifest,'CANONICAL_PROMPT_MANIFEST_ORACLE: registration lost or changed the exact context manifest.');
 const s1=prompts.buildPromptRecord(1,state,{operation:'COMPLETE',scope:operationLane(1,'COMPLETE')});assert(s1.prompt.includes('If this prompt lists files that you must receive, do not pretend you received or inspected them'),'Stage 01 lacks truthful missing-file handling.');assert(s1.prompt.includes('Ask the human to attach or send the exact listed file only when those bytes are actually required'),'Stage 01 lacks polite exact-file recovery guidance.');
 const ci=fs.readFileSync('.github/workflows/pages.yml','utf8');assert(ci.includes('node verify-ingestion.mjs'),'CI omits ingestion proof.');assert(ci.includes('run_browser_verifier verify-human-stage-walkthrough.mjs'),'CI omits operator-experience proof.');
 console.log(JSON.stringify({specGroundedRouteOracle:'PASS',stages:30,operations,promptsBuilt,nonExternalPromptRejections,conditionalRejections,readEdges,writeEdges,withheldEdges,currentScopeSelectors:true,independentReadWriteOracle:true,withheldContextOracle:true,promptGenerationCannotSilentlySkip:true,nonExternalPromptGenerationFailsClosed:true,downstreamForwardingOracle:true,operatorDoubleCheckGuidance:true,humanExperiencePromptContract:true,infrastructureFamiliesPresent:true},null,2));

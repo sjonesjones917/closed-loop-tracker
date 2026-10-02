@@ -88,10 +88,17 @@ await import('./verify-operator-action-lifecycle.mjs');
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
   vm.runInContext(app.slice(0,app.indexOf('globalThis.closedLoopAppReady=false;'))+`
     core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;ingestion=closedLoopResponseIngestion;
-    globalThis.ui={select:p=>{current=p;projects=[p];},instruction:()=>currentPromptRecord(current.activeStage)?.prompt||currentStagePrompt(current.activeStage),workflow:()=>{detailViews.clear();return workflow();}};
+    const policy=engine.operationalNextAction;globalThis.policyCalls=[];
+    engine={...engine,operationalNextAction(p,stage){policyCalls.push(stage);return policy(p,stage);}};
+    globalThis.ui={select:p=>{current=p;projects=[p];},instruction:()=>currentPromptRecord(current.activeStage)?.prompt||currentStagePrompt(current.activeStage),workflow:()=>{detailViews.clear();detailSequence=0;return workflow();},uncachedWorkflow:()=>{detailViews.clear();detailSequence=0;return workflowMarkup();}};
   })();`,runtime);
   const renderWorkflow=runtime.ui.workflow,presentationCases=[];
-  runtime.ui.workflow=()=>{const html=renderWorkflow();presentationCases.push(assertWorkflowPresentation(observeWorkflowMarkup(html),{instruction:runtime.ui.instruction(),caseId:'file-first-view-'+presentationCases.length}));return html;};
+  runtime.ui.workflow=()=>{
+    runtime.policyCalls.length=0;const html=renderWorkflow(),calls=[...runtime.policyCalls];
+    assert.equal(calls.length,new Set(calls).size,'A single screen build repeatedly calculated the same stage action.');
+    assert.equal(html,runtime.ui.uncachedWorkflow(),'Reusing an action within a screen build changed the displayed instruction or controls.');
+    presentationCases.push(assertWorkflowPresentation(observeWorkflowMarkup(html),{instruction:runtime.ui.instruction(),caseId:'file-first-view-'+presentationCases.length}));return html;
+  };
   vm.runInContext(`globalThis.previewBuilds=0;const realPromptEngine=closedLoopPromptEngine;
     closedLoopPromptEngine={...realPromptEngine,buildPromptRecord(...args){previewBuilds++;return realPromptEngine.buildPromptRecord(...args);}};
     globalThis.previewProject=closedLoopCore.createBlankState('CONTEXT-FIRST-PREVIEW');

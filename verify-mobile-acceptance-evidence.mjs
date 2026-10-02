@@ -137,6 +137,9 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(!NONEMPTY(evidence.mobileAcceptanceEvidenceId))issue(errors,'EVIDENCE_ID_REQUIRED','mobileAcceptanceEvidenceId is required.');
   if(evidence.physicalDeviceAssertion!==true)issue(errors,'PHYSICAL_DEVICE_ASSERTION_REQUIRED','Evidence must contain the performer physical-device assertion.');
   if(!ACCEPTABLE_PHYSICAL_EVIDENCE_BASES.includes(evidence.evidenceBasis))issue(errors,'EVIDENCE_BASIS_INSUFFICIENT','Physical-device evidence basis must be HUMAN_OBSERVATION or VERIFIED_EXTERNAL.');
+  // No physical-device attestation verifier is registered in this runtime.
+  // A submitted label or contract name cannot establish verified authority.
+  if(evidence.evidenceBasis==='VERIFIED_EXTERNAL')issue(errors,'MOBILE_ATTESTATION_UNVERIFIED','Verified external physical-device evidence requires a registered attestation-verification contract.');
   if(!NONEMPTY(evidence.performer))issue(errors,'PERFORMER_REQUIRED','Evidence performer identity is required.');
   if(!NONEMPTY(evidence.identityAssurance))issue(errors,'IDENTITY_ASSURANCE_REQUIRED','Evidence performer identity assurance is required.');
   if(!NONEMPTY(evidence.iosVersion))issue(errors,'IOS_VERSION_REQUIRED','Reported iOS version is required.');
@@ -158,6 +161,10 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
     if(receipt.targetId!==target.mobileAcceptanceTargetId||receipt.buildIdentity!==evidence.buildIdentity)issue(errors,'RECEIPT_BINDING_MISMATCH',`Receipt ${receipt.kind} target or build identity differs.`);
     if(receipt.evidenceBasis!=='APPLICATION_OBSERVATION'||!receipt.observation||typeof receipt.observation!=='object'||Array.isArray(receipt.observation)||!Object.keys(receipt.observation).length)issue(errors,'RECEIPT_OBSERVATION_REQUIRED',`Receipt ${receipt.kind} requires executed-operation evidence; a success flag is insufficient.`);
     else if(!operationObserved(receipt.kind,receipt.observation,target))issue(errors,'RECEIPT_OPERATION_EVIDENCE_INVALID',`Receipt ${receipt.kind} lacks the required operation-specific observation.`);
+    if(receipt.kind==='DEPLOYED_BUILD_IDENTITY_VERIFIED'&&receipt.observation){
+      const observed=receipt.observation,resources=observed.resources;
+      if(observed.buildIdentity!==evidence.buildIdentity||(expected.runtimeResources&&(!Array.isArray(resources)||resources.length!==expected.runtimeResources.length||!expected.runtimeResources.every(resource=>resources.some(actual=>actual.path===resource.path&&actual.byteSize===resource.byteSize&&actual.sha256===resource.digest)))))issue(errors,'RECEIPT_DEPLOYMENT_MISMATCH','Observed build or resource identities differ from the deployed build.');
+    }
     if(!isClosedLoopUtcInstant(receipt.recordedAt))issue(errors,'RECEIPT_TIME_INVALID',`Receipt ${receipt.kind} requires its observed UTC time.`);
   }
   for(const kind of REQUIRED_MOBILE_RECEIPT_KINDS){if(!kinds.has(kind))issue(errors,'REQUIRED_RECEIPT_MISSING',`Required mobile acceptance receipt ${kind} is missing.`);}

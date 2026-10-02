@@ -1,3 +1,4 @@
+import {runVerifier} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -21,5 +22,5 @@ for(const [names,reason] of [[['résumé.txt','re\u0301sume\u0301.txt'],'DUPLICA
 assert.equal(h.normalizeFilenameSet(['slots/first/result.txt','slots/second/result.txt']).length,2,'Distinct canonical slot paths must not be conflated with matching basenames');
 for(const name of ['bad\u0085name.txt','bad\u202ename.txt','..\u2024/secret.txt','folder∕file.txt'])assert.throws(()=>h.normalizeFilename(name,{allowPath:true}),/UNSAFE_FILENAME/);note('Canonical, case-fold, script-confusable, control and ambiguous-path violations are rejected or detected by the shared filename owner');
 const context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,Blob});vm.runInContext("String.prototype.normalize=function(){throw new Error('HOST NORMALIZATION MUST NOT RUN');};"+fs.readFileSync('hash.js','utf8'),context);assert.equal(context.closedLoopHash.normalizeFilename('re\u0301sume\u0301.txt').canonicalPath,'résumé.txt');note('Host normalization changes cannot change identities because the application uses its bundled pinned tables');
-const reproduced=spawnSync(process.execPath,['generate-unicode-tables.mjs','--check'],{encoding:'utf8'});assert.equal(reproduced.status,0,reproduced.stderr);note('Runtime tables reproduce exactly from the recorded official source bytes and digests');
+const reproduced=(await runVerifier(process.execPath,['generate-unicode-tables.mjs','--check'],{encoding:'utf8'}));assert.equal(reproduced.status,0,reproduced.stderr);note('Runtime tables reproduce exactly from the recorded official source bytes and digests');
 console.log(JSON.stringify({synthetic:true,actualBrowser:false,normalizationRows,unchangedScalars,caseFoldRows,confusableRows,unicodeContract:h.unicodeContract,cases},null,2));

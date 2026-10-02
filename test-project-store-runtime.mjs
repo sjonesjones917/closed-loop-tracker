@@ -29,7 +29,7 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
  const parse=vm.runInContext('(text)=>JSON.parse(text)',runtime);
  // Preserve undefined properties and shared references just as structured clone
  // does. JSON cloning would hide invalid durable-view fields in these tests.
- const copy=value=>{const seen=new Map();const visit=item=>{if(item===null||typeof item!=='object'||item instanceof Blob)return item;if(seen.has(item))return seen.get(item);const result=parse(Array.isArray(item)?'[]':'{}');seen.set(item,result);for(const key of Object.keys(item))result[key]=visit(item[key]);return result;};return visit(value);};
+ const copy=value=>{const seen=new Map();const visit=item=>{if(item===null||typeof item!=='object'||item instanceof Blob)return item;if(seen.has(item))return seen.get(item);const result=parse(Array.isArray(item)?'[]':'{}');seen.set(item,result);for(const key of Object.keys(item))Object.defineProperty(result,key,{value:visit(item[key]),enumerable:true,writable:true,configurable:true});return result;};return visit(value);};
  runtime.structuredClone=copy;
  runtime.openStorageTransaction=async(names,mode)=>{
   const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map([...(rows.get(name)||[])].map(([key,value])=>[key,copy(value)]))]));let aborted=false;
@@ -46,10 +46,12 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
  // runtime. Extract the actual owners together so every acceptance, correction
  // and retry verifier sees the same complete dependency set.
  const uiSource=sourceOverrides['app-core.js']??fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
- const continuationStart=uiSource.indexOf('function acceptedContinuation('),continuationEnd=uiSource.indexOf('const stageContinuationErrors=',continuationStart);
- if(continuationStart<0||continuationEnd<continuationStart)throw new Error('The actual persistence UI continuation owners are unavailable.');
  Object.assign(runtime,{safe:runtime.closedLoopWorkflowEngine.safe,operationSelection:{},runSelection:{}});
- vm.runInContext(uiSource.slice(continuationStart,continuationEnd),runtime,{filename:'app-core.js:continuation-owners'});
+ for(const [start,end] of [['function acceptedContinuation(','const stageContinuationErrors='],['function addNoticeDismiss(','function reportActionFailure(']]){
+  const first=uiSource.indexOf(start),last=uiSource.indexOf(end,first);
+  if(first<0||last<first)throw new Error('The actual persistence UI dependency is unavailable: '+start);
+  vm.runInContext(uiSource.slice(first,last),runtime,{filename:'app-core.js:persistence-ui-dependencies'});
+ }
  return {runtime,rows,copy,store:runtime.closedLoopProjectStore,engine:runtime.closedLoopWorkflowEngine,core:runtime.closedLoopCore,ingestion:runtime.closedLoopResponseIngestion,prompts:runtime.closedLoopPromptEngine};
 }
 

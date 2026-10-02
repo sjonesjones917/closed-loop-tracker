@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
-const sourceRevision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const sourceRevision=execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),r=projectStoreRuntime(),{runtime,store,engine,copy}=r;
 const source=await store.createProject({commandId:'ARCHIVE-LAST-PROJECT-SOURCE'});
 Object.assign(runtime,{current:source,projects:[source],core:r.core,engine,projectStore:store,clone:copy,projectUi:{},withStorageActivity:async(_,fn)=>fn(),refreshProjectStorage:async()=>{},announce(){},render(){}});

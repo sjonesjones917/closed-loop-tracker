@@ -8,7 +8,8 @@ const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structured
 context.globalThis=context;
 createVerifierRuntime(context);
 vm.runInContext(fs.readFileSync('hash.js','utf8'),context,{filename:'hash.js'});
-vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});
+const runtimeSource=fs.readFileSync('test-runtime.js','utf8');
+vm.runInContext(runtimeSource,context,{filename:'test-runtime.js'});
 const runtime=context.closedLoopTestRuntime;
 const plain=value=>JSON.parse(JSON.stringify(value));
 
@@ -58,14 +59,52 @@ const explicit={
 };
 assert.equal(runtime.validateSpec(explicit,{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-1'}}).valid,true);
 
-const duplicate=structuredClone(explicit);duplicate.steps[1].stepId='S001';
-assert.equal(runtime.validateSpec(duplicate,{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-1'}}).valid,false);
-const forward=structuredClone(explicit);forward.steps[1].inputs.artifact={stepRef:'S003',output:'text'};
-assert.equal(runtime.validateSpec(forward,{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-1'}}).valid,false);
-const wrongPort=structuredClone(explicit);wrongPort.steps[2].inputs.bytes={stepRef:'S002',output:'notARealPort'};
-assert.equal(runtime.validateSpec(wrongPort,{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-1'}}).valid,false);
-const implicit={version:runtime.SPEC_VERSION,languageVersion:runtime.TEST_IR_LANGUAGE_VERSION,operationRegistryVersion:runtime.OPERATION_REGISTRY_VERSION,operationRegistrySha256:runtime.OPERATION_REGISTRY_SHA256,steps:[{stepId:'S001',op:'ASSERT_EQ',inputs:{expected:{literal:true}}}],result:{stepRef:'S001',output:'assertion'}};
-assert.equal(runtime.validateSpec(implicit).valid,false,'Canonical DAG assertions cannot use an implicit current operand.');
+// Spec 21.3: unique step IDs, explicit operands, prior references and typed
+// outputs. Each invalid fixture differs from a validated control in one rule.
+// In particular, duplicate IDs must not ALSO leave another reference dangling.
+const literalAssertions={...explicit,steps:['S001','S002'].map(stepId=>({stepId,op:'ASSERT_EQ',inputs:{actual:{literal:true},expected:{literal:true}}})),result:{stepRef:'S001',output:'assertion'}};
+const dagCases=[
+ {id:'duplicate-id',base:literalAssertions,mutate:s=>{s.steps[1].stepId='S001';},issue:'Duplicate stepId S001.'},
+ {id:'forward-reference',base:explicit,mutate:s=>{[s.steps[0],s.steps[1]]=[s.steps[1],s.steps[0]];},issue:'Step 0 has a forward, missing, or cyclic reference to S001.'},
+ {id:'missing-reference',base:literalAssertions,mutate:s=>{s.steps[0].inputs.actual={stepRef:'S999',output:'assertion'};},issue:'Step 0 has a forward, missing, or cyclic reference to S999.'},
+ {id:'self-cycle',base:literalAssertions,mutate:s=>{s.steps[0].inputs.actual={stepRef:'S001',output:'assertion'};},issue:'Step 0 has a forward, missing, or cyclic reference to S001.'},
+ {id:'two-step-cycle',base:literalAssertions,mutate:s=>{s.steps[0].inputs.actual={stepRef:'S002',output:'assertion'};s.steps[1].inputs.actual={stepRef:'S001',output:'assertion'};},issue:'Step 0 has a forward, missing, or cyclic reference to S002.'},
+ {id:'unknown-output-port',base:explicit,mutate:s=>{s.steps[2].inputs.bytes.output='notARealPort';},issue:'Step 2 references unknown output port notARealPort on S002.'},
+ {id:'wrong-output-type',base:explicit,mutate:s=>{s.steps[2].inputs.bytes={stepRef:'S001',output:'artifact'};},issue:'Step 2 input bytes requires BYTES but S001.artifact produces ARTIFACT.'},
+ {id:'implicit-operand',base:literalAssertions,mutate:s=>{delete s.steps[0].inputs.actual;},issue:'Step 0 operation ASSERT_EQ is missing required input port actual.'},
+ {id:'non-assertion-result',base:explicit,mutate:s=>{s.result={stepRef:'S006',output:'count'};},issue:'Test IR result must be a registered ASSERTION output; ordinary data cannot supply a determination.'}
+];
+function verifyDagCases(implementation){
+ const results=[];
+ for(const row of dagCases){
+  const control=structuredClone(row.base),invalid=structuredClone(row.base),bindings={PRODUCT:{kind:'ARTIFACT',artifactId:'ART-1'}};
+  assert.deepEqual(plain(implementation.validateSpec(control,bindings)),{valid:true,issues:[]},'DAG_CONTROL_ORACLE: '+row.id);
+  row.mutate(invalid);
+  const observed=plain(implementation.validateSpec(invalid,bindings));
+  assert.deepEqual(observed,{valid:false,issues:[row.issue]},'DAG_REJECTION_ORACLE: '+row.id);
+  assert.deepEqual(plain(implementation.validateSpec(control,bindings)),{valid:true,issues:[]},'DAG_REPAIRED_CONTROL_ORACLE: '+row.id);
+  results.push({caseId:row.id,result:'PASS',expectedIssue:row.issue,observed});
+ }
+ return results;
+}
+const dagResults=verifyDagCases(runtime),dagFaults=[];
+for(const [fault,before,after,oracle] of [
+ ['duplicate-check-bypassed','else if(ids.has(step.stepId))issues.push(`Duplicate stepId ${step.stepId}.`);','', 'duplicate-id'],
+ ['prior-reference-check-bypassed','if(!prior.has(ref.stepRef))issues.push(`Step ${index} has a forward, missing, or cyclic reference to ${ref.stepRef}.`);','if(!prior.has(ref.stepRef)){}','forward-reference'],
+ ['output-port-check-bypassed','issues.push(`Step ${index} references unknown output port ${ref.output} on ${ref.stepRef}.`);','void 0;','unknown-output-port'],
+ ['output-type-check-bypassed','if(acceptedTypes&&!acceptedTypes.includes(producedType))','if(false)','wrong-output-type'],
+ ['explicit-input-check-bypassed','if(!hasOwn(step.inputs,key))issues.push(`Step ${index} operation ${step.op} is missing required input port ${key}.`);','if(false){}','implicit-operand'],
+ ['assertion-result-check-bypassed',"if(contract.outputs[spec.result.output]!=='ASSERTION'||!ASSERTION_OPS.has(prior.get(spec.result.stepRef).op))","if(false)",'non-assertion-result']
+]){
+ assert.equal(runtimeSource.split(before).length,2,'DAG_FAULT_ANCHOR_ORACLE: '+fault);
+ const mutant=createVerifierRuntime();
+ vm.runInContext(fs.readFileSync('hash.js','utf8'),mutant,{filename:'hash.js'});
+ vm.runInContext(runtimeSource.replace(before,after),mutant,{filename:'test-runtime.js'});
+ assert.throws(()=>verifyDagCases(mutant.closedLoopTestRuntime),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('DAG_REJECTION_ORACLE: '+oracle),'DAG_FAULT_DETECTION_ORACLE: '+fault);
+ dagFaults.push({fault,detectedBy:'DAG_REJECTION_ORACLE: '+oracle,result:'DETECTED'});
+}
+verifyDagCases(runtime);
+assert.equal(fs.readFileSync('test-runtime.js','utf8'),runtimeSource,'DAG_SOURCE_UNCHANGED_ORACLE');
 
 const compareContract=runtime.operationContracts().COMPARE;
 assert.deepEqual(plain(compareContract.requiredInputs),['left','right']);
@@ -93,5 +132,5 @@ assert.equal(runtime.validateSpec(nonAdjacent,{PRODUCT:{kind:'ARTIFACT',artifact
 const nonAdjacentResult=await runtime.execute({spec:nonAdjacent,artifacts:{PRODUCT:{artifactId:'ART-1',sha256:sha,bytes}},metadata:{bindings:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-1'}}}});
 assert.equal(nonAdjacentResult.determination,'SATISFIED');
 
-console.log(JSON.stringify({explicitDag:true,typedPorts:true,forwardReferenceRejected:true,legacyCompiledBeforeExecution:true,regexContract:true,jsonSelectorContract:true},null,2));
+console.log(JSON.stringify({explicitDag:true,typedPorts:true,forwardReferenceRejected:true,legacyCompiledBeforeExecution:true,regexContract:true,jsonSelectorContract:true,dagResults,dagFaults,productionSourceUnchanged:true},null,2));
 console.log('verify-test-runtime-dag: PASS');

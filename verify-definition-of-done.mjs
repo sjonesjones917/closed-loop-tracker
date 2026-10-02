@@ -1,3 +1,4 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 
@@ -13,22 +14,22 @@ const EXECUTED_DEFINITION_PROOF_FIELDS=Object.freeze([
   'releaseArtifactIdentityCoverage'
 ]);
 
-const productionInstructionProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-production-instruction.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const productionInstructionProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-production-instruction.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 assert.equal(productionInstructionProof.productionInstruction,'PASS','Stage 12 production-instruction regression proof did not pass.');
 assert.equal(productionInstructionProof.isolatedDisposableProjects,true,'Stage 12 production-instruction mutations were not isolated to disposable project state.');
 assert.equal(productionInstructionProof.noMutationBeforeAcceptance,true,'Stage 12 production-instruction verifier did not prove zero canonical mutation before acceptance.');
-const independentPreflightProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-independent-preflight.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const independentPreflightProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-independent-preflight.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 assert.equal(independentPreflightProof.independentPreflight,'PASS','Stage 13 independent-preflight regression proof did not pass.');
 assert.equal(independentPreflightProof.isolatedDisposableProjects,true,'Stage 13 independent-preflight mutations were not isolated to disposable project state.');
 assert.equal(independentPreflightProof.noMutationBeforeAcceptance,true,'Stage 13 independent-preflight verifier did not prove zero canonical mutation before acceptance.');
 assert.equal(independentPreflightProof.independenceEpistemicLimitPreserved,true,'Stage 13 independent-preflight verifier overclaimed unobservable external independence.');
-const candidateFreezeProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-candidate-freeze.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const candidateFreezeProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-candidate-freeze.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 assert.equal(candidateFreezeProof.candidateFreeze,'PASS','Stage 14 candidate-freeze regression proof did not pass.');
 assert.equal(candidateFreezeProof.noPartialMutationOnRejectedFreeze,true,'Stage 14 rejected candidate freeze partially mutated application state.');
 assert.equal(candidateFreezeProof.exactHumanSelectionReferenced,true,'Stage 14 frozen candidate did not bind the exact registered human component-selection decision.');
 assert.equal(candidateFreezeProof.frozenManifestImmutable,true,'Stage 14 frozen candidate manifest was not immutable.');
 assert.equal(candidateFreezeProof.isolatedDisposableProjects,true,'Stage 14 candidate-freeze mutations were not isolated.');
-const productionBaselineAuthorityProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-production-baseline-authority.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const productionBaselineAuthorityProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-production-baseline-authority.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 assert.equal(productionBaselineAuthorityProof.productionBaselineAuthority,'PASS','Stage 23 production-baseline-authority regression proof did not pass.');
 assert.equal(productionBaselineAuthorityProof.noPartialMutationOnRejectedFreeze,true,'Stage 23 rejected baseline freeze partially mutated application state.');
 assert.equal(productionBaselineAuthorityProof.exactHumanAuthorizationReferenced,true,'Stage 23 frozen baseline did not bind the exact registered BASELINE_AUTHORIZATION human decision.');
@@ -170,8 +171,8 @@ const emptyDenominatorAccepted=closedMetricFromUniverse({
 assert.equal(emptyDenominatorAccepted.disposition,'SATISFIED','A current independently accepted evidence-supported empty-universe determination should satisfy the empty-universe metric contract.');
 assert.equal(emptyDenominatorAccepted.value,1,'A reviewed evidence-supported empty universe should publish 100% only through the explicit empty-universe rule.');
 
-const stage01Proof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-stage01-intake-closure.mjs',import.meta.url).pathname],{encoding:'utf8'}));
-const zeroLossProof=JSON.parse(execFileSync(process.execPath,[new URL('./verify-zero-loss-accounting.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const stage01Proof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-stage01-intake-closure.mjs',import.meta.url).pathname],{encoding:'utf8'})));
+const zeroLossProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-zero-loss-accounting.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 report.stage01IntakeCoverage=Number(Boolean(stage01Proof.stage01IntakeClosure&&stage01Proof.currentManifestBound&&stage01Proof.incompleteAccountingRejected));
 report.stage04ObligationCoverage=Number(Boolean(zeroLossProof.zeroLossStage04&&zeroLossProof.completeStage03ResearchUnion&&zeroLossProof.incompleteObligationRejected));
 assert.equal(report.stage01IntakeCoverage,1,'Measured Stage 01 intake coverage is not complete.');

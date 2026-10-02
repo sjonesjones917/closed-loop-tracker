@@ -16,7 +16,11 @@ try{
   await browser.click('#start-mobile-acceptance-project');await panel();assert.deepEqual(await shownTarget(),target);
   await browser.click('#run-mobile-capability-probe');assert.match(await probeResult(),/BLOCKED/);record('probe rejects missing actual file and restore operations',{});
   for(const role of ['RESPONSE','RETURNED','MANIFEST']){const [file]=await browser.download(`[data-mobile-probe-export="${role}"]`);await browser.selectFiles(`[data-mobile-probe-file="${role}"]`,[{filename:file.filename,bytes:file.bytes}]);record('actual exported '+role.toLowerCase()+' bytes selected',{sha256:file.sha256,byteSize:file.bytes.length});}
-  const {project,file:backup}=await browser.project();assert.equal(project.job.JOB_ID,target.testProjectId);await browser.selectFiles('#import-file',[{filename:backup.filename,bytes:backup.bytes}]);await panel();assert.deepEqual(await shownTarget(),target);record('restored the selected exported backup bytes',{sha256:backup.sha256,byteSize:backup.bytes.length});
+  const {project,file:backup}=await browser.project();assert.equal(project.job.JOB_ID,target.testProjectId);await browser.selectFiles('#import-file',[{filename:backup.filename,bytes:backup.bytes}]);
+  // Dismiss the Project actions disclosure opened for the backup before
+  // activating the Workflow tab beneath it through the native pointer.
+  if(await browser.evaluate(`Boolean(document.querySelector('#project-actions-toggle')?.closest('details')?.open)`))await browser.click('#project-actions-toggle');
+  await panel();assert.deepEqual(await shownTarget(),target);record('restored the selected exported backup bytes',{sha256:backup.sha256,byteSize:backup.bytes.length});
   await browser.click('#run-mobile-capability-probe');assert.match(await probeResult(),/PASS/);record('probe passes after all actual capability operations',{});
   await browser.reload();await panel();assert.deepEqual(await shownTarget(),target);assert.match(await probeResult(),/PASS/);record('pinned target and completed probe survive reload',{});
   await browser.fill('#mobile-acceptance-target-json','');await browser.click('#record-mobile-acceptance-measurements');await browser.click('#record-mobile-acceptance-receipt');assert.deepEqual(await shownTarget(),target);assert.match(await browser.evaluate('document.body.innerText'),/Acceptance operations still required/);record('only observed receipts are collected; missing journey operations remain explicit',{});

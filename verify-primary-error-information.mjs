@@ -63,7 +63,7 @@ async function verifyImportFaultBoundary(){
 if(process.argv.includes('--import-fault-only')){console.log(JSON.stringify(await verifyImportFaultBoundary()));process.exit(0);}
 const cases=[];
 
-const revision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const revision=execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
 const r=projectStoreRuntime(),a=await r.store.createProject({commandId:'PRIMARY-ERROR-A'}),b=await r.store.createProject({commandId:'PRIMARY-ERROR-B'});
 const artifactId=r.engine.allocateId(a,'artifacts',r.copy({commandId:'PRIMARY-ERROR-FILE',payload:{filename:'input.txt'}}));
 await r.store.putArtifact({artifactId,jobId:a.job.JOB_ID,blob:new Blob(['Input bytes']),filename:'input.txt',mediaType:'text/plain'});

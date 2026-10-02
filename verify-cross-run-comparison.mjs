@@ -3,7 +3,7 @@ import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {reviewProofFixture,reviewApplicabilityFixture,recordProposal,evidence} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {spawnSync} from 'node:child_process';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import {createHash} from 'node:crypto';
 
 // Inject one fault into an in-memory module copy, never into retained source.
@@ -243,20 +243,20 @@ for(const iterationStage of [10,17,19]){
 
 if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){
  const rawRuns=[],faultResults=[],started=Date.now(),suiteBoundMs=180000;
- const execute=args=>{
+ const execute=async args=>{
   const remaining=suiteBoundMs-(Date.now()-started);
   assert(remaining>0,'COMPARISON_FAULT_SUITE_DEADLINE_ORACLE: fault matrix exceeded its hard bound.');
-  const child=spawnSync(process.execPath,['verify-cross-run-comparison.mjs',...args],{encoding:'utf8',timeout:Math.min(15000,remaining),maxBuffer:16*1024*1024,killSignal:'SIGKILL'});
+  const child=(await runVerifier(process.execPath,['verify-cross-run-comparison.mjs',...args],{encoding:'utf8',timeout:Math.min(15000,remaining),maxBuffer:16*1024*1024,killSignal:'SIGKILL'}));
   const run={command:[process.execPath,'verify-cross-run-comparison.mjs',...args],exitCode:child.status,signal:child.signal,error:child.error?String(child.error):null,stdout:child.stdout||'',stderr:child.stderr||''};rawRuns.push(run);
   assert(!run.error&&!run.signal,'COMPARISON_FAULT_EXECUTION_ORACLE: a timeout or execution failure is not fault detection.');return run;
  };
  try{
   for(const fault of comparisonFaults){
-   const run=execute(['--comparison-fault='+fault.id]);
-   assert(run.exitCode===1&&run.stderr.includes(fault.oracle),'COMPARISON_FAULT_DETECTION_ORACLE: '+fault.id+' did not fail at its intended invariant.');
+   const run=(await execute(['--comparison-fault='+fault.id]));
+   assertDetectedFault(run,fault.oracle,'COMPARISON_FAULT_DETECTION_ORACLE: '+fault.id+' did not fail at its intended invariant.');
    faultResults.push({faultId:fault.id,owner:'production',file:fault.file,originalSha256:comparisonSourceHashes[fault.file],injectedSha256:comparisonDigest(fs.readFileSync(fault.file,'utf8').replace(fault.from,fault.to)),caughtBy:fault.oracle,result:'PASS'});
   }
-  const restored=execute(['--comparison-control']);assert(restored.exitCode===0,'COMPARISON_RESTORED_CONTROL_ORACLE: unchanged implementation did not return to green.');
+  const restored=(await execute(['--comparison-control']));assert(restored.exitCode===0,'COMPARISON_RESTORED_CONTROL_ORACLE: unchanged implementation did not return to green.');
   for(const [file,digest] of Object.entries(comparisonSourceHashes))assert(comparisonDigest(fs.readFileSync(file,'utf8'))===digest,'COMPARISON_SOURCE_RESTORED_ORACLE: retained source changed during fault injection.');
   console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'PASS',synthetic:true,actualBrowser:false,childBoundSeconds:15,suiteBoundSeconds:180,faults:faultResults,rawRuns,sourceRestored:true}));
  }catch(error){console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'FAIL',faults:faultResults,rawRuns,failure:String(error.stack||error)}));throw error;}

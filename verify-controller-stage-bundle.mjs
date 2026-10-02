@@ -1,3 +1,4 @@
+import {runVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import cp from 'node:child_process';
@@ -13,7 +14,7 @@ const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 const writeJson=(file,value)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');};
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 
-const gitSha=String(process.env.GITHUB_SHA||cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()).toLowerCase();
+const gitSha=String(process.env.GITHUB_SHA||cp.execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim()).toLowerCase();
 assert(/^[0-9a-f]{40}$/.test(gitSha),'Exact canonical commit SHA unavailable.');
 assert(process.env.CONTROLLER_PRIOR_SUITE_PASSED==='1','Controller stage proof may run only after canonical CI and local browser proof passed.');
 for(const file of [SPEC_PATH,NORM_PATH,STATE_PATH])assert(fs.existsSync(file),`Required controller input missing: ${file}`);
@@ -95,7 +96,7 @@ const files=['verify-build-stage-ledger.mjs',...stageCommands[earliest]];
 for(const file of files)assert(fs.existsSync(file),`Proof command missing: ${file}`);
 const proofCommands=[];
 for(const file of files){
-  const result=cp.spawnSync(process.execPath,[file],{encoding:'utf8',env:process.env,maxBuffer:128*1024*1024});
+  const result=(await runVerifier(process.execPath,[file],{encoding:'utf8',env:process.env,maxBuffer:128*1024*1024}));
   if(result.stdout)process.stdout.write(result.stdout);
   if(result.stderr)process.stderr.write(result.stderr);
   const exitCode=Number.isInteger(result.status)?result.status:1;

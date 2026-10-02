@@ -8,7 +8,7 @@ import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 // A context-boundary fixture, not a claim of a complete operator journey.
 globalThis.dispatchEvent=()=>{};
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
-  const source=process.env.BASELINE_COMMIT?execFileSync('git',['show',process.env.BASELINE_COMMIT+':'+file],{encoding:'utf8',maxBuffer:10*1024*1024}):fs.readFileSync(file,'utf8');
+  const source=process.env.BASELINE_COMMIT?execFileSync('git',['show',process.env.BASELINE_COMMIT+':'+file],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8',maxBuffer:10*1024*1024}):fs.readFileSync(file,'utf8');
   createVerifierRuntime.loadScript(globalThis,source,{filename:file});
 }
 const core=closedLoopCore,schema=closedLoopWorkflowSchema,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion;

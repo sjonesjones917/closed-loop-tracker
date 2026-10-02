@@ -13,7 +13,7 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
  const previous={current,engine,nativeStage22Tests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
  current=fixture.project;engine=fixture.engine;nativeStage22Tests=()=>fixture.items;nativeTestInputs=fixture.inputs;persistReplacement=async next=>{await fixture.commit(next);current=next;};render=fixture.render;globalThis.closedLoopTestRuntime=fixture.runtime;
  try{return await runNativeStage22Tests();}finally{({current,engine,nativeStage22Tests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
-},answers:async()=>{const previous={current,ingestion};current={projectData:{humanInputRequests:[]}};ingestion={answerHumanInput(){throw Object.assign(new Error('Correct the required answer.'),{requestId:'REQUIRED-ANSWER'});}};try{await saveHumanAnswers();}finally{({current,ingestion}=previous);}},capture:fn=>{captureCurrentView=fn;},focus:focusAfterAction,run:runOperatorAction,fail:reportActionFailure,announce,retry:async()=>{const previous={current,savePromptRecord,render,selectedOperation};current={job:{JOB_ID:'FOCUS-DISPOSABLE'},activeStage:1};savePromptRecord=async()=>{};render=()=>{};selectedOperation=()=> 'COMPLETE';try{await prepareReplacementAttempt();await Promise.resolve();}finally{({current,savePromptRecord,render,selectedOperation}=previous);}},accept:async()=>{const previous={current,recordMobileOperation,render,replacementReview};current={job:{JOB_ID:'FOCUS-ACCEPT',CURRENT_STAGE:'STAGE 01'},activeStage:1,activeView:'Workflow',projectData:{generatedPrompts:[]},stages:{1:{gate:{complete:false}}}};recordMobileOperation=async()=>{};render=()=>{};replacementReview={};try{await finishAcceptedProposal({proposalId:'P1',rawResponseId:'R1',stage:1,continuationInstructionId:null});}finally{({current,recordMobileOperation,render,replacementReview}=previous);}}};})();`,c,{filename:'app-core.js'});
+},answers:async()=>{const previous={current,ingestion};current={projectData:{humanInputRequests:[]}};ingestion={answerHumanInput(){throw Object.assign(new Error('Correct the required answer.'),{requestId:'REQUIRED-ANSWER'});}};try{await saveHumanAnswers();}finally{({current,ingestion}=previous);}},capture:fn=>{captureCurrentView=fn;},storage:withStorageActivity,focus:focusAfterAction,prompt:setPromptExpanded,run:runOperatorAction,fail:reportActionFailure,announce,retry:async()=>{const previous={current,savePromptRecord,render,selectedOperation};current={job:{JOB_ID:'FOCUS-DISPOSABLE'},activeStage:1};savePromptRecord=async()=>{};render=()=>{};selectedOperation=()=> 'COMPLETE';try{await prepareReplacementAttempt();await Promise.resolve();}finally{({current,savePromptRecord,render,selectedOperation}=previous);}},accept:async()=>{const previous={current,recordMobileOperation,render,replacementReview};current={job:{JOB_ID:'FOCUS-ACCEPT',CURRENT_STAGE:'STAGE 01'},activeStage:1,activeView:'Workflow',projectData:{generatedPrompts:[]},stages:{1:{gate:{complete:false}}}};recordMobileOperation=async()=>{};render=()=>{};replacementReview={};try{await finishAcceptedProposal({proposalId:'P1',rawResponseId:'R1',stage:1,continuationInstructionId:null});}finally{({current,recordMobileOperation,render,replacementReview}=previous);}}};})();`,c,{filename:'app-core.js'});
 async function paint(){for(let i=0;i<3;i++){frames.splice(0).forEach(fn=>fn());await Promise.resolve();}}
 const target=element('visible-next-control');c.ui.focus(target);
 assert.deepEqual(calls.filter(x=>x.type==='scroll'),[],'FOCUS_VISIBLE_ORACLE: an already visible next action must not scroll.');
@@ -22,6 +22,20 @@ let entered=0,release;const held=new Promise(r=>release=r);const delayed=nodes.g
 const p=c.ui.run('Saving',async()=>{entered++;c.ui.focus(delayed);await held;});const duplicate=c.ui.run('Saving',()=>{entered++;});await paint();
 assert.equal(entered,1);assert.equal(delayed.disabled,true);assert.equal(nodes.get('#app-operation-status').hidden,true,'Sub-threshold work must not display a loading indicator.');assert.equal(calls.some(x=>x.type==='focus'),false,'FOCUS_PENDING_ORACLE: disabled controls must not take focus before resolution.');release();await p;await duplicate;
 const focus=calls.find(x=>x.type==='focus'&&x.id===delayed.id);assert.ok(focus,'FOCUS_DEFERRED_ORACLE: the next control was not focused after unlocking.');assert.equal(focus.disabled,false);assert.equal(focus.options?.preventScroll,true,'FOCUS_NATIVE_SCROLL_ORACLE: deferred focus reintroduced implicit scrolling.');assert.equal(calls.some(x=>x.type==='scroll'),false);assert.equal(delayed.disabled,false);cases.push({caseId:'FOCUS-AFTER-UNLOCK-WITHOUT-DUPLICATION',result:'PASS'});calls.length=0;
+// An error and delayed progress share one feedback surface. Dismissal reads
+// the current activity state rather than exposing a hidden stale message.
+{
+ const report=nodes.get('#operation-error'),status=nodes.get('#app-operation-status');let dismiss,finish;
+ c.document.createElement=()=>element('dismiss-error');report.append=button=>{dismiss=button;};
+ const work=c.ui.storage('Saving current view',()=>new Promise(resolve=>finish=resolve));
+ await new Promise(resolve=>setTimeout(resolve,1550));assert.equal(status.hidden,false);
+ c.ui.fail(new Error('The view could not be saved.'));assert.equal(report.hidden,false);assert.equal(status.hidden,true,'ERROR_PROGRESS_ORACLE: a pending indicator remained underneath the error');
+ dismiss.onclick();assert.equal(report.hidden,true);assert.equal(status.hidden,false,'ERROR_PROGRESS_ORACLE: dismissing an error failed to restore a genuinely pending activity');
+ c.ui.fail(new Error('Review the saved view.'));finish();await work;
+ dismiss.onclick();assert.equal(report.hidden,true);assert.equal(status.hidden,true,'ERROR_PROGRESS_ORACLE: dismissal revealed progress for completed work');
+ delete c.document.createElement;delete report.append;await paint();calls.length=0;
+ cases.push({caseId:'ERROR-REPLACES-PROGRESS-WITHOUT-STALE-DISMISSAL',result:'PASS'});
+}
 // UX-001/DEF-10: a non-form next-action container rendered during an
 // in-flight operation must not be placed until the operation unlocks and the
 // final post-action layout has settled. This is the real Stage 9 -> 10 class.
@@ -35,6 +49,21 @@ releaseRegion();await regionRun;await paint();
 assert.ok(calls.some(call=>call.type==='focus'&&call.id===region.id),'FOCUS_FINALIZED_REGION_ORACLE: finalized next-action region did not receive focus.');
 assert.ok(regionRect.bottom<=c.innerHeight,'FOCUS_FINALIZED_REGION_VISIBILITY_ORACLE: finalized next-action region remained clipped after layout settled.');
 cases.push({caseId:'FOCUS-NONCONTROL-REGION-AFTER-ACTION-FINALIZATION',result:'PASS',bottomAfterFinalization:regionRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;nodes.delete('#next-required-action');
+// A fixed error banner is already visible; reporting it must not move the page.
+const bannerRect={top:0,bottom:160,width:393,height:160},banner=element('operation-error',bannerRect),sticky=element('sticky-tabs',{top:125,bottom:181,width:393,height:56});
+nodes.set('.view-tabs',sticky);c.getComputedStyle=node=>({position:node===sticky?'sticky':node===banner?'fixed':'static',top:node===sticky?'125px':'0px'});
+c.ui.focus(banner,{reason:'RETRY'});assert.equal(calls.some(call=>call.type==='scroll'),false,'ERROR_SCROLL_ORACLE: an already visible fixed error must not move the document');calls.length=0;
+const obscuredRect={top:130,bottom:174,width:180,height:44},obscured=element('collapse-prompt',obscuredRect);
+c.window.scrollBy=options=>{obscuredRect.top-=options.top;obscuredRect.bottom-=options.top;};
+c.ui.focus(obscured,{reason:'RETURN'});assert(obscuredRect.top>=181,'STICKY_COLLAPSE_ORACLE: the correction/collapse control remained underneath sticky navigation');
+cases.push({caseId:'FOCUS-FIXED-ERROR-WITHOUT-JUMP-AND-STICKY-CONTROL',result:'PASS'});calls.length=0;delete c.window.scrollBy;delete c.getComputedStyle;nodes.delete('.view-tabs');
+const prompt=element('generated-prompt'),toggle=element('toggle-prompt'),collapse=element('collapse-prompt');let expanded=false;
+prompt.classList.toggle=(_class,value)=>{expanded=value;return expanded;};
+nodes.set('#generated-prompt',prompt);nodes.set('#toggle-prompt',toggle);nodes.set('#collapse-prompt',collapse);
+c.ui.prompt(true);await paint();assert.equal(expanded,true);assert.equal(collapse.hidden,false);assert.equal(toggle.getAttribute('aria-expanded'),'true');assert(!calls.some(call=>['focus','scroll','residual-scroll'].includes(call.type)),'EXPAND_POSITION_ORACLE: expanding the preview moved focus or scrolled away from the existing control');
+c.ui.prompt(false);c.ui.prompt(true);await paint();assert.equal(expanded,true);assert(!calls.some(call=>['focus','scroll','residual-scroll'].includes(call.type)),'EXPAND_POSITION_ORACLE: a previous collapse moved the view after the user expanded it again');
+c.ui.prompt(false);await paint();assert.equal(expanded,false);assert.equal(collapse.hidden,true);assert.equal(toggle.getAttribute('aria-expanded'),'false');assert(calls.some(call=>call.type==='focus'&&call.id==='toggle-prompt'));
+cases.push({caseId:'PROMPT-COLLAPSE-AVAILABLE-AT-BOTH-ENDS',result:'PASS'});calls.length=0;for(const id of ['generated-prompt','toggle-prompt','collapse-prompt'])nodes.delete('#'+id);
 const below=element('next-field',{top:930,bottom:974,left:0,right:300,width:300,height:44});c.ui.focus(below);assert.equal(calls.filter(x=>x.type==='scroll').length,1);assert.equal(calls.at(-1).options.block,'nearest','FOCUS_DISTANCE_ORACLE: move only enough to expose the next required element.');cases.push({caseId:'FOCUS-NEXT-FIELD-BELOW-VIEWPORT',result:'PASS'});calls.length=0;
 // Chromium may round the first nearest scroll down while the CSS box ends
 // at a fractional coordinate. The computed residual must still be exposed.

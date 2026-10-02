@@ -1,4 +1,6 @@
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
+import {recordProposal} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -51,6 +53,88 @@ assert(validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'
 let valid=envelope(capture);validation=ingestion.validateEnvelope(p,valid,{stage:1,promptRecord:prompt,rawSha256:hash.sha256Value(valid),files:[]});
 assert(!validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'),`Stage 01 ingestion rejected repaired intake accounting: ${JSON.stringify(validation.issues)}`);
 
-const humanAuthorityRoundTrip=JSON.parse(execFileSync(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'}));
+// Stored UTF-8 text is mechanically available and must not collapse into a
+// whole-file coverage assertion. Comments and line endings remain exact bytes.
+const textProject=core.createBlankState('JOB-RAW-UNITIZATION');
+Object.assign(textProject.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Preserve the complete supplied text.',CURRENT_INPUT_VERSION:'INPUT-v001'});engine.ensureShape(textProject);
+const exactText='First requirement.\r\n# Comment remains supplied context.\nLast requirement.',textBytes=new TextEncoder().encode(exactText),textArtifactId=artifactFixtureId(engine,textProject,'raw-text');
+const textMetadata={artifactId:textArtifactId,filename:'requirements.txt',mediaType:'text/plain',byteSize:textBytes.length,sha256:await hash.sha256Bytes(textBytes)};
+engine.registerArtifactBytes(textProject,{stage:1,...textMetadata,role:'HUMAN_INPUT'});
+textProject.stages[1].authorizedFiles=[{artifactId:textArtifactId}];
+textProject.projectData.userEntered.suppliedArtifactText={[textArtifactId]:{...textMetadata,text:exactText}};
+const textManifest=engine.intakeCoverageManifest(textProject),textUnits=textManifest.units.filter(unit=>unit.kind==='SUPPLIED_MATERIAL_CONTENT');
+assert(textUnits.length===3,'RAW_UNITIZATION_ORACLE: available text lines were replaced by whole-file accounting.');
+assert(textManifest.rawUnitizationVersion==='closed-loop-raw-units/1','RAW_UNITIZATION_VERSION_ORACLE');
+assert(textUnits.map(unit=>unit.rawValueText).join('')===exactText,'RAW_UNITIZATION_BYTES_ORACLE: comments or line endings were lost.');
+assert(textUnits.every(unit=>unit.artifactId===textArtifactId&&unit.sourceLocation.includes('#page=1&line=')),'RAW_UNITIZATION_LOCATION_ORACLE');
+const textCapture={...structuredClone(capture),inputVersion:textManifest.inputVersion,manifestSha256:textManifest.manifestSha256,units:textManifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Preserved exactly.',externalInspectionClaimed:unit.kind==='SUPPLIED_MATERIAL'?true:undefined,extractedStatements:[{statementKey:'text-'+index,text:unit.rawValueText,statementClass:'CONTEXT',sourceLocation:unit.sourceLocation}]}))};
+assert(engine.evaluateIntakeAccounting(textProject,{capture:textCapture}).complete,'RAW_UNITIZATION_ACCOUNTING_CONTROL_ORACLE');
+const omittedLine=structuredClone(textCapture);omittedLine.units=omittedLine.units.filter(unit=>unit.sourceUnitId!==textUnits[1].unitId);
+assert(engine.evaluateIntakeAccounting(textProject,{capture:omittedLine}).reasons.some(reason=>reason.includes('omitted controlled input unit '+textUnits[1].unitId)),'RAW_UNITIZATION_OMISSION_ORACLE');
+
+// Specification 6.5A uses strict greater-than boundaries in bytes and units.
+const fileChallengeCases=[];
+const challengeCases=[
+  {id:'files-20',count:20,required:false},
+  {id:'files-21',count:21,required:true},
+  {id:'text-bytes-at',count:1,byteSize:1048576,required:false},
+  {id:'text-bytes-over',count:1,byteSize:1048577,required:true},
+  {id:'stored-code-text-over',count:1,byteSize:1048577,storedText:true,extension:'.py',mediaType:'application/octet-stream',required:true},
+  {id:'aggregate-bytes-at',count:5,byteSize:1048576,mediaType:'application/octet-stream',required:false},
+  {id:'aggregate-bytes-over',count:5,byteSize:1048576,extraByte:true,mediaType:'application/octet-stream',required:true},
+  {id:'pages-at',count:1,pages:100,required:false},
+  {id:'pages-over',count:1,pages:101,required:true},
+  {id:'aggregate-pages-over',count:2,pages:51,required:true},
+  {id:'raw-units-at',count:0,rawUnits:500,required:false},
+  {id:'raw-units-over',count:0,rawUnits:501,required:true}
+];
+for(const testCase of challengeCases){
+  const {id,count,required}=testCase;
+  let project=core.createBlankState('JOB-FILE-CHALLENGE-'+id);
+  Object.assign(project.job,{JOB_TITLE:'File-count challenge',EXACT_USER_OBJECTIVE_VERBATIM:'Produce a checklist.',EXPLICIT_USER_REQUIREMENTS:'Preserve the supplied statements.',CURRENT_INPUT_VERSION:'INPUT-v001'});
+  engine.ensureShape(project);
+  const members=[];
+  for(let index=0;index<count;index++){
+    const text=testCase.storedText?'a'.repeat(testCase.byteSize):testCase.pages?Array.from({length:testCase.pages},(_,page)=>'File '+index+', page '+(page+1)).join('\f'):'Statement '+index,bytes=new TextEncoder().encode(text),artifactId=artifactFixtureId(engine,project,'count-'+index);
+    members.push({stage:1,artifactId,filename:'input-'+index+(testCase.extension||(testCase.mediaType?'.bin':'.txt')),mediaType:testCase.mediaType||'text/plain',byteSize:testCase.byteSize===undefined?bytes.length:testCase.byteSize+(testCase.extraByte&&index===0?1:0),sha256:await hash.sha256Bytes(bytes),role:'HUMAN_INPUT'});
+    if(testCase.pages||testCase.storedText){project.projectData.userEntered.suppliedArtifactText??={};project.projectData.userEntered.suppliedArtifactText[artifactId]={...members.at(-1),text};}
+  }
+  engine.registerArtifactBytesBatch(project,members);
+  project.stages[1].authorizedFiles=members.map(({artifactId})=>({artifactId}));
+  if(testCase.rawUnits){
+    const baseUnits=engine.intakeCoverageManifest(project).unitCount;
+    project.projectData.userEntered.thresholdStatements=Array.from({length:testCase.rawUnits-baseUnits},(_,index)=>'Raw statement '+index);
+    assert(engine.intakeCoverageManifest(project).unitCount===testCase.rawUnits,'CHALLENGE_UNIT_SETUP_ORACLE: '+id);
+  }
+  const current=engine.intakeCoverageManifest(project),accounting={...structuredClone(capture),inputVersion:current.inputVersion,manifestSha256:current.manifestSha256,units:current.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Preserve supplied statements.',externalInspectionClaimed:unit.kind==='SUPPLIED_MATERIAL'?true:undefined,extractedStatements:[{statementKey:'count-'+index,text:testCase.storedText&&unit.kind==='SUPPLIED_MATERIAL_CONTENT'?'The source file contains exactly 1,048,577 ASCII a characters.':unit.rawValueText,statementClass:'CONTEXT',sourceLocation:unit.sourceLocation}]}))};
+  assert(engine.evaluateIntakeAccounting(project,{capture:accounting}).complete,'FILE_CHALLENGE_SETUP_ORACLE: complete accounting is required before checking the challenge gate.');
+  const preparedContext=engine.preparePromptContext(project,1,{operation:'COMPLETE'}),instruction=prompts.buildPromptRecord(1,project,preparedContext.options);
+  project.projectData.generatedPrompts.push(instruction);
+  const response={...envelope(accounting),jobId:project.job.JOB_ID,operation:instruction.operation,promptIdentity:{instructionId:instruction.instructionId,bodySha256:instruction.bodySha256,contractSha256:instruction.contractSha256,contextSignature:instruction.contextSignature},scope:instruction.scope};
+  const prepared=ingestion.prepare(project,{stage:1,text:JSON.stringify(response),promptRecord:instruction});
+  assert(prepared.validation.valid,'FILE_CHALLENGE_SETUP_ORACLE: '+JSON.stringify(prepared.validation.issues));
+  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'COUNT_BOUNDARY_FIXTURE'});project=committed.project;
+  engine.recordStageConfirmation(project,1,true,'The represented intake matches the supplied intent.','COUNT_BOUNDARY_FIXTURE',{acceptedChangeId:committed.acceptedChange.changeId,inputVersion:project.job.CURRENT_INPUT_VERSION,instructionId:instruction.instructionId,contextSignature:instruction.contextSignature});
+  const gate=engine.gate(1,project);
+  assert(gate.complete===!required,'FILE_CHALLENGE_THRESHOLD_ORACLE: '+id+': '+JSON.stringify(gate));
+  if(required){
+    assert(gate.reasons.some(reason=>reason.includes('SEMANTIC_CHALLENGE')),'FILE_CHALLENGE_REASON_ORACLE');
+    assert(engine.operationalNextAction(project,1).operation==='SEMANTIC_CHALLENGE','FILE_CHALLENGE_NEXT_ACTION_ORACLE');
+    const continuation=ingestion.prepareStageContinuation(project,{stage:1});
+    assert(continuation?.prompt.operation==='SEMANTIC_CHALLENGE','FILE_CHALLENGE_CONTINUATION_ORACLE');
+    assert(continuation.prompt.contextManifest.semanticReviewBinding.bindingStatus==='BOUND','FILE_CHALLENGE_INDEPENDENCE_ORACLE');
+    project=continuation.project||project;
+    const challenge=continuation.prompt,review={...response,promptIdentity:{instructionId:challenge.instructionId,bodySha256:challenge.bodySha256,contractSha256:challenge.contractSha256,contextSignature:challenge.contextSignature},operation:challenge.operation,scope:challenge.scope,stageData:{},records:{semanticChallenges:[recordProposal(schema,'semanticChallenges',{tempKey:'count-review',overrides:{FINDINGS:'Every supplied statement is represented.',DISPOSITION:'ACCEPTED',REASONING:'An independent context compared the intake to the supplied files.'}})]}};
+    Object.assign(review,{packageId:challenge.packageId,operationReservationId:challenge.operationReservationId,challengeNonce:challenge.challengeNonce});
+    const transport={authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true,packageId:challenge.packageId,operationReservationId:challenge.operationReservationId,challengeNonce:challenge.challengeNonce,promptIdentity:review.promptIdentity};
+    const reviewed=ingestion.prepare(project,{stage:1,text:JSON.stringify(review),promptRecord:challenge,transport});
+    assert(reviewed.validation.valid,'FILE_CHALLENGE_REVIEW_SETUP_ORACLE: '+JSON.stringify(reviewed.validation.issues));
+    const acceptedReview=ingestion.commit(reviewed.project,reviewed.proposal.proposalId,{operator:'COUNT_BOUNDARY_FIXTURE',replacementConfirmation:ingestion.acceptanceImpact(reviewed.project,reviewed.proposal.proposalId)});project=acceptedReview.project;
+    engine.recordStageConfirmation(project,1,true,'The reviewed intake matches the supplied intent.','COUNT_BOUNDARY_FIXTURE',{acceptedChangeId:acceptedReview.acceptedChange.changeId,inputVersion:project.job.CURRENT_INPUT_VERSION});
+    assert(engine.gate(1,project).complete,'FILE_CHALLENGE_COMPLETION_ORACLE: a current accepted independent review must close the challenge.');
+  }
+  fileChallengeCases.push({id,count,required,complete:gate.complete,result:'PASS'});
+}
+const humanAuthorityRoundTrip=JSON.parse((await checkedVerifier(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'})));
 assert(humanAuthorityRoundTrip.humanAuthorityRoundTrip==='PASS'&&humanAuthorityRoundTrip.atomicCoAcceptanceStable===true&&humanAuthorityRoundTrip.unrelatedMutationFailsClosed===true&&humanAuthorityRoundTrip.returnedAttachmentNotRawInput===true,'Integrated Stage 01 human-authority regression did not report every repaired-path proof.');
-console.log(JSON.stringify({stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,legacyCaptureRejected:true,missingPassOneRejected:true,missingPassTwoRejected:true,incompleteChallengeCategoriesRejected:true,humanAuthorityRoundTripIntegrated:true}));
+console.log(JSON.stringify({stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,legacyCaptureRejected:true,missingPassOneRejected:true,missingPassTwoRejected:true,incompleteChallengeCategoriesRejected:true,humanAuthorityRoundTripIntegrated:true,fileChallengeCases}));

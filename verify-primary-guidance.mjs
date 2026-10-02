@@ -1,3 +1,4 @@
+import {runVerifier} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
@@ -33,7 +34,7 @@ out=[]
 for row in json.load(sys.stdin):
  p=P();p.feed(row.pop('html'));out.append(dict(row,text=' '.join(p.parts)))
 print(json.dumps(out))`;
-const parsed=spawnSync('python',['-c',parser],{input:JSON.stringify(pages),encoding:'utf8',maxBuffer:64*1024*1024});assert.equal(parsed.status,0,parsed.stderr);
+const parsed=await runVerifier('python',['-c',parser],{input:JSON.stringify(pages),encoding:'utf8',maxBuffer:64*1024*1024,timeout:120000});assert.equal(parsed.status,0,parsed.stderr);
 const observations=JSON.parse(parsed.stdout),ids=new Set(p.projectData.allocationReceipts.map(row=>row.resultingId));
 const cases=observations.map(row=>({stage:row.stage??null,operation:row.operation??null,view:row.view||'Workflow',leakedIds:[...ids].filter(id=>row.text.includes(id))}));
 console.log(JSON.stringify({synthetic:true,actualBrowser:false,source:process.env.APP_SOURCE||'app-core.js',expected:'Every stage and available operation keeps internal identities out of primary guidance and presents one instruction with at most one consolidated handoff control; exact bindings and diagnostic disclosures remain available',cases,presentationCases},null,2));
