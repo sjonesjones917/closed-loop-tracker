@@ -16,8 +16,8 @@ const HUMAN_AUTHORITY_CLASSES=Object.freeze(['HUMAN','HUMAN_DECISION']);
 const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','attachmentSlotId','role','filename','mediaType','byteSize','sha256','required']);
 const UNRESOLVED_KEYS=Object.freeze(['temporaryKey','kind','description','whyBlocking','affectedStageFields','affectedRecords','blocking']);
 const WARNING_KEYS=Object.freeze(['code','message','path']);
-const UNRESOLVED_KINDS=Object.freeze(['MISSING_HUMAN_INPUT','MISSING_APPLICATION_CONTEXT','INADEQUATE_PRIOR_OUTPUT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','WORK_TOO_LARGE_FOR_ENVIRONMENT','MISSING_ARTIFACT','UNRESOLVED_CONFLICT','EXECUTION_FAILURE','TOOL_FAILURE','UNKNOWN']);
-const ANSWER_TYPES=Object.freeze(['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_CHOICE','DATE','FILE_REFERENCE']);
+const UNRESOLVED_KINDS=schema.RESPONSE_UNRESOLVED_KINDS;
+const ANSWER_TYPES=schema.HUMAN_INPUT_ANSWER_TYPES;
 const RESPONSE_SCOPE_KEYS=Object.freeze(['projectRevision',...new Set(Object.values(schema.STAGE_OPERATION_SCOPE_MATRIX).flatMap(contract=>contract.requiredDimensions))]);
 
 const clone=workflow.clone;
@@ -441,7 +441,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
     unknownKeys(request,QUESTION_KEYS,path,issues);
     registerTemp(request.temporaryKey,`${path}/temporaryKey`,'question');
     for(const name of ['question','whyRequired','answerType'])if(!String(request[name]??'').trim())issues.push(issue('MISSING_QUESTION_FIELD',`${path}/${name}`,`${name} is required.`));
-    if(!ANSWER_TYPES.includes(request.answerType))issues.push(issue('INVALID_ANSWER_TYPE',`${path}/answerType`,`${request.answerType||'MISSING'} is not a supported answerType.`));
+    if(!ANSWER_TYPES.includes(request.answerType))issues.push(issue('INVALID_ANSWER_TYPE',`${path}/answerType`,`${request.answerType||'MISSING'} is not a supported answerType. Use exactly one of: ${ANSWER_TYPES.join(', ')}.`));
     if(!Array.isArray(request.affectedStageFields))issues.push(issue('INVALID_ARRAY',`${path}/affectedStageFields`,'affectedStageFields must be an array.'));
     if(!Array.isArray(request.affectedRecords))issues.push(issue('INVALID_ARRAY',`${path}/affectedRecords`,'affectedRecords must be an array.'));
     if(!Array.isArray(request.allowedValues))issues.push(issue('INVALID_ARRAY',`${path}/allowedValues`,'allowedValues must be an array.'));else if(['CHOICE','MULTI_CHOICE'].includes(request.answerType)&&(request.allowedValues.length===0||request.allowedValues.some(value=>typeof value!=='string'||!value.trim())||new Set(request.allowedValues).size!==request.allowedValues.length))issues.push(issue('INVALID_ALLOWED_VALUES',`${path}/allowedValues`,'CHOICE and MULTI_CHOICE require non-empty, unique string allowedValues.'));
@@ -466,7 +466,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
     else if(candidate.decisionPurpose!==undefined||candidate.targetFamily!==undefined||candidate.targetId!==undefined)issues.push(issue('HUMAN_CANDIDATE_DECISION_FIELDS',path,'Decision-specific fields are permitted only when authorityClass is HUMAN_DECISION.'));
   });
 
-  if(Array.isArray(envelope.unresolved))envelope.unresolved.forEach((item,index)=>{const path=`/unresolved/${index}`;if(!object(item)){issues.push(issue('INVALID_UNRESOLVED',path,'Unresolved item must be an object.'));return;}unknownKeys(item,UNRESOLVED_KEYS,path,issues);if(!UNRESOLVED_KINDS.includes(item.kind))issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.'));for(const key of ['temporaryKey','description','whyBlocking'])if(!String(item[key]??'').trim())issues.push(issue('MISSING_UNRESOLVED_FIELD',`${path}/${key}`,`${key} is required.`));if(!Array.isArray(item.affectedStageFields)||!Array.isArray(item.affectedRecords))issues.push(issue('INVALID_UNRESOLVED_TARGETS',path,'affectedStageFields and affectedRecords must be arrays.'));if(item.blocking!==undefined&&typeof item.blocking!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/blocking`,'blocking must be BOOLEAN when supplied.'));});
+  if(Array.isArray(envelope.unresolved))envelope.unresolved.forEach((item,index)=>{const path=`/unresolved/${index}`;if(!object(item)){issues.push(issue('INVALID_UNRESOLVED',path,'Unresolved item must be an object.'));return;}unknownKeys(item,UNRESOLVED_KEYS,path,issues);if(!UNRESOLVED_KINDS.includes(item.kind))issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,`Unresolved kind must be exactly one of: ${UNRESOLVED_KINDS.join(', ')}.`));for(const key of ['temporaryKey','description','whyBlocking'])if(!String(item[key]??'').trim())issues.push(issue('MISSING_UNRESOLVED_FIELD',`${path}/${key}`,`${key} is required.`));if(!Array.isArray(item.affectedStageFields)||!Array.isArray(item.affectedRecords))issues.push(issue('INVALID_UNRESOLVED_TARGETS',path,'affectedStageFields and affectedRecords must be arrays.'));if(item.blocking!==undefined&&typeof item.blocking!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/blocking`,'blocking must be BOOLEAN when supplied.'));});
   if(Array.isArray(envelope.warnings))envelope.warnings.forEach((item,index)=>{const path=`/warnings/${index}`;if(!object(item)){issues.push(issue('INVALID_WARNING',path,'Warning must be an object.'));return;}unknownKeys(item,WARNING_KEYS,path,issues);for(const key of ['code','message','path'])if(!String(item[key]??'').trim())issues.push(issue('MISSING_WARNING_FIELD',`${path}/${key}`,`${key} is required.`));});
 
   if(envelope.responseType==='HUMAN_INPUT_REQUIRED'){

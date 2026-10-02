@@ -73,4 +73,33 @@ function captureFor(prompt){
   assert.match(replacement.prompt,/decisionPurpose must be one of:/i);
 }
 
-console.log(JSON.stringify({stage01AgentContractAlignment:'PASS',legalUnicodeStringPunctuation:true,smartStructuralDelimitersRejected:true,typedEvidenceReferencesPublished:true,humanAuthorityEnumsPublished:true,validationRepairGuidancePublished:true,conformingStage01ResponseAccepted:true}));
+// Independent values come from controlling Section17.13 and the supported
+// unresolved-response contract, not from the production descriptor under test.
+let fallbackObservation;
+const expectedAnswerTypes=['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_CHOICE','DATE','FILE_REFERENCE'];
+const expectedUnresolvedKinds=['MISSING_HUMAN_INPUT','MISSING_APPLICATION_CONTEXT','INADEQUATE_PRIOR_OUTPUT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','WORK_TOO_LARGE_FOR_ENVIRONMENT','MISSING_ARTIFACT','UNRESOLVED_CONFLICT','EXECUTION_FAILURE','TOOL_FAILURE','UNKNOWN'];
+{
+  const p=project('JOB-CLOSED-FALLBACK-CONTRACT'),prompt=savedPrompt(p),descriptor=prompts.responseContractDescriptor(1,'COMPLETE');
+  assert.deepEqual(descriptor.envelope.humanInputAnswerTypeValues,expectedAnswerTypes,'FALLBACK_ENUM_ORACLE: published answer types must match Section17.13');
+  assert.deepEqual(descriptor.envelope.unresolvedKindValues,expectedUnresolvedKinds,'FALLBACK_ENUM_ORACLE: published unresolved kinds must match the supported consumer contract');
+  for(const value of [...expectedAnswerTypes,...expectedUnresolvedKinds])assert.ok(prompt.prompt.includes('"'+value+'"'),'FALLBACK_ENUM_ORACLE: exact generated instruction omitted '+value);
+  const response={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:1,operation:'COMPLETE',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+  let acceptedControls=0;
+  for(const answerType of expectedAnswerTypes){
+    const envelope={...response,humanInputRequests:[{temporaryKey:'question-'+answerType,question:'Supply the missing human-authority preference.',whyRequired:'Only the human can establish it.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType,allowedValues:['CHOICE','MULTI_CHOICE'].includes(answerType)?['FIRST','SECOND']:[],blocking:true}]};
+    const result=ingestion.validateEnvelope(p,envelope,{stage:1,promptRecord:prompt,rawSha256:closedLoopHash.rawResponseSha256(JSON.stringify(envelope))});
+    assert.equal(result.valid,true,'FALLBACK_CONTROL_ORACLE: '+answerType+' conforming fallback rejected: '+JSON.stringify(result.issues));acceptedControls+=Number(result.valid);
+  }
+  const invalid={...response,humanInputRequests:[{temporaryKey:'unsupported',question:'Supply the preference.',whyRequired:'Human-only preference.',affectedStageFields:[],affectedRecords:[],answerType:'STRING',allowedValues:[],blocking:true}]};
+  const rejected=ingestion.validateEnvelope(p,invalid,{stage:1,promptRecord:prompt,rawSha256:closedLoopHash.rawResponseSha256(JSON.stringify(invalid))});
+  assert.equal(rejected.valid,false);const error=rejected.issues.find(row=>row.code==='INVALID_ANSWER_TYPE');assert.ok(error);
+  for(const value of expectedAnswerTypes)assert.ok(error.message.includes(value),'FALLBACK_CONTROL_ORACLE: corrective diagnostic omitted '+value);
+  const blocked={...response,responseType:'BLOCKED',unresolved:[{temporaryKey:'unsupported-kind',kind:'NOT_A_KIND',description:'A missing supported capability.',whyBlocking:'The result cannot be produced.',affectedStageFields:[],affectedRecords:[],blocking:true}]};
+  const badKind=ingestion.validateEnvelope(p,blocked,{stage:1,promptRecord:prompt,rawSha256:closedLoopHash.rawResponseSha256(JSON.stringify(blocked))});
+  assert.equal(badKind.valid,false);
+  const kindError=badKind.issues.find(row=>row.code==='INVALID_UNRESOLVED_KIND');assert.ok(kindError);
+  for(const value of expectedUnresolvedKinds)assert.ok(kindError.message.includes(value),'FALLBACK_CONTROL_ORACLE: corrective diagnostic omitted '+value);
+  fallbackObservation={checkId:'BOUNDARY-FALLBACK-CLOSED-ENUMS',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:735','specification/closed-loop-reliability-controlling-implementation-specification.txt:1595'],boundary:'Final generated instruction and deterministic fallback validator',expected:{answerTypes:expectedAnswerTypes,unresolvedKinds:expectedUnresolvedKinds,conformingTypesAccepted:8,unsupportedAnswerAccepted:false,unsupportedKindAccepted:false},observed:{answerTypes:descriptor.envelope.humanInputAnswerTypeValues,unresolvedKinds:descriptor.envelope.unresolvedKindValues,conformingTypesAccepted:acceptedControls,unsupportedAnswerAccepted:rejected.valid,unsupportedKindAccepted:badKind.valid,answerErrorCode:error.code,unresolvedErrorCode:kindError.code},passed:true,violation:'unsupported closed fallback value',accepted:false};
+}
+
+console.log(JSON.stringify({stage01AgentContractAlignment:'PASS',legalUnicodeStringPunctuation:true,smartStructuralDelimitersRejected:true,typedEvidenceReferencesPublished:true,humanAuthorityEnumsPublished:true,validationRepairGuidancePublished:true,conformingStage01ResponseAccepted:true,fallbackAnswerTypesPublished:true,fallbackUnresolvedKindsPublished:true,fallbackControlsValidated:true,verificationObservations:[fallbackObservation]}));
