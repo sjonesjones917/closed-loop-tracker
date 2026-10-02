@@ -170,6 +170,30 @@ await check('Stage 22 UI discovers, executes, and persists the canonical-only te
  try{await t.runNativeStage22Tests();}finally{t.Worker=worker;}
  const persisted=await r.store.readProject(t.current.job.JOB_ID);assert.equal(e.recordValue(persisted.projectData.deterministicResults.at(-1),'APPLICATION_DETERMINATION'),'SATISFIED');
 });
+const nativeProductObservations=[];
+await check('Stage 24 UI executes actual adversarial Test IR and owns only Stage 24 results and observations',async()=>{
+ for(const outcome of ['SATISFIED','VIOLATED']){
+  const f=t.routingFixture();f.p.activeStage=24;
+  for(const [key,value]of Object.entries({TEST_TYPE:'ADVERSARIAL',VERIFICATION_PHASE:'FINAL_PRODUCT_ADVERSARIAL',EARLIEST_EXECUTABLE_STAGE:24,REQUIRED_BY_STAGE:24})) {f.test.fields[key]=value;f.test[key]=value;}
+  if(outcome==='VIOLATED'){f.test.fields.EXECUTABLE_SPEC.steps[1].value='CONTROLLED_DIFFERENT_PROJECT_ID';f.test.EXECUTABLE_SPEC=f.test.fields.EXECUTABLE_SPEC;}
+  e.refreshRecordHashes(f.test,'tests');await registerBytes(f.p,'Actual final product bytes','product.json',{productId:f.product.id});
+  const initial=await r.store.writeProject(f.p,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));t.current=initial;t.projects=copy([initial]);
+  assert.equal(t.nativeProductTests(24).length,1,'NATIVE_STAGE24_ROUTE_ORACLE: the declared native adversarial operation must have one runnable test.');
+  const worker=t.Worker;const {isolatedVerifierWorkerClass}=await import('./verifier-runtime.mjs');const NativeWorker=isolatedVerifierWorkerClass();t.Worker=class extends NativeWorker{set onmessage(handler){this.receive=handler;}get onmessage(){return event=>this.receive?.({data:copy(event.data)});}};
+  try{
+   if(outcome==='SATISFIED'){
+    const runner=extract('async function runNativeProductTests(','async function runNativeDeferredTest('),fault=runner.replace("  if(!schema.NATIVE_PRODUCT_RESULT_CONTRACTS[stage]","  if(stage!==22)return;\n  if(!schema.NATIVE_PRODUCT_RESULT_CONTRACTS[stage]");assert.notEqual(fault,runner,'The controlled original Stage22-only UI dispatch must bind to its execution owner.');
+    vm.runInContext(fault,t);await t.runNativeProductTests(24);const rejected=await r.store.readProject(t.current.job.JOB_ID);assert.throws(()=>assert(rejected.projectData.adversarialResults.length,'NATIVE_STAGE24_RESULT_ORACLE: missing persisted adversarial result'),/NATIVE_STAGE24_RESULT_ORACLE/,'Original Stage22-only dispatch must fail the final result oracle for its intended reason.');vm.runInContext(runner,t);
+   }
+   await t.runNativeProductTests(24);
+  }finally{t.Worker=worker;}
+  const saved=await r.store.readProject(t.current.job.JOB_ID),result=saved.projectData.adversarialResults.at(-1),observation=saved.projectData.observationRecords.at(-1),binding=JSON.parse(e.recordValue(observation,'RAW_OR_NATIVE_PROVENANCE'));
+  assert(result,'NATIVE_STAGE24_RESULT_ORACLE: the UI must persist an actual adversarial result.');assert.equal(result.stage,24);assert.equal(e.recordValue(result,'APPLICATION_DETERMINATION'),outcome);assert.equal(e.effectiveDetermination('adversarialResults',result,f.test,saved),outcome);const gate=e.gate(24,saved);assert.equal(gate.reasons.some(reason=>/Adversarial reviewer independence is not established|accepted response is required|Adversarial verification found/.test(reason)),outcome==='VIOLATED','NATIVE_STAGE24_GATE_ORACLE: native results must use their actual outcome and current application provenance.');
+  assert.equal(saved.projectData.deterministicResults.length,0);assert.equal(observation.stage,24);assert.equal(binding.stage,24);assert.equal(binding.resultCollection,'adversarialResults');assert.equal(binding.resultId,result.id);
+  let currentProofStatus=null,changedTestProofStatus=null;if(outcome==='VIOLATED'){const proofSubject=copy({id:'SYNTHETIC-NATIVE-PROOF-CONSUMER'}),consumer=copy({id:'SYNTHETIC-NATIVE-ENTAILMENT',stage:24,active:true,scope:e.currentScope(saved),fields:{TARGET_PROPOSITION_ID:proofSubject.id,OBSERVATION_ID:observation.id,ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:'REFUTES'}});saved.projectData.entailmentReviews.push(consumer);currentProofStatus=e.propositionState(saved,proofSubject).status;assert.equal(currentProofStatus,'VIOLATED');const altered=copy(saved);altered.projectData.tests[0].fields.EXECUTABLE_SPEC.steps[1].value='A_CHANGED_TEST';altered.projectData.tests[0].EXECUTABLE_SPEC=altered.projectData.tests[0].fields.EXECUTABLE_SPEC;e.refreshRecordHashes(altered.projectData.tests[0],'tests');changedTestProofStatus=e.propositionState(altered,proofSubject).status;assert.equal(changedTestProofStatus,'UNDETERMINED','NATIVE_STAGE24_CURRENTNESS_ORACLE: changed executable semantics must revoke proof consumer authority.');}
+  nativeProductObservations.push({checkId:'native-stage24-'+outcome.toLowerCase(),requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3538'],boundary:'actual UI runner → isolated Test IR worker → application result/proof observation → project storage reload',expected:{stage:24,resultCollection:'adversarialResults',determination:outcome,deterministicResultCount:0,currentProofStatus:outcome==='VIOLATED'?'VIOLATED':null,changedTestProofStatus:outcome==='VIOLATED'?'UNDETERMINED':null},observed:{stage:result.stage,resultCollection:binding.resultCollection,determination:e.recordValue(result,'APPLICATION_DETERMINATION'),deterministicResultCount:saved.projectData.deterministicResults.length,currentProofStatus,changedTestProofStatus},passed:true,...(outcome==='VIOLATED'?{violation:'exact project identity assertion',accepted:false}:{})});
+ }
+});
 // Reuse the existing Stage 06 response fixture and unchanged ingestion owners.
 // This verifies canonical input import; the separately quoted import failure
 // cannot be identified from an audit excerpt that omits its reproduction.
@@ -187,4 +211,4 @@ await check('Canonical-value bindings survive response validation and commit',()
  })()`,t);
  assert.equal(result.binding.kind,'CANONICAL_VALUE');assert.equal(result.binding.valueSha256,result.expectedSha256);assert.equal(result.forgedValid,false);assert(result.forgedIssues.some(issue=>issue.path.includes('externalCapabilities')));
 });
-console.log(JSON.stringify({verificationRouting:'PASS',verificationObservations,checks:checks.length,results:checks,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));
+console.log(JSON.stringify({verificationRouting:'PASS',verificationObservations:[...verificationObservations,...nativeProductObservations],checks:checks.length,results:checks,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));
