@@ -656,10 +656,12 @@ function replacementReviewFromSavedView(view){
 }
 function selectSavedView(view,{alreadyRebased=false}={}){
  pendingBackupAction=null;takeBackupPassphrase();const pendingButton=$('#backup-password-continue');if(pendingButton)pendingButton.hidden=true;
+ replacementReview=null;
+ for(const key of Object.keys(operationSelection))delete operationSelection[key];
+ for(const key of Object.keys(runSelection))delete runSelection[key];
+ for(const key of Object.keys(fileSelectionDrafts))delete fileSelectionDrafts[key];
  if(!view)return null;if(!alreadyRebased)view=projectStore.rebaseHistoryView(current,view);replacementReview=replacementReviewFromSavedView(view);current.activeView=views.includes(view.activeView)?view.activeView:'Workflow';current.activeStage=Math.max(1,Math.min(schema.STAGE_COUNT,Number(view.activeStage)||1));
- for(const key of Object.keys(operationSelection))delete operationSelection[key];Object.assign(operationSelection,view.operationSelection||{});
- for(const key of Object.keys(runSelection))delete runSelection[key];Object.assign(runSelection,view.runSelection||{});
- for(const key of Object.keys(fileSelectionDrafts))delete fileSelectionDrafts[key];Object.assign(fileSelectionDrafts,clone(view.fileSelections||{}));
+ Object.assign(operationSelection,view.operationSelection||{});Object.assign(runSelection,view.runSelection||{});Object.assign(fileSelectionDrafts,clone(view.fileSelections||{}));
  return view;
 }
 function applySavedView(view,{position=true}={}){
@@ -1027,9 +1029,9 @@ async function renameCurrentProject(){const jobId=String(current?.job?.JOB_ID||'
 async function duplicateCurrentProject({commandId=crypto.randomUUID()}={}){
  const source=current;
  const copied=await withStorageActivity('Copying project inputs',()=>projectStore.createProject({commandId,sourceJobId:source.job.JOB_ID,expectedSourceSha256:source.projectSha256}));
- projects=[copied,...projects.filter(project=>project.job.JOB_ID!==copied.job.JOB_ID)];current=copied;
- projectUi[copied.job.JOB_ID]={displayName:`${projectDisplayName(source)} — copy`};await saveProjectUi();await refreshProjectStorage();
- announce('Project copy saved with its supplied input files. Continue with intake.');render();
+ projectUi[copied.job.JOB_ID]={displayName:`${projectDisplayName(source)} — copy`};await saveProjectUi();
+ const activation=await prepareProjectActivation(copied);installProjectActivation(activation);await finishProjectActivation(activation);
+ announce('Project copy saved with its supplied input files. Continue with intake.');
 }
 function selectStageContinuation(prompt){if(!prompt)return;operationSelection[prompt.stage]=prompt.operation;if(prompt.scope?.runId)runSelection[prompt.stage]=prompt.scope.runId;}
 async function restoreStageContinuation(project,{throwOnFailure=false,retry=true}={}){
@@ -1059,14 +1061,42 @@ async function materializeProject(project,{startup=false}={}){
   projects=projects.map(item=>item.job.JOB_ID===loaded.job.JOB_ID?loaded:item);return loaded;
 }
 function unloadInactiveProjects(){projects=projects.map(project=>project===current||project._unloaded?project:{_unloaded:true,job:{JOB_ID:project.job.JOB_ID,JOB_TITLE:project.job.JOB_TITLE},revision:project.revision,isRetainedTestProject:project.isRetainedTestProject,retainedSpecRevision:project.retainedSpecRevision,activeView:project.activeView,activeStage:project.activeStage});}
+async function prepareProjectActivation(project,{session,captureDeparting=true}={}){
+ if(captureDeparting)await captureCurrentView();
+ const loaded=await materializeProject(project),jobId=loaded.job.JOB_ID,saved=await projectStore.readHistoryView?.(jobId);
+ const view=saved?projectStore.rebaseHistoryView(loaded,saved):{activeView:views.includes(loaded.activeView)?loaded.activeView:'Workflow',activeStage:loaded.activeStage||1,scrollX:'0',scrollY:'0',drafts:{},operationSelection:{},runSelection:{},fileSelections:{},pendingMutation:null};
+ const destinationSession=session===undefined?await projectStore.metaGet(acceptanceSessionKey(jobId))||null:session;
+ return {project:loaded,view,session:destinationSession};
+}
+function installProjectActivation(activation){
+ current=activation.project;projects=projects.map(project=>project.job.JOB_ID===current.job.JOB_ID?current:project);if(!projects.includes(current))projects.unshift(current);unloadInactiveProjects();
+ acceptanceSession=activation.session;responseActionFailure=null;promptPreviewCache=null;historyBrowseState=null;historyDestination=null;
+ for(const key of Object.keys(responseFileSelection))delete responseFileSelection[key];
+ activation.view=selectSavedView(activation.view,{alreadyRebased:true});savedDraftView=activation.view;savedViewSignature=null;
+ // Install destination controls before any awaited post-commit refresh or view capture.
+ render();applySavedView(activation.view,{position:false});
+ activation.activeView=current.activeView;activation.activeStage=current.activeStage;
+}
+async function finishProjectActivation(activation){
+ const owner=activation.project;if(current!==owner)return;
+ await projectStore.metaPut('selectedProject',owner.job.JOB_ID);if(current!==owner)return;
+ await refreshProjectStorage();if(current!==owner)return;
+ await refreshHistory();if(current!==owner)return;
+ const unchanged=current.activeView===activation.activeView&&current.activeStage===activation.activeStage,view=unchanged?activation.view:captureView();
+ if(historyState.activeId)writeBrowserEntry(historyState.activeId,view);
+ savedDraftView=view;savedViewSignature=null;
+ // Refresh readings without replacing destination drafts or newer navigation.
+ const live=captureView();render();applySavedView(live,{position:false});
+ if(unchanged)requestAnimationFrame(()=>{if(current===owner&&current.activeView===activation.activeView&&current.activeStage===activation.activeStage)window.scrollTo(Number(view.scrollX||0),Number(view.scrollY||0));});
+}
 let projectSelectionSequence=0;
 async function selectProject(project){
   const sequence=++projectSelectionSequence,owner=current;
-  try{await captureCurrentView();const loaded=await withStorageActivity('Opening project · '+projectDisplayName(project),()=>materializeProject(project));if(sequence!==projectSelectionSequence||current!==owner)return;current=loaded;unloadInactiveProjects();await loadAcceptanceSession();if(sequence!==projectSelectionSequence)return;await projectStore.metaPut('selectedProject',loaded.job.JOB_ID);await refreshProjectStorage();if(sequence===projectSelectionSequence){const savedView=await projectStore.readHistoryView?.(current.job.JOB_ID);selectSavedView(savedView);await recordCommittedBoundary();render();applySavedView(savedView);}}
+  try{const activation=await withStorageActivity('Opening project · '+projectDisplayName(project),()=>prepareProjectActivation(project));if(sequence!==projectSelectionSequence||current!==owner)return;installProjectActivation(activation);await finishProjectActivation(activation);}
   catch(error){if(sequence===projectSelectionSequence){reportActionFailure(error);await refreshHistory();const unavailable=new Set(quarantinedProjects.map(entry=>entry.jobId));projects=projects.filter(item=>item===current||!unavailable.has(item.job.JOB_ID));header();}}
 }
-async function archiveCurrentProject(){const jobId=current.job.JOB_ID;projectUi[jobId]={...projectUiEntry(jobId),archivedAt:new Date().toISOString()};await saveProjectUi();let replacement=projects.find(p=>p!==current&&!projectIsArchived(p));if(!replacement){replacement=await withStorageActivity('Creating project',()=>projectStore.createProject());projects=[replacement,...projects];}replacement=await materializeProject(replacement);current=replacement;projects=projects.map(project=>project.job?.JOB_ID===replacement.job.JOB_ID?replacement:project);unloadInactiveProjects();await projectStore.metaPut('selectedProject',current.job.JOB_ID);await refreshProjectStorage();announce('project archived; canonical project content unchanged');render();}
-async function restoreArchivedProject(jobId){const id=String(jobId||''),project=projects.find(p=>p.job?.JOB_ID===id);if(!project)return;const ui={...projectUiEntry(id)};delete ui.archivedAt;projectUi[id]=ui;await saveProjectUi();current=await materializeProject(project);unloadInactiveProjects();await projectStore.metaPut('selectedProject',id);await refreshProjectStorage();announce('project restored from archive');render();}
+async function archiveCurrentProject(){const jobId=current.job.JOB_ID;projectUi[jobId]={...projectUiEntry(jobId),archivedAt:new Date().toISOString()};await saveProjectUi();let replacement=projects.find(p=>p!==current&&!projectIsArchived(p));if(!replacement)replacement=await withStorageActivity('Creating project',()=>projectStore.createProject());const activation=await prepareProjectActivation(replacement);installProjectActivation(activation);await finishProjectActivation(activation);announce('project archived; canonical project content unchanged');}
+async function restoreArchivedProject(jobId){const id=String(jobId||''),project=projects.find(p=>p.job?.JOB_ID===id);if(!project)return;const ui={...projectUiEntry(id)};delete ui.archivedAt;projectUi[id]=ui;await saveProjectUi();const activation=await prepareProjectActivation(project);installProjectActivation(activation);await finishProjectActivation(activation);announce('project restored from archive');}
 async function importProjectPackageFile(file,{recordSelection=true,mobileSelected=null}={}){
   const f=file;
   if(recordSelection)await saveFileSelection('backup-import',[f]);
@@ -1127,14 +1157,14 @@ function syncDeleteProjectControl(){
 async function deleteCurrentProject(){
   const input=$('#delete-project-confirmation'),button=$('#delete-project'),jobId=String(current?.job?.JOB_ID||'').trim();
   if(!jobId||!input||input.value.trim()!==jobId){input?.focus();syncDeleteProjectControl();return;}
-  const deletingProject=current,remaining=projects.filter(project=>String(project?.job?.JOB_ID||'')!==jobId);let replacement=remaining[0]||null,createdReplacement=null;
+  const deletingProject=current,remaining=projects.filter(project=>String(project?.job?.JOB_ID||'')!==jobId);let replacement=remaining[0]||null,createdReplacement=null,activation;
   setControlDisabled(input,true);setControlDisabled(button,true);
   try{
     if(!replacement){
       createdReplacement=await projectStore.createProject();
       replacement=createdReplacement;remaining.push(replacement);
     }
-    replacement=await materializeProject(replacement);
+    activation=await prepareProjectActivation(replacement);replacement=activation.project;
     const removed=await projectStore.removeProject(jobId,{expectedProjectRevision:Number(deletingProject.revision||0),replacementSelectedProjectId:String(replacement.job.JOB_ID),suppressRetainedProject:Boolean(deletingProject.isRetainedTestProject),historyView:captureView()});
     if(!removed)throw new Error('The project no longer exists in browser storage.');
   }catch(error){
@@ -1144,9 +1174,9 @@ async function deleteCurrentProject(){
   try{
     // The replacement was verified before deletion. Install it immediately at
     // commit so later navigation cannot operate on the deleted/unloaded row.
-    current=replacement;current.activeView='Overview';projects=remaining.map(project=>project.job.JOB_ID===replacement.job.JOB_ID?replacement:project);unloadInactiveProjects();
-    const summaries=await projectStore.listProjectSummaries();projects=summaries.map(project=>project.job.JOB_ID===current.job.JOB_ID?current:project);projectUi=await projectStore.metaGet('projectUi')||{};await refreshProjectStorage();
-    await recordCommittedBoundary();announce('Project removed. Its saved versions remain in History.');render();
+    projects=remaining;installProjectActivation(activation);
+    const summaries=await projectStore.listProjectSummaries();projects=summaries.map(project=>project.job.JOB_ID===current.job.JOB_ID?current:project);projectUi=await projectStore.metaGet('projectUi')||{};
+    await finishProjectActivation(activation);announce('Project removed. Its saved versions remain in History.');
   }catch(error){announce('project deleted; application reload required');location.reload();}
 }
 function setProjectActionsOpen(open){const menu=$('.project-action-menu'),toggle=$('#project-actions-toggle'),expanded=Boolean(open);if(!menu||!toggle)return;menu.open=expanded;toggle.setAttribute('aria-expanded',String(expanded));}
@@ -1240,9 +1270,10 @@ async function startMobileAcceptanceProject(){
   if(!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(target.testProjectId||''))throw new Error('Pinned test-project identity is invalid.');
   if(projects.some(p=>p.job.JOB_ID===target.testProjectId))throw new Error('The pinned test project already exists. Select it to resume, or obtain a new target for a new run.');
   const build=await verifyMobileBuild(target),project=ensureState(core.createBlankState(target.testProjectId));project.activeView='Project';engine.createNewJobReset(project);
-  current=await persistNewProject(project);acceptanceSession={version:1,jobId:target.testProjectId,target,buildIdentity:RUNTIME_BUILD_ID,observations:[],exports:[],receipts:[],runtimeCountsByTab:{}};
+  const saved=await persistNewProject(project),session={version:1,jobId:target.testProjectId,target,buildIdentity:RUNTIME_BUILD_ID,observations:[],exports:[],receipts:[],runtimeCountsByTab:{}};
+  const activation=await prepareProjectActivation(saved,{session});installProjectActivation(activation);await finishProjectActivation(activation);
   await recordMobileOperation('PROJECT_CREATED',{createdProjectId:current.job.JOB_ID,revision:current.revision});
-  await recordMobileOperation('DEPLOYED_BUILD_IDENTITY_VERIFIED',build);await refreshProjectStorage();render();announce('Pinned acceptance project created. Perform and verify each required file operation.');
+  await recordMobileOperation('DEPLOYED_BUILD_IDENTITY_VERIFIED',build);announce('Pinned acceptance project created. Perform and verify each required file operation.');
 }
 function mobileProbeMembers(){
   const target=sessionBoundMobileAcceptanceTarget(),response=new Blob([JSON.stringify({schema:'closed-loop-mobile-transport-probe/1',challenge:target.challenge,role:'RESPONSE'})+'\n'],{type:'application/json'}),returned=new Blob([target.challenge+'\n'],{type:'text/plain'});
@@ -1337,7 +1368,7 @@ function wire(){wireExternalCapabilityEvidence();const resume=$('#resume-backup-
  await persistReplacement(next,{expectedProjectRevision:revision});selectStageContinuation(created.prompt);announce('Replacement instruction saved. Accepted progress is preserved until you accept a validated replacement.');render();focusAfterAction($('#next-required-action'),{reason:'CORRECTION'});
 });bindAction('#request-correction',()=>rejectPendingProposal(true));bindAction('#add-blocker',addBlocker);document.querySelectorAll('[data-resolve-blocker]').forEach(b=>bindAction(b,()=>resolveHumanBlocker(b.dataset.resolveBlocker)));document.querySelectorAll('[data-reopen-blocker]').forEach(b=>bindAction(b,()=>reopenHumanBlocker(b.dataset.reopenBlocker)));bindAction('#add-fresh-context',addFreshContext);bindAction('#reserve-run-batch',reserveRunBatch);bindAction('#freeze-candidate',async()=>{try{const next=clone(current);const artifactIds=selectedArtifactIds(),selectionDecision=engine.recordRegisteredHumanDecision(next,{stage:current.activeStage,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:globalThis.closedLoopHash.sha256Value([...artifactIds].sort()),value:[...artifactIds].sort(),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});engine.freezeCandidate(next,{stage:current.activeStage,artifactIds,selectionDecisionId:engine.recordId(selectionDecision,'humanDecisions'),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce(current.activeStage===19?'unchanged candidate verified':'candidate frozen');render();focusAfterAction($('#next-required-action'));}catch(error){reportActionFailure(error);}});bindAction('#begin-unchanged-confirmation',async()=>{try{const next=clone(current),candidate=engine.records(next,'candidateFreezes').filter(r=>Number(r.stage)===17&&engine.isActiveRecord(r)).at(-1);if(!candidate)throw new Error('A current Stage 17 frozen candidate is required.');engine.beginUnchangedConfirmationIteration(next,{candidateId:engine.recordId(candidate,'candidateFreezes'),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('unchanged confirmation iteration started');render();focusAfterAction($('#next-required-action'));}catch(error){reportActionFailure(error);}});bindAction('#freeze-baseline',async()=>{try{const next=clone(current);const iteration=engine.records(next,'iterations').find(r=>engine.recordId(r,'iterations')===String(next.job.CURRENT_ITERATION||'')&&engine.isActiveRecord(r)),candidateId=iteration?String(engine.recordValue(iteration,'CANDIDATE_ID')||iteration.scope?.candidateId||''):'',authorizationDecision=engine.recordRegisteredHumanDecision(next,{stage:20,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:candidateId,value:'AUTHORIZED',operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});engine.freezeBaseline(next,{artifactIds:selectedArtifactIds(),authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('baseline frozen');render();focusAfterAction($('#next-required-action'));}catch(error){reportActionFailure(error);}});bindAction('#reserve-product-execution',async()=>{try{const next=clone(current);engine.reserveProductExecution(next,{operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('product execution reserved');render();focusAfterAction($('#next-required-action'));}catch(error){reportActionFailure(error);}});bindFileAction('#stage-files',registerStageFiles,'Storing and verifying selected files');bindFileAction('#stage-directory',registerStageFiles,'Storing and verifying selected files');bindAction('#calculate-release-state',async()=>{try{const next=clone(current);engine.recordReleaseDetermination(next);await persistReplacement(next);announce('release determination recalculated');render();}catch(error){reportActionFailure(error);}});const identityStage=schema.RECORD_SCHEMAS.artifactIdentities.stage;bindFileAction('#audited-files',files=>saveFileSelection('audited',files,identityStage),'Saving audited file selection');bindFileAction('#audited-directory',files=>saveFileSelection('audited',files,identityStage),'Saving audited folder selection');bindFileAction('#release-files',files=>saveFileSelection('delivery',files,identityStage),'Saving delivery file selection');bindFileAction('#release-directory',files=>saveFileSelection('delivery',files,identityStage),'Saving delivery folder selection');bindAction('#hash-audited',async()=>{try{const draft=await auditedSelections(await readFileSelection('audited',identityStage)),next=clone(current);next.release.auditedDraft=draft;next.release.releaseDraft=[];await persistReplacement(next);announce('audited selection verified');render();}catch(error){reportActionFailure(error);}});bindAction('#hash-release',async()=>{try{if(!current.release.auditedDraft.length)throw new Error('Verify the audited canonical selection before hashing delivery files.');const draft=await deliverySelections(await readFileSelection('delivery',identityStage),current.release.auditedDraft),next=clone(current);next.release.releaseDraft=draft;await persistReplacement(next);announce('delivery selection hashed');render();}catch(error){reportActionFailure(error);}});bindAction('#compare-release',async()=>{try{const next=clone(current);engine.verifyArtifactIdentity(next,next.release.auditedDraft,next.release.releaseDraft);await persistReplacement(next);announce('artifact identity verified; human delivery authorization remains required');render();}catch(error){reportActionFailure(error);}});}
 function createUniqueJobId(){const base=new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,17);let suffix=0,id;do{id=`JOB-${base}${suffix?`-${String(suffix).padStart(2,'0')}`:''}`;suffix++;}while(projects.some(p=>p.job?.JOB_ID===id));return id;}
-async function addNew(){current=await withStorageActivity('Creating project',()=>projectStore.createProject());projects=[current,...projects];acceptanceSession=null;await refreshProjectStorage();announce('Project created');await recordCommittedBoundary();render();}
+async function addNew(){const project=await withStorageActivity('Creating project',()=>projectStore.createProject()),activation=await prepareProjectActivation(project);installProjectActivation(activation);await finishProjectActivation(activation);announce('Project created');}
 async function readApplicationResource(url,format='json',label='Reading application resource'){
   const controller=new AbortController();
   return globalThis.closedLoopHash.readWithDeadline((async()=>{
