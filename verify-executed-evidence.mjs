@@ -16,7 +16,42 @@ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-executed-evide
 const source=fs.readFileSync('verify-stage03-agent-protocol.mjs','utf8').replace("'./verifier-runtime.mjs'",JSON.stringify(pathToFileURL(path.resolve('verifier-runtime.mjs')).href));
 const preload=path.resolve('verification-evidence-preload.mjs'),suite='verify-stage03-agent-protocol.mjs';
 const producerControls=[];
+const producerFixtureInputs=['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt'];
 try{
+  // Project the maintained workflow's actual job and initial checkout step
+  // environments, then exercise Node's real preload boundary on a cold
+  // workspace. No repository preload may run before its checkout exists.
+  const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8'),coldCheckoutCases=[];
+  const bootstrapNode=process.env.CLOSED_LOOP_ACTION_NODE||process.execPath;
+  const scalar=value=>value==='\'\''?'':value.startsWith('"')?JSON.parse(value):value;
+  for(const job of ['test','publish-status']){
+    const start=workflow.indexOf('\n  '+job+':\n');assert(start>=0,'COLD_CHECKOUT_ORACLE: instrumented workflow job missing.');
+    const tail=workflow.slice(start+1),next=/\n  [a-z][\w-]*:\n/.exec(tail),block=next?tail.slice(0,next.index):tail;
+    const jobEnv=block.split('\n    env:\n')[1]?.split(/\n    [a-z][\w-]*:/)[0],jobOptions=/^      NODE_OPTIONS: (.*)$/m.exec(jobEnv||'')?.[1];
+    const checkout=/^      - uses: actions\/checkout@[^\n]+\n([\s\S]*?)(?=^      - |(?![\s\S]))/m.exec(block)?.[1];
+    assert(jobOptions&&checkout!==undefined,'COLD_CHECKOUT_ORACLE: actual workflow environment/checkout projection unavailable.');
+    const override=/^          NODE_OPTIONS: (.*)$/m.exec(checkout)?.[1];
+    const workspace=path.join(directory,'cold-checkout-'+job);fs.mkdirSync(workspace);
+    const inherited=scalar(jobOptions).replaceAll('${{ github.workspace }}',workspace),effective=override===undefined?inherited:scalar(override);
+    const action=`const fs=require('node:fs');if(fs.existsSync('verification-evidence-preload.mjs'))throw new Error('COLD_WORKSPACE_ORACLE');fs.writeFileSync('checkout-body-reached.json','true');console.log(JSON.stringify({actionBodyExecuted:true,repositoryInitiallyAbsent:true,runtime:process.version}));`;
+    const before=await runVerifier(bootstrapNode,['-e',action],{cwd:workspace,env:{...process.env,NODE_OPTIONS:inherited}});
+    assert.equal(before.status,1,'COLD_CHECKOUT_ORACLE: former inherited preload did not reject the missing repository module.');
+    assert.match(before.stderr,/ERR_MODULE_NOT_FOUND/);assert(before.stderr.includes(path.join(workspace,'verification-evidence-preload.mjs')));assert.equal(fs.existsSync(path.join(workspace,'checkout-body-reached.json')),false,'COLD_CHECKOUT_ORACLE: defective preload reached the action body.');
+    const after=await runVerifier(bootstrapNode,['-e',action],{cwd:workspace,env:{...process.env,NODE_OPTIONS:effective}});
+    assert.equal(after.status,0,'COLD_CHECKOUT_ORACLE: actual checkout environment rejected a cold workspace.');
+    const actionReport=JSON.parse(after.stdout);assert.equal(actionReport.actionBodyExecuted,true);
+    for(const file of producerFixtureInputs){fs.mkdirSync(path.dirname(path.join(workspace,file)),{recursive:true});fs.copyFileSync(file,path.join(workspace,file));}
+    execFileSync('git',['init','--quiet'],{cwd:workspace});execFileSync('git',['add','.'],{cwd:workspace});execFileSync('git',['-c','user.name=Cold checkout fixture','-c','user.email=fixture@localhost','commit','--quiet','-m','Checked-out real producer fixture'],{cwd:workspace});
+    const receiptDirectory=path.join(workspace,'receipts');
+    // No explicit --import: the workflow's unchanged post-checkout job options
+    // must actually record the required verifier receipt, rather than relying
+    // on the collector's separate explicit preload to conceal lost wiring.
+    const producer=await runVerifier(process.execPath,[path.join(workspace,suite)],{cwd:workspace,env:{...process.env,NODE_OPTIONS:inherited,CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:workspace,CLOSED_LOOP_VERIFICATION_RECEIPTS:receiptDirectory}});
+    assert.equal(producer.status,0,'COLD_CHECKOUT_ORACLE: checked-out required producer did not pass.');
+    const receipt=JSON.parse(fs.readFileSync(path.join(receiptDirectory,suite+'.json'),'utf8'));validateExecutionReceipt(receipt,suite,evidenceFingerprint(workspace));
+    assert(receipt.observations.some(row=>row.checkId==='stage03.canonical-recordId-accepted'&&row.passed));
+    coldCheckoutCases.push({job,actionRuntime:actionReport.runtime,formerInheritedExit:before.status,formerActionBodyExecuted:false,checkoutExit:after.status,checkoutBodyExecuted:true,postCheckoutProducerRuntime:receipt.fingerprint.runtime.node,postCheckoutProducerExit:producer.status,jobPreloadCreatedCurrentReceipt:true,producerFileSha256:receipt.producerFileSha256,stdoutSha256:receipt.stdoutSha256,stderrSha256:receipt.stderrSha256,receiptSha256:receipt.receiptSha256});
+  }
   const syntaxDirectory=path.join(directory,'syntax-only'),syntaxReceipts=path.join(syntaxDirectory,'receipts');fs.mkdirSync(syntaxDirectory);
   const syntaxEnvironment={...process.env,CLOSED_LOOP_VERIFICATION_RECEIPTS:syntaxReceipts,NODE_OPTIONS:`${process.env.NODE_OPTIONS||''} --import ${preload}`.trim()};
   const syntaxGood=await runVerifier(process.execPath,['--check',path.resolve(suite)],{env:syntaxEnvironment});
@@ -42,7 +77,7 @@ try{
   // capture. Keep it in runner diagnostics without reparsing it as the parent's
   // JSON report or replacing the parent's actual stderr with an empty string.
   const fixture=path.join(directory,'collector-own-output');fs.mkdirSync(fixture);
-  for(const file of ['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt']){
+  for(const file of producerFixtureInputs){
     fs.mkdirSync(path.dirname(path.join(fixture,file)),{recursive:true});fs.copyFileSync(file,path.join(fixture,file));
   }
   const nestedProgress='COLLECTOR_INHERITED_CHILD_PROGRESS\n';
@@ -151,5 +186,5 @@ try{
   assert.equal(empty.zeroCounts.staleProposalsAccepted,null,'Absent negative execution was published as zero accepted violations.');
   const saved=metricCatalog.closedMetricUniverseCoverage.checkIds;metricCatalog.closedMetricUniverseCoverage.checkIds=[];
   try{assert.throws(()=>aggregateExecutedEvidence(new Map(),evidenceFingerprint()),/empty\/duplicate metric universe/);}finally{metricCatalog.closedMetricUniverseCoverage.checkIds=saved;}
-  console.log(JSON.stringify({executedEvidenceProtection:'PASS',producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
+  console.log(JSON.stringify({executedEvidenceProtection:'PASS',coldCheckoutCases,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
 }finally{fs.rmSync(directory,{recursive:true,force:true});}

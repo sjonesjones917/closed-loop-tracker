@@ -48,6 +48,9 @@ jobs:
       verification_source_commit: ${{ steps.reuse.outputs.tested_commit || github.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        env:
+          # The repository preload does not exist until checkout completes.
+          NODE_OPTIONS: ''
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
@@ -513,6 +516,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        env:
+          NODE_OPTIONS: ''
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
