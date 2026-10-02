@@ -2,7 +2,7 @@ import {readStoreArchive} from './test-zip.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
+import {scalarFor,recordProposal,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime,storageBroadcastNetwork} from './test-project-store-runtime.mjs';
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
@@ -440,12 +440,14 @@ await storageRegression('import:saved-projection-does-not-bypass-record-or-relea
   }
 });
 await storageRegression('accumulation:selected-stage4-read-buffers',async()=>{
-  await vm.runInContext([evidence,stage04AcceptanceFixture,accumulatedStage04Fixture].map(fn=>fn.toString()).join('\n')+`\n(async()=>{globalThis.accumulatedProject=await accumulatedStage04Fixture({core,schema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion});})()`,storageRuntime);
+  await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,accumulatedStage04Fixture].map(fn=>fn.toString()).join('\n')+`\n(async()=>{globalThis.accumulatedProject=await accumulatedStage04Fixture({core,schema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion});})()`,storageRuntime);
   const saved=await storageRuntime.projectStore.writeProject(storageRuntime.accumulatedProject,{expectedProjectRevision:0,createOnly:true,selectProject:false});
   let encodes=0,characters=0;const Native=storageRuntime.TextEncoder;
   storageRuntime.TextEncoder=class extends Native{encode(text){encodes++;characters+=String(text).length;return super.encode(text);}};
   let loaded;try{loaded=await storageRuntime.projectStore.readProject(saved.job.JOB_ID);}finally{storageRuntime.TextEncoder=Native;}
-  assert(loaded.projectSha256===saved.projectSha256&&loaded.projectData.rawResponses.length===103&&loaded.projectData.generatedPrompts.length===104,'Accumulated startup lost exact response/instruction history.');
+  // Four accepted prerequisites include the required independent Stage02
+  // review, followed by 100 failed responses and their 101 Stage04 prompts.
+  assert(loaded.projectSha256===saved.projectSha256&&loaded.projectData.rawResponses.length===104&&loaded.projectData.generatedPrompts.length===105,'Accumulated startup lost exact response/instruction history.');
   assert(loaded.projectData.rawResponses.at(-1).completeRawResponse.endsWith('ACCUMULATION-TAIL-99'),'Accumulated startup truncated the preserved raw response.');
   assert(encodes<=Math.ceil(characters/1024)+1024,`Opening 100 accumulated Stage 04 attempts allocated ${encodes} UTF-8 buffers for ${characters} characters.`);
   console.log(JSON.stringify({accumulatedStage4Read:{attempts:100,encodes,characters,digest:loaded.projectSha256}}));

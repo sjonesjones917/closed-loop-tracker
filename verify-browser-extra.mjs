@@ -5,7 +5,7 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {scalarFor,recordProposal,evidence,stage04AcceptanceFixture,stage04AcceptanceEnvelope,accumulatedStage04Fixture,stageHandoffRecoveryProof} from './test-fixtures.mjs';
+import {scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,stage04AcceptanceEnvelope,accumulatedStage04Fixture,stageHandoffRecoveryProof} from './test-fixtures.mjs';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
 const appCoreSource=fs.readFileSync('app-core.js','utf8');
@@ -348,7 +348,7 @@ async function main(){
   await navigateAndWait(cdp,'Page.reload');await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`closedLoopProjectStore.readAll().then(all=>all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'))`)),'Deleted retained project was re-injected after reload.');assert(await evalValue(cdp,`closedLoopProjectStore.metaGet('retainedProjectSuppressed').then(x=>x?.jobId==='JOB-20260823144121')`),'Retained-project suppression was not committed transactionally.');
 
   console.log('extra:correction-instruction-to-accepted-proposition-persistence');
-  const fixtureFunctions=[scalarFor,recordProposal,evidence,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n');
+  const fixtureFunctions=[scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n');
   const runtimeBindings='const runtime={core:closedLoopCore,schema:closedLoopWorkflowSchema,engine:closedLoopWorkflowEngine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion};';
   await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}const p=stage04AcceptanceFixture(runtime);await closedLoopProjectStore.writeProject(p);})()`);
   await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,4);

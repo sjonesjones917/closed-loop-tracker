@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal,evidence} from './test-fixtures.mjs';
+import {stage01AcceptanceFixture,stage04AcceptanceFixture,stage04AcceptanceEnvelope,boundedSearchProposal,recordProposal,evidence} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 globalThis.dispatchEvent=()=>true;
@@ -129,6 +129,23 @@ for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[3,'SEMANTIC_CHALLENGE'
   assert(p.projectData.semanticChallenges.some(r=>r.DISPOSITION==='REJECTED'&&r.active===false),'Correction erased the original challenge.');
   if(stage===1){p=accept(prepare(p,1,'COMPLETE',()=>({stageData:{...p.stages[1].agentData,EXACT_DELIVERABLE_REQUESTED:'Revised one-page checklist.'}})));const change=engine.acceptedChanges(p,1).at(-1);engine.recordStageConfirmation(p,1,true,'The revised deliverable matches the requested intent.','FIXTURE',{acceptedChangeId:change.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION});assert.equal(p.stages[1].gate.complete,false,'An earlier challenge approved a new authored intake merely because its author context was reused.');assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,'SEMANTIC_CHALLENGE');}
 }
+const sourceSearchCompletionObservations=[];
+{
+  let p=stage01AcceptanceFixture(runtime,'JOB-MISSING-BOUNDED-SEARCH');
+  p=accept(prepare(p,2,'COMPLETE',()=>({stageData:{AUTHORITY_HIERARCHY:'No external authority applies.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The actor claims no external source applies.'}})));
+  const missing=engine.gate(2,p);
+  assert.equal(missing.complete,false,'SOURCE_SEARCH_CONTRACT_COMPLETION_ORACLE: no-source assertion completed without a bounded search contract.');
+  assert(missing.reasons.some(reason=>reason.includes('source search contract')),'SOURCE_SEARCH_CONTRACT_REASON_ORACLE');
+  assert.equal(engine.operationalNextAction(p,2).operation,'COMPLETE','Missing contract must return to authoring before independent review.');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.missing',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Current reserved Stage02 response acceptance and completion gate',expected:{complete:false},observed:{complete:missing.complete},passed:true,violation:'STAGE02_COMPLETION_WITHOUT_BOUNDED_SEARCH',accepted:false});
+  p=accept(prepare(p,2,'COMPLETE',()=>({stageData:structuredClone(p.stages[2].agentData),records:{sourceSearchContracts:[boundedSearchProposal(schema)]}})));
+  const unreviewed=engine.gate(2,p);assert.equal(unreviewed.complete,false,'Unreviewed source search completed.');assert.equal(engine.operationalNextAction(p,2).operation,'SEARCH_ADEQUACY_REVIEW');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.unreviewed',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:608'],boundary:'Current authored search contract completion gate',expected:{complete:false},observed:{complete:unreviewed.complete},passed:true,violation:'STAGE02_COMPLETION_WITHOUT_CURRENT_ADEQUACY_REVIEW',accepted:false});
+  p=accept(prepare(p,2,'SEARCH_ADEQUACY_REVIEW',()=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'search-adequacy',overrides:{REVIEW_QUESTION:'Is the executed closed fixture search adequate?',FINDING:'No applicable external source remains.',REASONING:'Every declared location, stopping criterion and candidate disposition is accounted for without residual risk.',RESULT:'ACCEPTED'}})]}})));
+  const reviewed=engine.gate(2,p);assert.equal(reviewed.complete,true,'Current independently reviewed bounded no-source search did not complete.');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.reviewed',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:608'],boundary:'Current independently bound accepted search review completion gate',expected:{complete:true},observed:{complete:reviewed.complete},passed:true});
+}
+
 // A bounded search record requires current review authority. Historical author
 // prompts without context binding return through authoring; they do not invent
 // an independent identity or approve the search during project recovery.
@@ -151,7 +168,11 @@ for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[3,'SEMANTIC_CHALLENGE'
   const priorReview=p.projectData.semanticReviews.at(-1);
   p=accept(prepare(p,2,'RECONCILE_SOURCE_SEARCH',()=>rows('ACCEPTED')));
   assert.equal(p.stages[2].gate.complete,false,'Source reconciliation approved itself.');
+  const currentSearch=engine.recordsForCurrentScope(p,'sourceSearchContracts');
+  assert.equal(currentSearch.length,1,'Reconciliation dropped the bounded search from the current source set.');
+  assert.equal(currentSearch[0].scope.sourceSetVersion,p.job.CURRENT_SOURCE_SET_VERSION,'Reconciliation retained stale source-search membership.');
   assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,'SEARCH_ADEQUACY_REVIEW');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.reconciliation-current',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:608'],boundary:'Reconciled source-set membership and independent-review continuation',expected:{currentContracts:1,operation:'SEARCH_ADEQUACY_REVIEW'},observed:{currentContracts:currentSearch.length,operation:p.job.NEXT_REQUIRED_ACTION.operation},passed:true});
   const reconciler=p.projectData.generatedPrompts.at(-1).contextManifest.semanticReviewBinding.authorContextId;
   assert.notEqual(reconciler,priorReview.AUTHOR_CONTEXT_ID);assert.notEqual(reconciler,priorReview.REVIEWER_CONTEXT_ID);
   p=accept(prepare(p,2,'SEARCH_ADEQUACY_REVIEW',()=>rows('ACCEPTED')));
@@ -252,7 +273,7 @@ for(const result of ['REJECTED','PARTIAL','UNKNOWN','DISAGREED']){
   assert.equal(saved.stages[6].status,'NOT STARTED',`${result} unlocked Stage 6.`);
   assert(saved.stages[5].gate.reasons.some(reason=>reason.includes(result)),`${result} is missing from the completion-gate explanation.`);
   assert.equal(saved.job.NEXT_REQUIRED_ACTION.operation,'RECONCILE_REQUIREMENT_SET',`${result} did not route to correction.`);
-  assert.deepEqual(saved.projectData.semanticReviews.map(r=>r.fields.RESULT),['ACCEPTED',result],'Review findings were rewritten.');
+  assert.deepEqual(saved.projectData.semanticReviews.filter(r=>Number(r.stage)===5).map(r=>r.fields.RESULT),['ACCEPTED',result],'Stage05 review findings were rewritten.');
 }
 
 // Follow the advertised correction operation all the way back to a complete
@@ -293,7 +314,7 @@ for(const value of ['PASS','FAIL','accepted','',null]){
   assert.equal(prepared.proposal,null,'An invalid result produced an actionable proposal.');
   assert(prepared.validation.issues.some(issue=>issue.path.endsWith('/RESULT')),'Missing exact invalid-result pointer.');
   assert.equal(prepared.project.projectData.rawResponses.at(-1).completeRawResponse,prepared.text,'Rejected review bytes were lost.');
-  assert.equal(prepared.project.projectData.semanticReviews.length,0,'Rejected review mutated canonical findings.');
+  assert.deepEqual(prepared.project.projectData.semanticReviews,author.projectData.semanticReviews,'Rejected review mutated canonical findings.');
 }
 for(const name of ['REVIEW_QUESTION','FINDING','REASONING','RESULT']){
   const prepared=review(['ACCEPTED']);delete prepared.proposal.envelope.records.semanticReviews[0].fields[name];
@@ -358,7 +379,7 @@ const recovered=ingestion.recoverInvalidSemanticReviews(legacy);
 assert.equal(recovered.changed,true,'The legacy accepted review has no automatic recovery.');
 assert.equal(hash.sha256Value(legacy),legacyHash,'Preparing recovery changed the original project.');
 assert.deepEqual(recovered.project.projectData.rawResponses.map(r=>r.completeRawResponse),legacyRaw,'Automatic recovery rewrote the original responses.');
-assert.equal(engine.recordsForCurrentScope(recovered.project,'semanticReviews').length,0);
+assert.equal(engine.recordsForCurrentScope(recovered.project,'semanticReviews').filter(r=>Number(r.stage)===5).length,0);
 assert.equal(recovered.continuation?.prompt.operation,'SEMANTIC_REVIEW','Automatic recovery did not save its replacement instruction.');
 assert.match(recovered.continuation.prompt.prompt,/unsupported RESULT values/);
 assert.equal(recovered.project.stages[5].gate.complete,false);
@@ -367,7 +388,7 @@ assert.equal(ingestion.recoverInvalidSemanticReviews(recovered.project).changed,
 assert.equal(ingestion.prepareStageContinuation(recovered.project,{stage:5}).created,false,'Reload regenerated a controlling instruction again.');
 assert.equal(closedLoopProjectStore.validateProjectIntegrity(recovered.project,{verifyDerived:false}).valid,true);
 engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.rawResponseId,reason:'The saved review uses an unrecognized result.'});
-assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
+assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').filter(r=>Number(r.stage)===5).length,0,'Correction left invalid Stage05 findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',inapplicableDispositionRequiresIndependentReview:true,mergedObligationsRequireIndependentReview:true,malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',verificationObservations:sourceSearchCompletionObservations,inapplicableDispositionRequiresIndependentReview:true,mergedObligationsRequireIndependentReview:true,malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));

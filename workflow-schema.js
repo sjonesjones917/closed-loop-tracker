@@ -1206,7 +1206,7 @@ function deferredExecutionFamily(stage,operation){const family=DEFERRED_EXECUTIO
 STAGE_OPERATIONS=Object.freeze(Object.fromEntries(Object.entries(STAGE_OPERATIONS).map(([stage,operations])=>[stage,Object.freeze([...new Set([...operations,...Object.keys(DEFERRED_EXECUTION_OPERATIONS).filter(op=>deferredExecutionFamily(stage,op))])])])));
 const STAGE_COLLECTIONS=Object.freeze({
   1:[],
-  2:['sources','sourceConflicts'],
+  2:['sources','sourceConflicts','sourceSearchContracts'],
   3:['research','candidateRequirements'],
   4:['requirements'],
   5:['requirementResolutions'],
