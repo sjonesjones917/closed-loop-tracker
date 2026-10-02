@@ -969,6 +969,36 @@
       ],
       "scope": "Real current registered Node producer/preload and receipt/report consumer reject missing/duplicate/failed/stale/wrong-candidate observations and checksum-consistent fabricated summary; absent finite execution and unreviewed empty population remain UNKNOWN. Only the named controlled production transport/aggregation obligations are established.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2619cc2ee2f0a654c4540e48abacfee6",
+      "sourceLineSha256": "019670147fc985bfd2896c0bdb10d7347662c1d90d5c067370f4f42ca534b2d2",
+      "checkIds": [
+        "stage02.search-capability.missing-after-review",
+        "stage02.search-capability.unknown-route",
+        "stage02.search-capability.bound-evidence",
+        "stage02.search-capability.changed-binding",
+        "stage02.search-capability.corrupt-canonical-report",
+        "stage02.search-capability.corrupt-operator-authorization",
+        "stage02.search-capability.file-first"
+      ],
+      "scope": "Actual current independently reviewed Stage02 search contract requires exact application-owned retained report/capability/operator bindings. Missing/unknown/stale/corrupt bindings fail closed; actual selected Blob readback and canonical UTF8 report receipts carry truthful externally supported or operator-confirmed authority. This does not prove an actual external live source search or model search judgment.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-6470db6f153d4a05ce9335a1a6fbaf2e",
+      "sourceLineSha256": "b07d6433841ee973eec1aebc433ca1e70e8d382bf72822cb5b9f0d498bea51f1",
+      "checkIds": [
+        "stage02.search-capability.missing-after-review",
+        "stage02.search-capability.unknown-route",
+        "stage02.search-capability.bound-evidence",
+        "stage02.search-capability.changed-binding",
+        "stage02.search-capability.corrupt-canonical-report",
+        "stage02.search-capability.corrupt-operator-authorization",
+        "stage02.search-capability.file-first"
+      ],
+      "scope": "Actual current independently reviewed Stage02 search contract requires exact application-owned retained report/capability/operator bindings. Missing/unknown/stale/corrupt bindings fail closed; actual selected Blob readback and canonical UTF8 report receipts carry truthful externally supported or operator-confirmed authority. This does not prove an actual external live source search or model search judgment.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     }
   ],
   "contractRefs": [
