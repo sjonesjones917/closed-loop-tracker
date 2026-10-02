@@ -57,11 +57,13 @@ function commitStage9(prepared){const committed=ingestion.commit(prepared.projec
 
 let promptSemanticsChecked=false;
 const unfavorablePropertyCases=[];
+const verificationObservations=[];
 for(const property of ['OBJECTIVELY_VERIFIABLE','RESPONSIBLE_OPERATION_ASSIGNED','ORDER_CLEAR','FAILURE_BEHAVIOR_DEFINED'])for(const value of ['FALSE','UNKNOWN']){
   const p=submitStage8(base('JOB-PREFLIGHT-'+property+'-'+value)),ctx=reviewerContext(p,'PREFLIGHT-PROPERTY-'+property+'-'+value),{prepared}=submitStage9(p,ctx.id,{[property]:value}),committed=commitStage9(prepared),row=engine.recordsForCurrentScope(committed,'preflightRecords').at(-1),effective=engine.evaluateResultConsistency('preflightRecords',row,null,committed),gate=engine.gate(9,committed);
   assert(effective.determination==='UNDETERMINED'&&effective.reasons.some(reason=>reason.includes(property)),`PREFLIGHT_REQUIRED_PROPERTY_ORACLE: ${property}=${value} was accepted: ${JSON.stringify(effective)}`);
   assert(!gate.complete&&gate.reasons.some(reason=>reason.includes(property)),`PREFLIGHT_REQUIRED_PROPERTY_GATE_ORACLE: ${property}=${value} escaped Stage 09: ${JSON.stringify(gate)}`);
   unfavorablePropertyCases.push({property,value});
+  verificationObservations.push({checkId:'stage09.required-property.'+property+'.'+value,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3404','specification/closed-loop-reliability-controlling-implementation-specification.txt:3407'],boundary:'Actual accepted independent preflight record effective determination and Stage09 gate',expected:{determination:'UNDETERMINED',complete:false},observed:{determination:effective.determination,complete:gate.complete},passed:true,violation:'PREFLIGHT_REQUIRED_PROPERTY_'+property+'_'+value,accepted:false});
 }
 {
   const p=submitStage8(base('JOB-STAGE13-MISSING-REVIEWER'));
@@ -97,4 +99,4 @@ let repairedIndependenceBasis='';
   assert(independence.determination==='EXTERNALLY_SUPPORTED',`Stage 09 overclaimed unobservable provider independence as ${independence.determination}.`);
 }
 delete globalThis.__stage13Project;
-console.log(JSON.stringify({controllerStage:'13',applicationStage:'09',independentPreflight:'PASS',unfavorablePropertyCases,intentionalInvalidFixturesRejected:['missing-independent-reviewer','material-ambiguity-with-favorable-claim','contaminated-reviewer-context'],repairedPathProgressed:true,independenceEpistemicLimitPreserved:repairedIndependenceBasis==='EXTERNALLY_SUPPORTED',noMutationBeforeAcceptance:true,promptSemanticsChecked,isolatedDisposableProjects:true},null,2));
+console.log(JSON.stringify({controllerStage:'13',applicationStage:'09',independentPreflight:'PASS',verificationObservations,unfavorablePropertyCases,intentionalInvalidFixturesRejected:['missing-independent-reviewer','material-ambiguity-with-favorable-claim','contaminated-reviewer-context'],repairedPathProgressed:true,independenceEpistemicLimitPreserved:repairedIndependenceBasis==='EXTERNALLY_SUPPORTED',noMutationBeforeAcceptance:true,promptSemanticsChecked,isolatedDisposableProjects:true},null,2));
