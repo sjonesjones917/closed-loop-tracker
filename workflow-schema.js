@@ -4,6 +4,20 @@
 const core=globalThis.closedLoopCore;
 if(!core)throw new Error('workbook.js must load before workflow-schema.js.');
 
+// Exact evidence and terminal subjects use the canonical hash registry. Every
+// omission is explicit: no summary or unregistered normalization stands in for a record.
+const evidenceHash=globalThis.closedLoopHash;
+if(!evidenceHash)throw new Error('hash.js must load before workflow-schema.js.');
+const dependencyOmissions=['/recordSha256','/sha256','/contentSha256','/createdAt','/updatedAt','/eventSequence','/scope/projectRevision'];
+const dependencyReasons=Object.fromEntries(dependencyOmissions.map(pointer=>[pointer,pointer.endsWith('Sha256')||pointer==='/sha256'?'Derived record digest metadata is excluded; its exact canonical dependency subject is included.':pointer==='/scope/projectRevision'?'The terminal/chain command own committed revision is not a material dependency change (§36.9).':'Audit-only creation/update/event ordering metadata is excluded from behavior identity.']));
+const chainOmissions=[...dependencyOmissions,'/EVIDENCE_CHAIN_VERSION','/fields/EVIDENCE_CHAIN_VERSION','/scope/evidenceChainVersion'];
+const chainReasons={...dependencyReasons,...Object.fromEntries(chainOmissions.filter(pointer=>!dependencyOmissions.includes(pointer)).map(pointer=>[pointer,'The evidence-chain version is calculated from this chain set and cannot include itself.']))};
+evidenceHash.registerHashPreimage('EVIDENCE_CHAIN_CANONICAL_RECORD/1',{includePointers:[''],omitPointers:chainOmissions,reasonByOmittedPointer:chainReasons});
+evidenceHash.registerHashPreimage('TERMINAL_DEPENDENCY_RECORD/1',{includePointers:[''],omitPointers:dependencyOmissions,reasonByOmittedPointer:dependencyReasons});
+evidenceHash.registerSetSemantics('/chainRecords',{elementIdentityKey:'id'});
+evidenceHash.registerHashPreimage('EVIDENCE_CHAIN_SET/1',{includePointers:['/jobId','/scope','/requirementIds','/chainRecords']});
+evidenceHash.registerHashPreimage('TERMINAL_EVIDENCE/1',{includePointers:['']});
+
 const PRODUCER=Object.freeze({
   HUMAN:'HUMAN',
   APPLICATION:'APPLICATION',
