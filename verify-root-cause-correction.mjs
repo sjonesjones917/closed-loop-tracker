@@ -150,4 +150,4 @@ function fixture(){
   assert.equal(gate.complete,true,`Repaired Stage 16 correction did not progress: ${gate.reasons.join('; ')}`);
 }
 
-console.log('verify-root-cause-correction: PASS');
+console.error('verify-root-cause-correction: PASS');

@@ -45,7 +45,12 @@ try{
   for(const file of ['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt']){
     fs.mkdirSync(path.dirname(path.join(fixture,file)),{recursive:true});fs.copyFileSync(file,path.join(fixture,file));
   }
-  const nestedProgress='COLLECTOR_INHERITED_CHILD_PROGRESS\n',ownDiagnostic='COLLECTOR_OWN_DIAGNOSTIC\n';
+  const nestedProgress='COLLECTOR_INHERITED_CHILD_PROGRESS\n';
+  // These exact plain diagnostic lines contaminated the completed production
+  // report stream. Keep the JSON-only contract and capture their actual bytes
+  // on stderr, including when the producer imports other verifier modules.
+  const producerProgress='verify-root-cause-correction: PASS\nverify-corrected-iteration: PASS\nverify-test-runtime-dag: PASS\n';
+  const ownDiagnostic='COLLECTOR_OWN_DIAGNOSTIC\n'+producerProgress;
   const fixtureSource=fs.readFileSync(suite,'utf8')+`\nif(process.env.NODE_OPTIONS!=='--no-warnings')throw new Error('COLLECTOR_RUNTIME_OPTIONS_ORACLE');\nprocess.emitWarning('COLLECTOR_WARNING_MUST_BE_SUPPRESSED');\n(await import('node:child_process')).execFileSync(process.execPath,['-e',${JSON.stringify('process.stdout.write('+JSON.stringify(nestedProgress)+')')}],{stdio:'inherit'});\nprocess.stderr.write(${JSON.stringify(ownDiagnostic)});\n`;
   fs.writeFileSync(path.join(fixture,suite),fixtureSource);
   execFileSync('git',['init','--quiet'],{cwd:fixture});execFileSync('git',['add','.'],{cwd:fixture});execFileSync('git',['-c','user.name=Executed evidence fixture','-c','user.email=fixture@localhost','commit','--quiet','-m','Controlled actual producer output'],{cwd:fixture});
@@ -60,8 +65,9 @@ try{
   assert.throws(()=>createExecutionReceipt(suite,{...callerEvidence,command:[process.execPath,path.join(fixture,suite)],stdout:callerEvidence.stdout,stderr:''},{cwd:fixture}),/JSON/,'COLLECTOR_OWN_OUTPUT_ORACLE: former merged-output reconstruction did not reject the controlled non-JSON descendant.');
   const persistedOwnReceipt=JSON.parse(fs.readFileSync(path.join(collectorDirectory,suite+'.json'),'utf8'));
   assert.deepEqual(ownReceipt,persistedOwnReceipt,'COLLECTOR_OWN_OUTPUT_ORACLE: collector rewrote the child-owned receipt.');
-  const collectorOwnOutputControl={caseId:'run-missing-owned-report-and-diagnostics',result:'PASS',actualStage03AssertionsExecuted:true,preloadInNodeOptions:false,ordinaryRuntimeOptionsPreserved:true,inheritedChildOutputInRunner:true,inheritedOutputExcludedFromOwnReport:true,actualStderrSha256:ownReceipt.stderrSha256,persistedChildReceiptRetained:true,formerReconstructionRejected:true};
+  const collectorOwnOutputControl={caseId:'run-missing-owned-report-and-diagnostics',result:'PASS',actualStage03AssertionsExecuted:true,preloadInNodeOptions:false,ordinaryRuntimeOptionsPreserved:true,inheritedChildOutputInRunner:true,inheritedOutputExcludedFromOwnReport:true,producerProgressOnStderr:true,producerProgressBytes:Buffer.byteLength(producerProgress),actualStderrSha256:ownReceipt.stderrSha256,persistedChildReceiptRetained:true,formerReconstructionRejected:true};
   for(const [name,text,diagnostic] of [
+    ['producer-progress-on-stdout',source+`\nprocess.stdout.write(${JSON.stringify(producerProgress)});\n`,'Unexpected non-whitespace character after JSON'],
     ['missing-required-observation',source.replace('stage03AgentProtocol:true','stage03AgentProtocol:false'),'failed or missing required assertion'],
     ['duplicate-report',source+"\nconsole.log(JSON.stringify({stage03AgentProtocol:true}));\n",'expected exactly one report marker'],
     ['duplicate-observation',source.replace("verificationObservations:[","verificationObservations:[{checkId:'stage03.protocol',boundary:'controlled duplicate',expected:true,observed:true,passed:true},"),'duplicate emitted assertion'],
