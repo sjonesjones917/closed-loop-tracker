@@ -1,5 +1,7 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import vm from 'node:vm';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -80,4 +82,29 @@ for(const [key,needed] of Object.entries(opNeed)){const [stage,operation]=key.sp
 for(const [stage,forbidden] of [[11,['verification','comparisons','rootCauses','changes']],[12,['comparisons','rootCauses','changes']],[23,['deterministicResults','adversarialResults']],[24,['deterministicResults','meaningResults']]]){
   const c=schema.operationContract(stage,schema.STAGE_CONTRACTS[stage].operations[0]);for(const x of forbidden)if(c.readCollections.includes(x))throw new Error(`Stage ${stage} leaks forbidden ${x} through its declared read contract.`);
 }
-console.log(JSON.stringify({promptsChecked,conditionalRejections,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:false},null,2));
+// Actual emitted instructions/context files, not collection names, prove28.3/28.4.
+function independentReviewContextOracle(runtime){
+ const c=runtime.closedLoopCore,e=runtime.closedLoopWorkflowEngine,s=runtime.closedLoopWorkflowSchema,pr=runtime.closedLoopPromptEngine,observations=[];
+ for(const stage of [23,24]){
+  const state=c.createBlankState('FINAL-REVIEW-ISOLATION-'+stage);e.ensureShape(state);for(let n=1;n<stage;n++){state.stages[n].status='COMPLETE';state.stages[n].gate={complete:true,reasons:[],blocked:false};}Object.assign(state.job,{CURRENT_BASELINE_ID:'BASELINE-ISOLATION',CURRENT_PRODUCT_ID:'PRODUCT-ISOLATION',CURRENT_PRODUCT_VERSION:'PRODUCT-v001',CURRENT_REQUIREMENTS_VERSION:'REQS-ISOLATION',CURRENT_TEST_SUITE_VERSION:'TESTS-ISOLATION'});
+  const scope={baselineId:'BASELINE-ISOLATION',productId:'PRODUCT-ISOLATION',productVersion:'PRODUCT-v001',requirementsVersion:'REQS-ISOLATION',testSuiteVersion:'TESTS-ISOLATION'},row=(family,id,stage,fields)=>({id,stage,active:true,scope:{...scope},fields:{[s.RECORD_SCHEMAS[family].idField]:id,...fields},...fields});
+  state.projectData.baselines.push(row('baselines','BASELINE-ISOLATION',20,{STATUS:'FROZEN'}));state.projectData.products.push({...row('products','PRODUCT-ISOLATION',21,{PRODUCT_VERSION:'PRODUCT-v001',BASELINE_ID:'BASELINE-ISOLATION',STATUS:'COMPLETED',GENERATED_ARTIFACT_INVENTORY:[]}),completionState:'COMPLETED'});
+  state.projectData.sources.push(row('sources','SOURCE-ISOLATION',2,{TITLE:'Governing source'}));state.projectData.requirements.push(row('requirements','REQ-ISOLATION',4,{SOURCE_ID:'SOURCE-ISOLATION',OBLIGATION:'AUTHORIZED_REQUIREMENT_CONTENT',STATUS:'ACTIVE'}));
+  state.projectData.evidenceRecords.push(row('evidenceRecords','SOURCE-EVIDENCE-ISOLATION',3,{SOURCE_ID:'SOURCE-ISOLATION',KIND:'SOURCE_EXCERPT',CONTENT:'AUTHORIZED_SOURCE_CONTENT'+'.'.repeat(70000),STATUS:'CURRENT'}));
+  state.projectData.evidenceRecords.push(row('evidenceRecords','GENERATOR-EVIDENCE-ISOLATION',21,{KIND:'AGENT_CLAIM',CONTENT:'FORBIDDEN_GENERATOR_CONTENT',STATUS:'CURRENT'}));
+  state.projectData.evidenceRecords.push({...row('evidenceRecords','NATIVE-EVIDENCE-ISOLATION',22,{APPLICATION_EVIDENCE_KIND:'APPLICATION_DETERMINISTIC_EXECUTION',APPLICATION_EVIDENCE_CONTENT:'FORBIDDEN_VERIFIER_EVIDENCE',STATUS:'CURRENT'}),source:'APPLICATION_TEST_RUNTIME'});
+  state.projectData.observationRecords.push({...row('observationRecords','NATIVE-OBSERVATION-ISOLATION',22,{APPLICATION_OBSERVED_VALUE:'FORBIDDEN_VERIFIER_OBSERVATION',OBSERVATION_ORIGIN:'NATIVE_APPLICATION_OBSERVATION',EPISTEMIC_BASIS:'APPLICATION_OBSERVED',FRESHNESS_STATUS:'CURRENT'}),source:'APPLICATION_TEST_RUNTIME'});
+  state.projectData.propositions.push(row('propositions','PROPOSITION-ISOLATION',4,{REQUIREMENT_ID:'REQ-ISOLATION',PROPOSITION_TEXT:'AUTHORIZED_PROPOSITION_INPUT',STATUS:'FORBIDDEN_DERIVED_PASS_SUMMARY'}));
+  const prepared=e.preparePromptContext(state,stage,{operation:'COMPLETE',scope}),record=pr.buildPromptRecord(stage,state,prepared.options),files=pr.materializePromptContextFiles(record,state),output=[record.prompt,...files.map(file=>file.text)].join('\n');
+  for(const marker of ['FORBIDDEN_GENERATOR_CONTENT','FORBIDDEN_VERIFIER_EVIDENCE','FORBIDDEN_VERIFIER_OBSERVATION','FORBIDDEN_DERIVED_PASS_SUMMARY'])assert.equal(output.includes(marker),false,'FINAL_REVIEW_CONTEXT_ORACLE: Stage'+stage+' embeds '+marker);
+  for(const marker of ['AUTHORIZED_REQUIREMENT_CONTENT','AUTHORIZED_SOURCE_CONTENT','AUTHORIZED_PROPOSITION_INPUT'])assert.equal(output.includes(marker),true,'FINAL_REVIEW_CONTEXT_ORACLE: Stage'+stage+' lost '+marker);
+  assert(files.length>0,'FINAL_REVIEW_CONTEXT_ORACLE: Large authorized source must exercise actual externalized context.');observations.push({stage,forbiddenContentAbsent:true,authorizedSourcePresent:true,externalizedContextFiles:files.length});
+ }
+ return observations;
+}
+const independentReviewContext=independentReviewContextOracle(globalThis);
+const contextFault=projectStoreRuntime({fault:{id:'secondary-provenance-filter-bypass',file:'prompt-engine.js',before:"const number=Number(stage);if(family==='rawResponses'",after:"return {allowed:true,record,reason:'Controlled old unprojected context equivalent.'};const number=Number(stage);if(family==='rawResponses'"}});
+vm.runInContext('globalThis.assert=assert;',Object.assign(contextFault.runtime,{assert}));
+assert.throws(()=>vm.runInContext(`(${independentReviewContextOracle.toString()})(globalThis)`,contextFault.runtime),/FINAL_REVIEW_CONTEXT_ORACLE: Stage23 embeds FORBIDDEN_GENERATOR_CONTENT/,'The context guard must reject the original secondary-family leak rather than fail setup.');
+
+console.log(JSON.stringify({promptsChecked,conditionalRejections,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,independentReviewContext,verificationObservations:independentReviewContext.map(item=>({checkId:'blind-stage'+item.stage+'-secondary-context-projection',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:'+(item.stage===23?'2499-2509':'2511-2521')],boundary:'actual emitted actor instruction and all materialized context files',expected:{stage:item.stage,forbiddenContentAbsent:true,authorizedSourcePresent:true,externalizedContextFiles:1},observed:item,passed:true})),browserStageWalkthrough:false},null,2));
