@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
 import {routingFixture,completedReport} from './test-verification-routing-fixtures.mjs';
-import {scalarFor,recordProposal} from './test-fixtures.mjs';
+import {scalarFor,recordProposal,canonicalFixtureRecord,reviewApplicabilityFixture,reviewProofFixture} from './test-fixtures.mjs';
 
 // Isolated projects, real production routing/runtime/commands and storage owners.
 // The shared transaction and DOM adapters do not claim a live-browser replay.
@@ -11,6 +11,7 @@ const r=projectStoreRuntime(),t=r.runtime,e=r.engine,h=t.closedLoopHash,rt=t.clo
 Object.assign(t,{engine:e,core:r.core,schema:t.closedLoopWorkflowSchema});
 vm.runInContext([routingFixture,completedReport].map(fn=>fn.toString()).join('\n'),t);
 const checks=[];
+const verificationObservations=[];
 const check=async(name,fn)=>{await fn();checks.push(name);};
 const copy=r.copy;
 const plan=(p,test)=>e.testExecutionPlan(p).items.find(row=>row.testId===test.id);
@@ -66,6 +67,41 @@ async function registerReport(f,report,options={}){
  const reportText=JSON.stringify(report),file=await registerBytes(f.p,reportText);
  return e.registerExternalCapabilityEvidence(f.p,copy({reportText,artifactId:file.artifactId,operatorConfirmed:true,operatorLabel:'FIXTURE_OPERATOR',...options}));
 }
+// Controlled upstream canonical data isolates Stage06 readiness; proof and
+// applicability approvals still pass through the production ingestion owner.
+function stage06DesignFixture(mode){
+ const schema=t.closedLoopWorkflowSchema,p=r.core.createBlankState('JOB-STAGE06-'+mode),runtime={engine:e,schema,prompts:r.prompts,ingestion:r.ingestion};
+ Object.assign(p.job,{JOB_TITLE:'Future product test design',EXACT_USER_OBJECTIVE_VERBATIM:'Produce the required deliverable.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});e.ensureShape(p);p.activeStage=6;
+ for(let stage=1;stage<=5;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
+ const scope={...e.currentScope(p),instructionVersion:null},req=canonicalFixtureRecord(runtime,p,'requirements',{...recordProposal(schema,'requirements').fields,MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',OBLIGATION:'The delivered product contains required content.'},{scope});
+ const prop=canonicalFixtureRecord(runtime,p,'propositions',{...recordProposal(schema,'propositions').fields,REQUIREMENT_ID:req.id,PROPOSITION_TEXT:'The delivered product contains required content.',STATUS:'CURRENT'},{scope,relationships:{REQUIREMENT_ID:req.id}});
+ canonicalFixtureRecord(runtime,p,'applicabilityRecords',{...recordProposal(schema,'applicabilityRecords').fields,SUBJECT_ID:prop.id,PROPOSED_APPLICABILITY:'APPLICABLE'},{scope,relationships:{SUBJECT_ID:prop.id}});reviewApplicabilityFixture(runtime,p);
+ Object.assign(p.job,{CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});
+ const native=mode==='APPLICATION_DETERMINISTIC',test=canonicalFixtureRecord(runtime,p,'tests',{...recordProposal(schema,'tests').fields,REQ_ID:req.id,TARGET_PROPOSITION_IDS:[prop.id],EXECUTION_MODE:mode,REQUIRED_CAPABILITY:native?'CLOSED_LOOP_TEST_IR':'CAD_TOOL',EXECUTABLE_KIND:native?'TEST_IR':'NONE',EXECUTABLE_SPEC_VERSION:native?'closed-loop-test-spec/1':'NONE',EXECUTABLE_SPEC:native?{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'FILE'},{op:'ASSERT_EQ',value:'Required content'}]}:{},EXECUTABLE_INPUT_BINDINGS:native?{FILE:{kind:'ARTIFACT',filename:'future.txt'}}:{},ARTIFACT_REQUIREMENTS:native?'Final product future.txt':'NONE',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}},{scope,relationships:{REQ_ID:req.id}});
+ const node={type:'LEAF',testId:test.id,requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};
+ canonicalFixtureRecord(runtime,p,'proofExpressions',{TARGET_PROPOSITION_ID:prop.id,PROPOSED_EXPRESSION:node,NORMALIZED_EXPRESSION:node,SEMANTIC_RATIONALE:'Execution awaits the completed final product; the route and evidence remain required.'},{scope,relationships:{TARGET_PROPOSITION_ID:prop.id}});reviewProofFixture(runtime,p);
+ return {p,test};
+}
+for(const mode of ['EXTERNAL_SYSTEM','EXTERNAL_AGENT_TOOL'])await check('Stage06 requires current scoped readiness for '+mode,async()=>{
+ const f=stage06DesignFixture(mode);f.p.job.AVAILABLE_TOOLS='CAD_TOOL';
+ const unavailable=e.gate(6,f.p);assert.equal(plan(f.p,f.test).capabilityReady,false);
+ assert.equal(unavailable.complete,false,'STAGE06_CAPABILITY_COMPLETION_ORACLE: '+mode+' completed without current capability authority.');
+ assert(unavailable.reasons.some(reason=>reason.includes('capability readiness')),'Stage06 does not explain its missing capability-readiness prerequisite.');
+ verificationObservations.push({checkId:'stage06.capability.'+mode+'.unknown',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2189','specification/closed-loop-reliability-controlling-implementation-specification.txt:2193'],boundary:'Stage06 required external route completion gate',expected:{complete:false,capabilityReady:false},observed:{complete:unavailable.complete,capabilityReady:plan(f.p,f.test).capabilityReady},passed:true,violation:'STAGE06_REQUIRED_EXTERNAL_CAPABILITY_UNKNOWN',accepted:false});
+ await registerReport(f,t.completedReport(f.p,f.test));
+ // Registration recalculates the controlled project; retain this fixture's
+ // disclosed upstream prerequisites while evaluating the real Stage06 gate.
+ for(let stage=1;stage<=5;stage++){f.p.stages[stage].status='COMPLETE';f.p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
+ const ready=e.gate(6,f.p);assert.equal(plan(f.p,f.test).capabilityReady,true);assert.equal(ready.complete,true,JSON.stringify(ready));
+ assert.equal(e.testDueState(f.p,f.test,6).executableNow,false,'Future product execution became due at Stage06.');
+ verificationObservations.push({checkId:'stage06.capability.'+mode+'.ready',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2176'],boundary:'Stage06 retained scoped external readiness with deferred future target',expected:{complete:true,capabilityReady:true,executionDue:false},observed:{complete:ready.complete,capabilityReady:plan(f.p,f.test).capabilityReady,executionDue:e.testDueState(f.p,f.test,6).executableNow},passed:true});
+});
+for(const mode of ['INDEPENDENT_AGENT_REVIEW','APPLICATION_DETERMINISTIC'])await check('Stage06 design preserves future-target timing for '+mode,()=>{
+ const f=stage06DesignFixture(mode),actual=e.gate(6,f.p),route=plan(f.p,f.test),due=e.testDueState(f.p,f.test,6);
+ assert.equal(actual.complete,true,'STAGE06_FUTURE_TARGET_DESIGN_ORACLE: '+mode+' '+JSON.stringify(actual));assert.equal(route.capabilityReady,true);assert.equal(due.executableNow,false);assert.equal(Boolean(f.p.job.CURRENT_PRODUCT_ID),false);
+ if(mode==='APPLICATION_DETERMINISTIC')assert.equal(route.artifactReady,false,'Native future-artifact fixture unexpectedly acquired product bytes.');
+ verificationObservations.push({checkId:'stage06.future-target.'+mode,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2176'],boundary:'Stage06 design gate before final product and artifact existence',expected:{complete:true,capabilityReady:true,executionDue:false},observed:{complete:actual.complete,capabilityReady:route.capabilityReady,executionDue:due.executableNow},passed:true});
+});
 await check('External tool names and uncompleted templates cannot establish readiness',()=>{
  external.p.job.AVAILABLE_TOOLS='CAD_TOOL';assert.equal(plan(external.p,external.test).capabilityReady,false);
  const template=e.externalCapabilityEvidenceTemplate(external.p,external.test.id);assert(Object.values(template.checks).every(check=>check.status==='UNKNOWN'));
@@ -151,4 +187,4 @@ await check('Canonical-value bindings survive response validation and commit',()
  })()`,t);
  assert.equal(result.binding.kind,'CANONICAL_VALUE');assert.equal(result.binding.valueSha256,result.expectedSha256);assert.equal(result.forgedValid,false);assert(result.forgedIssues.some(issue=>issue.path.includes('externalCapabilities')));
 });
-console.log(JSON.stringify({verificationRouting:'PASS',checks:checks.length,results:checks,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));
+console.log(JSON.stringify({verificationRouting:'PASS',verificationObservations,checks:checks.length,results:checks,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));

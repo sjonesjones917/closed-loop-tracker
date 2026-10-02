@@ -922,6 +922,8 @@ function gate(stage,project){
       const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!applicationTestSupported(test));
       if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
       const executionPlan=testExecutionPlan(project),missingCurrentArtifacts=executionPlan.items.filter(item=>mandatoryIds.has(item.requirementId)&&item.artifactRequired&&item.artifactIds.length>0&&!item.artifactReady);
+      const unavailableExternal=executionPlan.items.filter(item=>mandatoryIds.has(item.requirementId)&&['EXTERNAL_SYSTEM','EXTERNAL_AGENT_TOOL'].includes(item.executionMode)&&!item.capabilityReady);
+      if(unavailableExternal.length)reasons.push(`${unavailableExternal.length} mandatory external test definition(s) lack affirmative current capability readiness: ${unavailableExternal.map(item=>item.testId+' — '+item.blockingReason).join('; ')}`);
       if(missingCurrentArtifacts.length)reasons.push(`${missingCurrentArtifacts.length} mandatory test definition(s) depend on exact artifact bytes that are missing or no longer application-verified.`);
       const invalidTiming=mandatoryTests.map(test=>({testId:recordId(test,'tests'),state:testDueState(project,test,6)})).filter(item=>!item.state.valid);
       if(invalidTiming.length)reasons.push(`${invalidTiming.length} mandatory test definition(s) lack a valid closed verification-timing contract.`);
