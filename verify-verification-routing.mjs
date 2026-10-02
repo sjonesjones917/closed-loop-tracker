@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
 import {routingFixture,completedReport} from './test-verification-routing-fixtures.mjs';
-import {scalarFor,recordProposal,canonicalFixtureRecord,reviewApplicabilityFixture,reviewProofFixture} from './test-fixtures.mjs';
+import {scalarFor,recordProposal,canonicalFixtureRecord,reviewApplicabilityFixture,reviewProofFixture,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture} from './test-fixtures.mjs';
 
 // Isolated projects, real production routing/runtime/commands and storage owners.
 // The shared transaction and DOM adapters do not claim a live-browser replay.
@@ -160,6 +160,20 @@ await check('Operator report upload, confirmation, and save survive a production
  controls.set('#capability-operator',{value:'UI_FIXTURE_OPERATOR'});controls.set('#capability-confirm',{checked:true});await t.registerCapabilityEvidence();
  const persisted=await r.store.readProject(t.current.job.JOB_ID);assert.equal(plan(persisted,f.test).capabilityReady,true);
  const record=persisted.projectData.externalCapabilities.at(-1),basis=JSON.parse(e.recordValue(record,'VERIFICATION_BASIS')),bytes=await r.store.getArtifact(basis.artifactId);assert.equal(await bytes.blob.text(),JSON.stringify(report));
+});
+await check('Stage02 file-first capability registration retains the actual report before independent adequacy review',async()=>{
+ const searchRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:e,prompts:t.closedLoopPromptEngine,ingestion:t.closedLoopResponseIngestion},project=acceptPrerequisite(searchRuntime,stage01AcceptanceFixture(searchRuntime,'JOB-UI-SOURCE-SEARCH'),2,{stageData:{AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The bounded closed fixture search found no applicable external source.'},records:{sourceSearchContracts:[boundedSearchProposal(searchRuntime.schema)]}}).project;project.activeStage=2;
+ const initial=await r.store.writeProject(project,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));bindAcceptanceUi(r,initial,null);t.$=selector=>controls.get(selector)||null;
+ const contract=e.recordsForCurrentScope(t.current,'sourceSearchContracts').at(-1),id=e.recordId(contract,'sourceSearchContracts');controls.set('#capability-test',{value:id});
+ t.downloadCapabilityRequest();const request=JSON.parse(await t.downloads.at(-1).blob.text());assert.equal(request.request.targetFamily,'sourceSearchContracts');assert.equal(request.request.sourceSearchContractId,id);assert.equal(Object.hasOwn(request.request,'testId'),false,'SOURCE_SEARCH_TYPED_TARGET_ORACLE: search must never invent a test.');
+ const report=copy(registerFixtureSourceSearchCapability(searchRuntime,t.current,{register:false}));report.request=request.request;
+ const text=JSON.stringify(report),file=new Blob([text],{type:'application/json'});Object.defineProperty(file,'name',{value:'search-readiness.json'});
+ await t.selectCapabilityEvidence(file);controls.set('#capability-operator',{value:'UI_SEARCH_OPERATOR'});controls.set('#capability-confirm',{checked:true});await t.registerCapabilityEvidence();
+ const saved=await r.store.readProject(t.current.job.JOB_ID),current=e.recordsForCurrentScope(saved,'sourceSearchContracts').at(-1),capability=e.recordsForCurrentScope(saved,'externalCapabilities').find(row=>e.recordId(row,'externalCapabilities')===e.recordValue(current,'SEARCH_PERFORMER_CAPABILITY_ID')),basis=JSON.parse(e.recordValue(capability,'VERIFICATION_BASIS')),bytes=await r.store.getArtifact(basis.artifactId);
+ assert.equal(await bytes.blob.text(),text,'SOURCE_SEARCH_FILE_CUSTODY_ORACLE: retained report bytes must be exact');assert.equal(basis.retention,'VERIFIED_REPORT_ARTIFACT');assert.equal(e.sourceSearchCapabilityState(saved,current).complete,true);
+ assert.equal(e.gate(2,saved).complete,false,'SOURCE_SEARCH_INDEPENDENT_REVIEW_ORACLE: capability registration must not waive the required adequacy review.');assert.equal(e.operationalNextAction(saved,2).operation,'SEARCH_ADEQUACY_REVIEW');
+ const env=e.recordsForCurrentScope(saved,'environmentManifests').find(row=>e.recordId(row,'environmentManifests')===e.recordValue(capability,'ENVIRONMENT_MANIFEST_ID'));assert.equal(e.recordValue(env,'EVIDENCE_BASES').epistemicBasis,'OPERATOR_CONFIRMED_EXTERNAL_CLAIM');
+ verificationObservations.push({checkId:'stage02.search-capability.file-first',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Actual Stage02 request/file selection/store readback/operator authorization and current adequacy gate',expected:{targetFamily:'sourceSearchContracts',inventedTest:false,exactReportBytes:true,capabilityReady:true,oldReviewComplete:false,basis:'OPERATOR_CONFIRMED_EXTERNAL_CLAIM'},observed:{targetFamily:report.request.targetFamily,inventedTest:Object.hasOwn(report.request,'testId'),exactReportBytes:await bytes.blob.text()===text,capabilityReady:e.sourceSearchCapabilityState(saved,current).complete,oldReviewComplete:e.gate(2,saved).complete,basis:e.recordValue(env,'EVIDENCE_BASES').epistemicBasis},passed:true});
 });
 await check('Stage 22 UI discovers, executes, and persists the canonical-only test',async()=>{
  const f=t.routingFixture();await registerBytes(f.p,'Completed product bytes','product.json',{productId:f.product.id});const initial=await r.store.writeProject(f.p,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));t.current=initial;t.projects=copy([initial]);

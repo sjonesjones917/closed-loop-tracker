@@ -5,7 +5,7 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,stage04AcceptanceEnvelope,accumulatedStage04Fixture,stageHandoffRecoveryProof} from './test-fixtures.mjs';
+import {scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,stage04AcceptanceEnvelope,accumulatedStage04Fixture,stageHandoffRecoveryProof} from './test-fixtures.mjs';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
 const appCoreSource=fs.readFileSync('app-core.js','utf8');
@@ -168,6 +168,8 @@ async function main(){
   const stageTwo=responseFor(await activeProject(cdp),2,{AUTHORITY_HIERARCHY:'The accepted operator input governs this disposable checklist.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The current checklist scope has no external factual or jurisdictional claim.'});
   stageTwo.records.sourceSearchContracts=[await evalValue(cdp,`(()=>{${scalarFor.toString()}\n${recordProposal.toString()}\nreturn recordProposal(closedLoopWorkflowSchema,'sourceSearchContracts',{tempKey:'retry-search',evidenceRef:'retry-evidence',overrides:{PROJECT_SCOPE:'The accepted one-page checklist scope.',JURISDICTION_OR_SYSTEM_SCOPE:'No jurisdiction-dependent factual proposition is requested.',SOURCE_CLASSES_CONSIDERED:['Accepted operator input','External factual authority'],LOCATIONS_AND_REPOSITORIES:['Current accepted input and intake'],QUERIES_OR_STRATEGIES:['Check for claims requiring external factual authority.'],DATE_OR_VERSION_CUTOFF:'Current accepted input version',EXCLUSIONS:['Unrelated factual topics'],ACCESS_LIMITATIONS:[],ADEQUACY_RATIONALE:'The requested checklist contains no claim requiring external authority.',UNRESOLVED_DISCOVERY_RISK:'NONE'}});})()`)];
   await selectResponseFile(cdp,JSON.stringify(stageTwo));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);await click(cdp,'#accept-proposal');
+  const searchReport=await evalValue(cdp,`(()=>{${registerFixtureSourceSearchCapability.toString()}return registerFixtureSourceSearchCapability({engine:closedLoopWorkflowEngine},${JSON.stringify(await activeProject(cdp))},{register:false});})()`);
+  await evalValue(cdp,`(async()=>{const file=new File([${JSON.stringify(JSON.stringify(searchReport))}],'source-search-readiness.json',{type:'application/json'}),input=document.querySelector('#capability-evidence-file'),selection=new DataTransfer();selection.items.add(file);input.files=selection.files;await input.onchange({target:input});})()`);await evalValue(cdp,`(()=>{document.querySelector('#capability-operator').value='SYNTHETIC_SEARCH_OPERATOR';document.querySelector('#capability-confirm').checked=true;})()`);await click(cdp,'#register-capability-evidence');
   const stageTwoAccepted=await activeProject(cdp);
   if(stageTwoAccepted.stages[2].status!=='COMPLETE'){
     const derivedOperation=String(stageTwoAccepted.job?.NEXT_REQUIRED_ACTION?.operation||'');
@@ -348,7 +350,7 @@ async function main(){
   await navigateAndWait(cdp,'Page.reload');await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`closedLoopProjectStore.readAll().then(all=>all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'))`)),'Deleted retained project was re-injected after reload.');assert(await evalValue(cdp,`closedLoopProjectStore.metaGet('retainedProjectSuppressed').then(x=>x?.jobId==='JOB-20260823144121')`),'Retained-project suppression was not committed transactionally.');
 
   console.log('extra:correction-instruction-to-accepted-proposition-persistence');
-  const fixtureFunctions=[scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n');
+  const fixtureFunctions=[scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n');
   const runtimeBindings='const runtime={core:closedLoopCore,schema:closedLoopWorkflowSchema,engine:closedLoopWorkflowEngine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion};';
   await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}const p=stage04AcceptanceFixture(runtime);await closedLoopProjectStore.writeProject(p);})()`);
   await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,4);

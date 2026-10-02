@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,accumulatedStage04Fixture,evidence,stageHandoffRecoveryProof,scalarFor,recordProposal,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
+import {acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture,evidence,stageHandoffRecoveryProof,scalarFor,recordProposal,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
 import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -415,7 +415,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 const r=projectStoreRuntime(),t=r.runtime,s=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const extract=(a,b)=>s.slice(s.indexOf(a),s.indexOf(b,s.indexOf(a)+a.length));
 t.fixtureRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:r.engine,prompts:r.prompts,ingestion:r.ingestion,store:r.store};
-await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,accumulatedStage04Fixture].map(f=>f.toString()).join('\n')+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
+await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture].map(f=>f.toString()).join('\n')+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
 const initial=await r.store.writeProject(t.fixture,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
 bindAcceptanceUi(r,initial,null);
 Object.assign(t,{schema:t.closedLoopWorkflowSchema,recordValue:r.engine.recordValue,stageContinuationErrors:new Map(),stagePlanItems:(stage,operation)=>r.engine.stageTestExecutionPlan(t.current,{stage,operation}).items,displayedStageAction:stage=>r.engine.operationalNextAction(t.current,stage),announce(){},reportActionFailure(e){throw e;},downloadBlob(blob,filename){t.downloads.push({blob,filename});},downloads:[],$:()=>null});
@@ -449,7 +449,7 @@ snapshots.restored=await r.store.importPackage(backup);
  }
  console.log(JSON.stringify({caseId:'HANDOFF_BROWSER_VALID_TRANSITION',result:'PASS',actualBrowser:false,attempts:2,responseCharacters:128,beforePrompts:initial.projectData.generatedPrompts.length,afterPrompts:snapshots.backup.projectData.generatedPrompts.length,proof}));
  t.current=await r.store.readProject(initial.job.JOB_ID);await t.savePromptRecord(4);
- const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=[scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n'),runtimeBindings='const runtime=fixtureRuntime;';
+ const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=[scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n'),runtimeBindings='const runtime=fixtureRuntime;';
   console.error('nonbrowser:large-history-execution-package');
   const executionContext=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}
     const store=closedLoopProjectStore,p=await store.readProject('PROBE-5922'),prompt=p.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1),manifest=runtime.prompts.promptFileManifest(prompt),text=JSON.stringify(stage04AcceptanceEnvelope(runtime,p,prompt));

@@ -2,7 +2,7 @@ import {readStoreArchive} from './test-zip.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {scalarFor,recordProposal,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
+import {scalarFor,recordProposal,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime,storageBroadcastNetwork,bindProjectActivationUi} from './test-project-store-runtime.mjs';
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
@@ -441,7 +441,7 @@ await storageRegression('import:saved-projection-does-not-bypass-record-or-relea
   }
 });
 await storageRegression('accumulation:selected-stage4-read-buffers',async()=>{
-  await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,stage04AcceptanceFixture,accumulatedStage04Fixture].map(fn=>fn.toString()).join('\n')+`\n(async()=>{globalThis.accumulatedProject=await accumulatedStage04Fixture({core,schema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion});})()`,storageRuntime);
+  await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture].map(fn=>fn.toString()).join('\n')+`\n(async()=>{globalThis.accumulatedProject=await accumulatedStage04Fixture({core,schema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion});})()`,storageRuntime);
   const saved=await storageRuntime.projectStore.writeProject(storageRuntime.accumulatedProject,{expectedProjectRevision:0,createOnly:true,selectProject:false});
   let encodes=0,characters=0;const Native=storageRuntime.TextEncoder;
   storageRuntime.TextEncoder=class extends Native{encode(text){encodes++;characters+=String(text).length;return super.encode(text);}};

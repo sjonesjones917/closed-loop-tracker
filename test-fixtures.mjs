@@ -58,9 +58,23 @@ export function boundedSearchProposal(schema){
 }
 // Advance through actual acceptance and independently bound source review to
 // the first proposition-producing stage. No prerequisite gate is forced green.
+// Retain exact report text in canonical evidence through the supported source-
+// search registration API. This is a declared hermetic external-claim fixture,
+// not a fabricated stored artifact, human identity or live-network execution.
+export function registerFixtureSourceSearchCapability(runtime,project,{checks={},register=true}={}){
+  const {engine}=runtime,contract=engine.recordsForCurrentScope(project,'sourceSearchContracts').at(-1);if(!contract)throw new Error('Fixture search contract is missing.');
+  const report=engine.externalCapabilityEvidenceTemplate(project,engine.recordId(contract,'sourceSearchContracts')),time=Date.now();
+  Object.assign(report,{reportedBy:'SYNTHETIC_SEARCH_PERFORMER',environment:'Explicit closed hermetic fixture input universe',observedAt:new Date(time-1000).toISOString(),validUntil:new Date(time+3600000).toISOString()});
+  report.action={target:engine.recordValue(contract,'PROJECT_SCOPE'),riskClasses:['READ_ONLY'],expectedEffect:'Inspect only the complete declared synthetic input universe and preserve its search observations.',reversibility:'No mutation',maximumCost:'0',authority:'Controlled test fixture operator',containment:'No network or external authority is claimed',stopCondition:'Stop when every declared fixture location and stopping criterion is accounted for',responsibleActor:'SYNTHETIC_SEARCH_PERFORMER'};
+  for(const [key,check]of Object.entries(report.checks)){check.status=checks[key]||'TRUE';check.evidence=`Controlled fixture ${key} basis; not an independently observed live external capability.`;}
+  if(!register)return report;
+  const record=engine.registerExternalCapabilityEvidence(project,{reportText:JSON.stringify(report),operatorConfirmed:true,operatorLabel:'SYNTHETIC_FIXTURE_OPERATOR'});
+  return record;
+}
 export function stage04AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSISTENCE'){
   const {schema,engine}=runtime;let p=stage01AcceptanceFixture(runtime,jobId);
   p=acceptPrerequisite(runtime,p,2,{stageData:{AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The controlled bounded search found no applicable external governing source.'},records:{sourceSearchContracts:[boundedSearchProposal(schema)]}}).project;
+  registerFixtureSourceSearchCapability(runtime,p);
   p=acceptPrerequisite(runtime,p,2,{operation:'SEARCH_ADEQUACY_REVIEW',records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'fixture-search-review',overrides:{REVIEW_QUESTION:'Was the bounded fixture search executed adequately?',FINDING:'The closed fixture input universe is exhausted with no applicable external source.',REASONING:'Compared the declared source classes, locations, executed query evidence, stopping criteria, dispositions, exclusions and residual risk with the controlled fixture scope.',RESULT:'ACCEPTED'}})]}}).project;
   p=acceptPrerequisite(runtime,p,3,{stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false}}).project;
   for(let n=1;n<=3;n++)if(!engine.gate(n,p).complete)throw new Error(`Fixture prerequisite ${n}: ${engine.gate(n,p).reasons.join(' | ')}`);
