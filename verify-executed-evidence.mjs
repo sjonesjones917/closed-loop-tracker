@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {runVerifier} from './verify-conformance-regressions.mjs';
-import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,sha} from './verification-evidence.mjs';
+import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,observationsFromReports,sha} from './verification-evidence.mjs';
 import {metricCatalog} from './verification-evidence-catalog.mjs';
 import {collectVerificationEvidence,executeEvidenceProducer} from './collect-verification-evidence.mjs';
 
@@ -68,6 +68,9 @@ try{
   const collectorOwnOutputControl={caseId:'run-missing-owned-report-and-diagnostics',result:'PASS',actualStage03AssertionsExecuted:true,preloadInNodeOptions:false,ordinaryRuntimeOptionsPreserved:true,inheritedChildOutputInRunner:true,inheritedOutputExcludedFromOwnReport:true,producerProgressOnStderr:true,producerProgressBytes:Buffer.byteLength(producerProgress),actualStderrSha256:ownReceipt.stderrSha256,persistedChildReceiptRetained:true,formerReconstructionRejected:true};
   for(const [name,text,diagnostic] of [
     ['producer-progress-on-stdout',source+`\nprocess.stdout.write(${JSON.stringify(producerProgress)});\n`,'Unexpected non-whitespace character after JSON'],
+    ['foreign-failed-observation',source+`\nconsole.log(JSON.stringify({foreignImportedReport:true,verificationObservations:[{checkId:'foreign.failed-assertion',boundary:'controlled imported report',expected:true,observed:false,passed:false}]}));\n`,'failed or missing required assertion foreign.failed-assertion'],
+    ['foreign-duplicate-observation',source+`\nconsole.log(JSON.stringify({foreignImportedReport:true,verificationObservations:[{checkId:'foreign.duplicate-assertion',boundary:'controlled imported report',expected:true,observed:true,passed:true},{checkId:'foreign.duplicate-assertion',boundary:'controlled imported report',expected:true,observed:true,passed:true}]}));\n`,'duplicate emitted assertion foreign.duplicate-assertion'],
+    ['foreign-malformed-observation',source+`\nconsole.log(JSON.stringify({foreignImportedReport:true,verificationObservations:[{checkId:'foreign.malformed-assertion',expected:true,observed:true,passed:true}]}));\n`,'malformed emitted assertion observation'],
     ['missing-required-observation',source.replace('stage03AgentProtocol:true','stage03AgentProtocol:false'),'failed or missing required assertion'],
     ['duplicate-report',source+"\nconsole.log(JSON.stringify({stage03AgentProtocol:true}));\n",'expected exactly one report marker'],
     ['duplicate-observation',source.replace("verificationObservations:[","verificationObservations:[{checkId:'stage03.protocol',boundary:'controlled duplicate',expected:true,observed:true,passed:true},"),'duplicate emitted assertion'],
@@ -113,6 +116,30 @@ try{
     assert.equal(row.implementationClassification,'implemented but insufficiently tested');
   }
   const normativeRegistryLinkageControl={result:'PASS',exactQualifiedLinks:registryRequirements.map(([normativeRequirementId,checkId])=>({normativeRequirementId,checkId})),absentExecutionRemainsUnknown:true,unlinkedImplementationStatusUndetermined:true,fullClauseConformanceClaimed:false};
+  // Exercise the actual composed ingestion producer and both registered owners.
+  // Their independent report assertions execute; a wrapper's imported report
+  // cannot publish the owner's detailed identity or mask its missing receipt.
+  const ownershipSuites=['verify-ingestion.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];
+  const ownershipReceipts=new Map();
+  for(const owner of ownershipSuites)ownershipReceipts.set(owner,await executeEvidenceProducer(owner,{directory:path.join(directory,'ownership-receipts'),evidenceDirectory:path.join(directory,'ownership-runner')}));
+  const wrapper=ownershipReceipts.get('verify-ingestion.mjs'),canonicalIds=ownershipSuites.slice(1).flatMap(owner=>ownershipReceipts.get(owner).reports.flatMap(report=>report.verificationObservations||[]).map(row=>row.checkId));
+  assert.equal(canonicalIds.length,15,'OBSERVATION_OWNER_ORACLE: the actual composed canonical population changed.');
+  assert(canonicalIds.every(id=>wrapper.reports.some(report=>report.verificationObservations?.some(row=>row.checkId===id))),'OBSERVATION_OWNER_ORACLE: actual imported reports were discarded.');
+  assert(canonicalIds.every(id=>!wrapper.observations.some(row=>row.checkId===id)),'OBSERVATION_OWNER_ORACLE: wrapper claimed canonical imported assertion identities.');
+  const ownerAbsent=aggregateExecutedEvidence(new Map([['verify-ingestion.mjs',wrapper]]),evidenceFingerprint());
+  const absentLinks=ownerAbsent.normativeRequirementTrace.filter(row=>row.scopeBindings.some(binding=>binding.checkIds.some(id=>canonicalIds.includes(id))));
+  assert(absentLinks.length>0&&absentLinks.every(row=>row.disposition==='UNKNOWN'),'OBSERVATION_OWNER_ORACLE: imported reports masked missing canonical owner proof.');
+  const ownedAggregate=aggregateExecutedEvidence(ownershipReceipts,evidenceFingerprint());
+  assert.equal(ownedAggregate.receiptCount,3,'OBSERVATION_OWNER_ORACLE: actual composed/owner receipts did not aggregate.');
+  assert(canonicalIds.every(id=>ownedAggregate.normativeRequirementTrace.some(row=>row.executedAssertions.some(assertion=>assertion.checkId===id&&assertion.suite!=='verify-ingestion.mjs'))),'OBSERVATION_OWNER_ORACLE: exact canonical assertion links were lost.');
+  // A second producer explicitly claiming an already owned identity must still
+  // fail the real aggregate boundary, even with consistent per-receipt hashes.
+  const duplicate=structuredClone(registryReceipt),detail=structuredClone(good.receipt.reports.flatMap(report=>report.verificationObservations||[])[0]);
+  duplicate.reports.find(report=>Object.hasOwn(report,'contractClosure')).verificationObservations=[detail];
+  duplicate.observations=observationsFromReports(registrySuite,duplicate.reports);delete duplicate.receiptSha256;duplicate.receiptSha256=sha(duplicate);
+  assert.throws(()=>aggregateExecutedEvidence(new Map([[suite,good.receipt],[registrySuite,duplicate]]),evidenceFingerprint()),new RegExp('duplicate observation '+detail.checkId),'OBSERVATION_OWNER_ORACLE: a double-owned detailed assertion became accepted evidence.');
+  producerControls.push({caseId:'double-owned-detailed-assertion',accepted:false,result:'DETECTED'});
+  const observationOwnershipControl={result:'PASS',actualProducerSuites:ownershipSuites,canonicalDetailedAssertionCount:canonicalIds.length,canonicalCheckIds:canonicalIds,importedReportsRetained:true,canonicalOwnerMissingRemainsUnknown:true,exactCanonicalLinksPreserved:true,doubleOwnedDetailedAssertionRejected:true,foreignFailedDuplicateMalformedAssertionsRejected:true};
   fs.writeFileSync(evidencePath,JSON.stringify(genuine));
   assert.equal(readExecutedEvidence(evidencePath).receiptCount,2,'Actual conforming producer evidence did not reach the real report consumer.');
   const tampered=structuredClone(genuine);tampered.metrics.currentScopeSelectorCoverage={...tampered.metrics.currentScopeSelectorCoverage,numerator:1,denominator:1,value:1,disposition:'SATISFIED'};
@@ -124,5 +151,5 @@ try{
   assert.equal(empty.zeroCounts.staleProposalsAccepted,null,'Absent negative execution was published as zero accepted violations.');
   const saved=metricCatalog.closedMetricUniverseCoverage.checkIds;metricCatalog.closedMetricUniverseCoverage.checkIds=[];
   try{assert.throws(()=>aggregateExecutedEvidence(new Map(),evidenceFingerprint()),/empty\/duplicate metric universe/);}finally{metricCatalog.closedMetricUniverseCoverage.checkIds=saved;}
-  console.log(JSON.stringify({executedEvidenceProtection:'PASS',producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,normativeRegistryLinkageControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
+  console.log(JSON.stringify({executedEvidenceProtection:'PASS',producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
 }finally{fs.rmSync(directory,{recursive:true,force:true});}

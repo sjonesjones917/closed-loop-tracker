@@ -30,17 +30,25 @@ function valueAt(object,pointer){return pointer.split('.').reduce((value,key)=>v
 function selectedReport(reports,marker){const selected=reports.filter(report=>Object.hasOwn(report,marker));requireEvidence(selected.length===1,`expected exactly one report marker ${marker}; received ${selected.length}`);return selected[0];}
 export function observationsFromReports(suite,reports){
   const definition=verificationCatalog[suite];requireEvidence(definition,`unregistered producer ${suite}`);
+  const ownedReports=new Set();
   const observations=definition.checks.map(check=>{
     const report=selectedReport(reports,check.marker),observed=valueAt(report,check.path);
+    ownedReports.add(report);
     const passed=check.condition?check.condition(observed,report):isDeepStrictEqual(observed,check.expected);
     return {checkId:check.id,requirementRefs:check.requirementRefs||[],assertionReference:check.assertionReference,boundary:check.boundary||definition.boundary,expected:check.expected??check.expectedDescription,observed:observed===undefined?null:observed,passed,evidenceBasis:check.basis||'EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS',...(check.violation?{violation:check.violation,accepted:!passed}:{}),...(check.coverageIds?{coverageIds:check.coverageIds(report)}:{}),...(check.excludedIds?{excludedIds:check.excludedIds(report)}:{})};
   });
+  const emittedIds=new Set(observations.map(row=>row.checkId));
   for(const report of reports)for(const observation of report.verificationObservations||[]){
     requireEvidence(typeof observation.checkId==='string'&&observation.checkId&&typeof observation.passed==='boolean'&&typeof observation.boundary==='string'&&Object.hasOwn(observation,'expected')&&Object.hasOwn(observation,'observed'),'malformed emitted assertion observation');
-    // Emitted detailed observations remain separately scoped. They cannot enlarge
-    // a metric's frozen expected assertion population merely by appearing.
-    requireEvidence(!observations.some(row=>row.checkId===observation.checkId),`duplicate emitted assertion ${observation.checkId}`);
-    observations.push({...observation,evidenceBasis:'EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS'});
+    // Imported verifier reports remain complete evidence in receipt.reports,
+    // and every emitted assertion must still be well formed, unique and pass.
+    // Only this producer's exact catalog-selected reports publish its detailed
+    // assertion identities. An importing wrapper cannot replace the required
+    // canonical producer receipt or claim its assertions a second time.
+    requireEvidence(!emittedIds.has(observation.checkId),`duplicate emitted assertion ${observation.checkId}`);
+    emittedIds.add(observation.checkId);
+    requireEvidence(observation.passed,`producer ${suite} reported a failed or missing required assertion ${observation.checkId}`);
+    if(ownedReports.has(report))observations.push({...observation,evidenceBasis:'EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS'});
   }
   const population=negativePopulationCatalog[suite];
   if(population){
