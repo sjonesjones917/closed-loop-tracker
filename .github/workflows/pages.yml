@@ -93,6 +93,10 @@ jobs:
             node --check "$file"
           done
 
+      - name: Stage 01 agent response contract alignment
+        if: steps.reuse.outputs.reused != 'true'
+        run: node verify-stage01-agent-contract-alignment.mjs
+
       - name: Deployment manifest, build identity, and reproducibility
         if: steps.reuse.outputs.reused != 'true'
         run: |
