@@ -38,6 +38,10 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    env:
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     outputs:
       verified_artifact_name: ${{ steps.verified.outputs.artifact_name }}
       verification_run_id: ${{ steps.reuse.outputs.run_id || github.run_id }}
@@ -398,6 +402,9 @@ jobs:
         with:
           path: _site
 
+      - name: Collect current executed assertion evidence
+        run: node collect-verification-evidence.mjs --run-missing
+
       # This is reached only after full verification or proven reuse of the
       # identical Git tree and runtime bytes from a fully passing PR attempt.
       - name: Seal verified deployment artifact
@@ -498,6 +505,10 @@ jobs:
        (github.event_name == 'workflow_dispatch' && needs.test.result == 'success'))
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
+    env:
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     permissions:
       contents: read
     steps:
@@ -542,6 +553,17 @@ jobs:
             /tmp/mobile-verify-*.mjs.*.log
           retention-days: 90
           if-no-files-found: warn
+      - name: Download current executed assertion evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ needs.test.outputs.verified_artifact_name }}
+          path: _verified-evidence
+      - name: Validate current executed assertion evidence handoff
+        run: |
+          set -euo pipefail
+          mkdir -p .verification-receipts
+          cp -R _verified-evidence/proofs/. .verification-receipts/
+          node collect-verification-evidence.mjs
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:
@@ -574,6 +596,7 @@ jobs:
           import fs from 'node:fs';
           import {evaluateFinalAcceptance} from './final-acceptance.mjs';
           import {resolveVisualBaselineSubmission} from './visual-baseline-submission.mjs';
+          import {applyExecutedEvidence,readExecutedEvidence} from './verification-evidence.mjs';
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
           const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
           const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
@@ -599,7 +622,7 @@ jobs:
           }
           const physicalIPhoneAccepted=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
           const finalAcceptancePublication=false;
-          const report={
+          let report={
             commit:process.env.GITHUB_SHA,
             verificationSource:{runId:process.env.VERIFICATION_RUN_ID,sourceCommit:process.env.VERIFICATION_SOURCE_COMMIT},
             workflow:'mobile-closed-loop/30',
@@ -704,6 +727,7 @@ jobs:
           mobileMetric.scopeHash=`commit:${report.commit}:manifest:${mobileAcceptance.mobileAcceptanceDeploymentManifestDigest||'UNPROVEN'}`;
           mobileMetric.evidenceReferences=physicalIPhoneAccepted?[`mobile-evidence:${mobileAcceptance.mobileAcceptanceEvidenceId}`,`submitter:${mobileAcceptance.mobileAcceptanceSubmitter}`]:['evaluate-mobile-acceptance-submission.mjs:physical-proof-unavailable'];
           report.actualIPhoneSafariAcceptanceCoverage=mobileMetric.value;
+          report=applyExecutedEvidence(report,readExecutedEvidence('.verification-receipts/evidence.json'));
           const visualBaseline=resolveVisualBaselineSubmission({
             inputJson:process.env.VISUAL_BASELINE_EVIDENCE_JSON,
             ledgerVisualBaseline:JSON.parse(fs.readFileSync('verification/closed-loop-build-state.json','utf8')).visualBaseline,

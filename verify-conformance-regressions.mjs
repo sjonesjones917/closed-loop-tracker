@@ -8,6 +8,10 @@ import {fileURLToPath} from 'node:url';
 // Direct invariant checks precede composed matrices and full lifecycle fixtures.
 // This changes failure discovery order; every existing suite still executes.
 const suites=[
+ "verify-executed-evidence.mjs",
+ "verify-project-activation.mjs",
+ "verify-stage19-discovery-challenge.mjs",
+ "verify-stage26-independent-review.mjs",
  "verify-job-confirmation-contract.mjs",
  "verify-reconciliation-confirmation.mjs",
  "verify-verifier-runtime.mjs",
@@ -94,7 +98,7 @@ const suites=[
  "verify-counterpart-faults.mjs"];
 function conformanceSources(){
  const verifierRuntimeConsumers=fs.readdirSync('.').filter(path=>/\.mjs$/.test(path)&&fs.readFileSync(path,'utf8').includes("from './verifier-runtime.mjs'"));
- return [...new Set(['.github/workflows/pages.yml','verify-conformance-regressions.mjs','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs',...verifierRuntimeConsumers,...suites])];
+ return [...new Set(['.github/workflows/pages.yml','verify-conformance-regressions.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-evidence-preload.mjs','collect-verification-evidence.mjs','verification-assertion-bindings.json','verification-negative-populations.json','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs',...verifierRuntimeConsumers,...suites])];
 }
 
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');

@@ -163,10 +163,12 @@ try{
     const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     const step=workflow.match(new RegExp('^      - name: '+escaped+'\\n(?:(?!      - ).*(?:\\n|$))*','m'))?.[0];
     assert.ok(step,`Required gate missing from workflow: ${name}`);
-    if(!['Verified artifact reuse checks','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
+    if(!['Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
     else assert.doesNotMatch(step,/^        if:/m,'The artifact contract and final seal must always run.');
   }
   assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Shared production faults, bounded sequences, and executed observations'));
+  assert.ok(workflow.indexOf('name: Collect current executed assertion evidence')>workflow.indexOf('name: Shared production faults, bounded sequences, and executed observations'));
+  assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Collect current executed assertion evidence'));
   assert.match(workflow,/include-hidden-files: true/);
   assert.match(workflow,/name: \$\{\{ needs\.test\.outputs\.verified_artifact_name \}\}/,'Live verification must retain the successful test attempt artifact on job reruns.');
   assert.match(workflow,/VERIFIED_SITE_DIR: _verified-site\/site/);

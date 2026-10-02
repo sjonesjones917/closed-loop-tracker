@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import './hash.js';
+import {evidenceFingerprint,readExecutionReceipts,aggregateExecutedEvidence,sha as evidenceSha} from './verification-evidence.mjs';
 
 const hash=globalThis.closedLoopHash;
 export const manifestName='closed-loop-deployment-manifest.json';
@@ -18,12 +19,13 @@ export const fullTestSteps=[
   'Test IR validation, security, and deterministic runtime','Raw-first ingestion and negative cases',
   'Workflow, gates, and full cycle','Project lifecycle and application-owned controls','Prompt semantics and leakage',
   'Build static application for operator verification','Local Chromium operator path',
-  'Shared production faults, bounded sequences, and executed observations','Seal verified deployment artifact'
+  'Shared production faults, bounded sequences, and executed observations','Collect current executed assertion evidence','Seal verified deployment artifact'
 ];
 export const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const requireValue=(condition,message)=>{if(!condition)throw new Error(message);};
 const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 const writeJson=(file,value)=>fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');
+const collectsExecutedEvidence=cwd=>Boolean(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS)&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(cwd)===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT));
 const git=(cwd,...args)=>execFileSync('git',args,{timeout:30000,killSignal:'SIGKILL',cwd,encoding:'utf8'}).trim();
 const artifactName=(run,attempt)=>`verified-site-${run}-${attempt}`;
 const output=(name,value)=>{if(process.env.GITHUB_OUTPUT)fs.appendFileSync(process.env.GITHUB_OUTPUT,`${name}=${value}\n`);};
@@ -119,11 +121,19 @@ export async function sealSite({cwd,directory,bundleDirectory,context}){
   fs.rmSync(bundleDirectory,{recursive:true,force:true});
   fs.mkdirSync(bundleDirectory,{recursive:true});
   fs.cpSync(directory,path.join(bundleDirectory,'site'),{recursive:true});
+  let executedEvidence;
+  if(collectsExecutedEvidence(cwd)){
+    const fingerprint=evidenceFingerprint(cwd),receipts=readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,fingerprint),evidence=aggregateExecutedEvidence(receipts,fingerprint);
+    requireValue(receipts.size===Object.keys((await import('./verification-evidence-catalog.mjs')).verificationCatalog).length,'Required executed assertion receipt is absent at artifact seal.');
+    fs.cpSync(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,path.join(bundleDirectory,'proofs'),{recursive:true});
+    const proofFiles=Object.fromEntries(fs.readdirSync(path.join(bundleDirectory,'proofs')).filter(name=>name.endsWith('.json')).sort().map(name=>[name,digest(fs.readFileSync(path.join(bundleDirectory,'proofs',name)))]));
+    executedEvidence={schema:evidence.schema,sourceCommit:context.commit,sourceInputsSha256:fingerprint.sourceInputsSha256,receiptCount:receipts.size,proofFiles,proofBundleSha256:evidenceSha(proofFiles)};
+  }
   const receipt={schema:'closed-loop-verified-site/1',repository:context.repository,event:context.event,
     sourceCommit:context.commit,sourceTree:git(cwd,'rev-parse','HEAD^{tree}'),headSha:context.headSha,
     runId:String(context.runId),runAttempt:context.runAttempt,workflowFileSha256:manifest.workflowFileSha256,
     manifestDigest:manifest.manifestDigest.digest,buildIdentity:manifest.buildIdentity,
-    ...(context.reusedFrom?{reusedFrom:context.reusedFrom}:{})};
+    ...(context.reusedFrom?{reusedFrom:context.reusedFrom}:{}),...(executedEvidence?{executedEvidence}:{})};
   writeJson(path.join(bundleDirectory,'receipt.json'),receipt);
   return receipt;
 }
@@ -184,6 +194,21 @@ async function reuseCandidate(c){
     return;
   }
   assertReceipt(receipt,manifest,{run,repository:c.repository,headSha:candidate.headSha,sourceCommit:source.sha,sourceTree:source.tree.sha,workflowDigest:digest(fs.readFileSync('.github/workflows/pages.yml'))});
+  if(collectsExecutedEvidence(process.cwd())){
+  requireValue(receipt.executedEvidence?.sourceCommit===source.sha&&receipt.executedEvidence.proofBundleSha256===evidenceSha(receipt.executedEvidence.proofFiles),'Executed proof bundle receipt is absent or inconsistent.');
+  for(const [name,expected]of Object.entries(receipt.executedEvidence.proofFiles))requireValue(digest(fs.readFileSync(path.join('_verified-pr/proofs',name)))===expected,'Executed proof bundle file changed: '+name);
+  // Preserve the original tested revision while explicitly binding identical
+  // current inputs to this main promotion. Ordinary receipt readers cannot
+  // silently substitute a different head revision.
+  const fingerprint=evidenceFingerprint(process.cwd()),proofDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS||'.verification-receipts';
+  fs.mkdirSync(proofDirectory,{recursive:true});
+  for(const [name]of Object.entries(receipt.executedEvidence.proofFiles)){
+    if(name==='evidence.json')continue;
+    const proof=readJson(path.join('_verified-pr/proofs',name));
+    requireValue(proof.fingerprint?.sourceInputsSha256===fingerprint.sourceInputsSha256&&JSON.stringify(proof.fingerprint.runtime)===JSON.stringify(fingerprint.runtime),'Executed proof runtime/source inputs changed; current full verification is required.');
+    delete proof.receiptSha256;proof.promotion={sourceCommit:c.commit,sourceTree:mainTree,verifiedSourceCommit:source.sha,verifiedRunId:String(run.id),verifiedRunAttempt:run.run_attempt,proofBundleSha256:receipt.executedEvidence.proofBundleSha256};proof.receiptSha256=evidenceSha(proof);writeJson(path.join(proofDirectory,name),proof);
+  }
+  }
   (await promoteSite({cwd:process.cwd(),verifiedDirectory:path.resolve('_verified-pr/site'),outputDirectory:path.resolve('_site'),commit:c.commit,runId:c.runId}));
   writeJson('.verified-reuse.json',{...candidate,testedCommit:source.sha,sourceTree:mainTree,manifestDigest:manifest.manifestDigest.digest});
   output('reused','true');
