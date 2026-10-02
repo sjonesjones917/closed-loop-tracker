@@ -1,4 +1,5 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {routeProjectionFixtureFields} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
@@ -56,23 +57,8 @@ const scopeFor=c=>{const s=Number(schema.RECORD_SCHEMAS[c]?.stage||0),x={inputVe
 const sent={};
 for(const [c,d] of Object.entries(schema.RECORD_SCHEMAS)){
   const af=Object.values(d.fieldDefinitions).find(x=>x.producer===schema.PRODUCER.AGENT)?.name,id=`ORACLE-${c}-CURRENT`,sid=`ORACLE-${c}-STALE`,f={[d.idField]:id},sf={[d.idField]:sid};if(af){f[af]=`CURRENT-ORACLE-${c}`;sf[af]=`STALE-ORACLE-${c}`;}if(c==='defects'){f.OBSERVED_FAILURE='CURRENT-ORACLE-defects-observed';f.EXPECTED_CONDITION='CURRENT-ORACLE-defects-expected';sf.OBSERVED_FAILURE='STALE-ORACLE-defects-observed';sf.EXPECTED_CONDITION='STALE-ORACLE-defects-expected';}
-  // These records prove projection only. A proof object nevertheless needs its
-  // real canonical shape: ingestion validates PROPOSED_EXPRESSION and always
-  // writes NORMALIZED_EXPRESSION before any accepted proof can be reviewed.
-  // Keep distinct rationale sentinels to detect current/stale content leakage.
-  if(c==='proofExpressions'){
-    const node={type:'LEAF',testId:'ORACLE-tests-CURRENT',requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};
-    const staleNode={...node,testId:'ORACLE-tests-STALE'};
-    f.PROPOSED_EXPRESSION=node;f.NORMALIZED_EXPRESSION=node;f.SEMANTIC_RATIONALE='CURRENT-ORACLE-proofExpressions';
-    sf.PROPOSED_EXPRESSION=staleNode;sf.NORMALIZED_EXPRESSION=staleNode;sf.SEMANTIC_RATIONALE='STALE-ORACLE-proofExpressions';
-  }
-  // The discovery operation exports the actual governing instruction selected
-  // by requirement trace, not an untraced synthetic instruction record.
-  if(c==='instructionTraces'){f.INSTRUCTION_ID='ORACLE-instructions-CURRENT';sf.INSTRUCTION_ID='ORACLE-instructions-STALE';}
-  // Independent product reviewers receive actual governing source evidence and
-  // its attachment. Mere currentness never authorizes arbitrary evidence/files.
-  if(c==='requirements'){f.SOURCE_ID='ORACLE-sources-CURRENT';sf.SOURCE_ID='ORACLE-sources-STALE';}
-  if(c==='evidenceRecords'){f.SOURCE_ID='ORACLE-sources-CURRENT';f.ATTACHMENT_ID='ORACLE-artifacts-CURRENT';sf.SOURCE_ID='ORACLE-sources-STALE';sf.ATTACHMENT_ID='ORACLE-artifacts-STALE';}
+  Object.assign(f,routeProjectionFixtureFields(c,{idPrefix:'ORACLE',variant:'CURRENT',marker:`CURRENT-ORACLE-${c}`}));
+  Object.assign(sf,routeProjectionFixtureFields(c,{idPrefix:'ORACLE',variant:'STALE',marker:`STALE-ORACLE-${c}`}));
   const sc=scopeFor(c),ssc={...sc},first=Object.keys(ssc)[0];ssc[first]=`STALE-${ssc[first]}`;state.projectData[c]=[{id:sid,stage:d.stage||1,fields:sf,scope:ssc,active:true,validity:'CURRENT'},{id,stage:d.stage||1,fields:f,scope:sc,active:true,validity:'CURRENT'}];sent[c]={id,sid,text:typeof f[af]==='string'?f[af]:f.SEMANTIC_RATIONALE||id,stale:typeof sf[af]==='string'?sf[af]:sf.SEMANTIC_RATIONALE||sid};
   const selected=engine.recordsForCurrentScope(state,c);assert(selected.some(r=>engine.recordId(r,c)===id),`${c}: current-scope selector omitted current record.`);assert(!selected.some(r=>engine.recordId(r,c)===sid),`${c}: current-scope selector admitted stale record.`);
 }

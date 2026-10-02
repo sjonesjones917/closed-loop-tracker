@@ -124,6 +124,22 @@ export function stageHandoffRecoveryProof(before,exported,restored,hash){
   return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
 }
 
+// Current/stale route sentinels exercise projection, not accepted stage results.
+// Supply the verified canonical shape and governing relationships reached by
+// semantic review and independent product-review selectors. Do not derive any
+// read/write oracle or semantic approval from production implementation here.
+export function routeProjectionFixtureFields(collection,{idPrefix,variant,marker}){
+ const id=family=>`${idPrefix}-${family}-${variant}`;
+ if(collection==='proofExpressions'){
+  const leaf={type:'LEAF',testId:id('tests'),requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};
+  return {PROPOSED_EXPRESSION:leaf,NORMALIZED_EXPRESSION:leaf,SEMANTIC_RATIONALE:marker};
+ }
+ if(collection==='instructionTraces')return {INSTRUCTION_ID:id('instructions')};
+ if(collection==='requirements')return {SOURCE_ID:id('sources')};
+ if(collection==='evidenceRecords')return {SOURCE_ID:id('sources'),ATTACHMENT_ID:id('artifacts')};
+ return {};
+}
+
 // Bounded canonical records for logic fixtures use the production identity,
 // application field defaults and hash authorities. They are synthetic evidence.
 export function canonicalFixtureRecord({engine,schema},project,collection,fields,{scope={},relationships={},stage=schema.RECORD_SCHEMAS[collection].stage}={}){
