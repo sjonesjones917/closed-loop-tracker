@@ -578,6 +578,16 @@ function reserveAndBuildPromptRecord(state,stageOrDefinition,options={},metadata
   if(record.instructionId!==provisional.instructionId||!record.transportBindingRequired||record.operationReservationId!==recordId(reservation,'operationReservations')||record.packageId!==packageId||record.challengeNonce!==recordValue(reservation,'CHALLENGE_NONCE')||Number(record.scope?.projectRevision)!==Number(recordValue(reservation,'RESERVATION_REVISION')))throw new Error('The authoritative external instruction was not atomically bound to its application-owned reservation transaction.');
   const registered=workflow.registerGeneratedPrompt(state,record);promptContextFiles.set(registered,promptContextFiles.get(candidate)||[]);return {prompt:registered,reservation};
 }
+function prepareSemanticAuthorCorrection(state,reviewStage,{owningTabInstance}={}){
+ const completion=workflow.semanticReviewCompletion(state,Number(reviewStage)),target=completion.correctionTargets?.[0];
+ if(completion.complete||!target)throw new Error('No current missing semantic author provenance requires a replacement.');
+ const change=safe(state.projectData.acceptedChanges).find(change=>change.changeId===target.changeId&&!change.invalidatedBy&&change.status==='COMMITTED');
+ const contract=schema.operationContract(target.stage,target.operation);
+ if(!change||change.stage!==target.stage||change.operation!==target.operation||!contract||contract.acceptsExternalResponse===false||target.operation==='EXECUTE_RUN')throw new Error('The exact responsible author response has no supported external replacement path.');
+ workflow.addHistory(state,'REPLACEMENT_REQUESTED',{stage:target.stage,operation:target.operation,scope:workflow.clone(change.scope||{}),rawResponseId:change.rawResponseId,promptId:change.promptId||null,reason:target.reason,requestedByReviewStage:Number(reviewStage),responsibleChangeId:target.changeId});
+ const created=reserveAndBuildPromptRecord(state,target.stage,{operation:target.operation},{owningTabInstance});
+ return {...created,correctionTarget:target};
+}
 function promptFileManifest(record){
   const text=String(record?.prompt||'');
   if(!text.endsWith('\n')||text.includes('\r')||text.startsWith('\uFEFF')||hash.sha256Text(text)!==record?.bodySha256||record?.fullTextSha256!==record?.bodySha256)throw new Error('The instruction file no longer matches its authoritative byte identity. Save the current instruction again.');
@@ -587,5 +597,5 @@ function promptFileManifest(record){
 }
 function build(stageOrDefinition,state,options){return buildPromptRecord(stageOrDefinition,state,options).prompt;}
 core.buildStagePrompt=build;
-globalThis.closedLoopPromptEngine=Object.freeze({version:PROMPT_ENGINE_VERSION,PROMPT_INLINE_LIMITS,RETURNED_FILE_LIMITS,fileHandoff,materializePromptContextFiles,__controllingCompletionAmendmentVersion:CONTROLLING_COMPLETION_VERSION,build,buildPromptRecord,reserveAndBuildPromptRecord,promptFileManifest,procedures,procedureFor,contextFor,scopeFor,assertRequiredPromptScope,responseContractDescriptor,responseContract,packageIdForPrompt,promptTransportBinding,intakeCoverageManifest,obligationManifest,parseCapturedInputSet,dataEnvelope,refreshDataEnvelopes,contextContentAuthorization,retryContextFor,retryInputIdentities});
+globalThis.closedLoopPromptEngine=Object.freeze({version:PROMPT_ENGINE_VERSION,PROMPT_INLINE_LIMITS,RETURNED_FILE_LIMITS,fileHandoff,materializePromptContextFiles,__controllingCompletionAmendmentVersion:CONTROLLING_COMPLETION_VERSION,build,buildPromptRecord,reserveAndBuildPromptRecord,prepareSemanticAuthorCorrection,promptFileManifest,procedures,procedureFor,contextFor,scopeFor,assertRequiredPromptScope,responseContractDescriptor,responseContract,packageIdForPrompt,promptTransportBinding,intakeCoverageManifest,obligationManifest,parseCapturedInputSet,dataEnvelope,refreshDataEnvelopes,contextContentAuthorization,retryContextFor,retryInputIdentities});
 })();
