@@ -1,5 +1,6 @@
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {canonicalFixtureRecord,reviewApplicabilityFixture} from './test-fixtures.mjs';
+import {buildUnchangedConfirmationFixture} from './stage19-fixture.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -329,21 +330,16 @@ console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
 
 // Exact unchanged-confirmed candidate artifact identity controls Stage 20 baseline bytes.
 {
-  const p=project('JOB-BASELINE-EXACT-CANDIDATE');
-  const shaA='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',shaB='bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
-  const a=record('artifacts',17,{FILENAME:'confirmed.bin',TYPE:'application/octet-stream',BYTE_SIZE:10,SHA256:shaA,STORAGE_REFERENCE:'indexeddb:ARTIFACT-CONFIRMED',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-CONFIRMED');
-  const b=record('artifacts',20,{FILENAME:'different.bin',TYPE:'application/octet-stream',BYTE_SIZE:10,SHA256:shaB,STORAGE_REFERENCE:'indexeddb:ARTIFACT-DIFFERENT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-DIFFERENT');
-  p.projectData.artifacts.push(a,b);
-  const candidate=record('candidateFreezes',17,{ITERATION_ID:'ITERATION-CORRECTED',COMPONENT_MANIFEST:[{artifactId:'ARTIFACT-CONFIRMED',filename:'confirmed.bin',byteSize:10,sha256:shaA,storageReference:'indexeddb:ARTIFACT-CONFIRMED'}],COMPONENT_HASHES:{'ARTIFACT-CONFIRMED':shaA},STATUS:'FROZEN'},'CANDIDATE-CONFIRMED');
-  p.projectData.candidateFreezes.push(candidate);
-  const iteration=record('iterations',19,{CANDIDATE_ID:'CANDIDATE-CONFIRMED',PURPOSE:'UNCHANGED_CONFIRMATION',STATUS:'FROZEN'},'ITERATION-CONFIRM');
-  p.projectData.iterations.push(iteration);p.job.CURRENT_ITERATION='ITERATION-CONFIRM';
-  const scope={...engine.currentScope(p),iterationId:'ITERATION-CONFIRM',candidateId:'CANDIDATE-CONFIRMED'};candidate.scope={...scope,iterationId:'ITERATION-CORRECTED'};iteration.scope=scope;a.scope=scope;b.scope=scope;
-  const confirmation=record('confirmationRecords',19,{ITERATION_ID:'ITERATION-CONFIRM',CANDIDATE_ID:'CANDIDATE-CONFIRMED',DETERMINATION:'SATISFIED'},'CONFIRM-EXACT-CANDIDATE');confirmation.scope=scope;p.projectData.confirmationRecords.push(confirmation);
-  let rejected=false;try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-DIFFERENT'],operatorLabel:'VERIFY'});}catch(error){rejected=/exact artifact set/i.test(String(error.message));}
-  assert(rejected,'Stage 20 accepted a baseline artifact set different from the unchanged-confirmed candidate.');
-  const authorizationDecision=engine.recordRegisteredHumanDecision(p,{stage:20,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:'CANDIDATE-CONFIRMED',value:'AUTHORIZED',operatorLabel:'VERIFY'});
-  const baseline=engine.freezeBaseline(p,{authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});assert(JSON.stringify(engine.recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'))===JSON.stringify(['ARTIFACT-CONFIRMED']),'Stage 20 did not derive baseline artifacts from the unchanged-confirmed candidate manifest.');assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId==='CANDIDATE-CONFIRMED'&&engine.recordValue(baseline,'APPROVED_VERSIONS').iterationId==='ITERATION-CONFIRM','Stage 20 baseline lost the exact unchanged-confirmation candidate/iteration identity.');assert(engine.recordValue(baseline,'HUMAN_AUTHORIZATION')===engine.recordId(authorizationDecision,'humanDecisions'),'Stage 20 baseline did not reference the exact BASELINE_AUTHORIZATION human decision.');
+  const {p,cand19,iter19}=buildUnchangedConfirmationFixture('JOB-BASELINE-EXACT-CANDIDATE');
+  const artifactId=artifactFixtureId(engine,p,'ARTIFACT-CANDIDATE');
+  const authorizationDecision=engine.recordRegisteredHumanDecision(p,{stage:20,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:cand19,value:'AUTHORIZED',operatorLabel:'VERIFY'});
+  const before=hash.sha256Value(p);let rejected=false;
+  try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-DIFFERENT'],authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});}catch(error){rejected=/exact artifact set/i.test(String(error.message));}
+  assert(rejected,'Stage 20 accepted a baseline artifact set different from the unchanged-confirmed candidate.');assert(hash.sha256Value(p)===before,'Rejected exact-candidate selection mutated canonical state.');
+  const baseline=engine.freezeBaseline(p,{authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});
+  assert(JSON.stringify(engine.recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'))===JSON.stringify([artifactId]),'Stage 20 did not derive baseline artifacts from the unchanged-confirmed candidate manifest.');
+  assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId===cand19&&engine.recordValue(baseline,'APPROVED_VERSIONS').iterationId===iter19,'Stage 20 baseline lost the exact unchanged-confirmation candidate/iteration identity.');
+  assert(engine.recordValue(baseline,'HUMAN_AUTHORIZATION')===engine.recordId(authorizationDecision,'humanDecisions'),'Stage 20 baseline did not reference the exact BASELINE_AUTHORIZATION human decision.');
 }
 
 
