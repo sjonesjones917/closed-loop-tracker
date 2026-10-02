@@ -16,6 +16,16 @@ const source=fs.readFileSync('verify-stage03-agent-protocol.mjs','utf8').replace
 const preload=path.resolve('verification-evidence-preload.mjs'),suite='verify-stage03-agent-protocol.mjs';
 const producerControls=[];
 try{
+  const syntaxDirectory=path.join(directory,'syntax-only'),syntaxReceipts=path.join(syntaxDirectory,'receipts');fs.mkdirSync(syntaxDirectory);
+  const syntaxEnvironment={...process.env,CLOSED_LOOP_VERIFICATION_RECEIPTS:syntaxReceipts,NODE_OPTIONS:`${process.env.NODE_OPTIONS||''} --import ${preload}`.trim()};
+  const syntaxGood=await runVerifier(process.execPath,['--check',path.resolve(suite)],{env:syntaxEnvironment});
+  assert.equal(syntaxGood.status,0,'A valid syntax-only invocation was treated as an executed assertion producer.');
+  assert.equal(fs.existsSync(path.join(syntaxReceipts,suite+'.json')),false,'Syntax-only inspection fabricated a suite execution receipt.');
+  const invalidSyntaxFile=path.join(syntaxDirectory,suite);fs.writeFileSync(invalidSyntaxFile,'const controlledSyntaxViolation = ;\n');
+  const syntaxBad=await runVerifier(process.execPath,['--check',invalidSyntaxFile],{env:syntaxEnvironment});
+  assert.equal(syntaxBad.status,1,'The preload masked an actual Node syntax failure.');assert.match(syntaxBad.stderr,/SyntaxError/);
+  assert.equal(fs.existsSync(path.join(syntaxReceipts,suite+'.json')),false,'A parser failure became an executed suite receipt.');
+  const syntaxPopulationCases=[{caseId:'conforming-syntax-without-execution',expectedExit:0,observedExit:syntaxGood.status,executionReceiptCreated:false},{caseId:'controlled-parser-failure',expectedExit:1,observedExit:syntaxBad.status,executionReceiptCreated:false}];
   async function run(name,text){
     const caseDirectory=path.join(directory,name);fs.mkdirSync(caseDirectory);const file=name==='conforming'?path.resolve(suite):path.join(caseDirectory,suite);if(name!=='conforming')fs.writeFileSync(file,text);
     const receipts=path.join(caseDirectory,'receipts');
@@ -65,5 +75,5 @@ try{
   assert.equal(empty.zeroCounts.staleProposalsAccepted,null,'Absent negative execution was published as zero accepted violations.');
   const saved=metricCatalog.closedMetricUniverseCoverage.checkIds;metricCatalog.closedMetricUniverseCoverage.checkIds=[];
   try{assert.throws(()=>aggregateExecutedEvidence(new Map(),evidenceFingerprint()),/empty\/duplicate metric universe/);}finally{metricCatalog.closedMetricUniverseCoverage.checkIds=saved;}
-  console.log(JSON.stringify({executedEvidenceProtection:'PASS',producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
+  console.log(JSON.stringify({executedEvidenceProtection:'PASS',producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
 }finally{fs.rmSync(directory,{recursive:true,force:true});}

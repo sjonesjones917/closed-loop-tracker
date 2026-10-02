@@ -5,11 +5,14 @@ import {recordExecutionReceipt,evidenceFingerprint,sha,RECEIPT_SCHEMA} from './v
 
 const suite=path.basename(process.argv[1]||'');
 const directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS;
+// --check parses a named file without executing its verifier body. Preserve its
+// actual parser exit status, but never publish it as an executed suite receipt.
+const syntaxOnly=process.execArgv.includes('--check')||process.execArgv.includes('-c');
 // A focused timing-only child and a deliberately faulted native owner are
 // different audited populations. Their enclosing required verifiers retain
 // their negative receipts; neither can overwrite the complete positive run.
 const focusedPopulation=suite==='verify-full-cycle.mjs'&&process.argv.includes('--timing-only')||suite==='verify-native-proof-journey.mjs'&&process.env.CONFORMANCE_NATIVE_FAULT==='skip-proof-recording';
-if(directory&&verificationCatalog[suite]&&!focusedPopulation&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(process.cwd())===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT))){
+if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(process.cwd())===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT))){
   const fingerprint=evidenceFingerprint(),chunks=[],stderrChunks=[];
   let byteCount=0,outputOverflow=false;
   const write=process.stdout.write;
