@@ -866,6 +866,8 @@ function gate(stage,project){
   switch(stage){
     case 1:{
       if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');
+      const deliverable=String(project.stages[1]?.agentData?.EXACT_DELIVERABLE_REQUESTED??project.job.EXACT_DELIVERABLE_REQUESTED??'').trim();
+      if(!deliverable||adjudication_UNKNOWN.has(upper(deliverable)))reasons.push('A defined intended deliverable is required before Stage 01 can complete.');
       requireAccepted();
       const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===inputVersionForStage(project,1));
       if(!confirmed)reasons.push('Human confirmation bound to the current accepted change and input version is required.');
