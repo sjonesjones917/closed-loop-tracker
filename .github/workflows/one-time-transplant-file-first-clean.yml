@@ -1,0 +1,108 @@
+name: One-time clean file-first transplant
+on:
+  push:
+    branches: [fix/file-first-clean-726b-20260903]
+permissions:
+  contents: write
+jobs:
+  transplant:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/file-first-clean-726b-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply only the proven substantive file-first diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE=78d1760734d0d396adc6468d3702c2cb9ffb3a05
+          git fetch --no-tags origin "$SOURCE"
+          git diff "$SOURCE^" "$SOURCE" -- \
+            app-core.js \
+            build-test-project.mjs \
+            index.html \
+            project-store.js \
+            response-ingestion.js \
+            verify-browser-extra.mjs \
+            verify-browser.mjs \
+            verify-file-first-operator.mjs \
+            verify-file-first-response.mjs \
+            verify-ingestion.mjs \
+            verify-prompt-semantics.mjs \
+            verify.mjs \
+            workflow-engine.js > /tmp/file-first.patch
+          test -s /tmp/file-first.patch
+          git apply --3way /tmp/file-first.patch
+          ! grep -R -nE '^(<<<<<<<|=======|>>>>>>>)' -- \
+            app-core.js workflow-engine.js response-ingestion.js project-store.js index.html
+      - name: Remove the demonstrated UI instruction leak and pin exact response-file wording
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          app = Path('app-core.js')
+          text = app.read_text()
+          old = '<strong>The agent should now return one final JSON response file. Select that file below.</strong>'
+          new = '<strong>One final JSON response file is now required. Select that file below.</strong>'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one leaked UI instruction phrase, found {text.count(old)}')
+          app.write_text(text.replace(old, new))
+
+          html = Path('index.html')
+          text = html.read_text()
+          old = '<strong>Select that exact response JSON file in the application</strong>'
+          new = '<strong>Select the exact response.json file returned by the agent in the application</strong>'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one response-file guidance target, found {text.count(old)}')
+          html.write_text(text.replace(old, new))
+
+          proof = Path('verify-file-first-response.mjs')
+          text = proof.read_text()
+          old = "/Select that exact response JSON file in the application/"
+          new = "/Select the exact response\\.json file returned by the agent in the application/"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one static guidance oracle, found {text.count(old)}')
+          proof.write_text(text.replace(old, new))
+          PY
+      - name: Prove the whole ratchet step locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify-reservation-contract.mjs
+          node verify-file-first-response.mjs
+          node verify-file-first-operator.mjs
+          node verify-data-route-closure.mjs
+          node verify-infrastructure-route-closure.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          node verify.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+      - name: Commit only permanent implementation and regression files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/one-time-transplant-file-first-clean.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only | grep '^\.github/workflows/' || true)"
+          git commit -m 'Make the external response path file-first'
+          git push origin HEAD:fix/file-first-clean-726b-20260903
