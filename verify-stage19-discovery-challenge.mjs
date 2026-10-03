@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import vm from 'node:vm';
 import {appMarkup} from './test-app-markup.mjs';
 import assert from 'node:assert/strict';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -50,7 +49,7 @@ const beforeAuthorPrompt=originalAuthorIdentity(recoveryProject),beforeAccepted=
 assert.ok(handlerStart>=0&&handlerEnd>handlerStart);
 let recoveryHandler=null,rendered=false,selectedPrompt=null;
 const adapter={current:recoveryProject,clone:engine.clone,TAB_INSTANCE_ID:'SYNTHETIC-RECOVERY-TAB',closedLoopPromptEngine,bindAction:(selector,handler)=>{assert.equal(selector,'#prepare-semantic-author-correction');recoveryHandler=handler;},persistReplacement:async(next,{expectedProjectRevision})=>{assert.equal(expectedProjectRevision,recoveryProject.revision);adapter.current=next;},selectStageContinuation:pr=>{selectedPrompt=pr;},announce:()=>{},render:()=>{rendered=true;},focusAfterAction:()=>{},$:()=>null};
-vm.runInNewContext(appSource.slice(handlerStart,handlerEnd),adapter,{filename:'app-core.js:actual-semantic-author-recovery-handler'});await recoveryHandler();
+createVerifierRuntime.loadScript(createVerifierRuntime(adapter),appSource.slice(handlerStart,handlerEnd),{filename:'app-core.js:actual-semantic-author-recovery-handler'});await recoveryHandler();
 const corrected=adapter.current,correctionPrompt=selectedPrompt;
 assert.equal(corrected.activeStage,8);assert.equal(correctionPrompt.stage,8);assert.equal(correctionPrompt.operation,'COMPLETE');assert.equal(rendered,true);assert.ok(correctionPrompt.operationReservationId);assert.ok(correctionPrompt.contextManifest.operationActorContextId,'DISCOVERY_RECOVERY_RESERVED_AUTHOR_ORACLE: new execution has no actual pre-execution author reservation');
 assert.equal(hash.sha256Value(corrected.projectData.acceptedChanges),beforeAccepted,'DISCOVERY_RECOVERY_PROGRESS_ORACLE: preparing recovery replaced accepted progress');assert.equal(hash.sha256Value(corrected.projectData.instructions),beforeInstructions);assert.equal(originalAuthorIdentity(corrected),beforeAuthorPrompt,'DISCOVERY_RECOVERY_LEGACY_IDENTITY_ORACLE: fabricated the historical author identity');assert.equal(engine.semanticReviewCompletion(corrected,19).complete,false,'DISCOVERY_RECOVERY_PENDING_ORACLE: preparing a replacement accepted the unknown historical producer');
