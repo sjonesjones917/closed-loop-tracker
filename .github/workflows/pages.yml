@@ -93,6 +93,9 @@ jobs:
             node --check "$file"
           done
 
+      - name: Normative specification and requirement governance
+        run: node verify-normative-governance.mjs
+
       - name: Deployment manifest, build identity, and reproducibility
         if: steps.reuse.outputs.reused != 'true'
         run: |
