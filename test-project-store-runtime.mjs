@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -98,6 +99,25 @@ export async function restoreArtifactFixture(store,artifacts){
  if(!Array.isArray(artifacts))throw new Error('Artifact fixture bytes are missing.');
  for(const row of artifacts){const bytes=Buffer.from(row.bytesBase64,'base64');if(bytes.length!==row.byteSize||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw new Error('Artifact fixture restoration does not match captured byte identity.');await store.putArtifact({...row,blob:new Blob([bytes],{type:row.mediaType})});const restored=await store.getArtifact(row.artifactId);if(!restored||restored.sha256!==row.sha256||restored.byteSize!==row.byteSize)throw new Error('Artifact fixture bytes were not restored through the storage authority.');}
 }
+// Preserve original generation-time prompt context across fixture/runtime boundaries.
+// The ordinary production writer still verifies and stores every authorized file.
+export async function hydrateRetainedPromptContexts(r,project,contextFiles,{omitInvalidated=false}={}){
+  const producer=r.runtime.closedLoopPromptEngine;
+  for(const file of contextFiles){
+    assert.equal(createHash('sha256').update(file.text,'utf8').digest('hex'),file.sha256,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: captured bytes differ from the generation-time digest.');
+    assert.equal(Buffer.byteLength(file.text,'utf8'),file.byteSize,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: captured bytes differ from the generation-time length.');
+  }
+  r.runtime.closedLoopPromptEngine=Object.freeze({...producer,materializePromptContextFiles:record=>r.copy((record.contextManifest?.promptContext?.attachments||[]).map(required=>{
+    const file=contextFiles.find(file=>['path','filename','mediaType','sha256','byteSize'].every(key=>file[key]===required[key]));
+    assert.ok(file,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: the lifecycle producer did not retain an authorized original context file.');
+    return file;
+  }))});
+  try{for(const record of project.projectData.generatedPrompts){
+    if(omitInvalidated&&record.invalidatedBy)continue;
+    await r.store.persistPromptContextFiles(record,project);
+  }}finally{r.runtime.closedLoopPromptEngine=producer;}
+}
+
 export async function bindArtifactFixture(artifacts,runtime=globalThis){
  const store=projectStoreRuntime().store;await restoreArtifactFixture(store,artifacts);
  runtime.closedLoopProjectStore=Object.freeze({...runtime.closedLoopProjectStore,artifactCustodyState:identity=>store.artifactCustodyState(identity)});return store;

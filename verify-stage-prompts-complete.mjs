@@ -1,5 +1,6 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import vm from 'node:vm';
@@ -18,6 +19,62 @@ p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNA
 p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'};
 for(let stage=1;stage<30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
 if(!engine.evaluateIntakeAccounting(p).complete)throw new Error('Prompt closure fixture failed to establish current Stage 01 accounting.');
+
+// The native catalog is actor input, not a private application API an agent
+// should rediscover. Verify its actual serialized handoff and selected stage.
+function stage06CanonicalBindingPublicationOracle(runtime,project,expectedCatalog){
+ const e=runtime.closedLoopWorkflowEngine,s=runtime.closedLoopWorkflowSchema,pr=runtime.closedLoopPromptEngine,h=runtime.closedLoopHash,observations=[];
+ for(const operation of s.STAGE_CONTRACTS[6].operations){
+  const registration=s.STAGE_OPERATION_REGISTRY[`6:${operation}`];
+  if(registration.executorClass!=='EXTERNAL_AGENT'||registration.deferredSubjectFamily)continue;
+  const state=e.clone(project),scope=Object.fromEntries(s.operationContract(6,operation).scopeRequirements.map(key=>[key,key.toUpperCase()+'-AUDIT'])),record=pr.buildPromptRecord(6,state,{operation,scope}),files=pr.materializePromptContextFiles(record,state),manifest=pr.promptFileManifest(record),envelopes=[];
+  for(const match of record.prompt.matchAll(/BEGIN_UNTRUSTED_DATA_BLOCK\n([^\n]+)\nEND_UNTRUSTED_DATA_BLOCK/g))envelopes.push(JSON.parse(match[1]));
+  for(const file of files){const content=JSON.parse(file.text);envelopes.push(...content.members);assert.equal(h.sha256Text(file.text),file.sha256,'STAGE06_CANONICAL_CATALOG_ORACLE: context bytes differ from manifest.');}
+  const selected=envelopes.filter(item=>item.sourceIdentity==='stage06.availableCanonicalBindings');
+  assert.equal(selected.length,1,'STAGE06_CANONICAL_CATALOG_ORACLE: publish exactly one complete current catalog.');
+  const catalog=JSON.parse(selected[0].value),actualKeys=Object.keys(catalog).sort(),expectedKeys=Object.keys(expectedCatalog).sort();
+  assert.deepEqual(actualKeys,expectedKeys,'STAGE06_CANONICAL_CATALOG_ORACLE: permitted selected-stage catalog entries differ.');
+  for(const key of expectedKeys)for(const field of ['canonicalKey','value','valueSha256'])assert.equal(catalog[key][field],expectedCatalog[key][field],`STAGE06_CANONICAL_CATALOG_ORACLE: ${key}.${field} differs from the exact provided value.`);
+  assert.equal(manifest.promptIdentity.bodySha256,record.bodySha256,'STAGE06_CANONICAL_CATALOG_ORACLE: manifest does not bind instruction.');
+  observations.push({operation,keys:actualKeys,instructionSha256:record.bodySha256,contextSignature:record.contextSignature,contextFiles:files.length});
+ }
+ assert(observations.length>0,'STAGE06_CANONICAL_CATALOG_ORACLE: no external Stage06 operation was exercised.');
+ return observations;
+}
+const stage06ExpectedCatalog=Object.fromEntries(['JOB_ID','CURRENT_INPUT_VERSION','CURRENT_SOURCE_SET_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION'].map(field=>{
+ const key='JOB.'+field,value=p.job[field];return [key,{canonicalKey:key,value,valueSha256:createHash('sha256').update(JSON.stringify(value)).digest('hex')}];
+}));
+const stage06CanonicalBindings=stage06CanonicalBindingPublicationOracle(globalThis,p,stage06ExpectedCatalog);
+const stage06CatalogFault=projectStoreRuntime({fault:{id:'stage06-canonical-catalog-omission',file:'prompt-engine.js',before:'workflow.canonicalTestBindingCatalog(state)',after:'{}'}});
+assert.throws(()=>stage06CanonicalBindingPublicationOracle(stage06CatalogFault.runtime,stage06CatalogFault.copy(p),stage06ExpectedCatalog),/STAGE06_CANONICAL_CATALOG_ORACLE: permitted selected-stage catalog entries differ/,'The catalog oracle must catch omitted bindings, not fixture initialization.');
+// Catalog values are bound through the existing context transport fingerprint.
+{
+ const changed=engine.clone(p);changed.job.CURRENT_TEST_SUITE_VERSION='TEST-v002';
+ const expected={...stage06ExpectedCatalog,'JOB.CURRENT_TEST_SUITE_VERSION':{canonicalKey:'JOB.CURRENT_TEST_SUITE_VERSION',value:'TEST-v002',valueSha256:createHash('sha256').update(JSON.stringify('TEST-v002')).digest('hex')}};
+ const changedCatalog=stage06CanonicalBindingPublicationOracle(globalThis,changed,expected);
+ for(const record of changedCatalog){const prior=stage06CanonicalBindings.find(row=>row.operation===record.operation);assert.notEqual(record.contextSignature,prior.contextSignature,'STAGE06_CANONICAL_CATALOG_ORACLE: changed binding retains old context identity.');assert.notEqual(record.instructionSha256,prior.instructionSha256,'STAGE06_CANONICAL_CATALOG_ORACLE: changed binding retains old instruction bytes.');}
+}
+// Reproduce a retained instruction from the known deficient /80 generation in
+// the shared runtime. Version freshness must replace it through the real owner.
+{
+ const currentSource=fs.readFileSync('prompt-engine.js','utf8'),oldSource=currentSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/80';").replace('workflow.canonicalTestBindingCatalog(state)','{}');
+ const old=projectStoreRuntime({sourceOverrides:{'prompt-engine.js':oldSource}}),state=old.copy(p);state.activeStage=6;state.stages[6].status='NOT STARTED';state.stages[6].gate={complete:false,blocked:false,reasons:[]};
+ const prior=old.prompts.reserveAndBuildPromptRecord(state,6,{operation:'COMPLETE'},{owningTabInstance:'STAGE06-CATALOG-REGRESSION'}).prompt;
+ assert.equal(prior.promptEngineVersion,'closed-loop-prompt-engine/80','STAGE06_CATALOG_FRESHNESS_ORACLE: wrong historical setup.');
+ // Raw capture is the real initial ingestion step. A saved continuation may
+ // only be prepared once work is received or a retry is needed. Keep its exact
+ // supplied bytes unvalidated; the freshness oracle does not claim acceptance.
+ const captured=old.ingestion.captureRaw(state,{stage:6,text:'{',promptRecord:prior});
+ assert.equal(captured.rawRecord.completeRawResponse,'{','STAGE06_CATALOG_FRESHNESS_ORACLE: capture did not preserve supplied bytes.');
+ assert.equal(captured.project.projectData.acceptedChanges.length,state.projectData.acceptedChanges.length,'STAGE06_CATALOG_FRESHNESS_ORACLE: raw capture accepted work.');
+ const current=projectStoreRuntime(),project=current.copy(captured.project),replacement=current.ingestion.prepareStageContinuation(project,{stage:6,owningTabInstance:'STAGE06-CATALOG-REGRESSION'});
+ assert.equal(replacement?.created,true,'STAGE06_CATALOG_FRESHNESS_ORACLE: deficient same-scope saved instruction was reused.');
+ assert.equal(replacement.prompt.promptEngineVersion,current.prompts.version,'STAGE06_CATALOG_FRESHNESS_ORACLE: replacement uses obsolete generation.');
+ assert(project.projectData.generatedPrompts.find(row=>row.instructionId===prior.instructionId)?.invalidatedBy,'STAGE06_CATALOG_FRESHNESS_ORACLE: old deficient instruction remains active.');
+ stage06CanonicalBindingPublicationOracle(current.runtime,project,stage06ExpectedCatalog);
+}
+if(process.argv.includes('--stage06-bindings-only')){console.log(JSON.stringify({stage06CanonicalBindings:'PASS',observations:stage06CanonicalBindings,catalogFaultDetected:true,changedCatalogIdentity:true,savedDeficientInstructionReplaced:true,basis:'MAINTAINED_SYNTHETIC_STAGE_CONTRACT_FIXTURE_REAL_PROMPT_AND_CONTINUATION_OWNERS'},null,2));process.exit(0);}
+
 const requiredReads={
   4:['sourceConflicts'],5:['sources','candidateRequirements'],6:['sources','research'],8:['sources','sourceConflicts'],9:['failureTests','requirementResolutions','sources','sourceConflicts'],10:['artifacts'],13:['tests'],14:['requirements','tests','instructions','runs','research','sources','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','artifacts','evidenceRecords'],16:['requirements','tests','instructions','runs','artifacts','evidenceRecords'],18:['requirements','tests','rootCauses','changes'],20:['artifacts'],21:['instructions','artifacts'],23:['research','evidenceRecords'],24:['sources','research','evidenceRecords','artifacts'],26:['requirements','tests','instructions','runs','verification','regressionExecutions','confirmationRecords','evidenceRecords'],27:['products','baselines','confirmationRecords','regressions','evidenceRecords'],29:['adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','evidenceChains'],30:['requirements','evidenceRecords']
 };
@@ -108,4 +165,4 @@ const contextFault=projectStoreRuntime({fault:{id:'secondary-provenance-filter-b
 vm.runInContext('globalThis.assert=assert;',Object.assign(contextFault.runtime,{assert}));
 assert.throws(()=>vm.runInContext(`(${independentReviewContextOracle.toString()})(globalThis)`,contextFault.runtime),/FINAL_REVIEW_CONTEXT_ORACLE: Stage23 embeds FORBIDDEN_GENERATOR_CONTENT/,'The context guard must reject the original secondary-family leak rather than fail setup.');
 
-console.log(JSON.stringify({promptsChecked,conditionalRejections,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,independentReviewContext,verificationObservations:independentReviewContext.map(item=>({checkId:'blind-stage'+item.stage+'-secondary-context-projection',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:'+(item.stage===23?'2499-2509':'2511-2521')],boundary:'actual emitted actor instruction and all materialized context files',expected:{stage:item.stage,forbiddenContentAbsent:true,authorizedSourcePresent:true,externalizedContextFiles:1},observed:item,passed:true})),browserStageWalkthrough:false},null,2));
+console.log(JSON.stringify({promptsChecked,conditionalRejections,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,stage06CanonicalBindings,catalogFaultDetected:true,changedCatalogIdentity:true,savedDeficientInstructionReplaced:true,independentReviewContext,verificationObservations:independentReviewContext.map(item=>({checkId:'blind-stage'+item.stage+'-secondary-context-projection',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:'+(item.stage===23?'2499-2509':'2511-2521')],boundary:'actual emitted actor instruction and all materialized context files',expected:{stage:item.stage,forbiddenContentAbsent:true,authorizedSourcePresent:true,externalizedContextFiles:1},observed:item,passed:true})),browserStageWalkthrough:false},null,2));

@@ -1,6 +1,8 @@
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import './verify-reservation-contract.mjs';
@@ -222,6 +224,57 @@ function negativeAt(name,stage,mutate,expectedCode){
 }
 function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);e.scope[key]=`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: stale scope mutated canonical state.`);scopeChecks.push({checkId:`scope.${stage}.${key}.${name.replaceAll(' ','-')}`,stage,key,expected:'STALE_SCOPE',code:prepared.validation.issues.find(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`).code,accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length});negativeCount++;}
 const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode);
+
+// The envelope must obey the same STRING and closed-reference contracts as
+// its canonical records before a proposal is created (Sections10 and17.5).
+// Each case begins with a conforming control and changes exactly one property.
+const closedEnvelopeObservations=[];
+{
+  const failures=[];
+  const check=async(name,work)=>{try{await work();closedEnvelopeObservations.push({name,result:'PASS'});}catch(error){closedEnvelopeObservations.push({name,result:'FAIL',message:error.message});failures.push(error);}};
+  const setup=name=>{const p=project('JOB-ENVELOPE-'+name),pr=savePrompt(p,1),envelope=validEnvelope(p,1,pr),control=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(control.validation.valid,true,'CLOSED_ENVELOPE_SETUP_ORACLE: '+JSON.stringify(control.validation.issues));assert.ok(control.proposal);return {p,pr,envelope,control};};
+  const rejected=(name,prepared,code,path)=>{assert.equal(prepared.validation.valid,false,name+': the single contract violation was accepted');assert.ok(prepared.validation.issues.some(issue=>issue.code===code&&issue.path===path),name+': rejection did not identify the intended violation: '+JSON.stringify(prepared.validation.issues));assert.equal(prepared.proposal,null,name+': rejected work must not create a proposal');assert.equal(prepared.project.projectData.acceptedChanges.length,0,name+': rejection must not accept work');};
+  await check('EVIDENCE_OPTIONAL_AUTHORITY_TYPE_CONTROL',()=>{
+    const {p,pr,envelope,control}=setup('AUTHORITY-CONTROL');
+    assert.equal(control.proposal.evidence[0].fields.AUTHORITY_TYPE,'EXTERNAL_AGENT_RESPONSE','Omitted authorityType must retain its supported default');
+    envelope.evidence[0].authorityType='AGENT_CLAIM';
+    const explicit=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(explicit.validation.valid,true,JSON.stringify(explicit.validation.issues));assert.equal(explicit.proposal.evidence[0].fields.AUTHORITY_TYPE,'AGENT_CLAIM');
+  });
+  for(const field of ['kind','description','location','content','authorityType'])await check('EVIDENCE_STRING_TYPE_ORACLE:'+field,()=>{
+    const {p,pr,envelope}=setup('TYPE-'+field.toUpperCase());envelope.evidence[0][field]={claimed:'An object cannot satisfy this evidence STRING field.'};
+    const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});
+    rejected('EVIDENCE_STRING_TYPE_ORACLE:'+field,prepared,'WRONG_VALUE_TYPE','/evidence/0/'+field);
+  });
+  await check('TEMPORARY_KEY_BOUNDARY_ORACLE',()=>{
+    const {p,pr,envelope}=setup('KEY-BOUNDARY');envelope.evidence[0].temporaryKey='E'+'x'.repeat(119);
+    const maximum=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(maximum.validation.valid,true,'The supported 120-character key was rejected: '+JSON.stringify(maximum.validation.issues));
+    envelope.evidence[0].temporaryKey+='x';const oversized=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});rejected('TEMPORARY_KEY_BOUNDARY_ORACLE',oversized,'INVALID_TEMPORARY_KEY','/evidence/0/temporaryKey');
+    assert.ok(oversized.validation.issues.find(issue=>issue.code==='INVALID_TEMPORARY_KEY').message.includes('120'),'TEMPORARY_KEY_BOUNDARY_ORACLE: length failure must explain the actual maximum');
+  });
+  await check('TEMPORARY_KEY_STRING_TYPE_ORACLE',()=>{const {p,pr,envelope}=setup('KEY-TYPE');envelope.evidence[0].temporaryKey=true;rejected('TEMPORARY_KEY_STRING_TYPE_ORACLE',ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr}),'WRONG_VALUE_TYPE','/evidence/0/temporaryKey');});
+  await check('TEMPORARY_KEY_EXACT_IDENTITY_ORACLE',()=>{
+    const p=project('JOB-KEY-EXACT-IDENTITY'),pr=savePrompt(p,2),envelope=validEnvelope(p,2,pr);envelope.records={sources:[sourceProposal('source-key-control')]};
+    const control=ingestion.prepare(p,{stage:2,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(control.validation.valid,true,'KEY_IDENTITY_SETUP_ORACLE: '+JSON.stringify(control.validation.issues));assert.equal(control.proposal.canonicalRecords.sources[0].evidenceRefs.length,1,'KEY_IDENTITY_SETUP_ORACLE: conforming source must retain its evidence relationship');
+    envelope.evidence[0].temporaryKey=' '+envelope.evidence[0].temporaryKey+' ';
+    rejected('TEMPORARY_KEY_EXACT_IDENTITY_ORACLE',ingestion.prepare(p,{stage:2,text:JSON.stringify(envelope),promptRecord:pr}),'INVALID_TEMPORARY_KEY','/evidence/0/temporaryKey');
+  });
+  await check('TEMPORARY_KEY_SHARED_NAMESPACE_ORACLE',()=>{
+    const {p,pr,envelope}=setup('KEY-NAMESPACE');envelope.humanAuthorityCandidates=[{temporaryKey:envelope.evidence[0].temporaryKey,label:'Synthetic ordinary human-answer claim',value:false,authorityClass:'HUMAN',claimedConversationBasis:'Synthetic fixture only; no actual human action is asserted.',externalResponsePointer:'synthetic-message',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[]}];
+    rejected('TEMPORARY_KEY_SHARED_NAMESPACE_ORACLE',ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr}),'DUPLICATE_TEMPORARY_KEY','/humanAuthorityCandidates/0/temporaryKey');
+  });
+  await check('ATTACHMENT_REF_CLOSED_KEYS_ORACLE',async()=>{
+    const r=projectStoreRuntime(),{core,engine,prompts,store,ingestion,copy,runtime}=r,p=core.createBlankState('JOB-CLOSED-ATTACHMENT-REF');engine.ensureShape(p);engine.recalculate(p);
+    const artifactId=artifactFixtureId(engine,p,'CLOSED-REFERENCE-CONTROL'),blob=new Blob(['Actual bounded synthetic attachment bytes.'],{type:'text/plain'}),stored=await store.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:'reference.txt',mediaType:'text/plain'});
+    engine.registerArtifactBytes(p,{stage:1,artifactId,filename:stored.filename,mediaType:stored.mediaType,byteSize:stored.byteSize,sha256:stored.sha256});
+    const pr=prompts.reserveAndBuildPromptRecord(p,1,{operation:'COMPLETE'},{owningTabInstance:'SYNTHETIC-CLOSED-REFERENCE'}).prompt,manifest=prompts.promptFileManifest(pr),envelope={schema:runtime.closedLoopWorkflowSchema.RESPONSE_SCHEMA,contractProfileId:runtime.closedLoopWorkflowSchema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:manifest.promptIdentity,packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,scope:manifest.scope,responseType:'BLOCKED',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{},records:{},evidence:[{temporaryKey:'reference-evidence',kind:'SYNTHETIC_REFERENCE_CONTROL',description:'A typed reference to actually stored fixture bytes.',location:'verification fixture',content:'Synthetic reference validation; no completed external stage is claimed.',attachmentRef:{recordId:artifactId}}],unresolved:[{temporaryKey:'missing-context',kind:'MISSING_APPLICATION_CONTEXT',description:'Stored file is not included in this synthetic agent handoff.',whyBlocking:'Completion cannot be claimed before receiving the required bytes.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+    const validate=value=>ingestion.validateEnvelope(copy(p),copy(value),{stage:1,promptRecord:pr,rawSha256:runtime.closedLoopHash.rawResponseSha256(JSON.stringify(value))});
+    assert.equal(validate(envelope).valid,true,'ATTACHMENT_REF_SETUP_ORACLE: conforming actual artifact reference was rejected');
+    envelope.evidence[0].attachmentRef.targetId='UNAUTHORIZED-EXTRA-MEMBER';const invalid=validate(envelope);
+    assert.equal(invalid.valid,false,'ATTACHMENT_REF_CLOSED_KEYS_ORACLE: unknown reference member was accepted');assert.ok(invalid.issues.some(issue=>issue.code==='UNKNOWN_PROPERTY'&&issue.path==='/evidence/0/attachmentRef/targetId'),'ATTACHMENT_REF_CLOSED_KEYS_ORACLE: rejection must cite the extra targetId property');
+  });
+  console.log(JSON.stringify({closedEnvelopeObservations,synthetic:true,actualBrowser:false}));
+  if(failures.length)throw new AggregateError(failures,'CLOSED_ENVELOPE_INGESTION_ORACLE: invalid typed/key/reference work reached proposal validation');
+}
 
 // Authoritative JSON with smart/curly delimiters is preserved exactly and rejected fail-closed.
 {

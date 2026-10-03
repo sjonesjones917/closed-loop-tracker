@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime,restoreArtifactFixture,bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,restoreArtifactFixture,bindArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
 
 // Validate the fault target before building the lifecycle fixture. A stale
 // target is a verifier setup failure, not a delivery behavior failure.
@@ -18,22 +18,6 @@ assert.equal(appSource.split(retainedActionFaultTarget).length-1,1,'The retained
 // A lifecycle snapshot carries the original context bytes separately from its
 // actual artifact-store rows. Preserve every saved instruction's bytes before
 // asking production persistence to checkpoint it, including superseded ones.
-async function hydrateRetainedPromptContexts(r,project,contextFiles,{omitInvalidated=false}={}){
-  const producer=r.runtime.closedLoopPromptEngine;
-  for(const file of contextFiles){
-    assert.equal(createHash('sha256').update(file.text,'utf8').digest('hex'),file.sha256,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: captured bytes differ from the generation-time digest.');
-    assert.equal(Buffer.byteLength(file.text,'utf8'),file.byteSize,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: captured bytes differ from the generation-time length.');
-  }
-  r.runtime.closedLoopPromptEngine=Object.freeze({...producer,materializePromptContextFiles:record=>r.copy((record.contextManifest?.promptContext?.attachments||[]).map(required=>{
-    const file=contextFiles.find(file=>['path','filename','mediaType','sha256','byteSize'].every(key=>file[key]===required[key]));
-    assert.ok(file,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: the lifecycle producer did not retain an authorized original context file.');
-    return file;
-  }))});
-  for(const record of project.projectData.generatedPrompts){
-    if(omitInvalidated&&record.invalidatedBy)continue;
-    await r.store.persistPromptContextFiles(record,project);
-  }
-}
 async function assertRetainedPromptContextCustody(r,project){
   const hash=r.runtime.closedLoopHash,jobId=project.job.JOB_ID;
   let verified=0;

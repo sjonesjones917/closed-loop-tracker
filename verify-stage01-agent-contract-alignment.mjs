@@ -102,4 +102,34 @@ const expectedUnresolvedKinds=['MISSING_HUMAN_INPUT','MISSING_APPLICATION_CONTEX
   fallbackObservation={checkId:'BOUNDARY-FALLBACK-CLOSED-ENUMS',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:735','specification/closed-loop-reliability-controlling-implementation-specification.txt:1595'],boundary:'Final generated instruction and deterministic fallback validator',expected:{answerTypes:expectedAnswerTypes,unresolvedKinds:expectedUnresolvedKinds,conformingTypesAccepted:8,unsupportedAnswerAccepted:false,unsupportedKindAccepted:false},observed:{answerTypes:descriptor.envelope.humanInputAnswerTypeValues,unresolvedKinds:descriptor.envelope.unresolvedKindValues,conformingTypesAccepted:acceptedControls,unsupportedAnswerAccepted:rejected.valid,unsupportedKindAccepted:badKind.valid,answerErrorCode:error.code,unresolvedErrorCode:kindError.code},passed:true,violation:'unsupported closed fallback value',accepted:false};
 }
 
-console.log(JSON.stringify({stage01AgentContractAlignment:'PASS',legalUnicodeStringPunctuation:true,smartStructuralDelimitersRejected:true,typedEvidenceReferencesPublished:true,humanAuthorityEnumsPublished:true,validationRepairGuidancePublished:true,conformingStage01ResponseAccepted:true,fallbackAnswerTypesPublished:true,fallbackUnresolvedKindsPublished:true,fallbackControlsValidated:true,verificationObservations:[fallbackObservation]}));
+// Section10 requires the exact writable contract before the first submission.
+// Inspect the final reserved instruction, not a template or the private validator.
+// The alphabet and 120-character boundary preserve the current supported key
+// format; the canonical evidence schema already declares STRING fields.
+const envelopePublicationObservations=[];
+{
+  const p=project('JOB-CLOSED-ENVELOPE-PUBLICATION'),prompt=prompts.reserveAndBuildPromptRecord(p,1,{operation:'COMPLETE'},{owningTabInstance:'SYNTHETIC-CONTRACT-PUBLICATION'}).prompt;
+  const start='RESPONSE CONTRACT DEFINITIONS\n',end='\n\nEND HASHED INSTRUCTION BODY',first=prompt.prompt.indexOf(start),last=prompt.prompt.indexOf(end,first);
+  assert.ok(first>=0&&last>first,'EMITTED_ENVELOPE_SETUP_ORACLE: reserved instruction must contain its complete response contract');
+  const emitted=ingestion.strictParse(prompt.prompt.slice(first+start.length,last)),objects=[];
+  const visit=value=>{if(!value||typeof value!=='object')return;if(!Array.isArray(value))objects.push(value);for(const item of Object.values(value))visit(item);};visit(emitted.envelope);
+  const failures=[],check=(name,work)=>{try{work();envelopePublicationObservations.push({name,result:'PASS'});}catch(error){envelopePublicationObservations.push({name,result:'FAIL',message:error.message});failures.push(error);}};
+  check('TEMPORARY_KEY_PUBLICATION_ORACLE',()=>{
+    const rule=objects.find(value=>value.pattern==='^[A-Za-z][A-Za-z0-9._:-]{0,119}$'&&value.maxLength===120);
+    assert.ok(rule,'TEMPORARY_KEY_PUBLICATION_ORACLE: final emitted contract must publish the complete ASCII key grammar and 120-character maximum');
+    assert.equal(rule.valueType,'STRING','TEMPORARY_KEY_PUBLICATION_ORACLE: response-local keys are strings');
+    const groups=rule.uniqueAcross||rule.uniqueness?.groups;
+    assert.ok(Array.isArray(groups),'TEMPORARY_KEY_PUBLICATION_ORACLE: final emitted contract must declare its shared uniqueness groups');
+    for(const group of ['records','attachments','evidence','humanInputRequests','humanAuthorityCandidates'])assert.ok(groups.some(value=>String(value).split('.')[0]===group),'TEMPORARY_KEY_PUBLICATION_ORACLE: shared key namespace omitted '+group);
+    assert.ok(rule.normalization==='NONE'||rule.normalization==='PRESERVE_EXACT'||rule.normalizationAllowed===false||rule.trim===false&&rule.coerce===false,'TEMPORARY_KEY_PUBLICATION_ORACLE: keys must retain their exact typed identity without silent normalization');
+  });
+  check('EVIDENCE_STRING_PUBLICATION_ORACLE',()=>{
+    const names=['kind','description','location','content','authorityType'],definitions=objects.find(value=>names.every(name=>value[name]&&typeof value[name]==='object'&&value[name].valueType==='STRING'));
+    assert.ok(definitions,'EVIDENCE_STRING_PUBLICATION_ORACLE: final emitted contract must publish all five mapped evidence STRING fields');
+    for(const name of names){assert.equal(definitions[name].nullable,false,'EVIDENCE_STRING_PUBLICATION_ORACLE: '+name+' must not admit null');assert.equal(definitions[name].required,name!=='authorityType','EVIDENCE_STRING_PUBLICATION_ORACLE: '+name+' requiredness must match the evidence envelope');}
+  });
+  console.log(JSON.stringify({envelopePublicationObservations,synthetic:true,actualBrowser:false}));
+  if(failures.length)throw new AggregateError(failures,'EMITTED_ENVELOPE_CONTRACT_ORACLE: controlling contract is incomplete');
+}
+
+console.log(JSON.stringify({stage01AgentContractAlignment:'PASS',legalUnicodeStringPunctuation:true,smartStructuralDelimitersRejected:true,typedEvidenceReferencesPublished:true,humanAuthorityEnumsPublished:true,validationRepairGuidancePublished:true,conformingStage01ResponseAccepted:true,fallbackAnswerTypesPublished:true,fallbackUnresolvedKindsPublished:true,fallbackControlsValidated:true,envelopePublicationComplete:true,envelopePublicationObservations,verificationObservations:[fallbackObservation]}));

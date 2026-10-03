@@ -4,6 +4,19 @@ import {recordProposal} from './test-fixtures.mjs';
 export const OUTPUT='VERIFIED\n';
 export const OBJECTIVE='Produce a UTF-8 file named result.txt containing exactly VERIFIED followed by one LF newline.';
 export const CANDIDATE='Write result.txt as UTF-8 bytes: VERIFIED followed by one LF newline. Preserve that newline during transport. Do not add other content.\n';
+// One closed expected population for real counterpart fault detection and
+// its disposable supervisor-budget stand-in. Oracle expectations remain
+// independent of the injected production implementation.
+export const COUNTERPART_FAULT_CASES=Object.freeze([
+  ['missing-source-search-registration',2,'COUNTERPART_SOURCE_SEARCH_CAPABILITY_ORACLE'],
+  ['missing-retained-prompt-context',22,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE'],
+  ['missing-candidate-bytes',10,'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE'],
+  ['missing-product-bytes',21,'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE'],
+  ['fractional-stability',12,'must remain persistable after every operation'],
+  ['missing-defect-gate',13,'An observed initial violation without an evidence-linked defect must be rejected'],
+  ['unrelated-defect-reason',13,'COUNTERPART_DEFECT_REASON_ORACLE'],
+  ['partial-verification-completes-operation',17,'ITERATION_PARTIAL_VERIFY_ORACLE']
+].map(row=>Object.freeze(row)));
 const safe=value=>Array.isArray(value)?value:[];
 const categories=['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'];
 
