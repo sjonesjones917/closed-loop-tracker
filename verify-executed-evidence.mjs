@@ -154,11 +154,24 @@ try{
   // Exercise the actual composed ingestion producer and both registered owners.
   // Their independent report assertions execute; a wrapper's imported report
   // cannot publish the owner's detailed identity or mask its missing receipt.
+  // Exact independently maintained owner populations. Imported reports stay
+  // complete, but their detailed identities must remain with their own receipt.
+  const expectedCanonicalIdsByOwner={
+    'verify-response-authority-integrity.mjs':[
+      'PRODUCER-TIMING-REJECT-VERIFICATION_PHASE','PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE','PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE','PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED','PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED','PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED','PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION','PRODUCER-TIMING-REJECT-TIMING_ENTRIES','PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256','PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS'
+    ],
+    'verify-returned-slot-authority.mjs':[
+      'ATTACHMENT-SLOT-INVENTED-REJECTED','ATTACHMENT-SLOT-FOREIGN-REJECTED','ATTACHMENT-SLOT-ROLE-MISMATCH-REJECTED','ATTACHMENT-PACKAGE-EXACT-SLOT-BYTES','BOUNDARY-CORRECTED-RETURNED-FILE-RETRY','RETURNED-BYTE-CUSTODY-RETRY-RECOVERY','ACTUAL-UI-RETURNED-BYTE-REVERIFY'
+    ]
+  };
   const ownershipSuites=['verify-ingestion.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];
   const ownershipReceipts=new Map();
   for(const owner of ownershipSuites)ownershipReceipts.set(owner,await executeEvidenceProducer(owner,{directory:path.join(directory,'ownership-receipts'),evidenceDirectory:path.join(directory,'ownership-runner')}));
   const wrapper=ownershipReceipts.get('verify-ingestion.mjs'),canonicalIds=ownershipSuites.slice(1).flatMap(owner=>ownershipReceipts.get(owner).reports.flatMap(report=>report.verificationObservations||[]).map(row=>row.checkId));
-  assert.equal(canonicalIds.length,15,'OBSERVATION_OWNER_ORACLE: the actual composed canonical population changed.');
+  for(const [owner,expectedIds]of Object.entries(expectedCanonicalIdsByOwner)){
+    const actualIds=ownershipReceipts.get(owner).reports.flatMap(report=>report.verificationObservations||[]).map(row=>row.checkId);
+    assert.deepEqual([...actualIds].sort(),[...expectedIds].sort(),'OBSERVATION_OWNER_ORACLE: the exact canonical population differs for '+owner);
+  }
   assert(canonicalIds.every(id=>wrapper.reports.some(report=>report.verificationObservations?.some(row=>row.checkId===id))),'OBSERVATION_OWNER_ORACLE: actual imported reports were discarded.');
   assert(canonicalIds.every(id=>!wrapper.observations.some(row=>row.checkId===id)),'OBSERVATION_OWNER_ORACLE: wrapper claimed canonical imported assertion identities.');
   const ownerAbsent=aggregateExecutedEvidence(new Map([['verify-ingestion.mjs',wrapper]]),evidenceFingerprint());
@@ -167,6 +180,27 @@ try{
   const ownedAggregate=aggregateExecutedEvidence(ownershipReceipts,evidenceFingerprint());
   assert.equal(ownedAggregate.receiptCount,3,'OBSERVATION_OWNER_ORACLE: actual composed/owner receipts did not aggregate.');
   assert(canonicalIds.every(id=>ownedAggregate.normativeRequirementTrace.some(row=>row.executedAssertions.some(assertion=>assertion.checkId===id&&assertion.suite!=='verify-ingestion.mjs'))),'OBSERVATION_OWNER_ORACLE: exact canonical assertion links were lost.');
+  // Each new custody observation is mandatory at the receipt boundary, not
+  // merely another favorable imported report. Retain the real producer reports
+  // and suppress one detail only in this deliberate negative receipt control.
+  const custodySuite='verify-returned-slot-authority.mjs';
+  const custodyCheckIds=['RETURNED-BYTE-CUSTODY-RETRY-RECOVERY','ACTUAL-UI-RETURNED-BYTE-REVERIFY'];
+  for(const checkId of custodyCheckIds){
+    const incomplete=structuredClone(ownershipReceipts.get(custodySuite));
+    for(const report of incomplete.reports)if(Array.isArray(report.verificationObservations))report.verificationObservations=report.verificationObservations.filter(row=>row.checkId!==checkId);
+    incomplete.observations=observationsFromReports(custodySuite,incomplete.reports);
+    assert.equal(incomplete.observations.find(row=>row.checkId==='response.returned-slot-controls')?.passed,false,'CUSTODY_OBSERVATION_ORACLE: omitted '+checkId+' passed the required slot population.');
+    delete incomplete.receiptSha256;incomplete.receiptSha256=sha(incomplete);
+    assert.throws(()=>validateExecutionReceipt(incomplete,custodySuite,evidenceFingerprint()),/receipt assertions differ from actual executed report/,'CUSTODY_OBSERVATION_ORACLE: omitted '+checkId+' became an acceptable receipt.');
+    producerControls.push({caseId:'missing-required-custody-observation:'+checkId,accepted:false,result:'DETECTED'});
+  }
+  for(const [normativeRequirementId,checkIds]of [
+    ['NREQ-45544bcb4c30339899fe4199879fa5e0',custodyCheckIds],
+    ['NREQ-d6be21916e3d29c42922719f2b17f4de',['ACTUAL-UI-RETURNED-BYTE-REVERIFY']]
+  ]){
+    const requirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId===normativeRequirementId);
+    assert(requirement&&checkIds.every(checkId=>requirement.executedAssertions.some(row=>row.checkId===checkId&&row.suite===custodySuite)),'CUSTODY_NORMATIVE_LINK_ORACLE: exact readback/reverify obligation lost its canonical custody assertion.');
+  }
   // A second producer explicitly claiming an already owned identity must still
   // fail the real aggregate boundary, even with consistent per-receipt hashes.
   const duplicate=structuredClone(registryReceipt),detail=structuredClone(good.receipt.reports.flatMap(report=>report.verificationObservations||[])[0]);

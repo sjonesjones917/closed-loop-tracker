@@ -439,9 +439,11 @@
         "ATTACHMENT-SLOT-INVENTED-REJECTED",
         "ATTACHMENT-SLOT-FOREIGN-REJECTED",
         "ATTACHMENT-SLOT-ROLE-MISMATCH-REJECTED",
-        "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY"
+        "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY",
+        "RETURNED-BYTE-CUSTODY-RETRY-RECOVERY",
+        "ACTUAL-UI-RETURNED-BYTE-REVERIFY"
       ],
-      "scope": "Declared/selected files must bind authorized current slots before proposal acceptance; corrected actual returned bytes do not authorize an unallocated artifact.",
+      "scope": "Declared/selected files must bind authorized current slots before proposal acceptance; corrected actual returned bytes do not authorize an unallocated artifact. Native stored/rehashed returned-byte controls reject unavailable, missing, corrupt, unallocated, and stale inputs before proposal; verified same-byte corrections retain prior raw/rejection history. The actual acceptance caller reverifies before recording a blocker, with zero DATA_PROPOSAL acceptance and no Stage1 completion. Finite synthetic Node/store/caller controls only; no actual browser schedule, human, external agent, physical-device, or full-clause acceptance claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     },
     {
@@ -1034,6 +1036,25 @@
         "registry.durable"
       ],
       "scope": "Every declared canonical RECORD_SCHEMAS family has exactly one DURABLE_OBJECT_REGISTRY contract, including the independently required listed canonical families. This canonical-family declaration closure does not establish all nested durable objects, their lifecycle behavior or all specification-required families.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-45544bcb4c30339899fe4199879fa5e0",
+      "sourceLineSha256": "cef59d6fcf89f9f9de2c5df547ba54cb2e145040fe2ecb8d7bcae50223e2f24c",
+      "checkIds": [
+        "RETURNED-BYTE-CUSTODY-RETRY-RECOVERY",
+        "ACTUAL-UI-RETURNED-BYTE-REVERIFY"
+      ],
+      "scope": "Actual native Blob put/read/hash and public read invalidation/reverification establish the listed staged-byte custody controls. UNKNOWN, missing, and corrupt bytes stay adverse; settling and rehashing exact bytes permits retained-raw correction. Finite synthetic Node/store fixtures and actual acceptance caller only; no browser timing schedule, physical device, human observation, or full-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d6be21916e3d29c42922719f2b17f4de",
+      "sourceLineSha256": "c56e5b4ee5546215866e597f24359cc453bc9edcef28b86e8eeacb1c1fcc6657",
+      "checkIds": [
+        "ACTUAL-UI-RETURNED-BYTE-REVERIFY"
+      ],
+      "scope": "Actual production acceptance caller reverifies mapped returned bytes after native store/read invalidates custody; missing/corrupt bytes and deliberately omitted reverify are blocked with unchanged canonical state and preserved raw response. The valid path records a blocker and leaves Stage1 incomplete. Finite synthetic Node/store/caller controls only; no actual browser schedule, DATA_PROPOSAL completion, physical-device, or full-clause acceptance claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     }
   ],
