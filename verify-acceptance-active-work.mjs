@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {boundedSearchProposal} from './test-fixtures.mjs';
 const cases=[],note=name=>cases.push({name,result:'PASS'});
 const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8);
 const faults={
@@ -36,6 +37,10 @@ const next=copy(runtime.current),continuation=ingestion.prepareStageContinuation
 const browserSource=fs.readFileSync('verify-browser.mjs','utf8');
 const begin=browserSource.indexOf('const envelope='),end=browserSource.indexOf('\n const longEnvelope=',begin);
 runtime.retained=runtime.current;runtime.promptRecord=pr;
+// The extracted browser fixture uses its native module helper and live schema.
+// Preserve that dependency closure and create its records in the shared VM realm.
+runtime.fixtureSchema=runtime.closedLoopWorkflowSchema;
+runtime.boundedSearchProposal=value=>copy(boundedSearchProposal(value));
 const envelope=vm.runInContext(browserSource.slice(begin,end)+'\nenvelope;',runtime);
 const longStart=browserSource.indexOf('const longEnvelope=',end),longEnd=browserSource.indexOf('\n await selectResponseFile',longStart);
 const long=vm.runInContext(browserSource.slice(longStart,longEnd)+'\nlongEnvelope;',runtime);
