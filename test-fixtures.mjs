@@ -1,6 +1,8 @@
 export function scalarFor(def,name,overrides={}){
   if(Object.hasOwn(overrides,name))return overrides[name];
-  if(String(name).toUpperCase()==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';
+  // Generic synthetic actors perform generally routable independent review.
+  // Tool/system fixtures must select their route and establish scoped readiness.
+  if(String(name).toUpperCase()==='EXECUTION_MODE')return 'INDEPENDENT_AGENT_REVIEW';
   if(def.enumValues?.length)return def.enumValues[0];
   if(def.valueType==='BOOLEAN')return true;
   if(def.valueType==='INTEGER')return 1;
@@ -32,24 +34,49 @@ export function recordProposal(schema,collection,{tempKey,targetId,relationships
 }
 export function evidence(label='fixture'){return {temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:`${label} evidence`,location:'verify-full-cycle.mjs',content:`controlled ${label} evidence`};}
 
-// Advance through real response acceptance to the first proposition-producing stage.
-export function stage04AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSISTENCE'){
-  const {core,schema,engine,prompts,ingestion}=runtime;
-  let p=core.createBlankState(jobId);
+// Controlled external actor responses still use production context/ingestion/
+// acceptance. The synthetic bounded search makes no live-service claim.
+export function acceptPrerequisite(runtime,project,stage,{operation='COMPLETE',stageData={},records={}}={}){
+  const {schema,engine,prompts,ingestion}=runtime,preparedContext=engine.preparePromptContext(project,stage,{operation}),pr=prompts.buildPromptRecord(stage,project,preparedContext.options);
+  project.projectData.generatedPrompts.push(pr);
+  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records,evidence:[evidence(`stage-${stage}-${operation}`)],unresolved:[],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(project,{stage,text:JSON.stringify(envelope),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
+  return ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'BROWSER_FIXTURE',replacementConfirmation:ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId)});
+}
+export function stage01AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSISTENCE'){
+  const {core,engine}=runtime;let p=core.createBlankState(jobId);
   Object.assign(p.job,{JOB_TITLE:'Response acceptance persistence',EXACT_USER_OBJECTIVE_VERBATIM:'Produce a verified checklist.',EXPLICIT_USER_REQUIREMENTS:'The checklist must contain the required verified content.',CURRENT_INPUT_VERSION:'INPUT-v001'});
   engine.ensureShape(p);engine.recalculate(p);
-  function accept(stage,stageData){
-    const preparedContext=engine.preparePromptContext(p,stage,{operation:'COMPLETE'}),pr=prompts.buildPromptRecord(stage,p,preparedContext.options);p.projectData.generatedPrompts.push(pr);
-    const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records:{},evidence:[evidence(`stage-${stage}`)],unresolved:[],warnings:[],attachments:[]};
-    const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord:pr});
-    if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
-    const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'BROWSER_FIXTURE'});p=committed.project;return committed;
-  }
   const manifest=engine.intakeCoverageManifest(p),capture={schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Preserved for downstream reuse.',extractedStatements:[{statementKey:`s-${i}`,text:u.rawValueText,statementClass:'REQUIREMENT'}]}))};
-  const first=accept(1,{EXACT_DELIVERABLE_REQUESTED:'Verified checklist',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)});
+  const first=acceptPrerequisite(runtime,p,1,{stageData:{EXACT_DELIVERABLE_REQUESTED:'Verified checklist',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)}});p=first.project;
   engine.recordStageConfirmation(p,1,true,'Intent confirmed','BROWSER_FIXTURE',{acceptedChangeId:first.acceptedChange.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION,instructionId:first.acceptedChange.promptId,contextSignature:first.acceptedChange.contextSignature,operatorLabel:'BROWSER_FIXTURE'});
-  accept(2,{AUTHORITY_HIERARCHY:'No external authority applies.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'Evidence-supported search found no applicable external governing source.'});
-  accept(3,{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:1,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false});
+  engine.recalculate(p);if(!engine.gate(1,p).complete)throw new Error('Stage01 prerequisite did not complete.');return p;
+}
+export function boundedSearchProposal(schema){
+  return recordProposal(schema,'sourceSearchContracts',{tempKey:'bounded-fixture-search',overrides:{PROJECT_SCOPE:'The closed synthetic checklist fixture and its supplied human inputs.',JURISDICTION_OR_SYSTEM_SCOPE:'Disposable hermetic fixture; no legal or external-system authority is claimed.',SOURCE_CLASSES_CONSIDERED:['Project-supplied references'],LOCATIONS_AND_REPOSITORIES:['The complete controlled fixture input set'],QUERIES_OR_STRATEGIES:['Inspect every declared input location and supplied reference.','Final registered query round found no new candidate; no accepted authority has an undisposed citation.'],DATE_OR_VERSION_CUTOFF:'Current controlled fixture input version',EXCLUSIONS:['Other generic source classes are inapplicable to this explicitly hermetic fixture; no live-domain authority is asserted.'],ACCESS_LIMITATIONS:[],ADEQUACY_RATIONALE:'The versioned fixture checklist considered all seven generic source classes. Every registered location was inspected, the final query round was saturated, authority-chain closure is empty, no location was inaccessible, every discovered candidate has a disposition, and no material residual risk remains. The independent reviewer must assess this external fixture claim.',UNRESOLVED_DISCOVERY_RISK:'NONE'}});
+}
+// Advance through actual acceptance and independently bound source review to
+// the first proposition-producing stage. No prerequisite gate is forced green.
+// Retain exact report text in canonical evidence through the supported source-
+// search registration API. This is a declared hermetic external-claim fixture,
+// not a fabricated stored artifact, human identity or live-network execution.
+export function registerFixtureSourceSearchCapability(runtime,project,{checks={},register=true}={}){
+  const {engine}=runtime,contract=engine.recordsForCurrentScope(project,'sourceSearchContracts').at(-1);if(!contract)throw new Error('Fixture search contract is missing.');
+  const report=engine.externalCapabilityEvidenceTemplate(project,engine.recordId(contract,'sourceSearchContracts')),time=Date.now();
+  Object.assign(report,{reportedBy:'SYNTHETIC_SEARCH_PERFORMER',environment:'Explicit closed hermetic fixture input universe',observedAt:new Date(time-1000).toISOString(),validUntil:new Date(time+3600000).toISOString()});
+  report.action={target:engine.recordValue(contract,'PROJECT_SCOPE'),riskClasses:['READ_ONLY'],expectedEffect:'Inspect only the complete declared synthetic input universe and preserve its search observations.',reversibility:'No mutation',maximumCost:'0',authority:'Controlled test fixture operator',containment:'No network or external authority is claimed',stopCondition:'Stop when every declared fixture location and stopping criterion is accounted for',responsibleActor:'SYNTHETIC_SEARCH_PERFORMER'};
+  for(const [key,check]of Object.entries(report.checks)){check.status=checks[key]||'TRUE';check.evidence=`Controlled fixture ${key} basis; not an independently observed live external capability.`;}
+  if(!register)return report;
+  const record=engine.registerExternalCapabilityEvidence(project,{reportText:JSON.stringify(report),operatorConfirmed:true,operatorLabel:'SYNTHETIC_FIXTURE_OPERATOR'});
+  return record;
+}
+export function stage04AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSISTENCE'){
+  const {schema,engine}=runtime;let p=stage01AcceptanceFixture(runtime,jobId);
+  p=acceptPrerequisite(runtime,p,2,{stageData:{AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The controlled bounded search found no applicable external governing source.'},records:{sourceSearchContracts:[boundedSearchProposal(schema)]}}).project;
+  registerFixtureSourceSearchCapability(runtime,p);
+  p=acceptPrerequisite(runtime,p,2,{operation:'SEARCH_ADEQUACY_REVIEW',records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'fixture-search-review',overrides:{REVIEW_QUESTION:'Was the bounded fixture search executed adequately?',FINDING:'The closed fixture input universe is exhausted with no applicable external source.',REASONING:'Compared the declared source classes, locations, executed query evidence, stopping criteria, dispositions, exclusions and residual risk with the controlled fixture scope.',RESULT:'ACCEPTED'}})]}}).project;
+  p=acceptPrerequisite(runtime,p,3,{stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false}}).project;
   for(let n=1;n<=3;n++)if(!engine.gate(n,p).complete)throw new Error(`Fixture prerequisite ${n}: ${engine.gate(n,p).reasons.join(' | ')}`);
   p.activeStage=4;p.activeView='Workflow';return p;
 }
@@ -95,6 +122,22 @@ export function stageHandoffRecoveryProof(before,exported,restored,hash){
   const prefix=family=>equal(before.projectData[family]||[],(exported.projectData[family]||[]).slice(0,(before.projectData[family]||[]).length));
   const authoredStages=p=>Object.fromEntries(Object.entries(p.stages).map(([stage,row])=>[stage,row.agentData||{}]));
   return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
+}
+
+// Current/stale route sentinels exercise projection, not accepted stage results.
+// Supply the verified canonical shape and governing relationships reached by
+// semantic review and independent product-review selectors. Do not derive any
+// read/write oracle or semantic approval from production implementation here.
+export function routeProjectionFixtureFields(collection,{idPrefix,variant,marker}){
+ const id=family=>`${idPrefix}-${family}-${variant}`;
+ if(collection==='proofExpressions'){
+  const leaf={type:'LEAF',testId:id('tests'),requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};
+  return {PROPOSED_EXPRESSION:leaf,NORMALIZED_EXPRESSION:leaf,SEMANTIC_RATIONALE:marker};
+ }
+ if(collection==='instructionTraces')return {INSTRUCTION_ID:id('instructions')};
+ if(collection==='requirements')return {SOURCE_ID:id('sources')};
+ if(collection==='evidenceRecords')return {SOURCE_ID:id('sources'),ATTACHMENT_ID:id('artifacts')};
+ return {};
 }
 
 // Bounded canonical records for logic fixtures use the production identity,

@@ -2,9 +2,9 @@ import {readStoreArchive} from './test-zip.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
+import {scalarFor,recordProposal,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,evidence,accumulatedStage04Fixture} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime,storageBroadcastNetwork} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,storageBroadcastNetwork,bindProjectActivationUi} from './test-project-store-runtime.mjs';
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
 // History is exercised by verify-recoverable-history and the browser recovery gate.
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
@@ -117,8 +117,8 @@ rejectNextPackage=true;const failedPackage=packageRuntime.exportCompletePackage(
 assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz','Failed complete export left later backup requests stuck.');
 // Exercise the complete production package encoder with only the storage
 // boundary replaced. The browser suite supplies real IndexedDB coverage.
-const filePackageRuntime=lifecycleContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout});
-vm.runInContext(fs.readFileSync('hash.js','utf8'),filePackageRuntime);
+const filePackageRuntime=lifecycleContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout,Event:globalThis.Event,dispatchEvent:()=>true});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),filePackageRuntime,{filename:file});
 vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readExportSnapshot=async()=>({project:{...fixtureProject,projectSha256:projectSha256(fixtureProject)},artifacts:fixtureArtifacts,recovery:null});readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};metaGet=async()=>null;globalThis.closedLoopProjectStore='),filePackageRuntime);
 vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
 const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
@@ -176,10 +176,12 @@ filePackageRuntime.fixtureContextBlob=new Blob(['é🙂\\\n\t"'.repeat(20000),'C
 filePackageRuntime.fixtureContextSha=await globalThis.closedLoopHash.sha256Bytes(filePackageRuntime.fixtureContextBlob);
 vm.runInContext(`
   const hash=closedLoopHash,contextIdentity={path:'context.json',filename:'context.json',mediaType:'application/json',byteSize:fixtureContextBlob.size,sha256:fixtureContextSha};
-  const prompt={stage:4,operation:'COMPLETE',promptEngineVersion:'FIXTURE',instructionId:'PROMPT-FILES',prompt:'instruction\\n',scope:{},contextManifest:{promptContext:{attachments:[contextIdentity]}}};
+  const prompt={stage:4,operation:'COMPLETE',promptEngineVersion:'FIXTURE',instructionId:'PROMPT-FILES',prompt:'instruction\\n',scope:{},contextManifest:{retryAttemptInputs:[],promptContext:{attachments:[contextIdentity]}}};
   prompt.bodySha256=prompt.fullTextSha256=hash.sha256Text(prompt.prompt);prompt.contractSha256=hash.sha256Value({});fixtureProject.projectData.generatedPrompts=[prompt];
   globalThis.fixtureContextRow={artifactId:'PROMPT-CONTEXT-'+hash.sha256Value({jobId:'FILE-PRESSURE',sha256:fixtureContextSha}),jobId:'FILE-PRESSURE',blob:fixtureContextBlob,sha256:fixtureContextSha,byteSize:fixtureContextBlob.size};
-  globalThis.closedLoopPromptEngine={version:'FIXTURE',responseContractDescriptor:()=>({}),fileHandoff:(_record,base)=>({...base,attachmentSlots:[]}),promptFileManifest:()=>({scope:{},attachmentSlots:[],contractProfileId:'closed-loop-completion-profile/1',contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
+  // Only instruction selection is a fixture boundary here. Keep production
+  // retry projection and content authorization in the streaming-package path.
+  globalThis.closedLoopPromptEngine={...closedLoopPromptEngine,version:'FIXTURE',responseContractDescriptor:()=>({}),fileHandoff:(_record,base)=>({...base,attachmentSlots:[]}),promptFileManifest:()=>({scope:{},attachmentSlots:[],contractProfileId:'closed-loop-completion-profile/1',contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
   globalThis.closedLoopWorkflowEngine={stageContext:project=>project,executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
 `,filePackageRuntime);
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
@@ -194,6 +196,7 @@ try{
 const executionPackageReadBytes=totalPackageRead,executionPackageSourceBytes=artifactSizes[6]+filePackageRuntime.fixtureContextBlob.size;
 assert(maxPackageRead<=65536&&maxBase64Input<=65536,'Execution-package export buffered a complete artifact/context file.');
 const zipBytes=new Uint8Array(await executionPackage.blob.arrayBuffer()),executionMembers=readStoreArchive(zipBytes),executionManifest=JSON.parse(new TextDecoder().decode(executionMembers.find(row=>row.canonicalPath==='manifest.json').bytes));
+assert(executionManifest.retryInputs.length===0&&executionManifest.retryFiles.length===0,'A first-attempt streaming handoff invented prior rejected work.');
 assert(new TextDecoder().decode(executionMembers.find(row=>row.canonicalPath===executionManifest.contextFiles[0].path).bytes)===await filePackageRuntime.fixtureContextBlob.text(),'Execution-package context escaping or UTF-8 boundary changed exact content.');
 assert(createHash('sha256').update(zipBytes).digest('hex')===executionPackage.packageSha256,'Execution-package digest changed.');
 const artifactMember=executionMembers.find(row=>row.canonicalPath.startsWith('artifacts/'));
@@ -319,6 +322,7 @@ const appFunction=name=>{
   return next?rest.slice(0,next.index):rest.slice(0,rest.indexOf('\n'));
 };
 for(const name of ['readApplicationResource','blankStage','ensureState','projectDisplayName','saveProjectUi','persistAll','persistNewProject','persistReplacement','save','createUniqueJobId','addNew','duplicateCurrentProject','restoreStageContinuation','materializeProject','unloadInactiveProjects','archiveCurrentProject']){const source=appFunction(name);if(source)vm.runInContext(source,storageRuntime);}
+bindProjectActivationUi({runtime:storageRuntime,store:storageRuntime.projectStore,copy:storageRuntime.clone},{source:app});
 vm.runInContext(`globalThis.projectUiEntry=id=>projectUi[id]||{};globalThis.projectIsArchived=p=>Boolean(projectUiEntry(p.job.JOB_ID).archivedAt);globalThis.projectDisplayName=p=>p.job.JOB_TITLE||p.job.JOB_ID;globalThis.normalize=p=>ensureState(p);globalThis.makeStored=async id=>{const p=ensureState(core.createBlankState(id));return projectStore.writeProject(p,{expectedProjectRevision:0});};`,storageRuntime);
 const lifecycleFailures=[];
 async function storageRegression(name,run){try{await run();console.log(JSON.stringify({storageRegression:name,passed:true}));}catch(error){lifecycleFailures.push({name,message:error.message});console.log(JSON.stringify({storageRegression:name,passed:false,message:error.message}));}}
@@ -440,12 +444,14 @@ await storageRegression('import:saved-projection-does-not-bypass-record-or-relea
   }
 });
 await storageRegression('accumulation:selected-stage4-read-buffers',async()=>{
-  await vm.runInContext([evidence,stage04AcceptanceFixture,accumulatedStage04Fixture].map(fn=>fn.toString()).join('\n')+`\n(async()=>{globalThis.accumulatedProject=await accumulatedStage04Fixture({core,schema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion});})()`,storageRuntime);
+  await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture].map(fn=>fn.toString()).join('\n')+`\n(async()=>{globalThis.accumulatedProject=await accumulatedStage04Fixture({core,schema,engine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion,store:projectStore});})()`,storageRuntime);
   const saved=await storageRuntime.projectStore.writeProject(storageRuntime.accumulatedProject,{expectedProjectRevision:0,createOnly:true,selectProject:false});
   let encodes=0,characters=0;const Native=storageRuntime.TextEncoder;
   storageRuntime.TextEncoder=class extends Native{encode(text){encodes++;characters+=String(text).length;return super.encode(text);}};
   let loaded;try{loaded=await storageRuntime.projectStore.readProject(saved.job.JOB_ID);}finally{storageRuntime.TextEncoder=Native;}
-  assert(loaded.projectSha256===saved.projectSha256&&loaded.projectData.rawResponses.length===103&&loaded.projectData.generatedPrompts.length===104,'Accumulated startup lost exact response/instruction history.');
+  // Four accepted prerequisites include the required independent Stage02
+  // review, followed by 100 failed responses and their 101 Stage04 prompts.
+  assert(loaded.projectSha256===saved.projectSha256&&loaded.projectData.rawResponses.length===104&&loaded.projectData.generatedPrompts.length===105,'Accumulated startup lost exact response/instruction history.');
   assert(loaded.projectData.rawResponses.at(-1).completeRawResponse.endsWith('ACCUMULATION-TAIL-99'),'Accumulated startup truncated the preserved raw response.');
   assert(encodes<=Math.ceil(characters/1024)+1024,`Opening 100 accumulated Stage 04 attempts allocated ${encodes} UTF-8 buffers for ${characters} characters.`);
   console.log(JSON.stringify({accumulatedStage4Read:{attempts:100,encodes,characters,digest:loaded.projectSha256}}));

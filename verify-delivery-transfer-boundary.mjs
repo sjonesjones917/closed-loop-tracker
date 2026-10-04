@@ -5,14 +5,72 @@ import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime,restoreArtifactFixture,bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,restoreArtifactFixture,bindArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
 
 // Validate the fault target before building the lifecycle fixture. A stale
 // target is a verifier setup failure, not a delivery behavior failure.
 const appSource=fs.readFileSync('app-core.js','utf8');
 const retainedActionFaultTarget='return presentationAction(canonicalCurrentStage());';
 assert.equal(appSource.split(retainedActionFaultTarget).length-1,1,'The retained-action fault must alter exactly one display owner.');
+
+// A lifecycle snapshot carries the original context bytes separately from its
+// actual artifact-store rows. Preserve every saved instruction's bytes before
+// asking production persistence to checkpoint it, including superseded ones.
+async function assertRetainedPromptContextCustody(r,project){
+  const hash=r.runtime.closedLoopHash,jobId=project.job.JOB_ID;
+  let verified=0;
+  for(const record of project.projectData.generatedPrompts)for(const required of record.contextManifest?.promptContext?.attachments||[]){
+    const artifactId='PROMPT-CONTEXT-'+hash.sha256Value(r.copy({jobId:String(jobId),sha256:required.sha256})),row=await r.store.getArtifact(artifactId);
+    assert.ok(row,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: a saved instruction has no original stored context bytes.');
+    assert.equal(row.jobId,String(jobId),'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: context belongs to another project.');
+    assert.equal(row.filename,required.filename,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: original context filename changed.');
+    assert.equal(row.mediaType,required.mediaType,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: original context media type changed.');
+    assert.equal(row.byteSize,required.byteSize,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: original context length changed.');
+    assert.equal(row.sha256,required.sha256,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: original context identity changed.');
+    assert.equal(row.blob.size,required.byteSize);
+    assert.equal(createHash('sha256').update(Buffer.from(await row.blob.arrayBuffer())).digest('hex'),required.sha256,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: read-back bytes differ from their original identity.');
+    verified++;
+  }
+  return verified;
+}
+async function retainedPromptContextOracle(){
+  const r=projectStoreRuntime(),{engine,prompts,core,store,copy}=r,hash=r.runtime.closedLoopHash;
+  const p=core.createBlankState('JOB-DELIVERY-CONTEXT-CUSTODY');
+  p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve this exact historical objective. '.repeat(2100);
+  engine.recordHumanInputVersion(p,['EXACT_USER_OBJECTIVE_VERBATIM'],'SYNTHETIC-CONTROL');engine.recalculate(p);
+  const first=prompts.reserveAndBuildPromptRecord(p,1,{operation:'COMPLETE'}).prompt,firstFiles=prompts.materializePromptContextFiles(first,p),firstProject=copy(p);
+  assert.equal(firstFiles.length,1,'The bounded fixture must create one original manifest-bound context file.');
+  p.job.EXACT_USER_OBJECTIVE_VERBATIM='Use this changed current objective instead. '.repeat(2100);
+  engine.recordHumanInputVersion(p,['EXACT_USER_OBJECTIVE_VERBATIM'],'SYNTHETIC-CONTROL');engine.recalculate(p);
+  const second=prompts.reserveAndBuildPromptRecord(p,1,{operation:'COMPLETE'}).prompt,secondFiles=prompts.materializePromptContextFiles(second,p);
+  assert.equal(secondFiles.length,1);
+  assert.ok(p.projectData.generatedPrompts.find(record=>record.instructionId===first.instructionId).invalidatedBy,'The actual input change must supersede the original instruction.');
+  assert.notEqual(firstFiles[0].sha256,secondFiles[0].sha256);
+  const contextFiles=[...firstFiles,...secondFiles],originalArtifactId='PROMPT-CONTEXT-'+hash.sha256Value(copy({jobId:p.job.JOB_ID,sha256:firstFiles[0].sha256}));
+  // One controlled hydration fault: retain only current instructions. The
+  // ordinary storage validator must reject the missing original dependency.
+  await hydrateRetainedPromptContexts(r,p,contextFiles,{omitInvalidated:true});
+  await assert.rejects(store.writeProject(copy(p),{expectedProjectRevision:0,createOnly:true}),error=>error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH'&&error.message.includes(originalArtifactId),'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: omitting superseded context must reject checkpoint creation for that exact missing file.');
+  assert.equal(await store.readProject(p.job.JOB_ID),null,'Rejected incomplete custody must not commit the project.');
+  assert.equal(await store.getArtifact(originalArtifactId),null);
+  await hydrateRetainedPromptContexts(r,p,contextFiles);
+  assert.equal(await assertRetainedPromptContextCustody(r,p),2);
+  const saved=await store.writeProject(copy(p),{expectedProjectRevision:0,createOnly:true});
+  assert.ok((await store.historyList(p.job.JOB_ID)).activeId);
+  // The normal application saves the first instruction before a later input
+  // change. Verify that path without substituting its context materializer.
+  const normal=projectStoreRuntime(),initial=await normal.store.writeProject(normal.copy(firstProject),{expectedProjectRevision:0,createOnly:true}),replacement=normal.copy(p);
+  const current=await normal.store.writeProject(replacement,{expectedProjectRevision:initial.revision,mutationConfirmation:normal.store.mutationImpact(initial,replacement)});
+  assert.equal(await assertRetainedPromptContextCustody(normal,current),2);
+  return {name:'preserve original and current instruction context bytes before checkpointing',result:'PASS',savedRevision:saved.revision,normalSequentialRevisions:[initial.revision,current.revision],contextFiles:2,fault:{faultId:'DELIVERY-OMIT-SUPERSEDED-PROMPT-CONTEXT',kind:'CONTROLLED_VERIFIER_HYDRATION_FAULT',caughtBy:'PACKAGE_ARTIFACT_CUSTODY_MISMATCH',result:'DETECTED',productionSourceUnchanged:true},environment:'Production prompt/invalidation builders and persistence with shared transaction adapter; fixed synthetic inputs, no external execution or physical delivery asserted'};
+}
+const retainedContextCase=await retainedPromptContextOracle();
+if(process.argv.includes('--context-custody-only')){
+  console.log(JSON.stringify({deliveryTransferBoundary:'PASS',basis:'BOUNDED_SYNTHETIC_CONTEXT_PERSISTENCE',cases:[retainedContextCase]},null,2));
+  process.exit(0);
+}
 
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
@@ -37,7 +95,7 @@ let fixture,fixtureContextFiles,fixtureArtifacts;
 try{(await checkedVerifier(process.execPath,[script],{stdio:'pipe',timeout:600000,maxBuffer:64*1024*1024}));const generated=JSON.parse(fs.readFileSync(capture,'utf8'));fixture=generated.project;fixtureArtifacts=generated.artifacts;fixtureContextFiles=generated.contextFiles;}
 finally{fs.rmSync(script,{force:true});fs.rmSync(capture,{force:true});}
 await bindArtifactFixture(fixtureArtifacts);
-const value=engine.recordValue,id=(r,c)=>engine.recordId(r,c),fresh=()=>structuredClone(fixture),cases=[],faults=[];
+const value=engine.recordValue,id=(r,c)=>engine.recordId(r,c),fresh=()=>structuredClone(fixture),cases=[retainedContextCase],faults=[];
 const deliveryId=p=>id(engine.recordsForCurrentScope(p,'deliveryRecords').at(-1),'deliveryRecords');
 const attempt=(p,options={})=>engine.recordDeliveryAttempt(p,{deliveryId:deliveryId(p),commandId:'CONTROLLED-TRANSFER-1',...options});
 async function check(name,run){process.stderr.write('delivery: '+name+'\n');try{await run();cases.push({name,result:'PASS'});}catch(error){cases.push({name,result:'FAIL',message:error.message,underlying:error.actual?.message||null,stack:error.stack});}process.stderr.write('delivery: '+cases.at(-1).result+' '+name+'\n');}
@@ -161,14 +219,10 @@ let restorationPhase='build disposable persistence';
 try{
   const r=projectStoreRuntime(),jobId=fixture.job.JOB_ID,versions=[];
   let p=r.copy(fixture);p.activeStage=r.runtime.closedLoopWorkflowSchema.STAGE_COUNT;
-  // Supply the producer's saved bytes at the historical custody boundary.
-  // The real storage writer still hashes, stores and verifies every file.
-  for(const file of fixtureContextFiles)assert.equal(h.sha256Text(file.text),file.sha256,'Captured prompt context bytes must match their original identity.');
-  r.runtime.closedLoopPromptEngine=Object.freeze({...r.runtime.closedLoopPromptEngine,materializePromptContextFiles:record=>r.copy((record.contextManifest?.promptContext?.attachments||[]).map(required=>{
-    const file=fixtureContextFiles.find(file=>file.sha256===required.sha256&&file.byteSize===required.byteSize);
-    assert.ok(file,'The lifecycle producer did not retain an authorized historical context file.');return file;
-  }))});
   await restoreArtifactFixture(r.store,fixtureArtifacts);
+  restorationPhase='retain every original instruction context file';
+  await hydrateRetainedPromptContexts(r,p,fixtureContextFiles);
+  await assertRetainedPromptContextCustody(r,p);
   for(const artifact of r.engine.records(p,'artifacts')){
     const file=await r.store.getArtifact(r.engine.recordId(artifact,'artifacts'),{jobId});
     assert.ok(file,'The lifecycle builder must provide every retained artifact’s exact bytes.');

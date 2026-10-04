@@ -20,8 +20,14 @@ const csv = (text, expected, config={}) => dag([{op:'PARSE_CSV', inputs:{text:li
 const json = (text, path, expected) => dag([{op:'PARSE_JSON',inputs:{text:literal(text)}}, {op:'SELECT_JSON_PATH',inputs:{value:reference('S001'),path:literal(path)}}, eq(reference('S002','selection'),expected)]);
 const xml = (text, path, expected) => dag([{op:'PARSE_XML',inputs:{text:literal(text)}}, {op:'SELECT_XML',inputs:{value:reference('S001'),path:literal(path)}}, eq(reference('S002','selection'),expected)]);
 const passed = async spec => {assert.equal(runtime.validateSpec(spec).valid,true,JSON.stringify(runtime.validateSpec(spec).issues));const result=await execute(spec);assert.equal(result.determination,'SATISFIED',JSON.stringify(result));return result;};
-const invalid = spec => {const result=runtime.validateSpec(spec);assert.equal(result.valid,false,'Invalid Test IR passed ingestion: '+JSON.stringify(spec));};
+const invalid = spec => {const result=runtime.validateSpec(spec);assert.equal(result.valid,false,'Invalid Test IR passed ingestion: '+JSON.stringify(spec));return result;};
 const cases=[];
+const verificationObservations=[];
+function rejectedResult(checkId,spec,violation){
+ const result=invalid(spec),reason='Test IR result must be a registered ASSERTION output; ordinary data cannot supply a determination.';
+ assert.ok(result.issues.includes(reason),'The terminal-result control failed for a different validation reason: '+JSON.stringify(result.issues));
+ verificationObservations.push({checkId,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:1840',...(violation==='externalAssertionsOverridingApplicationProof'?['specification/closed-loop-reliability-controlling-implementation-specification.txt:5454']:[])],boundary:'Application Test IR validator: declared terminal output type',expected:{accepted:false,requiredResultType:'REGISTERED_ASSERTION'},observed:{accepted:result.valid,validationIssues:plain(result.issues)},passed:true,violation,accepted:false});
+}
 async function check(name, operation) {try {await operation();cases.push({name,result:'PASS'});}catch(error){cases.push({name,result:'FAIL',message:String(error.stack||error)});}}
 
 await check('D01 complete objects are compared without member-name unwrapping', async()=>{
@@ -33,9 +39,9 @@ await check('D01 canonical transport wrappers are unwrapped only at the binding 
  const spec=dag([{op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'SOURCE'}}},{op:'SELECT_JSON_PATH',inputs:{value:reference('S001','artifact'),path:literal('$.approved')}},eq(reference('S002','selection'),false)]);
  const result=await execute(spec,{canonicalBindings:{SOURCE:{value:{value:{approved:true},approved:false}}},metadata:{bindings:{SOURCE:{kind:'CANONICAL_VALUE',canonicalKey:'SOURCE'}}}});assert.equal(result.determination,'SATISFIED');
 });
-await check('D02 parsed objects cannot supply a terminal determination',()=>invalid(dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}}],reference('S001'))));
-await check('D02 artifact literals cannot forge a terminal determination',()=>invalid(dag([{op:'LOAD_ARTIFACT',inputs:{binding:literal({determination:'SATISFIED'})}}],reference('S001','artifact'))));
-await check('D02 only registered assertion output ports are terminal results',()=>invalid(dag([{op:'COUNT',inputs:{value:literal([])}}],reference('S001','count'))));
+await check('D02 parsed objects cannot supply a terminal determination',()=>rejectedResult('RUNTIME-EXTERNAL-DETERMINATION-PARSED-REJECTED',dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}}],reference('S001')),'externalAssertionsOverridingApplicationProof'));
+await check('D02 artifact literals cannot forge a terminal determination',()=>rejectedResult('RUNTIME-EXTERNAL-DETERMINATION-ARTIFACT-REJECTED',dag([{op:'LOAD_ARTIFACT',inputs:{binding:literal({determination:'SATISFIED'})}}],reference('S001','artifact')),'externalAssertionsOverridingApplicationProof'));
+await check('D02 only registered assertion output ports are terminal results',()=>rejectedResult('RUNTIME-NONASSERTION-RESULT-REJECTED',dag([{op:'COUNT',inputs:{value:literal([])}}],reference('S001','count')),'nonassertionTerminalResult'));
 await check('D03 an early violation remains a violation when a later result is unexecuted',async()=>{const result=await execute(dag([eq(literal(1),2),eq(literal(true),true)]));assert.equal(result.determination,'VIOLATED');assert.equal(result.actual,1);assert.equal(result.observations.length,1);});
 await check('D03 selecting an earlier pass cannot mask a later violation',async()=>{const result=await execute(dag([eq(literal(true),true),eq(literal(1),2)],reference('S001','assertion')));assert.equal(result.determination,'VIOLATED');assert.equal(result.actual,1);});
 for(const op of ['PARSE_JSON','PARSE_CSV','PARSE_XML']) await check(`D04 ${op} rejects non-string literals`,()=>invalid(dag([{op,inputs:{text:literal(123),...(op==='PARSE_CSV'?csvConfig:{})}},eq(reference('S001'),null)])));
@@ -71,14 +77,16 @@ await check('D20 supplementary Unicode CSV delimiters work',()=>passed(csv('a�
 await check('D20 supplementary Unicode CSV quotes work',()=>passed(csv('🧪a,b🧪,c',[['a,b','c']],{quote:literal('🧪')})));
 await check('D20 doubled supplementary Unicode CSV quotes work',()=>passed(csv('🧪a🧪🧪b🧪',[['a🧪b']],{quote:literal('🧪')})));
 await check('CSV quoted newlines and doubled quotes preserve literal text',()=>passed(csv('"a\nb","c""d"',[['a\nb','c"d']])));
-await check('Parsed data with a determination property is not labelled assertion evidence',async()=>{const result=await passed(dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}},eq(reference('S001'),{determination:'SATISFIED'})]));assert.equal(result.observations[0].kind,'OBJECT');});
+await check('Parsed data with a determination property is not labelled assertion evidence',async()=>{const result=await passed(dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}},eq(reference('S001'),{determination:'SATISFIED'})]));assert.equal(result.observations[0].kind,'OBJECT');verificationObservations.push({checkId:'RUNTIME-EXTERNAL-DETERMINATION-DATA-ONLY',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:1840'],boundary:'Application Test IR execution: parsed claim is data, registered assertion supplies the result',expected:{parsedObservationKind:'OBJECT',nativeAssertionDetermination:'SATISFIED'},observed:{parsedObservationKind:result.observations[0].kind,nativeAssertionDetermination:result.determination},passed:true});});
 await check('Corrected registry digests are reproducible and superseded executable identities fail closed',()=>{
  const registry=JSON.parse(fs.readFileSync(new URL('verification/runtime-integrity-registry.json',import.meta.url),'utf8'));
  for(const item of registry.registryDigests){context.registryDescriptorJson=JSON.stringify(item.descriptor);const descriptor=vm.runInContext('JSON.parse(registryDescriptorJson)',context);assert.equal(context.closedLoopHash.sha256Value(descriptor),item.sha256);assert.equal(runtime[item.constant],item.sha256);assert.notEqual(item.previousSha256,item.sha256);}
  const previous=registry.registryDigests.find(item=>item.constant==='OPERATION_REGISTRY_SHA256').previousSha256;
  invalid({...dag([eq(literal(true),true)]),operationRegistrySha256:previous});
 });
-const report={verifyTestRuntimeIntegrity:cases.every(item=>item.result==='PASS')?'PASS':'FAIL',runtimeSourceSha256:createHash('sha256').update(fs.readFileSync(new URL('test-runtime.js',import.meta.url))).digest('hex'),cases:cases.length,passed:cases.filter(item=>item.result==='PASS').length,failed:cases.filter(item=>item.result==='FAIL').length,results:cases};
+const externalClaimControls=verificationObservations.filter(row=>row.violation==='externalAssertionsOverridingApplicationProof'),externalClaimCounts={attempted:externalClaimControls.length,rejected:externalClaimControls.filter(row=>row.observed.accepted===false).length,accepted:externalClaimControls.filter(row=>row.observed.accepted===true).length};
+verificationObservations.push({checkId:'RUNTIME-EXTERNAL-ASSERTION-NEGATIVE-POPULATION',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:5454'],boundary:'Exactly the existing parsed JSON and artifact literal terminal-claim controls; no wider production population claim',expected:{attempted:2,rejected:2,accepted:0},observed:externalClaimCounts,passed:externalClaimCounts.attempted===2&&externalClaimCounts.rejected===2&&externalClaimCounts.accepted===0});
+const report={verifyTestRuntimeIntegrity:cases.every(item=>item.result==='PASS')?'PASS':'FAIL',runtimeSourceSha256:createHash('sha256').update(fs.readFileSync(new URL('test-runtime.js',import.meta.url))).digest('hex'),cases:cases.length,passed:cases.filter(item=>item.result==='PASS').length,failed:cases.filter(item=>item.result==='FAIL').length,results:cases,verificationObservations};
 const reportPath=process.argv.find(value=>value.startsWith('--integrity-report='))?.slice('--integrity-report='.length);
 if(reportPath)fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));

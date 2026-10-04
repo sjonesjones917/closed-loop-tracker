@@ -1,4 +1,5 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {routeProjectionFixtureFields} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
@@ -66,6 +67,8 @@ for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
   const staleFields={[recordSchema.idField]:staleId};
   if(agentField){fields[agentField]=`CURRENT-SENTINEL-${collection}`;staleFields[agentField]=`STALE-SENTINEL-${collection}`;}
   if(collection==='defects'){fields.EXPECTED_CONDITION='Expected fixture condition';staleFields.EXPECTED_CONDITION='Stale fixture condition';}
+  Object.assign(fields,routeProjectionFixtureFields(collection,{idPrefix:'ROUTE',variant:'CURRENT',marker:`CURRENT-SENTINEL-${collection}`}));
+  Object.assign(staleFields,routeProjectionFixtureFields(collection,{idPrefix:'ROUTE',variant:'STALE',marker:`STALE-SENTINEL-${collection}`}));
   const current={stage:recordSchema.stage||1,fields,scope:versionScopeFor(collection),active:true,validity:'CURRENT'};
   const stale={stage:recordSchema.stage||1,fields:staleFields,scope:staleScopeFor(collection),active:true,validity:'CURRENT'};
   engine.refreshRecordHashes(current,collection);engine.refreshRecordHashes(stale,collection);
@@ -85,6 +88,9 @@ const forbiddenReads={
   '24:COMPLETE':['deterministicResults','meaningResults']
 };
 for(const operation of ['EXECUTE_RUN','VERIFY'])for(const stage of [17,19])forbiddenReads[`${stage}:${operation}`]=operation==='EXECUTE_RUN'?['verification','comparisons','rootCauses','changes']:['comparisons','rootCauses','changes'];
+// Readable secondary families are not permission to embed unbound prior
+// conclusions in independent product reviews (specification Stages 23/24).
+const unboundSecondaryWithheld={23:['observationRecords','entailmentReviews','semanticReviews'],24:['observationRecords','entailmentReviews','semanticReviews']};
 
 let operationsChecked=0,readEdgesChecked=0,writableCollectionsChecked=0,writableFieldsChecked=0,relationshipDefinitionsChecked=0;
 const writeProducers=new Map();
@@ -123,6 +129,10 @@ for(let stage=1;stage<=30;stage++){
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
         if(Number(schema.RECORD_SCHEMAS[collection].stage)>stage){assert(!ids.includes(sent.currentId)&&!record.prompt.includes(sent.currentText),`Stage ${stage}/${operation} leaked subsequent-stage ${collection}.`);continue;}
+        if(unboundSecondaryWithheld[stage]?.includes(collection)){
+          assert(!ids.includes(sent.currentId)&&!record.prompt.includes(sent.currentText)&&!record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} leaked unauthorized current ${collection}.`);
+          assert(!ids.includes(sent.staleId)&&!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} leaked unauthorized stale ${collection}.`);continue;
+        }
         assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
         assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
@@ -180,6 +190,7 @@ assert(!/agent must |agent should |the agent should/i.test(uiSource),`External-a
 
 console.log(JSON.stringify({
   dataRouteClosure:'PASS',
+  scopeLimit:'Synthetic current/stale projection sentinels exercise actual prompt and contract owners; no stage completion, functional lifecycle, or independent semantic approval claim.',
   stages:30,
   operationsChecked,
   canonicalFamilies:Object.keys(schema.RECORD_SCHEMAS).length,

@@ -1,0 +1,1138 @@
+{
+  "schema": "closed-loop-verification-assertion-bindings/1",
+  "specificationSha256": "a610714d14a6cff6386fc432f071e90507910d844ded7f32d87e110ade88cc8c",
+  "bindings": [
+    {
+      "normativeRequirementId": "NREQ-9b3398156f2078436a91a934b077dcd2",
+      "sourceLineSha256": "23745d5e7ce66c18089d328a8939da87fd433c34036c3feb8a749f564416c9d6",
+      "checkIds": [
+        "stage01.deliverable.omitted",
+        "stage01.deliverable.empty",
+        "stage01.deliverable.unknown",
+        "stage01.deliverable.defined"
+      ],
+      "scope": "Actual Stage 01 omitted/empty/unknown versus defined intended-deliverable gate. Other parts of the complete job definition remain separately proved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-c8f0c961ebb556ba000471cade30fc15",
+      "sourceLineSha256": "0728c8bd353551b08c9ae542d2f66c7c7779ce5f11544672365870da3e50eb3d",
+      "checkIds": [
+        "stage01.deliverable.omitted",
+        "stage01.deliverable.empty",
+        "stage01.deliverable.unknown",
+        "stage01.deliverable.defined"
+      ],
+      "scope": "Actual Stage 01 omitted/empty/unknown versus defined intended-deliverable gate. Other parts of the complete job definition remain separately proved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2619cc2ee2f0a654c4540e48abacfee6",
+      "sourceLineSha256": "019670147fc985bfd2896c0bdb10d7347662c1d90d5c067370f4f42ca534b2d2",
+      "checkIds": [
+        "stage02.search-contract.missing",
+        "stage02.search-contract.unreviewed",
+        "stage02.search-contract.reviewed",
+        "stage02.search-contract.reconciliation-current"
+      ],
+      "scope": "Application enforcement of current source-search contract and accepted independent search adequacy/reconciliation; actual external discovery and semantic adequacy remain unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-6470db6f153d4a05ce9335a1a6fbaf2e",
+      "sourceLineSha256": "b07d6433841ee973eec1aebc433ca1e70e8d382bf72822cb5b9f0d498bea51f1",
+      "checkIds": [
+        "stage02.search-contract.missing",
+        "stage02.search-contract.unreviewed",
+        "stage02.search-contract.reviewed",
+        "stage02.search-contract.reconciliation-current"
+      ],
+      "scope": "Application enforcement of current source-search contract and accepted independent search adequacy/reconciliation; actual external discovery and semantic adequacy remain unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-945ebb6d65d04578bd385e06cc32410e",
+      "sourceLineSha256": "908fced35387c39bfa76d93c3b41da589a7635fe72a8c7122795ad62a5d316e0",
+      "checkIds": [
+        "stage02.search-contract.missing",
+        "stage02.search-contract.unreviewed",
+        "stage02.search-contract.reviewed",
+        "stage02.search-contract.reconciliation-current"
+      ],
+      "scope": "Application enforcement of current source-search contract and accepted independent search adequacy/reconciliation; actual external discovery and semantic adequacy remain unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-9522a3263396ea3633d8782d9422ff24",
+      "sourceLineSha256": "f4e46030553e678fb5038691d123c33bf18e70f80e83ff092c3a6e860ec84947",
+      "checkIds": [
+        "stage06.capability.EXTERNAL_SYSTEM.unknown",
+        "stage06.capability.EXTERNAL_SYSTEM.ready",
+        "stage06.capability.EXTERNAL_AGENT_TOOL.unknown",
+        "stage06.capability.EXTERNAL_AGENT_TOOL.ready",
+        "stage06.future-target.INDEPENDENT_AGENT_REVIEW",
+        "stage06.future-target.APPLICATION_DETERMINISTIC"
+      ],
+      "scope": "Unknown versus current retained external capability readiness and declared future target timing at Stage 06. Actual authorized external-system execution remains unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1d4547ddb9f2a6afb13407ecfa914446",
+      "sourceLineSha256": "e60f93a7d400bcd18476aec929aac9279c66c32791cb950fe31ee3ce6d7e2720",
+      "checkIds": [
+        "stage06.capability.EXTERNAL_SYSTEM.unknown",
+        "stage06.capability.EXTERNAL_SYSTEM.ready",
+        "stage06.capability.EXTERNAL_AGENT_TOOL.unknown",
+        "stage06.capability.EXTERNAL_AGENT_TOOL.ready",
+        "stage06.future-target.INDEPENDENT_AGENT_REVIEW",
+        "stage06.future-target.APPLICATION_DETERMINISTIC"
+      ],
+      "scope": "Unknown versus current retained external capability readiness and declared future target timing at Stage 06. Actual authorized external-system execution remains unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-be89fc9d4f060f40c26a091b898335c6",
+      "sourceLineSha256": "698150220e398a716afc9847ce038df91238f47b70cefd9108dd42124c7f3024",
+      "checkIds": [
+        "stage06.capability.EXTERNAL_SYSTEM.unknown",
+        "stage06.capability.EXTERNAL_SYSTEM.ready",
+        "stage06.capability.EXTERNAL_AGENT_TOOL.unknown",
+        "stage06.capability.EXTERNAL_AGENT_TOOL.ready",
+        "stage06.future-target.INDEPENDENT_AGENT_REVIEW",
+        "stage06.future-target.APPLICATION_DETERMINISTIC"
+      ],
+      "scope": "Unknown versus current retained external capability readiness and declared future target timing at Stage 06. Actual authorized external-system execution remains unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-50327f3f5eb324c68fce8489821f7c74",
+      "sourceLineSha256": "79663000ccc24591b6012c0072b48472a5dfe292d68178b08ff456c9323b3de8",
+      "checkIds": [
+        "stage09.required-property.OBJECTIVELY_VERIFIABLE.FALSE",
+        "stage09.required-property.OBJECTIVELY_VERIFIABLE.UNKNOWN",
+        "stage09.required-property.RESPONSIBLE_OPERATION_ASSIGNED.FALSE",
+        "stage09.required-property.RESPONSIBLE_OPERATION_ASSIGNED.UNKNOWN",
+        "stage09.required-property.ORDER_CLEAR.FALSE",
+        "stage09.required-property.ORDER_CLEAR.UNKNOWN",
+        "stage09.required-property.FAILURE_BEHAVIOR_DEFINED.FALSE",
+        "stage09.required-property.FAILURE_BEHAVIOR_DEFINED.UNKNOWN"
+      ],
+      "scope": "Four declared Stage 09 required properties FALSE/UNKNOWN cannot yield favorable effective determination or complete gate. Complete independent semantic clause review remains unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-68b1fdda428da9b5ef8383901bb06507",
+      "sourceLineSha256": "46ff3c2ae49017312dd6be4e1b85e07dd82f946c1c6b05f9a40084a2c71f6252",
+      "checkIds": [
+        "stage09.required-property.OBJECTIVELY_VERIFIABLE.FALSE",
+        "stage09.required-property.OBJECTIVELY_VERIFIABLE.UNKNOWN",
+        "stage09.required-property.RESPONSIBLE_OPERATION_ASSIGNED.FALSE",
+        "stage09.required-property.RESPONSIBLE_OPERATION_ASSIGNED.UNKNOWN",
+        "stage09.required-property.ORDER_CLEAR.FALSE",
+        "stage09.required-property.ORDER_CLEAR.UNKNOWN",
+        "stage09.required-property.FAILURE_BEHAVIOR_DEFINED.FALSE",
+        "stage09.required-property.FAILURE_BEHAVIOR_DEFINED.UNKNOWN"
+      ],
+      "scope": "Four declared Stage 09 required properties FALSE/UNKNOWN cannot yield favorable effective determination or complete gate. Complete independent semantic clause review remains unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8ed7add268e1bd6c3eec9939434b967d",
+      "sourceLineSha256": "6809ee8dec06bbf26522f23198776eb8451cc1b5a52e58fa7a762be5303a6ca6",
+      "checkIds": [
+        "delete.retry-single-effect"
+      ],
+      "scope": "One actual removal plus exact retry in the disposable production-store adapter.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The executed test asserts literal prior true result, exact seven minimal receipt keys with no substantive project content, unchanged recovery state and independent project after retry."
+    },
+    {
+      "normativeRequirementId": "NREQ-a82e9cc86f6339ad84237606b1a00c31",
+      "sourceLineSha256": "b8d928dabec19c231fc04a68adc943d014fc20ac9beacf245dbe0022a867bea8",
+      "checkIds": [
+        "clone.retry-single-effect"
+      ],
+      "scope": "One actual source-bound CLONE command and its exact retry, including mapping manifest.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The executed test asserts the same resulting JOB_ID, equal complete mapping manifest before/after retry, unchanged project count; initial source/copy receipt storage assertions prove external receipt location."
+    },
+    {
+      "normativeRequirementId": "NREQ-72e0277e74304f9922acff2205f2de8b",
+      "sourceLineSha256": "ebda169aad9ba93392b4f5337697d5ad5f6608098cfebdf55dc33043f8530479",
+      "checkIds": [
+        "clone.retry-single-effect",
+        "clone.backup-retry-single-effect",
+        "delete.retry-single-effect",
+        "delete.restored-activation-single-effect",
+        "delete.backup-retry-single-effect"
+      ],
+      "scope": "Five enumerated duplicate-effect challenges: CLONE exact retry and imported backup retry; DELETE exact retry, restored activation retry and imported backup retry.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Every case calls the actual createProject/removeProject owner. Clone cases assert unchanged project counts/same result; delete cases assert unchanged recovery or exact restored/imported canonical project. All five negative population rows carry accepted:false after executed assertions; this is a five-case result, not a global zero claim."
+    },
+    {
+      "normativeRequirementId": "NREQ-5e827a89e805ba6212aad7d514247ded",
+      "sourceLineSha256": "5f7626410b724848f54eb11ef0d9a0b351d80da385150617545faf27072f40c7",
+      "checkIds": [
+        "clone.retry-single-effect",
+        "clone.backup-retry-single-effect",
+        "delete.retry-single-effect",
+        "delete.restored-activation-single-effect",
+        "delete.backup-retry-single-effect"
+      ],
+      "scope": "Five enumerated duplicate-effect challenges: CLONE exact retry and imported backup retry; DELETE exact retry, restored activation retry and imported backup retry.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Every case calls the actual createProject/removeProject owner. Clone cases assert unchanged project counts/same result; delete cases assert unchanged recovery or exact restored/imported canonical project. All five negative population rows carry accepted:false after executed assertions; this is a five-case result, not a global zero claim."
+    },
+    {
+      "normativeRequirementId": "NREQ-f83e9de0994c6329419aa95e40d520ce",
+      "sourceLineSha256": "6b11dfa65a2b9f1a22a55d2d6f70a8063d71d58dcb2a893a2756f5529dab6b13",
+      "checkIds": [
+        "clone.retry-single-effect",
+        "clone.backup-retry-single-effect",
+        "delete.retry-single-effect",
+        "delete.restored-activation-single-effect",
+        "delete.backup-retry-single-effect"
+      ],
+      "scope": "Five enumerated duplicate-effect challenges: CLONE exact retry and imported backup retry; DELETE exact retry, restored activation retry and imported backup retry.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Every case calls the actual createProject/removeProject owner. Clone cases assert unchanged project counts/same result; delete cases assert unchanged recovery or exact restored/imported canonical project. All five negative population rows carry accepted:false after executed assertions; this is a five-case result, not a global zero claim."
+    },
+    {
+      "normativeRequirementId": "NREQ-3ccb0f669e08bc81100365d35e10b1fe",
+      "sourceLineSha256": "f4e54ca27cf95240bf97846c9787fa30d5bd1a5cd5e900c9195be5dcddf5b5b4",
+      "checkIds": [
+        "projection.recovery-canonical-authority"
+      ],
+      "scope": "13 fixed contradictory projections: three complete-package import variations; two retained-view reads; six HISTORY/UNDO/REDO activation variations; two nested-backup imports.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Actual store import/readHistoryView/restoreCheckpoint calls reject with exact PROJECT_INTEGRITY_FAILED or HISTORY_VERSION_INCOMPATIBLE codes. Canonical project/history/import receipt/source bytes are checked unchanged, or the empty destination remains empty. The favorable cache never becomes usable current authority in this finite population."
+    },
+    {
+      "normativeRequirementId": "NREQ-c07f7a06c4115492ce8bd4ba784025c0",
+      "sourceLineSha256": "21f31a6558375de04032499b24994c8e1c6a164f668fe6e16d8079bce6ea640f",
+      "checkIds": [
+        "projection.recovery-canonical-authority"
+      ],
+      "scope": "13 fixed contradictory projections: three complete-package import variations; two retained-view reads; six HISTORY/UNDO/REDO activation variations; two nested-backup imports.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Actual store import/readHistoryView/restoreCheckpoint calls reject with exact PROJECT_INTEGRITY_FAILED or HISTORY_VERSION_INCOMPATIBLE codes. Canonical project/history/import receipt/source bytes are checked unchanged, or the empty destination remains empty. The favorable cache never becomes usable current authority in this finite population."
+    },
+    {
+      "normativeRequirementId": "NREQ-f3a162780b1c810f1a98f9a34500e0ea",
+      "sourceLineSha256": "1afc86049dc3377510a1b9b579d0a58165199535b98ce70343504de584c9d64e",
+      "checkIds": [
+        "projection.recovery-canonical-authority"
+      ],
+      "scope": "Three contradictory cached-projection package imports against an existing active project.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Each import rejection is followed by independent deep equality of readProject, historyList, lastVerifiedImport and original input Blob bytes. Only the three import cases carry this unchanged-existing-project evidence; remaining History cases are not additional import population for this clause."
+    },
+    {
+      "normativeRequirementId": "NREQ-e596501d2b544facc0b2fb644217e864",
+      "sourceLineSha256": "b6f96ed9ce817cb08da62ccc3cc44d61668ab8063c8a1784c63100e268faaf3c",
+      "checkIds": [
+        "clone.invalid-receipt-isolation",
+        "delete.invalid-receipt-isolation"
+      ],
+      "scope": "38 enumerated malformed receipt mutations confined to private transaction-map runtimes: 23 CLONE receipt variants and 15 DELETE receipt variants. Protected synthetic project/hash/history is checked after each attempt.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Every mutation uses a test-only runtime from projectStoreRuntime with newly constructed private rows maps, not the browser database or a third-party client. After each attempted command, CLONE source canonical hash and exact clone project remain equal; DELETE removed project remains absent, recovery unchanged and independent canonical project equal. This measures only the isolated fixture population; no real-user/live-third-party safety or all-test isolation claim."
+    },
+    {
+      "normativeRequirementId": "NREQ-01f47b73f1b5cda5c2d2ae6f0d7667bc",
+      "sourceLineSha256": "0cb89d7154b552bc865d0664722786e871fadf4e62bf7ab74f8542dcf3eeef26",
+      "checkIds": [
+        "BOUNDARY-RETRY-PRIOR-SUBSTANCE"
+      ],
+      "scope": "Stage01 retry exports complete authorized rejected response and selected prior file bytes, including externalized large context; this is not an all-stage input completeness claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-9fa237d0d477749d6b99126d9193be9d",
+      "sourceLineSha256": "d51b3ba14c8cbb7fafe6a16b6c6e8afb676d3310fc3796817d89b6b26829a186",
+      "checkIds": [
+        "BOUNDARY-RETRY-PRIOR-SUBSTANCE"
+      ],
+      "scope": "Same Stage01 author/target lane carries the actual rejected substantive response into a saved/reloaded committed replacement ZIP.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-4203a10709c002636d4e1be33b5091a5",
+      "sourceLineSha256": "720645e787c15932800a56f00749b850c4729a96e143c819bb7c3bcc97a2c54f",
+      "checkIds": [
+        "BOUNDARY-RETRY-PRIOR-SUBSTANCE"
+      ],
+      "scope": "Known exact corrected human answer is transported in the next Stage01 package; no request to restate it is needed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a76e76766e072c9ef10c8e0e011bc250",
+      "sourceLineSha256": "a331b90c46d5141927538e27b2ec4f4c7454f61984a9739b93eba121bb04db11",
+      "checkIds": [
+        "BOUNDARY-RETRY-PRIOR-SUBSTANCE",
+        "human.unconfirmed-candidate"
+      ],
+      "scope": "Reported human claim remains UNCONFIRMED_AGENT_REPORT with zero canonical acceptance; existing human authority commit control requires direct exact confirmation.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cc4991358fad9cea4d677d47ac290d03",
+      "sourceLineSha256": "19c2de658c7263e42621eae76a6e30877a0c6dcecf9e537bd7d6707e7cb08cf0",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS",
+        "PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS"
+      ],
+      "scope": "Published closed fallback enum values and exclusion of application-owned proposition timing in each external proposition-writing response descriptor.",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-26987f8909e1e21f51bb8aec4ec11ad0",
+      "sourceLineSha256": "6412b87e0db357cda175c62be11e408226736b0a99933c238aa53d091514d937",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS"
+      ],
+      "scope": "The exact declared answer-type token is advertised and a conforming fallback request using it passes validation; unsupported STRING is rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8900e52a626074896907f9d0c2c8be8b",
+      "sourceLineSha256": "359cb15a5d06cb779f21be3b9944c5b96879849a3e2cd80885c69281ef2ccdcf",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS"
+      ],
+      "scope": "The exact declared answer-type token is advertised and a conforming fallback request using it passes validation; unsupported STRING is rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b032cdec8584aa7b76379f953d42aee2",
+      "sourceLineSha256": "d3ee6e83c3802cc8b9a2e7e96ebfd07b46ba73a1a54656323310ab5b2fa1423f",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS"
+      ],
+      "scope": "The exact declared answer-type token is advertised and a conforming fallback request using it passes validation; unsupported STRING is rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-6b631c4f193de8592e2b5da6f4631019",
+      "sourceLineSha256": "4f6a5dd018047b207d4eb31dabf67b161804f4852f1f1c22435b43e500f42296",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS"
+      ],
+      "scope": "The exact declared answer-type token is advertised and a conforming fallback request using it passes validation; unsupported STRING is rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d5c134c8ff6226d9d472296eae4bfe8d",
+      "sourceLineSha256": "785ac210577bdf81d3a2a1e7cc278714e443210e61beb33f62c6d0e6a8759951",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS"
+      ],
+      "scope": "The exact declared answer-type token is advertised and a conforming fallback request using it passes validation; unsupported STRING is rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-7dbcda9e603095af06037a6357b1c970",
+      "sourceLineSha256": "1a22213a782b15e441371cc18768c9d461c640218dc9942ef2844ebd3f2bfba4",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS"
+      ],
+      "scope": "The exact declared answer-type token is advertised and a conforming fallback request using it passes validation; unsupported STRING is rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-c7fbc4d45f7faed49f52781959db1ec3",
+      "sourceLineSha256": "cc1f0517c2f6e5f6296121c956638e866a504d1996e31986ceb42a4a69a0e0dd",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS"
+      ],
+      "scope": "The exact declared answer-type token is advertised and a conforming fallback request using it passes validation; unsupported STRING is rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d00ca1959a2b73302966ff3eee6fd5f7",
+      "sourceLineSha256": "aa003030c99eb1ed7efdc16af4ed2a3ab48b34f6ecf6855ce5ac10ebc1f5aa2c",
+      "checkIds": [
+        "BOUNDARY-FALLBACK-CLOSED-ENUMS"
+      ],
+      "scope": "The exact declared answer-type token is advertised and a conforming fallback request using it passes validation; unsupported STRING is rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8fe1bfd0e1bd9dcfb906edb36f78c438",
+      "sourceLineSha256": "c6ed6e483e91ff3fa520b4d63ebd94efbca9dcbb5612c885866751db5b5bde89",
+      "checkIds": [
+        "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY"
+      ],
+      "scope": "Corrected returned-file validation preserves the original MISSING_REQUIRED_ATTACHMENT validation as history.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2fe2dbb65f0574ac88c12a60d4b27255",
+      "sourceLineSha256": "b47e11d26a2fc64735b07b7c146e9b54a432670986c0c6fcd93a95936d22143c",
+      "checkIds": [
+        "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY"
+      ],
+      "scope": "A fresh exact corrected-file proposal passes precommit and commits once; equivalent successful retry reuses the receipt with no additional canonical changes. No injected atomic-failure claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-0108a1dba534bdc92d29b26019d57b4c",
+      "sourceLineSha256": "33398aa4e86a0a2c580e47111fab549398f55ffc6ff0e6abd57fa89d5cd2f3e5",
+      "checkIds": [
+        "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY"
+      ],
+      "scope": "Unchanged invalid JSON/file input reuses its rejection; corrected actual file input revalidates; successful same-byte reallocation returns original receipt with zero duplicate canonical mutations.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-7f4177f55e785aab7b5d6299625ddb31",
+      "sourceLineSha256": "e4f0738b7c6be20d6fcf48cab76f41d604c2099d91bb776f34a352af1192bc88",
+      "checkIds": [
+        "PRODUCER-TIMING-REJECT-VERIFICATION_PHASE",
+        "PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE",
+        "PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE",
+        "PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED",
+        "PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED",
+        "PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED",
+        "PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION",
+        "PRODUCER-TIMING-REJECT-TIMING_ENTRIES",
+        "PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256"
+      ],
+      "scope": "Nine existing agent-assignment attempts at application-owned proposition timing are rejected with actual field-specific issue/path and unchanged accepted state.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b1f0ecea1009257a9e24d8f4054563b0",
+      "sourceLineSha256": "aa02eec728c0f2f08e4e8aadd14437264e614eb7d3f46acd6f70b4ee78d88f89",
+      "checkIds": [
+        "PRODUCER-TIMING-REJECT-VERIFICATION_PHASE",
+        "PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE",
+        "PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE",
+        "PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED",
+        "PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED",
+        "PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED",
+        "PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION",
+        "PRODUCER-TIMING-REJECT-TIMING_ENTRIES",
+        "PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256",
+        "PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS"
+      ],
+      "scope": "Application-owned proposition timing fields are excluded from external descriptors and prohibited in agent ingress, including legacy scalar and derived schedule carriers.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-fc73ddc3ba9934e2d605107adca72254",
+      "sourceLineSha256": "810cfd630e4d0d02020bc283327dd306c252e7cab091e609c50881c177165331",
+      "checkIds": [
+        "ATTACHMENT-SLOT-INVENTED-REJECTED",
+        "ATTACHMENT-SLOT-FOREIGN-REJECTED",
+        "ATTACHMENT-SLOT-ROLE-MISMATCH-REJECTED",
+        "ATTACHMENT-PACKAGE-EXACT-SLOT-BYTES"
+      ],
+      "scope": "Reserved application-owned slot identities/roles survive actual exported ZIP; invented, foreign-job/package, or altered-role declarations are rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-53ba467545effc4fc63c93119acaed3c",
+      "sourceLineSha256": "fdf969dceaf22eff413ef02bfc40aac49dfd6848442bbd77be835415de6cfd32",
+      "checkIds": [
+        "ATTACHMENT-SLOT-INVENTED-REJECTED",
+        "ATTACHMENT-SLOT-FOREIGN-REJECTED",
+        "ATTACHMENT-SLOT-ROLE-MISMATCH-REJECTED",
+        "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY"
+      ],
+      "scope": "Declared/selected files must bind authorized current slots before proposal acceptance; corrected actual returned bytes do not authorize an unallocated artifact.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-565340ef17dd5d435a9b60253a2e3680",
+      "sourceLineSha256": "88d637a0ba29682640c0ec72a6612c1949980f9a98f0608707e5959ca1cc28fa",
+      "checkIds": [
+        "ATTACHMENT-PACKAGE-EXACT-SLOT-BYTES"
+      ],
+      "scope": "Actual production ZIP contains the exact saved reserved instruction bytes and authoritative slot manifest. No browser picker/physical device claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-ac56cc341e3ff24380bef0ff95da8e45",
+      "sourceLineSha256": "131718be957b731da086b38b31ead06f4440d95ec0118dc3d0a946c557f9a3da",
+      "checkIds": [
+        "RUNTIME-EXTERNAL-DETERMINATION-PARSED-REJECTED",
+        "RUNTIME-EXTERNAL-DETERMINATION-ARTIFACT-REJECTED",
+        "RUNTIME-NONASSERTION-RESULT-REJECTED",
+        "RUNTIME-EXTERNAL-DETERMINATION-DATA-ONLY"
+      ],
+      "scope": "Test IR declared terminal output must be a registered ASSERTION port; externally supplied SATISFIED-shaped data stays ordinary OBJECT data.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-250ea6d07394a03521caad344be64491",
+      "sourceLineSha256": "1c3040582a42695435832ae7de65b80f05cdfe7a1e1e3beee47c589b795a3b27",
+      "checkIds": [
+        "RUNTIME-EXTERNAL-DETERMINATION-PARSED-REJECTED",
+        "RUNTIME-EXTERNAL-DETERMINATION-ARTIFACT-REJECTED",
+        "RUNTIME-EXTERNAL-ASSERTION-NEGATIVE-POPULATION"
+      ],
+      "scope": "Only the finite two existing parsed/literal terminal-claim controls: 2 attempted, 2 rejected, 0 accepted. This does not establish a global production zero rate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1a635b514dc030428c4d3cfa5312036e",
+      "sourceLineSha256": "8ebc60284733a63c3053b43a77a541ecd1115e98bc61c5c33a19af194443cb2d",
+      "checkIds": [
+        "native.foreign-receipt-rejected"
+      ],
+      "scope": "Reuse CI-owned actual native receipt mismatched testId/testSpecSha256/inputArtifactSha256Values rejection controls; no new receipt population.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5ff3f0ebe82ad785adad3a4046c55373",
+      "sourceLineSha256": "28afc08c380e41ae572cc27e38bd3b62c4af8b88b66c09432b103652ae3a022e",
+      "checkIds": [
+        "registry.semantic-drift"
+      ],
+      "scope": "Reuse CI-owned current registry descriptor/digest reproduction and superseded operation-registry digest rejection; no broader runtime semantic completeness claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-3f1b8fcbdc2f1a0fdde538a2efd3a361",
+      "sourceLineSha256": "06742a8aaa311d08aace8b8763fdbe2744d003993577108d053c99dc51c48156",
+      "checkIds": [
+        "human.unconfirmed-candidate"
+      ],
+      "scope": "Reuse CI-owned actual HUMAN_AUTHORITY_CONFIRMATION_REQUIRED commit rejection for an unconfirmed agent-reported candidate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-05b4b9ffbc0aae82083dfd29cf4d9632",
+      "sourceLineSha256": "961c7e303b44f0b225a41bd93b7b2164b93ac901b502a7edc617bee178bb758e",
+      "checkIds": [
+        "blind-stage23-secondary-context-projection"
+      ],
+      "scope": "Stage23 actual emitted instruction and every externalized context file omit five marked generator/native/derived/failed-execution carriers and retain three independently named governing requirement/source/proposition markers; source content forces70KB actual file externalization. Only this finite fixture and explicit markers; not global semantic judgment or all content/tool custody.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Five forbidden and three authorized unique fixture sentinel strings; independent complete emitted-instruction and materialized-file concatenation assertions; controlled filter bypass fails FINAL_REVIEW_CONTEXT_ORACLE.",
+      "suite": "verify-stage-prompts-complete.mjs",
+      "boundary": "Actual buildPromptRecord and materializePromptContextFiles output",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2501,
+        "endLine": 2501,
+        "lineSha256": "961c7e303b44f0b225a41bd93b7b2164b93ac901b502a7edc617bee178bb758e"
+      },
+      "controllingText": "- governing requirement;"
+    },
+    {
+      "normativeRequirementId": "NREQ-d2e080083bec38aa35e7a5199028a38f",
+      "sourceLineSha256": "e0c6ccee59b99c3f9a46e5d146fa7fab1fd5a5cc953ed3cf3278dc1af5fa4794",
+      "checkIds": [
+        "blind-stage23-secondary-context-projection"
+      ],
+      "scope": "Stage23 actual emitted instruction and every externalized context file omit five marked generator/native/derived/failed-execution carriers and retain three independently named governing requirement/source/proposition markers; source content forces70KB actual file externalization. Only this finite fixture and explicit markers; not global semantic judgment or all content/tool custody.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Five forbidden and three authorized unique fixture sentinel strings; independent complete emitted-instruction and materialized-file concatenation assertions; controlled filter bypass fails FINAL_REVIEW_CONTEXT_ORACLE.",
+      "suite": "verify-stage-prompts-complete.mjs",
+      "boundary": "Actual buildPromptRecord and materializePromptContextFiles output",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2502,
+        "endLine": 2502,
+        "lineSha256": "e0c6ccee59b99c3f9a46e5d146fa7fab1fd5a5cc953ed3cf3278dc1af5fa4794"
+      },
+      "controllingText": "- applicable source evidence;"
+    },
+    {
+      "normativeRequirementId": "NREQ-d5221c7467b1b555f0ad617f87a9ec8c",
+      "sourceLineSha256": "4a40b761f66cdf136c90064bb4eb7c11d54776f2ae7b531c6519efe4ed6dcb3b",
+      "checkIds": [
+        "blind-stage23-secondary-context-projection"
+      ],
+      "scope": "Stage23 actual emitted instruction and every externalized context file omit five marked generator/native/derived/failed-execution carriers and retain three independently named governing requirement/source/proposition markers; source content forces70KB actual file externalization. Only this finite fixture and explicit markers; not global semantic judgment or all content/tool custody.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Five forbidden and three authorized unique fixture sentinel strings; independent complete emitted-instruction and materialized-file concatenation assertions; controlled filter bypass fails FINAL_REVIEW_CONTEXT_ORACLE.",
+      "suite": "verify-stage-prompts-complete.mjs",
+      "boundary": "Actual buildPromptRecord and materializePromptContextFiles output",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2506,
+        "endLine": 2506,
+        "lineSha256": "4a40b761f66cdf136c90064bb4eb7c11d54776f2ae7b531c6519efe4ed6dcb3b"
+      },
+      "controllingText": "- generator correctness claims;"
+    },
+    {
+      "normativeRequirementId": "NREQ-f8a892e16c85aa1efbaa45b5ee98be5e",
+      "sourceLineSha256": "92e6a462f18a7f807f14ce03bad67a0545143a51ad0dd8f0fb6da161a32ea4d6",
+      "checkIds": [
+        "blind-stage23-secondary-context-projection"
+      ],
+      "scope": "Stage23 actual emitted instruction and every externalized context file omit five marked generator/native/derived/failed-execution carriers and retain three independently named governing requirement/source/proposition markers; source content forces70KB actual file externalization. Only this finite fixture and explicit markers; not global semantic judgment or all content/tool custody.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Five forbidden and three authorized unique fixture sentinel strings; independent complete emitted-instruction and materialized-file concatenation assertions; controlled filter bypass fails FINAL_REVIEW_CONTEXT_ORACLE.",
+      "suite": "verify-stage-prompts-complete.mjs",
+      "boundary": "Actual buildPromptRecord and materializePromptContextFiles output",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2507,
+        "endLine": 2507,
+        "lineSha256": "92e6a462f18a7f807f14ce03bad67a0545143a51ad0dd8f0fb6da161a32ea4d6"
+      },
+      "controllingText": "- deterministic pass status when unnecessary;"
+    },
+    {
+      "normativeRequirementId": "NREQ-4b604f366d95db263bde4006e0020b60",
+      "sourceLineSha256": "e2ab4acf5844768abf79a4912a1068fb89d4b8678a4c7e62788bc525086aa06c",
+      "checkIds": [
+        "blind-stage24-secondary-context-projection"
+      ],
+      "scope": "Stage24 actual emitted instruction and every externalized context file omit five marked generator/native/derived/failed-execution carriers and retain three independently named governing requirement/source/proposition markers; source content forces70KB actual file externalization. Only this finite fixture; does not prove every explicit-attack exception or semantic interpretation.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Five forbidden and three authorized unique fixture sentinel strings; independent complete emitted-instruction and materialized-file concatenation assertions.",
+      "suite": "verify-stage-prompts-complete.mjs",
+      "boundary": "Actual buildPromptRecord and materializePromptContextFiles output",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2513,
+        "endLine": 2513,
+        "lineSha256": "e2ab4acf5844768abf79a4912a1068fb89d4b8678a4c7e62788bc525086aa06c"
+      },
+      "controllingText": "- applicable requirements;"
+    },
+    {
+      "normativeRequirementId": "NREQ-d92e0038d93c16434916952ce9cd9a49",
+      "sourceLineSha256": "f795f74b48693b40fea6e203aaed9467c2a40f17f0ce901ba82105d8e6e5f8eb",
+      "checkIds": [
+        "blind-stage24-secondary-context-projection"
+      ],
+      "scope": "Stage24 actual emitted instruction and every externalized context file omit five marked generator/native/derived/failed-execution carriers and retain three independently named governing requirement/source/proposition markers; source content forces70KB actual file externalization. Only this finite fixture; does not prove every explicit-attack exception or semantic interpretation.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Five forbidden and three authorized unique fixture sentinel strings; independent complete emitted-instruction and materialized-file concatenation assertions.",
+      "suite": "verify-stage-prompts-complete.mjs",
+      "boundary": "Actual buildPromptRecord and materializePromptContextFiles output",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2518,
+        "endLine": 2518,
+        "lineSha256": "f795f74b48693b40fea6e203aaed9467c2a40f17f0ce901ba82105d8e6e5f8eb"
+      },
+      "controllingText": "- generator reasoning;"
+    },
+    {
+      "normativeRequirementId": "NREQ-43e1967f12a5ea9831570d0a6a935bc9",
+      "sourceLineSha256": "b1d352ae0b6da8442da4e9cb52d001e930586526e763c2e519a701cef9d70102",
+      "checkIds": [
+        "blind-stage24-secondary-context-projection"
+      ],
+      "scope": "Stage24 actual emitted instruction and every externalized context file omit five marked generator/native/derived/failed-execution carriers and retain three independently named governing requirement/source/proposition markers; source content forces70KB actual file externalization. Only this finite fixture; does not prove every explicit-attack exception or semantic interpretation.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Five forbidden and three authorized unique fixture sentinel strings; independent complete emitted-instruction and materialized-file concatenation assertions.",
+      "suite": "verify-stage-prompts-complete.mjs",
+      "boundary": "Actual buildPromptRecord and materializePromptContextFiles output",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2519,
+        "endLine": 2519,
+        "lineSha256": "b1d352ae0b6da8442da4e9cb52d001e930586526e763c2e519a701cef9d70102"
+      },
+      "controllingText": "- generator self-evaluation;"
+    },
+    {
+      "normativeRequirementId": "NREQ-f065ac723cdf1c204755672c8f3800c8",
+      "sourceLineSha256": "04d57ba480029e10f3bd4a63d59a9fc0b5157637e3129600312d8da7649702e9",
+      "checkIds": [
+        "blind-stage24-secondary-context-projection"
+      ],
+      "scope": "Stage24 actual emitted instruction and every externalized context file omit five marked generator/native/derived/failed-execution carriers and retain three independently named governing requirement/source/proposition markers; source content forces70KB actual file externalization. Only this finite fixture; does not prove every explicit-attack exception or semantic interpretation.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Five forbidden and three authorized unique fixture sentinel strings; independent complete emitted-instruction and materialized-file concatenation assertions.",
+      "suite": "verify-stage-prompts-complete.mjs",
+      "boundary": "Actual buildPromptRecord and materializePromptContextFiles output",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2520,
+        "endLine": 2520,
+        "lineSha256": "04d57ba480029e10f3bd4a63d59a9fc0b5157637e3129600312d8da7649702e9"
+      },
+      "controllingText": "- conclusions telling the reviewer what to find;"
+    },
+    {
+      "normativeRequirementId": "NREQ-2b6bba4196d8c4cd91c7630369be0b33",
+      "sourceLineSha256": "ebaa859527849f7774c10b1120e0bea8fb34ad383fe69773877b92d2748f35c9",
+      "checkIds": [
+        "native-stage24-satisfied",
+        "native-stage24-violated"
+      ],
+      "scope": "Two exact project-identity Test IR outcomes SATISFIED and VIOLATED persisted exclusively as Stage24 adversarial results/observations; changed executable test revokes the controlled REFUTES proof consumer. No claim of live external adversarial judgment.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent exact project JOB_ID versus explicit different required identity; externally observable stage/family/owner/outcome values and UNDETERMINED after controlled semantic mutation; original Stage22-only dispatcher fails persisted-result oracle.",
+      "suite": "verify-verification-routing.mjs",
+      "boundary": "Actual UI runner \u2192 isolated Test IR worker \u2192 application result/proof observation \u2192 production CAS storage reload",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3538,
+        "endLine": 3538,
+        "lineSha256": "ebaa859527849f7774c10b1120e0bea8fb34ad383fe69773877b92d2748f35c9"
+      },
+      "controllingText": "Operations: RUN_NATIVE_ATTACKS, COMPLETE"
+    },
+    {
+      "normativeRequirementId": "NREQ-371f883d89a51026193c34386aa97645",
+      "sourceLineSha256": "1bfcb665be54758212b3fb806daa58d60d0d7cc8d7c8524051cbfb0c41315a50",
+      "checkIds": [
+        "native-stage24-satisfied",
+        "native-stage24-violated"
+      ],
+      "scope": "Two exact project-identity Test IR outcomes SATISFIED and VIOLATED persisted exclusively as Stage24 adversarial results/observations; changed executable test revokes the controlled REFUTES proof consumer. No claim of live external adversarial judgment.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent exact project JOB_ID versus explicit different required identity; externally observable stage/family/owner/outcome values and UNDETERMINED after controlled semantic mutation; original Stage22-only dispatcher fails persisted-result oracle.",
+      "suite": "verify-verification-routing.mjs",
+      "boundary": "Actual UI runner \u2192 isolated Test IR worker \u2192 application result/proof observation \u2192 production CAS storage reload",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3857,
+        "endLine": 3857,
+        "lineSha256": "1bfcb665be54758212b3fb806daa58d60d0d7cc8d7c8524051cbfb0c41315a50"
+      },
+      "controllingText": "- Agent or native runtime supplies observations."
+    },
+    {
+      "normativeRequirementId": "NREQ-fbbdbf6147bdacd44e4b8c4a637ba501",
+      "sourceLineSha256": "1507a1aa07a338fe713cf6cb9ac28c79adc329113a1133c29383359959db2185",
+      "checkIds": [
+        "evidence-chain-full-canonical-sha256",
+        "evidence-chain-old-summary-rejected"
+      ],
+      "scope": "Independent complete canonical chain subject SHA256 equals actual full64hex digest; seven material link mutations invalidate original version; original32hex summary version fails current completion. Exact declared set projection/explicit self-audit omissions only.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent Node createHash over independently reconstructed subject (not production preimage/hash helper); seven direct exact link changes and retained original truncated-summary counterexample.",
+      "suite": "verify-stage29-evidence-chain-checkpoint.mjs",
+      "boundary": "Actual Stage29 construct/calculate/current-set/checkpoint owner",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 2968,
+        "endLine": 2968,
+        "lineSha256": "1507a1aa07a338fe713cf6cb9ac28c79adc329113a1133c29383359959db2185"
+      },
+      "controllingText": "For every registered hash kind, the preimage inclusion set is exactly the canonical fields of the subject record or manifest, excluding only the digest field itself and every field whose value depends on that digest, fields declared audit-only or derived-summary, and fields the owning schema explicitly excludes with a registered reason. The scope-hash preimage is exactly the Section 14.7 dimensions of the operation, and the terminal-hash preimage is exactly the records enumerated in Section 36.9. An unregistered hash kind or pointer set is UNDEFINED_HASH_PREIMAGE and blocks the computation and every dependent gate. Default array semantics are ordered and order-significant; an array is set-valued only when its JSON pointer is explicitly registered with an element-identity key, a duplicate rule that rejects duplicates, and a sort rule of canonical byte order over the element identity. An unregistered pointer treated as a set is UNDEFINED_SET_SEMANTICS and blocks."
+    },
+    {
+      "normativeRequirementId": "NREQ-61c8d2f4ba0e18c19345a035cf4fe9e4",
+      "sourceLineSha256": "253ed5282087785cdb041aa46432ceadd6cd5360895ade45282f7331035bf55d",
+      "checkIds": [
+        "terminal-exact-record-preimage-sha256",
+        "terminal-summary-or-mutated-dependency-rejected"
+      ],
+      "scope": "Exact full lifecycle terminal canonical dependency subject matches independently derived SHA256; original proposition summary substitution and canonical release derivation change revoke actual authorized transfer. Synthetic external actor only; physical-device/model checks remain UNKNOWN.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent Node createHash over exact separately reconstructed Stage27/28/29/30/checkpoint/scope/artifact subject; original summary substitution and changed canonical release derivation are rejected at real transfer precondition.",
+      "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+      "boundary": "Actual terminal calculation, restored artifact bytes and deliveryTransferPrecondition",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3269,
+        "endLine": 3269,
+        "lineSha256": "253ed5282087785cdb041aa46432ceadd6cd5360895ade45282f7331035bf55d"
+      },
+      "controllingText": "4. verifies the Stage 29 evidence-chain set and exact EVIDENCE_CHAIN_SET_SHA256;"
+    },
+    {
+      "normativeRequirementId": "NREQ-09ad512e5aca0f31e81aa5083535af3e",
+      "sourceLineSha256": "b6f578ff715ca793fd180aa7d31ef947200a1ba82a39727d1e94329490d6bfd4",
+      "checkIds": [
+        "terminal-exact-record-preimage-sha256",
+        "terminal-summary-or-mutated-dependency-rejected"
+      ],
+      "scope": "Exact full lifecycle terminal canonical dependency subject matches independently derived SHA256; original proposition summary substitution and canonical release derivation change revoke actual authorized transfer. Synthetic external actor only; physical-device/model checks remain UNKNOWN.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent Node createHash over exact separately reconstructed Stage27/28/29/30/checkpoint/scope/artifact subject; original summary substitution and changed canonical release derivation are rejected at real transfer precondition.",
+      "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+      "boundary": "Actual terminal calculation, restored artifact bytes and deliveryTransferPrecondition",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3280,
+        "endLine": 3280,
+        "lineSha256": "b6f578ff715ca793fd180aa7d31ef947200a1ba82a39727d1e94329490d6bfd4"
+      },
+      "controllingText": "The terminal evidence hash is computed from the exact Stage 27 release record, Stage 28 identity record and human intent, Stage 29 evidence-chain set and hash, Stage 30 registry calculation, pre-delivery checkpoint, delivery scope, and authorized artifact identities. It is never computed from a summary standing in place of those records."
+    },
+    {
+      "normativeRequirementId": "NREQ-1d255fb22dcf311f8c59cfd6754608c6",
+      "sourceLineSha256": "eafb1ece826f7c026731b5a6f90b43ad2d8967e51c25be4938a2cd032ba1a28f",
+      "checkIds": [
+        "terminal-own-transition-noninvalidated",
+        "terminal-self-invalidation-mutant-detected"
+      ],
+      "scope": "Exactly one own-stage30 invalidation transition preserves disposable current release/delivery sentinels (noninvalidated/active/CURRENT); existing self-invalidation mutant is caught by INVALIDATION_ORACLE, restored baseline passes. This establishes one empirical own-transition self-invalidation count and one rejected mutant, not every Stage27/30 dependency cycle or accepted real project journey.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Declared derivedOwners release27/delivery30 and strict downstream stage>upstream expectation; existing controlled production-equivalent self-invalidation mutation must fail exact deliveryRecords owner30 after30 assertion.",
+      "suite": "verify-shared-contract-faults.mjs",
+      "boundary": "Production invalidateDownstream own stage30 transition and disposable SELF-INVALIDATE-TERMINAL module mutant/assertion owner",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 4882,
+        "endLine": 4882,
+        "lineSha256": "eafb1ece826f7c026731b5a6f90b43ad2d8967e51c25be4938a2cd032ba1a28f"
+      },
+      "controllingText": "- terminal self-invalidation and Stage 27/Stage 30 dependency cycle;"
+    },
+    {
+      "normativeRequirementId": "NREQ-b32ebf1e2e8a71b0f7c5e81ed8230f2c",
+      "sourceLineSha256": "9fadc64d1509483e8d5f8af74d7f7411a95c149bb0d9bb90ffbf43df87f8e51a",
+      "checkIds": [
+        "terminal-own-transition-noninvalidated",
+        "terminal-self-invalidation-mutant-detected"
+      ],
+      "scope": "Exactly one own-stage30 invalidation transition preserves disposable current release/delivery sentinels (noninvalidated/active/CURRENT); existing self-invalidation mutant is caught by INVALIDATION_ORACLE, restored baseline passes. This establishes one empirical own-transition self-invalidation count and one rejected mutant, not every Stage27/30 dependency cycle or accepted real project journey.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Declared derivedOwners release27/delivery30 and strict downstream stage>upstream expectation; existing controlled production-equivalent self-invalidation mutation must fail exact deliveryRecords owner30 after30 assertion.",
+      "suite": "verify-shared-contract-faults.mjs",
+      "boundary": "Production invalidateDownstream own stage30 transition and disposable SELF-INVALIDATE-TERMINAL module mutant/assertion owner",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5470,
+        "endLine": 5470,
+        "lineSha256": "9fadc64d1509483e8d5f8af74d7f7411a95c149bb0d9bb90ffbf43df87f8e51a"
+      },
+      "controllingText": "Terminal self-invalidation or dependency cycles   = 0"
+    },
+    {
+      "normativeRequirementId": "NREQ-4c362abc1d04c54714e0ea21e4bf5369",
+      "sourceLineSha256": "8db4800da1581797523a7687f69abf4166f3d2306682d7cbe82473c9a3212433",
+      "checkIds": [
+        "native.foreign-receipt-rejected"
+      ],
+      "scope": "Existing exact testId/testSpecSha256/inputArtifactSha256Values receipt mismatches reject atomically with project digest unchanged. Finite three foreign-identity fixtures, not all arbitrary native receipt forgery.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independently different WRONG test/spec IDs or all-zero input SHA; explicit exact-current-test rejection and pre/post canonical digest equality assertions.",
+      "suite": "verify-native-proof-journey.mjs",
+      "boundary": "Actual recordApplicationDeterministicResult normalization during native Test IR lifecycle",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5455,
+        "endLine": 5455,
+        "lineSha256": "8db4800da1581797523a7687f69abf4166f3d2306682d7cbe82473c9a3212433"
+      },
+      "controllingText": "Native execution receipts fabricated externally   = 0"
+    },
+    {
+      "normativeRequirementId": "NREQ-78bf4f2f5537ca81695558cfd4a06a8a",
+      "sourceLineSha256": "38be7c29749cd329477bfad76bb81d9af0fc30e52585f8d6547354dae4cbdc5d",
+      "checkIds": [
+        "registry.semantic-drift"
+      ],
+      "scope": "Current independently derived registry descriptors reproduce SHA values and superseded OPERATION_REGISTRY_SHA256 is rejected by validateSpec. Finite runtime descriptor registry and one stale executable identity; no global schema semantics claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent retained runtime-integrity-registry descriptor SHA comparisons and previousSha256 distinct identity rejected as invalid executable spec.",
+      "suite": "verify-test-runtime-integrity.mjs",
+      "boundary": "Actual runtime validateSpec and independent registered descriptor digest checks",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 4886,
+        "endLine": 4886,
+        "lineSha256": "38be7c29749cd329477bfad76bb81d9af0fc30e52585f8d6547354dae4cbdc5d"
+      },
+      "controllingText": "- registry semantic drift under an unchanged identity;"
+    },
+    {
+      "normativeRequirementId": "NREQ-caee2b9706543698ffe69ae7ccf99c73",
+      "sourceLineSha256": "f30810491539e8a7495bf30ea9cb678c43a4e1e4f8bf16366326bce863252e79",
+      "checkIds": [
+        "registry.semantic-drift"
+      ],
+      "scope": "Current independently derived registry descriptors reproduce SHA values and superseded OPERATION_REGISTRY_SHA256 is rejected by validateSpec. Finite runtime descriptor registry and one stale executable identity; no global schema semantics claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent retained runtime-integrity-registry descriptor SHA comparisons and previousSha256 distinct identity rejected as invalid executable spec.",
+      "suite": "verify-test-runtime-integrity.mjs",
+      "boundary": "Actual runtime validateSpec and independent registered descriptor digest checks",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5473,
+        "endLine": 5473,
+        "lineSha256": "f30810491539e8a7495bf30ea9cb678c43a4e1e4f8bf16366326bce863252e79"
+      },
+      "controllingText": "Registry semantic drift under unchanged identity  = 0"
+    },
+    {
+      "normativeRequirementId": "NREQ-453f7a50643565025ba0f7907be7cd17",
+      "sourceLineSha256": "7ebf58c20811d0a029ea2b5fb9ce82da185ef716a02660c38b3defb208809c1e",
+      "checkIds": [
+        "mobile.foreign-origin"
+      ],
+      "scope": "Foreign https://example.invalid origin cannot satisfy release eligibility; only this exact origin substitution and canonical supported origin. Does not prove every network redirect/resource policy or physical iPhone execution.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Explicit canonical origin constant versus independent foreign origin literal; actual releaseTagEligibility false.",
+      "suite": "verify-mobile-release-governance.mjs",
+      "boundary": "Actual releaseTagEligibility mobile submission-origin boundary",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5078,
+        "endLine": 5078,
+        "lineSha256": "7ebf58c20811d0a029ea2b5fb9ce82da185ef716a02660c38b3defb208809c1e"
+      },
+      "controllingText": "The deployment manifest binds canonical origin `https://sjonesjones917.github.io`, host `sjonesjones917.github.io`, base path `/closed-loop-tracker/`, the GitHub Pages production environment, a no-cross-origin-redirect policy, and the permitted same-origin runtime-resource set. Deployed verification rejects HTTP downgrade, unexpected host, unexpected custom domain, redirect outside policy, base-path mismatch, cross-origin substitution, or runtime resource outside the authorized deployment root. Identical bytes served from another origin do not satisfy the authorized deployment identity."
+    },
+    {
+      "normativeRequirementId": "NREQ-2ce616eb4484460d92c96de63315809b",
+      "sourceLineSha256": "e27eb8b032b2a48d6c7487d2367f8a56117f4ecc537b90c79ef16aedf1b5615f",
+      "checkIds": [
+        "mobile.foreign-origin"
+      ],
+      "scope": "Foreign https://example.invalid origin cannot satisfy release eligibility; only this exact origin substitution and canonical supported origin. Does not prove every network redirect/resource policy or physical iPhone execution.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Explicit canonical origin constant versus independent foreign origin literal; actual releaseTagEligibility false.",
+      "suite": "verify-mobile-release-governance.mjs",
+      "boundary": "Actual releaseTagEligibility mobile submission-origin boundary",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5481,
+        "endLine": 5481,
+        "lineSha256": "e27eb8b032b2a48d6c7487d2367f8a56117f4ecc537b90c79ef16aedf1b5615f"
+      },
+      "controllingText": "Unexpected deployment origin accepted             = 0"
+    },
+    {
+      "normativeRequirementId": "NREQ-8a437735e275a33b40347ce6db2e39ed",
+      "sourceLineSha256": "559f8af4bc71646c47e80f6b0274627be986881fde756ae7d9bba2ac70206046",
+      "checkIds": [
+        "mobile.unpinned-proof"
+      ],
+      "scope": "Existing exact source commit/challenge/viewport/currentness binding controls reject malformed evidence. Synthetic evidence fixture only; no physical device performed and no model/human judgment inferred.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent explicit target identity/challenge/source/runtime viewport mutations, absent/expired/reused controls; exact accepted/blocked validator values.",
+      "suite": "verify-mobile-release-governance.mjs",
+      "boundary": "Actual mobile evidence/submission validators",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5475,
+        "endLine": 5475,
+        "lineSha256": "559f8af4bc71646c47e80f6b0274627be986881fde756ae7d9bba2ac70206046"
+      },
+      "controllingText": "Unpinned mobile acceptance treated as complete    = 0"
+    },
+    {
+      "normativeRequirementId": "NREQ-c5a1fcaa9a3ae27294d96a9b8d81f3e9",
+      "sourceLineSha256": "e602e6e71fc5a4f68acfadf722f89e68af70626dbe978de992740e90a9cee928",
+      "checkIds": [
+        "timing.future-obligation"
+      ],
+      "scope": "Stages22/23/24 final targets without pointers/real retained bytes remain unavailable, reviewed obligations before due are deferred, future REQUIRED_BY_STAGE selects zero prematurely, repaired actual bytes/current due selects exact test. Only these three registered final-product phase cases.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent stage tuple22/23/24, explicit before/due stage and real store byte custody; future due changed tostage+1 must selectzero and restored current due exacttest.",
+      "suite": "verify-final-product-timing.mjs",
+      "boundary": "Actual reviewed final-product timing and availability/test selection",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 1277,
+        "endLine": 1277,
+        "lineSha256": "e602e6e71fc5a4f68acfadf722f89e68af70626dbe978de992740e90a9cee928"
+      },
+      "controllingText": "The application derives DUE_NOW only when the current stage is at least EARLIEST_EXECUTABLE_STAGE, the target-availability condition is TRUE, the obligation is current and applicable, and the current stage is at or beyond its REQUIRED_BY_STAGE. UNKNOWN target availability blocks only when the obligation could be due."
+    },
+    {
+      "normativeRequirementId": "NREQ-3c2ab07bd07ae849970732862be0368e",
+      "sourceLineSha256": "84f2e18a750e5f4585700f31f6aedfa1d9f86ece05a16d9fc1b07989d53c8426",
+      "checkIds": [
+        "timing.future-obligation"
+      ],
+      "scope": "Stages22/23/24 final targets without pointers/real retained bytes remain unavailable, reviewed obligations before due are deferred, future REQUIRED_BY_STAGE selects zero prematurely, repaired actual bytes/current due selects exact test. Only these three registered final-product phase cases.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent stage tuple22/23/24, explicit before/due stage and real store byte custody; future due changed tostage+1 must selectzero and restored current due exacttest.",
+      "suite": "verify-final-product-timing.mjs",
+      "boundary": "Actual reviewed final-product timing and availability/test selection",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5467,
+        "endLine": 5467,
+        "lineSha256": "84f2e18a750e5f4585700f31f6aedfa1d9f86ece05a16d9fc1b07989d53c8426"
+      },
+      "controllingText": "Obligations required before target availability   = 0"
+    },
+    {
+      "normativeRequirementId": "NREQ-cc4991358fad9cea4d677d47ac290d03",
+      "sourceLineSha256": "19c2de658c7263e42621eae76a6e30877a0c6dcecf9e537bd7d6707e7cb08cf0",
+      "checkIds": [
+        "stage03.emitted-relationship-contract",
+        "stage03.missing-emitted-contract-rejected",
+        "stage03.canonical-recordId-accepted",
+        "stage03.nested-targetId-rejected"
+      ],
+      "scope": "Final emitted Stage03 exact tempKey/recordId typed relationship descriptor; canonical recordId passes actual parser/validator/commit/gate while nested targetId rejects and missing emitted contract fails. Irrelevant conforming prose variation remains accepted. No all-stage instruction meaning claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-68a3cbefc9d4168cf4cb1d3c78afe09d",
+      "sourceLineSha256": "18e5db1d1a600de7b779dd5df6f8f923e1b002d69ee7af51bbf831cbe2663c3f",
+      "checkIds": [
+        "evidence.real-producer-controls",
+        "receipts.fail-closed",
+        "metrics.no-vacuous-success"
+      ],
+      "scope": "Real current registered Node producer/preload and receipt/report consumer reject missing/duplicate/failed/stale/wrong-candidate observations and checksum-consistent fabricated summary; absent finite execution and unreviewed empty population remain UNKNOWN. Only the named controlled production transport/aggregation obligations are established.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2619cc2ee2f0a654c4540e48abacfee6",
+      "sourceLineSha256": "019670147fc985bfd2896c0bdb10d7347662c1d90d5c067370f4f42ca534b2d2",
+      "checkIds": [
+        "stage02.search-capability.missing-after-review",
+        "stage02.search-capability.unknown-route",
+        "stage02.search-capability.bound-evidence",
+        "stage02.search-capability.changed-binding",
+        "stage02.search-capability.corrupt-canonical-report",
+        "stage02.search-capability.corrupt-operator-authorization",
+        "stage02.search-capability.file-first"
+      ],
+      "scope": "Actual current independently reviewed Stage02 search contract requires exact application-owned retained report/capability/operator bindings. Missing/unknown/stale/corrupt bindings fail closed; actual selected Blob readback and canonical UTF8 report receipts carry truthful externally supported or operator-confirmed authority. This does not prove an actual external live source search or model search judgment.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-6470db6f153d4a05ce9335a1a6fbaf2e",
+      "sourceLineSha256": "b07d6433841ee973eec1aebc433ca1e70e8d382bf72822cb5b9f0d498bea51f1",
+      "checkIds": [
+        "stage02.search-capability.missing-after-review",
+        "stage02.search-capability.unknown-route",
+        "stage02.search-capability.bound-evidence",
+        "stage02.search-capability.changed-binding",
+        "stage02.search-capability.corrupt-canonical-report",
+        "stage02.search-capability.corrupt-operator-authorization",
+        "stage02.search-capability.file-first"
+      ],
+      "scope": "Actual current independently reviewed Stage02 search contract requires exact application-owned retained report/capability/operator bindings. Missing/unknown/stale/corrupt bindings fail closed; actual selected Blob readback and canonical UTF8 report receipts carry truthful externally supported or operator-confirmed authority. This does not prove an actual external live source search or model search judgment.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a56263f8ca87f003eb82d8ce2a013284",
+      "sourceLineSha256": "e41bb8f3aff8227ca6cedc91fdee53e2377804ac618e0f3689c0006c991b1324",
+      "checkIds": [
+        "registry.fields"
+      ],
+      "scope": "Every independently enumerated current Job, stage, canonical-record and closed metadata receipt declaration occurs exactly once in FIELD_REGISTRY, retaining its declared path, producer, type, nullability, enum and relationship target. This declaration-to-registry assertion does not prove all specification-named fields, every field semantic or runtime behavior.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-15bcea4db7a052db7fc4f619dac3acae",
+      "sourceLineSha256": "8f783f3abb717dd6595fdae0cbdca60be63eb6811d3af69ae7080ee5dc471392",
+      "checkIds": [
+        "registry.operations"
+      ],
+      "scope": "Every declared stage-operation has the required operation properties and references its exact declared scope contract; the declared universe includes the independently counted approved original and deferred operation combinations. This metadata closure does not prove all completion, retry, independence, executor or writable-family behavior.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-ca1881e2147860bad9fb1f6de8df247f",
+      "sourceLineSha256": "ccc9b3058a78c02cbaea965817c67e6f022d1602c478d095f33b303cc5c4d252",
+      "checkIds": [
+        "registry.scopes"
+      ],
+      "scope": "The declared STAGE_OPERATION_REGISTRY and STAGE_OPERATION_SCOPE_MATRIX have identical exact combination identities and required-dimension bindings, including the independently expected terminal and confirmation shapes. This assertion does not prove all response, input, completion, retry or runtime rejection behavior.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2eda4f41b65187dddb96d68135a7fe03",
+      "sourceLineSha256": "9f17c9ed52cdf954526c0eaf20c02170ead62ce057357d34d0aa505ebb1be380",
+      "checkIds": [
+        "registry.durable"
+      ],
+      "scope": "Every declared canonical RECORD_SCHEMAS family has exactly one DURABLE_OBJECT_REGISTRY contract, including the independently required listed canonical families. This canonical-family declaration closure does not establish all nested durable objects, their lifecycle behavior or all specification-required families.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    }
+  ],
+  "contractRefs": [
+    {
+      "normativeRequirementId": "CTX-02",
+      "sourceLineSha256": "993f63893106bde8ad74b50b547db2e6559a2f3d403dcb5383222e29e69eebec",
+      "checkIds": [
+        "activation.exported-owned-instruction"
+      ],
+      "scope": "All seven actual activation handlers restore Stage01 COMPLETE for a fresh destination and destination-own allowed operation for saved views; valid owned Stage11 run is preserved.",
+      "basis": "Exact four PROJECT_ACTIVATION_* rows from verify-project-activation.mjs; real application/store handlers and independent ZIP parser, synthetic DOM/history and transaction adapter. This amendment is absent from the indexed main-spec NREQ inventory; no synthetic NREQ or full-clause compliance asserted.",
+      "source": {
+        "path": "specification/recovery-amendment-20260914.txt",
+        "startLine": 21,
+        "endLine": 21
+      },
+      "exactRequirement": "CTX-02 | Show instructions, information, files, and actions appropriate to the selected stage and operation; preserve valid prerequisite restrictions.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "CTX-03",
+      "sourceLineSha256": "b597528377945a58f06e5bb79d85e788657533fe6c1704862eb5d40eacad186d",
+      "checkIds": [
+        "activation.exported-owned-instruction"
+      ],
+      "scope": "Direct New\u2192reservation/store save\u2192ZIP export asserts new JOB_ID appears in literal Stage01 COMPLETE body and exported bytes equal its retrievable committed instruction. Other scope dimensions are not independently proved by this check.",
+      "basis": "Exact four PROJECT_ACTIVATION_* rows from verify-project-activation.mjs; real application/store handlers and independent ZIP parser, synthetic DOM/history and transaction adapter. This amendment is absent from the indexed main-spec NREQ inventory; no synthetic NREQ or full-clause compliance asserted.",
+      "source": {
+        "path": "specification/recovery-amendment-20260914.txt",
+        "startLine": 22,
+        "endLine": 22
+      },
+      "exactRequirement": "CTX-03 | Bind every execution and material to the project, saved version, target stage, operation, attempt, and governing revision.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "CTX-07",
+      "sourceLineSha256": "195489831dfc2d78e9ad86deb0fd079f35a7767bf583f8db65b34085ed742691",
+      "checkIds": [
+        "activation.exported-owned-instruction"
+      ],
+      "scope": "Fresh destination activation does not reuse departing project reconciliation choice. Rebuilds for arbitrary governing-revision changes are not proved by this check.",
+      "basis": "Exact four PROJECT_ACTIVATION_* rows from verify-project-activation.mjs; real application/store handlers and independent ZIP parser, synthetic DOM/history and transaction adapter. This amendment is absent from the indexed main-spec NREQ inventory; no synthetic NREQ or full-clause compliance asserted.",
+      "source": {
+        "path": "specification/recovery-amendment-20260914.txt",
+        "startLine": 26,
+        "endLine": 26
+      },
+      "exactRequirement": "CTX-07 | Rebuild stale handoffs after changes to project version, stage, scope, or governing revision.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "HIS-03",
+      "sourceLineSha256": "68d51fef33e49deb060fa38835ba436a8d58aa795bef237985a035e733f6cf63",
+      "checkIds": [
+        "activation.exported-owned-instruction"
+      ],
+      "scope": "Destination saved operation/run, textarea/checkbox/multiple drafts, scroll and pending unaccepted title correction are restored from real store checkpoints. Complete arbitrary file bytes/version reconstruction is outside this check.",
+      "basis": "Exact four PROJECT_ACTIVATION_* rows from verify-project-activation.mjs; real application/store handlers and independent ZIP parser, synthetic DOM/history and transaction adapter. This amendment is absent from the indexed main-spec NREQ inventory; no synthetic NREQ or full-clause compliance asserted.",
+      "source": {
+        "path": "specification/recovery-amendment-20260914.txt",
+        "startLine": 54,
+        "endLine": 54
+      },
+      "exactRequirement": "HIS-03 | Retain inputs, responses, prerequisites, acceptance decisions, progress, drafts, and exact file bytes required to reconstruct each promised version.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "HIS-04",
+      "sourceLineSha256": "794939e9d43f91fb1b9919522c8cc7d69969c649613054b0f4fa661815156eb4",
+      "checkIds": [
+        "activation.exported-owned-instruction"
+      ],
+      "scope": "Actual activation uses real captureCurrentView/store.saveCheckpoint before departure, but the current regression does not independently assert departing draft readback; retained implementation evidence only, not verified clause.",
+      "basis": "Exact four PROJECT_ACTIVATION_* rows from verify-project-activation.mjs; real application/store handlers and independent ZIP parser, synthetic DOM/history and transaction adapter. This amendment is absent from the indexed main-spec NREQ inventory; no synthetic NREQ or full-clause compliance asserted.",
+      "source": {
+        "path": "specification/recovery-amendment-20260914.txt",
+        "startLine": 55,
+        "endLine": 55
+      },
+      "exactRequirement": "HIS-04 | Capture relevant view state and drafts before leaving them; browser memory, picker state, temporary URLs, and browser history alone are insufficient persistence.",
+      "coverageClassification": "INSPECTED_IMPLEMENTATION_ONLY"
+    },
+    {
+      "normativeRequirementId": "HIS-05",
+      "sourceLineSha256": "aaca20e4bf303e0fb314c0aaafa32e55c273848869bd012e4a7dfc6d508e2e0d",
+      "checkIds": [
+        "activation.exported-owned-instruction"
+      ],
+      "scope": "Each of seven actual callers writes a synthetic browser-history entry with destination JOB_ID and restored destination operation/draft view; real browser traversal is not exercised.",
+      "basis": "Exact four PROJECT_ACTIVATION_* rows from verify-project-activation.mjs; real application/store handlers and independent ZIP parser, synthetic DOM/history and transaction adapter. This amendment is absent from the indexed main-spec NREQ inventory; no synthetic NREQ or full-clause compliance asserted.",
+      "source": {
+        "path": "specification/recovery-amendment-20260914.txt",
+        "startLine": 56,
+        "endLine": 56
+      },
+      "exactRequirement": "HIS-05 | Associate every application navigation entry with its saved project version and view.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    }
+  ]
+}

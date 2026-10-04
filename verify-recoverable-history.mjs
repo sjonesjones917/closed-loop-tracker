@@ -12,7 +12,9 @@ const mutation=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),faul
 if(mutation&&!faults[mutation])throw new Error('Unknown deliberate mutation.');
 const r=projectStoreRuntime({fault:faults[mutation]}),{store,engine,core,runtime,rows,copy}=r;
 const plain=value=>JSON.parse(JSON.stringify(value));
-const id='SYNTHETIC-RECOVERY-REGRESSION',cases=[];
+const id='SYNTHETIC-RECOVERY-REGRESSION',cases=[],verificationObservations=[],negativeCasePopulation=[];
+const spec='specification/closed-loop-reliability-controlling-implementation-specification.txt';
+function observedProjection(caseId,boundary,observed){const checkId='projection.recovery-canonical-authority',violation='stageProjectionsOverridingCanonicalRecords';negativeCasePopulation.push({caseId,checkId,violation,boundary,observed,accepted:false,result:'PASS'});const prior=verificationObservations.find(row=>row.checkId===checkId),actual={caseId,boundary,...observed};if(prior)prior.observed.cases.push(actual);else verificationObservations.push({checkId,requirementRefs:[spec+':4598',spec+':5465'],boundary:'Production store backup import, retained view read and checkpoint activation',expected:'Contradictory cached projection rejects before usable view or activation; canonical records remain authoritative.',observed:{cases:[actual]},passed:true,violation,accepted:false});}
 const record=(name,details={})=>cases.push({name,...details,result:'PASS'});
 let p=core.createBlankState(id);engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true});
 await store.beginHistorySession('SESSION-A');let history=await store.historyList(id);const start=history.sessions['SESSION-A'].checkpointId,starting=copy(p);
@@ -119,6 +121,7 @@ for(const interruption of [false,true]){
   assert.deepEqual(await store.historyList(source.job.JOB_ID),historyBefore,'Rejected projection changed recovery points');
   assert.deepEqual(await store.metaGet('lastVerifiedImport'),receiptBefore,'Rejected projection recorded successful import');
   assert.deepEqual(new Uint8Array(await blob.arrayBuffer()),sourceBytes,'Rejected source bytes must remain available unchanged');
+  observedProjection('import-'+violation,'Actual verified complete backup import',{violation,rejection:'PROJECT_INTEGRITY_FAILED',canonicalProjectUnchanged:true,recoveryUnchanged:true,importReceiptUnchanged:true,sourceBytesUnchanged:true});
   record('Reject contradictory '+violation+' before backup activation',{oracle:'IMPORT_PROJECTION_INTEGRITY_ORACLE'});
  }
  // Reconstruct the retained state an older permissive import could create.
@@ -134,7 +137,8 @@ for(const interruption of [false,true]){
   old.rows.get('projects').set(jobId,savedRow);
   const retained=await old.store.historyList(jobId);
   await assert.rejects(old.store.readHistoryView(jobId,checkpoint),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: contradictory '+violation+' became a usable view');
-  for(const mode of ['HISTORY','UNDO','REDO'])await assert.rejects(old.store.restoreCheckpoint(jobId,checkpoint,{expectedProjectRevision:compatible.revision,mode}),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: '+mode+' activated contradictory '+violation);
+  observedProjection('view-'+violation,'Actual retained History view read',{violation,rejection:'HISTORY_VERSION_INCOMPATIBLE',usableViewReturned:false});
+  for(const mode of ['HISTORY','UNDO','REDO']){await assert.rejects(old.store.restoreCheckpoint(jobId,checkpoint,{expectedProjectRevision:compatible.revision,mode}),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: '+mode+' activated contradictory '+violation);observedProjection(mode.toLowerCase()+'-'+violation,'Actual '+mode+' checkpoint activation',{violation,rejection:'HISTORY_VERSION_INCOMPATIBLE',activated:false});}
   assert.deepEqual(await old.store.readProject(jobId),compatible,'Rejected History changed the active version');
   assert.deepEqual(await old.store.historyList(jobId),retained,'Rejected History changed retained versions');
   // A valid active version must not hide an incompatible earlier checkpoint
@@ -143,6 +147,7 @@ for(const interruption of [false,true]){
   const backup=await old.store.exportPackage(jobId),destination=projectStoreRuntime();
   await assert.rejects(destination.store.importPackage(backup),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: backup accepted an incompatible retained checkpoint');
   assert.equal(await destination.store.readProject(jobId),null);
+  observedProjection('nested-import-'+violation,'Actual complete backup import with incompatible retained checkpoint',{violation,rejection:'HISTORY_VERSION_INCOMPATIBLE',destinationProjectCreated:false});
   record('Reject retained '+violation+' through view, History, Undo, Redo and nested backup import',{oracle:'HISTORY_PROJECTION_INTEGRITY_ORACLE'});
  }
  const exact=project=>{const value=copy(project);for(const key of ['projectSha256','historyActivationId','restoredCandidates'])delete value[key];value.revision=original.revision;return value;};
@@ -173,4 +178,4 @@ for(const interruption of [false,true]){
  assert.ok(proof.restored&&proof.originalPreserved&&proof.currentStage==='STAGE 01'&&!proof.fabricatedCompletion&&proof.historyReadable&&proof.successVisible&&proof.progress==='0/30 complete'&&proof.selected&&proof.tailPreserved,'IMPORT_PROJECTION_RESTORE_ORACLE: browser case failed usable restoration '+JSON.stringify(proof));
  record('Browser backup projection sequence through actual import, saved-view and header owners',{actualBrowserExpression:true,nativeIndexedDB:false,proof});
 }
-console.log(JSON.stringify({synthetic:true,environment:'Node VM; production store with the existing lifecycle transaction adapter',realIndexedDB:false,physicalDevice:false,cases},null,2));
+console.log(JSON.stringify({synthetic:true,environment:'Node VM; production store with the existing lifecycle transaction adapter',realIndexedDB:false,physicalDevice:false,cases,verificationObservations,negativeCasePopulation},null,2));

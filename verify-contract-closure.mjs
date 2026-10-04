@@ -23,20 +23,28 @@ const REQUIRED_FIELD_PROPERTIES=Object.freeze([
   'relationshipTarget','relationshipDirection','scope','scopeDimensions','migrationRule','invalidationOwner','normalizerIdentity','derivationIdentity'
 ]);
 
+// Sections16.1 and16.1A fix these closed values independently of production.
+const EXPECTED_VERIFICATION_PHASE_VALUES=Object.freeze(['PREPRODUCT_ITERATION','FINAL_PRODUCT_DETERMINISTIC','FINAL_PRODUCT_MEANING','FINAL_PRODUCT_ADVERSARIAL','FINAL_REPRESENTATION','DELIVERY_IDENTITY','EVIDENCE_CLOSURE','REGISTRY_CLOSURE','TERMINAL_DELIVERY']);
+const EXPECTED_TIMING_SOURCE_KIND_VALUES=Object.freeze(['TEST','PROPOSITION','APPLICABILITY','PROOF_OBLIGATION']);
+
 function verifyTimingFieldContracts(schema){
+  assert.deepEqual([...schema.VERIFICATION_PHASE_VALUES].sort(),[...EXPECTED_VERIFICATION_PHASE_VALUES].sort(),'TIMING_FIELD_DECLARATION_ORACLE: exported verification phase vocabulary must contain exactly the nine Section16.1 values.');
   const timingTypes={VERIFICATION_PHASE:'ENUM',EARLIEST_EXECUTABLE_STAGE:'INTEGER',REQUIRED_BY_STAGE:'INTEGER',PER_RUN_REQUIRED:'BOOLEAN',FINAL_PRODUCT_REQUIRED:'BOOLEAN',DELIVERY_REQUIRED:'BOOLEAN',TARGET_AVAILABILITY_CONDITION:'OBJECT'};
   for(const family of ['tests','regressions','failureTests'])for(const [field,type] of Object.entries(timingTypes)){
     const definition=schema.RECORD_SCHEMAS[family].fieldDefinitions[field];
     assert.ok(definition,`TIMING_FIELD_DECLARATION_ORACLE: ${family}.${field} is required by Section 16.1.`);
     const expectedProducer=['propositions','proofObligations'].includes(family)?'APPLICATION':'AGENT';
     assert.equal(definition.producer,expectedProducer,`TIMING_FIELD_DECLARATION_ORACLE: ${family}.${field} producer must follow its canonical family.`);
-    if(field==='VERIFICATION_PHASE')assert.deepEqual([...definition.enumValues],[...schema.VERIFICATION_PHASE_VALUES],`TIMING_FIELD_DECLARATION_ORACLE: ${family}.${field} must use the complete declared phase enum.`);
+    if(field==='VERIFICATION_PHASE')assert.deepEqual([...definition.enumValues].sort(),[...EXPECTED_VERIFICATION_PHASE_VALUES].sort(),`TIMING_FIELD_DECLARATION_ORACLE: ${family}.${field} must use the complete declared phase enum.`);
     else assert.equal(definition.valueType,type,`TIMING_FIELD_DECLARATION_ORACLE: ${family}.${field} must preserve its declared type.`);
   }
   for(const family of ['propositions','proofObligations'])for(const [field,type]of [['TIMING_ENTRIES','OBJECT_ARRAY'],['TIMING_SCHEDULE_SHA256','STRING']]){const d=schema.RECORD_SCHEMAS[family].fieldDefinitions[field];assert.ok(d&&d.producer==='APPLICATION'&&d.valueType===type,'TIMING_FIELD_DECLARATION_ORACLE: '+family+'.'+field+' must declare the application schedule.');}
   const object=schema.TIMING_CONTRACTS?.objects?.entry;assert.ok(object,'TIMING_FIELD_DECLARATION_ORACLE: closed timing entry contract is missing.');
+  const sourceKind=object.fieldDefinitions.SOURCE_KIND;
+  assert.ok(sourceKind&&sourceKind.producer==='APPLICATION'&&sourceKind.valueType==='ENUM','TIMING_FIELD_DECLARATION_ORACLE: SOURCE_KIND must be an application-owned enum.');
+  assert.deepEqual([...sourceKind.enumValues].sort(),[...EXPECTED_TIMING_SOURCE_KIND_VALUES].sort(),'TIMING_FIELD_DECLARATION_ORACLE: SOURCE_KIND must contain exactly TEST, PROPOSITION, APPLICABILITY and PROOF_OBLIGATION.');
   assert.deepEqual([...object.closedFields].sort(),['LEAF_PATH','SOURCE_KIND','SOURCE_ID',...Object.keys(timingTypes)].sort(),'TIMING_FIELD_DECLARATION_ORACLE: exact entry field universe.');
-  for(const [field,type]of Object.entries(timingTypes)){const d=object.fieldDefinitions[field];assert.ok(d&&d.producer==='APPLICATION'&&d.valueType===type,'TIMING_FIELD_DECLARATION_ORACLE: derived entry '+field+' must preserve application ownership and type.');if(field==='VERIFICATION_PHASE')assert.deepEqual([...d.enumValues],[...schema.VERIFICATION_PHASE_VALUES],'TIMING_FIELD_DECLARATION_ORACLE: complete entry phase enum.');}
+  for(const [field,type]of Object.entries(timingTypes)){const d=object.fieldDefinitions[field];assert.ok(d&&d.producer==='APPLICATION'&&d.valueType===type,'TIMING_FIELD_DECLARATION_ORACLE: derived entry '+field+' must preserve application ownership and type.');if(field==='VERIFICATION_PHASE')assert.deepEqual([...d.enumValues].sort(),[...EXPECTED_VERIFICATION_PHASE_VALUES].sort(),'TIMING_FIELD_DECLARATION_ORACLE: complete entry phase enum.');}
   for(const producer of ['agent','application'])for(const [type,keys]of Object.entries({PHASE_TARGET:['type'],CURRENT_RECORD:['type','family','recordId'],VERIFIED_ARTIFACT_BYTES:['type','artifactId'],ALL_OF:['type','children'],ANY_OF:['type','children'],AT_LEAST_K:['type','k','children']})){const d=schema.TIMING_CONTRACTS.objects[producer+'Condition.'+type];assert.ok(d,'TIMING_FIELD_DECLARATION_ORACLE: missing closed condition '+type);assert.deepEqual([...d.closedFields].sort(),keys.sort(),'TIMING_FIELD_DECLARATION_ORACLE: exact condition shape '+type);}
   return {families:5,scalarFields:21,derivedScheduleFamilies:2};
 }
@@ -155,7 +163,7 @@ function verify(source){
   assert.equal(schema.identityAssuranceSatisfies('UNKNOWN_PURPOSE','SELF_ASSERTED').allowed,false,'Unknown human-decision purpose must reject.');
   assert.equal(schema.identityAssuranceSatisfies('BASELINE_AUTHORIZATION','NONE').allowed,false,'Identity assurance below the registered minimum must reject.');
 
-  return {contractClosure:'PASS',stageOperations:Object.keys(schema.STAGE_OPERATION_REGISTRY).length,deferredOperations:deferredKeys.length,durableFamilies:Object.keys(schema.DURABLE_OBJECT_REGISTRY).length,fieldContracts:Object.keys(schema.FIELD_REGISTRY).length,normalizers:Object.keys(schema.normalizerRegistry.entries).length,derivations:Object.keys(schema.derivationRegistry.entries).length,attachmentSlotContract:true,identityAssuranceContract:true,fieldRegistryProof:{
+  return {contractClosure:'PASS',stageOperations:Object.keys(schema.STAGE_OPERATION_REGISTRY).length,deferredOperations:deferredKeys.length,durableFamilies:Object.keys(schema.DURABLE_OBJECT_REGISTRY).length,fieldContracts:Object.keys(schema.FIELD_REGISTRY).length,normalizers:Object.keys(schema.normalizerRegistry.entries).length,derivations:Object.keys(schema.derivationRegistry.entries).length,attachmentSlotContract:true,identityAssuranceContract:true,operationRegistryProof:{includedIds:Object.keys(schema.STAGE_OPERATION_REGISTRY).sort(),expectedProperties:REQUIRED_OPERATION_PROPERTIES,result:'PASS'},scopeMatrixProof:{includedIds:Object.keys(schema.STAGE_OPERATION_SCOPE_MATRIX).sort(),result:'PASS'},durableRegistryProof:{includedIds:Object.keys(schema.RECORD_SCHEMAS).sort(),result:'PASS'},fieldRegistryProof:{
     expected:'Every declared Job, stage, canonical-record and metadata command-receipt field occurs once in the registry and retains its declared path, producer, type, nullability, enum and relationship target.',
     universeDefinition:'All current JOB_FIELDS, STAGE_FIELDS, RECORD_SCHEMAS.fieldDefinitions and the closed metadata receipt objects in DURABLE_OBJECT_REGISTRY.commandReceipts; independent of the FIELD_REGISTRY entries being checked.',
     includedIds:expectedKeys,excludedIds:[],numerator:declarations.length,denominator:expectedKeys.length,
@@ -207,7 +215,19 @@ for(const field of ['VERIFICATION_PHASE','EARLIEST_EXECUTABLE_STAGE','REQUIRED_B
   assert.ok(rejected?.message.startsWith('TIMING_FIELD_DECLARATION_ORACLE'),`Timing declaration fault ${field}/${fault} must fail its intended invariant; actual ${rejected?.message||'PASS'}.`);
   timingContractFaults.push({field,fault,oracle:'TIMING_FIELD_DECLARATION_ORACLE',result:'DETECTED',diagnostic:rejected.message});
 }
+// A declaration and its registry projection can agree while both violate an
+// explicit specification enum. These faults preserve that agreement.
+const timingEnumContractFaults=[];
+for(const [field,omittedValue] of [['SOURCE_KIND','PROOF_OBLIGATION'],['VERIFICATION_PHASE','TERMINAL_DELIVERY']]){
+  const faultSource=source+`\n;(()=>{const s=globalThis.closedLoopWorkflowSchema,c=s.TIMING_CONTRACTS,drop=d=>Object.freeze({...d,enumValues:Object.freeze(d.enumValues.filter(value=>value!==${JSON.stringify(omittedValue)}))}),objects={...c.objects},entries={...s.FIELD_REGISTRY};for(const [name,object]of Object.entries(objects))if(object.fieldDefinitions[${JSON.stringify(field)}])objects[name]=Object.freeze({...object,fieldDefinitions:Object.freeze({...object.fieldDefinitions,[${JSON.stringify(field)}]:drop(object.fieldDefinitions[${JSON.stringify(field)}])})});for(const key of Object.keys(entries))if(key.endsWith('.'+${JSON.stringify(field)}))entries[key]=drop(entries[key]);const updates={TIMING_CONTRACTS:Object.freeze({...c,objects:Object.freeze(objects)}),FIELD_REGISTRY:Object.freeze(entries)};if(${JSON.stringify(field)}==='VERIFICATION_PHASE'){updates.VERIFICATION_PHASE_VALUES=Object.freeze(s.VERIFICATION_PHASE_VALUES.filter(value=>value!==${JSON.stringify(omittedValue)}));const records={...s.RECORD_SCHEMAS};for(const family of ['tests','regressions','failureTests']){const r=records[family];records[family]=Object.freeze({...r,fieldDefinitions:Object.freeze({...r.fieldDefinitions,VERIFICATION_PHASE:drop(r.fieldDefinitions.VERIFICATION_PHASE)})});}updates.RECORD_SCHEMAS=Object.freeze(records);}globalThis.closedLoopWorkflowSchema=Object.freeze({...s,...updates});})();`;
+  const changed=loadSchema(faultSource);
+  for(const object of Object.values(changed.TIMING_CONTRACTS.objects)){const d=object.fieldDefinitions[field];if(d)assert.deepEqual([...changed.FIELD_REGISTRY[d.registryKey].enumValues],[...d.enumValues],'TIMING_ENUM_FAULT_COHERENCE_ORACLE: nested declaration and registry must agree before the specification fault is tested.');}
+  for(const [family,record]of Object.entries(changed.RECORD_SCHEMAS)){const d=record.fieldDefinitions[field];if(d)assert.deepEqual([...changed.FIELD_REGISTRY['RECORD.'+family+'.'+field].enumValues],[...d.enumValues],'TIMING_ENUM_FAULT_COHERENCE_ORACLE: record declaration and registry must agree before the specification fault is tested.');}
+  let rejected=null;try{verify(faultSource);}catch(error){rejected=error;}
+  assert.ok(rejected?.message.startsWith('TIMING_FIELD_DECLARATION_ORACLE'),`TIMING_ENUM_CLOSURE_FAULT_ORACLE: consistent ${field} omission must fail the independent specification vocabulary oracle; actual ${rejected?.message||'PASS'}.`);
+  timingEnumContractFaults.push({field,omittedValue,declarationAndRegistryAgree:true,oracle:'TIMING_FIELD_DECLARATION_ORACLE',result:'DETECTED',diagnostic:rejected.message});
+}
 assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source,'FIELD_REGISTRY_SOURCE_UNCHANGED_ORACLE');
 const restored=verify(source);
 assert.deepEqual(restored,result,'FIELD_REGISTRY_RESTORED_ORACLE');
-console.log(JSON.stringify({...result,registryFaults,receiptContractFaults,timingContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));
+console.log(JSON.stringify({...result,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));

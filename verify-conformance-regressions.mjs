@@ -1,3 +1,4 @@
+import {COUNTERPART_FAULT_CASES} from './operator-journey-fixtures.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
@@ -8,6 +9,10 @@ import {fileURLToPath} from 'node:url';
 // Direct invariant checks precede composed matrices and full lifecycle fixtures.
 // This changes failure discovery order; every existing suite still executes.
 const suites=[
+ "verify-executed-evidence.mjs",
+ "verify-project-activation.mjs",
+ "verify-stage19-discovery-challenge.mjs",
+ "verify-stage26-independent-review.mjs",
  "verify-job-confirmation-contract.mjs",
  "verify-reconciliation-confirmation.mjs",
  "verify-verifier-runtime.mjs",
@@ -94,7 +99,7 @@ const suites=[
  "verify-counterpart-faults.mjs"];
 function conformanceSources(){
  const verifierRuntimeConsumers=fs.readdirSync('.').filter(path=>/\.mjs$/.test(path)&&fs.readFileSync(path,'utf8').includes("from './verifier-runtime.mjs'"));
- return [...new Set(['.github/workflows/pages.yml','verify-conformance-regressions.mjs','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs',...verifierRuntimeConsumers,...suites])];
+ return [...new Set(['.github/workflows/pages.yml','verify-conformance-regressions.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-evidence-preload.mjs','collect-verification-evidence.mjs','verification-assertion-bindings.json','verification-negative-populations.json','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','operator-journey-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs',...verifierRuntimeConsumers,...suites])];
 }
 
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -317,18 +322,19 @@ export async function verifyNestedChildCleanup(directory){
 async function verifyCounterpartRestoredBudget(directory){
  const folder=path.join(directory,'counterpart-restored-budget');fs.mkdirSync(folder);
  const ready=path.join(folder,'full-journey-ready'),release=path.join(folder,'full-journey-complete');
- const source=fs.readFileSync('verify-counterpart-faults.mjs','utf8').replace("from './verify-conformance-regressions.mjs'","from "+JSON.stringify(import.meta.url));
+ const source=fs.readFileSync('verify-counterpart-faults.mjs','utf8').replace("from './verify-conformance-regressions.mjs'","from "+JSON.stringify(import.meta.url)).replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(new URL('./operator-journey-fixtures.mjs',import.meta.url).href));
  const matrix=path.join(folder,'matrix.mjs'),clock=path.join(folder,'clock.mjs');
  fs.writeFileSync(matrix,source);fs.writeFileSync(path.join(folder,'workflow-engine.js'),'Controlled unchanged source for the supervision contract.\n');
  // Advance the owning deadline only after the full child is ready. The same
  // elapsed-work checkpoint exceeds the partial-fault budget, but remains
  // inside the existing full-suite budget. No real five-minute sleep is needed.
  fs.writeFileSync(clock,`import fs from 'node:fs';const later=setTimeout,repeat=setInterval;globalThis.setTimeout=(callback,ms,...args)=>{if(ms<300000)return later(callback,ms,...args);const timer=repeat(()=>{if(!fs.existsSync(${JSON.stringify(ready)}))return;clearInterval(timer);if(ms<=300001)callback(...args);else fs.writeFileSync(${JSON.stringify(release)},'complete');},10);return timer;};\n`);
- const oracles={'missing-candidate-bytes':'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE','missing-product-bytes':'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE','fractional-stability':'must remain persistable after every operation','missing-defect-gate':'An observed initial violation without an evidence-linked defect must be rejected','unrelated-defect-reason':'COUNTERPART_DEFECT_REASON_ORACLE','partial-verification-completes-operation':'ITERATION_PARTIAL_VERIFY_ORACLE'};
+ const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.map(([fault,,oracle])=>[fault,oracle]));
  fs.writeFileSync(path.join(folder,'verify-operator-counterpart.mjs'),`import fs from 'node:fs';import assert from 'node:assert/strict';const fault=process.env.CLRT_COUNTERPART_FAULT;if(fault)assert.fail(${JSON.stringify(oracles)}[fault]);assert.equal(process.env.CLRT_COUNTERPART_STAGE_LIMIT,'30');fs.writeFileSync(${JSON.stringify(ready)},'ready');await new Promise(resolve=>{const timer=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(timer);resolve();}},10);});console.log(JSON.stringify({counterpartContracts:'PASS',stages:30,controlledElapsedMs:300001}));\n`);
  const observed=await executeGate({name:'counterpart-restored-budget',args:['--import',clock,matrix]},{directory:folder,cwd:folder,timeoutMs:15000,env:{VERIFIER_CHILD_EVIDENCE_DIRECTORY:path.join(folder,'children')}});
- assert.equal(observed.outcome,'PASS','COUNTERPART_RESTORED_BUDGET_ORACLE: the full healthy journey must retain its full-suite supervision budget. '+observed.stderr);
- assert.equal(observed.report.cases.length,6,'COUNTERPART_RESTORED_BUDGET_ORACLE: every injected fault still executes');
+ if(observed.outcome!=='PASS')process.stderr.write(observed.stderr);
+ assert.equal(observed.outcome,'PASS','COUNTERPART_RESTORED_BUDGET_ORACLE: the full healthy journey must retain its full-suite supervision budget.');
+ assert.deepEqual(observed.report.cases.map(row=>[row.fault,row.throughStage,row.detectedBy]),COUNTERPART_FAULT_CASES.map(row=>Array.from(row)),'COUNTERPART_RESTORED_BUDGET_ORACLE: every current declared fault must execute once with its exact stage and oracle.');
  assert.equal(JSON.parse(observed.report.restoredRun.stdout).controlledElapsedMs,300001,'COUNTERPART_RESTORED_BUDGET_ORACLE: the healthy child must complete beyond the partial-fault deadline');
  return {case:'counterpart-full-journey-keeps-full-suite-budget',controlledClock:true,actualCounterpartJourney:false,observed};
 }
@@ -550,6 +556,8 @@ async function verifyRunnerFaults(){
   ['wait-for-pipe-close-before-cleanup',"  child.on('exit',()=>{rootExited=true;kill('SIGKILL');});",'', 'NESTED_CHILD_SETTLED_ORACLE'],
   ['ignore-child-cancellation','signal:controller.signal,timeoutMs:timeout,','timeoutMs:timeout,','CHILD_CANCELLATION_ORACLE'],
   ['ignore-composite-budget','timeoutMs:gate.timeoutMs??childTimeoutMs','timeoutMs:childTimeoutMs','RUNNER_COMPOSITE_BUDGET_ORACLE'],
+  ['omit-current-counterpart-oracle','const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.map(','const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.slice(1).map(','COUNTERPART_RESTORED_BUDGET_ORACLE'],
+  ['shorten-restored-counterpart-budget','fs.writeFileSync(matrix,source);',"fs.writeFileSync(matrix,source.replace(\"encoding:'utf8',killSignal:'SIGKILL'\",\"encoding:'utf8',timeout:300000,killSignal:'SIGKILL'\"));",'COUNTERPART_RESTORED_BUDGET_ORACLE'],
   ['ignore-child-exit','exitCode===0&&!error','!error','RUNNER_OUTCOME_ORACLE: nonzero'],
   ['accept-malformed-report',"&&!reportError?'PASS'","?'PASS'",'RUNNER_OUTCOME_ORACLE: malformed'],
   ['misclassify-timeout',"reason==='TIMEOUT'||reason==='AGGREGATE_TIMEOUT'","false",'RUNNER_OUTCOME_ORACLE: stalled'],
@@ -559,12 +567,16 @@ async function verifyRunnerFaults(){
  ];
  // Limit replacement to the implementation before the fault definitions.
  const implementation=original.slice(0,original.indexOf('async function verifyRunnerFaults('));
+ // Preserve the shared fixture authority when the supervisor owner is copied
+ // into a disposable module outside the repository for fault injection.
+ const fixtureUrl=new URL('./operator-journey-fixtures.mjs',import.meta.url).href;
+ const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl));
  try{
   for(const [name,before,after,oracle]of mutations){
    assert.equal(implementation.split(before).length,2,'Unique runner fault anchor required: '+name);
    // Exercise the mutated owner itself. An enclosing healthy owner's cleanup
    // must not mask this disposable supervisor fault.
-   const mutant=path.join(directory,name+'.mjs');fs.writeFileSync(mutant,"if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url))delete process.env.CLOSED_LOOP_VERIFIER_OWNER_FD;\n"+implementation.replace(before,after)+original.slice(implementation.length));
+   const mutant=path.join(directory,name+'.mjs');fs.writeFileSync(mutant,"if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url))delete process.env.CLOSED_LOOP_VERIFIER_OWNER_FD;\n"+serializedImplementation.replace(before,after)+original.slice(implementation.length));
    const result=await executeGate({name,args:[mutant,'--runner-contract-only','--fault-probe']},{directory,timeoutMs:20000,killGraceMs:50});
    assert.equal(result.outcome,'FAIL','RUNNER_FAULT_DETECTION_ORACLE: '+name);
    assertDetectedFault(result,oracle,'RUNNER_FAULT_SPECIFICITY_ORACLE: '+name);

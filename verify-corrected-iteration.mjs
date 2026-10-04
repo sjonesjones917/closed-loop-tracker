@@ -132,4 +132,4 @@ process.stderr.write('verify-corrected-iteration: lineage cases complete; starti
 await import('./verify-full-cycle.mjs');
 process.stderr.write('verify-corrected-iteration: complete synthetic lifecycle returned.\n');
 
-console.log('verify-corrected-iteration: PASS');
+console.error('verify-corrected-iteration: PASS');

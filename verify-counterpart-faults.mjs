@@ -1,22 +1,16 @@
+import {COUNTERPART_FAULT_CASES} from './operator-journey-fixtures.mjs';
 import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 const cases=[],sourcePath='workflow-engine.js',digest=()=>createHash('sha256').update(fs.readFileSync(sourcePath)).digest('hex'),sourceBefore=digest();
-for(const [fault,stage,expected] of [
-  ['missing-candidate-bytes',10,'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE'],
-  ['missing-product-bytes',21,'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE'],
-  ['fractional-stability',12,'must remain persistable after every operation'],
-  ['missing-defect-gate',13,'An observed initial violation without an evidence-linked defect must be rejected'],
-  ['unrelated-defect-reason',13,'COUNTERPART_DEFECT_REASON_ORACLE'],
-  ['partial-verification-completes-operation',17,'ITERATION_PARTIAL_VERIFY_ORACLE']
-]){
+for(const [fault,stage,expected] of COUNTERPART_FAULT_CASES){
   const result=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',timeout:300000,killSignal:'SIGKILL',maxBuffer:8*1024*1024,env:{...process.env,CLRT_COUNTERPART_FAULT:fault,CLRT_COUNTERPART_STAGE_LIMIT:String(stage)}}));
   assert.equal(result.error,null,`${fault} must finish within its hard timeout: ${result.error}`);
   assert.equal(result.signal,null,`${fault} must be detected by its oracle, not a killed process`);
   assertDetectedFault(result,expected,`${fault} escaped detection`);
   assert(result.stderr.includes(expected),`${fault} failed for an unrelated reason: ${result.stderr}`);
-  cases.push({fault,owner:fault.startsWith('missing-')&&fault.endsWith('-bytes')?'verifier':'production',throughStage:stage,exitCode:result.status,detectedBy:expected,result:'PASS',stdout:result.stdout,stderr:result.stderr});
+  cases.push({fault,owner:['missing-source-search-registration','missing-retained-prompt-context'].includes(fault)||fault.startsWith('missing-')&&fault.endsWith('-bytes')?'verifier':'production',throughStage:stage,exitCode:result.status,detectedBy:expected,result:'PASS',stdout:result.stdout,stderr:result.stderr});
 }
 // The restored control traverses all30 stages, so retain the same finite
 // full-suite supervision budget as its independent conformance entry point.

@@ -7,7 +7,9 @@ const mutation=process.argv.find(value=>value.startsWith('--fault='))?.slice(8);
 if(mutation&&mutation!=='skip-clone-receipt-validation')throw new Error('Unknown deliberate mutation');
 const fault=mutation?{id:'ACKNOWLEDGE_INVALID_CLONE_RECEIPT',file:'project-store.js',before:"const shape=globalThis.closedLoopWorkflowSchema.validateCommandReceiptShape('CLONE',receipt);",after:"return true;const shape=globalThis.closedLoopWorkflowSchema.validateCommandReceiptShape('CLONE',receipt);"}:null;
 const createRuntime=()=>projectStoreRuntime({sourceOverrides,fault});
-const r=createRuntime(),{engine,store,copy,rows}=r,cases=[],note=name=>cases.push({name,result:'PASS'});
+const r=createRuntime(),{engine,store,copy,rows}=r,cases=[],verificationObservations=[],negativeCasePopulation=[],note=name=>cases.push({name,result:'PASS'});
+const spec='specification/closed-loop-reliability-controlling-implementation-specification.txt';
+function observedCase(checkId,caseId,violation,boundary,observed,requirementLines){const value={caseId,checkId,violation,boundary,observed,accepted:false,result:'PASS'};negativeCasePopulation.push(value);const prior=verificationObservations.find(row=>row.checkId===checkId),actual={caseId,boundary,...observed};if(prior)prior.observed.cases.push(actual);else verificationObservations.push({checkId,requirementRefs:requirementLines.map(line=>spec+':'+line),boundary,expected:'The named violation is rejected and owned state remains unchanged.',observed:{cases:[actual]},passed:true,violation,accepted:false});}
 let source=await store.createProject({commandId:'COPY_SOURCE'}),next=copy(source);
 next.job.JOB_TITLE='Input custody';next.job.EXACT_USER_OBJECTIVE_VERBATIM='Retain exact human inputs in a fresh project.';
 const bytes=new Blob([Uint8Array.of(0,13,10,255,65)]),artifactId=engine.allocateId(next,'artifacts',{commandId:'SOURCE_INPUT',idempotencyKey:'input'});
@@ -28,7 +30,10 @@ assert.ok(!(copied.projectData.commandReceipts||[]).some(row=>row.commandId===re
 assert.equal((await store.historyList(source.job.JOB_ID)).commandReceipts['cloneReceipt:'+request.commandId].mappingManifestSha256,receipt.mappingManifestSha256);
 assert.equal((await store.historyList(copied.job.JOB_ID)).commandReceipts['cloneReceipt:'+request.commandId].mappingManifestSha256,receipt.mappingManifestSha256);
 note('Copy commits fresh canonical project and file identities with exact input bytes and external source-bound receipts; source and accepted work remain unchanged');
+const projectsBeforeRetry=rows.get('projects').size,mappingBeforeRetry=copy(receipt.mappingManifest);
 assert.equal((await store.createProject(request)).job.JOB_ID,copied.job.JOB_ID);
+assert.equal(rows.get('projects').size,projectsBeforeRetry,'COPY_DUPLICATE_EFFECT_ORACLE');assert.deepEqual((await store.metaGet('cloneReceipt:'+request.commandId)).mappingManifest,mappingBeforeRetry,'COPY_RETRY_MAPPING_ORACLE');
+observedCase('clone.retry-single-effect','clone-exact-retry','duplicateDeleteOrCloneEffects','Actual createProject exact CLONE retry',{projectCountBefore:projectsBeforeRetry,projectCountAfter:rows.get('projects').size,resultingJobId:copied.job.JOB_ID,mappingManifestUnchanged:true},[4379,4618,4884,5471]);
 await assert.rejects(store.createProject({...request,expectedSourceSha256:'f'.repeat(64)}),error=>error.code==='IDEMPOTENCY_PAYLOAD_CONFLICT');
 await assert.rejects(store.createProject({...request,commandId:'STALE_SOURCE',expectedSourceSha256:'f'.repeat(64)}),error=>error.code==='STALE_PROJECT_REVISION');
 note('Exact retry returns the same clone; changed payload and stale source are rejected');
@@ -52,6 +57,7 @@ for(const [name,mutate] of receiptFaults){
  finally{rows.get('meta').set(receiptKey,copy(receiptRow));}
  assert.equal((await store.readProject(source.job.JOB_ID)).projectSha256,sourceHash);
  assert.deepEqual(await store.readProject(copied.job.JOB_ID),copied);
+ observedCase('clone.invalid-receipt-isolation','clone-receipt-'+name,'mutationFixturesAffectingCanonicalUserState','Malformed receipt in one disposable production-store adapter',{sourceProjectSha256:sourceHash,cloneProjectUnchanged:true,adapter:'private transaction maps',externalTargetsInvoked:0},[5479]);
  receiptValidationCases.push({fault:name,actual:rejection||'RETRY_ACKNOWLEDGED',result:rejection?.code==='CLONE_BINDING_INVALID'?'PASS':'FAIL'});
 }
 assert.equal((await store.createProject(request)).job.JOB_ID,copied.job.JOB_ID,'Restoring the valid receipt must return the original clone.');
@@ -63,7 +69,10 @@ assert.deepEqual(rows,before,'COPY_ATOMICITY_ORACLE: interrupted creation cannot
 await store.createProject({...request,commandId:'INTERRUPTED_COPY'});
 note('An interrupted transaction changes none of source history, clone, files, allocation, or receipts; retry completes');
 const packageBytes=await store.exportPackage(copied.job.JOB_ID),restored=createRuntime(),imported=await restored.store.importPackage(packageBytes);
+const importedCountBefore=restored.rows.get('projects').size;
 assert.equal((await restored.store.createProject(request)).job.JOB_ID,imported.job.JOB_ID);
+assert.equal(restored.rows.get('projects').size,importedCountBefore,'COPY_RESTORED_DUPLICATE_EFFECT_ORACLE');
+observedCase('clone.backup-retry-single-effect','clone-backup-retry','duplicateDeleteOrCloneEffects','Actual imported clone backup then createProject exact retry',{projectCountBefore:importedCountBefore,projectCountAfter:restored.rows.get('projects').size,resultingJobId:imported.job.JOB_ID},[4379,4884,5471]);
 const recoveredFiles=await restored.store.listArtifacts(imported.job.JOB_ID);assert.deepEqual(new Uint8Array(await recoveredFiles[0].blob.arrayBuffer()),new Uint8Array(await bytes.arrayBuffer()));
 note('Restoring the copy backup restores exact bytes and completed-clone retry protection without needing the source');
 const payload=JSON.parse(await new Response(packageBytes.stream().pipeThrough(new DecompressionStream('gzip'))).text());
@@ -154,5 +163,5 @@ for(const field of ['filename','mediaType','artifactId','jobId']){
  assert.deepEqual(cloned.projectData.userEntered.suppliedArtifactText[row.artifactId],fixture.copy({...metadata,artifactId:row.artifactId,text}),'COPY_TEXT_CUSTODY_ORACLE');
  note('Text input retains exact line endings, Unicode, filename and media type under the new project file identity');
 }
-console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Production creation and recovery transaction owner with shared Node adapter',cases,receiptValidationCases,inMemoryFault:mutation||null,productionFilesModified:false},null,2));
 assert.equal(receiptValidationCases.filter(row=>row.result==='FAIL').length,0,'CLONE_RECEIPT_VALIDATION_ORACLE: incomplete or mistyped clone receipts must reject without creating another project or changing source and clone state.');
+console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Production creation and recovery transaction owner with shared Node adapter',cases,receiptValidationCases,verificationObservations,negativeCasePopulation,inMemoryFault:mutation||null,productionFilesModified:false},null,2));

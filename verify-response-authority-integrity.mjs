@@ -63,6 +63,7 @@ function assertTimingRejected(api,fixture,field){
  assert.equal(prepared.validation.valid,false,'An agent assigned application-owned proposition timing: '+field);
  assert.ok(prepared.validation.issues.some(issue=>['FIELD_OWNERSHIP_VIOLATION','UNKNOWN_RECORD_FIELD'].includes(issue.code)&&issue.path===path),JSON.stringify(prepared.validation.issues));
  assert.equal(api.hash.sha256Value(fixture.project),before,'Rejecting an invalid response changed accepted project state.');
+ return {accepted:prepared.validation.valid,field,path,issues:JSON.parse(JSON.stringify(prepared.validation.issues.filter(issue=>issue.path===path))),acceptedStateUnchanged:api.hash.sha256Value(fixture.project)===before};
 }
 function assertOwnershipViews(api){
  const owners={AGENT:'agent',APPLICATION:'application',HUMAN:'human',HUMAN_DECISION:'humanDecision'};
@@ -89,10 +90,13 @@ await check('TIMING-SEMANTIC-CONTROL: permitted proposition meaning still valida
  const accepted=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_AUTHORITY_TEST'}),record=engine.recordsForCurrentScope(accepted.project,'propositions')[0];
  assert.equal(engine.recordValue(record,'PROPOSITION_TEXT'),currentTiming.envelope.records.propositions[0].fields.PROPOSITION_TEXT);
 });
-for(const field of Object.keys(timingAssignments))await check('TIMING-REJECT-'+field,()=>assertTimingRejected(runtime,currentTiming,field));
+const verificationObservations=[];
+for(const field of Object.keys(timingAssignments))await check('TIMING-REJECT-'+field,()=>{const observed=assertTimingRejected(runtime,currentTiming,field);verificationObservations.push({checkId:'PRODUCER-TIMING-REJECT-'+field,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:132'],boundary:'Production response ingestion rejects agent assignment of application-owned proposition timing',expected:{accepted:false,field,acceptedStateUnchanged:true},observed,passed:true,violation:'externalApplicationOwnedFieldMutation',accepted:false});});
 await check('TIMING-PROMPT-CONTRACT: every proposition-writing operation excludes application-owned timing',()=>{
  const operations=Object.values(schema.STAGE_OPERATION_REGISTRY).filter(operation=>operation.acceptsExternalResponse&&operation.agentWritableCollections.includes('propositions'));assert.ok(operations.length);
- for(const operation of operations){const descriptor=prompts.responseContractDescriptor(operation.stage,operation.operation);for(const field of Object.keys(timingAssignments))assert.equal(Object.hasOwn(descriptor.records.propositions.agentFields,field),false,operation.operation+' disclosed '+field+' as agent-writable.');}
+ const actual=[];
+ for(const operation of operations){const descriptor=prompts.responseContractDescriptor(operation.stage,operation.operation);for(const field of Object.keys(timingAssignments))assert.equal(Object.hasOwn(descriptor.records.propositions.agentFields,field),false,operation.operation+' disclosed '+field+' as agent-writable.');actual.push({stage:operation.stage,operation:operation.operation,applicationTimingFieldsAdvertisedAsAgentWritable:Object.keys(timingAssignments).filter(field=>Object.hasOwn(descriptor.records.propositions.agentFields,field))});}
+ verificationObservations.push({checkId:'PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:735'],boundary:'Generated response contract descriptor for every external proposition-writing operation',expected:{applicationTimingFieldsAdvertisedAsAgentWritable:[]},observed:{operations:actual},passed:true});
 });
 await check('TIMING-REGISTRY-OWNER: all producer views preserve application authority',()=>{
  for(const field of ['TIMING_ENTRIES','TIMING_SCHEDULE_SHA256']){
@@ -139,5 +143,5 @@ if(results.every(row=>row.result==='PASS')){
   detectedFault('derived-ownership-omission',/propositions.TIMING_ENTRIES has inconsistent ownership/,()=>assertOwnershipViews(faulty.schema));
  });
 }
-const report={responseAuthorityIntegrity:results.every(row=>row.result==='PASS')?'PASS':'FAIL',syntheticCanonicalContexts:true,productionPromptAndIngestion:true,schemaSha256:hash.sha256Text(schemaSource),engineSha256:hash.sha256Text(engineSource),cases:results.length,passed:results.filter(row=>row.result==='PASS').length,failed:results.filter(row=>row.result==='FAIL').length,results,faults,sourceFaults:'IN_MEMORY_ONLY'};
+const report={responseAuthorityIntegrity:results.every(row=>row.result==='PASS')?'PASS':'FAIL',syntheticCanonicalContexts:true,productionPromptAndIngestion:true,schemaSha256:hash.sha256Text(schemaSource),engineSha256:hash.sha256Text(engineSource),cases:results.length,passed:results.filter(row=>row.result==='PASS').length,failed:results.filter(row=>row.result==='FAIL').length,results,faults,sourceFaults:'IN_MEMORY_ONLY',verificationObservations};
 const reportPath=process.argv.find(value=>value.startsWith('--authority-report='))?.slice('--authority-report='.length);if(reportPath)fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));assert.equal(report.failed,0,`${report.failed} response authority regressions failed.`);
