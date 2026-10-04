@@ -64,7 +64,9 @@ export function boundedSearchProposal(schema){
 export function registerFixtureSourceSearchCapability(runtime,project,{checks={},register=true}={}){
   const {engine}=runtime,contract=engine.recordsForCurrentScope(project,'sourceSearchContracts').at(-1);if(!contract)throw new Error('Fixture search contract is missing.');
   const report=engine.externalCapabilityEvidenceTemplate(project,engine.recordId(contract,'sourceSearchContracts')),time=Date.now();
-  Object.assign(report,{reportedBy:'SYNTHETIC_SEARCH_PERFORMER',environment:'Explicit closed hermetic fixture input universe',observedAt:new Date(time-1000).toISOString(),validUntil:new Date(time+3600000).toISOString()});
+  // This positive hermetic claim remains current for the full declared 120m
+  // operator-journey gate. Expired reports still fail production freshness checks.
+  Object.assign(report,{reportedBy:'SYNTHETIC_SEARCH_PERFORMER',environment:'Explicit closed hermetic fixture input universe',observedAt:new Date(time-1000).toISOString(),validUntil:new Date(time+7200000).toISOString()});
   report.action={target:engine.recordValue(contract,'PROJECT_SCOPE'),riskClasses:['READ_ONLY'],expectedEffect:'Inspect only the complete declared synthetic input universe and preserve its search observations.',reversibility:'No mutation',maximumCost:'0',authority:'Controlled test fixture operator',containment:'No network or external authority is claimed',stopCondition:'Stop when every declared fixture location and stopping criterion is accounted for',responsibleActor:'SYNTHETIC_SEARCH_PERFORMER'};
   for(const [key,check]of Object.entries(report.checks)){check.status=checks[key]||'TRUE';check.evidence=`Controlled fixture ${key} basis; not an independently observed live external capability.`;}
   if(!register)return report;

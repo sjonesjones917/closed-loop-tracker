@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {reservationScopeFixture} from './test-reservation-scope-fixture.mjs';
 import {responseFixture} from './operator-journey-fixtures.mjs';
+import {readStoreArchive} from './test-zip.mjs';
 const publicationProjection='...(outcomeInterpretation?{outcomeInterpretation}:{})',promptSource=fs.readFileSync('prompt-engine.js','utf8'),publicationFault=process.argv.includes('--fault=audit-outcome-publication');
 if(publicationFault)assert.equal(promptSource.split(publicationProjection).length-1,1,'AUDIT_PUBLICATION_FAULT_SETUP_ORACLE');
 const r=projectStoreRuntime({sourceOverrides:publicationFault?{'prompt-engine.js':promptSource.replace(publicationProjection,'...{}')}:{}}),{engine,core,prompts,ingestion}=r,schema=r.runtime.closedLoopWorkflowSchema,hash=r.runtime.closedLoopHash;
@@ -41,14 +42,35 @@ const fixture=reservationScopeFixture({core,schema,engine:{...engine,refreshReco
 let p=r.copy(fixture.project);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Review the two current audit bodies.';
 for(const[key,field]of Object.entries({baselineId:'CURRENT_BASELINE_ID',productId:'CURRENT_PRODUCT_ID',productVersion:'CURRENT_PRODUCT_VERSION',deliveryCandidateSetId:'CURRENT_DELIVERY_CANDIDATE_SET_ID'}))if(fixture.scope[key])p.job[field]=fixture.scope[key];
 const authorBase=engine.clone(p);
-function accept(operation){
+async function accept(operation,{reviewResult=null,fileFirst=false}={}){
+ if(fileFirst){for(const record of p.projectData.generatedPrompts)if(!record.invalidatedBy)await r.store.persistPromptContextFiles(record,p);p=await r.store.writeProject(p,{expectedProjectRevision:0,createOnly:true});}
+ const storedBaseRevision=fileFirst?p.revision:null;
  p.stages[25].status='COMPLETE';p.stages[25].gate=r.copy({complete:true,blocked:false,reasons:[]});
- const {prompt}=prompts.reserveAndBuildPromptRecord(p,26,{operation,scope:operation==='COMPLETE'?fixture.scope:{}});assertPublication(prompt);const envelope=responseFixture({schema,engine,prompt,manifest:prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});
+ const {prompt}=prompts.reserveAndBuildPromptRecord(p,26,{operation,scope:operation==='COMPLETE'?fixture.scope:{}});assertPublication(prompt);let envelope=responseFixture({schema,engine,prompt,manifest:prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});
+ if(reviewResult)envelope.records.semanticReviews[0].fields.RESULT=reviewResult;
+ if(fileFirst){
+  for(const record of p.projectData.generatedPrompts)if(!record.invalidatedBy)await r.store.persistPromptContextFiles(record,p);
+  p=await r.store.writeProject(p,{expectedProjectRevision:storedBaseRevision});
+  const pkg=await r.store.createExecutionPackage({jobId:p.job.JOB_ID,stage:26,operation,instructionId:prompt.instructionId}),packageBytes=new Uint8Array(await pkg.blob.arrayBuffer()),members=readStoreArchive(packageBytes),member=path=>{const file=members.find(row=>row.canonicalPath===path);assert(file,'S26_RECONCILE_PACKAGE_MEMBER_ORACLE: '+path);return Buffer.from(file.bytes);};
+  const manifest=JSON.parse(member('manifest.json').toString('utf8')),instructionBytes=member('instruction.txt'),contextFiles=manifest.contextFiles.map(file=>{const bytes=member(file.path);assert.equal(bytes.length,file.byteSize,'S26_RECONCILE_CONTEXT_BYTES_ORACLE');assert.equal(hash.sha256Text(bytes.toString('utf8')),file.sha256,'S26_RECONCILE_CONTEXT_BYTES_ORACLE');return {filename:file.path,bytes};});
+  assert.equal(manifest.operation,'RECONCILE','S26_RECONCILE_PACKAGE_IDENTITY_ORACLE');assert.equal(manifest.promptIdentity.instructionId,prompt.instructionId,'S26_RECONCILE_PACKAGE_IDENTITY_ORACLE');assert.equal(manifest.operationReservationId,prompt.operationReservationId,'S26_RECONCILE_PACKAGE_IDENTITY_ORACLE');assert.equal(instructionBytes.toString('utf8'),prompt.prompt,'S26_RECONCILE_INSTRUCTION_BYTES_ORACLE');assert.equal(manifest.promptIdentity.contractSha256,prompt.contractSha256,'S26_RECONCILE_PACKAGE_IDENTITY_ORACLE');
+  envelope=responseFixture({schema,engine,prompt,manifest,contextFiles,instructionBytes});
+  const text=JSON.stringify(envelope),blob=new Blob([text],{type:'application/json'}),identity=envelope.promptIdentity,transport={packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce};
+  const staged=await r.store.stageResponseFile({jobId:p.job.JOB_ID,stage:26,blob,rawFilename:'response.json',promptIdentity:r.copy(identity),...transport});
+  const returned=await r.store.readStagedResponseFile({jobId:p.job.JOB_ID,stagingId:staged.stagingId});assert.equal(Buffer.from(returned.bytes).toString('utf8'),text,'S26_RECONCILE_RESPONSE_BYTES_ORACLE');
+  Object.assign(transport,{authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:staged.rawFilename,status:staged.status,promptIdentity:staged.promptIdentity,sha256:staged.sha256,byteSize:staged.byteSize});
+  const captured=ingestion.captureRaw(p,{stage:26,text,promptRecord:prompt,transport}),save=next=>r.store.writeProject(next,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+  p=await save(captured.project);const stagedProject=await r.store.readProject(p.job.JOB_ID);assert.equal(stagedProject.projectData.rawResponses.at(-1).completeRawResponse,text,'S26_RECONCILE_RESPONSE_RELOAD_ORACLE');
+  const prepared=ingestion.prepareCaptured(p,{rawResponseId:captured.rawRecord.rawResponseId});assert.equal(prepared.validation.valid,true,'S26_RECONCILE_FILE_ADMISSION_ORACLE: '+JSON.stringify(prepared.validation.issues));
+  p=await save(prepared.project);const impact=ingestion.acceptanceImpact(p,prepared.proposal.proposalId),committed=ingestion.commit(p,prepared.proposal.proposalId,{replacementConfirmation:impact});
+  const storeImpact=r.store.mutationImpact(p,committed.project);assert.equal(storeImpact.requiresConfirmation,true,'S26_RECONCILE_REPLACEMENT_REVIEW_ORACLE');await assert.rejects(()=>r.store.writeProject(committed.project,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256}),error=>error.code==='MUTATION_CONFIRMATION_REQUIRED','S26_RECONCILE_REPLACEMENT_REVIEW_ORACLE');
+  p=await r.store.writeProject(committed.project,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,mutationConfirmation:storeImpact});const loaded=await r.store.readProject(p.job.JOB_ID);assert.deepEqual(r.copy(loaded.projectData),r.copy(p.projectData),'S26_RECONCILE_IMMEDIATE_STORAGE_ORACLE');p=loaded;return prompt;
+ }
  const prepared=ingestion.prepare(p,{stage:26,text:JSON.stringify(envelope),promptRecord:prompt,transport:{packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});
  assert.equal(prepared.validation.valid,true,'AUDIT_REVIEW_FIXTURE_ORACLE: '+JSON.stringify(prepared.validation.issues));
  const impact=ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId);p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{replacementConfirmation:impact}).project;return prompt;
 }
-const author=accept('COMPLETE'),authored=engine.clone(p);
+const author=await accept('COMPLETE'),authored=engine.clone(p);
 // Reconciliation publishes the same authoring contract without changing current
 // accepted work merely to inspect an instruction.
 const reconciliationProject=engine.clone(authored),reconciliationBefore=hash.sha256Value(r.copy({process:reconciliationProject.projectData.processAudits,product:reconciliationProject.projectData.productAudits}));
@@ -84,7 +106,7 @@ publicationObservations.push({checkId:'S26-PUBLISHED-UNKNOWN-STRING-CONTROLS',re
 assert.equal(engine.semanticReviewCompletion(p,26).complete,false,'AUDIT_REVIEW_ORACLE: authored audits bypass independent review');
 assert.equal(engine.semanticReviewCompletion(p,26).reasons.some(reason=>reason.includes('independently bound')),true);
 assert.equal(engine.operationalNextAction(p,26).operation,'SEMANTIC_REVIEW','Authored audits have no independent reviewer action');
-const authorVersion=p.job.CURRENT_REVIEW_VERSION,reviewPrompt=accept('SEMANTIC_REVIEW'),state=engine.semanticReviewCompletion(p,26);
+const authorVersion=p.job.CURRENT_REVIEW_VERSION,reviewPrompt=await accept('SEMANTIC_REVIEW'),state=engine.semanticReviewCompletion(p,26);
 assert.equal(state.complete,true,'AUDIT_CURRENT_REVIEW_ORACLE: independent current review did not complete');
 assert.equal(p.job.CURRENT_REVIEW_VERSION,authorVersion,'Reviewer response changed authored audit version');
 assert.deepEqual([...state.basis.targets.map(row=>row.collection)].sort(),['processAudits','productAudits']);
@@ -103,8 +125,44 @@ for(const violation of['MISSING_REVIEW','STALE_AUDIT','STALE_AUDIT_EVIDENCE','MI
  const observed=engine.semanticReviewCompletion(q,26);assert.equal(observed.complete,false,'AUDIT_REVIEW_ORACLE: accepted '+violation);
  verificationObservations.push({checkId:'S26-'+violation,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2424'],boundary:'current independent review -> audit progression authority',expected:{accepted:false},observed:{accepted:observed.complete,reasons:observed.reasons},violation,accepted:false,passed:true});
 }
+
+// Proposed bounded operation coverage: actual accepted adverse review ->
+// distinct authoring reconciliation -> fresh independent review. Synthetic
+// scope prerequisites do not establish the complete prior-stage journey.
+const reconciliationOperationCases=[];
+{
+ const retained=p;
+ try{
+  p=engine.clone(authored);
+  const unknownReview=await accept('SEMANTIC_REVIEW',{reviewResult:'UNKNOWN'});
+  assert.equal(engine.semanticReviewCompletion(p,26).complete,false,'S26_RECONCILE_UNKNOWN_ORACLE');
+  assert.equal(engine.operationalNextAction(p,26).operation,'RECONCILE','S26_RECONCILE_ROUTE_ORACLE');
+  const priorAudits=r.copy([...p.projectData.processAudits,...p.projectData.productAudits]),priorRawRows=r.copy(p.projectData.rawResponses).map(row=>({rawResponseId:row.rawResponseId,completeRawResponse:row.completeRawResponse}));
+  const reconciliation=await accept('RECONCILE',{fileFirst:true});
+  assert.notEqual(reconciliation.operationReservationId,author.operationReservationId,'S26_RECONCILER_DISTINCT_ORACLE');
+  assert.notEqual(reconciliation.operationReservationId,unknownReview.operationReservationId,'S26_RECONCILER_DISTINCT_ORACLE');
+  assert.equal(engine.semanticReviewCompletion(p,26).complete,false,'S26_RECONCILE_NOT_SELF_APPROVAL_ORACLE');
+  assert.equal(engine.operationalNextAction(p,26).operation,'SEMANTIC_REVIEW','S26_RECONCILE_NEW_REVIEW_ORACLE');
+  const reconcileChange=engine.acceptedChanges(p,26).find(row=>row.operation==='RECONCILE');
+  assert(reconcileChange,'S26_RECONCILE_EXACT_ADMISSION_ORACLE');
+  for(const prior of priorAudits){const current=[...p.projectData.processAudits,...p.projectData.productAudits].find(row=>row.id===prior.id);assert(current,'S26_RECONCILE_HISTORY_RECORD_ORACLE');assert.equal(hash.sha256Value(r.copy(current.fields)),hash.sha256Value(r.copy(prior.fields)),'S26_RECONCILE_HISTORY_RECORD_ORACLE');assert.deepEqual(r.copy(current.evidenceRefs),r.copy(prior.evidenceRefs),'S26_RECONCILE_HISTORY_EVIDENCE_ORACLE');}
+  for(const prior of priorRawRows)assert.equal(p.projectData.rawResponses.find(row=>row.rawResponseId===prior.rawResponseId)?.completeRawResponse,prior.completeRawResponse,'S26_RECONCILE_RAW_HISTORY_ORACLE');
+  const reconciliationRaw=p.projectData.rawResponses.find(row=>row.rawResponseId===reconcileChange.rawResponseId)?.completeRawResponse;assert.equal(JSON.parse(reconciliationRaw).operation,'RECONCILE','S26_RECONCILE_RAW_IDENTITY_ORACLE');
+  const nextReview=await accept('SEMANTIC_REVIEW'),reviewedState=engine.semanticReviewCompletion(p,26);
+  assert.equal(reviewedState.complete,true,'S26_RECONCILE_FRESH_REVIEW_ORACLE');
+  assert.notEqual(nextReview.operationReservationId,unknownReview.operationReservationId,'S26_RECONCILE_REVIEW_CONTEXT_ORACLE');
+  assert.equal(reviewedState.reviews.at(-1).AUTHOR_RESERVATION_ID,reconciliation.operationReservationId,'S26_RECONCILE_NEW_AUTHOR_BINDING_ORACLE');
+  for(const promptRecord of p.projectData.generatedPrompts)if(!promptRecord.invalidatedBy)await r.store.persistPromptContextFiles(promptRecord,p);
+  p=await r.store.writeProject(p);
+  const loaded=await r.store.readProject(p.job.JOB_ID);
+  assert.deepEqual(r.copy(loaded.projectData),r.copy(p.projectData),'S26_RECONCILE_STORAGE_ORACLE');
+  assert.equal(engine.semanticReviewCompletion(loaded,26).complete,true,'S26_RECONCILE_RELOAD_REVIEW_ORACLE');
+  reconciliationOperationCases.push({operation:'RECONCILE',boundary:'actual reserve -> saved ZIP instruction/manifest/context bytes -> staged strict JSON Blob -> read/rehashed bytes -> capture/operational save -> prepareCaptured -> operator commit -> immediate store/read -> fresh review -> store/read',requiredStructuredResponseSlots:prompts.promptFileManifest(reconciliation).attachmentSlots.filter(row=>row.required&&row.role==='STRUCTURED_RESPONSE').length,requiredOtherReturnedAttachmentSlots:prompts.promptFileManifest(reconciliation).attachmentSlots.filter(row=>row.required&&row.role!=='STRUCTURED_RESPONSE').length,actualExportedZipInstructionManifestAndContext:true,authoritativeResponseBlobStagedAndRehashed:true,immediateReconcileCommitStoreReload:true,responseBytes:Buffer.byteLength(reconciliationRaw,'utf8'),responseSha256:hash.sha256Text(reconciliationRaw),retainedRawHistory:true,retainedAuthoredFieldsAndEvidence:true,acceptedChangeId:reconcileChange.changeId,proposalId:reconcileChange.proposalId,reconciliationReservationId:reconciliation.operationReservationId,priorUnknownReservationId:unknownReview.operationReservationId,freshReviewReservationId:nextReview.operationReservationId,actualBrowser:false,realExternalActor:false,priorStagesEstablished:false});
+ }finally{p=retained;}
+}
+
 const anchor='function semanticReviewCompletion(p,stage){',source=fs.readFileSync('workflow-engine.js','utf8');assert.equal(source.split(anchor).length-1,1);
 const defective=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':source.replace(anchor,anchor+"if(stage===26)return {complete:true,reasons:[],reviews:[],basis:null};")}}),counterexample=defective.copy(authored);
 assert.throws(()=>assert.equal(defective.engine.semanticReviewCompletion(counterexample,26).complete,false,'AUDIT_REVIEW_ORACLE: controlled author bypass'),/AUDIT_REVIEW_ORACLE/);
 verificationObservations.push({checkId:'S26-CONTROLLED-AUTHOR-BYPASS-DETECTED',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2424'],boundary:'controlled former author-only approval -> independent boundary oracle',expected:{violationDetected:true},observed:{violationDetected:true,defectiveAccepted:true},passed:true});
-console.log(JSON.stringify({stage26IndependentReview:'PASS',isolatedScopeFixture:true,completeJourneyProven:false,verificationObservations,auditComparisonPublicationEvidence,interpretationCases},null,2));
+console.log(JSON.stringify({stage26IndependentReview:'PASS',isolatedScopeFixture:true,completeJourneyProven:false,reconciliationOperationCases,verificationObservations,auditComparisonPublicationEvidence,interpretationCases},null,2));

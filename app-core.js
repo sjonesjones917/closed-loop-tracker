@@ -1154,7 +1154,7 @@ async function exportPreDeliveryCheckpoint(){
     const saved=await projectStore.readProject(jobId);if(!saved||saved.revision!==current.revision)throw new Error('Project changed before the backup export. Export the current revision again.');
     const filename=jobId+'.pre-delivery'+(blob.type==='application/vnd.closed-loop.encrypted+json'?'.closed-loop.enc.json':'.closed-loop.json.gz');downloadBlob(blob,filename);
     const completed=clone(current);engine.recordCheckpointExportAction(completed,{checkpointId:engine.recordId(checkpoint,'backupCheckpoints'),packageSha256,filename});await persistReplacement(completed);
-    await recordMobileExport('BACKUP_EXPORTED',blob,filename);announce('Pre-delivery backup export action recorded. Keep the exported copy for recovery.');render();
+    await recordMobileExport('BACKUP_EXPORTED',blob,filename);announce('Pre-delivery backup export action recorded. Keep the exported copy for recovery.');render();focusAfterAction($('#next-required-action'));
   }catch(error){if(!requestBackupPassword(exportPreDeliveryCheckpoint,error))reportActionFailure(error);}
 }
 async function verifyStoredFilesNow(){try{await refreshProjectStorage({verify:true});announce(projectStorage.integrity==='VERIFIED'?'stored artifact bytes verified':'stored artifact mismatch detected');render();if(projectStorage.mismatches.length)reportActionFailure(`Stored artifact byte verification failed for: ${projectStorage.mismatches.join(', ')}`);}catch(error){announce('stored artifact verification failed');reportActionFailure(error);}}

@@ -802,6 +802,24 @@ async function writeProjectRow(project,tx,{expectedProjectRevision=null,incremen
   return {...next,projectSha256:digest};
 }
 function notifyProjectChange(project,details={}){try{const channel=new BroadcastChannel('closed-loop-reliability');channel.postMessage({type:'PROJECT_CHANGED',jobId:projectIdentity(project),revision:project.revision,contextId:STORE_CONTEXT_ID,...details});channel.close();}catch{}}
+// A replacement of obsolete unsubmitted instruction transport is not a
+// replacement of accepted work. Require the complete retained old issuance and
+// exact newly reserved same-slot issuance; all other loss still needs review.
+function unansweredInstructionTransportReplacement(prior,next,row,replacement){
+ const engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+ if(!prior||!replacement||!prompts?.promptTransportBinding||!['RESERVED','EXPORTED'].includes(String(engine.recordValue(row,'STATUS')))||String(engine.recordValue(replacement,'STATUS'))!=='SUPERSEDED')return false;
+ const old=(prior.projectData?.generatedPrompts||[]).find(prompt=>!prompt.invalidatedBy&&prompt.operationReservationId===engine.recordId(row,'operationReservations'));
+ const retained=old&&(next.projectData?.generatedPrompts||[]).find(prompt=>prompt.instructionId===old.instructionId),fresh=retained&&(next.projectData?.generatedPrompts||[]).find(prompt=>!prompt.invalidatedBy&&retained.invalidatedBy===`PROMPT-SUPERSEDED-${prompt.instructionId}`&&!prior.projectData.generatedPrompts.some(saved=>saved.instructionId===prompt.instructionId));
+ if(!old||!retained||!fresh||fresh.promptEngineVersion!==prompts.version||old.promptEngineVersion===fresh.promptEngineVersion&&old.contractSha256===fresh.contractSha256)return false;
+ const retainedBytes={...retained};delete retainedBytes.invalidatedBy;
+ if(hash.sha256Value(retainedBytes)!==hash.sha256Value(old)||old.jobId!==fresh.jobId||old.jobId!==prior.job.JOB_ID||next.job.JOB_ID!==prior.job.JOB_ID||(old.historyActivationId||null)!==(fresh.historyActivationId||null)||(old.historyActivationId||null)!==(prior.historyActivationId||null)||(next.historyActivationId||null)!==(prior.historyActivationId||null)||old.stage!==fresh.stage||old.operation!==fresh.operation)return false;
+ if([prior,next].some(project=>(project.projectData?.rawResponses||[]).some(raw=>raw.promptInstructionId===old.instructionId)||(project.projectData?.responseProposals||[]).some(proposal=>Number(proposal.stage)===Number(old.stage)&&!proposal.invalidatedBy&&['PENDING','PENDING_OPERATOR_REVIEW'].includes(String(proposal.status||proposal.state)))||(project.projectData?.acceptedChanges||[]).some(change=>!change.invalidatedBy&&change.promptId===old.instructionId&&change.status==='COMMITTED')))return false;
+ const oldBinding=prompts.promptTransportBinding(prior,old.stage,old.operation,old.instructionId,old.scope),freshBinding=prompts.promptTransportBinding(next,fresh.stage,fresh.operation,fresh.instructionId,fresh.scope),withoutRevision=scope=>Object.fromEntries(Object.entries(scope||{}).filter(([key])=>key!=='projectRevision'));
+ if(!oldBinding||!freshBinding||oldBinding.operationReservationId!==old.operationReservationId||oldBinding.packageId!==old.packageId||oldBinding.challengeNonce!==old.challengeNonce||freshBinding.operationReservationId!==fresh.operationReservationId||freshBinding.packageId!==fresh.packageId||freshBinding.challengeNonce!==fresh.challengeNonce||oldBinding.targetSlot!==freshBinding.targetSlot||oldBinding.targetSlot!==engine.reservationTargetSlot(prior,old)||freshBinding.targetSlot!==engine.reservationTargetSlot(next,fresh)||Number(engine.recordValue(row,'EXPECTED_REVISION'))!==Number(prior.revision)||hash.sha256Value(withoutRevision(old.scope))!==hash.sha256Value(withoutRevision(fresh.scope)))return false;
+ const freshReservation=(next.projectData?.operationReservations||[]).find(reservation=>engine.recordId(reservation,'operationReservations')===fresh.operationReservationId),former=clone(row);engine.transitionOperationReservation(former,'SUPERSEDED');
+ const retainedMetadata=record=>Object.fromEntries(Object.entries(record||{}).filter(([key])=>!['sha256','recordSha256','contentSha256','updatedAt'].includes(key)));
+ return String(engine.recordValue(freshReservation,'STATUS'))==='RESERVED'&&!prior.projectData.operationReservations.some(reservation=>engine.recordId(reservation,'operationReservations')===fresh.operationReservationId)&&hash.sha256Value(retainedMetadata(former))===hash.sha256Value(retainedMetadata(replacement));
+}
 function mutationImpact(prior,next,derivedNext=null){
   const engine=globalThis.closedLoopWorkflowEngine,affected=new Map(),replaces=[];
   const candidate=next;next=derivedNext||clone(candidate);
@@ -828,6 +846,7 @@ function mutationImpact(prior,next,derivedNext=null){
         // Regenerating an instruction supersedes its old transport, while its
         // accepted result remains governed by the owning acceptance operation.
         if(family==='generatedPrompts'&&String(replacement?.invalidatedBy||'').startsWith('PROMPT-SUPERSEDED-'))continue;
+        if(family==='operationReservations'&&unansweredInstructionTransportReplacement(prior,next,row,replacement))continue;
         if(!active(replacement)||!engine.isActiveRecord(replacement))add(row.stage??engine.recordValue(row,'STAGE')??globalThis.closedLoopWorkflowSchema.RECORD_SCHEMAS[family]?.stage,family,id);
       }
     }

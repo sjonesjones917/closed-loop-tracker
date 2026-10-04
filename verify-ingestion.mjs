@@ -1,7 +1,7 @@
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -24,6 +24,16 @@ const prompts=globalThis.closedLoopPromptEngine;
 const ingestion=globalThis.closedLoopResponseIngestion;
 if(!core||!schema||!engine||!prompts||!ingestion)throw new Error('Runtime modules failed to load.');
 if(core.STAGES.length!==30)throw new Error(`Expected 30 stages; found ${core.STAGES.length}.`);
+// Use the existing native Blob store for selected returned-file custody. The
+// production converter still queries the exact application-verified identity.
+const returnedByteStore=await bindArtifactFixture([]);
+async function retainReturnedFixture(p,file,blob){
+  assert.equal(blob.size,file.size,'RETURNED_FILE_NATIVE_FIXTURE_ORACLE: actual byte size must match the selected file');
+  assert.equal(await globalThis.closedLoopHash.sha256Bytes(blob),file.sha256,'RETURNED_FILE_NATIVE_FIXTURE_ORACLE: actual bytes must match the selected digest');
+  const stored=await returnedByteStore.putArtifact({artifactId:file.artifactId,jobId:p.job.JOB_ID,blob,filename:file.name,mediaType:file.type}),read=await returnedByteStore.getArtifact(file.artifactId);
+  assert.equal(read.jobId,p.job.JOB_ID);assert.equal(read.filename,file.name);assert.equal(read.mediaType,file.type);assert.equal(read.byteSize,file.size);assert.equal(stored.sha256,file.sha256);assert.equal(await globalThis.closedLoopHash.sha256Bytes(read.blob),file.sha256);
+  assert.equal(globalThis.closedLoopProjectStore.artifactCustodyState({jobId:p.job.JOB_ID,artifactId:file.artifactId,filename:file.name,byteSize:file.size,sha256:file.sha256}),'TRUE','RETURNED_FILE_NATIVE_FIXTURE_ORACLE: native readback must own current custody');
+}
 
 function prepareStage4Upstream(p){
   const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
@@ -353,15 +363,17 @@ negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].res
 
 // Attachment declarations are claims; only application-hashed supplied bytes may satisfy them.
 {
-  const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:48203,sha256:'a'.repeat(64)};
-  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e,exactFile:{...exactFile,artifactId:artifactFixtureId(engine,p,'ATTACHMENT-FILE')}};};
-  {const {p,stage,pr,e,exactFile}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:[{...exactFile,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
+  const attachmentBlob=new Blob([new Uint8Array(48203).fill(65)],{type:'application/pdf'}),exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:attachmentBlob.size,sha256:await globalThis.closedLoopHash.sha256Bytes(attachmentBlob)};
+  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:exactFile.size,sha256:exactFile.sha256,required:true}];issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e,exactFile:{...exactFile,artifactId:artifactFixtureId(engine,p,'ATTACHMENT-FILE')}};};
+  {const {p,stage,pr,e,exactFile}=make('JOB-ATTACHMENT-VALID'),files=[{...exactFile,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}],options={...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files};
+   const unverified=ingestion.prepare(p,options);assert.equal(unverified.validation.valid,false,'RETURNED_FILE_CUSTODY_ORACLE: selected metadata without stored bytes must be rejected');assert.ok(unverified.validation.issues.some(item=>item.code==='RETURNED_ARTIFACT_BYTES_UNVERIFIED'));assert.equal(unverified.proposal,null);assert.equal(unverified.project.projectData.artifacts.length,0);assert.equal(unverified.project.projectData.acceptedChanges.length,0);
+   await retainReturnedFixture(p,exactFile,attachmentBlob);const prepared=ingestion.prepare(p,options);if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');assert.equal(prepared.project.projectData.artifacts.length,0);assert.equal(prepared.project.projectData.acceptedChanges.length,0);}
   for(const [name,files,mutate,code] of [
     ['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT'],
     ['wrong attachment filename',[exactFile],e=>{e.attachments[0].filename='other.pdf';},'ATTACHMENT_FILENAME_MISMATCH'],
     ['wrong attachment byte size',[exactFile],e=>{e.attachments[0].byteSize=48204;},'ATTACHMENT_BYTE_SIZE_MISMATCH'],
     ['wrong attachment hash',[exactFile],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']
-  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:files.map(file=>({...file,artifactId:artifactFixtureId(engine,p,'ATTACHMENT-FILE'),attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}))});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
+  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const mapped=files.map(file=>({...file,artifactId:artifactFixtureId(engine,p,'ATTACHMENT-FILE'),attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}));for(const file of mapped)await retainReturnedFixture(p,file,attachmentBlob);const prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:mapped});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
 }
 
 // Duplicate response is semantic, not whitespace-sensitive.
@@ -577,10 +589,11 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
   let prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr});
   if(!prepared.validation.valid)throw new Error('Stage 06 future artifact requirement was rejected before execution readiness: '+JSON.stringify(prepared.validation.issues));
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Stage 06 incorrectly required execution bytes while accepting a test definition.');
-  const sha='a'.repeat(64);
+  const fixtureBlob=new Blob(['x;\n'],{type:'application/javascript'}),sha=await globalThis.closedLoopHash.sha256Bytes(fixtureBlob);
   e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
   issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
-  prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:artifactFixtureId(engine,p,'ARTIFACT-TEST-000001'),name:'fixture.js',type:'application/javascript',size:3,sha256:sha,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}]});
+  const fixtureFile={artifactId:artifactFixtureId(engine,p,'ARTIFACT-TEST-000001'),name:'fixture.js',type:'application/javascript',size:fixtureBlob.size,sha256:sha,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId};await retainReturnedFixture(p,fixtureFile,fixtureBlob);
+  prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:[fixtureFile]});
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
   if(!prepared.validation.valid)throw new Error('Byte-backed TEST artifact fixture was otherwise invalid: '+JSON.stringify(prepared.validation.issues));
   const proposedTest=prepared.proposal?.canonicalRecords?.tests?.[0],proposedEvidence=prepared.proposal?.evidence?.[0];
@@ -625,6 +638,7 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   const contents=['first\n','second\n'],files=contents.map((text,i)=>({artifactId:artifactFixtureId(engine,p,`RETURNED-ARTIFACT-${i}`),name:`returned-${i}.txt`,type:'text/plain',size:new TextEncoder().encode(text).byteLength,sha256:globalThis.closedLoopHash.sha256Text(text)}));
   e.attachments=files.map((file,i)=>({temporaryKey:`slot-${i}`,filename:file.name,mediaType:file.type,byteSize:file.size,sha256:file.sha256,required:true}));issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'slot-0'};
   const slots=ingestion.attachmentSlotPlan(p,e,pr),mapped=files.map((file,i)=>({...file,attachmentSlotId:slots[i].attachmentSlotId}));
+  for(const [index,file]of files.entries())await retainReturnedFixture(p,file,new Blob([contents[index]],{type:file.type}));
   const check=selected=>ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:selected});
   for(const [name,selected] of [
     ['filename-alone',files],['picker-order-without-slots',[...files].reverse()],
@@ -661,7 +675,8 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   ]){
     const p=project('JOB-FILENAME-GATE'),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr),text='Exact bytes\n',sha256=globalThis.closedLoopHash.sha256Text(text);
     e.attachments=[{temporaryKey:'name-check',filename:declared,mediaType:'text/plain',byteSize:new TextEncoder().encode(text).byteLength,sha256,required:true}];issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'name-check'};
-    const slot=ingestion.attachmentSlotPlan(p,e,pr)[0],files=[{artifactId:artifactFixtureId(engine,p,'FILENAME-FILE'),name:selected,type:'text/plain',size:e.attachments[0].byteSize,sha256,attachmentSlotId:slot.attachmentSlotId}],result=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files});
+    const slot=ingestion.attachmentSlotPlan(p,e,pr)[0],files=[{artifactId:artifactFixtureId(engine,p,'FILENAME-FILE-'+checked.length),name:selected,type:'text/plain',size:e.attachments[0].byteSize,sha256,attachmentSlotId:slot.attachmentSlotId}];await retainReturnedFixture(p,files[0],new Blob([text],{type:'text/plain'}));
+    const result=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files});
     if(expected){if(result.validation.valid||!result.validation.issues.some(issue=>issue.code===expected))throw new Error('FILENAME_GATE_ORACLE '+JSON.stringify({declared,expected,issues:result.validation.issues}));negativeCount++;}
     else {if(!result.validation.valid)throw new Error('FILENAME_VALID_ORACLE '+JSON.stringify(result.validation.issues));const accepted=ingestion.commit(result.project,result.proposal.proposalId),artifact=accepted.project.projectData.artifacts.at(-1);if(artifact.FILENAME!==selected||artifact.rawFilename!==selected||artifact.canonicalPath!==globalThis.closedLoopHash.pinnedNFC(selected))throw new Error('FILENAME_RAW_PRESERVATION_ORACLE');}
     checked.push({declared,expected,result:'PASS'});

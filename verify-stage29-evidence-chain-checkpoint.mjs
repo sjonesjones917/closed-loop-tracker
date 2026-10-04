@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {recordProposal,canonicalFixtureRecord} from './test-fixtures.mjs';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -35,8 +36,12 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   evidence.source='APPLICATION_TEST_RUNTIME';
   const instruction=record('instructions',{INSTRUCTION_ID:'INSTR-1',STATUS:'CURRENT',INSTRUCTION_TEXT:'Execute the Stage 29 requirement evidence validation.'},'INSTR-1',scope);
   const trace=record('instructionTraces',{TRACE_ID:'TRACE-1',REQ_ID:'REQ-1',INSTRUCTION_ID:'INSTR-1',INSTRUCTION_LOCATION:'stage-29.evidence-chain',IMPLEMENTED_BEHAVIOR:'Required evidence-chain validation',EVIDENCE_ID:'EVID-1',STATUS:'CURRENT'},'TRACE-1',scope);
-  const test=record('tests',{REQ_ID:'REQ-1',TEST_ID:'TEST-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',STATUS:'READY'},'TEST-1',scope);
-  const result=record('verification',{REQ_ID:'REQ-1',TEST_ID:'TEST-1',DETERMINATION:'SATISFIED',EVIDENCE_ID:['EVID-1'],RESULT_ID:'RES-1'},'RES-1',scope);
+  // The fixture isolates exact chain bindings. Supply the normative seven-field
+  // non-run declaration through the existing fixture/schema owner so it is not
+  // a malformed test that can bypass the required-result frontier.
+  const declared=recordProposal(schema,'tests').fields,timing=Object.fromEntries(schema.TIMING_FIELDS.map(key=>[key,declared[key]]));
+  const test=canonicalFixtureRecord({engine,schema},p,'tests',{REQ_ID:'REQ-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',STATUS:'READY',...timing,EARLIEST_EXECUTABLE_STAGE:6,REQUIRED_BY_STAGE:29,PER_RUN_REQUIRED:false},{scope});
+  const result=record('verification',{REQ_ID:'REQ-1',TEST_ID:engine.recordId(test,'tests'),DETERMINATION:'SATISFIED',EVIDENCE_ID:['EVID-1'],RESULT_ID:'RES-1'},'RES-1',scope);
   const identity=record('artifactIdentities',{IDENTITY_ID:'ART-1',ARTIFACT_ID:'ART-1',AUDITED_FILENAME:'artifact.bin',RELEASE_FILENAME:'artifact.bin',AUTHORIZATION:'AUTHORIZED',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,RELEASE_BYTE_SIZE:10,AUDITED_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210',PRE_DELIVERY_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'},'ART-1',scope);
   identity.identityEvidenceSha256='7'.repeat(64);identity.scope={...scope,releaseId,deliveryCandidateSetId:'SET-1'};
   p.projectData.deliveryCandidateSets.push(record('deliveryCandidateSets',{STATUS:'FROZEN',ARTIFACT_IDS:['ART-1'],AUTHORIZED_FILENAMES:{'ART-1':'artifact.bin'}},'SET-1',scope));
@@ -47,11 +52,10 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   p.projectData.products.push(product);
   p.projectData.releaseRecords.push(release);
   p.projectData.evidenceRecords.push(evidence);
-  p.projectData.tests.push(test);
   p.projectData.verification.push(result);
   p.projectData.artifactIdentities.push(identity);
   p.projectData.propositions.push(record('propositions',{REQUIREMENT_ID:'REQ-1',STATUS:'ACTIVE'},'PROP-1',scope));
-  p.projectData.evidenceChains.push(record('evidenceChains',{REQ_ID:'REQ-1',STATUS:status,MISSING_LINKS:missingLinks,RELEASE_DECISION_ID:chainReleaseId,HASH_REVIEW_ID:hashReviewId,PRODUCT_ELEMENT:productId,BASELINE_ID:baselineId,TEST_ID:['TEST-1'],EVIDENCE_ID:['EVID-1'],ARTIFACT_HASH_IDENTITY:['ART-1'],TEST_RESULT_ID:['RES-1']},'CHAIN-1',scope));
+  p.projectData.evidenceChains.push(record('evidenceChains',{REQ_ID:'REQ-1',STATUS:status,MISSING_LINKS:missingLinks,RELEASE_DECISION_ID:chainReleaseId,HASH_REVIEW_ID:hashReviewId,PRODUCT_ELEMENT:productId,BASELINE_ID:baselineId,TEST_ID:[engine.recordId(test,'tests')],EVIDENCE_ID:['EVID-1'],ARTIFACT_HASH_IDENTITY:['ART-1'],TEST_RESULT_ID:['RES-1']},'CHAIN-1',scope));
   return p;
 };
 

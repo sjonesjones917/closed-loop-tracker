@@ -160,9 +160,10 @@ const captureCurrentView=async()=>{},captureView=()=>({activeStage:current.activ
 ${extractUi('async function persistReplacement(','async function save(')}
 ${extractUi('function logicalFilePath(','async function registerStageFiles(')}
 ${extractUi('async function selectReturnedSlotFile(','async function reverifyReturnedFiles(')}
+${extractUi('async function reverifyReturnedFiles(','async function validateReturnedResponse(')}
 ${extractUi('function validationMarkup(','function proposalActionLabel(')}
 function recoveryIntro(){const n=2,locked=false,applicationOnlyInteraction=false,savedPrompt=currentPromptRecord(n),latestValidation=latestResponseValidation(n),retryPreview=!savedPrompt&&latestValidation&&!latestValidation.valid;return ${uiSource.slice(uiSource.indexOf('promptIntro=',uiSource.indexOf('function workflowMarkup('))+'promptIntro='.length,uiSource.indexOf(';return `',uiSource.indexOf('function workflowMarkup(')))};}
-globalThis.returnedUi={select:selectReturnedSlotFile,setProject:value=>{current=value;projects=[value];},current:()=>current,failures:returnedFailures,validation:()=>validationMarkup(2),intro:recoveryIntro};`,r.runtime);
+globalThis.returnedUi={select:selectReturnedSlotFile,reverify:()=>reverifyReturnedFiles(ingestion.findRaw(current,returnedRawId)),setProject:value=>{current=value;projects=[value];},current:()=>current,failures:returnedFailures,validation:()=>validationMarkup(2),intro:recoveryIntro};`,r.runtime);
   async function selectBytes(value){
     const beforeRevision=p.revision;r.runtime.returnedUi.setProject(p);await r.runtime.returnedUi.select(slot.attachmentSlotId,new r.runtime.File([value],'source-proof.txt',{type:'text/plain'}));
     assert.equal(r.runtime.returnedUi.failures.length,0,'OPEN_RETURNED_FILE_UI_SETUP_ORACLE: actual returned-slot owner must persist its selected bytes');p=r.runtime.returnedUi.current();
@@ -174,7 +175,15 @@ globalThis.returnedUi={select:selectReturnedSlotFile,setProject:value=>{current=
   await exportOpenAttempt('missing required returned file');
   await selectBytes(content.replace('Independent','Unsupported'),'wrong-returned-file');await validateOpenAttempt('ATTACHMENT_SHA256_MISMATCH');await exportOpenAttempt('returned-file hash mismatch');
   await selectBytes(content,'correct-returned-file');await exportOpenAttempt('corrected bytes mapped before validation');
+  // Package export reads canonical custody; selected returned files stay staged.
+  // The actual validation and acceptance owners reverify those exact Blobs anew.
+  const unverified=ingestion.prepareCaptured(p,{rawResponseId:captured.rawId,expectedCommittedRevision:p.revision});
+  assert.deepEqual(Array.from(unverified.validation.issues,row=>row.code),['RETURNED_ARTIFACT_BYTES_UNVERIFIED'],'OPEN_RETURNED_FILE_CUSTODY_ORACLE: stored metadata cannot replace current byte verification');
+  assert.equal(unverified.validation.valid,false);assert.equal(unverified.proposal,null);assert.equal(unverified.project.projectData.acceptedChanges.length,p.projectData.acceptedChanges.length);assert.equal(unverified.project.projectData.artifacts.length,0);
+  assert.equal(engine.recordValue(unverified.project.projectData.operationReservations.find(row=>engine.recordId(row,'operationReservations')===prompt.operationReservationId),'STATUS'),'RESPONSE_STAGED');assert.equal(unverified.rawRecord.completeRawResponse,text);
+  r.runtime.returnedUi.setProject(p);await r.runtime.returnedUi.reverify();
   const ready=ingestion.prepareCaptured(p,{rawResponseId:captured.rawId,expectedCommittedRevision:p.revision});assert.equal(ready.validation.valid,true,JSON.stringify(ready.validation.issues));p=await saveOperational(p,ready.project);
+  r.runtime.returnedUi.setProject(p);await r.runtime.returnedUi.reverify();
   const candidate=ingestion.prepareAcceptanceCandidate(p,ready.proposal.proposalId,{operator:'SYNTHETIC_OPERATOR',reviewNote:'Exact retained returned file verified.'});assert.equal(ingestion.validateAcceptanceCandidate(p,candidate.project,candidate.acceptance),true);
   assert.equal(store.validateProjectIntegrity(candidate.project).valid,true);p=await store.writeProject(candidate.project,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
   const restored=await store.readProject(p.job.JOB_ID),artifact=restored.projectData.artifacts.find(row=>engine.recordValue(row,'SHA256')===sha),bytes=await store.getArtifact(engine.recordId(artifact,'artifacts'));
@@ -296,6 +305,9 @@ let priorTransportObservation;
   assert.equal(new TextDecoder('utf-8',{fatal:true}).decode(read.bytes),text);
   const captured=ingestion.captureRaw(draft,{stage:1,text,promptRecord:first,files:[file],transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',byteSize:read.byteSize,sha256:read.sha256,status:read.status,promptIdentity:manifest.promptIdentity,packageId:first.packageId,operationReservationId:first.operationReservationId,challengeNonce:first.challengeNonce}});
   p=await store.writeProject(captured.project,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,operational:true});
+  // Follow the UI's native get/read/hash boundary after operational persistence
+  // before isolating the unrelated sourceRef rejection.
+  const stagedReturned=await store.getArtifact(artifactId);assert.equal(stagedReturned.jobId,p.job.JOB_ID);assert.equal(stagedReturned.filename,file.name);assert.equal(stagedReturned.mediaType,file.type);assert.equal(stagedReturned.blob.size,file.size);assert.equal(await runtime.closedLoopHash.sha256Bytes(stagedReturned.blob),file.sha256);
   const failure=ingestion.prepareCaptured(p,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:first,expectedCommittedRevision:p.revision});
   assert.deepEqual(Array.from(failure.validation.issues,row=>row.code),['INVALID_EVIDENCE_SOURCE_REF']);
   p=await store.writeProject(failure.project,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,operational:true});draft=copy(p);

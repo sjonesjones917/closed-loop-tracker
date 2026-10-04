@@ -15,6 +15,9 @@ export const COUNTERPART_FAULT_CASES=Object.freeze([
   ['fractional-stability',12,'must remain persistable after every operation'],
   ['missing-defect-gate',13,'An observed initial violation without an evidence-linked defect must be rejected'],
   ['unrelated-defect-reason',13,'COUNTERPART_DEFECT_REASON_ORACLE'],
+  ['reopened-initial-root-cause-by-later-defect',17,'STAGE17_INITIAL_OWNER_ORACLE'],
+  ['reopened-initial-regression-by-later-defect',17,'STAGE17_INITIAL_OWNER_ORACLE'],
+  ['reopened-initial-correction-by-later-defect',17,'STAGE17_INITIAL_OWNER_ORACLE'],
   ['partial-verification-completes-operation',17,'ITERATION_PARTIAL_VERIFY_ORACLE']
 ].map(row=>Object.freeze(row)));
 const safe=value=>Array.isArray(value)?value:[];
