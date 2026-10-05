@@ -23,7 +23,7 @@ async function ui(){
   window:{scrollX:0,scrollY:0,scrollTo(x,y){this.scrollX=x;this.scrollY=y;scroll.push({x,y});}},requestAnimationFrame:fn=>fn(),render:reset,
   captureCurrentView:async()=>r.store.saveCheckpoint(t.current.job.JOB_ID,{expectedProjectRevision:t.current.revision,view:r.copy(t.captureView())}),
   refreshHistory:async()=>{t.historyState=await r.store.historyList(t.current.job.JOB_ID);},historyState:{activeId:null},writeBrowserEntry(checkpointId,view){entries.push({jobId:t.current.job.JOB_ID,checkpointId,view:r.copy(view)});},
-  refreshProjectStorage:async()=>{},announce(){},reportActionFailure(error){throw error;},header(){},
+  refreshProjectStorage:async()=>{},announce(){},reportActionFailure(error){throw error;},header(){},historyRestoreController:null,restoringHistory:false,recordMobileBackupRestore:async()=>{},requestBackupPassword:()=>false,
   setControlDisabled:(control,disabled)=>{if(control)control.disabled=disabled;},location:{reload(){throw Error('PROJECT_ACTIVATION_UNEXPECTED_RELOAD');}},
   RUNTIME_BUILD_ID:'CONTROLLED-ACTIVATION-BUILD',parseMobileAcceptanceTargetControl:()=>({testProjectId:'PINNED-ACTIVATION-TEST'}),verifyMobileBuild:async()=>({buildIdentity:'CONTROLLED-ACTIVATION-BUILD'}),recordMobileOperation:async()=>{},
   stagePlanItems:(stage,operation)=>r.engine.stageTestExecutionPlan(t.current,{stage,operation}).items,displayedStageAction:stage=>r.engine.operationalNextAction(t.current,stage),presentationAction:stage=>r.engine.operationalNextAction(t.current,stage),currentNextAction:()=>r.engine.operationalNextAction(t.current,1),
@@ -33,6 +33,7 @@ async function ui(){
  vm.runInContext(extract('const projectUiEntry=','async function refreshProjectStorage(')+extract('function stageOperations(','// A saved response may be inspected independently.')+
   extract('async function savePromptRecord(','function promptTransportFilename(')+extract('let promptExportInFlight=','async function exportPromptContext(')+
   extract('async function duplicateCurrentProject(','function selectStageContinuation(')+extract('async function selectProject(','async function importProjectPackageFile(')+
+  extract('async function importProjectPackageFile(','let pendingBackupAction=')+extract('async function loadAcceptanceSession(','async function saveAcceptanceSession(')+extract('async function recordCommittedBoundary(','async function navigateWithinVersion(')+
   extract('function syncDeleteProjectControl(','function setProjectActionsOpen(')+extract('async function startMobileAcceptanceProject(','function mobileProbeMembers(')+
   extract('async function persistNewProject(','async function persistReplacement(')+extract('function blankStage(','function importSeed(')+
   extract('async function addNew(','async function readApplicationResource('),t);
@@ -90,6 +91,42 @@ for(const caller of ['addNew','duplicateCurrentProject','archiveCurrentProject',
  callerResults.push({caller,result:'PASS',destinationJobId:expected.jobId,selectedOperation:x.t.selectedOperation(1),savedOperation:x.t.operationSelection[1]||null,selectedRun:x.t.runSelection[11]||null,draft:x.nodes().get('#draft').value,scroll:{x:x.t.window.scrollX,y:x.t.window.scrollY},pendingReviewRestored:Boolean(x.t.replacementReview?.next),durableProjectSha256:durable.projectSha256});
 }
 observations.push({id:'PROJECT_ACTIVATION_CALLERS',result:'PASS',callers:callerResults,actorBasis:'Actual production caller/activation/store/view functions with synthetic DOM/history; pinned mobile target/build is controlled, no physical-device claim.'});
+{
+ const x=await ui(),dest=await destination(x),backup=await x.store.exportPackage(dest.project.job.JOB_ID),sourceSha256=x.source.projectSha256;
+ await x.t.importProjectPackageFile(backup,{recordSelection:false});assertDestination(x,dest.expected);
+ assert.equal(x.t.replacementReview.next.job.JOB_TITLE,'Destination pending title','PROJECT_ACTIVATION_IMPORT_PENDING_REVIEW_ORACLE');
+ const imported=await x.store.readProject(dest.project.job.JOB_ID),savedView=await x.store.readHistoryView(dest.project.job.JOB_ID);
+ assert.equal(savedView.drafts['#draft'].value,'Destination-own draft','PROJECT_ACTIVATION_IMPORT_DURABLE_DRAFT_ORACLE');
+ assert.equal(savedView.pendingMutation.next.job.JOB_TITLE,'Destination pending title','PROJECT_ACTIVATION_IMPORT_DURABLE_PENDING_REVIEW_ORACLE');
+ assert.equal((await x.store.readProject(x.source.job.JOB_ID)).projectSha256,sourceSha256,'PROJECT_ACTIVATION_IMPORT_SOURCE_UNCHANGED_ORACLE');
+ observations.push({id:'PROJECT_ACTIVATION_IMPORTED_VIEW',result:'PASS',destinationJobId:imported.job.JOB_ID,browserEntryDraft:x.entries.at(-1).view.drafts['#draft'].value,pendingReplacementPreserved:true,sourceUnchanged:true,backupSha256:digest(new Uint8Array(await backup.arrayBuffer()))});
+}
+{
+ const x=await ui(),dest=await destination(x),backup=await x.store.exportPackage(dest.project.job.JOB_ID);
+ x.t.refreshProjectStorage=async()=>{throw new Error('Controlled post-import refresh failure');};
+ await assert.rejects(x.t.importProjectPackageFile(backup,{recordSelection:false}),error=>error.code==='IMPORT_COMMITTED_REFRESH_FAILED','PROJECT_ACTIVATION_IMPORT_REFRESH_FAILURE_ORACLE');
+ assert.equal(x.t.current.job.JOB_ID,dest.expected.jobId,'PROJECT_ACTIVATION_IMPORT_COMMITTED_STATE_ORACLE');
+ assert.equal(x.nodes().get('#draft').value,'Destination-own draft','PROJECT_ACTIVATION_IMPORT_REFRESH_DRAFT_ORACLE');
+ assert.equal(x.t.replacementReview.next.job.JOB_TITLE,'Destination pending title','PROJECT_ACTIVATION_IMPORT_REFRESH_PENDING_REVIEW_ORACLE');
+ assert.equal((await x.store.readProject(dest.expected.jobId)).job.JOB_ID,dest.expected.jobId);
+ observations.push({id:'PROJECT_ACTIVATION_IMPORTED_REFRESH_FAILURE',result:'PASS',committed:true,destinationDraftPreserved:true,pendingReplacementPreserved:true,errorCode:'IMPORT_COMMITTED_REFRESH_FAILED'});
+}
+{
+ const x=await ui(),dest=await destination(x),backup=await x.store.exportPackage(dest.project.job.JOB_ID);
+ x.t.projectStore={...x.store,readHistoryView:async()=>{throw new Error('Controlled post-import view-read failure');}};
+ await assert.rejects(x.t.importProjectPackageFile(backup,{recordSelection:false}),error=>error.code==='IMPORT_COMMITTED_REFRESH_FAILED','PROJECT_ACTIVATION_IMPORT_VIEW_READ_FAILURE_ORACLE');
+ assert.equal(x.t.current.job.JOB_ID,dest.expected.jobId);assert.deepEqual(Object.keys(x.t.operationSelection),[]);assert.deepEqual(Object.keys(x.t.runSelection),[]);assert.deepEqual(Object.keys(x.t.fileSelectionDrafts),[]);
+ assert.equal(x.nodes().get('#draft').value,'','PROJECT_ACTIVATION_IMPORT_VIEW_READ_ISOLATION_ORACLE');
+ const savedView=await x.store.readHistoryView(dest.expected.jobId);assert.equal(savedView.drafts['#draft'].value,'Destination-own draft');assert.equal(savedView.pendingMutation.next.job.JOB_TITLE,'Destination pending title');
+ observations.push({id:'PROJECT_ACTIVATION_IMPORTED_VIEW_READ_FAILURE',result:'PASS',committed:true,departingControlsCleared:true,destinationDraftAndPendingReviewRecoverable:true,errorCode:'IMPORT_COMMITTED_REFRESH_FAILED'});
+}
+{
+ const x=await ui(),before=await x.store.readProject(x.source.job.JOB_ID);
+ await assert.rejects(x.t.importProjectPackageFile(new Blob(['invalid backup']),{recordSelection:false}),/Import rejected without changing existing projects/,'PROJECT_ACTIVATION_IMPORT_REJECTION_ORACLE');
+ assert.equal(x.t.current.job.JOB_ID,x.source.job.JOB_ID);assert.equal(x.nodes().get('#draft').value,'Source-only unsaved draft');
+ assert.equal((await x.store.readProject(x.source.job.JOB_ID)).projectSha256,before.projectSha256);
+ observations.push({id:'PROJECT_ACTIVATION_REJECTED_IMPORT',result:'PASS',sourceProjectUnchanged:true,sourceDraftPreserved:true});
+}
 {
  const x=await ui();x.t.replacementReview={next:x.copy(x.source)};x.t.fileSelectionDrafts.stale={jobId:x.source.job.JOB_ID};x.t.selectSavedView(null);
  assert.deepEqual(Object.keys(x.t.operationSelection),[],'PROJECT_ACTIVATION_NULL_OPERATION_ORACLE');assert.deepEqual(Object.keys(x.t.runSelection),[]);assert.deepEqual(Object.keys(x.t.fileSelectionDrafts),[]);assert.equal(x.t.replacementReview,null);

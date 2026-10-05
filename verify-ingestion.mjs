@@ -2,6 +2,7 @@ import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
 import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {verifyIngestionContextReferences,verifyHumanDecisionCandidateTargets,verifyExternalResponseIdentityShape,verifyCanonicalResponseRecovery,verifyResponseCanonicalValueBoundaries} from './test-ingestion-context-reference.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -244,6 +245,15 @@ const closedEnvelopeObservations=[];
   const check=async(name,work)=>{try{await work();closedEnvelopeObservations.push({name,result:'PASS'});}catch(error){closedEnvelopeObservations.push({name,result:'FAIL',message:error.message});failures.push(error);}};
   const setup=name=>{const p=project('JOB-ENVELOPE-'+name),pr=savePrompt(p,1),envelope=validEnvelope(p,1,pr),control=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(control.validation.valid,true,'CLOSED_ENVELOPE_SETUP_ORACLE: '+JSON.stringify(control.validation.issues));assert.ok(control.proposal);return {p,pr,envelope,control};};
   const rejected=(name,prepared,code,path)=>{assert.equal(prepared.validation.valid,false,name+': the single contract violation was accepted');assert.ok(prepared.validation.issues.some(issue=>issue.code===code&&issue.path===path),name+': rejection did not identify the intended violation: '+JSON.stringify(prepared.validation.issues));assert.equal(prepared.proposal,null,name+': rejected work must not create a proposal');assert.equal(prepared.project.projectData.acceptedChanges.length,0,name+': rejection must not accept work');};
+  await check('RESERVED_TARGET_STRING_SHAPE_ORACLE',()=>{
+    const p=project('JOB-RESERVED-TARGET-STRING-SHAPE'),first=fixtureBuildPrompt(11,p),run=engine.records(p,'runs').find(row=>engine.recordId(row,'runs')===first.scope.runId);
+    run.scope={...first.scope};run.fields.CONTEXT_ID=run.CONTEXT_ID=first.scope.contextId;engine.refreshRecordHashes(run,'runs');
+    const pr=fixtureBuildPrompt(11,p,{operation:first.operation,scope:first.scope});p.projectData.generatedPrompts.push(pr);
+    const envelope=validEnvelope(p,11,pr),definition=schema.RECORD_SCHEMAS.runs,fields={};for(const key of definition.required)if(definition.fieldDefinitions[key].producer===schema.PRODUCER.AGENT)fields[key]=valueForDefinition(definition.fieldDefinitions[key]);
+    envelope.stageData={};envelope.records={runs:[{targetId:pr.scope.runId,fields,relationships:{},evidenceRefs:['evidence-1']}]};
+    const control=ingestion.prepare(p,{stage:11,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(control.validation.valid,true,'RESERVED_TARGET_SETUP_ORACLE: '+JSON.stringify(control.validation.issues));assert.equal(control.proposal.canonicalRecords.runs[0].id,pr.scope.runId);
+    for(const malformed of [{targetId:[pr.scope.runId]},{targetId:{id:pr.scope.runId}},{targetId:pr.scope.runId,tempKey:null},{targetId:pr.scope.runId,tempKey:''}]){const changed=engine.clone(envelope);Object.assign(changed.records.runs[0],malformed);rejected('RESERVED_TARGET_STRING_SHAPE_ORACLE',ingestion.prepare(p,{stage:11,text:JSON.stringify(changed),promptRecord:pr}),'INVALID_RECORD_IDENTITY','/records/runs/0');}
+  });
   await check('EVIDENCE_OPTIONAL_AUTHORITY_TYPE_CONTROL',()=>{
     const {p,pr,envelope,control}=setup('AUTHORITY-CONTROL');
     assert.equal(control.proposal.evidence[0].fields.AUTHORITY_TYPE,'EXTERNAL_AGENT_RESPONSE','Omitted authorityType must retain its supported default');
@@ -351,6 +361,78 @@ negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');
 negative('unresolved evidence reference',(e)=>{e.stageData={};const r=sourceProposal('source-evidence');r.evidenceRefs=['does-not-exist'];e.records={sources:[r]};},'UNRESOLVED_EVIDENCE_REFERENCE');
 negative('unresolved evidence source',(e)=>{e.evidence[0].sourceRef={recordId:'SOURCE-NOT-THERE'};},'UNRESOLVED_EVIDENCE_SOURCE');
 negative('unresolved evidence attachment',(e)=>{e.evidence[0].attachmentRef={recordId:'ARTIFACT-NOT-THERE'};},'UNRESOLVED_EVIDENCE_ATTACHMENT');
+// Specification 4.1/16/17.5: an existing evidence identity must resolve to the
+// compatible current family. Persisted availability is not current byte custody.
+// Current reference controls use the owning operation that actually supplies the
+// identity (Stage 3 sources and Stage 6 artifacts), under the controlling operation context.
+// These are isolated production ingestion/acceptance boundaries, not an external
+// agent or complete lifecycle claim. Existing response-local attachment controls
+// below separately exercise the supported returned-file lane.
+{
+ const p=project('EVIDENCE-REFERENCE-SCOPE');p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-CURRENT';
+ const sourceId=engine.allocateId(p,'sources'),fields={SOURCE_ID:sourceId,...sourceProposal().fields},source={id:sourceId,stage:2,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION},fields,...fields};
+ engine.refreshRecordHashes(source,'sources');p.projectData.sources.push(source);
+ const pr=savePrompt(p,3),base=validEnvelope(p,3,pr);base.evidence[0].sourceRef={recordId:sourceId};
+ const current=ingestion.prepare(p,{stage:3,promptRecord:pr,text:JSON.stringify(base)});
+ assert.equal(current.validation.valid,true,'EVIDENCE-SOURCE-CURRENT: a conforming current source reference must validate');
+ assert.ok(ingestion.commit(current.project,current.proposal.proposalId).acceptedChange,'EVIDENCE-SOURCE-CURRENT: the current reference must remain acceptably committed');
+ for(const [label,mutate]of [['stale-input',row=>{row.scope.inputVersion='INPUT-OBSOLETE';}],['stale-source-version',row=>{row.scope.sourceSetVersion='SOURCE-OBSOLETE';}],['wrong-project',row=>{row.jobId='ANOTHER-PROJECT';}],['inactive',row=>{row.active=false;}],['corrupted-target',row=>{row.TITLE=row.fields.TITLE='Changed without a refreshed target hash';}]]){
+  const changed=structuredClone(p),row=changed.projectData.sources.find(row=>row.id===sourceId);mutate(row);if(label!=='corrupted-target')engine.refreshRecordHashes(row,'sources');
+  const rejected=ingestion.prepare(changed,{stage:3,promptRecord:pr,text:JSON.stringify(base)});
+  assert.equal(rejected.validation.valid,false,'EVIDENCE-SOURCE-'+label+': an invalid source relationship must be rejected');
+  assert.ok(rejected.validation.issues.some(issue=>issue.code==='UNRESOLVED_EVIDENCE_SOURCE'),'EVIDENCE-SOURCE-'+label+': intended reference error must be preserved');
+  assert.equal(rejected.proposal,null);assert.equal(rejected.rawRecord.completeRawResponse,JSON.stringify(base));
+  const pending=structuredClone(current.project),target=pending.projectData.sources.find(row=>row.id===sourceId);mutate(target);if(label!=='corrupted-target')engine.refreshRecordHashes(target,'sources');
+  const beforeCommit=JSON.stringify(pending);
+  assert.throws(()=>ingestion.commit(pending,current.proposal.proposalId),error=>error.code==='STALE_PROPOSAL','EVIDENCE-SOURCE-'+label+': commit must recheck the typed current relationship');
+  assert.equal(JSON.stringify(pending),beforeCommit,'EVIDENCE-SOURCE-'+label+': failed acceptance must preserve canonical state and recoverable raw/proposal work');
+ }
+ const omitted=structuredClone(base);delete omitted.evidence[0].sourceRef;
+ assert.equal(ingestion.prepare(p,{stage:3,promptRecord:pr,text:JSON.stringify(omitted)}).validation.valid,true,'EVIDENCE-SOURCE-OMITTED: optional absence remains valid');
+ const historyResult={scope:{inputVersion:'INPUT-OBSOLETE',sourceSetVersion:'SOURCE-OBSOLETE'},evidenceRefs:[]},historyEvidence={...current.proposal.evidence[0]},historical=structuredClone(p),historicalSource=historical.projectData.sources.find(row=>row.id===sourceId);historicalSource.scope=structuredClone(historyResult.scope);engine.refreshRecordHashes(historicalSource,'sources');
+ assert.equal(engine.evaluateEvidenceContract(null,{scope:pr.scope},[historyEvidence],historical).sufficient,false,'EVIDENCE-SOURCE-CURRENT-CONSUMER: current evidence cannot use the stale source');
+ assert.equal(engine.evaluateEvidenceContract(null,historyResult,[historyEvidence],historical).sufficient,true,'EVIDENCE-SOURCE-HISTORY: exact compatible historical execution evidence remains inspectable');
+ const operationContextResult=await verifyIngestionContextReferences({report:false}),operationContext=operationContextResult.verificationObservations[0].observed;
+ console.log(JSON.stringify({evidenceSourceScopeAuthority:true,operationContextCases:operationContextResult.observations,operationContextSourceHashes:operationContextResult.sourceHashes,verificationObservations:[{checkId:'EVIDENCE-SOURCE-SCOPE-AUTHORITY',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:141','specification/closed-loop-reliability-controlling-implementation-specification.txt:1250','specification/closed-loop-reliability-controlling-implementation-specification.txt:129','specification/closed-loop-reliability-controlling-implementation-specification.txt:733','specification/closed-loop-reliability-controlling-implementation-specification.txt:2466','specification/closed-loop-reliability-controlling-implementation-specification.txt:1502'],boundary:'Production response prepare, operator commit preconditions, canonical evidence consumption, plus exact reserved ZIP/file/capture/operator/storage context controls; isolated synthetic project under transaction adapter, not browser or external-agent execution',expected:{currentAccepted:true,invalidAdmissionRejected:5,invalidPrecommitRejected:5,rawAndPendingStatePreserved:true,optionalOmissionAccepted:true,historicalExecutionEvidenceRetained:true,operationContext:{currentUnprovidedRejected:2,preFixEquivalentFalseAdmissions:2,legacyPendingCommitRejected:2,conformingControlsCommitted:5}},observed:{currentAccepted:true,invalidAdmissionRejected:5,invalidPrecommitRejected:5,rawAndPendingStatePreserved:true,optionalOmissionAccepted:true,historicalExecutionEvidenceRetained:true,operationContext},passed:true}],synthetic:true,actualBrowser:false}));
+ negativeCount+=5;
+}
+{
+ const p=project('EVIDENCE-ATTACHMENT-CUSTODY'),blob=new Blob(['Canonical evidence bytes'],{type:'text/plain'}),artifactId=artifactFixtureId(engine,p,'EVIDENCE-REFERENCE'),digest=await globalThis.closedLoopHash.sha256Bytes(blob),file={artifactId,name:'evidence.txt',type:'text/plain',size:blob.size,sha256:digest};
+ preparePromptPrerequisites(p,6);
+ await retainReturnedFixture(p,file,blob);
+ engine.registerArtifactBytes(p,{stage:2,artifactId,filename:file.name,mediaType:file.type,byteSize:file.size,sha256:digest});
+ const pr=savePrompt(p,6),base=validEnvelope(p,6,pr);base.evidence[0].attachmentRef={recordId:artifactId};
+ const prepared=ingestion.prepare(p,{stage:6,promptRecord:pr,text:JSON.stringify(base)});
+ assert.equal(prepared.validation.valid,true,'EVIDENCE-ATTACHMENT-CURRENT: current exact stored bytes must validate');
+ assert.ok(ingestion.commit(prepared.project,prepared.proposal.proposalId).acceptedChange,'EVIDENCE-ATTACHMENT-CURRENT: current bytes must commit');
+ const metadataOnly=structuredClone(p),target=metadataOnly.projectData.artifacts.find(row=>row.id===artifactId);target.fields.FILENAME=target.FILENAME='unverified-evidence.txt';engine.refreshRecordHashes(target,'artifacts');
+ const rejected=ingestion.prepare(metadataOnly,{stage:6,promptRecord:pr,text:JSON.stringify(base)});
+ assert.equal(rejected.validation.valid,false,'EVIDENCE-ATTACHMENT-CUSTODY: persisted availability without exact custody must fail');
+ assert.ok(rejected.validation.issues.some(issue=>issue.code==='UNRESOLVED_EVIDENCE_ATTACHMENT'));assert.equal(rejected.proposal,null);
+ const exactEvidence=prepared.proposal.evidence[0],result={scope:pr.scope};
+ assert.equal(engine.evaluateEvidenceContract(null,result,[exactEvidence],metadataOnly).sufficient,false,'EVIDENCE-ATTACHMENT-CONSUMER: gate evidence must recheck exact byte custody');
+ const stale=structuredClone(p),oldArtifact=stale.projectData.artifacts.find(row=>row.id===artifactId);oldArtifact.scope.inputVersion='INPUT-OBSOLETE';engine.refreshRecordHashes(oldArtifact,'artifacts');
+ assert.equal(ingestion.prepare(stale,{stage:6,promptRecord:pr,text:JSON.stringify(base)}).validation.valid,false,'EVIDENCE-ATTACHMENT-SCOPE: actual stored bytes cannot authorize an obsolete input identity');
+ const pending=structuredClone(prepared.project),pendingArtifact=pending.projectData.artifacts.find(row=>row.id===artifactId);pendingArtifact.fields.FILENAME=pendingArtifact.FILENAME='unverified-evidence.txt';engine.refreshRecordHashes(pendingArtifact,'artifacts');
+ const beforeCommit=JSON.stringify(pending);
+ assert.throws(()=>ingestion.commit(pending,prepared.proposal.proposalId),error=>error.code==='STALE_PROPOSAL','EVIDENCE-ATTACHMENT-PRECOMMIT: custody must be rechecked before acceptance');
+ assert.equal(JSON.stringify(pending),beforeCommit,'EVIDENCE-ATTACHMENT-PRECOMMIT: rejected commit preserves canonical state and recoverable raw/proposal work');
+ await returnedByteStore.deleteArtifact(artifactId,p.job.JOB_ID);
+ const bytesLost=structuredClone(prepared.project),bytesLostBefore=JSON.stringify(bytesLost);
+ assert.throws(()=>ingestion.commit(bytesLost,prepared.proposal.proposalId),error=>error.code==='STALE_PROPOSAL','EVIDENCE-ATTACHMENT-BYTES-LOST: actual byte loss must invalidate a pending proposal without a project revision change');
+ assert.equal(JSON.stringify(bytesLost),bytesLostBefore,'EVIDENCE-ATTACHMENT-BYTES-LOST: missing bytes must preserve recoverable work');
+ assert.equal(engine.evaluateEvidenceContract(null,result,[exactEvidence],p).sufficient,false,'EVIDENCE-ATTACHMENT-BYTES-LOST: canonical evidence cannot remain sufficient after actual bytes disappear');
+ await retainReturnedFixture(p,file,blob);
+ assert.ok(ingestion.commit(bytesLost,prepared.proposal.proposalId).acceptedChange,'EVIDENCE-ATTACHMENT-RESTORED: reverified exact bytes permit the preserved proposal to progress');
+ console.log(JSON.stringify({evidenceAttachmentScopeCustody:true,verificationObservations:[{checkId:'EVIDENCE-ATTACHMENT-SCOPE-CUSTODY',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:141','specification/closed-loop-reliability-controlling-implementation-specification.txt:1490','specification/closed-loop-reliability-controlling-implementation-specification.txt:1503','specification/closed-loop-reliability-controlling-implementation-specification.txt:2321'],boundary:'Actual native Blob put/read/rehash/delete/restore, production response prepare, operator commit preconditions, and canonical evidence consumption; synthetic project and upstream prerequisite setup',expected:{currentBytesAccepted:true,metadataAndStaleAdmissionRejected:true,changedAndMissingBytesPrecommitRejected:true,pendingWorkPreserved:true,evidenceAfterByteLossInsufficient:true,restoredExactBytesProgress:true},observed:{currentBytesAccepted:true,metadataAndStaleAdmissionRejected:true,changedAndMissingBytesPrecommitRejected:true,pendingWorkPreserved:true,evidenceAfterByteLossInsufficient:true,restoredExactBytesProgress:true},passed:true}],synthetic:true,actualBrowser:false}));
+ negativeCount+=3;
+}
+
+await verifyHumanDecisionCandidateTargets();
+await verifyExternalResponseIdentityShape();
+await verifyCanonicalResponseRecovery();
+await verifyResponseCanonicalValueBoundaries();
+
 negative('invalid record identity',(e)=>{e.stageData={};const r=sourceProposal('source-both');r.targetId='SOURCE-ALSO';e.records={sources:[r]};},'INVALID_RECORD_IDENTITY');
 negativeAt('unresolved relationship',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]};},'UNRESOLVED_RELATIONSHIP');
 negativeAt('wrong relationship type',14,(e)=>{e.stageData={};e.records={rootCauses:[{tempKey:'wrong-type',fields:{CATEGORY:'INSTRUCTION',LAYER_TRACE:'trace',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'cause',EVIDENCE:'evidence',DOWNSTREAM_INVALIDATION:'downstream'},relationships:{DEFECT_ID:{tempKey:'wrong-type'}},evidenceRefs:['evidence-1']}]};},'WRONG_RELATIONSHIP_TYPE');

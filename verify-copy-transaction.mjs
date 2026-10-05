@@ -33,7 +33,7 @@ note('Copy commits fresh canonical project and file identities with exact input 
 const projectsBeforeRetry=rows.get('projects').size,mappingBeforeRetry=copy(receipt.mappingManifest);
 assert.equal((await store.createProject(request)).job.JOB_ID,copied.job.JOB_ID);
 assert.equal(rows.get('projects').size,projectsBeforeRetry,'COPY_DUPLICATE_EFFECT_ORACLE');assert.deepEqual((await store.metaGet('cloneReceipt:'+request.commandId)).mappingManifest,mappingBeforeRetry,'COPY_RETRY_MAPPING_ORACLE');
-observedCase('clone.retry-single-effect','clone-exact-retry','duplicateDeleteOrCloneEffects','Actual createProject exact CLONE retry',{projectCountBefore:projectsBeforeRetry,projectCountAfter:rows.get('projects').size,resultingJobId:copied.job.JOB_ID,mappingManifestUnchanged:true},[4379,4618,4884,5471]);
+observedCase('clone.retry-single-effect','clone-exact-retry','duplicateDeleteOrCloneEffects','Actual createProject exact CLONE retry',{projectCountBefore:projectsBeforeRetry,projectCountAfter:rows.get('projects').size,resultingJobId:copied.job.JOB_ID,mappingManifestUnchanged:true},[4444,4683,4949,5536]);
 await assert.rejects(store.createProject({...request,expectedSourceSha256:'f'.repeat(64)}),error=>error.code==='IDEMPOTENCY_PAYLOAD_CONFLICT');
 await assert.rejects(store.createProject({...request,commandId:'STALE_SOURCE',expectedSourceSha256:'f'.repeat(64)}),error=>error.code==='STALE_PROJECT_REVISION');
 note('Exact retry returns the same clone; changed payload and stale source are rejected');
@@ -57,7 +57,7 @@ for(const [name,mutate] of receiptFaults){
  finally{rows.get('meta').set(receiptKey,copy(receiptRow));}
  assert.equal((await store.readProject(source.job.JOB_ID)).projectSha256,sourceHash);
  assert.deepEqual(await store.readProject(copied.job.JOB_ID),copied);
- observedCase('clone.invalid-receipt-isolation','clone-receipt-'+name,'mutationFixturesAffectingCanonicalUserState','Malformed receipt in one disposable production-store adapter',{sourceProjectSha256:sourceHash,cloneProjectUnchanged:true,adapter:'private transaction maps',externalTargetsInvoked:0},[5479]);
+ observedCase('clone.invalid-receipt-isolation','clone-receipt-'+name,'mutationFixturesAffectingCanonicalUserState','Malformed receipt in one disposable production-store adapter',{sourceProjectSha256:sourceHash,cloneProjectUnchanged:true,adapter:'private transaction maps',externalTargetsInvoked:0},[5544]);
  receiptValidationCases.push({fault:name,actual:rejection||'RETRY_ACKNOWLEDGED',result:rejection?.code==='CLONE_BINDING_INVALID'?'PASS':'FAIL'});
 }
 assert.equal((await store.createProject(request)).job.JOB_ID,copied.job.JOB_ID,'Restoring the valid receipt must return the original clone.');
@@ -72,7 +72,7 @@ const packageBytes=await store.exportPackage(copied.job.JOB_ID),restored=createR
 const importedCountBefore=restored.rows.get('projects').size;
 assert.equal((await restored.store.createProject(request)).job.JOB_ID,imported.job.JOB_ID);
 assert.equal(restored.rows.get('projects').size,importedCountBefore,'COPY_RESTORED_DUPLICATE_EFFECT_ORACLE');
-observedCase('clone.backup-retry-single-effect','clone-backup-retry','duplicateDeleteOrCloneEffects','Actual imported clone backup then createProject exact retry',{projectCountBefore:importedCountBefore,projectCountAfter:restored.rows.get('projects').size,resultingJobId:imported.job.JOB_ID},[4379,4884,5471]);
+observedCase('clone.backup-retry-single-effect','clone-backup-retry','duplicateDeleteOrCloneEffects','Actual imported clone backup then createProject exact retry',{projectCountBefore:importedCountBefore,projectCountAfter:restored.rows.get('projects').size,resultingJobId:imported.job.JOB_ID},[4444,4949,5536]);
 const recoveredFiles=await restored.store.listArtifacts(imported.job.JOB_ID);assert.deepEqual(new Uint8Array(await recoveredFiles[0].blob.arrayBuffer()),new Uint8Array(await bytes.arrayBuffer()));
 note('Restoring the copy backup restores exact bytes and completed-clone retry protection without needing the source');
 const payload=JSON.parse(await new Response(packageBytes.stream().pipeThrough(new DecompressionStream('gzip'))).text());

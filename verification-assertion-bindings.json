@@ -1,6 +1,6 @@
 {
   "schema": "closed-loop-verification-assertion-bindings/1",
-  "specificationSha256": "a610714d14a6cff6386fc432f071e90507910d844ded7f32d87e110ade88cc8c",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
   "bindings": [
     {
       "normativeRequirementId": "NREQ-9b3398156f2078436a91a934b077dcd2",
@@ -362,9 +362,11 @@
       "normativeRequirementId": "NREQ-8fe1bfd0e1bd9dcfb906edb36f78c438",
       "sourceLineSha256": "c6ed6e483e91ff3fa520b4d63ebd94efbca9dcbb5612c885866751db5b5bde89",
       "checkIds": [
-        "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY"
+        "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY",
+        "CANONICAL-RESPONSE-RECOVERY",
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE"
       ],
-      "scope": "Corrected returned-file validation preserves the original MISSING_REQUIRED_ATTACHMENT validation as history.",
+      "scope": "Corrected returned-file validation preserves the original MISSING_REQUIRED_ATTACHMENT validation as history. Separately qualified subset: Finite rejection persistence subset: three missing-field error submissions and seven unsupported canonical response-file cases preserve exact authoritative raw bytes and failed validation/disposition through operational save/reload. Isolated old undefined-diagnostic/canonical-guard equivalents fail only for the intended canonical error while retaining staged bytes and the last valid project. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     },
     {
@@ -668,11 +670,11 @@
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "independentExpectedBasis": "Independent exact project JOB_ID versus explicit different required identity; externally observable stage/family/owner/outcome values and UNDETERMINED after controlled semantic mutation; original Stage22-only dispatcher fails persisted-result oracle.",
       "suite": "verify-verification-routing.mjs",
-      "boundary": "Actual UI runner \u2192 isolated Test IR worker \u2192 application result/proof observation \u2192 production CAS storage reload",
+      "boundary": "Actual UI runner → isolated Test IR worker → application result/proof observation → production CAS storage reload",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 3538,
-        "endLine": 3538,
+        "startLine": 3603,
+        "endLine": 3603,
         "lineSha256": "ebaa859527849f7774c10b1120e0bea8fb34ad383fe69773877b92d2748f35c9"
       },
       "controllingText": "Operations: RUN_NATIVE_ATTACKS, COMPLETE"
@@ -688,11 +690,11 @@
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "independentExpectedBasis": "Independent exact project JOB_ID versus explicit different required identity; externally observable stage/family/owner/outcome values and UNDETERMINED after controlled semantic mutation; original Stage22-only dispatcher fails persisted-result oracle.",
       "suite": "verify-verification-routing.mjs",
-      "boundary": "Actual UI runner \u2192 isolated Test IR worker \u2192 application result/proof observation \u2192 production CAS storage reload",
+      "boundary": "Actual UI runner → isolated Test IR worker → application result/proof observation → production CAS storage reload",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 3857,
-        "endLine": 3857,
+        "startLine": 3922,
+        "endLine": 3922,
         "lineSha256": "1bfcb665be54758212b3fb806daa58d60d0d7cc8d7c8524051cbfb0c41315a50"
       },
       "controllingText": "- Agent or native runtime supplies observations."
@@ -711,8 +713,8 @@
       "boundary": "Actual Stage29 construct/calculate/current-set/checkpoint owner",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 2968,
-        "endLine": 2968,
+        "startLine": 3033,
+        "endLine": 3033,
         "lineSha256": "1507a1aa07a338fe713cf6cb9ac28c79adc329113a1133c29383359959db2185"
       },
       "controllingText": "For every registered hash kind, the preimage inclusion set is exactly the canonical fields of the subject record or manifest, excluding only the digest field itself and every field whose value depends on that digest, fields declared audit-only or derived-summary, and fields the owning schema explicitly excludes with a registered reason. The scope-hash preimage is exactly the Section 14.7 dimensions of the operation, and the terminal-hash preimage is exactly the records enumerated in Section 36.9. An unregistered hash kind or pointer set is UNDEFINED_HASH_PREIMAGE and blocks the computation and every dependent gate. Default array semantics are ordered and order-significant; an array is set-valued only when its JSON pointer is explicitly registered with an element-identity key, a duplicate rule that rejects duplicates, and a sort rule of canonical byte order over the element identity. An unregistered pointer treated as a set is UNDEFINED_SET_SEMANTICS and blocks."
@@ -731,8 +733,8 @@
       "boundary": "Actual terminal calculation, restored artifact bytes and deliveryTransferPrecondition",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 3269,
-        "endLine": 3269,
+        "startLine": 3334,
+        "endLine": 3334,
         "lineSha256": "253ed5282087785cdb041aa46432ceadd6cd5360895ade45282f7331035bf55d"
       },
       "controllingText": "4. verifies the Stage 29 evidence-chain set and exact EVIDENCE_CHAIN_SET_SHA256;"
@@ -751,8 +753,8 @@
       "boundary": "Actual terminal calculation, restored artifact bytes and deliveryTransferPrecondition",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 3280,
-        "endLine": 3280,
+        "startLine": 3345,
+        "endLine": 3345,
         "lineSha256": "b6f578ff715ca793fd180aa7d31ef947200a1ba82a39727d1e94329490d6bfd4"
       },
       "controllingText": "The terminal evidence hash is computed from the exact Stage 27 release record, Stage 28 identity record and human intent, Stage 29 evidence-chain set and hash, Stage 30 registry calculation, pre-delivery checkpoint, delivery scope, and authorized artifact identities. It is never computed from a summary standing in place of those records."
@@ -771,8 +773,8 @@
       "boundary": "Production invalidateDownstream own stage30 transition and disposable SELF-INVALIDATE-TERMINAL module mutant/assertion owner",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 4882,
-        "endLine": 4882,
+        "startLine": 4947,
+        "endLine": 4947,
         "lineSha256": "eafb1ece826f7c026731b5a6f90b43ad2d8967e51c25be4938a2cd032ba1a28f"
       },
       "controllingText": "- terminal self-invalidation and Stage 27/Stage 30 dependency cycle;"
@@ -791,8 +793,8 @@
       "boundary": "Production invalidateDownstream own stage30 transition and disposable SELF-INVALIDATE-TERMINAL module mutant/assertion owner",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 5470,
-        "endLine": 5470,
+        "startLine": 5535,
+        "endLine": 5535,
         "lineSha256": "9fadc64d1509483e8d5f8af74d7f7411a95c149bb0d9bb90ffbf43df87f8e51a"
       },
       "controllingText": "Terminal self-invalidation or dependency cycles   = 0"
@@ -810,8 +812,8 @@
       "boundary": "Actual recordApplicationDeterministicResult normalization during native Test IR lifecycle",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 5455,
-        "endLine": 5455,
+        "startLine": 5520,
+        "endLine": 5520,
         "lineSha256": "8db4800da1581797523a7687f69abf4166f3d2306682d7cbe82473c9a3212433"
       },
       "controllingText": "Native execution receipts fabricated externally   = 0"
@@ -829,8 +831,8 @@
       "boundary": "Actual runtime validateSpec and independent registered descriptor digest checks",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 4886,
-        "endLine": 4886,
+        "startLine": 4951,
+        "endLine": 4951,
         "lineSha256": "38be7c29749cd329477bfad76bb81d9af0fc30e52585f8d6547354dae4cbdc5d"
       },
       "controllingText": "- registry semantic drift under an unchanged identity;"
@@ -848,8 +850,8 @@
       "boundary": "Actual runtime validateSpec and independent registered descriptor digest checks",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 5473,
-        "endLine": 5473,
+        "startLine": 5538,
+        "endLine": 5538,
         "lineSha256": "f30810491539e8a7495bf30ea9cb678c43a4e1e4f8bf16366326bce863252e79"
       },
       "controllingText": "Registry semantic drift under unchanged identity  = 0"
@@ -867,8 +869,8 @@
       "boundary": "Actual releaseTagEligibility mobile submission-origin boundary",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 5078,
-        "endLine": 5078,
+        "startLine": 5143,
+        "endLine": 5143,
         "lineSha256": "7ebf58c20811d0a029ea2b5fb9ce82da185ef716a02660c38b3defb208809c1e"
       },
       "controllingText": "The deployment manifest binds canonical origin `https://sjonesjones917.github.io`, host `sjonesjones917.github.io`, base path `/closed-loop-tracker/`, the GitHub Pages production environment, a no-cross-origin-redirect policy, and the permitted same-origin runtime-resource set. Deployed verification rejects HTTP downgrade, unexpected host, unexpected custom domain, redirect outside policy, base-path mismatch, cross-origin substitution, or runtime resource outside the authorized deployment root. Identical bytes served from another origin do not satisfy the authorized deployment identity."
@@ -886,8 +888,8 @@
       "boundary": "Actual releaseTagEligibility mobile submission-origin boundary",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 5481,
-        "endLine": 5481,
+        "startLine": 5546,
+        "endLine": 5546,
         "lineSha256": "e27eb8b032b2a48d6c7487d2367f8a56117f4ecc537b90c79ef16aedf1b5615f"
       },
       "controllingText": "Unexpected deployment origin accepted             = 0"
@@ -905,8 +907,8 @@
       "boundary": "Actual mobile evidence/submission validators",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 5475,
-        "endLine": 5475,
+        "startLine": 5540,
+        "endLine": 5540,
         "lineSha256": "559f8af4bc71646c47e80f6b0274627be986881fde756ae7d9bba2ac70206046"
       },
       "controllingText": "Unpinned mobile acceptance treated as complete    = 0"
@@ -943,8 +945,8 @@
       "boundary": "Actual reviewed final-product timing and availability/test selection",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-        "startLine": 5467,
-        "endLine": 5467,
+        "startLine": 5532,
+        "endLine": 5532,
         "lineSha256": "84f2e18a750e5f4585700f31f6aedfa1d9f86ece05a16d9fc1b07989d53c8426"
       },
       "controllingText": "Obligations required before target availability   = 0"
@@ -1056,6 +1058,283 @@
       ],
       "scope": "Actual production acceptance caller reverifies mapped returned bytes after native store/read invalidates custody; missing/corrupt bytes and deliberately omitted reverify are blocked with unchanged canonical state and preserved raw response. The valid path records a blocker and leaves Stage1 incomplete. Finite synthetic Node/store/caller controls only; no actual browser schedule, DATA_PROPOSAL completion, physical-device, or full-clause acceptance claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-749b81ff8c36960f18ded1d0142a724a",
+      "sourceLineSha256": "5c0389b3c1a11f4f532d99eaf5e82b1da5ed931ecc4a3c576b16bffa555a5eb0",
+      "checkIds": [
+        "EVIDENCE-SOURCE-SCOPE-AUTHORITY",
+        "EVIDENCE-ATTACHMENT-SCOPE-CUSTODY",
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE"
+      ],
+      "scope": "Finite actual ingestion/acceptance/evidence-consumption controls for current typed source and canonical artifact references. Five invalid source targets (obsolete input, obsolete source-set, other project, inactive, corrupt target hash) and stale/mismatched-custody artifact controls reject with conforming controls. Optional source omission and compatible historical inspection remain permitted. Synthetic project/prerequisites and native Node Blob store; no all-relationship, browser, external-actor, physical-device, or full-clause claim. Exact saved/reserved ZIP instruction additionally publishes permitted evidence-reference context; two current but undelivered typed identities reject at authoritative response-file admission, and five omitted/supplied-input/corrected-input-reuse/same-response controls permit actual operator commit/reload under the native transaction adapter. These finite evidence-context checks support the current canonical reference obligation and the latest authorized shared-reference invariant; they do not establish the distinct Section14.5 target-condition grammar. Explicit current supplied-input byte reuse is tested after actual objective/input-version correction while preserving the immutable artifact scope; arbitrary obsolete artifact evidence remains rejected. Separately qualified raw identity subset: Finite shared external wrong-type boundary: actual reserved ZIP publishes schema-owned echo/reference identity shapes; eleven array or STRING-stage scalar echoes and ten wrong/null/empty/dual/array canonical or local reference shapes are rejected during authoritative response-file admission, preserving exact raw bytes and omitting proposals. Seventeen isolated guard-removal equivalents reproduce intended false admissions; two exact retained pending proposals refuse repaired precommit without mutation. Seven neighboring already strict vocabulary/scope controls remain rejected, and three scalar canonical/local-reference and arbitrary HUMAN JSON controls proceed through actual operator acceptance and native store reload/integrity. Sixteen published nested STRING/STRING_ARRAY malformed fields reject with sixteen isolated pre-fix false-admission equivalents. Three missing schema/responseType/operation errors preserve raw bytes, fail-closed validation and canonical integrity through operational save/reload; two exact undefined diagnostic-field pre-fix equivalents fail the intended canonical save while preserving staged bytes and the last valid project. Synthetic external actor/setup and Node VM transaction adapter only: no all-stage/record-family combination, reserved-record-target case, allocation/CSPRNG, unavailable capability, actual agent/human/browser/physical execution or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b6c59f9417a6a40c7aee067b456a2a81",
+      "sourceLineSha256": "f0149f084261464c6cd659e4ea0bc24e11213be25db6ad4894b411c93e1baae5",
+      "checkIds": [
+        "EVIDENCE-SOURCE-SCOPE-AUTHORITY",
+        "EVIDENCE-ATTACHMENT-SCOPE-CUSTODY",
+        "RETAINED-HISTORICAL-EVIDENCE-CUSTODY"
+      ],
+      "scope": "Finite current evidence consumers reject obsolete source scope and obsolete artifact input identity; a separately scoped compatible historical source-result inspection remains available. Synthetic projects and production evidence consumers only; no claim that every historical family or every stage gate was exercised. Actual save/reload additionally reobserves exactly retained compatible historical report bytes once without hashing unrelated history. A separate current-scope result cannot use those old bytes; missing, corrupt, foreign-project, or omitted required attachment remains insufficient. This is finite canonical custody preservation, not historical evidence authorizing current gates. Explicit current supplied-input byte reuse is tested after actual objective/input-version correction while preserving the immutable artifact scope; arbitrary obsolete artifact evidence remains rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8c446bb0f81585af8291c866b1d2ef37",
+      "sourceLineSha256": "5e78a2874a97c555a098a62862caa8819c73debaefedb61e4426b7d0152c71aa",
+      "checkIds": [
+        "EVIDENCE-SOURCE-SCOPE-AUTHORITY",
+        "EVIDENCE-ATTACHMENT-SCOPE-CUSTODY",
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE"
+      ],
+      "scope": "Actual operator commit rechecks five source target changes and changed artifact metadata or deleted actual Blob bytes after a valid proposal. Rejection preserves canonical state and recoverable raw/pending work; exact Blob restoration and rehash permit the preserved proposal to commit. Finite native Node store/production ingestion controls; no transaction-failure, concurrent-browser, or full-precondition population claim. Two retained pending proposals admitted by an isolated pre-fix equivalent with only the operation-context guard removed are refused on repaired commit for the precise CONTEXT_REFERENCE_OUT_OF_SCOPE condition, with exact pending/raw state preserved. Five permitted reference controls proceed through operator acceptance and canonical reload/integrity. Explicit current supplied-input byte reuse is tested after actual objective/input-version correction while preserving the immutable artifact scope; arbitrary obsolete artifact evidence remains rejected. Separately qualified raw identity subset: Finite shared external wrong-type boundary: actual reserved ZIP publishes schema-owned echo/reference identity shapes; eleven array or STRING-stage scalar echoes and ten wrong/null/empty/dual/array canonical or local reference shapes are rejected during authoritative response-file admission, preserving exact raw bytes and omitting proposals. Seventeen isolated guard-removal equivalents reproduce intended false admissions; two exact retained pending proposals refuse repaired precommit without mutation. Seven neighboring already strict vocabulary/scope controls remain rejected, and three scalar canonical/local-reference and arbitrary HUMAN JSON controls proceed through actual operator acceptance and native store reload/integrity. Sixteen published nested STRING/STRING_ARRAY malformed fields reject with sixteen isolated pre-fix false-admission equivalents. Three missing schema/responseType/operation errors preserve raw bytes, fail-closed validation and canonical integrity through operational save/reload; two exact undefined diagnostic-field pre-fix equivalents fail the intended canonical save while preserving staged bytes and the last valid project. Synthetic external actor/setup and Node VM transaction adapter only: no all-stage/record-family combination, reserved-record-target case, allocation/CSPRNG, unavailable capability, actual agent/human/browser/physical execution or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-7f957ed42da46a5726f135a01f0c59a1",
+      "sourceLineSha256": "bf33f5118faa81dfb7daa61368187507ad9921ebbf0d055fcf01ee9a628b874e",
+      "checkIds": [
+        "RETAINED-HISTORICAL-EVIDENCE-CUSTODY"
+      ],
+      "scope": "Finite storage/reload prerequisite for preserving sufficient exact historical pre-correction report bytes after an owning instruction changes. Native Blob read/size/hash and explicit compatible evidence reference are required; missing, corrupt, foreign-project or omitted bytes stay insufficient. Synthetic instruction/evidence project only: no actual pre-correction execution, meaningful failure diagnosis, complete Stage15 regression, browser or physical-device claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-24943c781f9d964d0eb6d9c0efc36dbb",
+      "sourceLineSha256": "2b4b2f63d70a12cf03b736403bc2795013cb30ce95ddf80a3090578280e9c89e",
+      "checkIds": [
+        "CURRENT-HUMAN-DECISION-ASSURANCE"
+      ],
+      "scope": "Finite production registered-decision writer controls for every current registry purpose: default/explicit SELF_ASSERTED accepted; unavailable VERIFIED_EXTERNAL/AUTHENTICATED labels rejected before canonical state, allocation or history mutation. Native receipts and values survive transaction-adapter save/reload with actual available assurance. Synthetic operator and non-gating purpose targets only: no authentic human action, UI/browser exploit, strong authentication, CAPTURE_DELIVERY_INTENT flow or full-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-18c51e0e9c00c44231607920d0694a1b",
+      "sourceLineSha256": "f925399fba9bd953714144d363de3eaa75c0424d9ec255acfa2a3891674f1025",
+      "checkIds": [
+        "CURRENT-HUMAN-DECISION-ASSURANCE"
+      ],
+      "scope": "Finite production registered-decision writer controls for every current registry purpose: default/explicit SELF_ASSERTED accepted; unavailable VERIFIED_EXTERNAL/AUTHENTICATED labels rejected before canonical state, allocation or history mutation. Native receipts and values survive transaction-adapter save/reload with actual available assurance. Synthetic operator and non-gating purpose targets only: no authentic human action, UI/browser exploit, strong authentication, CAPTURE_DELIVERY_INTENT flow or full-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a90275150c73cd693d39c97e2d6ca4bf",
+      "sourceLineSha256": "b1bcb0c400a80a7a6ab9776b022a8338887bebaa10f01a072caf0f6936439cce",
+      "checkIds": [
+        "EVIDENCE-SOURCE-SCOPE-AUTHORITY",
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE"
+      ],
+      "scope": "Finite supplied-context subset of this obligation: exact saved/reserved ZIP instruction discloses allowed canonical evidence identity cohorts, and the controlling operation rejects two current but unprovided source/artifact references at authoritative response-file admission and retained pre-fix pending-proposal commit. Five omission, supplied-input artifact, corrected-input reuse, response-local source and returned-attachment controls proceed through actual operator acceptance and canonical store reload/integrity under the isolated transaction adapter. Synthetic seeded counterexample targets and actor; no complete prompt identity/revision population, all stage-specific contexts, independent-agent context, actual external-agent/browser/physical execution, or whole-clause proof. Explicit current supplied-input byte reuse is tested after actual objective/input-version correction while preserving the immutable artifact scope; arbitrary obsolete artifact evidence remains rejected. Separately qualified raw identity subset: Finite shared external wrong-type boundary: actual reserved ZIP publishes schema-owned echo/reference identity shapes; eleven array or STRING-stage scalar echoes and ten wrong/null/empty/dual/array canonical or local reference shapes are rejected during authoritative response-file admission, preserving exact raw bytes and omitting proposals. Seventeen isolated guard-removal equivalents reproduce intended false admissions; two exact retained pending proposals refuse repaired precommit without mutation. Seven neighboring already strict vocabulary/scope controls remain rejected, and three scalar canonical/local-reference and arbitrary HUMAN JSON controls proceed through actual operator acceptance and native store reload/integrity. Sixteen published nested STRING/STRING_ARRAY malformed fields reject with sixteen isolated pre-fix false-admission equivalents. Three missing schema/responseType/operation errors preserve raw bytes, fail-closed validation and canonical integrity through operational save/reload; two exact undefined diagnostic-field pre-fix equivalents fail the intended canonical save while preserving staged bytes and the last valid project. Synthetic external actor/setup and Node VM transaction adapter only: no all-stage/record-family combination, reserved-record-target case, allocation/CSPRNG, unavailable capability, actual agent/human/browser/physical execution or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1ccf3990bc3673dd9d188e2f84a145a5",
+      "sourceLineSha256": "a196fcbdf302800b3d086c5fc2a91f246bc3368ec221f71d8a8aa2cb22b29a02",
+      "checkIds": [
+        "EVIDENCE-SOURCE-SCOPE-AUTHORITY"
+      ],
+      "scope": "Finite supplied-context subset of this obligation: exact saved/reserved ZIP instruction discloses allowed canonical evidence identity cohorts, and the controlling operation rejects two current but unprovided source/artifact references at authoritative response-file admission and retained pre-fix pending-proposal commit. Five omission, supplied-input artifact, corrected-input reuse, response-local source and returned-attachment controls proceed through actual operator acceptance and canonical store reload/integrity under the isolated transaction adapter. Synthetic seeded counterexample targets and actor; no complete prompt identity/revision population, all stage-specific contexts, independent-agent context, actual external-agent/browser/physical execution, or whole-clause proof. Explicit current supplied-input byte reuse is tested after actual objective/input-version correction while preserving the immutable artifact scope; arbitrary obsolete artifact evidence remains rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-4fe3ebbc713419904b04a6d253575905",
+      "sourceLineSha256": "60284f3ea79448da54db02852d204f9a97e52519a1d2d6d1b1f2488b7984c2d2",
+      "checkIds": [
+        "EVIDENCE-SOURCE-SCOPE-AUTHORITY"
+      ],
+      "scope": "Finite supplied-context subset of this obligation: exact saved/reserved ZIP instruction discloses allowed canonical evidence identity cohorts, and the controlling operation rejects two current but unprovided source/artifact references at authoritative response-file admission and retained pre-fix pending-proposal commit. Five omission, supplied-input artifact, corrected-input reuse, response-local source and returned-attachment controls proceed through actual operator acceptance and canonical store reload/integrity under the isolated transaction adapter. Synthetic seeded counterexample targets and actor; no complete prompt identity/revision population, all stage-specific contexts, independent-agent context, actual external-agent/browser/physical execution, or whole-clause proof. Explicit current supplied-input byte reuse is tested after actual objective/input-version correction while preserving the immutable artifact scope; arbitrary obsolete artifact evidence remains rejected.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-9187118f7b09bef886f677cfc943c664",
+      "sourceLineSha256": "87b64ac04faa4596593b4a1d4011f08f47ed08c5511a7f20289ae96bd69de00e",
+      "checkIds": [
+        "CURRENT-HUMAN-DECISION-TARGET-INTEGRITY",
+        "HUMAN-DECISION-CANDIDATE-TARGET-AUTHORITY",
+        "RESPONSE-CANONICAL-VALUE-BOUNDARIES"
+      ],
+      "scope": "Finite current human-subject boundary: registered native command rejects unregistered, foreign-job, missing, wrong-family, nested, obsolete, inactive, other-project and corrupt target controls without allocation/history mutation; exact current target survives save/reload, and lost current target cannot be durably saved. Supported selection-set binding permits retained compatible components while malformed membership/hash fails; legacy unknown historical subject is preserved without current authority. Separately, eleven reported HUMAN_DECISION candidate targets or malformed/inherited decision purposes reject during actual authoritative file admission (decisionPurpose must be an exact published STRING enum; external case normalization is not permitted); an isolated pre-fix pending candidate cannot commit; five operator-confirmed current/retained selection and ordinary HUMAN false-value controls persist with actual SELF_ASSERTED. Synthetic scope/legacy fixtures and native transaction adapter, no actual human/strong authentication/browser/physical action, all target-family/purpose combinations, CAPTURE_DELIVERY_INTENT, or full-clause proof. Separately qualified subset: Finite exact human-value equality subset of Section14.10 source line1170: actual operator confirmation of reordered {a:1,b:2} retains the identical canonical value through native save/reload and creates no needless correction; the isolated insertion-order pre-fix equivalent requires replacement and creates an unnecessary input version. Material object value, array order, Unicode scalar sequence and primitive type changes still require human correction; the actual material object correction is saved/reloaded with required mutation confirmation. This checks only the stated examples, not complete Unicode key ordering or all line-ending/set-normalization behavior. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a475189429d715ecf6143001a65519a6",
+      "sourceLineSha256": "5ea8b5ad51bb79bf9703bdaf1d12ab228017f73051ba6098abb7549849cf327c",
+      "checkIds": [
+        "CURRENT-HUMAN-DECISION-TARGET-INTEGRITY",
+        "HUMAN-DECISION-CANDIDATE-TARGET-AUTHORITY"
+      ],
+      "scope": "Finite current human-subject boundary: registered native command rejects unregistered, foreign-job, missing, wrong-family, nested, obsolete, inactive, other-project and corrupt target controls without allocation/history mutation; exact current target survives save/reload, and lost current target cannot be durably saved. Supported selection-set binding permits retained compatible components while malformed membership/hash fails; legacy unknown historical subject is preserved without current authority. Separately, eleven reported HUMAN_DECISION candidate targets or malformed/inherited decision purposes reject during actual authoritative file admission (decisionPurpose must be an exact published STRING enum; external case normalization is not permitted); an isolated pre-fix pending candidate cannot commit; five operator-confirmed current/retained selection and ordinary HUMAN false-value controls persist with actual SELF_ASSERTED. Synthetic scope/legacy fixtures and native transaction adapter, no actual human/strong authentication/browser/physical action, all target-family/purpose combinations, CAPTURE_DELIVERY_INTENT, or full-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2bbf10b970acb8382c6def922798d68a",
+      "sourceLineSha256": "1ae38cf97ae3c4a581caf643fcccb8c0a0201f7faebb223b7009c2001d5fb3f5",
+      "checkIds": [
+        "CURRENT-HUMAN-DECISION-TARGET-INTEGRITY",
+        "HUMAN-DECISION-CANDIDATE-TARGET-AUTHORITY"
+      ],
+      "scope": "Finite current human-subject boundary: registered native command rejects unregistered, foreign-job, missing, wrong-family, nested, obsolete, inactive, other-project and corrupt target controls without allocation/history mutation; exact current target survives save/reload, and lost current target cannot be durably saved. Supported selection-set binding permits retained compatible components while malformed membership/hash fails; legacy unknown historical subject is preserved without current authority. Separately, eleven reported HUMAN_DECISION candidate targets or malformed/inherited decision purposes reject during actual authoritative file admission (decisionPurpose must be an exact published STRING enum; external case normalization is not permitted); an isolated pre-fix pending candidate cannot commit; five operator-confirmed current/retained selection and ordinary HUMAN false-value controls persist with actual SELF_ASSERTED. Synthetic scope/legacy fixtures and native transaction adapter, no actual human/strong authentication/browser/physical action, all target-family/purpose combinations, CAPTURE_DELIVERY_INTENT, or full-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e9ee7497bb9d7e5d687f2bd0e17654b3",
+      "sourceLineSha256": "24f24da03f3e5ac99590339843699e6cae1224bafc301f01be7bc47850a1721a",
+      "checkIds": [
+        "CURRENT-SUPPLIED-INPUT-CUSTODY"
+      ],
+      "scope": "Finite production storage-context prerequisite: after an actual objective/human input-version correction, a still explicitly supplied Stage01 input retains its immutable application identity and actual native Blob custody without a manual artifact read. Authoritative response-file staging/admission/operator commit, canonical save/reload, History checkpoint restore and package backup import preserve usable exact supplied bytes; five missing, metadata-only, corrupt, foreign-job or unselected-old controls remain insufficient. An omitted-input observer equivalent reproduces the false rejection; no retroactive historical-result authorization is inferred. Synthetic agent response, input setup and Node VM transaction adapter only: this does not establish a real independent agent, whole Stage01/independence clause, package minimality, built/deployed browser or physical-device acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-59a90d9d6965e63d52bd071fdaab48e3",
+      "sourceLineSha256": "6fc44d40f43c60ea8f2eb54b02d3a8ea66f2f55e622b87c210f060055751041e",
+      "checkIds": [
+        "CURRENT-SUPPLIED-INPUT-CUSTODY"
+      ],
+      "scope": "Finite production storage-context prerequisite: after an actual objective/human input-version correction, a still explicitly supplied Stage01 input retains its immutable application identity and actual native Blob custody without a manual artifact read. Authoritative response-file staging/admission/operator commit, canonical save/reload, History checkpoint restore and package backup import preserve usable exact supplied bytes; five missing, metadata-only, corrupt, foreign-job or unselected-old controls remain insufficient. An omitted-input observer equivalent reproduces the false rejection; no retroactive historical-result authorization is inferred. Synthetic agent response, input setup and Node VM transaction adapter only: this does not establish a real independent agent, whole Stage01/independence clause, package minimality, built/deployed browser or physical-device acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5820c2c7d769128a6e1e32543e3bf8aa",
+      "sourceLineSha256": "3a9259a0ae363e02b626e088c5c284480ff7f5eadfd89ce769f65fe3f80b0085",
+      "checkIds": [
+        "CURRENT-SUPPLIED-INPUT-CUSTODY"
+      ],
+      "scope": "Finite production storage-context prerequisite: after an actual objective/human input-version correction, a still explicitly supplied Stage01 input retains its immutable application identity and actual native Blob custody without a manual artifact read. Authoritative response-file staging/admission/operator commit, canonical save/reload, History checkpoint restore and package backup import preserve usable exact supplied bytes; five missing, metadata-only, corrupt, foreign-job or unselected-old controls remain insufficient. An omitted-input observer equivalent reproduces the false rejection; no retroactive historical-result authorization is inferred. Synthetic agent response, input setup and Node VM transaction adapter only: this does not establish a real independent agent, whole Stage01/independence clause, package minimality, built/deployed browser or physical-device acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e88a52eae80983f9d011ec1b3d4c5eff",
+      "sourceLineSha256": "f991f7affdabc62ed3331a6a158a5ceeee307f631cd5f146fe4b5b2027926da0",
+      "checkIds": [
+        "CURRENT-SUPPLIED-INPUT-CUSTODY"
+      ],
+      "scope": "Finite production storage-context prerequisite: after an actual objective/human input-version correction, a still explicitly supplied Stage01 input retains its immutable application identity and actual native Blob custody without a manual artifact read. Authoritative response-file staging/admission/operator commit, canonical save/reload, History checkpoint restore and package backup import preserve usable exact supplied bytes; five missing, metadata-only, corrupt, foreign-job or unselected-old controls remain insufficient. An omitted-input observer equivalent reproduces the false rejection; no retroactive historical-result authorization is inferred. Synthetic agent response, input setup and Node VM transaction adapter only: this does not establish a real independent agent, whole Stage01/independence clause, package minimality, built/deployed browser or physical-device acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-486b3d356d1077e6a811948127d14ba7",
+      "sourceLineSha256": "0a3007670191303f1d939218e3a098b2898a24324ddb8a469181984d54ee443f",
+      "checkIds": [
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE",
+        "RESPONSE-CANONICAL-VALUE-BOUNDARIES",
+        "RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED"
+      ],
+      "scope": "Finite shared external wrong-type boundary: actual reserved ZIP publishes schema-owned echo/reference identity shapes; eleven array or STRING-stage scalar echoes and ten wrong/null/empty/dual/array canonical or local reference shapes are rejected during authoritative response-file admission, preserving exact raw bytes and omitting proposals. Seventeen isolated guard-removal equivalents reproduce intended false admissions; two exact retained pending proposals refuse repaired precommit without mutation. Seven neighboring already strict vocabulary/scope controls remain rejected, and three scalar canonical/local-reference and arbitrary HUMAN JSON controls proceed through actual operator acceptance and native store reload/integrity. Sixteen published nested STRING/STRING_ARRAY malformed fields reject with sixteen isolated pre-fix false-admission equivalents. Three missing schema/responseType/operation errors preserve raw bytes, fail-closed validation and canonical integrity through operational save/reload; two exact undefined diagnostic-field pre-fix equivalents fail the intended canonical save while preserving staged bytes and the last valid project. Synthetic external actor/setup and Node VM transaction adapter only: no all-stage/record-family combination, reserved-record-target case, allocation/CSPRNG, unavailable capability, actual agent/human/browser/physical execution or whole-clause conformance claim. Separately qualified subset: Finite nested attachment.sha256 singleton ARRAY and inherited stage-field membership cases: actual returned bytes and authoritative response-file admission reject wrong digest type and two inherited field names, preserving raw; isolated guards reproduce intended false admissions. Human OBJECT semantics are separately linked to exact canonical ordering/scalar requirements, not inferred from numeric types. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. Also exactly64 malformed present optional Test IR binding STRING properties reject at runtime, runtime-present schema adapter and spec validation; each named owner receipt remains required separately.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+      "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+      "checkIds": [
+        "CANONICAL-RESPONSE-RECOVERY"
+      ],
+      "scope": "Finite actual reserved ZIP/authoritative escaped UTF-8 response-file subset: seven unsupported canonical values (high/low surrogates, unpaired object key, unsafe integer, negative zero, fractional number and duplicate unpaired key) reject with structured canonical-safe diagnostics, exact preserved raw/staged bytes and fail-closed operational save/reload; seven isolated pre-fix equivalents fail for the intended canonical TypeError and retain staged bytes. Seven direct validator controls and two altered pending proposals reject without canonical acceptance; conforming paired/decomposed Unicode is accepted, operator committed and reloaded without transformation. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2bf4248eaeff507c8ae287556074d93b",
+      "sourceLineSha256": "cef5d0b441fbaf72c3a70d7d3ed5bf52ecf3f7e656cb7881adf701a541f8a81e",
+      "checkIds": [
+        "CANONICAL-RESPONSE-RECOVERY"
+      ],
+      "scope": "Finite actual reserved ZIP/authoritative escaped UTF-8 response-file subset: seven unsupported canonical values (high/low surrogates, unpaired object key, unsafe integer, negative zero, fractional number and duplicate unpaired key) reject with structured canonical-safe diagnostics, exact preserved raw/staged bytes and fail-closed operational save/reload; seven isolated pre-fix equivalents fail for the intended canonical TypeError and retain staged bytes. Seven direct validator controls and two altered pending proposals reject without canonical acceptance; conforming paired/decomposed Unicode is accepted, operator committed and reloaded without transformation. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. Duplicate-name and unpaired-value cases are the finite listed parser cases; no entire duplicate-name grammar claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "checkIds": [
+        "CANONICAL-RESPONSE-RECOVERY"
+      ],
+      "scope": "Finite actual reserved ZIP/authoritative escaped UTF-8 response-file subset: seven unsupported canonical values (high/low surrogates, unpaired object key, unsafe integer, negative zero, fractional number and duplicate unpaired key) reject with structured canonical-safe diagnostics, exact preserved raw/staged bytes and fail-closed operational save/reload; seven isolated pre-fix equivalents fail for the intended canonical TypeError and retain staged bytes. Seven direct validator controls and two altered pending proposals reject without canonical acceptance; conforming paired/decomposed Unicode is accepted, operator committed and reloaded without transformation. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. Exact-number-string production as a whole is separately verified.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-c756b0b15119dd819444cd7212bdad56",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "checkIds": [
+        "CANONICAL-RESPONSE-RECOVERY"
+      ],
+      "scope": "Finite actual reserved ZIP/authoritative escaped UTF-8 response-file subset: seven unsupported canonical values (high/low surrogates, unpaired object key, unsafe integer, negative zero, fractional number and duplicate unpaired key) reject with structured canonical-safe diagnostics, exact preserved raw/staged bytes and fail-closed operational save/reload; seven isolated pre-fix equivalents fail for the intended canonical TypeError and retain staged bytes. Seven direct validator controls and two altered pending proposals reject without canonical acceptance; conforming paired/decomposed Unicode is accepted, operator committed and reloaded without transformation. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. NaN/Infinity/undefined/sparse/cyclic/implementation-object population is not established here.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-509a0f6d106fade3e430e5285aaef925",
+      "sourceLineSha256": "09dd73bd72dd12b7fe648f53de1320108e0a3d3c9701fc20fc3bb5b7d35965b8",
+      "checkIds": [
+        "CANONICAL-RESPONSE-RECOVERY",
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE"
+      ],
+      "scope": "Finite rejection persistence subset: three missing-field error submissions and seven unsupported canonical response-file cases preserve exact authoritative raw bytes and failed validation/disposition through operational save/reload. Isolated old undefined-diagnostic/canonical-guard equivalents fail only for the intended canonical error while retaining staged bytes and the last valid project. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b8561486350c0112370048374313fcfe",
+      "sourceLineSha256": "aeebf015a51fc17f7ba0330da56d2ac7f1f9214d04966726483e128ebff30f7b",
+      "checkIds": [
+        "CANONICAL-RESPONSE-RECOVERY",
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE"
+      ],
+      "scope": "Finite rejection persistence subset: three missing-field error submissions and seven unsupported canonical response-file cases preserve exact authoritative raw bytes and failed validation/disposition through operational save/reload. Isolated old undefined-diagnostic/canonical-guard equivalents fail only for the intended canonical error while retaining staged bytes and the last valid project. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d0001a2f5206a23698c15e33973c7be5",
+      "sourceLineSha256": "a7d1db5b1ad1ed554c6b67a44d29a33e95507d6e5d7e5f54f184a349ed77126a",
+      "checkIds": [
+        "CANONICAL-RESPONSE-RECOVERY"
+      ],
+      "scope": "Finite staged-byte recovery/recording subset only: seven exact old canonical parse/save failures preserve authoritative staged response bytes and slot identity; repaired submissions preserve raw bytes and recorded failed validation/disposition through actual operational save/reload without canonical acceptance. This native-adapter evidence does not establish required local/deployed browser reselect/status interactions or all transfer/storage failures. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775",
+      "checkIds": [
+        "RESPONSE-CANONICAL-VALUE-BOUNDARIES"
+      ],
+      "scope": "Finite exact human-value equality subset of Section14.10 source line1170: actual operator confirmation of reordered {a:1,b:2} retains the identical canonical value through native save/reload and creates no needless correction; the isolated insertion-order pre-fix equivalent requires replacement and creates an unnecessary input version. Material object value, array order, Unicode scalar sequence and primitive type changes still require human correction; the actual material object correction is saved/reloaded with required mutation confirmation. This checks only the stated examples, not complete Unicode key ordering or all line-ending/set-normalization behavior. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-7add6f24a57198b72b500e5a2acf1ca6",
+      "sourceLineSha256": "dc22dec623f4faadc455909b5c327cf4bda535aa9abbe91b83e80e4ad7b675b9",
+      "checkIds": [
+        "RESPONSE-CANONICAL-VALUE-BOUNDARIES"
+      ],
+      "scope": "Finite exact human-value equality subset of Section14.10 source line1170: actual operator confirmation of reordered {a:1,b:2} retains the identical canonical value through native save/reload and creates no needless correction; the isolated insertion-order pre-fix equivalent requires replacement and creates an unnecessary input version. Material object value, array order, Unicode scalar sequence and primitive type changes still require human correction; the actual material object correction is saved/reloaded with required mutation confirmation. This checks only the stated examples, not complete Unicode key ordering or all line-ending/set-normalization behavior. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "checkIds": [
+        "RESPONSE-CANONICAL-VALUE-BOUNDARIES"
+      ],
+      "scope": "Finite exact human-value equality subset of Section14.10 source line1170: actual operator confirmation of reordered {a:1,b:2} retains the identical canonical value through native save/reload and creates no needless correction; the isolated insertion-order pre-fix equivalent requires replacement and creates an unnecessary input version. Material object value, array order, Unicode scalar sequence and primitive type changes still require human correction; the actual material object correction is saved/reloaded with required mutation confirmation. This checks only the stated examples, not complete Unicode key ordering or all line-ending/set-normalization behavior. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b130456cd0c836a734b70a22f82c84fa",
+      "sourceLineSha256": "a4ec203980bf67427e3351ddd87863f318afb562df76fe7b435be0b9d3b1b32f",
+      "checkIds": [
+        "APPROVED-GOVERNANCE-SOURCE-BYTES",
+        "receipts.active-fixture-inputs"
+      ],
+      "scope": "Finite repository source-identity subclaim: the exact declared approval review JSON and approved proposal Markdown bytes remain in executed-evidence identity while tracked or untracked; missing bytes fail honestly, byte mutation rejects the reused actual Stage03 producer receipt, and exact restoration preserves its original identity. The prior Markdown-omission equivalent is independently detected. The exact maintained deferred-definition legacy fixture consumed by the required verifier is separately bound through a narrow catalog sourceInputs declaration while tracked or untracked; actual reused-receipt mutation/missing/restoration and former untracked-omission controls apply only to that fixture byte identity, not its semantic or execution claims. This does not establish whole-clause specification generation, actual CI, deployed-artifact identity, human approval authenticity, or application execution semantics.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-621d5f7e000ff2bcf9b817b4229ba8e2",
+      "sourceLineSha256": "b1a3feabb4701ddf7974eacf8ebf752adf70eaa588fadc644e2e693f469b48d1",
+      "checkIds": [
+        "RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED"
+      ],
+      "scope": "Exactly64 independently declared malformed present optional binding STRING properties reject in production Test IR validation, the runtime-present canonical schema adapter and executable-spec validation. This finite type population does not prove arbitrary native semantics, byte custody, dynamic selectors, stage completion or all supported input contracts; omission/hash/execution controls remain separately reported suite assertions.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     }
   ],
   "contractRefs": [
@@ -1081,7 +1360,7 @@
       "checkIds": [
         "activation.exported-owned-instruction"
       ],
-      "scope": "Direct New\u2192reservation/store save\u2192ZIP export asserts new JOB_ID appears in literal Stage01 COMPLETE body and exported bytes equal its retrievable committed instruction. Other scope dimensions are not independently proved by this check.",
+      "scope": "Direct New→reservation/store save→ZIP export asserts new JOB_ID appears in literal Stage01 COMPLETE body and exported bytes equal its retrievable committed instruction. Other scope dimensions are not independently proved by this check.",
       "basis": "Exact four PROJECT_ACTIVATION_* rows from verify-project-activation.mjs; real application/store handlers and independent ZIP parser, synthetic DOM/history and transaction adapter. This amendment is absent from the indexed main-spec NREQ inventory; no synthetic NREQ or full-clause compliance asserted.",
       "source": {
         "path": "specification/recovery-amendment-20260914.txt",

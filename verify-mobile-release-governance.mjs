@@ -31,8 +31,22 @@ export function assertRepositoryReadOnlyCI(workflow){
   assert.doesNotMatch(workflow,/\bgit\s+push\b|github\.rest\.git\.(?:create|update|delete)|createOrUpdateFileContents/,'CI_READ_ONLY_REPOSITORY_ORACLE: CI publishes artifacts and status, not repository mutations.');
 }
 
+export function assertJobScopedCIPermissions(workflow){
+  const readPermissions=(text,indent)=>{
+    const block=new RegExp('^'+indent+'permissions:\\n((?:'+indent+'  [^\\n]+\\n)+)','m').exec(text)?.[1];
+    return block?Object.fromEntries(block.trim().split('\n').map(line=>line.trim().split(/:\s*/))):null;
+  };
+  const defaults=readPermissions(workflow,'');
+  assert.deepEqual(defaults,{contents:'read'},'CI_JOB_PERMISSION_ORACLE: default execution must only read repository contents.');
+  const jobs=[...workflow.slice(workflow.indexOf('\njobs:\n')).matchAll(/^  ([a-z][a-z-]*):\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n|(?![\s\S]))/gm)];
+  const expected={test:{contents:'read',actions:'read','pull-requests':'read'},deploy:{pages:'write','id-token':'write'},'verify-live':{contents:'read'},'publish-status':{contents:'read'}};
+  assert.deepEqual(jobs.map(match=>match[1]).sort(),Object.keys(expected).sort(),'CI_JOB_PERMISSION_ORACLE: job permission inventory changed.');
+  for(const [,name,body]of jobs)assert.deepEqual(readPermissions(body,'    ')||defaults,expected[name],'CI_JOB_PERMISSION_ORACLE: incorrect privileges for '+name);
+}
+
 export function assertWorkflowGovernance(workflow){
   assertRepositoryReadOnlyCI(workflow);
+  assertJobScopedCIPermissions(workflow);
   assert.doesNotMatch(workflow,/actualAndroidChromeAcceptance/,'Android acceptance must not substitute for the pinned actual-iPhone requirement.');
   assert.match(workflow,/actualIPhoneSafariAcceptance/,'The acceptance calculation must consume actual-iPhone Safari status.');
   assert.match(workflow,/mobileAcceptanceResult/,'The acceptance calculation must consume the physical-device result.');
@@ -179,6 +193,17 @@ for(const [fault,mutated,oracle] of [
   assert.ok(rejection.includes(oracle),'Fault was not detected by its intended governance oracle: '+fault);
   assertWorkflowGovernance(workflow);repositoryMutationFaults.push({fault,oracle,result:'DETECTED',rejection,restored:'PASS'});
 }
+const jobPermissionFaults=[];
+for(const [fault,mutated]of [
+ ['former-inherited-writes',workflow.replace('permissions:\n  contents: read\n','permissions:\n  contents: read\n  actions: read\n  pull-requests: read\n  pages: write\n  id-token: write\n  statuses: write\n')],
+ ['test-pages-write',workflow.replace('      pull-requests: read\n','      pull-requests: read\n      pages: write\n')],
+ ['missing-test-artifact-read',workflow.replace('      actions: read\n','')],
+ ['missing-deployment-oidc',workflow.replace('      id-token: write\n','')],
+ ['missing-deployment-pages',workflow.replace('      pages: write\n','')],
+ ['live-status-write',workflow.replace('  verify-live:\n','  verify-live:\n    permissions:\n      contents: read\n      statuses: write\n')]
+]){
+ assert.throws(()=>assertJobScopedCIPermissions(mutated),/CI_JOB_PERMISSION_ORACLE/,'Job permission regression did not reach its intended oracle: '+fault);assertJobScopedCIPermissions(workflow);jobPermissionFaults.push({fault,result:'DETECTED',restored:'PASS'});
+}
 const hardCodedBlockMutation=workflow.replace('...mobileAcceptance,','...mobileAcceptance,actualIPhoneSafariAcceptance:false,');
 assert.throws(()=>assertWorkflowGovernance(hardCodedBlockMutation),/hard-code/,'The regression must fail when valid physical evidence is made impossible to accept.');
 const missingEvaluatorMutation=workflow.replace('node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json','true');
@@ -212,5 +237,7 @@ console.log(JSON.stringify({
   unconditionalEligibilityMutationDetected:true,
   repositoryReadOnlyCI:true,
   repositoryMutationFaults,
+  jobScopedPermissions:true,
+  jobPermissionFaults,
   falseAcceptanceTagRegressionCovered:true
 },null,2));

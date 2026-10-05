@@ -64,12 +64,32 @@ async function verifyPendingRestoration({failCheckpoint=false}={}){
 }
 
 const accepted=p=>p.projectData.acceptedChanges.filter(row=>!row.invalidatedBy);
+async function verifyImportedView(pendingBackup){
+ await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Import destination draft fixture');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');
+ await browser.click('[data-view="Project"]');const destinationDraft='Imported project retained unsaved draft';await browser.fill('[data-job="JOB_TITLE"]',destinationDraft);const backup=await state();
+ await browser.click('#new-project');const departing=await browser.readProject();await browser.fill('[data-job="JOB_TITLE"]','Foreign departing project draft');
+ await browser.selectFiles('#import-file',[{filename:backup.file.filename,bytes:backup.file.bytes}]);
+ const importedView=await browser.evaluate(`(async()=>({jobId:history.state?.jobId,browserDraft:history.state?.view?.drafts?.['#job-JOB_TITLE']?.value,visibleDraft:document.querySelector('#job-JOB_TITLE')?.value,storedDraft:(await closedLoopProjectStore.readHistoryView(history.state?.jobId))?.drafts?.['#job-JOB_TITLE']?.value}))()`);
+ assert.equal(importedView.jobId,backup.project.job.JOB_ID,'IMPORT_DESTINATION_IDENTITY_ORACLE');
+ for(const key of ['browserDraft','visibleDraft','storedDraft'])assert.equal(importedView[key],destinationDraft,'IMPORT_DESTINATION_DRAFT_ORACLE: '+key);
+ await browser.reload();assert.equal(await browser.evaluate(`document.querySelector('#job-JOB_TITLE')?.value`),destinationDraft,'IMPORT_RELOAD_DRAFT_ORACLE');
+ assert.equal(await browser.evaluate(`closedLoopProjectStore.readProject(${JSON.stringify(departing.job.JOB_ID)}).then(project=>project.projectSha256)`),departing.projectSha256,'IMPORT_DEPARTING_PROJECT_ORACLE');
+ record('Backup import activates the destination draft before browser history capture; reload preserves its own draft without cross-project contamination',{destinationJobId:backup.project.job.JOB_ID,departingJobId:departing.job.JOB_ID,backupSha256:backup.file.sha256,importedView});
+ await browser.selectFiles('#import-file',[{filename:pendingBackup.file.filename,bytes:pendingBackup.file.bytes}]);
+ assert.ok(await browser.exists('#replacement-confirmation'),'IMPORT_PENDING_CONFIRMATION_ORACLE');assert.ok(await browser.evaluate(`Boolean(history.state?.view?.pendingMutation)`),'IMPORT_BROWSER_PENDING_CONFIRMATION_ORACLE');
+ assert.deepEqual((await browser.readProject()).projectData,pendingBackup.project.projectData,'IMPORT_UNACCEPTED_CANONICAL_STATE_ORACLE');
+ await browser.reload();assert.ok(await browser.exists('#replacement-confirmation'),'IMPORT_RELOAD_PENDING_CONFIRMATION_ORACLE');
+ assert.deepEqual((await browser.readProject()).projectData,pendingBackup.project.projectData,'IMPORT_RELOAD_UNACCEPTED_CANONICAL_STATE_ORACLE');
+ record('Import and reload preserve the saved unaccepted replacement confirmation and accepted canonical state',{destinationJobId:pendingBackup.project.job.JOB_ID,backupSha256:pendingBackup.file.sha256});
+}
 try{
  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Disposable recoverable acceptance journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');
  assert.equal(await browser.evaluate(`document.querySelector('#next-required-action')!==null`),true,'Saving project information did not open the next operation');
+ assert.match(await browser.evaluate(`document.querySelector('#stage-files').closest('.panel').querySelector('.section-intro').textContent`),/No separate intent file is required/,'EMPTY_INTAKE_GUIDANCE_ORACLE');
  const unicodeFilename='re\u0301sume\u0301-中文.txt',unicodeBytes=Buffer.from('Unicode transport with exact UTF-8 bytes: é🙂\n');
  await browser.selectFiles('#stage-files',[{filename:unicodeFilename,bytes:unicodeBytes}]);
  const initial=await state(),startEntry=await position();
+ assert.match(await browser.evaluate(`document.querySelector('#stage-files').closest('.panel').querySelector('.section-intro').textContent`),/1 supplied Stage 01 file is retained with verified bytes/,'RETAINED_INTAKE_GUIDANCE_ORACLE');
  const unicodeArtifact=initial.project.projectData.artifacts.find(row=>row.rawFilename===unicodeFilename);assert.ok(unicodeArtifact);assert.equal(unicodeArtifact.canonicalPath,'résumé-中文.txt');const unicodeBackupMember=initial.package.artifacts.find(row=>row.artifactId===unicodeArtifact.id);assert.equal(unicodeBackupMember.filename,unicodeFilename);assert.deepEqual(Buffer.from(unicodeBackupMember.base64,'base64'),unicodeBytes);
  record('Unicode file selection retains original filename and exact bytes in IndexedDB and exported backup',{rawFilename:unicodeFilename,canonicalPath:unicodeArtifact.canonicalPath,sha256:digest(unicodeBytes)});
  await uploadValid({reloadSelection:true});await browser.click('#accept-proposal');await browser.click('#confirm-stage-one');
@@ -109,7 +129,7 @@ try{
  await browser.click(`[data-quarantine-history="${damagedJobId}"]`);await browser.fill('#history-version',new URL(validRecoveryEntry.url).searchParams.get('version'));await browser.click('#history-restore');const restoredIntegrity=await state();assert.equal(restoredIntegrity.project.job.JOB_ID,damagedJobId);assert.deepEqual(restoredIntegrity.project.projectData,validRecovery.project.projectData);assert.deepEqual(Buffer.from(restoredIntegrity.package.artifacts.find(row=>row.artifactId===unicodeArtifact.id).base64,'base64'),unicodeBytes);assert.ok(await browser.exists('#quarantine-notice'));record('Actual IndexedDB corruption is quarantined on reload; History restores the compatible valid project and original file bytes while retaining the damaged evidence');
  await browser.click('[data-quarantine-export]');await browser.fill('#backup-passphrase','Disposable browser quarantine evidence password');const [quarantineExport]=await browser.download('#backup-password-continue');const encryptedEvidence=JSON.parse(quarantineExport.bytes);assert.equal(encryptedEvidence.schema,'closed-loop-encrypted-export/1');assert.equal(encryptedEvidence.algorithm,'AES-256-GCM');
  await browser.click('[data-quarantine-remove]');assert.equal(await browser.exists('#quarantine-notice'),false);assert.deepEqual((await state()).project.projectData,validRecovery.project.projectData);record('Recovery controls export protected evidence and remove only the damaged copy while preserving the restored project and History');
- await verifyPendingRestoration();await verifyPendingRestoration({failCheckpoint:true});
+ await verifyPendingRestoration();await verifyPendingRestoration({failCheckpoint:true});await verifyImportedView(pendingFileCorrection);
  assert.deepEqual(browser.exceptions(),[]);report.complete=true;
 }catch(error){report.failures.push({message:error.stack});process.exitCode=1;try{await browser.inspect(1);}catch{}}
 finally{report.events=browser.events;fs.writeFileSync(path.join(directory,'recovery.json'),JSON.stringify(report,null,2)+'\n');await browser.close();}

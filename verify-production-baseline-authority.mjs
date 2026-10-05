@@ -1,8 +1,106 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import nodeAssert from 'node:assert/strict';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {canonicalFixtureRecord} from './test-fixtures.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(f,'utf8'),{filename:f});
+// Section39.13 permits SELF_ASSERTED for every current purpose. A minimum-level
+// comparison cannot establish that a stronger identity capability exists.
+const currentHumanDecisionAssurance=[];
+for(const purpose of Object.keys(globalThis.closedLoopWorkflowSchema.HUMAN_DECISION_PURPOSE_REGISTRY)){
+ const r=projectStoreRuntime(),p=r.core.createBlankState('SYNTHETIC-CURRENT-HUMAN-ASSURANCE-'+purpose),e=r.engine;
+ const command={stage:20,purpose,targetFamily:'job',targetId:p.job.JOB_ID,value:r.copy({authorized:true,synthetic:true}),operatorLabel:'SYNTHETIC OPERATOR'};
+ const rejected=[];
+ for(const identityAssurance of ['VERIFIED_EXTERNAL','AUTHENTICATED']){
+  const before=JSON.stringify(p);
+  nodeAssert.throws(()=>e.recordRegisteredHumanDecision(p,{...command,identityAssurance}),error=>error.code==='IDENTITY_ASSURANCE_UNAVAILABLE'&&error.message.includes('SELF_ASSERTED'),'CURRENT_HUMAN_ASSURANCE_ORACLE: unavailable identity assurance must be rejected with the supported recovery route.');
+  nodeAssert.equal(JSON.stringify(p),before,'CURRENT_HUMAN_ASSURANCE_ORACLE: rejected command changed canonical state, identities or history.');
+  rejected.push(identityAssurance);
+ }
+ const implicit=e.recordRegisteredHumanDecision(p,command),explicit=e.recordRegisteredHumanDecision(p,{...command,identityAssurance:'SELF_ASSERTED'}),ids=[implicit,explicit].map(row=>e.recordId(row,'humanDecisions'));
+ for(const row of [implicit,explicit]){
+  nodeAssert.equal(e.recordValue(row,'IDENTITY_ASSURANCE'),'SELF_ASSERTED','CURRENT_HUMAN_ASSURANCE_ORACLE: current command must record its actual available assurance.');
+  nodeAssert.equal(p.projectData.history.find(event=>event.eventId===e.recordValue(row,'RECEIPT_ID'))?.identityAssurance,'SELF_ASSERTED','CURRENT_HUMAN_ASSURANCE_ORACLE: decision receipt misstated identity assurance.');
+ }
+ const saved=await r.store.writeProject(r.copy(p),{expectedProjectRevision:0}),before=JSON.stringify(saved);
+ nodeAssert.throws(()=>e.recordRegisteredHumanDecision(saved,{...command,identityAssurance:'AUTHENTICATED'}),error=>error.code==='IDENTITY_ASSURANCE_UNAVAILABLE','CURRENT_HUMAN_ASSURANCE_ORACLE: saved current state allowed unavailable assurance.');
+ nodeAssert.equal(JSON.stringify(saved),before,'CURRENT_HUMAN_ASSURANCE_ORACLE: rejected command changed the last valid saved state.');
+ const reloaded=await r.store.readProject(p.job.JOB_ID);
+ for(const id of ids)nodeAssert.equal(e.recordValue(reloaded.projectData.humanDecisions.find(row=>e.recordId(row,'humanDecisions')===id),'IDENTITY_ASSURANCE'),'SELF_ASSERTED','CURRENT_HUMAN_ASSURANCE_ORACLE: save/reload changed actual assurance.');
+ nodeAssert.equal(reloaded.revision,saved.revision,'CURRENT_HUMAN_ASSURANCE_ORACLE: rejected command advanced durable revision.');
+ nodeAssert.equal(r.store.validateProjectIntegrity(reloaded,{verifyDerived:false}).valid,true,'CURRENT_HUMAN_ASSURANCE_ORACLE: supported decision did not preserve canonical integrity.');
+ currentHumanDecisionAssurance.push({purpose,rejected,defaultAndExplicitSelfAssertedAccepted:true,receiptsSelfAsserted:true,noMutationOnRejection:true,saveReloadPreserved:true});
+}
+console.log(JSON.stringify({humanDecisionCurrentAssurance:true,synthetic:true,actualBrowser:false,verificationObservations:[{checkId:'CURRENT-HUMAN-DECISION-ASSURANCE',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:4322','specification/closed-loop-reliability-controlling-implementation-specification.txt:4325'],boundary:'Production registered human-decision command, history receipt, serialization, transaction-adapter save/reload; synthetic operator and non-gating purpose targets',expected:{allCurrentPurposesCovered:true,strongerUnavailableAssurancesRejected:true,rejectionPreservesState:true,defaultAndExplicitSelfAssertedProgress:true,savedReceiptsAndRecordsSelfAsserted:true},observed:{allCurrentPurposesCovered:true,strongerUnavailableAssurancesRejected:true,rejectionPreservesState:true,defaultAndExplicitSelfAssertedProgress:true,savedReceiptsAndRecordsSelfAsserted:true},passed:true}],currentHumanDecisionAssurance}));
+const humanDecisionTargets=[];
+function targetFixture(label){const r=projectStoreRuntime(),p=r.core.createBlankState('SYNTHETIC-HUMAN-TARGET-'+label),e=r.engine,s=r.runtime.closedLoopWorkflowSchema;p.job.CURRENT_INPUT_VERSION='INPUT-v001';p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-v001';e.ensureShape(p);const source=canonicalFixtureRecord({engine:e,schema:s},p,'sources',{SOURCE_NAME:'Controlled current target',SOURCE_LOCATION:'fixture://human-target',STATUS:'CURRENT'},{stage:2});return {r,p,e,s,source,command:{stage:2,purpose:'TRADEOFF_OR_SCOPE_DECISION',targetFamily:'sources',targetId:e.recordId(source,'sources'),value:'Controlled explicit human choice',operatorLabel:'SYNTHETIC OPERATOR'}};}
+for(const [label,alter,expected] of [
+ ['unregistered-family',f=>({...f.command,targetFamily:'unregisteredFamily'}),'UNREGISTERED_HUMAN_DECISION_TARGET_FAMILY'],
+ ['other-job',f=>({...f.command,targetFamily:'job',targetId:'JOB-UNRELATED'}),'HUMAN_DECISION_TARGET_PROJECT_MISMATCH'],
+ ['missing-record',f=>({...f.command,targetId:'UNRESOLVED-TARGET'}),'UNRESOLVED_HUMAN_DECISION_TARGET'],
+ ['wrong-family',f=>({...f.command,targetFamily:'research'}),'UNRESOLVED_HUMAN_DECISION_TARGET'],
+ ['nested-target',f=>({...f.command,targetId:{recordId:f.command.targetId}}),'INVALID_HUMAN_DECISION_TARGET_IDENTITY'],
+ ['stale-target',f=>{f.source.scope.inputVersion='INPUT-v000';f.e.refreshRecordHashes(f.source,'sources');return f.command;},'UNRESOLVED_HUMAN_DECISION_TARGET'],
+ ['inactive-target',f=>{f.source.active=false;f.e.refreshRecordHashes(f.source,'sources');return f.command;},'UNRESOLVED_HUMAN_DECISION_TARGET'],
+ ['other-project-record',f=>{f.source.jobId='JOB-UNRELATED';f.e.refreshRecordHashes(f.source,'sources');return f.command;},'UNRESOLVED_HUMAN_DECISION_TARGET'],
+ ['corrupt-target',f=>{f.source.fields.SOURCE_NAME='Unhashed mutation';return f.command;},'UNRESOLVED_HUMAN_DECISION_TARGET']
+]){
+ const f=targetFixture(label),command=alter(f),before=JSON.stringify(f.p);
+ nodeAssert.throws(()=>f.e.recordRegisteredHumanDecision(f.p,command),error=>error.code===expected,'HUMAN_DECISION_TARGET_ORACLE: '+label+' must reject at the owning target boundary.');
+ nodeAssert.equal(JSON.stringify(f.p),before,'HUMAN_DECISION_TARGET_ORACLE: rejected '+label+' command changed canonical state.');humanDecisionTargets.push({case:label,result:'REJECTED',expectedCode:expected,noMutation:true});
+}
+{
+ const f=targetFixture('canonical-current'),d=f.e.recordRegisteredHumanDecision(f.p,f.command),id=f.e.recordId(d,'humanDecisions'),saved=await f.r.store.writeProject(f.r.copy(f.p),{expectedProjectRevision:0});
+ nodeAssert.equal(f.e.recordValue((await f.r.store.readProject(f.p.job.JOB_ID)).projectData.humanDecisions.find(row=>f.e.recordId(row,'humanDecisions')===id),'TARGET_ID'),f.command.targetId,'HUMAN_DECISION_TARGET_ORACLE: current canonical target did not persist.');
+ const bad=f.r.copy(saved),source=bad.projectData.sources.find(row=>f.e.recordId(row,'sources')===f.command.targetId);source.active=false;f.e.refreshRecordHashes(source,'sources');f.e.recalculate(bad);
+ nodeAssert.ok(f.r.store.validateProjectIntegrity(bad,{verifyDerived:false}).issues.some(text=>text.includes('Human decision')&&text.includes('UNRESOLVED_HUMAN_DECISION_TARGET')),'HUMAN_DECISION_TARGET_ORACLE: current integrity did not identify the missing active human target.');
+ await nodeAssert.rejects(()=>f.r.store.writeProject(bad,{expectedProjectRevision:saved.revision,mutationConfirmation:f.r.store.mutationImpact(saved,bad)}),error=>error.code==='PROJECT_INTEGRITY_FAILED'&&error.issues.some(text=>text.includes('Human decision')),'HUMAN_DECISION_TARGET_ORACLE: invalid current target was durably written.');
+ const recovered=await f.r.store.readProject(f.p.job.JOB_ID);nodeAssert.equal(recovered.revision,saved.revision);nodeAssert.equal(recovered.projectSha256,saved.projectSha256);humanDecisionTargets.push({case:'current-target-save-reload-and-failed-write',result:'PASS',lastValidStatePreserved:true});
+ const checkpoint=(await f.r.store.historyList(f.p.job.JOB_ID)).activeId,legacy=f.r.copy(f.r.rows.get('projects').get(f.p.job.JOB_ID)),legacyDecision=legacy.project.projectData.humanDecisions.find(row=>f.e.recordId(row,'humanDecisions')===id);
+ // Explicit persisted pre-fix counterexample, injected only into the isolated
+ // adapter. Recompute its self-consistency hashes as the old writer did; the
+ // new failure must be target integrity, rather than unrelated byte corruption.
+ legacyDecision.fields.TARGET_FAMILY=legacyDecision.TARGET_FAMILY='LEGACY_UNREGISTERED_SUBJECT';f.e.refreshRecordHashes(legacyDecision,'humanDecisions');legacy.projectSha256=f.r.store.projectSha256(legacy.project);f.r.rows.get('projects').set(f.p.job.JOB_ID,legacy);
+ await nodeAssert.rejects(()=>f.r.store.readProject(f.p.job.JOB_ID),error=>error.code==='PROJECT_INTEGRITY_FAILED'&&error.message.includes('quarantine'),'HUMAN_DECISION_TARGET_ORACLE: legacy invalid current subject was silently admitted.');
+ const quarantined=(await f.r.store.listQuarantinedProjects()).find(row=>row.jobId===f.p.job.JOB_ID);nodeAssert.equal(quarantined.completeSnapshot,true);const preserved=await f.r.store.metaGet(quarantined.key);nodeAssert.deepEqual(f.r.copy(preserved.row),f.r.copy(legacy),'HUMAN_DECISION_TARGET_ORACLE: legacy invalid state was discarded or rewritten.');
+ const exportBytes=await f.r.store.exportQuarantinedProject(quarantined.key,{passphrase:'synthetic-disposable-recovery-password'});nodeAssert.equal(await f.r.store.isEncryptedPackage(exportBytes),true,'HUMAN_DECISION_TARGET_ORACLE: preserved invalid state was not exportable through existing recovery.');
+ const restored=(await f.r.store.restoreCheckpoint(f.p.job.JOB_ID,checkpoint)).project;nodeAssert.equal(f.e.recordValue(restored.projectData.humanDecisions.find(row=>f.e.recordId(row,'humanDecisions')===id),'TARGET_FAMILY'),'sources');nodeAssert.equal(f.r.store.validateProjectIntegrity(restored,{verifyDerived:false}).valid,true);nodeAssert.equal((await f.r.store.readProject(f.p.job.JOB_ID)).revision,restored.revision);
+ humanDecisionTargets.push({case:'legacy-current-subject-quarantine-export-and-valid-checkpoint-restore',result:'PASS',exactInvalidSnapshotPreserved:true,existingRecoveryRoute:true,migrationRepairClaim:false});
+}
+{
+ const f=targetFixture('retained-artifact'),blob=new Blob(['Retained component bytes']),artifactId=f.e.allocateId(f.p,'artifacts'),sha256=await f.r.runtime.closedLoopHash.sha256Bytes(blob);
+ await f.r.store.putArtifact({artifactId,jobId:f.p.job.JOB_ID,filename:'retained.txt',mediaType:'text/plain',blob});await f.r.store.getArtifact(artifactId);f.e.registerArtifactBytes(f.p,{stage:10,artifactId,filename:'retained.txt',mediaType:'text/plain',byteSize:blob.size,sha256});
+ // Controlled old/current scope fixture: native selection is exercised; this
+ // does not claim the synthetic upstream version transition was user-executed.
+ f.p.job.CURRENT_INPUT_VERSION='INPUT-v002';const ids=[artifactId],targetId=f.r.runtime.closedLoopHash.sha256Value(ids),command={stage:17,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId,value:ids,operatorLabel:'SYNTHETIC OPERATOR'};
+ nodeAssert.equal(f.e.recordsForCurrentScope(f.p,'artifacts').length,0,'HUMAN_DECISION_TARGET_ORACLE: fixture did not retain an earlier-scope component.');
+ const d=f.e.recordRegisteredHumanDecision(f.p,command),id=f.e.recordId(d,'humanDecisions'),saved=await f.r.store.writeProject(f.r.copy(f.p),{expectedProjectRevision:0}),reloaded=await f.r.store.readProject(f.p.job.JOB_ID);
+ nodeAssert.equal(f.e.humanDecisionTargetState(reloaded,command).valid,true,'HUMAN_DECISION_TARGET_ORACLE: legitimate explicit retained-component selection was blocked.');nodeAssert.equal(f.e.recordValue(reloaded.projectData.humanDecisions.find(row=>f.e.recordId(row,'humanDecisions')===id),'TARGET_ID'),targetId);nodeAssert.equal(f.r.store.validateProjectIntegrity(reloaded,{verifyDerived:false}).valid,true);nodeAssert.equal(saved.revision,reloaded.revision);
+ for(const [label,value,digest,expected] of [['duplicate',[artifactId,artifactId],targetId,'INVALID_HUMAN_DECISION_ARTIFACT_SET'],['wrong-hash',ids,'0'.repeat(64),'HUMAN_DECISION_ARTIFACT_SET_HASH_MISMATCH'],['missing-member',['UNRESOLVED-ARTIFACT'],f.r.runtime.closedLoopHash.sha256Value(['UNRESOLVED-ARTIFACT']),'UNRESOLVED_HUMAN_DECISION_ARTIFACT_SET']]){const before=JSON.stringify(reloaded);nodeAssert.throws(()=>f.e.recordRegisteredHumanDecision(reloaded,{...command,value,targetId:digest}),error=>error.code===expected,'HUMAN_DECISION_TARGET_ORACLE: '+label+' selection was accepted.');nodeAssert.equal(JSON.stringify(reloaded),before);}
+ humanDecisionTargets.push({case:'retained-component-selection',result:'PASS',actualBytesStored:true,derivedBindingPreserved:true,duplicateWrongHashAndMissingMemberRejected:true,upstreamScopeSetupSynthetic:true});
+}
+{
+ const f=targetFixture('historical-preservation'),d=f.e.recordRegisteredHumanDecision(f.p,{...f.command,targetFamily:'job',targetId:f.p.job.JOB_ID}),id=f.e.recordId(d,'humanDecisions');
+ // Explicit legacy counterexample retained from before target admission. It is
+ // historical, never a new conforming command or current authorization.
+ d.fields.TARGET_FAMILY=d.TARGET_FAMILY='LEGACY_UNREGISTERED_SUBJECT';d.fields.TARGET_ID=d.TARGET_ID='LEGACY_MISSING_SUBJECT';f.e.refreshRecordHashes(d,'humanDecisions');f.p.job.CURRENT_INPUT_VERSION='INPUT-v002';
+ nodeAssert.equal(f.e.recordsForCurrentScope(f.p,'humanDecisions').some(row=>f.e.recordId(row,'humanDecisions')===id),false);
+ const saved=await f.r.store.writeProject(f.r.copy(f.p),{expectedProjectRevision:0}),reloaded=await f.r.store.readProject(f.p.job.JOB_ID),history=reloaded.projectData.humanDecisions.find(row=>f.e.recordId(row,'humanDecisions')===id);
+ nodeAssert.equal(f.e.recordValue(history,'TARGET_ID'),'LEGACY_MISSING_SUBJECT');nodeAssert.equal(history.recordSha256,d.recordSha256);nodeAssert.equal(reloaded.revision,saved.revision);nodeAssert.equal(f.e.humanDecisionTargetState(reloaded,{purpose:f.command.purpose,targetFamily:history.TARGET_FAMILY,targetId:history.TARGET_ID,value:history.VALUE}).valid,false);
+ humanDecisionTargets.push({case:'legacy-historical-subject-preserved-without-current-authority',result:'PASS',legacyFixtureExplicit:true});
+}
+{
+ const f=targetFixture('owning-input-invalidation');f.p.job.EXACT_USER_OBJECTIVE_VERBATIM='Original synthetic objective';f.e.recordHumanInputVersion(f.p,['EXACT_USER_OBJECTIVE_VERBATIM'],'SYNTHETIC OPERATOR');
+ const add=async text=>{const blob=new Blob([text]),artifactId=f.e.allocateId(f.p,'artifacts'),sha256=await f.r.runtime.closedLoopHash.sha256Bytes(blob);await f.r.store.putArtifact({artifactId,jobId:f.p.job.JOB_ID,filename:'candidate.txt',mediaType:'text/plain',blob});await f.r.store.getArtifact(artifactId);f.e.registerArtifactBytes(f.p,{stage:10,artifactId,filename:'candidate.txt',mediaType:'text/plain',byteSize:blob.size,sha256});return artifactId;};
+ const select=artifactId=>f.e.recordRegisteredHumanDecision(f.p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:f.r.runtime.closedLoopHash.sha256Value([artifactId]),value:[artifactId],operatorLabel:'SYNTHETIC OPERATOR'}),oldArtifact=await add('Original bytes'),oldDecision=select(oldArtifact),oldId=f.e.recordId(oldDecision,'humanDecisions');f.e.freezeCandidate(f.p,{stage:10,artifactIds:[oldArtifact],selectionDecisionId:oldId});
+ f.p.job.EXACT_USER_OBJECTIVE_VERBATIM='Corrected synthetic objective';f.e.recordHumanInputVersion(f.p,['EXACT_USER_OBJECTIVE_VERBATIM'],'SYNTHETIC OPERATOR');nodeAssert.equal(f.e.isActiveRecord(oldDecision),false,'HUMAN_DECISION_TARGET_ORACLE: actual owning correction left obsolete selection current.');
+ const currentArtifact=await add('Current bytes'),before=JSON.stringify(f.p);nodeAssert.throws(()=>f.e.freezeCandidate(f.p,{stage:10,artifactIds:[currentArtifact],selectionDecisionId:oldId}),/candidate-component selection decision does not exist in the current stage scope/,'HUMAN_DECISION_TARGET_ORACLE: old selection authorized current work after owning invalidation.');nodeAssert.equal(JSON.stringify(f.p),before);
+ const fresh=select(currentArtifact);f.e.freezeCandidate(f.p,{stage:10,artifactIds:[currentArtifact],selectionDecisionId:f.e.recordId(fresh,'humanDecisions')});const saved=await f.r.store.writeProject(f.r.copy(f.p),{expectedProjectRevision:0}),reloaded=await f.r.store.readProject(f.p.job.JOB_ID);nodeAssert.equal(f.e.isActiveRecord(reloaded.projectData.humanDecisions.find(row=>f.e.recordId(row,'humanDecisions')===oldId)),false);nodeAssert.equal(reloaded.revision,saved.revision);
+ humanDecisionTargets.push({case:'owning-correction-old-selection-rejected-fresh-selection-progresses',result:'PASS',actualInputVersionInvalidation:true,selectionAndFreezeProduction:true,upstreamStageCompletionClaim:false});
+}
+console.log(JSON.stringify({humanDecisionTargetIntegrity:true,synthetic:true,actualBrowser:false,verificationObservations:[{checkId:'CURRENT-HUMAN-DECISION-TARGET-INTEGRITY',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:141','specification/closed-loop-reliability-controlling-implementation-specification.txt:1117','specification/closed-loop-reliability-controlling-implementation-specification.txt:3959','specification/closed-loop-reliability-controlling-implementation-specification.txt:4715'],boundary:'Production human command and native transaction-adapter save/reload/integrity; synthetic upstream scope and legacy-record fixtures',expected:{badSubjectCommandRejected:true,noAllocationOnRejection:true,currentTypedTargetPersists:true,currentBadTargetWriteRejected:true,lastValidStatePreserved:true,retainedSelectionBindingPersists:true,historicalSubjectPreservedWithoutCurrentAuthority:true},observed:{badSubjectCommandRejected:true,noAllocationOnRejection:true,currentTypedTargetPersists:true,currentBadTargetWriteRejected:true,lastValidStatePreserved:true,retainedSelectionBindingPersists:true,historicalSubjectPreservedWithoutCurrentAuthority:true},passed:true}],humanDecisionTargets}));
 const {buildUnchangedConfirmationFixture}=await import('./stage19-fixture.mjs');
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,assert=(v,m)=>{if(!v)throw new Error(m)};
 const record=(collection,stage,fields={},id)=>{const def=schema.RECORD_SCHEMAS[collection],recordId=id||`${def.prefix}-TEST`;return {id:recordId,stage,active:true,fields:{...fields,[def.idField]:recordId},...fields,[def.idField]:recordId};};
@@ -22,7 +120,7 @@ function decision(p,overrides={}){return engine.recordRegisteredHumanDecision(p,
 {const p=project('JOB-STAGE23-WRONG-PURPOSE');const wrongPurpose=engine.recordRegisteredHumanDecision(p,{stage:20,purpose:'TRADEOFF_OR_SCOPE_DECISION',targetFamily:'candidateFreezes',targetId:confirmedCandidateId,value:'AUTHORIZED',operatorLabel:'STAGE23_VERIFIER'});const bb=p.projectData.baselines.length;let rejected=false;try{engine.freezeBaseline(p,{artifactIds:[confirmedArtifactId],authorizationDecisionId:engine.recordId(wrongPurpose,'humanDecisions'),operatorLabel:'STAGE23_VERIFIER'});}catch(e){rejected=/does not authorize the production baseline/i.test(String(e.message));}assert(rejected,'Freeze with a wrong-purpose decision was accepted.');assert(p.projectData.baselines.length===bb,'Rejected freeze partially mutated baseline state.');}
 
 // Permanent regression: a decision bound to a different target family or candidate identity cannot authorize the baseline.
-{const p=project('JOB-STAGE23-WRONG-TARGET');const wrongTarget=decision(p,{targetId:'CANDIDATE-OTHER'});const bb=p.projectData.baselines.length;let rejected=false;try{engine.freezeBaseline(p,{artifactIds:[confirmedArtifactId],authorizationDecisionId:engine.recordId(wrongTarget,'humanDecisions'),operatorLabel:'STAGE23_VERIFIER'});}catch(e){rejected=/not bound to the exact unchanged-confirmed candidate/i.test(String(e.message));}assert(rejected,'Freeze with a wrong-target decision was accepted.');assert(p.projectData.baselines.length===bb,'Rejected freeze partially mutated baseline state.');}
+{const p=project('JOB-STAGE23-WRONG-TARGET');const wrongTarget=decision(p);/* Explicit preserved preexisting wrong-subject fixture tests the independent freeze guard after command admission was strengthened. */wrongTarget.fields.TARGET_ID=wrongTarget.TARGET_ID='CANDIDATE-OTHER';engine.refreshRecordHashes(wrongTarget,'humanDecisions');const bb=p.projectData.baselines.length;let rejected=false;try{engine.freezeBaseline(p,{artifactIds:[confirmedArtifactId],authorizationDecisionId:engine.recordId(wrongTarget,'humanDecisions'),operatorLabel:'STAGE23_VERIFIER'});}catch(e){rejected=/not bound to the exact unchanged-confirmed candidate/i.test(String(e.message));}assert(rejected,'Freeze with a wrong-target decision was accepted.');assert(p.projectData.baselines.length===bb,'Rejected freeze partially mutated baseline state.');}
 
 // Permanent regression: a decision whose value is not exactly AUTHORIZED cannot authorize the baseline.
 {const p=project('JOB-STAGE23-WRONG-VALUE');const wrongValue=decision(p,{value:'PENDING'});const bb=p.projectData.baselines.length;let rejected=false;try{engine.freezeBaseline(p,{artifactIds:[confirmedArtifactId],authorizationDecisionId:engine.recordId(wrongValue,'humanDecisions'),operatorLabel:'STAGE23_VERIFIER'});}catch(e){rejected=/does not equal AUTHORIZED/i.test(String(e.message));}assert(rejected,'Freeze with a non-AUTHORIZED decision value was accepted.');assert(p.projectData.baselines.length===bb,'Rejected freeze partially mutated baseline state.');}

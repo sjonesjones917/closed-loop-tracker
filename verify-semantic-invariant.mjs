@@ -1,6 +1,7 @@
 import {reviewProofFixture,canonicalFixtureRecord} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import strictAssert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -75,9 +76,16 @@ const nakedVerification=record('verification',{REQ_ID:'REQ-1',RUN_ID:'RUN-X',TES
  const proseOnlyByte=record('verification',{EXACT_EVIDENCE:'An agent claims the byte hash matches.'});
  let byteEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:proseOnlyByte});
  assert(!byteEvidence.sufficient&&byteEvidence.requiredEvidenceClasses.includes('APPLICATION_VERIFIED_BYTES'),'Prose or a claimed hash satisfied a byte-authority proposition');
- p.projectData.artifacts.push({id:'ART-BYTE',stage:22,active:true,scope:{...scope},fields:{ARTIFACT_ID:'ART-BYTE',FILENAME:'product.bin',SHA256:'a'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
- p.projectData.evidenceRecords.push({id:'EVIDENCE-BYTE',stage:22,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-BYTE',KIND:'BYTE_HASH',AUTHORITY_TYPE:'APPLICATION',DESCRIPTION:'Application-computed byte identity.',CONTENT:'Verified exact bytes and SHA-256.',ATTACHMENT_ID:'ART-BYTE'},relationships:{ATTACHMENT_ID:'ART-BYTE'}});
+ // This fixture is synthetic evidence. Its byte-authority control must still
+ // cross the actual storage/readback boundary; a metadata availability claim
+ // cannot stand in for the application-observed custody required by §§17.6,25.
+ const byteBlob=new Blob(['Controlled exact product bytes'],{type:'application/octet-stream'}),artifactId=artifactFixtureId(engine,p,'BYTE-AUTHORITY'),digest=await hash.sha256Bytes(byteBlob);
+ engine.registerArtifactBytes(p,{stage:22,artifactId,filename:'product.bin',mediaType:byteBlob.type,byteSize:byteBlob.size,sha256:digest});
+ p.projectData.evidenceRecords.push({id:'EVIDENCE-BYTE',stage:22,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-BYTE',KIND:'BYTE_HASH',AUTHORITY_TYPE:'APPLICATION',DESCRIPTION:'Synthetic application-computed byte identity fixture.',CONTENT:'Verified exact bytes and SHA-256.',ATTACHMENT_ID:artifactId},relationships:{ATTACHMENT_ID:artifactId}});
  const verifiedByte=record('verification',{EXACT_EVIDENCE:'EVIDENCE-BYTE'},{evidenceRefs:['EVIDENCE-BYTE']});
+ assert(!engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:verifiedByte}).sufficient,'Metadata-only byte availability satisfied a byte-authority proposition');
+ const byteStore=await bindArtifactFixture([]);await byteStore.putArtifact({artifactId,jobId:p.job.JOB_ID,filename:'product.bin',mediaType:byteBlob.type,blob:byteBlob});
+ const stored=await byteStore.getArtifact(artifactId);strictAssert.equal(stored.jobId,p.job.JOB_ID);strictAssert.equal(stored.byteSize,byteBlob.size);strictAssert.equal(await hash.sha256Bytes(stored.blob),digest);
  byteEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:verifiedByte});
  assert(byteEvidence.sufficient,'Application-verified byte evidence did not repair byte-authority sufficiency');
 

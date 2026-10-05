@@ -1,4 +1,4 @@
-import {bindArtifactFixture,projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,bindAcceptanceUi,storageBroadcastNetwork,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
+import {bindArtifactFixture,projectStoreRuntime as baseProjectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,bindAcceptanceUi,storageBroadcastNetwork,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -6,13 +6,33 @@ import {readStoreArchive} from './test-zip.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {responseFixture,OBJECTIVE,OUTPUT,CANDIDATE,COUNTERPART_FAULT_CASES} from './operator-journey-fixtures.mjs';
-import {registerFixtureSourceSearchCapability,recordProposal} from './test-fixtures.mjs';
+import {registerFixtureSourceSearchCapability,recordProposal,deferredDefinitionResponseFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
 globalThis.dispatchEvent=()=>true;
 const injectedFault=process.env.CLRT_COUNTERPART_FAULT||null;
 const diagnosticPrefixDir=process.env.CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_DIR||null;
 const diagnosticPrefixInput=process.env.CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_INPUT||null;
-assert(!diagnosticPrefixInput,'The checked-in diagnostic mode creates the complete Stage7 prefix from current inputs; resumption is a separate scratch-only verifier mode.');
+assert(!diagnosticPrefixInput||diagnosticPrefixDir,'A retained diagnostic precursor is usable only by the declared isolated diagnostic setup mode.');
 assert(!(diagnosticPrefixDir&&injectedFault),'Diagnostic prefix generation and deliberate fault injection are separate verifier modes.');
+// Retained synthetic prerequisite fixtures are replayed only at their explicitly
+// recorded instant. The ordinary operator journey always uses the actual clock;
+// no retained capability report or canonical timestamp is rewritten for replay.
+const diagnosticRecovered=diagnosticPrefixInput?JSON.parse(fs.readFileSync(diagnosticPrefixInput,'utf8')):null;
+const diagnosticUsesArchivedClock=Boolean(diagnosticRecovered&&Object.hasOwn(diagnosticRecovered,'archivedFixtureClockUtc'));
+const archivedFixtureClockUtc=diagnosticUsesArchivedClock?diagnosticRecovered.archivedFixtureClockUtc:null;
+let DiagnosticFixtureDate=null;
+if(diagnosticUsesArchivedClock){
+  assert.equal(diagnosticRecovered.synthetic,true,'DIAGNOSTIC_ARCHIVED_CLOCK_SYNTHETIC_ORACLE');
+  assert.equal(diagnosticRecovered.actualBrowser,false,'DIAGNOSTIC_ARCHIVED_CLOCK_BROWSER_ORACLE');
+  assert.equal(diagnosticRecovered.earlierCompleteFlagsForced,false,'DIAGNOSTIC_ARCHIVED_CLOCK_GATES_ORACLE');
+  assert.equal(typeof archivedFixtureClockUtc,'string','DIAGNOSTIC_ARCHIVED_CLOCK_TIMESTAMP_ORACLE');
+  assert.equal(new Date(archivedFixtureClockUtc).toISOString(),archivedFixtureClockUtc,'DIAGNOSTIC_ARCHIVED_CLOCK_TIMESTAMP_ORACLE');
+  const NativeDate=Date;
+  DiagnosticFixtureDate=class extends NativeDate {constructor(...args){super(...(args.length?args:[archivedFixtureClockUtc]));}static now(){return NativeDate.parse(archivedFixtureClockUtc);}};
+  globalThis.Date=DiagnosticFixtureDate;
+}
+const diagnosticClockMetadata=diagnosticUsesArchivedClock?{archivedFixtureClockUtc,clockBasis:'EXPLICIT_RECORDED_SYNTHETIC_FIXTURE_INSTANT; canonical reports and timestamps retained; not current browser or external evidence'}:{};
+function projectStoreRuntime(options={}){return baseProjectStoreRuntime({...options,environment:{...options.environment,...(DiagnosticFixtureDate?{Date:DiagnosticFixtureDate}:{})}});}
+
 const runtimeSources={};
 const initialOwnerFaults=['reopened-initial-root-cause-by-later-defect','reopened-initial-regression-by-later-defect','reopened-initial-correction-by-later-defect'];
 const counterpartFaults={
@@ -44,7 +64,7 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 }
 const byteStore=await bindArtifactFixture([]);
 const engine=closedLoopWorkflowEngine,schema=closedLoopWorkflowSchema,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
-let p=diagnosticPrefixInput?JSON.parse(fs.readFileSync(diagnosticPrefixInput,'utf8')).project:closedLoopCore.createBlankState('COUNTERPART-CONTRACT-PREFLIGHT');if(!diagnosticPrefixInput){p.job.JOB_TITLE='Complete operator journey';p.job.EXACT_USER_OBJECTIVE_VERBATIM=OBJECTIVE;}engine.ensureShape(p);engine.recalculate(p);
+let p=diagnosticRecovered?diagnosticRecovered.project:closedLoopCore.createBlankState('COUNTERPART-CONTRACT-PREFLIGHT');if(!diagnosticPrefixInput){p.job.JOB_TITLE='Complete operator journey';p.job.EXACT_USER_OBJECTIVE_VERBATIM=OBJECTIVE;}engine.ensureShape(p);if(!diagnosticPrefixInput)engine.recalculate(p);
 const value=engine.recordValue,id=engine.recordId,latest=family=>engine.recordsForCurrentScope(p,family).at(-1),cases=[],retainedContextFiles=new Map();
 async function retainFixtureFile(label,filename,text){
   if(counterpartFaults[injectedFault]?.skipFixtureFile===label)return;
@@ -57,9 +77,11 @@ const diagnosticPrefixFiles=[];
 const sourceFingerprints=Object.fromEntries(['workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-fixtures.mjs','operator-journey-fixtures.mjs','app-core.js'].map(file=>[file,hash.sha256Text(fs.readFileSync(file,'utf8'))]));
 sourceFingerprints['verify-operator-counterpart.mjs']=hash.sha256Text(fs.readFileSync(import.meta.filename,'utf8'));
 if(diagnosticPrefixInput){
-  const recovered=JSON.parse(fs.readFileSync(diagnosticPrefixInput,'utf8'));
-  assert.equal(engine.gate(7,p).complete,true,'DIAGNOSTIC_PREFIX_RECOVERY_ORACLE: input must be a legitimate completed Stage7 prefix');
+  const recovered=diagnosticRecovered;
+  assert.equal(recovered.synthetic,true);assert.equal(recovered.earlierCompleteFlagsForced,false);assert([7,8,15,17].includes(recovered.entryStage),'DIAGNOSTIC_PREFIX_RECOVERY_ORACLE: unsupported predecessor boundary');if(recovered.entryStage===17)assert.equal(recovered.authorBoundary,'ENTRY_STAGE17_AFTER_ACCEPTED_STAGE16','DIAGNOSTIC_PREFIX_RECOVERY_ORACLE: only the exact retained entry checkpoint can resume this setup');
   await restoreArtifactFixture(byteStore,recovered.artifacts);
+  // Restored byte observations are prerequisites for the unchanged gate oracles.
+  engine.recalculate(p);for(let prior=1;prior<recovered.entryStage;prior++)assert.equal(engine.gate(prior,p).complete,true,'DIAGNOSTIC_PREFIX_RECOVERY_ORACLE: retained predecessor must actually complete '+prior);
   for(const file of recovered.contextFiles||[])retainedContextFiles.set(file.sha256,file);
 }
 function exportedDiagnosticRows(args,family){
@@ -67,6 +89,16 @@ function exportedDiagnosticRows(args,family){
   for(const file of args.contextFiles||[])for(const block of JSON.parse(Buffer.from(file.bytes).toString('utf8')).members||[])blocks.push(block);
   for(const match of args.instructionBytes.toString('utf8').matchAll(/BEGIN_UNTRUSTED_DATA_BLOCK\s*([\s\S]*?)\s*END_UNTRUSTED_DATA_BLOCK/g))blocks.push(JSON.parse(match[1]));
   const block=blocks.find(row=>row.sourceIdentity==='collection.'+family);return block?JSON.parse(block.value).records:[];
+}
+function compatibilityNativeIr(family){
+ const legacy={version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'FIXTURE'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'COMPARE',value:OUTPUT,operator:'NE'},{op:'ASSERT_EQ',value:true},...(family==='regressions'?[{op:'LOAD_ARTIFACT',binding:'TARGET'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:OUTPUT}]:[])]};
+ const normalized=closedLoopTestRuntime.normalizeSpec(legacy),withoutFixture=structuredClone(normalized);withoutFixture.steps=withoutFixture.steps.slice(3);withoutFixture.steps[0].inputs.left={literal:'VERIFIED'};
+ assert.equal(closedLoopTestRuntime.validateSpec(withoutFixture,family==='regressions'?{TARGET:{kind:'ARTIFACT',source:'CURRENT_PRODUCT',filename:'result.txt'}}:{}).valid,true,'Published native literal/predicate form must validate; no guessed port names.');return withoutFixture;
+}
+function compatibilityFutureTest(specimen,family,mode){
+ const future=structuredClone(specimen);future.tempKey='compat-'+(mode==='APPLICATION_DETERMINISTIC'?'native':'external')+'-'+family;const regression=family==='regressions';
+ Object.assign(future.fields,{TEST_TYPE:'ADVERSARIAL',TEST_ROLE:'NEGATIVE_ONLY',TEST_PROPOSITION_TEXT:regression?'The exact eight-byte VERIFIED fixture preserves the missing-LF defect; the same reviewed complete-content predicate distinguishes a defective eight-byte target from a distinct corrected nine-byte target.':'The exact eight-byte VERIFIED negative fixture is rejected for differing from the nine-byte required literal.',TESTED_SCOPE:regression?'Preserved exact negative literal plus the legitimately future current result.txt target under the published product phase/input contract.':'Only the exact preserved eight-byte negative literal and nine-byte expected control, scheduled at the declared future product phase.',POSITIVE_RESULT_MEANING:regression?'The preserved negative literal differs from the requirement and the current distinct corrected target is exactly VERIFIED followed by LF.':'The preserved eight-byte invalid literal differs from nine-byte VERIFIED followed by LF and is rejected.',NEGATIVE_RESULT_MEANING:regression?'The current target still omits LF or otherwise differs; PRE_CORRECTION is VIOLATED, POST_CORRECTION requires a distinct corrected target and SATISFIED.':'The invalid eight-byte literal is accepted or the conforming nine-byte control is rejected.',INPUTS:regression?'Preserved exact literal VERIFIED (8UTF8bytes) and the future current product result.txt (actual target bytes only when that phase is due).':'Preserved exact literal VERIFIED (8UTF8bytes) and exact expected VERIFIED followed by LF (9UTF8bytes).',PROCEDURE:regression?'First compare the preserved eight-byte literal with nine-byte VERIFIED followed by LF and require difference. Then compare all bytes of the actual current target with the nine-byte value; the original defective target fails and a distinct corrected target succeeds.':'Compare the complete preserved eight-byte literal with nine-byte VERIFIED followed by LF, require inequality, and retain the exact input/predicate/observation. No future target or execution is claimed now.',EXPECTED_RESULT:regression?'SATISFIED only for the reviewed exact corrected-target predicate; the original eight-byte target must yield VIOLATED.':'SATISFIED means actual rejection of the exact eight-byte invalid fixture, not affirmative product completion.',FAILURE_CONDITION:'A missing, added or changed byte, or an observation that does not establish the declared outcome meaning.',EVIDENCE_TO_PRESERVE:'Exact preserved negative literal, reviewed predicate/input contract, actual due target identity/bytes, current scope and separately observed outcome; no future execution receipt at definition admission.',VERIFICATION_PHASE:'FINAL_PRODUCT_ADVERSARIAL',EARLIEST_EXECUTABLE_STAGE:24,REQUIRED_BY_STAGE:24,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'},EXECUTION_MODE:mode,REQUIRED_CAPABILITY:mode==='APPLICATION_DETERMINISTIC'?'CLOSED_LOOP_TEST_IR':'INDEPENDENT_AGENT_REVIEW',TOOLS:mode==='APPLICATION_DETERMINISTIC'?'Application registered Test IR literal/byte primitives':'Supported independent complete-content comparison'});
+ if(mode==='APPLICATION_DETERMINISTIC')Object.assign(future.fields,{EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_INPUT_BINDINGS:regression?{TARGET:{kind:'ARTIFACT',source:'CURRENT_PRODUCT',filename:'result.txt'}}:{},EXECUTABLE_SPEC:compatibilityNativeIr(family)});return future;
 }
 function diagnosticActor(args){
   const response=responseFixture(args);
@@ -88,17 +120,26 @@ function diagnosticActor(args){
     const specimen=response.records.tests[0],future=structuredClone(specimen);future.tempKey='conditional-literal-rejection';
     Object.assign(future.fields,{TEST_TYPE:'ADVERSARIAL',TEST_ROLE:'NEGATIVE_ONLY',TEST_PROPOSITION_TEXT:'The deliberately malformed eight-byte output must fail exact comparison with VERIFIED plus LF.',TESTED_SCOPE:'Disposable clone of the current literal-output fixture only.',POSITIVE_RESULT_MEANING:'The invalid eight-byte fixture is rejected; the conforming nine-byte control matches.',NEGATIVE_RESULT_MEANING:'The invalid fixture is accepted or a conforming control is rejected.',EXPECTED_RESULT:'REJECT',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:8,REQUIRED_BY_STAGE:30,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}});
     response.records.tests.unshift(future);
+    for(const family of ['failureTests','regressions'])for(const mode of ['APPLICATION_DETERMINISTIC','INDEPENDENT_AGENT_REVIEW'])response.records.tests.push(compatibilityFutureTest(specimen,family,mode));
+    const capacity=compatibilityFutureTest(specimen,'regressions','INDEPENDENT_AGENT_REVIEW');capacity.tempKey='compat-capacity-regressions';Object.assign(capacity.fields,{TEST_PROPOSITION_TEXT:'The complete preserved199900character ASCII X negative fixture differs from the nine-byte required target; the same complete-content predicate rejects a defective target and accepts only a distinct corrected nine-byte target.',TESTED_SCOPE:'The exact preserved negative199900character literal of ASCII X and the legitimately future current result.txt target; no truncation or future execution now.',POSITIVE_RESULT_MEANING:'The complete199900character negative literal is unequal to VERIFIED followed by LF; the current distinct corrected target is exactly that required nine-byte value.',NEGATIVE_RESULT_MEANING:'The complete negative literal is accepted, evidence is truncated, or the actual target differs from the required nine-byte value.',INPUTS:'The complete preserved199900character ASCII X literal (all characters retained), the nine-byte expected VERIFIED followed by LF, and the actual current product result.txt when legitimately due.',PROCEDURE:'Compare all199900 ASCII X characters of the exact preserved negative literal with VERIFIED followed by LF; require inequality. Apply the same complete-content predicate to the actual due target: any different target fails, and only a distinct corrected nine-byte target succeeds.',EXPECTED_RESULT:'SATISFIED requires the exact negative fixture rejection and the distinct corrected target equality; a defective target is VIOLATED.',EVIDENCE_TO_PRESERVE:'The complete199900character negative literal, reviewed complete-content predicate/input contract, exact actual due target identity and bytes, and attributable separate outcome accounts; no truncated evidence or future execution receipt.'});response.records.tests.push(capacity);
   }
   if(stage===7&&operation==='COMPLETE'||stage===15&&operation==='COMPLETE'){
-    const test=rows('tests').find(row=>value(row,'TEST_ROLE')==='NEGATIVE_ONLY');assert(test,'DIAGNOSTIC_ACCEPTED_TEST_ORACLE');
+    const currentTests=rows('tests'),externalNegative=row=>value(row,'TEST_ROLE')==='NEGATIVE_ONLY'&&value(row,'EXECUTION_MODE')==='INDEPENDENT_AGENT_REVIEW';
+    const test=stage===7?(currentTests.find(row=>externalNegative(row)&&value(row,'VERIFICATION_PHASE')==='PREPRODUCT_ITERATION'&&Number(value(row,'EARLIEST_EXECUTABLE_STAGE'))===8&&Number(value(row,'REQUIRED_BY_STAGE'))===30)||currentTests.find(row=>externalNegative(row)&&value(row,'TEST_PROPOSITION_TEXT')==='The exact eight-byte VERIFIED negative fixture is rejected for differing from the nine-byte required literal.')):currentTests.find(row=>externalNegative(row)&&value(row,'VERIFICATION_PHASE')==='FINAL_PRODUCT_ADVERSARIAL'&&value(row,'TEST_PROPOSITION_TEXT')==='The exact eight-byte VERIFIED fixture preserves the missing-LF defect; the same reviewed complete-content predicate distinguishes a defective eight-byte target from a distinct corrected nine-byte target.');assert(test,'DIAGNOSTIC_ACCEPTED_TEST_ORACLE');
     const req=rows('requirements').find(row=>id(row,'requirements')===String(value(test,'REQ_ID')));assert(req,'DIAGNOSTIC_TYPED_REQUIREMENT_ORACLE');
     const relationships={REQ_ID:{recordId:id(req,'requirements')},EXECUTION_TEST_ID:{recordId:id(test,'tests')}};
-    if(stage===7)response.records.failureTests.push(recordProposal(schema,'failureTests',{tempKey:'conditional-future-failure',overrides:{VIOLATION_MODE:'MISSING_REQUIRED_TERMINAL_LF',FIXTURE:'VERIFIED',EXPECTED_REJECTION:'REJECT',ACTUAL_RESULT:'NOT_RUN',EXECUTION_OUTCOME:'NOT_RUN',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:8,REQUIRED_BY_STAGE:30,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'},EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_AGENT_REVIEW'},relationships}));
+    const family=stage===7?'failureTests':'regressions';let definition,defect=null;
+    if(stage===7)definition=recordProposal(schema,'failureTests',{tempKey:'conditional-future-failure',overrides:{VIOLATION_MODE:'MISSING_REQUIRED_TERMINAL_LF',FIXTURE:'VERIFIED',EXPECTED_REJECTION:'REJECT',ACTUAL_RESULT:'NOT_RUN',EXECUTION_OUTCOME:'NOT_RUN',...Object.fromEntries(schema.TIMING_FIELDS.map(name=>[name,value(test,name)])),EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_AGENT_REVIEW'},relationships});
     else{
-      const defect=rows('defects').find(row=>String(value(row,'REQ_ID'))===id(req,'requirements'));assert(defect,'DIAGNOSTIC_OBSERVED_INITIAL_DEFECT_ORACLE');
+      defect=rows('defects').find(row=>String(value(row,'REQ_ID'))===id(req,'requirements'));assert(defect,'DIAGNOSTIC_OBSERVED_INITIAL_DEFECT_ORACLE');
+      assert(Array.isArray(defect.evidenceRefs)&&defect.evidenceRefs.length>0,'DIAGNOSTIC_PUBLISHED_DEFECT_SUPPORT_ORACLE: the actual exported governing defect must provide its required evidence identities');const providedEvidence=new Set(rows('evidenceRecords').map(row=>id(row,'evidenceRecords')));assert(defect.evidenceRefs.every(ref=>providedEvidence.has(ref))&&defect.unavailableEvidenceRefCount===0,'DIAGNOSTIC_PUBLISHED_DEFECT_SUPPORT_ORACLE: all required defect support must be in the actual authorized exported evidence cohort');
       relationships.DEFECT_ID={recordId:id(defect,'defects')};
-      response.records.regressions.unshift(recordProposal(schema,'regressions',{tempKey:'conditional-future-regression',overrides:{FAILURE_FIXTURE:'VERIFIED',REPRODUCTION_PROCEDURE:'Execute the supplied diagnostic comparison against the preserved accepted eight-byte failed output.',DETECTION_METHOD:'Actual disposable complete-byte comparison',CORRECTION:'Preserve the required terminal LF.',PERMANENT_TEST_LOCATION:'Synthetic current regression registry',APPLICABILITY:'APPLICABLE',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:16,REQUIRED_BY_STAGE:30,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'},EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_AGENT_REVIEW'},relationships}));
+      definition=recordProposal(schema,'regressions',{tempKey:'conditional-future-regression',overrides:{FAILURE_FIXTURE:'VERIFIED',REPRODUCTION_PROCEDURE:'Execute the supplied diagnostic comparison against the preserved accepted eight-byte failed output.',DETECTION_METHOD:'Actual disposable complete-byte comparison',CORRECTION:'Preserve the required terminal LF.',PERMANENT_TEST_LOCATION:'Synthetic current regression registry',APPLICABILITY:'APPLICABLE',...Object.fromEntries(schema.TIMING_FIELDS.map(name=>[name,value(test,name)])),EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_AGENT_REVIEW'},relationships});
     }
+    // This synthetic author reads the actual published profile and preserves
+    // the exact missing-LF negative case. It does not establish future execution.
+    const authored=deferredDefinitionResponseFixture({schema,engine,prompts},{job:{JOB_ID:args.manifest.jobId}},args.prompt,{family,tempKey:definition.tempKey,fields:definition.fields,relationships,fixtureValue:'VERIFIED',...(defect?{defectId:id(defect,'defects'),defectEvidenceIds:defect.evidenceRefs||[]}:{})});
+    response.records[family][stage===7?'push':'unshift'](authored.records[family][0]);response.evidence.push(...authored.evidence);
   }
   return response;
 }
@@ -116,17 +157,17 @@ async function diagnosticPackage(stage,operation){
   assert.equal(manifest.operationReservationId,prompt.operationReservationId);assert.equal(manifest.challengeNonce,prompt.challengeNonce);
   console.error(JSON.stringify({phase:'diagnostic-definition-actual-package',stage:prompt.stage,operation:prompt.operation,packageId:manifest.packageId,instructionId:prompt.instructionId}));
   p=structuredClone(await r.store.readProject(saved.job.JOB_ID));
-  return {schema,engine,prompt:structuredClone(prompt),manifest,instructionBytes,contextFiles};
+  return {schema,engine,prompt:structuredClone(prompt),manifest,instructionBytes,contextFiles,storageRuntime:r};
 }
 async function emitDiagnosticPrefix(stage){
   if(!diagnosticPrefixDir)return;
-  const number=Number(stage);assert(number>=8&&number<=30);for(let prior=1;prior<number;prior++)assert.equal(engine.gate(prior,p).complete,true,'DIAGNOSTIC_PREFIX_PREREQUISITE_ORACLE '+prior+' -> '+number);
+  const number=Number(stage);assert([7,8,15].includes(number));for(let prior=1;prior<number;prior++)assert.equal(engine.gate(prior,p).complete,true,'DIAGNOSTIC_PREFIX_PREREQUISITE_ORACLE '+prior+' -> '+number);
   fs.mkdirSync(diagnosticPrefixDir,{recursive:true});const file=diagnosticPrefixDir+'/prefix-stage'+String(number).padStart(2,'0')+'.json';if(diagnosticPrefixFiles.includes(file))return;
   const r=projectStoreRuntime({sourceOverrides:runtimeSources});await restoreArtifactFixture(r.store,await captureArtifactFixture(byteStore,p.job.JOB_ID));const state=r.copy(p);state.activeStage=number;await hydrateRetainedPromptContexts(r,state,[...retainedContextFiles.values()]);
   await r.store.writeProject(state,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});const saved=await r.store.readProject(state.job.JOB_ID);assert.equal(r.store.validateProjectIntegrity(saved).valid,true);
-  const failure=engine.records(p,'failureTests').find(row=>String(value(row,'EXECUTION_TEST_ID')||'').trim()),regression=engine.records(p,'regressions').find(row=>String(value(row,'EXECUTION_TEST_ID')||'').trim());assert(failure,'DIAGNOSTIC_PREFIX_FAILURE_DEFINITION_ORACLE');
-  fs.writeFileSync(file,JSON.stringify({schema:'closed-loop-counterpart-diagnostic-prefix/1',sourceCommit:process.env.GITHUB_SHA||null,sourceFingerprints,entryStage:number,completedPriorStages:number-1,project:saved,artifacts:await captureArtifactFixture(r.store,saved.job.JOB_ID),contextFiles:[...retainedContextFiles.values()],definitionId:id(failure,'failureTests'),testId:value(failure,'EXECUTION_TEST_ID'),regressionId:regression?id(regression,'regressions'):null,synthetic:true,actualBrowser:false,earlierCompleteFlagsForced:false}));
-  diagnosticPrefixFiles.push(file);console.error(JSON.stringify({phase:'diagnostic-prefix-stored-read-emitted',entryStage:number,file,projectSha256:saved.projectSha256,definitionId:id(failure,'failureTests'),regressionId:regression?id(regression,'regressions'):null}));
+  const failure=engine.records(p,'failureTests').find(row=>String(value(row,'EXECUTION_TEST_ID')||'').trim()),regression=engine.records(p,'regressions').find(row=>String(value(row,'EXECUTION_TEST_ID')||'').trim());if(number>=8)assert(failure,'DIAGNOSTIC_PREFIX_FAILURE_DEFINITION_ORACLE');
+  fs.writeFileSync(file,JSON.stringify({schema:'closed-loop-counterpart-diagnostic-prefix/1',...diagnosticClockMetadata,sourceCommit:process.env.GITHUB_SHA||null,sourceFingerprints,entryStage:number,completedPriorStages:number-1,project:saved,artifacts:await captureArtifactFixture(r.store,saved.job.JOB_ID),contextFiles:[...retainedContextFiles.values()],definitionId:failure?id(failure,'failureTests'):null,testId:failure?value(failure,'EXECUTION_TEST_ID'):null,regressionId:regression?id(regression,'regressions'):null,synthetic:true,actualBrowser:false,earlierCompleteFlagsForced:false}));
+  diagnosticPrefixFiles.push(file);console.error(JSON.stringify({phase:'diagnostic-prefix-stored-read-emitted',entryStage:number,file,projectSha256:saved.projectSha256,definitionId:failure?id(failure,'failureTests'):null,regressionId:regression?id(regression,'regressions'):null}));
 }
 function diagnosticOrdinaryAction(stage){
   const external=operation=>{assert.equal(schema.STAGE_OPERATION_REGISTRY[stage+':'+operation]?.executorClass,'EXTERNAL_AGENT','DIAGNOSTIC_ORDINARY_REGISTRY_ORACLE');return {actionType:'EXTERNAL_AGENT_TOOL',operation,explicitOrdinarySelection:true};},native=actionType=>({actionType,explicitNativeControl:true});
@@ -149,8 +190,9 @@ function diagnosticOrdinaryAction(stage){
 // the separate verify-complete-operator-journey.mjs browser execution.
 const stageLimit=Number(process.env.CLRT_COUNTERPART_STAGE_LIMIT||(diagnosticPrefixDir?7:30));
 assert(Number.isInteger(stageLimit)&&stageLimit>=1&&stageLimit<=30);
-assert(!diagnosticPrefixDir||stageLimit===7,'The checked-in diagnostic mode emits exactly the verified Stage7 prefix; ordinary verification still supports all30 stages.');
-// SCRATCH DRAFT ONLY. Intended insertion in existing verify-operator-counterpart.mjs.
+assert(!diagnosticPrefixDir||[6,7,14,16].includes(stageLimit),'Diagnostic mode is bounded to the legitimate Stage6/7/14/16 precursors; ordinary verification still supports all30 stages.');
+// Isolated synthetic owning-operation controls use the existing accepted
+// lifecycle precursor and actual package/file/acceptance/storage boundaries.
 // Existing COMPLETE controls remain intact. All inputs below come from the
 // legitimate main lifecycle immediately before Stage07 / Stage15 admission.
 async function verifyOwningStageExecution(stage, operation) {
@@ -287,6 +329,59 @@ function verifyPermanentRegressionOwners(r,saved){
   cases.push({caseId:'stage15-original-and-stage17-19-complete-permanent-regression-selection',stage:17,operation:'REGRESSION',result:'PASS',synthetic:true,actualBrowser:false,initialIds,laterIds,observedBoundary:'actual admitted permanent17 regression -> Stage15 historical selection and current17/19 registered permanent selection -> initial/later gates'});
 }
 
+async function stage17DeferredReceiptControl(r,initial,sourceOverrides){
+  const e=r.engine,h=r.runtime.closedLoopHash,stage=17,operation='EXECUTE_FAILURE_TEST',copy=r.copy;
+  const itemFor=project=>e.deferredExecutionPlan(project,stage,{operation}).items.find(item=>item.subjectId===subjectId);
+  const initialItem=e.deferredExecutionPlan(initial,stage,{operation}).items.find(item=>item.completed&&item.family==='failureTests');
+  assert(initialItem,'STAGE17_RECEIPT_PRECURSOR_ORACLE: an actually accepted conditional receipt is required');
+  const subjectId=initialItem.subjectId,subject=e.records(initial,'failureTests').find(row=>e.recordId(row,'failureTests')===subjectId);
+  assert.equal(e.recordValue(subject,'VERIFICATION_PHASE'),'PREPRODUCT_ITERATION');assert.equal(e.recordValue(subject,'PER_RUN_REQUIRED'),false);
+  assert(!initialItem.binding.targetIdentities.some(row=>['candidateFreezes','iterations','runs'].includes(row.family)),'STAGE17_RECEIPT_NON_RUN_TARGET_ORACLE');
+  const receipt=e.records(initial,'regressionExecutions').find(row=>initialItem.receipts.includes(e.recordId(row,'regressionExecutions')));
+  assert(receipt,'STAGE17_RECEIPT_CANONICAL_PRECURSOR_ORACLE');
+  const receiptId=e.recordId(receipt,'regressionExecutions'),receiptBytes=h.stableStringify(receipt),definitionBytes=h.stableStringify(subject),observation=e.deferredReceiptObservationIdentity(initial,receipt),raw=initial.projectData.rawResponses.find(row=>row.rawResponseId===receipt.rawResponseId);
+  assert(observation);assert(raw);const rawBytes=raw.completeRawResponse,phases=[];
+  const reportReference=e.deferredReceiptAttachmentState(initial,receipt);assert.equal(reportReference.allowed,true,'STAGE17_RECEIPT_INITIAL_BYTE_CUSTODY_ORACLE');
+  const reportFile=await r.store.getArtifact(reportReference.attachmentId,{jobId:initial.job.JOB_ID});assert(reportFile);
+  // A documented old-comparator equivalent removes only the normalization
+  // which accidentally treated ambient candidate/iteration IDs as material.
+  const engineSource=sourceOverrides['workflow-engine.js']||fs.readFileSync('workflow-engine.js','utf8'),normalization='return {...target,compatibilityBinding:{...target.compatibilityBinding,scope:materialScope}};';
+  assert.equal(engineSource.split(normalization).length,2,'STAGE17_RECEIPT_OLD_COMPARATOR_FAULT_ANCHOR_ORACLE');
+  const prior=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':engineSource.replace(normalization,'return target;')}});
+  await restoreArtifactFixture(prior.store,await captureArtifactFixture(r.store,initial.job.JOB_ID));
+  assert.equal(prior.engine.deferredReceiptMatches(prior.copy(initial),prior.copy(receipt),prior.copy(initialItem.binding)),true,'STAGE17_RECEIPT_OLD_COMPARATOR_CONFORMING_CONTROL_ORACLE');
+  return {
+    async observe(project,phase){
+      const reloaded=await r.store.readProject(project.job.JOB_ID),item=itemFor(reloaded),current=e.records(reloaded,'regressionExecutions').find(row=>e.recordId(row,'regressionExecutions')===receiptId);
+      assert.equal(reloaded.projectSha256,project.projectSha256,'STAGE17_RECEIPT_OBSERVATION_MUST_NOT_WRITE_ORACLE');
+      assert(item);assert.equal(item.completed,true,'STAGE17_RECEIPT_FREEZE_RESERVATION_ORACLE: '+phase);
+      assert.deepEqual(Array.from(item.receipts),[receiptId],'STAGE17_RECEIPT_NO_REPEATED_EXECUTION_ORACLE: '+phase);
+      assert.equal(h.stableStringify(current),receiptBytes);assert.equal(h.stableStringify(e.records(reloaded,'failureTests').find(row=>e.recordId(row,'failureTests')===subjectId)),definitionBytes);
+      assert.equal(reloaded.projectData.rawResponses.find(row=>row.rawResponseId===raw.rawResponseId).completeRawResponse,rawBytes);
+      assert.equal(e.deferredReceiptObservationIdentity(reloaded,current),observation,'STAGE17_RECEIPT_STABLE_OBSERVATION_IDENTITY_ORACLE');
+      assert.equal(e.deferredReceiptAttachmentState(reloaded,current).allowed,true,'STAGE17_RECEIPT_RELOAD_CUSTODY_ORACLE');
+      assert.equal(prior.engine.deferredReceiptMatches(prior.copy(reloaded),prior.copy(current),prior.copy(item.binding)),false,'STAGE17_RECEIPT_OLD_COMPARATOR_COUNTEREXAMPLE_ORACLE: '+phase);
+      phases.push({phase,completed:true,receiptId,rawPreserved:true,definitionPreserved:true,byteCustodyReobserved:true,oldComparatorWouldRepeat:true});
+    },
+    async finish(project,runs){
+      const item=itemFor(project),current=e.records(project,'regressionExecutions').find(row=>e.recordId(row,'regressionExecutions')===receiptId),idempotent=copy(project),before=h.sha256Value(idempotent);
+      assert.deepEqual(Array.from(e.reserveRunBatch(idempotent,{stage}),row=>({...row})),Array.from(runs,row=>({...row})),'STAGE17_RECEIPT_IDEMPOTENT_BATCH_ORACLE');assert.equal(h.sha256Value(idempotent),before,'STAGE17_RECEIPT_IDEMPOTENT_BATCH_STATE_ORACLE');
+      const changedBindings=[['subject',binding=>binding.subjectSha256='0'.repeat(64)],['fixture',binding=>binding.fixtureSha256='0'.repeat(64)],['test',binding=>binding.testSha256='0'.repeat(64)],['input-version',binding=>binding.scope.inputVersion='SYNTHETIC_CHANGED_MATERIAL_INPUT'],['instruction-version',binding=>binding.compatibilityBinding.scope.instructionVersion='SYNTHETIC_CHANGED_MATERIAL_INSTRUCTION'],['activation',binding=>binding.compatibilityBinding.historyActivationId='SYNTHETIC_CHANGED_ACTIVATION']];
+      for(const [name,mutate]of changedBindings){const binding=copy(item.binding);mutate(binding);assert.equal(e.deferredReceiptMatches(project,current,binding),false,'STAGE17_RECEIPT_MATERIAL_CHANGE_ORACLE: '+name);}
+      const head=project.projectSha256;
+      await r.store.deleteArtifact(reportFile.artifactId,project.job.JOB_ID);
+      try{
+        const missing=await r.store.readProject(project.job.JOB_ID),missingReceipt=e.records(missing,'regressionExecutions').find(row=>e.recordId(row,'regressionExecutions')===receiptId);
+        assert.equal(e.deferredReceiptAttachmentState(missing,missingReceipt).allowed,false,'STAGE17_RECEIPT_MISSING_BYTES_AUTHORITY_ORACLE');assert.equal(itemFor(missing).completed,false,'STAGE17_RECEIPT_MISSING_BYTES_BLOCK_ORACLE');assert.equal(missing.projectSha256,head);assert.equal(h.stableStringify(missingReceipt),receiptBytes);
+      }finally{await r.store.putArtifact({...reportFile,expectedSha256:reportFile.sha256});}
+      const restored=await r.store.readProject(project.job.JOB_ID);assert.equal(itemFor(restored).completed,true,'STAGE17_RECEIPT_RESTORED_BYTES_PROGRESS_ORACLE');assert.equal(restored.projectSha256,head);
+      const result={operation:'EXECUTE_FAILURE_TEST',caseId:'stage17-deferred-receipt-freeze-reservation',requirementRefs:[1331,1502,1503,2884,2923].map(line=>'specification/closed-loop-reliability-controlling-implementation-specification.txt:'+line),subjectId,receiptId,phases,idempotentBatch:true,materialBindingNegatives:changedBindings.map(([name])=>name),missingBytesBlocked:true,restoredBytesProgress:true,canonicalStateUnchangedByNegatives:true,observedBoundary:'Actual accepted file/returned report -> real Stage17 freeze -> real ten-slot reservation -> store/readback; old-comparator and material-binding helpers are explicitly isolated counterfactuals.',synthetic:true,actualBrowser:false};
+      assert.deepEqual(phases.map(row=>row.phase),['after-freeze','after-run-reservation']);
+      console.error(JSON.stringify({phase:'stage17-receipt-freeze-controls',...result}));return result;
+    }
+  };
+}
+
 // A disposable Stage17 branch establishes real failed-run data before asking
 // the exact ROOT_CAUSE / CORRECT actors for a proposal. The main journey stays
 // unchanged and still supplies the separate clean corrected-iteration control.
@@ -298,15 +393,24 @@ async function verifyStage17FailureCorrection() {
   const fork=copy(p);fork.activeStage=17;e.recalculate(fork);
   await hydrateRetainedPromptContexts(r,fork,[...retainedContextFiles.values()]);
   let saved=await store.writeProject(fork,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
-  const v=e.recordValue,rid=(record,family)=>e.recordId(record,family),proof=[];
+  if(diagnosticPrefixDir){
+    // Retain accepted Stage15/16 work before a disposable setup assumption.
+    // This is an entry checkpoint, distinct from the later failed-RCA boundary.
+    for(let prior=1;prior<=16;prior++)assert.equal(e.gate(prior,saved).complete,true,'DIAGNOSTIC_STAGE17_ENTRY_PREDECESSOR_ORACLE: '+prior);
+    const file=diagnosticPrefixDir+'/prefix-stage17-entry.json';fs.writeFileSync(file,JSON.stringify({schema:'closed-loop-counterpart-diagnostic-prefix/1',...diagnosticClockMetadata,sourceFingerprints,entryStage:17,authorBoundary:'ENTRY_STAGE17_AFTER_ACCEPTED_STAGE16',completedPriorStages:16,project:saved,artifacts:await captureArtifactFixture(store,saved.job.JOB_ID),contextFiles:[...retainedContextFiles.values()],synthetic:true,actualBrowser:false,earlierCompleteFlagsForced:false}));diagnosticPrefixFiles.push(file);
+    console.error(JSON.stringify({phase:'diagnostic-stage17-entry-retained',file,projectSha256:saved.projectSha256,nextAction:e.operationalNextAction(saved,stage)}));
+  }
+  const v=e.recordValue,rid=(record,family)=>e.recordId(record,family),proof=[];let deferredReceiptRegression=null;
+  let checkpointSequence=0;
+  const retainSetupCheckpoint=async phase=>{if(!diagnosticPrefixDir)return;const file=diagnosticPrefixDir+'/checkpoint-stage17-last-accepted.json',temporary=file+'.tmp',plan=e.deferredExecutionPlan(saved,stage),checkpoint={schema:'closed-loop-counterpart-diagnostic-prefix/1',...diagnosticClockMetadata,sourceFingerprints,entryStage:17,authorBoundary:'ENTRY_STAGE17_AFTER_ACCEPTED_STAGE16',completedPriorStages:16,lastAcceptedSetupPhase:phase,project:saved,artifacts:await captureArtifactFixture(store,saved.job.JOB_ID),contextFiles:[...retainedContextFiles.values(),...setupContexts.values()],setupReceipts:proof,bindingDiagnostics:plan.items.map(item=>({family:item.family,subjectId:item.subjectId,completed:item.completed,receipts:item.receipts,compatibility:item.compatibility,binding:item.binding,targetIdentities:item.targetIdentities,scope:item.scope})),synthetic:true,actualBrowser:false,earlierCompleteFlagsForced:false};fs.writeFileSync(temporary,JSON.stringify(checkpoint));fs.renameSync(temporary,file);const numbered=diagnosticPrefixDir+'/checkpoint-stage17-'+String(++checkpointSequence).padStart(2,'0')+'-'+phase+'.json';fs.copyFileSync(file,numbered);console.error(JSON.stringify({phase:'stage17-durable-acceptance-checkpoint',operation:phase,file:numbered,projectSha256:saved.projectSha256,nextAction:e.operationalNextAction(saved,stage)}));};
   const persist=async project=>{const impact=store.mutationImpact(saved,project);saved=await store.writeProject(project,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256,...(impact.requiresConfirmation?{mutationConfirmation:impact}:{})});};
-  const command=async mutate=>{const project=copy(saved);const result=mutate(project);await persist(project);return result;};
+  const command=async(mutate,phase='APPLICATION_COMMAND')=>{const project=copy(saved);const result=mutate(project);await persist(project);await retainSetupCheckpoint(phase);return result;};
   const freeze=async()=>command(project=>{
     const artifactId=artifactFixtureId(e,project,'CANDIDATE-FILE'),artifact=e.records(project,'artifacts').find(row=>rid(row,'artifacts')===artifactId);
     assert(artifact,'STAGE17_COMPONENT_ORACLE: current verified candidate bytes are required');
     const artifactIds=[artifactId],decision=e.recordRegisteredHumanDecision(project,{stage,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(artifactIds),value:artifactIds,operatorLabel:'SYNTHETIC_STAGE17_OPERATOR'});
     return e.freezeCandidate(project,{stage,artifactIds,selectionDecisionId:rid(decision,'humanDecisions'),operatorLabel:'SYNTHETIC_STAGE17_OPERATOR'});
-  });
+  },'FREEZE_CANDIDATE');
   async function admit(operation,makeResponse=null,{omitTerminalLF=false}={}) {
     console.error(JSON.stringify({phase:'stage17-admit-start',stage,operation}));
     const draft=copy(saved),reserved=pr.reserveAndBuildPromptRecord(draft,stage,{operation}).prompt;
@@ -330,11 +434,13 @@ async function verifyStage17FailureCorrection() {
     const latest=family=>rows(family).at(-1),reference=(row,family)=>{assert(row,'Missing exported '+family);return {recordId:rid(row,family)};};
     const template=JSON.parse(instructionBytes.toString('utf8').split('\nSTRICT RESPONSE CONTRACT\n').at(-1).split('\n\nEND COPY BLOCK')[0]);
     const base=()=>({schema:s.RESPONSE_SCHEMA,contractProfileId:s.CONTRACT_PROFILE_ID,jobId:template.jobId,stage,operation,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce,scope:manifest.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[{temporaryKey:'evidence-1',kind:'SYNTHETIC_OPERATOR_JOURNEY',description:'Actual synthetic Stage17 '+operation+' comparison/control',authorityType:'AGENT_CLAIM',location:'verify-operator-counterpart.mjs',content:'Synthetic local fixture only. No real human, external-system execution or physical-device observation asserted.'}],unresolved:[],warnings:[],attachments:[]});
-    const envelope=makeResponse?makeResponse({base,rows,latest,reference,manifest,prompt,instructionBytes}):responseFixture(actors);
+    const authored=makeResponse?await makeResponse({base,rows,latest,reference,manifest,prompt,instructionBytes}):responseFixture(actors),envelope=authored.envelope||authored,received=copy(saved),files=[];
+    for(const returned of authored.returnedAttachments||[]){const descriptor=envelope.attachments.find(row=>row.temporaryKey===returned.temporaryKey);assert(descriptor,'STAGE17_RETURNED_EVIDENCE_SLOT_ORACLE');assert(i.attachmentSlotPlan(received,copy(envelope),prompt).some(row=>row.attachmentSlotId===descriptor.attachmentSlotId));const artifactId=e.allocateId(received,'artifacts',copy({targetSlot:descriptor.attachmentSlotId,payload:{stage,filename:descriptor.filename,mediaType:descriptor.mediaType,byteSize:descriptor.byteSize,sha256:descriptor.sha256}})),blob=new Blob([returned.bytes],{type:descriptor.mediaType}),stored=await store.putArtifact({artifactId,jobId:saved.job.JOB_ID,blob,filename:descriptor.filename,mediaType:descriptor.mediaType,expectedSha256:descriptor.sha256});assert.equal(stored.byteSize,descriptor.byteSize);assert.equal(Buffer.from(await (await store.getArtifact(artifactId,{jobId:saved.job.JOB_ID})).blob.arrayBuffer()).equals(Buffer.from(returned.bytes)),true,'STAGE17_RETURNED_EVIDENCE_BYTES_ORACLE');files.push({artifactId,name:stored.filename,type:stored.mediaType,size:stored.byteSize,sha256:stored.sha256,attachmentSlotId:descriptor.attachmentSlotId});}
+    for(const file of contextFiles)setupContexts.set(hash.sha256Text(file.bytes.toString('utf8')),{filename:file.filename,text:file.bytes.toString('utf8'),sha256:hash.sha256Text(file.bytes.toString('utf8')),byteSize:file.bytes.length});
     const text=JSON.stringify(envelope),staged=await store.stageResponseFile({jobId:saved.job.JOB_ID,stage,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',mediaType:'application/json',promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce});
     const file=await store.readStagedResponseFile({jobId:saved.job.JOB_ID,stagingId:staged.stagingId});
     assert.equal(new TextDecoder('utf-8',{fatal:true}).decode(file.bytes),text);
-    const before=saved.projectData.acceptedChanges.length,captured=i.captureRaw(saved,{stage,text,promptRecord:prompt,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',status:file.status,sha256:file.sha256,byteSize:file.byteSize,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce}});
+    const before=saved.projectData.acceptedChanges.length,captured=i.captureRaw(received,{stage,text,promptRecord:prompt,files,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',status:file.status,sha256:file.sha256,byteSize:file.byteSize,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce}});
     saved=await store.writeProject(captured.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});
     const prepared=i.prepareCaptured(saved,{rawResponseId:captured.rawRecord.rawResponseId});
     assert.equal(prepared.validation.valid,true,'STAGE17_ADMISSION_ORACLE '+operation+': '+JSON.stringify(prepared.validation.issues));
@@ -348,6 +454,7 @@ async function verifyStage17FailureCorrection() {
     const duplicate=i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_STAGE17_OPERATOR'});assert.equal(duplicate.idempotent,true);
     const item={operation,rawResponseId:captured.rawRecord.rawResponseId,proposalId:prepared.proposal.proposalId,acceptedChangeId:accepted.changeId,scope:accepted.scope,rawResponseSha256:file.sha256};proof.push(item);
     console.error(JSON.stringify({phase:'stage17-admit-complete',stage,...item}));
+    await retainSetupCheckpoint(operation);
     return item;
   }
   // Setup uses the existing counterpart admission path, without duplicating
@@ -370,11 +477,29 @@ async function verifyStage17FailureCorrection() {
     proof.push({operation,rawResponseId:accepted.rawResponseId,proposalId:prepared.proposal.proposalId,acceptedChangeId:accepted.changeId,scope:accepted.scope,observedBoundary:'production reservation/generated context -> prepare -> operator commit; setup prefix persisted together after comparison'});
     console.error(JSON.stringify({phase:'stage17-setup-complete',stage,operation,rawResponseId:accepted.rawResponseId}));
   }
-  assert.equal(e.operationalNextAction(saved,stage).actionType,'FREEZE_CANDIDATE');
-  const first=await freeze(),iterationId=rid(first.iteration,'iterations'),candidateId=rid(first.candidate,'candidateFreezes');
+  const entryAction=e.operationalNextAction(saved,stage);
+  if(diagnosticPrefixDir&&entryAction.operation==='EXECUTE_FAILURE_TEST'){
+    assert.equal(entryAction.actionType,'EXTERNAL_AGENT_TOOL');const definition=e.records(saved,'failureTests').find(row=>rid(row,'failureTests')===entryAction.deferredSubjectId),definitionBytes=JSON.stringify(definition);
+    await admit(entryAction.operation,({manifest,prompt})=>deferredFailureExecutionResponseFixture({schema:s,hash:r.runtime.closedLoopHash},manifest,prompt.contextManifest.deferredExecutionBinding,{isolationIdentity:'synthetic-stage17-original-eight-byte-fixture'}));
+    assert.equal(JSON.stringify(e.records(saved,'failureTests').find(row=>row.id===definition.id)),definitionBytes,'STAGE17_CONDITIONAL_DEFINITION_PRESERVATION_ORACLE');assert.equal(e.deferredExecutionPlan(saved,stage,{operation:entryAction.operation}).items.find(row=>row.subjectId===definition.id).completed,true,'STAGE17_CONDITIONAL_RETURNED_RECEIPT_ORACLE');
+  }
+  // The default due-stage verifier generates this legitimate diagnostic
+  // predecessor. Keep the accepted conditional receipt across the real freeze
+  // and ten-slot reservation, rather than manufacturing completed stages.
+  const scheduledReceiptControl=diagnosticPrefixDir&&e.deferredExecutionPlan(saved,stage,{operation:'EXECUTE_FAILURE_TEST'}).items.some(item=>{
+    if(item.family!=='failureTests')return false;
+    const definition=e.records(saved,'failureTests').find(row=>rid(row,'failureTests')===item.subjectId),earliest=v(definition,'EARLIEST_EXECUTABLE_STAGE');
+    return v(definition,'VERIFICATION_PHASE')==='PREPRODUCT_ITERATION'&&v(definition,'PER_RUN_REQUIRED')===false&&Number.isInteger(earliest)&&earliest<=stage;
+  });
+  const receiptControl=scheduledReceiptControl?await stage17DeferredReceiptControl(r,saved,runtimeSources):null;
+  const retainedIteration=diagnosticPrefixInput&&e.records(saved,'iterations').find(row=>Number(row.stage)===stage&&rid(row,'iterations')===e.currentScope(saved).iterationId),retainedCandidate=retainedIteration&&e.records(saved,'candidateFreezes').find(row=>rid(row,'candidateFreezes')===String(v(retainedIteration,'CANDIDATE_ID')||retainedIteration.scope?.candidateId||''));
+  let first;if(retainedIteration){assert(retainedCandidate,'STAGE17_RETAINED_CANDIDATE_ORACLE');first={iteration:retainedIteration,candidate:retainedCandidate};}else{assert.equal(e.operationalNextAction(saved,stage).actionType,'FREEZE_CANDIDATE','STAGE17_ENTRY_ACTION_ORACLE: '+JSON.stringify(e.operationalNextAction(saved,stage)));first=await freeze();}
+  if(receiptControl)await receiptControl.observe(saved,'after-freeze');
+  const iterationId=rid(first.iteration,'iterations'),candidateId=rid(first.candidate,'candidateFreezes');
   assert.equal(e.evaluateCorrectedIterationLineage(saved,iterationId).valid,true);
-  const runs=await command(project=>e.reserveRunBatch(project,{stage}));
+  const retainedRuns=diagnosticPrefixInput?e.recordsForIteration(saved,'runs',iterationId):[],runs=retainedRuns.length?retainedRuns.map(row=>({runId:rid(row,'runs'),contextId:String(v(row,'CONTEXT_ID'))})):await command(project=>e.reserveRunBatch(project,{stage}),'RESERVE_RUN_BATCH');
   assert.equal(runs.length,10);assert.equal(new Set(runs.map(row=>row.runId)).size,10);assert.equal(new Set(runs.map(row=>row.contextId)).size,10);
+  if(receiptControl){await receiptControl.observe(saved,'after-run-reservation');deferredReceiptRegression=await receiptControl.finish(saved,runs);}
   const setupPersistenceBase=copy(saved);
   for(let index=0;index<10;index++) {const action=e.operationalNextAction(saved,stage);assert.equal(action.operation,'EXECUTE_RUN');await establishSetup('EXECUTE_RUN',{omitTerminalLF:index===0});}
   for(let index=0;index<10;index++) {assert.equal(e.operationalNextAction(saved,stage).operation,'VERIFY');await establishSetup('VERIFY');}
@@ -383,6 +508,7 @@ async function verifyStage17FailureCorrection() {
   {const impact=store.mutationImpact(setupPersistenceBase,saved);saved=await store.writeProject(saved,{expectedProjectRevision:setupPersistenceBase.revision,expectedStateSha256:setupPersistenceBase.projectSha256,...(impact.requiresConfirmation?{mutationConfirmation:impact}:{})});}
   saved=await store.readProject(saved.job.JOB_ID);assert.equal(store.validateProjectIntegrity(saved).valid,true);
   console.error(JSON.stringify({phase:'stage17-legitimate-failed-prefix-stored',stage,setupReceipts:proof.length}));
+  await retainSetupCheckpoint('COMPARE');
   verifyInitialAnalysisOwners(r,saved);
   const failedRun=e.records(saved,'runs').find(row=>row.scope?.iterationId===iterationId&&v(row,'COMPLETE_OUTPUT')==='VERIFIED');
   const defect=e.records(saved,'defects').find(row=>row.scope?.iterationId===iterationId&&String(v(row,'RUN_ID'))===rid(failedRun,'runs'));
@@ -398,6 +524,14 @@ async function verifyStage17FailureCorrection() {
   });
   assert.equal(e.gate(stage,saved).complete,false,'STAGE17_RCA_NEGATIVE_GATE_ORACLE: admitting supported RCA cannot repair the failed runs');
   assert.equal(e.operationalNextAction(saved,stage).operation,'REGRESSION');
+  if(diagnosticPrefixDir){
+    // A genuinely failed disposable iteration supplies the existing REGRESSION
+    // author boundary. No main-journey stage or completion flag is altered.
+    for(let prior=1;prior<=16;prior++)assert.equal(e.gate(prior,saved).complete,true,'DIAGNOSTIC_STAGE17_AUTHOR_PREDECESSOR_ORACLE: '+prior);
+    fs.mkdirSync(diagnosticPrefixDir,{recursive:true});const file=diagnosticPrefixDir+'/prefix-stage17.json';
+    fs.writeFileSync(file,JSON.stringify({schema:'closed-loop-counterpart-diagnostic-prefix/1',...diagnosticClockMetadata,sourceFingerprints,entryStage:17,operation:'REGRESSION',authorBoundary:'ACTUAL_FAILED_ITERATION_WITH_ACCEPTED_ROOT_CAUSE',completedPriorStages:16,project:saved,artifacts:await captureArtifactFixture(store,saved.job.JOB_ID),contextFiles:[...setupContexts.values()],currentIterationId:iterationId,currentCandidateId:candidateId,currentDefectId:defectId,rootCauseReceipt:rca,setupReceipts:proof,deferredReceiptRegression,synthetic:true,actualBrowser:false,earlierCompleteFlagsForced:false}));
+    diagnosticPrefixFiles.push(file);assert.equal(hash.sha256Value(p),original,'STAGE17_DISPOSABLE_ISOLATION_ORACLE');return;
+  }
   await admit('REGRESSION',({base,rows,reference,manifest})=>{
     const response=base(),d=rows('defects').find(row=>rid(row,'defects')===defectId),req=rows('requirements').find(row=>rid(row,'requirements')===String(v(d,'REQ_ID')));
     assert(d&&req,'Regression actor needs the typed current defect/requirement');
@@ -431,7 +565,7 @@ async function verifyStage17FailureCorrection() {
   assert.notEqual(nextIterationId,iterationId);assert.notEqual(nextCandidateId,candidateId);
   assert.equal(v(next.iteration,'PREVIOUS_ITERATION_ID'),iterationId);assert.equal(v(next.iteration,'CHANGESET_ID'),rid(change,'changes'));
   assert.equal(e.evaluateCorrectedIterationLineage(saved,nextIterationId).valid,true);
-  const nextRuns=await command(project=>e.reserveRunBatch(project,{stage}));
+  const nextRuns=await command(project=>e.reserveRunBatch(project,{stage}),'RESERVE_RUN_BATCH');
   assert.equal(nextRuns.length,10);assert(nextRuns.every(row=>!runs.some(old=>old.runId===row.runId||old.contextId===row.contextId)));
   assert.equal(e.records(saved,'runs').filter(row=>row.scope?.iterationId===nextIterationId&&v(row,'EXECUTION_STATUS')==='COMPLETED').length,0);
   assert.equal(e.gate(stage,saved).complete,false,'STAGE17_EMPTY_BATCH_NEGATIVE_GATE_ORACLE: fresh empty batch cannot inherit old success/failure counts');
@@ -442,8 +576,8 @@ async function verifyStage17FailureCorrection() {
   cases.push({caseId:'stage17-failed-iteration-root-cause-correction-fresh-freeze',stage,operations:['ROOT_CAUSE','CORRECT'],result:'PASS',synthetic:true,actualBrowser:false,oldScope:failedScope,newScope:{iterationId:nextIterationId,candidateId:nextCandidateId},defectId,rootCauseReceipt:rca,correctionReceipt:correction,allReceipts:proof,acceptedFailedIterationStillIncomplete:true,instructionPreserved:true,newEmptyBatchIncomplete:true,priorRawBytesPreserved:true,mainLifecycleUnchanged:true,observedBoundary:'actual accepted failed ten-run prefix -> actual ZIP/staged response -> prepare/operator commit -> metadata store/readback -> adverse gate -> fresh application-owned freeze/batch'});
 }
 
-for(let stage=diagnosticPrefixInput?Number(JSON.parse(fs.readFileSync(diagnosticPrefixInput,'utf8')).entryStage):1;stage<=stageLimit;stage++){
-  if(diagnosticPrefixDir&&stage>=8)await emitDiagnosticPrefix(stage);
+for(let stage=diagnosticRecovered?Number(diagnosticRecovered.entryStage):1;stage<=stageLimit;stage++){
+  if(diagnosticPrefixDir&&[7,8,15].includes(stage))await emitDiagnosticPrefix(stage);
   if(stage===7&&!injectedFault&&!diagnosticPrefixDir)await verifyOwningStageExecution(stage,'EXECUTE_FAILURE_TEST');
   if(stage===15&&!injectedFault&&!diagnosticPrefixDir)await verifyOwningStageExecution(stage,'EXECUTE_REGRESSION');
   if(stage===17&&!diagnosticPrefixDir&&(!injectedFault||initialOwnerFaults.includes(injectedFault)))await verifyStage17FailureCorrection();
@@ -484,7 +618,7 @@ for(let stage=diagnosticPrefixInput?Number(JSON.parse(fs.readFileSync(diagnostic
     else if(action.actionType==='RECORD_DELIVERY_EVIDENCE')engine.recordDeliveryEvidence(p,{attemptId:id(latest('deliveryAttempts'),'deliveryAttempts'),outcome:'RECEIVED',observation:'Synthetic receipt for fixture contract preflight only.',operatorLabel:'SYNTHETIC'});
     else if(['SELECT_RESPONSE_JSON_FILE','AI_REVIEW','EXTERNAL_AGENT_TOOL','CONTINUE_AGENT_CONVERSATION','EXTERNAL_SYSTEM'].includes(action.actionType)){
       let actorInputs,prompt;
-      if(diagnosticPrefixDir&&[6,7,15].includes(stage)){
+      if(diagnosticPrefixDir){
         actorInputs=await diagnosticPackage(stage,action.operation||schema.STAGE_CONTRACTS[stage].operations[0]);prompt=actorInputs.prompt;
       }else{
         ({prompt}=prompts.reserveAndBuildPromptRecord(p,stage,{operation:action.operation||schema.STAGE_CONTRACTS[stage].operations[0]}));const materialized=prompts.materializePromptContextFiles(prompt,p);if(!counterpartFaults[injectedFault]?.skipPromptContextCapture)for(const file of materialized)retainedContextFiles.set(file.sha256,file);
@@ -492,7 +626,25 @@ for(let stage=diagnosticPrefixInput?Number(JSON.parse(fs.readFileSync(diagnostic
       }
       const request=diagnosticActor({...actorInputs,omitTerminalLF:stage===11&&!cases.some(row=>row.stage===11)}),files=[];
       if(stage===21){const slot=prompts.promptFileManifest(prompt).attachmentSlots.find(item=>item.role==='FINISHED_PRODUCT'&&item.required);assert.ok(slot,'Stage 21 must issue its required finished-product slot.');request.attachments=[{attachmentSlotId:slot.attachmentSlotId,role:slot.role,temporaryKey:'product-file',filename:'result.txt',mediaType:'text/plain',byteSize:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT),required:true}];request.evidence[0].attachmentRef={tempKey:'product-file'};await retainFixtureFile('PRODUCT-FILE','result.txt',OUTPUT);files.push({artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),name:'result.txt',type:'text/plain',size:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT),attachmentSlotId:ingestion.attachmentSlotPlan(p,request,prompt)[0].attachmentSlotId});}
-      const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(request),promptRecord:prompt,files,transport:{packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC'}).project;cases.push({stage,operation:prompt.operation,result:'PASS'});
+      let prepared;
+      if(diagnosticPrefixDir){
+        // Exact diagnostic precursor bytes pass through the normal file-first
+        // staging/capture/validation/acceptance path before snapshot reuse.
+        const r=actorInputs.storageRuntime,store=r.store,i=r.ingestion,manifest=actorInputs.manifest,text=JSON.stringify(request),baseline=await store.readProject(p.job.JOB_ID);
+        const staged=await store.stageResponseFile({jobId:p.job.JOB_ID,stage,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',mediaType:'application/json',promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce}),received=await store.readStagedResponseFile({jobId:p.job.JOB_ID,stagingId:staged.stagingId});
+        assert.equal(new TextDecoder('utf-8',{fatal:true}).decode(received.bytes),text);
+        const captured=i.captureRaw(baseline,{stage,text,promptRecord:r.copy(prompt),files:r.copy(files),transport:r.copy({authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',status:received.status,sha256:received.sha256,byteSize:received.byteSize,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce})});
+        let saved=await store.writeProject(captured.project,{operational:true,expectedProjectRevision:baseline.revision,expectedStateSha256:baseline.projectSha256});prepared=i.prepareCaptured(saved,{rawResponseId:captured.rawRecord.rawResponseId});saved=await store.writeProject(prepared.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});
+        assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));const acceptance=i.acceptanceImpact(saved,prepared.proposal.proposalId),committed=i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_PREFIX_OPERATOR',replacementConfirmation:acceptance}),impact=store.mutationImpact(saved,committed.project);
+        saved=await store.writeProject(committed.project,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256,...(impact.requiresConfirmation?{mutationConfirmation:impact}:{})});p=structuredClone(await store.readProject(saved.job.JOB_ID));await restoreArtifactFixture(byteStore,await captureArtifactFixture(store,p.job.JOB_ID));
+        cases.push({stage,operation:prompt.operation,result:'PASS',boundary:'ACTUAL_ZIP_AUTHORITATIVE_BLOB_RAW_PREPARE_EXPLICIT_SYNTHETIC_OPERATOR_TRANSACTION_ADAPTER_READBACK',rawResponseId:captured.rawRecord.rawResponseId,responseSha256:received.sha256});
+      }else{
+        prepared=ingestion.prepare(p,{stage,text:JSON.stringify(request),promptRecord:prompt,files,transport:{packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});
+      // Returned products require actual byte custody before a proposal exists.
+      // This owning rejection precedes the retained-artifact checks after commit.
+      if(stage===21)assert.equal(prepared.validation.issues.some(issue=>issue.code==='RETURNED_ARTIFACT_BYTES_UNVERIFIED'),false,'COUNTERPART_RETURNED_ARTIFACT_CUSTODY_ORACLE: '+JSON.stringify(prepared.validation.issues));
+      assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC'}).project;cases.push({stage,operation:prompt.operation,result:'PASS'});
+      }
       if(prompt.operation==='VERIFY'){const scope=prompt.scope,iterationId=scope.iterationId||scope.confirmationIterationId,runs=engine.records(p,'runs').filter(row=>String(engine.recordValue(row,'ITERATION_ID')||row.scope?.iterationId||'')===iterationId),verified=new Set(engine.records(p,'verification').filter(row=>(row.scope?.iterationId||row.scope?.confirmationIterationId)===iterationId).map(row=>String(engine.recordValue(row,'RUN_ID')||''))),remaining=runs.filter(row=>!verified.has(id(row,'runs')));if(remaining.length)assert.equal((diagnosticPrefixDir?diagnosticOrdinaryAction(stage):engine.operationalNextAction(p,stage)).operation,'VERIFY','ITERATION_PARTIAL_VERIFY_ORACLE: every bound run must be verified before the workflow advances');}
 
     }else throw new Error('No progressing fixture command: '+JSON.stringify(action));
@@ -553,5 +705,6 @@ for(let stage=diagnosticPrefixInput?Number(JSON.parse(fs.readFileSync(diagnostic
     cases.push({stage:13,caseId:'initial-violation-defect-rejection-and-correction',rejectionReasons:rejected.reasons,result:'PASS'});
   }
 }
-if(diagnosticPrefixDir&&stageLimit>=7&&stageLimit<30)await emitDiagnosticPrefix(stageLimit+1);
-console.log(JSON.stringify(diagnosticPrefixDir?{counterpartDiagnosticPrefixes:'EMITTED',completedPriorStages:stageLimit,prefixFiles:diagnosticPrefixFiles,sourceCommit:process.env.GITHUB_SHA||null,sourceFingerprints,synthetic:true,actualBrowserJourney:false}:{counterpartContracts:'PASS',stages:stageLimit,cases,sourceCommit:process.env.GITHUB_SHA||null,injectedFault,actualBrowserJourney:false,externalOutputs:'SYNTHETIC',persistenceCheckedAfterEveryOperation:true}));
+if(diagnosticPrefixDir&&[6,7,14].includes(stageLimit))await emitDiagnosticPrefix(stageLimit+1);
+if(diagnosticPrefixDir&&stageLimit===16)await verifyStage17FailureCorrection();
+console.log(JSON.stringify(diagnosticPrefixDir?{counterpartDiagnosticPrefixes:'EMITTED',...diagnosticClockMetadata,completedPriorStages:stageLimit,prefixFiles:diagnosticPrefixFiles,sourceCommit:process.env.GITHUB_SHA||null,sourceFingerprints,synthetic:true,actualBrowserJourney:false}:{counterpartContracts:'PASS',stages:stageLimit,cases,sourceCommit:process.env.GITHUB_SHA||null,injectedFault,actualBrowserJourney:false,externalOutputs:'SYNTHETIC',persistenceCheckedAfterEveryOperation:true}));

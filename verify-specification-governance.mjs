@@ -42,7 +42,9 @@ async function verifySourceCommit(){
   assert(cp.spawnSync('git',['merge-base','--is-ancestor',sourceCommit,'HEAD'],{timeout:30000,killSignal:'SIGKILL',stdio:'ignore'}).status===0,'Specification source commit is not reachable from current canonical main.');
   const shown=cp.spawnSync('git',['show',`${sourceCommit}:${SPEC_PATH}`],{timeout:30000,killSignal:'SIGKILL',encoding:null,maxBuffer:64*1024*1024});
   assert(shown.status===0,'Specification is absent from the recorded source commit.');
-  const clarifications=readJson('specification/requirement-evidence-bindings.json').approvedClarifications||[];
+  if(Buffer.compare(Buffer.from(shown.stdout),sourceBytes)===0)return {checked:true,basis:'EXACT_CURRENT_SPECIFICATION_BYTES'};
+  const approved=readJson('specification/requirement-evidence-bindings.json');
+  const clarifications=[...(approved.approvedClarifications||[]),...(approved.approvedAmendments||[])];
   let pinnedBytes=sourceBytes;
   if(clarifications.length){
     const lines=sourceText.split('\n'),excluded=new Set();
@@ -54,7 +56,7 @@ async function verifySourceCommit(){
     assert(clarifications.every(c=>sha256(pinnedBytes)===c.baseSpecificationSha256),'Approved source amendment changes unrelated controlling text.');
   }
   assert(Buffer.compare(Buffer.from(shown.stdout),pinnedBytes)===0,'Recorded source commit does not contain the exact pinned base specification bytes.');
-  return {checked:true};
+  return {checked:true,basis:'APPROVED_PINNED_BASE_RECONSTRUCTION'};
 }
 const sourceCommitEvidence=(await verifySourceCommit());
 
@@ -121,6 +123,7 @@ try{
     ...coreReport,
     sourceCommit,
     sourceCommitReachabilityChecked:sourceCommitEvidence.checked,
+    sourceCommitSpecificationBasis:sourceCommitEvidence.basis||'LOCAL_SOURCE_REACHABILITY_NOT_RUN',
     committedManifestBytesValidated:true,
     independentRegenerationCompared:true,
     verifierDidNotRewriteCommittedManifests:true,

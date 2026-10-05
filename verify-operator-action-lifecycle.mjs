@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {deferredDefinitionRestorationFixture} from './test-fixtures.mjs';
+import {appMarkup} from './test-app-markup.mjs';
 const {createBrowserReadiness}=await import(process.env.OPERATOR_DRIVER_MODULE||'./operator-browser-driver.mjs');
 
 // Execute the real UI bindings with a deliberately delayed storage boundary.
@@ -147,7 +149,7 @@ const nodes=new Map(['project-picker','new-project','export-project','header-bac
 const frames=[];
 const context=createVerifierRuntime({console,Event:class Event{},dispatchEvent(){},structuredClone,URL,Blob,TextDecoder,TextEncoder,crypto:globalThis.crypto,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),
   document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s.includes('button')||s.includes('input')||s.includes('select')?[...nodes.values()].filter(n=>!['app','app-live-status','app-operation-status','operation-label','storage-status','project-history'].includes(n.id)):[]}});
-for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context);
 vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
   schema=globalThis.closedLoopWorkflowSchema;projectStore={HISTORY_LIMITS:{maxCheckpoints:2048}};
   globalThis.ui={
@@ -426,6 +428,26 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
  assert.ok(markup.includes('Advanced action details'),'Audit disclosure must be retained');
  cases.push({caseId:'UI-WORKFLOW-PRIMARY-'+actionType,stage,control:id,uniqueControl:true,beforeLongDetails:true,result:'PASS'});
 }
+// Conditional independent review is selected by the production route owner,
+// even though the registered operation has the generic execution name. Use the
+// admitted archived fixture at its declared clock; these are presentation
+// assertions, not fresh external review or predecessor-stage acceptance.
+{
+ const r=projectStoreRuntime(),fixture=await deferredDefinitionRestorationFixture(r,{family:'failureTests',executionStage:8}),p=fixture.p;
+ const policy=r.prompts.deferredExecutionContextPolicy(p,8,'EXECUTE_FAILURE_TEST');
+ assert.equal(policy.executionMode,'INDEPENDENT_AGENT_REVIEW','INDEPENDENT_REVIEW_GUIDANCE_FIXTURE_ORACLE');
+ assert.equal(policy.requiresFreshConversation,true);assert.equal(policy.priorExportMayHaveExposedReviewContent,false);
+ const html=appMarkup(r.runtime,p,{source,operations:{8:'EXECUTE_FAILURE_TEST'}}),start=html.indexOf('id="next-required-action"'),notice=html.indexOf('id="independent-review-context-guidance"'),button=html.indexOf('id="next-export-prompt-file"');
+ assert.ok(start>=0&&notice>start&&button>notice,'INDEPENDENT_REVIEW_GUIDANCE_ORACLE: the selected conditional reviewer needs recovery guidance before the primary export control.');
+ const warning=html.slice(notice,button);
+ assert.match(warning,/Start a fresh independent reviewer conversation/,'INDEPENDENT_REVIEW_GUIDANCE_ORACLE');
+ assert.match(warning,/has not received prior verifier conclusions, proposed corrections, or rejected response content/,'INDEPENDENT_REVIEW_GUIDANCE_ORACLE');
+ assert.match(warning,/Prior responses and valid work remain in project History/,'INDEPENDENT_REVIEW_GUIDANCE_ORACLE');
+ assert.doesNotMatch(warning,/earlier exported package may have included/,'INDEPENDENT_REVIEW_UNEXPORTED_GUIDANCE_ORACLE');
+ const ordinary=appMarkup(r.runtime,p,{source,operations:{8:'COMPLETE'}});
+ assert.doesNotMatch(ordinary,/id="independent-review-context-guidance"/,'INDEPENDENT_REVIEW_ORDINARY_CONTROL_ORACLE');
+ cases.push({caseId:'UI-CONDITIONAL-INDEPENDENT-REVIEW-GUIDANCE',stage:8,operation:'EXECUTE_FAILURE_TEST',actualSelectedMode:policy.executionMode,freshConversationVisibleBeforeExport:true,unexportedExposureNeverClaimed:true,ordinaryAuthorControl:true,archivedFixtureClockUtc:fixture.archivedFixtureClockUtc,synthetic:true,actualBrowser:false,result:'PASS'});
+}
 // Replay the browser gate's actual selected-file setup through the production
 // binding, filename policy, recovery artifact custody and import owner. The
 // transport below is synthetic; layout and native worker delivery stay in CI.
@@ -446,10 +468,10 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
  const worker=new Worker();worker.onmessage=event=>{delivered.push(event.data);const request=pending.get(event.data.operationId);if(!request)return;pending.delete(event.data.operationId);event.data.ok?request.resolve(event.data.project):request.reject(event.data.error);};
  class DataTransfer{constructor(){this.files=[];this.items={add:file=>{assert.ok(file instanceof File,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: a browser file selection requires a File.');this.files.push(file);}};}}
  const facade={...r.store,importPackage:async blob=>{selected=(await r.store.listArtifacts(p.job.JOB_ID)).find(row=>row.lineage?.selectionKind==='backup-import');return new Promise((resolve,reject)=>{const operationId='IMPORT-'+(++sequence);pending.set(operationId,{resolve,reject});worker.postMessage({method:'IMPORT_PACKAGE',operationId,buildIdentity:'ACTIVITY-TEST',args:[blob]});});}};
- Object.assign(r.runtime,{File,DataTransfer,Worker,history:{state:null},document:{currentScript:null,querySelector:s=>activityNodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[activityNodes.get('#import-file')]:[]},getComputedStyle:()=>({display:'block',visibility:'visible'}),requestAnimationFrame:fn=>setTimeout(fn,0),closedLoopProjectStore:facade,__activityProject:p});r.runtime.window=r.runtime;
+ Object.assign(r.runtime,{File,DataTransfer,Worker,history:{state:null},document:{currentScript:null,querySelector:s=>activityNodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[activityNodes.get('#import-file')]:[]},getComputedStyle:()=>({display:'block',visibility:'visible'}),requestAnimationFrame:fn=>setTimeout(fn,0),scrollX:0,scrollY:0,scrollTo(){},closedLoopProjectStore:facade,__activityProject:p});r.runtime.window=r.runtime;
  vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
   core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;projectStore=closedLoopProjectStore;current=__activityProject;projects=[current];
-  captureCurrentView=async()=>{};refreshHistory=async()=>{};writeBrowserEntry=()=>{};loadAcceptanceSession=async()=>{};refreshProjectStorage=async()=>{};recordCommittedBoundary=async()=>{};selectSavedView=()=>null;applySavedView=()=>{};render=()=>wire();wire();
+  captureCurrentView=async()=>{};refreshHistory=async()=>{historyState=await projectStore.historyList(current.job.JOB_ID);};writeBrowserEntry=()=>{};loadAcceptanceSession=async()=>{};refreshProjectStorage=async()=>{};recordCommittedBoundary=async()=>{};render=()=>wire();wire();
  })();`,r.runtime,{filename:'app-core.js:delayed-import-control'});
  try{
   await vm.runInContext(setup,r.runtime);

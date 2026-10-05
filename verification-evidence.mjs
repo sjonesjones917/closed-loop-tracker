@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {isDeepStrictEqual} from 'node:util';
+import './hash.js';
 import {verificationCatalog,metricCatalog,zeroCatalog,negativePopulationCatalog} from './verification-evidence-catalog.mjs';
 
 export const RECEIPT_SCHEMA='closed-loop-executed-verification-receipt/1';
@@ -12,12 +13,99 @@ export const sha=value=>crypto.createHash('sha256').update(typeof value==='strin
 const requireEvidence=(condition,message)=>{if(!condition)throw new Error('EXECUTED_EVIDENCE_ORACLE: '+message);};
 const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 function git(cwd,...args){return execFileSync('git',args,{cwd,encoding:'utf8'}).trim();}
+// Full-clause proof is an optional, independently reviewed declaration over the
+// existing assertion bindings. Execution identities and outcomes are derived
+// later from current receipts; no future receipt digest enters source inputs.
+const validatedEvidenceDigests=new WeakMap();
+const nonempty=value=>typeof value==='string'&&value.trim().length>0;
+const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+const normativeManifestPath=SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-normative-requirements.json');
+export function coverageDeclarationSha256(coverage){const declaration={...coverage};delete declaration.review;return globalThis.closedLoopHash.sha256Value(declaration);}
+export function evaluateFullRequirementProof(requirement,bindings,observations,fingerprint){
+  const complete=bindings.filter(binding=>binding.fullCoverage),reasons=[];
+  const result={normativeRequirementId:requirement.normativeRequirementId,sourceLineSha256:requirement.sourceLocation.lineSha256,disposition:'UNKNOWN',reasons,executedAssertions:[]};
+  if(complete.length!==1){reasons.push(complete.length?'AMBIGUOUS_FULL_COVERAGE_DECLARATIONS':'NO_REVIEWED_FULL_COVERAGE_DECLARATION');return result;}
+  const binding=complete[0],coverage=binding.fullCoverage;
+  const reject=reason=>reasons.push(reason);
+  if(coverage.schema!=='closed-loop-full-requirement-coverage/1'||coverage.sourceLineSha256!==requirement.sourceLocation.lineSha256||coverage.schemaOrRegistryEntry!==requirement.schemaOrRegistryEntry)reject('COVERAGE_SOURCE_OR_REGISTRY_MISMATCH');
+  if(!Array.isArray(coverage.unresolvedObligations)||coverage.unresolvedObligations.length)reject('UNRESOLVED_COVERAGE_OBLIGATIONS');
+  const owners=coverage.productionOwners;
+  if(!Array.isArray(owners)||!owners.length||owners.some(owner=>!plain(owner)||!nonempty(owner.path)||!nonempty(owner.symbol)||!/\.(?:m?js|html|ya?ml)$/.test(owner.path)||!nonempty(fingerprint.inputSha256[owner.path])||fingerprint.inputSha256[owner.path]!==owner.sha256))reject('MISSING_OR_STALE_PRODUCTION_OWNER');
+  const reviewRef=coverage.review;let retainedReview=null;
+  if(!plain(reviewRef)||!/^verification\/[^/\\]+\.json$/.test(reviewRef.path||'')||fingerprint.inputSha256[reviewRef.path]!==reviewRef.sha256)reject('MISSING_OR_STALE_COVERAGE_REVIEW');
+  else {
+    let review;try{review=readJson(reviewRef.path);}catch{reject('UNREADABLE_COVERAGE_REVIEW');}
+    if(!plain(review))reject('INVALID_COVERAGE_REVIEW_RECORD');
+    else {
+      retainedReview=review;
+      if(review.schema!=='closed-loop-requirement-coverage-review/1'||review.normativeRequirementId!==requirement.normativeRequirementId||review.sourceLineSha256!==requirement.sourceLocation.lineSha256||review.specificationSha256!==fingerprint.specificationSha256||review.declarationSha256!==coverageDeclarationSha256(coverage))reject('COVERAGE_REVIEW_BINDING_MISMATCH');
+      if(review.decision!=='COMPLETE_COVERAGE'||review.evidenceBasis!=='EXTERNALLY_SUPPORTED'||!nonempty(review.method)||!nonempty(review.author?.actor)||!nonempty(review.author?.contextId)||!nonempty(review.reviewer?.actor)||!nonempty(review.reviewer?.contextId)||review.author.contextId===review.reviewer.contextId||!Array.isArray(review.reviewedInputs)||!review.reviewedInputs.length||!Array.isArray(review.findings)||review.findings.length||review.reviewPerformed!==true)reject('INCOMPLETE_OR_SELF_COVERAGE_REVIEW');
+      const reviewedInputs=Array.isArray(review.reviewedInputs)?review.reviewedInputs:[];
+      if(!reviewedInputs.some(input=>input?.path===SPECIFICATION_PATH&&input.sha256===fingerprint.specificationSha256)||!reviewedInputs.some(input=>input?.declarationSha256===coverageDeclarationSha256(coverage))||(Array.isArray(owners)?owners:[]).some(owner=>!plain(owner)||!reviewedInputs.some(input=>input?.path===owner.path&&input.sha256===owner.sha256)))reject('COVERAGE_REVIEW_INPUTS_INCOMPLETE');
+    }
+  }
+  const obligations=coverage.obligations;
+  if(!Array.isArray(obligations)||!obligations.length||obligations.some(obligation=>!plain(obligation)||!nonempty(obligation.id)||!nonempty(obligation.sourceText)||!nonempty(obligation.expectedBehavior))||new Set(obligations.map(obligation=>obligation.id)).size!==obligations.length||obligations.map(obligation=>obligation.sourceText).join('')!==requirement.controllingText){reject('INCOMPLETE_SOURCE_OBLIGATION_DECOMPOSITION');return result;}
+  if((requirement.requiredBrowserOrPhysicalDeviceProof||[]).length)reject('REQUIRED_BROWSER_OR_PHYSICAL_PROOF_NOT_ESTABLISHED_BY_SYNTHETIC_RECEIPTS');
+  const references=[];
+  for(const obligation of obligations){
+    const observedKinds=new Set();
+    if(!Array.isArray(obligation.evidenceKinds)||!obligation.evidenceKinds.length||obligation.evidenceKinds.some(kind=>!['EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS','EXECUTED_SCHEMA_METADATA_ASSERTIONS'].includes(kind)))reject('UNSUPPORTED_REQUIRED_EVIDENCE_KIND');
+    for(const role of ['deterministic','semantic','mutation']){
+      const checks=obligation.checks?.[role];
+      if(!Array.isArray(checks)||(!checks.length&&(role==='deterministic'||!nonempty(obligation.nonapplicable?.[role])))){reject('REQUIRED_CHECK_ROLE_UNACCOUNTED');continue;}
+      for(const reference of checks){
+        const observation=observations.get(reference?.checkId);
+        if(!plain(reference)||!nonempty(reference.suite)||!nonempty(reference.checkId)||!binding.checkIds.includes(reference.checkId)||!observation||observation.suite!==reference.suite||observation.passed!==true){reject('REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER');continue;}
+        if(!['EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS','EXECUTED_SCHEMA_METADATA_ASSERTIONS'].includes(observation.evidenceBasis))reject('UNSUPPORTED_ASSERTION_EVIDENCE_BASIS');
+        observedKinds.add(observation.evidenceBasis);
+        for(const inputPath of [reference.suite,'verification-evidence-catalog.mjs',...(verificationCatalog[reference.suite]?.sourceInputs||[])])if(!(Array.isArray(retainedReview?.reviewedInputs)?retainedReview.reviewedInputs:[]).some(input=>input?.path===inputPath&&input?.sha256===fingerprint.inputSha256[inputPath]))reject('COVERAGE_REVIEW_TEST_INPUT_MISMATCH');
+        references.push({role,obligationId:obligation.id,checkId:observation.checkId,suite:observation.suite,receiptSha256:observation.receiptSha256});
+      }
+    }
+    if(Array.isArray(obligation.evidenceKinds)&&obligation.evidenceKinds.some(kind=>!observedKinds.has(kind)))reject('REQUIRED_EVIDENCE_KIND_NOT_OBSERVED');
+  }
+  if(new Set(references.map(reference=>reference.checkId)).size!==new Set(binding.checkIds).size)reject('FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH');
+  result.reasons=[...new Set(reasons)];result.executedAssertions=references;result.review=coverage.review;result.declarationSha256=coverageDeclarationSha256(coverage);
+  if(!result.reasons.length){result.disposition='CONFORMANT_PROVEN';result.testTraceStatus='EXECUTED_REQUIREMENT_CASES';result.productionOwnerStatus='VERIFIED_PRODUCTION_OWNER';}
+  return result;
+}
+function normativeProofSummary(evidence){
+  const proof=evidence.fullRequirementProofs,rows=proof?.requirements||[],proven=rows.filter(row=>row.disposition==='CONFORMANT_PROVEN'),complete=rows.length>0&&proven.length===rows.length;
+  return {metricId:'NORMATIVE_REQUIREMENT_TRACE_COVERAGE',derivationVersion:'closed-loop-current-normative-proof/1',universeDefinition:'Every stable source requirement ID in the exact current normative manifest, with independently reviewed complete source-obligation coverage and current executed proof.',numerator:proven.length,denominator:rows.length,includedIds:rows.map(row=>row.normativeRequirementId),excludedIds:[],scopeHash:sha({fingerprint:evidence.fingerprint,proof}),evidenceReferences:[...new Set(proven.flatMap(row=>row.executedAssertions.map(assertion=>`${assertion.suite}.json#${assertion.checkId}`)))],value:complete?1:null,disposition:complete?'SATISFIED':'UNKNOWN',evidenceBasis:'REVIEWED_FULL_SOURCE_COVERAGE_AND_CURRENT_EXECUTED_RECEIPTS',qualifiedExecutedRequirementCount:evidence.normativeRequirementTrace.filter(row=>row.disposition==='QUALIFIED_EXECUTED_ASSERTION_EVIDENCE').length,fullClauseConformanceEstablished:complete};
+}
+export function validateFinalNormativeProof(report,evidence){
+  const validated=plain(evidence)?validatedEvidenceDigests.get(evidence):null;
+  requireEvidence(validated&&validated.digest===sha(evidence),'final normative proof requires unchanged revalidated current executed evidence');
+  const current=evidenceFingerprint(validated.cwd);
+  requireEvidence(current.sourceCommit===evidence.fingerprint.sourceCommit&&current.sourceInputsSha256===evidence.fingerprint.sourceInputsSha256&&current.specificationSha256===evidence.fingerprint.specificationSha256,'final normative proof source changed after receipt validation');
+  requireEvidence(report.commit===evidence.fingerprint.sourceCommit,'final normative proof belongs to a different candidate');
+  requireEvidence(isDeepStrictEqual(report.executedVerificationEvidence?.fingerprint,evidence.fingerprint)&&report.executedVerificationEvidence?.evidenceSha256===evidence.evidenceSha256,'final normative execution identity differs from revalidated evidence');
+  const expected=normativeProofSummary(evidence);
+  requireEvidence(isDeepStrictEqual(report.section49CoverageMetrics?.normativeRequirementTraceCoverage,expected)&&report.normativeRequirementTraceCoverage===expected.value,'final normative metric does not derive from the exact current requirement universe');
+  requireEvidence(isDeepStrictEqual(report.fullRequirementProofs,evidence.fullRequirementProofs)&&isDeepStrictEqual(report.normativeRequirementTrace,evidence.normativeRequirementTrace),'final normative proof trace differs from current source/receipts');
+  requireEvidence(expected.fullClauseConformanceEstablished===true,'mandatory normative implementation or proof remains unestablished');
+  return true;
+}
+
 export function evidenceFingerprint(cwd=process.cwd()){
   // Generated retained fixtures and progress/artifact directories are excluded.
   // All first-party executable/configuration/specification inputs are included,
   // including newly added regression files before they have been committed.
   const tracked=execFileSync('git',['ls-files','-z'],{cwd,encoding:'utf8'}).split('\0').filter(name=>name&&name!=='TEST_PROJECT.json'&&/\.(?:m?js|html|css|json|txt|ya?ml)$/.test(name));
-  const inputs=[...new Set([...tracked,...fs.readdirSync(cwd).filter(name=>!name.startsWith('.')&&/\.(?:m?js|html|css)$/.test(name)),...['verification-assertion-bindings.json','verification-negative-populations.json'].filter(name=>fs.existsSync(path.join(cwd,name)))])];
+  // An approved proposal and its source-only approval review are active
+  // governance inputs, including before their new files have been committed.
+  // Ordinary Markdown documentation is outside this execution-input policy.
+  const declaration=path.join(cwd,'specification/requirement-evidence-bindings.json');
+  const governance=fs.existsSync(declaration)?JSON.parse(fs.readFileSync(declaration,'utf8')):{},amendments=governance.approvedAmendments||[],independentSourceReview=governance.independentSourceReview;
+  const assertionPath=path.join(cwd,'verification-assertion-bindings.json'),fullCoverageReviewPaths=fs.existsSync(assertionPath)?(JSON.parse(fs.readFileSync(assertionPath,'utf8')).bindings||[]).flatMap(binding=>binding.fullCoverage?.review?.path?[binding.fullCoverage.review.path]:[]):[];
+  const governed=[...fullCoverageReviewPaths,...(independentSourceReview?[independentSourceReview.sourceReviewPath,independentSourceReview.reconciliationPath]:[]),...amendments.flatMap(amendment=>['sourceReviewPath','approvedProposalPath'].map(key=>amendment[key])),...Object.values(verificationCatalog).flatMap(suite=>suite.sourceInputs||[])];
+  const sourceRoot=fs.realpathSync(cwd)+path.sep;
+  for(const name of governed){
+    requireEvidence(typeof name==='string'&&/^verification\/[^/\\]+\.(?:json|md)$/.test(name)&&path.posix.normalize(name)===name,'declared governance or verifier input must be an exact first-party verification path');
+    requireEvidence(fs.realpathSync(path.join(cwd,name)).startsWith(sourceRoot),'declared governance or verifier input is outside the first-party source root');
+  }
+  const inputs=[...new Set([...tracked,...governed,...fs.readdirSync(cwd).filter(name=>!name.startsWith('.')&&/\.(?:m?js|html|css)$/.test(name)),...['verification-assertion-bindings.json','verification-negative-populations.json'].filter(name=>fs.existsSync(path.join(cwd,name)))])];
   const inputSha256=Object.fromEntries(inputs.sort().map(name=>[name,sha(fs.readFileSync(path.join(cwd,name)))]));
   return {sourceCommit:git(cwd,'rev-parse','HEAD'),sourceTree:git(cwd,'rev-parse','HEAD^{tree}'),sourceInputsSha256:sha(inputSha256),inputSha256,specificationSha256:inputSha256[SPECIFICATION_PATH],runtime:{node:process.version,platform:process.platform,architecture:process.arch},catalogSha256:inputSha256['verification-evidence-catalog.mjs']};
 }
@@ -136,6 +224,7 @@ export function aggregateExecutedEvidence(receipts,fingerprint){
   const normative=readJson(SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-normative-requirements.json'));
   const assertionBindings=fs.existsSync('verification-assertion-bindings.json')?readJson('verification-assertion-bindings.json'):{schema:'closed-loop-verification-assertion-bindings/1',specificationSha256:normative.specificationSha256,bindings:[]};
   requireEvidence(assertionBindings.schema==='closed-loop-verification-assertion-bindings/1'&&assertionBindings.specificationSha256===fingerprint.specificationSha256,'assertion bindings use a different controlling specification');
+  requireEvidence(sha(fs.readFileSync('verification-assertion-bindings.json'))===fingerprint.inputSha256['verification-assertion-bindings.json'],'normative assertion declarations are not current source inputs');
   const requirementsById=new Map(normative.requirements.map(row=>[row.normativeRequirementId,row]));
   for(const binding of assertionBindings.bindings){
     const requirement=requirementsById.get(binding.normativeRequirementId);
@@ -145,6 +234,8 @@ export function aggregateExecutedEvidence(receipts,fingerprint){
     const bindings=assertionBindings.bindings.filter(binding=>binding.normativeRequirementId===requirement.normativeRequirementId),ids=[...new Set(bindings.flatMap(binding=>binding.checkIds))],linked=ids.filter(id=>observations.has(id)).map(id=>observations.get(id)),missingIds=ids.filter(id=>!observations.has(id));
     return {normativeRequirementId:requirement.normativeRequirementId,sourceLocation:requirement.sourceLocation,sourceLineSha256:requirement.sourceLocation.lineSha256,controllingText:requirement.controllingText,disposition:linked.length&&missingIds.length===0&&linked.every(row=>row.passed)?'QUALIFIED_EXECUTED_ASSERTION_EVIDENCE':'UNKNOWN',implementationClassification:linked.length?'implemented but insufficiently tested':null,implementationEvidenceDisposition:linked.length?'QUALIFIED_SCOPED_IMPLEMENTATION_EVIDENCE':'INSUFFICIENT_CURRENT_EVIDENCE_TO_CLASSIFY_IMPLEMENTATION',scopeBindings:bindings.map(binding=>({scope:binding.scope,basis:binding.basis,checkIds:binding.checkIds})),missingAssertionIds:missingIds,executedAssertions:linked.map(row=>({checkId:row.checkId,suite:row.suite,boundary:row.boundary,assertionReference:row.assertionReference,expected:row.expected,observed:row.observed,receiptSha256:row.receiptSha256,evidenceBasis:row.evidenceBasis})),reason:linked.length?'Exact linked assertions establish their stated boundary. Long clauses retain unproved semantic/operator/environment obligations; no full-clause success is inferred.':'No requirement-specific current executed assertion binding. Candidate file mappings do not establish whether the implementation conforms, is missing, or requires unavailable external proof.'};
   });
+  const fullRequirementProofs={schema:'closed-loop-full-requirement-proof/1',specificationSha256:fingerprint.specificationSha256,normativeManifestSha256:sha(fs.readFileSync(normativeManifestPath)),normativeManifestIdentity:normative.manifestIdentity,requirements:normative.requirements.map(requirement=>evaluateFullRequirementProof(requirement,assertionBindings.bindings.filter(binding=>binding.normativeRequirementId===requirement.normativeRequirementId),observations,fingerprint))};
+  requireEvidence(fullRequirementProofs.normativeManifestSha256===fingerprint.inputSha256[normativeManifestPath],'normative proof manifest is not the current source input');
   const contractRequirementTrace=(assertionBindings.contractRefs||[]).map(binding=>{
     const source=binding.source,lines=fs.readFileSync(source.path,'utf8').split('\n');
     requireEvidence(sha(lines[source.startLine-1])===binding.sourceLineSha256,'amendment assertion binding source line changed');
@@ -155,7 +246,7 @@ export function aggregateExecutedEvidence(receipts,fingerprint){
   // observation stay absent; explicit nulls remain null. Return the exact value
   // that is persisted so a genuine report round trip cannot differ merely
   // because an in-memory optional member was undefined before serialization.
-  return JSON.parse(JSON.stringify({schema:'closed-loop-executed-verification-evidence/1',fingerprint,receiptCount:receipts.size,observationCount:observations.size,receiptReferences:receiptRefs,metrics,zeroCounts,negativePopulations,normativeRequirementTrace,contractRequirementTrace,sourceInspectionIsBehavioralProof:false}));
+  return JSON.parse(JSON.stringify({schema:'closed-loop-executed-verification-evidence/1',fingerprint,receiptCount:receipts.size,observationCount:observations.size,receiptReferences:receiptRefs,metrics,zeroCounts,negativePopulations,normativeRequirementTrace,fullRequirementProofs,contractRequirementTrace,sourceInspectionIsBehavioralProof:false}));
 }
 export function readExecutedEvidence(file,fingerprint=evidenceFingerprint()){
   const evidence=readJson(file),{evidenceSha256,...payload}=evidence;
@@ -163,14 +254,14 @@ export function readExecutedEvidence(file,fingerprint=evidenceFingerprint()){
   requireEvidence(evidence.fingerprint?.sourceCommit===fingerprint.sourceCommit&&evidence.fingerprint.sourceInputsSha256===fingerprint.sourceInputsSha256&&evidence.fingerprint.specificationSha256===fingerprint.specificationSha256&&isDeepStrictEqual(evidence.fingerprint.runtime,fingerprint.runtime),'aggregated evidence is not the current source/specification/revision/runtime');
   const canonical=aggregateExecutedEvidence(readExecutionReceipts(path.dirname(file),fingerprint),fingerprint);
   requireEvidence(isDeepStrictEqual(canonical,payload),'aggregated metrics/populations do not derive from the current executed receipts');
+  validatedEvidenceDigests.set(evidence,{digest:sha(evidence),cwd:process.cwd()});
   return evidence;
 }
 export function applyExecutedEvidence(report,evidence){
-  const output={...report,coverageMetrics:{...report.coverageMetrics},section49CoverageMetrics:{...report.section49CoverageMetrics},section49ZeroCountMetrics:{...report.section49ZeroCountMetrics},executedVerificationEvidence:{fingerprint:evidence.fingerprint,receiptCount:evidence.receiptCount,observationCount:evidence.observationCount,evidenceSha256:evidence.evidenceSha256,receiptReferences:evidence.receiptReferences},negativePopulations:evidence.negativePopulations,normativeRequirementTrace:evidence.normativeRequirementTrace,contractRequirementTrace:evidence.contractRequirementTrace};
+  const output={...report,coverageMetrics:{...report.coverageMetrics},section49CoverageMetrics:{...report.section49CoverageMetrics},section49ZeroCountMetrics:{...report.section49ZeroCountMetrics},executedVerificationEvidence:{fingerprint:evidence.fingerprint,receiptCount:evidence.receiptCount,observationCount:evidence.observationCount,evidenceSha256:evidence.evidenceSha256,receiptReferences:evidence.receiptReferences},negativePopulations:evidence.negativePopulations,normativeRequirementTrace:evidence.normativeRequirementTrace,fullRequirementProofs:evidence.fullRequirementProofs,contractRequirementTrace:evidence.contractRequirementTrace};
   if(output.section49CoverageMetrics.normativeRequirementTraceCoverage){
-    const traced=evidence.normativeRequirementTrace.filter(row=>row.disposition==='QUALIFIED_EXECUTED_ASSERTION_EVIDENCE');
-    output.section49CoverageMetrics.normativeRequirementTraceCoverage={...output.section49CoverageMetrics.normativeRequirementTraceCoverage,numerator:traced.length,denominator:evidence.normativeRequirementTrace.length,includedIds:evidence.normativeRequirementTrace.map(row=>row.normativeRequirementId),scopeHash:sha({fingerprint:evidence.fingerprint,trace:evidence.normativeRequirementTrace}),evidenceReferences:traced.flatMap(row=>row.executedAssertions.map(assertion=>`${assertion.suite}.json#${assertion.checkId}`)),value:null,disposition:'UNKNOWN',evidenceBasis:'EXACT_CURRENT_REQUIREMENT_ASSERTION_LINKS_WITH_EXPLICIT_UNPROVED_CLAUSES',qualifiedExecutedRequirementCount:traced.length,fullClauseConformanceEstablished:false};
-    output.normativeRequirementTraceCoverage=null;
+    output.section49CoverageMetrics.normativeRequirementTraceCoverage=normativeProofSummary(evidence);
+    output.normativeRequirementTraceCoverage=output.section49CoverageMetrics.normativeRequirementTraceCoverage.value;
   }
   for(const [key,metric]of Object.entries(evidence.metrics)){
     if(Object.hasOwn(output.coverageMetrics,key))output.coverageMetrics[key]=metric;

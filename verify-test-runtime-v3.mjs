@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {testIrLimitFixtures} from './test-fixtures.mjs';
+import {verifyOperationRegistryAdmission} from './test-runtime-operation-registry.mjs';
 
 const source=fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8');
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};
@@ -149,8 +150,9 @@ assert.equal(timeoutResult.status,'EXECUTION_FAILED');
 assert.equal(timeoutResult.failure.code,'WORKER_TIMEOUT');
 assert.equal(timeoutResult.observations.length,0,'timeout must produce no partial result');
 
+const operationRegistryAdmission=await verifyOperationRegistryAdmission(source,runtime);
 console.log(JSON.stringify({
-  verifyTestRuntimeV3:'PASS',
+  verifyTestRuntimeV3:'PASS',operationRegistryAdmission,
   operations:runtime.OPS.length,
   inputLimit:runtime.LIMITS.maxTotalInputBytes,
   workerTimeoutMs:runtime.LIMITS.workerTimeoutMs,

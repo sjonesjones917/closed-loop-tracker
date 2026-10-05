@@ -4,8 +4,8 @@
   "controllerTitle": "CLOSED-LOOP RELIABILITY APPLICATION / MONOTONIC IMPLEMENTATION CONTROLLER",
   "repository": "sjonesjones917/closed-loop-tracker",
   "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
-  "specificationSha256": "a610714d14a6cff6386fc432f071e90507910d844ded7f32d87e110ade88cc8c",
-  "specificationByteLength": 324306,
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "specificationByteLength": 342110,
   "specificationSourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "startingMainCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "lastObservedMainCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
@@ -691,7 +691,7 @@
       "endCommit": null,
       "specificationSections": [
         "36.8 Delivery-candidate set",
-        "37 Stage 25 — INSPECT THE FINAL REPRESENTATION",
+        "37 Stage 25 \u2014 INSPECT THE FINAL REPRESENTATION",
         "38 representationInspections",
         "38.1 deliveryCandidateSets",
         "41 tests 180-181",
@@ -778,8 +778,8 @@
         "30 Contradiction detection",
         "36.4 Release",
         "36.12 Derived-command self-validity",
-        "37 Stage 26 — RECONCILE PROCESS AND PRODUCT EVIDENCE",
-        "37 Stage 27 — APPLY THE RELEASE GATE",
+        "37 Stage 26 \u2014 RECONCILE PROCESS AND PRODUCT EVIDENCE",
+        "37 Stage 27 \u2014 APPLY THE RELEASE GATE",
         "38 processAudits",
         "38 productAudits",
         "38 releaseGateReviews",
@@ -864,7 +864,7 @@
         "30 Contradiction detection",
         "36.8 Delivery-candidate set",
         "36.9 Terminal delivery",
-        "37 Stage 28 — VERIFY ARTIFACT IDENTITY BEFORE RELEASE",
+        "37 Stage 28 \u2014 VERIFY ARTIFACT IDENTITY BEFORE RELEASE",
         "38 artifactIdentities",
         "38 humanDecisions",
         "41 tests 180-181",
@@ -957,7 +957,7 @@
         "36.6 Evidence graph",
         "36.9 Atomic Stage 30 terminal command",
         "36.12 Derived-command self-validity",
-        "37 Stage 29 — PRESERVE THE COMPLETE EVIDENCE CHAIN",
+        "37 Stage 29 \u2014 PRESERVE THE COMPLETE EVIDENCE CHAIN",
         "38.1 backupCheckpoints",
         "38 evidenceChains",
         "40 Permanent regression obligations",
@@ -1356,5 +1356,18 @@
     "Exact deployed-revision physical-iPhone Safari acceptance and approved visual-baseline evidence remain unestablished.",
     "Required real-project external-output evidence remains separate from synthetic verification."
   ],
-  "previousStartingMainCommit": "755e9c6c15acb23f80606fc286a38b63b7b0654f"
+  "previousStartingMainCommit": "755e9c6c15acb23f80606fc286a38b63b7b0654f",
+  "approvedSpecificationAdoption": {
+    "recordPath": "verification/approved-deferred-compatibility-20261005.json",
+    "approvedProposalSha256": "06c888569c9eaca414bde1926940cf596838fc2dd12c4ff7d4295e05d27ea22f",
+    "approvalMessageExact": "Approve",
+    "previousSpecificationTuple": {
+      "specificationSha256": "a610714d14a6cff6386fc432f071e90507910d844ded7f32d87e110ade88cc8c",
+      "specificationByteLength": 324306,
+      "specificationSourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64"
+    },
+    "sourceCommitBasis": "APPROVED_PINNED_BASE_RECONSTRUCTION",
+    "currentImplementationStatus": "APPROVED_IMPLEMENTATION_PENDING",
+    "qualification": "Top controlling tuple reconciled after explicit user approval. Existing stage statuses and recorded execution, browser, deployment and device evidence remain historical and unchanged; adoption creates no new DONE/PROVEN or release evidence."
+  }
 }

@@ -4,9 +4,10 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
+import {verifyDueEvidenceConsumers} from './test-due-evidence-consumers.mjs';
 import {runVerifier} from './verify-conformance-regressions.mjs';
 import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,observationsFromReports,sha} from './verification-evidence.mjs';
-import {metricCatalog} from './verification-evidence-catalog.mjs';
+import {metricCatalog,verificationCatalog} from './verification-evidence-catalog.mjs';
 import {collectVerificationEvidence,executeEvidenceProducer} from './collect-verification-evidence.mjs';
 
 // This exercises the real preload producer, not a YAML presence or mocked
@@ -16,7 +17,13 @@ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-executed-evide
 const source=fs.readFileSync('verify-stage03-agent-protocol.mjs','utf8').replace("'./verifier-runtime.mjs'",JSON.stringify(pathToFileURL(path.resolve('verifier-runtime.mjs')).href));
 const preload=path.resolve('verification-evidence-preload.mjs'),suite='verify-stage03-agent-protocol.mjs';
 const producerControls=[];
-const producerFixtureInputs=['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt'];
+const deferredCatalogConsumerControl=verifyDueEvidenceConsumers();
+const governanceDeclaration='specification/requirement-evidence-bindings.json';
+const governance=JSON.parse(fs.readFileSync(governanceDeclaration,'utf8'));
+const fullCoverageReviewInputs=(JSON.parse(fs.readFileSync('verification-assertion-bindings.json','utf8')).bindings||[]).flatMap(binding=>binding.fullCoverage?.review?.path?[binding.fullCoverage.review.path]:[]);
+const governedApprovalInputs=[...new Set([...fullCoverageReviewInputs,...(governance.approvedAmendments||[]).flatMap(amendment=>[amendment.sourceReviewPath,amendment.approvedProposalPath]),...(governance.independentSourceReview?[governance.independentSourceReview.sourceReviewPath,governance.independentSourceReview.reconciliationPath]:[])])].sort();
+const activeFixtureInputs=[...new Set(Object.values(verificationCatalog).flatMap(suite=>suite.sourceInputs||[]))].sort();
+const producerFixtureInputs=['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt',governanceDeclaration,...governedApprovalInputs,...activeFixtureInputs];
 try{
   // Project the maintained workflow's actual job and initial checkout step
   // environments, then exercise Node's real preload boundary on a cold
@@ -101,6 +108,50 @@ try{
   const persistedOwnReceipt=JSON.parse(fs.readFileSync(path.join(collectorDirectory,suite+'.json'),'utf8'));
   assert.deepEqual(ownReceipt,persistedOwnReceipt,'COLLECTOR_OWN_OUTPUT_ORACLE: collector rewrote the child-owned receipt.');
   const collectorOwnOutputControl={caseId:'run-missing-owned-report-and-diagnostics',result:'PASS',actualStage03AssertionsExecuted:true,preloadInNodeOptions:false,ordinaryRuntimeOptionsPreserved:true,inheritedChildOutputInRunner:true,inheritedOutputExcludedFromOwnReport:true,producerProgressOnStderr:true,producerProgressBytes:Buffer.byteLength(producerProgress),actualStderrSha256:ownReceipt.stderrSha256,persistedChildReceiptRetained:true,formerReconstructionRejected:true};
+  const governanceSourceCases=[],activeFixtureSourceCases=[],governanceBaseline=evidenceFingerprint(fixture);
+  assert(governedApprovalInputs.length>=2,'GOVERNANCE_INPUT_ORACLE: active approved proposal/review pair is missing.');
+  for(const file of [...governedApprovalInputs,...activeFixtureInputs]){
+    const target=path.join(fixture,file),bytes=fs.readFileSync(target);
+    assert.equal(governanceBaseline.inputSha256[file],sha(bytes),'GOVERNANCE_INPUT_ORACLE: actual declared governance bytes are absent from execution identity.');
+    fs.appendFileSync(target,'\n');
+    const changed=evidenceFingerprint(fixture);
+    assert.notEqual(changed.sourceInputsSha256,governanceBaseline.sourceInputsSha256,'GOVERNANCE_INPUT_ORACLE: changed active governance bytes retained the source fingerprint.');
+    assert.throws(()=>validateExecutionReceipt(persistedOwnReceipt,suite,changed),/stale source\/specification\/catalog\/runtime receipt/,'GOVERNANCE_INPUT_ORACLE: stale actual producer receipt survived changed governance bytes.');
+    fs.writeFileSync(target,bytes);
+    validateExecutionReceipt(persistedOwnReceipt,suite,evidenceFingerprint(fixture));
+    fs.unlinkSync(target);
+    assert.throws(()=>evidenceFingerprint(fixture),/ENOENT/,'GOVERNANCE_INPUT_ORACLE: missing active governance bytes silently disappeared.');
+    fs.writeFileSync(target,bytes);
+    // Remove only the new active files from Git's index. The declaration still
+    // makes their real bytes authoritative before an eventual candidate commit.
+    execFileSync('git',['rm','--cached','--quiet',file],{cwd:fixture});
+    assert.equal(evidenceFingerprint(fixture).inputSha256[file],sha(bytes),'GOVERNANCE_INPUT_ORACLE: untracked declared governance bytes lost execution identity.');
+    fs.appendFileSync(target,'\n');
+    const untrackedChanged=evidenceFingerprint(fixture);
+    assert.throws(()=>validateExecutionReceipt(persistedOwnReceipt,suite,untrackedChanged),/stale source\/specification\/catalog\/runtime receipt/,'GOVERNANCE_INPUT_ORACLE: untracked governance mutation retained stale actual evidence.');
+    fs.writeFileSync(target,bytes);
+    execFileSync('git',['add',file],{cwd:fixture});
+    validateExecutionReceipt(persistedOwnReceipt,suite,evidenceFingerprint(fixture));
+    (activeFixtureInputs.includes(file)?activeFixtureSourceCases:governanceSourceCases).push({file,actualByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true});
+  }
+  const proposalPath=governedApprovalInputs.find(file=>file.endsWith('.md'));
+  assert(proposalPath,'GOVERNANCE_INPUT_ORACLE: exact approved Markdown proposal is absent.');
+  const proposalTarget=path.join(fixture,proposalPath),proposalBytes=fs.readFileSync(proposalTarget);
+  const formerFingerprint=fingerprint=>{const copy=structuredClone(fingerprint);delete copy.inputSha256[proposalPath];copy.sourceInputsSha256=sha(copy.inputSha256);return copy;};
+  const beforeEquivalent=formerFingerprint(evidenceFingerprint(fixture));
+  fs.appendFileSync(proposalTarget,'\n');
+  assert.equal(formerFingerprint(evidenceFingerprint(fixture)).sourceInputsSha256,beforeEquivalent.sourceInputsSha256,'GOVERNANCE_INPUT_ORACLE: prior Markdown-omitting fingerprint did not reproduce stale identity.');
+  fs.writeFileSync(proposalTarget,proposalBytes);
+  assert.equal(activeFixtureInputs.length,1,'FIXTURE_INPUT_ORACLE: independently declared legacy fixture input is missing or duplicated.');
+  const legacyFixturePath=activeFixtureInputs[0],legacyFixtureTarget=path.join(fixture,legacyFixturePath),legacyFixtureBytes=fs.readFileSync(legacyFixtureTarget);
+  const formerUntrackedFixtureFingerprint=fingerprint=>{const copy=structuredClone(fingerprint);delete copy.inputSha256[legacyFixturePath];copy.sourceInputsSha256=sha(copy.inputSha256);return copy;};
+  execFileSync('git',['rm','--cached','--quiet',legacyFixturePath],{cwd:fixture});
+  const priorUntrackedFixtureEquivalent=formerUntrackedFixtureFingerprint(evidenceFingerprint(fixture));
+  fs.appendFileSync(legacyFixtureTarget,'\n');
+  assert.equal(formerUntrackedFixtureFingerprint(evidenceFingerprint(fixture)).sourceInputsSha256,priorUntrackedFixtureEquivalent.sourceInputsSha256,'FIXTURE_INPUT_ORACLE: former untracked-fixture omission did not reproduce stale identity.');
+  fs.writeFileSync(legacyFixtureTarget,legacyFixtureBytes);execFileSync('git',['add',legacyFixturePath],{cwd:fixture});validateExecutionReceipt(persistedOwnReceipt,suite,evidenceFingerprint(fixture));
+  const activeFixtureFingerprintControl={result:'PASS',boundary:'Existing actual Stage03 producer receipt and production source fingerprint/receipt consumer; isolated Git/filesystem, no added child',actualProducerReceiptReused:true,declaredSourcePaths:activeFixtureInputs,sourceCases:activeFixtureSourceCases,formerUntrackedFixtureOmissionReproduced:true};
+  const governanceFingerprintControl={result:'PASS',boundary:'Existing actual Stage03 producer receipt, isolated Git checkout and production fingerprint/receipt consumer; no new producer execution',declaredSourcePaths:governedApprovalInputs,actualProducerReceiptReused:true,formerMarkdownOmissionReproduced:true,sourceCases:governanceSourceCases};
   for(const [name,text,diagnostic] of [
     ['producer-progress-on-stdout',source+`\nprocess.stdout.write(${JSON.stringify(producerProgress)});\n`,'Unexpected non-whitespace character after JSON'],
     ['foreign-failed-observation',source+`\nconsole.log(JSON.stringify({foreignImportedReport:true,verificationObservations:[{checkId:'foreign.failed-assertion',boundary:'controlled imported report',expected:true,observed:false,passed:false}]}));\n`,'failed or missing required assertion foreign.failed-assertion'],
@@ -174,12 +225,168 @@ try{
   }
   assert(canonicalIds.every(id=>wrapper.reports.some(report=>report.verificationObservations?.some(row=>row.checkId===id))),'OBSERVATION_OWNER_ORACLE: actual imported reports were discarded.');
   assert(canonicalIds.every(id=>!wrapper.observations.some(row=>row.checkId===id)),'OBSERVATION_OWNER_ORACLE: wrapper claimed canonical imported assertion identities.');
+  const ingestionReferenceChecks=[
+    {checkId:'EVIDENCE-SOURCE-SCOPE-AUTHORITY',marker:'evidenceSourceScopeAuthority',populationId:'ingestion.evidence-source-scope',observed:{currentAccepted:true,invalidAdmissionRejected:5,invalidPrecommitRejected:5,rawAndPendingStatePreserved:true,optionalOmissionAccepted:true,historicalExecutionEvidenceRetained:true,operationContext:{currentUnprovidedRejected:2,preFixEquivalentFalseAdmissions:2,legacyPendingCommitRejected:2,conformingControlsCommitted:5}}},
+    {checkId:'EVIDENCE-ATTACHMENT-SCOPE-CUSTODY',marker:'evidenceAttachmentScopeCustody',populationId:'ingestion.evidence-attachment-custody',observed:{currentBytesAccepted:true,metadataAndStaleAdmissionRejected:true,changedAndMissingBytesPrecommitRejected:true,pendingWorkPreserved:true,evidenceAfterByteLossInsufficient:true,restoredExactBytesProgress:true}}
+  ];
+  for(const {checkId,marker,populationId,observed}of ingestionReferenceChecks){
+    const owned=wrapper.observations.filter(row=>row.checkId===checkId);
+    assert.equal(owned.length,1,'INGESTION_REFERENCE_OBSERVATION_ORACLE: missing or duplicate owning detail '+checkId);
+    assert.equal(owned[0].passed,true);assert.deepEqual(owned[0].observed,observed,'INGESTION_REFERENCE_OBSERVATION_ORACLE: the exact source/custody control population changed.');
+    const incomplete=structuredClone(wrapper);
+    for(const report of incomplete.reports)if(Array.isArray(report.verificationObservations))report.verificationObservations=report.verificationObservations.filter(row=>row.checkId!==checkId);
+    incomplete.observations=observationsFromReports('verify-ingestion.mjs',incomplete.reports);
+    assert.equal(incomplete.observations.find(row=>row.checkId===populationId)?.passed,false,'INGESTION_REFERENCE_OBSERVATION_ORACLE: omitted '+checkId+' passed its required population.');
+    delete incomplete.receiptSha256;incomplete.receiptSha256=sha(incomplete);
+    assert.throws(()=>validateExecutionReceipt(incomplete,'verify-ingestion.mjs',evidenceFingerprint()),/receipt assertions differ from actual executed report/,'INGESTION_REFERENCE_OBSERVATION_ORACLE: omitted '+checkId+' became an acceptable receipt.');
+    const missingReport=structuredClone(wrapper.reports).filter(report=>!Object.hasOwn(report,marker));
+    assert.throws(()=>observationsFromReports('verify-ingestion.mjs',missingReport),new RegExp('expected exactly one report marker '+marker),'INGESTION_REFERENCE_OBSERVATION_ORACLE: the owning source/custody report disappeared.');
+    producerControls.push({caseId:'missing-required-ingestion-reference-observation:'+checkId,accepted:false,result:'DETECTED'});
+  }
+  const humanTargetCheckId='HUMAN-DECISION-CANDIDATE-TARGET-AUTHORITY',humanTargetMarker='humanDecisionCandidateTargetAuthority';
+  const humanTarget=wrapper.observations.filter(row=>row.checkId===humanTargetCheckId);
+  assert.equal(humanTarget.length,1,'HUMAN_TARGET_OBSERVATION_ORACLE: missing or duplicate canonical ingestion detail.');
+  assert.equal(humanTarget[0].passed,true);
+  assert.deepEqual(humanTarget[0].observed,{invalidAdmissionRejected:11,preFixEquivalentFalseAdmission:true,legacyPendingCommitRejected:true,confirmedConformingControls:5,retainedSelectionControl:true,ordinaryHumanFalsePreserved:true,actualAssurance:'SELF_ASSERTED'},'HUMAN_TARGET_OBSERVATION_ORACLE: exact independent target/correction/control population changed.');
+  const humanTargetIncomplete=structuredClone(wrapper);
+  for(const report of humanTargetIncomplete.reports)if(Array.isArray(report.verificationObservations))report.verificationObservations=report.verificationObservations.filter(row=>row.checkId!==humanTargetCheckId);
+  humanTargetIncomplete.observations=observationsFromReports('verify-ingestion.mjs',humanTargetIncomplete.reports);
+  assert.equal(humanTargetIncomplete.observations.find(row=>row.checkId==='ingestion.human-decision-target-authority')?.passed,false,'HUMAN_TARGET_OBSERVATION_ORACLE: omitted target detail passed its required population.');
+  delete humanTargetIncomplete.receiptSha256;humanTargetIncomplete.receiptSha256=sha(humanTargetIncomplete);
+  assert.throws(()=>validateExecutionReceipt(humanTargetIncomplete,'verify-ingestion.mjs',evidenceFingerprint()),/receipt assertions differ from actual executed report/,'HUMAN_TARGET_OBSERVATION_ORACLE: omitted target detail became an acceptable receipt.');
+  assert.throws(()=>observationsFromReports('verify-ingestion.mjs',structuredClone(wrapper.reports).filter(report=>!Object.hasOwn(report,humanTargetMarker))),/expected exactly one report marker humanDecisionCandidateTargetAuthority/,'HUMAN_TARGET_OBSERVATION_ORACLE: mandatory target owner marker disappeared.');
+  producerControls.push({caseId:'missing-required-human-candidate-target-observation',accepted:false,result:'DETECTED'});
+  const externalIdentityCheckId='EXTERNAL-RESPONSE-IDENTITY-SHAPE',externalIdentity=wrapper.observations.filter(row=>row.checkId===externalIdentityCheckId);
+  assert.equal(externalIdentity.length,1,'EXTERNAL_IDENTITY_OBSERVATION_ORACLE: missing or duplicate canonical ingestion detail.');
+  assert.equal(externalIdentity[0].passed,true);
+  assert.deepEqual(externalIdentity[0].observed,{scalarTypeRejections:11,referenceTypeRejections:10,preFixEquivalentFalseAdmissions:17,legacyPendingCommitRejections:2,existingVocabularyAndScopeRejections:7,conformingControlsCommitted:3,nestedFieldTypeRejections:16,nestedPreFixEquivalentFalseAdmissions:16,invalidDiagnosticErrorsSaved:3,preFixDiagnosticSaveFailures:2,arbitraryHumanJsonPreserved:true},'EXTERNAL_IDENTITY_OBSERVATION_ORACLE: independently declared type/recovery/control population changed.');
+  const externalIdentityIncomplete=structuredClone(wrapper);
+  for(const report of externalIdentityIncomplete.reports)if(Array.isArray(report.verificationObservations))report.verificationObservations=report.verificationObservations.filter(row=>row.checkId!==externalIdentityCheckId);
+  externalIdentityIncomplete.observations=observationsFromReports('verify-ingestion.mjs',externalIdentityIncomplete.reports);
+  assert.equal(externalIdentityIncomplete.observations.find(row=>row.checkId==='ingestion.external-identity-shape')?.passed,false,'EXTERNAL_IDENTITY_OBSERVATION_ORACLE: omitted identity detail passed its required population.');
+  delete externalIdentityIncomplete.receiptSha256;externalIdentityIncomplete.receiptSha256=sha(externalIdentityIncomplete);
+  assert.throws(()=>validateExecutionReceipt(externalIdentityIncomplete,'verify-ingestion.mjs',evidenceFingerprint()),/receipt assertions differ from actual executed report/,'EXTERNAL_IDENTITY_OBSERVATION_ORACLE: omitted identity detail became an acceptable receipt.');
+  assert.throws(()=>observationsFromReports('verify-ingestion.mjs',structuredClone(wrapper.reports).filter(report=>!Object.hasOwn(report,'externalResponseIdentityShape'))),/expected exactly one report marker externalResponseIdentityShape/,'EXTERNAL_IDENTITY_OBSERVATION_ORACLE: mandatory identity marker disappeared.');
+  producerControls.push({caseId:'missing-required-external-response-identity-observation',accepted:false,result:'DETECTED'});
+  const canonicalBoundaryChecks=[
+    {checkId:'CANONICAL-RESPONSE-RECOVERY',marker:'canonicalResponseRecovery',populationId:'ingestion.canonical-response-recovery',observed:{unsupportedCanonicalValuesRejectedAndReloaded:7,preFixEquivalentCanonicalCrashes:7,directValidatorRejections:7,noncanonicalPendingRejections:2,validUnicodeCommitted:true}},
+    {checkId:'RESPONSE-CANONICAL-VALUE-BOUNDARIES',marker:'responseCanonicalValueBoundaries',populationId:'ingestion.canonical-value-boundaries',observed:{malformedAttachmentDigestRejected:true,preFixEquivalentDigestFalseAdmission:true,inheritedFieldRejections:2,preFixInheritedFieldFalseAdmissions:2,reorderedObjectConfirmed:true,reorderedObjectDoesNotCreateCorrection:true,preFixFalseCorrection:true,materialValueChangesRequireCorrection:4}}
+  ];
+  for(const {checkId,marker,populationId,observed} of canonicalBoundaryChecks){
+    const owned=wrapper.observations.filter(row=>row.checkId===checkId);
+    assert.equal(owned.length,1,'CANONICAL_BOUNDARY_OBSERVATION_ORACLE: missing or duplicate owning detail '+checkId);
+    assert.equal(owned[0].passed,true);assert.deepEqual(owned[0].observed,observed,'CANONICAL_BOUNDARY_OBSERVATION_ORACLE: independently declared finite recovery/value population changed.');
+    const incomplete=structuredClone(wrapper);
+    for(const report of incomplete.reports)if(Array.isArray(report.verificationObservations))report.verificationObservations=report.verificationObservations.filter(row=>row.checkId!==checkId);
+    incomplete.observations=observationsFromReports('verify-ingestion.mjs',incomplete.reports);
+    assert.equal(incomplete.observations.find(row=>row.checkId===populationId)?.passed,false,'CANONICAL_BOUNDARY_OBSERVATION_ORACLE: omitted '+checkId+' passed its required population.');
+    delete incomplete.receiptSha256;incomplete.receiptSha256=sha(incomplete);
+    assert.throws(()=>validateExecutionReceipt(incomplete,'verify-ingestion.mjs',evidenceFingerprint()),/receipt assertions differ from actual executed report/,'CANONICAL_BOUNDARY_OBSERVATION_ORACLE: omitted '+checkId+' became an acceptable receipt.');
+    assert.throws(()=>observationsFromReports('verify-ingestion.mjs',structuredClone(wrapper.reports).filter(report=>!Object.hasOwn(report,marker))),new RegExp('expected exactly one report marker '+marker),'CANONICAL_BOUNDARY_OBSERVATION_ORACLE: owning marker disappeared.');
+    producerControls.push({caseId:'missing-required-canonical-boundary-observation:'+checkId,accepted:false,result:'DETECTED'});
+  }
   const ownerAbsent=aggregateExecutedEvidence(new Map([['verify-ingestion.mjs',wrapper]]),evidenceFingerprint());
   const absentLinks=ownerAbsent.normativeRequirementTrace.filter(row=>row.scopeBindings.some(binding=>binding.checkIds.some(id=>canonicalIds.includes(id))));
   assert(absentLinks.length>0&&absentLinks.every(row=>row.disposition==='UNKNOWN'),'OBSERVATION_OWNER_ORACLE: imported reports masked missing canonical owner proof.');
   const ownedAggregate=aggregateExecutedEvidence(ownershipReceipts,evidenceFingerprint());
   assert.equal(ownedAggregate.receiptCount,3,'OBSERVATION_OWNER_ORACLE: actual composed/owner receipts did not aggregate.');
   assert(canonicalIds.every(id=>ownedAggregate.normativeRequirementTrace.some(row=>row.executedAssertions.some(assertion=>assertion.checkId===id&&assertion.suite!=='verify-ingestion.mjs'))),'OBSERVATION_OWNER_ORACLE: exact canonical assertion links were lost.');
+  for(const normativeRequirementId of ['NREQ-749b81ff8c36960f18ded1d0142a724a','NREQ-8c446bb0f81585af8291c866b1d2ef37']){
+    const requirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId===normativeRequirementId);
+    assert.equal(requirement?.disposition,'QUALIFIED_EXECUTED_ASSERTION_EVIDENCE','INGESTION_REFERENCE_NORMATIVE_LINK_ORACLE: exact relationship/scope/precommit obligation lost its executed control.');
+    assert.deepEqual(requirement.executedAssertions.map(row=>[row.checkId,row.suite]),ingestionReferenceChecks.map(row=>[row.checkId,'verify-ingestion.mjs']).concat([[externalIdentityCheckId,'verify-ingestion.mjs']]),'INGESTION_REFERENCE_NORMATIVE_LINK_ORACLE: reference/type controls were omitted or attributed to another producer.');
+  }
+  const wrongTypeRequirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId==='NREQ-486b3d356d1077e6a811948127d14ba7');
+  assert.equal(wrongTypeRequirement?.disposition,'UNKNOWN','EXTERNAL_IDENTITY_NORMATIVE_OWNER_ORACLE: ingestion assertions masked the missing closed native binding type owner.');
+  assert.deepEqual(wrongTypeRequirement.missingAssertionIds,['RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED'],'EXTERNAL_IDENTITY_NORMATIVE_OWNER_ORACLE: exact missing native type owner was not retained.');
+  assert.deepEqual(wrongTypeRequirement.executedAssertions.map(row=>[row.checkId,row.suite]),[[externalIdentityCheckId,'verify-ingestion.mjs'],['RESPONSE-CANONICAL-VALUE-BOUNDARIES','verify-ingestion.mjs']],'EXTERNAL_IDENTITY_NORMATIVE_LINK_ORACLE: wrong-type control was attributed to another producer.');
+  const nativeBindingRequirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId==='NREQ-621d5f7e000ff2bcf9b817b4229ba8e2');
+  assert.equal(nativeBindingRequirement?.disposition,'UNKNOWN','NATIVE_BINDING_NORMATIVE_OWNER_ORACLE: unrelated ingestion receipts established a missing native binding owner.');
+  assert.deepEqual(nativeBindingRequirement.missingAssertionIds,['RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED']);
+  assert.deepEqual(nativeBindingRequirement.executedAssertions,[],'NATIVE_BINDING_NORMATIVE_OWNER_ORACLE: controlled report-shape fixtures became execution evidence.');
+  const retainedCustodyMissing=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId==='NREQ-b6c59f9417a6a40c7aee067b456a2a81');
+  assert.equal(retainedCustodyMissing?.disposition,'UNKNOWN','RETAINED_CUSTODY_NORMATIVE_LINK_ORACLE: ingestion evidence masked the missing canonical reload owner.');
+  assert.deepEqual(retainedCustodyMissing.missingAssertionIds,['RETAINED-HISTORICAL-EVIDENCE-CUSTODY']);
+  assert.deepEqual(retainedCustodyMissing.executedAssertions.map(row=>[row.checkId,row.suite]),ingestionReferenceChecks.map(row=>[row.checkId,'verify-ingestion.mjs']),'RETAINED_CUSTODY_NORMATIVE_LINK_ORACLE: current reference controls were lost while retained custody was unknown.');
+  producerControls.push({caseId:'missing-retained-historical-custody-owner',accepted:false,result:'DETECTED'});
+  for(const normativeRequirementId of ['NREQ-9187118f7b09bef886f677cfc943c664','NREQ-a475189429d715ecf6143001a65519a6','NREQ-2bbf10b970acb8382c6def922798d68a']){
+    const requirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId===normativeRequirementId);
+    assert.equal(requirement?.disposition,'UNKNOWN','HUMAN_TARGET_NORMATIVE_OWNER_ORACLE: candidate intake masked the missing current native human target/storage owner.');
+    assert.deepEqual(requirement.missingAssertionIds,['CURRENT-HUMAN-DECISION-TARGET-INTEGRITY']);
+    assert.deepEqual(requirement.executedAssertions.map(row=>[row.checkId,row.suite]),[[humanTargetCheckId,'verify-ingestion.mjs']].concat(normativeRequirementId==='NREQ-9187118f7b09bef886f677cfc943c664'?[['RESPONSE-CANONICAL-VALUE-BOUNDARIES','verify-ingestion.mjs']]:[]),'HUMAN_TARGET_NORMATIVE_OWNER_ORACLE: intake control was attributed to another producer.');
+  }
+  producerControls.push({caseId:'missing-current-native-human-target-owner',accepted:false,result:'DETECTED'});
+
+  const suppliedInputRequirementIds=['NREQ-e9ee7497bb9d7e5d687f2bd0e17654b3','NREQ-59a90d9d6965e63d52bd071fdaab48e3','NREQ-5820c2c7d769128a6e1e32543e3bf8aa','NREQ-e88a52eae80983f9d011ec1b3d4c5eff'];
+  for(const normativeRequirementId of suppliedInputRequirementIds){
+    const requirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId===normativeRequirementId);
+    assert.equal(requirement?.disposition,'UNKNOWN','SUPPLIED_INPUT_CUSTODY_OWNER_ORACLE: response intake masked the missing native retained-input storage owner.');
+    assert.deepEqual(requirement.missingAssertionIds,['CURRENT-SUPPLIED-INPUT-CUSTODY']);
+    assert.deepEqual(requirement.executedAssertions,[],'SUPPLIED_INPUT_CUSTODY_OWNER_ORACLE: unrelated receipts supplied canonical storage evidence.');
+  }
+  producerControls.push({caseId:'missing-current-supplied-input-custody-owner',accepted:false,result:'DETECTED'});
+  // This is a controlled report-shape fixture for the catalog consumer only.
+  // It is never turned into an execution receipt or normative evidence. The
+  // ordinary persistence producer separately executes these storage assertions.
+  const storagePopulationFixture={retainedEvidenceCustody:true,currentSuppliedInputCustody:true,synthetic:true,verificationObservations:[
+    {checkId:'RETAINED-HISTORICAL-EVIDENCE-CUSTODY',boundary:'controlled catalog population fixture',expected:true,observed:true,passed:true},
+    {checkId:'CURRENT-SUPPLIED-INPUT-CUSTODY',boundary:'controlled catalog population fixture',expected:{omittedInputObserverInsufficient:true,currentSuppliedIdentityRetained:true,noManualReadRequired:true,commitReloadRestoreWorks:true,negativeVariantsInsufficient:5,noRetroactiveHistoricalAuthorization:true},observed:{omittedInputObserverInsufficient:true,currentSuppliedIdentityRetained:true,noManualReadRequired:true,commitReloadRestoreWorks:true,negativeVariantsInsufficient:5,noRetroactiveHistoricalAuthorization:true},passed:true}
+  ]};
+  const storagePopulationSuite='verify-operational-persistence.mjs';
+  assert(observationsFromReports(storagePopulationSuite,[storagePopulationFixture]).every(row=>row.passed),'STORAGE_POPULATION_ORACLE: conforming consumer report shape failed.');
+  for(const [caseId,mutate] of [
+    ['missing-current-supplied-input-outcome',value=>{delete value.noManualReadRequired;}],
+    ['wrong-current-supplied-input-outcome',value=>{value.commitReloadRestoreWorks=false;}],
+    ['missing-current-supplied-input-negative-case',value=>{value.negativeVariantsInsufficient=4;}],
+    ['undeclared-current-supplied-input-outcome',value=>{value.unassertedOutcome=true;}]
+  ]){
+    const changed=structuredClone(storagePopulationFixture),detail=changed.verificationObservations.find(row=>row.checkId==='CURRENT-SUPPLIED-INPUT-CUSTODY');mutate(detail.expected);mutate(detail.observed);
+    assert.equal(observationsFromReports(storagePopulationSuite,[changed]).find(row=>row.checkId==='store.current-supplied-input-custody')?.passed,false,'STORAGE_POPULATION_ORACLE: a self-consistent reported PASS with a changed finite outcome/count masked the required native byte population.');
+    producerControls.push({caseId,accepted:false,result:'DETECTED'});
+  }
+  for(const [checkId,marker,populationId] of [
+    ['RETAINED-HISTORICAL-EVIDENCE-CUSTODY','retainedEvidenceCustody','store.retained-evidence-custody'],
+    ['CURRENT-SUPPLIED-INPUT-CUSTODY','currentSuppliedInputCustody','store.current-supplied-input-custody']
+  ]){
+    const missingDetail=structuredClone(storagePopulationFixture);missingDetail.verificationObservations=missingDetail.verificationObservations.filter(row=>row.checkId!==checkId);
+    assert.equal(observationsFromReports(storagePopulationSuite,[missingDetail]).find(row=>row.checkId===populationId)?.passed,false,'STORAGE_POPULATION_ORACLE: omitted canonical storage detail passed its required population.');
+    const missingMarker=structuredClone(storagePopulationFixture);delete missingMarker[marker];
+    assert.throws(()=>observationsFromReports(storagePopulationSuite,[missingMarker]),new RegExp('expected exactly one report marker '+marker),'STORAGE_POPULATION_ORACLE: missing canonical storage marker passed.');
+    producerControls.push({caseId:'missing-required-storage-population:'+checkId,accepted:false,result:'DETECTED'});
+  }
+
+  // This independently declared report-shape fixture tests only the native
+  // catalog consumer. It is never an executed receipt or normative proof.
+  const bindingTypePopulationFixture={verifyTestRuntimeIntegrity:'PASS',verificationObservations:[{
+    checkId:'RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED',boundary:'controlled native binding catalog fixture',passed:true,
+    expected:{attempted:64,rejected:64,accepted:0,presentPropertyType:'NONEMPTY_STRING',hashFormat:'64_LOWERCASE_HEXADECIMAL_CHARACTERS',omission:'EXISTING_DEFAULTS'},
+    observed:{attempted:64,rejected:64,accepted:0}
+  }]};
+  const bindingTypePopulationSuite='verify-test-runtime-integrity.mjs',bindingTypePopulationId='runtime.closed-binding-string-types';
+  const bindingTypePopulationResult=report=>observationsFromReports(bindingTypePopulationSuite,[report]).find(row=>row.checkId===bindingTypePopulationId)?.passed;
+  assert.equal(bindingTypePopulationResult(bindingTypePopulationFixture),true,'NATIVE_BINDING_POPULATION_ORACLE: conforming finite catalog report shape failed.');
+  for(const [caseId,mutate]of [
+    ['missing-native-binding-type-count',row=>{delete row.expected.attempted;delete row.observed.attempted;}],
+    ['wrong-native-binding-type-count',row=>{row.expected.rejected=63;row.observed.rejected=63;}],
+    ['false-native-binding-type-acceptance',row=>{row.expected.accepted=1;row.observed.accepted=1;}],
+    ['coerced-native-binding-type-count',row=>{row.expected.attempted='64';row.observed.attempted='64';}],
+    ['undeclared-native-binding-type-count',row=>{row.expected.unassertedOutcome=true;row.observed.unassertedOutcome=true;}],
+    ['wrong-native-binding-type-contract',row=>{row.expected.presentPropertyType='COERCIBLE_VALUE';}]
+  ]){
+    const changed=structuredClone(bindingTypePopulationFixture);mutate(changed.verificationObservations[0]);
+    assert.equal(bindingTypePopulationResult(changed),false,'NATIVE_BINDING_POPULATION_ORACLE: self-consistent reported PASS replaced the independently declared finite native population: '+caseId);
+    producerControls.push({caseId,accepted:false,result:'DETECTED'});
+  }
+  const missingBindingTypeDetail=structuredClone(bindingTypePopulationFixture);missingBindingTypeDetail.verificationObservations=[];
+  assert.equal(bindingTypePopulationResult(missingBindingTypeDetail),false,'NATIVE_BINDING_POPULATION_ORACLE: omitted required native type detail passed.');
+  const failedBindingTypeMarker=structuredClone(bindingTypePopulationFixture);failedBindingTypeMarker.verifyTestRuntimeIntegrity='FAIL';
+  assert.equal(bindingTypePopulationResult(failedBindingTypeMarker),false,'NATIVE_BINDING_POPULATION_ORACLE: failed native suite marker passed.');
+  const missingBindingTypeMarker=structuredClone(bindingTypePopulationFixture);delete missingBindingTypeMarker.verifyTestRuntimeIntegrity;
+  assert.throws(()=>bindingTypePopulationResult(missingBindingTypeMarker),/expected exactly one report marker verifyTestRuntimeIntegrity/,'NATIVE_BINDING_POPULATION_ORACLE: missing native suite marker passed.');
+  const duplicateBindingTypeDetail=structuredClone(bindingTypePopulationFixture);duplicateBindingTypeDetail.verificationObservations.push(structuredClone(duplicateBindingTypeDetail.verificationObservations[0]));
+  assert.throws(()=>bindingTypePopulationResult(duplicateBindingTypeDetail),/duplicate emitted assertion RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED/,'NATIVE_BINDING_POPULATION_ORACLE: duplicate required native detail passed.');
+  producerControls.push({caseId:'missing-required-native-binding-type-owner',accepted:false,result:'DETECTED'});
+
   // Each new custody observation is mandatory at the receipt boundary, not
   // merely another favorable imported report. Retain the real producer reports
   // and suppress one detail only in this deliberate negative receipt control.
@@ -208,7 +415,7 @@ try{
   duplicate.observations=observationsFromReports(registrySuite,duplicate.reports);delete duplicate.receiptSha256;duplicate.receiptSha256=sha(duplicate);
   assert.throws(()=>aggregateExecutedEvidence(new Map([[suite,good.receipt],[registrySuite,duplicate]]),evidenceFingerprint()),new RegExp('duplicate observation '+detail.checkId),'OBSERVATION_OWNER_ORACLE: a double-owned detailed assertion became accepted evidence.');
   producerControls.push({caseId:'double-owned-detailed-assertion',accepted:false,result:'DETECTED'});
-  const observationOwnershipControl={result:'PASS',actualProducerSuites:ownershipSuites,canonicalDetailedAssertionCount:canonicalIds.length,canonicalCheckIds:canonicalIds,importedReportsRetained:true,canonicalOwnerMissingRemainsUnknown:true,exactCanonicalLinksPreserved:true,doubleOwnedDetailedAssertionRejected:true,foreignFailedDuplicateMalformedAssertionsRejected:true};
+  const observationOwnershipControl={result:'PASS',actualProducerSuites:ownershipSuites,canonicalDetailedAssertionCount:canonicalIds.length,canonicalCheckIds:canonicalIds,ingestionReferenceCheckIds:ingestionReferenceChecks.map(row=>row.checkId),ingestionReferenceOmissionRejected:true,ingestionReferenceExactNormativeLinksPreserved:true,humanCandidateTargetObservationRequired:true,externalIdentityShapeObservationRequired:true,missingNativeHumanTargetOwnerRemainsUnknown:true,missingCurrentSuppliedInputCustodyOwnerRemainsUnknown:true,storageCatalogOmissionControls:true,storageCatalogFixtureIsExecutionEvidence:false,importedReportsRetained:true,canonicalOwnerMissingRemainsUnknown:true,exactCanonicalLinksPreserved:true,doubleOwnedDetailedAssertionRejected:true,foreignFailedDuplicateMalformedAssertionsRejected:true};
   fs.writeFileSync(evidencePath,JSON.stringify(genuine));
   assert.equal(readExecutedEvidence(evidencePath).receiptCount,2,'Actual conforming producer evidence did not reach the real report consumer.');
   const tampered=structuredClone(genuine);tampered.metrics.currentScopeSelectorCoverage={...tampered.metrics.currentScopeSelectorCoverage,numerator:1,denominator:1,value:1,disposition:'SATISFIED'};
@@ -220,5 +427,29 @@ try{
   assert.equal(empty.zeroCounts.staleProposalsAccepted,null,'Absent negative execution was published as zero accepted violations.');
   const saved=metricCatalog.closedMetricUniverseCoverage.checkIds;metricCatalog.closedMetricUniverseCoverage.checkIds=[];
   try{assert.throws(()=>aggregateExecutedEvidence(new Map(),evidenceFingerprint()),/empty\/duplicate metric universe/);}finally{metricCatalog.closedMetricUniverseCoverage.checkIds=saved;}
-  console.log(JSON.stringify({executedEvidenceProtection:'PASS',coldCheckoutCases,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']}]}));
+  const ownReport={executedEvidenceProtection:'PASS',deferredCatalogConsumerControl,coldCheckoutCases,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,governanceFingerprintControl,governanceFingerprintInputs:true,activeFixtureFingerprintControl,activeFixtureFingerprintInputs:true,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']},{checkId:'APPROVED-GOVERNANCE-SOURCE-BYTES',boundary:governanceFingerprintControl.boundary,expected:{actualGovernanceByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true,formerMarkdownOmissionReproduced:true},observed:{actualGovernanceByteHashBound:governanceSourceCases.every(row=>row.actualByteHashBound),changedBytesRejectActualReceipt:governanceSourceCases.every(row=>row.changedBytesRejectActualReceipt),missingBytesFailHonestly:governanceSourceCases.every(row=>row.missingBytesFailHonestly),untrackedBytesBound:governanceSourceCases.every(row=>row.untrackedBytesBound),untrackedMutationRejectsActualReceipt:governanceSourceCases.every(row=>row.untrackedMutationRejectsActualReceipt),exactRestoreAdmitsActualReceipt:governanceSourceCases.every(row=>row.exactRestoreAdmitsActualReceipt),formerMarkdownOmissionReproduced:true},passed:true,requirementRefs:[96]}]};
+  const ownGovernanceCheck='receipts.approved-governance-input-observation';
+  assert.equal(observationsFromReports('verify-executed-evidence.mjs',[ownReport]).find(row=>row.checkId===ownGovernanceCheck)?.passed,true,'GOVERNANCE_INPUT_OBSERVATION_ORACLE: actual owner population was not admitted.');
+  for(const variant of ['omitted','wrong-value','missing-field','extra-field']){
+    const incomplete=structuredClone(ownReport),detail=incomplete.verificationObservations.find(row=>row.checkId==='APPROVED-GOVERNANCE-SOURCE-BYTES');
+    if(variant==='omitted')incomplete.verificationObservations=incomplete.verificationObservations.filter(row=>row!==detail);
+    else if(variant==='wrong-value')detail.observed.changedBytesRejectActualReceipt=false;
+    else if(variant==='missing-field')delete detail.observed.untrackedBytesBound;
+    else detail.observed.unrelatedSuccess=true;
+    assert.equal(observationsFromReports('verify-executed-evidence.mjs',[incomplete]).find(row=>row.checkId===ownGovernanceCheck)?.passed,false,'GOVERNANCE_INPUT_OBSERVATION_ORACLE: '+variant+' was silently admitted.');
+    producerControls.push({caseId:'required-governance-observation-'+variant,accepted:false,result:'DETECTED'});
+  }
+  const ownFixtureCheck='receipts.active-fixture-inputs';
+  assert.equal(observationsFromReports('verify-executed-evidence.mjs',[ownReport]).find(row=>row.checkId===ownFixtureCheck)?.passed,true,'FIXTURE_INPUT_OBSERVATION_ORACLE: actual current fixture-byte controls were not admitted.');
+  for(const variant of ['wrong-value','missing-case','extra-case']){
+    const incomplete=structuredClone(ownReport),control=incomplete.activeFixtureFingerprintControl;
+    if(variant==='wrong-value')control.sourceCases[0].untrackedMutationRejectsActualReceipt=false;
+    else if(variant==='missing-case')control.sourceCases=[];
+    else control.sourceCases.push(structuredClone(control.sourceCases[0]));
+    assert.equal(observationsFromReports('verify-executed-evidence.mjs',[incomplete]).find(row=>row.checkId===ownFixtureCheck)?.passed,false,'FIXTURE_INPUT_OBSERVATION_ORACLE: '+variant+' was silently admitted.');
+    producerControls.push({caseId:'required-active-fixture-input-'+variant,accepted:false,result:'DETECTED'});
+  }
+  const noFixtureMarker=structuredClone(ownReport);delete noFixtureMarker.activeFixtureFingerprintInputs;
+  assert.throws(()=>observationsFromReports('verify-executed-evidence.mjs',[noFixtureMarker]),/expected exactly one report marker activeFixtureFingerprintInputs/,'FIXTURE_INPUT_OBSERVATION_ORACLE: the required input owner marker disappeared.');
+  console.log(JSON.stringify(ownReport));
 }finally{fs.rmSync(directory,{recursive:true,force:true});}

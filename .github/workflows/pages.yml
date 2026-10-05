@@ -16,17 +16,12 @@ on:
         required: false
         type: string
       visual_baseline_evidence_json:
-        description: Approved visual baseline and before/after comparison evidence bound to the exact currently deployed main commit
+        description: Frozen visual baseline and exact-main comparison JSON; see README Repository visual acceptance submission
         required: false
         type: string
 
 permissions:
   contents: read
-  actions: read
-  pull-requests: read
-  pages: write
-  id-token: write
-  statuses: write
 
 concurrency:
   group: pages-${{ github.ref }}
@@ -36,6 +31,10 @@ concurrency:
 jobs:
   test:
     name: test
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
     runs-on: ubuntu-latest
     timeout-minutes: 360
     env:
@@ -424,6 +423,9 @@ jobs:
 
   deploy:
     name: Deploy exact verified bytes
+    permissions:
+      pages: write
+      id-token: write
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
@@ -600,6 +602,7 @@ jobs:
           node --input-type=module - <<'NODE'
           import fs from 'node:fs';
           import {evaluateFinalAcceptance} from './final-acceptance.mjs';
+          import {execFileSync} from 'node:child_process';
           import {resolveVisualBaselineSubmission} from './visual-baseline-submission.mjs';
           import {applyExecutedEvidence,readExecutedEvidence} from './verification-evidence.mjs';
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
@@ -732,14 +735,27 @@ jobs:
           mobileMetric.scopeHash=`commit:${report.commit}:manifest:${mobileAcceptance.mobileAcceptanceDeploymentManifestDigest||'UNPROVEN'}`;
           mobileMetric.evidenceReferences=physicalIPhoneAccepted?[`mobile-evidence:${mobileAcceptance.mobileAcceptanceEvidenceId}`,`submitter:${mobileAcceptance.mobileAcceptanceSubmitter}`]:['evaluate-mobile-acceptance-submission.mjs:physical-proof-unavailable'];
           report.actualIPhoneSafariAcceptanceCoverage=mobileMetric.value;
-          report=applyExecutedEvidence(report,readExecutedEvidence('.verification-receipts/evidence.json'));
+          const executedEvidence=readExecutedEvidence('.verification-receipts/evidence.json');
+          report=applyExecutedEvidence(report,executedEvidence);
+          // Resolve only the supplied exact source object in this repository.
+          // A shallow checkout may need that immutable predecessor object; no
+          // branch, checkout, workflow run, or published history is changed.
+          if(process.env.VISUAL_BASELINE_EVIDENCE_JSON?.trim()){
+            let sourceCommit;
+            try{sourceCommit=JSON.parse(process.env.VISUAL_BASELINE_EVIDENCE_JSON)?.sourceCommit;}catch{} // The owning parser reports malformed input.
+            if(typeof sourceCommit==='string'&&/^[0-9a-f]{40}$/.test(sourceCommit)){
+              try{execFileSync('git',['cat-file','-e',`${sourceCommit}^{commit}`],{stdio:'pipe',timeout:30000});}
+              catch{execFileSync('git',['fetch','--no-tags','--depth=1','origin',sourceCommit],{stdio:'pipe',timeout:30000});}
+            }
+          }
           const visualBaseline=resolveVisualBaselineSubmission({
             inputJson:process.env.VISUAL_BASELINE_EVIDENCE_JSON,
             ledgerVisualBaseline:JSON.parse(fs.readFileSync('verification/closed-loop-build-state.json','utf8')).visualBaseline,
             eventName:process.env.GITHUB_EVENT_NAME,ref:process.env.GITHUB_REF,
-            submitter:process.env.GITHUB_ACTOR,commit:report.commit
+            submitter:process.env.GITHUB_ACTOR,commit:report.commit,
+            deploymentManifestDigest:report.mobileAcceptanceDeploymentManifestDigest
           });
-          const finalGate=evaluateFinalAcceptance(report,{visualBaseline});
+          const finalGate=evaluateFinalAcceptance(report,{visualBaseline,executedEvidence});
           report.finalAcceptanceGate=finalGate;
           report.finalAcceptancePublication=finalGate.accepted;
           report.releaseTagEligible=finalGate.accepted;
