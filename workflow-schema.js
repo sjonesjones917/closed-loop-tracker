@@ -32,6 +32,38 @@ const CONTRACT_PROFILE_ID='closed-loop-completion-profile/1';
 const VALUE_TYPES=Object.freeze(['STRING','INTEGER','NUMBER','BOOLEAN','STRING_ARRAY','REFERENCE','REFERENCE_ARRAY','OBJECT','OBJECT_ARRAY','JSON']);
 const COLLECTION_POLICIES=Object.freeze({REPLACE_CURRENT_STAGE_SET:'REPLACE_CURRENT_STAGE_SET',APPEND_SCOPED:'APPEND_SCOPED',UPDATE_RESERVED:'UPDATE_RESERVED',APPEND_ONLY:'APPEND_ONLY',APPLICATION_DERIVED:'APPLICATION_DERIVED'});
 const DEFAULT_RESOURCE_LIMITS=Object.freeze({maxRawResponseBytes:1048576,maxJsonDepth:32,maxRecordsPerCollection:250,maxEvidenceRecords:500,maxAttachments:25,maxTextFieldLength:200000});
+// Defaulting may fill omitted canonical containers, but it must not erase a
+// present value of the wrong type. Legacy conversion remains explicit.
+const PROJECT_SHAPE_CONTRACT=Object.freeze({
+  rootObjects:Object.freeze(['projectData','stages','job','release']),
+  dataObjects:Object.freeze(['permanentRegistry','stageRecords','userEntered','idCounters']),
+  dataArrays:Object.freeze(['commandReceipts','allocationReceipts','migrationArchives','historicalImportRecords','nonOperationalImportedPayloads']),
+  stageObjects:Object.freeze(['agentData','humanData','derivedData','acceptedData','humanChecks','gateChecks','evidenceChecks','gate']),
+  stageArrays:Object.freeze(['authorizedFiles','revisions','acceptedDataChangeIds','acceptedControlEventIds','acceptedResponseIds']),
+  releaseArrays:Object.freeze(['auditedDraft','releaseDraft','comparisons','authorizedArtifactIds'])
+});
+function projectShapeIssues(project,collections=[]){
+  const issues=[],object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.prototype.toString.call(value)==='[object Object]';
+  if(!object(project))return ['Project is not an object.'];
+  const check=(parent,key,type,path=key)=>{if(!Object.prototype.hasOwnProperty.call(parent,key))return;const value=parent[key],valid=type==='array'?Array.isArray(value):type==='object'?object(value):type==='integer'?Number.isSafeInteger(value):typeof value==='string';if(!valid)issues.push(`${path} is not ${type==='array'?'an array':type==='object'?'an object':type==='integer'?'a safe integer':'a string'}.`);};
+  for(const key of PROJECT_SHAPE_CONTRACT.rootObjects)check(project,key,'object');
+  if(object(project.projectData)){
+    const data=project.projectData;
+    for(const key of new Set([...collections,...PROJECT_SHAPE_CONTRACT.dataArrays]))check(data,key,'array');
+    for(const key of PROJECT_SHAPE_CONTRACT.dataObjects)check(data,key,'object','projectData.'+key);
+    check(data,'eventSequence','integer','projectData.eventSequence');
+  }
+  if(object(project.stages))for(let stage=1;stage<=STAGE_COUNT;stage++){
+    check(project.stages,String(stage),'object','stages.'+stage);const entry=project.stages[stage];if(!object(entry))continue;
+    for(const key of PROJECT_SHAPE_CONTRACT.stageObjects)check(entry,key,'object',`stages.${stage}.${key}`);
+    for(const key of PROJECT_SHAPE_CONTRACT.stageArrays)check(entry,key,'array',`stages.${stage}.${key}`);
+    check(entry,'draftRecord','string',`stages.${stage}.draftRecord`);
+    if(Object.prototype.hasOwnProperty.call(entry,'number')&&entry.number!==stage)issues.push(`stages.${stage}.number does not match its stage.`);
+    if(object(entry.gate))check(entry.gate,'reasons','array',`stages.${stage}.gate.reasons`);
+  }
+  if(object(project.release))for(const key of PROJECT_SHAPE_CONTRACT.releaseArrays)check(project.release,key,'array','release.'+key);
+  return issues;
+}
 const RESPONSE_TYPES=Object.freeze(['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']);
 const HUMAN_INPUT_ANSWER_TYPES=Object.freeze(['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_CHOICE','DATE','FILE_REFERENCE']);
 const RESPONSE_UNRESOLVED_KINDS=Object.freeze(['MISSING_HUMAN_INPUT','MISSING_APPLICATION_CONTEXT','INADEQUATE_PRIOR_OUTPUT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','WORK_TOO_LARGE_FOR_ENVIRONMENT','MISSING_ARTIFACT','UNRESOLVED_CONFLICT','EXECUTION_FAILURE','TOOL_FAILURE','UNKNOWN']);
@@ -1330,7 +1362,7 @@ function sourceClassificationIssues(fields={}){
 
 globalThis.closedLoopWorkflowSchema=Object.freeze({
   version:'closed-loop-workflow-schema/2',
-  PROJECT_SCHEMA,WORKFLOW_ID,CONTRACT_PROFILE_ID,STAGE_COUNT,VALUE_TYPES,EXACT_NUMBER_ENCODING,canonicalRatio,canonicalDecimal,isCanonicalNumber,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,DEFERRED_EXECUTION_OPERATIONS,deferredExecutionFamily,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
+  PROJECT_SHAPE_CONTRACT,projectShapeIssues,PROJECT_SCHEMA,WORKFLOW_ID,CONTRACT_PROFILE_ID,STAGE_COUNT,VALUE_TYPES,EXACT_NUMBER_ENCODING,canonicalRatio,canonicalDecimal,isCanonicalNumber,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,DEFERRED_EXECUTION_OPERATIONS,deferredExecutionFamily,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
   PRODUCER,RESPONSE_SCHEMA,RESPONSE_TYPES,HUMAN_INPUT_ANSWER_TYPES,RESPONSE_UNRESOLVED_KINDS,RESPONSE_TEMPORARY_KEY_CONTRACT,RESPONSE_RELATIONSHIP_REFERENCE_KEYS,RESPONSE_RELATIONSHIP_REFERENCE_CONTRACT,RESPONSE_RECORD_IDENTITY_CONTRACT,RESPONSE_NESTED_FIELD_CONTRACTS,RESPONSE_ECHO_CONTRACT,RESPONSE_EVIDENCE_FIELD_MAP,CONFLICT_POLICIES,TEST_IR,validateTestIRSpec,validateTestIRBindings,validateTestIRTest,
   JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS,
   STAGE_FIELDS,STAGE_CONTRACTS,STAGE_COLLECTIONS,SUPPORT_COLLECTIONS,RECORD_SCHEMAS,
@@ -1353,10 +1385,14 @@ const PACKAGE_SCHEMA='closed-loop-verification-package/1';
 const clone=value=>typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));
 const STAGE01_HUMAN_CAPTURE_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS']);
 function restoreMigratedStage01AcceptedCapture(migrated,original){return migrated;}
-function normalizeTestRecords(value,seen=new WeakSet()){
-  if(!value||typeof value!=='object'||seen.has(value))return;seen.add(value);
-  const fields=value.fields&&typeof value.fields==='object'&&!Array.isArray(value.fields)?value.fields:value;
-  if(Object.prototype.hasOwnProperty.call(fields,'TEST_ID')||Object.prototype.hasOwnProperty.call(fields,'EXECUTABLE_KIND')||Object.prototype.hasOwnProperty.call(fields,'EXECUTABLE_SPEC')){
+function normalizeTestRecords(project){
+  // Only the two explicitly supported legacy test collections are executable
+  // migration inputs. Field-like names in extensions, responses and history
+  // remain opaque; recursively searching for TEST_ID would rewrite evidence.
+  const data=project?.projectData;
+  for(const collection of [data?.tests,data?.collections?.tests])for(const record of Array.isArray(collection)?collection:[]){
+    if(!record||typeof record!=='object'||Array.isArray(record))continue;
+    const fields=record.fields&&typeof record.fields==='object'&&!Array.isArray(record.fields)?record.fields:record;
     if(fields.EXECUTABLE_KIND==='CUSTOM_PIPELINE')fields.EXECUTABLE_KIND='TEST_IR';
     if(!fields.EXECUTABLE_KIND)fields.EXECUTABLE_KIND='NONE';
     fields.EXECUTABLE_SPEC_VERSION=TEST_IR_SCHEMA;
@@ -1364,18 +1400,27 @@ function normalizeTestRecords(value,seen=new WeakSet()){
     if(!fields.EXECUTABLE_INPUT_BINDINGS||typeof fields.EXECUTABLE_INPUT_BINDINGS!=='object'||Array.isArray(fields.EXECUTABLE_INPUT_BINDINGS))fields.EXECUTABLE_INPUT_BINDINGS={};
     if(!Object.prototype.hasOwnProperty.call(fields,'EXECUTABLE_SPEC_SHA256'))fields.EXECUTABLE_SPEC_SHA256='';
   }
-  if(Array.isArray(value)){for(const item of value)normalizeTestRecords(item,seen);}else for(const [key,item] of Object.entries(value)){if(key==='payload'&&value.operational===false)continue;normalizeTestRecords(item,seen);}
+}
+
+function migrationValuesEqual(left,right,seen=new Map()){
+  if(Object.is(left,right))return true;
+  if(!left||!right||typeof left!=='object'||typeof right!=='object'||Array.isArray(left)!==Array.isArray(right)||Object.prototype.toString.call(left)!==Object.prototype.toString.call(right))return false;
+  if(seen.has(left))return seen.get(left)===right;seen.set(left,right);
+  const leftKeys=Object.keys(left),rightKeys=Object.keys(right);if(leftKeys.length!==rightKeys.length)return false;
+  return leftKeys.every(key=>Object.prototype.hasOwnProperty.call(right,key)&&migrationValuesEqual(left[key],right[key],seen));
 }
 function markLegacyNonGating(project,original){
   project=ensureV3Defaults(project);project.job=project.job&&typeof project.job==='object'?project.job:{};
   project.projectData.nonOperationalImportedPayloads=Array.isArray(project.projectData.nonOperationalImportedPayloads)?project.projectData.nonOperationalImportedPayloads:[];
-  const alreadyLegacy=original?.projectData?.contractProfileMigration?.status==='LEGACY_NON_GATING';
+  const alreadyLegacy=original?.schema===CURRENT_PROJECT_SCHEMA&&original?.projectData?.contractProfileMigration?.status==='LEGACY_NON_GATING';
   const sourceSchema=alreadyLegacy?String(original.projectData.contractProfileMigration.sourceSchema||original?.schema||project.schema||''):String(original?.schema||project.schema||'');const sourceRevision=Number(original?.revision||0);
-  if(!alreadyLegacy&&!project.projectData.nonOperationalImportedPayloads.some(item=>item&&item.sourceSchema===sourceSchema&&item.sourceRevision===sourceRevision&&item.operational===false))project.projectData.nonOperationalImportedPayloads.push({sourceSchema,sourceRevision,operational:false,purpose:'ORIGINAL_IMPORTED_PAYLOAD_AUDIT_EVIDENCE',payload:clone(original)});
   project.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema,targetProfile:base.CONTRACT_PROFILE_ID,semanticProofMigrated:false};
   delete project.job.CONTRACT_PROFILE_ID;project.job.CURRENT_STATE='BLOCKED';project.job.JOB_RECORD_STATUS='INCOMPLETE';project.job.CURRENT_STAGE='STAGE 01';project.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(project.job.CURRENT_BLOCKERS)?project.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];
   const stage01=project?.stages?.['1']||project?.stages?.[1];if(stage01){stage01.status='NOT STARTED';stage01.decision='';stage01.decisionEvidence='';stage01.agentData={};stage01.acceptedData={};stage01.gate={satisfied:false,reasons:['Legacy/pre-profile data cannot satisfy current-profile Stage 01.']};}
-  project.activeStage=1;project.projectHash='';return project;
+  project.activeStage=1;project.projectHash='';
+  const migrationChanged=!migrationValuesEqual(project,original);
+  if(!alreadyLegacy||migrationChanged)project.projectData.nonOperationalImportedPayloads.push({sourceSchema:String(original?.schema||sourceSchema),sourceRevision,operational:false,purpose:'ORIGINAL_IMPORTED_PAYLOAD_AUDIT_EVIDENCE',payload:clone(original)});
+  return project;
 }
 function validateContractProfile(project){const reasons=[];if(project?.schema!==CURRENT_PROJECT_SCHEMA)reasons.push('Wrong project schema.');if(project?.job?.CONTRACT_PROFILE_ID!==base.CONTRACT_PROFILE_ID)reasons.push('Missing or wrong contract profile.');if(project?.projectData?.contractProfileMigration?.status==='LEGACY_NON_GATING')reasons.push('Project is legacy/non-gating.');return {valid:reasons.length===0,reasons};}
 function ensureV3Defaults(project){
@@ -1385,20 +1430,33 @@ function ensureV3Defaults(project){
   for(const key of ['intakeCoverageManifests','obligationManifests','promptContextManifests','blindAliasMaps','nativeExecutionEvents'])if(!Array.isArray(project.projectData[key]))project.projectData[key]=[];
   if(!Array.isArray(project.projectData.nonOperationalImportedPayloads))project.projectData.nonOperationalImportedPayloads=[];
   project.projectData.schemaIdentities={...(project.projectData.schemaIdentities||{}),project:CURRENT_PROJECT_SCHEMA,response:CURRENT_RESPONSE_SCHEMA,testIr:TEST_IR_SCHEMA,verificationPackage:PACKAGE_SCHEMA};
-  normalizeTestRecords(project);
   return project;
 }
 const priorMigrationName=['migrateProjectToCurrent','migrateProject','migrateLegacyProject','migrate'].find(name=>typeof base[name]==='function');
 const priorMigration=priorMigrationName?base[priorMigrationName].bind(base):null;
+function archiveCurrentLegacyContainers(project,original){
+  const data=project.projectData,nested=data?.fullProject,stageRecords=data?.stageRecords;
+  const hasStages=stageRecords&&Object.prototype.toString.call(stageRecords)==='[object Object]'&&Object.keys(stageRecords).length,hasNested=nested&&typeof nested==='object'&&Object.keys(nested).length;
+  if(!hasStages&&!hasNested)return project;
+  for(const key of ['migrationArchives','historicalImportRecords','nonOperationalImportedPayloads']){
+    if(!Object.prototype.hasOwnProperty.call(data,key))data[key]=[];
+    else if(!Array.isArray(data[key]))throw new Error(`Migration cannot preserve the original because ${key} is not an array.`);
+  }
+  data.nonOperationalImportedPayloads.push({sourceSchema:original.schema,sourceRevision:Number(original.revision||0),operational:false,purpose:'ORIGINAL_IMPORTED_PAYLOAD_AUDIT_EVIDENCE',payload:clone(original)});
+  if(hasStages){data.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:original.schema,operational:false,records:clone(stageRecords)});data.stageRecords={};}
+  if(hasNested){data.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:original.schema,operational:false,payload:clone(nested)});delete data.fullProject;}
+  return project;
+}
 function migrateProjectToCurrent(input){
   if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Imported project must be an object.');
   const original=clone(input);
-  if(input.schema===CURRENT_PROJECT_SCHEMA){const current=ensureV3Defaults(clone(input));return current?.job?.CONTRACT_PROFILE_ID===base.CONTRACT_PROFILE_ID?current:markLegacyNonGating(current,original);}
+  if(input.schema===CURRENT_PROJECT_SCHEMA){const current=clone(input);return current?.job?.CONTRACT_PROFILE_ID===base.CONTRACT_PROFILE_ID?archiveCurrentLegacyContainers(current,original):markLegacyNonGating(current,original);}
   let migrated;
   if(input.schema===PREVIOUS_PROJECT_SCHEMA)migrated=clone(input);
   else if(priorMigration){migrated=priorMigration(clone(input));if(migrated&&typeof migrated.then==='function')throw new Error('Project migration must be deterministic and synchronous.');}
   else throw new Error('Unsupported project schema '+String(input.schema));
   migrated=ensureV3Defaults(migrated);
+  normalizeTestRecords(migrated);
   restoreMigratedStage01AcceptedCapture(migrated,original);
   return markLegacyNonGating(migrated,original);
 }

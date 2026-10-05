@@ -10,7 +10,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 assert.ok(schema,'workflow-schema.js did not load.');
 
 // Permanent regression: closed stage-operation membership and exact initial EXECUTE_RUN semantics must remain aligned.
-const expected=Object.freeze({
+const ordinaryExpected=Object.freeze({
   1:['COMPLETE','SEMANTIC_CHALLENGE','RECONCILE_INTAKE'],
   2:['COMPLETE','SEARCH_ADEQUACY_REVIEW','RECONCILE_SOURCE_SEARCH'],
   3:['COMPLETE','SEMANTIC_CHALLENGE','RECONCILE_RESEARCH'],
@@ -43,12 +43,23 @@ const expected=Object.freeze({
   30:['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE']
 });
 
-// Approved Section 32.4A adds conditional reuse after each definition owner.
-for(const [operation,family]of [['EXECUTE_FAILURE_TEST','failureTests'],['EXECUTE_REGRESSION','regressions']])for(const stage of globalThis.closedLoopCore.STAGES.map(row=>row.number).filter(n=>n>schema.RECORD_SCHEMAS[family].stage))expected[stage].push(operation);
+// Sections 14.6/37 declare ordinary operations. Approved Section 32.4A
+// adds conditional reuse strictly after the independently fixed owners 7/15.
+const expected=Object.fromEntries(Object.entries(ordinaryExpected).map(([stage,operations])=>[stage,[...operations]]));
+for(const [operation,family,owner]of [['EXECUTE_FAILURE_TEST','failureTests',7],['EXECUTE_REGRESSION','regressions',15]]){
+  assert.equal(schema.RECORD_SCHEMAS[family].stage,owner,`${family} definition ownership drifted.`);
+  for(let stage=owner+1;stage<=30;stage++)expected[stage].push(operation);
+}
+assert.equal(Object.values(expected).reduce((count,operations)=>count+operations.length,0),104,'Independent closed operation population drifted.');
+assert.deepEqual(Object.keys(schema.STAGE_OPERATION_REGISTRY).sort(),Object.entries(expected).flatMap(([stage,operations])=>operations.map(operation=>`${stage}:${operation}`)).sort(),'Actual registry has missing or extra stage-operation keys.');
+const verificationObservations=[];
 assert.deepEqual(schema.STAGE_OPERATIONS,expected,'Stage-operation set is not the closed controlling set.');
 for(let stage=1;stage<=30;stage++){
   assert.deepEqual(schema.STAGE_CONTRACTS[stage].operations,expected[stage],`Stage ${stage} contract operations drifted.`);
   for(const operation of expected[stage])assert.ok(schema.operationContract(stage,operation),`Missing operation contract for Stage ${stage} ${operation}.`);
+  const registered=Object.keys(schema.STAGE_OPERATION_REGISTRY).filter(key=>key.startsWith(`${stage}:`)).map(key=>key.slice(key.indexOf(':')+1)).sort();
+  assert.deepEqual(registered,[...expected[stage]].sort(),`Stage ${stage} registry membership drifted.`);
+  if(stage>=2)verificationObservations.push({checkId:`stage-registry.stage${String(stage).padStart(2,'0')}.exact-membership`,stage,boundary:'Loaded canonical schema stage-operation registry and stage contract declarations compared with independently literal specification lists.',scopeLimit:'Exact declaration membership only, including approved conditional reuse after owners7/15. Does not establish operation execution, admission, gates or external-agent behavior.',expected:{ordinaryOperations:[...ordinaryExpected[stage]],conditionalOperations:expected[stage].slice(ordinaryExpected[stage].length),allOperations:[...expected[stage]]},observed:{stageOperations:[...schema.STAGE_OPERATIONS[stage]],stageContractOperations:[...schema.STAGE_CONTRACTS[stage].operations],registeredOperations:registered},passed:true});
 }
 for(const [stage,invalid] of [[10,'COMPLETE'],[11,'COMPLETE'],[12,'COMPLETE'],[22,'COMPLETE'],[27,'COMPLETE'],[30,'COMPLETE']])assert.equal(schema.operationContract(stage,invalid),null,`Stage ${stage} illegally accepts ${invalid}.`);
 
@@ -81,4 +92,4 @@ for(let stage=1;stage<=30;stage++)for(const operation of expected[stage]){
   if(expectedExecutor==='EXTERNAL_AGENT')externalOperations++;
 }
 
-console.log(JSON.stringify({stageOperationRegistry:'PASS',stages:30,operations:Object.values(expected).reduce((n,v)=>n+v.length,0),externalOperations,nonExternalOperations:Object.keys(nonExternal).length},null,2));
+console.log(JSON.stringify({stageOperationRegistry:'PASS',stages:30,operations:Object.values(expected).reduce((n,v)=>n+v.length,0),externalOperations,nonExternalOperations:Object.keys(nonExternal).length,verificationObservations},null,2));

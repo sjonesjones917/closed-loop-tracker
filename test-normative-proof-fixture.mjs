@@ -15,6 +15,9 @@ export function createNormativeProofFixture(){
     for(const name of fs.readdirSync(original))if(/\.(?:m?js|html|css|json)$/.test(name)&&name!=='TEST_PROJECT.json')copy(name);
     const governance=JSON.parse(fs.readFileSync('specification/requirement-evidence-bindings.json','utf8'));
     for(const file of [...new Set([SPECIFICATION_PATH,normativePath,'specification/requirement-evidence-bindings.json',...governance.approvedAmendments.flatMap(row=>[row.sourceReviewPath,row.approvedProposalPath]),...Object.values(governance.independentSourceReview).filter(value=>typeof value==='string'&&value.startsWith('verification/')),...Object.values(verificationCatalog).flatMap(row=>row.sourceInputs||[])])])copy(file);
+    // This intentionally one-row consumer universe excludes the real67-row
+    // context classification; it cannot claim real-manifest completeness.
+    const isolatedGovernance={...governance};delete isolatedGovernance.contextApplicabilityReview;fs.writeFileSync(path.join(directory,'specification/requirement-evidence-bindings.json'),JSON.stringify(isolatedGovernance,null,2)+'\n');
     const normative=JSON.parse(fs.readFileSync(path.join(directory,normativePath),'utf8')),requirement=normative.requirements.find(row=>row.normativeRequirementId==='NREQ-318da161cc5f30f33449238ba3870773');
     assert(requirement&&requirement.controllingText==='- unknown operation is rejected;','NORMATIVE_PROOF_FIXTURE_SOURCE_ORACLE');
     assert.equal(requirement.requiredBrowserOrPhysicalDeviceProof.length,0);

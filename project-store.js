@@ -141,10 +141,13 @@ const useStoreWorker=()=>Boolean(STORE_SCRIPT_URL&&typeof Worker==='function');
 const runSynchronousMutator=(mutator,next,before)=>{const result=mutator(next,before);if(result&&typeof result.then==='function')throw storageError('Project transaction mutators must be synchronous. Complete asynchronous work before opening the canonical IndexedDB transaction.','ASYNC_TRANSACTION_MUTATOR');return result;};
 const PLACEHOLDER_REFERENCES=new Set(['','NONE','NOT APPLICABLE','UNKNOWN','PENDING','UNASSIGNED']);
 const equivalent=(left,right)=>Object.is(left,right)||(!(left===undefined||right===undefined)&&hash.sha256Value(left)===hash.sha256Value(right));
+function projectCollectionShapeIssues(project){return globalThis.closedLoopWorkflowSchema.projectShapeIssues(project,globalThis.closedLoopWorkflowEngine.ALL_COLLECTIONS);}
+function assertProjectCollectionShape(project){const issues=projectCollectionShapeIssues(project);if(issues.length){const error=storageError(`Canonical project integrity validation failed: ${issues.join(' | ')}`,'PROJECT_INTEGRITY_FAILED');error.issues=issues;throw error;}}
 function validateProjectIntegrity(project,{verifyDerived=true,verifyCachedProjection=true,projectionObservedAt=null}={}){
   const issues=[],schemaApi=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine;
   if(!project||typeof project!=='object')return {valid:false,issues:['Project is not an object.']};
   if(!schemaApi||!engine)return {valid:false,issues:['Workflow schema and engine are required for canonical project integrity validation.']};
+  const collectionShapeIssues=projectCollectionShapeIssues(project);if(collectionShapeIssues.length)return {valid:false,issues:collectionShapeIssues};
   if(project.schema!==schemaApi.PROJECT_SCHEMA)issues.push(`Project schema ${project.schema||'UNKNOWN'} does not match ${schemaApi.PROJECT_SCHEMA}.`);
   if(project.workflow!==schemaApi.WORKFLOW_ID)issues.push(`Workflow ${project.workflow||'UNKNOWN'} does not match ${schemaApi.WORKFLOW_ID}.`);
   if(Number(project.stageCount)!==Number(schemaApi.STAGE_COUNT))issues.push(`Stage count ${project.stageCount} does not match ${schemaApi.STAGE_COUNT}.`);
@@ -293,6 +296,7 @@ async function writeOperationalProject(project,options={}){
   const id=projectIdentity(project),prior=await readProject(id);if(!prior)throw storageError('Project is unavailable.','PROJECT_NOT_FOUND');
   if(Number(options.expectedProjectRevision)!==Number(prior.revision)||!options.expectedStateSha256||options.expectedStateSha256!==prior.projectSha256)throw storageError('Project or pending response changed. Refresh it before retrying.','STALE_PROJECT_REVISION');
   const next=clone(project);delete next.projectSha256;
+  assertProjectCollectionShape(next);
   if(Number(next.revision)!==Number(prior.revision))throw storageError('An operational event cannot advance the canonical revision.','OPERATIONAL_OWNERSHIP_VIOLATION');
   if(projectSha256(next)===prior.projectSha256)return prior;
   globalThis.closedLoopWorkflowEngine.recalculate(next);assertOperationalChange(prior,next);assertProjectIntegrity(next);
@@ -351,12 +355,22 @@ async function quarantineEvidenceGraph(value){
   }
   return {graph:{schema:'closed-loop-quarantine-values/1',root:await encode(value),nodes},files};
 }
-async function exportQuarantinedProject(key,{passphrase=null}={}){
-  if(!String(key).startsWith('quarantine:'))throw storageError('Select preserved recovery evidence.','QUARANTINE_NOT_FOUND');const saved=await metaGet(key);if(!saved)throw storageError('The preserved recovery evidence is unavailable.','QUARANTINE_NOT_FOUND');
+async function exportProtectedRecoveryEvidence(saved,identity,passphrase){
   if(!passphrase)throw storageError('Enter a backup password to protect the preserved recovery evidence.','BACKUP_PASSPHRASE_REQUIRED');
   const {graph,files}=await quarantineEvidenceGraph(saved),raw=new Blob([JSON.stringify(graph)],{type:'application/json'});files.unshift({path:'raw-project.json',blob:raw,byteSize:raw.size,sha256:await hash.sha256Bytes(raw)});
-  const packageManifest={schema:'closed-loop-quarantine-manifest/1',quarantineKey:key,completeSnapshot:Array.isArray(saved.artifacts),activationPermitted:false,members:files.map(({blob,...identity})=>identity)},fileContents=new WeakMap(),members=files.map(file=>{const entry={path:file.path,base64:''};fileContents.set(entry,{property:'base64',encoding:'base64',blob:file.blob});return entry;}),packed=await compressPackage({schema:'closed-loop-quarantine-package/1',packageManifest,artifacts:members},fileContents);
+  const packageManifest={schema:'closed-loop-quarantine-manifest/1',...identity,activationPermitted:false,members:files.map(({blob,...member})=>member)},fileContents=new WeakMap(),members=files.map(file=>{const entry={path:file.path,base64:''};fileContents.set(entry,{property:'base64',encoding:'base64',blob:file.blob});return entry;}),packed=await compressPackage({schema:'closed-loop-quarantine-package/1',packageManifest,artifacts:members},fileContents);
   return encryptedPackage(packed.blob,hash.sha256Value(packageManifest),passphrase);
+}
+async function exportQuarantinedProject(key,{passphrase=null}={}){
+  if(!String(key).startsWith('quarantine:'))throw storageError('Select preserved recovery evidence.','QUARANTINE_NOT_FOUND');const saved=await metaGet(key);if(!saved)throw storageError('The preserved recovery evidence is unavailable.','QUARANTINE_NOT_FOUND');
+  return exportProtectedRecoveryEvidence(saved,{quarantineKey:key,completeSnapshot:Array.isArray(saved.artifacts)},passphrase);
+}
+async function exportLegacyMigrationData({passphrase=null}={}){
+  if(!passphrase)throw storageError('Enter a backup password to protect the preserved recovery evidence.','BACKUP_PASSPHRASE_REQUIRED');
+  if(!globalThis.localStorage)throw storageError('Original legacy migration data is available only in its browser document.','LEGACY_MIGRATION_UNAVAILABLE');
+  const entries=[];for(const key of LEGACY_KEYS){let value;try{value=globalThis.localStorage.getItem(key);}catch(error){throw storageError(`Legacy project storage could not be read from ${key}: ${error.message||error}`,'LEGACY_MIGRATION_READ_FAILED');}if(value!==null)entries.push({key,value});}
+  if(!entries.length)throw storageError('No original legacy migration data is retained in this browser.','NO_LEGACY_MIGRATION_DATA');
+  return exportProtectedRecoveryEvidence({kind:'LEGACY_LOCAL_STORAGE',entries,migrationStatus:await metaGet('migrationStatus')},{recoveryKind:'LEGACY_LOCAL_STORAGE',completeSnapshot:false},passphrase);
 }
 async function removeQuarantinedProject(key,{idempotencyKey=key}={}){
   if(!String(key).startsWith('quarantine:'))throw storageError('Select preserved recovery evidence.','QUARANTINE_NOT_FOUND');const receiptKey='quarantineDelete:'+hash.sha256Value({idempotencyKey:String(idempotencyKey)}),payloadSha256=hash.sha256Value({key}),tx=await openTransaction(META,'readwrite'),meta=tx.objectStore(META);
@@ -366,10 +380,13 @@ async function removeQuarantinedProject(key,{idempotencyKey=key}={}){
 }
 
 async function migrateLegacy(){
+  // Legacy localStorage belongs to the document. A storage worker must not
+  // overwrite its migration receipt merely because it cannot access that input.
+  if(!globalThis.localStorage)return {migrated:0};
   const countTx=await openTransaction(PROJECTS,'readonly'),count=await request(countTx.objectStore(PROJECTS).count());await complete(countTx);if(count)return {migrated:0};
-  const legacy=parseLegacy();if(!legacy.length){await metaPut('migrationStatus',{status:'NONE',at:now()});return {migrated:0};}
+  let legacy;try{legacy=parseLegacy();}catch(error){await metaPut('migrationStatus',{status:'FAILED',message:String(error.message||error),originalPreserved:true,at:now()});throw error;}if(!legacy.length){await metaPut('migrationStatus',{status:'NONE',at:now()});return {migrated:0};}
   const tx=await openTransaction([PROJECTS,META],'readwrite');let migrated=0;
-  try{fault('before-legacy-migration');const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;if(!core?.migrateState||!engine)throw storageError('Canonical workflow migration logic is unavailable.','LEGACY_MIGRATION_UNAVAILABLE');for(const source of legacy){const project=core.migrateState(clone(source));engine.ensureShape(project);engine.recalculate(project);assertProjectIntegrity(project,{verifyDerived:true});const id=projectIdentity(project);if(!id)throw storageError('Migrated legacy project has no JOB_ID.','LEGACY_MIGRATION_INVALID_PROJECT');const revision=Number(project.revision||0);tx.objectStore(PROJECTS).put({jobId:id,revision,picker:projectPickerKey(project,revision),project,projectSha256:projectSha256(project),updatedAt:now()});migrated++;}tx.objectStore(META).put({key:'migrationStatus',value:{status:'COMPLETE',migrated,at:now()},updatedAt:now()});fault('during-legacy-migration');await complete(tx);for(const key of LEGACY_KEYS)try{localStorage.removeItem(key);}catch{}return {migrated};}catch(error){try{tx.abort();}catch{}await metaPut('migrationStatus',{status:'FAILED',message:String(error.message||error),originalPreserved:true,at:now()});throw error;}
+  try{fault('before-legacy-migration');const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;if(!core?.migrateState||!engine)throw storageError('Canonical workflow migration logic is unavailable.','LEGACY_MIGRATION_UNAVAILABLE');for(const source of legacy){if(source.schema===globalThis.closedLoopWorkflowSchema?.PROJECT_SCHEMA)assertProjectCollectionShape(source);const project=core.migrateState(clone(source));assertProjectCollectionShape(project);engine.ensureShape(project);engine.recalculate(project);assertProjectIntegrity(project,{verifyDerived:true});const id=projectIdentity(project);if(!id)throw storageError('Migrated legacy project has no JOB_ID.','LEGACY_MIGRATION_INVALID_PROJECT');const revision=Number(project.revision||0);tx.objectStore(PROJECTS).put({jobId:id,revision,picker:projectPickerKey(project,revision),project,projectSha256:projectSha256(project),updatedAt:now()});migrated++;}tx.objectStore(META).put({key:'migrationStatus',value:{status:'COMPLETE',migrated,at:now()},updatedAt:now()});fault('during-legacy-migration');await complete(tx);for(const key of LEGACY_KEYS)try{localStorage.removeItem(key);}catch{}return {migrated};}catch(error){try{tx.abort();}catch{}await metaPut('migrationStatus',{status:'FAILED',message:String(error.message||error),originalPreserved:true,at:now()});throw error;}
 }
 
 async function readAllIndexed(){
@@ -954,6 +971,7 @@ async function prepareProjectWrite(project,options={}){
   if(options.expectedProjectRevision!==undefined&&options.expectedProjectRevision!==null&&Number(options.expectedProjectRevision)!==revision)throw storageError('Project changed before its checkpoint could be prepared.','STALE_PROJECT_REVISION');
   if(options.createOnly&&prior)throw storageError('This project already exists.','PROJECT_ALREADY_EXISTS');
   if(options.expectedStateSha256&&options.expectedStateSha256!==prior?.projectSha256)throw storageError('Project or pending response changed before preparation.','STALE_PROJECT_REVISION');
+  assertProjectCollectionShape(next);
   if(options.skipUnchanged&&prior?.projectSha256===projectSha256(next)){await persistProjectPromptFiles(next);const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView});return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior.projectSha256,preparedHistory}};}
   next.revision=(options.incrementRevision??true)?revision+1:revision;
   const engine=globalThis.closedLoopWorkflowEngine;engine.ensureShape(next);
@@ -1658,7 +1676,7 @@ const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB)tr
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE','SAVE_CHECKPOINT'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;
   const result=message.method==='SAVE_CHECKPOINT'?{checkpointId:await saveCheckpoint(message.args[0],{...message.args[1],operationId:message.operationId})}:{project:message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId})};
   globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,...result});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
+globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,exportLegacyMigrationData,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{
 'use strict';

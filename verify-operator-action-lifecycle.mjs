@@ -160,6 +160,8 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
     exports:fn=>{downloadProjectPackage=fn;render=()=>wire();},
     health:fn=>{projectStore={storageHealth:fn};globalThis.closedLoopStorageHealth=null;paintStorageHealth();},
     refreshHealth:()=>refreshStorageHealth(),
+    humanControls:stage=>{current=globalThis.closedLoopCore.createBlankState('SYNTHETIC-HUMAN-CONTROLS');return humanStageMarkup(stage,false);},
+    authorityControls:()=>{engine=globalThis.closedLoopWorkflowEngine;current=globalThis.closedLoopCore.createBlankState('SYNTHETIC-AUTHORITY-CONTROL');const original=pendingProposal;pendingProposal=()=>({changes:[],humanAuthorityCandidates:[{temporaryKey:'synthetic-human-answer',label:'Reported audience',value:'Field technicians'}]});try{return proposalMarkup(1);}finally{pendingProposal=original;}},
 
     history:available=>{projectStore={HISTORY_LIMITS:{maxCheckpoints:2048}};historyState={entries:[],undoId:available?'SAVED-PREVIOUS':null};historyBrowseState=null;recoveryProjects=[];quarantinedProjects=[];paintHistory();},
     action:fn=>runOperatorAction('Restoring version',fn),
@@ -500,5 +502,24 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
   assert.equal(delivered.filter(message=>message.operationId===requests[0].operationId).length,1,'DELAYED_IMPORT_RELEASE_ORACLE: a held import response must be delivered exactly once.');
   cases.push({caseId:'UI-DELAYED-IMPORT-BROWSER-SELECTION',result:'PASS',actualBrowser:false,requests:requests.length,selectedFilename:selected.filename,selectedByteSize:selected.byteSize,selectedSha256:selected.sha256,importReplies:1,unrelatedReplies:1,lateLayoutShiftRejected:true});
  }finally{r.runtime.__restoreActivityWorker?.();r.runtime.__releaseActivityReply?.();if(r.runtime.__activityImport)await r.runtime.__activityImport;}
+}
+// A preserved failed migration is not a healthy storage-success message.
+context.ui.health(async()=>({persistent:false,migrationStatus:{status:'FAILED',message:'Unsupported project schema: future-project/9',originalPreserved:true}}));
+await context.ui.refreshHealth();assert.match(nodes.get('#storage-status').textContent,/migration needs recovery.*has not removed the original browser data/i,'MIGRATION_FAILURE_VISIBLE_ORACLE');
+cases.push({caseId:'UI-MIGRATION-FAILURE-STATUS',result:'PASS',actualBrowser:false,rawExportVerified:false});
+
+// Sibling labels must name their controls, including neighboring human-owned
+// stages and the reported-human-answer confirmation route. Actual fallback
+// typing, native control behavior and persistence have their browser owner.
+for(const stage of [10,20,28]){
+ const html=context.ui.humanControls(stage),controls=[...html.matchAll(/<input\b[^>]*id="([^"]+)"[^>]*data-human-stage-field="([^"]+)"/g)];
+ assert.equal(controls.length,context.closedLoopWorkflowSchema.humanStageFields(stage).length,'HUMAN_STAGE_CONTROL_POPULATION_ORACLE');
+ for(const [,id]of controls)assert.ok(html.includes('<label for="'+id+'">'),'HUMAN_STAGE_CONTROL_LABEL_ORACLE: '+stage);
+ cases.push({caseId:'UI-HUMAN-STAGE-CONTROL-LABEL',stage,controls:controls.length,result:'PASS',actualBrowser:false});
+}
+{
+ const html=context.ui.authorityControls(),match=html.match(/<textarea\b[^>]*id="([^"]+)"[^>]*data-human-authority-confirmation="synthetic-human-answer"/);
+ assert.ok(match,'HUMAN_AUTHORITY_CONTROL_ID_ORACLE');assert.ok(html.includes('<label for="'+match[1]+'">Reported audience</label>'),'HUMAN_AUTHORITY_CONTROL_LABEL_ORACLE');
+ cases.push({caseId:'UI-HUMAN-AUTHORITY-CONTROL-LABEL',result:'PASS',actualBrowser:false});
 }
 console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',cases},null,2));

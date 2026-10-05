@@ -60,12 +60,12 @@ export const verificationCatalog={
   'verify-response-retry-persistence.mjs':{boundary:'actual failed response continuation, committed replacement ZIP, exact prior raw/file bytes and human status; transaction adapter',checks:[check('response.evidence-string-persistence','synthetic','verificationObservations',undefined,'Conforming staged response accepted/saved/readback; wrong evidence CONTENT type rejected before proposal',{expectedDescription:'Early canonical type rejection with preserved raw bytes and real save/readback control',condition:emittedCases(['BOUNDARY-EVIDENCE-STRING-PERSISTENCE'])}),check('response.retry-byte-custody','synthetic','verificationObservations',undefined,'Exact prior substance in saved/reloaded committed replacement ZIP',{expectedDescription:'Prior raw/file bytes survive actual committed replacement, large context externalization, human claim remains noncanonical',condition:emittedCases(['BOUNDARY-RETRY-PRIOR-SUBSTANCE'])})]},
   'verify-operational-persistence.mjs':{boundary:'actual canonical save/reload and native Blob custody; synthetic instruction-version/evidence project',checks:[check('store.retained-evidence-custody','retainedEvidenceCustody','verificationObservations',undefined,'Retained compatible historical report byte custody after current instruction changes; current-scope refusal and missing/corrupt/foreign/omitted byte controls',{expectedDescription:'Reload reobserves current and explicitly referenced historical report bytes once; unrelated history is not read; old bytes cannot authorize current result; all four required-byte negatives remain insufficient',condition:emittedCases(['RETAINED-HISTORICAL-EVIDENCE-CUSTODY'])}),check('store.current-supplied-input-custody','currentSuppliedInputCustody','verificationObservations',undefined,'Retained explicitly supplied input after real input-version correction; authoritative response commit/reload/History restore/backup import without a manual byte read',{expectedDescription:'Current supplied immutable input identity survives exact native Blob reobservation and response-file acceptance/recovery; five missing/metadata/corrupt/foreign/unselected byte variants remain insufficient; current supplied-input membership cannot authorize a different historical input scope',condition:rows=>emittedCases(['CURRENT-SUPPLIED-INPUT-CUSTODY'])(rows)&&['omittedInputObserverInsufficient','currentSuppliedIdentityRetained','noManualReadRequired','commitReloadRestoreWorks','noRetroactiveHistoricalAuthorization'].every(name=>rows.find(row=>row.checkId==='CURRENT-SUPPLIED-INPUT-CUSTODY').observed?.[name]===true)&&rows.find(row=>row.checkId==='CURRENT-SUPPLIED-INPUT-CUSTODY').observed?.negativeVariantsInsufficient===5&&Object.keys(rows.find(row=>row.checkId==='CURRENT-SUPPLIED-INPUT-CUSTODY').observed||{}).length===6})]},
   'verify-production-baseline-authority.mjs':{boundary:'actual registered human-decision writer, receipt and canonical save/reload; synthetic non-gating purpose targets',checks:[check('human.current-decision-assurance','humanDecisionCurrentAssurance','verificationObservations',undefined,'All registered current purposes reject unavailable stronger identity labels before mutation and preserve supported SELF_ASSERTED records and receipts',{expectedDescription:'Every current purpose supports default and explicit SELF_ASSERTED; VERIFIED_EXTERNAL and AUTHENTICATED reject without canonical identity/history mutation; native records/receipts retain actual assurance through save/reload',condition:emittedCases(['CURRENT-HUMAN-DECISION-ASSURANCE'])}),check('human.current-decision-target','humanDecisionTargetIntegrity','verificationObservations',undefined,'Typed current human targets, selection binding, exact canonical failed write and retained history scope',{expectedDescription:'Bad subjects reject before allocation; current targets persist; lost current targets cannot commit; supported retained selection and unknown historical subjects preserve separate scope',condition:emittedCases(['CURRENT-HUMAN-DECISION-TARGET-INTEGRITY'])})]},
-  'verify-stage01-agent-contract-alignment.mjs':{boundary:'final generated fallback contract and deterministic consumer; exact closed enum controls',checks:[check('response.closed-envelope-publication','stage01AgentContractAlignment','envelopePublicationObservations',undefined,'Actual emitted final key/evidence contract inspected independently',{expectedDescription:'Exact key grammar/type/global namespace and canonical evidence field types published',condition:rows=>Array.isArray(rows)&&['TEMPORARY_KEY_PUBLICATION_ORACLE','EVIDENCE_STRING_PUBLICATION_ORACLE'].every(name=>rows.filter(row=>row.name===name).length===1&&rows.some(row=>row.name===name&&row.result==='PASS'))}),check('response.fallback-enums','stage01AgentContractAlignment','verificationObservations',undefined,'Independent fallback enums and accepted/rejected controls',{expectedDescription:'Exact closed answer/unresolved kinds published and validated',condition:emittedCases(['BOUNDARY-FALLBACK-CLOSED-ENUMS'])})]},
+  'verify-stage01-agent-contract-alignment.mjs':{sourceInputs:['test-stage01-specification-controls.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','test-zip.mjs'],boundary:'final generated fallback contract and deterministic consumer; exact closed enum controls',checks:[check('response.closed-envelope-publication','stage01AgentContractAlignment','envelopePublicationObservations',undefined,'Actual emitted final key/evidence contract inspected independently',{expectedDescription:'Exact key grammar/type/global namespace and canonical evidence field types published',condition:rows=>Array.isArray(rows)&&['TEMPORARY_KEY_PUBLICATION_ORACLE','EVIDENCE_STRING_PUBLICATION_ORACLE'].every(name=>rows.filter(row=>row.name===name).length===1&&rows.some(row=>row.name===name&&row.result==='PASS'))}),check('response.fallback-enums','stage01AgentContractAlignment','verificationObservations',undefined,'Independent fallback enums and accepted/rejected controls',{expectedDescription:'Exact closed answer/unresolved kinds published and validated',condition:emittedCases(['BOUNDARY-FALLBACK-CLOSED-ENUMS'])})]},
   'verify-response-authority-integrity.mjs':{boundary:'actual production ingestion authority, immutable literal values, accepted-state preservation and final prompt descriptor',checks:[check('producer.application-timing-authority','responseAuthorityIntegrity','verificationObservations',undefined,'Application-owned timing cannot be supplied by external agent',{expectedDescription:'All9 named application timing fields reject, state unchanged; final descriptors omit these writable fields',condition:emittedCases(['DELIVERY_REQUIRED','EARLIEST_EXECUTABLE_STAGE','FINAL_PRODUCT_REQUIRED','PER_RUN_REQUIRED','REQUIRED_BY_STAGE','TARGET_AVAILABILITY_CONDITION','TIMING_ENTRIES','TIMING_SCHEDULE_SHA256','VERIFICATION_PHASE'].map(field=>'PRODUCER-TIMING-REJECT-'+field).concat('PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS'))})]},
   'verify-returned-slot-authority.mjs':{boundary:'actual reserved-slot ingress, stored/rehashed corrected Blob, idempotent duplicate receipt and exact exported package bytes',checks:[check('response.returned-slot-controls','returnedSlotAuthority','verificationObservations',undefined,'Current attachment-slot authority and corrected identical JSON/new file retry',{expectedDescription:'All3 explicit slot rejections, exact saved ZIP contract, corrected Blob retry, unavailable-custody recovery, and actual preaccept reverify controls execute',condition:emittedCases(['ATTACHMENT-SLOT-INVENTED-REJECTED','ATTACHMENT-SLOT-FOREIGN-REJECTED','ATTACHMENT-SLOT-ROLE-MISMATCH-REJECTED','ATTACHMENT-PACKAGE-EXACT-SLOT-BYTES','BOUNDARY-CORRECTED-RETURNED-FILE-RETRY','RETURNED-BYTE-CUSTODY-RETRY-RECOVERY','ACTUAL-UI-RETURNED-BYTE-REVERIFY'])})]},
   'verify-copy-transaction.mjs':{boundary:'actual production clone transaction, identity receipts, recovery and unchanged source state; isolated shared Node transaction adapter',checks:[check('clone.bounded-retry-isolation','synthetic','verificationObservations',undefined,'actual clone retry and invalid receipt rollback cases',{expectedDescription:'Exact live/recovery clone retries have one effect; every invalid receipt case preserves isolated source/canonical state',condition:emittedCases(['clone.retry-single-effect','clone.backup-retry-single-effect','clone.invalid-receipt-isolation'])})]},
   'verify-history-project-lifecycle.mjs':{boundary:'actual delete command idempotency, restored activation and recovery metadata; isolated production transaction adapter',checks:[check('delete.bounded-retry-isolation','synthetic','verificationObservations',undefined,'actual delete retry/restoration and invalid receipt rollback cases',{expectedDescription:'Exact live/restored/recovery delete retries have one effect; invalid receipts preserve isolated state',condition:emittedCases(['delete.retry-single-effect','delete.restored-activation-single-effect','delete.backup-retry-single-effect','delete.invalid-receipt-isolation'])})]},
-  'verify-recoverable-history.mjs':{boundary:'actual canonical recovery/import/view/History/Undo/Redo projection authority',checks:[check('projection.recovery-controls','synthetic','verificationObservations',undefined,'actual canonical recovery projection rejection controls',{expectedDescription:'All13 enumerated imported/view/history/nested projection authority violations reject',condition:emittedCases(['projection.recovery-canonical-authority'])})]},
+  'verify-recoverable-history.mjs':{sourceInputs:['test-project-store-runtime.mjs','verifier-runtime.mjs'],boundary:'actual canonical recovery/import/view/History/Undo/Redo projection authority',checks:[check('projection.recovery-controls','synthetic','verificationObservations',undefined,'actual canonical recovery projection rejection controls',{expectedDescription:'All13 enumerated imported/view/history/nested projection authority violations reject',condition:emittedCases(['projection.recovery-canonical-authority'])})]},
   'verify-stage-prompts-complete.mjs':{boundary:'final emitted and externalized Stage23/24 independent context projection',checks:[check('stage06.canonical-binding-publication','promptsChecked','stage06CanonicalBindings',undefined,'Actual generated and materialized allowed catalog, independent hashes and stale continuation controls',{expectedDescription:'All three external operations receive exactly five permitted current canonical entries',condition:rows=>Array.isArray(rows)&&rows.length===3&&new Set(rows.map(row=>row.operation)).size===3&&rows.every(row=>Array.isArray(row.keys)&&row.keys.length===5&&typeof row.contextSignature==='string'&&typeof row.instructionSha256==='string')}),check('review.blind-final-context','promptsChecked','verificationObservations',undefined,'actual author identity/content withheld and authorized source context preserved',{expectedDescription:'Stage23 and24 final instruction/externalized context excludes author and prior verdict substance while retaining authorized source',condition:emittedCases(['blind-stage23-secondary-context-projection','blind-stage24-secondary-context-projection'])})]},
   'verify-stage19-discovery-challenge.mjs':{boundary:'actual current independent discovery/confirmation requirement binding and gate; synthetic external actor',checks:[check('stage19.discovery-controls','stage19DiscoveryChallenge','verificationObservations',undefined,'Stage 19 current independent discovery challenge acceptance and counterexamples',{expectedDescription:'Exact current independent challenge passes; missing/stale/reused-context/unresolved findings block',condition:emittedCases(['S19-CURRENT-INDEPENDENT-DISCOVERY','S19-PRIOR-AUTHOR-EPISTEMIC-BOUNDARY','S19-MISSING_CHALLENGE','S19-STALE_REVIEWED_REQUIREMENT','S19-REUSED_AUTHOR_CONTEXT','S19-UNRESOLVED_DISCOVERY_FINDING','S19-CONTROLLED-MISSING-CHALLENGE-DETECTED','S19-STALE_GOVERNING_INSTRUCTION','S19-GOVERNING-INSTRUCTION-SCOPE'])})]},
   'verify-stage26-independent-review.mjs':{boundary:'actual current independent process/product review reservation and progression authority',checks:[check('stage26.independent-review-controls','stage26IndependentReview','verificationObservations',undefined,'Stage 26 author-alone cannot approve independent audit review',{expectedDescription:'Current independently bound review passes; all seven missing/stale/reused/unresolved controls block',condition:emittedCases(['S26-PUBLISHED-COMPARISON-COMPLETE','S26-PUBLISHED-COMPARISON-RECONCILE','S26-PUBLISHED-POSITIVE-STRING-CONTROLS','S26-PUBLISHED-UNKNOWN-STRING-CONTROLS','S26-AUTHOR-REQUIRES-INDEPENDENT-REVIEW','S26-CURRENT-BOUND-INDEPENDENT-REVIEW','S26-MISSING_REVIEW','S26-STALE_AUDIT','S26-STALE_AUDIT_EVIDENCE','S26-MISSING_REVIEW_EVIDENCE','S26-REUSED_AUTHOR_CONTEXT','S26-REUSED_AUTHOR_RESERVATION','S26-UNRESOLVED_REVIEW_FINDING','S26-CONTROLLED-AUTHOR-BYPASS-DETECTED'])})]},
@@ -105,7 +105,7 @@ export const verificationCatalog={
   'verify-contract-closure.mjs':{boundary:'actual exported registries against independently enumerated declarations and exact specification shapes',checks:[check('registry.fields','contractClosure','fieldRegistryProof.result','PASS','FIELD_REGISTRY_UNIVERSE_ORACLE/FIELD_REGISTRY_BINDING_ORACLE',{coverageIds:report=>report.fieldRegistryProof.includedIds}),check('registry.operations','contractClosure','operationRegistryProof.result','PASS','required operation properties and exact scope binding',{coverageIds:report=>report.operationRegistryProof.includedIds}),check('registry.scopes','contractClosure','scopeMatrixProof.result','PASS','registry and scope universes must be identical',{coverageIds:report=>report.scopeMatrixProof.includedIds}),check('registry.durable','contractClosure','durableRegistryProof.result','PASS','Every canonical family must have exactly one durable-object contract.',{coverageIds:report=>report.durableRegistryProof.includedIds})]},
   'verify-v3-migration.mjs':{boundary:'production migration/import canonical state and preservation',checks:[check('migration.current-profile','verifyV3Migration','verifyV3Migration','PASS','exact /2 to /3 migration'),check('migration.unknown-preserved','verifyV3Migration','unknownExtensionsPreserved',true,'unknown extension preservation'),check('migration.idempotent','verifyV3Migration','idempotent',true,'idempotent second migration'),negative('migration.no-silent-heal','verifyV3Migration','currentV3NoSilentHeal','quarantinedProjectReactivated','current invalid /3 state is not silently healed')]},
   'verify-file-first-response.mjs':{boundary:'emitted file-first prompts and production response staging wiring; actual ingestion separately',checks:[check('response.file-selection','fileFirstResponseContract','primaryResponseFileSelection',true,'response.json is the authoritative returned transport',{basis:'EXECUTED_WIRING_ASSERTION'}),check('response.byte-rehash-wiring','fileFirstResponseContract','stagedReadBackRehash',true,'actual staging/readback hash invocation',{basis:'EXECUTED_WIRING_ASSERTION'}),negative('response.paste-primary','fileFirstResponseContract','pastePrimaryMutationDetected','requiredClipboardOrPastedResponseOperations','paste-primary controlled wiring mutation')]},
-  'verify-test-runtime-v3.mjs':{sourceInputs:['verification/deferred-definition-compatibility-legacy-fixture-20261005.json'],boundary:'production Closed Loop Test IR runtime, independent exact expected values, bounds and timeouts',checks:[check('test-ir.operation-registry-admission','verifyTestRuntimeV3','operationRegistryAdmission',undefined,'Actual malformed/inherited operation and diagnostic boundary with unchanged registered primitive execution and Stage6 response admission',{expectedDescription:'Exact 41 operation,65 label,27 capability controls,14 paired ingestion observations; prior exceptions/coercions reproduced,all27 registered operations unchanged,zero invalid worker launches',condition:completeRuntimeOperationAdmission}),check('test-ir.exact-integer','verifyTestRuntimeV3','integerExact',true,'BigInt exact comparisons'),check('test-ir.json','verifyTestRuntimeV3','json',true,'independent expected JSON values'),negative('test-ir.unknown-operation','verifyTestRuntimeV3','unknownOperationRejected','unsupportedTestIrTreatedAsExecutable','unknown operation validation rejected'),negative('test-ir.arbitrary-code','verifyTestRuntimeV3','arbitraryCodeRejected','untrustedDomOrUrlExecutionAccepted','arbitrary executable code rejected'),check('test-ir.no-timeout-partials','verifyTestRuntimeV3','timeoutNoPartialResult',true,'timeout must produce no partial result')]},
+  'verify-test-runtime-v3.mjs':{sourceInputs:['test-runtime-operation-registry.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','verification/deferred-definition-compatibility-legacy-fixture-20261005.json'],boundary:'production Closed Loop Test IR runtime, independent exact expected values, bounds and timeouts',checks:[check('test-ir.operation-registry-admission','verifyTestRuntimeV3','operationRegistryAdmission',undefined,'Actual malformed/inherited operation and diagnostic boundary with unchanged registered primitive execution and Stage6 response admission',{expectedDescription:'Exact 41 operation,65 label,27 capability controls,14 paired ingestion observations; prior exceptions/coercions reproduced,all27 registered operations unchanged,zero invalid worker launches',condition:completeRuntimeOperationAdmission}),check('test-ir.exact-integer','verifyTestRuntimeV3','integerExact',true,'BigInt exact comparisons'),check('test-ir.json','verifyTestRuntimeV3','json',true,'independent expected JSON values'),negative('test-ir.unknown-operation','verifyTestRuntimeV3','unknownOperationRejected','unsupportedTestIrTreatedAsExecutable','unknown operation validation rejected'),negative('test-ir.arbitrary-code','verifyTestRuntimeV3','arbitraryCodeRejected','untrustedDomOrUrlExecutionAccepted','arbitrary executable code rejected'),check('test-ir.no-timeout-partials','verifyTestRuntimeV3','timeoutNoPartialResult',true,'timeout must produce no partial result')]},
   'verify-test-runtime-dag.mjs':{boundary:'actual Test IR compilation/DAG execution/typed operands and independent expected results',checks:[check('dag.explicit','explicitDag','explicitDag',true,'named explicit step DAG'),check('dag.typed-ports','explicitDag','typedPorts',true,'declared port type checking'),negative('dag.forward-reference','explicitDag','forwardReferenceRejected','implicitTestIrOperandSelection','forward reference rejected'),check('dag.legacy-compile','explicitDag','legacyCompiledBeforeExecution',true,'legacy plan normalized before execution')]},
   'verify-prompt-file-identity.mjs':{boundary:'every current registered external operation final emitted instruction bytes and manifest',checks:[negative('prompt.changed-bytes-rejected','promptFileIdentity','repairedOriginalAccepted','promptBodyFileByteDivergences','authoritative byte identity rejects BOM, CRLF, missing newline, wrapper, append, wrong digest across all 50 external operations')]},
   'verify-human-authority-roundtrip.mjs':{boundary:'actual reported human answer acceptance, direct confirmation, canonical propagation and correction',checks:[negative('human.unconfirmed-candidate','humanAuthorityRoundTrip','exactConfirmationRequired','humanFactsAcceptedOnlyFromAgentReport','Human answer was accepted without direct confirmation.')]},
@@ -143,6 +143,163 @@ export const metricCatalog={
   destinationBoundAuthorizationCoverage:metrics('DESTINATION_BOUND_AUTHORIZATION_COVERAGE',['intent.destination-bound','intent.timed-validity','intent.duplicate-blocked','intent.not-delivery'],'Current exact destination/time/count-bound intent and distinction between authorization and performed delivery.'),
   canonicalDeploymentOriginCoverage:metrics('CANONICAL_DEPLOYMENT_ORIGIN_COVERAGE',['deployment.canonical-origin','deployment.canonical-path','deployment.reproducible'],'Exact supported deployment origin/base path and generated resource identity. Current hosted byte observation remains the separate verify-live gate.')
 };
+const stage01OmissionCategories=['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'];
+const stage01AdmissionCases=['pass1-incomplete','pass2-incomplete','omissions-unresolved','duplicate-category','unknown-category','omitted-unit','duplicate-unit','unknown-unit','wrong-unit-hash','wrong-input-version','wrong-manifest','unknown-disposition','inaccessible-required-content',...stage01OmissionCategories.map(value=>'omitted-category-'+value)];
+const stage01GateCases=['missing-confirmation','wrong-confirmation-input','wrong-confirmation-change','blank-objective','missing-objective'];
+function completeStage01SourceControls(rows,report){
+ const population={authorOperations:2,omissionCategories:14,dispositions:6,admissionNegatives:27,gateNegatives:5,conformingComplete:1,carrierFaults:4};
+ if(report.stage01SpecificationControls!=='PASS'||report.synthetic!==true||report.actualBrowser!==false||report.realExternalActor!==false||!emittedCases(['STAGE01-SPECIFICATION-CONTRACT-CONTROLS'])(rows)||!['expected','observed'].every(key=>exactLiteralFields(rows.find(row=>row.checkId==='STAGE01-SPECIFICATION-CONTRACT-CONTROLS')[key],population)))return false;
+ if(!Array.isArray(report.packages)||report.packages.length!==2||!['COMPLETE','RECONCILE_INTAKE'].every(operation=>report.packages.filter(row=>row.operation===operation).length===1&&report.packages.some(row=>row.operation===operation&&row.actualSavedZip===true&&row.exactInstructionBytes===true&&row.categoryCount===14&&row.dispositionCount===6)))return false;
+ if(!Array.isArray(report.observations)||report.observations.length!==33||new Set(report.observations.map(row=>row.caseId)).size!==33)return false;
+ if(!stage01AdmissionCases.every(id=>report.observations.some(row=>row.caseId===id&&row.expectedCode==='INCOMPLETE_INTAKE_ACCOUNTING'&&row.actualCodes.includes('INCOMPLETE_INTAKE_ACCOUNTING')&&row.accepted===false&&row.canonicalChanges===0&&row.rawPreserved===true&&row.stageComplete===false)))return false;
+ if(!stage01GateCases.every(id=>report.observations.some(row=>row.caseId===id&&row.expectedComplete===false&&row.actualComplete===false&&row.gateReasonFound===true&&row.syntheticCorruptionProjection===true)))return false;
+ if(!report.observations.some(row=>row.caseId==='conforming-current-intent'&&['authoritativeFile','operatorAccepted','currentConfirmation','stageComplete'].every(key=>row[key]===true)))return false;
+ return Array.isArray(report.faults)&&report.faults.length===4&&['COMPLETE','RECONCILE_INTAKE'].every(operation=>['missing-category','unresolved-omissions'].every(name=>report.faults.filter(row=>row.operation===operation&&row.name===name).length===1&&report.faults.some(row=>row.operation===operation&&row.name===name&&row.intendedFailure===(name==='missing-category'?'STAGE01_SPEC_CATEGORIES_ORACLE':'STAGE01_SPEC_RESOLUTION_ORACLE'))));
+}
+verificationCatalog['verify-stage01-agent-contract-alignment.mjs'].checks.push(check('stage01.specification-controls','stage01SpecificationControls','verificationObservations',undefined,'Actual saved author ZIP + raw file admission + confirmation gate with independent literal specification populations',{expectedDescription:'Two exact author ZIPs,27 admission negatives,5 gate negatives,one conforming accepted/current confirmation and4 intended carrier faults',condition:completeStage01SourceControls}));
+// Proposed addition to verification-evidence-catalog.mjs; literal expectations from controlling Sections14.6/37 plus32.4A.
+const declaredStageOperations={
+  "2": [
+    "COMPLETE",
+    "SEARCH_ADEQUACY_REVIEW",
+    "RECONCILE_SOURCE_SEARCH"
+  ],
+  "3": [
+    "COMPLETE",
+    "SEMANTIC_CHALLENGE",
+    "RECONCILE_RESEARCH"
+  ],
+  "4": [
+    "COMPLETE",
+    "DISPOSITION_CHALLENGE",
+    "ATOMICITY_CHALLENGE",
+    "RECONCILE_REQUIREMENTS"
+  ],
+  "5": [
+    "COMPLETE",
+    "SEMANTIC_REVIEW",
+    "RECONCILE_REQUIREMENT_SET"
+  ],
+  "6": [
+    "COMPLETE",
+    "PROOF_REVIEW",
+    "RECONCILE_VERIFICATION_SUITE"
+  ],
+  "7": [
+    "COMPLETE",
+    "EXECUTE_FAILURE_TEST"
+  ],
+  "8": [
+    "COMPLETE"
+  ],
+  "9": [
+    "COMPLETE"
+  ],
+  "10": [
+    "FREEZE"
+  ],
+  "11": [
+    "EXECUTE_RUN"
+  ],
+  "12": [
+    "VERIFY"
+  ],
+  "13": [
+    "COMPARE"
+  ],
+  "14": [
+    "ROOT_CAUSE"
+  ],
+  "15": [
+    "COMPLETE",
+    "EXECUTE_REGRESSION"
+  ],
+  "16": [
+    "CORRECT"
+  ],
+  "17": [
+    "FREEZE",
+    "EXECUTE_RUN",
+    "VERIFY",
+    "COMPARE",
+    "ROOT_CAUSE",
+    "REGRESSION",
+    "CORRECT"
+  ],
+  "18": [
+    "COMPLETE"
+  ],
+  "19": [
+    "CONFIRM_FREEZE",
+    "EXECUTE_RUN",
+    "VERIFY",
+    "COMPARE",
+    "REGRESSION_VERIFY",
+    "CONFIRM"
+  ],
+  "20": [
+    "FREEZE_BASELINE"
+  ],
+  "21": [
+    "COMPLETE"
+  ],
+  "22": [
+    "RUN_NATIVE_TESTS",
+    "EXECUTE_EXTERNAL_TEST"
+  ],
+  "23": [
+    "COMPLETE"
+  ],
+  "24": [
+    "RUN_NATIVE_ATTACKS",
+    "COMPLETE"
+  ],
+  "25": [
+    "FREEZE_DELIVERY_CANDIDATE",
+    "COMPLETE"
+  ],
+  "26": [
+    "COMPLETE",
+    "SEMANTIC_REVIEW",
+    "RECONCILE"
+  ],
+  "27": [
+    "CALCULATE_RELEASE",
+    "ADVISORY_REVIEW"
+  ],
+  "28": [
+    "VERIFY_IDENTITY",
+    "CAPTURE_DELIVERY_INTENT"
+  ],
+  "29": [
+    "CALCULATE_EVIDENCE_CHAINS",
+    "INVESTIGATE_MISSING_EVIDENCE"
+  ],
+  "30": [
+    "CALCULATE_TERMINAL",
+    "EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS",
+    "RECORD_DELIVERY_EVIDENCE"
+  ]
+};
+const exactDeclaredStrings=(actual,expected)=>Array.isArray(actual)&&actual.length===expected.length&&actual.every((value,index)=>typeof value==='string'&&value===expected[index]);
+verificationCatalog['verify-stage-operation-registry.mjs']={emittedEvidenceBasis:'EXECUTED_SCHEMA_METADATA_ASSERTIONS',boundary:'Exact canonical stage-operation declaration membership only; ordinary literal specification lists plus approved conditional owners7/15. No operation execution, admission, gate or external-agent behavior claim.',checks:Object.entries(declaredStageOperations).map(([stageKey,ordinary])=>{
+ const stage=Number(stageKey),conditional=[...(stage>7?['EXECUTE_FAILURE_TEST']:[]),...(stage>15?['EXECUTE_REGRESSION']:[])],all=[...ordinary,...conditional],caseId=`stage-registry.stage${stageKey.padStart(2,'0')}.exact-membership`,id=`declaration.stage${stageKey.padStart(2,'0')}.operations`;
+ return check(id,'stageOperationRegistry','verificationObservations',undefined,`verify-stage-operation-registry.mjs: independent literal Stage${stageKey} declaration assertions`,{basis:'EXECUTED_SCHEMA_METADATA_ASSERTIONS',expectedDescription:`Exact Stage${stageKey} operation membership in canonical registry, stage operations and stage contract`,condition:rows=>{
+  if(!Array.isArray(rows)||rows.length!==29||rows.filter(row=>row?.checkId===caseId).length!==1)return false;const row=rows.find(row=>row?.checkId===caseId);
+  return row.passed===true&&row.stage===stage&&exactDeclaredStrings(row.expected?.ordinaryOperations,ordinary)&&exactDeclaredStrings(row.expected?.conditionalOperations,conditional)&&exactDeclaredStrings(row.expected?.allOperations,all)&&exactDeclaredStrings(row.observed?.stageOperations,all)&&exactDeclaredStrings(row.observed?.stageContractOperations,all)&&exactDeclaredStrings(row.observed?.registeredOperations,[...all].sort());
+ }});
+})};
+verificationCatalog['verify-stage-contract-closure.mjs']={emittedEvidenceBasis:'EXECUTED_SCHEMA_METADATA_ASSERTIONS',boundary:'Exact workbook Stage30 title and role declarations only; no terminal behavior or delivery claim.',checks:[
+ ['stage-name','PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY'],['role','Permanent defect-registry and terminal-delivery custodian']
+].map(([field,literal])=>{const caseId='stage-contract.stage30.'+field,id='declaration.stage30.'+(field==='stage-name'?'title':'role');return check(id,'stageContractClosure','verificationObservations',undefined,'verify-stage-contract-closure.mjs: exact literal Stage30 '+field,{basis:'EXECUTED_SCHEMA_METADATA_ASSERTIONS',expectedDescription:'Exact Stage30 '+field+' declaration',condition:rows=>Array.isArray(rows)&&rows.length===2&&rows.filter(row=>row?.checkId===caseId).length===1&&rows.some(row=>row?.checkId===caseId&&row.stage===30&&row.passed===true&&row.expected===literal&&row.observed===literal)});})};
+
+// Exact existing negativeAt assertions now have stable individual proof links.
+const publishedIngestionNegatives=[{"id":"ingestion.invalid.malformed-JSON","name":"malformed JSON","code":"MALFORMED_JSON"},{"id":"ingestion.invalid.truncated-JSON","name":"truncated JSON","code":"TRUNCATED_RESPONSE"},{"id":"ingestion.invalid.markdown-wrapped","name":"markdown wrapped","code":"NON_JSON_WRAPPER"},{"id":"ingestion.invalid.oversized-response","name":"oversized response","code":"OVERSIZED_RESPONSE"},{"id":"ingestion.invalid.duplicate-JSON-member","name":"duplicate JSON member","code":"DUPLICATE_JSON_MEMBER"},{"id":"ingestion.invalid.wrong-root-type","name":"wrong root type","code":"INVALID_ROOT"},{"id":"ingestion.invalid.unknown-top-level-property","name":"unknown top-level property","code":"UNKNOWN_PROPERTY"},{"id":"ingestion.invalid.wrong-stage","name":"wrong stage","code":"WRONG_STAGE"},{"id":"ingestion.invalid.wrong-operation","name":"wrong operation","code":"WRONG_OPERATION"},{"id":"ingestion.invalid.stale-prompt-id","name":"stale prompt id","code":"STALE_PROMPT_IDENTITY"},{"id":"ingestion.invalid.stale-contract-hash","name":"stale contract hash","code":"STALE_CONTRACT_HASH"},{"id":"ingestion.invalid.stale-context-signature","name":"stale context signature","code":"STALE_CONTEXT_SIGNATURE"},{"id":"ingestion.invalid.unresolved-relationship","name":"unresolved relationship","code":"UNRESOLVED_RELATIONSHIP"},{"id":"ingestion.invalid.wrong-relationship-cardinality","name":"wrong relationship cardinality","code":"INVALID_RELATIONSHIP_REFERENCE"}];
+for(const expected of publishedIngestionNegatives)verificationCatalog['verify-ingestion.mjs'].checks.push(check(expected.id,'scopeIdentityMatrix','negativeObservations',undefined,'verify-ingestion.mjs: negativeAt '+expected.name,{expectedDescription:'Exact current negativeAt case rejects atomically with the specified diagnostic',condition:rows=>Array.isArray(rows)&&rows.filter(row=>row.name===expected.name).length===1&&rows.some(row=>row.name===expected.name&&row.checkId===expected.id&&row.expectedCode===expected.code&&Array.isArray(row.observedCodes)&&row.observedCodes.includes(expected.code)&&row.accepted===false&&row.acceptedChanges===0)}));
+const canonicalSerializationIds=['canonical.safe-integer-and-typed-string','canonical.unsigned-scalar-key-order','canonical.ordered-arrays','canonical.exact-string-scalars-and-lines','canonical.exact-json-escapes','canonical.printable-nonascii-unescaped','canonical.prohibited-values-rejected'];
+verificationCatalog['verify-hash.mjs']={sourceInputs:['workbook.js','workflow-schema.js'],boundary:'Actual canonical serializer against independently declared exact text/value and rejection controls.',checks:[check('canonical.registered-set-semantics','sha256Vectors','registeredSetSemantics',true,'Actual registered TEST_HASH /members canonical set equality and duplicate identity refusal'),check('canonical.exact-serialization-controls','sha256Vectors','verificationObservations',undefined,'Seven exact canonical serialization source clauses',{expectedDescription:'Every exact named serialization assertion is present and passes',condition:emittedCases(canonicalSerializationIds)})]};
+verificationCatalog['verify-test-runtime-v3.mjs'].checks.push(check('test-ir.exact-integer-boundary-population','verifyTestRuntimeV3','verificationObservations',undefined,'Independent finite exact integer operations and overflow/type rejection controls',{expectedDescription:'Six literal conforming and six precise rejection cases plus restored control',condition:rows=>emittedCases(['test-ir.exact-integer-boundaries'])(rows)&&exactLiteralFields(rows.find(row=>row.checkId==='test-ir.exact-integer-boundaries').observed,{conforming:6,rejected:6,restoredControl:true})}));
+verificationCatalog['verify-recoverable-history.mjs'].checks.push(check('store.cas-stale-write-population','synthetic','verificationObservations',undefined,'Exact before/after canonical state and retained history at actual stale revision rejection',{expectedDescription:'Stale write rejects; canonical state/history unchanged; newer control succeeds',condition:rows=>emittedCases(['store.cas-stale-write-isolation'])(rows)&&exactLiteralFields(rows.find(row=>row.checkId==='store.cas-stale-write-isolation').observed,{staleRevisionRejected:true,canonicalStateUnchanged:true,historyUnchanged:true,newerRevisionRestored:true})}));
 const negatives={};
 for(const definition of Object.values(verificationCatalog))for(const observation of definition.checks)if(observation.violation)(negatives[observation.violation]??=[]).push(observation.id);
 export const zeroCatalog=Object.fromEntries(Object.entries(negatives).map(([name,checkIds])=>[name,{checkIds,populationDefinition:'The exact listed controlled invalid-operation attempts, checked by their actual production/assertion boundary and emitted only after rejection assertions.',scopeLimit}]));
@@ -150,3 +307,28 @@ for(const [suite,population]of Object.entries(negativePopulationCatalog))for(con
   const definition=zeroCatalog[row.violation]??={checkIds:[],populationDefinition:'The exact enumerated controlled invalid-operation attempts retained by their real assertion owner.',scopeLimit:population.scopeLimit};
   definition.checkIds.push(`negativecase.${suite}.${row.caseId}`);
 }
+
+// Optional actual-browser producers are collected only by the existing browser
+// workflow invocations. They are never substituted for the default synthetic
+// population, and every case is qualified by LOCAL or DEPLOYED receipt scope.
+const browserChecks=(suite,marker,fields)=>({boundary:'Actual Chromium controls against the retained built resource graph; external-agent inputs remain synthetic where declared by the owning suite.',sourceInputs:[],timeoutMs:suite==='verify-complete-operator-journey.mjs'?120*60*1000:10*60*1000,checks:Object.entries(fields).map(([field,expected])=>check(`${suite.replace(/\.mjs$/,'')}.${field}`,marker,field,expected,`${suite}: executed assertion represented by ${field}`,{basis:'ACTUAL_BROWSER_CONTROL_ASSERTIONS'}))});
+export const browserVerificationCatalog={
+ 'verify-browser.mjs':browserChecks('verify-browser.mjs','browserVerified',{browserVerified:true,horizontalOverflow:false,controlsWithinViewport:true,buttonSizing:true,touchTargetFloor:44,minimumUiTextPx:14,all30StagesReachable:true,reloadPersistence:true,runtimeErrors:0}),
+ 'verify-browser-extra.mjs':browserChecks('verify-browser-extra.mjs','browserExtraVerified',{browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,canonicalDataRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0}),
+ 'verify-human-stage-walkthrough.mjs':browserChecks('verify-human-stage-walkthrough.mjs','syntheticPromptAndNavigationChecks',{syntheticPromptAndNavigationChecks:true,completeOperatorJourney:false,humanIndependenceEstablished:false,stages:30,uiStagesReached:30,oneTimeSupply:true,promptVisualBaseline:true,operatorDoubleCheckGuide:true}),
+ 'verify-mobile-stage-action.mjs':browserChecks('verify-mobile-stage-action.mjs','mobileStageActionRegression',{mobileStageActionRegression:true,longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false}),
+ 'verify-mobile-capability-journey.mjs':browserChecks('verify-mobile-capability-journey.mjs','mobileCapabilityJourney',{mobileCapabilityJourney:true}),
+ 'verify-complete-operator-journey.mjs':browserChecks('verify-complete-operator-journey.mjs','completeOperatorJourney',{completeOperatorJourney:true,stages:30,failures:[]}),
+ 'verify-browser-recovery.mjs':browserChecks('verify-browser-recovery.mjs','browserRecovery',{browserRecovery:true,complete:true,failures:[]})
+};
+const browserCase=(suite,name)=>browserVerificationCatalog[suite].checks.push(check(`${suite.replace(/\.mjs$/,'')}.case:${name}`,suite==='verify-browser-recovery.mjs'?'browserRecovery':'mobileCapabilityJourney','cases',undefined,`${suite}: ${name}`,{basis:'ACTUAL_BROWSER_CONTROL_ASSERTIONS',expectedDescription:'Exactly one named executed case with PASS',condition:rows=>Array.isArray(rows)&&rows.filter(row=>row.name===name).length===1&&rows.find(row=>row.name===name)?.result==='PASS'}));
+for(const name of ['probe cannot pass before the pinned project exists','probe rejects missing actual file and restore operations','actual exported response bytes selected','actual exported returned bytes selected','actual exported manifest bytes selected','restored the selected exported backup bytes','probe passes after all actual capability operations','pinned target and completed probe survive reload','only observed receipts are collected; missing journey operations remain explicit','target mismatch is rejected without changing the pinned session'])browserCase('verify-mobile-capability-journey.mjs',name);
+browserVerificationCatalog['verify-mobile-capability-journey.mjs'].sourceInputs=['test-human-fallback-controls.mjs','test-human-fallback-fixture.mjs','test-zip.mjs'];
+for(const answerType of ['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_CHOICE','DATE','FILE_REFERENCE']){
+ const name=`human fallback ${answerType} control saves and reloads typed answer`;
+ browserVerificationCatalog['verify-mobile-capability-journey.mjs'].checks.push(check(`verify-mobile-capability-journey.fallback:${answerType}`,'mobileCapabilityJourney','cases',undefined,`Actual accessible ${answerType} control, native response-file ingestion, typed answer save and reload; human information is synthetic and the stage remains incomplete`,{basis:'ACTUAL_BROWSER_CONTROL_ASSERTIONS',expectedDescription:'Exactly one PASS case with all typed-answer and actual file controls; no human provenance or stage completion claimed',condition:rows=>{
+  if(!Array.isArray(rows))return false;const matches=rows.filter(row=>row.name===name),row=matches[0],observation=row?.observation;
+  return matches.length===1&&row.result==='PASS'&&observation?.answerType===answerType&&['accessibleQuestion','nativeControl','typedAnswerPreserved','actualResponseFile','syntheticHumanInformation'].every(field=>observation[field]===true)&&observation.stageCompleted===false;
+ }}));
+}
+for(const name of ['Ordinary selection opens each of all 30 stages in the active version without changing project data','Replacement execution preserves accepted result and pending dependent work','Cancellation and unanswered confirmation survive reload without accepting or invalidating','Confirmed replacement commits once and invalidates pending dependent work','Undo and Redo restore project state through the same checkpoint mechanism','New continuation keeps the previous forward version in application History','Actual exported backup bytes restore active data and retained alternatives','Saved-version direct link resolves the named complete version','Application History restores a removed project as its complete saved version','File correction confirmation, cancellation, reload, saved candidate acceptance and reversal preserve exact bytes and matching dependent progress','Actual IndexedDB corruption is quarantined on reload; History restores the compatible valid project and original file bytes while retaining the damaged evidence','Recovery controls export protected evidence and remove only the damaged copy while preserving the restored project and History'])browserCase('verify-browser-recovery.mjs',name);

@@ -28,8 +28,11 @@ assert.equal(p.job.JOB_TITLE,'First continuation');assert.equal((await store.get
 const currentBytes=await store.getArtifact(file.artifactId,{jobId:id});assert.deepEqual(new Uint8Array(await currentBytes.blob.arrayBuffer()),new Uint8Array(await bytes.arrayBuffer()));
 assert.deepEqual(p.projectData,firstProject.projectData);assert.deepEqual(p.stages,firstProject.stages);assert.ok(p.revision>firstProject.revision,'Restoration must preserve concurrency monotonicity.');
 record('Restore complete project and exact non-text bytes');
+const beforeStaleWrite=copy(p),beforeStaleHistory=await store.historyList(id);
 await assert.rejects(store.writeProject(firstProject,{expectedProjectRevision:firstProject.revision}),error=>error.code==='STALE_PROJECT_REVISION');
+assert.deepEqual(await store.readProject(id),beforeStaleWrite,'STALE_WRITE_CANONICAL_ISOLATION_ORACLE');assert.deepEqual(await store.historyList(id),beforeStaleHistory,'STALE_WRITE_HISTORY_ISOLATION_ORACLE');
 record('Delayed response or stale tab cannot write after restore');
+verificationObservations.push({checkId:'store.cas-stale-write-isolation',requirementRefs:[spec+':3082'],boundary:'Production store compare-and-swap via isolated lifecycle transaction adapter',expected:{staleRevisionRejected:true,canonicalStateUnchanged:true,historyUnchanged:true,newerRevisionRestored:true},observed:{staleRevisionRejected:true,canonicalStateUnchanged:true,historyUnchanged:true,newerRevisionRestored:p.revision>firstProject.revision},passed:true});
 p=(await store.restoreCheckpoint(id,second,{expectedProjectRevision:p.revision,mode:'REDO'})).project;assert.equal(p.job.JOB_TITLE,'Second continuation');record('Redo restores saved continuation without executing commands');
 p=(await store.restoreCheckpoint(id,first,{expectedProjectRevision:p.revision})).project;next=copy(p);next.job.JOB_TITLE='Alternative continuation';p=await store.writeProject(next,{expectedProjectRevision:p.revision});history=await store.historyList(id);assert.ok(history.entries.some(entry=>entry.id===second));const alternative=history.activeId;
 record('New continuation retains previous alternative');

@@ -9,7 +9,7 @@ import {responseFixture,OBJECTIVE} from './operator-journey-fixtures.mjs';
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema;
-const directory=path.resolve(process.env.RECOVERY_EVIDENCE_DIR||'recovery-browser-evidence'),browser=await createOperatorBrowser({directory});
+const directory=path.resolve(process.env.RECOVERY_EVIDENCE_DIR||'recovery-browser-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true});
 const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_CONTROLS_INDEXEDDB_AND_FILE_TRANSPORT',physicalDevice:false,humanIndependenceEstablished:false,cases:[],failures:[],complete:false};
 const record=(name,details={})=>report.cases.push({name,...details,result:'PASS'});
 async function state(){return browser.project();}
@@ -130,7 +130,7 @@ try{
  await browser.click('[data-quarantine-export]');await browser.fill('#backup-passphrase','Disposable browser quarantine evidence password');const [quarantineExport]=await browser.download('#backup-password-continue');const encryptedEvidence=JSON.parse(quarantineExport.bytes);assert.equal(encryptedEvidence.schema,'closed-loop-encrypted-export/1');assert.equal(encryptedEvidence.algorithm,'AES-256-GCM');
  await browser.click('[data-quarantine-remove]');assert.equal(await browser.exists('#quarantine-notice'),false);assert.deepEqual((await state()).project.projectData,validRecovery.project.projectData);record('Recovery controls export protected evidence and remove only the damaged copy while preserving the restored project and History');
  await verifyPendingRestoration();await verifyPendingRestoration({failCheckpoint:true});await verifyImportedView(pendingFileCorrection);
- assert.deepEqual(browser.exceptions(),[]);report.complete=true;
+ assert.deepEqual(browser.exceptions(),[]);report.browserExecution=await browser.executionEvidence();report.complete=true;
 }catch(error){report.failures.push({message:error.stack});process.exitCode=1;try{await browser.inspect(1);}catch{}}
 finally{report.events=browser.events;fs.writeFileSync(path.join(directory,'recovery.json'),JSON.stringify(report,null,2)+'\n');await browser.close();}
-console.log(JSON.stringify(report,null,2));
+console.log(JSON.stringify({browserRecovery:report.complete,...report},null,2));

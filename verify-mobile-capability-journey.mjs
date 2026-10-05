@@ -1,10 +1,12 @@
+import {verifyHumanFallbackControls} from './test-human-fallback-controls.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {createOperatorBrowser} from './operator-browser-driver.mjs';
 
-const directory=path.resolve(process.env.MOBILE_EVIDENCE_DIR||'mobile-capability-evidence'),browser=await createOperatorBrowser({directory}),cases=[];
+const directory=path.resolve(process.env.MOBILE_EVIDENCE_DIR||'mobile-capability-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true}),cases=[];
+let browserExecution,complete=false;
 const record=(name,observation)=>{cases.push({name,result:'PASS',observation});console.log(JSON.stringify(cases.at(-1)));};
 async function panel(){await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',30);}
 async function shownTarget(){return JSON.parse(await browser.evaluate(`document.querySelector('#mobile-acceptance-target-json').value`));}
@@ -25,6 +27,8 @@ try{
   await browser.reload();await panel();assert.deepEqual(await shownTarget(),target);assert.match(await probeResult(),/PASS/);record('pinned target and completed probe survive reload',{});
   await browser.fill('#mobile-acceptance-target-json','');await browser.click('#record-mobile-acceptance-measurements');await browser.click('#record-mobile-acceptance-receipt');assert.deepEqual(await shownTarget(),target);assert.match(await browser.evaluate('document.body.innerText'),/Acceptance operations still required/);record('only observed receipts are collected; missing journey operations remain explicit',{});
   await browser.fill('#mobile-acceptance-target-json',JSON.stringify({...target,deviceModel:'DIFFERENT'}));await browser.click('#record-mobile-acceptance-measurements');assert.match(await browser.evaluate('document.body.innerText'),/does not match the persisted acceptance-session target/);await browser.reload();await panel();assert.deepEqual(await shownTarget(),target);record('target mismatch is rejected without changing the pinned session',{});
-  assert.deepEqual(browser.exceptions(),[]);await browser.inspect(30);
+  await verifyHumanFallbackControls(browser,record);
+  assert.deepEqual(browser.exceptions(),[]);await browser.inspect(1);browserExecution=await browser.executionEvidence();complete=true;
 }catch(error){cases.push({name:'journey failure',result:'FAIL',message:error.stack,visibleState:await browser.evaluate(`document.querySelector('#mobile-acceptance-panel')?.innerText||document.body.innerText`)});try{await browser.inspect(30);}catch{}console.error(error);process.exitCode=1;}
-finally{fs.writeFileSync(path.join(directory,'capability.json'),JSON.stringify({basis:'ACTUAL_CHROMIUM_FILE_TRANSPORT',physicalIPhoneAcceptance:false,cases,events:browser.events},null,2)+'\n');await browser.close();}
+finally{fs.writeFileSync(path.join(directory,'capability.json'),JSON.stringify({browserExecution,complete,basis:'ACTUAL_CHROMIUM_FILE_TRANSPORT',physicalIPhoneAcceptance:false,cases,events:browser.events},null,2)+'\n');await browser.close();}
+console.log(JSON.stringify({mobileCapabilityJourney:complete,browserExecution,cases,physicalIPhoneAcceptance:false}));

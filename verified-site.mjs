@@ -24,7 +24,9 @@ export const fullTestSteps=[
 export const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const requireValue=(condition,message)=>{if(!condition)throw new Error(message);};
 const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
-const writeJson=(file,value)=>fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');
+const writeJson=(file,value)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');};
+function currentProofFiles(directory){const result=[];for(const entry of fs.readdirSync(directory,{withFileTypes:true})){if(entry.isFile()&&entry.name.endsWith('.json'))result.push(entry.name);else if(entry.isDirectory()&&['browser','LOCAL','DEPLOYED'].includes(entry.name))for(const name of currentProofFiles(path.join(directory,entry.name)))result.push(entry.name+'/'+name);}return result.sort();}
+export function executedProofFileHashes(directory){const files=currentProofFiles(directory);return Object.fromEntries(files.map(name=>{requireValue(/^(?:[\w.-]+\.json|browser\/(?:LOCAL|DEPLOYED)\/[\w.-]+\.json)$/.test(name)&&fs.lstatSync(path.join(directory,name)).isFile(),'Invalid executed proof file');return [name,digest(fs.readFileSync(path.join(directory,name)))];}));}
 const collectsExecutedEvidence=cwd=>Boolean(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS)&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(cwd)===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT));
 const git=(cwd,...args)=>execFileSync('git',args,{timeout:30000,killSignal:'SIGKILL',cwd,encoding:'utf8'}).trim();
 const artifactName=(run,attempt)=>`verified-site-${run}-${attempt}`;
@@ -124,9 +126,9 @@ export async function sealSite({cwd,directory,bundleDirectory,context}){
   let executedEvidence;
   if(collectsExecutedEvidence(cwd)){
     const fingerprint=evidenceFingerprint(cwd),receipts=readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,fingerprint),evidence=aggregateExecutedEvidence(receipts,fingerprint);
-    requireValue(receipts.size===Object.keys((await import('./verification-evidence-catalog.mjs')).verificationCatalog).length,'Required executed assertion receipt is absent at artifact seal.');
+    requireValue([...receipts.keys()].filter(key=>!key.startsWith('browser/')).length===Object.keys((await import('./verification-evidence-catalog.mjs')).verificationCatalog).length,'Required executed assertion receipt is absent at artifact seal.');
     fs.cpSync(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,path.join(bundleDirectory,'proofs'),{recursive:true});
-    const proofFiles=Object.fromEntries(fs.readdirSync(path.join(bundleDirectory,'proofs')).filter(name=>name.endsWith('.json')).sort().map(name=>[name,digest(fs.readFileSync(path.join(bundleDirectory,'proofs',name)))]));
+    const proofFiles=executedProofFileHashes(path.join(bundleDirectory,'proofs'));
     executedEvidence={schema:evidence.schema,sourceCommit:context.commit,sourceInputsSha256:fingerprint.sourceInputsSha256,receiptCount:receipts.size,proofFiles,proofBundleSha256:evidenceSha(proofFiles)};
   }
   const receipt={schema:'closed-loop-verified-site/1',repository:context.repository,event:context.event,
@@ -196,7 +198,8 @@ async function reuseCandidate(c){
   assertReceipt(receipt,manifest,{run,repository:c.repository,headSha:candidate.headSha,sourceCommit:source.sha,sourceTree:source.tree.sha,workflowDigest:digest(fs.readFileSync('.github/workflows/pages.yml'))});
   if(collectsExecutedEvidence(process.cwd())){
   requireValue(receipt.executedEvidence?.sourceCommit===source.sha&&receipt.executedEvidence.proofBundleSha256===evidenceSha(receipt.executedEvidence.proofFiles),'Executed proof bundle receipt is absent or inconsistent.');
-  for(const [name,expected]of Object.entries(receipt.executedEvidence.proofFiles))requireValue(digest(fs.readFileSync(path.join('_verified-pr/proofs',name)))===expected,'Executed proof bundle file changed: '+name);
+  requireValue(JSON.stringify(executedProofFileHashes('_verified-pr/proofs'))===JSON.stringify(Object.fromEntries(Object.entries(receipt.executedEvidence.proofFiles).sort(([a],[b])=>a.localeCompare(b)))),'Executed proof file universe or bytes differs from sealed bundle.');
+  for(const [name,expected]of Object.entries(receipt.executedEvidence.proofFiles)){requireValue(/^(?:[\w.-]+\.json|browser\/(?:LOCAL|DEPLOYED)\/[\w.-]+\.json)$/.test(name),'Unsafe executed proof path');requireValue(digest(fs.readFileSync(path.join('_verified-pr/proofs',name)))===expected,'Executed proof bundle file changed: '+name);}
   // Preserve the original tested revision while explicitly binding identical
   // current inputs to this main promotion. Ordinary receipt readers cannot
   // silently substitute a different head revision.

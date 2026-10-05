@@ -6,6 +6,7 @@ import {readStoreArchive} from './test-zip.mjs';
 import {reservationScopeFixture} from './test-reservation-scope-fixture.mjs';
 import {deferredDefinitionRestorationFixture} from './test-fixtures.mjs';
 import assert from 'node:assert/strict';
+import {verifyStage01SpecificationControls} from './test-stage01-specification-controls.mjs';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -481,4 +482,5 @@ await assert.rejects(()=>cachedReasonExportOracle(promptSource,'RESERVED',storeS
 const conditionalReasonFaultsDetected=['OMIT_PUBLISHED_REASON_RULE','OMIT_PROMPT_GENERATION_UPDATE','OMIT_EXACT_STALE_AUTHORITY_REFRESH','BYPASS_EXPECTED_REVISION_GUARD','BYPASS_CAPTURED_RESPONSE_GUARD','OMIT_EXACT_TRANSPORT_IMPACT_CLASSIFICATION'];
 console.log(JSON.stringify({conditionalReasonPublication:'PASS',conditionalReasonObservations,cachedInitialInstructionRefresh:'PASS',cacheObservations,sharedDescriptorCacheObservations,sharedDescriptorFaultsDetected,negativeCacheObservations,capturedResponseObservation,transportImpactObservations,sharedContextRefreshObservations,conditionalReasonFaultsDetected,synthetic:true,actualBrowser:false,realAgent:false,stageCompletionEstablished:false}));
 
+console.log(JSON.stringify(await verifyStage01SpecificationControls()));
 console.log(JSON.stringify({stage01AgentContractAlignment:'PASS',legalUnicodeStringPunctuation:true,smartStructuralDelimitersRejected:true,typedEvidenceReferencesPublished:true,humanAuthorityEnumsPublished:true,validationRepairGuidancePublished:true,conformingStage01ResponseAccepted:true,fallbackAnswerTypesPublished:true,fallbackUnresolvedKindsPublished:true,fallbackControlsValidated:true,envelopePublicationComplete:true,envelopePublicationObservations,conditionalReasonPublication:true,cachedInitialInstructionRefresh:true,sharedDescriptorInitialInstructionRefresh:true,sharedDescriptorFaultsDetected,conditionalReasonFaultsDetected,verificationObservations:[fallbackObservation]}));

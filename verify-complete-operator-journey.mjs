@@ -13,7 +13,7 @@ import {observeWorkflowDOM,assertWorkflowPresentation} from './test-app-markup.m
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,hash=globalThis.closedLoopHash;
-const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory});
+const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true});
 const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,viewportChecks:[],stages:[],operations:[],presentationCases:[],failures:[],complete:false};
 let snapshot,stage=1,sequence=0,rejected=false,reloaded=false;
 function preserveReport(){
@@ -167,7 +167,7 @@ try{
   await verifyFinalBackupRoundTrip();
   report.currentOperation={phase:'FINAL_LATENCY_AND_BROWSER_ERRORS',stage,sequence};preserveReport();
   await captureOperationLatency();assert.equal(report.operationLatency.thresholdMs,1500,'Operator loading threshold changed outside D-1 configured default.');assert.ok(report.operationLatency.samples.length>0,'Complete journey did not record operation latency.');assert.ok(report.operationLatency.samples.every(sample=>Number.isFinite(sample.durationMs)&&sample.durationMs>=0),'Operation latency evidence contains an invalid duration.');
-  assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.complete=true;
+  assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.browserExecution=await browser.executionEvidence();report.complete=true;
 }catch(error){report.failures.push({stage,sequence,message:error.stack});console.error(error);process.exitCode=1;try{report.failureView=await browser.evaluate(`(()=>{const node=document.querySelector('#next-required-action'),rect=node?.getBoundingClientRect();return {stage:document.querySelector('#stage-picker')?.value,width:innerWidth,height:innerHeight,scrollY,action:node?.innerText,rect:rect?.toJSON(),active:document.activeElement?.id,loading:document.querySelector('#app')?.getAttribute('aria-busy')};})()`);await browser.inspect(stage);}catch{}}
 finally{try{await captureOperationLatency();}catch(error){report.latencyReadFailure=String(error.message||error);}preserveReport();await browser.close();}
-console.log(JSON.stringify({completeOperatorJourney:report.complete,stages:report.stages.length,operations:report.operations.length,failures:report.failures,operationLatency:report.operationLatency},null,2));
+console.log(JSON.stringify({completeOperatorJourney:report.complete,browserExecution:report.browserExecution,operationCases:report.operations,presentationCases:report.presentationCases,stages:report.stages.length,operations:report.operations.length,failures:report.failures,operationLatency:report.operationLatency},null,2));

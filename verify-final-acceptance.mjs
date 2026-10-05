@@ -5,11 +5,15 @@ import assert from 'node:assert/strict';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {visualBaselineFixture} from './test-fixtures.mjs';
+import {verifyNormativeCatalogConsumers} from './test-normative-catalog-consumers.mjs';
+import {verifyExternalNormativeProof} from './test-external-normative-proof.mjs';
+import {verifyNormativeContextApplicability} from './test-normative-context-applicability.mjs';
 import {createNormativeProofFixture} from './test-normative-proof-fixture.mjs';
 import {applyExecutedEvidence,evaluateFullRequirementProof,coverageDeclarationSha256,validateFinalNormativeProof,readExecutedEvidence,validateExecutionReceipt,aggregateExecutedEvidence,readExecutionReceipts,evidenceFingerprint,observationsFromReports,sha} from './verification-evidence.mjs';
 import {runtimePaths} from './verified-site.mjs';
 import {evaluateFinalAcceptance,CORE_COVERAGE_KEYS,SECTION49_COVERAGE_KEYS,CORE_ZERO_KEYS,SECTION49_ZERO_KEYS} from './final-acceptance.mjs';
 // Disposable publication fixture. This proves the gate, not a physical-device run.
+const normativeContextApplicability=verifyNormativeContextApplicability();
 const normativeFixture=createNormativeProofFixture();
 process.on('exit',()=>normativeFixture.dispose());
 // Reuse this fixture's actual producer report. Mutations below test only its
@@ -94,12 +98,13 @@ for(const [name,change,reason] of [
  ['different-evidence-kind',b=>b.fullCoverage.obligations[0].evidenceKinds=['EXECUTED_SCHEMA_METADATA_ASSERTIONS'],'REQUIRED_EVIDENCE_KIND_NOT_OBSERVED'],
  ['missing-mutation-applicability',b=>delete b.fullCoverage.obligations[0].nonapplicable.mutation,'REQUIRED_CHECK_ROLE_UNACCOUNTED'],
  ['missing-semantic-applicability',b=>delete b.fullCoverage.obligations[0].nonapplicable.semantic,'REQUIRED_CHECK_ROLE_UNACCOUNTED'],
- ...['ACTUAL_IPHONE_SAFARI','HUMAN_OBSERVATION','VERIFIED_EXTERNAL','LOCAL_AND_DEPLOYED_BROWSER'].map(kind=>['synthetic-cannot-prove-'+kind,b=>b.fullCoverage.obligations[0].evidenceKinds=[kind],'UNSUPPORTED_REQUIRED_EVIDENCE_KIND'])
+ ...['ACTUAL_IPHONE_SAFARI','HUMAN_OBSERVATION','VERIFIED_EXTERNAL','LOCAL_AND_DEPLOYED_BROWSER'].map(kind=>['synthetic-cannot-prove-'+kind,b=>b.fullCoverage.obligations[0].evidenceKinds=[kind],['HUMAN_OBSERVATION','VERIFIED_EXTERNAL'].includes(kind)?'REQUIRED_EVIDENCE_KIND_NOT_OBSERVED':'UNSUPPORTED_REQUIRED_EVIDENCE_KIND'])
 ])rejectCoverage(name,change,reason);
 for(const [name,change,reason] of [
  ['self-review',review=>review.reviewer.contextId=review.author.contextId,'INCOMPLETE_OR_SELF_COVERAGE_REVIEW'],
  ['review-not-performed',review=>review.reviewPerformed=false,'INCOMPLETE_OR_SELF_COVERAGE_REVIEW'],
  ['review-has-open-finding',review=>review.findings=['Missing counterexample'],'INCOMPLETE_OR_SELF_COVERAGE_REVIEW'],
+ ['review-stale-helper-input',review=>review.reviewedInputs.push({path:'test-project-store-runtime.mjs',sha256:'0'.repeat(64)}),'COVERAGE_REVIEW_INPUT_CHANGED'],
  ['review-wrong-declaration',review=>review.declarationSha256='0'.repeat(64),'COVERAGE_REVIEW_BINDING_MISMATCH'],
  ['review-missing-catalog-source',review=>review.reviewedInputs=review.reviewedInputs.filter(row=>row.path!=='verification-evidence-catalog.mjs'),'COVERAGE_REVIEW_TEST_INPUT_MISMATCH'],
  ['review-missing-test-source',review=>review.reviewedInputs=review.reviewedInputs.filter(row=>row.path!=='verify-test-runtime-v3.mjs'),'COVERAGE_REVIEW_TEST_INPUT_MISMATCH']
@@ -283,4 +288,6 @@ for(const prefix of ['deployed','reverified-deployed']){
  const token='name: '+prefix+'-operator-journeys-${{ github.sha }}-${{ github.run_id }}';
  assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),/DEPLOYED_JOURNEY_ARTIFACT_ORACLE/);assertPublicationWiring(workflow);artifactFaults.push({fault:'remove-'+prefix+'-archive',oracle:'DEPLOYED_JOURNEY_ARTIFACT_ORACLE',result:'DETECTED',restored:'PASS'});
 }
-console.log(JSON.stringify({finalAcceptanceGate:'PASS',normativeProofCases,runtimeAdmissionConsumerControls,coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,staticEvidenceFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));
+const normativeCatalogConsumers=await verifyNormativeCatalogConsumers();
+const externalNormativeProof=await verifyExternalNormativeProof(normativeFixture);
+console.log(JSON.stringify({finalAcceptanceGate:'PASS',normativeCatalogConsumers,externalNormativeProof,normativeContextApplicability,normativeProofCases,runtimeAdmissionConsumerControls,coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,staticEvidenceFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));

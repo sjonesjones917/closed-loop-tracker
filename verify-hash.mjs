@@ -5,7 +5,8 @@ import {createHash} from 'node:crypto';
 createVerifierRuntime.loadScript(globalThis,fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
 const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
-const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){ok=e instanceof TypeError;}assert(ok,`${name} must be rejected.`);};
+const canonicalRejections=[],verificationObservations=[];
+const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){ok=e instanceof TypeError;}assert(ok,`${name} must be rejected.`);canonicalRejections.push(name);};
 // A single accumulated response must not be scanned in full before the first
 // bounded canonical chunk can reach the cooperative hashing/export consumer.
 {
@@ -109,6 +110,30 @@ for(const [name,make] of [
  ['Infinity',()=>({x:Infinity})],['NaN',()=>({x:NaN})],['negative Infinity',()=>({x:-Infinity})],['negative zero',()=>({x:-0})],['fraction',()=>({x:1.25})],['unsafe positive integer',()=>({x:Number.MAX_SAFE_INTEGER+1})],['unsafe negative integer',()=>({x:Number.MIN_SAFE_INTEGER-1})],['unpaired high surrogate',()=>({x:'\uD800'})],['unpaired low surrogate',()=>({x:'\uDC00'})],['unpaired surrogate key',()=>({['\uD800']:1})],['undefined member',()=>({x:undefined})],['undefined array member',()=>[undefined]],['undefined root',()=>undefined],['bigint',()=>({x:1n})],['function',()=>({x(){}})],['symbol value',()=>({x:Symbol('x')})],['symbol key',()=>{const x={};x[Symbol('x')]=1;return x;}],['Date',()=>new Date(0)],['Map',()=>new Map([['x',1]])],['Set',()=>new Set([1])],['sparse array',()=>{const x=[];x.length=1;return x;}],['array property',()=>{const x=[1];x.extra=2;return x;}],['accessor',()=>{const x={};Object.defineProperty(x,'a',{enumerable:true,get(){return 1;}});return x;}],['cycle',()=>{const x={};x.self=x;return x;}]
 ])reject(name,make);
 
+// Exact §34.1 serialization observations. Expected text is declared from the
+// source contract, never obtained from another production serialization path.
+const canonicalObservation=(checkId,line,expected,observed)=>{assert(JSON.stringify(observed)===JSON.stringify(expected),'CANONICAL_CONTRACT_ORACLE: '+checkId);verificationObservations.push({checkId,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:'+line],boundary:'Production canonical serializer; independent literal expected text and explicit rejection controls',expected,observed,passed:true});};
+const exactNumberContext=createVerifierRuntime({Event:class Event{},dispatchEvent(){}});for(const owner of ['workbook.js','hash.js','workflow-schema.js'])createVerifierRuntime.loadScript(exactNumberContext,fs.readFileSync(owner,'utf8'),{filename:owner});
+const numberContract=exactNumberContext.closedLoopWorkflowSchema,exactDecimal=numberContract.canonicalDecimal('0.1'),exactLargeInteger=numberContract.canonicalDecimal('9007199254740992');
+assert(exactDecimal==='rational:1/10'&&exactLargeInteger==='rational:9007199254740992/1','CANONICAL_REGISTERED_EXACT_NUMBER_ORACLE');assert(numberContract.isCanonicalNumber(exactDecimal)&&numberContract.isCanonicalNumber(exactLargeInteger),'CANONICAL_REGISTERED_EXACT_NUMBER_TYPE_ORACLE');assert(!numberContract.isCanonicalNumber('rational:2/20'),'CANONICAL_UNREDUCED_NUMBER_ORACLE');
+canonicalObservation('canonical.safe-integer-and-typed-string',3023,
+ {text:'{"decimal":"rational:1/10","large":"rational:9007199254740992/1","max":9007199254740991,"min":-9007199254740991}',unsafeRejected:true,registeredTypedStrings:true},
+ {text:h.stableStringify({min:Number.MIN_SAFE_INTEGER,max:Number.MAX_SAFE_INTEGER,decimal:exactDecimal,large:exactLargeInteger}),unsafeRejected:['fraction','unsafe positive integer','unsafe negative integer'].every(name=>canonicalRejections.includes(name)),registeredTypedStrings:numberContract.isCanonicalNumber(exactDecimal)&&numberContract.isCanonicalNumber(exactLargeInteger)});
+canonicalObservation('canonical.unsigned-scalar-key-order',3024,
+ '{"10":"ten","2":"two","a":"aye","":"bmp","𐀀":"astral"}',
+ h.stableStringify({'𐀀':'astral','':'bmp',a:'aye','2':'two','10':'ten'}));
+canonicalObservation('canonical.ordered-arrays',3025,
+ ['["b","a","b"]','["a","b","b"]'],[h.stableStringify(['b','a','b']),h.stableStringify(['a','b','b'])]);
+canonicalObservation('canonical.exact-string-scalars-and-lines',3026,
+ '"é|é|A\\r\\nB\\nC\\rD"',h.stableStringify('é|é|A\r\nB\nC\rD'));
+const controlEscapes=['\\u0000','\\u0001','\\u0002','\\u0003','\\u0004','\\u0005','\\u0006','\\u0007','\\b','\\t','\\n','\\u000b','\\f','\\r','\\u000e','\\u000f','\\u0010','\\u0011','\\u0012','\\u0013','\\u0014','\\u0015','\\u0016','\\u0017','\\u0018','\\u0019','\\u001a','\\u001b','\\u001c','\\u001d','\\u001e','\\u001f'];
+canonicalObservation('canonical.exact-json-escapes',3027,
+ controlEscapes.map(text=>'"'+text+'"').concat(['"\\\""','"\\\\"']),
+ Array.from({length:32},(_,value)=>h.stableStringify(String.fromCharCode(value))).concat([h.stableStringify('"'),h.stableStringify('\\')]));
+canonicalObservation('canonical.printable-nonascii-unescaped',3028,'"é中🙂𐀀"',h.stableStringify('é中🙂𐀀'));
+const prohibitedCanonicalNames=['negative zero','NaN','Infinity','negative Infinity','undefined member','undefined array member','undefined root','sparse array','cycle','Date','Map','Set','function','symbol value','symbol key','accessor'];
+canonicalObservation('canonical.prohibited-values-rejected',3029,prohibitedCanonicalNames,prohibitedCanonicalNames.filter(name=>canonicalRejections.includes(name)));
+
 let undefinedPreimageRejected=false;
 try{h.hashRegistered('UNREGISTERED_KIND',{x:1});}catch(error){undefinedPreimageRejected=/UNDEFINED_HASH_PREIMAGE/.test(String(error));}
 assert(undefinedPreimageRejected,'Unregistered release-bearing hash preimage must fail closed.');
@@ -171,5 +196,5 @@ const appCore=fs.readFileSync('app-core.js','utf8');
 assert(/function\s+artifactControlMarkup\s*\(\s*n\s*,\s*locked\s*\)\s*\{\s*if\s*\(\s*n\s*===\s*19\s*\)/.test(appCore),'Artifact controls must retain the established Stage 19 unchanged-candidate boundary; whitespace or formatting changes must not alter the invariant.');
 assert(!/function\s+artifactControlMarkup\s*\(\s*n\s*,\s*locked\s*\)\s*\{[\s\S]{0,500}?if\s*\(\s*n\s*===\s*4\s*\)\s*return\s*['"]{2}\s*;/.test(appCore),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
+console.log(JSON.stringify({verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
 await import('./verify-stage02-primitives.mjs');

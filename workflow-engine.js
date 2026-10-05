@@ -51,6 +51,7 @@ const isActiveRecord=record=>record?.active!==false&&!record?.invalidatedBy&&!['
 const records=(project,collection,{stage,active=true}={})=>safe(project?.projectData?.[collection]).filter(record=>(stage===undefined||Number(record?.stage)===Number(stage))&&(!active||isActiveRecord(record)));
 
 function ensureShape(project){
+  const shapeIssues=schema.projectShapeIssues(project,ALL_COLLECTIONS);if(shapeIssues.length)throw Object.assign(new TypeError(`Canonical project shape is invalid: ${shapeIssues.join(' | ')}`),{code:'PROJECT_INTEGRITY_FAILED',issues:shapeIssues});
   if(!project||typeof project!=='object')throw new TypeError('Project must be an object.');
   project.projectData=project.projectData&&typeof project.projectData==='object'?project.projectData:{};
   for(const collection of ALL_COLLECTIONS)project.projectData[collection]=safe(project.projectData[collection]);

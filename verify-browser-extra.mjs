@@ -1,3 +1,4 @@
+import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
 import {createBrowserReadiness,activateOperatorControl} from './operator-browser-driver.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {createHash} from 'node:crypto';
@@ -128,9 +129,12 @@ function installPostImportRefreshFault(jobId){
  };
  return {observation,restore(){Worker.prototype.postMessage=nativePost;IDBObjectStore.prototype.get=nativeGet;for(const [worker,listener]of listeners)worker.removeEventListener('message',listener);}};
 }
+let executionObserver;
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
-  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+  executionObserver=await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:PAGE_URL});
+  await cdp.send('Page.navigate',{url:`${PAGE_URL}?browserExtra=${Date.now()}`});
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true||Boolean(globalThis.closedLoopAppError)`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
   await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
 
@@ -763,10 +767,10 @@ async function main(){
 
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
-  console.log(JSON.stringify({browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,canonicalDataRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
+  console.log(JSON.stringify({browserExtraVerified:true,browserExecution:await executionObserver?.finish(),exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,canonicalDataRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
-try{await main();}finally{await cleanup();}
+try{await main();}finally{executionObserver?.close();await cleanup();}
 
 // reliability-v2 responsive UI source obligations (runtime browser suite above still exercises 320/393/desktop).
 {

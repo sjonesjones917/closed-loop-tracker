@@ -143,7 +143,11 @@ try{
   const retryFixture=path.join(temporary,'retry-fixture');fs.mkdirSync(retryFixture);
   fs.writeFileSync(path.join(retryFixture,'failure.mjs'),"import fs from 'node:fs';const p='attempts';const n=fs.existsSync(p)?Number(fs.readFileSync(p,'utf8'))+1:1;fs.writeFileSync(p,String(n));if(n===1){console.error('Earlier diagnostic: ECONNREFUSED 127.0.0.1:9222');console.error('AssertionError: CONTROLLED_BROWSER_ASSERTION');process.exitCode=1;}else console.log('Would pass after retry');\n");
   fs.writeFileSync(path.join(retryFixture,'healthy.mjs'),"console.log('healthy browser-boundary control');\n");
-  const executeBrowserFunction=(source,fixture)=>spawnSync('bash',['-c','set -euo pipefail\n'+source.replaceAll('/tmp/','./')+'\nrun_browser_verifier '+fixture+' 2s'],{cwd:retryFixture,encoding:'utf8',timeout:5000,killSignal:'SIGKILL'});
+  // This isolated fixture tests the unchanged shell failure/pipefail boundary.
+  // The wrapper adapter executes the supplied failing/healthy child once; real
+  // receipt parsing and source/scope validation have separate owning controls.
+  fs.writeFileSync(path.join(retryFixture,'collect-verification-evidence.mjs'),"import {spawnSync} from 'node:child_process';const suite=process.argv.find(arg=>arg.startsWith('--browser-suite='))?.slice(16);const result=spawnSync(process.execPath,[suite],{stdio:'inherit'});process.exitCode=result.status??1;\n");
+  const executeBrowserFunction=(source,fixture)=>spawnSync('bash',['-c','set -euo pipefail\n'+source.replaceAll('/tmp/','./')+'\nrun_browser_verifier '+fixture+' 2s'],{cwd:retryFixture,encoding:'utf8',timeout:5000,killSignal:'SIGKILL',env:{...process.env,CLOSED_LOOP_BROWSER_SCOPE:'LOCAL'}});
   for(const [index,source] of browserFunctions.entries()){
     fs.rmSync(path.join(retryFixture,'attempts'),{force:true});
     const failed=executeBrowserFunction(source,'failure.mjs');

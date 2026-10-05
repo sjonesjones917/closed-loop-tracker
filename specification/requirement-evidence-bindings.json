@@ -1479,5 +1479,9 @@
     "sourceReviewSha256": "7e08fd37e0885c3de089d1939ea25515a1bc933dc45aa7997e8062d68ac845bb",
     "reconciliationPath": "verification/independent-source-reconciliation-20261005.json",
     "reconciliationSha256": "b2b22f137623d5916a025d12575152a36b2b8b20daa8100db5c420e4d90f87a8"
+  },
+  "contextApplicabilityReview": {
+    "path": "verification/normative-context-applicability-20261005.json",
+    "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
   }
 }

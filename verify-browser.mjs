@@ -1,3 +1,4 @@
+import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
 import {createBrowserReadiness,activateOperatorControl} from './operator-browser-driver.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {boundedSearchProposal,registerFixtureSourceSearchCapability,recordProposal} from './test-fixtures.mjs';
@@ -53,11 +54,13 @@ async function allProjects(cdp){return evalValue(cdp,`globalThis.closedLoopProje
 // Reloading a saved-version URL intentionally restores that saved version instead.
 async function navigateAndWait(cdp,method,params={},options={}){await createBrowserReadiness(cdp,expression=>evalValue(cdp,expression),{timeout:60000}).navigate(method,params,options);}
 async function openStoredFixture(cdp){const url=await evalValue(cdp,`(async()=>{const url=new URL(location.href);url.searchParams.delete('version');url.searchParams.delete('stage');url.searchParams.set('project',await closedLoopProjectStore.metaGet('selectedProject'));return url.href;})()`);await navigateAndWait(cdp,'Page.navigate',{url});}
+let executionObserver;
 async function main(){
  await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
  const target=await getJson(`http://127.0.0.1:${port}/json/new?about:blank`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
  // Hold the actual runtime response so startup is inspected before readiness.
  await cdp.send('Fetch.enable',{patterns:[{urlPattern:'*app-core.js*',requestStage:'Request'}]});
+ executionObserver=await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:PAGE_URL});
  await cdp.send('Page.navigate',{url:`${PAGE_URL}?browser=${Date.now()}`});
  const pendingRuntime=await poll(()=>{const event=cdp.events.find(event=>event.method==='Fetch.requestPaused');if(!event)throw new Error('Waiting for held application runtime');return event.params;});
  // Observe real native messages, without replacing the worker or its result.
@@ -115,7 +118,7 @@ async function main(){
  if(process.argv.includes('--startup-scroll-only')){
   const exceptions=cdp.events.filter(event=>event.method==='Runtime.exceptionThrown');assert(exceptions.length===0,'Startup/scroll checks raised an uncaught browser exception: '+JSON.stringify(exceptions));
   const workerMessages=await evalValue(cdp,'globalThis.__storageWorkerMessages');assert(workerMessages?.WRITE_PROJECT>0&&workerMessages?.SAVE_CHECKPOINT>0,'Native storage-worker dispatch was not observed: '+JSON.stringify(workerMessages));
-  console.log(JSON.stringify({browserVerified:true,scope:'startup-scroll',viewports:[[320,568],[393,852],[1280,800]],startupScreen:true,collapseAfterUpArrow:true,errorWithoutPageJump:true,workerMessages,runtimeErrors:0}));cdp.close();return;
+  console.log(JSON.stringify({browserVerified:true,browserExecution:await executionObserver?.finish(),scope:'startup-scroll',viewports:[[320,568],[393,852],[1280,800]],startupScreen:true,collapseAfterUpArrow:true,errorWithoutPageJump:true,workerMessages,runtimeErrors:0}));cdp.close();return;
  }
  await click(cdp,'#save-prompt');await waitForSavedPrompt(cdp);
  retained=await activeProject(cdp);let promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(promptRecord?.instructionId&&promptRecord?.sha256,'Saved prompt identity missing.');
@@ -233,7 +236,7 @@ async function main(){
  const deletionState=await evalValue(cdp,`(async()=>{const all=await globalThis.closedLoopProjectStore.readAll(),selected=await globalThis.closedLoopProjectStore.metaGet('selectedProject'),currentId=document.querySelector('#current-project-summary')?.dataset?.projectId;return {projectExists:all.some(project=>project.job?.JOB_ID===${JSON.stringify(deletionJobId)}),artifactCount:(await globalThis.closedLoopProjectStore.listArtifacts(${JSON.stringify(deletionJobId)})).length,selected,currentId};})()`);assert(!deletionState.projectExists&&deletionState.artifactCount===0&&deletionState.selected===deletionState.currentId,`Project deletion did not atomically remove project/artifacts and select a surviving project: ${JSON.stringify(deletionState)}`);
  await click(cdp,'[data-view="Project"]');const retainedProtection=await activeProject(cdp);if(retainedProtection?.isRetainedTestProject)assert(await evalValue(cdp,`Boolean(document.querySelector('#project-management')&&!document.querySelector('#delete-project')&&document.querySelector('#project-management').innerText.includes('cannot be permanently deleted'))`),'Built-in retained reference project is not protected from deletion.');
 
- console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],horizontalOverflow:false,controlsWithinViewport:true,buttonSizing:true,touchTargetFloor:44,minimumUiTextPx:14,retainedCleanState:true,retainedStage1History:true,retainedStage2Next:true,all30StagesReachable:true,strictPromptContract:true,malformedResponseRejectedAtomically:true,proposalReview:true,canonicalCommit:true,canonicalIds:true,extractionManifest:true,receiptLinkage:true,genericLongSectionNavigation:true,compactPredictiveScrollControls:true,projectDeletion:true,reloadPersistence:true,nextPromptConsumesAcceptedData:true,existingProjectPreserved:true,newJobReset:true,artifactGenerationGuidance:true,sourceCountInputGuidance:true,sourceCountIntegerValidation:true,malformedImportNonDestructive:true,runtimeErrors:0},null,2));cdp.close();
+ console.log(JSON.stringify({browserVerified:true,browserExecution:await executionObserver?.finish(),widths:[320,393,1280],horizontalOverflow:false,controlsWithinViewport:true,buttonSizing:true,touchTargetFloor:44,minimumUiTextPx:14,retainedCleanState:true,retainedStage1History:true,retainedStage2Next:true,all30StagesReachable:true,strictPromptContract:true,malformedResponseRejectedAtomically:true,proposalReview:true,canonicalCommit:true,canonicalIds:true,extractionManifest:true,receiptLinkage:true,genericLongSectionNavigation:true,compactPredictiveScrollControls:true,projectDeletion:true,reloadPersistence:true,nextPromptConsumesAcceptedData:true,existingProjectPreserved:true,newJobReset:true,artifactGenerationGuidance:true,sourceCountInputGuidance:true,sourceCountIntegerValidation:true,malformedImportNonDestructive:true,runtimeErrors:0},null,2));cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
-try{await main();}finally{await cleanup();}
+try{await main();}finally{executionObserver?.close();await cleanup();}

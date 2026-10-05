@@ -1,3 +1,4 @@
+import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -144,7 +145,7 @@ export async function activateOperatorControl(cdp,evaluate,idle,selector){
 
 // This starts its own disposable CI browser. It never connects to an operator's
 // browser and never invokes workflow commands or writes project state through JS.
-export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://127.0.0.1:4173/',directory,width=393,height=852}={}){
+export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://127.0.0.1:4173/',directory,width=393,height=852,captureExecution=false}={}){
   const executable=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
   if(!executable)throw new Error('Chrome/Chromium is required for the complete operator journey.');
   directory=path.resolve(directory||fs.mkdtempSync(path.join(os.tmpdir(),'operator-journey-')));fs.mkdirSync(directory,{recursive:true});
@@ -156,8 +157,11 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
   // CDP Browser.downloadProgress and allowAndName provide actual downloaded
   // bytes, not a mocked Blob or an application-declared success flag.
   await root.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:downloads,eventsEnabled:true});
-  const target=await json(`/json/new?${encodeURIComponent(url)}`,{method:'PUT'}),page=new Connection(target.webSocketDebuggerUrl);await page.ready;await page.send('Runtime.enable');await page.send('Page.enable');
+  const target=await json(`/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),page=new Connection(target.webSocketDebuggerUrl);await page.ready;await page.send('Runtime.enable');await page.send('Page.enable');
   await page.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});
+  let executionObserver;
+  try{executionObserver=captureExecution?await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:url}):null;await page.send('Page.navigate',{url});}
+  catch(error){executionObserver?.close();page.close();root.close();child.kill('SIGKILL');throw error;}
   const events=[];let inputSequence=0;
   async function evaluate(expression){const result=await page.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result?.value;}
   const readiness=createBrowserReadiness(page,evaluate);
@@ -180,6 +184,6 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
   async function navigationHistory(){return page.send('Page.getNavigationHistory');}
   async function restoreEntry(entryId){await readiness.restoreEntry(entryId);await idle();events.push({operation:'browserHistoryTraversal',entryId});}
   async function openUrl(destination){await readiness.navigate('Page.navigate',{url:destination});await idle();events.push({operation:'directLink',url:destination});}
-  async function close(){try{page.close();root.close();}finally{child.kill('SIGKILL');}}
-  await idle();return {click,fill,selectFiles,download,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
+  async function close(){try{executionObserver?.close();page.close();root.close();}finally{child.kill('SIGKILL');}}
+  try{await idle();}catch(error){await close();throw error;}return {click,fill,selectFiles,download,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,executionEvidence:()=>executionObserver?.finish(),exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
 }
