@@ -12,7 +12,8 @@ Object.assign(t,{engine:e,core:r.core,schema:t.closedLoopWorkflowSchema});
 vm.runInContext([routingFixture,completedReport].map(fn=>fn.toString()).join('\n'),t);
 const checks=[];
 const verificationObservations=[];
-const check=async(name,fn)=>{await fn();checks.push(name);};
+const nativeProductControlsOnly=process.argv.includes('--native-product-controls-only');
+const check=async(name,fn)=>{if(nativeProductControlsOnly&&!/^Stage (22|24) UI /.test(name))return;await fn();checks.push(name);};
 const copy=r.copy;
 const plan=(p,test)=>e.testExecutionPlan(p).items.find(row=>row.testId===test.id);
 const execute=async({p,test,canonical})=>rt.execute(copy({spec:e.recordValue(test,'EXECUTABLE_SPEC'),canonicalBindings:{JOB:canonical},metadata:{testId:test.id,bindings:e.recordValue(test,'EXECUTABLE_INPUT_BINDINGS')}}));
@@ -185,6 +186,33 @@ await check('Stage 22 UI discovers, executes, and persists the canonical-only te
  const persisted=await r.store.readProject(t.current.job.JOB_ID);assert.equal(e.recordValue(persisted.projectData.deterministicResults.at(-1),'APPLICATION_DETERMINATION'),'SATISFIED');
 });
 const nativeProductObservations=[];
+await check('Stage 22 UI executes every ready native test once and excludes future or external work',async()=>{
+ const runner=extract('async function runNativeProductTests(','async function runNativeDeferredTest('),firstOnly=runner.replace('const items=nativeProductTests(stage);','const items=nativeProductTests(stage).slice(0,1);');
+ assert.notEqual(firstOnly,runner,'NATIVE_STAGE22_BATCH_FAULT_ANCHOR_ORACLE');
+ const observations=[];
+ for(const fault of [true,false]){
+  const f=t.routingFixture(),definition=copy(f.test);
+  const add=(label,changes)=>{const row=copy(definition),id=e.allocateId(f.p,'tests');row.id=row.recordId=id;row.fields.TEST_ID=row.TEST_ID=id;row.source='SYNTHETIC_NATIVE_BATCH_ROUTING_FIXTURE';for(const [key,value]of Object.entries(changes)){row.fields[key]=copy(value);row[key]=copy(value);}e.refreshRecordHashes(row,'tests');f.p.projectData.tests.push(row);return row;};
+  const refuted=add('refuted',{EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'JOB'},{op:'ASSERT_EQ',value:'CONTROLLED_DIFFERENT_PROJECT_ID'}]}});
+  const future=add('future',{TEST_TYPE:'ADVERSARIAL',VERIFICATION_PHASE:'FINAL_PRODUCT_ADVERSARIAL',EARLIEST_EXECUTABLE_STAGE:24,REQUIRED_BY_STAGE:24});
+  const external=add('external',{EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'SYNTHETIC_UNAVAILABLE_EXTERNAL_TOOL',EXECUTABLE_KIND:'NONE',EXECUTABLE_SPEC_VERSION:'NONE',EXECUTABLE_SPEC:{},EXECUTABLE_INPUT_BINDINGS:{}});
+  const expected=[{testId:f.test.id,determination:'SATISFIED'},{testId:refuted.id,determination:'VIOLATED'}].sort((a,b)=>a.testId.localeCompare(b.testId));
+  await registerBytes(f.p,'Actual product bytes for the bounded multi-test routing fixture','product.json',{productId:f.product.id});
+  const initial=await r.store.writeProject(f.p,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));t.current=initial;t.projects=copy([initial]);
+  const selected=t.nativeStage22Tests().map(row=>row.testId).sort();assert.deepEqual(copy(selected),copy(expected.map(row=>row.testId).sort()),'NATIVE_STAGE22_READY_SET_ORACLE');
+  assert(!selected.includes(future.id)&&!selected.includes(external.id),'NATIVE_STAGE22_NON_NATIVE_OR_FUTURE_ORACLE');
+  const worker=t.Worker;const {isolatedVerifierWorkerClass}=await import('./verifier-runtime.mjs');const NativeWorker=isolatedVerifierWorkerClass();t.Worker=class extends NativeWorker{set onmessage(handler){this.receive=handler;}get onmessage(){return event=>this.receive?.({data:copy(event.data)});}};
+  try{vm.runInContext(fault?firstOnly:runner,t);await t.runNativeProductTests(22);}finally{t.Worker=worker;vm.runInContext(runner,t);}
+  const saved=await r.store.readProject(t.current.job.JOB_ID),observed=saved.projectData.deterministicResults.map(row=>({testId:String(e.recordValue(row,'TEST_ID')),determination:e.recordValue(row,'APPLICATION_DETERMINATION')})).sort((a,b)=>a.testId.localeCompare(b.testId));
+  if(fault){assert.equal(observed.length,1,'NATIVE_STAGE22_BATCH_FAULT_SETUP_ORACLE');assert.throws(()=>assert.deepEqual(copy(observed),copy(expected),'NATIVE_STAGE22_ALL_READY_RESULTS_ORACLE'),/NATIVE_STAGE22_ALL_READY_RESULTS_ORACLE/);observations.push({caseId:'first-ready-only-controlled-fault',caughtAt:'NATIVE_STAGE22_ALL_READY_RESULTS_ORACLE',persistedResults:observed.length});continue;}
+  assert.deepEqual(copy(observed),copy(expected),'NATIVE_STAGE22_ALL_READY_RESULTS_ORACLE');
+  assert.equal(saved.projectData.adversarialResults.length,0,'NATIVE_STAGE22_FUTURE_RESULT_ORACLE');
+  for(const row of saved.projectData.deterministicResults){assert.equal(row.stage,22);assert.equal(row.source,'APPLICATION_TEST_RUNTIME');}
+  assert.equal(t.nativeStage22Tests().length,0,'NATIVE_STAGE22_ALREADY_EXECUTED_ORACLE');const before=h.sha256Value(saved);await t.runNativeProductTests(22);const repeated=await r.store.readProject(saved.job.JOB_ID);assert.equal(h.sha256Value(repeated),before,'NATIVE_STAGE22_RETRY_DUPLICATION_ORACLE');
+  observations.push({caseId:'all-ready-native-results',expected,observed,futureTestId:future.id,externalTestId:external.id,noDuplicateRetry:true});
+ }
+ nativeProductObservations.push({checkId:'native-stage22-all-ready-batch',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3586'],boundary:'Actual extracted UI runner -> isolated Test IR Worker -> application result recorder -> production transaction adapter store/read -> exact retry',expected:{readyNativeCount:2,outcomes:['SATISFIED','VIOLATED'],futureResults:0,externalResults:0,duplicateRetry:false,firstOnlyFaultDetected:true},observed:{readyNativeCount:2,outcomes:['SATISFIED','VIOLATED'],futureResults:0,externalResults:0,duplicateRetry:false,firstOnlyFaultDetected:true},cases:observations,passed:true,scopeLimit:'Explicit canonical routing fixture; no forced completed gates, prior-stage journey, actual browser, external tool or physical observation claimed.'});
+});
 await check('Stage 24 UI executes actual adversarial Test IR and owns only Stage 24 results and observations',async()=>{
  for(const outcome of ['SATISFIED','VIOLATED']){
   const f=t.routingFixture();f.p.activeStage=24;
@@ -225,4 +253,4 @@ await check('Canonical-value bindings survive response validation and commit',()
  })()`,t);
  assert.equal(result.binding.kind,'CANONICAL_VALUE');assert.equal(result.binding.valueSha256,result.expectedSha256);assert.equal(result.forgedValid,false);assert(result.forgedIssues.some(issue=>issue.path.includes('externalCapabilities')));
 });
-console.log(JSON.stringify({verificationRouting:'PASS',verificationObservations:[...verificationObservations,...nativeProductObservations],checks:checks.length,results:checks,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));
+console.log(JSON.stringify({verificationRouting:'PASS',focusedNativeProductControls:nativeProductControlsOnly,verificationObservations:[...verificationObservations,...nativeProductObservations],checks:checks.length,results:checks,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));
