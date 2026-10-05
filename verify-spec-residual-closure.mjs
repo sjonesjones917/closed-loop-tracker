@@ -1,5 +1,7 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {checkedVerifier,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 import fs from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
@@ -18,7 +20,9 @@ assert(!schema.STAGE_FIELDS[10].HASHES_RECORDED_WHERE_PRACTICAL,'Obsolete Stage 
 assert(!schema.STAGE_FIELDS[15].POST_CORRECTION_SUCCESSES_PROVEN,'Obsolete Stage 15 field leaked into runtime registry.');
 console.log(JSON.stringify({specResidualClosure:'PASS',testIrOperations:controllingOps.length}));
 
-await import('./verify-due-stage-timing.mjs');
+// The complete deferred matrix owns its receipt. An in-process import records
+// only the wrapper and makes the collector repeat this same composite proof.
+await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-due-stage-timing.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});
 await import('./verify-ten-independent-runs.mjs');
 await import('./verify-independent-run-verification.mjs');
 await import('./verify-cross-run-comparison.mjs');

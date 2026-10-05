@@ -103,7 +103,8 @@ function conformanceSources(){
 }
 
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
-const CHILD_TIMEOUT_MS=20*60*1000,AGGREGATE_TIMEOUT_MS=180*60*1000,KILL_GRACE_MS=5000;
+const CHILD_TIMEOUT_MS=20*60*1000,KILL_GRACE_MS=5000;
+export const AGGREGATE_TIMEOUT_MS=180*60*1000;
 const MAX_OUTPUT_BYTES=64*1024*1024;
 export const CREATION_MATRIX_TIMEOUT_MS=40*60*1000;
 let childGateNumber=0;
