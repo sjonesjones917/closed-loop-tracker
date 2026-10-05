@@ -82,6 +82,59 @@ const RESPONSE_NESTED_FIELD_CONTRACTS=Object.freeze({
 });
 const responseEchoString=Object.freeze({valueType:'STRING',nullable:false});
 const RESPONSE_ECHO_CONTRACT=Object.freeze({normalization:'NONE',envelopeFields:Object.freeze({jobId:responseEchoString,stage:Object.freeze({valueType:'INTEGER',nullable:false}),operation:responseEchoString}),promptIdentityFields:Object.freeze(Object.fromEntries(['instructionId','bodySha256','contractSha256','contextSignature'].map(key=>[key,responseEchoString]))),reservationIdentityFields:Object.freeze(Object.fromEntries(['packageId','operationReservationId','challengeNonce'].map(key=>[key,responseEchoString])))});
+// Stage 01's serialized accounting value uses the same nested type contract
+// in producer guidance, admission, and accepted-state accounting. Extra capture
+// metadata remains preserved; this contract validates the fields we consume.
+const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED']);
+const INTAKE_ACCOUNTING_REASON_REQUIRED_DISPOSITIONS=Object.freeze(['NO_PROJECT_RELEVANT_INFORMATION','INACCESSIBLE_OR_BLOCKED']);
+const INTAKE_STATEMENT_CLASSES=Object.freeze(['FACT','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY','CONTEXT']);
+const STAGE01_OMISSION_CHALLENGE_CATEGORIES=Object.freeze(['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES']);
+const intakeType=(valueType,required=true,extra={})=>Object.freeze({valueType,required,nullable:false,...extra});
+const STAGE01_CAPTURE_CONTRACT=Object.freeze({
+  schema:'closed-loop-stage01-capture/2',normalization:'NONE',reasonRequiredDispositions:INTAKE_ACCOUNTING_REASON_REQUIRED_DISPOSITIONS,reasonOptionalForOtherDispositions:true,
+  fields:Object.freeze({schema:intakeType('STRING'),inputVersion:intakeType('STRING'),manifestSha256:intakeType('STRING'),pass1Completed:intakeType('BOOLEAN'),pass2OmissionChallenge:intakeType('OBJECT'),units:intakeType('OBJECT_ARRAY')}),
+  challengeFields:Object.freeze({completed:intakeType('BOOLEAN'),checkedCategories:intakeType('STRING_ARRAY',true,{itemEnumValues:STAGE01_OMISSION_CHALLENGE_CATEGORIES}),omissionsFound:intakeType('STRING_ARRAY'),omissionsResolved:intakeType('BOOLEAN')}),
+  unitFields:Object.freeze({sourceUnitId:intakeType('STRING'),sourceRawValueSha256:intakeType('STRING'),disposition:intakeType('STRING',true,{enumValues:INTAKE_ACCOUNTING_DISPOSITIONS}),reason:intakeType('STRING',false),externalInspectionClaimed:intakeType('BOOLEAN',false),inspectionStatus:intakeType('STRING',false),extractedStatements:intakeType('OBJECT_ARRAY')}),
+  statementFields:Object.freeze({statementKey:intakeType('STRING'),text:intakeType('STRING'),statementClass:intakeType('STRING',true,{enumValues:INTAKE_STATEMENT_CLASSES}),sourceLocation:intakeType('STRING',false)})
+});
+const OBLIGATION_DISPOSITIONS=Object.freeze(['retained nonnormative context','inapplicable','blocked']);
+const OBLIGATION_DISPOSITION_CONTRACT=Object.freeze({normalization:'NONE',fields:Object.freeze({obligationId:responseRequiredString,disposition:Object.freeze({...responseRequiredString,enumValues:OBLIGATION_DISPOSITIONS}),reason:responseRequiredString})});
+function obligationDispositionShapeIssues(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))return [{path:'',message:'Expected OBJECT.'}];
+  return Object.entries(OBLIGATION_DISPOSITION_CONTRACT.fields).filter(([key])=>typeof value[key]!=='string').map(([key,definition])=>({path:'/'+key,message:'Expected '+definition.valueType+' (required).'}));
+}
+function obligationDispositionExample(){return {obligationId:'...',disposition:OBLIGATION_DISPOSITIONS.join('|'),reason:'...'};}
+const REPRESENTATION_OBSERVATION_CONTRACT=Object.freeze({identityComparison:'EXACT_STRING_SETS',fields:Object.freeze({...Object.fromEntries(['requiredPageOrViewIds','inspectedPageOrViewIds','requiredPackagedFileIds','openedOrTestedPackagedFileIds','requiredTransformationIds','inspectedTransformationIds'].map(name=>[name,Object.freeze({valueType:'STRING_ARRAY',required:true,nullable:false,emptyArrayAllowed:true,nonemptyItems:true})])),observation:responseRequiredString})});
+function representationObservationShapeIssues(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))return [{path:'',message:'OBSERVATIONS coverage payload is not an object.'}];
+  const issues=[];
+  for(const [name,definition] of Object.entries(REPRESENTATION_OBSERVATION_CONTRACT.fields)){
+    if(definition.valueType==='STRING_ARRAY'){
+      if(!Array.isArray(value[name]))issues.push({path:'/'+name,message:'OBSERVATIONS.'+name+' must be an explicitly provided array.'});
+      else if(value[name].some(item=>typeof item!=='string'||!item.trim()))issues.push({path:'/'+name,message:'OBSERVATIONS.'+name+' items must be nonempty STRING identities.'});
+    }else if(typeof value[name]!=='string')issues.push({path:'/'+name,message:'OBSERVATIONS.'+name+' must be a STRING.'});
+  }
+  return issues;
+}
+function stage01CaptureShapeIssues(capture,{legacy=false}={}){
+  const issues=[],object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+  const fields=(value,definitions,path)=>{
+    if(!object(value)){issues.push({path,message:'Expected OBJECT.'});return false;}
+    for(const [key,definition] of Object.entries(definitions)){
+      if(legacy&&path===''&&['pass1Completed','pass2OmissionChallenge'].includes(key)&&value[key]===undefined)continue;
+      const item=value[key];if(item===undefined&&!definition.required)continue;
+      const valid=definition.valueType==='STRING'?typeof item==='string':definition.valueType==='BOOLEAN'?typeof item==='boolean':definition.valueType==='OBJECT'?object(item):definition.valueType==='OBJECT_ARRAY'?Array.isArray(item)&&item.every(object):definition.valueType==='STRING_ARRAY'?Array.isArray(item)&&item.every(entry=>typeof entry==='string'):false;
+      if(!valid)issues.push({path:path+'/'+key,message:'Expected '+definition.valueType+(definition.required?' (required).':' when provided.')});
+    }
+    return true;
+  };
+  if(fields(capture,STAGE01_CAPTURE_CONTRACT.fields,'')){
+    if(capture.pass2OmissionChallenge!==undefined)fields(capture.pass2OmissionChallenge,STAGE01_CAPTURE_CONTRACT.challengeFields,'/pass2OmissionChallenge');
+    if(Array.isArray(capture.units))capture.units.forEach((unit,index)=>{if(fields(unit,STAGE01_CAPTURE_CONTRACT.unitFields,'/units/'+index)&&Array.isArray(unit.extractedStatements))unit.extractedStatements.forEach((statement,statementIndex)=>fields(statement,STAGE01_CAPTURE_CONTRACT.statementFields,'/units/'+index+'/extractedStatements/'+statementIndex));});
+  }
+  return issues;
+}
+function stage01CaptureExample(){return {schema:STAGE01_CAPTURE_CONTRACT.schema,inputVersion:'INPUT-v...',manifestSha256:'...',pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:[...STAGE01_OMISSION_CHALLENGE_CATEGORIES],omissionsFound:['response-local statement keys or NONE'],omissionsResolved:true},units:[{sourceUnitId:'INPUT-UNIT-...',sourceRawValueSha256:'...',disposition:INTAKE_ACCOUNTING_DISPOSITIONS.join('|'),reason:'concise reason; required for the dispositions specified below, otherwise optional',externalInspectionClaimed:false,extractedStatements:[{statementKey:'response-local key',text:'verbatim or faithful complete human-authority statement',statementClass:INTAKE_STATEMENT_CLASSES.join('|'),sourceLocation:'exact location when mechanically available'}]}]};}
 const RESPONSE_EVIDENCE_FIELD_MAP=Object.freeze({
   kind:Object.freeze({canonicalField:'KIND',required:true}),
   description:Object.freeze({canonicalField:'DESCRIPTION',required:true}),
@@ -1363,7 +1416,7 @@ function sourceClassificationIssues(fields={}){
 globalThis.closedLoopWorkflowSchema=Object.freeze({
   version:'closed-loop-workflow-schema/2',
   PROJECT_SHAPE_CONTRACT,projectShapeIssues,PROJECT_SCHEMA,WORKFLOW_ID,CONTRACT_PROFILE_ID,STAGE_COUNT,VALUE_TYPES,EXACT_NUMBER_ENCODING,canonicalRatio,canonicalDecimal,isCanonicalNumber,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,DEFERRED_EXECUTION_OPERATIONS,deferredExecutionFamily,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
-  PRODUCER,RESPONSE_SCHEMA,RESPONSE_TYPES,HUMAN_INPUT_ANSWER_TYPES,RESPONSE_UNRESOLVED_KINDS,RESPONSE_TEMPORARY_KEY_CONTRACT,RESPONSE_RELATIONSHIP_REFERENCE_KEYS,RESPONSE_RELATIONSHIP_REFERENCE_CONTRACT,RESPONSE_RECORD_IDENTITY_CONTRACT,RESPONSE_NESTED_FIELD_CONTRACTS,RESPONSE_ECHO_CONTRACT,RESPONSE_EVIDENCE_FIELD_MAP,CONFLICT_POLICIES,TEST_IR,validateTestIRSpec,validateTestIRBindings,validateTestIRTest,
+  PRODUCER,RESPONSE_SCHEMA,RESPONSE_TYPES,HUMAN_INPUT_ANSWER_TYPES,RESPONSE_UNRESOLVED_KINDS,RESPONSE_TEMPORARY_KEY_CONTRACT,RESPONSE_RELATIONSHIP_REFERENCE_KEYS,RESPONSE_RELATIONSHIP_REFERENCE_CONTRACT,RESPONSE_RECORD_IDENTITY_CONTRACT,RESPONSE_NESTED_FIELD_CONTRACTS,RESPONSE_ECHO_CONTRACT,STAGE01_CAPTURE_CONTRACT,OBLIGATION_DISPOSITIONS,OBLIGATION_DISPOSITION_CONTRACT,REPRESENTATION_OBSERVATION_CONTRACT,representationObservationShapeIssues,obligationDispositionShapeIssues,obligationDispositionExample,stage01CaptureShapeIssues,stage01CaptureExample,INTAKE_ACCOUNTING_DISPOSITIONS,INTAKE_ACCOUNTING_REASON_REQUIRED_DISPOSITIONS,INTAKE_STATEMENT_CLASSES,STAGE01_OMISSION_CHALLENGE_CATEGORIES,RESPONSE_EVIDENCE_FIELD_MAP,CONFLICT_POLICIES,TEST_IR,validateTestIRSpec,validateTestIRBindings,validateTestIRTest,
   JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS,
   STAGE_FIELDS,STAGE_CONTRACTS,STAGE_COLLECTIONS,SUPPORT_COLLECTIONS,RECORD_SCHEMAS,
   field,stageFieldDefinition,allowedCollections,allowedAgentStageFields,humanStageFields,recordAgentFields,recordHumanFields,operationContract,authorizeMutation,

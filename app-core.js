@@ -415,8 +415,10 @@ function promptMatches(record,n,options,requireCurrentRevision=true){if((record.
 function currentPromptEngineVersion(){return globalThis.closedLoopPromptEngine?.version||null;}
 function promptVersionCurrent(record){return Boolean(record)&&record.promptEngineVersion===currentPromptEngineVersion();}
 function proposalVersionCurrent(proposal){return Boolean(proposal)&&proposal.preconditions?.promptEngineVersion===currentPromptEngineVersion();}
-function currentPromptRecord(n){const options=promptOptions(n);if(globalThis.closedLoopPromptEngine.deferredDefinitionCorrectionContinuationState(current,Number(n),{operation:options.operation}).blocked)return null;return safe(current.projectData.generatedPrompts).filter(record=>{
- if(!promptMatches(record,n,options,true)||!promptVersionCurrent(record)||!globalThis.closedLoopPromptEngine.promptTransportBinding(current,n,record.operation,record.instructionId||record.promptId,record.scope))return false;
+function currentPromptRecord(n){const options=promptOptions(n);if(globalThis.closedLoopPromptEngine.deferredDefinitionCorrectionContinuationState(current,Number(n),{operation:options.operation}).blocked)return null;let currentContractSha=null;return safe(current.projectData.generatedPrompts).filter(record=>{
+ if(!promptMatches(record,n,options,true)||!promptVersionCurrent(record))return false;
+ currentContractSha??=globalThis.closedLoopHash.sha256Value(globalThis.closedLoopPromptEngine.responseContractDescriptor(Number(n),options.operation));
+ if(record.contractSha256!==currentContractSha||!globalThis.closedLoopPromptEngine.promptTransportBinding(current,n,record.operation,record.instructionId||record.promptId,record.scope))return false;
  // Reserved outputs are not accepted current inputs. Resolve every scope role
  // through the same policy that validates the eventual response.
  try{engine.assertOperationScope(current,n,record.operation,record.scope);return true;}catch{return false;}
@@ -424,7 +426,7 @@ function currentPromptRecord(n){const options=promptOptions(n);if(globalThis.clo
 // A saved response may be inspected independently. Validation owns its exact
 // reservation revision and any explicitly retained recovery binding.
 function responseAttemptPrompt(n){const options=promptOptions(n),saved=safe(current.projectData.generatedPrompts).filter(x=>x.transportBindingRequired&&promptMatches(x,n,options,false)).at(-1);if(saved)return saved;const selection=currentFileSelection('response',n),recovery=current.restoredCandidates;if(recovery?.activationId===current.historyActivationId&&selection?.files.some(file=>recovery.selectedFiles?.[file.artifactId]?.rawSha256===file.sha256))return safe(current.projectData.generatedPrompts).find(record=>(record.instructionId||record.promptId)===selection.promptId&&record.transportBindingRequired&&operatorLaneMatches(record,n))||null;return null;}
-function responsePromptRecord(n,text){let envelope=null;try{envelope=ingestion.strictParse(text);}catch{}const instructionId=String(envelope?.promptIdentity?.instructionId||'').trim();if(instructionId){const referenced=safe(current.projectData.generatedPrompts).find(x=>Number(x.stage)===Number(n)&&(x.instructionId||x.promptId)===instructionId);if(referenced)return referenced;}return responseAttemptPrompt(n);}
+function responsePromptRecord(n,text){let envelope=null;try{envelope=ingestion.strictParse(text);}catch{}const claimedInstructionId=envelope?.promptIdentity?.instructionId,instructionId=typeof claimedInstructionId==='string'?claimedInstructionId.trim():'';if(instructionId){const referenced=safe(current.projectData.generatedPrompts).find(x=>Number(x.stage)===Number(n)&&(x.instructionId||x.promptId)===instructionId);if(referenced)return referenced;}return responseAttemptPrompt(n);}
 // Required-file controls reuse the current preview's metadata without reserving
 // work or rebuilding accumulated context. Other projects/revisions/lanes cannot reuse it.
 function promptPreviewKey(n,options=promptOptions(n)){return JSON.stringify({stage:n,revision:current.revision,options});}

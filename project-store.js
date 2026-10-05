@@ -186,6 +186,7 @@ function validateProjectIntegrity(project,{verifyDerived=true,verifyCachedProjec
   let previousSequence=0;const eventIds=new Set();for(const event of Array.isArray(project.projectData?.history)?project.projectData.history:[]){const sequence=Number(event?.eventSequence);if(!Number.isInteger(sequence)||sequence<=previousSequence)issues.push('History eventSequence is missing, duplicated, or non-monotonic.');previousSequence=Math.max(previousSequence,Number.isFinite(sequence)?sequence:0);const eventId=String(event?.eventId||'');if(eventId&&eventIds.has(eventId))issues.push(`History contains duplicate event ID ${eventId}.`);if(eventId)eventIds.add(eventId);}if(Number(project.projectData?.eventSequence||0)<previousSequence)issues.push('Project eventSequence is behind committed history.');
   if(verifyDerived){let expected=clone(project);delete expected.projectSha256;engine.ensureShape(expected);if(projectionObservedAt===null)engine.recalculate(expected);else expected=engine.historicalProjection(expected,projectionObservedAt);if(verifyCachedProjection){for(const name of ['CURRENT_STAGE','CURRENT_STATE','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION','JOB_RECORD_STATUS','STATUS_EVIDENCE'])if(!equivalent(project.job?.[name],expected.job?.[name]))issues.push(`Application-derived job field ${name} does not match deterministic recalculation.`);for(let stage=1;stage<=Number(schemaApi.STAGE_COUNT);stage++){if(String(project.stages?.[stage]?.status||'')!==String(expected.stages?.[stage]?.status||''))issues.push(`Stage ${stage} status does not match deterministic recalculation.`);if(!equivalent(project.stages?.[stage]?.derivedData||{},expected.stages?.[stage]?.derivedData||{}))issues.push(`Stage ${stage} derivedData does not match deterministic recalculation.`);}}const releaseRecords=(project.projectData?.releaseRecords||[]).filter(record=>record?.active!==false&&!record?.invalidatedBy),latestRelease=releaseRecords.at(-1);if(latestRelease){const actual=String(engine.recordValue(latestRelease,'DETERMINATION')||''),calculated=String(engine.releaseMetrics(expected).determination||'');if(actual!==calculated)issues.push(`Current release determination ${actual||'UNKNOWN'} does not match deterministic release calculation ${calculated||'UNKNOWN'}.`);}}
   const artifacts=new Map((project.projectData?.artifacts||[]).map(record=>[engine.recordId(record,'artifacts'),record]));for(const identity of (project.projectData?.artifactIdentities||[]).filter(record=>record?.active!==false&&!record?.invalidatedBy)){const artifact=artifacts.get(String(engine.recordValue(identity,'ARTIFACT_ID')||''));const auditedHash=String(engine.recordValue(identity,'AUDITED_SHA256')||''),deliveryHash=String(engine.recordValue(identity,'PRE_DELIVERY_SHA256')||''),auditedSize=Number(engine.recordValue(identity,'AUDITED_BYTE_SIZE')),deliverySize=Number(engine.recordValue(identity,'RELEASE_BYTE_SIZE')),sameHash=Boolean(auditedHash&&deliveryHash&&auditedHash===deliveryHash),sameSize=Number.isFinite(auditedSize)&&Number.isFinite(deliverySize)&&auditedSize===deliverySize,sameName=String(engine.recordValue(identity,'AUDITED_FILENAME')||'')===String(engine.recordValue(identity,'RELEASE_FILENAME')||''),authorized=sameHash&&sameSize&&sameName;if(Boolean(engine.recordValue(identity,'EXACT_HASH_MATCH'))!==sameHash||Boolean(engine.recordValue(identity,'EXACT_SIZE_MATCH'))!==sameSize||String(engine.recordValue(identity,'AUTHORIZATION')||'')!==(authorized?'AUTHORIZED':'NOT AUTHORIZED'))issues.push(`Artifact identity ${engine.recordId(identity,'artifactIdentities')||'UNKNOWN'} contradicts its deterministic comparison.`);if(artifact){if(String(engine.recordValue(artifact,'SHA256')||'')!==auditedHash||Number(engine.recordValue(artifact,'BYTE_SIZE'))!==auditedSize||String(engine.recordValue(artifact,'FILENAME')||'')!==String(engine.recordValue(identity,'AUDITED_FILENAME')||''))issues.push(`Artifact identity ${engine.recordId(identity,'artifactIdentities')||'UNKNOWN'} does not match its canonical artifact.`);}}
+  try{requiredProjectArtifactBytes(project);}catch(error){issues.push(String(error.message||error));}
   return {valid:issues.length===0,issues};
 }
 function assertProjectIntegrity(project,options){const result=validateProjectIntegrity(project,options);if(!result.valid){const error=storageError(`Canonical project integrity validation failed: ${result.issues.join(' | ')}`,'PROJECT_INTEGRITY_FAILED');error.issues=result.issues;throw error;}return result;}
@@ -223,7 +224,54 @@ async function openTransaction(stores,mode='readonly'){
   throw storageError('IndexedDB connection could not be reopened for a transaction.','INDEXEDDB_CONNECTION_UNAVAILABLE');
 }
 
-function parseLegacy(storage=globalThis.localStorage){const out=[],seen=new Set();if(!storage)return out;for(const key of LEGACY_KEYS){let raw=null;try{raw=storage.getItem(key);}catch(error){throw storageError(`Legacy project storage could not be read from ${key}: ${error.message||error}`,'LEGACY_MIGRATION_READ_FAILED');}if(!raw)continue;let parsed;try{parsed=JSON.parse(raw);}catch(error){throw storageError(`Legacy project storage ${key} contains malformed JSON: ${error.message||error}`,'LEGACY_MIGRATION_PARSE_FAILED');}const items=Array.isArray(parsed)?parsed:[parsed];for(let index=0;index<items.length;index++){const item=items[index];if(!item||typeof item!=='object'||Array.isArray(item))throw storageError(`Legacy project storage ${key}[${index}] is not a project object.`,'LEGACY_MIGRATION_INVALID_PROJECT');const id=projectIdentity(item);if(!id)throw storageError(`Legacy project storage ${key}[${index}] has no JOB_ID.`,'LEGACY_MIGRATION_INVALID_PROJECT');if(seen.has(id))continue;seen.add(id);out.push(item);}}return out;}
+// Exact project spans never include a sibling project in the same legacy value.
+// Validation remains JSON.parse's responsibility; this scanner only records
+// already-valid object boundaries without reserializing their contents.
+const legacySourceSpans=new WeakMap();
+function projectJsonSpans(text,array){
+  const spans=[];let depth=0,quoted=false,escaped=false,start=null;
+  for(let index=0;index<text.length;index++){
+    const char=text[index];if(quoted){if(escaped)escaped=false;else if(char==='\\')escaped=true;else if(char==='"')quoted=false;continue;}
+    if(char==='"'){quoted=true;continue;}
+    if(char==='{'||char==='['){if(char==='{'&&depth===(array?1:0))start=index;depth++;}
+    else if(char==='}'||char===']'){depth--;if(char==='}'&&depth===(array?1:0)&&start!==null){spans.push({start,end:index+1});start=null;}}
+  }
+  return spans;
+}
+function sourceStringBlob(text){
+  // Web Storage provides UTF-16 code units, not original transport bytes.
+  // Retain those units losslessly, including unpaired surrogate code units.
+  const parts=[];for(let offset=0;offset<text.length;offset+=32768){const count=Math.min(32768,text.length-offset),bytes=new Uint8Array(count*2);for(let i=0;i<count;i++){const unit=text.charCodeAt(offset+i);bytes[i*2]=unit&255;bytes[i*2+1]=unit>>>8;}parts.push(bytes);}return new Blob(parts,{type:'application/octet-stream'});
+}
+function parseLegacy(storage=globalThis.localStorage){
+  const out=[],seen=new Map();if(!storage)return out;
+  for(const key of LEGACY_KEYS){
+    let raw=null;try{raw=storage.getItem(key);}catch(error){throw storageError(`Legacy project storage could not be read from ${key}: ${error.message||error}`,'LEGACY_MIGRATION_READ_FAILED');}if(!raw)continue;
+    let parsed;try{parsed=JSON.parse(raw);}catch(error){throw storageError(`Legacy project storage ${key} contains malformed JSON: ${error.message||error}`,'LEGACY_MIGRATION_PARSE_FAILED');}
+    const items=Array.isArray(parsed)?parsed:[parsed],spans=projectJsonSpans(raw,Array.isArray(parsed)),container={blob:sourceStringBlob(raw),sourceEncoding:'UTF-16LE_CODE_UNITS',storageKey:key,value:raw};
+    for(let index=0;index<items.length;index++){
+      const item=items[index];if(!item||typeof item!=='object'||Array.isArray(item))throw storageError(`Legacy project storage ${key}[${index}] is not a project object.`,'LEGACY_MIGRATION_INVALID_PROJECT');
+      const id=projectIdentity(item);if(!id)throw storageError(`Legacy project storage ${key}[${index}] has no JOB_ID.`,'LEGACY_MIGRATION_INVALID_PROJECT');
+      const span=spans[index];if(!span)throw storageError('The original project source location is unavailable.','LEGACY_MIGRATION_INVALID_PROJECT');
+      const owner=seen.get(id)||item;if(!seen.has(id)){seen.set(id,item);out.push(item);legacySourceSpans.set(item,[]);}
+      legacySourceSpans.get(owner).push({container,blob:container.blob.slice(span.start*2,span.end*2),payload:item,sourceLocation:{storageKey:key,jsonPointer:Array.isArray(parsed)?'/'+index:'',codeUnitStart:span.start,codeUnitEnd:span.end}});
+    }
+  }
+  return out;
+}
+const ORIGINAL_SOURCE_KIND='ORIGINAL_PROJECT_SOURCE',ORIGINAL_SOURCE_SCHEMA='closed-loop-original-project-source/1';
+async function retainProjectSource(project,source,rows,{recordProject=true}={}){
+  const jobId=projectIdentity(project),sha256=await hash.sha256Bytes(source.blob),artifactId='PROJECT-SOURCE-'+hash.sha256Value({jobId,sha256}),encoding=source.sourceEncoding||source.container?.sourceEncoding||'UTF-8';
+  const filename=artifactId+(encoding==='UTF-8'?'.json':'.json.utf16le'),mediaType=encoding==='UTF-8'?'application/json':'application/octet-stream',existing=rows.find(row=>row.artifactId===artifactId);
+  if(existing&&(existing.jobId!==jobId||existing.byteSize!==source.blob.size||existing.sha256!==sha256||await hash.sha256Bytes(existing.blob)!==sha256))throw storageError('Original project source bytes conflict with a retained identity.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+  const container=source.container;if(container&&!container.sha256)container.sha256=await hash.sha256Bytes(container.blob);
+  const descriptor={kind:ORIGINAL_SOURCE_KIND,schema:ORIGINAL_SOURCE_SCHEMA,operational:false,artifactId,filename,mediaType,byteSize:source.blob.size,sha256,sourceEncoding:encoding,sourceSha256:source.sourceSha256||container.sha256,sourceLocation:clone(source.sourceLocation),parser:{identity:source.parserIdentity||'closed-loop-legacy-json-reader',version:source.parserVersion||'1'},parsedPayloadSha256:hash.sha256Value(source.payload),disclosureClassification:containsCredentialSecret(source.payload)?'CREDENTIAL_SECRET':'UNKNOWN'};
+  if(recordProject){const data=project.projectData;if(!Object.hasOwn(data,'migrationArchives'))data.migrationArchives=[];if(!Array.isArray(data.migrationArchives))throw storageError('Original source archives require an array.','PROJECT_INTEGRITY_FAILED');
+    if(!data.migrationArchives.some(row=>row?.kind===ORIGINAL_SOURCE_KIND&&hash.sha256Value(row)===hash.sha256Value(descriptor)))data.migrationArchives.push(descriptor);}
+  if(!existing)rows.push({artifactId,jobId,filename,mediaType,byteSize:source.blob.size,sha256,blob:source.blob,lineage:{originalProjectSource:{schema:ORIGINAL_SOURCE_SCHEMA,operational:false,sourceEncoding:encoding,parsedPayloadSha256:descriptor.parsedPayloadSha256},...(containsCredentialSecret(source.payload)?{disclosureClassification:'CREDENTIAL_SECRET'}:{})},createdAt:now()});
+  return descriptor;
+}
+
 function readAllLegacy(storage){return parseLegacy(storage);}
 function writeAllLegacy(projects,storage){if(!storage)throw new Error('Legacy test storage is unavailable.');const payload=JSON.stringify(projects),prior=storage.getItem(STORE_KEY);try{fault('before-final-write');storage.setItem(STORE_KEY,payload);fault('after-final-write');return {changed:prior!==payload};}catch(error){try{if(prior===null)storage.removeItem(STORE_KEY);else storage.setItem(STORE_KEY,prior);}catch{}throw error;}}
 
@@ -385,8 +433,27 @@ async function migrateLegacy(){
   if(!globalThis.localStorage)return {migrated:0};
   const countTx=await openTransaction(PROJECTS,'readonly'),count=await request(countTx.objectStore(PROJECTS).count());await complete(countTx);if(count)return {migrated:0};
   let legacy;try{legacy=parseLegacy();}catch(error){await metaPut('migrationStatus',{status:'FAILED',message:String(error.message||error),originalPreserved:true,at:now()});throw error;}if(!legacy.length){await metaPut('migrationStatus',{status:'NONE',at:now()});return {migrated:0};}
-  const tx=await openTransaction([PROJECTS,META],'readwrite');let migrated=0;
-  try{fault('before-legacy-migration');const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;if(!core?.migrateState||!engine)throw storageError('Canonical workflow migration logic is unavailable.','LEGACY_MIGRATION_UNAVAILABLE');for(const source of legacy){if(source.schema===globalThis.closedLoopWorkflowSchema?.PROJECT_SCHEMA)assertProjectCollectionShape(source);const project=core.migrateState(clone(source));assertProjectCollectionShape(project);engine.ensureShape(project);engine.recalculate(project);assertProjectIntegrity(project,{verifyDerived:true});const id=projectIdentity(project);if(!id)throw storageError('Migrated legacy project has no JOB_ID.','LEGACY_MIGRATION_INVALID_PROJECT');const revision=Number(project.revision||0);tx.objectStore(PROJECTS).put({jobId:id,revision,picker:projectPickerKey(project,revision),project,projectSha256:projectSha256(project),updatedAt:now()});migrated++;}tx.objectStore(META).put({key:'migrationStatus',value:{status:'COMPLETE',migrated,at:now()},updatedAt:now()});fault('during-legacy-migration');await complete(tx);for(const key of LEGACY_KEYS)try{localStorage.removeItem(key);}catch{}return {migrated};}catch(error){try{tx.abort();}catch{}await metaPut('migrationStatus',{status:'FAILED',message:String(error.message||error),originalPreserved:true,at:now()});throw error;}
+  const prepared=[];let tx,migrated=0;
+  try{
+    fault('before-legacy-migration');const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;if(!core?.migrateState||!engine)throw storageError('Canonical workflow migration logic is unavailable.','LEGACY_MIGRATION_UNAVAILABLE');
+    for(const source of legacy){
+      if(source.schema===globalThis.closedLoopWorkflowSchema?.PROJECT_SCHEMA)assertProjectCollectionShape(source);
+      const project=core.migrateState(clone(source));assertProjectCollectionShape(project);engine.ensureShape(project);
+      const artifacts=[];for(const original of legacySourceSpans.get(source)||[])await retainProjectSource(project,original,artifacts);
+      if(artifacts.reduce((size,row)=>size+row.byteSize,0)>HISTORY_LIMITS.maxRetainedFileBytes)throw storageError('Original project sources exceed the supported recovery capacity. Original browser data is preserved.','HISTORY_LIMIT_REACHED');
+      engine.recalculate(project);assertProjectIntegrity(project,{verifyDerived:true});assertPackageArtifactCustody(project,artifacts);
+      const id=projectIdentity(project);if(!id)throw storageError('Migrated legacy project has no JOB_ID.','LEGACY_MIGRATION_INVALID_PROJECT');
+      prepared.push({project,artifacts,id});
+    }
+    const inputs=new Map();for(const source of legacy)for(const span of legacySourceSpans.get(source)||[])inputs.set(span.container.storageKey,span.container.value);
+    for(const [key,value]of inputs)if(localStorage.getItem(key)!==value)throw storageError('Legacy browser data changed during migration. The original input was not removed.','STALE_PROJECT_REVISION');
+    tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite');
+    if(await request(tx.objectStore(PROJECTS).count()))throw storageError('A project was created while legacy migration was prepared. Original browser data is preserved.','STALE_PROJECT_REVISION');
+    for(const {project,artifacts,id}of prepared){const revision=Number(project.revision||0);for(const artifact of artifacts)tx.objectStore(ARTIFACTS).put(artifact);tx.objectStore(PROJECTS).put({jobId:id,revision,picker:projectPickerKey(project,revision),project,projectSha256:projectSha256(project),updatedAt:now()});migrated++;}
+    tx.objectStore(META).put({key:'migrationStatus',value:{status:'COMPLETE',migrated,at:now()},updatedAt:now()});fault('during-legacy-migration');await complete(tx);
+    for(const [key,value]of inputs)try{if(localStorage.getItem(key)===value)localStorage.removeItem(key);}catch{}return {migrated};
+  }catch(error){try{tx?.abort();}catch{}await metaPut('migrationStatus',{status:'FAILED',message:String(error.message||error),originalPreserved:true,at:now()});throw error;}
+
 }
 
 async function readAllIndexed(){
@@ -459,6 +526,12 @@ function reconcileRecoveryTransfers(state,project){
     state.transfers[command]=transfer;
   }
 }
+async function verifyHistorySourceArchives(state,readFile=sha=>metaGet(historyFileKey(state.jobId,sha)),verifiedSources=null,verifiedByteDigests=null){
+  if(!state?.sourceArchives)return;
+  const sources=Object.values(state.sourceArchives),files=[];
+  for(const source of sources){const file=await readFile(source.sha256);if(!(file?.blob instanceof Blob)||file.blob.size!==source.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==source.sha256)throw storageError('Original source recovery bytes are missing or corrupt.','SOURCE_ARCHIVE_INTEGRITY_FAILED');files.push({...source,jobId:String(state.jobId),blob:file.blob});}
+  await verifyOriginalSourceBindings({job:{JOB_ID:state.jobId},projectData:{migrationArchives:sources}},files,verifiedSources);
+}
 async function assertRecoveryTransfer(project){
   const state=await metaGet(historyKey(projectIdentity(project))),engine=globalThis.closedLoopWorkflowEngine,checked=engine.deliveryTransferPrecondition(project),intentId=engine.recordId(checked.intentRecord,'humanDecisions');
   const consumed=Object.values(state?.transfers||{}).filter(transfer=>(transfer.intentId===intentId||transfer.deliveryId===checked.deliveryId)&&transfer.result!=='FAILED');
@@ -477,6 +550,13 @@ function validateRecoveryManifest(state){
   for(const entry of state.entries)if(entry.projectParts){
     assertHistoryProjectParts(entry.projectParts);
     if(entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
+  }
+  if(state.sourceArchives!==undefined){
+    if(!state.sourceArchives||typeof state.sourceArchives!=='object'||Array.isArray(state.sourceArchives))throw storageError('Original-source recovery metadata is invalid.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+    for(const [key,source]of Object.entries(state.sourceArchives)){
+      if(source?.schema!==ORIGINAL_SOURCE_SCHEMA||source.kind!==ORIGINAL_SOURCE_KIND||key!==hash.sha256Value(source)||state.files[source.sha256]?.byteSize!==source.byteSize)throw storageError('Original-source recovery bytes do not match their descriptor.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+      requiredProjectArtifactBytes({job:{JOB_ID:state.jobId},projectData:{migrationArchives:[source]}});
+    }
   }
   const snapshotBytes=state.entries.reduce((n,entry)=>n+Number(entry.byteSize),0),fileBytes=Object.values(state.files).reduce((n,file)=>n+Number(file.byteSize),0);
   if(!Number.isSafeInteger(snapshotBytes)||!Number.isSafeInteger(fileBytes)||snapshotBytes<0||fileBytes<0||snapshotBytes!==state.compressedProjectBytes||fileBytes!==state.retainedFileBytes)throw storageError('Recovery storage accounting does not match its retained contents.','HISTORY_VERSION_MISMATCH');
@@ -601,6 +681,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,sessionId=n
     if(!(row.blob instanceof Blob)||row.blob.size!==Number(row.byteSize)||await hash.sha256Bytes(row.blob)!==row.sha256)throw storageError(`Cannot preserve history: stored file ${row.filename} is missing or corrupt.`,'HISTORY_FILE_INTEGRITY_FAILED');
     if(!state.files[row.sha256]){newFiles.push({sha256:row.sha256,blob:row.blob});state.files[row.sha256]={byteSize:row.blob.size};state.retainedFileBytes+=row.blob.size;}
   }
+  await verifyOriginalSourceBindings(next,files);
   const verifiedValues=new Set();
   async function retainValue(sha256,blob){
     if(verifiedValues.has(sha256))return;
@@ -709,7 +790,17 @@ function recordedProjectionObservation(project){
 function historicalProjectionConsistent(project,error){
  if(error?.code!=='PROJECT_INTEGRITY_FAILED'||!error.issues?.length||error.issues.some(issue=>!/^Application-derived job field .* does not match deterministic recalculation\.$|^Stage \d+ (?:status|derivedData) does not match deterministic recalculation\.$/.test(issue)))return false;
  const observedAt=recordedProjectionObservation(project);
- return observedAt!==null&&validateProjectIntegrity(project,{projectionObservedAt:observedAt}).valid;
+ if(observedAt!==null&&validateProjectIntegrity(project,{projectionObservedAt:observedAt}).valid)return true;
+ // Earlier versions stored repeated occurrences in the Stage 13 group field.
+ // Recognize only that exact former calculation after byte identity and all
+ // other canonical/projection checks; never modify the retained source here.
+ if(!error.issues.includes('Stage 13 derivedData does not match deterministic recalculation.'))return false;
+ const saved=project.stages?.[13]?.derivedData?.REPEATED_FAILURE_GROUPS;
+ if(typeof saved!=='number')return false;
+ const engine=globalThis.closedLoopWorkflowEngine,iterationId=engine.evaluateCrossRunComparison(project).iterationId,stability=engine.executionStability(project,iterationId);
+ if(saved!==stability.repeatedDefectCount||saved===stability.repeatedFailureGroupCount)return false;
+ const corrected=clone(project);corrected.stages[13].derivedData.REPEATED_FAILURE_GROUPS=stability.repeatedFailureGroupCount;
+ return validateProjectIntegrity(corrected).valid||(observedAt!==null&&validateProjectIntegrity(corrected,{projectionObservedAt:observedAt}).valid);
 }
 function assertRecoveryCompatibility(project){
   // The complete saved projection must agree with its canonical version, not
@@ -784,7 +875,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
   if(!body.projectReference)recoveryProjectionBounds.set(project,body.createdAt);
   return {...body,project};
 }
-async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null){
+async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null){
   const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests),artifacts=[],ids=new Set();
   for(const descriptor of body.artifacts){
     if(ids.has(descriptor.artifactId)||descriptor.jobId!==String(jobId))throw storageError('Saved file relationships do not belong to one complete project.','HISTORY_VERSION_MISMATCH');ids.add(descriptor.artifactId);
@@ -801,7 +892,7 @@ async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey
     withVerifiedRecoveryCustody(artifacts,()=>assertRecoveryCompatibility(body.project));
     validatedProjections?.add(projectionKey);
   }
-  assertPackageArtifactCustody(body.project,artifacts);assertRecoveryViewFiles(jobId,body.view,artifacts);if(body.view?.pendingMutation&&body.view.pendingMutation.baseProjectSha256!==body.projectSha256)throw storageError('Saved draft correction belongs to another version.','HISTORY_VERSION_MISMATCH');
+  assertPackageArtifactCustody(body.project,artifacts);await verifyOriginalSourceBindings(body.project,artifacts,verifiedSources);assertRecoveryViewFiles(jobId,body.view,artifacts);if(body.view?.pendingMutation&&body.view.pendingMutation.baseProjectSha256!==body.projectSha256)throw storageError('Saved draft correction belongs to another version.','HISTORY_VERSION_MISMATCH');
   return {...body,artifacts};
 }
 function bindRestoredCandidates(next,saved,checkpointId,view=null){
@@ -835,7 +926,7 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
   if(!state?.entries.some(entry=>entry.id===checkpointId))throw storageError('That saved version is unavailable in this project.','HISTORY_VERSION_UNAVAILABLE');
   const priorRevision=Number(prior?.revision??state.activeRevision??0);
   if(expectedProjectRevision!==undefined&&priorRevision!==Number(expectedProjectRevision))throw storageError('Project changed before restoration. Reload the current version.','STALE_PROJECT_REVISION');
-  const saved=await readRetainedCheckpoint(jobId,checkpointId,state);
+  const saved=await readRetainedCheckpoint(jobId,checkpointId,state);await verifyHistorySourceArchives(state);
   if(signal?.aborted)throw storageError('A newer navigation replaced this restore.','RESTORE_INTERRUPTED');
   fault('before-history-restore');
   let next=clone(saved.project);next.revision=Math.max(priorRevision,Number(saved.project.revision))+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;bindRestoredCandidates(next,saved.project,checkpointId,saved.view);
@@ -973,6 +1064,7 @@ async function prepareProjectWrite(project,options={}){
   if(options.expectedStateSha256&&options.expectedStateSha256!==prior?.projectSha256)throw storageError('Project or pending response changed before preparation.','STALE_PROJECT_REVISION');
   assertProjectCollectionShape(next);
   if(options.skipUnchanged&&prior?.projectSha256===projectSha256(next)){await persistProjectPromptFiles(next);const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView});return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior.projectSha256,preparedHistory}};}
+  for(const source of prior?.projectData?.migrationArchives||[])if(source?.kind===ORIGINAL_SOURCE_KIND&&source.schema===ORIGINAL_SOURCE_SCHEMA&&!next.projectData?.migrationArchives?.some(row=>equivalent(row,source)))throw storageError('An existing original-source archive cannot be changed or removed by a canonical save.','SOURCE_ARCHIVE_MUTATED');
   next.revision=(options.incrementRevision??true)?revision+1:revision;
   const engine=globalThis.closedLoopWorkflowEngine;engine.ensureShape(next);
   engine.reconcileReservationRevisions(next);
@@ -1254,7 +1346,29 @@ function requiredProjectArtifactBytes(project){
   // identities remain required when those instructions become history.
   const contextIds=new Set();
   for(const prompt of project.projectData?.generatedPrompts||[])for(const file of prompt.contextManifest?.promptContext?.attachments||[]){const artifactId=promptContextArtifactId(id,file),identity=JSON.stringify([artifactId,file.filename,file.byteSize,file.sha256]);if(contextIds.has(identity))continue;contextIds.add(identity);expected.push({kind:'PROMPT_CONTEXT',artifactId,filename:file.filename,byteSize:file.byteSize,sha256:file.sha256});}
+  for(const source of project.projectData?.migrationArchives||[])if(source?.kind===ORIGINAL_SOURCE_KIND&&source.schema===ORIGINAL_SOURCE_SCHEMA){
+    if(source.operational!==false||typeof source.artifactId!=='string'||source.artifactId!=='PROJECT-SOURCE-'+hash.sha256Value({jobId:id,sha256:source.sha256})||!Number.isSafeInteger(source.byteSize)||source.byteSize<0||typeof source.sha256!=='string'||!/^([a-f0-9]{64})$/.test(source.sha256)||typeof source.sourceSha256!=='string'||!/^([a-f0-9]{64})$/.test(source.sourceSha256)||typeof source.parsedPayloadSha256!=='string'||!/^([a-f0-9]{64})$/.test(source.parsedPayloadSha256)||!['UTF-8','UTF-16LE_CODE_UNITS'].includes(source.sourceEncoding)||!source.sourceLocation||typeof source.sourceLocation!=='object'||!source.parser?.identity||!source.parser?.version)throw storageError('Original project source metadata is invalid.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+    const utf16=source.sourceEncoding==='UTF-16LE_CODE_UNITS',location=source.sourceLocation;
+    if(!['UNKNOWN','CREDENTIAL_SECRET'].includes(source.disclosureClassification)||source.filename!==source.artifactId+(utf16?'.json.utf16le':'.json')||source.mediaType!==(utf16?'application/octet-stream':'application/json')||Array.isArray(location)||typeof location.jsonPointer!=='string'||source.parser.version!=='1'||source.parser.identity!==(utf16?'closed-loop-legacy-json-reader':'closed-loop-project-package-json-reader')||(utf16?(!LEGACY_KEYS.includes(location.storageKey)||!/^($|\/[0-9]+)$/.test(location.jsonPointer)||!Number.isSafeInteger(location.codeUnitStart)||location.codeUnitStart<0||!Number.isSafeInteger(location.codeUnitEnd)||location.codeUnitEnd<=location.codeUnitStart||(location.codeUnitEnd-location.codeUnitStart)*2!==source.byteSize):(location.jsonPointer!=='/project'||location.containerEncoding!=='gzip')))throw storageError('Original project source provenance is invalid.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+    expected.push({kind:ORIGINAL_SOURCE_KIND,artifactId:source.artifactId,filename:source.filename,byteSize:source.byteSize,sha256:source.sha256});
+  }
   return expected;
+}
+async function verifyOriginalSourceBindings(project,artifacts,verifiedSources=null){
+  const byId=new Map(artifacts.map(row=>[row.artifactId,row])),seen=new Map();
+  for(const source of project.projectData?.migrationArchives||[])if(source?.kind===ORIGINAL_SOURCE_KIND&&source.schema===ORIGINAL_SOURCE_SCHEMA){
+    const row=byId.get(source.artifactId);if(!row)throw storageError('Original project source bytes are missing.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+    const contract=JSON.stringify([source.sourceEncoding,source.parser.identity,source.parser.version]),localKey=source.artifactId+':'+contract;let binding=seen.get(localKey)||verifiedSources?.get(row.blob)?.get(contract);
+    if(!binding){
+      let text;if(source.sourceEncoding==='UTF-16LE_CODE_UNITS'){
+        if(row.blob.size%2)throw storageError('Original source code units are incomplete.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+        const parts=[];for(let offset=0;offset<row.blob.size;offset+=65536){const bytes=new Uint8Array(await hash.readWithDeadline(row.blob.slice(offset,offset+65536).arrayBuffer(),'Reading original project source')),units=new Uint16Array(bytes.length/2);for(let i=0;i<units.length;i++)units[i]=bytes[i*2]|bytes[i*2+1]<<8;parts.push(String.fromCharCode(...units));}text=parts.join('');
+      }else{try{text=new TextDecoder('utf-8',{fatal:true}).decode(await hash.readWithDeadline(row.blob.arrayBuffer(),'Reading original project source'));}catch(error){if(error?.code==='IO_READ_TIMEOUT')throw error;throw storageError('Original project source bytes are not valid UTF-8.','SOURCE_ARCHIVE_INTEGRITY_FAILED');}}
+      let payload;try{payload=JSON.parse(text);}catch{throw storageError('Original source bytes are not the recorded JSON payload.','SOURCE_ARCHIVE_INTEGRITY_FAILED');}binding={jobId:projectIdentity(payload),parsedPayloadSha256:hash.sha256Value(payload)};seen.set(localKey,binding);
+      if(verifiedSources){let contracts=verifiedSources.get(row.blob);if(!contracts){contracts=new Map();verifiedSources.set(row.blob,contracts);}contracts.set(contract,binding);}
+    }
+    if(binding.jobId!==projectIdentity(project)||binding.parsedPayloadSha256!==source.parsedPayloadSha256)throw storageError('Original source bytes do not match their project and parsed-payload binding.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+  }
 }
 function assertPackageArtifactCustody(project,artifacts){
   const id=projectIdentity(project),byId=new Map(artifacts.map(row=>[String(row.artifactId),row]));
@@ -1262,6 +1376,9 @@ function assertPackageArtifactCustody(project,artifacts){
     const row=byId.get(artifactId);
     if(!row||String(row.jobId)!==id||String(filename)!==String(row.filename)||Number(byteSize)!==Number(row.byteSize)||String(sha256)!==String(row.sha256))throw storageError(`Canonical artifact ${artifactId||'UNKNOWN'} does not reconcile with verified package bytes.`,'PACKAGE_ARTIFACT_CUSTODY_MISMATCH');
   }
+  const sources=(project.projectData?.migrationArchives||[]).filter(source=>source?.kind===ORIGINAL_SOURCE_KIND&&source.schema===ORIGINAL_SOURCE_SCHEMA);
+  for(const source of sources){const row=byId.get(source.artifactId),lineage=row?.lineage?.originalProjectSource;if(row?.mediaType!==source.mediaType||lineage?.schema!==ORIGINAL_SOURCE_SCHEMA||lineage.operational!==false||lineage.sourceEncoding!==source.sourceEncoding||lineage.parsedPayloadSha256!==source.parsedPayloadSha256)throw storageError('Original-source artifact lineage does not match its descriptor.','SOURCE_ARCHIVE_INTEGRITY_FAILED');}
+  for(const row of artifacts)if(row.lineage?.originalProjectSource?.schema===ORIGINAL_SOURCE_SCHEMA&&!sources.some(source=>source.artifactId===row.artifactId))throw storageError('An owned original-source artifact has no matching descriptor.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
 }
 async function readExportSnapshot(jobId){
   const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readonly'),finished=complete(tx);
@@ -1296,11 +1413,17 @@ async function encryptedPackage(blob,manifestSha256,passphrase){
   return new Blob([JSON.stringify(container)],{type:'application/vnd.closed-loop.encrypted+json'});
 }
 async function isEncryptedPackage(blob){return /^\s*\{\s*"schema"\s*:\s*"closed-loop-encrypted-export\/1"/.test(await hash.readWithDeadline(blob.slice(0,160).text(),'Reading backup header'));}
+function validEncryptedBase64(value){
+  if(typeof value!=='string'||value.length%4!==0)return false;
+  const padding=value.endsWith('==')?2:value.endsWith('=')?1:0,end=value.length-padding;
+  for(let i=0;i<end;i++){const code=value.charCodeAt(i);if(!(code>=65&&code<=90||code>=97&&code<=122||code>=48&&code<=57||code===43||code===47))return false;}
+  return true;
+}
 async function decryptPackage(blob,passphrase){
   let container;try{container=JSON.parse(await hash.readWithDeadline(blob.text(),'Reading protected backup'));}catch(error){if(error?.code==='IO_READ_TIMEOUT')throw error;throw storageError('The encrypted backup is incomplete or invalid.','ENCRYPTED_PACKAGE_INVALID');}
   const expected=[...Object.keys(ENCRYPTED_EXPORT_PROFILE),'salt','iv','manifestSha256','ciphertextLength','authenticationTag','ciphertext'];
   if(Object.keys(container).length!==expected.length||Object.keys(container).some(key=>!expected.includes(key))||Object.entries(ENCRYPTED_EXPORT_PROFILE).some(([key,value])=>container[key]!==value))throw storageError('The encrypted backup uses unsupported or modified protection settings.','ENCRYPTED_PACKAGE_INVALID');
-  if(typeof container.ciphertext!=='string'||container.ciphertext.length%4!==0||! /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(container.ciphertext))throw storageError('Encrypted backup ciphertext is invalid.','ENCRYPTED_PACKAGE_INVALID');
+  if(!validEncryptedBase64(container.ciphertext))throw storageError('Encrypted backup ciphertext is invalid.','ENCRYPTED_PACKAGE_INVALID');
   const salt=encryptionBytes(container.salt,16),iv=encryptionBytes(container.iv,12),tag=encryptionBytes(container.authenticationTag,16),aad=encryptionBytes(container.manifestSha256,32),ciphertext=base64ToBytes(container.ciphertext);
   if(!Number.isSafeInteger(container.ciphertextLength)||ciphertext.length!==container.ciphertextLength)throw storageError('The encrypted backup has missing or modified bytes.','ENCRYPTED_PACKAGE_INVALID');
   const key=await backupKey(passphrase,salt,'decrypt'),combined=new Uint8Array(ciphertext.length+tag.length);combined.set(ciphertext);combined.set(tag,ciphertext.length);let plaintext;
@@ -1319,8 +1442,9 @@ async function exportPackage(jobId,{passphrase=null}={}){
     const {blob,...metadata}=a,entry={...metadata,base64:''};artifactEntries.push(entry);fileContents.set(entry,{property:'base64',encoding:'base64',blob});
   }
   for(const a of artifacts)await member(a);
+  await verifyOriginalSourceBindings(project,artifacts);
   if(recovery){
-    validateRecoveryManifest(recovery);
+    validateRecoveryManifest(recovery);await verifyHistorySourceArchives(recovery);requiresEncryption=requiresEncryption||containsCredentialSecret(recovery.sourceArchives);
     for(const entry of recovery.entries){const saved=await metaGet(snapshotKey(jobId,entry.id));if(!saved?.blob||saved.sha256!==entry.sha256)throw storageError('A promised checkpoint is missing. Backup export did not complete.','HISTORY_VERSION_UNAVAILABLE');await member({artifactId:'RECOVERY-SNAPSHOT-'+entry.id,jobId,filename:entry.id+'.checkpoint.gz',mediaType:'application/gzip',archiveKind:'RECOVERY_SNAPSHOT',checkpointId:entry.id,byteSize:entry.byteSize,sha256:entry.sha256,blob:saved.blob});const {payload:checkpoint}=await readPackageJson(saved.blob,{spoolArtifacts:false});if(checkpoint.schema!==HISTORY_SCHEMA||checkpoint.id!==entry.id||checkpoint.jobId!==String(jobId)||checkpoint.projectSha256!==entry.projectSha256)throw storageError('A saved checkpoint does not match its recorded identity.','HISTORY_VERSION_MISMATCH');requiresEncryption=requiresEncryption||containsCredentialSecret(checkpoint);}
     for(const [sha256,info] of Object.entries(recovery.files)){const file=await metaGet(historyFileKey(jobId,sha256));if(!file?.blob)throw storageError('A retained file is missing. Backup export did not complete.','HISTORY_FILE_INTEGRITY_FAILED');await member({artifactId:'RECOVERY-BYTES-'+sha256,jobId,filename:sha256+'.bin',mediaType:'application/octet-stream',archiveKind:'RECOVERY_BYTES',byteSize:info.byteSize,sha256,blob:file.blob});}
   }
@@ -1335,7 +1459,7 @@ async function exportPackage(jobId,{passphrase=null}={}){
 // text. The project remains a finite-memory object; artifact strings are
 // temporary Blobs whose exact decoded spelling is used by the canonical hash.
 async function readPackageJson(blob,{compressed=true,spoolArtifacts=true}={}){
-  const fileContents=new WeakMap(),stack=[];let root,hasRoot=false,kind=null,atom='',raw='',pieces=[],spooled=false,escape=false,unicode=0,lastYield=Date.now();
+  const fileContents=new WeakMap(),stack=[],projectSourceParts=[];let root,hasRoot=false,kind=null,atom='',raw='',pieces=[],spooled=false,escape=false,unicode=0,lastYield=Date.now(),projectSourceDepth=null,projectSourceStart=null,projectSourceBlob=null;
   const fail=()=>{throw new SyntaxError('Malformed project package JSON.');};
   const frame=()=>stack.at(-1);
   const expectsValue=()=>{const parent=frame();return parent?parent.state==='value'||parent.state==='valueOrEnd':!hasRoot;};
@@ -1349,7 +1473,7 @@ async function readPackageJson(blob,{compressed=true,spoolArtifacts=true}={}){
   }
   function flushString(){if(!raw)return;const text=JSON.parse('"'+raw+'"');raw='';if(spooled){if(/[^\x00-\x7f]/.test(text))throw new TypeError('Artifact base64 must contain ASCII characters.');pieces.push(new Blob([text]));}else pieces.push(text);}
   function parseChunk(text){
-    let start=kind==='string'?0:-1;
+    let start=kind==='string'?0:-1;if(projectSourceDepth!==null)projectSourceStart=0;
     const stringBoundary=/["\\\u0000-\u001f]/g;
     for(let i=0;i<text.length;i++){
       const char=text[i];
@@ -1387,16 +1511,17 @@ async function readPackageJson(blob,{compressed=true,spoolArtifacts=true}={}){
       }
       if(char==='{'||char==='['){
         if(!expectsValue())fail();const type=char==='{'?'object':'array',item=type==='object'?{}:[],artifact=type==='object'&&Boolean(parent?.artifactArray),artifactArray=spoolArtifacts&&type==='array'&&stack.length===1&&parent.type==='object'&&parent.key==='artifacts';
+        if(spoolArtifacts&&type==='object'&&stack.length===1&&parent.type==='object'&&parent.key==='project'){projectSourceParts.length=0;projectSourceDepth=stack.length+1;projectSourceStart=i;}
         value(item);stack.push({type,value:item,state:type==='object'?'keyOrEnd':'valueOrEnd',artifact,artifactArray});continue;
       }
       if(char==='}'||char===']'){
-        if(!parent||parent.type!==(char==='}'?'object':'array')||!['keyOrEnd','valueOrEnd','commaOrEnd'].includes(parent.state))fail();stack.pop();continue;
+        if(!parent||parent.type!==(char==='}'?'object':'array')||!['keyOrEnd','valueOrEnd','commaOrEnd'].includes(parent.state))fail();if(projectSourceDepth===stack.length){projectSourceParts.push(new Blob([text.slice(projectSourceStart,i+1)]));projectSourceBlob=new Blob(projectSourceParts,{type:'application/json'});projectSourceDepth=null;projectSourceStart=null;}stack.pop();continue;
       }
       if(char===','){if(parent?.state!=='commaOrEnd')fail();parent.state=parent.type==='object'?'key':'value';continue;}
       if(char===':'){if(parent?.type!=='object'||parent.state!=='colon')fail();parent.state='value';continue;}
       if(!expectsValue()||!/[\-0-9tfn]/.test(char))fail();kind='atom';atom=char;
     }
-    if(kind==='string')raw+=text.slice(start);
+    if(kind==='string')raw+=text.slice(start);if(projectSourceDepth!==null)projectSourceParts.push(new Blob([text.slice(projectSourceStart)]));
   }
   const stream=blob.stream(),reader=(compressed?stream.pipeThrough(new DecompressionStream('gzip')):stream).getReader(),decoder=new TextDecoder('utf-8',{fatal:true});let expandedBytes=0;
   // Internal checkpoint metadata has no streamed artifact payload. Native JSON
@@ -1419,7 +1544,7 @@ async function readPackageJson(blob,{compressed=true,spoolArtifacts=true}={}){
     }
     const tail=decoder.decode();
     if(metadataText)return {payload:JSON.parse(metadataText.join('')+tail),fileContents,expandedBytes};
-    parseChunk(tail);if(kind==='atom'){value(JSON.parse(atom));kind=null;}if(kind||stack.length||!hasRoot)fail();return {payload:root,fileContents,expandedBytes};
+    parseChunk(tail);if(kind==='atom'){value(JSON.parse(atom));kind=null;}if(kind||stack.length||!hasRoot)fail();return {payload:root,fileContents,expandedBytes,projectSourceBlob};
   }catch(error){try{void reader.cancel(error).catch(()=>{});}catch{}throw error;}finally{reader.releaseLock();}
 }
 async function base64BlobToBlob(blob,mediaType){
@@ -1433,7 +1558,7 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
   if(useStoreWorker())return requestStoreWorker('IMPORT_PACKAGE',[blob]);
   if(typeof DecompressionStream!=='function')throw storageError('DecompressionStream is required for complete package import.','DECOMPRESSION_STREAM_REQUIRED');
   const observedHeads=new Map((await listProjectSummaries()).map(p=>[projectIdentity(p),Number(p.revision||0)]));
-  const {payload,fileContents}=await readPackageJson(blob),{packageSha256,...body}=payload;
+  const {payload,fileContents,projectSourceBlob}=await readPackageJson(blob),{packageSha256,...body}=payload;
   if(await hash.sha256Chunks(packageJsonChunks(body,fileContents))!==packageSha256)throw Object.assign(new Error('Project package hash mismatch.'),{existingProjectsUnchanged:true});
   if(body.schema!=='closed-loop-project-package/1')throw Object.assign(new Error('Unsupported project package schema.'),{existingProjectsUnchanged:true});
   const schemaApi=globalThis.closedLoopWorkflowSchema,project=body.project,id=projectIdentity(project);
@@ -1445,14 +1570,14 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
   // state and defer its rejection to the subsequent History/view refresh.
   // Validation recalculates a disposable copy and preserves the source bytes.
   const packageArtifacts=Array.isArray(body.artifacts)?body.artifacts:[],artifactIds=packageArtifacts.map(a=>String(a?.artifactId||''));if(artifactIds.some(x=>!x)||new Set(artifactIds).size!==artifactIds.length)throw Object.assign(new Error('Package artifacts contain a missing or duplicate artifact identity.'),{existingProjectsUnchanged:true});
-  const verifiedArtifacts=[],verifiedByteDigests=new WeakMap();
+  const verifiedArtifacts=[],verifiedByteDigests=new WeakMap(),verifiedSources=new WeakMap();
   for(const a of packageArtifacts){if(a.jobId!==undefined&&String(a.jobId)!==id)throw Object.assign(new Error(`Artifact ${a.artifactId} belongs to a different JOB_ID than the package project.`),{existingProjectsUnchanged:true});const source=fileContents.get(a),artifactBlob=source?await base64BlobToBlob(source.blob,a.mediaType):base64ToBlob(a.base64,a.mediaType);fileContents.delete(a);if(artifactBlob.size!==Number(a.byteSize))throw Object.assign(new Error(`Artifact ${a.artifactId} byte size mismatch.`),{existingProjectsUnchanged:true});const digest=await historyBlobSha256(artifactBlob,verifiedByteDigests);if(digest!==a.sha256)throw Object.assign(new Error(`Artifact ${a.artifactId} hash mismatch.`),{existingProjectsUnchanged:true});const {base64,...metadata}=a;verifiedArtifacts.push({...clone(metadata),jobId:id,blob:artifactBlob});}
   const manifest=body.packageManifest||{},manifestArtifacts=Array.isArray(manifest.artifacts)?manifest.artifacts:[],manifestIds=manifestArtifacts.map(a=>String(a?.artifactId||''));if(manifestIds.some(x=>!x)||new Set(manifestIds).size!==manifestIds.length)throw Object.assign(new Error('Package manifest contains a missing or duplicate artifact identity.'),{existingProjectsUnchanged:true});if(manifest.jobId!==id||Number(manifest.artifactCount)!==verifiedArtifacts.length||manifestArtifacts.length!==verifiedArtifacts.length||manifest.projectSha256!==projectSha256(project))throw Object.assign(new Error('Package manifest does not reconcile with the embedded project and artifacts.'),{existingProjectsUnchanged:true});
   const manifestById=new Map(manifestArtifacts.map(a=>[String(a.artifactId),a]));for(const a of verifiedArtifacts){const m=manifestById.get(String(a.artifactId));if(!m||m.sha256!==a.sha256||Number(m.byteSize)!==Number(a.byteSize)||m.filename!==a.filename||String(m.mediaType||'')!==String(a.mediaType||''))throw Object.assign(new Error(`Package manifest mismatch for artifact ${a.artifactId}.`),{existingProjectsUnchanged:true});}
   recoveryProjectionBounds.set(project,body.exportedAt);
   try{withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertProjectIntegrity(project));assertPackageArtifactCustody(project,verifiedArtifacts);}catch(error){if(!withVerifiedRecoveryCustody(verifiedArtifacts,()=>historicalProjectionConsistent(project,error)))throw Object.assign(error,{existingProjectsUnchanged:true});assertPackageArtifactCustody(project,verifiedArtifacts);}
   if(verifiedArtifacts.some(a=>a.archiveKind&&!['RECOVERY_BYTES','RECOVERY_SNAPSHOT'].includes(a.archiveKind)))throw storageError('Unknown recovery archive member.','HISTORY_VERSION_MISMATCH');
-  const activeArtifacts=verifiedArtifacts.filter(a=>!a.archiveKind),priorProject=await readProject(id);
+  const activeArtifacts=verifiedArtifacts.filter(a=>!a.archiveKind);await verifyOriginalSourceBindings(project,activeArtifacts,verifiedSources);const priorProject=await readProject(id);
   if(Number(priorProject?.revision||0)!==Number(observedHeads.get(id)||0))throw storageError('This project changed while the backup was being verified. Its newer work is preserved.','STALE_PROJECT_REVISION');
   let preparedPrior=null;
   if(priorProject){try{preparedPrior=await prepareHistoryCommit(priorProject,priorProject);}catch(error){
@@ -1470,6 +1595,8 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     if(incoming.schema!==HISTORY_SCHEMA||incoming.jobId!==id||!Array.isArray(incoming.entries)||!incoming.entries.some(e=>e.id===incoming.activeId)||new Set(incoming.entries.map(e=>e.id)).size!==incoming.entries.length)throw storageError('Backup History identity is invalid.','HISTORY_VERSION_MISMATCH');
     validateRecoveryManifest(incoming);assertHistoryLimits(incoming);
     const archiveFiles=new Map(verifiedArtifacts.filter(a=>a.archiveKind==='RECOVERY_BYTES').map(a=>[a.sha256,a])),archiveSnapshots=new Map(),validatedRoots=new Map(incoming.entries.filter(entry=>entry.projectReference).map(entry=>[entry.projectReference.checkpointId,null])),verifiedParts=new Map(),validatedProjections=new Set();
+    await verifyHistorySourceArchives(incoming,sha=>archiveFiles.get(sha),verifiedSources,verifiedByteDigests);
+    for(const [key,source]of Object.entries(incoming.sourceArchives||{})){const prior=merged.sourceArchives?.[key];if(prior&&hash.sha256Value(prior)!==hash.sha256Value(source))throw storageError('Original-source recovery metadata conflicts with retained evidence.','SOURCE_ARCHIVE_INTEGRITY_FAILED');merged.sourceArchives={...(merged.sourceArchives||{}),[key]:clone(source)};}
     for(const entry of incoming.entries){const archived=verifiedArtifacts.find(a=>a.archiveKind==='RECOVERY_SNAPSHOT'&&a.checkpointId===entry.id);if(archived)archiveSnapshots.set(entry.id,{...entry,blob:archived.blob});}
     let previousRootId=null;
     for(const entry of incoming.entries){
@@ -1481,7 +1608,7 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
       previousRootId=rootId;
       const archived=verifiedArtifacts.find(a=>a.archiveKind==='RECOVERY_SNAPSHOT'&&a.checkpointId===entry.id);
       if(!archived||archived.sha256!==entry.sha256||archived.byteSize!==entry.byteSize)throw storageError('A promised checkpoint is missing from the backup.','HISTORY_VERSION_UNAVAILABLE');
-      const snapshot={...entry,blob:archived.blob},decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);if(entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
+      const snapshot={...entry,blob:archived.blob},decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources);if(entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
       const existing=merged.entries.find(item=>item.id===entry.id);
       if(existing&&hash.sha256Value(existing)!==hash.sha256Value(entry))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
       if(!existing){merged.entries.push(clone(entry));merged.compressedProjectBytes+=entry.byteSize;importSnapshots.push(snapshot);}
@@ -1497,6 +1624,8 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     merged.activeId=incoming.activeId;
   }else if(verifiedArtifacts.some(a=>a.archiveKind))throw storageError('Backup archive members have no governing History manifest.','HISTORY_VERSION_MISMATCH');
   let next=clone(project);next.revision=Math.max(Number(priorProject?.revision||0),Number(project.revision||0))+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;
+  if(!(projectSourceBlob instanceof Blob))throw storageError('The imported project source bytes are unavailable.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+  const importSourceRows=[],importSource=await retainProjectSource(next,{blob:projectSourceBlob,payload:project,sourceSha256:await hash.sha256Bytes(blob),sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},importSourceRows,{recordProject:false});
   if(body.recovery&&body.recovery.activeProjectSha256!==projectSha256(project))throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');
   assertRecoveryViewFiles(id,importedView,activeArtifacts);
   importedView=rebaseHistoryView(project,importedView);
@@ -1511,7 +1640,14 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     prepared={state:merged,expectedGeneration:Number(localState?.generation||0),snapshots:[],newFiles:[]};
   }else prepared=await prepareHistoryCommit(next,null,{label:'Restored backup',view:importedView,baseState:merged,artifactRows:activeArtifacts,retainedFiles:[...(preparedPrior?.newFiles||[]),...importFiles]});
   prepared.expectedGeneration=preparedPrior?preparedPrior.expectedGeneration:Number(localState?.generation||0);
-  prepared.snapshots=[...(preparedPrior?.snapshots||[]),...importSnapshots,...prepared.snapshots];prepared.newFiles=[...(preparedPrior?.newFiles||[]),...importFiles,...prepared.newFiles];assertHistoryLimits(prepared.state);
+  prepared.snapshots=[...(preparedPrior?.snapshots||[]),...importSnapshots,...prepared.snapshots];prepared.newFiles=[...(preparedPrior?.newFiles||[]),...importFiles,...prepared.newFiles];
+  // Transport custody is append-only recovery metadata, not a new work version.
+  // Preserve a full-capacity backup without consuming a checkpoint merely to
+  // record the exact bytes from which this activation was read.
+  const sourceRow=importSourceRows[0],sourceKey=hash.sha256Value(importSource);
+  if(!prepared.state.files[sourceRow.sha256]){prepared.state.files[sourceRow.sha256]={byteSize:sourceRow.byteSize};prepared.state.retainedFileBytes+=sourceRow.byteSize;prepared.newFiles.push({sha256:sourceRow.sha256,blob:sourceRow.blob});}
+  else{const retained=prepared.newFiles.find(file=>file.sha256===sourceRow.sha256)||await metaGet(historyFileKey(id,sourceRow.sha256));if(!(retained?.blob instanceof Blob)||retained.blob.size!==sourceRow.byteSize||await hash.sha256Bytes(retained.blob)!==sourceRow.sha256)throw storageError('An existing original-source identity has no matching bytes.','SOURCE_ARCHIVE_INTEGRITY_FAILED');}
+  prepared.state.sourceArchives={...(prepared.state.sourceArchives||{}),[sourceKey]:importSource};validateRecoveryManifest(prepared.state);assertHistoryLimits(prepared.state);
   fault('before-import-transaction');const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),projects=tx.objectStore(PROJECTS),artifacts=tx.objectStore(ARTIFACTS),meta=tx.objectStore(META);
   try{
     const prior=await projectRowWithOperations(tx,id);if(Number(prior?.revision||0)!==Number(observedHeads.get(id)||0)||prior?.projectSha256!==priorProject?.projectSha256)throw storageError('Another tab changed this project during import.','STALE_PROJECT_REVISION');

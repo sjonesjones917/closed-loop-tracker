@@ -3,6 +3,7 @@ import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
 import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {verifyIngestionContextReferences,verifyHumanDecisionCandidateTargets,verifyExternalResponseIdentityShape,verifyCanonicalResponseRecovery,verifyResponseCanonicalValueBoundaries} from './test-ingestion-context-reference.mjs';
+import {verifyResponseTypeBoundaries,verifyStage01CaptureCacheCompatibility,verifyResponseIdentityUiBoundary,verifyStage01LegacyCaptureTypes,verifyStage01LegacyNewResponses,verifyObligationDispositionTypes,verifyRepresentationObservationTypes} from './test-response-type-boundaries.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -430,6 +431,13 @@ negative('unresolved evidence attachment',(e)=>{e.evidence[0].attachmentRef={rec
 
 await verifyHumanDecisionCandidateTargets();
 await verifyExternalResponseIdentityShape();
+console.log(JSON.stringify(await verifyResponseTypeBoundaries()));
+console.log(JSON.stringify(await verifyStage01CaptureCacheCompatibility()));
+console.log(JSON.stringify(await verifyResponseIdentityUiBoundary()));
+console.log(JSON.stringify(verifyStage01LegacyCaptureTypes()));
+console.log(JSON.stringify(await verifyStage01LegacyNewResponses()));
+console.log(JSON.stringify(await verifyObligationDispositionTypes()));
+console.log(JSON.stringify(await verifyRepresentationObservationTypes()));
 await verifyCanonicalResponseRecovery();
 await verifyResponseCanonicalValueBoundaries();
 

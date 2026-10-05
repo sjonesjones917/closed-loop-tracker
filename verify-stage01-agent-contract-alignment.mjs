@@ -55,7 +55,7 @@ function captureFor(prompt){
     'For HUMAN, OMIT decisionPurpose, targetFamily, and targetId'
   ])assert.ok(prompt.prompt.includes(expected),'Stage 01 instruction omitted controlling rule: '+expected);
 
-  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:1,operation:'COMPLETE',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},packageId:prompt.packageId||null,operationReservationId:prompt.operationReservationId||null,challengeNonce:prompt.challengeNonce||null,scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[{temporaryKey:'human-answer-1',label:'Filing breadth preference',value:'Use the broadest practical coverage.',authorityClass:'HUMAN',claimedConversationBasis:'The human supplied this preference in the Stage 01 conversation.',externalResponsePointer:'conversation-message-1',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[]}],stageData:{EXACT_DELIVERABLE_REQUESTED:'Complete technical filing with the broadest practical coverage.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'evidence-1',kind:'INTAKE',description:'Stage 01 semantic intake',authorityType:'AGENT_CLAIM',location:'response.json',content:'The user answered “yes”; no canonical sources record or returned attachment applies.'}],unresolved:[],warnings:[],attachments:[]};
+  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:1,operation:'COMPLETE',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},...(prompt.transportBindingRequired?{packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}:{}),scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[{temporaryKey:'human-answer-1',label:'Filing breadth preference',value:'Use the broadest practical coverage.',authorityClass:'HUMAN',claimedConversationBasis:'The human supplied this preference in the Stage 01 conversation.',externalResponsePointer:'conversation-message-1',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[]}],stageData:{EXACT_DELIVERABLE_REQUESTED:'Complete technical filing with the broadest practical coverage.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'evidence-1',kind:'INTAKE',description:'Stage 01 semantic intake',authorityType:'AGENT_CLAIM',location:'response.json',content:'The user answered “yes”; no canonical sources record or returned attachment applies.'}],unresolved:[],warnings:[],attachments:[]};
   const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:prompt});
   assert.equal(prepared.validation.valid,true,'A contract-conforming Stage 01 response matching the uploaded failure pattern was rejected: '+JSON.stringify(prepared.validation.issues));
 }
@@ -188,11 +188,11 @@ const conditionalReasonObservations=[];
 // version-selector fixture. The earlier controlled generation omits only the
 // newly disclosed rule and uses its retained /81 generation marker.
 const promptSource=fs.readFileSync('prompt-engine.js','utf8'),appSource=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
-const reasonDescriptorSpread="...(stageFields.includes('INPUT_SET_CONTENTS')?{intakeAccountingContract:{schema:'closed-loop-stage01-capture/2',reasonRequiredDispositions:[...workflow.INTAKE_ACCOUNTING_REASON_REQUIRED_DISPOSITIONS],reasonOptionalForOtherDispositions:true}}:{}),";
+const reasonDescriptorSpread="...(stageFields.includes('INPUT_SET_CONTENTS')?{intakeAccountingContract:schema.STAGE01_CAPTURE_CONTRACT}:{}),";
 const reasonGuidance="\\nA nonblank reason is required when disposition is ${workflow.INTAKE_ACCOUNTING_REASON_REQUIRED_DISPOSITIONS.join(' or ')}; otherwise reason is optional. A reason never makes inaccessible required material complete.";
 function legacyReasonPromptSource(source){
   assert.ok(source.includes(reasonDescriptorSpread)&&source.includes(reasonGuidance),'INTAKE_CACHE_SETUP_ORACLE: missing controlled legacy publication anchors');
-  return source.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/81';").replace(reasonDescriptorSpread,'').replace(reasonGuidance,'').replace('"reason":"concise reason; required for the dispositions specified below, otherwise optional"','"reason":"optional concise reason"');
+  return source.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/81';").replace(reasonDescriptorSpread,'').replace(reasonGuidance,'').replace('JSON.stringify(schema.stage01CaptureExample())',"JSON.stringify({...schema.stage01CaptureExample(),units:schema.stage01CaptureExample().units.map(unit=>({...unit,reason:'optional concise reason'}))})");
 }
 // Controlled /82 equivalent retains its existing conditional reason rule and
 // all runtime/business owners. Only the newly structured shared producer
@@ -234,7 +234,7 @@ function uiOwner(name){
   assert.ok(start>=0&&end>start,'INTAKE_CACHE_SETUP_ORACLE: actual UI owner missing '+name);return appSource.slice(start,end);
 }
 const cachedUiOwners=['promptMatches','currentPromptEngineVersion','promptVersionCurrent','currentPromptRecord','savePromptRecord'].map(uiOwner).join('\n');
-async function cachedReasonFixture(currentSource,status='RESERVED',storeSource=fs.readFileSync('project-store.js','utf8'),legacyKind='REASON81'){
+async function cachedReasonFixture(currentSource,status='RESERVED',storeSource=fs.readFileSync('project-store.js','utf8'),legacyKind='REASON81',uiOwners=cachedUiOwners){
   const r=projectStoreRuntime({sourceOverrides:{'prompt-engine.js':currentSource,'project-store.js':storeSource}}),currentProducer=r.prompts;
   vm.runInContext(legacyKind==='GENERATION85'?legacyCurrent85PromptSource(promptSource):legacyKind==='SHARED82'?legacySharedDescriptorPromptSource(promptSource):legacyReasonPromptSource(promptSource),r.runtime,{filename:'prompt-engine.js:controlled-legacy-generation-'+legacyKind});
   const oldProducer=r.runtime.closedLoopPromptEngine,blank=r.core.createBlankState('JOB-INTAKE-CACHE-'+status);Object.assign(blank.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Preserve the complete current intake.',CURRENT_INPUT_VERSION:'INPUT-v001'});blank.activeStage=1;blank.activeView='Workflow';r.engine.ensureShape(blank);r.engine.recalculate(blank);
@@ -244,11 +244,11 @@ async function cachedReasonFixture(currentSource,status='RESERVED',storeSource=f
   p=await r.store.writeProject(draft,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
   r.runtime.closedLoopPromptEngine=currentProducer;
   bindAcceptanceUi(r,p,null);Object.assign(r.runtime,{promptOptions:()=>r.copy({operation:'COMPLETE'}),externalAgentOperation:()=>true,selectedOperation:()=> 'COMPLETE',operationExecutorClass:()=> 'EXTERNAL_AGENT'});
-  vm.runInContext(cachedUiOwners+'\nglobalThis.cachedIntakeUi={current:()=>currentPromptRecord(1),save:()=>savePromptRecord(1)};',r.runtime);
+  vm.runInContext(uiOwners+'\nglobalThis.cachedIntakeUi={current:()=>currentPromptRecord(1),save:()=>savePromptRecord(1)};',r.runtime);
   return {r,p,old,oldProducer};
 }
-async function cachedReasonExportOracle(currentSource,status,storeSource,legacyKind='REASON81'){
-  const {r,p,old}=await cachedReasonFixture(currentSource,status,storeSource,legacyKind),before={accepted:r.runtime.closedLoopHash.sha256Value(p.projectData.acceptedChanges),prompt:old.prompt,bodySha256:old.bodySha256,contractSha256:old.contractSha256,contextSignature:old.contextSignature};
+async function cachedReasonExportOracle(currentSource,status,storeSource,legacyKind='REASON81',uiOwners=cachedUiOwners){
+  const {r,p,old}=await cachedReasonFixture(currentSource,status,storeSource,legacyKind,uiOwners),before={accepted:r.runtime.closedLoopHash.sha256Value(p.projectData.acceptedChanges),prompt:old.prompt,bodySha256:old.bodySha256,contractSha256:old.contractSha256,contextSignature:old.contextSignature};
   if(legacyKind==='SHARED82'){
     const legacyDeclared=emittedReasonPublicationOracle(old,r.runtime);assert.equal(old.promptEngineVersion,'closed-loop-prompt-engine/82','INTAKE_SHARED_CACHE_SETUP_ORACLE: old equivalent must use /82');for(const key of sharedBoundaryDescriptorKeys)assert.equal(Object.hasOwn(legacyDeclared.envelope,key),false,'INTAKE_SHARED_CACHE_SETUP_ORACLE: legacy equivalent already includes '+key);
   }
@@ -324,10 +324,18 @@ const publicationFaultSource=promptSource.replace(reasonDescriptorSpread,'');
   const fault=projectStoreRuntime({sourceOverrides:{'prompt-engine.js':publicationFaultSource}}),state=fault.core.createBlankState('JOB-INTAKE-PUBLICATION-FAULT');Object.assign(state.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Preserve complete current intake.',CURRENT_INPUT_VERSION:'INPUT-v001'});fault.engine.ensureShape(state);fault.engine.recalculate(state);const issued=fault.prompts.reserveAndBuildPromptRecord(state,1,{operation:'COMPLETE'}).prompt;
   assert.throws(()=>emittedReasonPublicationOracle(issued,fault.runtime),/INTAKE_REASON_PUBLICATION_ORACLE/,'Conditional reason gate did not detect missing delivered declaration');
 }
+// Contract hashing independently refreshes changed descriptors in the same epoch.
+// The old negative assumed the epoch was the only applicable freshness guard.
+// Keep the same-epoch valid controls; only removing both guards may retain the
+// obsolete descriptor. Body/context-only epoch fault controls remain unchanged.
+const contractFreshnessGuard='record.contractSha256!==currentContractSha||';assert.equal(cachedUiOwners.split(contractFreshnessGuard).length,2,'INTAKE_CACHE_CONTRACT_GUARD_ANCHOR');
+const noContractFreshnessUi=cachedUiOwners.replace(contractFreshnessGuard,'');
 const noVersionBumpSource=promptSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/81';");
-await assert.rejects(()=>cachedReasonExportOracle(noVersionBumpSource,'RESERVED'),/INTAKE_CACHED_EXPORT_ORACLE/,'Cached instruction gate did not detect omitted generation update');
+const sameEpochDescriptorObservations=[await cachedReasonExportOracle(noVersionBumpSource,'RESERVED')];
+await assert.rejects(()=>cachedReasonExportOracle(noVersionBumpSource,'RESERVED',undefined,'REASON81',noContractFreshnessUi),/INTAKE_CACHED_EXPORT_ORACLE/,'Cached instruction gate did not detect omitted generation and contract freshness guards');
 const noSharedVersionBumpSource=promptSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/82';"),sharedDescriptorFaultsDetected=[];
-for(const status of ['RESERVED','EXPORTED']){await assert.rejects(()=>cachedReasonExportOracle(noSharedVersionBumpSource,status,undefined,'SHARED82'),/INTAKE_CACHED_EXPORT_ORACLE/,'Shared descriptor cached gate did not detect omitted /83 generation update for '+status);sharedDescriptorFaultsDetected.push({kind:'OMIT_SHARED_DESCRIPTOR_PROMPT_GENERATION_UPDATE',status,detectedBy:'INTAKE_CACHED_EXPORT_ORACLE'});}
+for(const status of ['RESERVED','EXPORTED']){sameEpochDescriptorObservations.push(await cachedReasonExportOracle(noSharedVersionBumpSource,status,undefined,'SHARED82'));await assert.rejects(()=>cachedReasonExportOracle(noSharedVersionBumpSource,status,undefined,'SHARED82',noContractFreshnessUi),/INTAKE_CACHED_EXPORT_ORACLE/,'Shared descriptor cached gate did not detect omitted generation and contract freshness guards for '+status);sharedDescriptorFaultsDetected.push({kind:'OMIT_SHARED_DESCRIPTOR_PROMPT_GENERATION_AND_CONTRACT_FRESHNESS',status,detectedBy:'INTAKE_CACHED_EXPORT_ORACLE'});}
+console.log(JSON.stringify({sameEpochDescriptorObservations,descriptorRefreshWithoutEpochChange:true,combinedFreshnessFaultDetected:true,actualBrowser:false}));
 const refreshStart=promptSource.indexOf('  // A generation change makes a saved first request obsolete'),refreshEnd=promptSource.indexOf('  if(workflow.allocateInstructionIdentity(state,provisional.identityAllocation)',refreshStart);assert.ok(refreshStart>=0&&refreshEnd>refreshStart,'INTAKE_CACHE_SETUP_ORACLE: freshness owner anchor missing');
 const noRefreshSource=promptSource.slice(0,refreshStart)+promptSource.slice(refreshEnd);
 await assert.rejects(()=>cachedReasonExportOracle(noRefreshSource,'EXPORTED'),/INTAKE_CACHED_EXPORT_ORACLE/,'Cached instruction gate did not detect missing exact supersession');
@@ -479,7 +487,7 @@ for(const faultKind of ['RETAINED_INSTRUCTION_BYTES','RETAINED_RESERVATION_OWNER
 }
 const storeSource=fs.readFileSync('project-store.js','utf8'),transportExemption="if(family==='operationReservations'&&unansweredInstructionTransportReplacement(prior,next,row,replacement))continue;";assert.ok(storeSource.includes(transportExemption),'INTAKE_TRANSPORT_SETUP_ORACLE: exact transport impact owner missing');
 await assert.rejects(()=>cachedReasonExportOracle(promptSource,'RESERVED',storeSource.replace(transportExemption,"if(false)continue;")),/INTAKE_CACHED_EXPORT_ORACLE/,'Cached export gate did not detect loss of transport-only impact classification');
-const conditionalReasonFaultsDetected=['OMIT_PUBLISHED_REASON_RULE','OMIT_PROMPT_GENERATION_UPDATE','OMIT_EXACT_STALE_AUTHORITY_REFRESH','BYPASS_EXPECTED_REVISION_GUARD','BYPASS_CAPTURED_RESPONSE_GUARD','OMIT_EXACT_TRANSPORT_IMPACT_CLASSIFICATION'];
+const conditionalReasonFaultsDetected=['OMIT_PUBLISHED_REASON_RULE','OMIT_PROMPT_GENERATION_AND_CONTRACT_FRESHNESS','OMIT_EXACT_STALE_AUTHORITY_REFRESH','BYPASS_EXPECTED_REVISION_GUARD','BYPASS_CAPTURED_RESPONSE_GUARD','OMIT_EXACT_TRANSPORT_IMPACT_CLASSIFICATION'];
 console.log(JSON.stringify({conditionalReasonPublication:'PASS',conditionalReasonObservations,cachedInitialInstructionRefresh:'PASS',cacheObservations,sharedDescriptorCacheObservations,sharedDescriptorFaultsDetected,negativeCacheObservations,capturedResponseObservation,transportImpactObservations,sharedContextRefreshObservations,conditionalReasonFaultsDetected,synthetic:true,actualBrowser:false,realAgent:false,stageCompletionEstablished:false}));
 
 console.log(JSON.stringify(await verifyStage01SpecificationControls()));
