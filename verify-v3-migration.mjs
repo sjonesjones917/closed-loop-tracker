@@ -142,7 +142,19 @@ for(const name of ['migrationArchives','historicalImportRecords','nonOperational
 // Exercise the exported production migration command through actual storage,
 // reload and real package bytes. This is a declared legacy fixture, not a claim
 // that the application UI imported an old project or any prior gate completed.
-const storageOverrides={};if(fault==='collection-shape-guard'){const source=fs.readFileSync('project-store.js','utf8'),anchor='  assertProjectCollectionShape(next);\n  if(options.skipUnchanged';assert.equal(source.split(anchor).length,2);storageOverrides['project-store.js']=source.replace(anchor,'  if(options.skipUnchanged');storageOverrides['workflow-engine.js']=fs.readFileSync('workflow-engine.js','utf8').replace(/^  const shapeIssues=schema.projectShapeIssues\(project,ALL_COLLECTIONS\);.*\n/m,'');}
+const storageOverrides={};if(fault==='collection-shape-guard'){
+  const source=fs.readFileSync('project-store.js','utf8'),start=source.indexOf('async function prepareProjectWrite(project,options={}){'),end=source.indexOf('\nasync function writeProject(',start);
+  assert.ok(start>=0&&end>start,'Migration collection fault must find its owning preparation boundary');
+  const preparation=source.slice(start,end),anchor='  assertProjectCollectionShape(next);\n';
+  assert.equal(preparation.split(anchor).length-1,1,'Migration collection fault must remove exactly one owning store guard');
+  storageOverrides['project-store.js']=source.slice(0,start)+preparation.replace(anchor,'')+source.slice(end);
+  // The shared normalizer independently guards this shape. Remove only that
+  // duplicate shape check so the fault reaches the original lossy default;
+  // scalar-field validation and every other write/integrity guard stay active.
+  const engineSource=fs.readFileSync('workflow-engine.js','utf8'),engineAnchor=/^  const shapeIssues=schema.projectShapeIssues\(project,ALL_COLLECTIONS\);.*\n/gm;
+  assert.equal([...engineSource.matchAll(engineAnchor)].length,1,'Migration collection fault must remove exactly one shared normalizer guard');
+  storageOverrides['workflow-engine.js']=engineSource.replace(engineAnchor,'');
+}
 if(fault==='structural-defaults'){
   const source=fs.readFileSync('workflow-schema.js','utf8'),start=source.indexOf('function projectShapeIssues(project,collections=[]){'),end=source.indexOf('\nconst RESPONSE_TYPES=',start);assert(start>=0&&end>start);
   storageOverrides['workflow-schema.js']=source.slice(0,start)+"function projectShapeIssues(project,collections=[]){const data=project?.projectData;if(data===undefined)return [];if(!data||typeof data!=='object'||Array.isArray(data))return ['projectData is not an object.'];return collections.filter(key=>data[key]!==undefined&&!Array.isArray(data[key])).map(key=>`${key} is not an array.`);}"+source.slice(end);
