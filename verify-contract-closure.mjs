@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
 import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {verifySpecifiedJobFieldRegistry,verifySpecifiedJobFieldMutants,verifySpecifiedCarrierFieldRegistry,verifySpecifiedCarrierFieldMutants,verifyConditionalDeferredManifestCarrier} from './test-specification-field-registry.mjs';
 
 function loadSchema(source=fs.readFileSync('workflow-schema.js','utf8')){
   const context={console,TextEncoder,TextDecoder,crypto:webcrypto,dispatchEvent(){},Event:function Event(type){this.type=type}};
@@ -52,7 +53,7 @@ function verifyTimingFieldContracts(schema){
 function verify(source){
   const schema=loadSchema(source);
   verifyTimingFieldContracts(schema);
-  for(const name of ['FIELD_REGISTRY','STAGE_OPERATION_REGISTRY','STAGE_OPERATION_SCOPE_MATRIX','DURABLE_OBJECT_REGISTRY','normalizerRegistry','derivationRegistry','ATTACHMENT_SLOT_CONTRACT','HUMAN_DECISION_PURPOSE_REGISTRY'])assert.ok(schema[name],`${name} must be exported.`);
+  for(const name of ['FIELD_REGISTRY','STAGE_OPERATION_REGISTRY','STAGE_OPERATION_SCOPE_MATRIX','DURABLE_OBJECT_REGISTRY','normalizerRegistry','derivationRegistry','ATTACHMENT_SLOT_CONTRACT','HUMAN_DECISION_PURPOSE_REGISTRY','CARRIER_FIELD_CONTRACTS'])assert.ok(schema[name],`${name} must be exported.`);
   const deferredOperations=[['EXECUTE_FAILURE_TEST','failureTests'],['EXECUTE_REGRESSION','regressions']],deferredKeys=[];
   for(const [operation,family]of deferredOperations)for(let stage=schema.RECORD_SCHEMAS[family].stage+1;stage<=schema.STAGE_COUNT;stage++){const key=stage+':'+operation,contract=schema.STAGE_OPERATION_REGISTRY[key];assert(contract?.deferredSubjectFamily===family,'DEFERRED_OPERATION_CONTRACT_ORACLE: missing conditional operation '+key);assert.deepEqual([...contract.agentWritableCollections],['regressionExecutions'],'DEFERRED_OPERATION_CONTRACT_ORACLE: '+key+' may append only execution receipts.');deferredKeys.push(key);}
   assert.equal(Object.keys(schema.STAGE_OPERATION_REGISTRY).length,66+deferredKeys.length,'The approved Section 32.4A combinations extend the original 66 closed operations.');
@@ -121,6 +122,7 @@ function verify(source){
     ...Object.entries(schema.STAGE_FIELDS).flatMap(([stage,fields])=>Object.entries(fields).map(([name,definition])=>({key:`STAGE.${stage}.${name}`,path:`/stages/${stage}/${name}`,definition,relationship:null}))),
     ...Object.entries(schema.RECORD_SCHEMAS).flatMap(([family,record])=>Object.entries(record.fieldDefinitions).map(([name,definition])=>({key:`RECORD.${family}.${name}`,path:`/projectData/${family}/*/${name}`,definition,relationship:record.relationships?.[name]||null}))),
     ...metadataDeclarations,
+    ...Object.values(schema.CARRIER_FIELD_CONTRACTS.objects).flatMap(object=>Object.entries(object.fieldDefinitions).map(([name,definition])=>({key:definition.registryKey,path:object.path+'/'+name,definition,relationship:definition.relationshipTarget||null}))),
     ...Object.values(schema.TIMING_CONTRACTS.objects).flatMap(object=>Object.entries(object.fieldDefinitions).map(([name,definition])=>({key:definition.registryKey,path:object.path+'/'+name,definition,relationship:definition.relationshipTarget||null})))
   ];
   const expectedKeys=declarations.map(({key})=>key).sort();
@@ -175,6 +177,13 @@ function verify(source){
 
 const source=fs.readFileSync('workflow-schema.js','utf8');
 const result=verify(source);
+// The literal source table is checked separately from the declaration-derived
+// registry consistency tests. Run its coherent mutation controls once.
+const specificationJobFields=verifySpecifiedJobFieldRegistry(loadSchema(source));
+const specificationJobFieldMutants=verifySpecifiedJobFieldMutants(loadSchema(source));
+const specificationCarrierFields=verifySpecifiedCarrierFieldRegistry(loadSchema(source));
+const specificationCarrierFieldMutants=verifySpecifiedCarrierFieldMutants(loadSchema(source));
+const conditionalDeferredManifestCarrier=verifyConditionalDeferredManifestCarrier(loadSchema(source));
 assert.throws(()=>verify(source.replace("30:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion']","30:['baselineId','productId']")),/deepStrictEqual|Expected values to be strictly deep-equal/,'Mutation removing terminal scope dimensions must fail.');
 assert.throws(()=>verify(source.replace("addRequiredFamily('humanDecisions'","addRequiredFamily('humanDecisionBROKEN'")),/humanDecisions must be a canonical family/,'Mutation removing humanDecisions must fail.');
 assert.throws(()=>verify(source.replace("const normalizerId=key=>{if(!key)return NO_NORMALIZER_ID;","const normalizerId=key=>{if(!key)return 'closed-loop-normalizer/missing/1';")),/undefined normalizer/,'Undefined normalizer mutation must fail.');
@@ -230,4 +239,4 @@ for(const [field,omittedValue] of [['SOURCE_KIND','PROOF_OBLIGATION'],['VERIFICA
 assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source,'FIELD_REGISTRY_SOURCE_UNCHANGED_ORACLE');
 const restored=verify(source);
 assert.deepEqual(restored,result,'FIELD_REGISTRY_RESTORED_ORACLE');
-console.log(JSON.stringify({...result,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));
+console.log(JSON.stringify({...result,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));

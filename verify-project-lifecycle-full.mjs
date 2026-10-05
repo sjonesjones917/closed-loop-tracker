@@ -10,6 +10,7 @@ import {projectStoreRuntime,storageBroadcastNetwork,bindProjectActivationUi} fro
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
 
 // Supply host facilities explicitly; never alter VM or String built-ins.
+const exportBoundariesOnly=process.argv.includes('--export-boundaries-only');
 const lifecycleContext=context=>createVerifierRuntime({setTimeout,clearTimeout,AbortController,...context});
 let blockedUpgradeError;
 const assert=(value,message)=>{if(!value)throw new Error(message);};
@@ -92,7 +93,9 @@ assert(custody.projectData.history.some(event=>event.type==='APPLICATION_ARTIFAC
 // Execute the production export coordinator with a slow persistence boundary.
 // Rapid requests for different handoff files must all complete without overlap.
 const delivered=[],exportErrors=[];let activeSaves=0,maxActiveSaves=0;
-const exportRuntime=lifecycleContext({...inactiveMobileAcceptance,current:{activeStage:3,job:{JOB_ID:'EXPORT-QUEUE'}},setTimeout,announce:()=>{},reportActionFailure:error=>exportErrors.push(String(error.message||error)),alert:message=>{throw new Error('Unexpected native popup: '+message);},savePromptRecord:async stage=>{activeSaves++;maxActiveSaves=Math.max(maxActiveSaves,activeSaves);await new Promise(resolve=>setTimeout(resolve,10));activeSaves--;return {stage,instructionId:'SAME-CONTROLLING-INSTRUCTION'};}});
+// The coordinator test supplies an explicit allowed review. Authorization is
+// verified in verify-handoff-disclosure; this fixture owns queue/navigation only.
+const exportRuntime=lifecycleContext({...inactiveMobileAcceptance,current:{activeStage:3,activeView:'Workflow',job:{JOB_ID:'EXPORT-QUEUE'}},runSelection:{},handoffNavigationSequence:0,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'}),displayedStageAction:()=>({actionType:'AI_REVIEW'}),stagePlanItems:()=>[],projectStore:{prepareExecutionPackageReview:async()=>({authorization:{allowed:true,syntheticPolicyFixture:true}})},setTimeout,announce:()=>{},reportActionFailure:error=>exportErrors.push(String(error.message||error)),alert:message=>{throw new Error('Unexpected native popup: '+message);},savePromptRecord:async stage=>{activeSaves++;maxActiveSaves=Math.max(maxActiveSaves,activeSaves);await new Promise(resolve=>setTimeout(resolve,10));activeSaves--;return {stage,instructionId:'SAME-CONTROLLING-INSTRUCTION'};}});
 vm.runInContext(app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext()'))+'\nglobalThis.exportRequest=promptExport;',exportRuntime);
 await Promise.all(['manifest','instruction','context'].map(name=>exportRuntime.exportRequest(record=>{delivered.push({name,instructionId:record.instructionId});})));
 assert(delivered.map(x=>x.name).join(',')==='manifest,instruction,context',`Rapid handoff requests were lost or reordered: ${JSON.stringify(delivered)}`);
@@ -120,7 +123,7 @@ assert(packageDownloads.at(-1).filename==='PACKAGE-C.backup.closed-loop.json.gz'
 const filePackageRuntime=lifecycleContext({...inactiveMobileAcceptance,Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,Response,crypto:globalThis.crypto,structuredClone,btoa,atob,setTimeout,Event:globalThis.Event,dispatchEvent:()=>true});
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),filePackageRuntime,{filename:file});
 vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readExportSnapshot=async()=>({project:{...fixtureProject,projectSha256:projectSha256(fixtureProject)},artifacts:fixtureArtifacts,recovery:null});readProject=async()=>({...fixtureProject,projectSha256:projectSha256(fixtureProject)});listArtifacts=async()=>fixtureArtifacts;metaPut=async()=>{};metaGet=async()=>null;globalThis.closedLoopProjectStore='),filePackageRuntime);
-vm.runInContext(`globalThis.closedLoopWorkflowSchema={RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
+vm.runInContext(`globalThis.closedLoopWorkflowSchema={...closedLoopWorkflowSchema,RESPONSE_SCHEMA:'closed-loop-stage-response/3'};globalThis.fixtureProject={schema:'closed-loop-project/3',workflow:'mobile-closed-loop/30',job:{JOB_ID:'FILE-PRESSURE'},projectData:{rawResponses:[{rawText:'preserve exact history tail é🙂'}]}};globalThis.fixtureArtifacts=[];`,filePackageRuntime);
 const artifactSizes=[0,1,2,3,65535,65536,65537,196607];
 for(let i=0;i<artifactSizes.length;i++){
   const bytes=Uint8Array.from({length:artifactSizes[i]},(_,j)=>(j*137+i)%256),sha256=createHash('sha256').update(bytes).digest('hex');
@@ -153,7 +156,7 @@ assert(damagedFileRejected,'Bounded file export accepted corrupted stored bytes.
 // real-browser operator path uses a fixed small fixture; this production-store
 // case carries the historical 600 x ~80k-character workload and requires exact
 // bytes/hash plus bounded termination without increasing the browser timeout.
-{
+if(!exportBoundariesOnly){
   const large=projectStoreRuntime(),records=600,charactersPerRecord=80000,deadlineMs=60000,jobId='NONBROWSER-ACCUMULATED-HISTORY';
   let project=large.core.createBlankState(jobId);
   project.projectData.rawResponses=large.copy(Array.from({length:records},(_,i)=>({rawResponseId:'RAW-NONBROWSER-'+i,stage:i%large.core.STAGES.length+1,status:'PRESERVED',rawText:'H'.repeat(charactersPerRecord)+'é🙂TAIL-'+i})));
@@ -179,10 +182,11 @@ vm.runInContext(`
   const prompt={stage:4,operation:'COMPLETE',promptEngineVersion:'FIXTURE',instructionId:'PROMPT-FILES',prompt:'instruction\\n',scope:{},contextManifest:{retryAttemptInputs:[],promptContext:{attachments:[contextIdentity]}}};
   prompt.bodySha256=prompt.fullTextSha256=hash.sha256Text(prompt.prompt);prompt.contractSha256=hash.sha256Value({});fixtureProject.projectData.generatedPrompts=[prompt];
   globalThis.fixtureContextRow={artifactId:'PROMPT-CONTEXT-'+hash.sha256Value({jobId:'FILE-PRESSURE',sha256:fixtureContextSha}),jobId:'FILE-PRESSURE',blob:fixtureContextBlob,sha256:fixtureContextSha,byteSize:fixtureContextBlob.size};
-  // Only instruction selection is a fixture boundary here. Keep production
-  // retry projection and content authorization in the streaming-package path.
+  // Instruction selection and the read-only policy decision are explicit
+  // fixture boundaries. This isolated byte-stream test does not prove human
+  // authorization. Production retry projection, scans and encoder remain real.
   globalThis.closedLoopPromptEngine={...closedLoopPromptEngine,version:'FIXTURE',responseContractDescriptor:()=>({}),fileHandoff:(_record,base)=>({...base,attachmentSlots:[]}),promptFileManifest:()=>({scope:{},attachmentSlots:[],contractProfileId:'closed-loop-completion-profile/1',contextFiles:[contextIdentity],promptIdentity:{instructionId:prompt.instructionId}})};
-  globalThis.closedLoopWorkflowEngine={stageContext:project=>project,executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
+  globalThis.closedLoopWorkflowEngine={stageContext:project=>project,handoffDisclosureClassification:()=> 'UNKNOWN',evaluateHandoffAuthorization:()=>({allowed:true,subjectSha256:hash.sha256Text('SYNTHETIC_STREAMING_POLICY_ONLY'),syntheticPolicyFixture:true}),finalizeExecutionHandoff:(_project,_prompt,{base,members})=>({...base,filesToSend:members,attachmentSlots:[],syntheticPolicyFixture:true}),executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
 `,filePackageRuntime);
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
 filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
@@ -216,6 +220,7 @@ for(const row of exportedPayload.artifacts){
   assert(Buffer.from(decoded).equals(Buffer.from(row.base64,'base64')),'Bounded restore changed base64 whitespace or final padding semantics.');
 }
 for(const invalid of ['Zg==YQ==','!AAA','A','AA=A',null,0,{},[]]){let rejected=false;try{decoderRuntime.decodeFile(invalid);}catch{rejected=true;}assert(rejected,`Invalid artifact base64 was accepted: ${invalid}`);}
+if(exportBoundariesOnly){console.log(JSON.stringify({lifecycleExportBoundaries:true,coordinatorQueueAndNavigation:true,exactStreamedBytes:true,independentPackageHashes:true,boundedArtifactReads:true,unicodeFilenameIdentity:true,strictBase64Restore:true,authorizationBoundary:'MOCKED_ALLOWED_POLICY_ONLY',accumulatedHistory:'NOT_RUN_FOCUSED_MODE',remainingLifecycle:'NOT_RUN_FOCUSED_MODE'}));process.exit(0);}
 // Replay the complete production UI owner, without starting browser storage.
 // Diagnostic lists must use the existing lazy disclosure and page controls.
 {

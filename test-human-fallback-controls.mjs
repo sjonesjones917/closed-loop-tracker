@@ -1,3 +1,4 @@
+import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 import assert from 'node:assert/strict';
 import {readStoreArchive} from './test-zip.mjs';
 import {HUMAN_FALLBACK_CASES,humanFallbackResponse,humanFallbackAnswers} from './test-human-fallback-fixture.mjs';
@@ -13,7 +14,7 @@ export async function verifyHumanFallbackControls(browser,record){
  await browser.selectFiles('#stage-files',[{filename:'fallback-reference.txt',bytes:supplied}]);
  const before=await browser.readProject(),artifact=before.projectData.artifacts.find(row=>row.fields?.FILENAME==='fallback-reference.txt');
  assert.ok(artifact?.fields?.ARTIFACT_ID,'FALLBACK_CONTROL_FILE_CUSTODY_ORACLE');
- const [download]=await browser.download('#next-export-prompt-file'),entries=readStoreArchive(download.bytes),manifest=JSON.parse(Buffer.from(entries.find(row=>row.canonicalPath==='manifest.json').bytes).toString());
+ const [download]=await downloadSyntheticHandoff(browser,'#next-export-prompt-file',{syntheticProject:true}),entries=readStoreArchive(download.bytes),manifest=JSON.parse(Buffer.from(entries.find(row=>row.canonicalPath==='manifest.json').bytes).toString());
  const response=Buffer.from(JSON.stringify(humanFallbackResponse(manifest))+'\n');
  await browser.selectFiles('#response-json-file',[{filename:'response.json',bytes:response}]);await browser.click('#process-response-file');
  const proposalState=await browser.readProject(),proposal=proposalState.projectData.responseProposals.at(-1),validation=proposalState.projectData.responseValidations.find(row=>row.validationId===proposal?.validationId);

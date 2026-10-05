@@ -1,3 +1,4 @@
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -65,13 +66,13 @@ async function destination(x){
 }
 // Direct proof at the real reservation/commit/package boundary; expected operation is literal contract data.
 {
- const x=await ui(),before=x.source.projectSha256;await x.t.addNew();await x.t.exportStageFiles();
+ const x=await ui(),before=x.source.projectSha256;await x.t.addNew();const initial=await x.t.savePromptRecord(1);assert.equal(x.t.current.projectData.generatedPrompts.length,1,'PROJECT_ACTIVATION_INITIAL_PROMPT_COUNT_ORACLE');const authorized=await authorizeSyntheticHandoff(x,{project:x.t.current,prompt:initial});x.t.current=authorized.project;x.t.projects=[x.source,authorized.project];const authorizedPromptCount=x.t.current.projectData.generatedPrompts.length;await x.t.exportStageFiles();
  assert.equal(x.downloads.length,1,'PROJECT_ACTIVATION_EXPORT_COUNT_ORACLE');
  const p=x.t.current,pr=p.projectData.generatedPrompts.at(-1),reservation=p.projectData.operationReservations.find(row=>x.engine.recordId(row,'operationReservations')===pr.operationReservationId);
  assert.equal(pr.operation,'COMPLETE','PROJECT_ACTIVATION_OPERATION_ORACLE: a clean destination must export Stage01 COMPLETE, not source reconciliation.');
  assert.equal(x.engine.recordValue(reservation,'OPERATION'),'COMPLETE','PROJECT_ACTIVATION_RESERVATION_ORACLE');assert.equal(pr.transportBindingRequired,true);
  const durable=await x.store.readProject(p.job.JOB_ID),storedPrompt=durable.projectData.generatedPrompts.at(-1),storedReservation=durable.projectData.operationReservations.find(row=>x.engine.recordId(row,'operationReservations')===storedPrompt.operationReservationId);
- assert.equal(durable.projectSha256,p.projectSha256,'PROJECT_ACTIVATION_PERSISTED_PROJECT_ORACLE');assert.equal(durable.projectData.generatedPrompts.length,1,'PROJECT_ACTIVATION_PERSISTED_PROMPT_COUNT_ORACLE');
+ assert.equal(durable.projectSha256,p.projectSha256,'PROJECT_ACTIVATION_PERSISTED_PROJECT_ORACLE');assert.equal(durable.projectData.generatedPrompts.length,authorizedPromptCount,'PROJECT_ACTIVATION_PERSISTED_PROMPT_COUNT_ORACLE: exporting an already authorized handoff must not create another instruction.');assert.equal(x.t.currentPromptRecord(1).instructionId,pr.instructionId,'PROJECT_ACTIVATION_CURRENT_AUTHORIZED_PROMPT_ORACLE');
  assert.equal(storedPrompt.operation,'COMPLETE','PROJECT_ACTIVATION_PERSISTED_OPERATION_ORACLE');assert.equal(storedPrompt.prompt,pr.prompt,'PROJECT_ACTIVATION_PERSISTED_BODY_ORACLE');assert.equal(storedPrompt.bodySha256,pr.bodySha256);assert.equal(x.engine.recordValue(storedReservation,'OPERATION'),'COMPLETE','PROJECT_ACTIVATION_PERSISTED_RESERVATION_ORACLE');
  const zip=new Uint8Array(await x.downloads[0].blob.arrayBuffer()),members=readStoreArchive(zip),instruction=members.find(member=>member.canonicalPath==='instruction.txt');assert.ok(instruction,'PROJECT_ACTIVATION_ARCHIVE_MEMBER_ORACLE');
  const text=new TextDecoder('utf-8',{fatal:true}).decode(instruction.bytes);assert.ok(text.includes('Stage 01 COMPLETE'),'PROJECT_ACTIVATION_INSTRUCTION_SEMANTICS_ORACLE');assert.ok(text.includes(p.job.JOB_ID));assert.equal(text,pr.prompt);assert.equal(digest(instruction.bytes),pr.bodySha256,'PROJECT_ACTIVATION_INSTRUCTION_BYTES_ORACLE');

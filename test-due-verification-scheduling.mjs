@@ -13,7 +13,7 @@ async function verifyCheckedProducerScheduling(directory,suite,caseId){
  assert.equal(dispatch.length,1,'DUE_RECEIPT_SCHEDULING_OWNER_ORACLE: complete deferred matrix must use its own checked child.');
  assert.match(dispatch[0],/stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS/,'DUE_RECEIPT_SCHEDULING_BUDGET_ORACLE: retain output and the existing composite budget.');
  assert(!owner.includes("await import('./"+suite+"');"),'DUE_RECEIPT_SCHEDULING_OWNER_ORACLE: duplicate in-process execution remains.');
- const copied=['verify-conformance-regressions.mjs','operator-journey-fixtures.mjs','test-fixtures.mjs','test-zip.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','hash.js','verification-evidence-preload.mjs','verification-evidence.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','collect-verification-evidence.mjs'],results=[];
+ const copied=['verify-conformance-regressions.mjs','operator-journey-fixtures.mjs','test-fixtures.mjs','test-handoff-authorization.mjs','test-zip.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','hash.js','verification-evidence-preload.mjs','verification-evidence.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','collect-verification-evidence.mjs'],results=[];
  const wrapper='verify-complete.mjs',diagnostic='SYNTHETIC_SCHEDULING_CHILD_DIAGNOSTIC\n';
  for(const mode of ['former-import','current-child','failed-child','malformed-child']){
   const cwd=path.join(directory,mode+' source with spaces');fs.mkdirSync(cwd,{recursive:true});
@@ -32,6 +32,7 @@ async function verifyCheckedProducerScheduling(directory,suite,caseId){
   execFileSync('git',['init','--quiet'],{cwd});execFileSync('git',['add','.'],{cwd});execFileSync('git',['-c','user.name=Synthetic scheduling fixture','-c','user.email=fixture@localhost','commit','--quiet','-m','Bounded scheduling fixture'],{cwd});
   const receipts=path.join(cwd,'receipts'),env={...process.env,NODE_OPTIONS:'--import '+JSON.stringify(path.join(cwd,'verification-evidence-preload.mjs')),CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:cwd,CLOSED_LOOP_VERIFICATION_RECEIPTS:receipts,SCHEDULING_FIXTURE_MODE:mode,VERIFIER_CHILD_EVIDENCE_DIRECTORY:path.join(cwd,'nested-runner')};
   const parent=await runVerifier(process.execPath,[path.join(cwd,wrapper)],{cwd,env,evidenceDirectory:path.join(cwd,'outer-runner'),timeout:30000}),count=()=>fs.readFileSync(path.join(cwd,'invocations.log'),'utf8').trim().split('\n').length;
+  assert(fs.existsSync(path.join(cwd,'invocations.log')),'DUE_RECEIPT_SCHEDULING_BOOTSTRAP_ORACLE: '+parent.stderr);
   assert.equal(count(),1,'DUE_RECEIPT_SCHEDULING_INVOCATION_ORACLE: parent did not execute exactly one producer.');
   const wrapperReceipt=JSON.parse(fs.readFileSync(path.join(receipts,wrapper+'.json'),'utf8')),ownPath=path.join(receipts,suite+'.json');
   if(['failed-child','malformed-child'].includes(mode)){
@@ -63,7 +64,7 @@ export async function verifyCrossRunVerificationScheduling(directory){
  const result=await verifyCheckedProducerScheduling(directory,'verify-cross-run-comparison.mjs','cross-run-producer-receipt-scheduling');
  const cwd=path.join(directory,'current-child source with spaces'),suite='verify-cross-run-comparison.mjs',receipts=path.join(cwd,'receipts'),receiptPath=path.join(receipts,suite+'.json'),prior=fs.readFileSync(receiptPath,'utf8');
  const env={...process.env,NODE_OPTIONS:'--import '+JSON.stringify(path.join(cwd,'verification-evidence-preload.mjs')),CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:cwd,CLOSED_LOOP_VERIFICATION_RECEIPTS:receipts,SCHEDULING_FIXTURE_MODE:'current-child'},focusedChildren=[];
- for(const [argument,mode,status]of [['--comparison-fault=STABILITY-REPEATED-GROUP-MAPPING','failed-child',1],['--comparison-control','current-child',0],['--stability-aggregate-control','current-child',0],['--projection-recovery-only','current-child',0]]){
+ for(const [argument,mode,status]of [['--comparison-fault=STABILITY-REPEATED-GROUP-MAPPING','failed-child',1],['--comparison-control','current-child',0],['--stability-aggregate-control','current-child',0],['--projection-recovery-only','current-child',0],['--scheduled-iteration-controls','current-child',0]]){
   const run=await runVerifier(process.execPath,[path.join(cwd,suite),argument],{cwd,env:{...env,SCHEDULING_FIXTURE_MODE:mode},evidenceDirectory:path.join(cwd,'focused-runner'),timeout:30000});
   assert.equal(run.status,status,'CROSS_RUN_FOCUSED_EXIT_ORACLE');
   assert.equal(fs.readFileSync(receiptPath,'utf8'),prior,'CROSS_RUN_FOCUSED_RECEIPT_ORACLE: a scoped child overwrote complete producer evidence.');
@@ -75,5 +76,16 @@ export async function verifyCrossRunVerificationScheduling(directory){
  assert.equal(unrecognized.status,1);assert.equal(JSON.parse(fs.readFileSync(receiptPath,'utf8')).complete,false,'CROSS_RUN_FOCUSED_SCOPE_ORACLE');
  const restored=await runVerifier(process.execPath,[path.join(cwd,suite)],{cwd,env,evidenceDirectory:path.join(cwd,'focused-runner'),timeout:30000});
  assert.equal(restored.status,0);assert.equal(JSON.parse(fs.readFileSync(receiptPath,'utf8')).complete,true,'CROSS_RUN_FOCUSED_RESTORE_ORACLE');
- return {...result,focusedChildren,unrecognizedFlagStillRecorded:true,restoredDefaultRecorded:true};
+ const otherFocused=[];
+ // Exact focused modes for the new owning producers preserve their canonical
+ // receipts too. These tiny processes assert scheduling, not handoff behavior.
+ for(const [extraSuite,arguments_]of [['verify-human-authority-roundtrip.mjs',['--human-stage-save-only']],['verify-handoff-disclosure.mjs',['--fault=authorization','--fault=scan']],['verify-due-stage-timing.mjs',['--stage17-receipt-parent-controls','--stage-binding-regressions','--definition-compatibility-witness-only','--definition-compatibility','--evidence-chain-frontier-only','--evidence-chain-faults-only','--deferred-reservations','--conditional-handoff-material','--conditional-independent-retry','--conditional-producer-contracts','--conditional-byte-carriers','--deferred-regression','--deferred-native','--deferred-small','--deferred-only','--regression-only','--deferred-cache-only','--deferred-fixture=declared-disposable-fixture']]]){
+  fs.copyFileSync(path.join(cwd,suite),path.join(cwd,extraSuite));
+  fs.appendFileSync(path.join(cwd,'verification-evidence-catalog.mjs'),`verificationCatalog[${JSON.stringify(extraSuite)}]={boundary:'synthetic focused receipt fixture',checks:[{id:${JSON.stringify('synthetic.'+extraSuite+'.completed')},marker:'schedulingChild',path:'schedulingChild',expected:true,assertionReference:'tiny explicit arithmetic assertion'}]};\n`);
+  const extraPath=path.join(receipts,extraSuite+'.json'),base=await runVerifier(process.execPath,[path.join(cwd,extraSuite)],{cwd,env,evidenceDirectory:path.join(cwd,'focused-runner'),timeout:30000});assert.equal(base.status,0);const complete=fs.readFileSync(extraPath,'utf8');assert.equal(JSON.parse(complete).complete,true);
+  for(const argument of arguments_){const status=argument.startsWith('--fault=')?1:0,run=await runVerifier(process.execPath,[path.join(cwd,extraSuite),argument],{cwd,env:{...env,SCHEDULING_FIXTURE_MODE:status?'failed-child':'current-child'},evidenceDirectory:path.join(cwd,'focused-runner'),timeout:30000});assert.equal(run.status,status);assert.equal(fs.readFileSync(extraPath,'utf8'),complete,'FOCUSED_PRODUCER_RECEIPT_ORACLE: '+extraSuite+':'+argument);otherFocused.push({suite:extraSuite,argument,exitCode:status,completeReceiptUnchanged:true});}
+  const failed=await runVerifier(process.execPath,[path.join(cwd,extraSuite),'--unrecognized-control'],{cwd,env:{...env,SCHEDULING_FIXTURE_MODE:'failed-child'},evidenceDirectory:path.join(cwd,'focused-runner'),timeout:30000});assert.equal(failed.status,1);assert.equal(JSON.parse(fs.readFileSync(extraPath,'utf8')).complete,false,'FOCUSED_PRODUCER_SCOPE_ORACLE');
+  const restored=await runVerifier(process.execPath,[path.join(cwd,extraSuite)],{cwd,env,evidenceDirectory:path.join(cwd,'focused-runner'),timeout:30000});assert.equal(restored.status,0);assert.equal(JSON.parse(fs.readFileSync(extraPath,'utf8')).complete,true,'FOCUSED_PRODUCER_RESTORE_ORACLE');
+ }
+ return {...result,focusedChildren,otherFocused,unrecognizedFlagStillRecorded:true,restoredDefaultRecorded:true};
 }

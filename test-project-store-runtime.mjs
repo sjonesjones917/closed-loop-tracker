@@ -56,10 +56,21 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
  return {runtime,rows,copy,store:runtime.closedLoopProjectStore,engine:runtime.closedLoopWorkflowEngine,core:runtime.closedLoopCore,ingestion:runtime.closedLoopResponseIngestion,prompts:runtime.closedLoopPromptEngine};
 }
 
+// UI-only initial state plus the actual scope matcher. These are not sharing
+// decisions; the review/authorization store boundary remains explicit in tests.
+export function bindHandoffReviewUiState(runtime,{source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8')}={}){
+ if(!Object.hasOwn(runtime,'handoffReview'))runtime.handoffReview=null;
+ if(!Object.hasOwn(runtime,'handoffNavigationSequence'))runtime.handoffNavigationSequence=0;
+ const first=source.indexOf('function handoffSelection('),last=source.indexOf('function retainHandoffReview(',first);
+ if(first<0||last<=first)throw new Error('The actual handoff review scope dependency is unavailable.');
+ vm.runInContext(source.slice(first,last),runtime,{filename:'app-core.js:handoff-view-scope'});
+}
+
 // Complete actual destination-view dependencies for extracted lifecycle owners.
 // DOM/history plumbing remains explicit; canonical storage and activation policy do not.
 export function bindProjectActivationUi(r,{source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8')}={}){
  const t=r.runtime,store=r.store||t.projectStore,copy=r.copy||t.clone;
+ bindHandoffReviewUiState(t,{source});
  const defaults={schema:t.closedLoopWorkflowSchema,views:['Overview','Project','Workflow','Records','Files','Release'],operationSelection:{},runSelection:{},responseFileSelection:{},fileSelectionDrafts:{},replacementReview:null,pendingBackupAction:null,responseActionFailure:null,promptPreviewCache:null,historyBrowseState:null,historyDestination:null,savedDraftView:null,savedViewSignature:null,historyState:{activeId:null},presentationActions:null,acceptanceSession:null,projectSelectionSequence:0,quarantinedProjects:[],CSS:{escape:String},takeBackupPassphrase:()=>null,$:()=>null,document:{querySelectorAll:()=>[],querySelector:()=>null},window:{scrollX:0,scrollY:0,scrollTo(){}},requestAnimationFrame:fn=>fn(),withStorageActivity:async(_label,fn)=>fn(),render(){},refreshProjectStorage:async()=>{},writeBrowserEntry(){},recordCommittedBoundary:async()=>{}};
  for(const [name,value]of Object.entries(defaults))if(!Object.hasOwn(t,name))t[name]=value;
  if(!t.document.querySelectorAll)t.document.querySelectorAll=()=>[];

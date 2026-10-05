@@ -2,12 +2,14 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
-import {deferredDefinitionRestorationFixture,deferredReviewedPrerequisiteFixture,deferredDefinitionAdmissionFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
+import {authorizeFixtureHandoff,deferredDefinitionRestorationFixture,deferredReviewedPrerequisiteFixture,deferredDefinitionAdmissionFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 
 // These cases exercise the actual producer, saved instruction and ZIP boundary.
 // Later-stage prerequisite flags are an explicit synthetic prompt projection;
 // they are not evidence that the preceding stages ran or could complete.
+const prerequisiteProjection=";(()=>{const e=globalThis.closedLoopWorkflowEngine;globalThis.closedLoopWorkflowEngine=Object.freeze({...e,recalculate(p,options){const out=e.recalculate(p,options),stage=globalThis.__syntheticProducerPriorStage;if(Number.isInteger(stage)&&stage>=8&&stage<30){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}return out;}});})();";
+function producerRuntime({sourceOverrides={}}={}){const source=sourceOverrides['workflow-engine.js']??fs.readFileSync('workflow-engine.js','utf8');return projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':source+prerequisiteProjection}});}
 const expectedOperations=[...Array.from({length:23},(_,i)=>({stage:i+8,operation:'EXECUTE_FAILURE_TEST',family:'failureTests'})),...Array.from({length:15},(_,i)=>({stage:i+16,operation:'EXECUTE_REGRESSION',family:'regressions'}))];
 const ordinarySentinels={8:'Complete only when one coherent current production instruction',9:'Complete only after an independent reviewer has reviewed every material clause',10:'Complete only when the human has selected the authorized candidate components',11:'This response is for exactly one application-reserved run lane',12:'Verify only the application-listed missing REQ_ID × RUN_ID × TEST_ID cells',13:'Compare all ten executions. Never discard a run.',14:'Root-cause every current material defect supplied',15:'Convert every confirmed current defect into a permanent regression definition',16:'Correct the root cause only at the earliest defective layer',17:'Perform only the named Stage 17 operation for the new corrected ten-run iteration',18:'Evaluate convergence only from the latest completed current iteration',19:'Perform only the named unchanged-confirmation operation on an unchanged converged candidate',20:'Freeze the production baseline only after the supplied unchanged-confirmation evidence',21:'Generate the complete approved deliverable.',22:'Handle only deterministic verification of the current finished product',23:'Perform only independent meaning-based verification for the exact current Stage 23',24:'Perform independent adversarial verification only.',25:'Inspect only the exact final representations, views, transformations',26:'Reconcile process evidence and product evidence only.',27:'Review the complete current release evidence only.',28:'No external agent operation is required for the authoritative byte-identity decision.',29:'Agent investigation may locate missing evidence only.',30:'Preserve failures permanently only.'};
 
@@ -31,26 +33,28 @@ function packageCarrierContract(r,packet,{stage,operation,family}){
  assert(!instruction.includes('A successful response requires its first FINISHED_PRODUCT slot.'),oracle+' unrelated output instruction');
  const blocks=[];for(const match of instruction.matchAll(/BEGIN_UNTRUSTED_DATA_BLOCK\s*([\s\S]*?)\s*END_UNTRUSTED_DATA_BLOCK/g))blocks.push(JSON.parse(match[1]));
  for(const file of manifest.contextFiles){const member=members.find(row=>row.canonicalPath===file.path);assert(member,oracle+' context bytes');const text=Buffer.from(member.bytes).toString('utf8');assert.equal(h.sha256Text(text),file.sha256,oracle+' context identity');blocks.push(...JSON.parse(text).members);}
- const bindingBlocks=blocks.filter(block=>block.sourceIdentity==='APPLICATION_DEFERRED_EXECUTION_BINDING');assert.equal(bindingBlocks.length,1,oracle+' selected binding carrier');const binding=JSON.parse(bindingBlocks[0].value);assert.deepEqual(r.copy(binding),r.copy(prompt.contextManifest.deferredExecutionBinding),oracle+' bound manifest context');
+ const binding=manifest.deferredExecutionBinding;assert(binding,oracle+' exact binding in actual manifest');assert.deepEqual(r.copy(binding),r.copy(prompt.contextManifest.deferredExecutionBinding),oracle+' bound manifest context');assert.equal(binding.projectRevision,manifest.scope.projectRevision,oracle+' current transport revision');
+ const materialBlocks=blocks.filter(block=>block.sourceIdentity==='APPLICATION_DEFERRED_EXECUTION_MATERIAL');assert.equal(materialBlocks.length,1,oracle+' selected logical binding carrier');const material=JSON.parse(materialBlocks[0].value),{projectRevision,...expectedMaterial}=binding;assert.deepEqual(r.copy(material),r.copy(expectedMaterial),oracle+' exact material except owned transport revision');assert(!Object.hasOwn(material,'projectRevision'),oracle+' transport revision must not churn material authorization');assert(instruction.includes('manifest.deferredExecutionBinding'),oracle+' actor must echo the complete actual manifest binding');
  const collection=key=>{const block=blocks.find(row=>row.sourceIdentity==='collection.'+key);assert(block,oracle+' required collection '+key);return JSON.parse(block.value).records;};
  assert.deepEqual(collection(family).map(row=>row.id),[binding.subjectId],oracle+' exact definition');assert.deepEqual(collection('tests').map(row=>row.id),[binding.testId],oracle+' reviewed test');
  assert(collection('requirements').some(row=>row.id===binding.requirementId||row.id===collection(family)[0].fields.REQ_ID),oracle+' governing requirement');
  assert.equal(binding.fixture,'VERIFIED',oracle+' exact preserved fixture');
  for(const expected of prompt.contextManifest.executionHandoff.send){const artifact=manifest.artifacts.find(row=>row.artifactId===expected.artifactId),member=members.find(row=>row.canonicalPath.startsWith('artifacts/'+expected.artifactId+'/'));assert(artifact&&member,oracle+' declared bytes');assert.equal(member.bytes.length,expected.byteSize,oracle+' exact byte size');}
  for(const label of ({11:['outputs from other runs','reviewer feedback'],12:['other verifiers’ determinations','root-cause analysis'],23:['Stage 21 generator correctness claims','adversarial findings'],24:['generator reasoning or self-evaluation','prior reviewer conclusions that tell the adversarial reviewer what to find']}[stage]||[]))assert(prompt.contextManifest.executionHandoff.withhold.some(row=>row.artifactIdOrCategory===label),oracle+' isolation policy '+label);
- return {operationId:stage+':'+operation,stage,family,actualSavedZip:true,packageSha256:packet.packageSha256,instructionSha256:prompt.bodySha256,bindingSubjectId:binding.subjectId,bindingTestId:binding.testId,contextFiles:manifest.contextFiles.length,fixturePreserved:true,operationOnlyInstructions:true,receiptOnlyContract:true,supportingEvidenceSlotsOnly:true,roleIsolationRetained:true,syntheticPrerequisiteProjection:stage!==8,stageCompletionClaimed:false};
+ return {operationId:stage+':'+operation,stage,family,actualSavedZip:true,packageSha256:packet.packageSha256,instructionSha256:prompt.bodySha256,bindingSubjectId:binding.subjectId,bindingTestId:binding.testId,contextFiles:manifest.contextFiles.length,fixturePreserved:true,operationOnlyInstructions:true,receiptOnlyContract:true,supportingEvidenceSlotsOnly:true,roleIsolationRetained:true,syntheticPrerequisiteProjection:stage!==8,priorStageExecutionClaimed:false,...(stage!==8?{prerequisiteProjection:{stage:stage-1,fields:['status','gate'],sourceOverride:prerequisiteProjection}}:{}),stageCompletionClaimed:false};
 }
 
 async function buildPacket(r,p,stage,operation,{projectPrerequisite=false}={}){
+ r.runtime.__syntheticProducerPriorStage=projectPrerequisite?stage-1:null;
  let saved=await r.store.readProject(p.job.JOB_ID)||await r.store.writeProject(p,{createOnly:true,expectedProjectRevision:0}),draft=r.copy(saved);draft.activeStage=stage;
  if(projectPrerequisite){draft.stages[stage-1].status='COMPLETE';draft.stages[stage-1].gate=r.copy({complete:true,blocked:false,reasons:[]});}
  const issued=r.prompts.reserveAndBuildPromptRecord(draft,stage,{operation}).prompt;saved=await r.store.writeProject(draft,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});
- const prompt=saved.projectData.generatedPrompts.find(row=>row.instructionId===issued.instructionId),pkg=await r.store.createExecutionPackage({jobId:saved.job.JOB_ID,stage,operation,instructionId:prompt.instructionId}),members=readStoreArchive(new Uint8Array(await pkg.blob.arrayBuffer())),manifest=JSON.parse(Buffer.from(members.find(row=>row.canonicalPath==='manifest.json').bytes)),instruction=Buffer.from(members.find(row=>row.canonicalPath==='instruction.txt').bytes).toString('utf8');
+ const authorized=await authorizeFixtureHandoff(r,{project:saved,prompt:saved.projectData.generatedPrompts.find(row=>row.instructionId===issued.instructionId)});saved=authorized.project;const prompt=authorized.prompt,pkg=await r.store.createExecutionPackage(authorized.request),members=readStoreArchive(new Uint8Array(await pkg.blob.arrayBuffer())),manifest=JSON.parse(Buffer.from(members.find(row=>row.canonicalPath==='manifest.json').bytes)),instruction=Buffer.from(members.find(row=>row.canonicalPath==='instruction.txt').bytes).toString('utf8');
  return {prompt,manifest,members,instruction,packageSha256:await r.runtime.closedLoopHash.sha256Bytes(pkg.blob)};
 }
 
 export async function verifyDeferredByteCarrierContracts(){
- const r=projectStoreRuntime(),e=r.engine,h=r.runtime.closedLoopHash,prefix=deferredReviewedPrerequisiteFixture(r,'nativeStage7'),instant=prefix.archivedFixtureClockUtc;
+ const r=producerRuntime(),e=r.engine,h=r.runtime.closedLoopHash,prefix=deferredReviewedPrerequisiteFixture(r,'nativeStage7'),instant=prefix.archivedFixtureClockUtc;
  assert.equal(new Date(instant).toISOString(),instant);r.runtime.Date=class extends Date{constructor(...args){super(...(args.length?args:[instant]));}static now(){return Date.parse(instant);}};
  const native=e.recordsForCurrentScope(prefix.project,'tests').find(row=>row.temporaryKey==='compat-due-native-failureTests'),fixtureArtifactId=e.recordValue(native,'EXECUTABLE_INPUT_BINDINGS').FIXTURE.artifactId;
  const admitted=await deferredDefinitionAdmissionFixture(r,{prefix,family:'failureTests',testKey:'compat-due-external-failureTests',fixtureArtifactId}),observations=[];
@@ -70,13 +74,15 @@ export async function verifyDeferredByteCarrierContracts(){
 }
 
 async function conditionalCase(spec,sourceOverrides={}){
- const r=projectStoreRuntime({sourceOverrides}),{p}=await deferredDefinitionRestorationFixture(r,{family:spec.family,executionStage:spec.stage});
+ const r=producerRuntime({sourceOverrides}),{p}=await deferredDefinitionRestorationFixture(r,{family:spec.family,executionStage:spec.stage});
  if(spec.stage===8)for(let prior=1;prior<=7;prior++)assert.equal(r.engine.gate(prior,p).complete,true,'DEFERRED_PRODUCER_GENUINE_PREFIX_ORACLE');
  return packageCarrierContract(r,await buildPacket(r,p,spec.stage,spec.operation,{projectPrerequisite:spec.stage!==8}),spec);
 }
 
+export async function verifyDeferredHandoffMaterialContract(){return conditionalCase(expectedOperations[0]);}
+
 export async function verifyDeferredFeedbackScope(){
- const r=projectStoreRuntime(),{p}=await deferredDefinitionRestorationFixture(r,{family:'failureTests',executionStage:8}),projected=r.copy(p);
+ const r=producerRuntime(),{p}=await deferredDefinitionRestorationFixture(r,{family:'failureTests',executionStage:8}),projected=r.copy(p);
  // This is a consumer-only projection of an accepted receipt's still-incomplete
  // ordinary stage, not an accepted-change or persistence fixture.
  projected.projectData.acceptedChanges.push(r.copy({stage:8,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'EXECUTE_FAILURE_TEST'}));
@@ -90,7 +96,7 @@ export async function verifyDeferredFeedbackScope(){
 }
 
 export async function verifyDeferredProducerContracts(){
- const source=fs.readFileSync('prompt-engine.js','utf8'),r=projectStoreRuntime(),registered=Object.values(r.runtime.closedLoopWorkflowSchema.STAGE_OPERATION_REGISTRY).filter(row=>row.deferredSubjectFamily).map(row=>row.stage+':'+row.operation).sort();
+ const source=fs.readFileSync('prompt-engine.js','utf8'),r=producerRuntime(),registered=Object.values(r.runtime.closedLoopWorkflowSchema.STAGE_OPERATION_REGISTRY).filter(row=>row.deferredSubjectFamily).map(row=>row.stage+':'+row.operation).sort();
  assert.deepEqual(registered,expectedOperations.map(row=>row.stage+':'+row.operation).sort(),'DEFERRED_PRODUCER_REGISTRY_POPULATION_ORACLE');
  const feedbackScope=await verifyDeferredFeedbackScope(),independentRetry=await verifyDeferredIndependentRetryContracts(),negatives=[];
  for(const [name,spec,anchor,replacement,oracle]of [
@@ -98,7 +104,7 @@ export async function verifyDeferredProducerContracts(){
   ['ordinary-stage21-output-slot',expectedOperations.find(row=>row.stage===21),'product=!deferred&&Number(stage)===21','product=Number(stage)===21','DEFERRED_PRODUCER_FILE_POLICY_ORACLE']
  ]){assert.equal(source.split(anchor).length,2);let caught;try{await conditionalCase(spec,{'prompt-engine.js':source.replace(anchor,replacement)});}catch(error){caught=error;}assert(caught?.message.includes(oracle),'DEFERRED_PRODUCER_MUTANT_OWNER_ORACLE: '+name+' '+caught?.stack);negatives.push({name,intendedFailure:true,message:caught.message});}
  const observations=[];for(const spec of expectedOperations)observations.push(await conditionalCase(spec));
- const ordinary=projectStoreRuntime(),{p}=await deferredDefinitionRestorationFixture(ordinary,{family:'failureTests',executionStage:8}),control=await buildPacket(ordinary,p,8,'COMPLETE');assert(control.instruction.includes(ordinarySentinels[8]),'DEFERRED_PRODUCER_ORDINARY_CONTROL_ORACLE');assert(!control.instruction.includes('OPERATION COMPLETION BOUNDARY'));assert(control.manifest.responseContract.agentWritableCollections.includes('instructions'));
+ const ordinary=producerRuntime(),{p}=await deferredDefinitionRestorationFixture(ordinary,{family:'failureTests',executionStage:8}),control=await buildPacket(ordinary,p,8,'COMPLETE');assert(control.instruction.includes(ordinarySentinels[8]),'DEFERRED_PRODUCER_ORDINARY_CONTROL_ORACLE');assert(!control.instruction.includes('OPERATION COMPLETION BOUNDARY'));assert(control.manifest.responseContract.agentWritableCollections.includes('instructions'));
  const ordinaryPolicies=[[11,'EXECUTE_RUN','RUN_OUTPUT',0],[21,'COMPLETE','FINISHED_PRODUCT',1]].map(([stage,operation,role,required])=>{const policy=ordinary.prompts.responseContractDescriptor(stage,operation).returnedFilePolicy;assert.equal(policy.role,role);assert.equal(policy.requiredFileCount,required);return {stage,operation,role,requiredFileCount:required};});
  return {case:'CONDITIONAL_OPERATION_PRODUCER_CONTRACTS',passed:true,expectedOperations:38,observedOperations:observations.length,observations,negatives,feedbackScope,independentRetry,ordinaryStage8SavedZip:true,ordinaryPolicies,synthetic:true,actualBrowser:false,realExternalActor:false,boundary:'Actual production reserve/build, saved canonical instruction, createExecutionPackage and every extracted instruction/manifest/context carrier. Stage8 uses genuinely completed archived synthetic predecessors. Later stages explicitly project prerequisite status only to isolate the producer; those flags prove no preceding execution, admission, stage completion or release.'};
 }
@@ -107,7 +113,7 @@ export async function verifyDeferredProducerContracts(){
 // withholding earlier conclusions in every exported carrier. These are actual
 // rejected/accepted file journeys; the executor observations remain synthetic.
 async function deferredReviewRetryJourney({accepted=false,sourceOverrides={}}={}){
- const r=projectStoreRuntime({sourceOverrides}),e=r.engine,i=r.ingestion,{p:initial}=await deferredDefinitionRestorationFixture(r,{family:'failureTests'});
+ const r=producerRuntime({sourceOverrides}),e=r.engine,i=r.ingestion,{p:initial}=await deferredDefinitionRestorationFixture(r,{family:'failureTests'});
  let packet=await buildPacket(r,initial,8,'EXECUTE_FAILURE_TEST'),p=await r.store.readProject(initial.job.JOB_ID);
  const {prompt,manifest}=packet,marker=accepted?'PRIOR_ACCEPTED_UNDETERMINED_REVIEW_CONCLUSION':'PRIOR_REJECTED_REVIEW_CONCLUSION',draft=r.copy(p),files=[];
  const response=await deferredFailureExecutionResponseFixture({schema:r.runtime.closedLoopWorkflowSchema,hash:r.runtime.closedLoopHash},manifest,prompt.contextManifest.deferredExecutionBinding),envelope=response.envelope;

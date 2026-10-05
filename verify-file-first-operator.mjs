@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture,evidence,stageHandoffRecoveryProof,scalarFor,recordProposal,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
-import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindAcceptanceUi,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
@@ -11,6 +12,14 @@ import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
 // History is exercised by verify-recoverable-history and the browser recovery gate.
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
+
+// Deliberately isolated coordinator fixtures model an already reviewed handoff.
+// They assert scheduling/context/CAS behavior, not disclosure authority. Actual
+// store/ZIP cases below use the registered synthetic human-decision command.
+function bindAuthorizedCoordinatorFixture(runtime){
+ bindHandoffReviewUiState(runtime);runtime.runSelection||={};runtime.selectedOperation||=()=> 'COMPLETE';runtime.promptOptions||=()=>({operation:'COMPLETE'});runtime.displayedStageAction||=()=>({actionType:'CONTINUE_AGENT_CONVERSATION'});runtime.stagePlanItems||=()=>[];runtime.projectStore={...runtime.projectStore,prepareExecutionPackageReview:async()=>({authorization:{allowed:true}})};
+}
+
 
 let app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');if(process.argv.includes('--fault=selected-operation')){const anchor='if(!registration||explicit===action.operation)return action;';assert.equal(app.split(anchor).length-1,1);app=app.replace(anchor,'if(true)return action;');}
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
@@ -37,6 +46,7 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
 // Exercise the application's one shared pending-action controller.
 await import('./verify-operator-action-lifecycle.mjs');
+await import('./verify-handoff-authorization-ui.mjs');
 
 // User input belongs to the project form; a successful save must lead to the
 // current workflow, including an unchanged save. Repeated clicks share one save.
@@ -73,6 +83,7 @@ await import('./verify-operator-action-lifecycle.mjs');
     withStorageActivity:async(_label,work)=>work(),document:{querySelectorAll:()=>[]},$:()=>null,
     savePromptRecord:async()=>{saves++;await new Promise(resolve=>release=resolve);return {instructionId:'SAME'};}});
   vm.runInContext(app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
+  bindAuthorizedCoordinatorFixture(runtime);
   const first=runtime.exportAttempt(()=>downloads++,'stage-files'),duplicate=runtime.exportAttempt(()=>downloads++,'stage-files');
   await new Promise(resolve=>setTimeout(resolve,5));assert.equal(saves,1);release();
   await Promise.all([first,duplicate]);
@@ -131,6 +142,10 @@ await import('./verify-operator-action-lifecycle.mjs');
   const saved=runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
   assert.doesNotMatch(runtime.ui.workflow(),/Regenerated and saved for the remaining work/,'INSTRUCTION_STATE_ORACLE: The first saved instruction was mislabeled as regenerated.');
   runtime.closedLoopWorkflowEngine.transitionOperationReservation(saved.reservation,'SUPERSEDED');
+  runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
+  assert.doesNotMatch(runtime.ui.workflow(),/Regenerated and saved for the remaining work/,'INSTRUCTION_STATE_ORACLE: reissuing identical material must not invent additional agent work.');
+  other.job.EXACT_USER_OBJECTIVE_VERBATIM='A changed human objective requires a new instruction.';
+  runtime.closedLoopWorkflowEngine.recordHumanInputVersion(other,['EXACT_USER_OBJECTIVE_VERBATIM'],'SYNTHETIC_OPERATOR');
   runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
   assert.match(runtime.ui.workflow(),/Regenerated and saved for the remaining work/, 'INSTRUCTION_STATE_ORACLE: The existing instruction text does not identify the saved replacement.');
   console.log(JSON.stringify({contextFirstPreview:true,previewDoesNotCommit:true,previewBuildsPerRender:1,unavailableStageChecks:29,staleRevisionAndProjectContextRejected:true,presentationCases}));
@@ -293,6 +308,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   const reporterStart=app.indexOf('const UNCONFIRMED_ACTION_OUTCOME_MESSAGE=');
   vm.runInContext(app.slice(reporterStart,app.indexOf('const storageActivities=',reporterStart)),runtime);
   vm.runInContext(app.slice(app.indexOf('async function savePromptRecord('),app.indexOf('function promptTransportFilename('))+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
+  bindAuthorizedCoordinatorFixture(runtime);
   let exported;
   await runtime.exportAttempt(record=>{exported=record;downloaded++;});
   assert.equal(downloaded,1,`Stage 05 still blocks export on manual bookkeeping: ${notice.textContent}`);
@@ -356,6 +372,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(x=>Number(x.stage)===n&&!x.invalidatedBy&&Number(x.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
   vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','saveRequiredContinuation','restoreStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  bindAuthorizedCoordinatorFixture(runtime);
   assert.equal(vm.runInContext('currentPromptRecord(6)?.instructionId',runtime),saved.instructionId,'Raw capture incorrectly stales the still-open instruction and blocks manifest re-export.');
   const priorRequirements=runtime.current.job.CURRENT_REQUIREMENTS_VERSION;runtime.current.job.CURRENT_REQUIREMENTS_VERSION='CHANGED-AUTHORITY';
   assert.equal(vm.runInContext('currentPromptRecord(6)',runtime),null,'A changed authority scope must not reuse an older instruction.');runtime.current.job.CURRENT_REQUIREMENTS_VERSION=priorRequirements;
@@ -418,8 +435,18 @@ const r=projectStoreRuntime(),t=r.runtime,s=fs.readFileSync(process.env.APP_SOUR
 const extract=(a,b)=>s.slice(s.indexOf(a),s.indexOf(b,s.indexOf(a)+a.length));
 t.fixtureRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:r.engine,prompts:r.prompts,ingestion:r.ingestion,store:r.store};
 await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture].map(f=>f.toString()).join('\n')+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
-const initial=await r.store.writeProject(t.fixture,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
-bindAcceptanceUi(r,initial,null);
+// The accumulated helper seeds historical reservations before entering the
+// store. Advance through ordinary saves to its existing revision frontier so
+// fresh authorization cannot reuse a historical expired reservation identity.
+const seededRevision=t.fixture.revision;
+let initial=await r.store.writeProject(t.fixture,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
+while(initial.revision<seededRevision)initial=await r.store.writeProject(initial,{expectedProjectRevision:initial.revision,skipUnchanged:false});
+const prepare=r.copy(initial),continuation=r.ingestion.prepareStageContinuation(prepare,{stage:4,owningTabInstance:'SYNTHETIC_AUTHORIZED_FILE_FIRST'}),issued=continuation.prompt;assert(issued,'The accumulated fixture must have a current instruction before permission setup.');initial=await r.store.writeProject(prepare,{expectedProjectRevision:initial.revision});
+const authorized=await authorizeSyntheticHandoff(r,{project:initial,prompt:issued});
+// One ordinary subsequent save reproduces the stale reservation that startup
+// must replace, after explicit fixture authorization and before the baseline.
+initial=await r.store.writeProject(authorized.project,{expectedProjectRevision:authorized.project.revision,skipUnchanged:false});
+bindAcceptanceUi(r,initial,null);bindHandoffReviewUiState(t,{source:s});
 Object.assign(t,{schema:t.closedLoopWorkflowSchema,recordValue:r.engine.recordValue,stageContinuationErrors:new Map(),stagePlanItems:(stage,operation)=>r.engine.stageTestExecutionPlan(t.current,{stage,operation}).items,displayedStageAction:stage=>r.engine.operationalNextAction(t.current,stage),announce(){},reportActionFailure(e){throw e;},downloadBlob(blob,filename){t.downloads.push({blob,filename});},downloads:[],$:()=>null});
 vm.runInContext(extract('function canonicalCurrentStage(','function displayedStageAction(')+extract('function stageOperations(','// A saved response may be inspected independently.')+extract('async function savePromptRecord(','function promptTransportFilename(')+extract('let promptExportInFlight=','async function exportPromptContext(')+extract('function selectStageContinuation(','async function materializeProject('),t);
 const snapshots={initial};
@@ -462,6 +489,8 @@ snapshots.restored=await r.store.importPackage(backup);
     return {contextBytes:file.byteSize,tailPreserved:(await file.blob.text()).includes('EXECUTION-CONTEXT-TAIL'),revision:saved.revision};
   })()`);
   assert(executionContext.contextBytes>262144&&executionContext.tailPreserved,'The accumulated execution fixture did not persist the exact large correction context: '+JSON.stringify(executionContext));
+  const beforeLarge=await r.store.readProject(initial.job.JOB_ID),largePrompt=beforeLarge.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1);
+  const authorizedLarge=await authorizeSyntheticHandoff(r,{project:beforeLarge,prompt:largePrompt});t.current=authorizedLarge.project;
   const largeExecution=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,hash=closedLoopHash,before=await store.readProject('PROBE-5922'),nativeRead=Blob.prototype.arrayBuffer;let sourceReadBytes=0,largestRead=0,result;Blob.prototype.arrayBuffer=function(){sourceReadBytes+=this.size;largestRead=Math.max(largestRead,this.size);return nativeRead.call(this);};try{result=await store.createExecutionPackage({jobId:before.job.JOB_ID,stage:4,operation:'COMPLETE'});}finally{Blob.prototype.arrayBuffer=nativeRead;}const archiveBytes=new Uint8Array(await result.blob.arrayBuffer()),members=(${readStoreArchive.toString()})(archiveBytes),files=new Map(members.map(member=>[member.canonicalPath,member.bytes])),manifest=JSON.parse(new TextDecoder().decode(files.get('manifest.json'))),{packageManifestSha256,...body}=manifest,sourceBytes=manifest.members.reduce((sum,file)=>sum+file.byteSize,0),after=await store.readProject(before.job.JOB_ID),contexts=manifest.members.filter(file=>file.role==='PROMPT_CONTEXT');return {packageVerified:hash.sha256Value(body)===packageManifestSha256&&await hash.sha256Bytes(archiveBytes)===result.packageSha256,instructionVerified:await hash.sha256Bytes(files.get('instruction.txt'))===manifest.instructionFullTextSha256,contextVerified:(await Promise.all(contexts.map(async file=>files.get(file.canonicalPath)?.byteLength===file.byteSize&&await hash.sha256Bytes(files.get(file.canonicalPath))===file.sha256))).every(Boolean),contextFiles:contexts.length,sourceBytes,sourceReadBytes,largestRead,canonicalUnchanged:after.projectSha256===before.projectSha256};})()`);
   assert(largeExecution.packageVerified&&largeExecution.instructionVerified&&largeExecution.contextVerified&&largeExecution.contextFiles>0&&largeExecution.largestRead<=65536&&largeExecution.sourceReadBytes<=largeExecution.sourceBytes*4&&largeExecution.canonicalUnchanged,'Accumulated execution package changed exact bytes, canonical state, or reread its file sources: '+JSON.stringify(largeExecution));
   console.log(JSON.stringify({largeExecutionPackage:{...largeExecution,fixture:executionContext}}));

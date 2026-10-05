@@ -23,6 +23,9 @@ const clone=value=>value===undefined?undefined:(typeof structuredClone==='functi
 // Readiness uses verified bytes from this storage context, never a persisted
 // success flag. Entries expire on observed byte changes and across tab changes.
 let artifactCustody=new Map();
+// Private observations belong to the exact returned row and immutable Blob.
+// They are never persisted or accepted from caller-supplied metadata.
+const artifactReadObservations=new WeakMap();
 let custodyEpoch=0;
 const custodyInvalidations=new Map();
 const custodyKey=(jobId,artifactId)=>JSON.stringify([String(jobId),String(artifactId)]);
@@ -32,8 +35,14 @@ async function observeArtifactCustody(row,observedEpoch=custodyEpoch){
  if(!(row.blob instanceof Blob))return;
  const sha256=await hash.sha256Bytes(row.blob);
  if(row.blob.size!==row.byteSize||sha256!==row.sha256)return;
+ artifactReadObservations.set(row,{blob:row.blob,sha256,byteSize:row.blob.size});
  if((custodyInvalidations.get(String(row.jobId))||0)>observedEpoch)return;
  artifactCustody.set(key,{jobId:String(row.jobId),artifactId:String(row.artifactId),filename:row.filename,byteSize:row.blob.size,sha256});
+}
+async function observedArtifactDigest(row){
+ const observed=artifactReadObservations.get(row);
+ if(observed&&observed.blob===row.blob&&observed.byteSize===row.blob.size&&observed.byteSize===row.byteSize&&observed.sha256===row.sha256)return observed.sha256;
+ return hash.sha256Bytes(row.blob);
 }
 async function observeProjectArtifactCustody(project){
  const engine=globalThis.closedLoopWorkflowEngine,jobId=projectIdentity(project);
@@ -143,11 +152,23 @@ const PLACEHOLDER_REFERENCES=new Set(['','NONE','NOT APPLICABLE','UNKNOWN','PEND
 const equivalent=(left,right)=>Object.is(left,right)||(!(left===undefined||right===undefined)&&hash.sha256Value(left)===hash.sha256Value(right));
 function projectCollectionShapeIssues(project){return globalThis.closedLoopWorkflowSchema.projectShapeIssues(project,globalThis.closedLoopWorkflowEngine.ALL_COLLECTIONS);}
 function assertProjectCollectionShape(project){const issues=projectCollectionShapeIssues(project);if(issues.length){const error=storageError(`Canonical project integrity validation failed: ${issues.join(' | ')}`,'PROJECT_INTEGRITY_FAILED');error.issues=issues;throw error;}}
+// Preserve incomplete work, but never reinterpret a present canonical value as
+// a different type. Required-at-stage and actor authority remain separate rules.
+function canonicalFieldValueIssues(project){
+  const schema=globalThis.closedLoopWorkflowSchema,ingestion=globalThis.closedLoopResponseIngestion,issues=[];
+  if(!schema||!ingestion?.validateValue)return ['Schema and response-ingestion value validator are required for canonical field validation.'];
+  const check=(values,definitions,path)=>{for(const [name,definition]of Object.entries(definitions||{})){if(!Object.prototype.hasOwnProperty.call(values||{},name))continue;const found=[];ingestion.validateValue(definition,values[name],path+'/'+name,found,{maxTextFieldLength:Infinity,rejectPlaceholder:!['HUMAN','HUMAN_DECISION'].includes(definition.producer)});for(const issue of found)issues.push(path+'/'+name+': '+issue.message);}};
+  check(project?.job,schema.JOB_FIELDS,'/job');
+  for(const [stage,definitions]of Object.entries(schema.STAGE_FIELDS||{}))for(const carrier of ['agentData','humanData','acceptedData','derivedData'])check(project?.stages?.[stage]?.[carrier],definitions,'/stages/'+stage+'/'+carrier);
+  return issues;
+}
+function assertCanonicalFieldValues(project){const issues=canonicalFieldValueIssues(project);if(issues.length)throw Object.assign(storageError('Canonical project field validation failed: '+issues.join(' | '),'PROJECT_INTEGRITY_FAILED'),{issues});}
 function validateProjectIntegrity(project,{verifyDerived=true,verifyCachedProjection=true,projectionObservedAt=null}={}){
   const issues=[],schemaApi=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine;
   if(!project||typeof project!=='object')return {valid:false,issues:['Project is not an object.']};
   if(!schemaApi||!engine)return {valid:false,issues:['Workflow schema and engine are required for canonical project integrity validation.']};
   const collectionShapeIssues=projectCollectionShapeIssues(project);if(collectionShapeIssues.length)return {valid:false,issues:collectionShapeIssues};
+  const fieldValueIssues=canonicalFieldValueIssues(project);if(fieldValueIssues.length)return {valid:false,issues:fieldValueIssues};
   if(project.schema!==schemaApi.PROJECT_SCHEMA)issues.push(`Project schema ${project.schema||'UNKNOWN'} does not match ${schemaApi.PROJECT_SCHEMA}.`);
   if(project.workflow!==schemaApi.WORKFLOW_ID)issues.push(`Workflow ${project.workflow||'UNKNOWN'} does not match ${schemaApi.WORKFLOW_ID}.`);
   if(Number(project.stageCount)!==Number(schemaApi.STAGE_COUNT))issues.push(`Stage count ${project.stageCount} does not match ${schemaApi.STAGE_COUNT}.`);
@@ -345,6 +366,7 @@ async function writeOperationalProject(project,options={}){
   if(Number(options.expectedProjectRevision)!==Number(prior.revision)||!options.expectedStateSha256||options.expectedStateSha256!==prior.projectSha256)throw storageError('Project or pending response changed. Refresh it before retrying.','STALE_PROJECT_REVISION');
   const next=clone(project);delete next.projectSha256;
   assertProjectCollectionShape(next);
+  assertCanonicalFieldValues(next);
   if(Number(next.revision)!==Number(prior.revision))throw storageError('An operational event cannot advance the canonical revision.','OPERATIONAL_OWNERSHIP_VIOLATION');
   if(projectSha256(next)===prior.projectSha256)return prior;
   globalThis.closedLoopWorkflowEngine.recalculate(next);assertOperationalChange(prior,next);assertProjectIntegrity(next);
@@ -1063,6 +1085,7 @@ async function prepareProjectWrite(project,options={}){
   if(options.createOnly&&prior)throw storageError('This project already exists.','PROJECT_ALREADY_EXISTS');
   if(options.expectedStateSha256&&options.expectedStateSha256!==prior?.projectSha256)throw storageError('Project or pending response changed before preparation.','STALE_PROJECT_REVISION');
   assertProjectCollectionShape(next);
+  assertCanonicalFieldValues(next);
   if(options.skipUnchanged&&prior?.projectSha256===projectSha256(next)){await persistProjectPromptFiles(next);const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView});return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior.projectSha256,preparedHistory}};}
   for(const source of prior?.projectData?.migrationArchives||[])if(source?.kind===ORIGINAL_SOURCE_KIND&&source.schema===ORIGINAL_SOURCE_SCHEMA&&!next.projectData?.migrationArchives?.some(row=>equivalent(row,source)))throw storageError('An existing original-source archive cannot be changed or removed by a canonical save.','SOURCE_ARCHIVE_MUTATED');
   next.revision=(options.incrementRevision??true)?revision+1:revision;
@@ -1081,6 +1104,7 @@ async function prepareProjectWrite(project,options={}){
 async function writeProject(project,options={}){
   options={skipUnchanged:true,...options};
   if(useStoreWorker())return requestStoreWorker('WRITE_PROJECT',[project,options]);
+  assertCanonicalFieldValues(project);
   if(options.operational)return writeOperationalProject(project,options);
   if(!projectIdentity(project))throw new Error('A project without a JOB_ID cannot be committed.');
   const prepared=await prepareProjectWrite(project,options);fault('before-project-transaction');const tx=await openTransaction(options.creation?[PROJECTS,ARTIFACTS,META]:[PROJECTS,META],'readwrite');
@@ -1347,6 +1371,7 @@ function requiredProjectArtifactBytes(project){
   const contextIds=new Set();
   for(const prompt of project.projectData?.generatedPrompts||[])for(const file of prompt.contextManifest?.promptContext?.attachments||[]){const artifactId=promptContextArtifactId(id,file),identity=JSON.stringify([artifactId,file.filename,file.byteSize,file.sha256]);if(contextIds.has(identity))continue;contextIds.add(identity);expected.push({kind:'PROMPT_CONTEXT',artifactId,filename:file.filename,byteSize:file.byteSize,sha256:file.sha256});}
   for(const source of project.projectData?.migrationArchives||[])if(source?.kind===ORIGINAL_SOURCE_KIND&&source.schema===ORIGINAL_SOURCE_SCHEMA){
+    const descriptor=globalThis.closedLoopWorkflowSchema?.validateOriginalProjectSourceDescriptor?.(source);if(!descriptor?.valid)throw storageError('Original project source descriptor violates its schema-owned contract.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
     if(source.operational!==false||typeof source.artifactId!=='string'||source.artifactId!=='PROJECT-SOURCE-'+hash.sha256Value({jobId:id,sha256:source.sha256})||!Number.isSafeInteger(source.byteSize)||source.byteSize<0||typeof source.sha256!=='string'||!/^([a-f0-9]{64})$/.test(source.sha256)||typeof source.sourceSha256!=='string'||!/^([a-f0-9]{64})$/.test(source.sourceSha256)||typeof source.parsedPayloadSha256!=='string'||!/^([a-f0-9]{64})$/.test(source.parsedPayloadSha256)||!['UTF-8','UTF-16LE_CODE_UNITS'].includes(source.sourceEncoding)||!source.sourceLocation||typeof source.sourceLocation!=='object'||!source.parser?.identity||!source.parser?.version)throw storageError('Original project source metadata is invalid.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
     const utf16=source.sourceEncoding==='UTF-16LE_CODE_UNITS',location=source.sourceLocation;
     if(!['UNKNOWN','CREDENTIAL_SECRET'].includes(source.disclosureClassification)||source.filename!==source.artifactId+(utf16?'.json.utf16le':'.json')||source.mediaType!==(utf16?'application/octet-stream':'application/json')||Array.isArray(location)||typeof location.jsonPointer!=='string'||source.parser.version!=='1'||source.parser.identity!==(utf16?'closed-loop-legacy-json-reader':'closed-loop-project-package-json-reader')||(utf16?(!LEGACY_KEYS.includes(location.storageKey)||!/^($|\/[0-9]+)$/.test(location.jsonPointer)||!Number.isSafeInteger(location.codeUnitStart)||location.codeUnitStart<0||!Number.isSafeInteger(location.codeUnitEnd)||location.codeUnitEnd<=location.codeUnitStart||(location.codeUnitEnd-location.codeUnitStart)*2!==source.byteSize):(location.jsonPointer!=='/project'||location.containerEncoding!=='gzip')))throw storageError('Original project source provenance is invalid.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
@@ -1704,13 +1729,14 @@ async function readPromptContextFile(record,jobId,path='context.json'){
   const file=(record.contextManifest?.promptContext?.attachments||[]).find(file=>file.path===path);
   if(!file)throw storageError('The instruction does not authorize this context file.','PROMPT_CONTEXT_NOT_AUTHORIZED');
   const stored=await getArtifact(promptContextArtifactId(jobId,file));
-  if(!stored||String(stored.jobId)!==String(jobId)||stored.blob.size!==file.byteSize||stored.sha256!==file.sha256||await hash.sha256Bytes(stored.blob)!==file.sha256)throw storageError('Exact saved context bytes failed read-back verification.','PROMPT_CONTEXT_INTEGRITY_FAILED');
+  if(!stored||String(stored.jobId)!==String(jobId)||stored.blob.size!==file.byteSize||stored.sha256!==file.sha256||await observedArtifactDigest(stored)!==file.sha256)throw storageError('Exact saved context bytes failed read-back verification.','PROMPT_CONTEXT_INTEGRITY_FAILED');
   return {...file,blob:stored.blob};
 }
 
 // closed-loop-archive-profile/1: exact, uncompressed members with a fixed ZIP
 // representation. Blob parts retain bounded reads even for large source files.
-async function handoffArchive(members){
+const handoffCrcTable=(()=>{const table=new Uint32Array(256);for(let i=0;i<256;i++){let crc=i;for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);table[i]=crc;}return table;})();
+async function handoffArchive(members,crc32ByBlob){
   const encoder=new TextEncoder(),seen=[new Set(),new Set(),new Set()],entries=[];
   for(const member of members){
     const normalized=hash.normalizeFilename(member.canonicalPath,{allowPath:true});
@@ -1722,10 +1748,11 @@ async function handoffArchive(members){
   }
   if(entries.length>=65535)throw storageError('This handoff has too many members.','HANDOFF_ARCHIVE_LIMIT');
   entries.sort((left,right)=>{const a=left.name,b=right.name;for(let i=0;i<Math.min(a.length,b.length);i++)if(a[i]!==b[i])return a[i]-b[i];return a.length-b.length;});
-  const table=new Uint32Array(256);for(let i=0;i<256;i++){let crc=i;for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);table[i]=crc;}
+  const table=handoffCrcTable;
   const parts=[],central=[];let offset=0,centralSize=0;
   for(const entry of entries){
-    let crc=0xffffffff;for(let pos=0;pos<entry.blob.size;pos+=65536){const bytes=new Uint8Array(await hash.readWithDeadline(entry.blob.slice(pos,pos+65536).arrayBuffer(),'Reading handoff file'));for(const byte of bytes)crc=table[(crc^byte)&255]^(crc>>>8);}crc=(crc^0xffffffff)>>>0;
+    let crc=crc32ByBlob?.get(entry.blob);
+    if(crc===undefined){crc=0xffffffff;for(let pos=0;pos<entry.blob.size;pos+=65536){const bytes=new Uint8Array(await hash.readWithDeadline(entry.blob.slice(pos,pos+65536).arrayBuffer(),'Reading handoff file'));for(const byte of bytes)crc=table[(crc^byte)&255]^(crc>>>8);}crc=(crc^0xffffffff)>>>0;}
     const local=new Uint8Array(30+entry.name.length),lv=new DataView(local.buffer);
     lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0x800,true);lv.setUint16(12,33,true);lv.setUint32(14,crc,true);lv.setUint32(18,entry.blob.size,true);lv.setUint32(22,entry.blob.size,true);lv.setUint16(26,entry.name.length,true);local.set(entry.name,30);
     const directory=new Uint8Array(46+entry.name.length),dv=new DataView(directory.buffer);
@@ -1737,7 +1764,37 @@ async function handoffArchive(members){
   return new Blob([...parts,...central,end],{type:'application/zip'});
 }
 
-async function createExecutionPackage({project=null,jobId=null,stage,operation=null,testIds=[],productId=null,runId=null,reviewerAliasContext=null,instructionId=null}={}){
+// Byte observations are separate from disclosure authority. A marker is a
+// potential credential indicator; only the human/schema owner can resolve a
+// harmless example, and an actual CREDENTIAL_SECRET classification never can.
+async function scanHandoffMembers(members,{crc32ByBlob=null}={}){
+  const contract=globalThis.closedLoopWorkflowSchema?.HANDOFF_SECRET_SCAN_CONTRACT;
+  if(!contract?.version||!Array.isArray(contract.patterns)||!contract.patterns.length)throw storageError('The handoff byte-scan contract is unavailable.','HANDOFF_SCAN_CONTRACT_UNAVAILABLE');
+  const signatures=[];
+  for(const rule of contract.patterns){
+    if(typeof rule.ruleId!=='string'||!rule.ruleId||typeof rule.asciiPattern!=='string'||!rule.asciiPattern||/[^\x00-\x7f]/.test(rule.asciiPattern))throw storageError('The handoff byte-scan contract is invalid.','HANDOFF_SCAN_CONTRACT_UNAVAILABLE');
+    const ascii=new TextEncoder().encode(rule.asciiPattern),little=new Uint8Array(ascii.length*2),big=new Uint8Array(ascii.length*2);for(let i=0;i<ascii.length;i++){little[i*2]=ascii[i];big[i*2+1]=ascii[i];}
+    for(const bytes of [ascii,little,big])signatures.push({ruleId:rule.ruleId,bytes});
+  }
+  const overlap=Math.max(...signatures.map(rule=>rule.bytes.length))-1,findings=[];
+  for(const member of members){
+    const found=new Map();let carry=new Uint8Array(),crc=0xffffffff;
+    for(let offset=0;offset<member.blob.size;offset+=65536){
+      const next=new Uint8Array(await hash.readWithDeadline(member.blob.slice(offset,offset+65536).arrayBuffer(),'Inspecting outbound file bytes')),bytes=new Uint8Array(carry.length+next.length);bytes.set(carry);bytes.set(next,carry.length);const start=offset-carry.length;
+      if(crc32ByBlob)for(const byte of next)crc=handoffCrcTable[(crc^byte)&255]^(crc>>>8);
+      for(const rule of signatures){
+        if(found.has(rule.ruleId)&&found.get(rule.ruleId)<start)continue;
+        let at=bytes.indexOf(rule.bytes[0]);
+        while(at>=0&&at+rule.bytes.length<=bytes.length){let match=true;for(let index=1;index<rule.bytes.length;index++)if(bytes[at+index]!==rule.bytes[index]){match=false;break;}if(match){const absolute=start+at;if(!found.has(rule.ruleId)||absolute<found.get(rule.ruleId))found.set(rule.ruleId,absolute);break;}at=bytes.indexOf(rule.bytes[0],at+1);}
+      }
+      carry=bytes.slice(Math.max(0,bytes.length-overlap));
+    }
+    if(crc32ByBlob)crc32ByBlob.set(member.blob,(crc^0xffffffff)>>>0);
+    for(const [ruleId,offset]of found)findings.push({ruleId,canonicalPath:member.canonicalPath,offset});
+  }
+  return {credentialSecretDetected:findings.length>0,findings};
+}
+async function buildExecutionPackage({project=null,jobId=null,stage,operation=null,testIds=[],productId=null,runId=null,reviewerAliasContext=null,instructionId=null}={}, {reviewOnly=false,memberPath=null}={}){
   if(!project&&jobId)project=await readProject(jobId);
   if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');
   const engine=globalThis.closedLoopWorkflowEngine,promptEngine=globalThis.closedLoopPromptEngine,canonicalJobId=projectIdentity(project);if(jobId&&String(jobId)!==canonicalJobId)throw storageError(`Execution-package job ${jobId} does not match canonical project ${canonicalJobId}.`,'EXECUTION_PACKAGE_JOB_MISMATCH');
@@ -1762,16 +1819,18 @@ async function createExecutionPackage({project=null,jobId=null,stage,operation=n
   const responseContract=promptEngine.responseContractDescriptor(normalizedStage,normalizedOperation),contractSha256=hash.sha256Value(responseContract);if(String(selectedPrompt.contractSha256||'')!==contractSha256)throw storageError('The saved controlling instruction response contract is stale. Save the current instruction again before preparing the package.','EXECUTION_PACKAGE_CONTRACT_STALE');
   if(normalizedRunId&&String(selectedPrompt.scope?.runId||'')!==normalizedRunId)throw storageError('The saved controlling instruction is bound to a different run lane.','EXECUTION_PACKAGE_RUN_MISMATCH');
   const plan=engine.executionHandoff(project,{stage:normalizedStage,operation:normalizedOperation,testIds:ids,runIds:normalizedRunId?[normalizedRunId]:null,deferredDefinitionCorrectionTarget:selectedPrompt.contextManifest?.deferredDefinitionCorrectionTarget||null}),artifactIds=[...new Set(plan.send.map(x=>String(x.artifactId||'')).filter(Boolean))],artifactEntries=[],fileContents=new WeakMap();
-  for(const artifactId of artifactIds){const canonical=engine.records(project,'artifacts').find(r=>engine.recordId(r,'artifacts')===artifactId&&engine.isActiveRecord(r));if(!canonical)throw storageError(`Execution-package artifact ${artifactId} is not current canonical state.`,'EXECUTION_PACKAGE_ARTIFACT_STALE');const row=await getArtifact(artifactId);if(!row||String(row.jobId)!==canonicalJobId)throw storageError(`Execution-package artifact ${artifactId} has no stored bytes for ${canonicalJobId}.`,'EXECUTION_PACKAGE_BYTES_MISSING');const sha256=await hash.sha256Bytes(row.blob),byteSize=row.blob.size,expectedSha=String(engine.recordValue(canonical,'SHA256')||''),expectedSize=Number(engine.recordValue(canonical,'BYTE_SIZE'));if(sha256!==expectedSha||byteSize!==expectedSize)throw storageError(`Execution-package artifact ${artifactId} failed byte identity verification.`,'EXECUTION_PACKAGE_ARTIFACT_MISMATCH');artifactEntries.push({artifactId,filename:String(engine.recordValue(canonical,'FILENAME')||row.filename||artifactId),mediaType:String(row.mediaType||'application/octet-stream'),byteSize,sha256,role:String(engine.recordValue(canonical,'ROLE')||'AUTHORIZED_INPUT'),disclosureClassification:String(engine.recordValue(canonical,'DISCLOSURE_CLASSIFICATION')||'UNKNOWN'),base64:''});fileContents.set(artifactEntries.at(-1),{property:'base64',encoding:'base64',blob:row.blob});}
+  for(const artifactId of artifactIds){const canonical=engine.records(project,'artifacts').find(r=>engine.recordId(r,'artifacts')===artifactId&&engine.isActiveRecord(r));if(!canonical)throw storageError(`Execution-package artifact ${artifactId} is not current canonical state.`,'EXECUTION_PACKAGE_ARTIFACT_STALE');const row=await getArtifact(artifactId);if(!row||String(row.jobId)!==canonicalJobId)throw storageError(`Execution-package artifact ${artifactId} has no stored bytes for ${canonicalJobId}.`,'EXECUTION_PACKAGE_BYTES_MISSING');const sha256=await observedArtifactDigest(row),byteSize=row.blob.size,expectedSha=String(engine.recordValue(canonical,'SHA256')||''),expectedSize=Number(engine.recordValue(canonical,'BYTE_SIZE'));if(sha256!==expectedSha||byteSize!==expectedSize)throw storageError(`Execution-package artifact ${artifactId} failed byte identity verification.`,'EXECUTION_PACKAGE_ARTIFACT_MISMATCH');artifactEntries.push({artifactId,filename:String(engine.recordValue(canonical,'FILENAME')||row.filename||artifactId),mediaType:String(row.mediaType||'application/octet-stream'),byteSize,sha256,role:String(engine.recordValue(canonical,'ROLE')||'AUTHORIZED_INPUT'),disclosureClassification:String(engine.recordValue(canonical,'DISCLOSURE_CLASSIFICATION')||'UNKNOWN'),base64:''});fileContents.set(artifactEntries.at(-1),{property:'base64',encoding:'base64',blob:row.blob});}
   const tests=engine.records(project,'tests').filter(t=>ids.includes(engine.recordId(t,'tests'))).map(t=>({testId:engine.recordId(t,'tests'),requirementId:String(engine.recordValue(t,'REQ_ID')||t.relationships?.REQ_ID||''),fields:clone(t.fields||{}),relationships:clone(t.relationships||{})}));
   const aliasEntries=promptAliases,reviewerAlias=String(providedAlias?.alias||providedAlias?.reviewerAlias||aliasEntries[0]?.alias||aliasEntries[0]?.reviewerAlias||'').trim()||null,publicIdentity=value=>{const text=String(value??'');const match=aliasEntries.find(entry=>String(entry.canonicalId||'')===text);return match?String(match.alias):value;},publicScope=Object.fromEntries(Object.entries(selectedPrompt.scope||{}).map(([key,value])=>[key,publicIdentity(value)]));
   const instruction={instructionId:String(selectedPrompt.instructionId||selectedPrompt.promptId||''),promptEngineVersion:String(selectedPrompt.promptEngineVersion||''),bodySha256:String(selectedPrompt.bodySha256||selectedPrompt.sha256||''),contractSha256:String(selectedPrompt.contractSha256||''),contextSignature:String(selectedPrompt.contextSignature||''),scope:clone(publicScope),fullTextSha256,text:exactPrompt};
-  const promptFileManifest=promptEngine.promptFileManifest(selectedPrompt),manifest={...(promptFileManifest.deferredDefinitionCompatibilityContractVersion?{deferredDefinitionCompatibilityContractVersion:promptFileManifest.deferredDefinitionCompatibilityContractVersion,contextManifest:clone(promptFileManifest.contextManifest||{}),...(promptFileManifest.deferredDefinitionCorrectionTarget?{deferredDefinitionCorrectionTarget:clone(promptFileManifest.deferredDefinitionCorrectionTarget)}:{})}:{}),scope:clone(promptFileManifest.scope),historyActivationId:selectedPrompt.historyActivationId||null,contractProfileId:promptFileManifest.contractProfileId,promptIdentity:promptFileManifest.promptIdentity,packageId:promptFileManifest.packageId||null,operationReservationId:promptFileManifest.operationReservationId||null,challengeNonce:promptFileManifest.challengeNonce||null,targetSlot:promptFileManifest.targetSlot||null,reservationRevision:promptFileManifest.reservationRevision??null,schema:'closed-loop-handoff-container/1',verificationPackageSchema:'closed-loop-verification-package/1',archiveProfile:'closed-loop-archive-profile/1',workflow:project.workflow,projectSchema:project.schema,responseSchema:globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA,jobId:canonicalJobId,stage:normalizedStage,operation:normalizedOperation,runId:publicIdentity(normalizedRunId),reviewerAlias,productId:publicIdentity(selectedPrompt.scope?.productId||null),testIds:ids,instructionId:instruction.instructionId,instructionFullTextSha256:fullTextSha256,responseContractSha256:contractSha256,artifacts:artifactEntries.map(({base64,...x})=>x),attachmentSlots:clone(promptFileManifest.attachmentSlots),handoff:clone(promptEngine.fileHandoff(selectedPrompt,plan))};
+  const promptFileManifest=promptEngine.promptFileManifest(selectedPrompt),manifest={...(promptFileManifest.deferredExecutionBinding?{deferredExecutionBinding:clone(promptFileManifest.deferredExecutionBinding)}:{}),...(promptFileManifest.deferredDefinitionCompatibilityContractVersion?{deferredDefinitionCompatibilityContractVersion:promptFileManifest.deferredDefinitionCompatibilityContractVersion,contextManifest:clone(promptFileManifest.contextManifest||{}),...(promptFileManifest.deferredDefinitionCorrectionTarget?{deferredDefinitionCorrectionTarget:clone(promptFileManifest.deferredDefinitionCorrectionTarget)}:{})}:{}),scope:clone(promptFileManifest.scope),historyActivationId:selectedPrompt.historyActivationId||null,contractProfileId:promptFileManifest.contractProfileId,promptIdentity:promptFileManifest.promptIdentity,packageId:promptFileManifest.packageId||null,operationReservationId:promptFileManifest.operationReservationId||null,challengeNonce:promptFileManifest.challengeNonce||null,targetSlot:promptFileManifest.targetSlot||null,reservationRevision:promptFileManifest.reservationRevision??null,schema:'closed-loop-handoff-container/1',verificationPackageSchema:'closed-loop-verification-package/1',archiveProfile:'closed-loop-archive-profile/1',workflow:project.workflow,projectSchema:project.schema,responseSchema:globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA,jobId:canonicalJobId,stage:normalizedStage,operation:normalizedOperation,runId:publicIdentity(normalizedRunId),reviewerAlias,productId:publicIdentity(selectedPrompt.scope?.productId||null),testIds:ids,instructionId:instruction.instructionId,instructionFullTextSha256:fullTextSha256,responseContractSha256:contractSha256,artifacts:artifactEntries.map(({base64,...x})=>x),attachmentSlots:clone(promptFileManifest.attachmentSlots),handoff:clone(promptEngine.fileHandoff(selectedPrompt,plan))};
   const contextFiles=[];for(const identity of promptFileManifest.contextFiles){const file=await readPromptContextFile(selectedPrompt,canonicalJobId,identity.path);contextFiles.push({...identity,text:''});fileContents.set(contextFiles.at(-1),{property:'text',encoding:'utf8',blob:file.blob});}manifest.contextFiles=promptFileManifest.contextFiles;
+  if(typeof engine.handoffDisclosureClassification!=='function')throw storageError('The current disclosure classification authority is unavailable.','HANDOFF_AUTHORITY_UNAVAILABLE');
+  const classification=authority=>engine.handoffDisclosureClassification(activeProject,selectedPrompt,{authority});
   const members=[],addMember=(canonicalPath,blob,identity)=>{members.push({canonicalPath,blob,...identity,byteSize:blob.size,hashAlgorithm:'SHA-256',required:true});};
-  addMember('instruction.txt',new Blob([exactPrompt],{type:'text/plain;charset=utf-8'}),{role:'AUTHORITATIVE_INSTRUCTION',sha256:fullTextSha256,mediaType:'text/plain',disclosureClassification:'UNKNOWN'});
-  for(const identity of contextFiles)addMember(identity.path,fileContents.get(identity).blob,{role:'PROMPT_CONTEXT',sha256:identity.sha256,mediaType:identity.mediaType,disclosureClassification:identity.disclosureClassification||'UNKNOWN'});
-  for(const entry of artifactEntries){const identity=hash.normalizeFilename(entry.filename,{allowPath:true});addMember(hash.normalizeFilename(`artifacts/${entry.artifactId}/${identity.canonicalPath}`,{allowPath:true}).canonicalPath,fileContents.get(entry).blob,{artifactId:entry.artifactId,rawFilename:entry.filename,displayFilename:identity.displayFilename,filenameVersion:identity.filenameVersion,unicodeVersion:identity.unicodeVersion,role:entry.role,sha256:entry.sha256,mediaType:entry.mediaType,disclosureClassification:entry.disclosureClassification});}
+  addMember('instruction.txt',new Blob([exactPrompt],{type:'text/plain;charset=utf-8'}),{artifactId:instruction.instructionId,filename:'instruction.txt',role:'AUTHORITATIVE_INSTRUCTION',authority:'APPLICATION_INSTRUCTION',availability:'BYTES_PERSISTED_AND_VERIFIED',sha256:fullTextSha256,mediaType:'text/plain',disclosureClassification:classification('APPLICATION_INSTRUCTION')});
+  for(const identity of contextFiles)addMember(identity.path,fileContents.get(identity).blob,{artifactId:promptContextArtifactId(canonicalJobId,identity),filename:identity.filename||identity.path,role:'PROMPT_CONTEXT',authority:'APPLICATION_CONTEXT',availability:'BYTES_PERSISTED_AND_VERIFIED',sha256:identity.sha256,mediaType:identity.mediaType,disclosureClassification:classification('APPLICATION_CONTEXT')});
+  for(const entry of artifactEntries){const identity=hash.normalizeFilename(entry.filename,{allowPath:true});addMember(hash.normalizeFilename(`artifacts/${entry.artifactId}/${identity.canonicalPath}`,{allowPath:true}).canonicalPath,fileContents.get(entry).blob,{artifactId:entry.artifactId,filename:entry.filename,authority:'CANONICAL_ARTIFACT',availability:'BYTES_PERSISTED_AND_VERIFIED',rawFilename:entry.filename,displayFilename:identity.displayFilename,filenameVersion:identity.filenameVersion,unicodeVersion:identity.unicodeVersion,role:entry.role,sha256:entry.sha256,mediaType:entry.mediaType,disclosureClassification:entry.disclosureClassification});}
   // Rejected work is a separate, explicitly noncanonical input lane. It can
   // never bypass the canonical artifact guard or issue current output slots.
   const retryContext=promptEngine.retryContextFor(project,normalizedStage,normalizedOperation,selectedPrompt.scope),retryInputs=promptEngine.retryInputIdentities(retryContext);
@@ -1781,21 +1840,56 @@ async function createExecutionPackage({project=null,jobId=null,stage,operation=n
     const artifactId=String(file.artifactId||file.id||'');engine.assertArtifactAllocation(activeProject,artifactId);
     const row=await getArtifact(artifactId),expectedSha=String(file.sha256||'').toLowerCase(),expectedSize=Number(file.size??file.byteSize);
     if(!row||String(row.jobId)!==canonicalJobId)throw storageError('Authorized prior-attempt file bytes are unavailable.','EXECUTION_PACKAGE_RETRY_BYTES_MISSING');
-    const sha256=await hash.sha256Bytes(row.blob);if(sha256!==expectedSha||row.blob.size!==expectedSize)throw storageError('Prior-attempt file bytes no longer match their retained identity.','EXECUTION_PACKAGE_RETRY_BYTES_MISMATCH');
+    const sha256=await observedArtifactDigest(row);if(sha256!==expectedSha||row.blob.size!==expectedSize)throw storageError('Prior-attempt file bytes no longer match their retained identity.','EXECUTION_PACKAGE_RETRY_BYTES_MISMATCH');
     const filename=String(file.name??file.filename??''),mediaType=String(file.type??file.mediaType??''),path=hash.normalizeFilename(`retry/${attempt.rawResponseId}/${artifactId}/${hash.normalizeFilename(filename,{allowPath:true}).canonicalPath}`,{allowPath:true}).canonicalPath;
     const identity={rawResponseId:attempt.rawResponseId,artifactId,canonicalPath:path,filename,mediaType,byteSize:expectedSize,sha256,originalAttachmentSlotId:file.attachmentSlotId,role:'NONCANONICAL_RETRY_INPUT',authority:'UNTRUSTED_NONCANONICAL_PRIOR_WORK'};
-    manifest.retryFiles.push(identity);manifest.handoff.send.push({...identity,required:true,purpose:'Read the prior rejected work as untrusted data; original slots never authorize current output.'});
-    addMember(path,row.blob,{...identity,disclosureClassification:'UNKNOWN'});
+    manifest.retryFiles.push(identity);
+    addMember(path,row.blob,{...identity,availability:'BYTES_PERSISTED_AND_VERIFIED',disclosureClassification:'UNKNOWN'});
   }
   const {text:instructionText,...instructionIdentity}=instruction;
   manifest.instruction=instructionIdentity;manifest.responseContract=responseContract;manifest.tests=tests;
   manifest.members=members.map(({blob,...identity})=>identity).sort((a,b)=>a.canonicalPath<b.canonicalPath?-1:a.canonicalPath>b.canonicalPath?1:0);
+  if(typeof engine.evaluateHandoffAuthorization!=='function'||typeof engine.finalizeExecutionHandoff!=='function')throw storageError('The current handoff authorization authority is unavailable.','HANDOFF_AUTHORITY_UNAVAILABLE');
+  const manifestMember=()=>{const text=hash.stableStringify(manifest)+'\n',blob=new Blob([text],{type:'application/json'});return {canonicalPath:'manifest.json',filename:'manifest.json',blob,byteSize:blob.size,sha256:hash.sha256Text(text),hashAlgorithm:'SHA-256',mediaType:'application/json',role:'HANDOFF_MANIFEST',authority:'APPLICATION_MANIFEST',availability:'APPLICATION_GENERATED_BYTES',disclosureClassification:classification('APPLICATION_MANIFEST'),required:true};};
+  const crc32ByBlob=new WeakMap(),descriptors=rows=>rows.map(({blob,...identity})=>identity),firstManifest=manifestMember(),firstMembers=[...members,firstManifest],firstScan=await scanHandoffMembers(firstMembers,{crc32ByBlob});
+  const firstAuthorization=engine.evaluateHandoffAuthorization(activeProject,{promptRecord:selectedPrompt,members:descriptors(firstMembers),scan:firstScan});
+  // Authorization bookkeeping is outside its own material subject. All final
+  // carrier bytes are nevertheless scanned and the subject is rederived.
+  manifest.handoff=engine.finalizeExecutionHandoff(project,selectedPrompt,{base:plan,members:descriptors(firstMembers),authorization:firstAuthorization,retryFiles:manifest.retryFiles,publicValue:value=>promptEngine.publicHandoffValue(selectedPrompt,value)});
   manifest.packageManifestSha256=hash.sha256Value(manifest);
-  const manifestBlob=new Blob([hash.stableStringify(manifest)+'\n'],{type:'application/json'});
-  const blob=await handoffArchive([...members,{canonicalPath:'manifest.json',blob:manifestBlob}]),packageSha256=await hash.sha256Bytes(blob);
+  const finalManifest=manifestMember(),finalMembers=[...members,finalManifest],manifestScan=await scanHandoffMembers([finalManifest],{crc32ByBlob});
+  const scan={credentialSecretDetected:firstScan.findings.some(item=>item.canonicalPath!=='manifest.json')||manifestScan.credentialSecretDetected,findings:[...firstScan.findings.filter(item=>item.canonicalPath!=='manifest.json'),...manifestScan.findings]},authorization=engine.evaluateHandoffAuthorization(activeProject,{promptRecord:selectedPrompt,members:descriptors(finalMembers),scan});
+  if(authorization.subjectSha256!==firstAuthorization.subjectSha256)throw storageError('The final handoff changed its disclosure subject. Prepare its review again.','HANDOFF_SUBJECT_CHANGED');
   const currentProject=await readProject(canonicalJobId);if(!currentProject||currentProject.projectSha256!==activeProject.projectSha256||Number(currentProject.revision||0)!==Number(activeProject.revision||0)||(currentProject.historyActivationId||null)!==(activeProject.historyActivationId||null))throw storageError('The project changed while its handoff was being assembled. Export the current version again.','EXECUTION_PACKAGE_VERSION_STALE');
+  const review={handoff:clone(manifest.handoff),members:descriptors(finalMembers),authorization:clone(authorization),scan:clone(scan)};
+  if(reviewOnly)return review;
+  if(!authorization.allowed){const secret=finalMembers.some(member=>member.disclosureClassification==='CREDENTIAL_SECRET');throw Object.assign(storageError(secret?'A credential-secret member cannot be transferred. Remove it from this handoff or supply a separately redacted artifact.':'Review and authorize this exact handoff before exporting its files.',secret?'HANDOFF_CREDENTIAL_SECRET_BLOCKED':'HANDOFF_AUTHORIZATION_REQUIRED'),{review});}
+  if(memberPath!==null){const selected=finalMembers.find(member=>member.canonicalPath===memberPath);if(!selected)throw storageError('This file is outside the authorized handoff.','HANDOFF_MEMBER_NOT_AUTHORIZED');const {blob,...identity}=selected;return {...identity,blob,authorization:clone(authorization)};}
+  const blob=await handoffArchive(finalMembers,crc32ByBlob),packageSha256=await hash.sha256Bytes(blob);
+  const afterArchive=await readProject(canonicalJobId);if(!afterArchive||afterArchive.projectSha256!==activeProject.projectSha256||Number(afterArchive.revision||0)!==Number(activeProject.revision||0)||(afterArchive.historyActivationId||null)!==(activeProject.historyActivationId||null))throw storageError('The project changed while its handoff was being assembled. Export the current version again.','EXECUTION_PACKAGE_VERSION_STALE');
   return {blob,filename:`STAGE-${String(normalizedStage).padStart(2,'0')}-files.zip`,manifest,packageSha256};
 }
+async function createExecutionPackage(options){return buildExecutionPackage(options);}
+async function prepareExecutionPackageReview(options){return buildExecutionPackage(options,{reviewOnly:true});}
+async function readAuthorizedHandoffMember({canonicalPath,...options}={}){if(typeof canonicalPath!=='string'||!canonicalPath)throw storageError('Select an exact authorized handoff path.','HANDOFF_MEMBER_NOT_AUTHORIZED');return buildExecutionPackage(options,{memberPath:canonicalPath});}
+async function buildCapabilityRequest({project=null,jobId=null,targetId}={},reviewOnly=false){
+  if(!project&&jobId)project=await readProject(jobId);
+  if(!project||typeof project!=='object')throw storageError('A current project is required for a capability request.','CAPABILITY_REQUEST_PROJECT_REQUIRED');
+  const id=projectIdentity(project),engine=globalThis.closedLoopWorkflowEngine,active=await readProject(id);
+  const current=state=>state&&Number(state.revision||0)===Number(project.revision||0)&&state.projectSha256===project.projectSha256&&(state.historyActivationId||null)===(project.historyActivationId||null);
+  if(jobId&&String(jobId)!==id||!current(active))throw storageError('The project changed before its capability request could be prepared.','EXECUTION_PACKAGE_VERSION_STALE');
+  if(typeof engine.capabilityReadinessHandoff!=='function'||typeof engine.evaluateHandoffAuthorization!=='function')throw storageError('The current capability handoff authority is unavailable.','HANDOFF_AUTHORITY_UNAVAILABLE');
+  const request=engine.capabilityReadinessHandoff(active,targetId),{text,...identity}=request;
+  if(typeof text!=='string')throw storageError('The capability request has no exact bytes.','CAPABILITY_REQUEST_BYTES_INVALID');
+  const blob=new Blob([text],{type:identity.mediaType});if(blob.size!==identity.byteSize||hash.sha256Text(text)!==identity.sha256)throw storageError('The capability request byte identity is invalid.','CAPABILITY_REQUEST_BYTES_INVALID');
+  const members=[identity],scan=await scanHandoffMembers([{...identity,blob}]),capabilityRequest={targetId:request.targetId},authorization=engine.evaluateHandoffAuthorization(active,{capabilityRequest,members,scan});
+  if(!current(await readProject(id)))throw storageError('The project changed while its capability request was being inspected. Prepare the current request again.','EXECUTION_PACKAGE_VERSION_STALE');
+  const review={capabilityRequest,members:clone(members),authorization:clone(authorization),scan:clone(scan)};if(reviewOnly)return review;
+  if(!authorization.allowed)throw Object.assign(storageError(authorization.credentialProhibited?'A credential-secret capability request cannot be transferred.':'Review and authorize this exact capability request before exporting it.',authorization.credentialProhibited?'HANDOFF_CREDENTIAL_SECRET_BLOCKED':'HANDOFF_AUTHORIZATION_REQUIRED'),{review});
+  return {...identity,blob,authorization:clone(authorization)};
+}
+async function prepareCapabilityRequestReview(options){return buildCapabilityRequest(options,true);}
+async function readAuthorizedCapabilityRequest(options){return buildCapabilityRequest(options,false);}
 async function stageResponseFile({jobId,stage,blob,rawFilename='response.json',mediaType='application/json',promptIdentity=null,packageId=null,operationReservationId=null,challengeNonce=null}={}){
   const owner=String(jobId||'').trim(),stageNumber=Number(stage);if(!owner)throw storageError('JOB_ID is required to stage a response file.','RESPONSE_STAGE_JOB_ID_REQUIRED');if(!Number.isInteger(stageNumber)||stageNumber<1||stageNumber>30)throw storageError('A valid stage is required to stage a response file.','RESPONSE_STAGE_INVALID_STAGE');if(!(blob instanceof Blob))throw new TypeError('Response-file bytes must be a Blob.');
   const originalName=String(rawFilename||'response.json'),claimedType=String(mediaType||blob.type||'application/octet-stream'),byteSize=blob.size,sha256=await hash.sha256Bytes(blob),stagingId=`RESPONSE-STAGING-${crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`}`,key=`responseStaging:${owner}:${stagingId}`,record={schema:'closed-loop-response-staging/1',stagingId,jobId:owner,stage:stageNumber,rawFilename:originalName,mediaType:claimedType,byteSize,sha256,blob:new Blob([blob],{type:claimedType}),promptIdentity:clone(promptIdentity),packageId:packageId||null,operationReservationId:operationReservationId||null,challengeNonce:challengeNonce||null,status:'HASHED_AND_REVERIFIED',createdAt:now()};
@@ -1812,7 +1906,7 @@ const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB)tr
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE','SAVE_CHECKPOINT'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;
   const result=message.method==='SAVE_CHECKPOINT'?{checkpointId:await saveCheckpoint(message.args[0],{...message.args[1],operationId:message.operationId})}:{project:message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId})};
   globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,...result});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,exportLegacyMigrationData,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
+globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,exportLegacyMigrationData,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,prepareExecutionPackageReview,readAuthorizedHandoffMember,prepareCapabilityRequestReview,readAuthorizedCapabilityRequest,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{
 'use strict';

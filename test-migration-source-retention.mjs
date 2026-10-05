@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync,gzipSync} from 'node:zlib';
 import {pathToFileURL} from 'node:url';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 const plain=value=>JSON.parse(JSON.stringify(value));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const originals=project=>(project.projectData.migrationArchives||[]).filter(row=>row.kind==='ORIGINAL_PROJECT_SOURCE');
@@ -73,7 +74,7 @@ export async function verifyMigrationSourceRetention({sourceOverrides={},fixture
  assert.equal(lexicalStore.engine.records(lexicalProject,'artifacts').length,0);assert.equal(lexicalStore.engine.gate(1,lexicalProject).complete,false);
  const context=JSON.stringify(lexicalStore.engine.stageContext(lexicalProject,1));assert(!context.includes('PROJECT-SOURCE-'),'SOURCE_NON_OPERATIONAL_CONTEXT_ORACLE');
  const draft=lexicalStore.copy(lexicalProject),issued=lexicalStore.prompts.reserveAndBuildPromptRecord(draft,1,{operation:'COMPLETE'},{owningTabInstance:'SYNTHETIC-SOURCE-ISOLATION'}).prompt;
- const handoffProject=await lexicalStore.store.writeProject(draft,{expectedProjectRevision:lexicalProject.revision,expectedStateSha256:lexicalProject.projectSha256}),handoff=await lexicalStore.store.createExecutionPackage({project:handoffProject,stage:1,operation:'COMPLETE',instructionId:issued.instructionId||issued.promptId}),handoffBytes=Buffer.from(await handoff.blob.arrayBuffer());
+ const handoffProject=await lexicalStore.store.writeProject(draft,{expectedProjectRevision:lexicalProject.revision,expectedStateSha256:lexicalProject.projectSha256}),authorized=await authorizeSyntheticHandoff(lexicalStore,{project:handoffProject,prompt:issued}),handoff=await lexicalStore.store.createExecutionPackage(authorized.request),handoffBytes=Buffer.from(await handoff.blob.arrayBuffer());
  for(const forbidden of ['PROJECT-SOURCE-','ORIGINAL_PROJECT_SOURCE','ONLY_PROJECT_A','ONLY_PROJECT_B_PRIVATE'])assert(!handoffBytes.includes(Buffer.from(forbidden)),'SOURCE_HANDOFF_ISOLATION_ORACLE: '+forbidden);
  cases.push('package-noncanonical-spelling','source-files-not-canonical-or-gating','source-descriptors-excluded-from-stage-context','actual-handoff-zip-excludes-source-metadata-and-bytes');
  if(fixtureDirectory){fs.mkdirSync(fixtureDirectory,{recursive:true});fs.writeFileSync(fixtureDirectory+'/legacy-multiple-projects.json',raw);fs.writeFileSync(fixtureDirectory+'/legacy-older-project.json',olderText);fs.writeFileSync(fixtureDirectory+'/package-lexical-source.gz',Buffer.from(await lexicalPackage.arrayBuffer()));fs.writeFileSync(fixtureDirectory+'/expected.json',JSON.stringify({synthetic:true,jobId:a.job.JOB_ID,siblingJobId:b.job.JOB_ID,firstText,olderText,secondText,legacySourceKeys:[key,olderKey],sourceKind:'ORIGINAL_PROJECT_SOURCE'},null,2));}

@@ -7,6 +7,7 @@ import {gunzipSync} from 'node:zlib';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {verifyMigrationSourceRetention} from './test-migration-source-retention.mjs';
+import {verifyCanonicalFieldIntegrity} from './test-canonical-field-integrity.mjs';
 
 const fault=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8)||null;
 assert.ok(!fault||['foreign-observation','lost-extension','rewritten-raw-response','recursive-normalization','current-profile-default-rewrite','collection-shape-guard','v2-delegation','worker-migration-receipt','claimed-audit-identity','current-startup-shape','structural-defaults','current-audit-identity','parse-failure-receipt','core-current-archive','current-legacy-container-shape','current-archive-undefined'].includes(fault),'Unknown migration fault');
@@ -229,6 +230,7 @@ await assert.rejects(failedParse.store.importPackage(protectedRecovery,{passphra
 await assert.rejects(projectStoreRuntime().store.exportLegacyMigrationData({passphrase}),error=>error.code==='NO_LEGACY_MIGRATION_DATA');
 if(process.env.CLRT_MIGRATION_FIXTURE_DIRECTORY)fs.writeFileSync(process.env.CLRT_MIGRATION_FIXTURE_DIRECTORY+'/startup-legacy-v2.json',legacyText);
 
+const canonicalFieldIntegrity=!fault?await verifyCanonicalFieldIntegrity():null;
 const sourceBytePreservation=!fault?await verifyMigrationSourceRetention({fixtureDirectory:process.env.CLRT_SOURCE_FIXTURE_DIRECTORY||null}):null;
 const faults=[];
 if(!fault)for(const [injected,oracle]of [['source-legacy-loss','SOURCE_LEGACY_EXACT_SPAN_ORACLE'],['source-package-loss','SOURCE_PACKAGE_EXACT_SPAN_ORACLE'],['source-payload-binding','SOURCE_PAYLOAD_BINDING_ORACLE'],['source-cache-binding','SOURCE_PAYLOAD_BINDING_ORACLE'],['source-write-downgrade','SOURCE_WRITE_IMMUTABLE_ORACLE'],['source-new-write-binding','SOURCE_NEW_WRITE_BINDING_ORACLE']]){
@@ -241,4 +243,4 @@ if(!fault)for(const [injected,oracle] of [['foreign-observation','MIGRATION_EXTE
   assert.ok(run.stderr.includes(oracle),'Migration fault failed for an unrelated reason: '+run.stderr);
   faults.push({fault:injected,oracle,result:'DETECTED',exitCode:run.status,stdout:run.stdout,stderr:run.stderr});
 }
-console.log(JSON.stringify({faults,sourceBytePreservation,verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,opaqueExtensionsPreserved:true,historicalEnvelopesPreserved:true,currentV3NoSilentRewrite:true,migrationStorageReadbackImport:true,normalV2StartupMigration:true,unsupportedFutureStartupPreserved:true,documentMigrationReceiptPreserved:true,collectionShapeCases:shapeCases,structuralShapeCases,structuralWriteCases,omittedDefaultsRemainSupported:true,claimedAuditCannotSuppressOriginal:true,currentStartupInvalidStatePreserved:true,protectedExactLegacyRecovery:true,idempotent:true,legacyStage01SemanticFabricationRejected:true,currentV3NoSilentHeal:true}));
+console.log(JSON.stringify({faults,sourceBytePreservation,canonicalFieldIntegrity,verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,opaqueExtensionsPreserved:true,historicalEnvelopesPreserved:true,currentV3NoSilentRewrite:true,migrationStorageReadbackImport:true,normalV2StartupMigration:true,unsupportedFutureStartupPreserved:true,documentMigrationReceiptPreserved:true,collectionShapeCases:shapeCases,structuralShapeCases,structuralWriteCases,omittedDefaultsRemainSupported:true,claimedAuditCannotSuppressOriginal:true,currentStartupInvalidStatePreserved:true,protectedExactLegacyRecovery:true,idempotent:true,legacyStage01SemanticFabricationRejected:true,currentV3NoSilentHeal:true}));

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 
 // Independent literals from controlling §§6.5–6.6. These expectations must not
@@ -54,7 +55,9 @@ export async function verifyStage01SpecificationControls(){
   let p=await r.store.writeProject(blank,{expectedProjectRevision:0,incrementRevision:false,createOnly:true}),draft=r.copy(p);
   const issued=r.prompts.reserveAndBuildPromptRecord(draft,1,{operation},{owningTabInstance:'SYNTHETIC-SPEC-CONTROL'}).prompt;
   p=await r.store.writeProject(draft,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
-  const prompt=p.projectData.generatedPrompts.find(row=>row.instructionId===issued.instructionId),pkg=await r.store.createExecutionPackage({jobId:p.job.JOB_ID,stage:1,operation,instructionId:prompt.instructionId});
+  let prompt=p.projectData.generatedPrompts.find(row=>row.instructionId===issued.instructionId);
+  const authorized=await authorizeSyntheticHandoff(r,{project:p,prompt});p=authorized.project;prompt=authorized.prompt;
+  const pkg=await r.store.createExecutionPackage(authorized.request);
   const members=readStoreArchive(new Uint8Array(await pkg.blob.arrayBuffer())),instruction=members.find(row=>row.canonicalPath==='instruction.txt'),manifest=JSON.parse(Buffer.from(members.find(row=>row.canonicalPath==='manifest.json').bytes).toString('utf8')),text=Buffer.from(instruction.bytes).toString('utf8');
   assert.equal(text,prompt.prompt,'STAGE01_SPEC_SAVED_INSTRUCTION_ORACLE');assert.equal(digest(instruction.bytes),manifest.promptIdentity.bodySha256,'STAGE01_SPEC_MANIFEST_BYTES_ORACLE');instructionOracle(text,operation);
   packages.push({operation,actualSavedZip:true,exactInstructionBytes:true,categoryCount:categories.length,dispositionCount:dispositions.length,producerVersion:prompt.promptEngineVersion});

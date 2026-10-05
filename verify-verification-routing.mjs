@@ -68,6 +68,37 @@ async function registerReport(f,report,options={}){
  const reportText=JSON.stringify(report),file=await registerBytes(f.p,reportText);
  return e.registerExternalCapabilityEvidence(f.p,copy({reportText,artifactId:file.artifactId,operatorConfirmed:true,operatorLabel:'FIXTURE_OPERATOR',...options}));
 }
+await check('Section23 execution-route vocabulary and readiness',async()=>{
+ // These distinct vocabularies are literal Section23 contracts. In particular,
+ // EXTERNAL_AGENT is an operation executor, not an executionRoute value.
+ const tuples=[
+  ['APPLICATION_DETERMINISTIC','APPLICATION','APPLICATION','RUN_IN_APP',true],
+  ['EXTERNAL_AGENT_TOOL','EXTERNAL_AGENT_TOOL','EXTERNAL_AGENT_TOOL','SEND_TO_TOOL_AGENT',true],
+  ['INDEPENDENT_AGENT_REVIEW','INDEPENDENT_AI','INDEPENDENT_REVIEWER','SEND_TO_INDEPENDENT_REVIEWER',true],
+  ['HUMAN_INSPECTION','HUMAN','HUMAN','HUMAN_INSPECTION',true],
+  ['EXTERNAL_SYSTEM','EXTERNAL_SYSTEM','EXTERNAL_SYSTEM','USE_EXTERNAL_SYSTEM',true],
+  ['UNAVAILABLE','BLOCKED','UNAVAILABLE','BLOCKED',false]
+ ],observations=[];let capabilityBlockedControls=0;
+ for(const [mode,route,executor,action,ready]of tuples){
+  const f=t.routingFixture(mode);
+  if(['EXTERNAL_AGENT_TOOL','EXTERNAL_SYSTEM'].includes(mode)){
+   const missing=plan(f.p,f.test);
+   assert.equal(missing.operatorAction,'BLOCKED','EXECUTION_ROUTE_CONTROL_ORACLE: missing capability must already block the operator.');
+   assert.equal(missing.executionRoute,'BLOCKED','EXECUTION_ROUTE_READINESS_ORACLE: missing capability cannot publish an executable route.');
+   capabilityBlockedControls++;
+   await registerReport(f,t.completedReport(f.p,f.test));
+  }
+  const item=plan(f.p,f.test);
+  assert.equal(item.executableNow,ready,'EXECUTION_ROUTE_READINESS_ORACLE: '+mode);
+  assert.equal(item.executionRoute,route,'EXECUTION_ROUTE_VOCABULARY_ORACLE: '+mode);
+  assert.equal(item.executorClass,executor,'EXECUTION_ROUTE_EXECUTOR_ORACLE: '+mode);
+  assert.equal(item.operatorAction,action,'EXECUTION_ROUTE_ACTION_ORACLE: '+mode);
+  observations.push({mode,executionRoute:item.executionRoute,executorClass:item.executorClass,operatorAction:item.operatorAction,executableNow:item.executableNow});
+ }
+ const unbound=t.routingFixture();unbound.test.fields.EXECUTABLE_INPUT_BINDINGS.JOB.canonicalKey='JOB.UNAVAILABLE_BOUND_VALUE';
+ const blocked=plan(unbound.p,unbound.test);assert.equal(blocked.operatorAction,'BLOCKED');assert.equal(blocked.executionRoute,'BLOCKED','EXECUTION_ROUTE_READINESS_ORACLE: unavailable native input must have a blocked route.');
+ verificationObservations.push({checkId:'routing.specification-route-vocabulary',expected:{modes:6,capabilityBlockedControls:2,nativeBindingBlockedControls:1},observed:{modes:observations.length,capabilityBlockedControls,nativeBindingBlockedControls:Number(blocked.executionRoute==='BLOCKED')},cases:observations,passed:true,synthetic:true,actualExternalCapability:false,actualBrowser:false});
+});
 // Controlled upstream canonical data isolates Stage06 readiness; proof and
 // applicability approvals still pass through the production ingestion owner.
 function stage06DesignFixture(mode){

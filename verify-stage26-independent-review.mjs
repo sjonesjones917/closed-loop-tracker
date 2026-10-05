@@ -1,3 +1,4 @@
+import {authorizeFixtureHandoff} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
@@ -6,7 +7,12 @@ import {responseFixture} from './operator-journey-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 const publicationProjection='...(outcomeInterpretation?{outcomeInterpretation}:{})',promptSource=fs.readFileSync('prompt-engine.js','utf8'),publicationFault=process.argv.includes('--fault=audit-outcome-publication');
 if(publicationFault)assert.equal(promptSource.split(publicationProjection).length-1,1,'AUDIT_PUBLICATION_FAULT_SETUP_ORACLE');
-const r=projectStoreRuntime({sourceOverrides:publicationFault?{'prompt-engine.js':promptSource.replace(publicationProjection,'...{}')}:{}}),{engine,core,prompts,ingestion}=r,schema=r.runtime.closedLoopWorkflowSchema,hash=r.runtime.closedLoopHash;
+// This existing isolated fixture intentionally has no Stage1–25 bodies. Keep
+// only its declared Stage25 prerequisite projection stable during ordinary
+// saves. The Stage26 gate/review/authority functions are never replaced.
+const priorStageProjection=";(()=>{const e=globalThis.closedLoopWorkflowEngine;globalThis.closedLoopWorkflowEngine=Object.freeze({...e,recalculate(p,options){const out=e.recalculate(p,options);p.stages[25].status='COMPLETE';p.stages[25].gate={complete:true,blocked:false,reasons:[]};return out;}});})();";
+const isolatedEngineSource=fs.readFileSync('workflow-engine.js','utf8')+priorStageProjection;
+const r=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':isolatedEngineSource,...(publicationFault?{'prompt-engine.js':promptSource.replace(publicationProjection,'...{}')}:{})}}),{engine,core,prompts,ingestion}=r,schema=r.runtime.closedLoopWorkflowSchema,hash=r.runtime.closedLoopHash;
 // Controlling field semantics and the approved bounded repair plan preserve an
 // open STRING observation. These literal oracles are independent of the runtime
 // interpretation API: publication must tell the agent what the application uses.
@@ -46,12 +52,13 @@ async function accept(operation,{reviewResult=null,fileFirst=false}={}){
  if(fileFirst){for(const record of p.projectData.generatedPrompts)if(!record.invalidatedBy)await r.store.persistPromptContextFiles(record,p);p=await r.store.writeProject(p,{expectedProjectRevision:0,createOnly:true});}
  const storedBaseRevision=fileFirst?p.revision:null;
  p.stages[25].status='COMPLETE';p.stages[25].gate=r.copy({complete:true,blocked:false,reasons:[]});
- const {prompt}=prompts.reserveAndBuildPromptRecord(p,26,{operation,scope:operation==='COMPLETE'?fixture.scope:{}});assertPublication(prompt);let envelope=responseFixture({schema,engine,prompt,manifest:prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});
+ let {prompt}=prompts.reserveAndBuildPromptRecord(p,26,{operation,scope:operation==='COMPLETE'?fixture.scope:{}});assertPublication(prompt);let envelope=responseFixture({schema,engine,prompt,manifest:prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});
  if(reviewResult)envelope.records.semanticReviews[0].fields.RESULT=reviewResult;
  if(fileFirst){
   for(const record of p.projectData.generatedPrompts)if(!record.invalidatedBy)await r.store.persistPromptContextFiles(record,p);
   p=await r.store.writeProject(p,{expectedProjectRevision:storedBaseRevision});
-  const pkg=await r.store.createExecutionPackage({jobId:p.job.JOB_ID,stage:26,operation,instructionId:prompt.instructionId}),packageBytes=new Uint8Array(await pkg.blob.arrayBuffer()),members=readStoreArchive(packageBytes),member=path=>{const file=members.find(row=>row.canonicalPath===path);assert(file,'S26_RECONCILE_PACKAGE_MEMBER_ORACLE: '+path);return Buffer.from(file.bytes);};
+  const authorized=await authorizeFixtureHandoff(r,{project:p,prompt});p=authorized.project;prompt=authorized.prompt;
+  const pkg=await r.store.createExecutionPackage(authorized.request),packageBytes=new Uint8Array(await pkg.blob.arrayBuffer()),members=readStoreArchive(packageBytes),member=path=>{const file=members.find(row=>row.canonicalPath===path);assert(file,'S26_RECONCILE_PACKAGE_MEMBER_ORACLE: '+path);return Buffer.from(file.bytes);};
   const manifest=JSON.parse(member('manifest.json').toString('utf8')),instructionBytes=member('instruction.txt'),contextFiles=manifest.contextFiles.map(file=>{const bytes=member(file.path);assert.equal(bytes.length,file.byteSize,'S26_RECONCILE_CONTEXT_BYTES_ORACLE');assert.equal(hash.sha256Text(bytes.toString('utf8')),file.sha256,'S26_RECONCILE_CONTEXT_BYTES_ORACLE');return {filename:file.path,bytes};});
   assert.equal(manifest.operation,'RECONCILE','S26_RECONCILE_PACKAGE_IDENTITY_ORACLE');assert.equal(manifest.promptIdentity.instructionId,prompt.instructionId,'S26_RECONCILE_PACKAGE_IDENTITY_ORACLE');assert.equal(manifest.operationReservationId,prompt.operationReservationId,'S26_RECONCILE_PACKAGE_IDENTITY_ORACLE');assert.equal(instructionBytes.toString('utf8'),prompt.prompt,'S26_RECONCILE_INSTRUCTION_BYTES_ORACLE');assert.equal(manifest.promptIdentity.contractSha256,prompt.contractSha256,'S26_RECONCILE_PACKAGE_IDENTITY_ORACLE');
   envelope=responseFixture({schema,engine,prompt,manifest,contextFiles,instructionBytes});
@@ -165,4 +172,4 @@ const anchor='function semanticReviewCompletion(p,stage){',source=fs.readFileSyn
 const defective=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':source.replace(anchor,anchor+"if(stage===26)return {complete:true,reasons:[],reviews:[],basis:null};")}}),counterexample=defective.copy(authored);
 assert.throws(()=>assert.equal(defective.engine.semanticReviewCompletion(counterexample,26).complete,false,'AUDIT_REVIEW_ORACLE: controlled author bypass'),/AUDIT_REVIEW_ORACLE/);
 verificationObservations.push({checkId:'S26-CONTROLLED-AUTHOR-BYPASS-DETECTED',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2424'],boundary:'controlled former author-only approval -> independent boundary oracle',expected:{violationDetected:true},observed:{violationDetected:true,defectiveAccepted:true},passed:true});
-console.log(JSON.stringify({stage26IndependentReview:'PASS',isolatedScopeFixture:true,completeJourneyProven:false,reconciliationOperationCases,verificationObservations,auditComparisonPublicationEvidence,interpretationCases},null,2));
+console.log(JSON.stringify({stage26IndependentReview:'PASS',isolatedScopeFixture:true,completeJourneyProven:false,priorStageExecutionClaimed:false,producerPrerequisiteProjection:{priorStage:25,appliesOnlyTo:['stages.25.status','stages.25.gate'],sourceOverride:priorStageProjection,sourceSha256:hash.sha256Text(isolatedEngineSource)},reconciliationOperationCases,verificationObservations,auditComparisonPublicationEvidence,interpretationCases},null,2));

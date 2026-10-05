@@ -1,3 +1,4 @@
+import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 import {registerFixtureSourceSearchCapability} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -96,11 +97,12 @@ async function ingest(request,{invalid=false,observedBefore=null}={}){
   assert.equal(after.projectData.acceptedChanges.length,count+1,'Accept did not commit exactly one response: '+JSON.stringify(report.acceptanceFailure));assert.ok(after.projectData.rawResponses.some(row=>row.completeRawResponse===bytes.toString()),'The selected response bytes were not retained exactly');
   report.operations.push({stage,operation:request.operation,responseSha256:digest(bytes),acceptedChangeId:after.projectData.acceptedChanges.at(-1).changeId,revision:after.revision});return observation;
 }
+function syntheticJourneyAction(stage){return {target:'Disposable isolated complete-operator fixture, Stage '+stage,riskClasses:['READ_ONLY','REVERSIBLE'],expectedEffect:'Read this synthetic fixture and create only its declared response.json and disposable returned result.txt when requested.',reversibility:'Discard the isolated test project and its disposable output files; no real external resources are modified.',maximumCost:'No paid services or external tool calls are used by this synthetic counterpart.',authority:'Explicitly synthetic operator authorization for this controlled browser test project only.',containment:'Only the fixture context and files selected through this isolated browser; no real user projects, credentials, network search, or external side effects.',stopCondition:'Stop on any request outside the declared synthetic fixture or any changed target.',responsibleActor:'SYNTHETIC_TEST_OPERATOR and the declared deterministic fixture counterpart'};}
 async function external(){
   const exportControl=await browser.exists('#next-export-prompt-file')?'#next-export-prompt-file':await browser.exists('#download-execution-package')?'#download-execution-package':null;
   assert.ok(exportControl,`Stage ${stage}: no consolidated stage package control was available for the current external operation.`);
   assert.equal(await browser.visible(`#next-required-action ${exportControl}`),true,`Stage ${stage}: consolidated stage-file export was not the visible next action before transport.`);
-  const files=await browser.download(exportControl);assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: the stage export action must download exactly one file.');const [archive]=files,members=readStoreArchive(archive.bytes);
+  const files=await downloadSyntheticHandoff(browser,exportControl,{syntheticProject:true,action:syntheticJourneyAction(stage)});assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: the stage export action must download exactly one file.');const [archive]=files,members=readStoreArchive(archive.bytes);
   const manifest=JSON.parse(Buffer.from(members.find(member=>member.canonicalPath==='manifest.json').bytes).toString()),instructionMember=members.find(member=>member.canonicalPath==='instruction.txt'),instruction={bytes:Buffer.from(instructionMember.bytes),sha256:digest(instructionMember.bytes)};
   await inspectPresentation(browser,'exported-stage-'+stage+'-'+manifest.operation,instruction.bytes.toString());
   assert.equal(instruction.sha256,manifest.instruction.bodySha256);assert.equal(instruction.bytes.length,manifest.members.find(member=>member.canonicalPath==='instruction.txt').byteSize);
@@ -127,7 +129,7 @@ try{
       const view=await check.inspect(1);
       assert.match(view.action,/Current state:/);
       assert.match(view.action,/Who acts:/);
-      const files=await check.download('#next-export-prompt-file');assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: viewport stage export must download one file.');const [file]=files;
+      const files=await downloadSyntheticHandoff(check,'#next-export-prompt-file',{syntheticProject:true});assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: viewport stage export must download one file.');const [file]=files;
       const members=readStoreArchive(file.bytes);
       assert.ok(members.some(member=>member.canonicalPath==='instruction.txt'));
       assert.ok(members.some(member=>member.canonicalPath==='manifest.json'));

@@ -1,3 +1,4 @@
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -58,9 +59,9 @@ await check('Case-fold collisions between named returned files are rejected',()=
 await check('An unmodified saved prompt cannot export a modified slot set',()=>{const prompt=structuredClone(f.prompt);assert.ok(prompt.attachmentSlots?.length);prompt.attachmentSlots[1].role='HUMAN_AUTHORIZATION';assert.throws(()=>prompts.promptFileManifest(prompt),/slot/i);});
 await check('Unreserved instruction previews cannot create attachment authority',()=>{const project=core.createBlankState('UNRESERVED-SLOT-PREVIEW');engine.ensureShape(project);engine.recalculate(project);const prompt=prompts.buildPromptRecord(1,project);project.projectData.generatedPrompts.push(prompt);const envelope={...f.envelope,jobId:project.job.JOB_ID,promptIdentity:prompts.promptFileManifest(prompt).promptIdentity};assert.throws(()=>ingestion.attachmentSlotPlan(project,envelope,prompt),/slot|reserv/i);});
 await check('The production ZIP package preserves the exact issued slots and instruction bytes',async()=>{
- const {runtime,core,engine,prompts,store}=projectStoreRuntime(),project=core.createBlankState('SLOT-ZIP-BOUNDARY');project.job.EXACT_USER_OBJECTIVE_VERBATIM='Retain the exact preissued file contract in the exported package.';engine.ensureShape(project);engine.recalculate(project);
- const {prompt}=prompts.reserveAndBuildPromptRecord(project,1,{operation:'COMPLETE'}),expected=prompts.promptFileManifest(prompt);
- await store.writeProject(project);
+ const r=projectStoreRuntime(),{runtime,core,engine,prompts,store}=r;let project=core.createBlankState('SLOT-ZIP-BOUNDARY');project.job.EXACT_USER_OBJECTIVE_VERBATIM='Retain the exact preissued file contract in the exported package.';engine.ensureShape(project);engine.recalculate(project);
+ let {prompt}=prompts.reserveAndBuildPromptRecord(project,1,{operation:'COMPLETE'});
+ project=await store.writeProject(project);({project,prompt}=await authorizeSyntheticHandoff(r,{project,prompt}));const expected=prompts.promptFileManifest(prompt);
  const result=await store.createExecutionPackage({jobId:project.job.JOB_ID,stage:1,operation:'COMPLETE'}),members=readStoreArchive(new Uint8Array(await result.blob.arrayBuffer())),decode=path=>new TextDecoder().decode(members.find(row=>row.canonicalPath===path).bytes),manifest=JSON.parse(decode('manifest.json'));
  assert.deepEqual(manifest.attachmentSlots,JSON.parse(JSON.stringify(expected.attachmentSlots)));
  assert.deepEqual(manifest.handoff.attachmentSlots,manifest.attachmentSlots);
