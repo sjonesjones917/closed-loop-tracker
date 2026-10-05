@@ -3,7 +3,7 @@
   "manifestIdentity": "NRM-498102a2bfeb9d52bef01a345914fd7d",
   "generatorVersion": "closed-loop-governance-generator/9",
   "contractProfileId": "closed-loop-completion-profile/1",
-  "sourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "sourceCommit": "8283121898e18d7868eef81c5ca8bebf0c9585c0",
   "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
   "specificationByteLength": 342110,
@@ -223694,5 +223694,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "c3ffdb55370f4fc49db3d4f79ae087c93152d6daf2c0955edff387d9807a85a1"
+  "manifestSha256": "e0efbd27cbd574c4df9da7fc658540c3b438f15da62d8917ff1cd494b3c7fa7f"
 }
