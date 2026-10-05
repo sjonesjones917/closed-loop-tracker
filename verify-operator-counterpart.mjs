@@ -13,6 +13,8 @@ const diagnosticPrefixDir=process.env.CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_DIR||nu
 const diagnosticPrefixInput=process.env.CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_INPUT||null;
 assert(!diagnosticPrefixInput||diagnosticPrefixDir,'A retained diagnostic precursor is usable only by the declared isolated diagnostic setup mode.');
 assert(!(diagnosticPrefixDir&&injectedFault),'Diagnostic prefix generation and deliberate fault injection are separate verifier modes.');
+if(process.argv.includes('--stage17-selector-only')){console.log(JSON.stringify(stage17DeferredReceiptSelectorControls()));process.exit(0);}
+
 // Retained synthetic prerequisite fixtures are replayed only at their explicitly
 // recorded instant. The ordinary operator journey always uses the actual clock;
 // no retained capability report or canonical timestamp is rewritten for replay.
@@ -329,12 +331,33 @@ function verifyPermanentRegressionOwners(r,saved){
   cases.push({caseId:'stage15-original-and-stage17-19-complete-permanent-regression-selection',stage:17,operation:'REGRESSION',result:'PASS',synthetic:true,actualBrowser:false,initialIds,laterIds,observedBoundary:'actual admitted permanent17 regression -> Stage15 historical selection and current17/19 registered permanent selection -> initial/later gates'});
 }
 
-async function stage17DeferredReceiptControl(r,initial,sourceOverrides){
+function stage17DeferredReceiptSelection(e,project,{subjectId=null,requireCompleted=false}={}){
+  const stage=17,items=e.deferredExecutionPlan(project,stage,{operation:'EXECUTE_FAILURE_TEST'}).items;
+  const selected=items.find(item=>{
+    if(item.family!=='failureTests'||subjectId!==null&&item.subjectId!==subjectId)return false;
+    const definition=e.records(project,'failureTests').find(row=>e.recordId(row,'failureTests')===item.subjectId),earliest=e.recordValue(definition,'EARLIEST_EXECUTABLE_STAGE');
+    return e.recordValue(definition,'VERIFICATION_PHASE')==='PREPRODUCT_ITERATION'&&e.recordValue(definition,'PER_RUN_REQUIRED')===false&&Number.isInteger(earliest)&&earliest<=stage;
+  })||null;
+  if(requireCompleted)assert(selected?.completed,'STAGE17_RECEIPT_PRECURSOR_ORACLE: an actually accepted conditional receipt for the selected subject is required');
+  return selected;
+}
+function stage17DeferredReceiptSelectorControls(select=stage17DeferredReceiptSelection){
+  // These are verifier-selection values, never manufactured application state,
+  // completed stage gates, accepted receipts, freeze or reservation evidence.
+  const e={deferredExecutionPlan:p=>({items:p.items}),records:p=>p.definitions,recordId:row=>row?.id,recordValue:(row,key)=>row?.[key]},other={subjectId:'OTHER-COMPLETED-PER-RUN',family:'failureTests',completed:true},eligible={subjectId:'ELIGIBLE-NON-PER-RUN',family:'failureTests',completed:true},definitions=[{id:other.subjectId,VERIFICATION_PHASE:'PREPRODUCT_ITERATION',PER_RUN_REQUIRED:true,EARLIEST_EXECUTABLE_STAGE:11},{id:eligible.subjectId,VERIFICATION_PHASE:'PREPRODUCT_ITERATION',PER_RUN_REQUIRED:false,EARLIEST_EXECUTABLE_STAGE:8}],mixed={items:[other,eligible],definitions};
+  assert.equal(select(e,mixed)?.subjectId,'ELIGIBLE-NON-PER-RUN','STAGE17_MIXED_RECEIPT_SELECTION_ORACLE');
+  assert.equal(select(e,mixed,{subjectId:'ELIGIBLE-NON-PER-RUN',requireCompleted:true})?.subjectId,'ELIGIBLE-NON-PER-RUN','STAGE17_EXACT_SELECTED_RECEIPT_ORACLE');
+  assert.equal(select(e,{items:[eligible],definitions:[definitions[1]]},{requireCompleted:true})?.subjectId,'ELIGIBLE-NON-PER-RUN','STAGE17_SINGLE_RECEIPT_SELECTION_ORACLE');
+  assert.throws(()=>select(e,{items:[other,{...eligible,completed:false}],definitions},{subjectId:'ELIGIBLE-NON-PER-RUN',requireCompleted:true}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('STAGE17_RECEIPT_PRECURSOR_ORACLE'),'STAGE17_MISSING_SELECTED_RECEIPT_ORACLE');
+  assert.equal(select(e,{items:[eligible],definitions:[{...definitions[1],EARLIEST_EXECUTABLE_STAGE:24}]}),null,'STAGE17_FUTURE_RECEIPT_SELECTION_ORACLE');
+  return {caseId:'stage17-deferred-receipt-selector',result:'PASS',mixedCohort:true,exactSelectedSubject:true,originalSingleControl:true,missingCompletedSelectedReceiptRejected:true,future24NotApplicable:true,boundary:'Verifier selection helper only; actual accepted receipt/freeze/reservation behavior requires its separate mandatory default control.'};
+}
+
+async function stage17DeferredReceiptControl(r,initial,sourceOverrides,subjectId){
   const e=r.engine,h=r.runtime.closedLoopHash,stage=17,operation='EXECUTE_FAILURE_TEST',copy=r.copy;
   const itemFor=project=>e.deferredExecutionPlan(project,stage,{operation}).items.find(item=>item.subjectId===subjectId);
-  const initialItem=e.deferredExecutionPlan(initial,stage,{operation}).items.find(item=>item.completed&&item.family==='failureTests');
-  assert(initialItem,'STAGE17_RECEIPT_PRECURSOR_ORACLE: an actually accepted conditional receipt is required');
-  const subjectId=initialItem.subjectId,subject=e.records(initial,'failureTests').find(row=>e.recordId(row,'failureTests')===subjectId);
+  const initialItem=stage17DeferredReceiptSelection(e,initial,{subjectId,requireCompleted:true});
+  const subject=e.records(initial,'failureTests').find(row=>e.recordId(row,'failureTests')===subjectId);
   assert.equal(e.recordValue(subject,'VERIFICATION_PHASE'),'PREPRODUCT_ITERATION');assert.equal(e.recordValue(subject,'PER_RUN_REQUIRED'),false);
   assert(!initialItem.binding.targetIdentities.some(row=>['candidateFreezes','iterations','runs'].includes(row.family)),'STAGE17_RECEIPT_NON_RUN_TARGET_ORACLE');
   const receipt=e.records(initial,'regressionExecutions').find(row=>initialItem.receipts.includes(e.recordId(row,'regressionExecutions')));
@@ -486,12 +509,8 @@ async function verifyStage17FailureCorrection() {
   // The default due-stage verifier generates this legitimate diagnostic
   // predecessor. Keep the accepted conditional receipt across the real freeze
   // and ten-slot reservation, rather than manufacturing completed stages.
-  const scheduledReceiptControl=diagnosticPrefixDir&&e.deferredExecutionPlan(saved,stage,{operation:'EXECUTE_FAILURE_TEST'}).items.some(item=>{
-    if(item.family!=='failureTests')return false;
-    const definition=e.records(saved,'failureTests').find(row=>rid(row,'failureTests')===item.subjectId),earliest=v(definition,'EARLIEST_EXECUTABLE_STAGE');
-    return v(definition,'VERIFICATION_PHASE')==='PREPRODUCT_ITERATION'&&v(definition,'PER_RUN_REQUIRED')===false&&Number.isInteger(earliest)&&earliest<=stage;
-  });
-  const receiptControl=scheduledReceiptControl?await stage17DeferredReceiptControl(r,saved,runtimeSources):null;
+  const scheduledReceiptControl=diagnosticPrefixDir&&stage17DeferredReceiptSelection(e,saved);
+  const receiptControl=scheduledReceiptControl?await stage17DeferredReceiptControl(r,saved,runtimeSources,scheduledReceiptControl.subjectId):null;
   const retainedIteration=diagnosticPrefixInput&&e.records(saved,'iterations').find(row=>Number(row.stage)===stage&&rid(row,'iterations')===e.currentScope(saved).iterationId),retainedCandidate=retainedIteration&&e.records(saved,'candidateFreezes').find(row=>rid(row,'candidateFreezes')===String(v(retainedIteration,'CANDIDATE_ID')||retainedIteration.scope?.candidateId||''));
   let first;if(retainedIteration){assert(retainedCandidate,'STAGE17_RETAINED_CANDIDATE_ORACLE');first={iteration:retainedIteration,candidate:retainedCandidate};}else{assert.equal(e.operationalNextAction(saved,stage).actionType,'FREEZE_CANDIDATE','STAGE17_ENTRY_ACTION_ORACLE: '+JSON.stringify(e.operationalNextAction(saved,stage)));first=await freeze();}
   if(receiptControl)await receiptControl.observe(saved,'after-freeze');
@@ -576,6 +595,7 @@ async function verifyStage17FailureCorrection() {
   cases.push({caseId:'stage17-failed-iteration-root-cause-correction-fresh-freeze',stage,operations:['ROOT_CAUSE','CORRECT'],result:'PASS',synthetic:true,actualBrowser:false,oldScope:failedScope,newScope:{iterationId:nextIterationId,candidateId:nextCandidateId},defectId,rootCauseReceipt:rca,correctionReceipt:correction,allReceipts:proof,acceptedFailedIterationStillIncomplete:true,instructionPreserved:true,newEmptyBatchIncomplete:true,priorRawBytesPreserved:true,mainLifecycleUnchanged:true,observedBoundary:'actual accepted failed ten-run prefix -> actual ZIP/staged response -> prepare/operator commit -> metadata store/readback -> adverse gate -> fresh application-owned freeze/batch'});
 }
 
+cases.push(stage17DeferredReceiptSelectorControls());
 for(let stage=diagnosticRecovered?Number(diagnosticRecovered.entryStage):1;stage<=stageLimit;stage++){
   if(diagnosticPrefixDir&&[7,8,15].includes(stage))await emitDiagnosticPrefix(stage);
   if(stage===7&&!injectedFault&&!diagnosticPrefixDir)await verifyOwningStageExecution(stage,'EXECUTE_FAILURE_TEST');
