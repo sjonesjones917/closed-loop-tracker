@@ -8,10 +8,10 @@ const directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS;
 // --check parses a named file without executing its verifier body. Preserve its
 // actual parser exit status, but never publish it as an executed suite receipt.
 const syntaxOnly=process.execArgv.includes('--check')||process.execArgv.includes('-c');
-// A focused timing-only child and a deliberately faulted native owner are
-// different audited populations. Their enclosing required verifiers retain
-// their negative receipts; neither can overwrite the complete positive run.
-const focusedPopulation=suite==='verify-full-cycle.mjs'&&process.argv.includes('--timing-only')||suite==='verify-native-proof-journey.mjs'&&process.env.CONFORMANCE_NATIVE_FAULT==='skip-proof-recording';
+// Focused timing, fault, and restoration children are different populations.
+// Their enclosing required verifiers retain the actual child results; these
+// children must never overwrite the complete positive producer receipt.
+const focusedPopulation=suite==='verify-full-cycle.mjs'&&process.argv.includes('--timing-only')||suite==='verify-native-proof-journey.mjs'&&process.env.CONFORMANCE_NATIVE_FAULT==='skip-proof-recording'||suite==='verify-cross-run-comparison.mjs'&&process.argv.slice(2).some(argument=>argument.startsWith('--comparison-fault=')||argument==='--comparison-control'||argument==='--stability-aggregate-control'||argument==='--projection-recovery-only');
 if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(process.cwd())===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT))){
   const fingerprint=evidenceFingerprint(),chunks=[],stderrChunks=[];
   let byteCount=0,outputOverflow=false;

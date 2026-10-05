@@ -1,6 +1,7 @@
 // Frozen assertion populations from the maintained verifier boundary audit.
 // These are named observations after executed assertions, not suite-name proof.
 import fs from 'node:fs';
+import {isDeepStrictEqual} from 'node:util';
 export const negativePopulationCatalog=JSON.parse(fs.readFileSync(new URL('./verification-negative-populations.json',import.meta.url),'utf8')).suites;
 const scopeLimit='Finite listed synthetic production/assertion cases only; semantic completeness, actual browser behavior and physical-device acceptance require their own evidence.';
 const check=(id,marker,path,expected,assertionReference,extra={})=>({id,marker,path,expected,assertionReference,...extra});
@@ -8,6 +9,670 @@ const negative=(id,marker,path,violation,assertionReference)=>check(id,marker,pa
 const invalidCase=(id,marker,caseName,expectedCode,violation)=>check(id,marker,'negativeObservations',undefined,'negativeAt actual rejection and canonical-state preservation',{violation,expectedDescription:`${caseName} rejected with ${expectedCode}, zero accepted changes`,condition:rows=>Array.isArray(rows)&&rows.filter(row=>row.name===caseName).length===1&&rows.some(row=>row.name===caseName&&row.expectedCode===expectedCode&&row.observedCodes.includes(expectedCode)&&row.accepted===false&&row.acceptedChanges===0)});
 const emittedCases=(ids)=>rows=>Array.isArray(rows)&&ids.every(id=>rows.filter(row=>row.checkId===id).length===1&&rows.some(row=>row.checkId===id&&row.passed===true));
 const exactLiteralFields=(value,expected)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===Object.keys(expected).length&&Object.entries(expected).every(([key,entry])=>Object.hasOwn(value,key)&&value[key]===entry);
+const exactNamedCases=(rows,names)=>Array.isArray(rows)&&rows.length===names.length&&new Set(rows).size===names.length&&names.every(name=>rows.includes(name));
+const specificationIdentityCases=['current-manifest-and-source-projection','specification-source-distinct-from-candidate','missing-identity','missing-manifestPath','missing-manifestSha256','missing-sourceCommit','missing-sourcePath','missing-sourceSha256','wrong-manifest-path','wrong-manifest-digest','candidate-as-specification-source','wrong-source-path','wrong-source-digest','report-cannot-mutate-private-expected-specification','malformed-manifest-schema','wrong-declared-source-path','malformed-specification-commit','wrong-declared-source-bytes','array-specification-commit','object-specification-commit','null-specification-commit'];
+const acceptanceRegistryCases=['missing-registries','missing-test-ir-identities','changed-field-registry','changed-operation-registry','report-cannot-mutate-private-expected-identities'];
+const deploymentRegistryCases=['current-build-conforming-control','former-omission-accepted-and-correction-rejects','missing-registry-block','missing-language-block','extra-registry','field-missing','field-wrong-digest','operation-missing','operation-wrong-digest','scope-missing','scope-wrong-digest','durableObject-missing','durableObject-wrong-digest','normalizer-missing','normalizer-wrong-digest','derivation-missing','derivation-wrong-digest','id-missing','id-wrong-digest','wrong-registry-owner','wrong-language','wrong-operation-version','wrong-operation-digest','wrong-operation-owner','self-consistent-untrusted-owner-rejected-before-execution','exact-artifact-recovery'];
+const migrationSourceCases=['legacy-exact-spans-and-duplicate-history','same-span-dedup','sibling-project-isolation','utf16-representation-accounting','native-backup-import-reload','exact-import-dedup','distinct-import-source-retained','history-restore-exact-sources','transport-source-survives-undo','missing-original-blocks-export','corrupt-original-blocks-export','restored-valid-source-control','source-digest-fields-require-exact-strings','startup-abort-keeps-original','startup-capacity-keeps-original','changed-legacy-input-preserved','import-abort-keeps-prior','import-capacity-keeps-prior','rehashed-wrong-payload-binding-rejected','source-save-idempotency','new-source-false-parsed-binding-rejected-before-commit','new-source-valid-parsed-binding-save-control','owned-source-schema-and-binding-immutable-on-save','ordinary-save-retains-opaque-unknown-archive','history-source-missing-blocks-export-and-restore','history-source-corruption-detected','history-source-corrected-control','package-noncanonical-spelling','source-files-not-canonical-or-gating','source-descriptors-excluded-from-stage-context','actual-handoff-zip-excludes-source-metadata-and-bytes'];
+const migrationSourceFaults={'source-legacy-loss':'SOURCE_LEGACY_EXACT_SPAN_ORACLE','source-package-loss':'SOURCE_PACKAGE_EXACT_SPAN_ORACLE','source-payload-binding':'SOURCE_PAYLOAD_BINDING_ORACLE','source-cache-binding':'SOURCE_PAYLOAD_BINDING_ORACLE','source-write-downgrade':'SOURCE_WRITE_IMMUTABLE_ORACLE','source-new-write-binding':'SOURCE_NEW_WRITE_BINDING_ORACLE'};
+function completeMigrationSourceBytes(value,report){
+ return report.verifyV3Migration==='PASS'&&value?.schema==='closed-loop-source-retention-check/1'&&value.result==='PASS'&&value.synthetic===true&&value.actualBrowser===false&&value.sourceArtifactCount===3&&Number.isSafeInteger(value.legacyExactSourceBytes)&&value.legacyExactSourceBytes>0&&exactNamedCases(value.cases,migrationSourceCases)&&Array.isArray(report.faults)&&Object.entries(migrationSourceFaults).every(([fault,oracle])=>{const rows=report.faults.filter(row=>row?.fault===fault);return rows.length===1&&rows[0].oracle===oracle&&rows[0].result==='DETECTED'&&rows[0].exitCode===1&&typeof rows[0].stderr==='string'&&rows[0].stderr.includes(oracle);});
+}
+const oneObservation=(rows,id)=>Array.isArray(rows)&&rows.filter(row=>row?.checkId===id).length===1?rows.find(row=>row?.checkId===id):null;
+const exactObservationFacts=(row,expected)=>row?.passed===true&&isDeepStrictEqual(row.expected,expected)&&isDeepStrictEqual(row.observed,expected);
+const nonemptyString=value=>typeof value==='string'&&value.length>0;
+function completeNativeStage22Batch(rows,report){
+ const row=oneObservation(rows,'native-stage22-all-ready-batch'),facts={readyNativeCount:2,outcomes:['SATISFIED','VIOLATED'],futureResults:0,externalResults:0,duplicateRetry:false,firstOnlyFaultDetected:true};
+ if(report.verificationRouting!=='PASS'||report.focusedNativeProductControls!==false||!exactObservationFacts(row,facts)||!Array.isArray(row.cases)||row.cases.length!==2||row.cases.some(value=>!value||typeof value!=='object'||Array.isArray(value)))return false;
+ const fault=oneCase(row.cases.map(value=>({...value,case:value.caseId})),'first-ready-only-controlled-fault'),control=oneCase(row.cases.map(value=>({...value,case:value.caseId})),'all-ready-native-results');
+ return fault?.caughtAt==='NATIVE_STAGE22_ALL_READY_RESULTS_ORACLE'&&fault.persistedResults===1&&control?.noDuplicateRetry===true&&Array.isArray(control.expected)&&control.expected.length===2&&control.expected.every(value=>value&&typeof value==='object'&&!Array.isArray(value)&&nonemptyString(value.testId))&&new Set(control.expected.map(value=>value.testId)).size===2&&exactNamedCases(control.expected.map(value=>value.determination),['SATISFIED','VIOLATED'])&&isDeepStrictEqual(control.observed,control.expected)&&nonemptyString(control.futureTestId)&&nonemptyString(control.externalTestId)&&control.futureTestId!==control.externalTestId&&control.expected.every(value=>value.testId!==control.futureTestId&&value.testId!==control.externalTestId);
+}
+function completeStage29Investigation(rows,report){
+ const row=oneObservation(rows,'stage29.investigation.admission-and-authority');
+ return report.stagesCompleted===30&&exactObservationFacts(row,{operation:'INVESTIGATE_MISSING_EVIDENCE',admitted:true,retainedRawBytes:true,canonicalInvestigation:true,agentChainWriteRejected:true,stageComplete:false,idempotent:true})&&row.basis==='ACTUAL_ACCEPTED_SYNTHETIC_FULL_CYCLE_PREFIX_THROUGH_STAGE28'&&row.prior28GatesExecuted===true&&row.actualBrowser===false&&row.actualExternalOrPhysicalObservation===false&&row.canonicalProjectStoreReload===false&&typeof row.rawSha256==='string'&&/^[a-f0-9]{64}$/.test(row.rawSha256)&&typeof row.instructionSha256==='string'&&/^[a-f0-9]{64}$/.test(row.instructionSha256)&&Number.isSafeInteger(row.responseByteSize)&&row.responseByteSize>0&&Number.isSafeInteger(row.contextFileCount)&&row.contextFileCount>=0;
+}
+function completeStage20Authorization(rows,report){
+ const row=oneObservation(rows,'stage20.registered-authorization-consumed'),expected=row?.expected;
+ if(report.productionBaselineAuthority!=='PASS'||row?.passed!==true||!expected||!isDeepStrictEqual(row.observed,expected)||!exactNamedCases(Object.keys(expected),['decisionSource','decisionPurpose','identityAssurance','authorizationDecisionId','candidateId','confirmationIterationId','acceptedExternalResponses']))return false;
+ return expected.decisionSource==='HUMAN_DECISION_COMMAND'&&expected.decisionPurpose==='BASELINE_AUTHORIZATION'&&expected.identityAssurance==='SELF_ASSERTED'&&expected.acceptedExternalResponses===0&&['authorizationDecisionId','candidateId','confirmationIterationId'].every(key=>nonemptyString(expected[key]))&&exactNamedCases(report.intentionalInvalidFixturesRejected,['missing-human-authorization-decision','wrong-decision-purpose','wrong-decision-target','wrong-decision-value','wrong-decision-stage','inactive-historical-decision','wrong-artifact-set'])&&['noPartialMutationOnRejectedFreeze','exactHumanAuthorizationReferenced','zeroAcceptedStage20ExternalResponses','operatorActionBindsHumanDecision','isolatedDisposableProjects'].every(key=>report[key]===true);
+}
+const comparisonFaultOracles={
+ 'STABILITY-REPEATED-GROUP-MAPPING':'STABILITY_DEFECT_AGGREGATE_ORACLE',
+ 'COMPARISON-ATOMIC-DEFECT-BINDING':'COMPARISON_ATOMIC_DEFECT_HANDOFF_ORACLE',
+ 'COMPARISON-ATOMIC-DEFECT-MEMBERSHIP':'COMPARISON_ATOMIC_HANDOFF_BINDING_ORACLE',
+ 'COMPARISON-ATOMIC-DEFECT-PROVENANCE':'COMPARISON_ATOMIC_HANDOFF_BINDING_ORACLE',
+ 'COMPARISON-CORRECTED-DEFECT-AUTHORING':'COMPARISON_ATOMIC_DEFECT_CONTRACT_ORACLE',
+ 'COMPARISON-PRODUCTION-BINDING':'PRODUCTION_COMPARISON_BINDING_ORACLE',
+ 'COMPARISON-MISSING-TUPLE':'Missing required run verification was not rejected.',
+ 'COMPARISON-MISSING-CONTRACT':'Missing frozen expected-variance contract was not rejected.',
+ 'COMPARISON-UNKNOWN-AUTHORIZATION':'UNKNOWN variance authorization did not block Stage 13.',
+ 'COMPARISON-NONRESOLVING-DEFECT':'A nonexistent defect marker authorized prohibited variance.',
+ 'COMPARISON-MUTATING-READ':'Comparison evaluation rewrote an accepted record.',
+ 'COMPARISON-SUPERSESSION':'COMPARISON_REPLACEMENT_CURRENT_ORACLE',
+ 'VERIFICATION-INDEPENDENT-BATCH':'VERIFICATION_PARTIAL_BATCH_IMPACT_ORACLE',
+ 'VERIFICATION-SCOPED-REFINEMENT':'VERIFICATION_SCOPED_REFINEMENT_ORACLE',
+ 'VERIFICATION-INDEPENDENT-PROMPT':'VERIFICATION_INDEPENDENT_PROVENANCE_ORACLE',
+ 'VERIFICATION-INDEPENDENT-PROPOSAL':'VERIFICATION_INDEPENDENT_PROVENANCE_ORACLE',
+ 'VERIFICATION-INTRA-STAGE-DEPENDENCY':'VERIFICATION_SAME_STAGE_DEPENDENCY_ORACLE',
+ 'COMPARISON-UNCONFIRMED-ACCEPTANCE':'COMPARISON_UNCONFIRMED_ORACLE',
+ 'UI-ADDITIONAL-BATCH-MISLABEL':'ADDITIONAL_BATCH_CONFIRMATION_ORACLE',
+ 'UI-SAME-STAGE-DEPENDENCY':'SAME_STAGE_CONFIRMATION_ORACLE',
+ 'SCOPED-BATCH-DUPLICATE':'SCOPED_BATCH_DUPLICATE_ORACLE'
+};
+function completeComparisonAggregates(rows,report){
+ const row=oneObservation(rows,'stage13.application-defect-stability-aggregates');
+ const facts={totalDistinctDefects:4,repeatedDefectCount:2,repeatedFailureGroupCount:1,uniqueDefectCount:2,newDefectsByRun:{'RUN-pqu5ikh6im3sq7n40qsehesk7nsq21pp':2,'RUN-u8hl0c0obuni5crfmo1f8op1ld40mc66':1,'RUN-3cukajs1ni6bbv64i46c6hq1bgpjakpa':1},derivedRepeatedFailureGroups:1,derivedUniqueFailures:2};
+ return report.crossRunComparison==='PASS'&&report.requiredRunCount===10&&report.requiredTupleCount===10&&exactObservationFacts(row,facts)&&isDeepStrictEqual(report.stabilityArithmetic,{tenOfTen:1,nineOfTen:0.9,violationCountExact:true,undeterminedCountExact:true,closedAgreementUniverse:true})&&['expectedVarianceContractBound','applicationOwnedAggregateFacts','prohibitedVarianceDefectHandoffEnforced','unknownVarianceBlocked','undeterminedTruthBlocked','violatedTruthRoutedForward','noRunOrEvidenceDiscarded','isolatedDisposableProject'].every(key=>report[key]===true);
+}
+function completeComparisonFaults(rows,report){
+ const ids=Object.keys(comparisonFaultOracles),digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+ if(report.caseId!=='COMPARISON-IMPLEMENTATION-FAULTS'||report.result!=='PASS'||report.synthetic!==true||report.actualBrowser!==false||report.childBoundSeconds!==15||report.suiteBoundSeconds!==180||report.sourceRestored!==true||!Array.isArray(rows)||!exactCaseIds(rows.map(row=>({...row,caseId:row?.faultId})),ids)||!Array.isArray(report.rawRuns)||report.rawRuns.length!==22)return false;
+ const commandRows=argument=>report.rawRuns.filter(row=>Array.isArray(row?.command)&&row.command.length===3&&nonemptyString(row.command[0])&&row.command[1]==='verify-cross-run-comparison.mjs'&&row.command[2]===argument);
+ if(!ids.every(id=>{const row=rows.find(value=>value.faultId===id),runs=commandRows('--comparison-fault='+id),oracle=comparisonFaultOracles[id];return row.owner==='production'&&row.file===(id==='COMPARISON-CORRECTED-DEFECT-AUTHORING'?'workflow-schema.js':['COMPARISON-SUPERSESSION','VERIFICATION-INDEPENDENT-BATCH','COMPARISON-UNCONFIRMED-ACCEPTANCE','SCOPED-BATCH-DUPLICATE'].includes(id)?'response-ingestion.js':['UI-ADDITIONAL-BATCH-MISLABEL','UI-SAME-STAGE-DEPENDENCY'].includes(id)?'app-core.js':'workflow-engine.js')&&row.caughtBy===oracle&&row.result==='PASS'&&digest(row.originalSha256)&&digest(row.injectedSha256)&&row.originalSha256!==row.injectedSha256&&runs.length===1&&runs[0].exitCode===1&&runs[0].signal===null&&runs[0].error===null&&typeof runs[0].stdout==='string'&&typeof runs[0].stderr==='string'&&(runs[0].stdout+runs[0].stderr).includes(oracle);}))return false;
+ const restored=commandRows('--comparison-control');return restored.length===1&&restored[0].exitCode===0&&restored[0].signal===null&&restored[0].error===null;
+}
+function completeStage13Recovery(rows,report){
+ const row=oneObservation(rows,'stage13.old-group-projection-recovery'),facts={oldGroups:2,currentGroups:1,repeatedOccurrences:2,rawAndAcceptedHistoryPreserved:true,oldCheckpointPreserved:true,newNormalRevision:true,historyAuthorityBlockedStage:7,historyStage13ProjectionCleared:true,restoredComputedGroups:1,canonicalMetricInputsPreserved:true,negativeCases:['wrong-numeric-old-count','string-old-count','array-old-count','unrelated-derived-change','canonical-record-corruption']};
+ const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+ return report.stage13ProjectionRecovery==='PASS'&&exactObservationFacts(row,facts)&&row.synthetic===true&&row.actualBrowser===false&&row.priorActorHistoryReplayed===false&&row.duplicateDefectIsDeclaredFixtureInput===true&&report.sourceHashes&&exactNamedCases(Object.keys(report.sourceHashes),files)&&files.every(file=>digest(report.sourceHashes[file]))&&digest(report.legacyOwnerSha256)&&report.legacyOwnerSha256!==report.sourceHashes['workflow-engine.js'];
+}
+const typedAdmissionChecks=[
+ {
+  "marker": "responseTypeBoundaries",
+  "expected": {
+   "negativeCases": 102,
+   "optionalControls": 4,
+   "actualSavedPackage": true,
+   "conformingAdmission": true,
+   "acceptedAccountingControl": true,
+   "rawPreserved": true
+  },
+  "caseIds": [
+   "COMPLETE:root.schema:null",
+   "COMPLETE:root.schema:object",
+   "COMPLETE:root.schema:array",
+   "COMPLETE:root.schema:number",
+   "COMPLETE:root.schema:missing",
+   "COMPLETE:root.inputVersion:null",
+   "COMPLETE:root.inputVersion:object",
+   "COMPLETE:root.inputVersion:array",
+   "COMPLETE:root.inputVersion:number",
+   "COMPLETE:root.inputVersion:missing",
+   "COMPLETE:root.manifestSha256:null",
+   "COMPLETE:root.manifestSha256:object",
+   "COMPLETE:root.manifestSha256:array",
+   "COMPLETE:root.manifestSha256:number",
+   "COMPLETE:root.manifestSha256:missing",
+   "COMPLETE:root.pass1Completed:null",
+   "COMPLETE:root.pass1Completed:object",
+   "COMPLETE:root.pass1Completed:array",
+   "COMPLETE:root.pass1Completed:number",
+   "COMPLETE:root.pass1Completed:missing",
+   "COMPLETE:root.pass2OmissionChallenge:null",
+   "COMPLETE:root.pass2OmissionChallenge:array",
+   "COMPLETE:root.pass2OmissionChallenge:number",
+   "COMPLETE:root.pass2OmissionChallenge:missing",
+   "COMPLETE:root.units:null",
+   "COMPLETE:root.units:object",
+   "COMPLETE:root.units:array",
+   "COMPLETE:root.units:number",
+   "COMPLETE:root.units:missing",
+   "COMPLETE:challenge.completed:null",
+   "COMPLETE:challenge.completed:object",
+   "COMPLETE:challenge.completed:array",
+   "COMPLETE:challenge.completed:number",
+   "COMPLETE:challenge.completed:missing",
+   "COMPLETE:challenge.checkedCategories:null",
+   "COMPLETE:challenge.checkedCategories:object",
+   "COMPLETE:challenge.checkedCategories:number",
+   "COMPLETE:challenge.checkedCategories:missing",
+   "COMPLETE:challenge.omissionsFound:null",
+   "COMPLETE:challenge.omissionsFound:object",
+   "COMPLETE:challenge.omissionsFound:number",
+   "COMPLETE:challenge.omissionsFound:missing",
+   "COMPLETE:challenge.omissionsResolved:null",
+   "COMPLETE:challenge.omissionsResolved:object",
+   "COMPLETE:challenge.omissionsResolved:array",
+   "COMPLETE:challenge.omissionsResolved:number",
+   "COMPLETE:challenge.omissionsResolved:missing",
+   "COMPLETE:unit.sourceUnitId:null",
+   "COMPLETE:unit.sourceUnitId:object",
+   "COMPLETE:unit.sourceUnitId:array",
+   "COMPLETE:unit.sourceUnitId:number",
+   "COMPLETE:unit.sourceUnitId:missing",
+   "COMPLETE:unit.sourceRawValueSha256:null",
+   "COMPLETE:unit.sourceRawValueSha256:object",
+   "COMPLETE:unit.sourceRawValueSha256:array",
+   "COMPLETE:unit.sourceRawValueSha256:number",
+   "COMPLETE:unit.sourceRawValueSha256:missing",
+   "COMPLETE:unit.disposition:null",
+   "COMPLETE:unit.disposition:object",
+   "COMPLETE:unit.disposition:array",
+   "COMPLETE:unit.disposition:number",
+   "COMPLETE:unit.disposition:missing",
+   "COMPLETE:unit.reason:null",
+   "COMPLETE:unit.reason:object",
+   "COMPLETE:unit.reason:array",
+   "COMPLETE:unit.reason:number",
+   "COMPLETE:unit.externalInspectionClaimed:null",
+   "COMPLETE:unit.externalInspectionClaimed:object",
+   "COMPLETE:unit.externalInspectionClaimed:array",
+   "COMPLETE:unit.externalInspectionClaimed:number",
+   "COMPLETE:unit.inspectionStatus:null",
+   "COMPLETE:unit.inspectionStatus:object",
+   "COMPLETE:unit.inspectionStatus:array",
+   "COMPLETE:unit.inspectionStatus:number",
+   "COMPLETE:unit.extractedStatements:null",
+   "COMPLETE:unit.extractedStatements:object",
+   "COMPLETE:unit.extractedStatements:array",
+   "COMPLETE:unit.extractedStatements:number",
+   "COMPLETE:unit.extractedStatements:missing",
+   "COMPLETE:statement.statementKey:null",
+   "COMPLETE:statement.statementKey:object",
+   "COMPLETE:statement.statementKey:array",
+   "COMPLETE:statement.statementKey:number",
+   "COMPLETE:statement.statementKey:missing",
+   "COMPLETE:statement.text:null",
+   "COMPLETE:statement.text:object",
+   "COMPLETE:statement.text:array",
+   "COMPLETE:statement.text:number",
+   "COMPLETE:statement.text:missing",
+   "COMPLETE:statement.statementClass:null",
+   "COMPLETE:statement.statementClass:object",
+   "COMPLETE:statement.statementClass:array",
+   "COMPLETE:statement.statementClass:number",
+   "COMPLETE:statement.statementClass:missing",
+   "COMPLETE:statement.sourceLocation:null",
+   "COMPLETE:statement.sourceLocation:object",
+   "COMPLETE:statement.sourceLocation:array",
+   "COMPLETE:statement.sourceLocation:number",
+   "COMPLETE:challenge.checkedCategories:nested-item",
+   "COMPLETE:challenge.omissionsFound:nested-item",
+   "COMPLETE:root.units:nested-item",
+   "COMPLETE:unit.extractedStatements:nested-item"
+  ],
+  "id": "admission-contract.stage01.capture-types.COMPLETE"
+ },
+ {
+  "marker": "responseTypeBoundaries",
+  "expected": {
+   "negativeCases": 102,
+   "optionalControls": 4,
+   "actualSavedPackage": true,
+   "conformingAdmission": true,
+   "acceptedAccountingControl": true,
+   "rawPreserved": true
+  },
+  "caseIds": [
+   "RECONCILE_INTAKE:root.schema:null",
+   "RECONCILE_INTAKE:root.schema:object",
+   "RECONCILE_INTAKE:root.schema:array",
+   "RECONCILE_INTAKE:root.schema:number",
+   "RECONCILE_INTAKE:root.schema:missing",
+   "RECONCILE_INTAKE:root.inputVersion:null",
+   "RECONCILE_INTAKE:root.inputVersion:object",
+   "RECONCILE_INTAKE:root.inputVersion:array",
+   "RECONCILE_INTAKE:root.inputVersion:number",
+   "RECONCILE_INTAKE:root.inputVersion:missing",
+   "RECONCILE_INTAKE:root.manifestSha256:null",
+   "RECONCILE_INTAKE:root.manifestSha256:object",
+   "RECONCILE_INTAKE:root.manifestSha256:array",
+   "RECONCILE_INTAKE:root.manifestSha256:number",
+   "RECONCILE_INTAKE:root.manifestSha256:missing",
+   "RECONCILE_INTAKE:root.pass1Completed:null",
+   "RECONCILE_INTAKE:root.pass1Completed:object",
+   "RECONCILE_INTAKE:root.pass1Completed:array",
+   "RECONCILE_INTAKE:root.pass1Completed:number",
+   "RECONCILE_INTAKE:root.pass1Completed:missing",
+   "RECONCILE_INTAKE:root.pass2OmissionChallenge:null",
+   "RECONCILE_INTAKE:root.pass2OmissionChallenge:array",
+   "RECONCILE_INTAKE:root.pass2OmissionChallenge:number",
+   "RECONCILE_INTAKE:root.pass2OmissionChallenge:missing",
+   "RECONCILE_INTAKE:root.units:null",
+   "RECONCILE_INTAKE:root.units:object",
+   "RECONCILE_INTAKE:root.units:array",
+   "RECONCILE_INTAKE:root.units:number",
+   "RECONCILE_INTAKE:root.units:missing",
+   "RECONCILE_INTAKE:challenge.completed:null",
+   "RECONCILE_INTAKE:challenge.completed:object",
+   "RECONCILE_INTAKE:challenge.completed:array",
+   "RECONCILE_INTAKE:challenge.completed:number",
+   "RECONCILE_INTAKE:challenge.completed:missing",
+   "RECONCILE_INTAKE:challenge.checkedCategories:null",
+   "RECONCILE_INTAKE:challenge.checkedCategories:object",
+   "RECONCILE_INTAKE:challenge.checkedCategories:number",
+   "RECONCILE_INTAKE:challenge.checkedCategories:missing",
+   "RECONCILE_INTAKE:challenge.omissionsFound:null",
+   "RECONCILE_INTAKE:challenge.omissionsFound:object",
+   "RECONCILE_INTAKE:challenge.omissionsFound:number",
+   "RECONCILE_INTAKE:challenge.omissionsFound:missing",
+   "RECONCILE_INTAKE:challenge.omissionsResolved:null",
+   "RECONCILE_INTAKE:challenge.omissionsResolved:object",
+   "RECONCILE_INTAKE:challenge.omissionsResolved:array",
+   "RECONCILE_INTAKE:challenge.omissionsResolved:number",
+   "RECONCILE_INTAKE:challenge.omissionsResolved:missing",
+   "RECONCILE_INTAKE:unit.sourceUnitId:null",
+   "RECONCILE_INTAKE:unit.sourceUnitId:object",
+   "RECONCILE_INTAKE:unit.sourceUnitId:array",
+   "RECONCILE_INTAKE:unit.sourceUnitId:number",
+   "RECONCILE_INTAKE:unit.sourceUnitId:missing",
+   "RECONCILE_INTAKE:unit.sourceRawValueSha256:null",
+   "RECONCILE_INTAKE:unit.sourceRawValueSha256:object",
+   "RECONCILE_INTAKE:unit.sourceRawValueSha256:array",
+   "RECONCILE_INTAKE:unit.sourceRawValueSha256:number",
+   "RECONCILE_INTAKE:unit.sourceRawValueSha256:missing",
+   "RECONCILE_INTAKE:unit.disposition:null",
+   "RECONCILE_INTAKE:unit.disposition:object",
+   "RECONCILE_INTAKE:unit.disposition:array",
+   "RECONCILE_INTAKE:unit.disposition:number",
+   "RECONCILE_INTAKE:unit.disposition:missing",
+   "RECONCILE_INTAKE:unit.reason:null",
+   "RECONCILE_INTAKE:unit.reason:object",
+   "RECONCILE_INTAKE:unit.reason:array",
+   "RECONCILE_INTAKE:unit.reason:number",
+   "RECONCILE_INTAKE:unit.externalInspectionClaimed:null",
+   "RECONCILE_INTAKE:unit.externalInspectionClaimed:object",
+   "RECONCILE_INTAKE:unit.externalInspectionClaimed:array",
+   "RECONCILE_INTAKE:unit.externalInspectionClaimed:number",
+   "RECONCILE_INTAKE:unit.inspectionStatus:null",
+   "RECONCILE_INTAKE:unit.inspectionStatus:object",
+   "RECONCILE_INTAKE:unit.inspectionStatus:array",
+   "RECONCILE_INTAKE:unit.inspectionStatus:number",
+   "RECONCILE_INTAKE:unit.extractedStatements:null",
+   "RECONCILE_INTAKE:unit.extractedStatements:object",
+   "RECONCILE_INTAKE:unit.extractedStatements:array",
+   "RECONCILE_INTAKE:unit.extractedStatements:number",
+   "RECONCILE_INTAKE:unit.extractedStatements:missing",
+   "RECONCILE_INTAKE:statement.statementKey:null",
+   "RECONCILE_INTAKE:statement.statementKey:object",
+   "RECONCILE_INTAKE:statement.statementKey:array",
+   "RECONCILE_INTAKE:statement.statementKey:number",
+   "RECONCILE_INTAKE:statement.statementKey:missing",
+   "RECONCILE_INTAKE:statement.text:null",
+   "RECONCILE_INTAKE:statement.text:object",
+   "RECONCILE_INTAKE:statement.text:array",
+   "RECONCILE_INTAKE:statement.text:number",
+   "RECONCILE_INTAKE:statement.text:missing",
+   "RECONCILE_INTAKE:statement.statementClass:null",
+   "RECONCILE_INTAKE:statement.statementClass:object",
+   "RECONCILE_INTAKE:statement.statementClass:array",
+   "RECONCILE_INTAKE:statement.statementClass:number",
+   "RECONCILE_INTAKE:statement.statementClass:missing",
+   "RECONCILE_INTAKE:statement.sourceLocation:null",
+   "RECONCILE_INTAKE:statement.sourceLocation:object",
+   "RECONCILE_INTAKE:statement.sourceLocation:array",
+   "RECONCILE_INTAKE:statement.sourceLocation:number",
+   "RECONCILE_INTAKE:challenge.checkedCategories:nested-item",
+   "RECONCILE_INTAKE:challenge.omissionsFound:nested-item",
+   "RECONCILE_INTAKE:root.units:nested-item",
+   "RECONCILE_INTAKE:unit.extractedStatements:nested-item"
+  ],
+  "id": "admission-contract.stage01.capture-types.RECONCILE_INTAKE"
+ },
+ {
+  "marker": "responseTypeBoundaries",
+  "expected": {
+   "negativeCases": 30,
+   "scopeNegatives": 1,
+   "conformingAdmission": true,
+   "rawPreserved": true,
+   "structuredInvalid": true
+  },
+  "caseIds": [
+   "jobId:object",
+   "jobId:array",
+   "jobId:null",
+   "stage:object",
+   "stage:array",
+   "stage:null",
+   "operation:object",
+   "operation:array",
+   "operation:null",
+   "promptIdentity.instructionId:object",
+   "promptIdentity.instructionId:array",
+   "promptIdentity.instructionId:null",
+   "promptIdentity.bodySha256:object",
+   "promptIdentity.bodySha256:array",
+   "promptIdentity.bodySha256:null",
+   "promptIdentity.contractSha256:object",
+   "promptIdentity.contractSha256:array",
+   "promptIdentity.contractSha256:null",
+   "promptIdentity.contextSignature:object",
+   "promptIdentity.contextSignature:array",
+   "promptIdentity.contextSignature:null",
+   "packageId:object",
+   "packageId:array",
+   "packageId:null",
+   "operationReservationId:object",
+   "operationReservationId:array",
+   "operationReservationId:null",
+   "challengeNonce:object",
+   "challengeNonce:array",
+   "challengeNonce:null"
+  ],
+  "id": "admission-contract.response.typed-identity-boundary"
+ },
+ {
+  "marker": "stage01CaptureCacheCompatibility",
+  "expected": {
+   "cachedExports": 4,
+   "capturedCases": 2,
+   "epochChanges": 0
+  },
+  "detailCases": [
+   {
+    "operation": "COMPLETE",
+    "status": "RESERVED",
+    "actualUiSaveOwner": true,
+    "actualSavedZip": true,
+    "retainedBytesUnchanged": true,
+    "sameGeneration": true,
+    "descriptorCalls": 1
+   },
+   {
+    "operation": "COMPLETE",
+    "status": "EXPORTED",
+    "actualUiSaveOwner": true,
+    "actualSavedZip": true,
+    "retainedBytesUnchanged": true,
+    "sameGeneration": true,
+    "descriptorCalls": 1
+   },
+   {
+    "operation": "RECONCILE_INTAKE",
+    "status": "RESERVED",
+    "actualUiSaveOwner": true,
+    "actualSavedZip": true,
+    "retainedBytesUnchanged": true,
+    "sameGeneration": true,
+    "descriptorCalls": 1
+   },
+   {
+    "operation": "RECONCILE_INTAKE",
+    "status": "EXPORTED",
+    "actualUiSaveOwner": true,
+    "actualSavedZip": true,
+    "retainedBytesUnchanged": true,
+    "sameGeneration": true,
+    "descriptorCalls": 1
+   },
+   {
+    "capturedResponse": true,
+    "malformed": false,
+    "expected": "CONFORMING_ACCEPTANCE",
+    "sameGeneration": true,
+    "rawRetained": true,
+    "syntheticPreFixGuardEquivalent": true
+   },
+   {
+    "capturedResponse": true,
+    "malformed": true,
+    "expected": "PRECOMMIT_TYPE_REJECTION",
+    "sameGeneration": true,
+    "rawRetained": true,
+    "syntheticPreFixGuardEquivalent": true
+   }
+  ],
+  "requiredReport": {
+   "cacheFaultDetected": true
+  },
+  "id": "admission-contract.stage01.capture-cache-compatibility"
+ },
+ {
+  "marker": "responseIdentityUiBoundary",
+  "expected": {
+   "stagedExactBytes": true,
+   "rawExactBytes": true,
+   "wrongTypeDiagnostic": true,
+   "acceptedChanges": 0,
+   "correctionPrompt": true
+  },
+  "requiredReport": {
+   "uiFaultDetected": true
+  },
+  "id": "admission-contract.response.typed-identity-ui-boundary"
+ },
+ {
+  "marker": "stage01LegacyCaptureTypes",
+  "expected": {
+   "legacyCaptureSchema": "closed-loop-stage01-capture/1",
+   "shapeErrors": 0,
+   "newPassErrors": 0,
+   "projectUnchanged": true
+  },
+  "id": "admission-contract.stage01.capture-legacy-types"
+ },
+ {
+  "marker": "stage01LegacyNewResponses",
+  "expected": {
+   "operations": 2,
+   "newV2Valid": 2,
+   "newV1Valid": 0
+  },
+  "detailCases": [
+   {
+    "operation": "COMPLETE",
+    "newV2AcceptedForReview": true,
+    "newV1AcceptedForReview": false,
+    "historyPreserved": true
+   },
+   {
+    "operation": "RECONCILE_INTAKE",
+    "newV2AcceptedForReview": true,
+    "newV1AcceptedForReview": false,
+    "historyPreserved": true
+   }
+  ],
+  "id": "admission-contract.stage01.capture-new-legacy-rejection"
+ },
+ {
+  "marker": "obligationDispositionTypes",
+  "expected": {
+   "negativeCases": 15,
+   "conformingAdmission": true,
+   "actualSavedZip": true
+  },
+  "caseIds": [
+   "obligationId:array",
+   "obligationId:object",
+   "obligationId:null",
+   "obligationId:number",
+   "obligationId:missing",
+   "disposition:array",
+   "disposition:object",
+   "disposition:null",
+   "disposition:number",
+   "disposition:missing",
+   "reason:array",
+   "reason:object",
+   "reason:null",
+   "reason:number",
+   "reason:missing"
+  ],
+  "id": "admission-contract.stage04.disposition-types.COMPLETE"
+ },
+ {
+  "marker": "obligationDispositionTypes",
+  "expected": {
+   "negativeCases": 15,
+   "conformingAdmission": true,
+   "actualSavedZip": true
+  },
+  "caseIds": [
+   "obligationId:array",
+   "obligationId:object",
+   "obligationId:null",
+   "obligationId:number",
+   "obligationId:missing",
+   "disposition:array",
+   "disposition:object",
+   "disposition:null",
+   "disposition:number",
+   "disposition:missing",
+   "reason:array",
+   "reason:object",
+   "reason:null",
+   "reason:number",
+   "reason:missing"
+  ],
+  "id": "admission-contract.stage04.disposition-types.RECONCILE_REQUIREMENTS"
+ },
+ {
+  "marker": "representationObservationTypes",
+  "expected": {
+   "negativeCases": 54,
+   "conformingEmptyInventories": true,
+   "partialInventoryRecord": true,
+   "actualSavedZip": true,
+   "rawPreserved": true
+  },
+  "caseIds": [
+   "requiredPageOrViewIds:missing",
+   "requiredPageOrViewIds:null",
+   "requiredPageOrViewIds:object",
+   "requiredPageOrViewIds:nested-array",
+   "requiredPageOrViewIds:object-item",
+   "requiredPageOrViewIds:number-item",
+   "requiredPageOrViewIds:null-item",
+   "requiredPageOrViewIds:blank-item",
+   "inspectedPageOrViewIds:missing",
+   "inspectedPageOrViewIds:null",
+   "inspectedPageOrViewIds:object",
+   "inspectedPageOrViewIds:nested-array",
+   "inspectedPageOrViewIds:object-item",
+   "inspectedPageOrViewIds:number-item",
+   "inspectedPageOrViewIds:null-item",
+   "inspectedPageOrViewIds:blank-item",
+   "requiredPackagedFileIds:missing",
+   "requiredPackagedFileIds:null",
+   "requiredPackagedFileIds:object",
+   "requiredPackagedFileIds:nested-array",
+   "requiredPackagedFileIds:object-item",
+   "requiredPackagedFileIds:number-item",
+   "requiredPackagedFileIds:null-item",
+   "requiredPackagedFileIds:blank-item",
+   "openedOrTestedPackagedFileIds:missing",
+   "openedOrTestedPackagedFileIds:null",
+   "openedOrTestedPackagedFileIds:object",
+   "openedOrTestedPackagedFileIds:nested-array",
+   "openedOrTestedPackagedFileIds:object-item",
+   "openedOrTestedPackagedFileIds:number-item",
+   "openedOrTestedPackagedFileIds:null-item",
+   "openedOrTestedPackagedFileIds:blank-item",
+   "requiredTransformationIds:missing",
+   "requiredTransformationIds:null",
+   "requiredTransformationIds:object",
+   "requiredTransformationIds:nested-array",
+   "requiredTransformationIds:object-item",
+   "requiredTransformationIds:number-item",
+   "requiredTransformationIds:null-item",
+   "requiredTransformationIds:blank-item",
+   "inspectedTransformationIds:missing",
+   "inspectedTransformationIds:null",
+   "inspectedTransformationIds:object",
+   "inspectedTransformationIds:nested-array",
+   "inspectedTransformationIds:object-item",
+   "inspectedTransformationIds:number-item",
+   "inspectedTransformationIds:null-item",
+   "inspectedTransformationIds:blank-item",
+   "observation:missing",
+   "observation:null",
+   "observation:array",
+   "observation:object",
+   "observation:hostile-object",
+   "paired-nested-view-identities"
+  ],
+  "id": "admission-contract.stage25.observation-types"
+ },
+ {
+  "marker": null,
+  "expected": {
+   "cases": 64,
+   "satisfiedControls": 2,
+   "undeterminedNegatives": 62,
+   "inventoryGuardFaultDetected": true
+  },
+  "caseIds": [
+   "explicit-full-coverage",
+   "explicit-empty-classes",
+   "all-inventories-omitted",
+   "missing-requiredPageOrViewIds",
+   "string-requiredPageOrViewIds",
+   "null-requiredPageOrViewIds",
+   "object-requiredPageOrViewIds",
+   "missing-inspectedPageOrViewIds",
+   "string-inspectedPageOrViewIds",
+   "null-inspectedPageOrViewIds",
+   "object-inspectedPageOrViewIds",
+   "missing-requiredPackagedFileIds",
+   "string-requiredPackagedFileIds",
+   "null-requiredPackagedFileIds",
+   "object-requiredPackagedFileIds",
+   "missing-openedOrTestedPackagedFileIds",
+   "string-openedOrTestedPackagedFileIds",
+   "null-openedOrTestedPackagedFileIds",
+   "object-openedOrTestedPackagedFileIds",
+   "missing-requiredTransformationIds",
+   "string-requiredTransformationIds",
+   "null-requiredTransformationIds",
+   "object-requiredTransformationIds",
+   "missing-inspectedTransformationIds",
+   "string-inspectedTransformationIds",
+   "null-inspectedTransformationIds",
+   "object-inspectedTransformationIds",
+   "required-view-uninspected",
+   "observation-missing",
+   "nested-array-item-requiredPageOrViewIds",
+   "object-item-requiredPageOrViewIds",
+   "number-item-requiredPageOrViewIds",
+   "null-item-requiredPageOrViewIds",
+   "blank-item-requiredPageOrViewIds",
+   "nested-array-item-inspectedPageOrViewIds",
+   "object-item-inspectedPageOrViewIds",
+   "number-item-inspectedPageOrViewIds",
+   "null-item-inspectedPageOrViewIds",
+   "blank-item-inspectedPageOrViewIds",
+   "nested-array-item-requiredPackagedFileIds",
+   "object-item-requiredPackagedFileIds",
+   "number-item-requiredPackagedFileIds",
+   "null-item-requiredPackagedFileIds",
+   "blank-item-requiredPackagedFileIds",
+   "nested-array-item-openedOrTestedPackagedFileIds",
+   "object-item-openedOrTestedPackagedFileIds",
+   "number-item-openedOrTestedPackagedFileIds",
+   "null-item-openedOrTestedPackagedFileIds",
+   "blank-item-openedOrTestedPackagedFileIds",
+   "nested-array-item-requiredTransformationIds",
+   "object-item-requiredTransformationIds",
+   "number-item-requiredTransformationIds",
+   "null-item-requiredTransformationIds",
+   "blank-item-requiredTransformationIds",
+   "nested-array-item-inspectedTransformationIds",
+   "object-item-inspectedTransformationIds",
+   "number-item-inspectedTransformationIds",
+   "null-item-inspectedTransformationIds",
+   "blank-item-inspectedTransformationIds",
+   "object-observation",
+   "throwing-observation",
+   "array-observation",
+   "null-observation",
+   "matching-nested-identities"
+  ],
+  "id": "admission-contract.stage25.observation-effective-types"
+ }
+];
+function completeTypedAdmission(definition,rows,report){
+ const id=definition.id.slice('admission-contract.'.length),row=oneObservation(rows,id);
+ if(definition.marker&&report[definition.marker]!=='PASS'||!exactObservationFacts(row,definition.expected))return false;
+ if(definition.caseIds&&!exactNamedCases(row.caseIds,definition.caseIds))return false;
+ if(definition.requiredReport&&!Object.entries(definition.requiredReport).every(([key,value])=>report[key]===value))return false;
+ if(definition.detailCases&&(!Array.isArray(report.observations)||report.observations.length!==definition.detailCases.length||!definition.detailCases.every(expected=>report.observations.filter(actual=>actual&&Object.entries(expected).every(([key,value])=>actual[key]===value)).length===1)))return false;
+ if(definition.marker==='responseTypeBoundaries'){
+  const faults=report.faults;
+  if(!Array.isArray(faults)||faults.length!==2||faults.filter(fault=>fault?.caseId==='missing-capture-shape-guard'&&fault.intendedFailure==='CAPTURE_TYPE_ADMISSION_ORACLE'&&fault.falseAdmission===true).length!==1||faults.filter(fault=>fault?.caseId==='missing-identity-type-guard'&&fault.intendedFailure==='RESPONSE_IDENTITY_STRUCTURED_REJECTION_ORACLE'&&fault.originalCoercionException===true).length!==1)return false;
+ }
+ return true;
+}
 const currentExecutedMetric=metric=>metric&&metric.value===1&&metric.disposition==='SATISFIED'&&Number.isInteger(metric.denominator)&&metric.denominator>0&&metric.numerator===metric.denominator&&Array.isArray(metric.includedIds)&&metric.includedIds.length===metric.denominator&&new Set(metric.includedIds).size===metric.denominator;
 const deferredAdmissionPopulation=Object.freeze({supportedFutureAuthorControls:8,immediateControls:1,legacyCorrectionControls:2,producerRejections:28,precommitFreshnessRejections:3,independentSharedSupportPredicateControls:4,retainedUnprovenStorageControls:3,supportedActivationStorageControls:1,narrowFaultControls:3,staleTargetConfirmationRejections:1});
 const deferredAuthorCases=['external-future-regression','native-future-regression','external-future-failure','zero-byte-future-failure','native-owning-failure-execution','owning-regression-execution','corrected-iteration-regression-author','lossless-capacity-and-normalizer'];
@@ -53,6 +718,7 @@ function completeRuntimeOperationAdmission(value){
 }
 function completeConditionalBytes(rows){const value=oneCase(rows,'CONDITIONAL_REQUIRED_FIXTURE_BYTES');return value?.passed===true&&value.actualDefinitionFileAdmission===true&&value.actualSavedZip===true&&value.synthetic===true&&value.actualBrowser===false&&value.realExternalActor===false&&Array.isArray(value.observations)&&value.observations.length===2&&[23,24].every(stage=>value.observations.filter(row=>row.stage===stage).length===1&&value.observations.some(row=>row.stage===stage&&row.operation==='EXECUTE_FAILURE_TEST'&&row.actualBytes===8&&row.byteIdentityVerified===true&&row.priorConclusionsWithheld===true&&row.syntheticPrerequisiteProjection===true));}
 export const verificationCatalog={
+  'verify-final-acceptance.mjs':{sourceInputs:['browser-execution-evidence.mjs','deployment-contract-identities.mjs','evaluate-mobile-acceptance-submission.mjs','final-acceptance.mjs','hash.js','mobile-evidence-test-fixture.mjs','operator-journey-fixtures.mjs','test-external-normative-proof.mjs','test-fixtures.mjs','test-normative-catalog-consumers.mjs','test-normative-context-applicability.mjs','test-normative-proof-fixture.mjs','test-project-store-runtime.mjs','test-stage01-specification-controls.mjs','test-zip.mjs','verification-evidence.mjs','verified-site.mjs','verifier-runtime.mjs','verify-conformance-regressions.mjs','verify-mobile-acceptance-evidence.mjs','visual-baseline-submission.mjs','verify-test-runtime-v3.mjs','test-runtime-operation-registry.mjs','workbook.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],boundary:'Actual retained-evidence reader, report projection and final consumer with explicitly disposable conformance/device fixtures; no actual release acceptance claim',checks:[check('acceptance.specification-identity','finalAcceptanceGate','specificationIdentityCases',undefined,'Exact source-manifest projection, separate candidate identity, missing/wrong/coerced type rejection and report-reference isolation',{expectedDescription:'All21 independently listed source-identity controls execute; actual specification manifest source is distinct from application candidate',condition:(rows,report)=>report.finalAcceptanceGate==='PASS'&&exactNamedCases(rows,specificationIdentityCases)}),check('acceptance.registry-identity','finalAcceptanceGate','deploymentContractIdentityCases',undefined,'Current private registry/TestIR identity projection and exact final consumer negatives',{expectedDescription:'All five missing/wrong/reference-isolation controls execute with conforming recovery',condition:(rows,report)=>report.finalAcceptanceGate==='PASS'&&exactNamedCases(rows,acceptanceRegistryCases)})]},
   'verify-due-stage-timing.mjs':{sourceInputs:['verification/deferred-definition-compatibility-legacy-fixture-20261005.json'],boundary:'Actual bounded deferred-definition file/operator/store regression owner; each conditional package projection states its synthetic prerequisites',checks:[check('definitions.compatibility-admission','deferredDefinitionCompatibilityAdmission','verificationObservations',undefined,'Full finite 51-observation admission population with literal counts and exact actual outcomes',{expectedDescription:'Eight admitted future controls, one immediate, two correction, 28 rejection, three precommit, four shared support, three retained-storage, one activation, three fault and one stale-confirmation observations',condition:completeDeferredAdmission}),check('definitions.stage17-receipt-preserved','dueStageTiming','results',undefined,'Actual Stage17 child receipt control after freeze and reservation; parent synthetic consumer cannot substitute',{expectedDescription:'Exact child marker, both phases, all six material negatives, byte-loss blocking and restoration, idempotency and state preservation',condition:completeStage17Receipt}),check('definitions.conditional-producer-contracts','dueStageTiming','results',undefined,'Actual saved ZIP carriers for all 38 current conditional receipt operations',{expectedDescription:'Exact conditional operation universe, shared operation-only contract, fixture/evidence custody and role isolation, ordinary neighbor controls and two owning faults',condition:completeConditionalProducer}),check('definitions.conditional-fixture-bytes','dueStageTiming','results',undefined,'Actual admitted byte-backed definition and exported required bytes at independent conditional Stage23/24',{expectedDescription:'Both stages provide exactly the eight preserved fixture bytes and withhold unrelated conclusions; synthetic prerequisites do not claim completed stages',condition:completeConditionalBytes})]},
   'verify-definition-of-done-invariants.mjs':{boundary:'actual loaded schema ownership/derivation/typed-relationship/extraction/provenance metadata assertions; semantics/custody separately scoped',checks:['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage'].map(name=>check('metadata.'+name,'fieldOwnershipCoverage','coverageMetrics.'+name,undefined,'Actual canonical field/relationship metadata enumerations and independent required schema assertions',{expectedDescription:'Nonempty exact declared metadata universe with complete owner/derivation/type/response-path/provenance contract',condition:currentExecutedMetric,coverageIds:report=>report.coverageMetrics[name].includedIds,basis:'EXECUTED_SCHEMA_METADATA_ASSERTIONS'}))},
   'verify-v3-definition-of-done.mjs':{boundary:'existing eight independently asserted current stage intake/obligation/file-byte/slot/timing/activation verifier executions; synthetic semantic actor fixture',checks:['stage01RawInputAccounting','stage01RequiredFileInspectionAccounting','stage01AcceptedSemanticMappingCoverage','stage04ObligationAccounting','fileFirstPromptByteIdentityCoverage','attachmentSlotMappingCoverage','dueStageObligationCoverage','activationProofCoverage'].map(name=>check('existing.'+name,'section49MetricUniverseContract','section49CoverageMetrics.'+name,undefined,'Existing independently checked actual verifier outputs',{expectedDescription:'Existing exact nonempty verifier case universe, measured numerator reconciles IDs and direct production controls',condition:currentExecutedMetric,coverageIds:report=>report.section49CoverageMetrics[name].includedIds}))},
@@ -117,7 +783,7 @@ export const verificationCatalog={
   'verify-native-proof-journey.mjs':{boundary:'actual Test IR execution and application-owned proof result normalization during full lifecycle',checks:[check('native.foreign-receipt-rejected','nativeProofJourney','stdout',undefined,'Mismatched native testId/testSpecSha256/inputArtifactSha256Values rejected atomically',{violation:'nativeExecutionReceiptsFabricatedExternally',expectedDescription:'All three exact current native identity mutations reject atomically',condition:text=>{try{const report=String(text).trim().split(/\n(?=\{)/).map(x=>JSON.parse(x)).find(x=>x.nativeProofChecks);return ['testId','testSpecSha256','inputArtifactSha256Values'].every(field=>report?.nativeProofChecks.some(row=>row.name===`native ${field} mismatch rejected atomically`&&row.result==='PASS'));}catch{return false;}}})]},
   'verify-stage29-evidence-chain-checkpoint.mjs':{boundary:'actual application chain/checkpoint/export custody commands on disposable full lifecycle',checks:[check('checkpoint.full-chain-digest','stage29CurrentSetValidated','verificationObservations',undefined,'Independent complete canonical SHA oracle and old truncated-summary rejection',{expectedDescription:'Exact independently computed full chain SHA and old summary rejection execute',condition:emittedCases(['evidence-chain-full-canonical-sha256','evidence-chain-old-summary-rejected'])}),check('checkpoint.export-custody','preDeliveryCheckpointExportCustody','preDeliveryCheckpointExportCustody',true,'exact export evidence current checkpoint custody'),negative('checkpoint.fabricated','fabricatedCheckpointRejected','fabricatedCheckpointRejected','inOriginDuplicateTreatedAsExternalBackup','fabricated current backup custody rejected'),negative('checkpoint.generic-evidence','genericExportEvidenceRejected','genericExportEvidenceRejected','inOriginDuplicateTreatedAsExternalBackup','generic evidence is not exact export action'),check('checkpoint.current-set','stage29CurrentSetValidated','stage29CurrentSetValidated',true,'exact current Stage 29 set'),negative('checkpoint.stale-weak','staleAndWeakEvidenceRejected','staleAndWeakEvidenceRejected','historicalScopeSatisfyingCurrentGates','stale/weak export evidence rejected')]},
   'verify-stage30-terminal-mobile-boundary.mjs':{boundary:'actual terminal/attempt authorization and mobile submission validators; physical device remains separately required',checks:[check('terminal.exact-record-preimage','stage30TerminalMobileBoundary','verificationObservations',undefined,'Independent exact terminal record SHA and mutated dependency rejection',{expectedDescription:'Exact full chain terminal preimage digest matches independently; old summary and changed release dependency reject transfer',condition:emittedCases(['terminal-exact-record-preimage-sha256','terminal-summary-or-mutated-dependency-rejected'])}),check('terminal.application-command','stage30TerminalMobileBoundary','terminalCalculationApplicationOwned',true,'application command controls terminal'),check('terminal.idempotent','stage30TerminalMobileBoundary','terminalRetryIdempotent',true,'Exact CALCULATE_TERMINAL retry must be idempotent.'),negative('terminal.blocked-export','stage30TerminalMobileBoundary','blockedTerminalRecorded','unsafeExternalActionWithoutAuthorization','A BLOCKED terminal record must never authorize export/share.'),negative('delivery.no-attempt-evidence','stage30TerminalMobileBoundary','deliveryEvidenceDistinct','authorizationRepresentedAsCompletedDelivery','Delivery completion evidence requires a real prior delivery attempt.'),check('terminal.operator-action','stage30TerminalMobileBoundary','authorizedExportOperatorAction',true,'authorized exact artifact export/share command')]},
-  'verify-deployment-manifest.mjs':{boundary:'actual deterministic site generation and exact manifest/resource digest/worker binding validation',checks:[check('deployment.canonical-origin','deploymentManifest','canonicalOrigin','https://sjonesjones917.github.io','canonical deployment origin'),check('deployment.canonical-path','deploymentManifest','canonicalBasePath','/closed-loop-tracker/','canonical deployment base path'),check('deployment.reproducible','deploymentManifest','reproducible',true,'deterministic generated site manifest'),check('deployment.worker-byte-identity','deploymentManifest','workerResultByteIdentityBound',true,'worker execution receipt actual byte/build identity'),negative('deployment.governance-excluded','deploymentManifest','repositoryGovernanceExcludedFromRuntime','runtimeProjectCopiesOfSpecificationText','controlling specification/controller not runtime resources')]},
+  'verify-deployment-manifest.mjs':{sourceInputs:['test-deployment-contract-identities.mjs','deployment-contract-identities.mjs','verified-site.mjs','build-static-site.mjs'],boundary:'actual deterministic site generation and exact manifest/resource digest/worker binding validation',checks:[check('deployment.registry-identities','deploymentManifest','registryIdentityRegression',undefined,'Actual built registry identity projection and exact artifact validation, including former omission and untrusted artifact owner controls',{expectedDescription:'All26 independently listed controls; all seven registry families and TestIR identities, actual build with no deployment/browser/device claim',condition:(value,report)=>report.deploymentManifest==='PASS'&&value?.passed===true&&exactNamedCases(value.cases,deploymentRegistryCases)&&value.actualBuiltArtifact===true&&value.actualDeployment===false&&value.actualBrowser===false&&value.actualPhysicalDevice===false}),check('deployment.canonical-origin','deploymentManifest','canonicalOrigin','https://sjonesjones917.github.io','canonical deployment origin'),check('deployment.canonical-path','deploymentManifest','canonicalBasePath','/closed-loop-tracker/','canonical deployment base path'),check('deployment.reproducible','deploymentManifest','reproducible',true,'deterministic generated site manifest'),check('deployment.worker-byte-identity','deploymentManifest','workerResultByteIdentityBound',true,'worker execution receipt actual byte/build identity'),negative('deployment.governance-excluded','deploymentManifest','repositoryGovernanceExcludedFromRuntime','runtimeProjectCopiesOfSpecificationText','controlling specification/controller not runtime resources')]},
   'verify-executed-evidence.mjs':{boundary:'real executed receipt producer and metric/negative-population consumer',checks:[check('receipts.active-fixture-inputs','activeFixtureFingerprintInputs','activeFixtureFingerprintControl',undefined,'Actual reused Stage03 producer receipt binds the actively consumed maintained legacy fixture while tracked or untracked',{expectedDescription:'The exact declared legacy fixture byte mutation invalidates actual receipt; missing bytes fail and exact restoration admits',condition:value=>value?.result==='PASS'&&value.actualProducerReceiptReused===true&&value.formerUntrackedFixtureOmissionReproduced===true&&Array.isArray(value.declaredSourcePaths)&&value.declaredSourcePaths.length===1&&value.declaredSourcePaths[0]==='verification/deferred-definition-compatibility-legacy-fixture-20261005.json'&&Array.isArray(value.sourceCases)&&value.sourceCases.length===1&&value.sourceCases[0].file===value.declaredSourcePaths[0]&&['actualByteHashBound','changedBytesRejectActualReceipt','missingBytesFailHonestly','untrackedBytesBound','untrackedMutationRejectsActualReceipt','exactRestoreAdmitsActualReceipt'].every(key=>value.sourceCases[0][key]===true)}),check('receipts.approved-governance-input-observation','governanceFingerprintInputs','verificationObservations',undefined,'Actual named approved governance source-byte assertion owner',{expectedDescription:'The actual source-byte/freshness assertion is emitted once by its executed receipt owner',condition:rows=>emittedCases(['APPROVED-GOVERNANCE-SOURCE-BYTES'])(rows)&&['expected','observed'].every(member=>{const value=rows.find(row=>row.checkId==='APPROVED-GOVERNANCE-SOURCE-BYTES')[member],keys=['actualGovernanceByteHashBound','changedBytesRejectActualReceipt','missingBytesFailHonestly','untrackedBytesBound','untrackedMutationRejectsActualReceipt','exactRestoreAdmitsActualReceipt','formerMarkdownOmissionReproduced'];return value&&Object.keys(value).length===keys.length&&keys.every(key=>value[key]===true);})}),check('receipts.approved-governance-inputs','executedEvidenceProtection','governanceFingerprintControl',undefined,'Actual reused Stage03 producer receipt invalidates after tracked/untracked approved source-byte changes; exact restoration and missing-byte controls',{expectedDescription:'Every active declared approval JSON/proposal MD is bound before and after commit; changed or missing bytes never reuse actual stale evidence',condition:value=>value?.result==='PASS'&&value.actualProducerReceiptReused===true&&value.formerMarkdownOmissionReproduced===true&&Array.isArray(value.declaredSourcePaths)&&value.declaredSourcePaths.length>=2&&value.declaredSourcePaths.some(file=>file.endsWith('.md'))&&value.declaredSourcePaths.some(file=>file.endsWith('.json'))&&Array.isArray(value.sourceCases)&&value.sourceCases.length===value.declaredSourcePaths.length&&value.declaredSourcePaths.every(file=>value.sourceCases.filter(row=>row.file===file).length===1&&value.sourceCases.some(row=>row.file===file&&['actualByteHashBound','changedBytesRejectActualReceipt','missingBytesFailHonestly','untrackedBytesBound','untrackedMutationRejectsActualReceipt','exactRestoreAdmitsActualReceipt'].every(key=>row[key]===true)))}),check('receipts.syntax-population','executedEvidenceProtection','syntaxChecksDoNotClaimExecution',true,'Actual Node --check parser status propagates without fabricated verifier execution receipt'),check('receipts.fail-closed','executedEvidenceProtection','producerViolationsRejected',true,'actual producer absent/failed/stale/duplicate controls'),negative('metrics.no-vacuous-success','executedEvidenceProtection','emptyUniverseRejected','vacuous100Metrics','empty denominator rejected at aggregation boundary')]}
 };
 const metrics=(metricId,checkIds,universeDefinition)=>({metricId,checkIds,universeDefinition,scopeLimit});
@@ -300,6 +966,30 @@ const canonicalSerializationIds=['canonical.safe-integer-and-typed-string','cano
 verificationCatalog['verify-hash.mjs']={sourceInputs:['workbook.js','workflow-schema.js'],boundary:'Actual canonical serializer against independently declared exact text/value and rejection controls.',checks:[check('canonical.registered-set-semantics','sha256Vectors','registeredSetSemantics',true,'Actual registered TEST_HASH /members canonical set equality and duplicate identity refusal'),check('canonical.exact-serialization-controls','sha256Vectors','verificationObservations',undefined,'Seven exact canonical serialization source clauses',{expectedDescription:'Every exact named serialization assertion is present and passes',condition:emittedCases(canonicalSerializationIds)})]};
 verificationCatalog['verify-test-runtime-v3.mjs'].checks.push(check('test-ir.exact-integer-boundary-population','verifyTestRuntimeV3','verificationObservations',undefined,'Independent finite exact integer operations and overflow/type rejection controls',{expectedDescription:'Six literal conforming and six precise rejection cases plus restored control',condition:rows=>emittedCases(['test-ir.exact-integer-boundaries'])(rows)&&exactLiteralFields(rows.find(row=>row.checkId==='test-ir.exact-integer-boundaries').observed,{conforming:6,rejected:6,restoredControl:true})}));
 verificationCatalog['verify-recoverable-history.mjs'].checks.push(check('store.cas-stale-write-population','synthetic','verificationObservations',undefined,'Exact before/after canonical state and retained history at actual stale revision rejection',{expectedDescription:'Stale write rejects; canonical state/history unchanged; newer control succeeds',condition:rows=>emittedCases(['store.cas-stale-write-isolation'])(rows)&&exactLiteralFields(rows.find(row=>row.checkId==='store.cas-stale-write-isolation').observed,{staleRevisionRejected:true,canonicalStateUnchanged:true,historyUnchanged:true,newerRevisionRestored:true})}));
+verificationCatalog['verify-v3-migration.mjs'].sourceInputs=['test-migration-source-retention.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','project-store.js','workbook.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','hash.js'];
+verificationCatalog['verify-v3-migration.mjs'].checks.push(check('migration.source-byte-preservation','verifyV3Migration','sourceBytePreservation',undefined,'Actual legacy/package original source bytes, production transaction adapter, recovery and handoff isolation',{expectedDescription:'All31 named source-retention controls and six intended owning faults; exact stored source population, valid restoration and explicitly synthetic nonbrowser scope',condition:completeMigrationSourceBytes}));
+// Named scoped observations retain their actual default producer and boundary.
+verificationCatalog['verify-verification-routing.mjs'].sourceInputs=['app-core.js','workflow-engine.js','workflow-schema.js','test-runtime.js','test-worker.js','project-store.js','verifier-runtime.mjs','test-project-store-runtime.mjs'];
+verificationCatalog['verify-verification-routing.mjs'].checks.push(check('stage-semantic.native-stage22-all-ready-batch','verificationRouting','verificationObservations',undefined,'Actual extracted UI all-ready native batch, real isolated worker, canonical result/store and retry',{expectedDescription:'Exactly two ready native outcomes; future and external excluded; first-only fault detected; full default routing suite required',condition:completeNativeStage22Batch}));
+verificationCatalog['verify-full-cycle.mjs'].sourceInputs=['test-stage29-investigation.mjs','test-fixtures.mjs','workflow-engine.js','workflow-schema.js','prompt-engine.js','response-ingestion.js','project-store.js','test-project-store-runtime.mjs'];
+verificationCatalog['verify-full-cycle.mjs'].checks.push(check('stage-semantic.stage29.investigation.admission-and-authority','stagesCompleted','verificationObservations',undefined,'Actual accepted synthetic lifecycle through Stage28 then generated investigation response/commit/retry',{expectedDescription:'Genuine default prefix; exact stored response/instruction identity; investigation progresses without an agent-owned evidence chain or false stage completion',condition:completeStage29Investigation}));
+verificationCatalog['verify-stage29-evidence-chain-checkpoint.mjs'].sourceInputs=['workflow-engine.js','workflow-schema.js','hash.js','workbook.js'];
+verificationCatalog['verify-stage29-evidence-chain-checkpoint.mjs'].checks.push(check('stage-semantic.stage29.application-construction-from-empty','stage29CurrentSetValidated','verificationObservations',undefined,'Application evidence-chain command from zero records selects the exact canonical fixture identities',{expectedDescription:'REQ/SRC/trace-selected instruction/distinct execution and product identities and application derivation provenance; no sufficiency or stage-completion inference',condition:(rows,report)=>report.stage29ApplicationCommand===true&&exactObservationFacts(oneObservation(rows,'stage29.application-construction-from-empty'),{stage:29,source:'APPLICATION_DERIVATION',derivationKey:'stage29.evidenceChains',requirementId:'REQ-1',authorityId:'SRC-1',instructionId:'INSTR-1',executionId:'EXEC-1',productId:'PROD-1'})}));
+verificationCatalog['verify-production-baseline-authority.mjs'].sourceInputs=['workflow-engine.js','workflow-schema.js','project-store.js','response-ingestion.js','prompt-engine.js','stage19-fixture.mjs','app-core.js'];
+verificationCatalog['verify-production-baseline-authority.mjs'].checks.push(check('stage-semantic.stage20.registered-authorization-consumed','productionBaselineAuthority','verificationObservations',undefined,'Application registered SELF_ASSERTED decision consumed by exact unchanged-confirmed baseline candidate',{expectedDescription:'Exact decision/purpose/assurance/candidate/iteration reference and zero external envelopes; all seven authority negatives and unchanged-state controls remain required',condition:completeStage20Authorization}));
+verificationCatalog['verify-cross-run-comparison.mjs']={boundary:'Actual synthetic Stage13 comparison/stability and current-scope mutation owners; exact ten-run arithmetic and independent defect counts; no real-agent, browser or physical acceptance.',sourceInputs:['workflow-engine.js','workflow-schema.js','response-ingestion.js','prompt-engine.js','app-core.js','workbook.js','hash.js','test-fixtures.mjs','test-artifact-fixtures.mjs','verifier-runtime.mjs','verify-conformance-regressions.mjs','operator-journey-fixtures.mjs','test-stage13-projection-recovery.mjs','test-project-store-runtime.mjs','project-store.js','verification/deferred-definition-compatibility-legacy-fixture-20261005.json'],checks:[
+ check('stage-semantic.stage13.application-defect-stability-aggregates','crossRunComparison','verificationObservations',undefined,'Exact Stage13 ten-run agreement and distinct/repeated/unique/per-run defect arithmetic',{expectedDescription:'10/10 and9/10 agreements;4 defect records,2 repeated occurrences,1 repeated pattern and2 unique; current complete producer invariants',condition:completeComparisonAggregates}),
+ check('stage-semantic.stage13.comparison-fault-population','childBoundSeconds','faults',undefined,'All21 independently named owning mutations fail at their exact oracle and unchanged control returns to success',{expectedDescription:'Exactly21 failed mutation children and one restored successful control, bounded by original supervisor and unchanged source',condition:completeComparisonFaults})
+]};
+verificationCatalog['verify-cross-run-comparison.mjs'].checks.push(check('stage-semantic.stage13.old-group-projection-recovery','stage13ProjectionRecovery','verificationObservations',undefined,'Actual former-owner projection write/checkpoint, current refresh/reload and History invalidation with exact source and metric-input preservation',{expectedDescription:'Former groups2 becomes current group1 while occurrences2 persist; old raw/checkpoint retained; new revision; restored History honestly blocked at7 and clears cached13; exact five corruption/type negatives',condition:completeStage13Recovery}));
+verificationCatalog['verify-ingestion.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-ingestion.mjs'].sourceInputs||[]),'test-response-type-boundaries.mjs','verification/stage01-retained-capture-legacy-fixture-20261005.json','app-core.js','test-project-store-runtime.mjs','verifier-runtime.mjs','test-fixtures.mjs','test-zip.mjs','operator-journey-fixtures.mjs','workflow-schema.js','workflow-engine.js','response-ingestion.js','prompt-engine.js','project-store.js','workbook.js','hash.js'])];
+verificationCatalog['verify-semantic-invariant.mjs'].sourceInputs=['workflow-schema.js','workflow-engine.js','workbook.js','hash.js','response-ingestion.js','prompt-engine.js','test-runtime.js','project-store.js','test-fixtures.mjs','test-artifact-fixtures.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs'];
+for(const definition of typedAdmissionChecks){
+ const suite=definition.id==='admission-contract.stage25.observation-effective-types'?'verify-semantic-invariant.mjs':'verify-ingestion.mjs';
+ verificationCatalog[suite].checks.push(check(definition.id,definition.marker||'verificationObservations','verificationObservations',undefined,'Exact named typed-boundary assertions with conforming controls and retained raw/continuation semantics',{expectedDescription:'Exact declared expected and observed facts, finite case membership, and owning fault/detail controls; synthetic actor and transaction adapter, no browser or release claim',condition:(rows,report)=>completeTypedAdmission(definition,rows,report)}));
+}
+const representationSemanticCases=typedAdmissionChecks.find(row=>row.id==='admission-contract.stage25.observation-effective-types').caseIds;
+Object.assign(verificationCatalog['verify-semantic-invariant.mjs'].checks.find(row=>row.id==='stage25.explicit-coverage-inventories'),{expectedDescription:'All64 named inventory/effective-determination controls, including the original29; only explicit full and empty controls satisfy; inventory guard fault detected',condition:(rows,report)=>report.semanticFalseAcceptanceInvariant===true&&report.inventoryGuardFaultDetected===true&&Array.isArray(rows)&&exactNamedCases(rows.map(row=>row?.caseId),representationSemanticCases)&&rows.every(row=>{const valid=['explicit-full-coverage','explicit-empty-classes'].includes(row.caseId);return row.expectedValid===valid&&row.aggregateComplete===valid&&row.effectiveDetermination===(valid?'SATISFIED':'UNDETERMINED');})});
 const negatives={};
 for(const definition of Object.values(verificationCatalog))for(const observation of definition.checks)if(observation.violation)(negatives[observation.violation]??=[]).push(observation.id);
 export const zeroCatalog=Object.fromEntries(Object.entries(negatives).map(([name,checkIds])=>[name,{checkIds,populationDefinition:'The exact listed controlled invalid-operation attempts, checked by their actual production/assertion boundary and emitted only after rejection assertions.',scopeLimit}]));

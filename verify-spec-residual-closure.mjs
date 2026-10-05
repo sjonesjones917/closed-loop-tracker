@@ -25,7 +25,7 @@ console.log(JSON.stringify({specResidualClosure:'PASS',testIrOperations:controll
 await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-due-stage-timing.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});
 await import('./verify-ten-independent-runs.mjs');
 await import('./verify-independent-run-verification.mjs');
-await import('./verify-cross-run-comparison.mjs');
+await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-cross-run-comparison.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});
 await import('./verify-root-cause-regressions.mjs');
 await import('./verify-root-cause-correction.mjs');
 await import('./verify-corrected-iteration.mjs');
