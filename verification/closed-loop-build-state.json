@@ -6,7 +6,7 @@
   "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
   "specificationByteLength": 342110,
-  "specificationSourceCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
+  "specificationSourceCommit": "8283121898e18d7868eef81c5ca8bebf0c9585c0",
   "startingMainCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "lastObservedMainCommit": "76bac0c862388623a0b43124153816bd3de1ac64",
   "currentStage": "01",

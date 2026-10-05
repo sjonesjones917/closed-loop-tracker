@@ -9,6 +9,7 @@ import {evaluateMobileAcceptanceSubmission,deployedExpected} from './evaluate-mo
 import {REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
 import {validateBrowserExecution} from './browser-execution-evidence.mjs';
 import {verificationCatalog,browserVerificationCatalog,metricCatalog,zeroCatalog,negativePopulationCatalog} from './verification-evidence-catalog.mjs';
+import {deploymentContractIdentities} from './deployment-contract-identities.mjs';
 
 export const RECEIPT_SCHEMA='closed-loop-executed-verification-receipt/1';
 export const SPECIFICATION_PATH='specification/closed-loop-reliability-controlling-implementation-specification.txt';
@@ -120,6 +121,7 @@ export function validateFinalNormativeProof(report,evidence){
   const current=evidenceFingerprint(validated.cwd);
   requireEvidence(current.sourceCommit===evidence.fingerprint.sourceCommit&&current.sourceInputsSha256===evidence.fingerprint.sourceInputsSha256&&current.specificationSha256===evidence.fingerprint.specificationSha256,'final normative proof source changed after receipt validation');
   requireEvidence(report.commit===evidence.fingerprint.sourceCommit,'final normative proof belongs to a different candidate');
+  for(const key of ['registryIdentities','testIrIdentities'])requireEvidence(isDeepStrictEqual(report[key],validated.contractIdentities?.[key]),'final deployment contract identity is missing or differs: '+key);
   requireEvidence(isDeepStrictEqual(report.executedVerificationEvidence?.fingerprint,evidence.fingerprint)&&report.executedVerificationEvidence?.evidenceSha256===evidence.evidenceSha256,'final normative execution identity differs from revalidated evidence');
   const expected=normativeProofSummary(evidence);
   requireEvidence(isDeepStrictEqual(report.section49CoverageMetrics?.normativeRequirementTraceCoverage,expected)&&report.normativeRequirementTraceCoverage===expected.value,'final normative metric does not derive from the exact current requirement universe');
@@ -335,7 +337,7 @@ export async function readReleaseExecutedEvidence(file,{siteDirectory,directory=
     const submission={targetJson,evidenceJson,expected,usedChallenges,submitter};mobileResult=evaluateMobileAcceptanceSubmission(submission);if(mobileResult.mobileAcceptanceResult==='ACCEPTED'){mobile=submission;mobileObservations(mobile,fingerprint);}
   }
   const output=aggregateExecutedEvidence(receipts,fingerprint,{mobile});if(mobileResult)output.externalMobileResult=mobileResult;output.evidenceSha256=sha(output);
-  validatedEvidenceDigests.set(output,{digest:sha(output),cwd:process.cwd(),releaseManifest:manifest});return output;
+  validatedEvidenceDigests.set(output,{digest:sha(output),cwd:process.cwd(),releaseManifest:manifest,contractIdentities:{registryIdentities:manifest.registryIdentities,testIrIdentities:manifest.testIrIdentities}});return output;
 }
 function readEvidencePayload(file,fingerprint,receipts){
   const evidence=readJson(file),{evidenceSha256,...payload}=evidence;
@@ -343,12 +345,12 @@ function readEvidencePayload(file,fingerprint,receipts){
   requireEvidence(evidence.fingerprint?.sourceCommit===fingerprint.sourceCommit&&evidence.fingerprint.sourceInputsSha256===fingerprint.sourceInputsSha256&&evidence.fingerprint.specificationSha256===fingerprint.specificationSha256&&isDeepStrictEqual(evidence.fingerprint.runtime,fingerprint.runtime),'aggregated evidence is not the current source/specification/revision/runtime');
   const canonical=aggregateExecutedEvidence(receipts,fingerprint);
   requireEvidence(isDeepStrictEqual(canonical,payload),'aggregated metrics/populations do not derive from the current executed receipts');
-  validatedEvidenceDigests.set(evidence,{digest:sha(evidence),cwd:process.cwd()});
+  validatedEvidenceDigests.set(evidence,{digest:sha(evidence),cwd:process.cwd(),contractIdentities:deploymentContractIdentities(process.cwd())});
   return evidence;
 }
 export function readExecutedEvidence(file,fingerprint=evidenceFingerprint()){return readEvidencePayload(file,fingerprint,readExecutionReceipts(path.dirname(file),fingerprint));}
 export function applyExecutedEvidence(report,evidence){
-  const output={...report,...(evidence.externalMobile?evaluateMobileAcceptanceSubmission(evidence.externalMobile):evidence.externalMobileResult||{}),coverageMetrics:{...report.coverageMetrics},section49CoverageMetrics:{...report.section49CoverageMetrics},section49ZeroCountMetrics:{...report.section49ZeroCountMetrics},executedVerificationEvidence:{fingerprint:evidence.fingerprint,receiptCount:evidence.receiptCount,observationCount:evidence.observationCount,evidenceSha256:evidence.evidenceSha256,receiptReferences:evidence.receiptReferences},negativePopulations:evidence.negativePopulations,normativeRequirementTrace:evidence.normativeRequirementTrace,fullRequirementProofs:evidence.fullRequirementProofs,contractRequirementTrace:evidence.contractRequirementTrace};
+  const output={...report,...structuredClone(validatedEvidenceDigests.get(evidence)?.contractIdentities||{}),...(evidence.externalMobile?evaluateMobileAcceptanceSubmission(evidence.externalMobile):evidence.externalMobileResult||{}),coverageMetrics:{...report.coverageMetrics},section49CoverageMetrics:{...report.section49CoverageMetrics},section49ZeroCountMetrics:{...report.section49ZeroCountMetrics},executedVerificationEvidence:{fingerprint:evidence.fingerprint,receiptCount:evidence.receiptCount,observationCount:evidence.observationCount,evidenceSha256:evidence.evidenceSha256,receiptReferences:evidence.receiptReferences},negativePopulations:evidence.negativePopulations,normativeRequirementTrace:evidence.normativeRequirementTrace,fullRequirementProofs:evidence.fullRequirementProofs,contractRequirementTrace:evidence.contractRequirementTrace};
   if(output.section49CoverageMetrics.normativeRequirementTraceCoverage){
     output.section49CoverageMetrics.normativeRequirementTraceCoverage=normativeProofSummary(evidence);
     output.normativeRequirementTraceCoverage=output.section49CoverageMetrics.normativeRequirementTraceCoverage.value;

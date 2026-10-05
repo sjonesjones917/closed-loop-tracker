@@ -13,7 +13,7 @@ export async function verifyDueVerificationScheduling(directory){
  assert.equal(dispatch.length,1,'DUE_RECEIPT_SCHEDULING_OWNER_ORACLE: complete deferred matrix must use its own checked child.');
  assert.match(dispatch[0],/stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS/,'DUE_RECEIPT_SCHEDULING_BUDGET_ORACLE: retain output and the existing composite budget.');
  assert(!owner.includes("await import('./verify-due-stage-timing.mjs');"),'DUE_RECEIPT_SCHEDULING_OWNER_ORACLE: duplicate in-process execution remains.');
- const copied=['verify-conformance-regressions.mjs','operator-journey-fixtures.mjs','test-fixtures.mjs','test-zip.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','hash.js','verification-evidence-preload.mjs','verification-evidence.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','collect-verification-evidence.mjs'],results=[];
+ const copied=['verify-conformance-regressions.mjs','operator-journey-fixtures.mjs','test-fixtures.mjs','test-zip.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','hash.js','verification-evidence-preload.mjs','verification-evidence.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','collect-verification-evidence.mjs'],results=[];
  const suite='verify-due-stage-timing.mjs',wrapper='verify-complete.mjs',diagnostic='SYNTHETIC_SCHEDULING_CHILD_DIAGNOSTIC\n';
  for(const mode of ['former-import','current-child','failed-child','malformed-child']){
   const cwd=path.join(directory,mode+' source with spaces');fs.mkdirSync(cwd,{recursive:true});

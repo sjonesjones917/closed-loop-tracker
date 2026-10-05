@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import './hash.js';
+import {validateDeploymentContractIdentities} from './deployment-contract-identities.mjs';
 import {evidenceFingerprint,readExecutionReceipts,aggregateExecutedEvidence,sha as evidenceSha} from './verification-evidence.mjs';
 
 const hash=globalThis.closedLoopHash;
@@ -46,6 +47,7 @@ export function validateSite(directory){
     const bytes=fs.readFileSync(path.join(directory,resource.path));
     requireValue(resource.hashAlgorithm==='SHA-256'&&resource.digest===digest(bytes)&&resource.byteSize===bytes.length&&resource.buildIdentity===manifest.buildIdentity,`Changed verified runtime file: ${resource.path}`);
   }
+  validateDeploymentContractIdentities(manifest,directory);
   return manifest;
 }
 
