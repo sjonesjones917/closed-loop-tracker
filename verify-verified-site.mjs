@@ -4,17 +4,29 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {runtimePaths,manifestName,fullTestSteps,digest,validateSite,assertPassedRun,assertReceipt,promoteSite,sealSite} from './verified-site.mjs';
+import {runtimePaths,manifestName,fullTestSteps,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,sealSite} from './verified-site.mjs';
+import {verificationCatalog} from './verification-evidence-catalog.mjs';
 
 const root=process.cwd(),temporary=fs.mkdtempSync(path.join(root,'.verify-artifact-'));
 const cases=[];
 async function rejects(name,operation,expected){await assert.rejects(async()=>await operation(),expected);cases.push(name);}
+const cataloguedOwners=new Set(Object.keys(verificationCatalog));
+const verifierSources=Object.fromEntries(fs.readdirSync(root).filter(file=>/^verify-[\w-]+\.mjs$/.test(file)).map(file=>[file,fs.readFileSync(path.join(root,file),'utf8')]));
+function assertNoNestedCataloguedOwners(sources){
+  const nested=[];
+  for(const [file,source] of Object.entries(sources))for(const match of source.matchAll(/(?:^|\n)\s*import\s*['"]\.\/(verify-[\w-]+\.mjs)['"]|(?:^|\n)\s*await\s+import\(\s*['"]\.\/(verify-[\w-]+\.mjs)['"]\s*\)/g)){
+    const owner=match[1]||match[2];if(cataloguedOwners.has(owner))nested.push({file,owner});
+  }
+  assert.deepEqual(nested,[],'CATALOG_OWNER_NESTING_ORACLE: a verifier side-effect import executes a separately catalogued owner without its own receipt.');
+}
 const repository='test-owner/test-repo',headSha='a'.repeat(40),workflowId=42;
 const run={id:123,run_attempt:1,event:'pull_request',status:'completed',conclusion:'success',repository:{full_name:repository},head_repository:{full_name:repository},head_sha:headSha,workflow_id:workflowId,path:'.github/workflows/pages.yml'};
 const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))}];
 const bindings={repository,headSha,workflowId};
 const clone=value=>structuredClone(value);
 try{
+  assertNoNestedCataloguedOwners(verifierSources);cases.push('catalogued-owners-not-nested');
+  await rejects('nested-full-cycle-owner',()=>assertNoNestedCataloguedOwners({...verifierSources,'verify-corrected-iteration.mjs':verifierSources['verify-corrected-iteration.mjs']+"\nawait import('./verify-full-cycle.mjs');\n"}),/CATALOG_OWNER_NESTING_ORACLE/);
   assertPassedRun(run,jobs,bindings);cases.push('complete-passing-PR');
   for(const [name,change] of [
     ['incomplete-run',v=>{v.status='in_progress';v.conclusion=null;}],
@@ -118,6 +130,44 @@ try{
 
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
   const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
+  assertLifecycleWorkflowCommand(workflow);
+  const lifecycleLine='          node verify-project-lifecycle.mjs\n',definitionLine='          node verify-v3-definition-of-done.mjs\n';
+  const externalLine='          node verify-external-result-determination.mjs\n',doneLine='          node verify-definition-of-done.mjs\n';
+  const stage01Line='          node verify-stage01-intake-closure.mjs\n',preflightLine='          node verify-independent-preflight.mjs\n',receiptControlLine='          node verify-definition-of-done.mjs --owner-receipt-controls\n';
+  for(const [name,alter] of [
+    ['stage01-missing',text=>text.replace(stage01Line,'')],
+    ['preflight-missing',text=>text.replace(preflightLine,'')],
+    ['preflight-duplicate',text=>text.replace(preflightLine,preflightLine+preflightLine)],
+    ['receipt-control-missing',text=>text.replace(receiptControlLine,'')],
+    ['receipt-control-duplicate',text=>text.replace(receiptControlLine,receiptControlLine+receiptControlLine)],
+    ['receipt-control-before-preflight',text=>text.replace(receiptControlLine,'').replace(preflightLine,receiptControlLine+preflightLine)],
+    ['receipt-control-after-dod',text=>text.replace(receiptControlLine,'').replace(doneLine,doneLine+receiptControlLine)]
+  ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`DOD_RECEIPT_GATE_SETUP_ORACLE: ${name} mutation did not reach the Workflow gate.`);(await rejects(`dod-receipt-${name}`,()=>assertLifecycleWorkflowCommand(changed),/Stage 01\/09 direct owner receipts and DOD receipt controls/));}
+  for(const [name,alter] of [
+    ['missing',text=>text.replace(externalLine,'')],
+    ['duplicate',text=>text.replace(externalLine,externalLine+externalLine)],
+    ['reordered',text=>text.replace(externalLine,'').replace(doneLine,doneLine+externalLine)]
+  ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`EXTERNAL_RESULT_GATE_SETUP_ORACLE: ${name} mutation did not reach the Workflow gate.`);(await rejects(`external-result-${name}`,()=>assertLifecycleWorkflowCommand(changed),/external-result determination proof/));}
+  for(const [name,alter] of [
+    ['missing',text=>text.replace(lifecycleLine,'')],
+    ['duplicate',text=>text.replace(lifecycleLine,lifecycleLine+lifecycleLine)],
+    ['reordered',text=>text.replace(lifecycleLine+definitionLine,definitionLine+lifecycleLine)]
+  ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`LIFECYCLE_GATE_SETUP_ORACLE: ${name} mutation did not reach the Workflow gate.`);(await rejects(`lifecycle-${name}`,()=>assertLifecycleWorkflowCommand(changed),/lifecycle proof/));}
+  const contractLine='          node verify-contract-closure.mjs\n',migrationLine='          node verify-v3-migration.mjs\n';
+  const fullCycleLine='          node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json\n',terminalLine='          node verify-stage30-terminal-mobile-boundary.mjs\n';
+  const promptHeading='      - name: Prompt semantics and leakage\n',fullHeading='      - name: Full cycle and terminal boundary\n';
+  const promptAt=workflow.indexOf(promptHeading),fullAt=workflow.indexOf(fullHeading),sharedAt=workflow.indexOf('      - name: Shared production faults, bounded sequences, and executed observations\n');
+  assert(promptAt>=0&&fullAt>promptAt&&sharedAt>fullAt,'CI_PROOF_ORDER_SETUP_ORACLE: required current proof steps are missing.');
+  for(const [name,alter,diagnostic] of [
+    ['contract-missing',text=>text.replace(contractLine,''),/Contract-closure/],
+    ['contract-duplicate',text=>text.replace(contractLine,contractLine+contractLine),/Contract-closure/],
+    ['contract-after-migration',text=>text.replace(contractLine+migrationLine,migrationLine+contractLine),/Contract-closure/],
+    ['early-infrastructure',text=>text.replace('          node verify-data-route-closure.mjs\n','          node verify-data-route-closure.mjs\n          node verify-infrastructure-route-closure.mjs\n'),/Infrastructure route/],
+    ['full-cycle-missing',text=>text.replace(fullCycleLine,''),/Full-cycle and Stage 30/],
+    ['terminal-duplicate',text=>text.replace(terminalLine,terminalLine+terminalLine),/Full-cycle and Stage 30/],
+    ['prompt-after-full-cycle',text=>text.slice(0,promptAt)+text.slice(fullAt,sharedAt)+text.slice(promptAt,fullAt)+text.slice(sharedAt),/specification order/]
+  ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`CI_PROOF_ORDER_SETUP_ORACLE: ${name} mutation did not apply.`);(await rejects(`proof-order-${name}`,()=>assertLifecycleWorkflowCommand(changed),diagnostic));}
+  cases.push('workflow-proof-order-and-direct-owner-mutations');
   assert.equal((testWorkflow.match(/^          node build-test-project\.mjs$/gm)||[]).length,1,'CI_DUPLICATE_FIXTURE_ORACLE: retained fixture verification runs once');
   const conformancePosition=testWorkflow.indexOf('name: Shared production faults, bounded sequences, and executed observations');
   for(const name of ['Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes','Acceptance viewport regression and targeted layout fault','Local Chromium operator path'])assert.ok(conformancePosition>=0&&testWorkflow.indexOf('name: '+name)>conformancePosition,'CI_PROOF_ORDER_ORACLE: non-browser proof precedes '+name);

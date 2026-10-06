@@ -462,11 +462,19 @@ snapshots.restored=await r.store.importPackage(backup);
  assert.equal(r.engine.recordValue(reservation,'STATUS'),'EXPORTED','HANDOFF_RECEIPT_ORACLE: export must record its successful transfer');
  const browser=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8'),oracle=browser.match(/  assert\(accumulatedRoundTrip[\s\S]*?;\n/)?.[0];
  assert(oracle,'HANDOFF_BROWSER_ORACLE: the real browser assertion must exist');
- const accumulatedRoundTrip={...proof,instructionVerified:true,canonicalUnchanged:snapshots.backup.projectSha256===initial.projectSha256,tailPreserved:true,restoredDigest:true,singleStagePackage:true};
+ assert.equal(t.downloads.length,1,'HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: the VM path must export one actual package.');
+ const exportedMembers=readStoreArchive(new Uint8Array(await t.downloads[0].blob.arrayBuffer())),manifestMember=exportedMembers.find(row=>row.canonicalPath==='manifest.json');
+ assert(manifestMember,'HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: the package must contain its actual manifest.');
+ const exportedManifest=JSON.parse(new TextDecoder().decode(manifestMember.bytes));
+ const handoffContextValid=exportedManifest.jobId===initial.job.JOB_ID&&Number(exportedManifest.stage)===4&&exportedManifest.operation==='COMPLETE'&&exportedManifest.handoff?.disclosureAuthorizationIds?.length===1;
+ const accumulatedRoundTrip={...proof,handoffContextValid,instructionVerified:true,canonicalUnchanged:snapshots.backup.projectSha256===initial.projectSha256,tailPreserved:true,restoredDigest:true,singleStagePackage:true};
  try{createVerifierRuntime.loadScript(createVerifierRuntime({accumulatedRoundTrip,assert,JSON}),oracle);}catch(error){throw new Error('HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: a valid current-instruction/export/restore sequence must pass the actual browser oracle: '+error.message);}
 
+ assert(initial.projectData.humanDecisions.length>0,'HANDOFF_BROWSER_CORRUPTION_ORACLE: a retained decision is required for the negative control.');
  for(const [fault,violate]of [
   ['accepted-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}],
+  ['retained-human-decision',p=>{p.projectData.humanDecisions[0].fields.PURPOSE='CORRUPTION';}],
+  ['unauthorized-appended-decision',p=>{p.projectData.humanDecisions.push(r.copy(p.projectData.humanDecisions[0]));}],
   ['retained-instruction-bytes',p=>{p.projectData.generatedPrompts[0].prompt+=' CORRUPTION';}],
   ['retained-history',p=>{p.projectData.history[0].eventType='CORRUPTION';}],
   ['restored-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}]

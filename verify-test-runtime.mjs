@@ -1,5 +1,6 @@
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto,setTimeout,clearTimeout};context.globalThis=context;createVerifierRuntime(context);vm.runInContext(fs.readFileSync('hash.js','utf8'),context,{filename:'hash.js'});vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const runtime=context.closedLoopTestRuntime;
 assert.equal(runtime.CAPABILITY,'CLOSED_LOOP_TEST_IR');assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');assert.ok(runtime.OPS.includes('BYTE_COMPARE'));assert.ok(!runtime.OPS.some(x=>/JAVASCRIPT|PYTHON|SHELL/i.test(x)));
 const closedControl={version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:1}]};assert.equal(runtime.validateSpec(closedControl).valid,true,'TEST_IR_CLOSED_CONTROL_ORACLE');
@@ -64,6 +65,6 @@ const boundRuntime=boundContext.closedLoopTestRuntime,boundResult=await boundRun
 for(const mutation of [{runtimeBuildIdentity:'OTHER-BUILD'},{testWorkerSha256:'0'.repeat(64)},{workerProtocolVersion:'UNKNOWN'}]){replyOverride=mutation;const rejected=await boundRuntime.executeTest(test,{PRODUCT:{bytes:new Uint8Array([1])}},{},{Worker:BoundWorker});assert.equal(rejected.status,'EXECUTION_FAILED','A worker result with mismatched build/digest/protocol was accepted.');}
 console.log(JSON.stringify({asyncWorkerBuildIdentityRetained:true,workerDigestRetained:true,mismatchedWorkerResultRejected:true}));
 await import('./verify-test-ir-port-types.mjs');
-await import('./verify-test-runtime-dag.mjs');
+await checkedVerifier(process.execPath,[new URL('./verify-test-runtime-dag.mjs',import.meta.url).pathname],{stdio:'inherit'});
 console.log(JSON.stringify({genericTestIr:true,stage04CanonicalInputBoundary:true,stage04UpstreamClosureFixture:true,testIrPortTypeRegressionExecuted:true},null,2));
 console.log('verify-test-runtime: PASS');

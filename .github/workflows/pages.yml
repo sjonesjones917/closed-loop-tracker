@@ -99,10 +99,6 @@ jobs:
             node --check "$file"
           done
 
-      - name: Stage 01 agent response contract alignment
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verify-stage01-agent-contract-alignment.mjs
-
       - name: Deployment manifest, build identity, and reproducibility
         if: steps.reuse.outputs.reused != 'true'
         run: |
@@ -159,15 +155,21 @@ jobs:
         run: |
           set -euo pipefail
           node verify-data-route-closure.mjs
-          node verify-infrastructure-route-closure.mjs
 
       - name: Migration and v3 contracts
         if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
+          node verify-contract-closure.mjs
           node verify-v3-migration.mjs
           node verify-v3-contract.mjs
           node verify-spec3-contract.mjs
+
+      - name: Stage 01 agent response contract alignment
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-stage01-agent-contract-alignment.mjs
 
       - name: Stage 01 raw intake and semantic accounting
         if: steps.reuse.outputs.reused != 'true'
@@ -176,6 +178,7 @@ jobs:
           node verify-stage01-intake-closure.mjs
           node verify-one-time-intent-intake.mjs
           node verify-zero-loss-accounting.mjs
+          node verify-stage01-review-subject.mjs
 
       - name: Stage 04 obligation accounting and prompt completeness
         if: steps.reuse.outputs.reused != 'true'
@@ -205,24 +208,20 @@ jobs:
           node verify-execution-reports.mjs
           node verify-backup-json-stream.mjs
 
-      - name: Workflow, gates, and full cycle
+      - name: Workflow and gates
         if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
           node verify-complete.mjs
+          node verify-independent-preflight.mjs
+          node verify-external-result-determination.mjs
           node verify-stage28-artifact-delivery-intent.mjs
-          node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
-          node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('/tmp/full-cycle-proof.json','utf8'));"
           node verify-stage29-evidence-chain-checkpoint.mjs
           node verify-production-baseline-authority.mjs
+          node verify-definition-of-done.mjs --owner-receipt-controls
           node verify-definition-of-done.mjs
-          node verify-v3-definition-of-done.mjs
-
-      - name: Project lifecycle and application-owned controls
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
           node verify-project-lifecycle.mjs
+          node verify-v3-definition-of-done.mjs
 
       - name: Prompt semantics and leakage
         if: steps.reuse.outputs.reused != 'true'
@@ -230,6 +229,14 @@ jobs:
           set -euo pipefail
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
+
+      - name: Full cycle and terminal boundary
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
+          node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('/tmp/full-cycle-proof.json','utf8'));"
+          node verify-stage30-terminal-mobile-boundary.mjs
 
       # Complete non-browser proof before browser acceptance (specification 46).
       # Every gate remains mandatory; failures retain their raw evidence.
@@ -423,6 +430,14 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
+      - name: Preserve verifier child logs after an earlier failed gate
+        if: failure() && steps.conformance.outcome != 'failure'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: verifier-child-failure-${{ github.sha }}-${{ github.run_id }}
+          path: conformance-regression-evidence/child-processes/
+          retention-days: 30
+          if-no-files-found: warn
 
   deploy:
     name: Deploy exact verified bytes

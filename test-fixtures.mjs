@@ -174,17 +174,26 @@ export function stage04AcceptanceEnvelope(runtime,p,pr){
 
 // Accumulate real failed-response and replacement-instruction records. The first
 // three stages use production intake/acceptance; no gate is forced complete.
-export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAGE4',attempts=100,responseCharacters=20000}={}){
+export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAGE4',attempts=100,responseCharacters=20000,persistTransitions=false}={}){
   let project=stage04AcceptanceFixture(runtime,jobId);
-  let prompt=runtime.prompts.reserveAndBuildPromptRecord(project,4).prompt;
-  if(runtime.store)await runtime.store.persistPromptContextFiles(prompt,project);
+  if(persistTransitions){
+    if(!runtime.store)throw new Error('Persisted accumulation requires a project store.');
+    project=await runtime.store.writeProject(project,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
+  }
+  const reserve=async()=>{
+    const beforeRevision=project.revision,beforeSha=project.projectSha256;
+    const issued=runtime.prompts.reserveAndBuildPromptRecord(project,4).prompt;
+    if(runtime.store)await runtime.store.persistPromptContextFiles(issued,project);
+    if(persistTransitions)project=await runtime.store.writeProject(project,{expectedProjectRevision:beforeRevision,expectedStateSha256:beforeSha});
+    return project.projectData.generatedPrompts.find(row=>row.instructionId===issued.instructionId);
+  };
+  let prompt=await reserve();
   for(let index=0;index<attempts;index++){
     const text=`Invalid response ${index}: ${'X'.repeat(responseCharacters)} é🙂 ACCUMULATION-TAIL-${index}`;
     const result=runtime.ingestion.prepare(project,{stage:4,text,promptRecord:prompt});
     if(result.validation.valid||!result.rawRecord||!result.validation.validationId)throw new Error('Accumulation fixture did not preserve a real failed response and validation.');
-    project=result.project;
-    prompt=runtime.prompts.reserveAndBuildPromptRecord(project,4).prompt;
-    if(runtime.store)await runtime.store.persistPromptContextFiles(prompt,project);
+    project=persistTransitions?await runtime.store.writeProject(result.project,{operational:true,expectedProjectRevision:project.revision,expectedStateSha256:project.projectSha256}):result.project;
+    prompt=await reserve();
   }
   project.activeStage=4;project.activeView='Workflow';return project;
 }
@@ -192,10 +201,10 @@ export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAG
 // Export may prepare a current instruction and record its receipt. Those
 // operational changes must not replace accepted work or rewrite retained bytes.
 // Backup restoration must recover the exact post-export project data.
-export function stageHandoffRecoveryProof(before,exported,restored,hash){
+export function stageHandoffRecoveryProof(before,exported,restored,hash,{handoff=null}={}){
   const stable=value=>JSON.stringify(value,(_key,row)=>row&&typeof row==='object'&&!Array.isArray(row)?Object.fromEntries(Object.keys(row).sort().map(key=>[key,row[key]])):row);
   const equal=(a,b)=>hash.sha256Text(stable(a))===hash.sha256Text(stable(b));
-  const preparation=new Set(['generatedPrompts','operationReservations','history','allocationReceipts','idCounters','eventSequence']);
+  const preparation=new Set(['generatedPrompts','operationReservations','history','allocationReceipts','idCounters','eventSequence','humanDecisions']);
   const accepted=p=>Object.fromEntries(Object.entries(p.projectData).filter(([key])=>!preparation.has(key)));
   const promptBytes=p=>Object.fromEntries(Object.entries(p).filter(([key])=>key!=='invalidatedBy'));
   const retained=(before.projectData.generatedPrompts||[]).every(prior=>{
@@ -204,7 +213,12 @@ export function stageHandoffRecoveryProof(before,exported,restored,hash){
   });
   const prefix=family=>equal(before.projectData[family]||[],(exported.projectData[family]||[]).slice(0,(before.projectData[family]||[]).length));
   const authoredStages=p=>Object.fromEntries(Object.entries(p.stages).map(([stage,row])=>[stage,row.agentData||{}]));
-  return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
+  const priorDecisions=before.projectData.humanDecisions||[],appendedDecisions=(exported.projectData.humanDecisions||[]).slice(priorDecisions.length),authorizedIds=handoff?.disclosureAuthorizationIds||[],authorizedSet=new Set(authorizedIds);
+  const humanDecisionAppendAuthorized=Array.isArray(authorizedIds)&&authorizedSet.size===authorizedIds.length&&appendedDecisions.length===authorizedIds.length&&appendedDecisions.every(row=>{
+    const fields=row?.fields||{},value=fields.VALUE||{},subject=value.subject||{},id=fields.HUMAN_DECISION_ID||row.id;
+    return authorizedSet.has(id)&&fields.PURPOSE==='DISCLOSURE_AUTHORIZATION'&&fields.TARGET_FAMILY==='job'&&fields.TARGET_ID===before.job.JOB_ID&&value.authorized===true&&subject.jobId===before.job.JOB_ID&&Number(subject.stage)===Number(handoff?.stage)&&subject.operation===handoff?.operation&&value.subjectSha256===hash.sha256Value(subject);
+  });
+  return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),humanDecisionPrefixPreserved:prefix('humanDecisions'),humanDecisionAppendAuthorized,authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
 }
 
 // Current/stale route sentinels exercise projection, not accepted stage results.

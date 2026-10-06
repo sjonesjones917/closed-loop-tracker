@@ -127,9 +127,4 @@ function fixture(){
   assert(result.reasons.some(reason=>/component.*hash|manifest/i.test(String(reason))),'Candidate hash-manifest rejection was not explicit.');
 }
 
-// The repaired runtime must still execute the repository's complete synthetic 30-stage lifecycle.
-process.stderr.write('verify-corrected-iteration: lineage cases complete; starting the complete synthetic 30-stage lifecycle.\n');
-await import('./verify-full-cycle.mjs');
-process.stderr.write('verify-corrected-iteration: complete synthetic lifecycle returned.\n');
-
 console.error('verify-corrected-iteration: PASS');

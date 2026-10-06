@@ -2039,5 +2039,22 @@ carrier('originalProjectSourceLineage','/artifact/lineage/originalProjectSource'
 const ORIGINAL_PROJECT_SOURCE_CONTRACT=Object.freeze({schema:'closed-loop-original-project-source/1',kind:'ORIGINAL_PROJECT_SOURCE',operational:false,fieldDefinitions:original.fieldDefinitions,requiredFields:original.closedFields,opaqueUnrelatedVariantsPreserved:true});
 function validateOriginalProjectSourceDescriptor(value){const reasons=[];if(!value||typeof value!=='object'||Array.isArray(value))return {valid:false,reasons:['Original project source descriptor must be an object.']};for(const [key,definition]of Object.entries(original.fieldDefinitions)){const item=value[key];if(definition.valueType==='STRING'&&(typeof item!=='string'||!item)||definition.valueType==='ENUM'&&!definition.enumValues.includes(item)||definition.valueType==='BOOLEAN'&&typeof item!=='boolean'||definition.valueType==='INTEGER'&&(!Number.isSafeInteger(item)||item<0)||definition.valueType==='OBJECT'&&(!item||typeof item!=='object'||Array.isArray(item)))reasons.push('Original project source '+key+' has an invalid type or value.');}if(value.operational!==false)reasons.push('Original project source is nonoperational.');for(const key of ['sha256','sourceSha256','parsedPayloadSha256'])if(typeof value[key]!=='string'||!/[a-f0-9]{64}/.test(value[key])||value[key].length!==64)reasons.push('Original project source '+key+' must be an exact lowercase SHA-256.');return {valid:!reasons.length,reasons};}
 const CARRIER_FIELD_CONTRACTS=Object.freeze({version:'closed-loop-carrier-fields/1',objects:Object.freeze(objects)});
-globalThis.closedLoopWorkflowSchema=Object.freeze({...s,FIELD_REGISTRY:Object.freeze(fields),derivationRegistry:Object.freeze({...s.derivationRegistry,entries:Object.freeze(derivations)}),CARRIER_FIELD_CONTRACTS,ORIGINAL_PROJECT_SOURCE_CONTRACT,validateOriginalProjectSourceDescriptor,ATTACHMENT_SLOT_CONTRACT:Object.freeze({...s.ATTACHMENT_SLOT_CONTRACT,fieldDefinitions:objects.attachmentSlot.fieldDefinitions})});
+const PREFLIGHT_COMPLETION_POLICY=Object.freeze({
+  recordPositiveFields:Object.freeze(['OBJECTIVELY_VERIFIABLE','RESPONSIBLE_OPERATION_ASSIGNED','ORDER_CLEAR','FAILURE_BEHAVIOR_DEFINED']),
+  recordClearFields:Object.freeze(['MULTIPLE_INTERPRETATIONS','UNDEFINED_OBJECTS','UNSUPPLIED_DEPENDENCIES','INTERNAL_CONFLICTS','UNAVAILABLE_CAPABILITIES']),
+  stagePositiveFields:Object.freeze(['EVERY_SENTENCE_REVIEWED']),
+  stageClearFields:Object.freeze(['KNOWN_MATERIAL_AMBIGUITIES','KNOWN_MATERIAL_CONFLICTS','UNAVAILABLE_REQUIRED_CAPABILITIES','UNVERIFIABLE_INSTRUCTIONS']),
+  positiveValues:Object.freeze(['TRUE','YES','SATISFIED']),
+  clearValues:Object.freeze(['NONE','NO','FALSE','NOT PRESENT']),
+  determinationValue:'SATISFIED',
+  traceabilityField:'TRACEABILITY'
+});
+const EXTERNAL_RESULT_COMPLETION_POLICY=Object.freeze({
+  collections:Object.freeze(['verification','deterministicResults','meaningResults','adversarialResults']),
+  determinationField:'DETERMINATION',
+  normalizedOutcomes:Object.freeze(['SATISFIED','VIOLATED','UNDETERMINED']),
+  completionValue:'SATISFIED',
+  unresolvedDisposition:'UNDETERMINED'
+});
+globalThis.closedLoopWorkflowSchema=Object.freeze({...s,FIELD_REGISTRY:Object.freeze(fields),derivationRegistry:Object.freeze({...s.derivationRegistry,entries:Object.freeze(derivations)}),CARRIER_FIELD_CONTRACTS,ORIGINAL_PROJECT_SOURCE_CONTRACT,validateOriginalProjectSourceDescriptor,PREFLIGHT_COMPLETION_POLICY,EXTERNAL_RESULT_COMPLETION_POLICY,ATTACHMENT_SLOT_CONTRACT:Object.freeze({...s.ATTACHMENT_SLOT_CONTRACT,fieldDefinitions:objects.attachmentSlot.fieldDefinitions})});
 })();

@@ -127,7 +127,13 @@ export async function runVerifier(command,args,options={}){
 }
 export async function checkedVerifier(command,args,options={}){
  const result=await runVerifier(command,args,options);
- if(result.outcome!=='PASS'||result.status!==0||result.error||result.signal||result.reason)throw Object.assign(new Error('Verifier child did not pass: '+JSON.stringify([command,...args])+'\n'+result.stdout+'\n'+result.stderr),{code:result.error?.code||'VERIFIER_CHILD_FAILED',result});
+ if(result.outcome!=='PASS'||result.status!==0||result.error||result.signal||result.reason){
+  const nested=/^(?:Error: )?Verifier child did not pass: (\{[^\n]*\})/m.exec(result.stderr);
+  let cause=null;try{cause=nested?JSON.parse(nested[1]):null;}catch{/* The raw child stderr remains in its owned file. */}
+  const diagnostic=cause?.diagnostic||failureDiagnostic(result.stderr).message||result.error?.message||result.reason||result.reportError||`Exit status ${result.status??'UNKNOWN'}`;
+  const summary={command:[command,...args],outcome:result.outcome,status:result.status,signal:result.signal,reason:result.reason,diagnostic,evidencePath:result.evidencePath,stdoutPath:result.stdoutPath,stderrPath:result.stderrPath,...(cause?.evidencePath?{causeEvidencePath:cause.evidencePath}:{})};
+  throw Object.assign(new Error('Verifier child did not pass: '+JSON.stringify(summary)),{code:result.error?.code||'VERIFIER_CHILD_FAILED',result});
+ }
  return result.stdout;
 }
 function failureDiagnostic(text){
@@ -429,6 +435,22 @@ async function verifyRunnerContract(){
   const stdinChild=await runVerifier(process.execPath,['-e',"process.stdin.pipe(process.stdout)"],{input:stdinText,timeout:3000,evidenceDirectory:directory});
   assert.equal(stdinChild.outcome,'PASS','CHILD_STDIN_SUCCESS_ORACLE');assert.equal(stdinChild.stdout,stdinText,'CHILD_STDIN_BYTES_ORACLE');
   await assert.rejects(()=>checkedVerifier(process.execPath,['-e',"console.log('before-failure');console.error('controlled child failure');process.exitCode=3"],{timeout:3000,evidenceDirectory:directory}),error=>error.code==='VERIFIER_CHILD_FAILED'&&error.result.status===3&&error.result.stdout==='before-failure\n'&&error.result.stderr==='controlled child failure\n','CHECKED_CHILD_FAILURE_ORACLE');
+  const rawOnlyMarker='CHECKED_CHILD_RAW_ONLY_5541';
+  let childFailure;
+  await assert.rejects(()=>checkedVerifier(process.execPath,['-e',"console.error(process.env.CHECKED_CHILD_FAILURE_MARKER);process.exitCode=3"],{timeout:3000,evidenceDirectory:directory,env:{CHECKED_CHILD_FAILURE_MARKER:rawOnlyMarker}}),error=>{childFailure=error;return error.code==='VERIFIER_CHILD_FAILED'&&error.result.status===3;},'CHECKED_CHILD_FAILURE_ORACLE');
+  assert.equal(childFailure.result.stderr,rawOnlyMarker+'\n','CHECKED_CHILD_RAW_RESULT_ORACLE');
+  assert.equal(fs.readFileSync(childFailure.result.stderrPath,'utf8'),rawOnlyMarker+'\n','CHECKED_CHILD_RAW_FILE_ORACLE');
+  assert.equal(childFailure.message.includes(rawOnlyMarker),false,'CHECKED_CHILD_LOG_DEDUP_ORACLE');
+  assert.ok(childFailure.message.includes(childFailure.result.evidencePath)&&childFailure.message.includes(childFailure.result.stderrPath),'CHECKED_CHILD_FAILURE_REFERENCE_ORACLE');
+  const nestedSource=`import {checkedVerifier} from ${JSON.stringify(import.meta.url)};try{await checkedVerifier(process.execPath,['-e',"console.error(process.env.CHECKED_CHILD_FAILURE_MARKER);process.exitCode=3"],{timeout:3000,evidenceDirectory:process.env.CHECKED_CHILD_EVIDENCE_DIRECTORY});}catch(error){process.stderr.write(error.message+'\\n');process.exitCode=4;}`;
+  let nestedFailure;
+  await assert.rejects(()=>checkedVerifier(process.execPath,['--input-type=module','-e',nestedSource],{timeout:6000,evidenceDirectory:directory,env:{CHECKED_CHILD_FAILURE_MARKER:rawOnlyMarker,CHECKED_CHILD_EVIDENCE_DIRECTORY:directory}}),error=>{nestedFailure=error;return error.code==='VERIFIER_CHILD_FAILED'&&error.result.status===4;},'NESTED_CHILD_FAILURE_ORACLE');
+  const nestedMessage=nestedFailure.result.stderr.trim();
+  assert.ok(nestedMessage.startsWith('Verifier child did not pass: '),'NESTED_CHILD_FAILURE_REFERENCE_ORACLE');
+  const nestedSummary=JSON.parse(nestedMessage.slice('Verifier child did not pass: '.length));
+  assert.equal(fs.readFileSync(nestedSummary.stderrPath,'utf8'),rawOnlyMarker+'\n','NESTED_CHILD_RAW_FILE_ORACLE');
+  assert.equal(nestedFailure.message.includes(rawOnlyMarker),false,'NESTED_CHILD_LOG_DEDUP_ORACLE');
+  assert.ok(nestedFailure.message.includes(nestedSummary.evidencePath),'NESTED_CHILD_FAILURE_REFERENCE_ORACLE');
   cases.push({case:'child-cancellation-and-checked-result-contract',cancelledChild,checkedText});
   cases.push(await verifyNestedChildCleanup(directory));
   const unrelatedCrash=(await runVerifier(process.execPath,['--input-type=module','-e',`import assert from 'node:assert/strict';assert.equal(undefinedValue,1,${JSON.stringify(expected)});`],{timeout:3000,evidenceDirectory:directory}));

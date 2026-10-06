@@ -1,4 +1,5 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {deepStrictEqual} from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
@@ -37,14 +38,19 @@ let p=project(),pr=savePrompt(p);
 const descriptor=prompts.responseContractDescriptor(3,'COMPLETE');
 function assertEmittedRelationshipContract(prompt,contract){
   assert(JSON.stringify(contract.envelope.relationshipReferenceKeys)===JSON.stringify(['tempKey','recordId']),'STAGE03_RELATIONSHIP_CONTRACT: relationship references must expose exactly tempKey and recordId.');
-  assert(prompt.includes(JSON.stringify(contract,null,2)),'STAGE03_RELATIONSHIP_CONTRACT: the complete typed descriptor was not emitted to the agent.');
+  const start='RESPONSE CONTRACT DEFINITIONS\n',end='\n\nEND HASHED INSTRUCTION BODY',first=prompt.indexOf(start),last=first<0?-1:prompt.indexOf(end,first+start.length);
+  assert(first>=0&&last>first+start.length,'STAGE03_RELATIONSHIP_CONTRACT: the complete typed descriptor was not emitted to the agent.');
+  let emitted;try{emitted=JSON.parse(prompt.slice(first+start.length,last));}catch{throw new Error('STAGE03_RELATIONSHIP_CONTRACT: the emitted typed descriptor is not valid JSON.');}
+  try{deepStrictEqual(emitted,JSON.parse(JSON.stringify(contract)));}catch{throw new Error('STAGE03_RELATIONSHIP_CONTRACT: the emitted typed descriptor differs from its complete consumer contract.');}
 }
 assertEmittedRelationshipContract(pr.prompt,descriptor);
-const missingDescriptor=pr.prompt.replace(JSON.stringify(descriptor,null,2),'');
+const missingDescriptor=pr.prompt.replace(/RESPONSE CONTRACT DEFINITIONS\n[\s\S]*?\n\nEND HASHED INSTRUCTION BODY/,'RESPONSE CONTRACT DEFINITIONS\n\nEND HASHED INSTRUCTION BODY');
 let missingDescriptorRejected=false;
 try{assertEmittedRelationshipContract(missingDescriptor,descriptor);}catch(error){missingDescriptorRejected=error.message.startsWith('STAGE03_RELATIONSHIP_CONTRACT:');}
 assert(missingDescriptorRejected,'A prompt missing the real relationship descriptor passed the oracle.');
-assertEmittedRelationshipContract(pr.prompt.replace('Use recordId for an existing canonical application-provided record','Existing canonical records use the recordId relationship key'),descriptor);
+const changedProse=pr.prompt.replace('- Existing canonical application-provided record:','- Existing canonical record:');
+assert(changedProse!==pr.prompt,'The prose control did not change the actual emitted instruction.');
+assertEmittedRelationshipContract(changedProse,descriptor);
 assert(pr.prompt.includes('SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED: BOOLEAN'),'Stage 03 prompt does not declare second-pass completion as BOOLEAN.');
 assert(pr.prompt.includes('LATEST_PASS_NUMBER: INTEGER'),'Stage 03 prompt does not declare latest pass as INTEGER.');
 assert(pr.prompt.includes('NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS: BOOLEAN'),'Stage 03 prompt does not declare new-material status as BOOLEAN.');

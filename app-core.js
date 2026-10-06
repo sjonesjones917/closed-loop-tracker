@@ -73,7 +73,14 @@ function deliveryObservationMarkup(){
 
 let actionFailureNotice=null;
 const UNCONFIRMED_ACTION_OUTCOME_MESSAGE='The action did not finish and the saved outcome needs verification. Review the stored project and History before retrying. No rollback is claimed.';
-function actionOutcomeNeedsVerification(error=null){return error?.existingProjectsUnchanged===false||(operatorActionInFlight&&((current?.job?.JOB_ID||null)!==operatorActionInFlight.jobId||(current?.projectSha256||null)!==operatorActionInFlight.projectSha256));}
+const COMMITTED_PARTIAL_ACTION_MESSAGE='The project was saved, but the action did not finish. Reload to inspect the saved project and History, then retry only the unfinished step. The saved change was not rolled back.';
+function confirmedCurrentActionCommit(){const pending=operatorActionInFlight,commit=pending?.confirmedCommit;return Boolean(commit&&pending.jobId===commit.jobId&&current?.job?.JOB_ID===commit.jobId&&Number(current.revision)===commit.revision&&current.projectSha256===commit.projectSha256);}
+function actionOutcomeMessage(error=null){
+ if(error?.existingProjectsUnchanged===false)return UNCONFIRMED_ACTION_OUTCOME_MESSAGE;
+ if(confirmedCurrentActionCommit())return COMMITTED_PARTIAL_ACTION_MESSAGE;
+ const pending=operatorActionInFlight;
+ return pending&&((current?.job?.JOB_ID||null)!==pending.jobId||(current?.projectSha256||null)!==pending.projectSha256)?UNCONFIRMED_ACTION_OUTCOME_MESSAGE:null;
+}
 function addNoticeDismiss(report){
  if(report?.id!=='operation-error'||typeof document.createElement!=='function')return;
  const button=document.createElement('button');button.type='button';button.textContent='Dismiss message';button.onclick=()=>{report.hidden=true;actionFailureNotice=null;paintOperationStatus();scheduleWorkflowActionInset();};report.append(button);paintOperationStatus();scheduleWorkflowActionInset();
@@ -81,11 +88,11 @@ function addNoticeDismiss(report){
 function reportActionFailure(error){
  if(error?.code==='MUTATION_REVIEW_SHOWN')return;
  if(operatorActionInFlight){operatorActionInFlight.failed=true;operatorActionInFlight.focusReason='RETRY';}
- const diagnostic=String(error?.message||error||'The action could not be completed.'),code=String(error?.code||'');
+ const diagnostic=String(error?.message||error||'The action could not be completed.'),code=String(error?.code||''),outcomeMessage=actionOutcomeMessage(error);
  const technical=/\b(?:JOB|ARTIFACT|SOURCE|PRODUCT|CHANGE|INSTRUCTION|CONTEXT|PACKAGE|RESERVATION|RESPONSE|CHECKPOINT)-[A-Za-z0-9-]+\b|\b[a-f0-9]{64}\b|\b[A-Z]+(?:_[A-Z0-9]+){2,}\b|Canonical project integrity|\bat .+\.(?:js|mjs):\d+/i.test(diagnostic);
  let message=diagnostic;
  if(code==='IMPORT_COMMITTED_REFRESH_FAILED')message='Project package imported and saved, but the view could not refresh. Reload the application to refresh the saved project.';
- else if(actionOutcomeNeedsVerification(error))message=UNCONFIRMED_ACTION_OUTCOME_MESSAGE;
+ else if(outcomeMessage)message=outcomeMessage;
  else if(code==='CROSS_PROJECT_ARTIFACT_ID_COLLISION')message='This file identity belongs to another project. Select the input file again in the current project.';
  else if(code==='PROJECT_INTEGRITY_FAILED'||diagnostic.includes('Canonical project integrity'))message='This change could not be saved because its data is inconsistent. Retry the action or restore a saved version from History.';
  else if(/^STALE_|CLONE_SOURCE_REQUIRED/.test(code))message='The project changed while this action was running. Review the current saved version and retry.';
@@ -152,7 +159,15 @@ function runOperatorAction(label,operation){
       // Required view persistence belongs to the operation, including its lock,
       // loading interval, failure outcome and measured end-to-end duration.
       try{if(operatorActionInFlight===pending&&(current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}
-      catch(error){outcome='FAILED';reportActionFailure(error);}
+      catch(error){
+        const knownCommit=!pending.failed&&confirmedCurrentActionCommit();
+        if(knownCommit){
+          outcome='COMMITTED_VIEW_CAPTURE_FAILED';
+          const diagnostic=String(error?.message||error||'Final draft and view capture failed.');
+          globalThis.__closedLoopPostCommitRecoveryWarning={message:'Project change saved, but the final draft and view could not be saved. Reload to inspect the current saved project and History before retrying that view action. Reason: '+diagnostic.slice(0,512),diagnostic};
+          showPostCommitRecoveryWarning();
+        }else{outcome='FAILED';reportActionFailure(error);}
+      }
       finally{
         clearTimeout(pending.timer);if(pending.failed)outcome='FAILED';recordOperationLatency('operator',label,pending.startedAt,outcome);
         if(operatorActionInFlight===pending){operatorActionInFlight=null;paintOperatorAction();const deferredFocus=actionFocusTarget;actionFocusTarget=null;if(!historyRestoreController&&deferredFocus?.isConnected)focusAfterAction(deferredFocus,{reason:pending.focusReason||'FORWARD'});}
@@ -311,16 +326,30 @@ async function persistReplacement(next,{expectedProjectRevision=null,mutationCon
   }
   throw error;
  }
+ const projectChangeSaved=!source||Number(committed.revision)!==Number(source.revision)||committed.projectSha256!==source.projectSha256;
  projects=projects.map(p=>p.job?.JOB_ID===committed.job?.JOB_ID?committed:p);if(!projects.some(p=>p.job?.JOB_ID===committed.job?.JOB_ID))projects.unshift(committed);
+ if(typeof operatorActionInFlight!=='undefined'&&operatorActionInFlight?.jobId===jobId&&projectChangeSaved)operatorActionInFlight.confirmedCommit={jobId,revision:Number(committed.revision),projectSha256:committed.projectSha256};
  if(String(current?.job?.JOB_ID||'')===jobId){committed.activeView=current.activeView;committed.activeStage=current.activeStage;current=committed;if(acceptance?.stage)rebaseAcceptedLaneSelection(acceptance.stage,acceptedContinuation(current,acceptance),operationSelection,runSelection);}unloadInactiveProjects();if(mobileSessionCurrent())try{await saveAcceptanceSession();}catch(error){acceptanceSession.receiptPersistenceError=String(error.message||error);}
  if(String(current?.job?.JOB_ID||'')===jobId)try{await recordCommittedBoundary();}catch(error){
-  // replaceProject has already committed the canonical version and its durable
-  // recovery state. Presentation/browser-history bookkeeping cannot turn that
-  // committed acceptance into a reported acceptance failure.
-  if(!acceptance)throw error;
-  globalThis.__closedLoopPostCommitRecoveryWarning={message:'Response accepted and saved. History recovery could not refresh after the commit. Reload the application to refresh History; the accepted work remains committed.',diagnostic:String(error?.message||error||'History recovery bookkeeping failed.')};
+  // The store returned successfully. A later History refresh cannot convert a
+  // committed change into a storage failure; a no-op cannot claim a save.
+  const message=!projectChangeSaved?'Project contents are unchanged. History recovery could not refresh after the operation. Reload the application to inspect the current project and History.':acceptance?'Response accepted and saved. History recovery could not refresh after the commit. Reload the application to refresh History; the accepted work remains committed.':'Project save completed. History recovery could not refresh afterward. Reload the application to refresh History and inspect the saved project.';
+  globalThis.__closedLoopPostCommitRecoveryWarning={message,diagnostic:String(error?.message||error||'History recovery bookkeeping failed.')};
+  if(!acceptance)showPostCommitRecoveryWarning();
  }
  return committed;
+}
+function showPostCommitRecoveryWarning(){
+ const recoveryWarning=globalThis.__closedLoopPostCommitRecoveryWarning;if(!recoveryWarning)return;
+ delete globalThis.__closedLoopPostCommitRecoveryWarning;
+ try{
+  const report=$('#operation-error')||$('.next-action-panel > .notice')||$('#screen .notice')||$('#screen .section-intro');
+  if(!report){const live=$('#app-live-status');if(live)live.textContent=recoveryWarning.message;return;}
+  report.hidden=false;report.textContent=recoveryWarning.message;report.classList?.remove?.('danger');report.classList?.add?.('notice','warn');report.setAttribute?.('tabindex','-1');report.scrollIntoView?.({block:'nearest'});addNoticeDismiss(report);
+ }catch{
+  // A broken notice widget cannot retroactively fail a durable commit.
+  try{const live=document.querySelector('#app-live-status');if(live)live.textContent=recoveryWarning.message;}catch{}
+ }
 }
 async function save(){try{await persistReplacement(current);announce('saved');return true;}catch(error){console.error(error);announce('storage failed');reportActionFailure(error);return false;}}
 function blankStage(n){const d=core.STAGES[n-1];return {number:n,status:'NOT STARTED',draftRecord:core.stageTemplate(d),responseDraft:'',authorizedFiles:[],acceptedData:{},humanData:{},acceptedResponseIds:[],gate:{reasons:[]},revisions:[]};}
@@ -413,9 +442,9 @@ function operatorLaneMatches(item,n,{accepted=false}={}){
 function validationLaneRecord(validation){return safe(current.projectData.generatedPrompts).find(x=>(x.instructionId||x.promptId)===validation?.promptId)||validation;}
 function acceptedLaneChanges(n){return engine.acceptedChanges(current,n).filter(x=>operatorLaneMatches(x,n,{accepted:true}));}
 function promptMatches(record,n,options,requireCurrentRevision=true){if((record.historyActivationId||null)!==(current.historyActivationId||null)||Number(record.stage)!==Number(n)||record.invalidatedBy||(requireCurrentRevision&&Number(record.scope?.projectRevision)!==Number(current.revision||0))||record.operation!==options.operation||globalThis.closedLoopHash.sha256Value(record.contextManifest?.deferredDefinitionCorrectionTarget||null)!==globalThis.closedLoopHash.sha256Value(options.deferredDefinitionCorrectionTarget||null))return false;for(const [key,value] of Object.entries(options.scope||{}))if(String(record.scope?.[key]??'')!==String(value??''))return false;return true;}
-function currentPromptEngineVersion(){return globalThis.closedLoopPromptEngine?.version||null;}
-function promptVersionCurrent(record){return Boolean(record)&&record.promptEngineVersion===currentPromptEngineVersion();}
-function proposalVersionCurrent(proposal){return Boolean(proposal)&&proposal.preconditions?.promptEngineVersion===currentPromptEngineVersion();}
+function currentPromptEngineVersion(stage,operation){const prompts=globalThis.closedLoopPromptEngine;return prompts?.versionFor?.(stage,operation)||prompts?.version||null;}
+function promptVersionCurrent(record){return Boolean(record)&&record.promptEngineVersion===currentPromptEngineVersion(record.stage,record.operation);}
+function proposalVersionCurrent(proposal){return Boolean(proposal)&&proposal.preconditions?.promptEngineVersion===currentPromptEngineVersion(proposal.stage,proposal.envelope?.operation||proposal.operation);}
 function currentPromptRecord(n){const options=promptOptions(n);if(globalThis.closedLoopPromptEngine.deferredDefinitionCorrectionContinuationState(current,Number(n),{operation:options.operation}).blocked)return null;let currentContractSha=null;return safe(current.projectData.generatedPrompts).filter(record=>{
  if(!promptMatches(record,n,options,true)||!promptVersionCurrent(record))return false;
  currentContractSha??=globalThis.closedLoopHash.sha256Value(globalThis.closedLoopPromptEngine.responseContractDescriptor(Number(n),options.operation));
@@ -437,7 +466,7 @@ function operationMarkup(n,locked){const operations=stageOperations(n);if(operat
 function reportResponseFailure(message,error=null){
  if(error?.code==='MUTATION_REVIEW_SHOWN')return;
  if(operatorActionInFlight){operatorActionInFlight.failed=true;operatorActionInFlight.focusReason='RETRY';}
-  if(actionOutcomeNeedsVerification(error))message=UNCONFIRMED_ACTION_OUTCOME_MESSAGE;
+  message=actionOutcomeMessage(error)||message;
  responseActionFailure={jobId:current.job.JOB_ID,stage:current.activeStage,message,detail:error?String(error.message||error):''};announce(message);
  const report=$('#validation-report'),responsePanel=$('#response-json-file')?.closest?.('.panel');
  if(report?.replaceWith||responsePanel?.before){
@@ -1092,7 +1121,7 @@ async function finishAcceptedProposal(acceptance){
  const continuation=acceptedContinuation(current,acceptance);
  announce(continuation?'Stage '+String(stage).padStart(2,'0')+' is not complete; the next instruction is saved and ready to export':current.stages[stage]?.gate?.complete?`response accepted; Stage ${String(stage).padStart(2,'0')} is complete`:`response saved; Stage ${String(stage).padStart(2,'0')} has not passed its completion gate`);
  current.activeStage=canonicalCurrentStage();current.activeView='Workflow';render();focusAfterAction($('#next-required-action'));
- const recoveryWarning=globalThis.__closedLoopPostCommitRecoveryWarning;if(recoveryWarning){delete globalThis.__closedLoopPostCommitRecoveryWarning;const report=$('#operation-error')||$('.next-action-panel > .notice')||$('#screen .notice')||$('#screen .section-intro');if(report){report.hidden=false;report.textContent=recoveryWarning.message;addNoticeDismiss(report);report.classList?.remove?.('danger');report.classList?.add?.('notice','warn');report.setAttribute?.('tabindex','-1');report.scrollIntoView?.({block:'nearest'});}}
+ showPostCommitRecoveryWarning();
 }
 async function keepCurrentProgress(){
  const review=replacementReview;if(!review)return;

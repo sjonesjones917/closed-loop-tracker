@@ -18,12 +18,56 @@ export const fullTestSteps=[
   'Complete 30-stage canonical data-route closure','Migration and v3 contracts',
   'Stage 01 raw intake and semantic accounting','Stage 04 obligation accounting and prompt completeness',
   'Test IR validation, security, and deterministic runtime','Raw-first ingestion and negative cases',
-  'Workflow, gates, and full cycle','Project lifecycle and application-owned controls','Prompt semantics and leakage',
+  'Workflow and gates','Prompt semantics and leakage','Full cycle and terminal boundary',
   'Build static application for operator verification','Local Chromium operator path',
   'Shared production faults, bounded sequences, and executed observations','Collect current executed assertion evidence','Seal verified deployment artifact'
 ];
 export const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const requireValue=(condition,message)=>{if(!condition)throw new Error(message);};
+export function assertLifecycleWorkflowCommand(workflow){
+  const start=workflow.indexOf('\n  test:\n');
+  requireValue(start>=0,'Required test job is absent from the workflow.');
+  const following=workflow.slice(start+'\n  test:\n'.length),end=following.search(/\n  [a-z][\w-]*:\n/),testJob=end<0?following:following.slice(0,end);
+  const heading='      - name: Workflow and gates\n',at=testJob.indexOf(heading);
+  requireValue(at>=0&&testJob.indexOf(heading,at+heading.length)<0,'Required workflow gate step is absent or duplicated.');
+  const migrationHeading='      - name: Migration and v3 contracts\n',migrationAt=testJob.indexOf(migrationHeading);
+  requireValue(migrationAt>=0&&migrationAt<at,'Registry and migration proof step is absent or late.');
+  const migrationRemainder=testJob.slice(migrationAt+migrationHeading.length),migrationNext=migrationRemainder.search(/\n      - /),migration=migrationNext<0?migrationRemainder:migrationRemainder.slice(0,migrationNext);
+  requireValue((testJob.match(/^          node verify-contract-closure\.mjs$/gm)||[]).length===1&&
+    migration.indexOf('node verify-contract-closure.mjs')>=0&&
+    migration.indexOf('node verify-contract-closure.mjs')<migration.indexOf('node verify-v3-migration.mjs')&&
+    migration.indexOf('node verify-v3-migration.mjs')<migration.indexOf('node verify-v3-contract.mjs'),'Contract-closure must execute once before migration and v3 contract checks.');
+  requireValue(!/^          node verify-infrastructure-route-closure\.mjs$/m.test(testJob),'Infrastructure route must execute after ingestion and lifecycle through the v3 gate.');
+  const remainder=testJob.slice(at+heading.length),next=remainder.search(/\n      - /),gate=next<0?remainder:remainder.slice(0,next);
+  const promptHeading='      - name: Prompt semantics and leakage\n',fullHeading='      - name: Full cycle and terminal boundary\n';
+  const promptAt=testJob.indexOf(promptHeading),fullAt=testJob.indexOf(fullHeading);
+  requireValue(promptAt>at&&fullAt>promptAt&&testJob.indexOf(fullHeading,fullAt+fullHeading.length)<0,'Required gate, prompt, and full-cycle proof steps must run in specification order.');
+  const fullRemainder=testJob.slice(fullAt+fullHeading.length),fullNext=fullRemainder.search(/\n      - /),full=fullNext<0?fullRemainder:fullRemainder.slice(0,fullNext);
+  requireValue((testJob.match(/^          node verify-full-cycle\.mjs \| tee \/tmp\/full-cycle-proof\.json$/gm)||[]).length===1&&
+    (full.match(/^          node verify-full-cycle\.mjs \| tee \/tmp\/full-cycle-proof\.json$/gm)||[]).length===1&&
+    (testJob.match(/^          node verify-stage30-terminal-mobile-boundary\.mjs$/gm)||[]).length===1&&
+    (full.match(/^          node verify-stage30-terminal-mobile-boundary\.mjs$/gm)||[]).length===1&&
+    full.indexOf('node verify-full-cycle.mjs')<full.indexOf('node verify-stage30-terminal-mobile-boundary.mjs'),'Full-cycle and Stage 30 terminal proofs must each execute once after prompt semantics.');
+  const lifecycle='          node verify-project-lifecycle.mjs',definition='          node verify-v3-definition-of-done.mjs';
+  const external='          node verify-external-result-determination.mjs';
+  const stage01='          node verify-stage01-intake-closure.mjs',preflight='          node verify-independent-preflight.mjs',receiptControls='          node verify-definition-of-done.mjs --owner-receipt-controls',done='          node verify-definition-of-done.mjs\n';
+  requireValue((testJob.match(/^          node verify-stage01-intake-closure\.mjs$/gm)||[]).length===1&&
+    testJob.indexOf(stage01)<at&&
+    (testJob.match(/^          node verify-independent-preflight\.mjs$/gm)||[]).length===1&&
+    (gate.match(/^          node verify-independent-preflight\.mjs$/gm)||[]).length===1&&
+    (testJob.match(/^          node verify-definition-of-done\.mjs --owner-receipt-controls$/gm)||[]).length===1&&
+    (gate.match(/^          node verify-definition-of-done\.mjs --owner-receipt-controls$/gm)||[]).length===1&&
+    gate.indexOf(preflight)<gate.indexOf(receiptControls)&&gate.indexOf(receiptControls)<gate.indexOf(done)&&
+    gate.indexOf(done)<gate.indexOf(definition),'Required Stage 01/09 direct owner receipts and DOD receipt controls must execute once before definition of done in the Workflow gate.');
+  requireValue((testJob.match(/^          node verify-external-result-determination\.mjs$/gm)||[]).length===1&&
+    (gate.match(/^          node verify-external-result-determination\.mjs$/gm)||[]).length===1&&
+    gate.indexOf('          node verify-complete.mjs')<gate.indexOf(external)&&
+    gate.indexOf(external)<gate.indexOf('          node verify-definition-of-done.mjs'),'Required external-result determination proof must execute once before definition of done in the Workflow gate.');
+  requireValue((testJob.match(/^          node verify-project-lifecycle\.mjs$/gm)||[]).length===1&&
+    (gate.match(/^          node verify-project-lifecycle\.mjs$/gm)||[]).length===1&&
+    (gate.match(/^          node verify-v3-definition-of-done\.mjs$/gm)||[]).length===1&&
+    gate.indexOf(lifecycle)<gate.indexOf(definition),'Required project lifecycle proof must execute exactly once before v3 definition of done in the Workflow gate.');
+}
 const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 const writeJson=(file,value)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');};
 function currentProofFiles(directory){const result=[];for(const entry of fs.readdirSync(directory,{withFileTypes:true})){if(entry.isFile()&&entry.name.endsWith('.json'))result.push(entry.name);else if(entry.isDirectory()&&['browser','LOCAL','DEPLOYED'].includes(entry.name))for(const name of currentProofFiles(path.join(directory,entry.name)))result.push(entry.name+'/'+name);}return result.sort();}
@@ -58,6 +102,7 @@ export function assertRuntimeEqual(first,second){
 }
 
 export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
+  assertLifecycleWorkflowCommand(fs.readFileSync('.github/workflows/pages.yml','utf8'));
   requireValue(run.event==='pull_request'&&run.status==='completed'&&run.conclusion==='success','PR verification is not successfully completed.');
   requireValue(run.repository?.full_name===repository&&run.head_repository?.full_name===repository&&run.head_sha===headSha,'PR verification repository or head mismatch.');
   requireValue(run.workflow_id===workflowId&&run.path==='.github/workflows/pages.yml','PR verification used a different workflow.');

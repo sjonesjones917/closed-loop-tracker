@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {selectExecutionReport} from './execution-report.mjs';
-import {applyAvailableExecutedEvidence} from './verification-evidence.mjs';
+import {applyAvailableExecutedEvidence,readExecutionReceipts} from './verification-evidence.mjs';
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const readIf=path=>{try{return read(path);}catch{return '';}};
 const schema=read('./workflow-schema.js'),runtime=read('./test-runtime.js'),worker=read('./test-worker.js'),engine=read('./workflow-engine.js'),prompt=read('./prompt-engine.js'),ingestion=read('./response-ingestion.js'),store=read('./project-store.js'),app=read('./app-core.js');
@@ -30,15 +30,28 @@ assert.match(schema+store,/closed-loop-project\/2/);assert.match(schema,/closed-
 assert.match(workflow,/actualIPhoneSafariAcceptance/);assert.match(workflow,/finalAcceptancePublication/);assert.doesNotMatch(workflow,/actualAndroidChromeAcceptance/);
 const routeProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-data-route-closure.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 assert.equal(routeProof.dataRouteClosure,'PASS');assert.equal(routeProof.stages,30);assert.equal(routeProof.currentScopeStaleExclusion,true);assert.equal(routeProof.promptReadSerialization,true);assert.equal(routeProof.responseAuthorizationClosure,true);assert.equal(routeProof.provenanceContractClosure,true);assert.equal(routeProof.downstreamForwardingClosure,true);assert.equal(routeProof.downstreamOnlyInvalidation,true);assert.equal(routeProof.subjectNeutralPromptAuthority,true);assert.equal(routeProof.humanExperiencePromptContract,true);
-const infrastructureProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-infrastructure-route-closure.mjs',import.meta.url).pathname],{encoding:'utf8'})));
-assert.equal(infrastructureProof.infrastructureRouteClosure,'PASS');assert.equal(infrastructureProof.rawFirstCapture,true);assert.equal(infrastructureProof.validationAndProposalPersistence,true);assert.equal(infrastructureProof.precommitRevalidation,true);assert.equal(infrastructureProof.receiptPersistence,true);assert.equal(infrastructureProof.extractionManifestProvenance,true);assert.equal(infrastructureProof.promptContextManifestRoute,true);assert.equal(infrastructureProof.versionRoute,true);assert.equal(infrastructureProof.authorityPartitionsSeparated,true);assert.equal(infrastructureProof.currentScopeRoute,true);assert.equal(infrastructureProof.persistenceIntegrityRoute,true);assert.equal(infrastructureProof.structuredOperatorActionRoute,true);assert.equal(infrastructureProof.executableIngestionSuite,true);assert.equal(infrastructureProof.executableLifecycleSuite,true);
+const infrastructureFields=['rawFirstCapture','validationAndProposalPersistence','precommitRevalidation','receiptPersistence','extractionManifestProvenance','promptContextManifestRoute','versionRoute','authorityPartitionsSeparated','currentScopeRoute','persistenceIntegrityRoute','structuredOperatorActionRoute','executableIngestionSuite','executableLifecycleSuite'];
+function assertInfrastructureProof(proof){
+  assert.equal(proof?.infrastructureRouteClosure,'PASS','INFRASTRUCTURE_GATE_ORACLE: complete route proof is required.');
+  for(const field of infrastructureFields)assert.equal(proof[field],true,'INFRASTRUCTURE_GATE_ORACLE: missing or failed '+field);
+  return proof;
+}
+const infrastructureProof=assertInfrastructureProof(JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-infrastructure-route-closure.mjs',import.meta.url).pathname],{encoding:'utf8'}))));
+for(const [name,mutation] of [
+  ['missing-route',{...infrastructureProof,infrastructureRouteClosure:undefined}],
+  ['missing-ingestion',{...infrastructureProof,executableIngestionSuite:undefined}],
+  ['failed-lifecycle',{...infrastructureProof,executableLifecycleSuite:false}]
+])assert.throws(()=>assertInfrastructureProof(mutation),/INFRASTRUCTURE_GATE_ORACLE/,'Required infrastructure proof mutation was accepted: '+name);
 const mobileGovernanceProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-mobile-release-governance.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 assert.equal(mobileGovernanceProof.mobileReleaseGovernance,'PASS');assert.equal(mobileGovernanceProof.actualIPhoneRequiredForTag,true);assert.equal(mobileGovernanceProof.unconditionalTagMutationDetected,true);assert.equal(mobileGovernanceProof.androidSubstitutionRejected,true);
 const specificationManifest=JSON.parse(read('./specification/closed-loop-specification-manifest.json'));
 const specificationGovernanceProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-specification-governance.mjs',import.meta.url).pathname],{encoding:'utf8',maxBuffer:64*1024*1024,env:{...process.env,SOURCE_COMMIT:specificationManifest.sourceCommit}})));
 assert.equal(specificationGovernanceProof.specificationTraceIntegrity,'PASS');assert.equal(specificationGovernanceProof.independentMechanicalOmissionPass,true);assert.equal(specificationGovernanceProof.reconciliationComplete,true);assert.equal(specificationGovernanceProof.runtimeSpecificationCopies,0);assert.equal(specificationGovernanceProof.runtimeControllerCopies,0);assert.equal(specificationGovernanceProof.intentionalUncoveredSectionMutationRejected,true);
 
+const executedReceipts=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS?readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS):new Map();
 const executedProof=async (file,marker)=>{
+  const receipt=executedReceipts.get(file);
+  if(receipt){const matches=receipt.reports.filter(report=>Object.hasOwn(report,marker));assert.equal(matches.length,1,`Expected one current executed ${file} report containing ${marker}`);return matches[0];}
   const text=(await checkedVerifier(process.execPath,[new URL('./'+file,import.meta.url).pathname],{encoding:'utf8',maxBuffer:64*1024*1024}));
   return selectExecutionReport(text,marker);
 };

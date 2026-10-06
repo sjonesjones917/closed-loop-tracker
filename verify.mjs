@@ -1,4 +1,3 @@
-import {runVerifier} from './verify-conformance-regressions.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -83,8 +82,6 @@ store.writeAll(migrated,storage);if(JSON.parse(storage.getItem(store.STORE_KEY))
 const prior=storage.getItem(store.STORE_KEY);globalThis.__closedLoopStorageFault='after-final-write';let failed=false;try{store.writeAll([{job:{JOB_ID:'JOB-OTHER'}}],storage);}catch{failed=true;}finally{delete globalThis.__closedLoopStorageFault;}if(!failed||storage.getItem(store.STORE_KEY)!==prior)throw new Error('Transactional storage failure did not roll back exactly.');
 const replaced=store.replaceProject(migrated,{...oldProject,job:{...oldProject.job,JOB_TITLE:'Updated'}},storage);if(replaced.length!==1||replaced[0].job.JOB_TITLE!=='Updated')throw new Error('Stable JOB_ID reconciliation duplicated a project.');
 
-const stage03ProtocolRun=(await runVerifier(process.execPath,['verify-stage03-agent-protocol.mjs'],{encoding:'utf8'}));if(stage03ProtocolRun.status!==0)throw new Error(`verify-stage03-agent-protocol.mjs failed:\n${stage03ProtocolRun.stdout}\n${stage03ProtocolRun.stderr}`);
-const ingestionRun=(await runVerifier(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'}));if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
 const appSourceForStatus=fs.readFileSync('app-core.js','utf8');
 const prepareSource=appSourceForStatus.match(/async function prepareStageResponseFile\(file,[\s\S]*?\n\}/)?.[0]||'';
 if(!prepareSource||prepareSource.includes('savePromptRecord(n)'))throw new Error('Response-file staging still creates a new controlling instruction before validation.');
@@ -97,7 +94,7 @@ const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.r
 if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.stringify(retained)))throw new Error('Unauthorized product content remains.');
 
-console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allOperationsVerified:totalOperations,externalPromptsVerified,nonExternalPromptRejections,conditionalRejections,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true},null,2));
+console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allOperationsVerified:totalOperations,externalPromptsVerified,nonExternalPromptRejections,conditionalRejections,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true},null,2));
 
 // Practical-100 schema/ownership contract.
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};

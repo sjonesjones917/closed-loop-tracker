@@ -1,5 +1,6 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {routeProjectionFixtureFields} from './test-fixtures.mjs';
+import {routeProjectionFixtureFields,deferredDefinitionRestorationFixture} from './test-fixtures.mjs';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
@@ -175,9 +176,24 @@ for(const phrase of [
   'ask the human directly in concise plain language',
   'The human supplies project information once',
   'If this prompt lists files that you must receive, do not pretend you received or inspected them',
-  'Ask the human to attach or send the exact listed file only when those bytes are actually required',
-  'Before final JSON, re-read the complete current-stage instruction'
+  'Ask the human to attach or send the exact listed file only when those bytes are actually required'
 ])assert(promptSource.includes(phrase),`Prompt authority missing human-experience invariant: ${phrase}`);
+const ordinaryInstruction='Before final JSON, re-read the complete current-stage instruction';
+const deferredInstruction='Before final JSON, re-read the complete current-operation instruction';
+function assertReviewInstruction(text,required,scope){assert(text.includes(required),`PROMPT_HUMAN_EXPERIENCE_ORACLE: generated ${scope} instruction omitted its complete current-work review.`);}
+const ordinaryPrompt=prompts.buildPromptRecord(1,state,{operation:'COMPLETE'}).prompt;
+assertReviewInstruction(ordinaryPrompt,ordinaryInstruction,'Stage 01');
+const deferredRuntime=projectStoreRuntime(),deferredFixture=await deferredDefinitionRestorationFixture(deferredRuntime,{family:'failureTests'});
+const deferredPrompt=deferredRuntime.prompts.reserveAndBuildPromptRecord(deferredFixture.p,deferredFixture.stage,{operation:'EXECUTE_FAILURE_TEST'}).prompt.prompt;
+assertReviewInstruction(deferredPrompt,deferredInstruction,'conditional execution');
+const phraseTemplate='Before final JSON, re-read the complete current-${task} instruction';
+assert(promptSource.includes(phraseTemplate),'PROMPT_HUMAN_EXPERIENCE_SETUP_ORACLE: the controlling prompt template was not reached.');
+const omittedSource=promptSource.replace(phraseTemplate,'Before final JSON, omit the current instruction review');
+const omittedRuntime=projectStoreRuntime({sourceOverrides:{'prompt-engine.js':omittedSource}}),omittedState=omittedRuntime.core.createBlankState('ROUTE-OMITTED-PROMPT-REVIEW');
+omittedRuntime.engine.ensureShape(omittedState);
+let omissionDetected=false;
+try{assertReviewInstruction(omittedRuntime.prompts.buildPromptRecord(1,omittedState,{operation:'COMPLETE'}).prompt,ordinaryInstruction,'Stage 01');}catch(error){omissionDetected=error.message.includes('PROMPT_HUMAN_EXPERIENCE_ORACLE');}
+assert(omissionDetected,'PROMPT_HUMAN_EXPERIENCE_MUTATION_ORACLE: omission in the production prompt source was not detected at the generated instruction.');
 for(const subject of ['patent','legal','medical','software','aec','mechanical','cad','cam','cnc','scientific','financial']){
   const branchPattern=new RegExp(`(?:\\bif\\b|\\bswitch\\b|\\bcase\\b)[^\\n]{0,120}\\b${subject}\\b`,'i');
   assert(!branchPattern.test(promptSource),`prompt-engine.js contains subject-specific runtime branch for ${subject}.`);

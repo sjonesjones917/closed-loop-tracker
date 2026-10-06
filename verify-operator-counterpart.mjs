@@ -368,11 +368,15 @@ async function stage17DeferredReceiptControl(r,initial,sourceOverrides,subjectId
   assert(observation);assert(raw);const rawBytes=raw.completeRawResponse,phases=[];
   const reportReference=e.deferredReceiptAttachmentState(initial,receipt);assert.equal(reportReference.allowed,true,'STAGE17_RECEIPT_INITIAL_BYTE_CUSTODY_ORACLE');
   const reportFile=await r.store.getArtifact(reportReference.attachmentId,{jobId:initial.job.JOB_ID});assert(reportFile);
-  // A documented old-comparator equivalent removes only the normalization
-  // which accidentally treated ambient candidate/iteration IDs as material.
-  const engineSource=sourceOverrides['workflow-engine.js']||fs.readFileSync('workflow-engine.js','utf8'),normalization='return {...target,compatibilityBinding:{...target.compatibilityBinding,scope:materialScope}};';
-  assert.equal(engineSource.split(normalization).length,2,'STAGE17_RECEIPT_OLD_COMPARATOR_FAULT_ANCHOR_ORACLE');
-  const prior=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':engineSource.replace(normalization,'return target;')}});
+  // The accepted receipt was issued under the current binding contract. An
+  // isolated old-comparator equivalent must therefore restore only the old
+  // erroneous dependence on the ambient candidate, without rewriting the
+  // receipt's signed prompt or accepted raw evidence.
+  const originalCandidateId=e.recordValue(receipt,'CANDIDATE_ID');
+  assert(originalCandidateId&&String(originalCandidateId)===String(e.currentScope(initial).candidateId),'STAGE17_RECEIPT_ORIGINAL_CANDIDATE_CONTROL_ORACLE');
+  const engineSource=sourceOverrides['workflow-engine.js']||fs.readFileSync('workflow-engine.js','utf8'),oldComparatorAnchor='function deferredReceiptMatches(p,record,binding){';
+  assert.equal(engineSource.split(oldComparatorAnchor).length,2,'STAGE17_RECEIPT_OLD_COMPARATOR_FAULT_ANCHOR_ORACLE');
+  const prior=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':engineSource.replace(oldComparatorAnchor,oldComparatorAnchor+'if(e0.recordValue(record,"CANDIDATE_ID")&&String(e0.currentScope(p).candidateId)!==String(e0.recordValue(record,"CANDIDATE_ID")))return false;')}});
   await restoreArtifactFixture(prior.store,await captureArtifactFixture(r.store,initial.job.JOB_ID));
   assert.equal(prior.engine.deferredReceiptMatches(prior.copy(initial),prior.copy(receipt),prior.copy(initialItem.binding)),true,'STAGE17_RECEIPT_OLD_COMPARATOR_CONFORMING_CONTROL_ORACLE');
   return {
@@ -391,7 +395,7 @@ async function stage17DeferredReceiptControl(r,initial,sourceOverrides,subjectId
     async finish(project,runs){
       const item=itemFor(project),current=e.records(project,'regressionExecutions').find(row=>e.recordId(row,'regressionExecutions')===receiptId),idempotent=copy(project),before=h.sha256Value(idempotent);
       assert.deepEqual(Array.from(e.reserveRunBatch(idempotent,{stage}),row=>({...row})),Array.from(runs,row=>({...row})),'STAGE17_RECEIPT_IDEMPOTENT_BATCH_ORACLE');assert.equal(h.sha256Value(idempotent),before,'STAGE17_RECEIPT_IDEMPOTENT_BATCH_STATE_ORACLE');
-      const changedBindings=[['subject',binding=>binding.subjectSha256='0'.repeat(64)],['fixture',binding=>binding.fixtureSha256='0'.repeat(64)],['test',binding=>binding.testSha256='0'.repeat(64)],['input-version',binding=>binding.scope.inputVersion='SYNTHETIC_CHANGED_MATERIAL_INPUT'],['instruction-version',binding=>binding.compatibilityBinding.scope.instructionVersion='SYNTHETIC_CHANGED_MATERIAL_INSTRUCTION'],['activation',binding=>binding.compatibilityBinding.historyActivationId='SYNTHETIC_CHANGED_ACTIVATION']];
+      const changedBindings=[['subject',binding=>binding.subjectSha256='0'.repeat(64)],['fixture',binding=>binding.fixtureSha256='0'.repeat(64)],['test',binding=>binding.testSha256='0'.repeat(64)],['input-version',binding=>binding.scope.inputVersion='SYNTHETIC_CHANGED_MATERIAL_INPUT'],['requirements-version',binding=>binding.compatibilityBinding.scope.requirementsVersion='SYNTHETIC_CHANGED_MATERIAL_REQUIREMENTS'],['activation',binding=>binding.compatibilityBinding.historyActivationId='SYNTHETIC_CHANGED_ACTIVATION']];
       for(const [name,mutate]of changedBindings){const binding=copy(item.binding);mutate(binding);assert.equal(e.deferredReceiptMatches(project,current,binding),false,'STAGE17_RECEIPT_MATERIAL_CHANGE_ORACLE: '+name);}
       const head=project.projectSha256;
       await r.store.deleteArtifact(reportFile.artifactId,project.job.JOB_ID);

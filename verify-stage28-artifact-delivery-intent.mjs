@@ -1,5 +1,5 @@
 import {checkedVerifier} from './verify-conformance-regressions.mjs';
-import {bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {bindArtifactFixture,projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -10,8 +10,39 @@ import {execFileSync} from 'node:child_process';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']) createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','response-ingestion.js']) createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+assert.equal(typeof globalThis.closedLoopResponseIngestion.strictParse,'function','The Stage 28 verifier must load the ingestion owner used by deferred readiness.');
 const {closedLoopWorkflowEngine:engine}=globalThis;
+async function pendingIdentityStoreBoundary(){
+  const source=fs.readFileSync('workflow-engine.js','utf8'),guard='if(identity.HASH_REVIEW_ID===null)delete derived.HASH_REVIEW_ID;';
+  assert.equal(source.split(guard).length,2,'The pending-identity projection correction must have one exact fault anchor.');
+  const former=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':source.replace(guard,'')}}),oldProject=former.runtime.closedLoopCore.createBlankState('JOB-STAGE28-PENDING-OLD');
+  former.engine.ensureShape(oldProject);former.engine.recalculate(oldProject);
+  const oldProjection=former.engine.deriveStageData(oldProject,28);
+  assert.equal(Object.hasOwn(oldProjection,'HASH_REVIEW_ID'),true,'The former derivation must reach the intended pending-identity fault.');
+  assert.equal(oldProjection.HASH_REVIEW_ID,null,'The former pending identity must be the nonnullable null that blocked projection.');
+
+  const current=projectStoreRuntime(),p=current.runtime.closedLoopCore.createBlankState('JOB-STAGE28-PENDING-STORE');
+  current.engine.ensureShape(p);current.engine.recalculate(p);
+  const derived=current.engine.deriveStageData(p,28);
+  assert.equal(Object.hasOwn(derived,'HASH_REVIEW_ID'),false,'A pending byte review must omit its not-yet-owned identity.');
+  assert.equal(current.engine.gate(28,p).complete,false,'An omitted pending identity must not complete Stage 28.');
+  const saved=await current.store.writeProject(p,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
+  const reloaded=await current.store.readProject(saved.job.JOB_ID);
+  assert.equal(Object.hasOwn(reloaded.stages[28].derivedData,'HASH_REVIEW_ID'),false,'Real store reload invented a pending identity.');
+  assert.equal(current.engine.gate(28,reloaded).complete,false,'Real store reload completed an unverified byte review.');
+  const invalid=current.copy(reloaded);invalid.stages[28].derivedData.HASH_REVIEW_ID=oldProjection.HASH_REVIEW_ID;
+  const projected=current.store.validateProjectIntegrity(invalid),issue='/stages/28/derivedData/HASH_REVIEW_ID: Null is not permitted.';
+  assert.equal(projected.valid,false,'The former pending-null projection unexpectedly passed integrity validation.');
+  assert(projected.issues.includes(issue),'The former fault failed before the intended Stage 28 field: '+JSON.stringify(projected.issues));
+  await assert.rejects(current.store.writeProject(invalid,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256}),error=>error.code==='PROJECT_INTEGRITY_FAILED'&&error.issues?.includes(issue),'The invalid pending-null projection must be rejected by the real write boundary.');
+  const retained=await current.store.readProject(saved.job.JOB_ID);
+  assert.equal(retained.projectSha256,saved.projectSha256,'A failed Stage 28 projection write replaced the last valid project.');
+  assert.equal(Object.hasOwn(retained.stages[28].derivedData,'HASH_REVIEW_ID'),false,'A failed Stage 28 projection write retained the invalid null.');
+  return {formerFault:'PRESENT_NULL',currentPending:'OMITTED',realStoreRoundtrip:true,nullWriteRejected:true,lastValidStatePreserved:true,boundary:'DIRECT_STAGE28_DERIVATION_AND_DISPOSABLE_BLANK_PROJECT_STORE_WRITE_READ',fullStage27Journey:false};
+}
+const pendingIdentityStoreProjection=await pendingIdentityStoreBoundary();
+if(process.argv.includes('--pending-id-only')){console.log(JSON.stringify({stage28PendingIdentity:pendingIdentityStoreProjection}));process.exit(0);}
 const tmp=fs.mkdtempSync(path.join(process.cwd(),'.stage28-fixture-'));
 const snapshotPath=path.join(tmp,'stage27-ready.json');
 const instrumentedPath=path.join(process.cwd(),`.stage28-full-cycle-${process.pid}.mjs`);
@@ -51,7 +82,7 @@ const captured=JSON.parse(fs.readFileSync(snapshotPath,'utf8')),source=captured.
 await bindArtifactFixture(captured.artifacts);
 fs.rmSync(tmp,{recursive:true,force:true});
 
-function fresh(){const p=structuredClone(source);engine.ensureShape(p);engine.recalculate(p);assert.equal(engine.gate(27,p).complete,true,'The isolated Stage 28 fixture is not actually Stage 27-ready.');return p;}
+function fresh(){const p=structuredClone(source);engine.ensureShape(p);engine.recalculate(p);const prior=engine.gate(27,p);assert.equal(prior.complete,true,'The isolated Stage 28 fixture is not actually Stage 27-ready: '+prior.reasons.join(' | '));return p;}
 function context(p){
   const candidate=engine.currentDeliveryCandidate(p),release=engine.recordsForCurrentScope(p,'releaseRecords').at(-1);assert.ok(candidate&&release,'Stage 28 fixture lacks its current candidate or release.');
   const ids=(engine.recordValue(candidate,'ARTIFACT_IDS')||[]).map(String),rawNames=engine.recordValue(candidate,'AUTHORIZED_FILENAMES'),rawSizes=engine.recordValue(candidate,'BYTE_LENGTHS'),rawHashes=engine.recordValue(candidate,'SHA256_VALUES');
@@ -116,4 +147,4 @@ for (const [id,mutate] of [
   assert.equal(created.every(r=>engine.recordValue(r,'AUTHORIZATION')==='AUTHORIZED'),true,'Reversed picker order changed exact artifact authorization.');
 }
 
-console.log(JSON.stringify({stage28:'PASS',applicationStage:28,intentionalInvalidFixturesRejected:rejected,noIdentityMutationOnRejectedByteFixtures:true,applicationByteRehashRequired:true,exactCandidateMappingRequired:true,orderIndependentIdentity:true,destinationBoundIntentGate:true,trustedTimedValidityGate:true,ambiguousDuplicateIntentBlocked:true,candidateSemanticDriftRejected:true,identityScopeDriftRejected:true,stage28DoesNotAuthorizeDelivery:true,repairedPathProgressed:true,fullCycleFixtureReachedStage27:true,isolatedDisposableProjects:true}));
+console.log(JSON.stringify({stage28:'PASS',applicationStage:28,pendingIdentityStoreProjection,intentionalInvalidFixturesRejected:rejected,noIdentityMutationOnRejectedByteFixtures:true,applicationByteRehashRequired:true,exactCandidateMappingRequired:true,orderIndependentIdentity:true,destinationBoundIntentGate:true,trustedTimedValidityGate:true,ambiguousDuplicateIntentBlocked:true,candidateSemanticDriftRejected:true,identityScopeDriftRejected:true,stage28DoesNotAuthorizeDelivery:true,repairedPathProgressed:true,fullCycleFixtureReachedStage27:true,isolatedDisposableProjects:true}));

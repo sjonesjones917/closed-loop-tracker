@@ -1,6 +1,11 @@
 import {checkedVerifier} from './verify-conformance-regressions.mjs';
+import {readExecutionReceipts,executionReports,sha} from './verification-evidence.mjs';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 // Closed output fields that this executed definition-of-done proof must retain.
 // This is a compatibility contract for downstream acceptance publication, not a substitute for executing the measurements below.
@@ -14,11 +19,53 @@ const EXECUTED_DEFINITION_PROOF_FIELDS=Object.freeze([
   'releaseArtifactIdentityCoverage'
 ]);
 
+async function currentOwnerReport(file,marker,{receiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,run=checkedVerifier}={}){
+  const receipt=receiptDirectory?readExecutionReceipts(receiptDirectory).get(file):null;
+  const reports=receipt?.reports||executionReports(await run(process.execPath,[new URL('./'+file,import.meta.url).pathname],{encoding:'utf8'}));
+  const matching=reports.filter(row=>Object.hasOwn(row,marker));
+  assert.equal(matching.length,1,`Expected exactly one current ${file} report containing ${marker}.`);
+  return matching[0];
+}
+
+if(process.argv.includes('--owner-receipt-controls')){
+  const directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS;
+  assert(directory,'Owner receipt controls require current direct owner receipts.');
+  const receipts=readExecutionReceipts(directory);
+  const cases=[['verify-independent-preflight.mjs','independentPreflight'],['verify-stage01-intake-closure.mjs','stage01IntakeClosure']];
+  for(const [file,marker] of cases){
+    const receipt=receipts.get(file);
+    assert(receipt,`Missing current direct owner receipt ${file}.`);
+    const skipped=await currentOwnerReport(file,marker,{receiptDirectory:directory,run:()=>{throw new Error('EXACT_RECEIPT_SKIP_ORACLE: child was started.');}});
+    const selected=receipt.reports.filter(row=>Object.hasOwn(row,marker));
+    assert.equal(selected.length,1);
+    assert.deepEqual(skipped,selected[0]);
+    const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-dod-owner-'));
+    try{
+      let runs=0;
+      const fallback=await currentOwnerReport(file,marker,{receiptDirectory:temporary,run:async(command,args)=>{
+        assert.equal(path.basename(args[0]),file);
+        runs++;
+        return JSON.stringify(selected[0]);
+      }});
+      assert.equal(runs,1,`MISSING_RECEIPT_FALLBACK_ORACLE: ${file} was not invoked exactly once.`);
+      assert.deepEqual(fallback,selected[0]);
+      const stale=structuredClone(receipt);
+      stale.fingerprint.sourceInputsSha256='0'.repeat(64);
+      delete stale.receiptSha256;
+      stale.receiptSha256=sha(stale);
+      fs.writeFileSync(path.join(temporary,file+'.json'),JSON.stringify(stale));
+      await assert.rejects(currentOwnerReport(file,marker,{receiptDirectory:temporary,run:()=>{throw new Error('STALE_RECEIPT_FALLBACK_ORACLE: child was started.');}}),/EXECUTED_EVIDENCE_ORACLE: stale source\/specification\/catalog\/runtime receipt/);
+    }finally{fs.rmSync(temporary,{recursive:true,force:true});}
+  }
+  console.log(JSON.stringify({definitionOfDoneOwnerReceiptControls:'PASS',owners:cases.map(([file])=>file),exactReceiptSkips:true,missingReceiptRunsOnce:true,staleReceiptFailsClosed:true,syntheticFallbackReportReuse:true}));
+  process.exit(0);
+}
+
 const productionInstructionProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-production-instruction.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 assert.equal(productionInstructionProof.productionInstruction,'PASS','Stage 12 production-instruction regression proof did not pass.');
 assert.equal(productionInstructionProof.isolatedDisposableProjects,true,'Stage 12 production-instruction mutations were not isolated to disposable project state.');
 assert.equal(productionInstructionProof.noMutationBeforeAcceptance,true,'Stage 12 production-instruction verifier did not prove zero canonical mutation before acceptance.');
-const independentPreflightProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-independent-preflight.mjs',import.meta.url).pathname],{encoding:'utf8'})));
+const independentPreflightProof=await currentOwnerReport('verify-independent-preflight.mjs','independentPreflight');
 assert.equal(independentPreflightProof.independentPreflight,'PASS','Stage 13 independent-preflight regression proof did not pass.');
 assert.equal(independentPreflightProof.isolatedDisposableProjects,true,'Stage 13 independent-preflight mutations were not isolated to disposable project state.');
 assert.equal(independentPreflightProof.noMutationBeforeAcceptance,true,'Stage 13 independent-preflight verifier did not prove zero canonical mutation before acceptance.');
@@ -29,24 +76,31 @@ assert.equal(candidateFreezeProof.noPartialMutationOnRejectedFreeze,true,'Stage 
 assert.equal(candidateFreezeProof.exactHumanSelectionReferenced,true,'Stage 14 frozen candidate did not bind the exact registered human component-selection decision.');
 assert.equal(candidateFreezeProof.frozenManifestImmutable,true,'Stage 14 frozen candidate manifest was not immutable.');
 assert.equal(candidateFreezeProof.isolatedDisposableProjects,true,'Stage 14 candidate-freeze mutations were not isolated.');
-const productionBaselineAuthorityProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-production-baseline-authority.mjs',import.meta.url).pathname],{encoding:'utf8'})));
+const productionBaselineReceipt=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS?readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS).get('verify-production-baseline-authority.mjs'):null;
+const productionBaselineReports=productionBaselineReceipt?.reports||executionReports(await checkedVerifier(process.execPath,[new URL('./verify-production-baseline-authority.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const productionBaselineAuthorityProof=(()=>{
+  const reports=productionBaselineReports.filter(report=>Object.hasOwn(report,'productionBaselineAuthority'));
+  assert.equal(reports.length,1,'Expected exactly one current production-baseline authority report.');
+  return reports[0];
+})();
 assert.equal(productionBaselineAuthorityProof.productionBaselineAuthority,'PASS','Stage 23 production-baseline-authority regression proof did not pass.');
 assert.equal(productionBaselineAuthorityProof.noPartialMutationOnRejectedFreeze,true,'Stage 23 rejected baseline freeze partially mutated application state.');
 assert.equal(productionBaselineAuthorityProof.exactHumanAuthorizationReferenced,true,'Stage 23 frozen baseline did not bind the exact registered BASELINE_AUTHORIZATION human decision.');
 assert.equal(productionBaselineAuthorityProof.zeroAcceptedStage20ExternalResponses,true,'Stage 23 baseline freeze required an accepted Stage 20 external response envelope.');
 assert.equal(productionBaselineAuthorityProof.isolatedDisposableProjects,true,'Stage 23 production-baseline-authority mutations were not isolated.');
 
-const originalLog=console.log;
-const captured=[];
-console.log=(...args)=>captured.push(args.map(String).join(' '));
-try{
-  await import('./verify-definition-of-done-invariants.mjs');
-}finally{
-  console.log=originalLog;
-}
-assert.equal(captured.length,1,'Definition-of-done invariant verifier must emit exactly one JSON report.');
-const report=JSON.parse(captured[0]);
+const invariantReceipt=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS?readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS).get('verify-definition-of-done-invariants.mjs'):null;
+const report=invariantReceipt?(()=>{
+  const reports=invariantReceipt.reports.filter(row=>Object.hasOwn(row,'fieldOwnershipCoverage'));
+  assert.equal(reports.length,1,'Expected exactly one current definition-of-done invariant report.');
+  return reports[0];
+})():JSON.parse(await checkedVerifier(process.execPath,[new URL('./verify-definition-of-done-invariants.mjs',import.meta.url).pathname],{encoding:'utf8'}));
 for(const field of EXECUTED_DEFINITION_PROOF_FIELDS)assert(Object.hasOwn(report,field),`Definition-of-done proof omitted required report field ${field}.`);
+// Metric fixtures use the production calculation authorities. The invariant
+// suite runs in its own process and must not supply these globals by import.
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
 const core=globalThis.closedLoopCore;
 const engine=globalThis.closedLoopWorkflowEngine;
 const hash=globalThis.closedLoopHash;
@@ -171,7 +225,7 @@ const emptyDenominatorAccepted=closedMetricFromUniverse({
 assert.equal(emptyDenominatorAccepted.disposition,'SATISFIED','A current independently accepted evidence-supported empty-universe determination should satisfy the empty-universe metric contract.');
 assert.equal(emptyDenominatorAccepted.value,1,'A reviewed evidence-supported empty universe should publish 100% only through the explicit empty-universe rule.');
 
-const stage01Proof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-stage01-intake-closure.mjs',import.meta.url).pathname],{encoding:'utf8'})));
+const stage01Proof=await currentOwnerReport('verify-stage01-intake-closure.mjs','stage01IntakeClosure');
 const zeroLossProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-zero-loss-accounting.mjs',import.meta.url).pathname],{encoding:'utf8'})));
 report.stage01IntakeCoverage=Number(Boolean(stage01Proof.stage01IntakeClosure&&stage01Proof.currentManifestBound&&stage01Proof.incompleteAccountingRejected));
 report.stage04ObligationCoverage=Number(Boolean(zeroLossProof.zeroLossStage04&&zeroLossProof.completeStage03ResearchUnion&&zeroLossProof.incompleteObligationRejected));
@@ -224,4 +278,4 @@ assert.equal(report.independentPreflightMutationProof.materialAmbiguityBlocked,t
 assert.equal(report.independentPreflightMutationProof.contaminatedReviewerBlocked,true,'Stage 13 contaminated-reviewer mutation was not rejected.');
 report.candidateFreezeCoverage=Number(candidateFreezeProof.candidateFreeze==='PASS'&&candidateFreezeProof.repairedPathProgressed===true&&candidateFreezeProof.noPartialMutationOnRejectedFreeze===true&&candidateFreezeProof.exactHumanSelectionReferenced===true&&candidateFreezeProof.frozenManifestImmutable===true&&candidateFreezeProof.isolatedDisposableProjects===true);
 assert.equal(report.candidateFreezeCoverage,1,'Stage 14 candidate-freeze coverage is not complete.');
-originalLog(JSON.stringify(report,null,2));
+console.log(JSON.stringify(report,null,2));

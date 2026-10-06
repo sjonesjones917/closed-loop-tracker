@@ -25,6 +25,21 @@ const fullCoverageReviewInputs=(JSON.parse(fs.readFileSync('verification-asserti
 const governedApprovalInputs=[...new Set([...fullCoverageReviewInputs,...(governance.contextApplicabilityReview?[governance.contextApplicabilityReview.path]:[]),...(governance.approvedAmendments||[]).flatMap(amendment=>[amendment.sourceReviewPath,amendment.approvedProposalPath]),...(governance.independentSourceReview?[governance.independentSourceReview.sourceReviewPath,governance.independentSourceReview.reconciliationPath]:[])])].sort();
 const declaredVerifierInputs=[...new Set([...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(suite=>suite.sourceInputs||[]))].sort();
 const activeFixtureInputs=declaredVerifierInputs.filter(file=>file.startsWith('verification/')),activeHelperInputs=declaredVerifierInputs.filter(file=>!file.startsWith('verification/'));
+const expectedActiveFixtureInputs=[
+  'verification/deferred-definition-compatibility-legacy-fixture-20261005.json',
+  'verification/handoff-producer88-source-fixture-20261005.json',
+  'verification/handoff-producer89-source-fixture-20261005.json',
+  'verification/stage01-retained-capture-legacy-fixture-20261005.json'
+];
+function assertActiveFixtureInputs(paths){assert.deepEqual(paths,expectedActiveFixtureInputs,'FIXTURE_INPUT_ORACLE: active fixture source paths differ from the independently declared current producer inputs.');}
+assertActiveFixtureInputs(activeFixtureInputs);
+const fixtureCatalogMutations=[];
+for(const file of expectedActiveFixtureInputs){
+  assert.throws(()=>assertActiveFixtureInputs(activeFixtureInputs.filter(path=>path!==file)),/FIXTURE_INPUT_ORACLE/,'Omitting '+file+' must not preserve the declared source population.');
+  fixtureCatalogMutations.push({file,mutation:'missing-path',result:'DETECTED'});
+}
+assert.throws(()=>assertActiveFixtureInputs([...activeFixtureInputs.slice(0,-1),'verification/unknown-fixture.json']),/FIXTURE_INPUT_ORACLE/,'A changed fixture path must not preserve the declared source population.');
+fixtureCatalogMutations.push({file:'verification/unknown-fixture.json',mutation:'changed-path',result:'DETECTED'});
 const producerFixtureInputs=['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt',governanceDeclaration,...governedApprovalInputs,...declaredVerifierInputs];
 try{
   const dueSchedulingControl=await verifyDueVerificationScheduling(path.join(directory,'due-scheduling'));
@@ -146,8 +161,8 @@ try{
   fs.appendFileSync(proposalTarget,'\n');
   assert.equal(formerFingerprint(evidenceFingerprint(fixture)).sourceInputsSha256,beforeEquivalent.sourceInputsSha256,'GOVERNANCE_INPUT_ORACLE: prior Markdown-omitting fingerprint did not reproduce stale identity.');
   fs.writeFileSync(proposalTarget,proposalBytes);
-  assert.equal(activeFixtureInputs.length,1,'FIXTURE_INPUT_ORACLE: independently declared legacy fixture input is missing or duplicated.');
-  const legacyFixturePath=activeFixtureInputs[0],legacyFixtureTarget=path.join(fixture,legacyFixturePath),legacyFixtureBytes=fs.readFileSync(legacyFixtureTarget);
+  assertActiveFixtureInputs(activeFixtureInputs);
+  const legacyFixturePath='verification/deferred-definition-compatibility-legacy-fixture-20261005.json',legacyFixtureTarget=path.join(fixture,legacyFixturePath),legacyFixtureBytes=fs.readFileSync(legacyFixtureTarget);
   const formerUntrackedFixtureFingerprint=fingerprint=>{const copy=structuredClone(fingerprint);delete copy.inputSha256[legacyFixturePath];copy.sourceInputsSha256=sha(copy.inputSha256);return copy;};
   execFileSync('git',['rm','--cached','--quiet',legacyFixturePath],{cwd:fixture});
   const priorUntrackedFixtureEquivalent=formerUntrackedFixtureFingerprint(evidenceFingerprint(fixture));
@@ -155,7 +170,7 @@ try{
   assert.equal(formerUntrackedFixtureFingerprint(evidenceFingerprint(fixture)).sourceInputsSha256,priorUntrackedFixtureEquivalent.sourceInputsSha256,'FIXTURE_INPUT_ORACLE: former untracked-fixture omission did not reproduce stale identity.');
   fs.writeFileSync(legacyFixtureTarget,legacyFixtureBytes);execFileSync('git',['add',legacyFixturePath],{cwd:fixture});validateExecutionReceipt(persistedOwnReceipt,suite,evidenceFingerprint(fixture));
   const activeHelperFingerprintControl={result:'PASS',boundary:'Exact registered first-party assertion helper bytes in the existing receipt fingerprint and freshness validator',actualProducerReceiptReused:true,declaredSourcePaths:activeHelperInputs,sourceCases:activeHelperSourceCases};
-  const activeFixtureFingerprintControl={result:'PASS',boundary:'Existing actual Stage03 producer receipt and production source fingerprint/receipt consumer; isolated Git/filesystem, no added child',actualProducerReceiptReused:true,declaredSourcePaths:activeFixtureInputs,sourceCases:activeFixtureSourceCases,formerUntrackedFixtureOmissionReproduced:true};
+  const activeFixtureFingerprintControl={result:'PASS',boundary:'Existing actual Stage03 producer receipt and production source fingerprint/receipt consumer; isolated Git/filesystem, no added child',actualProducerReceiptReused:true,declaredSourcePaths:activeFixtureInputs,sourceCases:activeFixtureSourceCases,fixtureCatalogMutations,formerUntrackedFixtureOmissionReproduced:true};
   const governanceFingerprintControl={result:'PASS',boundary:'Existing actual Stage03 producer receipt, isolated Git checkout and production fingerprint/receipt consumer; no new producer execution',declaredSourcePaths:governedApprovalInputs,actualProducerReceiptReused:true,formerMarkdownOmissionReproduced:true,sourceCases:governanceSourceCases};
   for(const [name,text,diagnostic] of [
     ['producer-progress-on-stdout',source+`\nprocess.stdout.write(${JSON.stringify(producerProgress)});\n`,'Unexpected non-whitespace character after JSON'],
@@ -207,11 +222,8 @@ try{
     assert.equal(row.implementationClassification,'implemented but insufficiently tested');
   }
   const normativeRegistryLinkageControl={result:'PASS',exactQualifiedLinks:registryRequirements.map(([normativeRequirementId,checkId])=>({normativeRequirementId,checkId})),absentExecutionRemainsUnknown:true,unlinkedImplementationStatusUndetermined:true,fullClauseConformanceClaimed:false};
-  // Exercise the actual composed ingestion producer and both registered owners.
-  // Their independent report assertions execute; a wrapper's imported report
-  // cannot publish the owner's detailed identity or mask its missing receipt.
-  // Exact independently maintained owner populations. Imported reports stay
-  // complete, but their detailed identities must remain with their own receipt.
+  // Exercise ingestion and its independent registered authority/custody owners.
+  // Their exact receipt assertions cannot be supplied by the ingestion wrapper.
   const expectedCanonicalIdsByOwner={
     'verify-response-authority-integrity.mjs':[
       'PRODUCER-TIMING-REJECT-VERIFICATION_PHASE','PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE','PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE','PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED','PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED','PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED','PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION','PRODUCER-TIMING-REJECT-TIMING_ENTRIES','PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256','PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS'
@@ -228,7 +240,7 @@ try{
     const actualIds=ownershipReceipts.get(owner).reports.flatMap(report=>report.verificationObservations||[]).map(row=>row.checkId);
     assert.deepEqual([...actualIds].sort(),[...expectedIds].sort(),'OBSERVATION_OWNER_ORACLE: the exact canonical population differs for '+owner);
   }
-  assert(canonicalIds.every(id=>wrapper.reports.some(report=>report.verificationObservations?.some(row=>row.checkId===id))),'OBSERVATION_OWNER_ORACLE: actual imported reports were discarded.');
+  assert(canonicalIds.every(id=>!wrapper.reports.some(report=>report.verificationObservations?.some(row=>row.checkId===id))),'OBSERVATION_OWNER_ORACLE: ingestion redundantly executed an independently owned assertion.');
   assert(canonicalIds.every(id=>!wrapper.observations.some(row=>row.checkId===id)),'OBSERVATION_OWNER_ORACLE: wrapper claimed canonical imported assertion identities.');
   const ingestionReferenceChecks=[
     {checkId:'EVIDENCE-SOURCE-SCOPE-AUTHORITY',marker:'evidenceSourceScopeAuthority',populationId:'ingestion.evidence-source-scope',observed:{currentAccepted:true,invalidAdmissionRejected:5,invalidPrecommitRejected:5,rawAndPendingStatePreserved:true,optionalOmissionAccepted:true,historicalExecutionEvidenceRetained:true,operationContext:{currentUnprovidedRejected:2,preFixEquivalentFalseAdmissions:2,legacyPendingCommitRejected:2,conformingControlsCommitted:5}}},
@@ -360,6 +372,31 @@ try{
     producerControls.push({caseId:'missing-required-storage-population:'+checkId,accepted:false,result:'DETECTED'});
   }
 
+  // Controlled catalog input only. The Stage 28 owner must supply its own
+  // direct derivation and disposable blank-project store observation.
+  const stage28ProjectionControl={
+    stage28:'PASS',applicationByteRehashRequired:true,exactCandidateMappingRequired:true,
+    orderIndependentIdentity:true,destinationBoundIntentGate:true,trustedTimedValidityGate:true,
+    ambiguousDuplicateIntentBlocked:true,candidateSemanticDriftRejected:true,
+    identityScopeDriftRejected:true,stage28DoesNotAuthorizeDelivery:true,
+    pendingIdentityStoreProjection:{formerFault:'PRESENT_NULL',currentPending:'OMITTED',
+      realStoreRoundtrip:true,nullWriteRejected:true,lastValidStatePreserved:true,
+      boundary:'DIRECT_STAGE28_DERIVATION_AND_DISPOSABLE_BLANK_PROJECT_STORE_WRITE_READ',fullStage27Journey:false}
+  };
+  const stage28ProjectionId='artifact.pending-id-store-projection';
+  const stage28ProjectionPassed=report=>observationsFromReports('verify-stage28-artifact-delivery-intent.mjs',[report]).find(row=>row.checkId===stage28ProjectionId)?.passed;
+  assert.equal(stage28ProjectionPassed(stage28ProjectionControl),true,'STAGE28_PENDING_STORE_CATALOG_ORACLE: conforming direct store projection was rejected.');
+  for(const [name,mutate] of [
+    ['missing-projection',report=>{delete report.pendingIdentityStoreProjection;}],
+    ['null-write-accepted',report=>{report.pendingIdentityStoreProjection.nullWriteRejected=false;}],
+    ['last-valid-state-lost',report=>{report.pendingIdentityStoreProjection.lastValidStatePreserved=false;}],
+    ['false-full-stage27-claim',report=>{report.pendingIdentityStoreProjection.fullStage27Journey=true;}]
+  ]){
+    const changed=structuredClone(stage28ProjectionControl);mutate(changed);
+    assert.equal(stage28ProjectionPassed(changed),false,'STAGE28_PENDING_STORE_CATALOG_ORACLE: '+name+' passed the required current-store observation.');
+    producerControls.push({caseId:'stage28-pending-store:'+name,accepted:false,result:'DETECTED'});
+  }
+
   // This independently declared report-shape fixture tests only the native
   // catalog consumer. It is never an executed receipt or normative proof.
   const bindingTypePopulationFixture={verifyTestRuntimeIntegrity:'PASS',verificationObservations:[{
@@ -420,7 +457,7 @@ try{
   duplicate.observations=observationsFromReports(registrySuite,duplicate.reports);delete duplicate.receiptSha256;duplicate.receiptSha256=sha(duplicate);
   assert.throws(()=>aggregateExecutedEvidence(new Map([[suite,good.receipt],[registrySuite,duplicate]]),evidenceFingerprint()),new RegExp('duplicate observation '+detail.checkId),'OBSERVATION_OWNER_ORACLE: a double-owned detailed assertion became accepted evidence.');
   producerControls.push({caseId:'double-owned-detailed-assertion',accepted:false,result:'DETECTED'});
-  const observationOwnershipControl={result:'PASS',actualProducerSuites:ownershipSuites,canonicalDetailedAssertionCount:canonicalIds.length,canonicalCheckIds:canonicalIds,ingestionReferenceCheckIds:ingestionReferenceChecks.map(row=>row.checkId),ingestionReferenceOmissionRejected:true,ingestionReferenceExactNormativeLinksPreserved:true,humanCandidateTargetObservationRequired:true,externalIdentityShapeObservationRequired:true,missingNativeHumanTargetOwnerRemainsUnknown:true,missingCurrentSuppliedInputCustodyOwnerRemainsUnknown:true,storageCatalogOmissionControls:true,storageCatalogFixtureIsExecutionEvidence:false,importedReportsRetained:true,canonicalOwnerMissingRemainsUnknown:true,exactCanonicalLinksPreserved:true,doubleOwnedDetailedAssertionRejected:true,foreignFailedDuplicateMalformedAssertionsRejected:true};
+  const observationOwnershipControl={result:'PASS',actualProducerSuites:ownershipSuites,canonicalDetailedAssertionCount:canonicalIds.length,canonicalCheckIds:canonicalIds,ingestionReferenceCheckIds:ingestionReferenceChecks.map(row=>row.checkId),ingestionReferenceOmissionRejected:true,ingestionReferenceExactNormativeLinksPreserved:true,humanCandidateTargetObservationRequired:true,externalIdentityShapeObservationRequired:true,missingNativeHumanTargetOwnerRemainsUnknown:true,missingCurrentSuppliedInputCustodyOwnerRemainsUnknown:true,storageCatalogOmissionControls:true,storageCatalogFixtureIsExecutionEvidence:false,independentOwnerReportsRequired:true,canonicalOwnerMissingRemainsUnknown:true,exactCanonicalLinksPreserved:true,doubleOwnedDetailedAssertionRejected:true,foreignFailedDuplicateMalformedAssertionsRejected:true};
   fs.writeFileSync(evidencePath,JSON.stringify(genuine));
   assert.equal(readExecutedEvidence(evidencePath).receiptCount,2,'Actual conforming producer evidence did not reach the real report consumer.');
   const tampered=structuredClone(genuine);tampered.metrics.currentScopeSelectorCoverage={...tampered.metrics.currentScopeSelectorCoverage,numerator:1,denominator:1,value:1,disposition:'SATISFIED'};

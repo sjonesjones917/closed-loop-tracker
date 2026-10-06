@@ -2,6 +2,7 @@ import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {recordProposal} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {executionReports} from './verification-evidence.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
@@ -153,6 +154,18 @@ for(const testCase of challengeCases){
   }
   fileChallengeCases.push({id,count,required,complete:gate.complete,result:'PASS'});
 }
-const humanAuthorityRoundTrip=JSON.parse((await checkedVerifier(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'})));
-assert(humanAuthorityRoundTrip.humanAuthorityRoundTrip==='PASS'&&humanAuthorityRoundTrip.atomicCoAcceptanceStable===true&&humanAuthorityRoundTrip.unrelatedMutationFailsClosed===true&&humanAuthorityRoundTrip.returnedAttachmentNotRawInput===true,'Integrated Stage 01 human-authority regression did not report every repaired-path proof.');
+function selectHumanAuthorityReports(reports){
+  const save=reports.filter(row=>Object.hasOwn(row,'humanStageSave'));
+  const authority=reports.filter(row=>Object.hasOwn(row,'humanAuthorityRoundTrip'));
+  assert(reports.length===2&&save.length===1&&authority.length===1,'HUMAN_AUTHORITY_REPORT_ORACLE: expected one stage-save and one authority report.');
+  return {save:save[0],authority:authority[0]};
+}
+const humanAuthorityReports=executionReports(await checkedVerifier(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'}));
+const {save:humanStageSave,authority:humanAuthorityRoundTrip}=selectHumanAuthorityReports(humanAuthorityReports);
+for(const [name,reports] of [
+  ['missing-authority',humanAuthorityReports.filter(row=>row!==humanAuthorityRoundTrip)],
+  ['duplicate-authority',[...humanAuthorityReports,humanAuthorityRoundTrip]],
+  ['missing-stage-save',humanAuthorityReports.filter(row=>row!==humanStageSave)]
+]){let rejected=false;try{selectHumanAuthorityReports(reports);}catch(error){rejected=error.message.includes('HUMAN_AUTHORITY_REPORT_ORACLE');}assert(rejected,'HUMAN_AUTHORITY_REPORT_MUTATION_ORACLE: '+name+' was accepted.');}
+assert(humanStageSave.humanStageSave==='PASS'&&humanStageSave.actualStoreAndReload===true&&humanAuthorityRoundTrip.humanAuthorityRoundTrip==='PASS'&&humanAuthorityRoundTrip.atomicCoAcceptanceStable===true&&humanAuthorityRoundTrip.unrelatedMutationFailsClosed===true&&humanAuthorityRoundTrip.returnedAttachmentNotRawInput===true,'Integrated Stage 01 human-authority regression did not report every repaired-path proof.');
 console.log(JSON.stringify({stage01IntakeClosure:true,verificationObservations,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,legacyCaptureRejected:true,missingPassOneRejected:true,missingPassTwoRejected:true,incompleteChallengeCategoriesRejected:true,humanAuthorityRoundTripIntegrated:true,fileChallengeCases,deliverableCompletionCases}));

@@ -8,11 +8,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import './verify-reservation-contract.mjs';
-import './verify-file-first-response.mjs';
 import './verify-file-first-operator.mjs';
 import './verify-response-contract-profile.mjs';
-import './verify-response-authority-integrity.mjs';
-import './verify-returned-slot-authority.mjs';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);

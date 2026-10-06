@@ -184,7 +184,7 @@ export function observationsFromReports(suite,reports,{scope}={}){
   const observations=definition.checks.map(check=>{
     const report=selectedReport(reports,check.marker),observed=valueAt(report,check.path);
     ownedReports.add(report);
-    const passed=check.condition?check.condition(observed,report):isDeepStrictEqual(observed,check.expected);
+    const passed=check.condition?check.condition(observed,report,reports):isDeepStrictEqual(observed,check.expected);
     return {checkId:browser?`browser.${scope}.${check.id}`:check.id,...(browser?{browserScope:scope}:{}),requirementRefs:check.requirementRefs||[],assertionReference:check.assertionReference,boundary:check.boundary||definition.boundary,expected:check.expected??check.expectedDescription,observed:observed===undefined?null:observed,passed,evidenceBasis:check.basis||'EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS',...(check.violation?{violation:check.violation,accepted:!passed}:{}),...(check.coverageIds?{coverageIds:check.coverageIds(report)}:{}),...(check.excludedIds?{excludedIds:check.excludedIds(report)}:{})};
   });
   const emittedIds=new Set(observations.map(row=>row.checkId));
