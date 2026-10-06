@@ -1258,3 +1258,330 @@ for(const answerType of ['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_C
  }}));
 }
 for(const name of ['Ordinary selection opens each of all 30 stages in the active version without changing project data','Replacement execution preserves accepted result and pending dependent work','Cancellation and unanswered confirmation survive reload without accepting or invalidating','Confirmed replacement commits once and invalidates pending dependent work','Undo and Redo restore project state through the same checkpoint mechanism','New continuation keeps the previous forward version in application History','Actual exported backup bytes restore active data and retained alternatives','Saved-version direct link resolves the named complete version','Application History restores a removed project as its complete saved version','File correction confirmation, cancellation, reload, saved candidate acceptance and reversal preserve exact bytes and matching dependent progress','Actual IndexedDB corruption is quarantined on reload; History restores the compatible valid project and original file bytes while retaining the damaged evidence','Recovery controls export protected evidence and remove only the damaged copy while preserving the restored project and History'])browserCase('verify-browser-recovery.mjs',name);
+
+// Exact syntax/transport, retry/numeric and scoped human Job assertion populations.
+// Exact catalog helpers consume actual owning reports;
+// they do not execute or stand in for production ingestion.
+const syntaxTransportClauses=Object.freeze([
+ {sourceLine:1422,id:'ingestion.syntax.malformed-json',cases:[['malformed JSON','MALFORMED_JSON']]},
+ {sourceLine:1423,id:'ingestion.syntax.truncated-json',cases:[['truncated JSON','TRUNCATED_RESPONSE']]},
+ {sourceLine:1424,id:'ingestion.syntax.markdown-wrapper',cases:[['markdown wrapped','NON_JSON_WRAPPER']]},
+ {sourceLine:1425,id:'ingestion.syntax.oversized-json',cases:[['oversized response','OVERSIZED_RESPONSE']]},
+ {sourceLine:1426,id:'ingestion.syntax.duplicate-members',cases:[['duplicate JSON member','DUPLICATE_JSON_MEMBER'],['nested duplicate JSON member','DUPLICATE_JSON_MEMBER'],['array nested duplicate JSON member','DUPLICATE_JSON_MEMBER'],['escaped equivalent duplicate JSON member','DUPLICATE_JSON_MEMBER'],['nested escaped equivalent duplicate JSON member','DUPLICATE_JSON_MEMBER']]},
+ {sourceLine:1428,id:'ingestion.syntax.root-object',cases:[['wrong root type','INVALID_ROOT'],['null root type','INVALID_ROOT'],['string root type','INVALID_ROOT'],['number root type','INVALID_ROOT'],['true root type','INVALID_ROOT'],['false root type','INVALID_ROOT']]},
+ {sourceLine:1431,id:'ingestion.transport.stage',cases:[['wrong stage','WRONG_STAGE']]},
+ {sourceLine:1432,id:'ingestion.transport.operation',cases:[['wrong operation','WRONG_OPERATION']]},
+ {sourceLine:1433,id:'ingestion.transport.prompt-identity',cases:[['stale prompt id','STALE_PROMPT_IDENTITY'],['stale prompt hash','STALE_PROMPT_HASH'],['stale contract hash','STALE_CONTRACT_HASH'],['stale context signature','STALE_CONTEXT_SIGNATURE']]},
+ {sourceLine:1435,id:'ingestion.transport.context-signature',cases:[['stale context signature','STALE_CONTEXT_SIGNATURE']]}
+]);
+function completeStage1SyntaxReport(report){
+ if(report?.stage1SyntaxTransportBoundary!=='PASS'||report.synthetic!==true||report.actualBrowser!==false||report.realExternalAgent!==false||report.syntheticPrerequisiteFlags!==false||!Array.isArray(report.stagesExercised)||report.stagesExercised.length!==1||report.stagesExercised[0]!==1||!Array.isArray(report.observations)||!Array.isArray(report.controls)||report.controls.length!==3)return false;
+ return ['ascii-escaped-data','unicode-quotation-data','exact-size-boundary'].every(name=>{
+  const matches=report.controls.filter(row=>row?.name===name),row=matches[0];
+  return matches.length===1&&row.stage===1&&row.validationValid===true&&row.proposalCreated===true&&row.proposalNotCanonicalCommit===true&&row.protectedJobAndCanonicalStateUnchanged===true&&row.retainedAuditPrefixesPreserved===true&&row.rawExactAfterReload===true&&row.pendingProposalSavedAndReloaded===true&&row.acceptedChangesBefore===0&&row.acceptedChangesAfter===0&&(name!=='exact-size-boundary'||row.rawByteSize===1048576);
+ });
+}
+function completeStage1SyntaxClause(rows,report,cases){
+ if(!completeStage1SyntaxReport(report)||!Array.isArray(rows))return false;
+ return cases.every(([name,code])=>{
+  const matches=rows.filter(row=>row&&typeof row==='object'&&!Array.isArray(row)&&row.name===name);if(matches.length!==1)return false;const row=matches[0];
+  if(row.stage!==1||row.expectedCode!==code||!Array.isArray(row.observedCodes)||!row.observedCodes.every(value=>typeof value==='string')||!row.observedCodes.includes(code)||row.proposalCreated!==false||row.protectedJobAndCanonicalStateUnchanged!==true||row.retainedAuditPrefixesPreserved!==true||row.inputProjectPreserved!==true||row.rawExactAfterReload!==true||row.acceptedChangesBefore!==0||row.acceptedChangesAfter!==0)return false;
+  if(['MALFORMED_JSON','TRUNCATED_RESPONSE','NON_JSON_WRAPPER','DUPLICATE_JSON_MEMBER','INVALID_ROOT','UNSAFE_SMART_QUOTES','OVERSIZED_RESPONSE'].includes(code)&&row.observedCodes.length!==1)return false;
+  if(name==='oversized response')return row.responseBoundary==='STAGED_READ_GUARD'&&row.rawBlobRetained===true&&row.rejectionReceiptRetained===true&&row.stagedByteSize===1048577;
+  return row.responseBoundary==='PREPARE_CAPTURED'&&row.validationValid===false&&row.rejectionSavedAndReloaded===true&&row.reservationBindingPreserved===true&&row.reservationStatus==='REJECTED';
+ });
+}
+const stage1SyntaxTransportChecks=[
+ ...syntaxTransportClauses.map(({id,cases})=>({id,marker:'stage1SyntaxTransportBoundary',path:'observations',assertionReference:'verifySyntaxTransportStage1 literal invalid response-file inputs; real new-project/reserved-package staging, precise error/no proposal, protected Job/canonical/reservation binding equality, exact raw save/reload; three conforming pending-proposal controls',expectedDescription:'Every exact clause case rejects without canonical mutation at its actual file-first boundary and preserves exact original bytes; all three conforming controls remain valid pending proposals',condition:(rows,report)=>completeStage1SyntaxClause(rows,report,cases)})),
+ {id:'ingestion.syntax.unsafe-smart-quotes',marker:'stage1SyntaxTransportBoundary',path:'observations',assertionReference:'Actual Stage1 curly JSON delimiter rejection with exact raw reload and canonical preservation; ASCII escaped-data and Unicode quotation-data controls',expectedDescription:'Unsafe delimiters reject with sole UNSAFE_SMART_QUOTES; correct JSON string data remains valid; no rejection or pending proposal commits canonical data',condition:(rows,report)=>completeStage1SyntaxClause(rows,report,[['curly-delimiters','UNSAFE_SMART_QUOTES']])}
+];
+
+// Independently frozen report populations from the reviewed retry/number module.
+const responseRetryNumberContracts=[
+ {
+  "catalogId": "ingestion.semantic-response-retry-preservation",
+  "emittedId": "SEMANTIC-RESPONSE-RETRY-PRESERVATION",
+  "reportFlag": "semanticResponseRetryPreservation",
+  "exactExpected": {
+   "acceptedPendingRetryCases": 3,
+   "wrongRetryIdentityRejections": 5,
+   "missingRetryProvenanceRejections": 2,
+   "staleOriginalRejection": true,
+   "acceptedRetryIdempotent": true,
+   "rejectedResponsePreserved": true,
+   "differentValidPayloadPreserved": true,
+   "changedReturnedBytesRejected": true,
+   "preFixFalseRejectionDetected": true,
+   "legacyCycleRecovered": true,
+   "realChangedInputRevalidations": 2,
+   "staleRetryNotCommitReady": true
+  },
+  "requiredExactCases": [
+   {
+    "case": "exact-before-accept",
+    "duplicate": true,
+    "originalProposalReceiptReused": true,
+    "canonicalUnchangedBeforeAcceptance": true,
+    "originalRevalidationIdempotent": true,
+    "noRetryCycle": true,
+    "acceptedOnce": true,
+    "rawExactAfterReload": true
+   },
+   {
+    "case": "whitespace-before-accept",
+    "duplicate": true,
+    "originalProposalReceiptReused": true,
+    "canonicalUnchangedBeforeAcceptance": true,
+    "originalRevalidationIdempotent": true,
+    "noRetryCycle": true,
+    "acceptedOnce": true,
+    "rawExactAfterReload": true
+   },
+   {
+    "case": "wrong-retry-duplicateOfRawResponseId",
+    "rejected": true,
+    "code": "DUPLICATE_RESPONSE",
+    "boundary": "isolated altered operational relationship, production precommit"
+   },
+   {
+    "case": "wrong-retry-receiptId",
+    "rejected": true,
+    "code": "DUPLICATE_RESPONSE",
+    "boundary": "isolated altered operational relationship, production precommit"
+   },
+   {
+    "case": "wrong-retry-validationId",
+    "rejected": true,
+    "code": "DUPLICATE_RESPONSE",
+    "boundary": "isolated altered operational relationship, production precommit"
+   },
+   {
+    "case": "wrong-retry-proposalId",
+    "rejected": true,
+    "code": "DUPLICATE_RESPONSE",
+    "boundary": "isolated altered operational relationship, production precommit"
+   },
+   {
+    "case": "wrong-retry-status",
+    "rejected": true,
+    "code": "DUPLICATE_RESPONSE",
+    "boundary": "isolated altered operational relationship, production precommit"
+   },
+   {
+    "case": "missing-shared-receiptId",
+    "rejected": true,
+    "code": "DUPLICATE_RESPONSE",
+    "boundary": "isolated corrupted original and alias provenance, production precommit"
+   },
+   {
+    "case": "missing-shared-validationId",
+    "rejected": true,
+    "code": "DUPLICATE_RESPONSE",
+    "boundary": "isolated corrupted original and alias provenance, production precommit"
+   },
+   {
+    "case": "stale-original-with-retry",
+    "rejected": true,
+    "code": "STALE_PROPOSAL"
+   },
+   {
+    "case": "multiple-before-accept",
+    "duplicate": true,
+    "originalProposalReceiptReused": true,
+    "canonicalUnchangedBeforeAcceptance": true,
+    "originalRevalidationIdempotent": true,
+    "noRetryCycle": true,
+    "acceptedOnce": true,
+    "rawExactAfterReload": true
+   },
+   {
+    "case": "after-accept",
+    "duplicate": true,
+    "acceptedReceiptIdentity": true,
+    "canonicalFamiliesAndAllocationsUnchanged": true
+   },
+   {
+    "case": "rejected-original-retry",
+    "duplicate": true,
+    "rejectionRetained": true,
+    "noCanonicalAcceptance": true
+   },
+   {
+    "case": "different-valid-payload",
+    "duplicate": false,
+    "validProposal": true,
+    "distinctProposal": true
+   },
+   {
+    "case": "changed-returned-bytes",
+    "duplicate": false,
+    "code": "ATTACHMENT_SHA256_MISMATCH",
+    "proposalAbsent": true,
+    "noCanonicalAcceptance": true,
+    "sameByteReselectionUsesOriginal": true
+   },
+   {
+    "case": "pre-fix-pending-retry-accept",
+    "intendedFalseRejection": true,
+    "code": "STALE_PROPOSAL",
+    "issue": "DUPLICATE_RESPONSE"
+   },
+   {
+    "case": "legacy-retry-cycle-recovery",
+    "oldCycleReproduced": true,
+    "originalAcceptedOnce": true,
+    "exactRawIdentityPreserved": true,
+    "integrityValidAfterReload": true
+   },
+   {
+    "case": "stale-revalidate-without-retry",
+    "currentRejection": true,
+    "code": "STALE_SCOPE",
+    "noRetryCycle": true,
+    "rawExactAfterReload": true,
+    "noCanonicalAcceptance": true
+   },
+   {
+    "case": "stale-revalidate-with-retry",
+    "currentRejection": true,
+    "code": "STALE_SCOPE",
+    "noRetryCycle": true,
+    "rawExactAfterReload": true,
+    "noCanonicalAcceptance": true
+   },
+   {
+    "case": "stale-new-transfer-historical-receipt",
+    "duplicate": true,
+    "historicalValidReceiptPreserved": true,
+    "proposalStale": true,
+    "commitRejected": true,
+    "noCanonicalAcceptance": true
+   }
+  ],
+  "requirementRefs": [
+   1465,
+   1526
+  ],
+  "meaning": "No duplicate canonical effect; current original proposal remains acceptable after legitimate repeated transfers; genuine stale state fails revalidation and prior historical receipt remains explicitly non-commit-ready.",
+  "fullCoverageClaim": false
+ },
+ {
+  "catalogId": "ingestion.nonfinite-response-numbers",
+  "emittedId": "NONFINITE-RESPONSE-NUMBERS",
+  "reportFlag": "nonfiniteResponseNumbers",
+  "exactExpected": {
+   "rawOverflowNumbersRejected": 2,
+   "finiteNumericControlsAccepted": 3,
+   "exactRawDurability": true
+  },
+  "requiredExactCases": [
+   {
+    "case": "1e999",
+    "rejected": true,
+    "code": "NONCANONICAL_JSON_VALUE",
+    "proposalAbsent": true,
+    "rawExactAfterReload": true,
+    "noCanonicalAdmission": true
+   },
+   {
+    "case": "-1e999",
+    "rejected": true,
+    "code": "NONCANONICAL_JSON_VALUE",
+    "proposalAbsent": true,
+    "rawExactAfterReload": true,
+    "noCanonicalAdmission": true
+   },
+   {
+    "case": "0",
+    "accepted": true,
+    "numericValuePreserved": true,
+    "rawExactAfterReload": true
+   },
+   {
+    "case": "9007199254740991",
+    "accepted": true,
+    "numericValuePreserved": true,
+    "rawExactAfterReload": true
+   },
+   {
+    "case": "-9007199254740991",
+    "accepted": true,
+    "numericValuePreserved": true,
+    "rawExactAfterReload": true
+   }
+  ],
+  "requirementRefs": [
+   1453
+  ],
+  "meaning": "Both signs of literal overflow JSON number rejected at actual raw-file boundary; same numeric JSON location accepts0 and signed safe-integer boundary controls with actual operator confirmation and reload.",
+  "fullCoverageClaim": false
+ }
+];
+const proofExactRows=(rows,expected)=>Array.isArray(rows)&&rows.length===expected.length&&expected.every(value=>rows.filter(row=>isDeepStrictEqual(row,value)).length===1);
+function completeResponseRetryNumber(rows,report,contract){
+ if(report?.[contract.reportFlag]!==true||report.synthetic!==true||report.actualBrowser!==false||report.realAgent!==false||!Array.isArray(report.verificationObservations)||report.verificationObservations.length!==1)return false;
+ const evidence=report.verificationObservations[0];
+ return evidence?.checkId===contract.emittedId&&evidence.passed===true&&typeof evidence.boundary==='string'&&evidence.boundary.length>0&&isDeepStrictEqual(evidence.expected,contract.exactExpected)&&isDeepStrictEqual(evidence.observed,contract.exactExpected)&&isDeepStrictEqual(evidence.requirementRefs,contract.requirementRefs.map(line=>'specification/closed-loop-reliability-controlling-implementation-specification.txt:'+line))&&proofExactRows(rows,contract.requiredExactCases);
+}
+const humanJobProofFields=Object.freeze(['JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS']);
+const exactHumanFields=(values,expected=humanJobProofFields)=>Array.isArray(values)&&values.length===expected.length&&expected.every(field=>values.filter(value=>value===field).length===1);
+function completeHumanJobAuthority(rows,report){
+ const expected=humanJobProofFields.flatMap(field=>[{field,surface:'stageData',code:'FIELD_OWNERSHIP_VIOLATION',humanStatePreserved:true},{field,surface:'job',code:'UNKNOWN_PROPERTY',humanStatePreserved:true}]);
+ return report?.humanJobAuthority===true&&report.checkId==='human-job-input.authority'&&report.passed===true&&report.synthetic===true&&report.actualBrowser===false&&report.stageReadCapturePrepare===true&&report.sourceStoreUnchanged===true&&report.conformingControls===2&&exactHumanFields(report.fields)&&typeof report.boundary==='string'&&report.boundary.length>0&&proofExactRows(rows,expected);
+}
+function completeHumanJobControls(rows){
+ if(!Array.isArray(rows))return false;const matches=rows.filter(row=>row?.checkId==='human-job-controls.save-reload');if(matches.length!==1)return false;const row=matches[0],first=row.firstVersion,second=row.secondVersion;
+ const validVersion=value=>value&&['inputVersionId','version','eventId'].every(key=>typeof value[key]==='string'&&value[key].length>0)&&typeof value.sha256==='string'&&/^[a-f0-9]{64}$/.test(value.sha256)&&value.operator==='HUMAN_OPERATOR';
+ return row.passed===true&&row.normalUiOnly===true&&row.nativeIndexedDbReload===true&&row.appendOnlyInputHistory===true&&row.noOpDoesNotVersion===true&&row.syntheticHuman===true&&row.physicalDevice===false&&typeof row.jobId==='string'&&row.jobId.length>0&&exactHumanFields(row.fields)&&validVersion(first)&&validVersion(second)&&first.version!==second.version&&first.inputVersionId!==second.inputVersionId&&first.eventId!==second.eventId&&exactHumanFields(first.changedFields)&&exactHumanFields(second.changedFields,['JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','DESIRED_SOURCE_COUNT']);
+}
+const retryNumberCatalogChecks=responseRetryNumberContracts.map(contract=>({id:contract.catalogId,marker:contract.reportFlag,path:'observations',assertionReference:'test-semantic-response-retries.mjs exact literal cases and verificationObservation facts',expectedDescription:contract.meaning+' This named check does not declare the whole referenced specification clause covered.',condition:(rows,report)=>completeResponseRetryNumber(rows,report,contract)}));
+const humanJobAuthorityCatalogCheck={id:'ingestion.human-job-fields-authority',marker:'humanJobAuthority',path:'negativeCases',assertionReference:'test-human-job-authority.mjs actual saveJob baseline and typed agent-write/root-envelope counterexamples for all eleven source-listed fields',expectedDescription:'All22 exact forbidden writes reject, human state stays unchanged, and both conforming blocker controls validate. Scoped authority evidence; nullable/required-stage/type completeness is not claimed.',condition:completeHumanJobAuthority};
+const humanJobControlsCatalogCheck={id:'browser.human-job-fields-save-reload',marker:'browserRecovery',path:'cases',basis:'ACTUAL_BROWSER_CONTROL_ASSERTIONS',assertionReference:'test-human-job-controls.mjs actual UI values, independent raw-input digest, input history and native IndexedDB reload assertions',expectedDescription:'All eleven literal human Job controls preserve exact values and append-only provenance through save/edit/reload; four edited controls and null number value preserve exact raw input distinctions. Synthetic human; no physical-device or whole source-row conformance claim.',condition:completeHumanJobControls};
+
+function completeResponseRetryBrowser(rows){
+ if(!Array.isArray(rows))return false;const matches=rows.filter(row=>row?.responseRetryBrowser==='PASS');if(matches.length!==1)return false;const row=matches[0];
+ return row.synthetic===true&&row.actualBrowser===true&&row.realExternalAgent===false&&row.physicalDevice===false&&typeof row.originalProposalId==='string'&&row.originalProposalId.length>0&&typeof row.receiptId==='string'&&row.receiptId.length>0&&row.rawTransfersRetained===3&&row.questionsCreated===1&&row.acceptedDataChanges===0&&row.stageComplete===false&&row.acceptedAfterEquivalentRetry===true&&row.acceptedRetryNotMislabeledRejected===true&&row.reloadPreserved===true;
+}
+const responseRetryBrowserCatalogCheck={id:'browser.semantic-response-retry-preservation',marker:'browserRecovery',path:'cases',basis:'ACTUAL_BROWSER_CONTROL_ASSERTIONS',assertionReference:'test-response-retry-browser.mjs exported Stage1 ZIP and selected compact/expanded response files; original question proposal/receipt identity, acceptance, unchanged canonical revision, operator continuation and reload',expectedDescription:'Three exact response transfers retain one clarified question and original proposal/receipt without data acceptance or false stage completion; accepted replay is accurately communicated. Synthetic external response; no real agent or physical device claim.',condition:completeResponseRetryBrowser};
+
+const retainedHistoryDigest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+function completeRetainedBackupHistory(value){
+ return Boolean(value&&retainedHistoryDigest(value.backupSha256)&&Number.isSafeInteger(value.backupByteSize)&&value.backupByteSize>0&&Number.isSafeInteger(value.beforeEntryCount)&&value.beforeEntryCount>1&&Number.isSafeInteger(value.exportedEntryCount)&&value.exportedEntryCount>=value.beforeEntryCount&&Number.isSafeInteger(value.sessionCount)&&value.sessionCount>0&&Number.isSafeInteger(value.retainedFileCount)&&value.retainedFileCount>=0&&Number.isSafeInteger(value.verifiedByteMembers)&&value.verifiedByteMembers===value.exportedEntryCount+value.retainedFileCount&&value.retainedPrefix===true&&value.retainedSessions===true&&value.retainedHistoryBytes===true&&value.manualHistoryMutations===false);
+}
+function completePreDeliveryHistory(value){return completeRetainedBackupHistory(value?.history)&&value.sha256===value.history.backupSha256&&value.byteSize===value.history.backupByteSize;}
+function completeRestoredHistory(value,report){
+ const exported=report?.finalBackupHistory,history=value?.history,activation=value?.activation;
+ return Boolean(completeRetainedBackupHistory(exported)&&value?.selectedSha256===exported.backupSha256&&history?.retainedPrefix===true&&history.retainedSessions===true&&history.retainedHistoryBytes===true&&history.manualHistoryMutations===false&&Number.isSafeInteger(history.restoredEntryCount)&&history.restoredEntryCount>=exported.exportedEntryCount&&history.verifiedRestoredMembers===exported.verifiedByteMembers&&activation?.activatedNewRevision===true&&Number.isSafeInteger(activation.beforeRevision)&&activation.beforeRevision>=0&&Number.isSafeInteger(activation.restoredRevision)&&activation.restoredRevision>activation.beforeRevision&&(activation.beforeHistoryActivationId===null||typeof activation.beforeHistoryActivationId==='string')&&typeof activation.restoredHistoryActivationId==='string'&&activation.restoredHistoryActivationId.length>0&&activation.restoredHistoryActivationId!==activation.beforeHistoryActivationId);
+}
+const retainedHistoryCatalogChecks=[
+ {id:'browser.journey.pre-delivery-retained-history',marker:'completeOperatorJourney',path:'preDeliveryBackup',basis:'ACTUAL_BROWSER_CONTROL_ASSERTIONS',assertionReference:'observeRetainedHistory plus verifyRetainedBackup at actual pre-delivery export, independent Node hash of every exported snapshot and recovery file',expectedDescription:'Actual exported bytes retain prior History prefix, sessions and file bytes; all declared snapshots/files counted and byte-verified; no manual History rewrite. Scoped check, not full source-clause coverage.',condition:completePreDeliveryHistory},
+ {id:'browser.journey.final-backup-retained-history',marker:'completeOperatorJourney',path:'finalBackupHistory',basis:'ACTUAL_BROWSER_CONTROL_ASSERTIONS',assertionReference:'verifyFinalBackupRoundTrip invokes exact retained prefix/session/source-archive comparison and independent byte verification',expectedDescription:'Final backup preserves all retained entries and file-byte identities with exact verified member accounting; no manual History rewrite. Scoped check, not full source-clause coverage.',condition:completeRetainedBackupHistory},
+ {id:'browser.journey.restored-retained-history',marker:'completeOperatorJourney',path:'backupRestore',basis:'ACTUAL_BROWSER_CONTROL_ASSERTIONS',assertionReference:'verifyRetainedRestore exact prefix/session/file-byte comparison and FINAL_BACKUP_ACTIVATION_ORACLE followed by emitted revision/activation facts',expectedDescription:'Restoration preserves every exported History byte identity and activates a new actual saved revision; counts and selected backup digest bind to the verified final backup. Scoped check, not full source-clause coverage.',condition:completeRestoredHistory}
+];
+
+const returnedAttachmentChecks=Object.freeze([
+ ['ingestion.returned-attachment.missing-declared-required','missing','MISSING_REQUIRED_ATTACHMENT'],
+ ['ingestion.returned-attachment.filename','filename','ATTACHMENT_FILENAME_MISMATCH'],
+ ['ingestion.returned-attachment.media-type','media-type','ATTACHMENT_MEDIA_TYPE_MISMATCH'],
+ ['ingestion.returned-attachment.byte-size','size','ATTACHMENT_BYTE_SIZE_MISMATCH'],
+ ['ingestion.returned-attachment.actual-byte-hash','actual-byte-hash','ATTACHMENT_SHA256_MISMATCH']
+]);
+function completeReturnedAttachment(rows,report,caseId,code){
+ if(report?.stage1ReturnedAttachmentBoundary!=='PASS'||report.status!=='PASS'||report.synthetic!==true||report.actualBrowser!==false||report.realExternalActor!==false||!Array.isArray(rows))return false;
+ const pick=id=>{const found=rows.filter(row=>row?.caseId===id);return found.length===1?found[0]:null;},control=pick('conforming'),row=pick(caseId);
+ const common=value=>value&&value.rawResponseStagedReadRehashed===true&&value.slotAuthority==='ACTUAL_EXPORTED_STAGE1_SUPPORTING_EVIDENCE_SLOT'&&value.slotRequiredByIssuedContract===false&&value.requiredDeclaredByResponse===true&&value.acceptedBefore===0&&value.rawBefore===0&&value.rawExactAfterReload===true;
+ return Boolean(common(control)&&control.actualValid===true&&control.expectedCode===null&&Array.isArray(control.codes)&&control.codes.length===0&&control.returnedActualBlobReadRehashed===true&&control.proposalMappingCorrect===true&&control.proposalNotCanonicalCommit===true&&control.operatorAcceptanceSavedAndReloaded===true&&control.actualReturnedBytesCommitted===true&&control.acceptedAfter===1&&common(row)&&row.expectedCode===code&&row.actualValid===false&&Array.isArray(row.codes)&&row.codes.every(value=>typeof value==='string')&&row.codes.includes(code)&&row.returnedActualBlobReadRehashed===(caseId!=='missing')&&row.noProposal===true&&row.protectedJobAndCanonicalStateUnchanged===true&&row.rejectionSavedAndReloaded===true&&row.acceptedAfter===0);
+}
+const returnedAttachmentCatalogChecks=returnedAttachmentChecks.map(([id,caseId,code])=>({id,marker:'stage1ReturnedAttachmentBoundary',path:'rows',assertionReference:'test-returned-attachment-boundaries.mjs exact exported optional Stage1 supporting slot, response declaration, actual stored returned Blob metadata/hash contrast and real acceptance/reload control',expectedDescription:caseId+' contrast rejects with '+code+' and preserves the asserted Job/registered-family/stage-business projection plus raw reload; conforming bytes commit through actual acceptance. The projection excludes reservations/additional nonregistry metadata. Missing case covers a response-declared required optional Stage1 slot, not mandatory Stage21 omission. No fullCoverage claim.',condition:(rows,report)=>completeReturnedAttachment(rows,report,caseId,code)}));
+
+verificationCatalog['verify-ingestion.mjs'].checks.push(...stage1SyntaxTransportChecks,...retryNumberCatalogChecks,humanJobAuthorityCatalogCheck,...returnedAttachmentCatalogChecks);
+browserVerificationCatalog['verify-browser-recovery.mjs'].checks.push(humanJobControlsCatalogCheck,responseRetryBrowserCatalogCheck);
+browserVerificationCatalog['verify-complete-operator-journey.mjs'].checks.push(...retainedHistoryCatalogChecks);
+verificationCatalog['verify-ingestion.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-ingestion.mjs'].sourceInputs||[]),...["test-ingestion-syntax-transport.mjs","test-returned-attachment-boundaries.mjs","test-ingestion-context-reference.mjs","test-semantic-response-retries.mjs","test-human-job-authority.mjs","test-human-job-controls.mjs","test-handoff-authorization.mjs","test-project-store-runtime.mjs","test-zip.mjs","test-fixtures.mjs","verifier-runtime.mjs","workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js","prompt-engine.js","response-ingestion.js","project-store.js","app-core.js"]])];
+browserVerificationCatalog['verify-browser-recovery.mjs'].sourceInputs=[...new Set([...(browserVerificationCatalog['verify-browser-recovery.mjs'].sourceInputs||[]),...["test-human-job-controls.mjs","test-response-retry-browser.mjs","test-browser-handoff-authorization.mjs","test-zip.mjs","operator-browser-driver.mjs","app-core.js","project-store.js","workflow-engine.js","workflow-schema.js","workbook.js","hash.js"]])];
+verificationCatalog['verify-test-runtime-v3.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-test-runtime-v3.mjs'].sourceInputs||[]),...["workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js","prompt-engine.js","response-ingestion.js","project-store.js","app-core.js"]])];
+verificationCatalog['verify-operational-persistence.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-operational-persistence.mjs'].sourceInputs||[]),...["test-project-store-runtime.mjs","verifier-runtime.mjs","workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js","prompt-engine.js","response-ingestion.js","project-store.js","app-core.js"]])];
+verificationCatalog['verify-stage01-agent-contract-alignment.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-stage01-agent-contract-alignment.mjs'].sourceInputs||[]),...["workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js","prompt-engine.js","response-ingestion.js","project-store.js","app-core.js"]])];
+verificationCatalog['verify-recoverable-history.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-recoverable-history.mjs'].sourceInputs||[]),...["workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js","prompt-engine.js","response-ingestion.js","project-store.js","app-core.js"]])];
+verificationCatalog['verify-v3-migration.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-v3-migration.mjs'].sourceInputs||[]),...["test-runtime.js","app-core.js"]])];
+browserVerificationCatalog['verify-complete-operator-journey.mjs'].sourceInputs=[...new Set([...(browserVerificationCatalog['verify-complete-operator-journey.mjs'].sourceInputs||[]),...["test-retained-history-browser.mjs","test-zip.mjs"]])];

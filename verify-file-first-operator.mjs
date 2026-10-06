@@ -27,6 +27,22 @@ const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
+// Distinguish a current pending proposal from a retained historical receipt.
+{
+const start=app.indexOf('function presentPreparedResponse('),end=app.indexOf('async function prepareStageResponseFallback(',start);assert.ok(start>=0&&end>start);const cases=[];
+for(const [name,pending,prepared,continuation,message,focus] of [
+ ['current pending',{proposalId:'P'},{validation:{valid:true},proposal:{proposalId:'P',status:'PENDING_OPERATOR_REVIEW'}},null,'proposal ready','#proposal-heading'],
+ ['recorded question',null,{duplicate:true,validation:{valid:true},proposal:{proposalId:'P',status:'QUESTIONS_CREATED'}},null,'response already recorded; follow the current action','#next-required-action'],
+ ['stale recorded proposal',null,{duplicate:true,validation:{valid:true},proposal:{proposalId:'P',status:'STALE'}},null,'response already recorded; follow the current action','#next-required-action'],
+ ['different pending',{proposalId:'OTHER'},{validation:{valid:true},proposal:{proposalId:'P'}},null,'response already recorded; follow the current action','#next-required-action'],
+ ['failed with correction',null,{validation:{valid:false}}, {created:true},'response rejected; corrected instruction saved','#validation-report'],
+ ['failed without correction',null,{validation:{valid:false}},null,'validation failed','#validation-report']
+]){const events=[],runtime=createVerifierRuntime({pendingProposal:()=>pending,announce:m=>events.push(['announce',m]),render:()=>events.push(['render']),queueMicrotask:fn=>fn(),$:selector=>({focus:()=>events.push(['focus',selector])})});vm.runInContext(app.slice(start,end)+'globalThis.present=presentPreparedResponse;',runtime);runtime.present(prepared,continuation);assert.deepEqual(events,[['announce',message],['render'],['focus',focus]],'RESPONSE_PREPARATION_FEEDBACK_ORACLE: '+name);cases.push({name,message,focus,result:'PASS'});}
+console.log(JSON.stringify({responsePreparationFeedback:'PASS',synthetic:true,actualBrowser:false,cases}));
+
+}
+
+
 // The selected operation, its instruction and its sole handoff must agree.
 {
  const runtime=createVerifierRuntime({Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:()=>null,querySelectorAll:()=>[]}});
@@ -223,6 +239,12 @@ verify();
   assert.match(runtime.mode(stage),/notice warn.*this stage has not passed/,'A saved response appeared to pass an incomplete stage '+stage);
   runtime.current.stages[stage].gate={complete:true};
   assert.match(runtime.mode(stage),/notice success.*this stage is complete/,'The satisfied completion gate was not reported at stage '+stage);
+  runtime.current.projectData.rawResponses[0].status='DUPLICATE_RESPONSE';
+  for(const complete of [false,true]){runtime.current.stages[stage].gate.complete=complete;const markup=runtime.mode(stage);assert.match(markup,/This response is already recorded/,'VALID_DUPLICATE_FEEDBACK_ORACLE: '+stage);assert.match(markup,/No additional changes were accepted from this copy/);assert.doesNotMatch(markup,/same rejected response file|new response.json|stage is complete/);}
+  runtime.current.projectData.responseValidations[0].valid=false;assert.match(runtime.mode(stage),/same rejected response file/);assert.match(runtime.mode(stage),/current stage file package/);
+  runtime.current.projectData.responseValidations=[];assert.match(runtime.mode(stage),/already recorded/);assert.doesNotMatch(runtime.mode(stage),/same rejected/);
+  runtime.pendingProposal=()=>({proposalId:'PENDING'});assert.match(runtime.mode(stage),/Review the proposal/);assert.doesNotMatch(runtime.mode(stage),/already recorded|same rejected/);runtime.pendingProposal=()=>null;
+
  }
 }
 // An action on an inspected stage belongs to that selected stage in the active version.
@@ -371,7 +393,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.projectStore={readProject:async()=>runtime.clone(stored),replaceProject:async(next,{expectedProjectRevision,operational=false})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+(operational?0:1);return runtime.clone(stored);}};
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(x=>Number(x.stage)===n&&!x.invalidatedBy&&Number(x.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
-  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','saveRequiredContinuation','restoreStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','presentPreparedResponse','pendingProposal','saveRequiredContinuation','restoreStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
   bindAuthorizedCoordinatorFixture(runtime);
   assert.equal(vm.runInContext('currentPromptRecord(6)?.instructionId',runtime),saved.instructionId,'Raw capture incorrectly stales the still-open instruction and blocks manifest re-export.');
   const priorRequirements=runtime.current.job.CURRENT_REQUIREMENTS_VERSION;runtime.current.job.CURRENT_REQUIREMENTS_VERSION='CHANGED-AUTHORITY';

@@ -1,3 +1,5 @@
+import {verifyResponseRetryBrowser} from './test-response-retry-browser.mjs';
+import {verifyHumanJobControls} from './test-human-job-controls.mjs';
 import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -84,6 +86,8 @@ async function verifyImportedView(pendingBackup){
  record('Import and reload preserve the saved unaccepted replacement confirmation and accepted canonical state',{destinationJobId:pendingBackup.project.job.JOB_ID,backupSha256:pendingBackup.file.sha256});
 }
 try{
+ record('Equivalent response transfers preserve the original proposal and current operator action',await verifyResponseRetryBrowser(browser));
+ await verifyHumanJobControls(browser,record);
  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Disposable recoverable acceptance journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');
  assert.equal(await browser.evaluate(`document.querySelector('#next-required-action')!==null`),true,'Saving project information did not open the next operation');
  assert.match(await browser.evaluate(`document.querySelector('#stage-files').closest('.panel').querySelector('.section-intro').textContent`),/No separate intent file is required/,'EMPTY_INTAKE_GUIDANCE_ORACLE');

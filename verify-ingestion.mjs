@@ -1,3 +1,7 @@
+import {verifyReturnedAttachmentBoundaries} from './test-returned-attachment-boundaries.mjs';
+import {verifyHumanJobAuthority} from './test-human-job-authority.mjs';
+import {verifySyntaxTransportStage1} from './test-ingestion-syntax-transport.mjs';
+import {verifySemanticResponseRetryPreservation,verifyNonfiniteResponseNumbers} from './test-semantic-response-retries.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
@@ -432,6 +436,7 @@ negative('unresolved evidence attachment',(e)=>{e.evidence[0].attachmentRef={rec
  negativeCount+=3;
 }
 
+console.log(JSON.stringify(await verifyHumanJobAuthority()));
 await verifyHumanDecisionCandidateTargets();
 await verifyExternalResponseIdentityShape();
 console.log(JSON.stringify(await verifyNestedResponseTypeSafety()));
@@ -443,7 +448,11 @@ console.log(JSON.stringify(await verifyStage01LegacyNewResponses()));
 console.log(JSON.stringify(await verifyObligationDispositionTypes()));
 console.log(JSON.stringify(await verifyRepresentationObservationTypes()));
 await verifyCanonicalResponseRecovery();
+await verifySemanticResponseRetryPreservation();
+await verifyNonfiniteResponseNumbers();
 await verifyResponseCanonicalValueBoundaries();
+console.log(JSON.stringify(await verifySyntaxTransportStage1()));
+console.log(JSON.stringify(await verifyReturnedAttachmentBoundaries()));
 
 negative('invalid record identity',(e)=>{e.stageData={};const r=sourceProposal('source-both');r.targetId='SOURCE-ALSO';e.records={sources:[r]};},'INVALID_RECORD_IDENTITY');
 // The published research PASS_NUMBER field is STRING. Keep relationship

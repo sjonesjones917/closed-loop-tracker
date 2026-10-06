@@ -1388,8 +1388,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261006.json",
-          "sha256": "68d3d88c0157b8f5d3ffbd7c6f15cf7272aae66031126203a7af12c6f8b1f26c"
+          "path": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261006-followup-93555b513db0.json",
+          "sha256": "11dc4443c5bf2b0110c75bb5379b610fb56632a4acff38b681fd49b4369f5b87"
         }
       }
     },
@@ -1445,8 +1445,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261006.json",
-          "sha256": "f4bc4e07b1a20b9314f31609901cfc032412100bd556f969a0844681b507714e"
+          "path": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261006-followup-a2d8ce7af746.json",
+          "sha256": "7109084e9c5049264e7cf28e65381977aa167600f5e29e73c1281b1f07a31ae5"
         }
       }
     },
@@ -1502,8 +1502,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261006.json",
-          "sha256": "37a234ff30cc8c7e161c45048fb494c8ed0f96124ffa029470a415aac213fd4c"
+          "path": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261006-followup-8a3bb0b1f15f.json",
+          "sha256": "aaf392f7dafba16c21afef22e883e5c7066b20568e81df9dd273c57d96f88f60"
         }
       }
     },
@@ -1559,8 +1559,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261006.json",
-          "sha256": "2b33cb6c566a0f6ea86f7accfb1587d9bed918f41c39988662f3483a1ba36a73"
+          "path": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261006-followup-2a148b6694cb.json",
+          "sha256": "846e4c18ab0d772e7b18efce41a1b183c304183ca1529c36aca792f9c76ff47e"
         }
       }
     },
@@ -1616,8 +1616,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261006.json",
-          "sha256": "2c89eaaaa076928ac900f8d2354411ad5ce10f053a2dd9048c92f365738ae277"
+          "path": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261006-followup-633736e83a7c.json",
+          "sha256": "4c32ba64f946d17636cc91ba1e8efd70b888c5723679706fa82624cfc9a86bcc"
         }
       }
     },
@@ -1673,8 +1673,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261006.json",
-          "sha256": "87b2a44ef43e03f4dbbc28b08aa2aa8f3af2a253f7427054abd71af29fc5e76c"
+          "path": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261006-followup-3392af969866.json",
+          "sha256": "4ec225ed48e8a0555b6044c1a498e6de64547066c5b690862f426511daafc73f"
         }
       }
     },
@@ -1730,8 +1730,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261006.json",
-          "sha256": "ad1d6d39562e66c4dd7b4e28274370f4edd500620349aa951c265a006bd28920"
+          "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261006-followup-8aca327dc682.json",
+          "sha256": "3c7406bf88d69404301109ab97aae4579898f15d46064b613a511178bac41518"
         }
       }
     },
@@ -1787,8 +1787,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261006.json",
-          "sha256": "5d526d798b473817c08ed07e797244bb234f4a6dcca289a2cdc5573c1bc71d0f"
+          "path": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261006-followup-d9cbd2ad7b74.json",
+          "sha256": "bd30ca8b3c6ffb3149be4131f52875efdf24888a35d6360187549f6d98ebaf83"
         }
       }
     },
@@ -1844,8 +1844,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261006.json",
-          "sha256": "e50c3671d3bf1b85639e9ae7ffd0736457f54ac5a93df14a6fa3c17346aabf5b"
+          "path": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261006-followup-66f32b298ecd.json",
+          "sha256": "022f0fbe0b036fa66d7413c8254aaa0b48075de116172e91cca4940795ab2ff7"
         }
       }
     },
@@ -1901,8 +1901,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261006.json",
-          "sha256": "0e658250172561cb24041405c95b4d4f47e003f26f9323068f2e62441acd854d"
+          "path": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261006-followup-da385b153abe.json",
+          "sha256": "fc4ebd76da14413ef272fae83b534271726e1024fffc21d41c631639b01ce231"
         }
       }
     },
@@ -1958,8 +1958,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261006.json",
-          "sha256": "7f330375a8aa34c5b6b321fb86c49c56523537e662bee3574ce9935a8166b575"
+          "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261006-followup-425ac7de0203.json",
+          "sha256": "4ea63baea9e2ab44ef3a186086ccde4d257a6ef7165b438a8e9f96b547bb8f80"
         }
       }
     },
@@ -2015,8 +2015,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261006.json",
-          "sha256": "49191a07a8079351515cfed4fab884be6376f18359f9c9f3556eb58cae8ef8ff"
+          "path": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261006-followup-7b1eb2d3d3a8.json",
+          "sha256": "7da07f861632cd7cdf69d7544467bf6575f8e66352bf4b6d686a9321eeea86c4"
         }
       }
     },
@@ -2072,8 +2072,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261006.json",
-          "sha256": "03980df41c662a5d242b27e3e8f86078db1bba48cd9bcd638abe8cc1a010eee5"
+          "path": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261006-followup-b3aac6d3b3e5.json",
+          "sha256": "117aaa442b3663c77f7ad9839edd019b987de665825be3f8cb3eee9b59c26ea4"
         }
       }
     },
@@ -2129,8 +2129,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261006.json",
-          "sha256": "817584bc66d445538651d001fe7e7d4927dd4f7865f2dcd2601ba37fd05f9cd4"
+          "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261006-followup-fc08a3accbcd.json",
+          "sha256": "eedf9f7c0ebf6556008895c6f4c4717cd064500070f2f98129295dfbb6322350"
         }
       }
     },
@@ -2186,8 +2186,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261006.json",
-          "sha256": "e9c67f51707deb6792bb23f3d5bf172ed112a0f14507bc4ae19bbbec3dd3cba9"
+          "path": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261006-followup-f8ed37f738e9.json",
+          "sha256": "a1ab418f37a5221aef96019faa4e7eff11120db50c25082d640f827ce6088a07"
         }
       }
     },
@@ -2243,8 +2243,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261006.json",
-          "sha256": "4dd39c3b479ffceb1801822db273e2b682f44fc689103ec2ceb43863180ef845"
+          "path": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261006-followup-1e122c6d5f65.json",
+          "sha256": "a2fb9946532c6ee46ecbc59e3ff1f1dc46678bcca7934a2b4d06afb8d95d1eba"
         }
       }
     },
@@ -2300,8 +2300,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261006.json",
-          "sha256": "76610af3f23729a6ea35e6dfde7414a9429ee12a441d8c965f07892b036085dd"
+          "path": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261006-followup-a1029b0f744c.json",
+          "sha256": "8a4fa760695a3e7881d1de455ae08f75834c2d872627b8ea19ba34a93006fc81"
         }
       }
     },
@@ -2357,8 +2357,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261006.json",
-          "sha256": "1d4e28123c99e3c326ecec9cd9b7cfa16453f407a759a36ec570ffa95963a558"
+          "path": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261006-followup-8576e9d3d1d2.json",
+          "sha256": "18276efa11663e7a6dfac353d84938f426869fa297e734391d50c38ca8f7cc6c"
         }
       }
     },
@@ -2414,8 +2414,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261006.json",
-          "sha256": "d77e8a51df43b4b5689ba04f1eb3a0ca96305e666d4acf02ef622c2e3c6e4a38"
+          "path": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261006-followup-1f2549af4f14.json",
+          "sha256": "1f42b36d5adb582e92335916b4cd33f12570f13be5e3073cc4163180b18c0fda"
         }
       }
     },
@@ -2471,8 +2471,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261006.json",
-          "sha256": "042c9464555bc9a913045833bad9f973394abefd0fb560f0fd56626b98a978ca"
+          "path": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261006-followup-c55d0cfb2cf2.json",
+          "sha256": "5a07a789942d49b675f95e34d99f8d6e1cbcd8bdf375a675283263f792b0600b"
         }
       }
     },
@@ -2528,8 +2528,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261006.json",
-          "sha256": "a41888b002e61ff5c21447c6e0911e7203925d0554615c4d88b231cbfb545317"
+          "path": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261006-followup-299fbcad5b2f.json",
+          "sha256": "953e22297c9becd56a604fd47dcce4dcad6e4e5004d68a531874552d66169a80"
         }
       }
     },
@@ -2585,8 +2585,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261006.json",
-          "sha256": "5844be77cc48c05643bc79bae8ad971f92686af784598eb59ea48adfad1b5462"
+          "path": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261006-followup-279bfa793744.json",
+          "sha256": "a3419e4ac4f2216febe0df8f10360c3b91dfad5fbdf0e2e6b3bb20b651f1bdf2"
         }
       }
     },
@@ -2642,8 +2642,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261006.json",
-          "sha256": "54326007139a1ba3bdeab61852bf7dc4249c362cd748327eecb7f72e0bbd0b05"
+          "path": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261006-followup-95daaf7230c2.json",
+          "sha256": "e3bc9802ef9364e5cc1e658b8ff217a477345c5c6222ae3f03fa6e561faff431"
         }
       }
     },
@@ -2699,8 +2699,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261006.json",
-          "sha256": "520d432e37c4ad505ba6ea7719d2c35af931f899a5d514b41a8b754a77cca155"
+          "path": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261006-followup-0316ee90229c.json",
+          "sha256": "7ae45480c366602c73cbd86803744bf1b1bc12fa5cb553b1b81c28e31ecf9789"
         }
       }
     },
@@ -2756,8 +2756,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261006.json",
-          "sha256": "4224a3c11f3c34526e005161f9e79a36c255d0fea6008981492c5b5105348443"
+          "path": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261006-followup-8ac80449d859.json",
+          "sha256": "0fe751a4c4d46f5d153a2148faa6f1f4d500c0a213974661d3acd18377bbbc83"
         }
       }
     },
@@ -2813,8 +2813,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261006.json",
-          "sha256": "73efc27afac2d2413ed982e3740c986ba9fbbd695e1f8e5594852c09a170adcb"
+          "path": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261006-followup-6b4550ef4468.json",
+          "sha256": "8c8e8b5ebf6291784ea61069995319e94fa32a7ea2531a6d4b64f1234b224b7d"
         }
       }
     },
@@ -2870,8 +2870,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261006.json",
-          "sha256": "d669cc9ce4b206e45b2f19da858ae18991e767b03174ae0da9f363004f88030b"
+          "path": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261006-followup-4a9f1091db05.json",
+          "sha256": "fc9633a7674a21c2a1743cb0467871c2deea7cf92a2b07d7705b525a1643098e"
         }
       }
     },
@@ -2934,8 +2934,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261006.json",
-          "sha256": "d6edf90d6c49030500df31ac195ad4b9dcdb2de043ab4ce1ed5e5ffe078a23af"
+          "path": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261006-followup-096c3cac8f31.json",
+          "sha256": "038a77e5af1aa955c742628cddde6cfb0216c31422f6d4285120429fac1f8ba9"
         }
       }
     },
@@ -3004,8 +3004,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261006.json",
-          "sha256": "fa694f2c062fe7fd47eb270489e453818ab2fef34b8ef42848bb4b5fac111646"
+          "path": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261006-followup-d83f9a70b392.json",
+          "sha256": "28ece71c56d5840785772a8eaeb623e297066804d1a3a40b6b9b7123369060da"
         }
       }
     },
@@ -3064,8 +3064,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261006.json",
-          "sha256": "d87d5e6b71581837c68830bccb007e31fc120b6836573af7e3a23d00696bca4f"
+          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261006-followup-82c7e1e7fbd6.json",
+          "sha256": "c4a7862818d7e7020beca3ab5223c0fd2a5180885d0085b8ee49f46dd211e8cc"
         }
       }
     },
@@ -3124,8 +3124,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261006.json",
-          "sha256": "4d87f8e42f9b680689e8715ca65d0cd8ab23ee0f12cb607e831878635f91fe6c"
+          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261006-followup-1c927671ba38.json",
+          "sha256": "08e8a16df4be514e11b6be1a339092c9f50814e36e87157835d0f23380694c57"
         }
       }
     },
@@ -3180,8 +3180,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261006.json",
-          "sha256": "1cfd2a935bf7ca6c320f293d3fd476e6d5c4bf36282b8eaa0dbe7af43cec4e4b"
+          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261006-followup-fe65bb9312b0.json",
+          "sha256": "08c0ce36ae81eb9bbd1d53a9c7658f692d184ae38a3782d8143462ebcdefdb70"
         }
       }
     },
@@ -3236,8 +3236,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261006.json",
-          "sha256": "b16c44ac79d2e0f9697468ff1fd1c89829ac0631c8e90d29c7b3fae3997eb3dc"
+          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261006-followup-194628ae5eff.json",
+          "sha256": "05c03436775ea29ccaf5c5fe2491c28c808ad8abb243188ab0c39726354f63e0"
         }
       }
     },
@@ -3292,8 +3292,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261006.json",
-          "sha256": "7c6fc3ff58e545adf8fa6a319d079f3a27c27bc2acd67339bbdcee242f7c6e66"
+          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261006-followup-9b9731e56600.json",
+          "sha256": "74a6ac11bcb55c4f95d731cf3781a896cefaa59893ab20ea7093887af598c8fb"
         }
       }
     },
@@ -3361,8 +3361,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261006.json",
-          "sha256": "73794f9f0dfd9a9baab884a6dc1d369cd17135ea01d3779513c756828d928ffb"
+          "path": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261006-followup-89b948ec8bd9.json",
+          "sha256": "0267781a1d534a977f7be2e4684f207e54a8af2919b90e03ae34b0d37dad7fc8"
         }
       }
     },
@@ -3430,8 +3430,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261006.json",
-          "sha256": "1712653af60e3a57a8b5e5b0e93cd33ed49d7a0bd1e22d44654d21e5b0910cb2"
+          "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261006-followup-633b432f0758.json",
+          "sha256": "e895d08e3572bac90cf77e67af12654e21df5ae00f4cdc42aae9dc889a2136d4"
         }
       }
     },
@@ -3499,8 +3499,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261006.json",
-          "sha256": "452e381f5749fb09fce9db1ff707bf9fde9f05eee08a6538fd8c910158c8ba2a"
+          "path": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261006-followup-56758cfcf5f4.json",
+          "sha256": "153d7d858b5bc39a59b0f7fd356452e943bc29e4290ddc872a8103a55a679a4e"
         }
       }
     },
@@ -3568,8 +3568,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261006.json",
-          "sha256": "620622acc039efcf38c15af5f95ecfeace8a6e9d097880e26f2f3e852f9a9422"
+          "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261006-followup-7d4547851935.json",
+          "sha256": "f09906e6410680da85c30f31f602b98597fac0d5e2a73c734823c61f366b94cf"
         }
       }
     },
@@ -3637,8 +3637,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261006.json",
-          "sha256": "23848571579194a5541b10bc587257ef62671581a7d6f80d65f0f2c874915fd1"
+          "path": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261006-followup-834a60e05404.json",
+          "sha256": "1cf653c41038f46997baf38d172ef171baa23a1f7ce8795147b3a3a9e92f0034"
         }
       }
     },
@@ -3693,8 +3693,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261006.json",
-          "sha256": "aaea900f0b24a8375b34c7bcea1f73384204f8bf1ede65ecf06ec38d70201646"
+          "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261006-followup-dc129a23ee5e.json",
+          "sha256": "fa928a480664c5702902d1e7c553e46f331f5f3e2c0fe422d2405d4629e510d0"
         }
       }
     },
@@ -3744,8 +3744,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261006.json",
-          "sha256": "540637ff14cf765c1cc71869882363b98f22b4cc74b3607d110755b4e517ee1c"
+          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261006-followup-b4e9913dba6c.json",
+          "sha256": "3a74bc57807e8efb982ccec9b29ef4bcc0f848c5a0da3f4d7feb229d73638918"
         }
       }
     },
@@ -3800,8 +3800,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7add6f24a57198b72b500e5a2acf1ca6-20261006.json",
-          "sha256": "497a7aa6e35b329ce304a068e5b10bae1079281bd5e5b44e1eef63aba6e98596"
+          "path": "verification/requirement-coverage-NREQ-7add6f24a57198b72b500e5a2acf1ca6-20261006-followup-fa3b972257c8.json",
+          "sha256": "1bbfd8028cb7c74cee3f3fa508f5ef88e3050be280efa09a75ca041220cee496"
         }
       }
     },
@@ -3851,8 +3851,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261006.json",
-          "sha256": "c7d63180d2970a2b079dad0aba8705a53a18cc042b08985673f9a7f6ce110dfd"
+          "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261006-followup-d8c55412f4e4.json",
+          "sha256": "31a356d45ddc9d4c8fd1e27b8ad86b74dc3413a06d6a5fc1dbea7242420e1331"
         }
       }
     },
@@ -3902,8 +3902,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261006.json",
-          "sha256": "9f45f8a6984d6744031b529926cadc09c4eff0eee74af88d0c8e6837d6891a26"
+          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261006-followup-1d5b52212a4c.json",
+          "sha256": "28360f7e6581df145fe288073e639dc6680468396d6c4d4de248fedb1902a976"
         }
       }
     },
@@ -3953,8 +3953,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261006.json",
-          "sha256": "0218bb33b661298e05a836a693b3813e518aa63398c796d8e3513d52999feaa1"
+          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261006-followup-3fbf647e6faa.json",
+          "sha256": "6ba6d67fcfe191a2126d571cfa6a3e895eb2a0a1738641ad310e0937c7053446"
         }
       }
     },
@@ -4004,8 +4004,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261006.json",
-          "sha256": "a6d0eb911a90e29d9cea72124c92d59ab6c4ce34e9fe146c9641a2be5b462b1c"
+          "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261006-followup-7456da2e55f4.json",
+          "sha256": "abd105a76cf8deff5197b2671c521dfa96d9baf99c3429ef41564b3f87f84073"
         }
       }
     },
@@ -4060,8 +4060,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261006.json",
-          "sha256": "9efb46aace15acbe487920d9356f32da518ba656fa5719f5bc0d8eb6661cdcea"
+          "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261006-followup-6b8b5a6e3779.json",
+          "sha256": "677337e68bfa37055c873e53db292416a819e95d22c09011bb9b27de13806ca0"
         }
       }
     },
@@ -4117,8 +4117,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006.json",
-          "sha256": "728d071e901508d49319ca1a64d57804e96f4022c33ede1299ce593cd092e434"
+          "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006-followup-6592f15eaff3.json",
+          "sha256": "a346484560cbadc42396371ba35c1e8b63e669b52caf693193afc70a2f52f568"
         }
       }
     },
@@ -4138,7 +4138,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4183,8 +4183,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261006.json",
-          "sha256": "793773b6a6e38ba0aa1ebcb23bef3cae43e509ee36ce39ba7a4dae0b72a972da"
+          "path": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261006-followup-1508a91f013e.json",
+          "sha256": "4829e028b86eda01fdd2d4e4ee73365946019417e87a03a75e8951a69c102021"
         }
       }
     },
@@ -4204,7 +4204,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4249,8 +4249,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261006.json",
-          "sha256": "42484aaf5314f6dc19b97a883e6f0ff96a63941ec4d7b4a9c52e465d46fd2921"
+          "path": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261006-followup-4ead98a35025.json",
+          "sha256": "d8414f64bd663227248b8385dbf75e0d3b29c1457247b7fd11e32fdb315634dc"
         }
       }
     },
@@ -4270,7 +4270,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4315,8 +4315,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261006.json",
-          "sha256": "d6df294244e53e8572fd193a39bc4f85277c8193d1a955979a71ac6670005559"
+          "path": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261006-followup-7ad8743b4de4.json",
+          "sha256": "63e636d09d78468fe7b3ddca7a1f2c9d205183c0d3d4734a7c586edf77043a7d"
         }
       }
     },
@@ -4336,7 +4336,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4381,8 +4381,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261006.json",
-          "sha256": "fe7612ea3156dc45955e44c40b0d3caf7b50976641f9819e5b328bd73d65c911"
+          "path": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261006-followup-414222a6ddd9.json",
+          "sha256": "aa70fa814f1e3708778663a843a92a917986f483ac02d9740e879f8e45234866"
         }
       }
     },
@@ -4402,7 +4402,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4447,8 +4447,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261006.json",
-          "sha256": "ae81bd60275dddbd2d08865266049bfd457324fb09cab4a8bd0731e62fc65cb1"
+          "path": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261006-followup-a53aa9cb7ed1.json",
+          "sha256": "734a49b649fe57b482ffc0258f398166f08bcde5e8d7e173e220431baf6fb6ff"
         }
       }
     },
@@ -4468,7 +4468,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4513,8 +4513,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261006.json",
-          "sha256": "c524ba61c99453d3c4f4f2aa0b1e209b71d325b952b6f59a238f7c5e34226720"
+          "path": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261006-followup-42141fe5dadf.json",
+          "sha256": "b0d495b26b09acb6adce838f8e1ad1a710f9d6943c7cc02e34b01acd30d0ab5c"
         }
       }
     },
@@ -4534,7 +4534,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4579,8 +4579,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261006.json",
-          "sha256": "2c54283bb1d9204ecf74b2e86ecdfc8e30708bcbd7e23202d4d378282a65187d"
+          "path": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261006-followup-a653a395245f.json",
+          "sha256": "e2b781bc20729de1d4c4921bb1c2b6cbf3b0f7d4a0122983a1b5b6b4b547c617"
         }
       }
     },
@@ -4600,7 +4600,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4645,8 +4645,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261006.json",
-          "sha256": "c8d9bd478f06d17145f2ae0ed8295c5b9f1769dee524e381432eb443796ff991"
+          "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261006-followup-4c8b0e401503.json",
+          "sha256": "414874782468c0bc197fc0e2295f7eb0e9b029225761c084e36a80278f78a6ed"
         }
       }
     },
@@ -4666,7 +4666,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4711,8 +4711,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261006.json",
-          "sha256": "8f42df54597e627bb8bad32790a7752a6b1c17333211e997fe7f6c81b1dd8ca5"
+          "path": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261006-followup-afe10eef614c.json",
+          "sha256": "71d620c244b51aef5c22333bb10f3ef1c443854b97615883bdf7ebc119849c02"
         }
       }
     },
@@ -4732,7 +4732,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4777,8 +4777,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261006.json",
-          "sha256": "989cf36d42b91ffe1f5289aa670f820da343041282e4249d5663f527dbddc94c"
+          "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261006-followup-3185714733b8.json",
+          "sha256": "98a8f9021ba07ba9c12ad57a7f28bc24aa32a1a1be781d90fe8195f1195750c8"
         }
       }
     },
@@ -4798,7 +4798,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4843,8 +4843,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261006.json",
-          "sha256": "3f8ffb53490dab32929f8ff646421f0b2b6828e2611a9c58518ae2227103dede"
+          "path": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261006-followup-1823852bde21.json",
+          "sha256": "2906d4f14e113f91ac3f95b4633f0b39f4ad6a71a428ada2cae4172070bc15f7"
         }
       }
     },
@@ -4864,7 +4864,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           },
           {
             "path": "workflow-schema.js",
@@ -4909,8 +4909,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261006.json",
-          "sha256": "ed7fd7c7cfe6f4f288b24b6f3f8ba8b2c7c8884998fe16906223bc70927ec8de"
+          "path": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261006-followup-5ea29c7d8a79.json",
+          "sha256": "938dc9af43678d68b662255f010bc94e17bc7a3d3a136473e76e086c45ce797c"
         }
       }
     },
@@ -4930,7 +4930,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -4970,8 +4970,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261006.json",
-          "sha256": "92f2a65ad4f54e86c59d70549a75cec33f600141a2f3b693d5dfb7d7e4696552"
+          "path": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261006-followup-abeb91174073.json",
+          "sha256": "2e2c04180f654c6e1a30623893c0008eedf1d01e2ff4a2dab819b4c00e11006c"
         }
       }
     },
@@ -5001,7 +5001,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5035,8 +5035,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261006.json",
-          "sha256": "c86a57bcde3f839903f1d56cb2ffbd47edb07f33ad85144a0f939d9159c0d492"
+          "path": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261006-followup-3cf4851e7526.json",
+          "sha256": "b05eb5a360d9c5e7335cd1474315ef9ad1627c662a759f21030bb47c8f0e2c17"
         }
       }
     },
@@ -5066,7 +5066,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5100,8 +5100,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261006.json",
-          "sha256": "7777bb55c99b0a008e2a284832ec33bbac7cbb21bf03a5ce7f3bd7d6ca00dc9f"
+          "path": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261006-followup-4c4c4e071b27.json",
+          "sha256": "60567326d9db910fd48931acc665e0507b3ca1714811f4015bdea67e33014116"
         }
       }
     },
@@ -5131,7 +5131,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5165,8 +5165,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261006.json",
-          "sha256": "9358dde3be5df3e60334138d2fb84fcb58825c7cf5bd9ba07d04c15e291e4af1"
+          "path": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261006-followup-dafd72e85d1b.json",
+          "sha256": "c49392e88246ca4f5b347944d092791cde95eaf0787550f77310a0512a74a41b"
         }
       }
     },
@@ -5196,7 +5196,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5230,8 +5230,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261006.json",
-          "sha256": "c0656678419e525ca1f7a60b40e5c0e49e1ad1a98469b034a87b4980f1c2991e"
+          "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261006-followup-a5bc86b189b1.json",
+          "sha256": "e37b7d4674ef0690d0c0273219c4e87201c2718f21c78e96889ade65ca701613"
         }
       }
     },
@@ -5261,7 +5261,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5295,8 +5295,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261006.json",
-          "sha256": "8d927291bfc7e4872d948a8e6ab6c34be12c4ddfbf203ba3b010270c524a6f7c"
+          "path": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261006-followup-6c3e7ac43e40.json",
+          "sha256": "4be5abb46eacd5a229e6d3a6661420025ad884854be36631d048d91be5239e61"
         }
       }
     },
@@ -5326,7 +5326,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5360,8 +5360,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261006.json",
-          "sha256": "d7aa9969b4e0ac005783115d9c2be3b83b3dedf4579f48bf0be167eff8fde56b"
+          "path": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261006-followup-8df63a835291.json",
+          "sha256": "61f5ac1c9b4ef5ea6f0a5a429d1b3d52df91c782b04c16ed48f29a73c56a4a18"
         }
       }
     },
@@ -5391,7 +5391,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5425,8 +5425,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261006.json",
-          "sha256": "cf5eb1cada143aef612f567ba48296e91727edfd492c3cfc369c14d67f45088a"
+          "path": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261006-followup-be0343ea9086.json",
+          "sha256": "9e762d96437fb794399c8e1e798f72dbbd0db3191951f4840dc545a4c569a561"
         }
       }
     },
@@ -5456,7 +5456,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5490,8 +5490,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261006.json",
-          "sha256": "95a313ab89a74646202e3fa8c823064f5d4822e0d94ad0460d83246d928d8286"
+          "path": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261006-followup-c9a6e339b268.json",
+          "sha256": "6d6b42fa11195fbff88d1895811d9be486d0dac75be45c9c37fa1026b013777f"
         }
       }
     },
@@ -5521,7 +5521,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5555,8 +5555,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261006.json",
-          "sha256": "2100bec125bf44fa060b40a66521cf626056a782b5aa0d5fe2f49dee32532187"
+          "path": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261006-followup-a8aa1557a81a.json",
+          "sha256": "fbf94f7638398c52c4021dae2765b40313442d960d667f9a98cd403f9aa5d907"
         }
       }
     },
@@ -5586,7 +5586,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5620,8 +5620,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261006.json",
-          "sha256": "049ae7cb5243905c3a2d23dabf59aba02c9ed900facc1660e732df0cba49f732"
+          "path": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261006-followup-f00421255dd8.json",
+          "sha256": "8c6cdb57b06a11df6340c2a8aa46bd2bebe96a3ec2facb625e2f2b7605732719"
         }
       }
     },
@@ -5651,7 +5651,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5685,8 +5685,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261006.json",
-          "sha256": "d91d21cc8e69b9d4fb42743ee4308cdbcdd492fddb52d1680282a2a840d08469"
+          "path": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261006-followup-3cbc71d8ea79.json",
+          "sha256": "fd62ce171a252610eac03ca9905d10faea1d15dae733e3e40e3c6551dd0b91d8"
         }
       }
     },
@@ -5716,7 +5716,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5750,8 +5750,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261006.json",
-          "sha256": "e2284725dd276815d793e8872d4808395de576fe3df9f26fe1c9a4d3369eaf23"
+          "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261006-followup-3880e0826bb1.json",
+          "sha256": "c888f02007763653655d4acea109b538312f016019b92b36d7798c70a04daa28"
         }
       }
     },
@@ -5781,7 +5781,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5815,8 +5815,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261006.json",
-          "sha256": "0a6bcb6a7583d6f5a9ff11e6efde54aab427d763890daca7839b077133337091"
+          "path": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261006-followup-5cb9606a575b.json",
+          "sha256": "ca4e938bee9f9c53d5fba73227f6759fd8d8d03868fa65f30a3f153ef1019d98"
         }
       }
     },
@@ -5846,7 +5846,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5880,8 +5880,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261006.json",
-          "sha256": "1a92cacaf7419227c2d5ac2f2f7ead1753c65d08d707751f4d02ffaf6dcd9d6c"
+          "path": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261006-followup-f2f004d5f2fb.json",
+          "sha256": "f41b8dcbbebd3fb19875381487d257585c3c1fcccdfdac0052ea04af8ebf4081"
         }
       }
     },
@@ -5911,7 +5911,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -5945,8 +5945,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261006.json",
-          "sha256": "1155b2a9458914cf0a2e47cb75f771d5acca72d179561476ee5fef5510edba82"
+          "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261006-followup-b0424e1ce262.json",
+          "sha256": "622b7b406593dff2be2acbe0dc176351d11033e8018ee88a00b70cb13ffdac75"
         }
       }
     },
@@ -5976,7 +5976,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -6010,8 +6010,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261006.json",
-          "sha256": "b50b4c3330d8ee6c5e3c8783a46d45d38609463dd137ab633ea29a4ab766f156"
+          "path": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261006-followup-efe81049d715.json",
+          "sha256": "615d8f46c3ea93085b1857d413907b839c45b3b5425b3c8ff93197c73824112e"
         }
       }
     },
@@ -6036,7 +6036,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -6070,8 +6070,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261006.json",
-          "sha256": "d03f7ec3a8135928049fd2154193e96e430d09c569e6c60d9d48bd5479020149"
+          "path": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261006-followup-a624628afedd.json",
+          "sha256": "793479713ccd0d062eab6f923f543594bc8c9ea8c82bd18093bb8292de676d6d"
         }
       }
     },
@@ -6096,7 +6096,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -6136,8 +6136,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261006.json",
-          "sha256": "2cdc1b62fae236441f9c41e814ae97c29cd89cff2c5c5321d3cb369d4ba8d2b9"
+          "path": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261006-followup-34dc81e9f2f5.json",
+          "sha256": "f8d0bf5a080239f5095608b71458d022bc513ea8f268b3e793a17bfcf51e88ad"
         }
       }
     },
@@ -6162,7 +6162,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
           }
         ],
         "obligations": [
@@ -6202,8 +6202,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261006.json",
-          "sha256": "4e2a3fd7301303306a836ca6154907b9bd1eaa64d2d0489d560da1cc89a2e1ea"
+          "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261006-followup-4fca88bcf9d9.json",
+          "sha256": "effec5864edf3dc6629a78d8a4e3039711eb76c108dbb4073d3da4d37ae11626"
         }
       }
     },
@@ -6258,8 +6258,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2b14774ffd65e947a3d3deae3ad09c92-20261006.json",
-          "sha256": "9b664af4ee12107545e79d3f68bbd96511f2a6ff6c866f8424905d3930098f6b"
+          "path": "verification/requirement-coverage-NREQ-2b14774ffd65e947a3d3deae3ad09c92-20261006-followup-a48ce7d34993.json",
+          "sha256": "1aca08927af4cd9f0b4f1aaad6191250b7ad80472cab8725eeb648365801e1f0"
         }
       }
     },
@@ -6314,8 +6314,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c6ad5908eba2e59771e74f2ceebc5077-20261006.json",
-          "sha256": "39b50318aabc088cb29163467a9d25be20beae054a79db15bcfc9d40eb656188"
+          "path": "verification/requirement-coverage-NREQ-c6ad5908eba2e59771e74f2ceebc5077-20261006-followup-829ae90306a6.json",
+          "sha256": "d85ea02037dc532d78cf678762a753529c9ddf551c8cde88223568c1c2252509"
         }
       }
     },
@@ -6370,8 +6370,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa-20261006.json",
-          "sha256": "5291bd81f419cd9ef552a97ac25a9bfc6f57ed3f122b1093b9e9ac4699666ffc"
+          "path": "verification/requirement-coverage-NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa-20261006-followup-a61b44a24ea7.json",
+          "sha256": "5554d87675032d42249650e952cc111435cccca12828ab3c27d1c2b7049b921d"
         }
       }
     },
@@ -6426,8 +6426,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261006.json",
-          "sha256": "3c235d78078b84af522fb08af701feec056aa59a0e6615966040f9e7fc58dbf5"
+          "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261006-followup-0a60999428af.json",
+          "sha256": "ca0951972097f18abc093f304894e12edfdca5977564e9a770806e1facc00a08"
         }
       }
     },
@@ -6482,8 +6482,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-26b8cfa830777dd2bfa4c8aac620403c-20261006.json",
-          "sha256": "ee1060c750e26ff8f4d63342030ae4e38ea62aaf037dd1e85d9da1dc18c66331"
+          "path": "verification/requirement-coverage-NREQ-26b8cfa830777dd2bfa4c8aac620403c-20261006-followup-661637942dfd.json",
+          "sha256": "d5dd305b19b0e7bdb87d6c9cf5c6f057e8cd19840e7026b9990cb66758502869"
         }
       }
     },
@@ -6538,8 +6538,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-04e156310ae4ecdd6915448e3f30e047-20261006.json",
-          "sha256": "c12dad8c4c3b557f121b3651712bb44e8ef9fe544bf731d188571e6068ada845"
+          "path": "verification/requirement-coverage-NREQ-04e156310ae4ecdd6915448e3f30e047-20261006-followup-02e3456d2abe.json",
+          "sha256": "370b79a66411847f94981fe5d41e45a4f8d12a860afd549a8c45e05ac7b79205"
         }
       }
     },
@@ -6594,8 +6594,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f0d3896f2d4c46e85ce52981147764ef-20261006.json",
-          "sha256": "50fc70a0c1437e1008551e4df00fe37dd438cc83da61b88f0edd251f0c3d257c"
+          "path": "verification/requirement-coverage-NREQ-f0d3896f2d4c46e85ce52981147764ef-20261006-followup-f405fe983ae6.json",
+          "sha256": "5cb85c9505169e98492ced848b8722913c0e7befe11e79d32d9bf5884f855396"
         }
       }
     },
@@ -6650,8 +6650,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a8822e7da5b9525a6c3e097b71e59183-20261006.json",
-          "sha256": "675852eca23d1206f4c2d7cf2008236184b745b64e917b22f109365cd2244863"
+          "path": "verification/requirement-coverage-NREQ-a8822e7da5b9525a6c3e097b71e59183-20261006-followup-9a1bb804222a.json",
+          "sha256": "a3e616ec5839015d94caf1c305905ff611888d75c30f37d5acb5903fa2d4f9a0"
         }
       }
     },
@@ -6706,8 +6706,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-8c2bdedb1f707a1a97695f7b0745365c-20261006.json",
-          "sha256": "c5daf19a56b3973b88c797f785fdcc10edc58869df7e48f52a6f9968906b3d8c"
+          "path": "verification/requirement-coverage-NREQ-8c2bdedb1f707a1a97695f7b0745365c-20261006-followup-ac065a6753d0.json",
+          "sha256": "434a26f9c4d2b13414a08c809ec50febaf1b8c48de1c4ded911874b533667adb"
         }
       }
     },
@@ -6762,8 +6762,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a9ef7326ce64b6049b07bdddd8d9d024-20261006.json",
-          "sha256": "1c1584f1282fdd556134139e763b0cd8e7bc5b5e01c4f8367e0f1d1abb4fb0d5"
+          "path": "verification/requirement-coverage-NREQ-a9ef7326ce64b6049b07bdddd8d9d024-20261006-followup-ea04e9f10d4f.json",
+          "sha256": "6ff9048aafda5e0030fff095eff70ca25cf6011ff061a1b91acce278f8a99db5"
         }
       }
     },
@@ -6818,8 +6818,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f50ee5baca83ff85d962de77d313fda6-20261006.json",
-          "sha256": "16ae0fe99b98267fb2aa6cd1365f9fe501b57088c789d832c17ab288513bf7b2"
+          "path": "verification/requirement-coverage-NREQ-f50ee5baca83ff85d962de77d313fda6-20261006-followup-4542293de4b8.json",
+          "sha256": "61f6bbd22444d192cb6606fe4a4716455ab69769b71d9cd15a3155b546b1d94e"
         }
       }
     },
@@ -6874,8 +6874,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7d91a0dd124e5a78fc01449f23a3e8fa-20261006.json",
-          "sha256": "0db8e09e8a59e8152d5bc1df0e6ca70b00553835c3dfc15f05aeed9cf2a3479f"
+          "path": "verification/requirement-coverage-NREQ-7d91a0dd124e5a78fc01449f23a3e8fa-20261006-followup-d6cb774f471f.json",
+          "sha256": "2da708e11ea21c7b45df85dac0e66cc2d966f1beb9f25d58a8a6ec036ae4c546"
         }
       }
     },
@@ -6930,8 +6930,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75-20261006.json",
-          "sha256": "dac1d1df8736f7d1882e69fdea79eef8032836d4842ee8cba6c532794b19a481"
+          "path": "verification/requirement-coverage-NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75-20261006-followup-37918b6d97b0.json",
+          "sha256": "6ff2f502b428e039c3457bf152c2a0ed1bb5998e203d821ee5933579c5ed126f"
         }
       }
     },
@@ -6986,8 +6986,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-925405b741265dbbc292d4f3a74c2bd6-20261006.json",
-          "sha256": "e86fc86d85e369564677f83bc275e32ff0bc00709c1f8b02922dd6f090521839"
+          "path": "verification/requirement-coverage-NREQ-925405b741265dbbc292d4f3a74c2bd6-20261006-followup-95dcb16a864a.json",
+          "sha256": "34f3a01c6da4f5bcb6b7710c30b35a9f7863e50e01ca85293743380352f90f82"
         }
       }
     },
@@ -7042,8 +7042,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4363c0420b1bd921591c1f2446cfb8eb-20261006.json",
-          "sha256": "1b43a8055c45ee6903d167527fec6f30e5931825483db5d0035dd73448988921"
+          "path": "verification/requirement-coverage-NREQ-4363c0420b1bd921591c1f2446cfb8eb-20261006-followup-4828fac31389.json",
+          "sha256": "0e23165d5c4bb15becc62ac4757cc6d686f7aef02988c4c935c34d6f832b2317"
         }
       }
     },
@@ -7098,8 +7098,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2174af2894ceaa1acb9a032113db659d-20261006.json",
-          "sha256": "e3826333e4cb9fba86dc0fa055984912d3b28e52bee203dda142ec5b6a4cc613"
+          "path": "verification/requirement-coverage-NREQ-2174af2894ceaa1acb9a032113db659d-20261006-followup-784562f8d1b0.json",
+          "sha256": "4b5161e88aa95bfb64d250f205e3d965b5436e1bdb98b9b5bfcf51ae870e1f9a"
         }
       }
     },
@@ -7154,8 +7154,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a12012292224d4b4a0a9b1088c8c49d0-20261006.json",
-          "sha256": "b86d22a9344fc49e640eaf037c45d6973c07e22a9c52dadcbc719ab092971bf2"
+          "path": "verification/requirement-coverage-NREQ-a12012292224d4b4a0a9b1088c8c49d0-20261006-followup-daf125b97128.json",
+          "sha256": "3af4594a879540b24bce01113fa6670b6b08dcb7947bd97ff4d34497420b4557"
         }
       }
     },
@@ -7210,8 +7210,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-255fe5112069486751f53087b1ab699e-20261006.json",
-          "sha256": "9250c27cc1385021844f9db1cab66d268ca319aaeb95245a2ad721575fa83f54"
+          "path": "verification/requirement-coverage-NREQ-255fe5112069486751f53087b1ab699e-20261006-followup-c907f3c0e413.json",
+          "sha256": "1c974b23614c849fab253711b225510fae375263b4923c5cff90b53dbd9244fc"
         }
       }
     },
@@ -7266,8 +7266,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-6fe30b5cb969bf2fb9daaabc3422ac38-20261006.json",
-          "sha256": "679dd7b43b711653a6d5b7ff1eaad5396b90601618cf539f19ca21b66d8913dd"
+          "path": "verification/requirement-coverage-NREQ-6fe30b5cb969bf2fb9daaabc3422ac38-20261006-followup-d6d7c6168285.json",
+          "sha256": "6f02b672dac21a1a084afb5432dabdcf41f2dd4f5b494d040b328df99ab22a20"
         }
       }
     },
@@ -7322,8 +7322,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-229f56cf458329f04d589d3aa92b95e5-20261006.json",
-          "sha256": "66d74922da1e0f54bbe8318a91cc377cf7a7ebee8db80606916c295ef5403e69"
+          "path": "verification/requirement-coverage-NREQ-229f56cf458329f04d589d3aa92b95e5-20261006-followup-ea8ed4f99a0e.json",
+          "sha256": "c62038f873f2497f7e6754fb9cf0895e54b00045271bd6f9b385efa344322b81"
         }
       }
     },
@@ -7378,8 +7378,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4d7b09d088c999d3c6e91a968cbe1a02-20261006.json",
-          "sha256": "813be13f0e6547d87ece48eb32e996dc0f57b06f6d5b3bef8cadb09b7e316f5e"
+          "path": "verification/requirement-coverage-NREQ-4d7b09d088c999d3c6e91a968cbe1a02-20261006-followup-12d3a59bbd31.json",
+          "sha256": "daaa06188cac3a37ebf919c40495adb9daf56a1c4820bf942ebef2a443c180f7"
         }
       }
     },
@@ -7434,8 +7434,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-55dce831e47c4a26e093cc6134572e8f-20261006.json",
-          "sha256": "c12ed0252a63a454be5d2d2b5c9841fc30c64ffe0cf89d4c48592284ac64966e"
+          "path": "verification/requirement-coverage-NREQ-55dce831e47c4a26e093cc6134572e8f-20261006-followup-8740bdb93fd2.json",
+          "sha256": "f611828e1b69847d0f782a23179b1057758afd9e6e7d9cd39095cea33d76a24b"
         }
       }
     },
@@ -7490,8 +7490,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7542acad543ceb37f7fb325baac0d9d0-20261006.json",
-          "sha256": "995fd68e1d3ebab87fb1afb0e6a65c195e38557ba5442ac7c3c34d7b603315b0"
+          "path": "verification/requirement-coverage-NREQ-7542acad543ceb37f7fb325baac0d9d0-20261006-followup-5dd630255ee2.json",
+          "sha256": "eb96635ea322b76958faf00b429e030d3c7de6641ee5c116da410f840510adaf"
         }
       }
     },
@@ -7546,8 +7546,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-292af594522de75d72b35851b9befed4-20261006.json",
-          "sha256": "501cd50fa17b06df315bead2048a7186515b35e5df4b30ad88daa166d9041030"
+          "path": "verification/requirement-coverage-NREQ-292af594522de75d72b35851b9befed4-20261006-followup-dc4d31c2a824.json",
+          "sha256": "713a09f82edcd3dff6bb5b1ce7b78aca30fdac2878a486446778266e69862848"
         }
       }
     },
@@ -7602,8 +7602,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f295ec535d0d117429de1cced6886a6e-20261006.json",
-          "sha256": "9d227381b55a81ac010a3d2ee6510ce48a3cae20cb5c954389f15dabcc885886"
+          "path": "verification/requirement-coverage-NREQ-f295ec535d0d117429de1cced6886a6e-20261006-followup-f39b9cdad261.json",
+          "sha256": "fe27232d6705b0d0a83ccda5ce03be2f4613217b8d9d3dd3af2755cfcc6060db"
         }
       }
     },
@@ -7658,8 +7658,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9b21240c5c27ee356dec92b459a0fcb9-20261006.json",
-          "sha256": "79f2de256fe708de2fa9e8fcafedf427f7f5441208cbbb6c7e45ed13507ec213"
+          "path": "verification/requirement-coverage-NREQ-9b21240c5c27ee356dec92b459a0fcb9-20261006-followup-289517a5d523.json",
+          "sha256": "169001cda64d8cd2fd1df292901c26333b8c9a11ec59e4cce144ab61274b9ca6"
         }
       }
     },
@@ -7714,8 +7714,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0774fcb2b6e2510d755133d371474ec8-20261006.json",
-          "sha256": "767ef38707e6c507e9775aa30cd8ff817f40fffffa10ff2d4462753d62b89ef9"
+          "path": "verification/requirement-coverage-NREQ-0774fcb2b6e2510d755133d371474ec8-20261006-followup-40fe6848e121.json",
+          "sha256": "563dcfa2149a4cc85ae54acc4ee4f66b1eaa20c247c995898c4c8b74591cb9c8"
         }
       }
     },
@@ -7765,8 +7765,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261006.json",
-          "sha256": "f9faff0501eddc92b1304344bdc64626320de1406dcc629e389abc05dd5ae498"
+          "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261006-followup-2ac55ffc6c85.json",
+          "sha256": "6ee97b2b4ac6e8434e5264eb4c907ef040ae3daa6fb62d05b3ae54bd7fc45366"
         }
       }
     },
@@ -7816,8 +7816,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0f5cdc9e49a6fb5b69455d4b2338448c-20261006.json",
-          "sha256": "9df997b4739851c8c0552aafaaa1806aae8eb9401107e5ba2f66736ef2f9647f"
+          "path": "verification/requirement-coverage-NREQ-0f5cdc9e49a6fb5b69455d4b2338448c-20261006-followup-5fb814d5ac99.json",
+          "sha256": "33c7b4af58f1f9bb2193040328e183cb135c7e86d52bdd0cac69487caf1d80ba"
         }
       }
     },
@@ -7872,8 +7872,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a5e73329c9ae93f23b01a42d43179133-20261006.json",
-          "sha256": "e6f7a8bd58175afee3d06a3d5402a73293ac3c7b88237575ae40346019ae2659"
+          "path": "verification/requirement-coverage-NREQ-a5e73329c9ae93f23b01a42d43179133-20261006-followup-64fb093b2613.json",
+          "sha256": "9b89dee5a824b243fe0f506ce788f787eb44afa13e4d40de25555514258995a8"
         }
       }
     },
@@ -7928,8 +7928,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-70114fe79e900fc756a0d6cc14ea8f90-20261006.json",
-          "sha256": "c7ef40484f6738c00dc799d75a4b7dc5c68985bbb662b6470af312d0bb145c19"
+          "path": "verification/requirement-coverage-NREQ-70114fe79e900fc756a0d6cc14ea8f90-20261006-followup-e56ea6563989.json",
+          "sha256": "59f526ab6c5a3471b209ae0af4b8764a09ba6c442dfea226eb2aa3e0cca337e9"
         }
       }
     },
@@ -7984,8 +7984,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-db8a127d9ff92a6510ae92e3eb1fbb86-20261006.json",
-          "sha256": "62c8179d3af0951e87bd49ba22d5fe2d40e336fc5f0e3b46f1654116e913291e"
+          "path": "verification/requirement-coverage-NREQ-db8a127d9ff92a6510ae92e3eb1fbb86-20261006-followup-89344759574a.json",
+          "sha256": "5593e48619bd17f6a0c9bd0ba1d0dcaf4acde1e266af38310231cdc931b3c0cc"
         }
       }
     },
@@ -8040,8 +8040,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f6858b1d41ca1327e88e31e7f0e8f94f-20261006.json",
-          "sha256": "61b7ad65437feb7d5f4fb33eb6b91c5e6f592990203941a6911306e515416f63"
+          "path": "verification/requirement-coverage-NREQ-f6858b1d41ca1327e88e31e7f0e8f94f-20261006-followup-0f028e257439.json",
+          "sha256": "94476d739e098889a69e3dd46a6b6f5694fa6992f7a278f6ba4e159dbc0ba809"
         }
       }
     },
@@ -8096,8 +8096,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b14772d932b286c302b05996186c8022-20261006.json",
-          "sha256": "db9d9ae2879ac0eeb1799c55451e2fe042d5f46332d218f6786c71eaa446a9a2"
+          "path": "verification/requirement-coverage-NREQ-b14772d932b286c302b05996186c8022-20261006-followup-d9f1232a56a8.json",
+          "sha256": "545f19035e3610cc3f318542b2413fe1417e45c5979811883624a80118fe4ed4"
         }
       }
     },
@@ -8152,8 +8152,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9e413bfc92a85655c990712d56002499-20261006.json",
-          "sha256": "4f2ceb1a381a31fc89dc51cf3e3ce4093fbcbc00c900a2d27a410867fb85358b"
+          "path": "verification/requirement-coverage-NREQ-9e413bfc92a85655c990712d56002499-20261006-followup-4b04dd9a6e9b.json",
+          "sha256": "4a692cd52d64e2078f94b5b5d0e8df40bd26921051720517822e0ff98eb0e8b0"
         }
       }
     },
@@ -8208,8 +8208,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-22cf265b2b952dcb7187618a915c98bd-20261006.json",
-          "sha256": "629897e17e84075b218d7906bc4dcab712e53b7541cdb729efa751086c08f762"
+          "path": "verification/requirement-coverage-NREQ-22cf265b2b952dcb7187618a915c98bd-20261006-followup-801fe8931ddc.json",
+          "sha256": "da43f6c405ea62c93b2aca1f5d3b036b836920386bcf72c596159f75585a9f8e"
         }
       }
     },
@@ -8264,8 +8264,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-928c9bbcf0101e2a0e4a0e69edc59164-20261006.json",
-          "sha256": "c856933bff95bdb214c98e654abaf8b2ef9e121bb3dbc10cbf8ac80911a6cd7f"
+          "path": "verification/requirement-coverage-NREQ-928c9bbcf0101e2a0e4a0e69edc59164-20261006-followup-b00537b5838d.json",
+          "sha256": "c5d322fd197fc5636f9ec3932ba650cdd0ee073245d3696a43b45a1267a10e4c"
         }
       }
     },
@@ -8320,8 +8320,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd-20261006.json",
-          "sha256": "4ad3058f0057741b2beab864cb3794f832411cbd4f41df518bc134510dcb0d5a"
+          "path": "verification/requirement-coverage-NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd-20261006-followup-1c4c4064d651.json",
+          "sha256": "703ae2eb9a7478a36531f0f244b75a7a2b2306c6efec4afa9893fc073659b386"
         }
       }
     },
@@ -8376,8 +8376,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e5db8a7c723f5b54ada73ce37c7725a2-20261006.json",
-          "sha256": "906f6ca3b54472495b0a842a20ab1338ff950b970b2bd37814ed07d119101cd6"
+          "path": "verification/requirement-coverage-NREQ-e5db8a7c723f5b54ada73ce37c7725a2-20261006-followup-53064e75189e.json",
+          "sha256": "b7702a06ba6eed03186eacf686cb8c1bf8836bc3f4b768fa49b2c2d89c760bf4"
         }
       }
     },
@@ -8432,8 +8432,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4bb54f6379863c0a17e6fbc58edcd042-20261006.json",
-          "sha256": "eca358215827148a6f456487b90fdaf19a6fc189905eed1af1cae963ec991a87"
+          "path": "verification/requirement-coverage-NREQ-4bb54f6379863c0a17e6fbc58edcd042-20261006-followup-9dbd2cfffea8.json",
+          "sha256": "1723f02ca1b9212f2898f1a6ad90952359a3825de8244cbc931810309656ea5c"
         }
       }
     },
@@ -8488,8 +8488,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-266e79545a48e7c4310883faa04e9844-20261006.json",
-          "sha256": "7f693b745863b6a6e330d0536752dfba359c000ae313a98e908cd259819411e7"
+          "path": "verification/requirement-coverage-NREQ-266e79545a48e7c4310883faa04e9844-20261006-followup-93b9a85717ea.json",
+          "sha256": "0891087a528b48173c219a0fd8d5d12177473d9dcbb45a4204e4baddbfff2566"
         }
       }
     },
@@ -8544,8 +8544,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e1a8ce05f1d7a97c385039fd3bd71143-20261006.json",
-          "sha256": "1e63b0268b31b24bcdefceb06e105c366467aba797b34b1baad5bc1a9538a4e9"
+          "path": "verification/requirement-coverage-NREQ-e1a8ce05f1d7a97c385039fd3bd71143-20261006-followup-af66493a8c34.json",
+          "sha256": "18b1c0108df6643c88ca0370bb71fd880c33622a33a21b1e0427ed00b3899fd8"
         }
       }
     },
@@ -8600,8 +8600,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ddf7192c16e06f5276d4d324b2e1f6c3-20261006.json",
-          "sha256": "2f3e46fa3865df2f0408bb42577e10723aa7f26a88e40a6ae551496c30878184"
+          "path": "verification/requirement-coverage-NREQ-ddf7192c16e06f5276d4d324b2e1f6c3-20261006-followup-7263e564ea9b.json",
+          "sha256": "218b5c9f3c55a672125efd849053e54bfdacaf2ad6adf659abd1db19a244f488"
         }
       }
     },
@@ -8656,8 +8656,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1000a70e39109bdb76b85fa6855a4892-20261006.json",
-          "sha256": "163f585aa1abcd6d99aab716d81d2f59b121d7aabca68e6e6c43dc7516c647d0"
+          "path": "verification/requirement-coverage-NREQ-1000a70e39109bdb76b85fa6855a4892-20261006-followup-237de29a154d.json",
+          "sha256": "27538235b4a296e3ec06e004ceea2474eb2261aae69d855d549922dd149cdd07"
         }
       }
     },
@@ -8712,8 +8712,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec-20261006.json",
-          "sha256": "956bea94fd1f176cb1022edd77af5c3dd7e5b0a616987aba93269b5d08f7c504"
+          "path": "verification/requirement-coverage-NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec-20261006-followup-83a2046d1001.json",
+          "sha256": "3916dc3c8c895713be7bec2f4714ad98c51df651eb5088d0afa52e12c6683726"
         }
       }
     },
@@ -8768,8 +8768,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-931f08afd15144dcac6c7768f2c393d0-20261006.json",
-          "sha256": "9ffc7dbddb2c33bee72824b0ea34be57737554881043a1827d38d4059a526ec9"
+          "path": "verification/requirement-coverage-NREQ-931f08afd15144dcac6c7768f2c393d0-20261006-followup-da43501d182a.json",
+          "sha256": "3bd14c6470c5ec3251c22e2e9a2fdc4a9702c11f5ace5ab86deef3c5ff5d16d5"
         }
       }
     },
@@ -8824,8 +8824,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-3a3ba3d92dd569d454e781fcccf7ac61-20261006.json",
-          "sha256": "c51a4569a9a195a825cd9f00e4677d159eaa8a84b9e5fe6febf34ce76d4e5407"
+          "path": "verification/requirement-coverage-NREQ-3a3ba3d92dd569d454e781fcccf7ac61-20261006-followup-e4088e6033e5.json",
+          "sha256": "bb7ddc44fd8c81c130e5000001d6eb4af4b7c5311668b3b307b909abb64bf7d0"
         }
       }
     },
@@ -8880,8 +8880,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6-20261006.json",
-          "sha256": "2812cb3174ebb6429a05ae1154b9bce526ccc51c1ed405c105e0fab973a92af6"
+          "path": "verification/requirement-coverage-NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6-20261006-followup-ed356fc1c0a8.json",
+          "sha256": "4116d7c4a9fc6e94d2e751d60e7407bf1744a67856d87783d5e7b777807c4006"
         }
       }
     },
@@ -8936,8 +8936,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5d9431875519d7cfc3188157a10d6bfc-20261006.json",
-          "sha256": "e1f58a601fa579298f98331db5871696d4ba48bcdd3cabeba6b8b0b0b66c6352"
+          "path": "verification/requirement-coverage-NREQ-5d9431875519d7cfc3188157a10d6bfc-20261006-followup-efd4ac81f205.json",
+          "sha256": "95b90a745131857911b77520e3d999ecc4ed6d90b8879882ec91ca0ca9cc60a1"
         }
       }
     },
@@ -8992,8 +8992,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-aafc7cd5dc54af415d36425000d76acb-20261006.json",
-          "sha256": "1405c6b8a795e76ea123f07d8e816e06bc2918661e05bcdd0293e4c3b55d94a4"
+          "path": "verification/requirement-coverage-NREQ-aafc7cd5dc54af415d36425000d76acb-20261006-followup-19d7e3e1195c.json",
+          "sha256": "4d8e681dc549bedc7c56ecb2b3fc5a389adf647a1dc6102d5691a23d221e4abe"
         }
       }
     },
@@ -9048,8 +9048,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-829ac5f73d2b01828644e51c0675d6b6-20261006.json",
-          "sha256": "4c11c00775d2aee7215a0b53f56abb923b5476d1fd289f641965e9390fa34a43"
+          "path": "verification/requirement-coverage-NREQ-829ac5f73d2b01828644e51c0675d6b6-20261006-followup-1b85f2bfd977.json",
+          "sha256": "a2e5453516bb465b4668a2d1204caab71852bacfea779c4ebb2078755563cdb4"
         }
       }
     },
@@ -9104,8 +9104,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9050383f9f0b382f0fd9b465a0a20f78-20261006.json",
-          "sha256": "28cc62f0c01306301b7ff4c7cf58c7a8ca06de77cba660548a5faf52abcf71c8"
+          "path": "verification/requirement-coverage-NREQ-9050383f9f0b382f0fd9b465a0a20f78-20261006-followup-01a5183581ad.json",
+          "sha256": "cda3545e1004f30216140bcb72a742e81c04fd1a6d2e06670da15de045086963"
         }
       }
     },
@@ -9160,8 +9160,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-dd1241e76fbe641c1c88243ba947dc89-20261006.json",
-          "sha256": "7e27f795d56ade7fae685168a0ae575b513439b395740e869e8139360b15d5bf"
+          "path": "verification/requirement-coverage-NREQ-dd1241e76fbe641c1c88243ba947dc89-20261006-followup-fdabd9a47acb.json",
+          "sha256": "21b40bc7934fcdd2854f0e9fb188ebd49e995185a191bdccc7178d8a4e4b8d81"
         }
       }
     },
@@ -9216,8 +9216,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-536910c50d3998944884b519e0d89555-20261006.json",
-          "sha256": "c2f89e6f613f8629776888e09d1f9fadc5501ec2bb83450c6864e728ae04312b"
+          "path": "verification/requirement-coverage-NREQ-536910c50d3998944884b519e0d89555-20261006-followup-3d70ff300546.json",
+          "sha256": "b00975679e0c4b6bab2a62d091ca12a241d46ba3d2c21ae3047e6a57ca831443"
         }
       }
     },
@@ -9272,8 +9272,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-efa519285f6f28591dc9ad7936c1caa6-20261006.json",
-          "sha256": "76de53ab882a4cb4826745b2c69683cde5dcdaf3feb6c1673a554e195c56588c"
+          "path": "verification/requirement-coverage-NREQ-efa519285f6f28591dc9ad7936c1caa6-20261006-followup-34270d170c41.json",
+          "sha256": "b8b4cc9df183fc0439a03a4031f40d58f5f5e858c8849d046335bee242d2cc2a"
         }
       }
     },
@@ -9328,8 +9328,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ee95aae3e46bebd05ef8469aff39c9da-20261006.json",
-          "sha256": "cb190126c5f8ec997129d18a65e9fd4a97a481b1a6999cc70864e23ac574f372"
+          "path": "verification/requirement-coverage-NREQ-ee95aae3e46bebd05ef8469aff39c9da-20261006-followup-3e7a3e06cd9f.json",
+          "sha256": "220aefac214f1512a5a97317525b58e709be5db8f4b0bf196e108da8dfee94da"
         }
       }
     },
@@ -9384,8 +9384,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-647d36595971915d7c485a338ddc4013-20261006.json",
-          "sha256": "1dfd10a36643a241c174e5158d1722d28b562dfb17eecef46f8bd44036f43e53"
+          "path": "verification/requirement-coverage-NREQ-647d36595971915d7c485a338ddc4013-20261006-followup-2288432ea5e4.json",
+          "sha256": "86b393d7f64511f25348a7655e5e99c51a421dd0cdf5e4a200eb086d2407da58"
         }
       }
     },
@@ -9440,8 +9440,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-aa165dd96291b05acd70bf948f215d04-20261006.json",
-          "sha256": "288c110fc4a70d5bea07d82a930321fce16dacc73d5c353c84c5fc5dbd739711"
+          "path": "verification/requirement-coverage-NREQ-aa165dd96291b05acd70bf948f215d04-20261006-followup-983b8ee5e37d.json",
+          "sha256": "707d7221d41a74bec39e3316bd2638e7791eba1e388ca714deb489932f10a950"
         }
       }
     },
@@ -9496,8 +9496,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5f9aa84ccae751c1692f148708a9288c-20261006.json",
-          "sha256": "3c419892e83c43ac4582cffa0de2b6473f1cc5150ca6291e38839e6bd37b7ad9"
+          "path": "verification/requirement-coverage-NREQ-5f9aa84ccae751c1692f148708a9288c-20261006-followup-77a89409cc16.json",
+          "sha256": "ea3d3004a97f9313dd74772e92aa528d790668e2725688c03e792744c546af72"
         }
       }
     },
@@ -9561,8 +9561,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261006.json",
-          "sha256": "78c3d9f1290eea6e8ba3c401ba76007f0000f06891b4f01d2f695cf9ff7e1bde"
+          "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261006-followup-a095a81faf74.json",
+          "sha256": "6e51fe1bed90b282ba2889bebad4cae4d7c4b74e68297468b14cad6aaadecbe7"
         }
       }
     },
@@ -9626,8 +9626,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261006.json",
-          "sha256": "53499f1a69f51da2240a236d527adce21096135fbfd9b6c2a4367850648f87ab"
+          "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261006-followup-2e4a9673178d.json",
+          "sha256": "b0396be0bc9c53a3ed695116dd3c80a2fb82be4292179df6715e7a31877d4123"
         }
       }
     },
@@ -9715,8 +9715,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261006.json",
-          "sha256": "e9871770ab4186573503b36d36ffc0fc49f147dc5191543c5d4155324da43f6d"
+          "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261006-followup-41a8a451064a.json",
+          "sha256": "991d23e66258a162d7e05353bc5a0d027dcd27f52736b8f202152a30906a28a1"
         }
       }
     },
@@ -9804,8 +9804,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261006.json",
-          "sha256": "e4a17316d8db2be99674ef1545fadc2a94248200060cc5fad2026a0850a89161"
+          "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261006-followup-2a9e59b2c60f.json",
+          "sha256": "bbc116d6e2dda24d2fa411a36661d736c71c1f59b32affa405e767e317aaaa39"
         }
       }
     },
@@ -9860,8 +9860,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261006.json",
-          "sha256": "bf9dbb1993a2b8ca9c7699e5407e612b15cdd183ae35d00d0ee9b283d2b0c189"
+          "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261006-followup-b1fe67c0903e.json",
+          "sha256": "567dc2dbf936a04cc275e213efe3328cdb7949f57df45f0cb8174731037339d9"
         }
       }
     },
@@ -9916,8 +9916,734 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261006.json",
-          "sha256": "6015f908837c8c9f9657700da4c9daae04e1cb4e100020c819b4c8f89601cd3d"
+          "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261006-followup-42b0470a2dcc.json",
+          "sha256": "e446b9838962882498a057a7e9c476b90d4637facb60af0c63e81180bd9204b9"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+      "sourceLineSha256": "89af7e3ffb6168d966b07568ede7d292cf9e3d346e92d61f5d51c1ded9c4d468",
+      "checkIds": [
+        "ingestion.syntax.malformed-json"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "89af7e3ffb6168d966b07568ede7d292cf9e3d346e92d61f5d51c1ded9c4d468",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "strictParse / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-7a68fe07ee725cf205dd2102cd997b7f-whole-clause",
+            "sourceText": "- malformed JSON;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.malformed-json"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.malformed-json"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-7a68fe07ee725cf205dd2102cd997b7f-20261006-syntax-604fe56395d2.json",
+          "sha256": "22f6d3191ac680eed7af030d2132605a826af1170e0eeed70a6f2930f3172960"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+      "sourceLineSha256": "09e17204b42dbb8cd59e88b06533986100f2bce3180c9746b79edb50f66c3bfe",
+      "checkIds": [
+        "ingestion.syntax.truncated-json"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "09e17204b42dbb8cd59e88b06533986100f2bce3180c9746b79edb50f66c3bfe",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "strictParse / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-whole-clause",
+            "sourceText": "- truncated JSON;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.truncated-json"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.truncated-json"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-20261006-syntax-47227ea1782b.json",
+          "sha256": "8adb8f0e1b597cd924200c001f9d603b0c4b709ea96b25b88f17c13eb8ed038c"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-768d67996244254c83c0d11796f63912",
+      "sourceLineSha256": "db64c2b69f90715f643b80468a2f5ed0a5853c0eec261205e23aece559c0ac9b",
+      "checkIds": [
+        "ingestion.syntax.markdown-wrapper"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "db64c2b69f90715f643b80468a2f5ed0a5853c0eec261205e23aece559c0ac9b",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "strictParse / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-768d67996244254c83c0d11796f63912-whole-clause",
+            "sourceText": "- Markdown-wrapped JSON;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.markdown-wrapper"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.markdown-wrapper"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-768d67996244254c83c0d11796f63912-20261006-syntax-66f1d2945952.json",
+          "sha256": "3e1ca776abcbf37b42a013c82efe66a4be072d3b32a79f29fe2056fa0c80886c"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-59d5854af99ac5a566eb61e978519b21",
+      "sourceLineSha256": "a2dbce8b467827a0a515845181d9a0f4dd8dbc6d4ffc47e582dec4eaab4e28f0",
+      "checkIds": [
+        "ingestion.syntax.oversized-json"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Staged-read rejection and the subsequent canonical project reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. The published STRUCTURED_RESPONSE maximumSize is independently asserted as1048576 bytes. A valid JSON document padded to1048577 bytes must be refused by the actual staged-read guard with OVERSIZED_RESPONSE before parsing/raw-response metadata creation; the original Blob/hash and rejection receipt remain recoverable. The otherwise conforming1048576-byte document must stage, validate and reload as a pending proposal.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "a2dbce8b467827a0a515845181d9a0f4dd8dbc6d4ffc47e582dec4eaab4e28f0",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "project-store.js",
+            "symbol": "stageResponseFile / readStagedResponseFile",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-59d5854af99ac5a566eb61e978519b21-whole-clause",
+            "sourceText": "- oversized JSON;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Staged-read rejection and the subsequent canonical project reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. The published STRUCTURED_RESPONSE maximumSize is independently asserted as1048576 bytes. A valid JSON document padded to1048577 bytes must be refused by the actual staged-read guard with OVERSIZED_RESPONSE before parsing/raw-response metadata creation; the original Blob/hash and rejection receipt remain recoverable. The otherwise conforming1048576-byte document must stage, validate and reload as a pending proposal.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.oversized-json"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.oversized-json"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-59d5854af99ac5a566eb61e978519b21-20261006-syntax-17a46cd3b694.json",
+          "sha256": "06978f943a8852d7d8919ae4d9a9f12e7e26e0f85ddac9ea7c20786e6fd0623e"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+      "sourceLineSha256": "d7307bac047e7a507188e96dfe7e2fdf3ca2a443fa42811991f52185d967505b",
+      "checkIds": [
+        "ingestion.syntax.duplicate-members"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. Duplicate root, nested object, object inside array, and escaped-equivalent root/nested member names each require the sole DUPLICATE_JSON_MEMBER error.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "d7307bac047e7a507188e96dfe7e2fdf3ca2a443fa42811991f52185d967505b",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "strictParse / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-75b670fc6ea047b7452b4148f12a30ba-whole-clause",
+            "sourceText": "- duplicate member names;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. Duplicate root, nested object, object inside array, and escaped-equivalent root/nested member names each require the sole DUPLICATE_JSON_MEMBER error.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.duplicate-members"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.duplicate-members"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-75b670fc6ea047b7452b4148f12a30ba-20261006-syntax-779bc3b1943f.json",
+          "sha256": "06dbb6781df63aea414a0d40a6cf1904d08fc910094a13c0387aff3c9f5ca687"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+      "sourceLineSha256": "73d12df9f851dd4e9e1c1bba38e49d28adb7d882b5d311872c735f0acc4e107c",
+      "checkIds": [
+        "ingestion.syntax.unsafe-smart-quotes"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. Curly quotation characters used as authoritative JSON delimiters must produce the sole UNSAFE_SMART_QUOTES error; correctly ASCII-delimited JSON containing escaped or Unicode quotation data remains valid.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "73d12df9f851dd4e9e1c1bba38e49d28adb7d882b5d311872c735f0acc4e107c",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "strictParse / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-86651d173d1583e48cf6c03f9d486f4f-whole-clause",
+            "sourceText": "- unsafe smart or curly quotation output;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. Curly quotation characters used as authoritative JSON delimiters must produce the sole UNSAFE_SMART_QUOTES error; correctly ASCII-delimited JSON containing escaped or Unicode quotation data remains valid.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.unsafe-smart-quotes"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.unsafe-smart-quotes"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-86651d173d1583e48cf6c03f9d486f4f-20261006-syntax-7047993e8847.json",
+          "sha256": "1638d6f37878d8b707272b30000d0b1e3cee956fb6e1f7d068451f350d5973ea"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+      "sourceLineSha256": "34d21a8d47ac34454516030c062acf0b4c5f0b0484b52cfff8b77162709a694c",
+      "checkIds": [
+        "ingestion.syntax.root-object"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. The finite wrong-root population independently includes array, null, string, number, true and false JSON roots, each with sole INVALID_ROOT.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "34d21a8d47ac34454516030c062acf0b4c5f0b0484b52cfff8b77162709a694c",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "strictParse / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-1576e27fba46e1d68631bb2ade2e37f4-whole-clause",
+            "sourceText": "- wrong root type;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. The finite wrong-root population independently includes array, null, string, number, true and false JSON roots, each with sole INVALID_ROOT.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.root-object"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.syntax.root-object"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261006-syntax-26d52bad9b8f.json",
+          "sha256": "665f65a33c3d87f55be7f0672ce52710ac5f54b8fc87b486bed93768c685bc37"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-cf25cf824db06866df51c0e538fcbc03",
+      "sourceLineSha256": "c5b9ff0268b8d71bc6d5a0703eca52f282ecc77f070becceb716394375783225",
+      "checkIds": [
+        "ingestion.transport.stage"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "c5b9ff0268b8d71bc6d5a0703eca52f282ecc77f070becceb716394375783225",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "validateEnvelope / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-cf25cf824db06866df51c0e538fcbc03-whole-clause",
+            "sourceText": "- wrong stage;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.transport.stage"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.transport.stage"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-cf25cf824db06866df51c0e538fcbc03-20261006-syntax-b08c1e2db648.json",
+          "sha256": "8084324bea3b46498c1ee51e69c6ce3e36676b285ec916c5988c904ce877b399"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+      "sourceLineSha256": "f22a760170b132ac24eed090d31ddb96763c226be9df46441403e6688f934886",
+      "checkIds": [
+        "ingestion.transport.operation"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "f22a760170b132ac24eed090d31ddb96763c226be9df46441403e6688f934886",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "validateEnvelope / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-whole-clause",
+            "sourceText": "- wrong operation;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.transport.operation"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.transport.operation"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-20261006-syntax-fedff6aa7452.json",
+          "sha256": "04376f3c6d5571c48fff380393369bf313ead40215de8182b63a286defc404b0"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-0c973b955d61ee36887734df0ade5e69",
+      "sourceLineSha256": "63ae465edda4818ed6b0b93d17c83773bfd235057037d2cffc1a2315b1f99868",
+      "checkIds": [
+        "ingestion.transport.prompt-identity"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. All four current prompt-identity components are tested independently: instructionId, bodySha256, contractSha256 and contextSignature.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "63ae465edda4818ed6b0b93d17c83773bfd235057037d2cffc1a2315b1f99868",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "validateEnvelope / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-0c973b955d61ee36887734df0ade5e69-whole-clause",
+            "sourceText": "- wrong prompt identity;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. All four current prompt-identity components are tested independently: instructionId, bodySha256, contractSha256 and contextSignature.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.transport.prompt-identity"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.transport.prompt-identity"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-0c973b955d61ee36887734df0ade5e69-20261006-syntax-d0c65f5bc979.json",
+          "sha256": "424fc5bcb1d79dcba0407979cfb632f08aa7720989c85ee345a91356150c5ab0"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-971af7158d193e9b1d780c13b6c8e0ec",
+      "sourceLineSha256": "726c761ed6f54f1ec9a7d8ab6654f5e07507036d4e8070023fd5c5681d494a31",
+      "checkIds": [
+        "ingestion.transport.context-signature"
+      ],
+      "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "726c761ed6f54f1ec9a7d8ab6654f5e07507036d4e8070023fd5c5681d494a31",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+        "productionOwners": [
+          {
+            "path": "response-ingestion.js",
+            "symbol": "validateEnvelope / prepareCaptured",
+            "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeOperationalProject / assertOperationalChange / readProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "NREQ-971af7158d193e9b1d780c13b6c8e0ec-whole-clause",
+            "sourceText": "- wrong context signature;",
+            "expectedBehavior": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.transport.context-signature"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-ingestion.mjs",
+                  "checkId": "ingestion.transport.context-signature"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This source bullet is deterministic syntax/current transport identity rejection. Literal input mutations supply independent negative controls; mutation-role evidence does not claim production-source mutation testing. Correct quotation characters inside JSON string data remain allowed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+            "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+            "controllingText": "17.5 Closed-schema rejection"
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261006-syntax-696b464da717.json",
+          "sha256": "67f810deeda81d4d71376baae54a7b110234a758cd7821307c1b1bd3398f01b8"
         }
       }
     }

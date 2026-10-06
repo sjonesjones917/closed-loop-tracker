@@ -1,3 +1,4 @@
+import {observeRetainedHistory,verifyRetainedBackup,verifyRetainedRestore} from './test-retained-history-browser.mjs';
 import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 import {registerFixtureSourceSearchCapability} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -46,43 +47,25 @@ async function inspectPresentation(driver,caseId,instruction){
   const result=assertWorkflowPresentation(observed,{caseId,instruction});report.presentationCases.push(result);if(driver===browser)await captureOperationLatency(driver);return result;
 }
 async function saved({backup=false,workflow=false,stages=[stage]}={}){await captureOperationLatency();if(!backup)return workflow?browser.readWorkflow(stages):browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
-async function boundStage30BrowserRecovery(project,purpose='PRE_DELIVERY'){
-  const jobId=String(project?.job?.JOB_ID||''),revision=Number(project?.revision),projectSha256=String(project?.projectSha256||'');
-  assert.ok(jobId&&Number.isInteger(revision)&&/^[a-f0-9]{64}$/.test(projectSha256),'Bounded Stage 30 browser fixture requires the exact current stored project identity.');
-  const before=await browser.evaluate(`closedLoopProjectStore.historyList(${JSON.stringify(jobId)})`);
-  const observed=await browser.evaluate(`(async()=>{
-    const jobId=${JSON.stringify(jobId)},expectedRevision=${revision},expectedSha=${JSON.stringify(projectSha256)},store=closedLoopProjectStore,current=await store.readProject(jobId);
-    if(!current||current.revision!==expectedRevision||current.projectSha256!==expectedSha)throw new Error('BOUND_BROWSER_FIXTURE_STALE_PROJECT');
-    const db=await store.openDatabase(),tx=db.transaction(store.stores.meta,'readwrite'),meta=tx.objectStore(store.stores.meta),prefix='recovery:'+jobId;
-    const complete=new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error||new Error('BOUND_BROWSER_FIXTURE_TRANSACTION_FAILED'));tx.onabort=()=>reject(tx.error||new Error('BOUND_BROWSER_FIXTURE_TRANSACTION_ABORTED'));});
-    await new Promise((resolve,reject)=>{const request=meta.openCursor();request.onerror=()=>reject(request.error||new Error('BOUND_BROWSER_FIXTURE_CURSOR_FAILED'));request.onsuccess=()=>{const cursor=request.result;if(!cursor){resolve(true);return;}const key=String(cursor.key);if(key===prefix||key.startsWith(prefix+':'))cursor.delete();cursor.continue();};});
-    await complete;
-    const checkpointId=await store.saveCheckpoint(jobId,{expectedProjectRevision:expectedRevision,label:'Bounded Stage 30 browser backup fixture'}),after=await store.readProject(jobId),history=await store.historyList(jobId);
-    return {checkpointId,revision:after?.revision,projectSha256:after?.projectSha256,historyEntries:history.entries.length,compressedProjectBytes:history.compressedProjectBytes,retainedFileBytes:history.retainedFileBytes};
-  })()`);
-  assert.equal(observed.revision,revision,'Bounded Stage 30 browser fixture changed the canonical project revision.');
-  assert.equal(observed.projectSha256,projectSha256,'Bounded Stage 30 browser fixture changed canonical project bytes.');
-  assert.equal(observed.historyEntries,1,'Bounded Stage 30 browser fixture must retain exactly one fresh recovery root.');
-  const fixture={purpose,basis:'CURRENT_CANONICAL_PROJECT_FROM_PRECEDING_REAL_BROWSER_CONTROLS',beforeHistoryEntries:before.entries.length,afterHistoryEntries:observed.historyEntries,compressedProjectBytes:observed.compressedProjectBytes,retainedFileBytes:observed.retainedFileBytes,projectRevision:revision,projectSha256};
-  (report.boundedBrowserHistoryFixtures??=[]).push(fixture);
-  if(purpose==='PRE_DELIVERY')report.stage30BrowserFixture=fixture;
-  preserveReport();return fixture;
-}
 async function verifyFinalBackupRoundTrip(){
-  report.currentOperation={phase:'FINAL_BACKUP_FIXTURE',stage,sequence};preserveReport();
-  // Completed-stage presentation adds saved views after the pre-delivery
-  // bound. Keep this real-file control check independent of that accumulated
-  // History workload. All canonical stages and actual files remain unchanged;
-  // the existing non-browser recovery gates prove larger retained histories.
-  report.finalBackupBrowserFixture=await boundStage30BrowserRecovery(await browser.readProject(),'FINAL_BACKUP');
+  report.currentOperation={phase:'FINAL_BACKUP_HISTORY_OBSERVATION',stage,sequence};preserveReport();
+  const retained=await observeRetainedHistory(browser,await browser.readProject());
   report.currentOperation={phase:'FINAL_BACKUP_EXPORT',stage,sequence};preserveReport();
   const before=await saved({backup:true}),backup=snapshot.file;
+  report.currentOperation={phase:'FINAL_BACKUP_HISTORY_EXPORT_VERIFY',stage,sequence};preserveReport();
+  const exported=verifyRetainedBackup(retained,backup,{decoded:snapshot.package});
+  report.finalBackupHistory=exported.report;
   report.currentOperation={phase:'FINAL_BACKUP_IMPORT',stage,sequence};preserveReport();
   await browser.selectFiles('#import-file',[{filename:'journey.closed-loop.json.gz',bytes:backup.bytes}]);
   report.currentOperation={phase:'FINAL_BACKUP_VERIFY',stage,sequence};preserveReport();
   // Read the freshly restored stored state. Exporting it again is a separate
   // expensive operator action and contributes no assertion to this round trip.
   const observed=await saved({workflow:true,stages:Array.from({length:schema.STAGE_COUNT},(_,index)=>index+1)}),restored=observed.project;assert.equal(restored.job.JOB_ID,before.job.JOB_ID);assert.equal(restored.projectData.acceptedChanges.length,before.projectData.acceptedChanges.length);assert.ok(observed.workflow.every(row=>row.gate.complete),'Every restored stage must pass in the runtime that verified its saved artifact bytes.');report.backupRestore={selectedSha256:backup.sha256,stagesPreserved:observed.workflow.length,workflow:observed.workflow};
+  report.currentOperation={phase:'FINAL_BACKUP_HISTORY_RESTORE_VERIFY',stage,sequence};preserveReport();
+  const restoredHistory=await observeRetainedHistory(browser,restored,{verifyBytes:true});
+  report.backupRestore.history=verifyRetainedRestore(exported,restoredHistory);
+  assert.ok(Number.isSafeInteger(restored.revision)&&restored.revision>before.revision&&typeof restored.historyActivationId==='string'&&restored.historyActivationId!==before.historyActivationId,'FINAL_BACKUP_ACTIVATION_ORACLE: the import must activate a new saved revision, not leave the pre-import project unchanged');
+  report.backupRestore.activation={beforeRevision:before.revision,restoredRevision:restored.revision,beforeHistoryActivationId:before.historyActivationId??null,restoredHistoryActivationId:restored.historyActivationId,activatedNewRevision:true};
 }
 async function ingest(request,{invalid=false,observedBefore=null}={}){
   // The caller may pass its just-read pre-operation state; no state is reused
@@ -156,7 +139,7 @@ try{
       if(action.actionType==='CAPTURE_DELIVERY_INTENT'){for(const [key,value]of Object.entries({recipient:'Disposable CI operator',destination:'Disposable CI download directory',purpose:'Retrieve the tested literal file',channel:'BROWSER_DOWNLOAD',disclosure:'SYNTHETIC_PUBLIC',count:'1'}))await browser.fill('#delivery-intent-'+key,value);await browser.click('#capture-delivery-intent');continue;}
       if(action.actionType==='RECORD_DELIVERY_EVIDENCE'){await browser.fill('#delivery-observed-outcome','RECEIVED');await browser.fill('#delivery-observation','Synthetic operator opened the actual downloaded result.txt and compared all nine bytes.');await browser.fill('#delivery-evidence-location','Actual Chromium download event and filesystem byte comparison in this test.');if(await browser.exists('#delivery-observer'))await browser.fill('#delivery-observer','SYNTHETIC_OPERATOR');await browser.click('#record-delivery-evidence');continue;}
       if(action.actionType==='EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS'){const files=await browser.download('#export-authorized-artifacts');assert.equal(files.length,1);assert.equal(files[0].filename,'result.txt');assert.deepEqual(files[0].bytes,Buffer.from(OUTPUT));report.finalArtifact={filename:files[0].filename,sha256:files[0].sha256,byteSize:files[0].bytes.length};continue;}
-      if(action.actionType==='EXPORT_PRE_DELIVERY_CHECKPOINT'){await boundStage30BrowserRecovery(p);const [file]=await browser.download('#export-pre-delivery-checkpoint');report.preDeliveryBackup={sha256:file.sha256,byteSize:file.bytes.length};continue;}
+      if(action.actionType==='EXPORT_PRE_DELIVERY_CHECKPOINT'){const retained=await observeRetainedHistory(browser,p);const [file]=await browser.download('#export-pre-delivery-checkpoint');report.preDeliveryBackup={sha256:file.sha256,byteSize:file.bytes.length,history:verifyRetainedBackup(retained,file).report};continue;}
       const controls={CONFIRM_STAGE_ONE_INTENT:'#confirm-stage-one',FREEZE_CANDIDATE:'#freeze-candidate',RESERVE_RUN_BATCH:'#reserve-run-batch',BEGIN_UNCHANGED_CONFIRMATION:'#begin-unchanged-confirmation',FREEZE_BASELINE:'#freeze-baseline',RESERVE_PRODUCT_EXECUTION:'#reserve-product-execution',FREEZE_DELIVERY_CANDIDATE:'#freeze-delivery-candidate',RUN_APP_TESTS:'#run-native-tests',CALCULATE_CONVERGENCE:'#calculate-stage18-convergence',CALCULATE_UNCHANGED_CONFIRMATION:'#calculate-stage19-confirmation',CALCULATE_RELEASE:'#calculate-stage27-release',BUILD_EVIDENCE_CHAINS:'#build-evidence-chains',CALCULATE_TERMINAL:'#calculate-stage30-terminal'};
       if(controls[action.actionType]){if(action.actionType==='FREEZE_CANDIDATE'){assert.equal(engine.recordValue(engine.recordsForCurrentScope(p,'instructions').at(-1),'INSTRUCTION_TEXT'),CANDIDATE);await browser.selectFiles('#stage-files',[{filename:'production-instruction.txt',bytes:Buffer.from(CANDIDATE)}]);}await browser.click(controls[action.actionType]);report.operations.push({stage,command:action.actionType});}
       else if(['EXTERNAL_AGENT_TOOL','AI_REVIEW','EXTERNAL_SYSTEM','CONTINUE_AGENT_CONVERSATION','SELECT_RESPONSE_JSON_FILE'].includes(action.actionType))nextObservedWorkflow=await external();
@@ -172,4 +155,4 @@ try{
   assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.browserExecution=await browser.executionEvidence();report.complete=true;
 }catch(error){report.failures.push({stage,sequence,message:error.stack});console.error(error);process.exitCode=1;try{report.failureView=await browser.evaluate(`(()=>{const node=document.querySelector('#next-required-action'),rect=node?.getBoundingClientRect();return {stage:document.querySelector('#stage-picker')?.value,width:innerWidth,height:innerHeight,scrollY,action:node?.innerText,rect:rect?.toJSON(),active:document.activeElement?.id,loading:document.querySelector('#app')?.getAttribute('aria-busy')};})()`);await browser.inspect(stage);}catch{}}
 finally{try{await captureOperationLatency();}catch(error){report.latencyReadFailure=String(error.message||error);}preserveReport();await browser.close();}
-console.log(JSON.stringify({completeOperatorJourney:report.complete,browserExecution:report.browserExecution,operationCases:report.operations,presentationCases:report.presentationCases,stages:report.stages.length,operations:report.operations.length,failures:report.failures,operationLatency:report.operationLatency},null,2));
+console.log(JSON.stringify({completeOperatorJourney:report.complete,browserExecution:report.browserExecution,operationCases:report.operations,presentationCases:report.presentationCases,stages:report.stages.length,operations:report.operations.length,failures:report.failures,operationLatency:report.operationLatency,preDeliveryBackup:report.preDeliveryBackup,finalBackupHistory:report.finalBackupHistory,backupRestore:report.backupRestore},null,2));
