@@ -190,16 +190,23 @@ const conditionalReasonObservations=[];
 const promptSource=fs.readFileSync('prompt-engine.js','utf8'),appSource=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const reasonDescriptorSpread="...(stageFields.includes('INPUT_SET_CONTENTS')?{intakeAccountingContract:schema.STAGE01_CAPTURE_CONTRACT}:{}),";
 const reasonGuidance="\\nA nonblank reason is required when disposition is ${workflow.INTAKE_ACCOUNTING_REASON_REQUIRED_DISPOSITIONS.join(' or ')}; otherwise reason is optional. A reason never makes inaccessible required material complete.";
+// These controlled historical equivalents deliberately assign the old epoch to
+// every operation. A global-only replacement would leave scoped current epochs
+// intact, so the fixture would no longer contain an obsolete request.
+function legacyPromptGenerationSource(source,epoch){
+  let replaced=0;const legacy=source.replace(/const ([A-Z_]+)='closed-loop-prompt-engine\/[^']+';/g,(_,name)=>{replaced++;return `const ${name}='closed-loop-prompt-engine/${epoch}';`;});
+  assert.ok(replaced,'LEGACY_PROMPT_GENERATION_SETUP_ORACLE: producer generation declarations missing');return legacy;
+}
 function legacyReasonPromptSource(source){
   assert.ok(source.includes(reasonDescriptorSpread)&&source.includes(reasonGuidance),'INTAKE_CACHE_SETUP_ORACLE: missing controlled legacy publication anchors');
-  return source.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/81';").replace(reasonDescriptorSpread,'').replace(reasonGuidance,'').replace('JSON.stringify(schema.stage01CaptureExample())',"JSON.stringify({...schema.stage01CaptureExample(),units:schema.stage01CaptureExample().units.map(unit=>({...unit,reason:'optional concise reason'}))})");
+  return legacyPromptGenerationSource(source,81).replace(reasonDescriptorSpread,'').replace(reasonGuidance,'').replace('JSON.stringify(schema.stage01CaptureExample())',"JSON.stringify({...schema.stage01CaptureExample(),units:schema.stage01CaptureExample().units.map(unit=>({...unit,reason:'optional concise reason'}))})");
 }
 // Controlled /82 equivalent retains its existing conditional reason rule and
 // all runtime/business owners. Only the newly structured shared producer
 // disclosures are removed; this is not a claim of historical source byte identity.
 const sharedBoundaryDescriptorKeys=['echoContract','nestedFieldContracts','relationshipReferenceContract','recordIdentityContract','humanDecisionTargetContract','canonicalJsonContract'];
 function legacySharedDescriptorPromptSource(source){
-  let legacy=source.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/82';");
+  let legacy=legacyPromptGenerationSource(source,82);
   for(const [key,owner]of [['echoContract','RESPONSE_ECHO_CONTRACT'],['nestedFieldContracts','RESPONSE_NESTED_FIELD_CONTRACTS'],['relationshipReferenceContract','RESPONSE_RELATIONSHIP_REFERENCE_CONTRACT'],['recordIdentityContract','RESPONSE_RECORD_IDENTITY_CONTRACT'],['humanDecisionTargetContract','HUMAN_DECISION_TARGET_CONTRACT']]){
     const declaration=key+':schema.'+owner+',';assert.equal(legacy.split(declaration).length,2,'INTAKE_SHARED_CACHE_SETUP_ORACLE: missing unique structured disclosure '+key);legacy=legacy.replace(declaration,'');
   }
@@ -213,7 +220,7 @@ function legacySharedDescriptorPromptSource(source){
 // Content-specific oracles above and the Test IR/deferred-definition owning
 // checks establish the changed disclosures separately.
 function legacyCurrent85PromptSource(source){
-  return source.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/85';");
+  return legacyPromptGenerationSource(source,85);
 }
 function emittedSharedBoundaryContractOracle(emitted,runtime){
   const envelope=JSON.parse(JSON.stringify(emitted.envelope)),echo=envelope.echoContract,nested=envelope.nestedFieldContracts;
@@ -337,10 +344,10 @@ const publicationFaultSource=promptSource.replace(reasonDescriptorSpread,'');
 // obsolete descriptor. Body/context-only epoch fault controls remain unchanged.
 const contractFreshnessGuard='record.contractSha256!==currentContractSha||';assert.equal(cachedUiOwners.split(contractFreshnessGuard).length,2,'INTAKE_CACHE_CONTRACT_GUARD_ANCHOR');
 const noContractFreshnessUi=cachedUiOwners.replace(contractFreshnessGuard,'');
-const noVersionBumpSource=promptSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/81';");
+const noVersionBumpSource=legacyPromptGenerationSource(promptSource,81);
 const sameEpochDescriptorObservations=[await cachedReasonExportOracle(noVersionBumpSource,'RESERVED')];
 await assert.rejects(()=>cachedReasonExportOracle(noVersionBumpSource,'RESERVED',undefined,'REASON81',noContractFreshnessUi),/INTAKE_CACHED_EXPORT_ORACLE/,'Cached instruction gate did not detect omitted generation and contract freshness guards');
-const noSharedVersionBumpSource=promptSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/82';"),sharedDescriptorFaultsDetected=[];
+const noSharedVersionBumpSource=legacyPromptGenerationSource(promptSource,82),sharedDescriptorFaultsDetected=[];
 for(const status of ['RESERVED','EXPORTED']){sameEpochDescriptorObservations.push(await cachedReasonExportOracle(noSharedVersionBumpSource,status,undefined,'SHARED82'));await assert.rejects(()=>cachedReasonExportOracle(noSharedVersionBumpSource,status,undefined,'SHARED82',noContractFreshnessUi),/INTAKE_CACHED_EXPORT_ORACLE/,'Shared descriptor cached gate did not detect omitted generation and contract freshness guards for '+status);sharedDescriptorFaultsDetected.push({kind:'OMIT_SHARED_DESCRIPTOR_PROMPT_GENERATION_AND_CONTRACT_FRESHNESS',status,detectedBy:'INTAKE_CACHED_EXPORT_ORACLE'});}
 console.log(JSON.stringify({sameEpochDescriptorObservations,descriptorRefreshWithoutEpochChange:true,combinedFreshnessFaultDetected:true,actualBrowser:false}));
 const refreshStart=promptSource.indexOf('  // A generation change makes a saved first request obsolete'),refreshEnd=promptSource.indexOf('  if(workflow.allocateInstructionIdentity(state,provisional.identityAllocation)',refreshStart);assert.ok(refreshStart>=0&&refreshEnd>refreshStart,'INTAKE_CACHE_SETUP_ORACLE: freshness owner anchor missing');
@@ -361,15 +368,17 @@ for(const [stage,operation,behaviorClass]of [[5,'COMPLETE','SEMANTIC_AUTHOR'],[5
  const oldProducer=r.runtime.closedLoopPromptEngine,registration=r.runtime.closedLoopWorkflowSchema.STAGE_OPERATION_REGISTRY[stage+':'+operation],fixture=vm.runInContext('('+reservationScopeFixture.toString()+')',r.runtime)({core:r.core,schema:r.runtime.closedLoopWorkflowSchema,engine:r.engine},registration),state=r.copy(fixture.project);
  state.stages[stage-1].status='COMPLETE';state.stages[stage-1].gate=r.copy({complete:true,blocked:false,reasons:[]});
  const options=r.copy({operation,scope:fixture.scope}),old=oldProducer.reserveAndBuildPromptRecord(state,stage,options).prompt,oldBytes=old.prompt,oldBinding=r.copy(old.contextManifest.semanticReviewBinding||{}),priorContexts=r.runtime.closedLoopHash.sha256Value(state.projectData.freshContexts),acceptedBefore=r.runtime.closedLoopHash.sha256Value(state.projectData.acceptedChanges);
+ assert.equal(old.promptEngineVersion,'closed-loop-prompt-engine/81','SHARED_REFRESH_LEGACY_SETUP_ORACLE: every controlled legacy operation must carry the old generation');
+ assert.notEqual(old.promptEngineVersion,currentProducer.versionFor(stage,operation),'SHARED_REFRESH_LEGACY_SETUP_ORACLE: the retained request must actually be obsolete');
  r.runtime.closedLoopPromptEngine=currentProducer;
  const fresh=currentProducer.reserveAndBuildPromptRecord(state,stage,options).prompt;
- assert.notEqual(fresh.instructionId,old.instructionId,'SHARED_REFRESH_CONTEXT_ORACLE: '+behaviorClass+' did not refresh obsolete issuance');assert.equal(fresh.promptEngineVersion,currentProducer.version);assert.equal(old.prompt,oldBytes);assert.equal(r.runtime.closedLoopHash.sha256Value(state.projectData.acceptedChanges),acceptedBefore,'SHARED_REFRESH_CONTEXT_ORACLE: transport refresh accepted role work');
+ assert.notEqual(fresh.instructionId,old.instructionId,'SHARED_REFRESH_CONTEXT_ORACLE: '+behaviorClass+' did not refresh obsolete issuance');assert.equal(fresh.promptEngineVersion,currentProducer.versionFor(stage,operation));assert.equal(old.prompt,oldBytes);assert.equal(r.runtime.closedLoopHash.sha256Value(state.projectData.acceptedChanges),acceptedBefore,'SHARED_REFRESH_CONTEXT_ORACLE: transport refresh accepted role work');
  assert.doesNotThrow(()=>r.engine.assertOperationScope(state,stage,operation,fresh.scope),'SHARED_REFRESH_CONTEXT_ORACLE: role scope was weakened or stale');
  assert.ok(currentProducer.promptTransportBinding(state,stage,operation,fresh.instructionId,fresh.scope),'SHARED_REFRESH_CONTEXT_ORACLE: refreshed role lacks native authority');
  const currentBinding=fresh.contextManifest.semanticReviewBinding||{};
  if(behaviorClass==='INDEPENDENT_SEMANTIC_REVIEW'){assert.ok(currentBinding.reviewerContextId,'SHARED_REFRESH_CONTEXT_ORACLE: reviewer role context absent');assert.equal(currentBinding.reviewerContextId,oldBinding.reviewerContextId,'SHARED_REFRESH_CONTEXT_ORACLE: native unused reviewer choice unexpectedly changed');}
  if(behaviorClass==='FROZEN_RUN'){for(const key of ['candidateId','iterationId','runId','contextId'])assert.equal(fresh.scope[key],old.scope[key],'SHARED_REFRESH_CONTEXT_ORACLE: unchanged frozen-run identity changed '+key);}
- sharedContextRefreshObservations.push({stage,operation,behaviorClass,refreshed:true,nativeScopeAndBindingPreserved:true,contextPolicyUnchanged:priorContexts===r.runtime.closedLoopHash.sha256Value(state.projectData.freshContexts),independenceEstablished:false,runCountContribution:0,fixture:'SYNTHETIC_SCOPE_BOUNDARY_PROJECTION'});
+ sharedContextRefreshObservations.push({stage,operation,behaviorClass,oldGeneration:old.promptEngineVersion,currentGeneration:fresh.promptEngineVersion,refreshed:true,nativeScopeAndBindingPreserved:true,contextPolicyUnchanged:priorContexts===r.runtime.closedLoopHash.sha256Value(state.projectData.freshContexts),independenceEstablished:false,runCountContribution:0,fixture:'SYNTHETIC_SCOPE_BOUNDARY_PROJECTION'});
 }
 
 // Restore genuinely admitted author work with its raw response, current review,
@@ -390,7 +399,7 @@ for(const [family,operation]of [['failureTests','EXECUTE_FAILURE_TEST'],['regres
 // this is producer-cache recovery evidence, not historical source byte identity.
 function legacyDefinitionCarrierPromptSource(source){
  const anchor="deferredDefinitionWriter(stage,operation)&&collection==='defects'?";assert.equal(source.split(anchor).length,2,'DEFINITION_CARRIER_CACHE_SETUP_ORACLE: governing support carrier anchor missing');
- return source.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/84';").replace(anchor,'false?');
+ return legacyPromptGenerationSource(source,84).replace(anchor,'false?');
 }
 function definitionPackageRows(members,family){
  const manifest=JSON.parse(Buffer.from(members.find(row=>row.canonicalPath==='manifest.json').bytes).toString('utf8')),instruction=Buffer.from(members.find(row=>row.canonicalPath==='instruction.txt').bytes).toString('utf8'),blocks=[];
@@ -418,7 +427,7 @@ async function cachedDefinitionCarrierOracle(currentSource,status){
  return {status,stage:15,operation:'COMPLETE',oldGeneration:old.promptEngineVersion,currentGeneration:fresh.promptEngineVersion,oldActualPackageOmittedSupport:true,freshActualPackagePublishedSupport:true,oldBytesAndAuthorWorkPreserved:true,obsoleteResponseRejected:true,unchangedSaveReused:true,synthetic:true,actualBrowser:false};
 }
 const definitionCarrierCacheObservations=[];for(const status of ['RESERVED','EXPORTED'])definitionCarrierCacheObservations.push(await cachedDefinitionCarrierOracle(promptSource,status));
-const noDefinitionCarrierVersionBump=promptSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/84';");await assert.rejects(()=>cachedDefinitionCarrierOracle(noDefinitionCarrierVersionBump,'RESERVED'),/DEFINITION_CARRIER_CACHE_REFRESH_ORACLE/,'Definition carrier cache did not detect an unchanged generation');
+const noDefinitionCarrierVersionBump=legacyPromptGenerationSource(promptSource,84);await assert.rejects(()=>cachedDefinitionCarrierOracle(noDefinitionCarrierVersionBump,'RESERVED'),/DEFINITION_CARRIER_CACHE_REFRESH_ORACLE/,'Definition carrier cache did not detect an unchanged generation');
 console.log(JSON.stringify({definitionCarrierCacheObservations,definitionCarrierNoVersionBumpDetected:true}));
 
 // Controlled /86 retains the exact pre-correction procedure/completion owners.
@@ -427,7 +436,7 @@ console.log(JSON.stringify({definitionCarrierCacheObservations,definitionCarrier
 // unrelated producer contracts rather than claiming complete historical bytes.
 const legacyConditional86Owners={"procedureFor": "function procedureFor(stage,operation){const procedure=operationSpecial?.[stage]?.[operation]||stageSpecial[stage],invariant=stageInvariant?.[stage]||'';const combined=[procedure,invariant].filter(Boolean).join('\\n');return (stage===17||stage===19)?`CURRENT DECLARED OPERATION: ${operation}\\n${combined}`:combined;}", "stageCompletionDirective": "function stageCompletionDirective(stage){return STAGE_COMPLETION_DIRECTIVES[stage]||'Complete the current stage only when every requirement of its declared stage contract is satisfied or explicitly blocked with exact reason and evidence.';}"};
 function legacyConditional86PromptSource(source){
- let old=source.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/86';");
+ let old=legacyPromptGenerationSource(source,86);
  for(const [name,body]of Object.entries(legacyConditional86Owners)){const start=old.indexOf('function '+name+'('),ends=[old.indexOf('\nfunction ',start+1),old.indexOf('\nasync function ',start+1)].filter(index=>index>=0),end=Math.min(...ends);assert(start>=0&&end>start,'CONDITIONAL86_CACHE_OWNER_ANCHOR_ORACLE: '+name);old=old.slice(0,start)+body+old.slice(end);}
  return old;
 }
@@ -443,7 +452,7 @@ async function cachedConditional86Oracle(currentSource,status,oldSource=legacyCo
  const oldPkg=await r.store.createExecutionPackage({jobId:p.job.JOB_ID,stage,operation,instructionId:old.instructionId}),oldMembers=readStoreArchive(new Uint8Array(await oldPkg.blob.arrayBuffer())),oldInstruction=Buffer.from(oldMembers.find(row=>row.canonicalPath==='instruction.txt').bytes).toString('utf8'),ordinary='Complete only when one coherent current production instruction contains every required section and every current mandatory requirement has a complete instruction trace.';
  assert.equal(oldInstruction,old.prompt);assert(oldInstruction.includes(ordinary),'CONDITIONAL86_OLD_CONTRADICTION_REQUIRED');assert(oldInstruction.includes('Return exactly one regressionExecutions record'),'CONDITIONAL86_OLD_RECEIPT_CONTRACT_REQUIRED');
  const before=Object.fromEntries(['acceptedChanges','failureTests','regressionExecutions','rawResponses','responseProposals'].map(family=>[family,h.sha256Value(p.projectData[family])]));r.runtime.closedLoopPromptEngine=currentProducer;bindAcceptanceUi(r,p,null);Object.assign(r.runtime,{promptOptions:()=>r.copy({operation}),externalAgentOperation:()=>true,selectedOperation:()=>operation,operationExecutorClass:()=> 'EXTERNAL_AGENT'});vm.runInContext(cachedUiOwners+'\nglobalThis.cachedConditional86Ui={save:()=>savePromptRecord(8)};',r.runtime);
- let fresh=await r.runtime.cachedConditional86Ui.save(),current=r.runtime.current;assert.notEqual(fresh.instructionId,old.instructionId,'CONDITIONAL86_CACHE_REFRESH_ORACLE: contradictory cached operation remained selected');assert.equal(fresh.promptEngineVersion,currentProducer.version);
+ let fresh=await r.runtime.cachedConditional86Ui.save(),current=r.runtime.current;assert.notEqual(fresh.instructionId,old.instructionId,'CONDITIONAL86_CACHE_REFRESH_ORACLE: contradictory cached operation remained selected');assert.equal(fresh.promptEngineVersion,currentProducer.versionFor(stage,operation));
  const retained=current.projectData.generatedPrompts.find(row=>row.instructionId===old.instructionId);for(const key of ['prompt','bodySha256','contractSha256','contextSignature'])assert.equal(retained[key],old[key],'CONDITIONAL86_OLD_BYTES_PRESERVED_ORACLE');assert.equal(e.recordValue(current.projectData.operationReservations.find(row=>e.recordId(row,'operationReservations')===old.operationReservationId),'STATUS'),'SUPERSEDED');
  for(const [family,digest]of Object.entries(before))assert.equal(h.sha256Value(current.projectData[family]),digest,'CONDITIONAL86_NO_CANONICAL_CHANGE_ORACLE: '+family);
  assert.equal(fresh.contextManifest.deferredExecutionBinding.projectRevision,old.contextManifest.deferredExecutionBinding.projectRevision+1);
@@ -456,7 +465,7 @@ async function cachedConditional86Oracle(currentSource,status,oldSource=legacyCo
  return {status,stage,operation,oldGeneration:old.promptEngineVersion,currentGeneration:fresh.promptEngineVersion,oldPackageSha256:await h.sha256Bytes(oldPkg.blob),freshPackageSha256:await h.sha256Bytes(pkg.blob),oldContradictionObserved:true,freshReceiptOnlyContract:true,exactScheduledBindingPreserved:true,oldBytesAndCanonicalWorkPreserved:true,obsoleteResponseRejected:true,unchangedSaveIdempotent:true,ordinaryStageStillIncomplete:true,transactionAndReloadVerified:true,synthetic:true,actualBrowser:false};
 }
 const conditional86CacheObservations=[];for(const status of ['RESERVED','EXPORTED'])conditional86CacheObservations.push(await cachedConditional86Oracle(promptSource,status));
-const noConditional86VersionBump=promptSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/86';");for(const status of ['RESERVED','EXPORTED'])await assert.rejects(()=>cachedConditional86Oracle(noConditional86VersionBump,status),/CONDITIONAL86_CACHE_REFRESH_ORACLE/,'Contradictory /86 conditional cache did not detect an unchanged generation for '+status);
+const noConditional86VersionBump=legacyPromptGenerationSource(promptSource,86);for(const status of ['RESERVED','EXPORTED'])await assert.rejects(()=>cachedConditional86Oracle(noConditional86VersionBump,status),/CONDITIONAL86_CACHE_REFRESH_ORACLE/,'Contradictory /86 conditional cache did not detect an unchanged generation for '+status);
 console.log(JSON.stringify({conditional86CacheObservations,conditional86NoVersionBumpDetected:true}));
 
 // The selected independent-review route must not recover prior conclusions
@@ -464,7 +473,7 @@ console.log(JSON.stringify({conditional86CacheObservations,conditional86NoVersio
 // the new conditional prior-output authorization guards; exact /87 bytes are separately retained.
 function legacyIndependent87PromptSource(source){
  const gate='deferred?independentDeferred:number===12';assert.equal(source.split(gate).length,2,'INDEPENDENT87_CACHE_POLICY_ANCHOR_ORACLE');
- return source.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/87';").replace(gate,'deferred?false:number===12').replace('if(independentDeferred){','if(false){');
+ return legacyPromptGenerationSource(source,87).replace(gate,'deferred?false:number===12').replace('if(independentDeferred){','if(false){');
 }
 async function cachedIndependent87Oracle(currentSource,status,oldSource=legacyIndependent87PromptSource(promptSource)){
  const r=projectStoreRuntime({sourceOverrides:{'prompt-engine.js':currentSource}}),e=r.engine,i=r.ingestion,h=r.runtime.closedLoopHash,currentProducer=r.prompts,{p:restored,test}=await deferredDefinitionRestorationFixture(r,{family:'failureTests'}),stage=8,operation='EXECUTE_FAILURE_TEST',marker='REJECTED_INDEPENDENT_REVIEW_CONCLUSION_MUST_NOT_REACH_NEXT_REVIEW';
@@ -477,7 +486,7 @@ async function cachedIndependent87Oracle(currentSource,status,oldSource=legacyIn
  const oldPkg=await r.store.createExecutionPackage({jobId:p.job.JOB_ID,stage,operation,instructionId:old.instructionId}),oldMembers=readStoreArchive(new Uint8Array(await oldPkg.blob.arrayBuffer()));assert(oldMembers.some(row=>Buffer.from(row.bytes).toString('utf8').includes(marker)),'INDEPENDENT87_ACTUAL_LEAKED_PACKAGE_REQUIRED');assert(old.contextManifest.retryAttemptInputs.length>0);assert.equal(old.promptEngineVersion,'closed-loop-prompt-engine/87');
  if(status==='EXPORTED'){const failures=bindAcceptanceUi(r,p,null);vm.runInContext(uiOwner('recordInstructionExport'),r.runtime);await r.runtime.recordInstructionExport(old);assert.equal(failures.length,0,'INDEPENDENT87_EXPORT_OWNER_FAILURE_ORACLE');p=await r.store.readProject(p.job.JOB_ID);assert(p.projectData.history.some(row=>row.type==='INSTRUCTION_PACKAGE_EXPORTED'&&row.promptId===old.instructionId),'INDEPENDENT87_EXPORT_HISTORY_REQUIRED');}
  const before=Object.fromEntries(['acceptedChanges','failureTests','regressionExecutions','rawResponses','responseProposals','responseValidations'].map(family=>[family,h.sha256Value(p.projectData[family])]));r.runtime.closedLoopPromptEngine=currentProducer;bindAcceptanceUi(r,p,null);Object.assign(r.runtime,{promptOptions:()=>r.copy({operation}),externalAgentOperation:()=>true,selectedOperation:()=>operation,operationExecutorClass:()=> 'EXTERNAL_AGENT'});vm.runInContext(cachedUiOwners+'\nglobalThis.cachedIndependent87Ui={save:()=>savePromptRecord(8)};',r.runtime);
- let fresh=await r.runtime.cachedIndependent87Ui.save(),current=r.runtime.current;assert.notEqual(fresh.instructionId,old.instructionId,'INDEPENDENT87_CACHE_REFRESH_ORACLE: exposed retry remained authoritative');assert.equal(fresh.promptEngineVersion,currentProducer.version);assert.notEqual(fresh.packageId,old.packageId);assert.notEqual(fresh.challengeNonce,old.challengeNonce);
+ let fresh=await r.runtime.cachedIndependent87Ui.save(),current=r.runtime.current;assert.notEqual(fresh.instructionId,old.instructionId,'INDEPENDENT87_CACHE_REFRESH_ORACLE: exposed retry remained authoritative');assert.equal(fresh.promptEngineVersion,currentProducer.versionFor(stage,operation));assert.notEqual(fresh.packageId,old.packageId);assert.notEqual(fresh.challengeNonce,old.challengeNonce);
  ({project:current,prompt:fresh}=await authorizeCachedExportFixture(r,current,fresh));r.runtime.current=current;r.runtime.projects=r.copy([current]);
  const pkg=await r.store.createExecutionPackage({jobId:current.job.JOB_ID,stage,operation,instructionId:fresh.instructionId}),members=readStoreArchive(new Uint8Array(await pkg.blob.arrayBuffer())),manifest=JSON.parse(Buffer.from(members.find(row=>row.canonicalPath==='manifest.json').bytes).toString('utf8')),instruction=Buffer.from(members.find(row=>row.canonicalPath==='instruction.txt').bytes).toString('utf8');assert.equal(instruction,fresh.prompt);assert.equal(members.some(row=>Buffer.from(row.bytes).toString('utf8').includes(marker)),false,'INDEPENDENT87_NO_PRIOR_CONCLUSION_CARRIER_ORACLE');assert.equal((manifest.retryInputs||[]).length,0);assert(instruction.includes('WRONG_VALUE_TYPE')&&instruction.includes('PHASE'),'INDEPENDENT87_ACTIONABLE_PROTOCOL_FEEDBACK_ORACLE');assert(instruction.includes('fresh independent reviewer conversation'),'INDEPENDENT87_FRESH_CONTEXT_RECOVERY_ORACLE');assert(instruction.includes('does not restore independence'),'INDEPENDENT87_EXPOSURE_NOT_ERASED_ORACLE');
  const policy=currentProducer.deferredExecutionContextPolicy(current,stage,operation);assert.equal(policy.independentReview,true);assert.equal(policy.requiresFreshConversation,true);assert.equal(policy.priorExportMayHaveExposedRejectedWork,status==='EXPORTED','INDEPENDENT87_EXPOSURE_STATUS_ORACLE');
@@ -486,7 +495,7 @@ async function cachedIndependent87Oracle(currentSource,status,oldSource=legacyIn
  return {status,stage,operation,oldGeneration:old.promptEngineVersion,currentGeneration:fresh.promptEngineVersion,oldPackageSha256:await h.sha256Bytes(oldPkg.blob),freshPackageSha256:await h.sha256Bytes(pkg.blob),actualWrongTypeFileRejected:true,actualPriorConclusionLeakedByOldPackage:true,noPriorConclusionInAnyFreshCarrier:true,actionableProtocolFeedbackRetained:true,freshReviewConversationRequired:true,priorExportMayHaveExposedRejectedWork:policy.priorExportMayHaveExposedRejectedWork,rawAndCanonicalWorkPreserved:true,oldPackageBytesPreserved:true,unchangedSaveIdempotent:true,ordinaryStageStillIncomplete:true,storedAndReloaded:true,synthetic:true,actualBrowser:false,actualExternalExposureClaimed:false};
 }
 const independent87CacheObservations=[];for(const status of ['RESERVED','EXPORTED'])independent87CacheObservations.push(await cachedIndependent87Oracle(promptSource,status));
-const noIndependent87VersionBump=promptSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/87';");await assert.rejects(()=>cachedIndependent87Oracle(noIndependent87VersionBump,'EXPORTED'),/INDEPENDENT87_CACHE_REFRESH_ORACLE/,'Independent-review /87 cache did not detect unchanged generation');
+const noIndependent87VersionBump=legacyPromptGenerationSource(promptSource,87);await assert.rejects(()=>cachedIndependent87Oracle(noIndependent87VersionBump,'EXPORTED'),/INDEPENDENT87_CACHE_REFRESH_ORACLE/,'Independent-review /87 cache did not detect unchanged generation');
 console.log(JSON.stringify({independent87CacheObservations,independent87NoVersionBumpDetected:true}));
 
 // Confirmation remains mandatory when the candidate changes retained

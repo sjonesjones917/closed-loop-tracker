@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
 import {gzipSync,gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
 import {readStoreArchive} from './test-zip.mjs';
 import {responseFixture} from './operator-journey-fixtures.mjs';
 import {execFileSync} from 'node:child_process';
@@ -11,6 +12,7 @@ import {projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,hydrat
 import {appMarkup} from './test-app-markup.mjs';
 import {isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {authorizeFixtureHandoff,recordProposal,canonicalFixtureRecord,reviewProofFixture,deferredDefinitionResponseFixture,deferredCompatibilityFixtureValues,deferredDefinitionRestorationFixture,deferredDefinitionAdmissionFixture,deferredReviewedPrerequisiteFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
+import {DEFERRED_LEGACY_FIXTURE_MAX_OUTPUT_BYTES,readDeferredDefinitionLegacyFixture} from './test-fixtures.mjs';
 import {verifyDeferredHandoffMaterialContract,verifyDeferredProducerContracts,verifyDeferredByteCarrierContracts,verifyDeferredIndependentRetryContracts} from './test-deferred-producer-contracts.mjs';
 
 // Small synthetic canonical fixtures isolate timing logic. The full-cycle gate
@@ -231,8 +233,22 @@ export async function verifyDefinitionCompatibilityWitnessReplay(directory){
  assert(directory,'DEFINITION_COMPATIBILITY_WITNESS_DIRECTORY_REQUIRED');const names=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],sources=Object.fromEntries(names.map(name=>[name,fs.readFileSync(name,'utf8')])),h=runtime(sources).runtime.closedLoopHash,preFixCommit='e9eb7b23153c5f5925c00412b85ab1845ec103c3',oldSources=Object.fromEntries(names.map(name=>[name,execFileSync('git',['show',preFixCommit+':'+name],{encoding:'utf8',maxBuffer:4*1024*1024})]));
  const before={...await definitionCompatibilityWitness(oldSources,directory),preFixCommit,sourceHashes:Object.fromEntries(names.map(name=>[name,h.sha256Text(oldSources[name])]))},after={...await definitionCompatibilityWitness(sources,directory),sourceHashes:Object.fromEntries(names.map(name=>[name,h.sha256Text(sources[name])]))};return {schema:'closed-loop-deferred-definition-witness-replay/1',passed:true,observations:[before,after],synthetic:true,actualBrowser:false};
 }
-function readDefinitionLegacyFixture(filename,h){const carrier=JSON.parse(fs.readFileSync(filename,'utf8'));assert.equal(carrier.schema,'closed-loop-deferred-definition-legacy-carrier/1');assert.equal(carrier.encoding,'gzip-base64');const compressed=Buffer.from(carrier.gzipBase64,'base64');assert.equal(compressed.toString('base64'),carrier.gzipBase64);assert.equal(compressed.length,carrier.gzipByteSize);const bytes=gunzipSync(compressed,{maxOutputLength:32*1024*1024}),text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);assert.equal(bytes.length,carrier.decodedByteSize);assert.equal(h.sha256Text(text),carrier.decodedSha256,'DEFINITION_COMPATIBILITY_LEGACY_DECODED_IDENTITY_ORACLE');const payload=JSON.parse(text);assert.equal(payload.schema,'closed-loop-deferred-definition-legacy-fixture/1');assert.equal(payload.earlierCompleteFlagsForced,false);return payload;}
+function readDefinitionLegacyFixture(filename,h){const carrier=JSON.parse(fs.readFileSync(filename,'utf8'));assert.equal(carrier.schema,'closed-loop-deferred-definition-legacy-carrier/1');assert.equal(carrier.encoding,'gzip-base64');const compressed=Buffer.from(carrier.gzipBase64,'base64');assert.equal(compressed.toString('base64'),carrier.gzipBase64);assert.equal(compressed.length,carrier.gzipByteSize);const bytes=gunzipSync(compressed,{maxOutputLength:DEFERRED_LEGACY_FIXTURE_MAX_OUTPUT_BYTES}),text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);assert.equal(bytes.length,carrier.decodedByteSize);assert.equal(h.sha256Text(text),carrier.decodedSha256,'DEFINITION_COMPATIBILITY_LEGACY_DECODED_IDENTITY_ORACLE');const payload=JSON.parse(text);assert.equal(payload.schema,'closed-loop-deferred-definition-legacy-fixture/1');assert.equal(payload.earlierCompleteFlagsForced,false);return payload;}
 function writeDefinitionLegacyFixture(filename,payload,h){const text=JSON.stringify(payload),bytes=Buffer.from(text,'utf8'),compressed=gzipSync(bytes,{level:9});fs.writeFileSync(filename,JSON.stringify({schema:'closed-loop-deferred-definition-legacy-carrier/1',encoding:'gzip-base64',decodedByteSize:bytes.length,decodedSha256:h.sha256Text(text),gzipByteSize:compressed.length,gzipBase64:compressed.toString('base64'),synthetic:true,actualBrowser:false},null,2)+'\n');}
+function deferredFixtureDecoderBounds(){
+ // Literal sizes are independent of the configured decoder bound. Exercise
+ // both real readers with a valid JSON carrier at the limit and one byte over.
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-fixture-bounds-')),filename=path.join(directory,'carrier.json'),h={sha256Text:text=>createHash('sha256').update(text).digest('hex')},r={runtime:{closedLoopHash:h}},observations=[];
+ try{for(const byteSize of [50_331_648,50_331_649]){
+  const payload={schema:'closed-loop-deferred-definition-legacy-fixture/1',synthetic:true,actualBrowser:false,earlierCompleteFlagsForced:false,padding:''};payload.padding='x'.repeat(byteSize-Buffer.byteLength(JSON.stringify(payload)));assert.equal(Buffer.byteLength(JSON.stringify(payload)),byteSize);writeDefinitionLegacyFixture(filename,payload,h);
+  for(const [name,read]of [['shared',()=>readDeferredDefinitionLegacyFixture(r,filename)],['compatibility',()=>readDefinitionLegacyFixture(filename,h)]]){
+   if(byteSize===50_331_648){const decoded=read();assert.equal(decoded.padding.length,payload.padding.length,'DEFERRED_FIXTURE_LIMIT_VALID_CONTROL');assert.equal(decoded.earlierCompleteFlagsForced,false);}
+   else assert.throws(read,error=>error.code==='ERR_BUFFER_TOO_LARGE','DEFERRED_FIXTURE_OVERSIZE_REJECTION');
+   observations.push({reader:name,decodedByteSize:byteSize,accepted:byteSize===50_331_648});
+  }
+ }}finally{fs.rmSync(directory,{recursive:true,force:true});}
+ return {case:'BOUNDED_DEFERRED_FIXTURE_DECODERS',observations,synthetic:true,actualBrowser:false};
+}
 function compatibilityWithoutGlobalClone(r,p,subject,family){const supplied=r.runtime.clone,had=Object.hasOwn(r.runtime,'clone');delete r.runtime.clone;try{return r.engine.deferredDefinitionCompatibilityState(p,subject,family);}finally{if(had)r.runtime.clone=supplied;}}
 function correctionInputWithoutGlobalClone(r,packet,family,id){const supplied=r.runtime.clone,had=Object.hasOwn(r.runtime,'clone');delete r.runtime.clone;try{assert.equal(r.engine.deferredDefinitionCorrectionInputState(packet.p,packet.prompt,family,id).allowed,true,'DEFINITION_COMPATIBILITY_CURRENT_CORRECTION_INPUT_NO_GLOBAL_CLONE_ORACLE');}finally{if(had)r.runtime.clone=supplied;}}
 function savedCorrectionActionWithoutGlobalClone(r,p,stage){
@@ -787,6 +803,8 @@ async function maintainedStageBindingRegressions({only=null}={}) {
  assert.equal(observations.length,only?1:3,'STAGE_BINDING_EXPECTED_POPULATION_ORACLE');assert.equal(faults.length,only?1:3,'STAGE_BINDING_EXPECTED_POPULATION_ORACLE');
  return {stageBindingRegressions:'PASS',observedAtUtc:new Date().toISOString(),nodeVersion:process.version,verifierSha256:runtime().runtime.closedLoopHash.sha256Text(definitionVerifierSource),fixtureSha256:runtime().runtime.closedLoopHash.sha256Text(fs.readFileSync('verification/deferred-definition-compatibility-legacy-fixture-20261005.json','utf8')),observations,faults,sourceHashes:Object.fromEntries(files.map(file=>[file,runtime().runtime.closedLoopHash.sha256Text(sources[file])])),boundary:'Each observation names its boundary. Stage6 restoration and Stage8 version controls use an authored/reviewed archived synthetic prerequisite, actual ZIP, response-file staging/capture/admission, operator callback and transaction-adapter reload. Stage6 membership controls exercise the shared helper on isolated clones and generated context. No real external actor, browser or current-clock authority claimed.',synthetic:true,actualBrowser:false};
 }
+if(process.argv.includes('--fixture-decoder-bounds')){console.log(JSON.stringify(deferredFixtureDecoderBounds()));process.exit(0);}
+if(process.argv.includes('--stage17-correction-parent-controls')){console.log(JSON.stringify(stage17CorrectionParentControls()));process.exit(0);}
 if(process.argv.includes('--stage17-receipt-parent-controls')){console.log(JSON.stringify(stage17DeferredReceiptParentControls()));process.exit(0);}
 if(process.argv.includes('--stage-binding-regressions')){console.log(JSON.stringify(await maintainedStageBindingRegressions({only:process.argv.find(arg=>arg.startsWith('--stage-binding-case='))?.slice('--stage-binding-case='.length)})));process.exit(0);}
 if(process.argv.includes('--definition-compatibility-witness-only')){console.log(JSON.stringify(await verifyDefinitionCompatibilityWitnessReplay(process.argv.find(arg=>arg.startsWith('--definition-compatibility-witness='))?.slice('--definition-compatibility-witness='.length))));process.exit(0);}
@@ -980,6 +998,84 @@ function generateLegitimateDeferredPrefix(){
  for(const [file,digest]of Object.entries(prefix.sourceFingerprints))assert.equal(hash.sha256Text(fs.readFileSync(file,'utf8')),digest,'DEFERRED_PREFIX_SOURCE_IDENTITY_ORACLE: '+file);
  return {prefix,outputDir,setup:{case:'LEGITIMATE_STAGE7_DIAGNOSTIC_PREFIX',childCommand:process.execPath+' verify-operator-counterpart.mjs',hardTimeoutMilliseconds:120000,childExitStatus:0,childStdoutSha256:hash.sha256Text(stdout),sourceFingerprints:prefix.sourceFingerprints,earlierCompleteFlagsForced:false,synthetic:true,actualBrowser:false}};
 }
+function stage17CorrectionParentControls(){
+ // Specification 32.4B preserves the recorded defect and fixture support when
+ // correcting a retained definition. These isolated graph controls establish
+ // no prior stage, exported package, accepted proposal, or completed iteration.
+ const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+ const sources=Object.fromEntries(files.map(file=>[file,fs.readFileSync(file,'utf8')]));
+ const fixture=(overrides={})=>{
+  const r=runtime({...sources,...overrides}),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,h=r.runtime.closedLoopHash;
+  const p=r.core.createBlankState('JOB-STAGE17-PRIOR-CORRECTION-PARENTS');
+  Object.assign(p.job,{CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INST-v001',CURRENT_ITERATION:'ITERATION-NEW'});
+  e.ensureShape(p);
+  const current={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-v001',researchVersion:'RESEARCH-v001',requirementsVersion:'REQ-v001',testSuiteVersion:'TEST-v001',instructionVersion:'INST-v001'};
+  const prior={...current,iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'};
+  const make=(family,fields,{stage=17,scope=prior}={})=>{
+   const row=canonicalFixtureRecord({engine:e,schema:s},p,family,{...recordProposal(s,family).fields,...fields},{stage,source:'SYNTHETIC_CORRECTION_SCOPE_CONTROL'});
+   row.scope=r.copy(scope);e.refreshRecordHashes(row,family);return row;
+  };
+  const requirement=make('requirements',{OBLIGATION:'Preserve the required terminal LF.',STATUS:'ACTIVE'},{stage:4,scope:current});
+  const test=make('tests',{REQ_ID:requirement.id},{stage:6,scope:current});
+  const evidence=make('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'SYNTHETIC_PRIOR_FAILURE',APPLICATION_EVIDENCE_CONTENT:'The isolated prior fixture lacks its terminal LF; no real execution is claimed.',AUTHORITY_TYPE:'AGENT_CLAIM'});
+  const defect=make('defects',{REQ_ID:requirement.id,OBSERVED_FAILURE:'Prior synthetic fixture omitted LF.',EXPECTED_CONDITION:'Preserve LF.',STATUS:'CONFIRMED',SEVERITY:'MAJOR'});
+  defect.evidenceRefs=[evidence.id];e.refreshRecordHashes(defect,'defects');
+  const subject=make('regressions',{REQ_ID:requirement.id,DEFECT_ID:defect.id,EXECUTION_TEST_ID:test.id,FAILURE_FIXTURE:'VERIFIED',EXECUTION_COMPATIBILITY:{}});
+  subject.evidenceRefs=[evidence.id];e.refreshRecordHashes(subject,'regressions');
+  const target=r.copy({kind:'DEFERRED_DEFINITION_COMPATIBILITY',family:'regressions',recordId:subject.id,recordSha256:h.recordSha256(subject),rawResponseId:null,rawResponseSha256:null,stage:17,operation:'REGRESSION',reason:'Retained definition needs supported current correction.'});
+  return {r,e,h,p,requirement,test,evidence,defect,subject,target};
+ };
+ const f=fixture(),{r,e,p,defect,evidence,subject,target}=f;
+ assert.equal(e.timingCurrentRecord(p,'defects',defect.id).truth,'FALSE','STAGE17_ORDINARY_SCOPE_EXCLUDES_PRIOR_PARENT_ORACLE');
+ const graph=e.deferredDefinitionCorrectionInputs(p,target);
+ assert.equal(graph.valid,true);
+ const prompt=r.copy({contextManifest:{deferredDefinitionCorrectionTarget:target,deferredDefinitionCorrectionInputs:graph.binding}});
+ const requireParents=(engine,project,record,parents)=>{
+  for(const [family,row] of parents){
+   assert(record.contextManifest.deferredDefinitionCorrectionInputs.records.some(entry=>entry.family===family&&entry.recordId===row.id&&entry.admissibleReference),'STAGE17_PRIOR_CORRECTION_PARENT_GRAPH_ORACLE');
+   assert.equal(engine.deferredDefinitionCorrectionInputState(project,record,family,row.id).allowed,true,'STAGE17_PRIOR_CORRECTION_PARENT_REFERENCE_ORACLE');
+  }
+ };
+ const parents=[['defects',defect],['evidenceRecords',evidence]];
+ requireParents(e,p,prompt,parents);
+ const negatives=[];
+ for(const [name,mutate] of [
+  ['changed-parent-hash',q=>{q.projectData.defects.find(row=>row.id===defect.id).fields.OBSERVED_FAILURE='Changed';}],
+  ['inactive-parent',q=>{q.projectData.defects.find(row=>row.id===defect.id).active=false;}],
+  ['foreign-parent',q=>{q.projectData.defects.find(row=>row.id===defect.id).jobId='JOB-FOREIGN';}],
+  ['ambiguous-parent',q=>{q.projectData.defects.push(r.copy(q.projectData.defects.find(row=>row.id===defect.id)));}],
+  ['changed-immutable-parent-scope',q=>{const row=q.projectData.defects.find(row=>row.id===defect.id);row.scope.iterationId='ITERATION-OTHER';e.refreshRecordHashes(row,'defects');}],
+  ['wrong-family-identity',()=>{}]
+ ]){
+  const changed=r.copy(p);mutate(changed);
+  assert.equal(e.deferredDefinitionCorrectionInputState(changed,prompt,'defects',name==='wrong-family-identity'?subject.id:defect.id).allowed,false,'STAGE17_PRIOR_CORRECTION_PARENT_NEGATIVE_ORACLE: '+name);
+  negatives.push(name);
+ }
+ for(const [family,row] of [['requirements',f.requirement],['tests',f.test]]){
+  const changed=r.copy(p),parent=changed.projectData[family].find(item=>item.id===row.id);
+  parent.scope.requirementsVersion='REQ-STALE';e.refreshRecordHashes(parent,family);
+  const changedGraph=e.deferredDefinitionCorrectionInputs(changed,target);
+  assert.equal(changedGraph.binding.records.find(entry=>entry.family===family&&entry.recordId===row.id).admissibleReference,false,'STAGE17_CURRENT_GOVERNING_INPUT_REQUIRED_ORACLE');
+  negatives.push('stale-current-'+family);
+ }
+ const forged=r.copy(prompt),unrelated=r.copy(graph.binding.records.find(row=>row.family==='defects'));
+ unrelated.recordId=subject.id;forged.contextManifest.deferredDefinitionCorrectionInputs.records.push(unrelated);
+ assert.equal(e.deferredDefinitionCorrectionInputState(p,forged,'defects',subject.id).allowed,false,'STAGE17_UNRELATED_GRAPH_ENTRY_REJECTED_ORACLE');negatives.push('forged-unrelated-graph-entry');
+ const faults=[];
+ for(const [name,before,after,oracle] of [
+  ['original-scope-omitted-from-graph',"scopeRule=['requirements','tests'].includes(family)?null:originalScope",'scopeRule=null','STAGE17_PRIOR_CORRECTION_PARENT_GRAPH_ORACLE'],
+  ['original-scope-omitted-from-consumer',"e0.timingCurrentRecord(p,family,id,['requirements','tests'].includes(family)?null:entry.scope)",'e0.timingCurrentRecord(p,family,id,null)','STAGE17_PRIOR_CORRECTION_PARENT_REFERENCE_ORACLE']
+ ]){
+  assert.equal(sources['workflow-engine.js'].split(before).length-1,1,'STAGE17_CORRECTION_PARENT_FAULT_ANCHOR_ORACLE');
+  const m=fixture({'workflow-engine.js':sources['workflow-engine.js'].replace(before,after)}),binding=m.e.deferredDefinitionCorrectionInputs(m.p,m.target);
+  const packet=m.r.copy({contextManifest:{deferredDefinitionCorrectionTarget:m.target,deferredDefinitionCorrectionInputs:binding.binding}});
+  assert.throws(()=>requireParents(m.e,m.p,packet,[['defects',m.defect],['evidenceRecords',m.evidence]]),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'STAGE17_CORRECTION_PARENT_OWNING_FAULT_ORACLE: '+name);
+  faults.push({name,oracle,detected:true});
+ }
+ assert.equal(negatives.length,9);assert.equal(faults.length,2);
+ requireParents(e,p,prompt,parents);
+ return {case:'STAGE17_PRIOR_ITERATION_CORRECTION_PARENTS',result:'PASS',sourceHashes:Object.fromEntries(files.map(file=>[file,f.h.sha256Text(sources[file])])),verifierSha256:f.h.sha256Text(definitionVerifierSource),fixtureOwnerSha256:f.h.sha256Text(definitionFixtureSource),ordinaryCurrentScopeExcludesPriorDefect:true,exactOriginalDefectAndEvidenceAllowed:true,currentRequirementsAndTestsRequired:true,negativeCases:negatives,faults,conformingControlRestored:true,synthetic:true,actualBrowser:false,actualStage17Acceptance:false,boundary:'Isolated declared canonical graph -> production correction graph and typed reference consumers. No Stage16 establishment, prompt export, Stage17 commit, stored acceptance, or gate completion claimed.'};
+}
 function requireStage17DeferredReceiptRegression(prefix){
  const result=prefix?.deferredReceiptRegression,oracle='STAGE17_REQUIRED_RECEIPT_REGRESSION_ORACLE';
  assert(result&&typeof result==='object'&&!Array.isArray(result),oracle+': the default original8/30 diagnostic must execute its receipt/freeze/reservation control');
@@ -1049,7 +1145,8 @@ for(const status of ['RESERVED','EXPORTED']){
 if(process.argv.includes('--deferred-cache-only')){const generated=generateLegitimateDeferredPrefix();console.log(JSON.stringify({deferredCachedPackages:'PASS',setup:generated.setup,control:await verifyLegitimateDeferredCachedPackages(generated.prefix)}));process.exit(0);}
 
 const source=fs.readFileSync('workflow-schema.js','utf8'),r=runtime();
-results.push(stage17DeferredReceiptParentControls());results.push(await maintainedStageBindingRegressions());results.push(await verifyDeferredProducerContracts());results.push(await verifyDeferredByteCarrierContracts());
+results.push(deferredFixtureDecoderBounds());
+results.push(stage17CorrectionParentControls());results.push(stage17DeferredReceiptParentControls());results.push(await maintainedStageBindingRegressions());results.push(await verifyDeferredProducerContracts());results.push(await verifyDeferredByteCarrierContracts());
 deferredReviewProvenance(runtime());await deferredArtifactOwnership(runtime());await deferredReservationBoundaries(runtime());await deferredReceiptJourney(runtime());await deferredNativeJourney(runtime());await deferredNativeJourney(runtime(),{executionStage:r.core.STAGES.at(-1).number});await deferredRegressionJourney(runtime());await evidenceChainFrontierCases(runtime());await evidenceChainFrontierCases(runtime(),{requiredBy:29});scalarCases(r);conditions(r);await availability(r);
 regressionIterationBoundary(r);regressionTimingConsumers(r);
 const completedFixture=process.argv.find(arg=>arg.startsWith('--completed-fixture='))?.slice('--completed-fixture='.length);if(completedFixture)await completedPhaseTargets(r,completedFixture);

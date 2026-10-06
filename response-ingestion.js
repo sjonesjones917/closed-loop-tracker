@@ -109,7 +109,7 @@ function remapBlindAliases(envelope,promptRecord){
     if(family)mapped.stageData[name]=typedValue(value,definition,family);
   }
   if(object(mapped.records))for(const [family,rows] of Object.entries(mapped.records)){
-    const definition=schema.RECORD_SCHEMAS[family];if(!definition||!Array.isArray(rows))continue;
+    const definition=Object.hasOwn(schema.RECORD_SCHEMAS,family)?schema.RECORD_SCHEMAS[family]:null;if(!definition||!Array.isArray(rows))continue;
     for(const row of rows){
       if(!object(row))continue;
       if(Object.hasOwn(row,'targetId'))row.targetId=identity(row.targetId,family);
@@ -118,7 +118,7 @@ function remapBlindAliases(envelope,promptRecord){
     }
   }
   for(const row of safe(mapped.evidence)){if(!object(row))continue;reference(row.sourceRef,'sources');reference(row.attachmentRef,'artifacts');}
-  for(const candidate of safe(mapped.humanAuthorityCandidates))if(object(candidate)&&schema.RECORD_SCHEMAS[candidate.targetFamily])candidate.targetId=identity(candidate.targetId,candidate.targetFamily);
+  for(const candidate of safe(mapped.humanAuthorityCandidates))if(object(candidate)&&typeof candidate.targetFamily==='string'&&Object.hasOwn(schema.RECORD_SCHEMAS,candidate.targetFamily))candidate.targetId=identity(candidate.targetId,candidate.targetFamily);
   if(changed)Object.defineProperty(mapped,'__blindAliasRemap',{value:{original:envelope},enumerable:false});
   return {envelope:mapped,changed};
 }
@@ -237,10 +237,52 @@ function responseIdentityTypeIssues(envelope){
   check(envelope,schema.RESPONSE_ECHO_CONTRACT.reservationIdentityFields,'');
   return issues;
 }
+// Type errors must stop before semantic consumers coerce identities or labels.
+// Keep the original JSON and use the existing field/identity contracts; this
+// pass neither normalizes values nor supplies missing producer data.
+function responseNestedTypeIssues(envelope,stage,promptRecord){
+  const issues=[],string=schema.RESPONSE_ECHO_CONTRACT.envelopeFields.jobId;
+  const check=(value,definitions,path)=>{if(!object(value))return;for(const [key,definition]of Object.entries(definitions||{}))if(Object.hasOwn(value,key)){const found=[],fieldPath=path+'/'+pointerEscape(key);validateValue(definition,value[key],fieldPath,found,{maxTextFieldLength:Infinity,rejectPlaceholder:false});const types=found.filter(item=>['WRONG_VALUE_TYPE','PROHIBITED_NULL'].includes(item.code));issues.push(...types);if(types.length&&definition.producer&&!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',fieldPath,`${key} is owned by ${definition.producer}; the agent cannot set it.`));}};
+  const carriers=schema.CARRIER_FIELD_CONTRACTS.objects.responseEnvelope.fieldDefinitions;
+  check(envelope,Object.fromEntries(['promptIdentity','scope','stageData','records','humanInputRequests','humanAuthorityCandidates','evidence','unresolved','warnings','attachments'].map(key=>[key,carriers[key]])),'');
+  check(envelope.scope,Object.fromEntries(RESPONSE_SCOPE_KEYS.map(key=>[key,key==='projectRevision'?schema.RESPONSE_ECHO_CONTRACT.envelopeFields.stage:string])),'/scope');
+  for(const key of schema.STAGE_OPERATION_SCOPE_MATRIX[`${stage}:${promptRecord?.operation}`]?.requiredDimensions||[])if(object(envelope.scope)&&Object.hasOwn(envelope.scope,key)&&typeof envelope.scope[key]!=='string')issues.push(issue('MISSING_REQUIRED_SCOPE','/scope/'+key,`Required operation scope ${key} is missing or unresolved.`));
+  for(const key of RESPONSE_SCOPE_KEYS)if(issues.some(item=>item.path==='/scope/'+key)&&JSON.stringify(envelope.scope?.[key]??null)!==JSON.stringify(promptRecord?.scope?.[key]??null))issues.push(issue('STALE_SCOPE','/scope/'+key,`Scope ${key} does not match the controlling prompt.`));
+  const keys={attachments:ATTACHMENT_KEYS,evidence:EVIDENCE_KEYS,humanInputRequests:QUESTION_KEYS,humanAuthorityCandidates:HUMAN_AUTHORITY_CANDIDATE_KEYS,unresolved:UNRESOLVED_KEYS,warnings:WARNING_KEYS};
+  const shapes={temporaryKey:string,affectedStageFields:{valueType:'STRING_ARRAY',nullable:false},affectedRecords:{valueType:'STRING_ARRAY',nullable:false},allowedValues:{valueType:'STRING_ARRAY',nullable:false},blocking:{valueType:'BOOLEAN',nullable:false},required:{valueType:'BOOLEAN',nullable:false},byteSize:{valueType:'INTEGER',nullable:false},sourceRef:{valueType:'OBJECT',nullable:false},attachmentRef:{valueType:'OBJECT',nullable:false},value:{valueType:'JSON',nullable:true}};
+  const reference=(value,path,code='INVALID_RELATIONSHIP_REFERENCE')=>{if(value===undefined)return;if(object(value))check(value,Object.fromEntries(schema.RESPONSE_RELATIONSHIP_REFERENCE_KEYS.map(key=>[key,string])),path);if(!validResponseIdentity(value))issues.push(issue(code,path,'Provide exactly one present tempKey or recordId member containing a nonempty STRING with its exact published identity.'));};
+  for(const [family,names]of Object.entries(keys))for(const [index,value]of safe(envelope[family]).entries()){
+    const path='/'+family+'/'+index;
+    const definitions={...Object.fromEntries(names.filter(key=>key!=='notes'&&key!=='byteSize'&&(key!=='allowedValues'||['CHOICE','MULTI_CHOICE'].includes(value?.answerType))).map(key=>[key,shapes[key]||string])),...schema.RESPONSE_NESTED_FIELD_CONTRACTS[family]};
+    if(family==='evidence')for(const [name,mapping]of Object.entries(schema.RESPONSE_EVIDENCE_FIELD_MAP))definitions[name]=schema.RECORD_SCHEMAS.evidenceRecords.fieldDefinitions[mapping.canonicalField];
+    if(family==='attachments')Object.assign(definitions,{attachmentSlotId:schema.ATTACHMENT_SLOT_CONTRACT.fieldDefinitions.attachmentSlotId,role:schema.ATTACHMENT_SLOT_CONTRACT.fieldDefinitions.role,required:schema.ATTACHMENT_SLOT_CONTRACT.fieldDefinitions.required,filename:schema.RECORD_SCHEMAS.artifacts.fieldDefinitions.FILENAME,sha256:schema.RECORD_SCHEMAS.artifacts.fieldDefinitions.SHA256,mediaType:schema.CARRIER_FIELD_CONTRACTS.objects.handoffMember.fieldDefinitions.mediaType});
+    check(value,definitions,path);
+    if(family==='humanAuthorityCandidates'&&value?.authorityClass==='HUMAN_DECISION'){
+      if(Object.hasOwn(value,'decisionPurpose')&&typeof value.decisionPurpose!=='string')issues.push(issue('INVALID_HUMAN_DECISION_PURPOSE',path+'/decisionPurpose','decisionPurpose must be a STRING containing exactly one published controlled human-decision purpose; no coercion, trimming, or case normalization is performed.'));
+      if(['targetFamily','targetId'].some(key=>Object.hasOwn(value,key)&&typeof value[key]!=='string'))issues.push(issue('INVALID_HUMAN_DECISION_TARGET_IDENTITY',path+'/targetId','A HUMAN_DECISION target must match the published humanDecisionTargetContract and exact current application-provided subject. Correct the controlled target; use HUMAN only when the answer is an ordinary human fact or preference.'));
+    }
+    if(family==='attachments'&&object(value)&&Object.hasOwn(value,'filename')&&typeof value.filename!=='string')issues.push(issue('INVALID_ATTACHMENT_FILENAME',path+'/filename','filename must be a string.'));
+    if(family==='evidence'&&object(value)){reference(value.sourceRef,path+'/sourceRef','INVALID_EVIDENCE_SOURCE_REF');reference(value.attachmentRef,path+'/attachmentRef','INVALID_EVIDENCE_ATTACHMENT_REF');}
+  }
+  if(object(envelope.stageData))check(envelope.stageData,schema.STAGE_FIELDS[stage],'/stageData');
+  if(object(envelope.records))for(const [family,rows]of Object.entries(envelope.records)){
+    const path='/records/'+pointerEscape(family),found=[];validateValue({valueType:'OBJECT_ARRAY',nullable:false},rows,path,found);issues.push(...found);
+    if(!Object.hasOwn(schema.RECORD_SCHEMAS,family)){issues.push(issue('UNKNOWN_COLLECTION',path,`Unknown canonical collection ${family}.`));continue;}
+    for(const [index,row]of safe(rows).entries()){
+      check(row,{...Object.fromEntries(schema.RESPONSE_RECORD_IDENTITY_CONTRACT.allowedKeys.map(key=>[key,string])),fields:{valueType:'OBJECT',nullable:false},relationships:{valueType:'OBJECT',nullable:false},evidenceRefs:{valueType:'STRING_ARRAY',nullable:false}},path+'/'+index);
+      if(!object(row))continue;
+      if(!validResponseIdentity(row,schema.RESPONSE_RECORD_IDENTITY_CONTRACT))issues.push(issue('INVALID_RECORD_IDENTITY',path+'/'+index,'Provide exactly one present tempKey or targetId member containing a nonempty STRING with its exact published identity.'));
+      if(object(row.fields)&&Object.hasOwn(schema.RECORD_SCHEMAS,family))check(row.fields,Object.fromEntries(Object.keys(row.fields).filter(name=>Object.hasOwn(schema.RECORD_SCHEMAS[family].fieldDefinitions,name)).map(name=>[name,schema.recordResponseFieldDefinition(family,name)])),path+'/'+index+'/fields');
+      if(object(row.relationships))for(const [name,value]of Object.entries(row.relationships))reference(value,path+'/'+index+'/relationships/'+pointerEscape(name));
+    }
+  }
+  return issues;
+}
 function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResponseId=null,files=[]}={}){
   const canonical=canonicalEnvelopeState(envelope);if(!canonical.valid)return {valid:false,issues:[canonical.issue],errorCount:1,warningCount:0,checkedAt:now(),responseSchema:null,responseType:null,canonicalEnvelopeSha256:null};
   workflow.ensureShape(project);
   const issues=responseIdentityTypeIssues(envelope);
+  issues.push(...responseNestedTypeIssues(envelope,Number(stage),promptRecord));
   if(issues.length)return {valid:false,issues,errorCount:issues.length,warningCount:0,checkedAt:now(),responseSchema:typeof envelope.schema==='string'?envelope.schema:null,responseType:typeof envelope.responseType==='string'?envelope.responseType:null,canonicalEnvelopeSha256:canonical.sha256};
   if(schema.deferredExecutionFamily(Number(stage),envelope.operation)){
     try{const item=workflow.currentDeferredExecution(project,Number(stage),envelope.operation);if(item.native)throw new Error('Use the application-owned native execution control.');if(hash.stableStringify(item.binding)!==hash.stableStringify(promptRecord?.contextManifest?.deferredExecutionBinding))throw new Error('The deferred fixture or its current target changed; regenerate the operation.');}

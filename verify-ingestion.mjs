@@ -3,7 +3,7 @@ import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
 import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {verifyIngestionContextReferences,verifyHumanDecisionCandidateTargets,verifyExternalResponseIdentityShape,verifyCanonicalResponseRecovery,verifyResponseCanonicalValueBoundaries} from './test-ingestion-context-reference.mjs';
-import {verifyResponseTypeBoundaries,verifyStage01CaptureCacheCompatibility,verifyResponseIdentityUiBoundary,verifyStage01LegacyCaptureTypes,verifyStage01LegacyNewResponses,verifyObligationDispositionTypes,verifyRepresentationObservationTypes} from './test-response-type-boundaries.mjs';
+import {verifyNestedResponseTypeSafety,verifyResponseTypeBoundaries,verifyStage01CaptureCacheCompatibility,verifyResponseIdentityUiBoundary,verifyStage01LegacyCaptureTypes,verifyStage01LegacyNewResponses,verifyObligationDispositionTypes,verifyRepresentationObservationTypes} from './test-response-type-boundaries.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -231,7 +231,7 @@ function negativeAt(name,stage,mutate,expectedCode){
   negativeObservations.push({checkId:'ingestion.invalid.'+name.replaceAll(' ','-'),name,stage,expectedCode,observedCodes:prepared.validation.issues.map(issue=>issue.code),accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length});
   negativeCount++;
 }
-function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);e.scope[key]=`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: stale scope mutated canonical state.`);scopeChecks.push({checkId:`scope.${stage}.${key}.${name.replaceAll(' ','-')}`,stage,key,expected:'STALE_SCOPE',code:prepared.validation.issues.find(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`).code,accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length});negativeCount++;}
+function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);const control=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert.equal(control.validation.valid,true,`SCOPE_CURRENT_CONTROL: ${name}`);e.scope[key]=key==='projectRevision'?e.scope[key]+1:`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert.equal(prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path===`/scope/${key}`),false,`SCOPE_TYPED_STALE_CONTROL: ${name}`);if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: stale scope mutated canonical state.`);scopeChecks.push({checkId:`scope.${stage}.${key}.${name.replaceAll(' ','-')}`,stage,key,expected:'STALE_SCOPE',code:prepared.validation.issues.find(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`).code,currentControlAccepted:control.validation.valid,staleValueTypeConforming:!prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path===`/scope/${key}`),accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length});negativeCount++;}
 const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode);
 
 // The envelope must obey the same STRING and closed-reference contracts as
@@ -334,6 +334,12 @@ negative('stale contract hash',(e)=>{e.promptIdentity.contractSha256='0'.repeat(
 negative('stale context signature',(e)=>{e.promptIdentity.contextSignature='0'.repeat(64);},'STALE_CONTEXT_SIGNATURE');
 for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',2,'inputVersion'],['source set version',3,'sourceSetVersion'],['requirements version',5,'requirementsVersion'],['test suite version',7,'testSuiteVersion'],['instruction version',9,'instructionVersion'],['iteration',11,'iterationId'],['candidate',11,'candidateId'],['run',11,'runId'],['context',11,'contextId'],['baseline',21,'baselineId'],['product',21,'productId']])scopeNegative(name,stage,key);
 scopeNegative('non-required populated scope identity',2,'baselineId');
+// Literal remaining transport dimensions from Sections14.6/17.5 and the
+// unchanged-confirmation/product/delivery scope contracts. evidenceChainVersion
+// belongs to application/operator stages, so it is tested as a prohibited extra.
+for(const [name,stage,key] of [['research version',3,'researchVersion'],['source converged iteration',19,'sourceConvergedIterationId'],['confirmation iteration',19,'confirmationIterationId'],['product version',23,'productVersion'],['delivery candidate set',25,'deliveryCandidateSetId'],['review version',26,'reviewVersion'],['reconciled review version',27,'reconciledReviewVersion'],['release identity',29,'releaseId'],['hash review identity',29,'hashReviewId'],['prohibited evidence-chain version',2,'evidenceChainVersion']])scopeNegative(name,stage,key);
+assert.deepEqual([...new Set(scopeChecks.map(row=>row.key))].sort(),['projectRevision',...new Set(Object.values(schema.STAGE_OPERATION_SCOPE_MATRIX).flatMap(contract=>contract.requiredDimensions))].sort(),'SCOPE_DIMENSION_POPULATION_ORACLE');
+
 negative('blocked human input uses wrong recovery lane',(e)=>{e.responseType='BLOCKED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'human-needed',kind:'MISSING_HUMAN_INPUT',description:'Human decision required',whyBlocking:'Only the human can supply this authority.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'WRONG_RECOVERY_CHANNEL');
 negative('execution failed without an attempted failure',(e)=>{e.responseType='EXECUTION_FAILED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'capability-missing',kind:'MISSING_CAPABILITY',description:'Required capability is unavailable',whyBlocking:'The operation cannot begin without the capability.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MISSING_EXECUTION_FAILURE_DETAIL');
 negative('cross-project response',(e)=>{e.jobId='JOB-CROSS-PROJECT';},'WRONG_JOB_ID');
@@ -428,6 +434,7 @@ negative('unresolved evidence attachment',(e)=>{e.evidence[0].attachmentRef={rec
 
 await verifyHumanDecisionCandidateTargets();
 await verifyExternalResponseIdentityShape();
+console.log(JSON.stringify(await verifyNestedResponseTypeSafety()));
 console.log(JSON.stringify(await verifyResponseTypeBoundaries()));
 console.log(JSON.stringify(await verifyStage01CaptureCacheCompatibility()));
 console.log(JSON.stringify(await verifyResponseIdentityUiBoundary()));
@@ -439,9 +446,11 @@ await verifyCanonicalResponseRecovery();
 await verifyResponseCanonicalValueBoundaries();
 
 negative('invalid record identity',(e)=>{e.stageData={};const r=sourceProposal('source-both');r.targetId='SOURCE-ALSO';e.records={sources:[r]};},'INVALID_RECORD_IDENTITY');
-negativeAt('unresolved relationship',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]};},'UNRESOLVED_RELATIONSHIP');
+// The published research PASS_NUMBER field is STRING. Keep relationship
+// counterexamples free of an unrelated type error that stops before lookup.
+negativeAt('unresolved relationship',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-1',fields:{PASS_NUMBER:'1',EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]};},'UNRESOLVED_RELATIONSHIP');
 negativeAt('wrong relationship type',14,(e)=>{e.stageData={};e.records={rootCauses:[{tempKey:'wrong-type',fields:{CATEGORY:'INSTRUCTION',LAYER_TRACE:'trace',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'cause',EVIDENCE:'evidence',DOWNSTREAM_INVALIDATION:'downstream'},relationships:{DEFECT_ID:{tempKey:'wrong-type'}},evidenceRefs:['evidence-1']}]};},'WRONG_RELATIONSHIP_TYPE');
-negativeAt('wrong relationship cardinality',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-cardinality',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:[{recordId:'SOURCE-A'},{recordId:'SOURCE-B'}]},evidenceRefs:['evidence-1']}]};},'INVALID_RELATIONSHIP_REFERENCE');
+negativeAt('wrong relationship cardinality',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-cardinality',fields:{PASS_NUMBER:'1',EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:[{recordId:'SOURCE-A'},{recordId:'SOURCE-B'}]},evidenceRefs:['evidence-1']}]};},'INVALID_RELATIONSHIP_REFERENCE');
 negative('mixed human input response',(e)=>{e.responseType='HUMAN_INPUT_REQUIRED';e.humanInputRequests=[{temporaryKey:'q',question:'Need input?',whyRequired:'Human authority required.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
 negative('mixed blocked response',(e)=>{e.responseType='BLOCKED';e.unresolved=[{temporaryKey:'u',kind:'MISSING_AUTHORITY',description:'Missing authority',whyBlocking:'Cannot proceed',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
 negative('mixed execution failed response',(e)=>{e.responseType='EXECUTION_FAILED';e.unresolved=[{temporaryKey:'u',kind:'EXECUTION_FAILURE',description:'Execution failed',whyBlocking:'Cannot proceed',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MIXED_RESPONSE_TYPE');

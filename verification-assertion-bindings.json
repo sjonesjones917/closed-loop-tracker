@@ -1388,8 +1388,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261005.json",
-          "sha256": "ae736981458bbb9bc90d57cd0091a682f06713aa014008d9b256454b64671f7a"
+          "path": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261006.json",
+          "sha256": "68d3d88c0157b8f5d3ffbd7c6f15cf7272aae66031126203a7af12c6f8b1f26c"
         }
       }
     },
@@ -1445,8 +1445,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261005.json",
-          "sha256": "5f1ad757bf114341732eb0736f32e1bdc0e3d0211a861042dc39addc175035af"
+          "path": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261006.json",
+          "sha256": "f4bc4e07b1a20b9314f31609901cfc032412100bd556f969a0844681b507714e"
         }
       }
     },
@@ -1502,8 +1502,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261005.json",
-          "sha256": "77cccf1c0c7eeb08c5e8cc5fa6f46d275b44692b9f3c753def5b938d413b7d9a"
+          "path": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261006.json",
+          "sha256": "37a234ff30cc8c7e161c45048fb494c8ed0f96124ffa029470a415aac213fd4c"
         }
       }
     },
@@ -1559,8 +1559,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261005.json",
-          "sha256": "2e64eed4b2f3c3514742d7163ba6fef6759ef19192a900bc896167b9247195ea"
+          "path": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261006.json",
+          "sha256": "2b33cb6c566a0f6ea86f7accfb1587d9bed918f41c39988662f3483a1ba36a73"
         }
       }
     },
@@ -1616,8 +1616,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261005.json",
-          "sha256": "0a6056a53fdada98f47a2a623959886e5b29c74510d97a9d092f508f0b7a5256"
+          "path": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261006.json",
+          "sha256": "2c89eaaaa076928ac900f8d2354411ad5ce10f053a2dd9048c92f365738ae277"
         }
       }
     },
@@ -1673,8 +1673,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261005.json",
-          "sha256": "76f2bf43279c7e82c5c64df461dba38789c81ee5ec65550b848461c42f445ca8"
+          "path": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261006.json",
+          "sha256": "87b2a44ef43e03f4dbbc28b08aa2aa8f3af2a253f7427054abd71af29fc5e76c"
         }
       }
     },
@@ -1730,8 +1730,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261005.json",
-          "sha256": "c22c631c9b20ac9596a1da6e3d42e43acba9b57cf3fa69526ad0870348f19ec9"
+          "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261006.json",
+          "sha256": "ad1d6d39562e66c4dd7b4e28274370f4edd500620349aa951c265a006bd28920"
         }
       }
     },
@@ -1787,8 +1787,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261005.json",
-          "sha256": "6ef09b1ed2cf5ed6b8001fd24ca8d11e2889154485243c3ff9b368b9342ea82d"
+          "path": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261006.json",
+          "sha256": "5d526d798b473817c08ed07e797244bb234f4a6dcca289a2cdc5573c1bc71d0f"
         }
       }
     },
@@ -1844,8 +1844,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261005.json",
-          "sha256": "dc25ec4683c3d13af16b147766cc78d2f97b32b53dd5d842f4c0198f7e2d1bca"
+          "path": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261006.json",
+          "sha256": "e50c3671d3bf1b85639e9ae7ffd0736457f54ac5a93df14a6fa3c17346aabf5b"
         }
       }
     },
@@ -1901,8 +1901,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261005.json",
-          "sha256": "0b325498bc2ae1d2c1b5bd7432620bfa15e85ce23bd61e9fa9cc6630912df1ac"
+          "path": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261006.json",
+          "sha256": "0e658250172561cb24041405c95b4d4f47e003f26f9323068f2e62441acd854d"
         }
       }
     },
@@ -1958,8 +1958,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261005.json",
-          "sha256": "eb01df3bfc9894028eb965c9da58aad63b2fc46a57d671f3d18487335374eeb1"
+          "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261006.json",
+          "sha256": "7f330375a8aa34c5b6b321fb86c49c56523537e662bee3574ce9935a8166b575"
         }
       }
     },
@@ -2015,8 +2015,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261005.json",
-          "sha256": "23fb0bd8db4e682a4b25f828d92e581ba62a249c592d9a05cc42956be34923fb"
+          "path": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261006.json",
+          "sha256": "49191a07a8079351515cfed4fab884be6376f18359f9c9f3556eb58cae8ef8ff"
         }
       }
     },
@@ -2072,8 +2072,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261005.json",
-          "sha256": "4a33f70c58a027cd7636ee9b020676fab820a2c6abd081df30df95d5e0a143b1"
+          "path": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261006.json",
+          "sha256": "03980df41c662a5d242b27e3e8f86078db1bba48cd9bcd638abe8cc1a010eee5"
         }
       }
     },
@@ -2129,8 +2129,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261005.json",
-          "sha256": "14540e1076a650867f82059eb28ce39747cc5ca48591c4f58b853b8ac140159e"
+          "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261006.json",
+          "sha256": "817584bc66d445538651d001fe7e7d4927dd4f7865f2dcd2601ba37fd05f9cd4"
         }
       }
     },
@@ -2186,8 +2186,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261005.json",
-          "sha256": "1450665ca9002f79029fffcf90404e815c2f9d382a177e0503f1301407913eff"
+          "path": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261006.json",
+          "sha256": "e9c67f51707deb6792bb23f3d5bf172ed112a0f14507bc4ae19bbbec3dd3cba9"
         }
       }
     },
@@ -2243,8 +2243,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261005.json",
-          "sha256": "c7a5088e424b9a79bcdd17783fc75f56fd8f802fcd349d6b4e7cbded507a455a"
+          "path": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261006.json",
+          "sha256": "4dd39c3b479ffceb1801822db273e2b682f44fc689103ec2ceb43863180ef845"
         }
       }
     },
@@ -2300,8 +2300,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261005.json",
-          "sha256": "dd2be76cceeacde721d72a01a4f3ff2d69af73a41b8836057969f8dc86bf8883"
+          "path": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261006.json",
+          "sha256": "76610af3f23729a6ea35e6dfde7414a9429ee12a441d8c965f07892b036085dd"
         }
       }
     },
@@ -2357,8 +2357,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261005.json",
-          "sha256": "22a647965c2cae976e5cc4eaf1c32a185adf84b121306db71dc3c8bec70f0ab1"
+          "path": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261006.json",
+          "sha256": "1d4e28123c99e3c326ecec9cd9b7cfa16453f407a759a36ec570ffa95963a558"
         }
       }
     },
@@ -2414,8 +2414,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261005.json",
-          "sha256": "98fc235e4a1cf01e0b58c3e937617b17ec705900fc369e67d93cfcabf07796b1"
+          "path": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261006.json",
+          "sha256": "d77e8a51df43b4b5689ba04f1eb3a0ca96305e666d4acf02ef622c2e3c6e4a38"
         }
       }
     },
@@ -2471,8 +2471,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261005.json",
-          "sha256": "44f0cfdff3492812b49b0205b927b12a825c675b0fb72e92f067e8f2ec0e35f5"
+          "path": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261006.json",
+          "sha256": "042c9464555bc9a913045833bad9f973394abefd0fb560f0fd56626b98a978ca"
         }
       }
     },
@@ -2528,8 +2528,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261005.json",
-          "sha256": "6532ec1a1f2628ae2cdc2626732361be9641ed23d8fbbfca37f78a09054142c9"
+          "path": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261006.json",
+          "sha256": "a41888b002e61ff5c21447c6e0911e7203925d0554615c4d88b231cbfb545317"
         }
       }
     },
@@ -2585,8 +2585,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261005.json",
-          "sha256": "de902996d08a94ea3de7c940327f44b75b5ef897bf21d4cd118fa7953dee5af8"
+          "path": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261006.json",
+          "sha256": "5844be77cc48c05643bc79bae8ad971f92686af784598eb59ea48adfad1b5462"
         }
       }
     },
@@ -2642,8 +2642,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261005.json",
-          "sha256": "c3a549bc1cc0a3310aff32ac8e554d27b1237556f385098ac3737ebc19648080"
+          "path": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261006.json",
+          "sha256": "54326007139a1ba3bdeab61852bf7dc4249c362cd748327eecb7f72e0bbd0b05"
         }
       }
     },
@@ -2699,8 +2699,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261005.json",
-          "sha256": "82e69576d67cfba709676995a8bcd5c91bb738565e10f6673723556675ec29a5"
+          "path": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261006.json",
+          "sha256": "520d432e37c4ad505ba6ea7719d2c35af931f899a5d514b41a8b754a77cca155"
         }
       }
     },
@@ -2756,8 +2756,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261005.json",
-          "sha256": "df27efc0e9a37b9e826a1585c1bf3de4d6ac39e963161b03813977b34ce58c3e"
+          "path": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261006.json",
+          "sha256": "4224a3c11f3c34526e005161f9e79a36c255d0fea6008981492c5b5105348443"
         }
       }
     },
@@ -2813,8 +2813,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261005.json",
-          "sha256": "7018f833bb8428bcbee961527fddc1b220173ea385bde4a4edd2b33703807583"
+          "path": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261006.json",
+          "sha256": "73efc27afac2d2413ed982e3740c986ba9fbbd695e1f8e5594852c09a170adcb"
         }
       }
     },
@@ -2870,8 +2870,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261005.json",
-          "sha256": "3ab33b253a84b49aeaf535d42d26e63bb3223b4cd83bc816e25ff4335b1b24dd"
+          "path": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261006.json",
+          "sha256": "d669cc9ce4b206e45b2f19da858ae18991e767b03174ae0da9f363004f88030b"
         }
       }
     },
@@ -2934,8 +2934,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261005.json",
-          "sha256": "6a96a8046cb8e395fb29f1e40f04fac7b139e71a295696483c230bba0cf8854d"
+          "path": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261006.json",
+          "sha256": "d6edf90d6c49030500df31ac195ad4b9dcdb2de043ab4ce1ed5e5ffe078a23af"
         }
       }
     },
@@ -3004,8 +3004,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261005.json",
-          "sha256": "b41f08e2128e086f74209eaba6cdab48864964d5c671f4e99a6a3755c4761fca"
+          "path": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261006.json",
+          "sha256": "fa694f2c062fe7fd47eb270489e453818ab2fef34b8ef42848bb4b5fac111646"
         }
       }
     },
@@ -3025,7 +3025,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / normalizeTestRecords / markLegacyNonGating / migrationValuesEqual / archiveCurrentLegacyContainers / ensureV3Defaults",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -3064,8 +3064,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261005.json",
-          "sha256": "edf1565f3d1c31fd730649421a6a41e91fd87c3ea7ed9b9b9d60ec1fd2338ef4"
+          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261006.json",
+          "sha256": "d87d5e6b71581837c68830bccb007e31fc120b6836573af7e3a23d00696bca4f"
         }
       }
     },
@@ -3085,7 +3085,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / normalizeTestRecords / markLegacyNonGating / migrationValuesEqual / archiveCurrentLegacyContainers / ensureV3Defaults",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -3124,8 +3124,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261005.json",
-          "sha256": "2943fb8b9673435da603ec87e3b9229ce23f98d0be8c397f81960fff5ab1f735"
+          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261006.json",
+          "sha256": "4d87f8e42f9b680689e8715ca65d0cd8ab23ee0f12cb607e831878635f91fe6c"
         }
       }
     },
@@ -3145,7 +3145,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / normalizeTestRecords / markLegacyNonGating / migrationValuesEqual / archiveCurrentLegacyContainers / ensureV3Defaults",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -3180,8 +3180,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261005.json",
-          "sha256": "da13dd891eee2a6152e90d010263131dbff0fea903629790a0fea5bace1dca42"
+          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261006.json",
+          "sha256": "1cfd2a935bf7ca6c320f293d3fd476e6d5c4bf36282b8eaa0dbe7af43cec4e4b"
         }
       }
     },
@@ -3201,7 +3201,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / normalizeTestRecords / markLegacyNonGating / migrationValuesEqual / archiveCurrentLegacyContainers / ensureV3Defaults",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -3236,8 +3236,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261005.json",
-          "sha256": "32cdbf79c7d4d7a476e3e254f06d6841b46e6a134f7827b5bf3e7627af78908c"
+          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261006.json",
+          "sha256": "b16c44ac79d2e0f9697468ff1fd1c89829ac0631c8e90d29c7b3fae3997eb3dc"
         }
       }
     },
@@ -3257,7 +3257,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / normalizeTestRecords / markLegacyNonGating / migrationValuesEqual / archiveCurrentLegacyContainers / ensureV3Defaults",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -3292,8 +3292,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261005.json",
-          "sha256": "cde8a5d33cabb20d8d59a72ece4d4df1b186cfae5efa09f6d3a996cc2e56294a"
+          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261006.json",
+          "sha256": "7c6fc3ff58e545adf8fa6a319d079f3a27c27bc2acd67339bbdcee242f7c6e66"
         }
       }
     },
@@ -3314,12 +3314,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "f6cf08bad0c9d4b8de0e20cdb4ecda9e92f94d1980ef06bbb4568a9e6db92c7b"
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           }
         ],
         "obligations": [
@@ -3361,8 +3361,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261005.json",
-          "sha256": "90de8ae00ea7e27c5ea64aaf4b1471e5998173e4065af71886769adc916acc04"
+          "path": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261006.json",
+          "sha256": "73794f9f0dfd9a9baab884a6dc1d369cd17135ea01d3779513c756828d928ffb"
         }
       }
     },
@@ -3383,12 +3383,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "f6cf08bad0c9d4b8de0e20cdb4ecda9e92f94d1980ef06bbb4568a9e6db92c7b"
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           }
         ],
         "obligations": [
@@ -3430,8 +3430,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261005.json",
-          "sha256": "e9d12568f6f8903a1b66f475c026d1003c6c59f1768b940ba24847227df2dad5"
+          "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261006.json",
+          "sha256": "1712653af60e3a57a8b5e5b0e93cd33ed49d7a0bd1e22d44654d21e5b0910cb2"
         }
       }
     },
@@ -3452,12 +3452,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "f6cf08bad0c9d4b8de0e20cdb4ecda9e92f94d1980ef06bbb4568a9e6db92c7b"
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           }
         ],
         "obligations": [
@@ -3499,8 +3499,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261005.json",
-          "sha256": "5f6e20756af4e461d12d3b0d31b1a03b52b3dd947c2cb0b8289515e25ffc84ca"
+          "path": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261006.json",
+          "sha256": "452e381f5749fb09fce9db1ff707bf9fde9f05eee08a6538fd8c910158c8ba2a"
         }
       }
     },
@@ -3521,12 +3521,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "f6cf08bad0c9d4b8de0e20cdb4ecda9e92f94d1980ef06bbb4568a9e6db92c7b"
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           }
         ],
         "obligations": [
@@ -3568,8 +3568,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261005.json",
-          "sha256": "a12a60f62ab501ec499b95ffc4258eccea6de0994896ce34020b536ebd3a839e"
+          "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261006.json",
+          "sha256": "620622acc039efcf38c15af5f95ecfeace8a6e9d097880e26f2f3e852f9a9422"
         }
       }
     },
@@ -3590,12 +3590,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "f6cf08bad0c9d4b8de0e20cdb4ecda9e92f94d1980ef06bbb4568a9e6db92c7b"
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           }
         ],
         "obligations": [
@@ -3637,8 +3637,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261005.json",
-          "sha256": "68180b9383019492c4e5660de20e998182e21b45afab95661cf21422ab32dd8a"
+          "path": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261006.json",
+          "sha256": "23848571579194a5541b10bc587257ef62671581a7d6f80d65f0f2c874915fd1"
         }
       }
     },
@@ -3663,7 +3663,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "canonicalDecimal / isCanonicalNumber / reducedNumber",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -3693,8 +3693,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261005.json",
-          "sha256": "f8c18e4339278370751ff0db5723c31878451b281466460055c1e156bd6e3146"
+          "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261006.json",
+          "sha256": "aaea900f0b24a8375b34c7bcea1f73384204f8bf1ede65ecf06ec38d70201646"
         }
       }
     },
@@ -3744,8 +3744,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261005.json",
-          "sha256": "8447ac82553c5f9059f6cdcd8cb1cf52bcea204f3ece943a0ad751ee89a40280"
+          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261006.json",
+          "sha256": "540637ff14cf765c1cc71869882363b98f22b4cc74b3607d110755b4e517ee1c"
         }
       }
     },
@@ -3800,8 +3800,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7add6f24a57198b72b500e5a2acf1ca6-20261005.json",
-          "sha256": "043fecc05d4c79f72132c4ea514a9fa4beacb14f1371867d834fdb8982099027"
+          "path": "verification/requirement-coverage-NREQ-7add6f24a57198b72b500e5a2acf1ca6-20261006.json",
+          "sha256": "497a7aa6e35b329ce304a068e5b10bae1079281bd5e5b44e1eef63aba6e98596"
         }
       }
     },
@@ -3851,8 +3851,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261005.json",
-          "sha256": "70df272d43434d323ae569827c89dfa6d6cd88aff12e479b7da03d39e22cf45f"
+          "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261006.json",
+          "sha256": "c7d63180d2970a2b079dad0aba8705a53a18cc042b08985673f9a7f6ce110dfd"
         }
       }
     },
@@ -3902,8 +3902,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261005.json",
-          "sha256": "ebe1fff387234103bae7651ee9833d149cbc07b3a5e39dc0a35b30d060c53a86"
+          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261006.json",
+          "sha256": "9f45f8a6984d6744031b529926cadc09c4eff0eee74af88d0c8e6837d6891a26"
         }
       }
     },
@@ -3953,8 +3953,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261005.json",
-          "sha256": "36c037a82d080c2b525ee7428fd53d0b2c59676fd796e8acc8be59b5ac69eabc"
+          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261006.json",
+          "sha256": "0218bb33b661298e05a836a693b3813e518aa63398c796d8e3513d52999feaa1"
         }
       }
     },
@@ -4004,8 +4004,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261005.json",
-          "sha256": "2022cbf17e50777b289e9e7dbc1fc2810ee54e99591fa96551f734bc97009255"
+          "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261006.json",
+          "sha256": "a6d0eb911a90e29d9cea72124c92d59ab6c4ce34e9fe146c9641a2be5b462b1c"
         }
       }
     },
@@ -4060,8 +4060,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261005.json",
-          "sha256": "ae9f2407f539cf27c6b8c052486bf89789a11f65a890a30bd08e3f82bcc9312f"
+          "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261006.json",
+          "sha256": "9efb46aace15acbe487920d9356f32da518ba656fa5719f5bc0d8eb6661cdcea"
         }
       }
     },
@@ -4081,7 +4081,7 @@
           {
             "path": "project-store.js",
             "symbol": "writeProjectRow / writeProject / restoreCheckpoint",
-            "sha256": "f6cf08bad0c9d4b8de0e20cdb4ecda9e92f94d1980ef06bbb4568a9e6db92c7b"
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
           }
         ],
         "obligations": [
@@ -4117,8 +4117,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261005.json",
-          "sha256": "6dfaf7a1cd1b752373d26e0f406bcc4d6e10a13b106cf97d064d9f0d3f4f8d91"
+          "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006.json",
+          "sha256": "728d071e901508d49319ca1a64d57804e96f4022c33ede1299ce593cd092e434"
         }
       }
     },
@@ -4138,12 +4138,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4183,8 +4183,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261005.json",
-          "sha256": "e24230a340c3fca73b3ac0273cb915cced28a4d3357c102fd217fcc9408d2490"
+          "path": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261006.json",
+          "sha256": "793773b6a6e38ba0aa1ebcb23bef3cae43e509ee36ce39ba7a4dae0b72a972da"
         }
       }
     },
@@ -4194,7 +4194,7 @@
       "checkIds": [
         "ingestion.scope-negative-population"
       ],
-      "scope": "At the one response ingestion boundary, a response changing the thirteen exercised cases spanning twelve unique current scope dimensions, including the second populated immutable baseline reference case away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
+      "scope": "At the single response-ingestion transport boundary,23 independently literal stage/dimension pairs span all22 current scope keys: projectRevision and the complete registered required-dimension union. Each starts with an accepted conforming current control, then rejects a type-conforming changed identity with STALE_SCOPE at the exact /scope path and zero accepted canonical changes. The additional Stage2 baseline and evidenceChainVersion cases are prohibited-extra negatives; evidenceChainVersion has no external-agent operation. This establishes transport-scope rejection, not every downstream reference family, stage gate, storage transaction or external-agent behavior.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "fullCoverage": {
         "schema": "closed-loop-full-requirement-coverage/1",
@@ -4204,19 +4204,19 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
           {
             "id": "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-whole-clause",
             "sourceText": "- wrong scope;",
-            "expectedBehavior": "At the one response ingestion boundary, a response changing the thirteen exercised cases spanning twelve unique current scope dimensions, including the second populated immutable baseline reference case away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
+            "expectedBehavior": "At the single response-ingestion transport boundary,23 independently literal stage/dimension pairs span all22 current scope keys: projectRevision and the complete registered required-dimension union. Each starts with an accepted conforming current control, then rejects a type-conforming changed identity with STALE_SCOPE at the exact /scope path and zero accepted canonical changes. The additional Stage2 baseline and evidenceChainVersion cases are prohibited-extra negatives; evidenceChainVersion has no external-agent operation. This establishes transport-scope rejection, not every downstream reference family, stage gate, storage transaction or external-agent behavior.",
             "checks": {
               "deterministic": [
                 {
@@ -4249,8 +4249,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261005.json",
-          "sha256": "e0be1e6cab10082718e0e698a3fb93afe5f558072e32ee9c31d3f5f1968efdc5"
+          "path": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261006.json",
+          "sha256": "42484aaf5314f6dc19b97a883e6f0ff96a63941ec4d7b4a9c52e465d46fd2921"
         }
       }
     },
@@ -4270,12 +4270,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4315,8 +4315,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261005.json",
-          "sha256": "e0c2802b81489818c39e4a4dde59c22275a73c83c93a603e8c0cd9530f42bbd7"
+          "path": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261006.json",
+          "sha256": "d6df294244e53e8572fd193a39bc4f85277c8193d1a955979a71ac6670005559"
         }
       }
     },
@@ -4336,12 +4336,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4381,8 +4381,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261005.json",
-          "sha256": "d222fa2fd7c4285c511f9996d7f480b12766409fefe756b386cb7762abc9f455"
+          "path": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261006.json",
+          "sha256": "fe7612ea3156dc45955e44c40b0d3caf7b50976641f9819e5b328bd73d65c911"
         }
       }
     },
@@ -4402,12 +4402,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4447,8 +4447,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261005.json",
-          "sha256": "8c63008e3accabe7c3b23f8f1a507c5e53637fef2f86ce090214d8d591bd2eb7"
+          "path": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261006.json",
+          "sha256": "ae81bd60275dddbd2d08865266049bfd457324fb09cab4a8bd0731e62fc65cb1"
         }
       }
     },
@@ -4468,12 +4468,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4513,8 +4513,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261005.json",
-          "sha256": "d85ea6e2c72530498b05860ab567f319326b16e7a13beb64c2a8b4e7de952077"
+          "path": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261006.json",
+          "sha256": "c524ba61c99453d3c4f4f2aa0b1e209b71d325b952b6f59a238f7c5e34226720"
         }
       }
     },
@@ -4534,12 +4534,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4579,8 +4579,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261005.json",
-          "sha256": "00d7f51e57ba259c18e3bed43f49945c091f29e9c05eb313e6951f8d89ee3986"
+          "path": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261006.json",
+          "sha256": "2c54283bb1d9204ecf74b2e86ecdfc8e30708bcbd7e23202d4d378282a65187d"
         }
       }
     },
@@ -4600,12 +4600,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4645,8 +4645,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261005.json",
-          "sha256": "9ee3f927941cce713a6a5eb4b8dfa3e2bdb07c65da012ea33d769c8c1028b664"
+          "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261006.json",
+          "sha256": "c8d9bd478f06d17145f2ae0ed8295c5b9f1769dee524e381432eb443796ff991"
         }
       }
     },
@@ -4666,12 +4666,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4711,8 +4711,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261005.json",
-          "sha256": "e88937c47a6ffa63cd5fab3eb93ca26e5675634242805f015f8f775d3c3ff833"
+          "path": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261006.json",
+          "sha256": "8f42df54597e627bb8bad32790a7752a6b1c17333211e997fe7f6c81b1dd8ca5"
         }
       }
     },
@@ -4732,12 +4732,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4777,8 +4777,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261005.json",
-          "sha256": "ee776e48773502b267516f6f334fd0929c35537e51682469631cfe645506e5aa"
+          "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261006.json",
+          "sha256": "989cf36d42b91ffe1f5289aa670f820da343041282e4249d5663f527dbddc94c"
         }
       }
     },
@@ -4798,12 +4798,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4843,8 +4843,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261005.json",
-          "sha256": "8bb8241acebcc41a9c80870fabc579e3a1de8bca78a265a829d8c1f0fc674d5c"
+          "path": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261006.json",
+          "sha256": "3f8ffb53490dab32929f8ff646421f0b2b6828e2611a9c58518ae2227103dede"
         }
       }
     },
@@ -4864,12 +4864,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           },
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           }
         ],
         "obligations": [
@@ -4909,8 +4909,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261005.json",
-          "sha256": "fbafd9a252c3009a2a3953e91baea798ad733004a894223dab0fe4f7f986ae10"
+          "path": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261006.json",
+          "sha256": "ed7fd7c7cfe6f4f288b24b6f3f8ba8b2c7c8884998fe16906223bc70927ec8de"
         }
       }
     },
@@ -4930,7 +4930,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -4970,8 +4970,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261005.json",
-          "sha256": "33f5ca84b5eab1468a52a9237e1a74200270be84680a147495c71e965954150e"
+          "path": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261006.json",
+          "sha256": "92f2a65ad4f54e86c59d70549a75cec33f600141a2f3b693d5dfb7d7e4696552"
         }
       }
     },
@@ -4991,17 +4991,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5035,8 +5035,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261005.json",
-          "sha256": "fdbfc381bc65d23ed6b4b829a711718bc5c889600347c15153b3d08f689bde35"
+          "path": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261006.json",
+          "sha256": "c86a57bcde3f839903f1d56cb2ffbd47edb07f33ad85144a0f939d9159c0d492"
         }
       }
     },
@@ -5056,17 +5056,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5100,8 +5100,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261005.json",
-          "sha256": "14fbead7d5c65403ad32cbe1b702d29423cbf7184e1f0c2a75f33ee337ec65cc"
+          "path": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261006.json",
+          "sha256": "7777bb55c99b0a008e2a284832ec33bbac7cbb21bf03a5ce7f3bd7d6ca00dc9f"
         }
       }
     },
@@ -5121,17 +5121,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5165,8 +5165,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261005.json",
-          "sha256": "b463d021b6a538491f64ae2a0e812bfe2ddb2392cc8adb44f3f1aacb16448f58"
+          "path": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261006.json",
+          "sha256": "9358dde3be5df3e60334138d2fb84fcb58825c7cf5bd9ba07d04c15e291e4af1"
         }
       }
     },
@@ -5186,17 +5186,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5230,8 +5230,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261005.json",
-          "sha256": "53a69683d913a313d0f2388d2a7b73fe7aaf0e9d2644c3b43af85af4c0a7f072"
+          "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261006.json",
+          "sha256": "c0656678419e525ca1f7a60b40e5c0e49e1ad1a98469b034a87b4980f1c2991e"
         }
       }
     },
@@ -5251,17 +5251,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5295,8 +5295,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261005.json",
-          "sha256": "124defb0bab28f7eb5b3f084087ae96b586db5bb430b249b52b784581ff42456"
+          "path": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261006.json",
+          "sha256": "8d927291bfc7e4872d948a8e6ab6c34be12c4ddfbf203ba3b010270c524a6f7c"
         }
       }
     },
@@ -5316,17 +5316,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5360,8 +5360,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261005.json",
-          "sha256": "8706e1dc5f2d2000b55229a1a5c1ef606358eae4d3167c2a4262d53bdc4b1940"
+          "path": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261006.json",
+          "sha256": "d7aa9969b4e0ac005783115d9c2be3b83b3dedf4579f48bf0be167eff8fde56b"
         }
       }
     },
@@ -5381,17 +5381,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5425,8 +5425,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261005.json",
-          "sha256": "7e8408ebd3d06af07ec0294ea3e0fe981c195290f479048f72e2171c88d2db32"
+          "path": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261006.json",
+          "sha256": "cf5eb1cada143aef612f567ba48296e91727edfd492c3cfc369c14d67f45088a"
         }
       }
     },
@@ -5446,17 +5446,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5490,8 +5490,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261005.json",
-          "sha256": "c138552a431df64673006bd8ccbbfd84889f7e55df70f2684d3a6242a185e845"
+          "path": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261006.json",
+          "sha256": "95a313ab89a74646202e3fa8c823064f5d4822e0d94ad0460d83246d928d8286"
         }
       }
     },
@@ -5511,17 +5511,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5555,8 +5555,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261005.json",
-          "sha256": "9a9d04f02dbbc50239c641c6d42001502d3a4489ddbad9babe0b93f0eacd2e77"
+          "path": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261006.json",
+          "sha256": "2100bec125bf44fa060b40a66521cf626056a782b5aa0d5fe2f49dee32532187"
         }
       }
     },
@@ -5576,17 +5576,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5620,8 +5620,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261005.json",
-          "sha256": "b14aad9d88ae2ae7ce9707c36ed7efd07a535cce2d4436d038d1b4093e3ef59f"
+          "path": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261006.json",
+          "sha256": "049ae7cb5243905c3a2d23dabf59aba02c9ed900facc1660e732df0cba49f732"
         }
       }
     },
@@ -5641,17 +5641,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5685,8 +5685,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261005.json",
-          "sha256": "980194d8e07925b1fadf06aaa82add05edff0e1d76ab6e94a394caa0119cfc3e"
+          "path": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261006.json",
+          "sha256": "d91d21cc8e69b9d4fb42743ee4308cdbcdd492fddb52d1680282a2a840d08469"
         }
       }
     },
@@ -5706,17 +5706,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5750,8 +5750,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261005.json",
-          "sha256": "e6fb328e29cb065d8e980ec84243cfa008ac244be1791ff6fd87b01a7051bd54"
+          "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261006.json",
+          "sha256": "e2284725dd276815d793e8872d4808395de576fe3df9f26fe1c9a4d3369eaf23"
         }
       }
     },
@@ -5771,17 +5771,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5815,8 +5815,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261005.json",
-          "sha256": "31cb7edd0cd360e28438fc320073ba6898982cdfa7ac830b8fd081e6233e2a21"
+          "path": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261006.json",
+          "sha256": "0a6bcb6a7583d6f5a9ff11e6efde54aab427d763890daca7839b077133337091"
         }
       }
     },
@@ -5836,17 +5836,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5880,8 +5880,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261005.json",
-          "sha256": "cd9bad961bd9bef906f620284d715f399eb2e9f398a878f52558b941473fffe1"
+          "path": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261006.json",
+          "sha256": "1a92cacaf7419227c2d5ac2f2f7ead1753c65d08d707751f4d02ffaf6dcd9d6c"
         }
       }
     },
@@ -5901,17 +5901,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -5945,8 +5945,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261005.json",
-          "sha256": "c3ca98940bde6c8bd05bfd21fdcd3c74249948632725d38361550366bcfae4ce"
+          "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261006.json",
+          "sha256": "1155b2a9458914cf0a2e47cb75f771d5acca72d179561476ee5fef5510edba82"
         }
       }
     },
@@ -5966,17 +5966,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "e2ac4565d39ff855b00059eff81c06f49399ffc07799066de032daf84393b7e7"
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -6010,8 +6010,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261005.json",
-          "sha256": "d9c2e23543b06a4446850af5d910ba50d7f04f13bda97cc59f6622e5c5c6037c"
+          "path": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261006.json",
+          "sha256": "b50b4c3330d8ee6c5e3c8783a46d45d38609463dd137ab633ea29a4ab766f156"
         }
       }
     },
@@ -6031,12 +6031,12 @@
           {
             "path": "workflow-engine.js",
             "symbol": "gate / evaluateIntakeAccounting / recordStageConfirmation",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -6070,8 +6070,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261005.json",
-          "sha256": "8463626aa3009a6bce7f2e5fca628fb8871ad036ac97c38ac10d21ffa629ca0e"
+          "path": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261006.json",
+          "sha256": "d03f7ec3a8135928049fd2154193e96e430d09c569e6c60d9d48bd5479020149"
         }
       }
     },
@@ -6091,12 +6091,12 @@
           {
             "path": "workflow-engine.js",
             "symbol": "gate / evaluateIntakeAccounting / recordStageConfirmation",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -6136,8 +6136,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261005.json",
-          "sha256": "651a86f1842a50b63e65c944b21a8f79bc6de6612b1c25d6ae7f221188c79684"
+          "path": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261006.json",
+          "sha256": "2cdc1b62fae236441f9c41e814ae97c29cd89cff2c5c5321d3cb369d4ba8d2b9"
         }
       }
     },
@@ -6157,12 +6157,12 @@
           {
             "path": "workflow-engine.js",
             "symbol": "gate / evaluateIntakeAccounting / recordStageConfirmation",
-            "sha256": "5bc810909489b49e7dcf41bb5e779edd215d9b7c7ad56dc0a0f0f55707d7615b"
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
           }
         ],
         "obligations": [
@@ -6202,8 +6202,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261005.json",
-          "sha256": "863d309ecbeabb8f19849384926802fa418d39b232e2ba64fd47a09f5a4b5512"
+          "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261006.json",
+          "sha256": "4e2a3fd7301303306a836ca6154907b9bd1eaa64d2d0489d560da1cc89a2e1ea"
         }
       }
     },
@@ -6225,7 +6225,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6258,8 +6258,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2b14774ffd65e947a3d3deae3ad09c92-20261005.json",
-          "sha256": "943dc6a388877c38a935723ad76cd67931f56be202acebade95be47645ce1e04"
+          "path": "verification/requirement-coverage-NREQ-2b14774ffd65e947a3d3deae3ad09c92-20261006.json",
+          "sha256": "9b664af4ee12107545e79d3f68bbd96511f2a6ff6c866f8424905d3930098f6b"
         }
       }
     },
@@ -6281,7 +6281,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6314,8 +6314,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c6ad5908eba2e59771e74f2ceebc5077-20261005.json",
-          "sha256": "f9a0aa40edc8387a7c39786229969dbef1fe5a36a8a909ff9127d967dff1bbfe"
+          "path": "verification/requirement-coverage-NREQ-c6ad5908eba2e59771e74f2ceebc5077-20261006.json",
+          "sha256": "39b50318aabc088cb29163467a9d25be20beae054a79db15bcfc9d40eb656188"
         }
       }
     },
@@ -6337,7 +6337,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6370,8 +6370,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa-20261005.json",
-          "sha256": "2678c02fb1513c6ce0977f36e377935c9c4a62e2841d5e903b2815a4eb2cfa60"
+          "path": "verification/requirement-coverage-NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa-20261006.json",
+          "sha256": "5291bd81f419cd9ef552a97ac25a9bfc6f57ed3f122b1093b9e9ac4699666ffc"
         }
       }
     },
@@ -6393,7 +6393,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6426,8 +6426,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261005.json",
-          "sha256": "e99202db51bb3616a989ec839881ebb0655d93165dc81b9fcb66b94606883871"
+          "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261006.json",
+          "sha256": "3c235d78078b84af522fb08af701feec056aa59a0e6615966040f9e7fc58dbf5"
         }
       }
     },
@@ -6449,7 +6449,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6482,8 +6482,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-26b8cfa830777dd2bfa4c8aac620403c-20261005.json",
-          "sha256": "10a8ad2c0563b507b7990d0b069a6ae60e443a7c17b4661a35aa00180394692e"
+          "path": "verification/requirement-coverage-NREQ-26b8cfa830777dd2bfa4c8aac620403c-20261006.json",
+          "sha256": "ee1060c750e26ff8f4d63342030ae4e38ea62aaf037dd1e85d9da1dc18c66331"
         }
       }
     },
@@ -6505,7 +6505,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6538,8 +6538,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-04e156310ae4ecdd6915448e3f30e047-20261005.json",
-          "sha256": "fa1499071c2e40c7262869eed83cc0ddbf0935730e870d2a1165ec0c9e9ccd68"
+          "path": "verification/requirement-coverage-NREQ-04e156310ae4ecdd6915448e3f30e047-20261006.json",
+          "sha256": "c12dad8c4c3b557f121b3651712bb44e8ef9fe544bf731d188571e6068ada845"
         }
       }
     },
@@ -6561,7 +6561,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6594,8 +6594,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f0d3896f2d4c46e85ce52981147764ef-20261005.json",
-          "sha256": "227c0281fa8064427f0e7a5dbdab6bc1aa62bc16f3ab031413fd47d2a82ec33a"
+          "path": "verification/requirement-coverage-NREQ-f0d3896f2d4c46e85ce52981147764ef-20261006.json",
+          "sha256": "50fc70a0c1437e1008551e4df00fe37dd438cc83da61b88f0edd251f0c3d257c"
         }
       }
     },
@@ -6617,7 +6617,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6650,8 +6650,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a8822e7da5b9525a6c3e097b71e59183-20261005.json",
-          "sha256": "9b1181799eb1df5b9728e38bf079e105c5644b9b743522a08bf605c3b55fb919"
+          "path": "verification/requirement-coverage-NREQ-a8822e7da5b9525a6c3e097b71e59183-20261006.json",
+          "sha256": "675852eca23d1206f4c2d7cf2008236184b745b64e917b22f109365cd2244863"
         }
       }
     },
@@ -6673,7 +6673,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6706,8 +6706,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-8c2bdedb1f707a1a97695f7b0745365c-20261005.json",
-          "sha256": "80f09bb7471c0fab9479fcf28fb18a22d9dd561f5d0ae3ea6061b2eb7321eb67"
+          "path": "verification/requirement-coverage-NREQ-8c2bdedb1f707a1a97695f7b0745365c-20261006.json",
+          "sha256": "c5daf19a56b3973b88c797f785fdcc10edc58869df7e48f52a6f9968906b3d8c"
         }
       }
     },
@@ -6729,7 +6729,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6762,8 +6762,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a9ef7326ce64b6049b07bdddd8d9d024-20261005.json",
-          "sha256": "02773521a3122213c9c1ae6e6f2ccf0921d6c3862eba0d725b4aeb96feaffcc7"
+          "path": "verification/requirement-coverage-NREQ-a9ef7326ce64b6049b07bdddd8d9d024-20261006.json",
+          "sha256": "1c1584f1282fdd556134139e763b0cd8e7bc5b5e01c4f8367e0f1d1abb4fb0d5"
         }
       }
     },
@@ -6785,7 +6785,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6818,8 +6818,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f50ee5baca83ff85d962de77d313fda6-20261005.json",
-          "sha256": "c5849c5f6bab5f5910f45d7be81f69be21c515cc1d2537e06d5062dd1fa355c1"
+          "path": "verification/requirement-coverage-NREQ-f50ee5baca83ff85d962de77d313fda6-20261006.json",
+          "sha256": "16ae0fe99b98267fb2aa6cd1365f9fe501b57088c789d832c17ab288513bf7b2"
         }
       }
     },
@@ -6841,7 +6841,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6874,8 +6874,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7d91a0dd124e5a78fc01449f23a3e8fa-20261005.json",
-          "sha256": "deb54b3371311043ec1e6d8bf3c034cc45e03abdc1fc10e2e215a60fca291719"
+          "path": "verification/requirement-coverage-NREQ-7d91a0dd124e5a78fc01449f23a3e8fa-20261006.json",
+          "sha256": "0db8e09e8a59e8152d5bc1df0e6ca70b00553835c3dfc15f05aeed9cf2a3479f"
         }
       }
     },
@@ -6897,7 +6897,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6930,8 +6930,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75-20261005.json",
-          "sha256": "9fa15c472b2022fe70a1be0022d37c53368cb4e50fd3e77c2d8e900fa9871869"
+          "path": "verification/requirement-coverage-NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75-20261006.json",
+          "sha256": "dac1d1df8736f7d1882e69fdea79eef8032836d4842ee8cba6c532794b19a481"
         }
       }
     },
@@ -6953,7 +6953,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -6986,8 +6986,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-925405b741265dbbc292d4f3a74c2bd6-20261005.json",
-          "sha256": "ddd296ab5e6200de30fba1016febd31d070bbaf690e45787e2ec6eaaa7ac32d9"
+          "path": "verification/requirement-coverage-NREQ-925405b741265dbbc292d4f3a74c2bd6-20261006.json",
+          "sha256": "e86fc86d85e369564677f83bc275e32ff0bc00709c1f8b02922dd6f090521839"
         }
       }
     },
@@ -7009,7 +7009,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7042,8 +7042,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4363c0420b1bd921591c1f2446cfb8eb-20261005.json",
-          "sha256": "a18b8d5dfc21bdc1ebd415217ca62a515f10402fddbeeb81a48046c3ffe223d0"
+          "path": "verification/requirement-coverage-NREQ-4363c0420b1bd921591c1f2446cfb8eb-20261006.json",
+          "sha256": "1b43a8055c45ee6903d167527fec6f30e5931825483db5d0035dd73448988921"
         }
       }
     },
@@ -7065,7 +7065,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7098,8 +7098,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2174af2894ceaa1acb9a032113db659d-20261005.json",
-          "sha256": "ef75ad4c41b82f656ea67c5ac68980a03db969b1e83b0759c640fbcdf975e69d"
+          "path": "verification/requirement-coverage-NREQ-2174af2894ceaa1acb9a032113db659d-20261006.json",
+          "sha256": "e3826333e4cb9fba86dc0fa055984912d3b28e52bee203dda142ec5b6a4cc613"
         }
       }
     },
@@ -7121,7 +7121,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7154,8 +7154,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a12012292224d4b4a0a9b1088c8c49d0-20261005.json",
-          "sha256": "8cf29022bc78dcfb1bb3aed599d294454be9dc4498439dbf8822d2c1838cd5da"
+          "path": "verification/requirement-coverage-NREQ-a12012292224d4b4a0a9b1088c8c49d0-20261006.json",
+          "sha256": "b86d22a9344fc49e640eaf037c45d6973c07e22a9c52dadcbc719ab092971bf2"
         }
       }
     },
@@ -7177,7 +7177,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7210,8 +7210,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-255fe5112069486751f53087b1ab699e-20261005.json",
-          "sha256": "8c6127fe09954a29de2ee5c8eaa62321cdd9a175fb401885d863efa4531976a8"
+          "path": "verification/requirement-coverage-NREQ-255fe5112069486751f53087b1ab699e-20261006.json",
+          "sha256": "9250c27cc1385021844f9db1cab66d268ca319aaeb95245a2ad721575fa83f54"
         }
       }
     },
@@ -7233,7 +7233,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7266,8 +7266,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-6fe30b5cb969bf2fb9daaabc3422ac38-20261005.json",
-          "sha256": "cba60d569705dea54e8675773994582a30cb0bd302ad7f24098c73c6de090f21"
+          "path": "verification/requirement-coverage-NREQ-6fe30b5cb969bf2fb9daaabc3422ac38-20261006.json",
+          "sha256": "679dd7b43b711653a6d5b7ff1eaad5396b90601618cf539f19ca21b66d8913dd"
         }
       }
     },
@@ -7289,7 +7289,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7322,8 +7322,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-229f56cf458329f04d589d3aa92b95e5-20261005.json",
-          "sha256": "1e5e41228a51c2ed498651242e42bc7766d7d43f5f1474dfea387a421390b69c"
+          "path": "verification/requirement-coverage-NREQ-229f56cf458329f04d589d3aa92b95e5-20261006.json",
+          "sha256": "66d74922da1e0f54bbe8318a91cc377cf7a7ebee8db80606916c295ef5403e69"
         }
       }
     },
@@ -7345,7 +7345,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7378,8 +7378,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4d7b09d088c999d3c6e91a968cbe1a02-20261005.json",
-          "sha256": "4ace38b9543f972e24c0ea23585d540fde898fef6ab570350bbff1f0e17aa992"
+          "path": "verification/requirement-coverage-NREQ-4d7b09d088c999d3c6e91a968cbe1a02-20261006.json",
+          "sha256": "813be13f0e6547d87ece48eb32e996dc0f57b06f6d5b3bef8cadb09b7e316f5e"
         }
       }
     },
@@ -7401,7 +7401,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7434,8 +7434,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-55dce831e47c4a26e093cc6134572e8f-20261005.json",
-          "sha256": "724e3cd5942ac03ab187c1c093d38ea83eb5f2786ce7345c3388a6794d3d46fb"
+          "path": "verification/requirement-coverage-NREQ-55dce831e47c4a26e093cc6134572e8f-20261006.json",
+          "sha256": "c12ed0252a63a454be5d2d2b5c9841fc30c64ffe0cf89d4c48592284ac64966e"
         }
       }
     },
@@ -7457,7 +7457,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7490,8 +7490,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7542acad543ceb37f7fb325baac0d9d0-20261005.json",
-          "sha256": "80034b701389572b138eed01d629bdcf7c7eae9d5fa5a84cc41e7d46f3be2d3d"
+          "path": "verification/requirement-coverage-NREQ-7542acad543ceb37f7fb325baac0d9d0-20261006.json",
+          "sha256": "995fd68e1d3ebab87fb1afb0e6a65c195e38557ba5442ac7c3c34d7b603315b0"
         }
       }
     },
@@ -7513,7 +7513,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7546,8 +7546,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-292af594522de75d72b35851b9befed4-20261005.json",
-          "sha256": "6e0a9a7d3c6d2041c017882764d3058496a43c8c13d0a37e650743c732254614"
+          "path": "verification/requirement-coverage-NREQ-292af594522de75d72b35851b9befed4-20261006.json",
+          "sha256": "501cd50fa17b06df315bead2048a7186515b35e5df4b30ad88daa166d9041030"
         }
       }
     },
@@ -7569,7 +7569,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7602,8 +7602,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f295ec535d0d117429de1cced6886a6e-20261005.json",
-          "sha256": "da3f2cbf6808a8b8b0e419d12eabc972e3942a893211626dca8382aa9faefead"
+          "path": "verification/requirement-coverage-NREQ-f295ec535d0d117429de1cced6886a6e-20261006.json",
+          "sha256": "9d227381b55a81ac010a3d2ee6510ce48a3cae20cb5c954389f15dabcc885886"
         }
       }
     },
@@ -7625,7 +7625,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7658,8 +7658,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9b21240c5c27ee356dec92b459a0fcb9-20261005.json",
-          "sha256": "1fc4b149053ae997522c3065f3bbec387595319b245e782001751cf28fab1e30"
+          "path": "verification/requirement-coverage-NREQ-9b21240c5c27ee356dec92b459a0fcb9-20261006.json",
+          "sha256": "79f2de256fe708de2fa9e8fcafedf427f7f5441208cbbb6c7e45ed13507ec213"
         }
       }
     },
@@ -7681,7 +7681,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7714,8 +7714,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0774fcb2b6e2510d755133d371474ec8-20261005.json",
-          "sha256": "c67e2c75c9211c467b9d4b0626a4250777871b1e6661b143832db4a8a31a7cfa"
+          "path": "verification/requirement-coverage-NREQ-0774fcb2b6e2510d755133d371474ec8-20261006.json",
+          "sha256": "767ef38707e6c507e9775aa30cd8ff817f40fffffa10ff2d4462753d62b89ef9"
         }
       }
     },
@@ -7765,8 +7765,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
-          "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f"
+          "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261006.json",
+          "sha256": "f9faff0501eddc92b1304344bdc64626320de1406dcc629e389abc05dd5ae498"
         }
       }
     },
@@ -7816,8 +7816,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0f5cdc9e49a6fb5b69455d4b2338448c-20261005.json",
-          "sha256": "1b76101a23e92b6752f8f1a5d669956c9b73e60b9b74d43c66e3a232cda8bca6"
+          "path": "verification/requirement-coverage-NREQ-0f5cdc9e49a6fb5b69455d4b2338448c-20261006.json",
+          "sha256": "9df997b4739851c8c0552aafaaa1806aae8eb9401107e5ba2f66736ef2f9647f"
         }
       }
     },
@@ -7839,7 +7839,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7872,8 +7872,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a5e73329c9ae93f23b01a42d43179133-20261005.json",
-          "sha256": "ba10469f3b97cbbfbc4e06a3d5c9b142663d9a1cc0cf92cda2df88efa39a8b1e"
+          "path": "verification/requirement-coverage-NREQ-a5e73329c9ae93f23b01a42d43179133-20261006.json",
+          "sha256": "e6f7a8bd58175afee3d06a3d5402a73293ac3c7b88237575ae40346019ae2659"
         }
       }
     },
@@ -7895,7 +7895,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7928,8 +7928,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-70114fe79e900fc756a0d6cc14ea8f90-20261005.json",
-          "sha256": "6d8659be3966be40aee868a9968f6fb5ce97cd653c45e51044719927147bb1f3"
+          "path": "verification/requirement-coverage-NREQ-70114fe79e900fc756a0d6cc14ea8f90-20261006.json",
+          "sha256": "c7ef40484f6738c00dc799d75a4b7dc5c68985bbb662b6470af312d0bb145c19"
         }
       }
     },
@@ -7951,7 +7951,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -7984,8 +7984,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-db8a127d9ff92a6510ae92e3eb1fbb86-20261005.json",
-          "sha256": "e797bf8bf31e40a48c557fce08ebdc20550a8527bcbab5172b6433a6835a6712"
+          "path": "verification/requirement-coverage-NREQ-db8a127d9ff92a6510ae92e3eb1fbb86-20261006.json",
+          "sha256": "62c8179d3af0951e87bd49ba22d5fe2d40e336fc5f0e3b46f1654116e913291e"
         }
       }
     },
@@ -8007,7 +8007,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8040,8 +8040,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f6858b1d41ca1327e88e31e7f0e8f94f-20261005.json",
-          "sha256": "67a949495fdc170fac85797518cb530419a387dcbc1d603b72d9790ba366b5e1"
+          "path": "verification/requirement-coverage-NREQ-f6858b1d41ca1327e88e31e7f0e8f94f-20261006.json",
+          "sha256": "61b7ad65437feb7d5f4fb33eb6b91c5e6f592990203941a6911306e515416f63"
         }
       }
     },
@@ -8063,7 +8063,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8096,8 +8096,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b14772d932b286c302b05996186c8022-20261005.json",
-          "sha256": "46e5d7c4a373be08d01e65988b22a6435132c6200ddfd3ab76f88be508209c95"
+          "path": "verification/requirement-coverage-NREQ-b14772d932b286c302b05996186c8022-20261006.json",
+          "sha256": "db9d9ae2879ac0eeb1799c55451e2fe042d5f46332d218f6786c71eaa446a9a2"
         }
       }
     },
@@ -8119,7 +8119,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8152,8 +8152,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9e413bfc92a85655c990712d56002499-20261005.json",
-          "sha256": "66f639d437511f0e834045529ad4aaa0349c2f2ec68b73ea52d84c299166b514"
+          "path": "verification/requirement-coverage-NREQ-9e413bfc92a85655c990712d56002499-20261006.json",
+          "sha256": "4f2ceb1a381a31fc89dc51cf3e3ce4093fbcbc00c900a2d27a410867fb85358b"
         }
       }
     },
@@ -8175,7 +8175,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8208,8 +8208,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-22cf265b2b952dcb7187618a915c98bd-20261005.json",
-          "sha256": "5f044dd407e919709e25d97d00f93f00054fb298be0c71713bb817a8b2fb5c62"
+          "path": "verification/requirement-coverage-NREQ-22cf265b2b952dcb7187618a915c98bd-20261006.json",
+          "sha256": "629897e17e84075b218d7906bc4dcab712e53b7541cdb729efa751086c08f762"
         }
       }
     },
@@ -8231,7 +8231,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8264,8 +8264,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-928c9bbcf0101e2a0e4a0e69edc59164-20261005.json",
-          "sha256": "1f7acc9175bb3b47e64f7d6b5d1d12cfb993e81bf1d651732ecd630c84da8737"
+          "path": "verification/requirement-coverage-NREQ-928c9bbcf0101e2a0e4a0e69edc59164-20261006.json",
+          "sha256": "c856933bff95bdb214c98e654abaf8b2ef9e121bb3dbc10cbf8ac80911a6cd7f"
         }
       }
     },
@@ -8287,7 +8287,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8320,8 +8320,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd-20261005.json",
-          "sha256": "aa8507441bd521d6ed120066377ae7bfd60a47af491959dda4b325acc4748c7b"
+          "path": "verification/requirement-coverage-NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd-20261006.json",
+          "sha256": "4ad3058f0057741b2beab864cb3794f832411cbd4f41df518bc134510dcb0d5a"
         }
       }
     },
@@ -8343,7 +8343,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8376,8 +8376,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e5db8a7c723f5b54ada73ce37c7725a2-20261005.json",
-          "sha256": "af1810d7deaef9d80d447d71af3c8a96f363aadaf94b6108a94bce04b97c8f04"
+          "path": "verification/requirement-coverage-NREQ-e5db8a7c723f5b54ada73ce37c7725a2-20261006.json",
+          "sha256": "906f6ca3b54472495b0a842a20ab1338ff950b970b2bd37814ed07d119101cd6"
         }
       }
     },
@@ -8399,7 +8399,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8432,8 +8432,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4bb54f6379863c0a17e6fbc58edcd042-20261005.json",
-          "sha256": "f5283eb13678304daa42fa52ed565758ce756db4053c0cdc95b709058ef088ee"
+          "path": "verification/requirement-coverage-NREQ-4bb54f6379863c0a17e6fbc58edcd042-20261006.json",
+          "sha256": "eca358215827148a6f456487b90fdaf19a6fc189905eed1af1cae963ec991a87"
         }
       }
     },
@@ -8455,7 +8455,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8488,8 +8488,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-266e79545a48e7c4310883faa04e9844-20261005.json",
-          "sha256": "89d918b945c1fc86ebfed6b4336d128c225c43488745b31fe377ec340dfaec74"
+          "path": "verification/requirement-coverage-NREQ-266e79545a48e7c4310883faa04e9844-20261006.json",
+          "sha256": "7f693b745863b6a6e330d0536752dfba359c000ae313a98e908cd259819411e7"
         }
       }
     },
@@ -8511,7 +8511,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8544,8 +8544,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e1a8ce05f1d7a97c385039fd3bd71143-20261005.json",
-          "sha256": "1663f919e2bf1b438e586fe53446a2372e7c2a280722061269a809ef790942ea"
+          "path": "verification/requirement-coverage-NREQ-e1a8ce05f1d7a97c385039fd3bd71143-20261006.json",
+          "sha256": "1e63b0268b31b24bcdefceb06e105c366467aba797b34b1baad5bc1a9538a4e9"
         }
       }
     },
@@ -8567,7 +8567,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8600,8 +8600,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ddf7192c16e06f5276d4d324b2e1f6c3-20261005.json",
-          "sha256": "4d4fc69bd279baf9785a6e95bd306205dc921c0194fb567fe4d2f7c52a0f45bd"
+          "path": "verification/requirement-coverage-NREQ-ddf7192c16e06f5276d4d324b2e1f6c3-20261006.json",
+          "sha256": "2f3e46fa3865df2f0408bb42577e10723aa7f26a88e40a6ae551496c30878184"
         }
       }
     },
@@ -8623,7 +8623,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8656,8 +8656,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1000a70e39109bdb76b85fa6855a4892-20261005.json",
-          "sha256": "ef4899cb791fe4c2bf478c091df251bba783fb5e68fd2d19aeec9eca11f18769"
+          "path": "verification/requirement-coverage-NREQ-1000a70e39109bdb76b85fa6855a4892-20261006.json",
+          "sha256": "163f585aa1abcd6d99aab716d81d2f59b121d7aabca68e6e6c43dc7516c647d0"
         }
       }
     },
@@ -8679,7 +8679,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8712,8 +8712,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec-20261005.json",
-          "sha256": "99171910662bfbb858959145a3944c4fe83a63e1f5073bb75a991c9403a2df14"
+          "path": "verification/requirement-coverage-NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec-20261006.json",
+          "sha256": "956bea94fd1f176cb1022edd77af5c3dd7e5b0a616987aba93269b5d08f7c504"
         }
       }
     },
@@ -8735,7 +8735,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8768,8 +8768,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-931f08afd15144dcac6c7768f2c393d0-20261005.json",
-          "sha256": "2c3d080b65878492e636c2fc86aeb86e6af8afc0e9bac9d8c3cdc1410874e711"
+          "path": "verification/requirement-coverage-NREQ-931f08afd15144dcac6c7768f2c393d0-20261006.json",
+          "sha256": "9ffc7dbddb2c33bee72824b0ea34be57737554881043a1827d38d4059a526ec9"
         }
       }
     },
@@ -8791,7 +8791,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8824,8 +8824,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-3a3ba3d92dd569d454e781fcccf7ac61-20261005.json",
-          "sha256": "4d65488fff5510b9afc64d67bb0a013b9346b0fc902b9e5645c23b782ccd5512"
+          "path": "verification/requirement-coverage-NREQ-3a3ba3d92dd569d454e781fcccf7ac61-20261006.json",
+          "sha256": "c51a4569a9a195a825cd9f00e4677d159eaa8a84b9e5fe6febf34ce76d4e5407"
         }
       }
     },
@@ -8847,7 +8847,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8880,8 +8880,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6-20261005.json",
-          "sha256": "3ccebd9c22efef595cc33cadd8d1ee2a6abe608becd71d75a04c619a78e3386f"
+          "path": "verification/requirement-coverage-NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6-20261006.json",
+          "sha256": "2812cb3174ebb6429a05ae1154b9bce526ccc51c1ed405c105e0fab973a92af6"
         }
       }
     },
@@ -8903,7 +8903,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8936,8 +8936,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5d9431875519d7cfc3188157a10d6bfc-20261005.json",
-          "sha256": "1015c4ed99a5e220bddad201b22ad21ef655d926c71ba9497b6113dea2af429c"
+          "path": "verification/requirement-coverage-NREQ-5d9431875519d7cfc3188157a10d6bfc-20261006.json",
+          "sha256": "e1f58a601fa579298f98331db5871696d4ba48bcdd3cabeba6b8b0b0b66c6352"
         }
       }
     },
@@ -8959,7 +8959,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -8992,8 +8992,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-aafc7cd5dc54af415d36425000d76acb-20261005.json",
-          "sha256": "760fcf6a6af5255c8f39c389979bb72c1ac50a40033a419d38c0e9d3bc6e78a1"
+          "path": "verification/requirement-coverage-NREQ-aafc7cd5dc54af415d36425000d76acb-20261006.json",
+          "sha256": "1405c6b8a795e76ea123f07d8e816e06bc2918661e05bcdd0293e4c3b55d94a4"
         }
       }
     },
@@ -9015,7 +9015,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9048,8 +9048,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-829ac5f73d2b01828644e51c0675d6b6-20261005.json",
-          "sha256": "9a6096077f05fb8c199af484233560c8f08f768412d145c2b15203b5259d69eb"
+          "path": "verification/requirement-coverage-NREQ-829ac5f73d2b01828644e51c0675d6b6-20261006.json",
+          "sha256": "4c11c00775d2aee7215a0b53f56abb923b5476d1fd289f641965e9390fa34a43"
         }
       }
     },
@@ -9071,7 +9071,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9104,8 +9104,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9050383f9f0b382f0fd9b465a0a20f78-20261005.json",
-          "sha256": "1c44d21dbca3151d1a9a12c0f2615b55b9a6649a4223d23542b0b3f5345ccff9"
+          "path": "verification/requirement-coverage-NREQ-9050383f9f0b382f0fd9b465a0a20f78-20261006.json",
+          "sha256": "28cc62f0c01306301b7ff4c7cf58c7a8ca06de77cba660548a5faf52abcf71c8"
         }
       }
     },
@@ -9127,7 +9127,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9160,8 +9160,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-dd1241e76fbe641c1c88243ba947dc89-20261005.json",
-          "sha256": "a1ae68e9b857aeb948f6a62f7749d312d57aa3b87b3c9f50c56693e75600d712"
+          "path": "verification/requirement-coverage-NREQ-dd1241e76fbe641c1c88243ba947dc89-20261006.json",
+          "sha256": "7e27f795d56ade7fae685168a0ae575b513439b395740e869e8139360b15d5bf"
         }
       }
     },
@@ -9183,7 +9183,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9216,8 +9216,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-536910c50d3998944884b519e0d89555-20261005.json",
-          "sha256": "80c365018169d81c066a93ae312928b5c0eca789c2dd856e9124beee35544b65"
+          "path": "verification/requirement-coverage-NREQ-536910c50d3998944884b519e0d89555-20261006.json",
+          "sha256": "c2f89e6f613f8629776888e09d1f9fadc5501ec2bb83450c6864e728ae04312b"
         }
       }
     },
@@ -9239,7 +9239,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9272,8 +9272,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-efa519285f6f28591dc9ad7936c1caa6-20261005.json",
-          "sha256": "1b73f59428384d6c96be575a7581d253f45a0d1ca682cbbc912ae58e5ea8062d"
+          "path": "verification/requirement-coverage-NREQ-efa519285f6f28591dc9ad7936c1caa6-20261006.json",
+          "sha256": "76de53ab882a4cb4826745b2c69683cde5dcdaf3feb6c1673a554e195c56588c"
         }
       }
     },
@@ -9295,7 +9295,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9328,8 +9328,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ee95aae3e46bebd05ef8469aff39c9da-20261005.json",
-          "sha256": "ae66c84ae770b8dc9c4612525c626e78afcbe88a383c173f18e6a8de6748079e"
+          "path": "verification/requirement-coverage-NREQ-ee95aae3e46bebd05ef8469aff39c9da-20261006.json",
+          "sha256": "cb190126c5f8ec997129d18a65e9fd4a97a481b1a6999cc70864e23ac574f372"
         }
       }
     },
@@ -9351,7 +9351,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9384,8 +9384,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-647d36595971915d7c485a338ddc4013-20261005.json",
-          "sha256": "c611e2482a8221a5891be2309cc0fc98b6fc9fbf700b2a357164b65d9478899c"
+          "path": "verification/requirement-coverage-NREQ-647d36595971915d7c485a338ddc4013-20261006.json",
+          "sha256": "1dfd10a36643a241c174e5158d1722d28b562dfb17eecef46f8bd44036f43e53"
         }
       }
     },
@@ -9407,7 +9407,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9440,8 +9440,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-aa165dd96291b05acd70bf948f215d04-20261005.json",
-          "sha256": "2274f9d5d530ed471b4322def24d5e522e9e1491cc096ff0db6c5fea849b8eea"
+          "path": "verification/requirement-coverage-NREQ-aa165dd96291b05acd70bf948f215d04-20261006.json",
+          "sha256": "288c110fc4a70d5bea07d82a930321fce16dacc73d5c353c84c5fc5dbd739711"
         }
       }
     },
@@ -9463,7 +9463,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "STAGE_OPERATIONS, STAGE_OPERATION_REGISTRY, STAGE_CONTRACTS",
-            "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
           },
           {
             "path": "workbook.js",
@@ -9496,8 +9496,428 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5f9aa84ccae751c1692f148708a9288c-20261005.json",
-          "sha256": "f81b417df14e0ed2593193f8cab453cd8c2caa754d035929b1481d75e133977b"
+          "path": "verification/requirement-coverage-NREQ-5f9aa84ccae751c1692f148708a9288c-20261006.json",
+          "sha256": "3c419892e83c43ac4582cffa0de2b6473f1cc5150ca6291e38839e6bd37b7ad9"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+      "sourceLineSha256": "8db81aaca34f656ab0178e82dc986cd2a5eaefb0840fa0cedad6fa6e5d6f56fa",
+      "checkIds": [
+        "acceptance.specification-identity"
+      ],
+      "scope": "Complete proposed coverage of the exact Section46.2 report identity clause only. Publication occurrence, runtime behavior, other Section46 clauses, and whole release remain separately established.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "8db81aaca34f656ab0178e82dc986cd2a5eaefb0840fa0cedad6fa6e5d6f56fa",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_46.2",
+        "productionOwners": [
+          {
+            "path": "verification-evidence.mjs",
+            "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
+            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+          },
+          {
+            "path": "final-acceptance.mjs",
+            "symbol": "evaluateFinalAcceptance",
+            "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+          },
+          {
+            "path": ".github/workflows/pages.yml",
+            "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
+            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-5148",
+            "sourceText": "- repository-only specification-manifest filename and SHA-256;",
+            "expectedBehavior": "The acceptance report carries specificationIdentity.manifestPath equal to the repository-only specification manifest path and manifestSha256 equal to SHA-256 of those exact source bytes; omitted, changed or malformed identities cannot authorize final acceptance. The filename is identified by the complete manifest path.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-final-acceptance.mjs",
+                  "checkId": "acceptance.specification-identity"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-final-acceptance.mjs",
+                  "checkId": "acceptance.specification-identity"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "Exact repository identity/path/version/digest publication is a deterministic comparison. No human semantic interpretation or external actor conclusion is needed for this narrow report-field clause."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261006.json",
+          "sha256": "78c3d9f1290eea6e8ba3c401ba76007f0000f06891b4f01d2f695cf9ff7e1bde"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+      "sourceLineSha256": "32926b4b752f7f258af7d72829a566bc01ebcc5702e9852a7f68338daa724ba7",
+      "checkIds": [
+        "acceptance.specification-identity"
+      ],
+      "scope": "Complete proposed coverage of the exact Section46.2 report identity clause only. Publication occurrence, runtime behavior, other Section46 clauses, and whole release remain separately established.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "32926b4b752f7f258af7d72829a566bc01ebcc5702e9852a7f68338daa724ba7",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_46.2",
+        "productionOwners": [
+          {
+            "path": "verification-evidence.mjs",
+            "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
+            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+          },
+          {
+            "path": "final-acceptance.mjs",
+            "symbol": "evaluateFinalAcceptance",
+            "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+          },
+          {
+            "path": ".github/workflows/pages.yml",
+            "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
+            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-5149",
+            "sourceText": "- exact source commit and specification path;",
+            "expectedBehavior": "The acceptance report identifies the exact specification sourceCommit and sourcePath from the verified repository-only manifest, separately from the application candidate commit; substituting the candidate commit, wrong path, malformed source commit, or alias mutation cannot authorize final acceptance.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-final-acceptance.mjs",
+                  "checkId": "acceptance.specification-identity"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-final-acceptance.mjs",
+                  "checkId": "acceptance.specification-identity"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "Exact repository identity/path/version/digest publication is a deterministic comparison. No human semantic interpretation or external actor conclusion is needed for this narrow report-field clause."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261006.json",
+          "sha256": "53499f1a69f51da2240a236d527adce21096135fbfd9b6c2a4367850648f87ab"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+      "sourceLineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96",
+      "checkIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "scope": "Complete proposed coverage of the exact Section46.2 report identity clause only. Publication occurrence, runtime behavior, other Section46 clauses, and whole release remain separately established.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96",
+        "schemaOrRegistryEntry": "normalizerRegistry",
+        "productionOwners": [
+          {
+            "path": "verification-evidence.mjs",
+            "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
+            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+          },
+          {
+            "path": "final-acceptance.mjs",
+            "symbol": "evaluateFinalAcceptance",
+            "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+          },
+          {
+            "path": ".github/workflows/pages.yml",
+            "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
+            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+          },
+          {
+            "path": "deployment-contract-identities.mjs",
+            "symbol": "deploymentContractIdentities / validateDeploymentContractIdentities",
+            "sha256": "f68c2aa2ae755ff856713af5ce7a4cc392b10131dd2976a76291b643056e334c"
+          },
+          {
+            "path": "verified-site.mjs",
+            "symbol": "validateSite",
+            "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+          },
+          {
+            "path": "build-static-site.mjs",
+            "symbol": "manifest registryIdentities / testIrIdentities",
+            "sha256": "fdda103454069b9c40cb563ac327bfcc3ab999428466fea647da5364eca1b840"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-5152",
+            "sourceText": "- field, operation, scope, durable-object, normalizer, derivation, and ID registry identities;",
+            "expectedBehavior": "The acceptance report identifies all seven current registry families: field, operation, scope, durableObject, normalizer, derivation and id, with exact designated owner and registry identity/digest. It takes the checked deployment manifest identities on release and validates the complete report identity object; omission, extra family, altered digest/owner or report-reference alias mutation is rejected.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-final-acceptance.mjs",
+                  "checkId": "acceptance.registry-identity"
+                },
+                {
+                  "suite": "verify-deployment-manifest.mjs",
+                  "checkId": "deployment.registry-identities"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-final-acceptance.mjs",
+                  "checkId": "acceptance.registry-identity"
+                },
+                {
+                  "suite": "verify-deployment-manifest.mjs",
+                  "checkId": "deployment.registry-identities"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "Exact repository identity/path/version/digest publication is a deterministic comparison. No human semantic interpretation or external actor conclusion is needed for this narrow report-field clause."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261006.json",
+          "sha256": "e9871770ab4186573503b36d36ffc0fc49f147dc5191543c5d4155324da43f6d"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+      "sourceLineSha256": "4ead881cf27674aa764ac029016151b38dfde1410776d06b461d35f2043c9bb5",
+      "checkIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "scope": "Complete proposed coverage of the exact Section46.2 report identity clause only. Publication occurrence, runtime behavior, other Section46 clauses, and whole release remain separately established.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "4ead881cf27674aa764ac029016151b38dfde1410776d06b461d35f2043c9bb5",
+        "schemaOrRegistryEntry": "closed-loop-test-ir-operations/1",
+        "productionOwners": [
+          {
+            "path": "verification-evidence.mjs",
+            "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
+            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+          },
+          {
+            "path": "final-acceptance.mjs",
+            "symbol": "evaluateFinalAcceptance",
+            "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+          },
+          {
+            "path": ".github/workflows/pages.yml",
+            "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
+            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+          },
+          {
+            "path": "deployment-contract-identities.mjs",
+            "symbol": "deploymentContractIdentities / validateDeploymentContractIdentities",
+            "sha256": "f68c2aa2ae755ff856713af5ce7a4cc392b10131dd2976a76291b643056e334c"
+          },
+          {
+            "path": "verified-site.mjs",
+            "symbol": "validateSite",
+            "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+          },
+          {
+            "path": "build-static-site.mjs",
+            "symbol": "manifest registryIdentities / testIrIdentities",
+            "sha256": "fdda103454069b9c40cb563ac327bfcc3ab999428466fea647da5364eca1b840"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-5153",
+            "sourceText": "- Test IR language and operation-registry identities;",
+            "expectedBehavior": "The acceptance report identifies the current Test IR language version, operation-registry version and operation-registry SHA-256 from test-runtime.js under its exact owner identity. Missing language identity, changed version/digest/owner or changed report values is rejected and an unchanged conforming report remains accepted in the isolated consumer control.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-final-acceptance.mjs",
+                  "checkId": "acceptance.registry-identity"
+                },
+                {
+                  "suite": "verify-deployment-manifest.mjs",
+                  "checkId": "deployment.registry-identities"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-final-acceptance.mjs",
+                  "checkId": "acceptance.registry-identity"
+                },
+                {
+                  "suite": "verify-deployment-manifest.mjs",
+                  "checkId": "deployment.registry-identities"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "Exact repository identity/path/version/digest publication is a deterministic comparison. No human semantic interpretation or external actor conclusion is needed for this narrow report-field clause."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261006.json",
+          "sha256": "e4a17316d8db2be99674ef1545fadc2a94248200060cc5fad2026a0850a89161"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+      "sourceLineSha256": "81e2f80bd8992d1328c44a89fd0c5e5bc19f1046c9bb0f959e63730d2ed4c487",
+      "checkIds": [
+        "store.hash-mismatch-quarantine",
+        "lifecycle.complete-report-population"
+      ],
+      "scope": "A stored canonical hash mismatch rejects readProject with PROJECT_HASH_MISMATCH, removes the mismatching project from the active store through the quarantine transaction, and retains the exact corrupt project row and available native Blob bytes in quarantine. Interrupted quarantine preserves the original active source; a valid independent project and verified checkpoint remain usable. This is the deterministic mismatch-to-quarantine clause only. Finite production storage/transaction-adapter mismatch controls; no actual IndexedDB/browser concurrency, whole recovery action set, all damaged object shapes, UI/device acceptance or full application conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "81e2f80bd8992d1328c44a89fd0c5e5bc19f1046c9bb0f959e63730d2ed4c487",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_35.2",
+        "productionOwners": [
+          {
+            "path": "project-store.js",
+            "symbol": "readProject / quarantine",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-3088",
+            "sourceText": "A mismatch quarantines the project.",
+            "expectedBehavior": "A stored canonical hash mismatch rejects readProject with PROJECT_HASH_MISMATCH, removes the mismatching project from the active store through the quarantine transaction, and retains the exact corrupt project row and available native Blob bytes in quarantine. Interrupted quarantine preserves the original active source; a valid independent project and verified checkpoint remain usable. This is the deterministic mismatch-to-quarantine clause only.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-quarantine-recovery.mjs",
+                  "checkId": "store.hash-mismatch-quarantine"
+                },
+                {
+                  "suite": "verify-project-lifecycle.mjs",
+                  "checkId": "lifecycle.complete-report-population"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "The clause defines a deterministic storage disposition/action, demonstrated through exact stored identities, errors, presence/absence and byte equality. It does not require semantic actor judgments for this narrow mechanical behavior.",
+              "mutation": "A separate implementation-mutation execution is not required for this narrow deterministic disposition clause: independent stored corrupt-input, exact active-row absence, preserved-byte, valid-control and interrupted-write assertions directly cover the stated behavior. Corrupted input is a negative control, not an implementation mutation. No maintained mismatch-to-quarantine implementation mutant is claimed."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261006.json",
+          "sha256": "bf9dbb1993a2b8ca9c7699e5407e612b15cdd183ae35d00d0ee9b283d2b0c189"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "sourceLineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994",
+      "checkIds": [
+        "recovery.quarantine-controlled-deletion",
+        "recovery.quarantine-body-delete-fault"
+      ],
+      "scope": "The supported controlled deletion action removes the selected quarantined project body and catalog entry atomically, returns an idempotent receipt for an exact retry, rejects conflicting reuse, and preserves active projects and their file bytes. An interrupted deletion retains the recoverable quarantined body. Successful body absence is asserted directly through metaGet; omitting only meta.delete(key) must fail the named assertion before a PASS report. Deterministic controlled store command under the lifecycle transaction adapter. This does not approve all quarantine recovery actions, real IndexedDB fault behavior, UI discoverability, browser/device acceptance or full application conformance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_35.8",
+        "productionOwners": [
+          {
+            "path": "project-store.js",
+            "symbol": "removeQuarantinedProject",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-3162",
+            "sourceText": "- delete the quarantined project.",
+            "expectedBehavior": "The supported controlled deletion action removes the selected quarantined project body and catalog entry atomically, returns an idempotent receipt for an exact retry, rejects conflicting reuse, and preserves active projects and their file bytes. An interrupted deletion retains the recoverable quarantined body. Successful body absence is asserted directly through metaGet; omitting only meta.delete(key) must fail the named assertion before a PASS report.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-quarantine-recovery.mjs",
+                  "checkId": "recovery.quarantine-controlled-deletion"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-integrity-recovery-faults.mjs",
+                  "checkId": "recovery.quarantine-body-delete-fault"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "The clause defines a deterministic storage disposition/action, demonstrated through exact stored identities, errors, presence/absence and byte equality. It does not require semantic actor judgments for this narrow mechanical behavior."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261006.json",
+          "sha256": "6015f908837c8c9f9657700da4c9daae04e1cb4e100020c819b4c8f89601cd3d"
         }
       }
     }
