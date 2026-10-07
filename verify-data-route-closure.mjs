@@ -83,8 +83,8 @@ for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
 bindIntake();
 
 const forbiddenReads={
-  '11:COMPLETE':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
-  '12:COMPLETE':['comparisons','rootCauses','changes'],
+  '11:EXECUTE_RUN':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
+  '12:VERIFY':['comparisons','rootCauses','changes'],
   '23:COMPLETE':['deterministicResults','adversarialResults'],
   '24:COMPLETE':['deterministicResults','meaningResults']
 };
@@ -92,6 +92,13 @@ for(const operation of ['EXECUTE_RUN','VERIFY'])for(const stage of [17,19])forbi
 // Readable secondary families are not permission to embed unbound prior
 // conclusions in independent product reviews (specification Stages 23/24).
 const unboundSecondaryWithheld={23:['observationRecords','entailmentReviews','semanticReviews'],24:['observationRecords','entailmentReviews','semanticReviews']};
+// §28.1/28.2 and §36.2 preserve governing inputs and exclude unbound secondary
+// conclusions in each independent execution/verification role. Keep this
+// specification-side expectation independent of the production selector.
+const independentRunRoles=['11:EXECUTE_RUN','12:VERIFY','17:EXECUTE_RUN','17:VERIFY','19:EXECUTE_RUN','19:VERIFY'];
+const independentRunSecondaryFamilies=['observationRecords','entailmentReviews','semanticReviews'];
+const independentRunUnboundContextObservations=[];
+
 
 let operationsChecked=0,readEdgesChecked=0,writableCollectionsChecked=0,writableFieldsChecked=0,relationshipDefinitionsChecked=0;
 const writeProducers=new Map();
@@ -130,9 +137,16 @@ for(let stage=1;stage<=30;stage++){
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
         if(Number(schema.RECORD_SCHEMAS[collection].stage)>stage){assert(!ids.includes(sent.currentId)&&!record.prompt.includes(sent.currentText),`Stage ${stage}/${operation} leaked subsequent-stage ${collection}.`);continue;}
-        if(unboundSecondaryWithheld[stage]?.includes(collection)){
+        const independentUnbound=independentRunRoles.includes(`${stage}:${operation}`)&&independentRunSecondaryFamilies.includes(collection);
+        if(unboundSecondaryWithheld[stage]?.includes(collection)||independentUnbound){
           assert(!ids.includes(sent.currentId)&&!record.prompt.includes(sent.currentText)&&!record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} leaked unauthorized current ${collection}.`);
-          assert(!ids.includes(sent.staleId)&&!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} leaked unauthorized stale ${collection}.`);continue;
+          assert(!ids.includes(sent.staleId)&&!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} leaked unauthorized stale ${collection}.`);
+          if(independentUnbound){
+            const carriers=[record.prompt,JSON.stringify(prompts.promptFileManifest(record)),...prompts.materializePromptContextFiles(record,state).map(file=>file.text)].join('\n');
+            assert(![sent.currentId,sent.currentText,sent.staleId,sent.staleText].some(value=>carriers.includes(value)),`ROUTE_UNBOUND_SECONDARY_CARRIER_ORACLE: ${stage}/${operation} exposed ${collection} through an exported carrier.`);
+            independentRunUnboundContextObservations.push({operationKey:`${stage}:${operation}`,collection,currentWithheld:true,staleWithheld:true,allCarriersWithheld:true});
+          }
+          continue;
         }
         assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
@@ -147,6 +161,8 @@ for(let stage=1;stage<=30;stage++){
     }
   }
 }
+
+for(const key of independentRunRoles)for(const collection of independentRunSecondaryFamilies)assert(independentRunUnboundContextObservations.filter(row=>row.operationKey===key&&row.collection===collection).length===1,`ROUTE_UNBOUND_SECONDARY_POPULATION_ORACLE: ${key}/${collection} was not checked exactly once.`);
 
 const terminalFamilies=new Set(['releaseGateReviews','evidenceInvestigations']);
 for(const [collection,producers] of writeProducers){
@@ -206,6 +222,7 @@ assert(!/agent must |agent should |the agent should/i.test(uiSource),`External-a
 
 console.log(JSON.stringify({
   dataRouteClosure:'PASS',
+  independentRunUnboundContextObservations,
   scopeLimit:'Synthetic current/stale projection sentinels exercise actual prompt and contract owners; no stage completion, functional lifecycle, or independent semantic approval claim.',
   stages:30,
   operationsChecked,
