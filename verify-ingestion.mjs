@@ -74,6 +74,9 @@ function fixtureBuildPrompt(stage,p,options={operation:fixturePromptOperation(st
   const references={...(options.scope||{})};
   const contract=schema.operationContract(stage,options.operation);
   for(const key of contract.scopeRequirements){
+    // Verification context is issued for the selected run by the application.
+    // A generic synthetic context is not an authorized independent reviewer.
+    if(key==='contextId'&&options.operation==='VERIFY'&&!references.contextId)continue;
     const family=schema.SCOPE_REFERENCE_FAMILIES[key];if(!family)continue;
     const existing=engine.records(p,family).find(row=>engine.isActiveRecord(row)&&!(family==='products'&&contract.scope.dimensions[key]==='TARGET_RESERVED'&&String(row.completionState||row.status||engine.recordValue(row,'STATUS')).toUpperCase()==='COMPLETED')&&(key!=='confirmationIterationId'||engine.recordValue(row,'PURPOSE')==='UNCHANGED_CONFIRMATION')&&(!references[key]||engine.recordId(row,family)===references[key]));
     if(existing){references[key]=engine.recordId(existing,family);continue;}

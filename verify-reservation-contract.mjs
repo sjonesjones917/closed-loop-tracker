@@ -24,6 +24,23 @@ const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.rec
   assert(!project.projectData.history.some(r=>r.type==='FRESH_CONTEXT_REGISTERED'),'Automatic allocation must not fabricate a human registration action.');
   for(const [stage,operation] of [[9,'COMPLETE'],[12,'VERIFY'],[17,'VERIFY'],[19,'VERIFY'],[23,'COMPLETE'],[24,'COMPLETE']]){
     const fixture=reservationScopeFixture({core,schema,engine},schema.STAGE_OPERATION_REGISTRY[stage+':'+operation],{omitReferences:['contextId']}),p=fixture.project;p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};
+    if(operation==='VERIFY'){
+      // A scope-dimension fixture supplies identities independently. A verifier
+      // handoff additionally needs the run's actual iteration/candidate binding.
+      const iterationId=fixture.scope.iterationId||fixture.scope.confirmationIterationId,candidateId=fixture.scope.candidateId;
+      const iteration=engine.records(p,'iterations').find(row=>engine.recordId(row,'iterations')===iterationId);
+      const run=engine.records(p,'runs').find(row=>engine.recordId(row,'runs')===fixture.scope.runId);
+      assert(iteration&&run&&candidateId,'VERIFIER_RUN_FIXTURE_IDENTITY_ORACLE');
+      assert(!engine.recordsForIteration(p,'runs',iterationId).includes(run),'VERIFIER_RUN_FIXTURE_MISSING_BINDING_CONTROL');
+      iteration.fields.CANDIDATE_ID=iteration.CANDIDATE_ID=candidateId;
+      iteration.scope={...engine.currentScope(p),iterationId,candidateId};
+      engine.refreshRecordHashes(iteration,'iterations');
+      run.fields.ITERATION_ID=run.ITERATION_ID=iterationId;
+      run.fields.CANDIDATE_ID=run.CANDIDATE_ID=candidateId;
+      run.scope={...engine.scopeForIteration(p,iterationId),iterationId,candidateId};
+      engine.refreshRecordHashes(run,'runs');
+      assert(engine.recordsForIteration(p,'runs',iterationId).includes(run),'VERIFIER_RUN_FIXTURE_CURRENT_BINDING_ORACLE');
+    }
     const result=prompts.reserveAndBuildPromptRecord(p,stage,{operation,scope:fixture.scope},{owningTabInstance:'TAB-AUTOMATIC-CONTEXT'});
     assert(result.prompt.scope.contextId,`Stage ${stage} still requires manual reviewer-context bookkeeping.`);
     const reviewer=engine.records(p,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===result.prompt.scope.contextId);

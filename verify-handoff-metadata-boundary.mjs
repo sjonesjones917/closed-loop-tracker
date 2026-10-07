@@ -46,20 +46,33 @@ async function checkUi(fault=null){
 async function checkRunOutput(stage,fault=null){
  // This byte-isolation fixture declares prior-stage readiness; it does not claim those stages executed. Preserve only that prerequisite projection across ordinary authorization saves.
  const priorStageProjection=`;(()=>{const e=globalThis.closedLoopWorkflowEngine;globalThis.closedLoopWorkflowEngine=Object.freeze({...e,recalculate(p,options){const out=e.recalculate(p,options);for(let n=1;n<${stage};n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}return out;}});})();`;
- const r=projectStoreRuntime({fault,sourceOverrides:{'workflow-engine.js':fs.readFileSync('workflow-engine.js','utf8')+priorStageProjection}}),{engine,core,store,prompts}=r,h=r.runtime.closedLoopHash,schema=r.runtime.closedLoopWorkflowSchema;
+ const r=projectStoreRuntime({fault,sourceOverrides:{'workflow-engine.js':fs.readFileSync('workflow-engine.js','utf8')+priorStageProjection}}),{engine,core,store,prompts}=r,h=r.runtime.closedLoopHash;
  let project=core.createBlankState('TARGET-RUN-FILES-'+stage);engine.ensureShape(project);
- Object.assign(project.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Inspect the exact target output file.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INST-v001'});
+ Object.assign(project.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Inspect the exact target output file.',CURRENT_INPUT_VERSION:'INPUT-v001'});
+ // Establish the synthetic prerequisites through their owning version registry.
+ // Later records and the frozen iteration must inherit these issued identities.
+ engine.registerStageVersion(project,2,'SYNTHETIC_SOURCE_PREREQUISITE');
+ engine.registerStageVersion(project,3,'SYNTHETIC_RESEARCH_PREREQUISITE');
+ const prerequisiteScope={inputVersion:project.job.CURRENT_INPUT_VERSION,sourceSetVersion:project.job.CURRENT_SOURCE_SET_VERSION,researchVersion:project.job.CURRENT_RESEARCH_VERSION};
+ const requirement=r.copy({id:'REQ-TARGET',stage:4,active:true,scope:prerequisiteScope,fields:{REQ_ID:'REQ-TARGET',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',STATUS:'ACTIVE',OBLIGATION:'Target output conforms.'}});
+ engine.refreshRecordHashes(requirement,'requirements');project.projectData.requirements.push(requirement);
+ engine.registerStageVersion(project,4,'SYNTHETIC_REQUIREMENTS_PREREQUISITE');
+ const test=r.copy({id:'TEST-TARGET',stage:6,active:true,scope:{...prerequisiteScope,requirementsVersion:project.job.CURRENT_REQUIREMENTS_VERSION},fields:{TEST_ID:'TEST-TARGET',REQ_ID:'REQ-TARGET',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_AGENT_REVIEW',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:'Exact target bytes',STATUS:'READY',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}}});
+ engine.refreshRecordHashes(test,'tests');project.projectData.tests.push(test);
+ engine.registerStageVersion(project,6,'SYNTHETIC_TEST_PREREQUISITE');
+ project.stages[8].acceptedData=r.copy({INSTRUCTION_ARTIFACT_TEXT:'Synthetic candidate instruction for exact output isolation.'});
+ engine.registerStageVersion(project,8,'SYNTHETIC_INSTRUCTION_PREREQUISITE');
+ assert.equal(engine.jobPointerIntegrityIssues(project).length,0,'TARGET_OUTPUT_PREREQUISITE_IDENTITY_ORACLE');
  const retain=async(label,filename,bytes,ownerStage,role)=>{const artifactId=artifactFixtureId(engine,project,label);await store.putArtifact({jobId:project.job.JOB_ID,artifactId,filename,blob:new Blob([bytes]),mediaType:'application/octet-stream'});engine.registerArtifactBytes(project,{stage:ownerStage,artifactId,filename,byteSize:bytes.length,sha256:h.sha256Text(bytes),role});return artifactId;};
  const candidate=await retain('candidate','candidate.txt','candidate',10,'CANDIDATE_COMPONENT'),freezeStage=stage===12?10:17;
  const decision=engine.recordRegisteredHumanDecision(project,{stage:freezeStage,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:h.sha256Value([candidate]),value:[candidate]});
  const frozen=engine.freezeCandidate(project,{stage:freezeStage,artifactIds:[candidate],selectionDecisionId:engine.recordId(decision,'humanDecisions')});
  let iterationId=engine.recordId(frozen.iteration,'iterations');
  if(stage===19){project.stages[18].status='COMPLETE';iterationId=engine.recordId(engine.beginUnchangedConfirmationIteration(project,{candidateId:engine.recordId(frozen.candidate,'candidateFreezes')}),'iterations');}
- const runStage=stage===12?11:stage,slots=engine.reserveRunBatch(project,{stage:runStage,iterationId,count:10}),target=slots[0],other=slots[1],scope=engine.scopeForIteration(project,iterationId);
+ const runStage=stage===12?11:stage,slots=engine.reserveRunBatch(project,{stage:runStage,iterationId,count:10}),target=slots[0],other=slots[1];
  const targetBytes='EXACT_TARGET_OUTPUT\n',otherBytes='PRIVATE_OTHER_RUN_OUTPUT\n';
  const targetArtifact=await retain('target-output','target-output.txt',targetBytes,runStage,'RUN_OUTPUT'),otherArtifact=await retain('other-output','other-output.txt',otherBytes,runStage,'RUN_OUTPUT');
  for(const [slot,artifactId]of[[target,targetArtifact],[other,otherArtifact]]){const run=engine.records(project,'runs').find(row=>engine.recordId(row,'runs')===slot.runId);run.fields.OUTPUT_ARTIFACT_IDENTITIES=run.OUTPUT_ARTIFACT_IDENTITIES=artifactId;run.fields.COMPLETE_OUTPUT=run.COMPLETE_OUTPUT='Read the returned output file.';engine.refreshRecordHashes(run,'runs');}
- for(const[family,identity,fields]of[['requirements','REQ-TARGET',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',STATUS:'ACTIVE',OBLIGATION:'Target output conforms.'}],['tests','TEST-TARGET',{REQ_ID:'REQ-TARGET',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_AGENT_REVIEW',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:'Exact target bytes',STATUS:'READY',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}}]]){const row=r.copy({id:identity,stage:family==='tests'?6:4,active:true,scope,fields:{...fields,[schema.RECORD_SCHEMAS[family].idField]:identity},...fields});engine.refreshRecordHashes(row,family);project.projectData[family].push(row);}
  for(let n=1;n<stage;n++){project.stages[n].status='COMPLETE';project.stages[n].gate=r.copy({complete:true,blocked:false,reasons:[]});}project.activeStage=stage;
  project=await store.writeProject(project,{expectedProjectRevision:0});
  const reserved=r.copy(project),issued=prompts.reserveAndBuildPromptRecord(reserved,stage,r.copy({operation:'VERIFY',scope:{runId:target.runId}})).prompt;project=await store.writeProject(reserved,{expectedProjectRevision:project.revision,expectedStateSha256:project.projectSha256});const prompt=project.projectData.generatedPrompts.find(row=>row.instructionId===issued.instructionId);
