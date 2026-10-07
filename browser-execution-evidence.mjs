@@ -55,6 +55,19 @@ class ObserverConnection{
   async send(method,params={},sessionId){await this.ready;const id=++this.sequence;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(id);reject(new Error('Browser evidence command timed out: '+method));},30000);this.pending.set(id,{resolve,reject,timer});this.ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
   close(){this.ws.close();for(const item of this.pending.values()){clearTimeout(item.timer);item.reject(new Error('Browser evidence observer closed'));}this.pending.clear();}
 }
+// CDP command completion can precede the parsed-source event for a worker
+// attached during navigation. Wait for observations, never infer them from a
+// completed Debugger.enable request or a separately fetched copy of the file.
+export async function waitForBrowserExecutionObservations({pending,errors,workerTargets,workers,timeoutMs=30000}){
+  const deadline=Date.now()+timeoutMs;
+  while(pending.size||[...workerTargets].some(url=>!workers.has(url))){
+    if(errors.length)throw errors[0];
+    const remaining=deadline-Date.now();
+    check(remaining>0,'timed out waiting for parsed script observations from every started worker');
+    await new Promise(resolve=>setTimeout(resolve,Math.min(25,remaining)));
+  }
+  if(errors.length)throw errors[0];
+}
 export async function createBrowserExecutionObserver({webSocketDebuggerUrl,pageUrl,suite=path.basename(process.argv[1]),environment=process.env}){
   const expected=await loadBrowserExpectedSite(environment);if(!expected)return null;
   const base=siteBase(pageUrl,expected.scope,expected.manifest),resources=new Map(expected.manifest.runtimeResources.map(item=>[item.path,item]));
@@ -94,7 +107,7 @@ export async function createBrowserExecutionObserver({webSocketDebuggerUrl,pageU
     check(page.ready&&page.buildIdentity===expected.manifest.buildIdentity,'current document is not the expected ready application');siteBase(page.url,expected.scope,expected.manifest);
     const actualBase=new URL('.',page.url);check(actualBase.href===base.href,'suite navigated outside its artifact root');
     const received=await evaluate(`(async()=>{const paths=${JSON.stringify([...resources.keys()])},out=[];for(const path of paths){const response=await fetch(new URL(path,${JSON.stringify(base.href)}),{cache:'no-store',redirect:'error'}),bytes=new Uint8Array(await response.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));out.push({path,responseUrl:response.url,status:response.status,base64:btoa(binary)});}return out;})()`);
-    while(pending.size)await Promise.allSettled([...pending]);if(errors.length)throw errors[0];
+    await waitForBrowserExecutionObservations({pending,errors,workerTargets,workers});
     for(const url of workerTargets)check(workers.has(url),'started worker source was not observed: '+url);
     const browser=await connection.send('Browser.getVersion'),observedScriptSources=[...sources.values()].sort((a,b)=>(a.targetType+a.url).localeCompare(b.targetType+b.url));
     const carrier={schema,suite,...{scope:expected.scope,sourceCommit:expected.sourceCommit},manifestDigest:expected.manifest.manifestDigest.digest,buildIdentity:expected.manifest.buildIdentity,pageUrl:page.url,pageOrigin:page.origin,browserVersion:browser.product,complete:true,applicationReady:true,resources:received.map(({base64,...row})=>{const bytes=Buffer.from(base64,'base64');return {...row,byteSize:bytes.length,sha256:sha(bytes),observation:'BROWSER_HTTP_BYTES'};}),observedScriptSources,observedDocuments:[...documents.values()],observedWorkers:[...workers].sort(),unobservedRuntimeResources:[...resources.keys()].filter(name=>!observedScriptSources.some(row=>row.path===name)).sort()};

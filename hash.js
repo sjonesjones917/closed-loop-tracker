@@ -287,6 +287,7 @@ function filenameCollisionKeys(filename){const normalized=normalizeFilename(file
 function normalizeFilenameSet(filenames){
   const identities=filenames.map(filename=>normalizeFilename(filename,{allowPath:true})),seen=[new Set(),new Set(),new Set()];
   for(const identity of identities){const keys=[identity.canonicalPath,identity.caseFoldCollisionKey,identity.platformRiskCollisionKey];for(let index=0;index<keys.length;index++){if(seen[index].has(keys[index]))throw new TypeError(['DUPLICATE_CANONICAL_PATH','CASE_FOLD_PATH_COLLISION','PLATFORM_RISK_PATH_COLLISION'][index]+': selected package paths collide.');seen[index].add(keys[index]);}}
+  for(const paths of seen)for(const path of paths){const segments=path.split('/');for(let count=1;count<segments.length;count++)if(paths.has(segments.slice(0,count).join('/')))throw new TypeError('EXTRACTION_TARGET_PATH_COLLISION: a selected path is both a file and a directory.');}
   return identities;
 }
 

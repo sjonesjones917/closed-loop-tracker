@@ -74,6 +74,25 @@ Run the deterministic repository checks in the order required by the repository 
 
 Local and deployed Chromium verification are required browser proofs, but they do not substitute for the pinned actual physical-iPhone Safari acceptance required before final acceptance publication and release tagging.
 
+## Repository physical acceptance preparation
+
+The controlling specification, including its authority and precedence rules, remains authoritative. The authorized acceptance controller creates a fresh target for the exact verified deployed build. This is repository release evidence, separate from ordinary agent handoff or project-stage completion. Write `mobile-target-input.json` with these observed values; the names below describe inputs, not completed evidence:
+
+- `sourceCommit` (full 40-character SHA), `deploymentManifestDigest` (64-character SHA-256), and `buildIdentity` from that deployment's manifest; `origin: "https://sjonesjones917.github.io"` and `basePath: "/closed-loop-tracker/"`.
+- A new `testProjectId`, the actual `procedureVersion`, recorded `performer`, and actual `identityAssurance`. `HUMAN_OBSERVATION` of the physical device with recorded `SELF_ASSERTED` identity assurance is sufficient; do not claim stronger authentication.
+- `viewport: {width, height, devicePixelRatio}` with positive numbers measured on the device; `deviceModel`, reported `iosVersion`, `iosBuild`, `safariVersion`, `webkitBuild`, and observed `safariUserAgent` as strings. The reported iOS version and Safari user agent are required. Hardware/WebKit facts unavailable to the observer may be `"UNKNOWN"`; missing optional iOS/WebKit build fields also become `"UNKNOWN"`.
+- `unavailableEnvironmentFacts`, an array (empty when none) of `{fact, reason, evidenceBasis}`. Each declared `"UNKNOWN"` device fact needs its actual reason and epistemic basis; do not invent a hardware or build identity. Optional `issuedAt` uses canonical UTC with milliseconds, and `challengeLifetimeSeconds` defaults to 3600.
+
+```sh
+MOBILE_ACCEPTANCE_TARGET_INPUT="$(cat mobile-target-input.json)" node generate-mobile-acceptance-target.mjs > mobile-acceptance-target.json
+```
+
+The generator creates the target ID, immutable preparation ID, random single-use challenge and required evidence inventory. On the actual iPhone in Safari, import the generated target in Stage 30's physical-acceptance panel and select **Create pinned test project**. The application saves the exact initial project package before the acceptance work. Use the named file controls and backup restore to complete **Run MOBILE_CAPABILITY_PROBE**; successful setup freezes the actual storage observations and initial package under that target. A failed or interrupted setup preserves its recoverable state and must be resolved before substantive acceptance receipts can be recorded. A changed target, performer, build or frozen preparation requires a fresh authorized target; later actor evidence cannot replace those facts.
+
+The actor JSON supplies `challenge`, `physicalDeviceAssertion` (the performer's actual boolean observation), `evidenceBasis: "HUMAN_OBSERVATION"`, and the exact pinned `performer`, `identityAssurance`, `deviceModel`, `iosVersion`, `iosBuild`, `safariVersion`, `webkitBuild`, and `safariUserAgent` strings. Supply a nonempty `screenshotOrRecordingReferences` array of strings locating the actual captures. Keep permitted `"UNKNOWN"` facts unchanged; do not fill in guessed values. The application supplies preparation, operation receipts, runtime findings, measurements and byte identities from its recorded observations.
+
+Complete the required operator journey, measurements, exported-byte checks and human physical-device observation, then select **Export mobile-acceptance-evidence.json**. Submit the original target JSON and the application's exported evidence together through the authenticated workflow inputs `mobile_acceptance_target_json` and `mobile_acceptance_evidence_json`. The application-saved preparation is included automatically. A reused or expired challenge, missing observations or mismatched identity blocks acceptance. Synthetic fixtures and Chromium capability runs remain explicitly nonphysical and never satisfy this requirement.
+
 ## Repository visual acceptance submission
 
 The workflow-dispatch input `visual_baseline_evidence_json` carries repository evidence; it is never application project state. Its existing outer fields are `status: "PROVEN"`, `sourceCommit`, `comparedCommit`, `comparisonResult: "PASS"`, `authority` (`APPROVED_PREDECESSOR` or `VISUAL_BASELINE_AUTHORIZATION`), `authorityRecordId`, and a nonempty string array `evidenceReferences`. Both commits are complete lowercase Git SHAs; the compared commit must be the exact deployed main commit.

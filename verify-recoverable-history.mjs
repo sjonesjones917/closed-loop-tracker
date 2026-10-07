@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {gunzipSync} from 'node:zlib';
-import {projectStoreRuntime,bindProjectActivationUi,restoreArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
+import {storedArtifactBody,projectStoreRuntime,bindProjectActivationUi,restoreArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
 const mutation=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),faults={
  'mixed-versions':{id:'RESTORE-INCOMPATIBLE-VERSIONS',file:'project-store.js',before:'let next=clone(saved.project);',after:'let next={...clone(saved.project),projectData:clone(prior.projectData)};'},
  'import-projection':{id:'IMPORT-PROJECTION-INTEGRITY',file:'project-store.js',before:'withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertProjectIntegrity(project))',after:'withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertProjectIntegrity(project,{verifyCachedProjection:false}))'},
@@ -63,10 +63,10 @@ for(const phase of ['before-history-checkpoint','during-history-write','before-t
 const browserSource=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8'),contextExpression=browserSource.match(/const contextSaveProof=await evalValue\(cdp,`([\s\S]*?)`\);/)?.[1];
 assert.equal(typeof contextExpression,'string','Browser context fault gate is unavailable');
 for(const interruption of [false,true]){
- const r=projectStoreRuntime({sourceOverrides:process.env.STORE_SOURCE?{'project-store.js':fs.readFileSync(process.env.STORE_SOURCE,'utf8')}:{}}),writes=[];let original,projectBefore,historyBefore;
+ const r=projectStoreRuntime({sourceOverrides:process.env.STORE_SOURCE?{'project-store.js':fs.readFileSync(process.env.STORE_SOURCE,'utf8')}:{}}),writes=[];let original,originalBlob,projectBefore,historyBefore;
  const db={transaction(name,mode){
-  assert.equal(name,'artifacts');assert.equal(mode,'readwrite');const pending=[],tx={objectStore(storeName){assert.equal(storeName,name);return {put(row){pending.push(r.copy(row));}};}};
-  queueMicrotask(()=>{for(const row of pending){if(!original){original=r.copy(r.rows.get(name).get(row.artifactId));projectBefore=r.copy(r.rows.get('projects').get(row.jobId));historyBefore=r.copy(r.rows.get('meta').get('recovery:'+row.jobId));}writes.push(row);r.rows.get(name).set(row.artifactId,row);}tx.oncomplete?.();});return tx;
+  assert.equal(name,'artifacts');assert(['readonly','readwrite'].includes(mode));if(mode==='readonly')return {objectStore:()=>({get:id=>{const req={};queueMicrotask(()=>{req.result=r.copy(r.rows.get(name).get(id));req.onsuccess?.();});return req;}})};const pending=[],tx={objectStore(storeName){assert.equal(storeName,name);return {put(row){pending.push(r.copy(row));}};}};
+  queueMicrotask(()=>{for(const row of pending){if(!original){original=r.copy(r.rows.get(name).get(row.artifactId));originalBlob=storedArtifactBody(r,row.artifactId).blob;projectBefore=r.copy(r.rows.get('projects').get(row.jobId));historyBefore=r.copy(r.rows.get('meta').get('recovery:'+row.jobId));}writes.push(row);r.rows.get(name).set(row.artifactId,row);}tx.oncomplete?.();});return tx;
  }};
  r.runtime.closedLoopProjectStore={...r.store,openDatabase:async()=>db,readProject:async(...args)=>{
   if(interruption&&original&&writes.length===1)throw Object.assign(new Error('CONTROLLED_CONTEXT_OBSERVATION_FAILURE'),{code:'CONTROLLED_CONTEXT_OBSERVATION_FAILURE'});
@@ -76,7 +76,7 @@ for(const interruption of [false,true]){
  assert(original&&writes[0].byteSize===original.byteSize+1,'CONTEXT_FAULT_INJECTION_ORACLE: the negative case must contain exactly one byte-size violation');
  if(!interruption)assert(!error,'CONTEXT_FAULT_LIFECYCLE_ORACLE: the valid negative test must finish and preserve recovery: '+String(error?.code||error));
  const finalWrite=writes.at(-1);
- assert(writes.length===2&&JSON.stringify({...finalWrite,blob:null})===JSON.stringify({...original,blob:null})&&await finalWrite.blob.text()===await original.blob.text(),'CONTEXT_FAULT_RESTORATION_ORACLE: restore the exact faulted row, including when an observation throws');
+ assert(writes.length===2&&JSON.stringify({...finalWrite,blob:null})===JSON.stringify({...original,blob:null})&&await storedArtifactBody(r,original.artifactId).blob.text()===await originalBlob.text(),'CONTEXT_FAULT_RESTORATION_ORACLE: restore the exact faulted row, including when an observation throws');
  const jobId=original.jobId;
  if(interruption){
   assert.equal(error?.code,'CONTROLLED_CONTEXT_OBSERVATION_FAILURE','The original observation error must remain visible');
@@ -88,7 +88,7 @@ for(const interruption of [false,true]){
   assert.equal((await r.store.listArtifacts(jobId)).length,0);
   const history=await r.store.historyList(jobId),restored=await r.store.restoreCheckpoint(jobId,history.activeId);
   assert.deepEqual(restored.project.projectData.generatedPrompts,projectBefore.project.projectData.generatedPrompts,'Removal recovery changed historical instructions');
-  const file=await r.store.getArtifact(original.artifactId);assert.equal(file.byteSize,original.byteSize);assert.equal(file.sha256,original.sha256);assert.deepEqual(new Uint8Array(await file.blob.arrayBuffer()),new Uint8Array(await original.blob.arrayBuffer()));
+  const file=await r.store.getArtifact(original.artifactId);assert.equal(file.byteSize,original.byteSize);assert.equal(file.sha256,original.sha256);assert.deepEqual(new Uint8Array(await file.blob.arrayBuffer()),new Uint8Array(await originalBlob.arrayBuffer()));
   // The application must still reject recoverable removal of corrupt content.
   const project=await r.store.readProject(jobId),retained=await r.store.historyList(jobId);
   for(const violation of ['size','digest','bytes']){

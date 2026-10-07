@@ -1,4 +1,4 @@
-import {observeRetainedHistory,verifyRetainedBackup,verifyRetainedRestore} from './test-retained-history-browser.mjs';
+import {observeRetainedHistory,verifyRetainedBackup,verifyRetainedRestore,observeBackupCanonicalFamilies,verifyBackupCanonicalFamilies} from './test-retained-history-browser.mjs';
 import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 import {registerFixtureSourceSearchCapability} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -49,9 +49,10 @@ async function inspectPresentation(driver,caseId,instruction){
 async function saved({backup=false,workflow=false,stages=[stage]}={}){await captureOperationLatency();if(!backup)return workflow?browser.readWorkflow(stages):browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
 async function verifyFinalBackupRoundTrip(){
   report.currentOperation={phase:'FINAL_BACKUP_HISTORY_OBSERVATION',stage,sequence};preserveReport();
-  const retained=await observeRetainedHistory(browser,await browser.readProject());
+  const current=await browser.readProject(),canonicalBefore=observeBackupCanonicalFamilies(current),retained=await observeRetainedHistory(browser,current);
   report.currentOperation={phase:'FINAL_BACKUP_EXPORT',stage,sequence};preserveReport();
   const before=await saved({backup:true}),backup=snapshot.file;
+  const canonicalExport=verifyBackupCanonicalFamilies(canonicalBefore,before,'DOWNLOADED_BACKUP');
   report.currentOperation={phase:'FINAL_BACKUP_HISTORY_EXPORT_VERIFY',stage,sequence};preserveReport();
   const exported=verifyRetainedBackup(retained,backup,{decoded:snapshot.package});
   report.finalBackupHistory=exported.report;
@@ -61,6 +62,7 @@ async function verifyFinalBackupRoundTrip(){
   // Read the freshly restored stored state. Exporting it again is a separate
   // expensive operator action and contributes no assertion to this round trip.
   const observed=await saved({workflow:true,stages:Array.from({length:schema.STAGE_COUNT},(_,index)=>index+1)}),restored=observed.project;assert.equal(restored.job.JOB_ID,before.job.JOB_ID);assert.equal(restored.projectData.acceptedChanges.length,before.projectData.acceptedChanges.length);assert.ok(observed.workflow.every(row=>row.gate.complete),'Every restored stage must pass in the runtime that verified its saved artifact bytes.');report.backupRestore={selectedSha256:backup.sha256,stagesPreserved:observed.workflow.length,workflow:observed.workflow};
+  report.backupRestore.canonicalFamilies={before:canonicalBefore,export:canonicalExport,restore:verifyBackupCanonicalFamilies(canonicalBefore,restored,'UI_IMPORTED_PROJECT')};
   report.currentOperation={phase:'FINAL_BACKUP_HISTORY_RESTORE_VERIFY',stage,sequence};preserveReport();
   const restoredHistory=await observeRetainedHistory(browser,restored,{verifyBytes:true});
   report.backupRestore.history=verifyRetainedRestore(exported,restoredHistory);

@@ -1,3 +1,5 @@
+import {verifyStagingSafeCleanup} from './test-staging-safe-cleanup.mjs';
+import {verifyStartupStorageBoundaries} from './test-startup-storage-boundaries.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -16,6 +18,56 @@ let blockedUpgradeError;
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8'),html=fs.readFileSync('index.html','utf8'),browserExtra=fs.readFileSync('verify-browser-extra.mjs','utf8');
 const storageHealthSource=app.includes('function storageHealthValue(')?app.slice(app.indexOf('function storageHealthValue('),app.indexOf('function stageLocked(')):'';
+async function storageHealthProbeControls(ownerSource=store){
+ const rows=[];
+ for(const scenario of [
+  {id:'persistent',persist:true,expected:true,label:'PERSISTENT',banner:'Persistent storage available.'},
+  {id:'not-persistent',persist:false,expected:false,label:'NOT PERSISTENT',banner:'Browser storage available. Keep an exported backup.'},
+  {id:'persist-rejected',persist:'REJECT',expected:undefined,label:'UNKNOWN'},
+  {id:'persist-unavailable',persist:'ABSENT',expected:undefined,label:'UNKNOWN'},
+  {id:'persist-invalid',persist:'not a boolean',expected:undefined,label:'UNKNOWN'},
+  {id:'estimate-rejected',persist:true,estimate:'REJECT',expected:true,label:'PERSISTENT',banner:'Persistent storage available.'},
+  {id:'estimate-invalid',persist:false,estimate:'INVALID',expected:false,label:'NOT PERSISTENT',banner:'Browser storage available. Keep an exported backup.'},
+  {id:'both-unavailable',persist:'ABSENT',estimate:'ABSENT',expected:undefined,label:'UNKNOWN'}
+ ]){
+  const r=projectStoreRuntime({sourceOverrides:{'project-store.js':ownerSource}}),status={textContent:''};let estimateCalls=0;
+  r.runtime.navigator.storage={
+   ...(scenario.persist==='ABSENT'?{}:{persist:async()=>{if(scenario.persist==='REJECT')throw new Error('CONTROLLED_PERSIST_PROBE_FAILURE');return scenario.persist;}}),
+   ...(scenario.estimate==='ABSENT'?{}:{estimate:async()=>{estimateCalls++;if(scenario.estimate==='REJECT')throw new Error('CONTROLLED_ESTIMATE_PROBE_FAILURE');return scenario.estimate==='INVALID'?{usage:-1,quota:'100'}:{usage:50,quota:100};}})
+  };
+  Object.assign(r.runtime,{$:selector=>selector==='#storage-status'?status:null,document:{querySelectorAll:()=>[]}});
+  vm.runInContext(storageHealthSource,r.runtime);r.runtime.paintStorageHealth();assert(status.textContent==='Checking storage.','STORAGE_HEALTH_PENDING_ORACLE');
+  const health=await r.store.storageHealth();assert(health.persistent===scenario.expected,'STORAGE_HEALTH_UNKNOWN_ORACLE: '+scenario.id);
+  const validEstimate=!scenario.estimate;assert(health.usage===(validEstimate?50:null)&&health.quota===(validEstimate?100:null),'STORAGE_HEALTH_ESTIMATE_ORACLE: '+scenario.id);assert(estimateCalls===(scenario.estimate==='ABSENT'?0:1),'STORAGE_HEALTH_INDEPENDENT_PROBES_ORACLE: '+scenario.id);
+  r.runtime.closedLoopStorageHealth=health;assert(r.runtime.storageHealthValue('persistent')===scenario.label,'STORAGE_HEALTH_LABEL_ORACLE: '+scenario.id);r.runtime.paintStorageHealth();assert(status.textContent===(scenario.banner||'Storage persistence unavailable. Keep an exported backup.'),'STORAGE_HEALTH_BANNER_ORACLE: '+scenario.id);
+  rows.push({caseId:scenario.id,persistent:health.persistent??'UNKNOWN',usage:health.usage,quota:health.quota,label:scenario.label,banner:status.textContent});
+ }
+ return rows;
+}
+const storageHealthControls=await storageHealthProbeControls(),storageHealthFaults=[];
+for(const [name,before,after,oracle]of [
+ ['failed-probe-as-false','let persistent,estimate={};','let persistent=false,estimate={};','STORAGE_HEALTH_UNKNOWN_ORACLE: persist-rejected'],
+ ['estimate-coupled-to-persistence','try{estimate=await hash.readWithDeadline(navigator.storage.estimate()',"try{if(persistent!==undefined)estimate=await hash.readWithDeadline(navigator.storage.estimate()",'STORAGE_HEALTH_ESTIMATE_ORACLE: persist-rejected']
+]){
+ assert(store.split(before).length===2,'STORAGE_HEALTH_FAULT_ANCHOR: '+name);let detected;
+ try{await storageHealthProbeControls(store.replace(before,after));}catch(error){detected=error;}
+ assert(detected?.message.includes(oracle),'STORAGE_HEALTH_INTENDED_FAULT_ORACLE: '+name);storageHealthFaults.push({name,oracle,result:'DETECTED'});
+}
+console.log(JSON.stringify({storageRegression:'diagnostics:storage-probes-retain-unknown',passed:true,cases:storageHealthControls,owningFaults:storageHealthFaults,boundary:'Production storage health through transaction adapter and extracted actual value/banner renderers; controlled capability outcomes, not real browser permissions'}));
+function integrityBasisControls(source=app){
+ const start=source.indexOf('function projectManagementMarkup('),end=source.indexOf('function projectView(',start);assert(start>=0&&end>start,'INTEGRITY_BASIS_RENDERER_ANCHOR');const rows=[];
+ for(const [internal,expected]of [['VERIFIED','INTEGRITY_CHECKED'],['FAILED','FAILED'],['NOT CHECKED','NOT CHECKED']]){
+  const fields=[],context=lifecycleContext({current:{job:{JOB_ID:'SYNTHETIC-INTEGRITY-BASIS'},projectData:{history:[]}},projects:[],projectStorage:{integrity:internal,artifactCount:0,byteSize:0,mismatches:[]},projectIsArchived:()=>false,safe:value=>Array.isArray(value)?value:[],projectDisplayName:()=> 'Synthetic project',esc:String,details:()=>'',storageHealthField:()=>'',diagnosticList:()=>'',field:(name,value)=>{fields.push({name,value});return '';}});
+  vm.runInContext(source.slice(start,end),context);const html=context.projectManagementMarkup(),shown=fields.find(row=>row.name==='Integrity status');assert(shown?.value===expected,'INTEGRITY_BASIS_LABEL_ORACLE: '+internal);assert(html.includes('does not authenticate the source or mark tests passed'),'INTEGRITY_BASIS_LIMIT_ORACLE');rows.push({internal,displayed:shown.value});
+ }
+ return rows;
+}
+const integrityBasis=integrityBasisControls();let integrityBasisFault;
+const integrityLabel="projectStorage.integrity==='VERIFIED'?'INTEGRITY_CHECKED':projectStorage.integrity";assert(app.includes(integrityLabel),'INTEGRITY_BASIS_FAULT_ANCHOR');
+try{integrityBasisControls(app.replace(integrityLabel,'projectStorage.integrity'));}catch(error){integrityBasisFault=error;}
+assert(integrityBasisFault?.message.includes('INTEGRITY_BASIS_LABEL_ORACLE: VERIFIED'),'INTEGRITY_BASIS_INTENDED_FAULT_ORACLE');
+console.log(JSON.stringify({storageRegression:'diagnostics:integrity-basis-label',passed:true,cases:integrityBasis,owningFault:'INTEGRITY_BASIS_LABEL_ORACLE: VERIFIED',boundary:'Actual project-management renderer with controlled existing verification states; UI evidence labeling only, not cryptographic authentication'}));
+if(process.argv.includes('--storage-health-only'))process.exit(0);
 // Replay the real database-open owner while an older tab keeps the upgrade
 // pending. A second caller must receive the known blocked error, not queue an
 // open request that cannot report its own blocked event until the first ends.
@@ -897,3 +949,23 @@ await storageRegression('storage-worker:atomic-abort-and-import-recovery',async(
 });
 assert(lifecycleFailures.length===0,JSON.stringify(lifecycleFailures,null,2));
 console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,mobileProjectActionsVisible:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalBlobReverification:true,applicationCustodyBlocking:true,custodyFailureRecoveryBehavior:true,staleDeliveryAuthorizationNotResurrected:true,perProjectBackupState:true,zeroLossAcceptanceReduction:true,queuedHandoffFilesPreserved:true,exportNavigationGuard:true,completeExportIdentityAfterNavigation:true,serializedCompletePackages:true,completeExportFailureRecovery:true,unsafeOverrides:0}));
+
+// Startup diagnosis owns separate response/artifact boundary cases. Preserve
+// the full existing lifecycle population and require each intended failure.
+const startupStorageBoundaries=await verifyStartupStorageBoundaries(),startupStorageFaults=[];
+for(const [name,oracle]of [['omit-boundary-scan','STARTUP_METADATA_WITHOUT_BYTES_ORACLE: staged-blob'],['retain-canonical-blocker','STARTUP_REPAIRED_CANONICAL_STATUS_ORACLE'],['trust-meta-source-digest','STARTUP_ARCHIVE_REPAIR_INVALID_OR_RETIRED_ORACLE']]){
+ let detected;try{await verifyStartupStorageBoundaries({fault:name});}catch(error){detected=error;}
+ assert(detected?.code==='ERR_ASSERTION'&&detected.message.includes(oracle),'STARTUP_BOUNDARY_INTENDED_SOURCE_FAULT_ORACLE: '+name+' '+String(detected?.message||'no failure'));
+ startupStorageFaults.push({name,oracle,detected:true});
+}
+console.log(JSON.stringify({startupStorageBoundaries:'PASS',...startupStorageBoundaries,faults:startupStorageFaults}));
+
+// Safe removal requires established obsolete authority and an atomic absence of
+// all retained references; failure diagnostics alone never authorize deletion.
+const stagingSafeCleanup=await verifyStagingSafeCleanup(),stagingSafeCleanupFaults=[];
+for(const [name,oracle]of [['omit','STAGING_SAFE_CLEANUP_ORACLE'],['references','STAGING_CLEANUP_DURABLE_REFERENCE_ORACLE']]){
+ let detected;try{await verifyStagingSafeCleanup({fault:name});}catch(error){detected=error;}
+ assert(detected?.code==='ERR_ASSERTION'&&detected.message.includes(oracle),'STAGING_CLEANUP_INTENDED_SOURCE_FAULT_ORACLE: '+name+' '+String(detected?.message||'no failure'));
+ stagingSafeCleanupFaults.push({name,oracle,detected:true});
+}
+console.log(JSON.stringify({stagingSafeCleanup:'PASS',...stagingSafeCleanup,faults:stagingSafeCleanupFaults}));

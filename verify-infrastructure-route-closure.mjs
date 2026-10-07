@@ -77,11 +77,19 @@ const lifecycleReports=lifecycleReceipt?.reports||executionReports(await checked
 assert(completeLifecycleReports(lifecycleReports),'Lifecycle verification omitted or failed a required storage, focus, or final control.');
 const lifecycleStorage=lifecycleReports.find(report=>Object.hasOwn(report,'storageRegression'));
 const lifecycleFocus=lifecycleReports.find(report=>report.schema==='closed-loop-focus-observations/1');
+const lifecycleStartup=lifecycleReports.find(report=>Object.hasOwn(report,'startupStorageBoundaries'));
+const lifecycleCleanup=lifecycleReports.find(report=>Object.hasOwn(report,'stagingSafeCleanup'));
 const lifecycleMutations=[
   ['missing-storage-case',lifecycleReports.filter(report=>report!==lifecycleStorage)],
   ['failed-storage-case',lifecycleReports.map(report=>report===lifecycleStorage?{...report,passed:false}:report)],
   ['missing-final-marker',lifecycleReports.filter(report=>!Object.hasOwn(report,'projectLifecycleControls'))],
-  ['missing-focus-case',lifecycleReports.map(report=>report===lifecycleFocus?{...report,cases:report.cases.slice(1)}:report)]
+  ['missing-focus-case',lifecycleReports.map(report=>report===lifecycleFocus?{...report,cases:report.cases.slice(1)}:report)],
+  ['missing-startup-marker',lifecycleReports.filter(report=>report!==lifecycleStartup)],
+  ['missing-startup-case',lifecycleReports.map(report=>report===lifecycleStartup?{...report,cases:report.cases.slice(1)}:report)],
+  ['missing-startup-fault',lifecycleReports.map(report=>report===lifecycleStartup?{...report,faults:report.faults.slice(1)}:report)],
+  ['missing-cleanup-marker',lifecycleReports.filter(report=>report!==lifecycleCleanup)],
+  ['missing-cleanup-case',lifecycleReports.map(report=>report===lifecycleCleanup?{...report,cases:report.cases.slice(1)}:report)],
+  ['missing-cleanup-fault',lifecycleReports.map(report=>report===lifecycleCleanup?{...report,faults:report.faults.slice(1)}:report)]
 ];
 for(const [name,reports] of lifecycleMutations){
   assert(!completeLifecycleReports(reports),'LIFECYCLE_REPORT_POPULATION_ORACLE: '+name+' was accepted.');

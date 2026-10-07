@@ -1,3 +1,4 @@
+import {verifyInboundResponseArchive} from './test-inbound-response-archive.mjs';
 import {verifyReturnedAttachmentBoundaries} from './test-returned-attachment-boundaries.mjs';
 import {verifyHumanJobAuthority} from './test-human-job-authority.mjs';
 import {verifySyntaxTransportStage1} from './test-ingestion-syntax-transport.mjs';
@@ -808,3 +809,11 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   for(const value of [undefined,()=>true,NaN,Infinity,cycle,{value:undefined}]){const issues=[];ingestion.validateValue(field,value,'/humanDecisions/VALUE',issues);if(!issues.length)throw new Error('Non-JSON human decision value was accepted.');}
   console.log(JSON.stringify({acceptedPropositionPersistence:true,pendingProofCannotComplete:true,invalidProofReferencesRejected:true,typedHumanDecisionsValidated:true}));
 }
+
+// Exact optional inbound archive assertions retain their own transport boundary.
+const inboundResponseArchive=await verifyInboundResponseArchive(),inboundResponseArchiveFaults=[];
+for(const [name,oracle]of [["trust-member-digest", "INBOUND_ARCHIVE_NEGATIVE_ORACLE: INBOUND_ARCHIVE_MEMBER_BYTES_MISMATCH"], ["omit-manifest-binding", "INBOUND_ARCHIVE_NEGATIVE_ORACLE: INBOUND_ARCHIVE_TRANSPORT_MISMATCH"], ["separate-files-only-prose", "INBOUND_ARCHIVE_MANDATORY_PROSE_ORACLE"]]){
+ await assert.rejects(()=>verifyInboundResponseArchive({fault:name}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'INBOUND_ARCHIVE_INTENDED_SOURCE_FAULT_ORACLE: '+name);
+ inboundResponseArchiveFaults.push({name,oracle,detected:true});
+}
+console.log(JSON.stringify({inboundResponseArchive:'PASS',...inboundResponseArchive,faults:inboundResponseArchiveFaults}));

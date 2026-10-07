@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindAcceptanceUi,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
 import {routingFixture,completedReport} from './test-verification-routing-fixtures.mjs';
 import {scalarFor,recordProposal,canonicalFixtureRecord,reviewApplicabilityFixture,reviewProofFixture,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture} from './test-fixtures.mjs';
 
@@ -173,6 +173,13 @@ const initial=await r.store.writeProject(f.p,copy({expectedProjectRevision:0,cre
 bindAcceptanceUi(r,initial,null);
 const controls=new Map();Object.assign(t,{$:selector=>controls.get(selector)||null,recordValue:e.recordValue,downloads:[],downloadBlob:(blob,filename)=>t.downloads.push({blob,filename}),esc:value=>String(value).replace(/[<>&"]/g,'_'),details:(_label,value)=>JSON.stringify(value),stagePlanItems:(stage,operation)=>e.stageTestExecutionPlan(t.current,{stage,operation}).items,reportActionFailure:error=>{throw error;}});
 const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),extract=(a,b)=>{const start=source.indexOf(a),end=source.indexOf(b,start+a.length);assert(start>=0&&end>start);return source.slice(start,end);};
+bindHandoffReviewUiState(t,{source});Object.assign(t,{runSelection:{},selectedOperation:()=> 'COMPLETE'});
+async function authorizeCapabilityDisclosure(targetId){
+ const review=await r.store.prepareCapabilityRequestReview({project:t.current,targetId});assert.equal(review.authorization.blocked,false);
+ await assert.rejects(()=>r.store.readAuthorizedCapabilityRequest({project:t.current,targetId}),error=>error.code==='HANDOFF_AUTHORIZATION_REQUIRED','CAPABILITY_REQUEST_DISCLOSURE_REQUIRED_ORACLE');
+ const next=copy(t.current);e.recordHandoffAuthorization(next,{capabilityRequest:copy(review.capabilityRequest),members:copy(review.members),scan:copy(review.scan),purpose:'DISCLOSURE_AUTHORIZATION',recipient:'Synthetic readiness respondent',provider:'Isolated verification fixture',suitabilityBasis:'Only the controlled synthetic readiness inquiry is disclosed.',operatorLabel:'SYNTHETIC_FIXTURE_OPERATOR',confirmed:true});
+ await t.persistReplacement(next,{expectedProjectRevision:t.current.revision});
+}
 vm.runInContext('let detailSequence=0;const detailViews=new Map();'+extract('function details(','function noticeText(')+extract('function logicalFilePath(','async function registerStageFiles(')+extract('let capabilityEvidenceDraft=','function testExecutionGuidanceMarkup(')+extract('function nativeStage22Tests(','async function runNativeDeferredTest('),t);
 await check('Readiness selection keeps internal identities in bindings and advanced details',()=>{
  const html=t.externalCapabilityMarkup(e.testExecutionPlan(t.current).items),options=[...html.matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)];
@@ -181,7 +188,7 @@ await check('Readiness selection keeps internal identities in bindings and advan
  assert.match(options[0][2],/Evidence needed/,'The operator must still see the readiness state.');
 });
 await check('Operator report upload, confirmation, and save survive a production storage reload',async()=>{
- controls.set('#capability-test',{value:f.test.id});t.downloadCapabilityRequest();const template=JSON.parse(await t.downloads[0].blob.text());assert.equal(template.request.testId,f.test.id);
+ controls.set('#capability-test',{value:f.test.id});await authorizeCapabilityDisclosure(f.test.id);await t.downloadCapabilityRequest();const request=JSON.parse(await t.downloads[0].blob.text()),template=request.reportTemplate;assert.equal(template.request.testId,f.test.id);assert(Object.values(template.checks).every(check=>check.status==='UNKNOWN'));
  const report=t.completedReport(t.current,f.test),file=new Blob([JSON.stringify(report)],{type:'application/json'});Object.defineProperty(file,'name',{value:'readiness.json'});
  await t.selectCapabilityEvidence(file);const html=t.externalCapabilityMarkup(e.testExecutionPlan(t.current).items);assert.match(html,/capability-confirm/);
  const review=html.match(/<strong>(Review[^<]*)<\/strong>/)?.[1];assert.ok(review&&!review.includes(f.test.id),'CAPABILITY_REVIEW_ORACLE: the authorization heading must identify the external test without exposing its internal ID.');
@@ -193,11 +200,25 @@ await check('Operator report upload, confirmation, and save survive a production
  const persisted=await r.store.readProject(t.current.job.JOB_ID);assert.equal(plan(persisted,f.test).capabilityReady,true);
  const record=persisted.projectData.externalCapabilities.at(-1),basis=JSON.parse(e.recordValue(record,'VERIFICATION_BASIS')),bytes=await r.store.getArtifact(basis.artifactId);assert.equal(await bytes.blob.text(),JSON.stringify(report));
 });
+await check('A blocked capability is announced after actual report selection and confirmation',async()=>{
+ const announcement=controls.get('#app-live-status')||{textContent:''};controls.set('#app-live-status',announcement);
+ const priorAnnounce=t.announce,announceStart=source.indexOf('function announce('),announceEnd=source.indexOf('\nconst recordValue=',announceStart+1);
+ assert(announceStart>=0&&announceEnd>announceStart);t.actionFailureNotice=null;vm.runInContext(source.slice(announceStart,announceEnd),t);
+ try{
+  const report=t.completedReport(t.current,f.test);report.checks.permissions.status='FALSE';
+  const text=JSON.stringify(report),file=new Blob([text],{type:'application/json'});Object.defineProperty(file,'name',{value:'blocked-readiness.json'});
+  await t.selectCapabilityEvidence(file);controls.set('#capability-operator',{value:'UI_FIXTURE_OPERATOR'});controls.set('#capability-confirm',{checked:true});
+  await assert.rejects(()=>t.registerCapabilityEvidence(),error=>error.code==='MUTATION_REVIEW_SHOWN','CAPABILITY_REVOCATION_REVIEW_REQUIRED_ORACLE');assert(t.replacementReview?.next);await t.confirm();
+  const persisted=await r.store.readProject(t.current.job.JOB_ID);assert.equal(plan(persisted,f.test).capabilityReady,false,'CAPABILITY_BLOCKED_LIVE_REGION_STATE_ORACLE');
+  const record=persisted.projectData.externalCapabilities.at(-1),basis=JSON.parse(e.recordValue(record,'VERIFICATION_BASIS'));assert.equal(await (await r.store.getArtifact(basis.artifactId)).blob.text(),text);
+  assert.match(announcement.textContent,/unresolved readiness checks still block execution/,'CAPABILITY_BLOCKED_LIVE_REGION_ORACLE');
+ }finally{t.announce=priorAnnounce;}
+});
 await check('Stage02 file-first capability registration retains the actual report before independent adequacy review',async()=>{
  const searchRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:e,prompts:t.closedLoopPromptEngine,ingestion:t.closedLoopResponseIngestion},project=acceptPrerequisite(searchRuntime,stage01AcceptanceFixture(searchRuntime,'JOB-UI-SOURCE-SEARCH'),2,{stageData:{AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The bounded closed fixture search found no applicable external source.'},records:{sourceSearchContracts:[boundedSearchProposal(searchRuntime.schema)]}}).project;project.activeStage=2;
  const initial=await r.store.writeProject(project,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));bindAcceptanceUi(r,initial,null);t.$=selector=>controls.get(selector)||null;
  const contract=e.recordsForCurrentScope(t.current,'sourceSearchContracts').at(-1),id=e.recordId(contract,'sourceSearchContracts');controls.set('#capability-test',{value:id});
- t.downloadCapabilityRequest();const request=JSON.parse(await t.downloads.at(-1).blob.text());assert.equal(request.request.targetFamily,'sourceSearchContracts');assert.equal(request.request.sourceSearchContractId,id);assert.equal(Object.hasOwn(request.request,'testId'),false,'SOURCE_SEARCH_TYPED_TARGET_ORACLE: search must never invent a test.');
+ await authorizeCapabilityDisclosure(id);await t.downloadCapabilityRequest();const request=JSON.parse(await t.downloads.at(-1).blob.text()).reportTemplate;assert.equal(request.request.targetFamily,'sourceSearchContracts');assert.equal(request.request.sourceSearchContractId,id);assert.equal(Object.hasOwn(request.request,'testId'),false,'SOURCE_SEARCH_TYPED_TARGET_ORACLE: search must never invent a test.');
  const report=copy(registerFixtureSourceSearchCapability(searchRuntime,t.current,{register:false}));report.request=request.request;
  const text=JSON.stringify(report),file=new Blob([text],{type:'application/json'});Object.defineProperty(file,'name',{value:'search-readiness.json'});
  await t.selectCapabilityEvidence(file);controls.set('#capability-operator',{value:'UI_SEARCH_OPERATOR'});controls.set('#capability-confirm',{checked:true});await t.registerCapabilityEvidence();

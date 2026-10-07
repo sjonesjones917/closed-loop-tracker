@@ -8,6 +8,8 @@ const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),fau
 const r=projectStoreRuntime({fault}),{core,engine,store,rows,copy,runtime}=r,cases=[],note=name=>cases.push({name,result:'PASS'}),password='Disposable recovery evidence password';
 async function project(id){let p=core.createBlankState(id);p.job.JOB_TITLE='Valid saved project';engine.ensureShape(p);engine.recalculate(p);return store.writeProject(p,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});}
 let p=await project('QUARANTINE-RECOVERY'),file=await store.putArtifact({artifactId:'QUARANTINE-FILE',jobId:p.job.JOB_ID,filename:'original.bin',blob:new Blob(['GOOD\0BYTES'])});await store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision});const checkpoint=(await store.historyList(p.job.JOB_ID)).activeId;
+// Corrupt this occurrence carrier, leaving the independently promised History
+// body intact; corrupting the shared body would be a different recovery fault.
 const corrupted=rows.get('projects').get(p.job.JOB_ID);corrupted.project.job.JOB_TITLE='CORRUPTED SOURCE';rows.get('artifacts').get(file.artifactId).blob=new Blob(['CORRUPTED\0BYTES']);await assert.rejects(()=>store.readProject(p.job.JOB_ID),error=>error.code==='PROJECT_HASH_MISMATCH');
 const raw=[...rows.get('meta').values()].find(row=>row.key.startsWith('quarantine:'+p.job.JOB_ID+':'));
 assert.equal(raw?.value.artifacts?.length,1,'QUARANTINE_FILES_ORACLE: original file bytes must be captured before restoring another version');assert.equal(await raw.value.artifacts[0].blob.text(),'CORRUPTED\0BYTES');assert.equal(raw.value.row.project.job.JOB_TITLE,'CORRUPTED SOURCE');note('Corrupt project and actual file bytes are preserved together before the canonical row is quarantined');

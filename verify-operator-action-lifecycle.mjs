@@ -1,3 +1,8 @@
+import {verifyBackupImportStaging} from './test-backup-import-staging.mjs';
+import {verifyBackupStagingStore} from './test-backup-staging-store.mjs';
+import {verifyResponseStagingRecoveryUI} from './test-response-staging-recovery-ui.mjs';
+import {verifyOperatorSafetyFeedback} from './test-operator-safety-feedback.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import {verifyRetainedHistoryOracles} from './verify-retained-history-oracles.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -29,6 +34,26 @@ if(process.argv.includes('--fault=incorrect-storage-persistence')){
 }
 const workflowActionCall=source.slice(source.indexOf('function workflow(')).match(/\$\{(nextActionMarkup\([^}]+\))\}/)?.[1];
 const cases=[];
+// Choosing the already selected view does not leave it. Its current drafts and
+// pending review stay visible, while ordinary navigation still captures History.
+{
+ const start=source.indexOf('async function navigateWithinVersion('),end=source.indexOf('function presentRestoredVersion(',start);
+ assert(start>=0&&end>start,'NAVIGATION_OWNER_SOURCE_ORACLE');
+ const r=createVerifierRuntime({});
+ vm.runInContext(`
+ let current={activeView:'Workflow',activeStage:30},draft='Exact unsaved performer observation',captures=0,renders=0,entries=0;
+ let handoffNavigationSequence=7,handoffReview={pending:true},replacementReview={pending:true};
+ const views=['Overview','Workflow'],schema={STAGE_COUNT:30},historyState={activeId:'RETAINED-VIEW'};
+ const captureCurrentView=async()=>{captures++;},captureView=()=>({drafts:{actor:{value:draft}}});
+ const writeBrowserEntry=()=>{entries++;},render=()=>{renders++;draft='';},requestAnimationFrame=fn=>fn(),focusAfterAction=()=>{},$=()=>null,window={scrollTo(){}};
+ ${source.slice(start,end)}
+ globalThis.navigationDraftTest={navigate:navigateWithinVersion,state:()=>({draft,captures,renders,entries,handoffNavigationSequence,handoffReview,replacementReview,view:current.activeView,stage:current.activeStage})};`,r);
+ const t=r.navigationDraftTest;await t.navigate({activeView:'Workflow',activeStage:30});const same=t.state();
+ assert.equal(same.draft,'Exact unsaved performer observation','NOOP_NAVIGATION_DRAFT_ORACLE');assert.equal(same.captures,1);assert.equal(same.renders,0);assert.equal(same.entries,0);assert.equal(same.handoffNavigationSequence,7);assert(same.handoffReview?.pending&&same.replacementReview?.pending);
+ await t.navigate({activeView:'Overview',activeStage:30});const changed=t.state();assert.equal(changed.captures,2);assert.equal(changed.renders,1);assert.equal(changed.entries,1);assert.equal(changed.view,'Overview');assert.equal(changed.handoffReview,null);assert.equal(changed.replacementReview,null);
+ cases.push({caseId:'NOOP-NAVIGATION-PRESERVES-VISIBLE-DRAFT-AND-REVIEW',result:'PASS',ordinaryNavigationStillCapturesHistory:true});
+}
+if(process.argv.includes('--navigation-draft-only')){console.log(JSON.stringify({navigationDraftRetention:true,cases}));process.exit(0);}
 // A deliberately blocked startup must let the browser verifier observe the
 // destination document before application interactivity. Normal navigation
 // still waits for the interactive application boundary.
@@ -56,7 +81,7 @@ const cases=[];
 {
  let driver=fs.readFileSync(process.env.OPERATOR_DRIVER_SOURCE||'operator-browser-driver.mjs','utf8');
  if(process.argv.includes('--fault=forced-operator-scroll')){
-  const before="if(rect.top<0||rect.left<0||rect.bottom>innerHeight||rect.right>innerWidth)node.scrollIntoView({block:'nearest',inline:'nearest'});";
+  const before="if(rect.top<top||rect.left<left||rect.bottom>bottom||rect.right>right)node.scrollIntoView({block:'nearest',inline:'nearest'});";
   assert.equal(driver.split(before).length-1,1,'Operator scroll fault anchor is missing');
   driver=driver.replace(before,"node.scrollIntoView({block:'center'});");
  }
@@ -67,6 +92,9 @@ const cases=[];
  const rect=(top,left=24,width=180,height=44)=>({top,left,width,height,bottom:top+height,right:left+width});
  for(const specimen of [
   {name:'visible centre',box:rect(310),scroll:false},
+  {name:'visual viewport offset',box:rect(860),viewport:{offsetTop:87,offsetLeft:19,width:393,height:852,scale:1},scroll:false},
+  {name:'scaled visual viewport uses CSS input',box:rect(240,100),viewport:{offsetTop:120,offsetLeft:40,width:260,height:400,scale:2},scroll:false},
+  {name:'below visual viewport',box:rect(600,100),viewport:{offsetTop:120,offsetLeft:40,width:260,height:400,scale:2},scroll:true},
   {name:'visible at top edge',box:rect(0),scroll:false},
   {name:'visible at bottom edge',box:rect(808),scroll:false},
   {name:'pending focus before activation',box:rect(310),frameMotion:true,pendingFocus:true,scroll:true},
@@ -87,6 +115,7 @@ const cases=[];
   {name:'inert control',box:rect(310),inert:true,reject:true},
   {name:'layout hides revealed control',box:rect(900),hideAfterReveal:true,reject:true}
  ]){
+  const viewport=specimen.viewport||{offsetTop:0,offsetLeft:0,width:393,height:852,scale:1};
   const moves=[],events=[],inputEvents=[];let clicks=0,directClicks=0,opened=!specimen.disclosure,box={...specimen.box},pendingReveal=false,hidden=false,revealBlock;
   let focusFrames=specimen.pendingFocus?2:0,revealFrames=0,layoutFrames=0;
   const summary={disabled:false,parentElement:null,getBoundingClientRect:()=>rect(100),contains:n=>n===summary,click(){opened=true;disclosure.open=true;directClicks++;}};
@@ -98,13 +127,13 @@ const cases=[];
   const target=specimen.summaryTarget?summary:control;
   const currentNode=()=>specimen.summaryTarget||specimen.disclosure&&!disclosure.open?summary:target;
   let covered=Boolean(specimen.obscuredUntilReveal);
-  const finishReveal=()=>{box=rect(specimen.centerCovered&&revealBlock==='end'?852-box.height:specimen.obscuredUntilReveal?310:Math.max(0,Math.min(852-box.height,box.top)),Math.max(0,Math.min(393-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);covered=Boolean(specimen.centerCovered&&revealBlock!=='end');pendingReveal=false;};
+  const finishReveal=()=>{box=rect(specimen.centerCovered&&revealBlock==='end'?852-box.height:specimen.obscuredUntilReveal?310:Math.max(viewport.offsetTop,Math.min(viewport.offsetTop+viewport.height-box.height,box.top)),Math.max(viewport.offsetLeft,Math.min(viewport.offsetLeft+viewport.width-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);covered=Boolean(specimen.centerCovered&&revealBlock!=='end');pendingReveal=false;};
   // Interactivity does not settle a prior action's deferred focus or a reveal.
   // These controls move only on later browser frames, just as the native case.
   const animationFrame=callback=>setTimeout(()=>{layoutFrames++;if(focusFrames){focusFrames--;box=rect(focusFrames?900:930,box.left,box.width,box.height);}if(pendingReveal&&--revealFrames===0)finishReveal();callback(performance.now());},0);
-  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured||covered?{}:currentNode()},innerHeight:852,innerWidth:393,scrollX:0,scrollY:0,requestAnimationFrame:animationFrame,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
+  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured||covered?{}:currentNode()},innerHeight:specimen.viewport?1000:852,innerWidth:specimen.viewport?500:393,visualViewport:specimen.viewport,scrollX:0,scrollY:0,requestAnimationFrame:animationFrame,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
   const idle=async()=>{if(pendingReveal&&!specimen.frameMotion)finishReveal();};
-  const page={send:async(method,params)=>{assert.equal(method,'Input.dispatchMouseEvent','DRIVER_POINTER_AUTHORITY_ORACLE');assert.ok(!focusFrames&&!pendingReveal,'DRIVER_LAYOUT_SETTLEMENT_ORACLE: native activation preceded deferred focus or reveal completion: '+specimen.name);inputEvents.push(params);if(params.type==='mouseReleased'){if(specimen.summaryTarget){disclosure.open=!disclosure.open;opened=disclosure.open;clicks++;}else if(specimen.disclosure&&!disclosure.open){opened=true;disclosure.open=true;}else clicks++;}}};
+  const page={send:async(method,params)=>{assert.equal(method,'Input.dispatchMouseEvent','DRIVER_POINTER_AUTHORITY_ORACLE');assert.ok(!focusFrames&&!pendingReveal,'DRIVER_LAYOUT_SETTLEMENT_ORACLE: native activation preceded deferred focus or reveal completion: '+specimen.name);if(specimen.viewport){const hit=currentNode().getBoundingClientRect(),expectedX=(Math.max(viewport.offsetLeft,hit.left)+Math.min(viewport.offsetLeft+viewport.width,hit.right))/2-viewport.offsetLeft,expectedY=(Math.max(viewport.offsetTop,hit.top)+Math.min(viewport.offsetTop+viewport.height,hit.bottom))/2-viewport.offsetTop;assert.equal(params.x,expectedX,'DRIVER_VISUAL_VIEWPORT_INPUT_ORACLE: CSS x');assert.equal(params.y,expectedY,'DRIVER_VISUAL_VIEWPORT_INPUT_ORACLE: CSS y');}inputEvents.push(params);if(params.type==='mouseReleased'){if(specimen.summaryTarget){disclosure.open=!disclosure.open;opened=disclosure.open;clicks++;}else if(specimen.disclosure&&!disclosure.open){opened=true;disclosure.open=true;}else clicks++;}}};
   const click=Function('idle','evaluate','events','performance','assert','page',helper+driver.slice(start,end)+';return click;')(idle,async expression=>vm.runInContext(expression,dom),events,performance,assert,page);
   let rejection=null;try{await click('#current-action');}catch(error){rejection=error;}
   if(specimen.reject){
@@ -473,11 +502,11 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
  const activityNodes=new Map(['app','app-operation-status','operation-label','app-live-status','operation-error','storage-status','import-file','project-picker','import-project'].map(id=>['#'+id,{...node(id),value:'',hasAttribute(key){return key in this.attrs;},getBoundingClientRect(){return {top:0,bottom:24,left:0,right:180,width:180,height:24};}}]));
  const delivered=[],requests=[],pending=new Map();let sequence=0,selected;
  class Worker{
-  postMessage(message){requests.push(message);this.onmessage({data:{operationId:'UNRELATED',buildIdentity:message.buildIdentity,ok:true}});void r.store.importPackage(message.args[0]).then(project=>this.onmessage({data:{...message,ok:true,project}}),error=>this.onmessage({data:{...message,ok:false,error}}));}
+  postMessage(message){requests.push(message);this.onmessage({data:{operationId:'UNRELATED',buildIdentity:message.buildIdentity,ok:true}});void r.store.importPackage(...message.args).then(project=>this.onmessage({data:{...message,ok:true,project}}),error=>this.onmessage({data:{...message,ok:false,error}}));}
  }
  const worker=new Worker();worker.onmessage=event=>{delivered.push(event.data);const request=pending.get(event.data.operationId);if(!request)return;pending.delete(event.data.operationId);event.data.ok?request.resolve(event.data.project):request.reject(event.data.error);};
  class DataTransfer{constructor(){this.files=[];this.items={add:file=>{assert.ok(file instanceof File,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: a browser file selection requires a File.');this.files.push(file);}};}}
- const facade={...r.store,importPackage:async blob=>{selected=(await r.store.listArtifacts(p.job.JOB_ID)).find(row=>row.lineage?.selectionKind==='backup-import');return new Promise((resolve,reject)=>{const operationId='IMPORT-'+(++sequence);pending.set(operationId,{resolve,reject});worker.postMessage({method:'IMPORT_PACKAGE',operationId,buildIdentity:'ACTIVITY-TEST',args:[blob]});});}};
+ const facade={...r.store,importPackage:async(blob,options)=>{const staged=await r.store.readPendingBackupImport(p.job.JOB_ID);selected=staged?{...staged,filename:staged.rawFilename}:null;return new Promise((resolve,reject)=>{const operationId='IMPORT-'+(++sequence);pending.set(operationId,{resolve,reject});worker.postMessage({method:'IMPORT_PACKAGE',operationId,buildIdentity:'ACTIVITY-TEST',args:[blob,options]});});}};
  Object.assign(r.runtime,{File,DataTransfer,Worker,history:{state:null},document:{currentScript:null,querySelector:s=>activityNodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[activityNodes.get('#import-file')]:[]},getComputedStyle:()=>({display:'block',visibility:'visible'}),requestAnimationFrame:fn=>setTimeout(fn,0),scrollX:0,scrollY:0,scrollTo(){},closedLoopProjectStore:facade,__activityProject:p});r.runtime.window=r.runtime;
  vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
   core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;projectStore=closedLoopProjectStore;current=__activityProject;projects=[current];
@@ -491,6 +520,7 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
   assert.ok(observation.requests===1&&observation.held&&!observation.done,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: the browser loading case must reach one valid pending import through its actual file binding: '+JSON.stringify(observation));
   assert.ok(selected&&selected.filename&&selected.byteSize===r.runtime.__activityPackage.size,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: the selected backup must retain its filename and exact bytes.');
   assert.equal(selected.sha256,await r.runtime.closedLoopHash.sha256Bytes(r.runtime.__activityPackage));
+  assert.deepEqual(new Uint8Array(await selected.blob.arrayBuffer()),new Uint8Array(await r.runtime.__activityPackage.arrayBuffer()),'DELAYED_IMPORT_EXACT_PENDING_BYTES_ORACLE');
   await new Promise(resolve=>setTimeout(resolve,1510));
   assert.equal(activityNodes.get('#storage-status').getAttribute('aria-busy'),'true','DELAYED_IMPORT_LOADING_ORACLE: a pending import past the threshold must show storage activity.');
   assert.equal(activityNodes.get('#app-operation-status').hidden,false,'DELAYED_IMPORT_LOADING_ORACLE: a pending import past the threshold must show operator progress.');
@@ -507,6 +537,7 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
   assert.equal(activityNodes.get('#import-file').disabled,false,'Completed import must release its control.');
   assert.equal(activityNodes.get('#import-file').value,'','Completed import must clear the selected control.');
   assert.match(activityNodes.get('#app-live-status').textContent,/project package imported and reloaded/,'Import must explicitly report completion.');
+  assert.equal(await r.store.pendingBackupImportIdentity(p.job.JOB_ID),null,'DELAYED_IMPORT_PENDING_CONSUMED_ORACLE');
   assert.equal(delivered.filter(message=>message.operationId===requests[0].operationId).length,1,'DELAYED_IMPORT_RELEASE_ORACLE: a held import response must be delivered exactly once.');
   cases.push({caseId:'UI-DELAYED-IMPORT-BROWSER-SELECTION',result:'PASS',actualBrowser:false,requests:requests.length,selectedFilename:selected.filename,selectedByteSize:selected.byteSize,selectedSha256:selected.sha256,importReplies:1,unrelatedReplies:1,lateLayoutShiftRejected:true});
  }finally{r.runtime.__restoreActivityWorker?.();r.runtime.__releaseActivityReply?.();if(r.runtime.__activityImport)await r.runtime.__activityImport;}
@@ -530,4 +561,20 @@ for(const stage of [10,20,28]){
  assert.ok(match,'HUMAN_AUTHORITY_CONTROL_ID_ORACLE');assert.ok(html.includes('<label for="'+match[1]+'">Reported audience</label>'),'HUMAN_AUTHORITY_CONTROL_LABEL_ORACLE');
  cases.push({caseId:'UI-HUMAN-AUTHORITY-CONTROL-LABEL',result:'PASS',actualBrowser:false});
 }
-console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',cases},null,2));
+const backupImportStaging=await verifyBackupImportStaging({appSource:source}),backupStagingStore=await verifyBackupStagingStore(),responseStagingRecoveryUI=await verifyResponseStagingRecoveryUI({appSource:source}),operatorSafetyFeedback=await verifyOperatorSafetyFeedback({appSource:source}),backupStagingFaults=[],responseStagingUIFaults=[],operatorSafetyFeedbackFaults=[];
+for(const [script,fault,oracle]of [
+ ['test-backup-import-staging.mjs','permanent-backup-history','BACKUP_UI_CAPACITY_ORACLE'],
+ ['test-backup-import-staging.mjs','empty-staging-identity','BACKUP_EMPTY_STAGING_ID_RECOVERY_ORACLE'],
+ ['test-backup-staging-store.mjs','retain-consumed-input','BACKUP_STAGE_ATOMIC_CONSUME_ORACLE'],
+ ['test-backup-staging-store.mjs','trust-staging-digest','BACKUP_STAGE_REHASH_ORACLE']
+]){
+ const run=await runVerifier(process.execPath,[script,'--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Backup import staging fault '+fault);backupStagingFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
+}
+for(const [fault,oracle]of [['missing-diagnostics','RESPONSE_RECOVERY_RENDER_ORACLE'],['stale-project','RESPONSE_RECOVERY_STALE_PROJECT_ORACLE'],['all-files-as-response','RESPONSE_RECOVERY_TYPED_ROUTE_ORACLE:RETURNED_FILE'],['repeat-stale-response','RESPONSE_RECOVERY_STALE_ROUTE_ORACLE:RESPONSE_STAGE_PROMPT_IDENTITY_MISMATCH']]){
+ const run=await runVerifier(process.execPath,['test-response-staging-recovery-ui.mjs','--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Response staging recovery UI fault '+fault);responseStagingUIFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
+}
+for(const [fault,oracle]of [['generic-attachment-feedback','ATTACHMENT_LIVE_REGION_ORACLE'],['trust-release-label','RELEASE_RENDER_CONTRADICTION_ORACLE'],['untyped-independence-error','INDEPENDENCE_LIVE_REGION_ORACLE']]){
+ const run=await runVerifier(process.execPath,['test-operator-safety-feedback.mjs','--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Operator safety feedback fault '+fault);operatorSafetyFeedbackFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
+}
+cases.push(...backupImportStaging.cases,...backupStagingStore.cases.map(row=>({...row,caseId:'STORE-BACKUP-STAGING-'+row.caseId,result:row.passed?'PASS':'FAIL'})),...responseStagingRecoveryUI.cases,...operatorSafetyFeedback.cases);
+console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',backupImportStaging,backupStagingStore,backupStagingFaults,responseStagingRecoveryUI,responseStagingUIFaults,operatorSafetyFeedback,operatorSafetyFeedbackFaults,cases},null,2));

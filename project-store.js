@@ -5,6 +5,7 @@
 // imports the existing authorities; it does not implement another data model.
 const STORE_SCRIPT_URL=typeof document!=='undefined'?document.currentScript?.src:null;
 const STORE_WORKER=typeof document==='undefined'&&typeof importScripts==='function'&&new URLSearchParams(globalThis.location?.search||'').get('storeWorker')==='1';
+const ARCHIVE_PARSER_WORKER=STORE_WORKER&&new URLSearchParams(globalThis.location.search).get('archiveParser')==='1';
 const STORE_BUILD_ID=(STORE_SCRIPT_URL?new URL(STORE_SCRIPT_URL).searchParams.get('v'):STORE_WORKER?new URLSearchParams(globalThis.location.search).get('v'):null)||'UNMANIFESTED_LOCAL_RUNTIME';
 // The window and its storage worker are one writer. A delayed notification of
 // that writer's own verified commit must not revoke its receiving-side proof.
@@ -76,7 +77,7 @@ async function observeProjectArtifactCustody(project){
   const raw=(project.projectData.rawResponses||[]).find(row=>row.rawResponseId===subject.rawResponseId),prompt=raw&&(project.projectData.generatedPrompts||[]).find(row=>(row.instructionId||row.promptId)===raw.promptInstructionId);
   for(const entry of prompt?.contextManifest?.deferredDefinitionCorrectionInputs?.records||[])if(entry.family==='artifacts'&&engine.deferredDefinitionCorrectionInputState(project,prompt,'artifacts',entry.recordId,{subject,requireBytes:false}).allowed)artifactIds.add(entry.recordId);
  }
- for(const artifactId of artifactIds)await getArtifact(artifactId);
+ for(const artifactId of artifactIds){try{await getArtifact(artifactId);}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;/* Canonical metadata remains usable; missing/corrupt bytes confer no custody. Explicit reads and recovery diagnostics retain the precise failure. */}}
 }
 function artifactCustodyState(identity){
  const verified=artifactCustody.get(custodyKey(identity.jobId,identity.artifactId));
@@ -122,14 +123,15 @@ const workerRequests=new Map();
 function recordWorkerCommit(tx,operationId,project,digest,checkpointId=null){if(operationId)tx.objectStore(META).put({key:'storageOperation:'+operationId,value:{operationId,jobId:projectIdentity(project),revision:project.revision,projectSha256:digest,...(checkpointId?{checkpointId}:{})},updatedAt:now()});}
 async function clearWorkerCommit(operationId){try{const tx=await openTransaction(META,'readwrite');tx.objectStore(META).delete('storageOperation:'+operationId);await complete(tx);}catch{/* An unacknowledged minimal receipt remains recoverable. */}}
 async function recoverWorkerOperation(pending,error){
-  try{const receipt=await metaGet('storageOperation:'+pending.operationId);if(receipt){
+  try{const receipt=await metaGet('storageOperation:'+pending.operationId);if(receipt!==undefined){
+    if(!receipt||typeof receipt!=='object'||Array.isArray(receipt)||receipt.operationId!==pending.operationId||typeof receipt.jobId!=='string'||!receipt.jobId.trim()||!Number.isSafeInteger(receipt.revision)||receipt.revision<0||typeof receipt.projectSha256!=='string'||!/^[a-f0-9]{64}$/.test(receipt.projectSha256)||pending.jobId!==null&&receipt.jobId!==pending.jobId)throw storageError('The durable storage receipt does not match this operation.','INVALID_STORAGE_OPERATION_RECEIPT');
     if(pending.method==='SAVE_CHECKPOINT'){
-      if(receipt.operationId!==pending.operationId||receipt.jobId!==pending.jobId||!receipt.checkpointId)throw storageError('The saved-view receipt does not match this operation.','HISTORY_VERSION_MISMATCH');
+      if(typeof receipt.checkpointId!=='string'||!receipt.checkpointId)throw storageError('The saved-view receipt does not match this operation.','HISTORY_VERSION_MISMATCH');
       const saved=await readRetainedCheckpoint(receipt.jobId,receipt.checkpointId);
       if(saved.projectSha256!==receipt.projectSha256||Number(saved.project.revision)!==Number(receipt.revision))throw storageError('The saved view does not match its committed project.','HISTORY_VERSION_MISMATCH');
       await clearWorkerCommit(pending.operationId);pending.resolve(receipt.checkpointId);return;
     }
-    const project=await readProject(receipt.jobId);if(!project||Number(project.revision)<Number(receipt.revision))throw Object.assign(storageError('The operation committed, but its project is no longer available at that revision. Reload the current stored state.','COMMITTED_PROJECT_UNAVAILABLE'),{existingProjectsUnchanged:false});await clearWorkerCommit(pending.operationId);pending.resolve(project);return;}pending.reject(Object.assign(error,{existingProjectsUnchanged:true}));}
+    const project=await readProject(receipt.jobId);if(!project||projectIdentity(project)!==receipt.jobId||!Number.isSafeInteger(project.revision)||project.revision<receipt.revision||project.revision===receipt.revision&&project.projectSha256!==receipt.projectSha256)throw Object.assign(storageError('The operation committed, but its project is no longer available with the recorded revision and identity. Reload the current stored state.','COMMITTED_PROJECT_UNAVAILABLE'),{existingProjectsUnchanged:false});await clearWorkerCommit(pending.operationId);pending.resolve(project);return;}pending.reject(Object.assign(error,{existingProjectsUnchanged:true}));}
   catch(recoveryError){pending.reject(Object.assign(storageError(`The storage outcome could not be confirmed. Reload and verify the stored project before retrying: ${recoveryError.message||recoveryError}`,'STORAGE_OUTCOME_UNCONFIRMED'),{existingProjectsUnchanged:false}));}
 }
 function requestStoreWorker(method,args){
@@ -144,7 +146,7 @@ function requestStoreWorker(method,args){
       }
       void observeProjectArtifactCustody(message.project).then(()=>{void clearWorkerCommit(message.operationId);pending.resolve(message.project);},error=>recoverWorkerOperation(pending,error));}else void recoverWorkerOperation(pending,Object.assign(new Error(message.error?.message||'Storage operation failed.'),message.error));};
   }
-  const operationId=crypto.randomUUID(),worker=operationWorker;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{if(workerRequests.has(operationId)&&operationWorker===worker)worker.onerror({message:`Storage worker did not return within ${STORAGE_WORKER_TIMEOUT_MS} ms. Its durable commit receipt is being checked before retry is permitted.`});},STORAGE_WORKER_TIMEOUT_MS);workerRequests.set(operationId,{operationId,method,jobId:method==='SAVE_CHECKPOINT'?String(args[0]):null,resolve,reject,timer});try{worker.postMessage({operationId,method,args,buildIdentity:STORE_BUILD_ID,fault:globalThis.__closedLoopStorageFault||null});}catch(error){clearTimeout(timer);workerRequests.delete(operationId);reject(Object.assign(error,{existingProjectsUnchanged:true}));}});
+  const operationId=crypto.randomUUID(),worker=operationWorker;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{if(workerRequests.has(operationId)&&operationWorker===worker)worker.onerror({message:`Storage worker did not return within ${STORAGE_WORKER_TIMEOUT_MS} ms. Its durable commit receipt is being checked before retry is permitted.`});},STORAGE_WORKER_TIMEOUT_MS);workerRequests.set(operationId,{operationId,method,jobId:method==='SAVE_CHECKPOINT'?String(args[0]):method==='WRITE_PROJECT'?projectIdentity(args[0]):null,resolve,reject,timer});try{worker.postMessage({operationId,method,args,buildIdentity:STORE_BUILD_ID,fault:globalThis.__closedLoopStorageFault||null});}catch(error){clearTimeout(timer);workerRequests.delete(operationId);reject(Object.assign(error,{existingProjectsUnchanged:true}));}});
 }
 const useStoreWorker=()=>Boolean(STORE_SCRIPT_URL&&typeof Worker==='function');
 const runSynchronousMutator=(mutator,next,before)=>{const result=mutator(next,before);if(result&&typeof result.then==='function')throw storageError('Project transaction mutators must be synchronous. Complete asynchronous work before opening the canonical IndexedDB transaction.','ASYNC_TRANSACTION_MUTATOR');return result;};
@@ -163,12 +165,14 @@ function canonicalFieldValueIssues(project){
   return issues;
 }
 function assertCanonicalFieldValues(project){const issues=canonicalFieldValueIssues(project);if(issues.length)throw Object.assign(storageError('Canonical project field validation failed: '+issues.join(' | '),'PROJECT_INTEGRITY_FAILED'),{issues});}
-function validateProjectIntegrity(project,{verifyDerived=true,verifyCachedProjection=true,projectionObservedAt=null}={}){
+function assertJobPointerIntegrity(project,prior=null){const issues=globalThis.closedLoopWorkflowEngine.jobPointerIntegrityIssues(project,{prior});if(issues.length)throw Object.assign(storageError('Canonical Job pointer validation failed: '+issues.join(' | '),'PROJECT_INTEGRITY_FAILED'),{issues});}
+function validateProjectIntegrity(project,{verifyDerived=true,verifyCachedProjection=true,projectionObservedAt=null,prior=null}={}){
   const issues=[],schemaApi=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine;
   if(!project||typeof project!=='object')return {valid:false,issues:['Project is not an object.']};
   if(!schemaApi||!engine)return {valid:false,issues:['Workflow schema and engine are required for canonical project integrity validation.']};
   const collectionShapeIssues=projectCollectionShapeIssues(project);if(collectionShapeIssues.length)return {valid:false,issues:collectionShapeIssues};
   const fieldValueIssues=canonicalFieldValueIssues(project);if(fieldValueIssues.length)return {valid:false,issues:fieldValueIssues};
+  const pointerIssues=engine.jobPointerIntegrityIssues(project,{prior});if(pointerIssues.length)return {valid:false,issues:pointerIssues};
   if(project.schema!==schemaApi.PROJECT_SCHEMA)issues.push(`Project schema ${project.schema||'UNKNOWN'} does not match ${schemaApi.PROJECT_SCHEMA}.`);
   if(project.workflow!==schemaApi.WORKFLOW_ID)issues.push(`Workflow ${project.workflow||'UNKNOWN'} does not match ${schemaApi.WORKFLOW_ID}.`);
   if(Number(project.stageCount)!==Number(schemaApi.STAGE_COUNT))issues.push(`Stage count ${project.stageCount} does not match ${schemaApi.STAGE_COUNT}.`);
@@ -296,8 +300,53 @@ async function retainProjectSource(project,source,rows,{recordProject=true}={}){
 function readAllLegacy(storage){return parseLegacy(storage);}
 function writeAllLegacy(projects,storage){if(!storage)throw new Error('Legacy test storage is unavailable.');const payload=JSON.stringify(projects),prior=storage.getItem(STORE_KEY);try{fault('before-final-write');storage.setItem(STORE_KEY,payload);fault('after-final-write');return {changed:prior!==payload};}catch(error){try{if(prior===null)storage.removeItem(STORE_KEY);else storage.setItem(STORE_KEY,prior);}catch{}throw error;}}
 
-async function metaPut(key,value,tx=null){const own=tx||await openTransaction(META,'readwrite');own.objectStore(META).put({key,value,updatedAt:now()});if(!tx)await complete(own);return value;}
-async function metaGet(key){const tx=await openTransaction(META,'readonly');const row=await request(tx.objectStore(META).get(key));await complete(tx);return row?.value;}
+function assertMobileAcceptanceSessionWrite(key,value,prior){
+ const owner=String(key).slice('stage30MobileAcceptance.v1:'.length);
+ if(!value||typeof value!=='object'||Array.isArray(value))throw storageError('The mobile acceptance session has invalid project or preparation identity.','MOBILE_ACCEPTANCE_SESSION_INVALID');
+ const immutable=globalThis.closedLoopWorkflowSchema.MOBILE_ACCEPTANCE_SESSION_ANCHOR_CONTRACT.protectedFields;
+ if(prior!==undefined){
+  if(!prior||typeof prior!=='object'||Array.isArray(prior))throw storageError('The existing mobile acceptance session is damaged and was preserved. Start a new pinned test project.','MOBILE_ACCEPTANCE_SESSION_CONFLICT');
+  for(const field of immutable)if(Object.hasOwn(prior,field)&&(!Object.hasOwn(value,field)||!equivalent(prior[field],value[field])))throw storageError('The mobile acceptance target, initial package, or preparation changed in another operation. Reload the saved session; its original evidence was preserved.','MOBILE_ACCEPTANCE_SESSION_CONFLICT');
+ }
+ const checked=globalThis.closedLoopWorkflowSchema.validateMobileAcceptanceSessionAnchors(value);if(!owner||!checked.valid||value.jobId!==owner)throw storageError('The mobile acceptance session has invalid project or preparation identity.','MOBILE_ACCEPTANCE_SESSION_INVALID');
+ if(value.initialProjectPackage&&(!prior||!Object.hasOwn(prior,'initialProjectPackage'))){
+  const initial=value.initialProjectPackage;let bytes;
+  try{const binary=atob(initial.base64);if(btoa(binary)!==initial.base64)throw new Error('Noncanonical base64');bytes=Uint8Array.from(binary,character=>character.charCodeAt(0));}catch{throw storageError('Initial mobile project package encoding is invalid.','MOBILE_ACCEPTANCE_INITIAL_PACKAGE_INVALID');}
+  const digest=hash.createSha256();digest.update(bytes);
+  if(bytes.byteLength!==initial.byteSize||digest.digest()!==initial.sha256)throw storageError('Initial mobile project package bytes differ from their captured identity.','MOBILE_ACCEPTANCE_INITIAL_PACKAGE_INVALID');
+ }
+}
+function mergeMobileAcceptanceSession(prior,value){
+ const schema=globalThis.closedLoopWorkflowSchema,policy=schema.MOBILE_ACCEPTANCE_SESSION_MERGE_CONTRACT;
+ for(const session of [prior,value])if(session!==undefined&&!schema.validateMobileAcceptanceSessionMutable(session).valid)throw storageError('Mobile acceptance observations or runtime counters have invalid types.','MOBILE_ACCEPTANCE_SESSION_INVALID');
+ const merged={...(prior||{}),...value};
+ for(const field of policy.identityCollections){
+  if(prior?.[field]===undefined&&value[field]===undefined)continue;
+  const rows=[],byId=new Map();for(const row of [...(prior?.[field]||[]),...(value[field]||[])]){const saved=byId.get(row.receiptId);if(saved&&!equivalent(saved,row))throw storageError('A recorded mobile observation identity was reused for different content. Its original evidence was preserved.','MOBILE_ACCEPTANCE_OBSERVATION_CONFLICT');if(!saved){byId.set(row.receiptId,row);rows.push(clone(row));}}merged[field]=rows;
+ }
+ for(const field of policy.exactSetCollections){
+  if(prior?.[field]===undefined&&value[field]===undefined)continue;
+  const rows=[],seen=new Set();for(const row of [...(prior?.[field]||[]),...(value[field]||[])]){const digest=hash.sha256Value(row);if(!seen.has(digest)){seen.add(digest);rows.push(clone(row));}}merged[field]=rows;
+ }
+ for(const field of policy.keyedMapCollections){
+  if(prior?.[field]===undefined&&value[field]===undefined)continue;
+  merged[field]=Object.fromEntries([...Object.entries(prior?.[field]||{}),...Object.entries(value[field]||{})].map(([key,row])=>[key,clone(row)]));
+ }
+ const counterField=policy.counterMap;if(prior?.[counterField]!==undefined||value[counterField]!==undefined){const counters={};for(const tabId of new Set([...Object.keys(prior?.[counterField]||{}),...Object.keys(value[counterField]||{})])){const previous=Object.hasOwn(prior?.[counterField]||{},tabId)?prior[counterField][tabId]:null,incoming=Object.hasOwn(value[counterField]||{},tabId)?value[counterField][tabId]:null;Object.defineProperty(counters,tabId,{enumerable:true,writable:true,configurable:true,value:Object.fromEntries(policy.counterFields.map(field=>[field,Math.max(previous?.[field]??0,incoming?.[field]??0)]))});}merged[counterField]=counters;}
+ // A successful explicit save clears its earlier transient write error. The
+ // observation records and monotonic counters above remain retained.
+ if(!Object.hasOwn(value,'receiptPersistenceError'))delete merged.receiptPersistenceError;
+ return merged;
+}
+async function metaPut(key,value,tx=null){
+ if(String(key).startsWith('responseStaging:')&&value?.blob instanceof Blob&&(value.blob.size!==value.byteSize||await hash.sha256Bytes(value.blob)!==value.sha256))throw storageError('Response staging bytes failed identity verification.','RESPONSE_STAGE_REHASH_MISMATCH');
+ const own=tx||await openTransaction(META,'readwrite'),store=own.objectStore(META);
+ try{
+  let saved=value;if(String(key).startsWith('stage30MobileAcceptance.v1:')){const prior=(await request(store.get(key)))?.value;assertMobileAcceptanceSessionWrite(key,value,prior);saved=mergeMobileAcceptanceSession(prior,value);}
+  store.put({key,value:String(key).startsWith('responseStaging:')&&saved?.blob instanceof Blob?await sharedByteRecord(own,saved):saved,updatedAt:now()});if(!tx)await complete(own);return saved;
+ }catch(error){try{own.abort();}catch{}throw error;}
+}
+async function metaGet(key){const tx=await openTransaction(META,'readonly');const row=await request(tx.objectStore(META).get(key)),value=String(key).startsWith('responseStaging:')?await hydrateByteRecord(tx,row?.value):row?.value;await complete(tx);return value;}
 // Operational response work is owned by META and bound to one canonical row.
 // Its closed patch contains no accepted-work authority. Canonical commits fold
 // the resulting audit records into their complete snapshot and retire the patch.
@@ -361,22 +410,43 @@ function applyOperationalJournal(row,journal){
   return {...row,project:next,projectSha256:body.projectSha256};
 }
 async function projectRowWithOperations(tx,jobId){const row=await request(tx.objectStore(PROJECTS).get(String(jobId))),journal=await request(tx.objectStore(META).get(operationalKey(jobId)));return applyOperationalJournal(row,journal?.value);}
+async function preparePendingReturnedArtifacts(project,prior,input){
+ if(input===undefined)return [];if(!Array.isArray(input))throw storageError('Pending returned artifacts must be an array.','PENDING_ARTIFACTS_INVALID');
+ const engine=globalThis.closedLoopWorkflowEngine,ingestion=globalThis.closedLoopResponseIngestion,owner=projectIdentity(project),seen=new Set(),checkedResponses=new Set(),rows=[];
+ engine.validateAllocationReceipts(project,prior);
+ for(const supplied of input){
+  if(!supplied||typeof supplied!=='object'||!(supplied.blob instanceof Blob)||typeof supplied.artifactId!=='string'||!supplied.artifactId||supplied.jobId!==owner||seen.has(supplied.artifactId)||typeof supplied.filename!=='string'||typeof supplied.mediaType!=='string'||!Number.isSafeInteger(supplied.byteSize)||supplied.byteSize<0||supplied.blob.size!==supplied.byteSize||typeof supplied.sha256!=='string'||!/^[a-f0-9]{64}$/.test(supplied.sha256))throw storageError('Pending returned bytes have an invalid owner or identity.','PENDING_ARTIFACTS_INVALID');
+  seen.add(supplied.artifactId);const receipt=engine.assertArtifactAllocation(project,supplied.artifactId),raw=(project.projectData.rawResponses||[]).find(row=>row.rawResponseId===supplied.lineage?.rawResponseId),file=Array.isArray(raw?.files)?raw.files.find(row=>row.artifactId===supplied.artifactId):null,original=(prior.projectData.rawResponses||[]).find(row=>row.rawResponseId===raw?.rawResponseId);
+  if(!raw||!original||raw.jobId!==owner||!['PRESERVED','VALIDATION_FAILED'].includes(raw.status)||raw.sha256!==original.sha256||receipt.parentId!==raw.rawResponseId||receipt.targetSlot!==supplied.lineage?.attachmentSlotId||supplied.lineage.stage!==raw.stage||supplied.lineage.logicalPath!==supplied.filename||supplied.lineage.role!==globalThis.closedLoopCore.STAGES[raw.stage-1]?.role||!file||file.attachmentSlotId!==supplied.lineage.attachmentSlotId||file.name!==supplied.filename||file.type!==supplied.mediaType||file.size!==supplied.byteSize||file.sha256!==supplied.sha256||supplied.lineage.productId!==undefined&&supplied.lineage.productId!==raw.promptScope?.productId)throw storageError('Pending returned bytes are not bound to their exact allocated response slot.','PENDING_ARTIFACT_BINDING_INVALID');
+  // Reuse admission's slot/response/allocation rules; this disposable binder
+  // result grants no proposal acceptance and is never persisted as a new event.
+  if(!checkedResponses.has(raw.rawResponseId)){ingestion.bindAttachmentSlots(project,{rawResponseId:raw.rawResponseId,files:raw.files});checkedResponses.add(raw.rawResponseId);}
+  if(await hash.sha256Bytes(supplied.blob)!==supplied.sha256)throw storageError('Pending returned bytes differ from their captured digest.','PENDING_ARTIFACT_REHASH_MISMATCH');
+  rows.push({artifactId:supplied.artifactId,jobId:owner,blob:supplied.blob,filename:supplied.filename,mediaType:supplied.mediaType,byteSize:supplied.byteSize,sha256:supplied.sha256,lineage:clone(supplied.lineage),createdAt:now()});
+ }
+ return rows;
+}
 async function writeOperationalProject(project,options={}){
   const id=projectIdentity(project),prior=await readProject(id);if(!prior)throw storageError('Project is unavailable.','PROJECT_NOT_FOUND');
   if(Number(options.expectedProjectRevision)!==Number(prior.revision)||!options.expectedStateSha256||options.expectedStateSha256!==prior.projectSha256)throw storageError('Project or pending response changed. Refresh it before retrying.','STALE_PROJECT_REVISION');
   const next=clone(project);delete next.projectSha256;
   assertProjectCollectionShape(next);
   assertCanonicalFieldValues(next);
+  assertJobPointerIntegrity(next,prior);
   if(Number(next.revision)!==Number(prior.revision))throw storageError('An operational event cannot advance the canonical revision.','OPERATIONAL_OWNERSHIP_VIOLATION');
-  if(projectSha256(next)===prior.projectSha256)return prior;
+  const pendingArtifacts=await preparePendingReturnedArtifacts(next,prior,options.pendingArtifacts);
+  if(projectSha256(next)===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
   globalThis.closedLoopWorkflowEngine.recalculate(next);assertOperationalChange(prior,next);assertProjectIntegrity(next);
-  const digest=projectSha256(next);if(digest===prior.projectSha256)return prior;
-  const prepared=await prepareHistoryCommit(next,prior,{label:options.historyLabel||'Response work saved',view:options.historyView});
-  fault('before-project-transaction');const tx=await openTransaction([PROJECTS,META],'readwrite');
+  const digest=projectSha256(next);if(digest===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
+  const retainedArtifacts=pendingArtifacts.length?await listArtifacts(id):null,byId=new Map((retainedArtifacts||[]).map(row=>[row.artifactId,row]));
+  for(const row of pendingArtifacts){const existing=byId.get(row.artifactId);if(existing&&(existing.sha256!==row.sha256||existing.byteSize!==row.byteSize||existing.filename!==row.filename||existing.mediaType!==row.mediaType||!equivalent(existing.lineage,row.lineage)))throw storageError('A pending returned artifact conflicts with stored bytes.','ARTIFACT_ID_REUSE');if(existing)row.createdAt=existing.createdAt;byId.set(row.artifactId,row);}
+  const prepared=await prepareHistoryCommit(next,prior,{label:options.historyLabel||'Response work saved',view:options.historyView,artifactRows:pendingArtifacts.length?[...byId.values()]:null});
+  fault('before-project-transaction');const tx=await openTransaction(pendingArtifacts.length?[PROJECTS,ARTIFACTS,META]:[PROJECTS,META],'readwrite');
   try{
     const meta=tx.objectStore(META),base=await request(tx.objectStore(PROJECTS).get(id)),current=await projectRowWithOperations(tx,id);
     if(current?.projectSha256!==prior.projectSha256)throw storageError('Another session changed the pending response.','STALE_PROJECT_REVISION');
     globalThis.closedLoopWorkflowEngine.validateAllocationReceipts(next,current?.project);
+    if(pendingArtifacts.length){const artifacts=tx.objectStore(ARTIFACTS);for(const row of pendingArtifacts){const existing=await request(artifacts.get(row.artifactId));if(existing&&(existing.jobId!==id||existing.sha256!==row.sha256||existing.byteSize!==row.byteSize||existing.filename!==row.filename||existing.mediaType!==row.mediaType||existing.createdAt!==row.createdAt||!equivalent(existing.lineage,row.lineage)))throw storageError('Another operation changed the pending returned artifact identity.','ARTIFACT_ID_REUSE');fault('during-pending-artifact-write');await storeArtifactRow(tx,row);}}
     const existing=(await request(meta.get(operationalKey(id))))?.value,body={schema:'closed-loop-response-operations/1',jobId:id,baseProjectSha256:base.projectSha256,projectRevision:Number(base.revision),sequence:Number(existing?.sequence||0)+1,patches:assertOperationalChange(base.project,next),projectSha256:digest};
     await commitHistory(tx,prepared);meta.put({key:operationalKey(id),value:{...body,sha256:hash.sha256Value(body)},updatedAt:now()});fault('during-operational-write');recordWorkerCommit(tx,options.operationId,next,digest);fault('before-transaction-commit');await complete(tx);notifyProjectChange(next,{operational:true});return {...next,projectSha256:digest};
   }catch(error){try{tx.abort();}catch{}throw error;}
@@ -385,7 +455,7 @@ async function quarantine(row,reason,{operationalSha256}={}){
  const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),projects=tx.objectStore(PROJECTS),meta=tx.objectStore(META);
  try{const current=await request(projects.get(String(row?.jobId||''))),journal=await request(meta.get(operationalKey(row?.jobId)));
   if(!current||String(current.projectSha256||'')!==String(row?.projectSha256||'')||operationalSha256!==undefined&&journal?.value?.sha256!==operationalSha256){await complete(tx);return false;}
-  const artifacts=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(row.jobId))),key=`quarantine:${row?.jobId||'UNKNOWN'}:${crypto.randomUUID()}`,capturedAt=now(),catalog=clone((await request(meta.get('quarantineCatalog')))?.value||{});
+  const artifacts=await hydrateArtifactRows(tx,await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(row.jobId))),{diagnostic:true,preserveDamagedBytes:true}),key=`quarantine:${row?.jobId||'UNKNOWN'}:${crypto.randomUUID()}`,capturedAt=now(),catalog=clone((await request(meta.get('quarantineCatalog')))?.value||{});
   const entry={key,jobId:String(row.jobId),title:String(row.project?.job?.JOB_TITLE||'Project needing recovery'),reason,capturedAt,artifactCount:artifacts.length,completeSnapshot:true};catalog[key]=entry;
   fault('during-quarantine-write');meta.put({key,value:{schema:'closed-loop-quarantine/1',reason,row:clone(current),operationalJournal:clone(journal?.value||null),artifacts:clone(artifacts),capturedAt},updatedAt:capturedAt});meta.put({key:'quarantineCatalog',value:catalog,updatedAt:capturedAt});projects.delete(String(row.jobId));meta.delete(operationalKey(row.jobId));await complete(tx);return true;
  }catch(error){try{tx.abort();}catch{}throw error;}
@@ -460,6 +530,7 @@ async function migrateLegacy(){
     fault('before-legacy-migration');const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;if(!core?.migrateState||!engine)throw storageError('Canonical workflow migration logic is unavailable.','LEGACY_MIGRATION_UNAVAILABLE');
     for(const source of legacy){
       if(source.schema===globalThis.closedLoopWorkflowSchema?.PROJECT_SCHEMA)assertProjectCollectionShape(source);
+      if(source?.schema===globalThis.closedLoopWorkflowSchema.PROJECT_SCHEMA)try{assertJobPointerIntegrity(source);}catch(error){if(!legacyJobPointerProjection(source,{verifyDerived:false}))throw error;}
       const project=core.migrateState(clone(source));assertProjectCollectionShape(project);engine.ensureShape(project);
       const artifacts=[];for(const original of legacySourceSpans.get(source)||[])await retainProjectSource(project,original,artifacts);
       if(artifacts.reduce((size,row)=>size+row.byteSize,0)>HISTORY_LIMITS.maxRetainedFileBytes)throw storageError('Original project sources exceed the supported recovery capacity. Original browser data is preserved.','HISTORY_LIMIT_REACHED');
@@ -471,7 +542,7 @@ async function migrateLegacy(){
     for(const [key,value]of inputs)if(localStorage.getItem(key)!==value)throw storageError('Legacy browser data changed during migration. The original input was not removed.','STALE_PROJECT_REVISION');
     tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite');
     if(await request(tx.objectStore(PROJECTS).count()))throw storageError('A project was created while legacy migration was prepared. Original browser data is preserved.','STALE_PROJECT_REVISION');
-    for(const {project,artifacts,id}of prepared){const revision=Number(project.revision||0);for(const artifact of artifacts)tx.objectStore(ARTIFACTS).put(artifact);tx.objectStore(PROJECTS).put({jobId:id,revision,picker:projectPickerKey(project,revision),project,projectSha256:projectSha256(project),updatedAt:now()});migrated++;}
+    for(const {project,artifacts,id}of prepared){const revision=Number(project.revision||0);for(const artifact of artifacts)await storeArtifactRow(tx,artifact);tx.objectStore(PROJECTS).put({jobId:id,revision,picker:projectPickerKey(project,revision),project,projectSha256:projectSha256(project),updatedAt:now()});migrated++;}
     tx.objectStore(META).put({key:'migrationStatus',value:{status:'COMPLETE',migrated,at:now()},updatedAt:now()});fault('during-legacy-migration');await complete(tx);
     for(const [key,value]of inputs)try{if(localStorage.getItem(key)===value)localStorage.removeItem(key);}catch{}return {migrated};
   }catch(error){try{tx?.abort();}catch{}await metaPut('migrationStatus',{status:'FAILED',message:String(error.message||error),originalPreserved:true,at:now()});throw error;}
@@ -487,21 +558,47 @@ async function listProjectSummaries(){
   const cursorRead=storageEvent('CURSOR',(resolve,reject,active)=>{const req=tx.objectStore(PROJECTS).index('picker').openKeyCursor();req.onerror=()=>{if(active())reject(req.error||new Error('Project picker could not be read.'));};req.onsuccess=()=>{if(!active())return;const cursor=req.result;if(!cursor){resolve();return;}summaries.push(projectPickerSummary(cursor.key));cursor.continue();};},tx);
   await Promise.all([cursorRead,finished]);return summaries;
 }
-async function readProject(jobId){
+async function readProjectMetadata(jobId){
   const tx=await openTransaction([PROJECTS,META],'readonly'),row=await request(tx.objectStore(PROJECTS).get(String(jobId))),journal=await request(tx.objectStore(META).get(operationalKey(jobId)));await complete(tx);
   if(!row)return null;
   let computed;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}catch(error){await quarantine(row,'PROJECT_ENCODING_INVALID: '+error.message);throw storageError('The stored project contains invalid canonical data. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}
   if(computed!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');throw storageError('Project hash mismatch. The original row was preserved in quarantine.','PROJECT_HASH_MISMATCH');}
   if(Number(row.revision)!==Number(row.project?.revision)){await quarantine(row,'PROJECT_REVISION_MISMATCH');throw storageError('Stored revision does not match the canonical project. The original row was preserved in quarantine.','PROJECT_REVISION_MISMATCH');}
-  try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+error.message);throw storageError('The stored project failed canonical integrity validation. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}
-  let active;try{active=applyOperationalJournal(row,journal?.value);if(active!==row)assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;recoveryProjectionBounds.set(active.project,active===row?row.updatedAt:journal.updatedAt);await observeProjectArtifactCustody(active.project);return active.project;
+  try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(row.project,{verifyDerived:false})){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+error.message);throw storageError('The stored project failed canonical integrity validation. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}}
+  let active;try{active=applyOperationalJournal(row,journal?.value);if(active!==row){try{assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(active.project,{verifyDerived:false}))throw error;}}}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;recoveryProjectionBounds.set(active.project,active===row?row.updatedAt:journal.updatedAt);
+  const repaired=legacyJobPointerProjection(active.project,{verifyDerived:false});
+  return repaired?migrateJobPointerProjection(active.project,repaired):active.project;
 }
+function legacyJobPointerProjection(project,{verifyDerived=true}={}){
+  const engine=globalThis.closedLoopWorkflowEngine,changed=new Map(engine.jobPointerProjectionRepairs(project).map(repair=>[repair.field,repair]));
+  // Earlier human-project/30 seed mapping wrote placeholder prose into nullable
+  // identity fields. Recognize only that retained original source and its exact
+  // mapped values; arbitrary non-null current-schema identities still reject.
+  const legacySource=project.isRetainedTestProject===true?(project.projectData?.migrationArchives||[]).find(row=>row.kind==='ORIGINAL_IMPORT_PAYLOAD'&&row.operational===false&&row.payload?.schema==='human-project/30'&&!row.payload.stages&&row.payload.jobId===projectIdentity(project))?.payload:null;
+  if(legacySource){const oldValues={CURRENT_SOURCE_SET_VERSION:legacySource.currentVersions?.sources||'NOT APPLICABLE',CURRENT_REQUIREMENTS_VERSION:legacySource.currentVersions?.requirements||'NOT APPLICABLE',CURRENT_TEST_SUITE_VERSION:legacySource.currentVersions?.tests||'NOT APPLICABLE',CURRENT_INSTRUCTION_VERSION:legacySource.currentVersions?.instruction||'NOT APPLICABLE',CURRENT_BASELINE_ID:legacySource.baseline?.baselineId||'NONE',CURRENT_PRODUCT_ID:legacySource.product?.productId||'NONE'};for(const [field,value]of Object.entries(oldValues))if(['NONE','NOT APPLICABLE'].includes(value)&&project.job?.[field]===value)changed.set(field,{field,from:value,to:null});}
+  if(!changed.size)return null;
+  const corrected=clone(project);for(const {field,to}of changed.values())corrected.job[field]=to;
+  for(const {field,to}of engine.jobPointerProjectionRepairs(corrected)){changed.set(field,{field,from:project.job[field]??null,to});corrected.job[field]=to;}
+  const repairs=[...changed.values()];
+  const bound=recoveryProjectionBounds.get(project);if(bound)recoveryProjectionBounds.set(corrected,bound);
+  const checked=validateProjectIntegrity(corrected,{verifyDerived});
+  if(!checked.valid&&(!verifyDerived||!historicalProjectionConsistent(corrected,{code:'PROJECT_INTEGRITY_FAILED',issues:checked.issues})))return null;
+  return {project:corrected,repairs};
+}
+async function migrateJobPointerProjection(prior,{project:next,repairs}){
+  const engine=globalThis.closedLoopWorkflowEngine;delete next.projectSha256;next.revision=Number(prior.revision)+1;
+  await observeProjectArtifactCustody(next);engine.reconcileReservationRevisions(next);engine.addHistory(next,'JOB_POINTER_PROJECTION_REPAIRED',{sourceProjectSha256:prior.projectSha256,repairs});engine.recalculate(next);assertProjectIntegrity(next,{prior});
+  const preparedHistory=await prepareHistoryCommit(next,prior,{label:'Application identities repaired'});
+  fault('before-project-transaction');const tx=await openTransaction([PROJECTS,META],'readwrite');
+  try{const saved=await writeProjectRow(next,tx,{expectedProjectRevision:prior.revision,expectedStateSha256:prior.projectSha256,preparedHistory,incrementRevision:true});fault('before-transaction-commit');await complete(tx);notifyProjectChange(saved);return saved;}catch(error){try{tx.abort();}catch{}throw error;}
+}
+async function readProject(jobId){const project=await readProjectMetadata(jobId);if(project)await observeProjectArtifactCustody(project);return project;}
 function cachedReadinessProjection(project){
- const job=Object.fromEntries(['CURRENT_STAGE','CURRENT_STATE','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION','JOB_RECORD_STATUS','STATUS_EVIDENCE'].map(key=>[key,project.job?.[key]]));
+ const job=Object.fromEntries(['CURRENT_STAGE','CURRENT_STATE','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION','JOB_RECORD_STATUS','STATUS_EVIDENCE',...Object.keys(globalThis.closedLoopWorkflowSchema.JOB_POINTER_TARGETS)].map(key=>[key,project.job?.[key]]));
  return {job,stages:Object.fromEntries(Object.entries(project.stages||{}).map(([number,stage])=>[number,{status:stage.status,derivedData:stage.derivedData||{}}]))};
 }
 function recalculateChangedProjection(project){
- const next=clone(project);globalThis.closedLoopWorkflowEngine.recalculate(next);
+ const next=legacyJobPointerProjection(project,{verifyDerived:false})?.project||clone(project);globalThis.closedLoopWorkflowEngine.recalculate(next);
  // Preserve the exact saved audit timestamps when authority is unchanged.
  // A changed current determination receives the fully recalculated projection.
  return equivalent(cachedReadinessProjection(project),cachedReadinessProjection(next))?project:next;
@@ -520,11 +617,13 @@ async function refreshProjectProjection(jobId,{expectedProjectRevision,expectedS
 function readAll(storage){return storage?readAllLegacy(storage):readAllIndexed();}
 
 // Full immutable checkpoints share the existing IndexedDB transaction owner.
-// Files are content-addressed here only for recovery; agent exports never read
-// these keys. Reaching a bound fails before the dependent canonical commit.
+// Artifact occurrences and History share these content-addressed bodies. Agent
+// exports still resolve only their authorized canonical artifact identities. Reaching a bound fails before the dependent canonical commit.
 const HISTORY_SCHEMA='closed-loop-recovery/1';
 const HISTORY_PROJECT_REFERENCE='closed-loop-recovery-project-reference/1';
 const HISTORY_PROJECT_PARTS='closed-loop-recovery-project-parts/1';
+const HISTORY_SOURCE_REFERENCE=globalThis.closedLoopWorkflowSchema.RECOVERY_SOURCE_REFERENCE_CONTRACT.schema;
+const HISTORY_ACTIVATION_FIELDS=globalThis.closedLoopWorkflowSchema.RECOVERY_SOURCE_REFERENCE_CONTRACT.activationFields;
 const HISTORY_LIMITS=Object.freeze({maxCheckpoints:2048,maxCompressedProjectBytes:512*1024*1024,maxRetainedFileBytes:1024*1024*1024});
 const historyKey=jobId=>'recovery:'+String(jobId);
 const snapshotKey=(jobId,id)=>historyKey(jobId)+':snapshot:'+id;
@@ -548,11 +647,44 @@ function reconcileRecoveryTransfers(state,project){
     state.transfers[command]=transfer;
   }
 }
-async function verifyHistorySourceArchives(state,readFile=sha=>metaGet(historyFileKey(state.jobId,sha)),verifiedSources=null,verifiedByteDigests=null){
+function sourceReferenceProject(project,reference){
+  const result={...project};for(const key of HISTORY_ACTIVATION_FIELDS)delete result[key];
+  for(const [key,value]of Object.entries(reference.activation))Object.defineProperty(result,key,{value:clone(value),enumerable:true,writable:true,configurable:true});
+  return result;
+}
+async function readHistorySourceFile(state,source,readFile=sha=>metaGet(historyFileKey(state.jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(state.jobId,id)),verifiedByteDigests=null,decodedSources=null){
+  const reference=state.sourceArchiveReferences?.[source.sha256];let file;
+  if(reference){
+    const checkedSnapshot=async id=>{const expected=state.entries.find(entry=>entry.id===id),stored=await readSnapshot(id);if(!expected||!stored?.blob)throw storageError('Original source depends on a missing saved project.','SOURCE_ARCHIVE_INTEGRITY_FAILED');return {...expected,blob:stored.blob};};
+    const entry=await checkedSnapshot(reference.checkpointId);
+    if(entry.sha256!==reference.snapshotSha256)throw storageError('Original source identifies a different saved project.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+    const cached=decodedSources?.get(reference.checkpointId);let body=cached?.blob===entry.blob?cached.body:null;
+    if(!body){body=await readCheckpointBody(state.jobId,entry,checkedSnapshot,new Map(),false,readFile,new Map(),verifiedByteDigests);if(decodedSources){decodedSources.clear();decodedSources.set(reference.checkpointId,{blob:entry.blob,body});}}
+    const project=sourceReferenceProject(body.project,reference),blob=new Blob([...hash.canonicalChunks(project)],{type:source.mediaType});
+    file={sha256:source.sha256,blob};
+  }else file=await readFile(source.sha256);
+  if(!(file?.blob instanceof Blob)||file.blob.size!==source.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==source.sha256)throw storageError('Original source recovery bytes are missing or corrupt.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+  return file;
+}
+async function readOriginalSourceArchive(jobId,sha256){
+  const state=await metaGet(historyKey(jobId));if(!state)throw storageError('Original source recovery history is unavailable.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+  validateRecoveryManifest(state);const source=Object.values(state.sourceArchives||{}).find(row=>row.sha256===sha256);
+  if(!source)throw storageError('Original source recovery identity is unavailable.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+  const file=await readHistorySourceFile(state,source),row={...source,jobId:String(jobId),blob:file.blob};
+  await verifyOriginalSourceBindings({job:{JOB_ID:String(jobId)},projectData:{migrationArchives:[source]}},[row]);return row;
+}
+async function verifyHistorySourceArchives(state,readFile=sha=>metaGet(historyFileKey(state.jobId,sha)),verifiedSources=null,verifiedByteDigests=null,readSnapshot=id=>metaGet(snapshotKey(state.jobId,id))){
   if(!state?.sourceArchives)return;
-  const sources=Object.values(state.sourceArchives),files=[];
-  for(const source of sources){const file=await readFile(source.sha256);if(!(file?.blob instanceof Blob)||file.blob.size!==source.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==source.sha256)throw storageError('Original source recovery bytes are missing or corrupt.','SOURCE_ARCHIVE_INTEGRITY_FAILED');files.push({...source,jobId:String(state.jobId),blob:file.blob});}
-  await verifyOriginalSourceBindings({job:{JOB_ID:state.jobId},projectData:{migrationArchives:sources}},files,verifiedSources);
+  // Retain one decoded root and one reconstructed source at a time. Several
+  // provenance descriptors may identify the same original bytes; verify that
+  // blob once without materializing every retained project in memory together.
+  const groups=new Map(),decodedSources=new Map();
+  for(const source of Object.values(state.sourceArchives)){if(!groups.has(source.sha256))groups.set(source.sha256,[]);groups.get(source.sha256).push(source);}
+  for(const sources of groups.values()){
+    const file=await readHistorySourceFile(state,sources[0],readFile,readSnapshot,verifiedByteDigests,decodedSources),files=sources.map(source=>({...source,jobId:String(state.jobId),blob:file.blob}));
+    for(const source of sources)if(source.byteSize!==file.blob.size)throw storageError('Original source recovery descriptors disagree about their exact bytes.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+    await verifyOriginalSourceBindings({job:{JOB_ID:state.jobId},projectData:{migrationArchives:sources}},files,verifiedSources);
+  }
 }
 async function assertRecoveryTransfer(project){
   const state=await metaGet(historyKey(projectIdentity(project))),engine=globalThis.closedLoopWorkflowEngine,checked=engine.deliveryTransferPrecondition(project),intentId=engine.recordId(checked.intentRecord,'humanDecisions');
@@ -576,8 +708,15 @@ function validateRecoveryManifest(state){
   if(state.sourceArchives!==undefined){
     if(!state.sourceArchives||typeof state.sourceArchives!=='object'||Array.isArray(state.sourceArchives))throw storageError('Original-source recovery metadata is invalid.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
     for(const [key,source]of Object.entries(state.sourceArchives)){
-      if(source?.schema!==ORIGINAL_SOURCE_SCHEMA||source.kind!==ORIGINAL_SOURCE_KIND||key!==hash.sha256Value(source)||state.files[source.sha256]?.byteSize!==source.byteSize)throw storageError('Original-source recovery bytes do not match their descriptor.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+      if(source?.schema!==ORIGINAL_SOURCE_SCHEMA||source.kind!==ORIGINAL_SOURCE_KIND||key!==hash.sha256Value(source)||(!state.sourceArchiveReferences?.[source.sha256]&&state.files[source.sha256]?.byteSize!==source.byteSize))throw storageError('Original-source recovery bytes do not match their descriptor.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
       requiredProjectArtifactBytes({job:{JOB_ID:state.jobId},projectData:{migrationArchives:[source]}});
+    }
+  }
+  if(state.sourceArchiveReferences!==undefined){
+    if(!state.sourceArchiveReferences||typeof state.sourceArchiveReferences!=='object'||Array.isArray(state.sourceArchiveReferences))throw storageError('Original-source recovery references are invalid.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
+    for(const [sha256,reference]of Object.entries(state.sourceArchiveReferences)){
+      const sources=Object.values(state.sourceArchives||{}).filter(source=>source.sha256===sha256),entry=byId.get(reference?.checkpointId);
+      if(!globalThis.closedLoopWorkflowSchema.validateRecoverySourceReference(reference).valid||!sources.length||sources.some(source=>source.sourceEncoding!=='UTF-8'||source.parsedPayloadSha256!==sha256)||!entry||entry.sha256!==reference.snapshotSha256)throw storageError('Original-source recovery reference is not an exact canonical source binding.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
     }
   }
   const snapshotBytes=state.entries.reduce((n,entry)=>n+Number(entry.byteSize),0),fileBytes=Object.values(state.files).reduce((n,file)=>n+Number(file.byteSize),0);
@@ -587,12 +726,12 @@ function assertHistoryLimits(state){
   if(state.entries.length>HISTORY_LIMITS.maxCheckpoints||state.compressedProjectBytes>HISTORY_LIMITS.maxCompressedProjectBytes||state.retainedFileBytes>HISTORY_LIMITS.maxRetainedFileBytes)throw storageError('History storage limit reached. The current project and every retained version are preserved. Export a complete backup before continuing in a new project.','HISTORY_LIMIT_REACHED');
 }
 function historyArtifactsSha256(rows){return hash.sha256Value(rows.map(historyDescriptor).sort((a,b)=>hash.compareUnicodeScalarSequence(a.artifactId,b.artifactId)));}
-function historyWorkSha256(project){const work={...project};for(const key of ['projectSha256','projectHash','revision','historyActivationId','restoredCandidates','activeView','activeStage'])delete work[key];return hash.sha256Value(work);}
+function historyWorkSha256(project){const work={...project};for(const key of HISTORY_ACTIVATION_FIELDS)delete work[key];return hash.sha256Value(work);}
 // Both identities retain their existing canonical preimages. Encode each
 // shared root value once; feed identical UTF-8 bytes to independent SHA states.
 function historyProjectDigests(project){
   const canonical=canonicalProject(project),projectDigest=hash.createSha256(),workDigest=hash.createSha256();
-  const omitted=new Set(['projectSha256','projectHash','revision','historyActivationId','restoredCandidates','activeView','activeStage']);
+  const omitted=new Set(HISTORY_ACTIVATION_FIELDS);
   if(Object.getOwnPropertySymbols(canonical).length)throw new TypeError('Cannot canonically hash symbol-keyed project properties.');
   const encoder=new TextEncoder(),keys=Object.keys(canonical).sort(hash.compareUnicodeScalarSequence);
   const write=(text,includeWork=true)=>{const bytes=encoder.encode(text);projectDigest.update(bytes);if(includeWork)workDigest.update(bytes);};
@@ -698,7 +837,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,sessionId=n
   const jobId=projectIdentity(next),existing=baseState||await metaGet(historyKey(jobId));
   const state=clone(existing||{schema:HISTORY_SCHEMA,jobId,generation:0,activeId:null,activeProjectSha256:null,entries:[],sessions:{},files:{},compressedProjectBytes:0,retainedFileBytes:0,redo:[]});
   const retainedRedo=clone(state.redo||[]),viewOnly=prior&&digest(next)===digest(prior);
-  const expectedGeneration=Number(state.generation||0),files=artifactRows||await listArtifacts(jobId),newFiles=[],snapshots=[];
+  let files=artifactRows;try{files=files||await listArtifacts(jobId);}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;throw storageError('Cannot preserve History: a stored file is missing or corrupt.','HISTORY_FILE_INTEGRITY_FAILED');}const expectedGeneration=Number(state.generation||0),newFiles=[],snapshots=[];
   for(const row of files){
     if(!(row.blob instanceof Blob)||row.blob.size!==Number(row.byteSize)||await hash.sha256Bytes(row.blob)!==row.sha256)throw storageError(`Cannot preserve history: stored file ${row.filename} is missing or corrupt.`,'HISTORY_FILE_INTEGRITY_FAILED');
     if(!state.files[row.sha256]){newFiles.push({sha256:row.sha256,blob:row.blob});state.files[row.sha256]={byteSize:row.blob.size};state.retainedFileBytes+=row.blob.size;}
@@ -829,7 +968,7 @@ function assertRecoveryCompatibility(project){
   // only stages labelled COMPLETE. Otherwise an older permissive import can
   // re-enter through History, Undo/Redo or a nested backup checkpoint.
   try{assertProjectIntegrity(project);}catch(error){
-    if(historicalProjectionConsistent(project,error))return;
+    if(historicalProjectionConsistent(project,error)||legacyJobPointerProjection(project))return;
     if(error.code!=='PROJECT_INTEGRITY_FAILED')throw error;
     throw Object.assign(storageError('The saved project projection does not match its canonical records. The current version and saved history are preserved. Restore a compatible backup.','HISTORY_VERSION_INCOMPATIBLE'),{issues:error.issues});
   }
@@ -883,7 +1022,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
       project=await restoreHistoryProject(body,readFile,verifiedParts,verifiedByteDigests);
       if(projectIdentity(project)!==String(jobId))throw storageError('Saved project belongs to another job.','HISTORY_VERSION_MISMATCH');
       ({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));
-      assertProjectIntegrity(project,{verifyDerived:false});
+      try{assertProjectIntegrity(project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(project,{verifyDerived:false}))throw error;}
     }
   }
   if(body.projectSha256!==verifiedProjectSha256)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');
@@ -964,7 +1103,7 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
     const present=await request(files.index('jobId').getAll(String(jobId)));
     for(const row of saved.artifacts){const existing=await request(files.get(row.artifactId));if(existing&&existing.jobId!==String(jobId))throw storageError('A restored file identity belongs to another project.','CROSS_PROJECT_ARTIFACT_ID_COLLISION');}
     if(signal?.aborted)throw storageError('A newer navigation replaced this restore.','RESTORE_INTERRUPTED');
-    for(const row of present)files.delete(row.artifactId);for(const row of saved.artifacts){files.put(row);const staged=row.lineage?.stagedResponse;if(staged)meta.put({key:`responseStaging:${jobId}:${staged.stagingId}`,value:{...staged,blob:row.blob},updatedAt:now()});}
+    for(const row of present)files.delete(row.artifactId);for(const row of saved.artifacts){await storeArtifactRow(tx,row);const staged=row.lineage?.stagedResponse;if(staged)meta.put({key:`responseStaging:${jobId}:${staged.stagingId}`,value:await sharedByteRecord(tx,{...staged,blob:row.blob}),updatedAt:now()});}
     fault('during-history-restore');meta.delete(operationalKey(jobId));projects.put({jobId:String(jobId),revision:next.revision,picker:projectPickerKey(next),project:next,projectSha256:digest,updatedAt:now()});
     meta.put({key:historyKey(jobId),value:updated,updatedAt:now()});await updateRecoveryCatalog(meta,updated);meta.put({key:'selectedProject',value:String(jobId),updatedAt:now()});meta.put({key:'lastCommittedRevision',value:{jobId:String(jobId),revision:next.revision,projectSha256:digest},updatedAt:now()});recordWorkerCommit(tx,operationId,next,digest);fault('before-history-restore-commit');await complete(tx);
     next.projectSha256=digest;await listArtifacts(jobId);notifyProjectChange(next,{restored:true});return {project:next,view:updated.activeViewOverride,checkpointId};
@@ -972,7 +1111,7 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
 }
 
 async function persistProjectPromptFiles(project){const prompts=globalThis.closedLoopPromptEngine;await persistPromptContextRecords((project.projectData?.generatedPrompts||[]).filter(record=>!record.invalidatedBy&&record.promptEngineVersion===(prompts?.versionFor?.(record.stage,record.operation)||prompts?.version)),project);}
-async function writeProjectRow(project,tx,{expectedProjectRevision=null,incrementRevision=true,createOnly=false,skipUnchanged=false,selectProject=true,operationId=null,preparedHistory=null,expectedStateSha256=null,projectAllocation=null,creation=null}={}){
+async function writeProjectRow(project,tx,{expectedProjectRevision=null,incrementRevision=true,createOnly=false,skipUnchanged=false,selectProject=true,operationId=null,preparedHistory=null,expectedStateSha256=null,projectAllocation=null,creation=null,initialMobileAcceptanceSession=null}={}){
   const id=projectIdentity(project);if(!id)throw new Error('A project without a JOB_ID cannot be committed.');
   const store=tx.objectStore(PROJECTS),prior=await projectRowWithOperations(tx,id),currentRevision=Number(prior?.revision||0);
   if(createOnly&&prior)throw storageError(`Project ${id} already exists and was not replaced.`,'PROJECT_ALREADY_EXISTS');
@@ -986,7 +1125,7 @@ async function writeProjectRow(project,tx,{expectedProjectRevision=null,incremen
     for(const mapping of creation.receipt.mappingManifest.files){
       const sourceFile=await request(files.get(mapping.sourceArtifactId)),copied=creation.artifacts.find(row=>row.artifactId===mapping.artifactId);
       if(!sameCopiedFileIdentity(sourceFile,{...mapping,artifactId:mapping.sourceArtifactId})||sourceFile.jobId!==source.jobId||!sameCopiedFileIdentity(copied,mapping)||copied.jobId!==id||await request(files.get(mapping.artifactId)))throw storageError('A source file changed before the copy could be saved. Restore or reselect the source file and retry.','CLONE_FILE_CHANGED');
-      files.put(copied);
+      await storeArtifactRow(tx,copied);
     }
     await commitHistory(tx,creation.sourceHistory);
     meta.put({key:creation.receiptKey,value:creation.receipt,updatedAt:now()});
@@ -1007,8 +1146,14 @@ async function writeProjectRow(project,tx,{expectedProjectRevision=null,incremen
   next.revision=(incrementRevision??Boolean(prior))?currentRevision+1:currentRevision;
   // The private candidate was derived before checkpoint encoding. Recheck its
   // authority here without changing time-bearing cached projections.
-  assertProjectIntegrity(next);globalThis.closedLoopWorkflowEngine.validateAllocationReceipts(next,prior?.project);
-  const digest=projectSha256(next);if(!preparedHistory||preparedHistory.state.activeProjectSha256!==digest)throw storageError('The required checkpoint was not prepared for this exact change.','HISTORY_CHECKPOINT_REQUIRED');await commitHistory(tx,preparedHistory);fault('during-project-write');tx.objectStore(META).delete(operationalKey(id));store.put({jobId:id,revision:next.revision,picker:projectPickerKey(next),project:next,projectSha256:digest,updatedAt:now()});
+  assertProjectIntegrity(next,{prior:prior?.project});globalThis.closedLoopWorkflowEngine.validateAllocationReceipts(next,prior?.project);
+  const digest=projectSha256(next);
+  if(initialMobileAcceptanceSession){
+    if(!createOnly||prior||Object.hasOwn(initialMobileAcceptanceSession,'initialProjectPackage')||Object.hasOwn(initialMobileAcceptanceSession,'preparation'))throw storageError('A mobile acceptance session must be created atomically with its new project, before capturing its initial package.','MOBILE_ACCEPTANCE_CREATION_INVALID');
+    const initialProjectState={revision:next.revision,projectSha256:digest};if(Object.hasOwn(initialMobileAcceptanceSession,'initialProjectState')&&!equivalent(initialMobileAcceptanceSession.initialProjectState,initialProjectState))throw storageError('The initial mobile project identity does not match the newly committed project.','MOBILE_ACCEPTANCE_CREATION_INVALID');
+    await metaPut('stage30MobileAcceptance.v1:'+id,{...clone(initialMobileAcceptanceSession),initialProjectState},tx);fault('during-mobile-acceptance-session-write');
+  }
+  if(!preparedHistory||preparedHistory.state.activeProjectSha256!==digest)throw storageError('The required checkpoint was not prepared for this exact change.','HISTORY_CHECKPOINT_REQUIRED');await commitHistory(tx,preparedHistory);fault('during-project-write');tx.objectStore(META).delete(operationalKey(id));store.put({jobId:id,revision:next.revision,picker:projectPickerKey(next),project:next,projectSha256:digest,updatedAt:now()});
   if(selectProject)tx.objectStore(META).put({key:'selectedProject',value:id,updatedAt:now()});tx.objectStore(META).put({key:'lastCommittedRevision',value:{jobId:id,revision:next.revision,projectSha256:digest},updatedAt:now()});
   recordWorkerCommit(tx,operationId,next,digest);
   return {...next,projectSha256:digest};
@@ -1080,12 +1225,14 @@ function assertMutationConfirmation(prior,next,confirmation,derivedNext=null){
   return impact;
 }
 async function prepareProjectWrite(project,options={}){
+  if(options.initialMobileAcceptanceSession!==undefined&&(!options.createOnly||!options.initialMobileAcceptanceSession||typeof options.initialMobileAcceptanceSession!=='object'||Array.isArray(options.initialMobileAcceptanceSession)))throw storageError('Initial mobile sessions require a create-only project transaction.','MOBILE_ACCEPTANCE_CREATION_INVALID');
   const id=projectIdentity(project),prior=await readProject(id),revision=Number(prior?.revision||0),next=clone(project);delete next.projectSha256;
   if(options.expectedProjectRevision!==undefined&&options.expectedProjectRevision!==null&&Number(options.expectedProjectRevision)!==revision)throw storageError('Project changed before its checkpoint could be prepared.','STALE_PROJECT_REVISION');
   if(options.createOnly&&prior)throw storageError('This project already exists.','PROJECT_ALREADY_EXISTS');
   if(options.expectedStateSha256&&options.expectedStateSha256!==prior?.projectSha256)throw storageError('Project or pending response changed before preparation.','STALE_PROJECT_REVISION');
   assertProjectCollectionShape(next);
   assertCanonicalFieldValues(next);
+  assertJobPointerIntegrity(next,prior);
   if(options.skipUnchanged&&prior?.projectSha256===projectSha256(next)){await persistProjectPromptFiles(next);const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView});return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior.projectSha256,preparedHistory}};}
   for(const source of prior?.projectData?.migrationArchives||[])if(source?.kind===ORIGINAL_SOURCE_KIND&&source.schema===ORIGINAL_SOURCE_SCHEMA&&!next.projectData?.migrationArchives?.some(row=>equivalent(row,source)))throw storageError('An existing original-source archive cannot be changed or removed by a canonical save.','SOURCE_ARCHIVE_MUTATED');
   next.revision=(options.incrementRevision??true)?revision+1:revision;
@@ -1103,6 +1250,8 @@ async function prepareProjectWrite(project,options={}){
 }
 async function writeProject(project,options={}){
   options={skipUnchanged:true,...options};
+  if(options.initialMobileAcceptanceSession!==undefined&&(!options.createOnly||options.operational))throw storageError('Initial mobile sessions require a create-only project transaction.','MOBILE_ACCEPTANCE_CREATION_INVALID');
+  if(options.pendingArtifacts!==undefined&&!options.operational)throw storageError('Pending returned bytes require an operational response transaction.','PENDING_ARTIFACTS_UNSUPPORTED');
   if(useStoreWorker())return requestStoreWorker('WRITE_PROJECT',[project,options]);
   assertCanonicalFieldValues(project);
   if(options.operational)return writeOperationalProject(project,options);
@@ -1145,7 +1294,7 @@ async function prepareCopiedInputs(project,source,commandId,payloadSha256){
   project.projectData.userEntered={suppliedArtifactFiles:{},suppliedArtifactText:{},explicitRequirements:String(project.job.EXPLICIT_USER_REQUIREMENTS||'').split(/\r?\n/).filter(Boolean)};
   for(const [key,field] of Object.entries(inputs))if(project.job[field]!==undefined)project.projectData.userEntered[key]=clone(project.job[field]);
   for(const [oldId,metadata] of Object.entries(source.projectData.userEntered?.suppliedArtifactFiles||{}).sort(([a],[b])=>a<b?-1:a>b?1:0)){
-    const original=await getArtifact(oldId),canonical=engine.records(source,'artifacts',{active:false}).find(row=>engine.recordId(row,'artifacts')===oldId);
+    let original;try{original=await getArtifact(oldId);}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;throw storageError('A supplied input file is missing or corrupt. Restore the source from History or a verified backup before copying.','CLONE_SOURCE_FILE_INVALID');}const canonical=engine.records(source,'artifacts',{active:false}).find(row=>engine.recordId(row,'artifacts')===oldId);
     const identity=canonical?{artifactId:oldId,filename:engine.recordValue(canonical,'FILENAME'),mediaType:engine.recordValue(canonical,'TYPE'),byteSize:Number(engine.recordValue(canonical,'BYTE_SIZE')),sha256:engine.recordValue(canonical,'SHA256')}:null;
     if(!identity||!sameCopiedFileIdentity(original,identity)||!sameCopiedFileIdentity(metadata,identity)||original.jobId!==source.job.JOB_ID||!(original.blob instanceof Blob)||original.byteSize!==original.blob.size||await hash.sha256Bytes(original.blob)!==original.sha256)throw storageError('A supplied input file is missing or corrupt. Restore the source from History or a verified backup before copying.','CLONE_SOURCE_FILE_INVALID');
     const artifactId=engine.allocateId(project,'artifacts',{commandId,targetSlot:oldId,idempotencyKey:'CLONE_INPUT',payload:{payloadSha256,sha256:original.sha256,byteSize:original.byteSize,filename:original.filename}}),lineage={stage:1,role:'STAGE_ARTIFACT',logicalPath:original.filename,origin:'COPIED_HUMAN_INPUT'},row={artifactId,jobId:project.job.JOB_ID,blob:original.blob,filename:original.filename,mediaType:original.mediaType,byteSize:original.byteSize,sha256:original.sha256,lineage,createdAt:now()};
@@ -1267,18 +1416,99 @@ async function removeProjectIndexed(projectsOrJobId,options={}){
 }
 function removeProject(projectsOrJobId,jobIdOrStorage,storage){if(Array.isArray(projectsOrJobId)&&storage){const next=clone(projectsOrJobId).filter(project=>projectIdentity(project)!==String(jobIdOrStorage||''));writeAllLegacy(next,storage);return next;}return removeProjectIndexed(projectsOrJobId,jobIdOrStorage||{});}
 
+// Canonical occurrences retain independent identities; immutable payload bytes
+// share the existing per-project History body address. This private carrier is
+// removed at the public row boundary, so export and callers still receive Blob.
+function artifactByteReference(row){
+ const schema=globalThis.closedLoopWorkflowSchema,reference={schema:schema.ARTIFACT_BYTE_REFERENCE_CONTRACT.schema,jobId:String(row.jobId),sha256:row.sha256,byteSize:row.byteSize};
+ if(!schema.validateArtifactByteReference(reference).valid)throw storageError('Stored artifact byte identity is invalid.','ARTIFACT_BYTE_REFERENCE_INVALID');
+ return reference;
+}
+async function sharedByteRecord(tx,row){
+ if(!(row.blob instanceof Blob)||row.blob.size!==row.byteSize)throw storageError('Artifact bytes do not match their stored size.','ARTIFACT_BYTE_REFERENCE_INVALID');
+ const reference=artifactByteReference(row),key=historyFileKey(reference.jobId,reference.sha256),meta=tx.objectStore(META),existing=await request(meta.get(key));
+ // All writers hash their supplied Blob before entering the transaction. The
+ // same content address is replaced only with those exact verified bytes.
+ meta.put({...existing,key,value:{...existing?.value,sha256:reference.sha256,blob:row.blob},updatedAt:now()});
+ const {blob,byteReference,...metadata}=row;return {...metadata,byteReference:reference};
+}
+async function storeArtifactRow(tx,row){tx.objectStore(ARTIFACTS).put(await sharedByteRecord(tx,row));}
+async function hydrateByteRecord(tx,row,{diagnostic=false,preserveDamagedBytes=false,allowOccurrenceSizeMismatch=false}={}){
+ if(!row||!Object.hasOwn(row,'byteReference'))return row;
+ const reference=row.byteReference,schema=globalThis.closedLoopWorkflowSchema;
+ if(!schema.validateArtifactByteReference(reference).valid||reference.jobId!==String(row.jobId)||reference.sha256!==row.sha256||(!allowOccurrenceSizeMismatch&&reference.byteSize!==row.byteSize)||Object.hasOwn(row,'blob')){if(diagnostic)return {...row,blob:preserveDamagedBytes?row.blob:undefined};throw storageError('Stored artifact byte reference does not match its owner.','ARTIFACT_BYTE_REFERENCE_INVALID');}
+ const body=(await request(tx.objectStore(META).get(historyFileKey(reference.jobId,reference.sha256))))?.value;
+ if(!(body?.blob instanceof Blob)||body.sha256!==reference.sha256||(allowOccurrenceSizeMismatch&&body.blob.size!==reference.byteSize)){if(diagnostic)return {...row,blob:preserveDamagedBytes?body?.blob:undefined};throw storageError('Stored artifact bytes are missing or do not match their reference.','ARTIFACT_BYTES_UNAVAILABLE');}
+ const {byteReference,...metadata}=row;return {...metadata,...(diagnostic?{byteReference}:{}),blob:!row.mediaType||row.mediaType===body.blob.type?body.blob:body.blob.slice(0,body.blob.size,row.mediaType)};
+}
+async function hydrateArtifactRows(tx,rows,options){
+ const result=[];for(let offset=0;offset<rows.length;offset+=64)result.push(...await Promise.all(rows.slice(offset,offset+64).map(row=>hydrateByteRecord(tx,row,options))));return result;
+}
+async function migrateInlineArtifacts(rows){
+ const legacy=rows.filter(row=>row?.blob instanceof Blob&&!Object.hasOwn(row,'byteReference'));
+ if(!legacy.length)return;
+ const staged=new Map();
+ // Hash before opening the atomic conversion. Corrupt legacy bytes and all
+ // unknown metadata remain untouched for the existing recovery owner.
+ for(const row of legacy){
+  if(row.blob.size!==row.byteSize||await hash.sha256Bytes(row.blob)!==row.sha256)throw storageError('Legacy artifact bytes failed integrity verification; original storage was preserved.','ARTIFACT_LEGACY_BYTES_INVALID');
+  const id=row.lineage?.stagedResponse?.stagingId;if(!id)continue;
+  const key=responseStagingKey(row.jobId,id),read=await openTransaction(META,'readonly'),saved=await request(read.objectStore(META).get(key));await complete(read);
+  if(!saved?.value?.blob)continue;
+  const value=saved.value;
+  if(value.jobId!==row.jobId||value.sha256!==row.sha256||value.byteSize!==row.byteSize||!(value.blob instanceof Blob)||value.blob.size!==value.byteSize||await hash.sha256Bytes(value.blob)!==value.sha256)throw storageError('Legacy staged response bytes failed integrity verification; original storage was preserved.','ARTIFACT_LEGACY_BYTES_INVALID');
+  staged.set(row.artifactId,saved);
+ }
+ const tx=await openTransaction([ARTIFACTS,META],'readwrite');
+ try{
+  for(const row of legacy){
+   const current=await request(tx.objectStore(ARTIFACTS).get(row.artifactId));
+   if(!current||!equivalent(metadataWithoutBlob(current),metadataWithoutBlob(row))||(!Object.hasOwn(current,'byteReference')&&(!(current.blob instanceof Blob)||current.blob.size!==row.blob.size)))throw storageError('Stored artifact changed before byte-sharing migration. Retry the read.','STALE_ARTIFACT_STORAGE');
+   if(Object.hasOwn(current,'byteReference'))await hydrateByteRecord(tx,current);else await storeArtifactRow(tx,row);
+   const saved=staged.get(row.artifactId);
+   if(saved){
+    const present=await request(tx.objectStore(META).get(saved.key));
+    if(!present||!equivalent(metadataWithoutBlob(present.value),metadataWithoutBlob(saved.value))||(!Object.hasOwn(present.value,'byteReference')&&(!(present.value.blob instanceof Blob)||present.value.blob.size!==saved.value.blob.size)))throw storageError('Staged response changed before byte-sharing migration. Retry the read.','STALE_ARTIFACT_STORAGE');
+    if(Object.hasOwn(present.value,'byteReference'))await hydrateByteRecord(tx,present.value);else tx.objectStore(META).put({...present,value:await sharedByteRecord(tx,saved.value)});
+   }
+   fault('during-artifact-sharing-migration');
+  }
+  await complete(tx);
+ }catch(error){try{tx.abort();}catch{}throw error;}
+}
+async function discardUnretainedArtifactBody(tx,row){
+ if(!row?.jobId||!row.sha256)return false;
+ const meta=tx.objectStore(META),history=(await request(meta.get(historyKey(row.jobId))))?.value;
+ if(history?.files?.[row.sha256])return false;
+ const others=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(row.jobId)));
+ if(others.some(other=>other.sha256===row.sha256))return false;
+ const keys=meta.getAllKeys?await request(meta.getAllKeys()):(await request(meta.getAll())).map(item=>item.key);
+ for(const key of keys.filter(key=>String(key).startsWith('responseStaging:'+row.jobId+':'))){const staged=(await request(meta.get(key)))?.value;if(staged?.sha256===row.sha256)return false;}
+ const key=historyFileKey(row.jobId,row.sha256),existing=await request(meta.get(key));meta.delete(key);return existing?.value?.blob instanceof Blob;
+}
 async function putArtifact({artifactId,jobId,blob,filename,mediaType,lineage={}}){
   forgetArtifactCustody(jobId,artifactId);
-  const observedEpoch=custodyEpoch;
   if(!(blob instanceof Blob))throw new TypeError('Artifact bytes must be a Blob.');if(!artifactId||!jobId)throw new Error('artifactId and jobId are required.');
-  fault('during-artifact-blob-write');const id=String(artifactId),owner=String(jobId),byteSize=blob.size,sha256=await hash.sha256Bytes(blob),tx=await openTransaction(ARTIFACTS,'readwrite'),store=tx.objectStore(ARTIFACTS);let prior=null;
-  try{prior=await request(store.get(id));if(prior&&String(prior.jobId)!==owner)throw storageError(`Artifact identity ${id} already belongs to another project.`,'CROSS_PROJECT_ARTIFACT_ID_COLLISION');if(prior){if(String(prior.sha256)!==sha256||Number(prior.byteSize)!==byteSize)throw storageError(`Artifact identity ${id} cannot be reused for different bytes.`,'ARTIFACT_ID_REUSE');await complete(tx);}else{store.put({artifactId:id,jobId:owner,blob,filename:String(filename||id),mediaType:String(mediaType||blob.type||'application/octet-stream'),byteSize,sha256,lineage:clone(lineage),createdAt:now()});await complete(tx);}}catch(error){try{tx.abort();}catch{}throw error;}
-  if(prior){const priorDigest=await hash.sha256Bytes(prior.blob);if(priorDigest!==String(prior.sha256)||priorDigest!==sha256||Number(prior.byteSize)!==byteSize)throw storageError(`Artifact identity ${id} cannot be reused because its stored bytes failed integrity verification.`,'ARTIFACT_ID_REUSE');await observeArtifactCustody(prior,observedEpoch);return prior;}
-  const verified=await getArtifact(id);if(!verified||String(verified.jobId)!==owner||verified.byteSize!==byteSize||await hash.sha256Bytes(verified.blob)!==sha256){const cleanupTx=await openTransaction(ARTIFACTS,'readwrite');const row=await request(cleanupTx.objectStore(ARTIFACTS).get(id));if(row&&String(row.jobId)===owner)cleanupTx.objectStore(ARTIFACTS).delete(id);await complete(cleanupTx);forgetArtifactCustody(owner,id);notifyProjectChange({job:{JOB_ID:owner}},{artifactId:id});throw new Error('Artifact byte read-back verification failed; the unverified artifact was removed.');}return verified;
+  const id=String(artifactId),owner=String(jobId),byteSize=blob.size,sha256=await hash.sha256Bytes(blob);
+  fault('during-artifact-blob-write');const tx=await openTransaction([ARTIFACTS,META],'readwrite'),store=tx.objectStore(ARTIFACTS);let prior=null;
+  try{prior=await request(store.get(id));if(prior&&String(prior.jobId)!==owner)throw storageError(`Artifact identity ${id} already belongs to another project.`,'CROSS_PROJECT_ARTIFACT_ID_COLLISION');if(prior){if(String(prior.sha256)!==sha256||Number(prior.byteSize)!==byteSize)throw storageError(`Artifact identity ${id} cannot be reused for different bytes.`,'ARTIFACT_ID_REUSE');}else await storeArtifactRow(tx,{artifactId:id,jobId:owner,blob,filename:String(filename||id),mediaType:String(mediaType||blob.type||'application/octet-stream'),byteSize,sha256,lineage:clone(lineage),createdAt:now()});fault('during-artifact-sharing-write');await complete(tx);}catch(error){try{tx.abort();}catch{}throw error;}
+  const verified=await getArtifact(id);if(!verified||String(verified.jobId)!==owner||verified.byteSize!==byteSize||await observedArtifactDigest(verified)!==sha256){if(!prior)await deleteArtifact(id,owner);throw storageError('Artifact byte read-back verification failed; original bytes were preserved where previously stored.','ARTIFACT_ID_REUSE');}return verified;
 }
-async function getArtifact(artifactId){for(const [key,value] of artifactCustody)if(value.artifactId===String(artifactId))artifactCustody.delete(key);const observedEpoch=custodyEpoch,tx=await openTransaction(ARTIFACTS,'readonly'),row=await request(tx.objectStore(ARTIFACTS).get(String(artifactId)));await complete(tx);if(row)await observeArtifactCustody(row,observedEpoch);return row||null;}
-async function deleteArtifact(artifactId,jobId){for(const [key,value] of artifactCustody)if(value.artifactId===String(artifactId))artifactCustody.delete(key);const id=String(artifactId),owner=String(jobId||''),tx=await openTransaction(ARTIFACTS,'readwrite'),store=tx.objectStore(ARTIFACTS);try{const row=await request(store.get(id));if(!row){await complete(tx);return false;}if(owner&&String(row.jobId)!==owner)throw storageError(`Artifact ${id} belongs to another project and was not deleted.`,'CROSS_PROJECT_ARTIFACT_DELETE');store.delete(id);await complete(tx);forgetArtifactCustody(row.jobId,id);notifyProjectChange({job:{JOB_ID:row.jobId}},{artifactId:id});return true;}catch(error){try{tx.abort();}catch{}throw error;}}
-async function listArtifacts(jobId){forgetArtifactCustody(jobId);const observedEpoch=custodyEpoch,tx=await openTransaction(ARTIFACTS,'readonly'),rows=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId)));await complete(tx);for(const row of rows)await observeArtifactCustody(row,observedEpoch);return rows;}
+async function readArtifactRow(artifactId,{allowOccurrenceSizeMismatch=false}={}){
+ for(const [key,value] of artifactCustody)if(value.artifactId===String(artifactId))artifactCustody.delete(key);
+ const observedEpoch=custodyEpoch,tx=await openTransaction([ARTIFACTS,META],'readonly'),stored=await request(tx.objectStore(ARTIFACTS).get(String(artifactId))),row=await hydrateByteRecord(tx,stored,{allowOccurrenceSizeMismatch});await complete(tx);
+ if(row){if(stored.blob instanceof Blob)await migrateInlineArtifacts([stored]);await observeArtifactCustody(row,observedEpoch);}return row||null;
+}
+async function getArtifact(artifactId){return readArtifactRow(artifactId);}
+async function deleteArtifact(artifactId,jobId){
+ for(const [key,value] of artifactCustody)if(value.artifactId===String(artifactId))artifactCustody.delete(key);
+ const id=String(artifactId),owner=String(jobId||''),tx=await openTransaction([ARTIFACTS,META],'readwrite'),store=tx.objectStore(ARTIFACTS);
+ try{const row=await request(store.get(id));if(!row){await complete(tx);return false;}if(owner&&String(row.jobId)!==owner)throw storageError(`Artifact ${id} belongs to another project and was not deleted.`,'CROSS_PROJECT_ARTIFACT_DELETE');store.delete(id);await discardUnretainedArtifactBody(tx,row);await complete(tx);forgetArtifactCustody(row.jobId,id);notifyProjectChange({job:{JOB_ID:row.jobId}},{artifactId:id});return true;}catch(error){try{tx.abort();}catch{}throw error;}
+}
+async function listArtifacts(jobId){
+ forgetArtifactCustody(jobId);const observedEpoch=custodyEpoch,tx=await openTransaction([ARTIFACTS,META],'readonly'),stored=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),rows=await hydrateArtifactRows(tx,stored);await complete(tx);
+ await migrateInlineArtifacts(stored);for(const row of rows)await observeArtifactCustody(row,observedEpoch);return rows;
+}
 async function verifyProjectArtifacts(jobId){
   const id=String(jobId||'').trim();if(!id)throw storageError('JOB_ID is required for artifact verification.','ARTIFACT_VERIFY_JOB_ID_REQUIRED');const project=await readProject(id);if(!project)throw storageError(`Project ${id} is not stored.`,'ARTIFACT_VERIFY_PROJECT_MISSING');const rows=await listArtifacts(id),rowById=new Map(rows.map(row=>[String(row.artifactId),row])),expected=requiredProjectArtifactBytes(project),expectedById=new Map(expected.map(record=>[record.artifactId,record])),results=[];let byteSize=0;
   for(const record of expected){const {artifactId}=record,row=rowById.get(artifactId),canonicalFilename=String(record.filename||''),canonicalSize=Number(record.byteSize),canonicalSha256=String(record.sha256||'');if(!row){results.push({artifactId,filename:canonicalFilename,storedByteSize:null,actualByteSize:null,storedSha256:null,actualSha256:null,verified:false,issue:'MISSING_STORED_BLOB'});continue;}const actualSize=row.blob.size,actualSha256=await hash.sha256Bytes(row.blob);byteSize+=actualSize;const verified=String(row.jobId)===id&&String(row.filename)===canonicalFilename&&Number(row.byteSize)===canonicalSize&&String(row.sha256)===canonicalSha256&&actualSize===canonicalSize&&actualSha256===canonicalSha256;results.push({artifactId,filename:canonicalFilename,storedByteSize:Number(row.byteSize),actualByteSize:actualSize,storedSha256:String(row.sha256||''),actualSha256,verified,issue:verified?null:'CANONICAL_BLOB_IDENTITY_MISMATCH'});}
@@ -1407,11 +1637,12 @@ function assertPackageArtifactCustody(project,artifacts){
 }
 async function readExportSnapshot(jobId){
   const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readonly'),finished=complete(tx);
-  const [row,artifacts,recoveryRow]=await Promise.all([projectRowWithOperations(tx,jobId),request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),request(tx.objectStore(META).get(historyKey(jobId)))]);await finished;
+  const [row,storedArtifacts,recoveryRow]=await Promise.all([projectRowWithOperations(tx,jobId),request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),request(tx.objectStore(META).get(historyKey(jobId)))]);const artifacts=await hydrateArtifactRows(tx,storedArtifacts);await finished;
   if(!row)throw storageError('The project is unavailable for export.','PROJECT_NOT_FOUND');
   const digest=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));
   if(digest!==row.projectSha256||Number(row.revision)!==Number(row.project.revision))throw storageError('Project identity failed export verification.','PROJECT_HASH_MISMATCH');
-  assertProjectIntegrity(row.project,{verifyDerived:false});return {project:{...row.project,projectSha256:digest},artifacts,recovery:recoveryRow?.value||null};
+  try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(row.project,{verifyDerived:false}))throw error;await readProjectMetadata(jobId);return readExportSnapshot(jobId);}
+  return {project:{...row.project,projectSha256:digest},artifacts,recovery:recoveryRow?.value||null};
 }
 const ENCRYPTED_EXPORT_PROFILE=Object.freeze({schema:'closed-loop-encrypted-export/1',algorithm:'AES-256-GCM',kdf:'PBKDF2-HMAC-SHA-256',iterations:600000,keyBits:256,saltBytes:16,ivBytes:12,tagBytes:16,plaintextMediaType:'application/gzip'});
 function containsCredentialSecret(value){
@@ -1577,8 +1808,20 @@ async function base64BlobToBlob(blob,mediaType){
   for(let offset=0;offset<blob.size;offset+=65536){pending+=(await hash.readWithDeadline(blob.slice(offset,offset+65536).text(),'Reading recovered artifact')).replace(/[\t\n\f\r ]/g,'');const end=Math.max(0,Math.floor(pending.length/4)*4-4);if(end){const part=pending.slice(0,end);if(part.includes('='))throw new TypeError('Invalid base64 padding before the end of an artifact.');parts.push(base64ToBytes(part));pending=pending.slice(end);}}
   parts.push(base64ToBytes(pending));return new Blob(parts,{type:mediaType||'application/octet-stream'});
 }
-async function importPackage(blob,{operationId=null,passphrase=null}={}){
+async function importPackage(blob,{operationId=null,passphrase=null,pendingBackupImport=null}={}){
   hash.assertPinnedUnicodeHost();
+  // A pending intake is the original transport, including encryption. The
+  // worker must verify that same slot before decrypting; passwords exist only
+  // in the ephemeral command and are never written to the staging descriptor.
+  if(pendingBackupImport&&useStoreWorker())return requestStoreWorker('IMPORT_PACKAGE',[blob,{passphrase,pendingBackupImport}]);
+  let stagedBackup=null;
+  if(pendingBackupImport){
+    const {jobId,stagingId}=pendingBackupImport;
+    stagedBackup=await readPendingBackupImport(jobId);
+    if(!stagedBackup||stagedBackup.stagingId!==stagingId)throw staleBackupImportSelection();
+    if(!(blob instanceof Blob)||blob.size!==stagedBackup.byteSize||await hash.sha256Bytes(blob)!==stagedBackup.sha256)throw storageError('The import input differs from the saved backup selection. Choose the original file again.','BACKUP_IMPORT_STAGE_REHASH_MISMATCH');
+    blob=stagedBackup.blob;
+  }
   if(await isEncryptedPackage(blob))blob=await decryptPackage(blob,passphrase);
   if(useStoreWorker())return requestStoreWorker('IMPORT_PACKAGE',[blob]);
   if(typeof DecompressionStream!=='function')throw storageError('DecompressionStream is required for complete package import.','DECOMPRESSION_STREAM_REQUIRED');
@@ -1600,7 +1843,7 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
   const manifest=body.packageManifest||{},manifestArtifacts=Array.isArray(manifest.artifacts)?manifest.artifacts:[],manifestIds=manifestArtifacts.map(a=>String(a?.artifactId||''));if(manifestIds.some(x=>!x)||new Set(manifestIds).size!==manifestIds.length)throw Object.assign(new Error('Package manifest contains a missing or duplicate artifact identity.'),{existingProjectsUnchanged:true});if(manifest.jobId!==id||Number(manifest.artifactCount)!==verifiedArtifacts.length||manifestArtifacts.length!==verifiedArtifacts.length||manifest.projectSha256!==projectSha256(project))throw Object.assign(new Error('Package manifest does not reconcile with the embedded project and artifacts.'),{existingProjectsUnchanged:true});
   const manifestById=new Map(manifestArtifacts.map(a=>[String(a.artifactId),a]));for(const a of verifiedArtifacts){const m=manifestById.get(String(a.artifactId));if(!m||m.sha256!==a.sha256||Number(m.byteSize)!==Number(a.byteSize)||m.filename!==a.filename||String(m.mediaType||'')!==String(a.mediaType||''))throw Object.assign(new Error(`Package manifest mismatch for artifact ${a.artifactId}.`),{existingProjectsUnchanged:true});}
   recoveryProjectionBounds.set(project,body.exportedAt);
-  try{withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertProjectIntegrity(project));assertPackageArtifactCustody(project,verifiedArtifacts);}catch(error){if(!withVerifiedRecoveryCustody(verifiedArtifacts,()=>historicalProjectionConsistent(project,error)))throw Object.assign(error,{existingProjectsUnchanged:true});assertPackageArtifactCustody(project,verifiedArtifacts);}
+  try{withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertProjectIntegrity(project));assertPackageArtifactCustody(project,verifiedArtifacts);}catch(error){if(!withVerifiedRecoveryCustody(verifiedArtifacts,()=>historicalProjectionConsistent(project,error)||legacyJobPointerProjection(project)))throw Object.assign(error,{existingProjectsUnchanged:true});assertPackageArtifactCustody(project,verifiedArtifacts);}
   if(verifiedArtifacts.some(a=>a.archiveKind&&!['RECOVERY_BYTES','RECOVERY_SNAPSHOT'].includes(a.archiveKind)))throw storageError('Unknown recovery archive member.','HISTORY_VERSION_MISMATCH');
   const activeArtifacts=verifiedArtifacts.filter(a=>!a.archiveKind);await verifyOriginalSourceBindings(project,activeArtifacts,verifiedSources);const priorProject=await readProject(id);
   if(Number(priorProject?.revision||0)!==Number(observedHeads.get(id)||0))throw storageError('This project changed while the backup was being verified. Its newer work is preserved.','STALE_PROJECT_REVISION');
@@ -1620,9 +1863,12 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     if(incoming.schema!==HISTORY_SCHEMA||incoming.jobId!==id||!Array.isArray(incoming.entries)||!incoming.entries.some(e=>e.id===incoming.activeId)||new Set(incoming.entries.map(e=>e.id)).size!==incoming.entries.length)throw storageError('Backup History identity is invalid.','HISTORY_VERSION_MISMATCH');
     validateRecoveryManifest(incoming);assertHistoryLimits(incoming);
     const archiveFiles=new Map(verifiedArtifacts.filter(a=>a.archiveKind==='RECOVERY_BYTES').map(a=>[a.sha256,a])),archiveSnapshots=new Map(),validatedRoots=new Map(incoming.entries.filter(entry=>entry.projectReference).map(entry=>[entry.projectReference.checkpointId,null])),verifiedParts=new Map(),validatedProjections=new Set();
-    await verifyHistorySourceArchives(incoming,sha=>archiveFiles.get(sha),verifiedSources,verifiedByteDigests);
-    for(const [key,source]of Object.entries(incoming.sourceArchives||{})){const prior=merged.sourceArchives?.[key];if(prior&&hash.sha256Value(prior)!==hash.sha256Value(source))throw storageError('Original-source recovery metadata conflicts with retained evidence.','SOURCE_ARCHIVE_INTEGRITY_FAILED');merged.sourceArchives={...(merged.sourceArchives||{}),[key]:clone(source)};}
     for(const entry of incoming.entries){const archived=verifiedArtifacts.find(a=>a.archiveKind==='RECOVERY_SNAPSHOT'&&a.checkpointId===entry.id);if(archived)archiveSnapshots.set(entry.id,{...entry,blob:archived.blob});}
+    await verifyHistorySourceArchives(incoming,sha=>archiveFiles.get(sha),verifiedSources,verifiedByteDigests,checkpointId=>archiveSnapshots.get(checkpointId));
+    for(const [key,source]of Object.entries(incoming.sourceArchives||{})){const prior=merged.sourceArchives?.[key];if(prior&&hash.sha256Value(prior)!==hash.sha256Value(source))throw storageError('Original-source recovery metadata conflicts with retained evidence.','SOURCE_ARCHIVE_INTEGRITY_FAILED');merged.sourceArchives={...(merged.sourceArchives||{}),[key]:clone(source)};}
+    // Both representations were verified against the same exact source digest.
+    // An existing local reference remains valid; all its snapshots are retained.
+    for(const [sha256,reference]of Object.entries(incoming.sourceArchiveReferences||{}))if(!merged.sourceArchiveReferences?.[sha256])merged.sourceArchiveReferences={...(merged.sourceArchiveReferences||{}),[sha256]:clone(reference)};
     let previousRootId=null;
     for(const entry of incoming.entries){
       const rootId=entry.projectReference?.checkpointId||entry.id;
@@ -1670,12 +1916,24 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
   // Preserve a full-capacity backup without consuming a checkpoint merely to
   // record the exact bytes from which this activation was read.
   const sourceRow=importSourceRows[0],sourceKey=hash.sha256Value(importSource);
-  if(!prepared.state.files[sourceRow.sha256]){prepared.state.files[sourceRow.sha256]={byteSize:sourceRow.byteSize};prepared.state.retainedFileBytes+=sourceRow.byteSize;prepared.newFiles.push({sha256:sourceRow.sha256,blob:sourceRow.blob});}
-  else{const retained=prepared.newFiles.find(file=>file.sha256===sourceRow.sha256)||await metaGet(historyFileKey(id,sourceRow.sha256));if(!(retained?.blob instanceof Blob)||retained.blob.size!==sourceRow.byteSize||await hash.sha256Bytes(retained.blob)!==sourceRow.sha256)throw storageError('An existing original-source identity has no matching bytes.','SOURCE_ARCHIVE_INTEGRITY_FAILED');}
+  let sourceReference=null;
+  if(importedActive&&historyWorkSha256(importedActive.project)===historyWorkSha256(project)){
+    const checkpoint=prepared.state.entries.find(entry=>entry.id===body.recovery.activeId),activation=Object.fromEntries(HISTORY_ACTIVATION_FIELDS.filter(key=>Object.hasOwn(project,key)).map(key=>[key,clone(project[key])])),reference={schema:HISTORY_SOURCE_REFERENCE,checkpointId:checkpoint.id,snapshotSha256:checkpoint.sha256,activation};
+    // Equality is proved against the actual received bytes before sharing.
+    // Different whitespace, escapes, number spelling, and unknown extension
+    // bytes keep the original raw-archive path; parsing alone is insufficient.
+    const reconstructed=new Blob([...hash.canonicalChunks(sourceReferenceProject(importedActive.project,reference))]);
+    if(reconstructed.size===sourceRow.byteSize&&await hash.sha256Bytes(reconstructed)===sourceRow.sha256)sourceReference=reference;
+  }
+  if(!prepared.state.files[sourceRow.sha256]&&!prepared.state.sourceArchiveReferences?.[sourceRow.sha256]){
+    if(sourceReference)prepared.state.sourceArchiveReferences={...(prepared.state.sourceArchiveReferences||{}),[sourceRow.sha256]:sourceReference};
+    else{prepared.state.files[sourceRow.sha256]={byteSize:sourceRow.byteSize};prepared.state.retainedFileBytes+=sourceRow.byteSize;prepared.newFiles.push({sha256:sourceRow.sha256,blob:sourceRow.blob});}
+  }else await readHistorySourceFile(prepared.state,importSource,async sha=>prepared.newFiles.find(file=>file.sha256===sha)||await metaGet(historyFileKey(id,sha)),async checkpointId=>prepared.snapshots.find(entry=>entry.id===checkpointId)||await metaGet(snapshotKey(id,checkpointId)));
   prepared.state.sourceArchives={...(prepared.state.sourceArchives||{}),[sourceKey]:importSource};validateRecoveryManifest(prepared.state);assertHistoryLimits(prepared.state);
   fault('before-import-transaction');const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),projects=tx.objectStore(PROJECTS),artifacts=tx.objectStore(ARTIFACTS),meta=tx.objectStore(META);
   try{
     const prior=await projectRowWithOperations(tx,id);if(Number(prior?.revision||0)!==Number(observedHeads.get(id)||0)||prior?.projectSha256!==priorProject?.projectSha256)throw storageError('Another tab changed this project during import.','STALE_PROJECT_REVISION');
+    if(stagedBackup){const pending=await request(meta.get(backupImportStagingKey(stagedBackup.jobId)));if(!pending?.value||!sameBackupImportIdentity(pending.value,stagedBackup)||!(pending.value.blob instanceof Blob)||pending.value.blob.size!==stagedBackup.byteSize)throw staleBackupImportSelection();meta.delete(backupImportStagingKey(stagedBackup.jobId));}
     const digest=projectSha256(next),existingArtifacts=await request(artifacts.index('jobId').getAll(id));
     await restoreProjectAllocation(tx,next);
     for(const row of activeArtifacts){const existing=await request(artifacts.get(row.artifactId));if(existing&&String(existing.jobId)!==id)throw storageError('An imported artifact identity belongs to another project.','CROSS_PROJECT_ARTIFACT_ID_COLLISION');}
@@ -1683,8 +1941,8 @@ async function importPackage(blob,{operationId=null,passphrase=null}={}){
     await commitHistory(tx,prepared);
     for(const existing of existingArtifacts)artifacts.delete(existing.artifactId);
     fault('during-import-project-write');meta.delete(operationalKey(id));projects.put({jobId:id,revision:next.revision,picker:projectPickerKey(next),project:next,projectSha256:digest,updatedAt:now()});
-    for(const a of activeArtifacts){fault('during-import-artifact-write');artifacts.put({...a,jobId:id});const staged=a.lineage?.stagedResponse;if(staged)meta.put({key:`responseStaging:${id}:${staged.stagingId}`,value:{...clone(staged),blob:a.blob},updatedAt:now()});}
-    meta.put({key:'selectedProject',value:id,updatedAt:now()});meta.put({key:'lastCommittedRevision',value:{jobId:id,revision:next.revision,projectSha256:digest},updatedAt:now()});meta.put({key:'lastVerifiedImport',value:{jobId:id,packageSha256,artifactCount:activeArtifacts.length,historyCheckpointCount:prepared.state.entries.length,at:now()},updatedAt:now()});recordWorkerCommit(tx,operationId,next,digest);fault('before-import-commit');await complete(tx);next.projectSha256=digest;notifyProjectChange(next);try{await observeProjectArtifactCustody(next);}catch(error){throw Object.assign(error,{existingProjectsUnchanged:false});}return next;
+    for(const a of activeArtifacts){fault('during-import-artifact-write');await storeArtifactRow(tx,{...a,jobId:id});const staged=a.lineage?.stagedResponse;if(staged)meta.put({key:`responseStaging:${id}:${staged.stagingId}`,value:await sharedByteRecord(tx,{...clone(staged),blob:a.blob}),updatedAt:now()});}
+    meta.put({key:'selectedProject',value:id,updatedAt:now()});meta.put({key:'lastCommittedRevision',value:{jobId:id,revision:next.revision,projectSha256:digest},updatedAt:now()});meta.put({key:'lastVerifiedImport',value:{jobId:id,packageSha256,artifactCount:activeArtifacts.length,historyCheckpointCount:prepared.state.entries.length,...(stagedBackup?{selectedBackupImport:backupImportDescriptor(stagedBackup)}:{}),at:now()},updatedAt:now()});recordWorkerCommit(tx,operationId,next,digest);fault('before-import-commit');await complete(tx);next.projectSha256=digest;notifyProjectChange(next);try{await observeProjectArtifactCustody(next);}catch(error){throw Object.assign(error,{existingProjectsUnchanged:false});}return next;
   }catch(error){let aborted=false;try{tx.abort();aborted=true;}catch{}throw Object.assign(error,{existingProjectsUnchanged:error.existingProjectsUnchanged!==false&&aborted});}
 }
 
@@ -1728,7 +1986,7 @@ async function persistPromptContextFiles(record,project){await persistPromptCont
 async function readPromptContextFile(record,jobId,path='context.json'){
   const file=(record.contextManifest?.promptContext?.attachments||[]).find(file=>file.path===path);
   if(!file)throw storageError('The instruction does not authorize this context file.','PROMPT_CONTEXT_NOT_AUTHORIZED');
-  const stored=await getArtifact(promptContextArtifactId(jobId,file));
+  let stored;try{stored=await readArtifactRow(promptContextArtifactId(jobId,file),{allowOccurrenceSizeMismatch:true});}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;throw storageError('Exact saved context bytes failed read-back verification.','PROMPT_CONTEXT_INTEGRITY_FAILED');}
   if(!stored||String(stored.jobId)!==String(jobId)||stored.blob.size!==file.byteSize||stored.sha256!==file.sha256||await observedArtifactDigest(stored)!==file.sha256)throw storageError('Exact saved context bytes failed read-back verification.','PROMPT_CONTEXT_INTEGRITY_FAILED');
   return {...file,blob:stored.blob};
 }
@@ -1736,6 +1994,99 @@ async function readPromptContextFile(record,jobId,path='context.json'){
 // closed-loop-archive-profile/1: exact, uncompressed members with a fixed ZIP
 // representation. Blob parts retain bounded reads even for large source files.
 const handoffCrcTable=(()=>{const table=new Uint32Array(256);for(let i=0;i<256;i++){let crc=i;for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);table[i]=crc;}return table;})();
+// Inbound ZIP is a convenience transport, not the deterministic outbound
+// profile. Only verified member bytes leave this isolated, read-only parser.
+const inboundZipCp437="\u00c7\u00fc\u00e9\u00e2\u00e4\u00e0\u00e5\u00e7\u00ea\u00eb\u00e8\u00ef\u00ee\u00ec\u00c4\u00c5\u00c9\u00e6\u00c6\u00f4\u00f6\u00f2\u00fb\u00f9\u00ff\u00d6\u00dc\u00a2\u00a3\u00a5\u20a7\u0192\u00e1\u00ed\u00f3\u00fa\u00f1\u00d1\u00aa\u00ba\u00bf\u2310\u00ac\u00bd\u00bc\u00a1\u00ab\u00bb\u2591\u2592\u2593\u2502\u2524\u2561\u2562\u2556\u2555\u2563\u2551\u2557\u255d\u255c\u255b\u2510\u2514\u2534\u252c\u251c\u2500\u253c\u255e\u255f\u255a\u2554\u2569\u2566\u2560\u2550\u256c\u2567\u2568\u2564\u2565\u2559\u2558\u2552\u2553\u256b\u256a\u2518\u250c\u2588\u2584\u258c\u2590\u2580\u03b1\u00df\u0393\u03c0\u03a3\u03c3\u00b5\u03c4\u03a6\u0398\u03a9\u03b4\u221e\u03c6\u03b5\u2229\u2261\u00b1\u2265\u2264\u2320\u2321\u00f7\u2248\u00b0\u2219\u00b7\u221a\u207f\u00b2\u25a0\u00a0";
+function inboundArchiveError(message,code='INBOUND_ARCHIVE_INVALID'){return storageError(message,code);}
+function inboundCrc32(bytes){let crc=0xffffffff;for(const byte of bytes)crc=handoffCrcTable[(crc^byte)&255]^(crc>>>8);return (crc^0xffffffff)>>>0;}
+function inboundZipExtras(bytes){
+ const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),fields=new Map();
+ for(let at=0;at<bytes.length;){if(at+4>bytes.length)throw inboundArchiveError('ZIP extra-field header is truncated.');const id=view.getUint16(at,true),size=view.getUint16(at+2,true);at+=4;if(at+size>bytes.length||fields.has(id))throw inboundArchiveError('ZIP extra fields are truncated or repeated.');const data=bytes.subarray(at,at+size);at+=size;
+  if(!globalThis.closedLoopWorkflowSchema.INBOUND_RESPONSE_ARCHIVE_CONTRACT.supportedZipExtraFieldIds.includes(id))throw inboundArchiveError('The ZIP uses an unsupported extra-field interpretation. Use ordinary STORE or DEFLATE files, or select the original files separately.','INBOUND_ARCHIVE_UNSUPPORTED');
+  if(id===0x000d&&size!==12)throw inboundArchiveError('UNIX link or device entries are prohibited.');
+  if(id===0x756e){const v=new DataView(data.buffer,data.byteOffset,data.byteLength);if(size!==14||inboundCrc32(data.subarray(4))!==v.getUint32(0,true)||![0,0x8000].includes(v.getUint16(4,true)&0xf000)||v.getUint32(6,true)!==0)throw inboundArchiveError('ASi UNIX link or device entries are prohibited.');}
+  fields.set(id,data);
+ }
+ return fields;
+}
+function inboundZipName(bytes,flags,extras){
+ let name;try{name=flags&0x800?new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes):Array.from(bytes,byte=>byte<128?String.fromCharCode(byte):inboundZipCp437[byte-128]).join('');}catch{throw inboundArchiveError('ZIP filename encoding is invalid.');}
+ const unicode=extras.get(0x7075);if(unicode){if(unicode.length<5||unicode[0]!==1||new DataView(unicode.buffer,unicode.byteOffset,unicode.byteLength).getUint32(1,true)!==inboundCrc32(bytes))throw inboundArchiveError('ZIP Unicode filename metadata is inconsistent.');let alternate;try{alternate=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(unicode.subarray(5));}catch{throw inboundArchiveError('ZIP Unicode filename metadata is invalid.');}if(hash.pinnedNFC(name)!==hash.pinnedNFC(alternate))throw inboundArchiveError('ZIP filename interpretations are ambiguous.');}
+ return name;
+}
+function inboundZip64(extra,requested){
+ let at=0;const values={};for(const [key,needed,width]of requested){if(!needed)continue;if(!extra||at+width>extra.length)throw inboundArchiveError('Required ZIP64 size or offset is missing.');const v=new DataView(extra.buffer,extra.byteOffset,extra.byteLength),number=width===8?v.getBigUint64(at,true):BigInt(v.getUint32(at,true));if(number>BigInt(Number.MAX_SAFE_INTEGER))throw inboundArchiveError('ZIP64 value exceeds the supported safe size.','INBOUND_ARCHIVE_LIMIT');values[key]=Number(number);at+=width;}if(extra&&at!==extra.length)throw inboundArchiveError('ZIP64 metadata contains unexpected or conflicting size fields.');return values;
+}
+function validateInboundDeflate(bytes,expectedSize){
+ // DecompressionStream does not expose consumed compressed length. Verify the
+ // RFC1951 frame independently, including final-block consumption; native
+ // decompression remains responsible for producing the actual returned bytes.
+ let bit=0,produced=0;
+ const read=count=>{if(bit+count>bytes.length*8)throw inboundArchiveError('DEFLATE bitstream is truncated.');let value=0;for(let n=0;n<count;n++,bit++)value|=((bytes[bit>>>3]>>>(bit&7))&1)<<n;return value;};
+ const tree=lengths=>{const counts=new Uint16Array(16),tables=Array.from({length:16},()=>new Map());for(const length of lengths){if(!Number.isInteger(length)||length<0||length>15)throw inboundArchiveError('DEFLATE code length is invalid.');counts[length]++;}let code=0,left=1;const next=new Uint16Array(16);for(let width=1;width<=15;width++){left=(left<<1)-counts[width];if(left<0)throw inboundArchiveError('DEFLATE Huffman tree is oversubscribed.');code=(code+(width===1?0:counts[width-1]))<<1;next[width]=code;}lengths.forEach((length,symbol)=>{if(length)tables[length].set(next[length]++,symbol);});return tables;};
+ const symbol=tables=>{let code=0;for(let width=1;width<=15;width++){code=(code<<1)|read(1);if(tables[width].has(code))return tables[width].get(code);}throw inboundArchiveError('DEFLATE symbol has no code.');};
+ const lengthBase=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258],lengthBits=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0],distanceBase=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577],distanceBits=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+ const fixedLiteral=tree(Array.from({length:288},(_,i)=>i<144?8:i<256?9:i<280?7:8)),fixedDistance=tree(Array(32).fill(5));
+ let last=false;
+ while(!last){last=Boolean(read(1));const kind=read(2);if(kind===0){bit=(bit+7)&~7;const size=read(16),inverse=read(16);if((size^inverse)!==65535||bit+size*8>bytes.length*8)throw inboundArchiveError('DEFLATE stored block is malformed.');bit+=size*8;produced+=size;}
+  else if(kind===1||kind===2){let literal,distance;if(kind===1){literal=fixedLiteral;distance=fixedDistance;}
+   else{const literalCount=read(5)+257,distanceCount=read(5)+1,codeCount=read(4)+4,order=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15],lengths=Array(19).fill(0);if(literalCount>286)throw inboundArchiveError('DEFLATE literal table is invalid.');for(let i=0;i<codeCount;i++)lengths[order[i]]=read(3);const codes=tree(lengths),all=[];while(all.length<literalCount+distanceCount){const value=symbol(codes);if(value<16)all.push(value);else{if(value===16&&!all.length)throw inboundArchiveError('DEFLATE repeat has no preceding length.');const count=value===16?read(2)+3:value===17?read(3)+3:read(7)+11,repeat=value===16?all.at(-1):0;if(all.length+count>literalCount+distanceCount)throw inboundArchiveError('DEFLATE repeat exceeds its table.');for(let i=0;i<count;i++)all.push(repeat);}}if(!all[256])throw inboundArchiveError('DEFLATE end-of-block code is absent.');literal=tree(all.slice(0,literalCount));distance=tree(all.slice(literalCount));}
+   for(;;){const value=symbol(literal);if(value<256)produced++;else if(value===256)break;else{if(value>285)throw inboundArchiveError('DEFLATE reserved length code is prohibited.');const index=value-257,length=lengthBase[index]+read(lengthBits[index]),distanceCode=symbol(distance);if(distanceCode>29)throw inboundArchiveError('DEFLATE reserved distance code is prohibited.');const back=distanceBase[distanceCode]+read(distanceBits[distanceCode]);if(back>produced)throw inboundArchiveError('DEFLATE distance precedes available output.');produced+=length;}if(produced>expectedSize)throw inboundArchiveError('DEFLATE expands beyond its declared member size.','INBOUND_ARCHIVE_LIMIT');}
+  }else throw inboundArchiveError('DEFLATE reserved block type is prohibited.');
+  if(produced>expectedSize)throw inboundArchiveError('DEFLATE expands beyond its declared member size.','INBOUND_ARCHIVE_LIMIT');
+ }
+ if(produced!==expectedSize||Math.ceil(bit/8)!==bytes.length)throw inboundArchiveError('DEFLATE size or final compressed-stream boundary is inconsistent.');
+}
+async function parseInboundArchive(blob){
+ const contract=globalThis.closedLoopWorkflowSchema.INBOUND_RESPONSE_ARCHIVE_CONTRACT,limits=contract?.limits;
+ if(!limits||!contract.parserVersion)throw inboundArchiveError('Inbound archive contract is unavailable.','INBOUND_ARCHIVE_CONTRACT_UNAVAILABLE');
+ if(!(blob instanceof Blob))throw new TypeError('Inbound archive bytes must be a Blob.');
+ if(blob.size<22||blob.size>limits.maxArchiveBytes)throw inboundArchiveError('Archive size exceeds the published inbound transport bounds. Select the response and returned files separately.','INBOUND_ARCHIVE_LIMIT');
+ const read=async(offset,size)=>{if(!Number.isSafeInteger(offset)||!Number.isSafeInteger(size)||offset<0||size<0||offset+size>blob.size)throw inboundArchiveError('ZIP structure is truncated or outside the selected bytes.');return new Uint8Array(await hash.readWithDeadline(blob.slice(offset,offset+size).arrayBuffer(),'Reading inbound archive'));};
+ const view=bytes=>new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),tailOffset=Math.max(0,blob.size-65557),tail=await read(tailOffset,blob.size-tailOffset),tv=view(tail);let end=-1;
+ for(let at=tail.length-22;at>=0;at--)if(tv.getUint32(at,true)===0x06054b50&&at+22+tv.getUint16(at+20,true)===tail.length){end=at;break;}
+ if(end<0)throw inboundArchiveError('ZIP end directory is missing or has trailing data.');
+ let count=tv.getUint16(end+10,true),centralSize=tv.getUint32(end+12,true),centralOffset=tv.getUint32(end+16,true),centralEnd=tailOffset+end;
+ if(tv.getUint16(end+4,true)!==0||tv.getUint16(end+6,true)!==0||tv.getUint16(end+8,true)!==count)throw inboundArchiveError('Split-volume ZIP archives are unsupported.','INBOUND_ARCHIVE_UNSUPPORTED');
+ const locator=centralEnd>=20?await read(centralEnd-20,20):null,lv=locator?view(locator):null;
+ if(count===65535||centralSize===0xffffffff||centralOffset===0xffffffff||lv?.getUint32(0,true)===0x07064b50){if(!lv)throw inboundArchiveError('ZIP64 locator is missing.');if(lv.getUint32(0,true)!==0x07064b50||lv.getUint32(4,true)!==0||lv.getUint32(16,true)!==1)throw inboundArchiveError('ZIP64 locator is invalid.');const position=lv.getBigUint64(8,true);if(position>BigInt(Number.MAX_SAFE_INTEGER))throw inboundArchiveError('ZIP64 directory offset is excessive.','INBOUND_ARCHIVE_LIMIT');const bytes=await read(Number(position),56),v=view(bytes);if(v.getUint32(0,true)!==0x06064b50||v.getBigUint64(4,true)!==44n||v.getUint16(14,true)>45||v.getUint32(16,true)!==0||v.getUint32(20,true)!==0||v.getBigUint64(24,true)!==v.getBigUint64(32,true)||Number(position)+56!==centralEnd-20)throw inboundArchiveError('ZIP64 end directory is inconsistent.');const values=[v.getBigUint64(32,true),v.getBigUint64(40,true),v.getBigUint64(48,true)];if(values.some(value=>value>BigInt(Number.MAX_SAFE_INTEGER)))throw inboundArchiveError('ZIP64 directory values are excessive.','INBOUND_ARCHIVE_LIMIT');const expanded=values.map(Number);if(count!==65535&&count!==expanded[0]||centralSize!==0xffffffff&&centralSize!==expanded[1]||centralOffset!==0xffffffff&&centralOffset!==expanded[2])throw inboundArchiveError('ZIP64 and ordinary end-directory values disagree.');[count,centralSize,centralOffset]=expanded;centralEnd=Number(position);}
+ if(count<1||count>limits.maxEntries||centralOffset+centralSize!==centralEnd)throw inboundArchiveError('ZIP member count or central-directory bounds are invalid.','INBOUND_ARCHIVE_LIMIT');
+ const entries=[];let at=centralOffset,totalExpanded=0;
+ for(let i=0;i<count;i++){const header=await read(at,46),v=view(header);if(v.getUint32(0,true)!==0x02014b50)throw inboundArchiveError('ZIP central-directory entry is invalid.');const needed=v.getUint16(6,true),flags=v.getUint16(8,true),method=v.getUint16(10,true),nameLength=v.getUint16(28,true),extraLength=v.getUint16(30,true),commentLength=v.getUint16(32,true),disk=v.getUint16(34,true),attributes=v.getUint32(38,true),madeBy=v.getUint16(4,true)>>>8;
+  if(needed<10||needed>45||!contract.supportedCompressionMethods.includes(method)||(flags&~0x080e)!==0||method===0&&(flags&6)!==0)throw inboundArchiveError('ZIP encryption, flags, or compression method are unsupported.','INBOUND_ARCHIVE_UNSUPPORTED');
+  const mode=attributes>>>16,type=mode&0xf000;if((attributes&0x18)!==0||[3,19].includes(madeBy)&&type!==0&&type!==0x8000||![3,19].includes(madeBy)&&(attributes&0x440)!==0)throw inboundArchiveError('Directory, link, device, or special ZIP entries are prohibited.');
+  if(!nameLength||nameLength>limits.maxFilenameBytes||at+46+nameLength+extraLength+commentLength>centralEnd)throw inboundArchiveError('ZIP filename or metadata exceeds its bounds.','INBOUND_ARCHIVE_LIMIT');
+  const metadata=await read(at+46,nameLength+extraLength+commentLength),nameBytes=metadata.subarray(0,nameLength),extras=inboundZipExtras(metadata.subarray(nameLength,nameLength+extraLength)),rawFilename=inboundZipName(nameBytes,flags,extras);let normalized;try{normalized=hash.normalizeFilename(rawFilename,{allowPath:true});}catch(error){throw inboundArchiveError(error.message,'INBOUND_ARCHIVE_UNSAFE_PATH');}if(normalized.canonicalPath.split('/').length>limits.maxPathDepth)throw inboundArchiveError('Archive path depth exceeds the published bound.','INBOUND_ARCHIVE_LIMIT');
+  const originalCompressed=v.getUint32(20,true),originalSize=v.getUint32(24,true),originalOffset=v.getUint32(42,true),zip64=inboundZip64(extras.get(1),[['byteSize',originalSize===0xffffffff,8],['compressedSize',originalCompressed===0xffffffff,8],['offset',originalOffset===0xffffffff,8],['disk',disk===65535,4]]),byteSize=zip64.byteSize??originalSize,compressedSize=zip64.compressedSize??originalCompressed,offset=zip64.offset??originalOffset;
+  if((zip64.disk??disk)!==0)throw inboundArchiveError('Split-volume member is unsupported.','INBOUND_ARCHIVE_UNSUPPORTED');
+  const max=normalized.canonicalPath==='manifest.json'?limits.maxManifestBytes:normalized.canonicalPath==='response.json'?limits.maxResponseBytes:limits.maxEntryBytes;
+  if(byteSize>max||compressedSize>limits.maxArchiveBytes||byteSize>Math.max(1,compressedSize)*limits.maxCompressionRatio||method===0&&compressedSize!==byteSize||(totalExpanded+=byteSize)>limits.maxExpandedBytes)throw inboundArchiveError('ZIP member size, expansion, or compression ratio exceeds the published bound.','INBOUND_ARCHIVE_LIMIT');
+  entries.push({rawFilename,canonicalPath:normalized.canonicalPath,nameBytes,flags,method,needed,modTime:v.getUint16(12,true),modDate:v.getUint16(14,true),crc32:v.getUint32(16,true),byteSize,compressedSize,offset});at+=46+nameLength+extraLength+commentLength;
+ }
+ if(at!==centralEnd)throw inboundArchiveError('ZIP contains unlisted central-directory data.');
+ try{hash.normalizeFilenameSet(entries.map(entry=>entry.rawFilename));}catch(error){throw inboundArchiveError(error.message,'INBOUND_ARCHIVE_PATH_COLLISION');}
+ const sorted=[...entries].sort((a,b)=>a.offset-b.offset);if(sorted[0].offset!==0)throw inboundArchiveError('ZIP prefix or self-extracting content is unsupported.','INBOUND_ARCHIVE_UNSUPPORTED');
+ for(let i=0;i<sorted.length;i++){const entry=sorted[i],boundary=sorted[i+1]?.offset??centralOffset,header=await read(entry.offset,30),v=view(header);if(v.getUint32(0,true)!==0x04034b50||v.getUint16(4,true)!==entry.needed||v.getUint16(6,true)!==entry.flags||v.getUint16(8,true)!==entry.method||v.getUint16(10,true)!==entry.modTime||v.getUint16(12,true)!==entry.modDate)throw inboundArchiveError('ZIP local and central headers disagree.');const nameLength=v.getUint16(26,true),extraLength=v.getUint16(28,true),metadata=await read(entry.offset+30,nameLength+extraLength),name=metadata.subarray(0,nameLength),extras=inboundZipExtras(metadata.subarray(nameLength));if(name.length!==entry.nameBytes.length||name.some((byte,index)=>byte!==entry.nameBytes[index])||inboundZipName(name,entry.flags,extras)!==entry.rawFilename)throw inboundArchiveError('ZIP local and central filenames disagree.');
+  const originalCompressed=v.getUint32(18,true),originalSize=v.getUint32(22,true),zip64=inboundZip64(extras.get(1),[['byteSize',originalSize===0xffffffff,8],['compressedSize',originalCompressed===0xffffffff,8]]),size=zip64.byteSize??originalSize,compressedSize=zip64.compressedSize??originalCompressed,crc=v.getUint32(14,true),descriptor=Boolean(entry.flags&8);if(descriptor?(![0,entry.byteSize].includes(size)||![0,entry.compressedSize].includes(compressedSize)||![0,entry.crc32].includes(crc)):(size!==entry.byteSize||compressedSize!==entry.compressedSize||crc!==entry.crc32))throw inboundArchiveError('ZIP local member identity disagrees with the directory.');
+  entry.dataOffset=entry.offset+30+nameLength+extraLength;const dataEnd=entry.dataOffset+entry.compressedSize;if(dataEnd>boundary)throw inboundArchiveError('ZIP member data overlaps another entry.');
+  if(descriptor){const remaining=boundary-dataEnd;if(![12,16,20,24].includes(remaining))throw inboundArchiveError('ZIP data descriptor length is invalid.');const data=await read(dataEnd,remaining),dv=view(data),hasSignature=remaining===16||remaining===24,base=hasSignature?4:0,wide=remaining>=20;if(hasSignature&&dv.getUint32(0,true)!==0x08074b50||dv.getUint32(base,true)!==entry.crc32||(wide?dv.getBigUint64(base+4,true)!==BigInt(entry.compressedSize)||dv.getBigUint64(base+12,true)!==BigInt(entry.byteSize):dv.getUint32(base+4,true)!==entry.compressedSize||dv.getUint32(base+8,true)!==entry.byteSize))throw inboundArchiveError('ZIP data descriptor disagrees with the directory.');}
+  else if(dataEnd!==boundary)throw inboundArchiveError('ZIP has unlisted bytes between its members.');
+ }
+ const members=[];
+ for(const entry of entries){const compressed=blob.slice(entry.dataOffset,entry.dataOffset+entry.compressedSize);let output=compressed;
+  if(entry.method===8){const compressedBytes=new Uint8Array(await hash.readWithDeadline(compressed.arrayBuffer(),'Reading compressed archive member'));validateInboundDeflate(compressedBytes,entry.byteSize);let stream;try{stream=compressed.stream().pipeThrough(new DecompressionStream('deflate-raw'));}catch{throw inboundArchiveError('This browser cannot decode DEFLATE ZIP members in its isolated parser. Select the response and returned files separately.','INBOUND_ARCHIVE_DECOMPRESSION_UNAVAILABLE');}const reader=stream.getReader(),parts=[];let size=0;try{for(;;){const {done,value}=await hash.readWithDeadline(reader.read(),'Expanding archive member');if(done)break;if((size+=value.byteLength)>entry.byteSize)throw inboundArchiveError('ZIP member expansion exceeded its declared size.','INBOUND_ARCHIVE_LIMIT');parts.push(value);}}catch(error){void reader.cancel().catch(()=>{});if(error?.code)throw error;throw inboundArchiveError('ZIP compressed member could not be decoded.');}finally{reader.releaseLock();}if(size!==entry.byteSize)throw inboundArchiveError('ZIP expanded member length is inconsistent.');output=new Blob(parts);}
+  let crc=0xffffffff;const digest=hash.createSha256();for(let offset=0;offset<output.size;offset+=65536){const bytes=new Uint8Array(await hash.readWithDeadline(output.slice(offset,offset+65536).arrayBuffer(),'Verifying archive member'));digest.update(bytes);for(const byte of bytes)crc=handoffCrcTable[(crc^byte)&255]^(crc>>>8);}if(((crc^0xffffffff)>>>0)!==entry.crc32)throw inboundArchiveError('ZIP member CRC does not match its actual bytes.','INBOUND_ARCHIVE_CRC_MISMATCH');members.push({rawFilename:entry.rawFilename,canonicalPath:entry.canonicalPath,byteSize:output.size,sha256:digest.digest(),crc32:entry.crc32,compressionMethod:entry.method,blob:output});
+ }
+ return {archive:{parserVersion:contract.parserVersion,sha256:await hash.sha256Bytes(blob),byteSize:blob.size,mediaType:'application/zip'},members};
+}
+async function extractInboundArchive(blob){
+ if(STORE_WORKER||typeof document==='undefined'&&typeof globalThis.openStorageTransaction==='function')return parseInboundArchive(blob);
+ if(!useStoreWorker())throw inboundArchiveError('Isolated archive parsing is unavailable in this browser. Select response.json and the returned files separately.','INBOUND_ARCHIVE_WORKER_UNAVAILABLE');
+ const contract=globalThis.closedLoopWorkflowSchema.INBOUND_RESPONSE_ARCHIVE_CONTRACT;
+ if(!(blob instanceof Blob)||blob.size>contract.limits.maxArchiveBytes)throw inboundArchiveError('Archive bytes exceed the published input bound.','INBOUND_ARCHIVE_LIMIT');
+ return new Promise((resolve,reject)=>{const url=new URL(STORE_SCRIPT_URL);url.searchParams.set('storeWorker','1');url.searchParams.set('archiveParser','1');url.searchParams.set('storeContext',STORE_CONTEXT_ID);const operationId=crypto.randomUUID();let worker,timer,settled=false;const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);worker?.terminate();error?reject(Object.assign(error,{existingProjectsUnchanged:true})):resolve(value);};try{worker=new Worker(url.href);timer=setTimeout(()=>finish(inboundArchiveError('Isolated archive parsing timed out. The selected original and project are unchanged. Select the files separately or retry with a supported archive.','INBOUND_ARCHIVE_WORKER_TIMEOUT')),contract.limits.workerTimeoutMs);worker.onerror=event=>finish(inboundArchiveError(event?.message||'Isolated archive parser stopped.','INBOUND_ARCHIVE_WORKER_FAILED'));worker.onmessageerror=()=>finish(inboundArchiveError('Isolated archive parser returned unreadable data.','INBOUND_ARCHIVE_WORKER_FAILED'));worker.onmessage=event=>{const message=event.data||{};if(message.operationId!==operationId||message.buildIdentity!==STORE_BUILD_ID)return finish(inboundArchiveError('Isolated archive parser identity did not match the request.','INBOUND_ARCHIVE_WORKER_FAILED'));if(!message.ok)return finish(Object.assign(new Error(message.error?.message||'Archive parsing failed.'),{code:message.error?.code||'INBOUND_ARCHIVE_INVALID'}));const result=message.archiveResult;if(result?.archive?.parserVersion!==contract.parserVersion||result.archive.byteSize!==blob.size||result.archive.mediaType!=='application/zip'||!/^[a-f0-9]{64}$/.test(String(result.archive.sha256))||!Array.isArray(result.members)||!result.members.length||result.members.length>contract.limits.maxEntries||result.members.some(member=>!member||typeof member.rawFilename!=='string'||typeof member.canonicalPath!=='string'||!(member.blob instanceof Blob)||!Number.isSafeInteger(member.byteSize)||member.byteSize!==member.blob.size||member.byteSize>contract.limits.maxEntryBytes||!/^[a-f0-9]{64}$/.test(String(member.sha256))||!Number.isInteger(member.crc32)||member.crc32<0||member.crc32>0xffffffff||!contract.supportedCompressionMethods.includes(member.compressionMethod)))return finish(inboundArchiveError('Isolated archive parser returned an invalid result.','INBOUND_ARCHIVE_WORKER_FAILED'));finish(null,result);};worker.postMessage({operationId,method:'EXTRACT_INBOUND_ARCHIVE',args:[blob],buildIdentity:STORE_BUILD_ID});}catch(error){finish(error);}});
+}
+
 async function handoffArchive(members,crc32ByBlob){
   const encoder=new TextEncoder(),seen=[new Set(),new Set(),new Set()],entries=[];
   for(const member of members){
@@ -1890,23 +2241,242 @@ async function buildCapabilityRequest({project=null,jobId=null,targetId}={},revi
 }
 async function prepareCapabilityRequestReview(options){return buildCapabilityRequest(options,true);}
 async function readAuthorizedCapabilityRequest(options){return buildCapabilityRequest(options,false);}
+// Backup intake is one replaceable pending operation per owning project, not
+// a project artifact or version. Keeping the transport inside its own backup
+// would recursively retain backups and consume History capacity before restore.
+// Existing file selections already promised by History remain untouched.
+const backupImportStagingKey=jobId=>'backupImportStaging:'+String(jobId);
+const staleBackupImportSelection=()=>storageError('The pending backup selection changed. Resume the current selection or choose the original file again.','STALE_BACKUP_IMPORT_SELECTION');
+function backupImportDescriptor(record){const {blob,...descriptor}=record;return descriptor;}
+function validBackupImportRecord(record,jobId){
+  return Boolean(record&&globalThis.closedLoopWorkflowSchema.validateBackupImportStaging(backupImportDescriptor(record)).valid&&record.jobId===String(jobId)&&record.blob instanceof Blob&&record.blob.size===record.byteSize);
+}
+function sameBackupImportIdentity(left,right){
+  return validBackupImportRecord(left,right.jobId)&&hash.sha256Value(backupImportDescriptor(left))===hash.sha256Value(backupImportDescriptor(right));
+}
+async function pendingBackupImportIdentity(jobId){
+  const owner=String(jobId||'').trim(),record=await metaGet(backupImportStagingKey(owner));if(record===undefined)return null;
+  // Startup reads metadata only. It neither proves custody nor hashes a large
+  // backup merely to show the resume control. Corruption must not hide a valid
+  // project; an explicit replacement can recover even a malformed descriptor.
+  if(!validBackupImportRecord(record,owner))return {jobId:owner,stagingId:typeof record?.stagingId==='string'?record.stagingId:null,invalid:true,error:'The saved backup selection is damaged. Choose the backup file again.'};
+  return backupImportDescriptor(record);
+}
+async function readPendingBackupImport(jobId){
+  const owner=String(jobId||'').trim(),record=await metaGet(backupImportStagingKey(owner));if(record===undefined)return null;
+  if(!validBackupImportRecord(record,owner))throw storageError('The saved backup selection is damaged. Choose the backup file again.','BACKUP_IMPORT_STAGE_INVALID');
+  if(await hash.sha256Bytes(record.blob)!==record.sha256)throw storageError('The saved backup bytes no longer match their original identity. Choose the backup file again.','BACKUP_IMPORT_STAGE_REHASH_MISMATCH');
+  return record;
+}
+async function stageBackupImport({jobId,blob,rawFilename='backup.closed-loop',mediaType='application/octet-stream',expectedProjectRevision,expectedStateSha256,expectedStagingId=null}={}){
+  const owner=String(jobId||'').trim();if(!owner)throw storageError('JOB_ID is required for pending backup selection.','BACKUP_IMPORT_STAGE_JOB_ID_REQUIRED');
+  if(!(blob instanceof Blob))throw new TypeError('Backup-file bytes must be a Blob.');
+  const record={schema:globalThis.closedLoopWorkflowSchema.BACKUP_IMPORT_STAGING_CONTRACT.schema,stagingId:'BACKUP-IMPORT-'+crypto.randomUUID(),jobId:owner,rawFilename:String(rawFilename),mediaType:String(mediaType),byteSize:blob.size,sha256:await hash.sha256Bytes(blob),createdAt:now(),blob:new Blob([blob],{type:String(mediaType)})};
+  if(!validBackupImportRecord(record,owner))throw storageError('The pending backup descriptor is invalid.','BACKUP_IMPORT_STAGE_INVALID');
+  const tx=await openTransaction([PROJECTS,META],'readwrite'),meta=tx.objectStore(META);
+  try{
+    const project=await projectRowWithOperations(tx,owner),prior=await request(meta.get(backupImportStagingKey(owner)));
+    if(!project||Number(project.revision)!==Number(expectedProjectRevision)||!expectedStateSha256||project.projectSha256!==expectedStateSha256)throw storageError('The project changed before its backup selection was saved. Reload the current project.','STALE_PROJECT_REVISION');
+    if((typeof prior?.value?.stagingId==='string'?prior.value.stagingId:null)!==expectedStagingId)throw staleBackupImportSelection();
+    meta.put({key:backupImportStagingKey(owner),value:record,updatedAt:now()});fault('before-backup-staging-commit');await complete(tx);
+  }catch(error){try{tx.abort();}catch{}throw error;}
+  const stored=await readPendingBackupImport(owner);if(!stored||stored.stagingId!==record.stagingId)throw staleBackupImportSelection();return backupImportDescriptor(stored);
+}
+
+const responseStagingKey=(jobId,stagingId)=>`responseStaging:${jobId}:${stagingId}`;
+const responseStagingRetiredKey=(jobId,stagingId)=>`responseStagingRetired:${jobId}:${stagingId}`;
+const responseStagingRecoveryKey=(jobId,artifactId)=>`responseStagingRecovery:${jobId}:${artifactId}`;
+const recoveredResponseStages=new Map();
+function metadataWithoutBlob(record){if(!record||typeof record!=='object')return record;const {blob,byteReference,...metadata}=record;return metadata;}
+function responseStagingDescriptor(record){const {blob,bytes,storageKey,byteReference,...descriptor}=record;return descriptor;}
+function responseStagingIdentity(record){const descriptor=responseStagingDescriptor(record);delete descriptor.rejection;return descriptor;}
+function sameResponseStageInput(left,right){return ['jobId','stage','rawFilename','mediaType','byteSize','sha256','packageId','operationReservationId','challengeNonce'].every(key=>left[key]===right[key])&&equivalent(left.promptIdentity,right.promptIdentity);}
+function referencesStagedIdentity(value,identities){
+ const pending=[value],seen=new WeakSet();
+ while(pending.length){const item=pending.pop();if(typeof item==='string'){if(identities.has(item))return true;continue;}if(!item||typeof item!=='object'||item instanceof Blob||item instanceof ArrayBuffer||ArrayBuffer.isView(item)||seen.has(item))continue;seen.add(item);
+  if(item instanceof Map){for(const [key,value]of item)pending.push(key,value);continue;}if(item instanceof Set){for(const value of item)pending.push(value);continue;}
+  for(const [key,value]of Object.entries(item)){if(identities.has(key))return true;pending.push(value);}
+ }
+ return false;
+}
+async function removeUnreferencedResponseStage(tx,{project,artifact,descriptor,receipt,expectedHistoryGeneration}){
+ const ingestion=globalThis.closedLoopResponseIngestion;
+ if(!project||!ingestion.stagedResponseCleanupStatus(project,descriptor).eligible)return false;
+ const owner=String(artifact.jobId),meta=tx.objectStore(META),files=tx.objectStore(ARTIFACTS),current=await projectRowWithOperations(tx,owner),history=await request(meta.get(historyKey(owner)));
+ if(current?.projectSha256!==project.projectSha256||Number(history?.value?.generation||0)!==expectedHistoryGeneration)return false;
+ const identities=new Set([artifact.artifactId,artifact.sha256,descriptor.stagingId]),receiptKey=responseStagingRecoveryKey(owner,artifact.artifactId),retiredKey=responseStagingRetiredKey(owner,descriptor.stagingId);
+ // Absence is checked inside the deleting transaction. A current raw record,
+ // returned binding, pending selection, canonical/extension relationship or
+ // promised History custody always wins over cleanup. Diagnostic/retirement
+ // metadata describes this decision; it does not promise retention of bytes.
+ const projectRows=await request(tx.objectStore(PROJECTS).getAll());
+ if(projectRows.some(row=>referencesStagedIdentity(row.project,identities)))return false;
+ const keys=meta.getAllKeys?await request(meta.getAllKeys()):(await request(meta.getAll())).map(row=>row.key);
+ for(const key of keys){if(key===receiptKey||key===retiredKey||key===historyFileKey(owner,artifact.sha256))continue;const row=await request(meta.get(key)),value=row?.value,schema=globalThis.closedLoopWorkflowSchema;
+  if(String(key).startsWith('responseStagingRecovery:')&&schema.validateResponseStagingRecovery(value).valid)continue;
+  if(String(key).startsWith('responseStagingRetired:')&&schema.validateResponseStagingRetirement(value).valid)continue;
+  if(identities.has(String(key))||referencesStagedIdentity(value,identities))return false;
+ }
+ files.delete(artifact.artifactId);receipt.bytesRemoved=await discardUnretainedArtifactBody(tx,artifact);receipt.stagingOccurrenceRemoved=true;receipt.outcome='UNREFERENCED_STAGING_REMOVED';
+ meta.put({key:retiredKey,value:{schema:globalThis.closedLoopWorkflowSchema.RESPONSE_STAGING_RETIREMENT_CONTRACT.schema,jobId:owner,stagingId:descriptor.stagingId,retiredAt:now()},updatedAt:now()});
+ fault('during-unreferenced-staging-cleanup');return true;
+}
+async function listResponseStagingRecovery(jobId){
+ const owner=String(jobId),tx=await openTransaction(META,'readonly'),store=tx.objectStore(META),keys=store.getAllKeys?await request(store.getAllKeys()):(await request(store.getAll())).map(row=>row.key),rows=[];
+ for(const key of keys)if(String(key).startsWith('responseStagingRecovery:'+owner+':')){const row=await request(store.get(key));if(row?.value?.jobId===owner){if(!globalThis.closedLoopWorkflowSchema.validateResponseStagingRecovery(row.value).valid)throw storageError('Response staging recovery diagnostics are damaged. Original files remain preserved.','RESPONSE_STAGE_RECOVERY_INVALID');const retirement=row.value.stagingId?(await request(store.get(responseStagingRetiredKey(owner,row.value.stagingId))))?.value:null;if(retirement&&globalThis.closedLoopWorkflowSchema.validateResponseStagingRetirement(retirement).valid&&retirement.jobId===owner&&retirement.stagingId===row.value.stagingId&&row.value.outcome!=='UNREFERENCED_STAGING_REMOVED')continue;rows.push(row.value);}}
+ await complete(tx);return rows;
+}
+async function recoverResponseStaging(){
+ // Old releases persisted RAW bytes before their staging metadata. Scan Blob
+ // handles and hash only incomplete RAW staging, never all retained History.
+ // This rebuilds byte custody only. Ingestion still owns prompt/scope admission
+ // and the operator still owns proposal acceptance and canonical promotion.
+ const read=await openTransaction([ARTIFACTS,META],'readonly'),artifacts=await hydrateArtifactRows(read,await request(read.objectStore(ARTIFACTS).getAll()),{diagnostic:true});await complete(read);const recovered=[],projects=new Map(),candidates=artifacts.filter(artifact=>artifact.lineage?.role==='RAW_RESPONSE_RECOVERY');
+ // One readonly metadata snapshot replaces three transactions per saved RAW.
+ // Request only the known staging/retirement/receipt keys, never every History
+ // Blob in META. Each repair still performs its own fresh write-transaction CAS.
+ const metadata=await openTransaction(META,'readonly'),meta=metadata.objectStore(META),metadataKeys=meta.getAllKeys?await request(meta.getAllKeys()):(await request(meta.getAll())).map(row=>row.key),stagedRows=await Promise.all(metadataKeys.filter(key=>String(key).startsWith('responseStaging:')).map(async key=>{const row=await request(meta.get(key));return {...row,value:await hydrateByteRecord(metadata,row?.value,{diagnostic:true})};})),stagedByKey=new Map(stagedRows.map(row=>[row.key,row])),recoveryReceipts=new Map((await Promise.all(metadataKeys.filter(key=>String(key).startsWith('responseStagingRecovery:')).map(key=>request(meta.get(key))))).map(row=>[row.key,row.value])),retirements=new Map(await Promise.all(stagedRows.map(async row=>{const key=responseStagingRetiredKey(row.value?.jobId,row.value?.stagingId);return [key,(await request(meta.get(key)))?.value];})));
+ const missingArchives=new Set(),artifactIds=new Set(artifacts.map(row=>row.artifactId));
+ for(const row of stagedRows){const saved=row?.value;if(!saved||!globalThis.closedLoopWorkflowSchema.validateResponseStagingDescriptor(responseStagingDescriptor(saved)).valid||row.key!==responseStagingKey(saved.jobId,saved.stagingId)||!(saved.blob instanceof Blob)||saved.blob.size!==saved.byteSize)continue;const artifactId='RAW-'+saved.stagingId;if(artifactIds.has(artifactId))continue;missingArchives.add(artifactId);candidates.push({artifactId,jobId:saved.jobId,filename:saved.rawFilename,mediaType:saved.mediaType,byteSize:saved.byteSize,sha256:saved.sha256,blob:saved.blob,lineage:{stage:saved.stage,role:'RAW_RESPONSE_RECOVERY',stagedResponse:responseStagingIdentity(saved)},createdAt:saved.createdAt});}
+ const snapshots=await Promise.all(candidates.map(async artifact=>{
+  const owner=String(artifact.jobId),descriptor=artifact.lineage.stagedResponse,stagingId=typeof descriptor?.stagingId==='string'&&descriptor.stagingId?descriptor.stagingId:null,key=stagingId?responseStagingKey(owner,stagingId):null,receiptKey=responseStagingRecoveryKey(owner,artifact.artifactId);
+  const [prior,retirement,previousReceipt]=await Promise.all([stagedByKey.get(key)||null,stagingId?retirements.has(responseStagingRetiredKey(owner,stagingId))?{value:retirements.get(responseStagingRetiredKey(owner,stagingId))}:request(meta.get(responseStagingRetiredKey(owner,stagingId))):null,{value:recoveryReceipts.get(receiptKey)}]);
+  return {artifact,missingArchive:missingArchives.has(artifact.artifactId),owner,descriptor,stagingId,key,receiptKey,prior:prior?.value,retirement:retirement?.value,previousReceipt:previousReceipt?.value};
+ }));await complete(metadata);
+ for(const {artifact,missingArchive,owner,descriptor,stagingId,key,receiptKey,prior,retirement,previousReceipt}of snapshots){
+  if(retirement){if(globalThis.closedLoopWorkflowSchema.validateResponseStagingRetirement(retirement).valid&&retirement.jobId===owner&&retirement.stagingId===stagingId)continue;}
+  const existingValid=Boolean(prior&&globalThis.closedLoopWorkflowSchema.validateResponseStagingDescriptor(responseStagingDescriptor(prior)).valid&&prior.jobId===owner&&prior.stagingId===stagingId&&prior.blob instanceof Blob&&prior.blob.size===prior.byteSize);
+  if(existingValid&&!retirement&&!missingArchive){if(previousReceipt?.outcome==='METADATA_RECOVERED')recoveredResponseStages.set(key,responseStagingIdentity(prior));continue;}
+  let code=missingArchive?'RESPONSE_STAGE_ARCHIVE_RECOVERED':'RESPONSE_STAGE_METADATA_MISSING',outcome='METADATA_RECOVERED',project=null;
+  const valid=globalThis.closedLoopWorkflowSchema.validateResponseStagingDescriptor(descriptor).valid&&descriptor.jobId===owner&&artifact.artifactId==='RAW-'+stagingId&&descriptor.stage===artifact.lineage.stage&&descriptor.rawFilename===artifact.filename&&descriptor.mediaType===artifact.mediaType&&descriptor.byteSize===artifact.byteSize&&descriptor.sha256===artifact.sha256&&artifact.blob instanceof Blob&&artifact.blob.size===descriptor.byteSize;
+  if(!valid||retirement||key&&prior!==undefined&&!missingArchive){outcome='BLOCKED';code='RESPONSE_STAGE_IDENTITY_MISMATCH';}
+  else if(await hash.sha256Bytes(artifact.blob)!==descriptor.sha256){outcome='BLOCKED';code='RESPONSE_STAGE_REHASH_MISMATCH';}
+  else{
+    try{if(!projects.has(owner))projects.set(owner,await readProjectMetadata(owner));project=projects.get(owner);}catch{project=null;}
+    if(!project){outcome='BLOCKED';code=(await metaGet(historyKey(owner)))?.removed?'RESPONSE_STAGE_PROJECT_REMOVED':'RESPONSE_STAGE_PROJECT_UNAVAILABLE';}
+    else{const freshness=globalThis.closedLoopResponseIngestion.stagedResponseRecoveryStatus(project,descriptor);if(freshness.code==='RESPONSE_STAGE_ALREADY_RECORDED'){outcome='ALREADY_RECORDED';code=freshness.code;}else if(freshness.current===false){outcome='BLOCKED';code=freshness.code;}}
+  }
+  const receipt={schema:globalThis.closedLoopWorkflowSchema.RESPONSE_STAGING_RECOVERY_CONTRACT.schema,kind:'RAW_RESPONSE',jobId:owner,stagingId,artifactId:String(artifact.artifactId),stage:Number.isInteger(descriptor?.stage)&&descriptor.stage>=1&&descriptor.stage<=globalThis.closedLoopWorkflowSchema.STAGE_COUNT?descriptor.stage:null,rawFilename:typeof descriptor?.rawFilename==='string'&&descriptor.rawFilename?descriptor.rawFilename:null,sha256:typeof descriptor?.sha256==='string'&&/^[a-f0-9]{64}$/.test(descriptor.sha256)?descriptor.sha256:null,byteSize:Number.isSafeInteger(descriptor?.byteSize)&&descriptor.byteSize>=0?descriptor.byteSize:null,outcome,code,checkedAt:now()};
+  if(!globalThis.closedLoopWorkflowSchema.validateResponseStagingRecovery(receipt).valid)throw storageError('Staging recovery receipt is invalid.','RESPONSE_STAGE_RECOVERY_INVALID');
+  const cleanupCandidate=outcome==='BLOCKED'&&valid&&!missingArchive&&!prior&&!retirement&&project&&globalThis.closedLoopResponseIngestion.stagedResponseCleanupStatus(project,descriptor).eligible,expectedHistoryGeneration=cleanupCandidate?Number((await metaGet(historyKey(owner)))?.generation||0):null;
+  const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),meta=tx.objectStore(META);
+  try{
+    const current=await hydrateByteRecord(tx,await request(tx.objectStore(ARTIFACTS).get(artifact.artifactId)),{diagnostic:true}),presentRow=key?await request(meta.get(key)):null,present=presentRow?{...presentRow,value:await hydrateByteRecord(tx,presentRow.value,{diagnostic:true})}:null,retired=stagingId?await request(meta.get(responseStagingRetiredKey(owner,stagingId))):null;
+    // New selection/retirement wins; never overwrite concurrent recoverable
+    // work or claim that a changed descriptor still identifies verified bytes.
+    if(Boolean(current)===missingArchive||Boolean(present)!==Boolean(key&&prior!==undefined)||present&&!equivalent(metadataWithoutBlob(present.value),metadataWithoutBlob(prior))||Boolean(retired)!==Boolean(retirement)||retired&&!equivalent(retired.value,retirement)||current&&(!equivalent(metadataWithoutBlob(current),metadataWithoutBlob(artifact))||Boolean(current.blob instanceof Blob)!==Boolean(artifact.blob instanceof Blob)||current.blob?.size!==artifact.blob?.size)){await complete(tx);continue;}
+    if(project&&(await projectRowWithOperations(tx,owner))?.projectSha256!==project.projectSha256){await complete(tx);continue;}
+    if(outcome==='METADATA_RECOVERED'||missingArchive&&outcome==='ALREADY_RECORDED'){await storeArtifactRow(tx,{...artifact,...current,blob:artifact.blob});meta.put({key,value:await sharedByteRecord(tx,{...clone(prior?responseStagingDescriptor(prior):descriptor),blob:artifact.blob}),updatedAt:now()});}
+    if(cleanupCandidate)await removeUnreferencedResponseStage(tx,{project,artifact,descriptor,receipt,expectedHistoryGeneration});
+    if(!globalThis.closedLoopWorkflowSchema.validateResponseStagingRecovery(receipt).valid)throw storageError('Staging cleanup receipt is invalid.','RESPONSE_STAGE_RECOVERY_INVALID');
+    meta.put({key:receiptKey,value:receipt,updatedAt:now()});fault('during-response-staging-recovery');await complete(tx);
+    if(outcome==='METADATA_RECOVERED')recoveredResponseStages.set(key,clone(descriptor));recovered.push(receipt);
+  }catch(error){try{tx.abort();}catch{}throw error;}
+ }
+ await recoverStorageBoundaries(artifacts,stagedRows,retirements,recoveryReceipts,projects,recovered);
+ return recovered;
+}
+
+// Startup diagnosis does not confer custody or promotion authority. Read only
+// the project metadata needed for relationship checks; payloads are rehashed
+// by readStagedResponseFile, artifact custody and actual repair boundaries.
+async function recoverStorageBoundaries(artifacts,stagedRows,retirements,recoveryReceipts,projects,results){
+ const byId=new Map(artifacts.map(row=>[row.artifactId,row])),owners=new Set(artifacts.map(row=>String(row.jobId)));
+ for(const row of stagedRows)if(typeof row?.value?.jobId==='string'&&row.value.jobId)owners.add(row.value.jobId);
+ for(const summary of await listProjectSummaries())owners.add(projectIdentity(summary));
+ const histories=new Map();
+ for(const owner of owners){
+  if(!projects.has(owner)){try{projects.set(owner,await readProjectMetadata(owner));}catch{projects.set(owner,null);}}
+  histories.set(owner,await metaGet(historyKey(owner)));
+ }
+ async function record({owner,artifactId,artifact=null,staged=null,stageKey=null,kind,code,stage=null,rawFilename=null,sha256=null,byteSize=null,outcome='BLOCKED',project=projects.get(owner)}){
+  const receipt={schema:globalThis.closedLoopWorkflowSchema.RESPONSE_STAGING_RECOVERY_CONTRACT.schema,kind,jobId:owner,stagingId:typeof staged?.stagingId==='string'&&staged.stagingId?staged.stagingId:null,artifactId,stage:Number.isInteger(stage)&&stage>=1&&stage<=30?stage:null,rawFilename:typeof rawFilename==='string'&&rawFilename?rawFilename:null,sha256:typeof sha256==='string'&&/^[a-f0-9]{64}$/.test(sha256)?sha256:null,byteSize:Number.isSafeInteger(byteSize)&&byteSize>=0?byteSize:null,outcome,code,checkedAt:now()};
+  if(!globalThis.closedLoopWorkflowSchema.validateResponseStagingRecovery(receipt).valid)throw storageError('Storage recovery receipt is invalid.','RESPONSE_STAGE_RECOVERY_INVALID');
+  const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),meta=tx.objectStore(META);
+  try{
+   const current=await hydrateByteRecord(tx,await request(tx.objectStore(ARTIFACTS).get(artifactId)),{diagnostic:true}),stageRow=stageKey?await request(meta.get(stageKey)):null,currentStage=stageRow?{...stageRow,value:await hydrateByteRecord(tx,stageRow.value,{diagnostic:true})}:null,currentProject=await projectRowWithOperations(tx,owner),currentHistory=await request(meta.get(historyKey(owner)));
+   if(Boolean(current)!==Boolean(artifact)||current&&(!equivalent(metadataWithoutBlob(current),metadataWithoutBlob(artifact))||current.blob?.size!==artifact.blob?.size)||stageKey&&(!currentStage||!equivalent(metadataWithoutBlob(currentStage.value),metadataWithoutBlob(staged))||currentStage.value.blob?.size!==staged.blob?.size)||currentProject?.projectSha256!==project?.projectSha256||Number(currentHistory?.value?.generation||0)!==Number(histories.get(owner)?.generation||0)){await complete(tx);return;}
+   if(staged?.stagingId&&await request(meta.get(responseStagingRetiredKey(owner,staged.stagingId)))){await complete(tx);return;}
+   meta.put({key:responseStagingRecoveryKey(owner,artifactId),value:receipt,updatedAt:now()});fault('during-storage-boundary-recovery');await complete(tx);results.push(receipt);
+  }catch(error){try{tx.abort();}catch{}throw error;}
+ }
+ for(const row of stagedRows){
+  const staged=row?.value,owner=typeof staged?.jobId==='string'?staged.jobId:null,id=typeof staged?.stagingId==='string'?staged.stagingId:null;
+  // A damaged owner cannot be attributed to another project. Preserve its
+  // original row and surface the global startup failure for manual recovery.
+  if(!owner||!id||row.key!==responseStagingKey(owner,id))throw storageError('Response staging metadata has no valid project/selection identity. Original metadata and bytes were preserved.','RESPONSE_STAGE_IDENTITY_MISMATCH');
+  const artifactId='RAW-'+id,artifact=byId.get(artifactId),project=projects.get(owner),descriptor=responseStagingDescriptor(staged);
+  if(results.some(receipt=>receipt.jobId===owner&&receipt.artifactId===artifactId))continue;
+  if(retirements.get(responseStagingRetiredKey(owner,id)))continue;
+  let code=null;
+  if(!globalThis.closedLoopWorkflowSchema.validateResponseStagingDescriptor(descriptor).valid)code='RESPONSE_STAGE_IDENTITY_MISMATCH';
+  else if(!(staged.blob instanceof Blob)||staged.blob.size!==staged.byteSize)code='RESPONSE_STAGE_BYTES_MISSING';
+  else if(!project)code=histories.get(owner)?.removed?'RESPONSE_STAGE_PROJECT_REMOVED':'RESPONSE_STAGE_PROJECT_UNAVAILABLE';
+  else if(!artifact)code='RESPONSE_STAGE_ARCHIVE_MISSING';
+  else if(artifact.jobId!==owner||artifact.lineage?.role!=='RAW_RESPONSE_RECOVERY'||!equivalent(artifact.lineage.stagedResponse,responseStagingIdentity(staged))||artifact.filename!==staged.rawFilename||artifact.mediaType!==staged.mediaType||artifact.byteSize!==staged.byteSize||artifact.sha256!==staged.sha256||!(artifact.blob instanceof Blob)||artifact.blob.size!==staged.byteSize)code='RESPONSE_STAGE_ARCHIVE_IDENTITY_MISMATCH';
+  else{
+   const status=globalThis.closedLoopResponseIngestion.stagedResponseRecoveryStatus(project,descriptor);
+   if(status.current===false)code=status.code;
+  }
+  const previous=recoveryReceipts.get(responseStagingRecoveryKey(owner,artifactId));if(code||previous?.outcome==='BLOCKED'){if(code)recoveredResponseStages.delete(row.key);await record({owner,artifactId,artifact,staged,stageKey:row.key,kind:'RAW_RESPONSE',code:code||'RESPONSE_STAGE_METADATA_AVAILABLE',outcome:code?'BLOCKED':'ALREADY_RECORDED',stage:staged.stage,rawFilename:staged.rawFilename,sha256:staged.sha256,byteSize:staged.byteSize,project});}
+ }
+ for(const owner of owners){
+  const project=projects.get(owner),history=histories.get(owner),expected=project?requiredProjectArtifactBytes(project):[],canonicalById=new Map(expected.map(row=>[row.artifactId,row])),historicalArtifactIds=new Set((project?.projectData?.artifacts||[]).map(row=>globalThis.closedLoopWorkflowEngine.recordId(row,'artifacts'))),returned=new Map();
+  for(const raw of project?.projectData?.rawResponses||[])for(const file of Array.isArray(raw.files)?raw.files:[])if(file.artifactId)returned.set(file.artifactId,{raw,file});
+  for(const expectedRow of expected){const row=byId.get(expectedRow.artifactId),invalid=!row||row.jobId!==owner||!(row.blob instanceof Blob)||row.blob.size!==expectedRow.byteSize||row.sha256!==expectedRow.sha256||row.filename!==expectedRow.filename,previous=recoveryReceipts.get(responseStagingRecoveryKey(owner,expectedRow.artifactId));if(invalid||previous?.outcome==='BLOCKED')await record({owner,artifactId:expectedRow.artifactId,artifact:row,kind:'ARTIFACT',code:invalid?'CANONICAL_ARTIFACT_BYTES_MISSING_OR_MISMATCHED':'ARTIFACT_RELATIONSHIP_RECORDED',outcome:invalid?'BLOCKED':'ALREADY_RECORDED',rawFilename:expectedRow.filename,sha256:expectedRow.sha256,byteSize:expectedRow.byteSize,project});}
+  for(const [artifactId,{raw,file}]of returned){const row=byId.get(artifactId);if(!row||row.jobId!==owner)await record({owner,artifactId,artifact:row,kind:'RETURNED_FILE',code:row?'RETURNED_FILE_BINDING_MISMATCH':'RETURNED_FILE_BYTES_MISSING',stage:Number(raw.stage),rawFilename:file.name??file.filename,sha256:file.sha256,byteSize:file.size??file.byteSize,project});}
+  for(const artifact of artifacts.filter(row=>String(row.jobId)===owner&&row.lineage?.role!=='RAW_RESPONSE_RECOVERY')){
+   if(canonicalById.has(artifact.artifactId)||historicalArtifactIds.has(artifact.artifactId))continue;
+   const binding=returned.get(artifact.artifactId),isReturned=Boolean(artifact.lineage?.rawResponseId||artifact.lineage?.attachmentSlotId),kind=isReturned?'RETURNED_FILE':'ARTIFACT';
+   let code=null;
+   if(!(artifact.blob instanceof Blob)||artifact.blob.size!==artifact.byteSize)code='STORED_ARTIFACT_BYTES_MISSING';
+   else if(binding){if(binding.raw.rawResponseId!==artifact.lineage?.rawResponseId||binding.file.attachmentSlotId!==artifact.lineage?.attachmentSlotId||binding.file.sha256!==artifact.sha256||(binding.file.size??binding.file.byteSize)!==artifact.byteSize||(binding.file.name??binding.file.filename)!==artifact.filename||(binding.file.type??binding.file.mediaType)!==artifact.mediaType)code='RETURNED_FILE_BINDING_MISMATCH';}
+   else if(history?.files?.[artifact.sha256]?.byteSize!==artifact.byteSize)code=isReturned?'RETURNED_FILE_BINDING_NOT_COMMITTED':'ARTIFACT_RELATIONSHIP_NOT_COMMITTED';
+   const priorReceipt=recoveryReceipts.get(responseStagingRecoveryKey(owner,artifact.artifactId));
+   if(code||priorReceipt?.outcome==='BLOCKED')await record({owner,artifactId:artifact.artifactId,artifact,kind,code:code||'ARTIFACT_RELATIONSHIP_RECORDED',outcome:code?'BLOCKED':'ALREADY_RECORDED',stage:artifact.lineage?.stage,rawFilename:artifact.filename,sha256:artifact.sha256,byteSize:artifact.byteSize,project});
+  }
+ }
+}
+
 async function stageResponseFile({jobId,stage,blob,rawFilename='response.json',mediaType='application/json',promptIdentity=null,packageId=null,operationReservationId=null,challengeNonce=null}={}){
   const owner=String(jobId||'').trim(),stageNumber=Number(stage);if(!owner)throw storageError('JOB_ID is required to stage a response file.','RESPONSE_STAGE_JOB_ID_REQUIRED');if(!Number.isInteger(stageNumber)||stageNumber<1||stageNumber>30)throw storageError('A valid stage is required to stage a response file.','RESPONSE_STAGE_INVALID_STAGE');if(!(blob instanceof Blob))throw new TypeError('Response-file bytes must be a Blob.');
   const originalName=String(rawFilename||'response.json'),claimedType=String(mediaType||blob.type||'application/octet-stream'),byteSize=blob.size,sha256=await hash.sha256Bytes(blob),stagingId=`RESPONSE-STAGING-${crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`}`,key=`responseStaging:${owner}:${stagingId}`,record={schema:'closed-loop-response-staging/1',stagingId,jobId:owner,stage:stageNumber,rawFilename:originalName,mediaType:claimedType,byteSize,sha256,blob:new Blob([blob],{type:claimedType}),promptIdentity:clone(promptIdentity),packageId:packageId||null,operationReservationId:operationReservationId||null,challengeNonce:challengeNonce||null,status:'HASHED_AND_REVERIFIED',createdAt:now()};
   const {blob:responseBlob,...stagingIdentity}=record;
-  await putArtifact({artifactId:'RAW-'+stagingId,jobId:owner,blob:record.blob,filename:originalName,mediaType:claimedType,lineage:{stage:stageNumber,role:'RAW_RESPONSE_RECOVERY',stagedResponse:stagingIdentity}});fault('during-response-staging-write');await metaPut(key,record);const stored=await metaGet(key);if(!stored?.blob)throw storageError('Staged response bytes were not persisted.','RESPONSE_STAGE_BYTES_MISSING');const verifyDigest=await hash.sha256Bytes(stored.blob);if(stored.blob.size!==byteSize||verifyDigest!==sha256){const tx=await openTransaction(META,'readwrite');tx.objectStore(META).delete(key);await complete(tx);throw storageError('Staged response bytes failed read-back verification.','RESPONSE_STAGE_REHASH_MISMATCH');}return {...stored,blob:undefined,storageKey:key};
+  if(!globalThis.closedLoopWorkflowSchema.validateResponseStagingDescriptor(stagingIdentity).valid)throw storageError('Response staging identity is invalid.','RESPONSE_STAGE_IDENTITY_MISMATCH');
+  for(const [recoveredKey,candidate]of recoveredResponseStages)if(sameResponseStageInput(candidate,stagingIdentity)){
+    const retired=await metaGet(responseStagingRetiredKey(owner,candidate.stagingId));if(retired){recoveredResponseStages.delete(recoveredKey);continue;}
+    const saved=await readStagedResponseFile({jobId:owner,stagingId:candidate.stagingId});if(!sameResponseStageInput(saved,stagingIdentity))throw storageError('Recovered response selection changed. Select the original file again.','RESPONSE_STAGE_IDENTITY_MISMATCH');return {...responseStagingDescriptor(saved),storageKey:recoveredKey};
+  }
+  fault('during-artifact-blob-write');const tx=await openTransaction([ARTIFACTS,META],'readwrite'),artifacts=tx.objectStore(ARTIFACTS),meta=tx.objectStore(META),artifactId='RAW-'+stagingId;
+  try{
+    if(await request(artifacts.get(artifactId))||await request(meta.get(key)))throw storageError('Response staging identity is already in use.','RESPONSE_STAGE_IDENTITY_MISMATCH');
+    await storeArtifactRow(tx,{artifactId,jobId:owner,blob:record.blob,filename:originalName,mediaType:claimedType,byteSize,sha256,lineage:{stage:stageNumber,role:'RAW_RESPONSE_RECOVERY',stagedResponse:stagingIdentity},createdAt:record.createdAt});fault('during-response-staging-write');meta.put({key,value:await sharedByteRecord(tx,record),updatedAt:now()});await complete(tx);
+  }catch(error){try{tx.abort();}catch{}throw error;}
+  const persistedArtifact=await getArtifact(artifactId);if(!persistedArtifact||persistedArtifact.jobId!==owner||persistedArtifact.byteSize!==byteSize||persistedArtifact.sha256!==sha256||persistedArtifact.blob?.size!==byteSize||await observedArtifactDigest(persistedArtifact)!==sha256)throw storageError('Staged response archive bytes failed read-back verification.','RESPONSE_STAGE_REHASH_MISMATCH');
+  const stored=await metaGet(key);if(!stored?.blob)throw storageError('Staged response bytes were not persisted.','RESPONSE_STAGE_BYTES_MISSING');const verifyDigest=await hash.sha256Bytes(stored.blob);if(stored.blob.size!==byteSize||verifyDigest!==sha256){const tx=await openTransaction(META,'readwrite');tx.objectStore(META).delete(key);await complete(tx);throw storageError('Staged response bytes failed read-back verification.','RESPONSE_STAGE_REHASH_MISMATCH');}return {...stored,blob:undefined,storageKey:key};
 }
-async function readStagedResponseFile({jobId,stagingId}={}){const owner=String(jobId||'').trim(),id=String(stagingId||'').trim();if(!owner||!id)throw storageError('JOB_ID and stagingId are required.','RESPONSE_STAGE_ID_REQUIRED');const key=`responseStaging:${owner}:${id}`,stored=await metaGet(key);if(!stored?.blob)throw storageError('Staged response file is unavailable.','RESPONSE_STAGE_NOT_FOUND');if(String(stored.jobId)!==owner)throw storageError('Staged response belongs to another project.','CROSS_PROJECT_RESPONSE_STAGE');const limit=globalThis.closedLoopWorkflowSchema?.DEFAULT_RESOURCE_LIMITS?.maxRawResponseBytes;if(Number.isFinite(limit)&&stored.blob.size>limit){const digest=await hash.sha256Bytes(stored.blob);if(stored.blob.size!==Number(stored.byteSize)||digest!==String(stored.sha256))throw storageError('Staged response bytes no longer match their captured identity.','RESPONSE_STAGE_REHASH_MISMATCH');await metaPut(key,{...stored,rejection:{code:'OVERSIZED_RESPONSE',byteSize:stored.blob.size,maxRawResponseBytes:limit,at:now()}});throw storageError(`Response file exceeds the ${limit}-byte stage limit. The exact original bytes and rejection receipt remain staged for ${owner}.`,'OVERSIZED_RESPONSE');}const bytes=new Uint8Array(await hash.readWithDeadline(stored.blob.arrayBuffer(),'Reading staged response')),sha256=await hash.sha256Bytes(bytes);if(bytes.byteLength!==Number(stored.byteSize)||sha256!==String(stored.sha256))throw storageError('Staged response bytes no longer match their captured identity.','RESPONSE_STAGE_REHASH_MISMATCH');return {...stored,bytes,blob:stored.blob,storageKey:key};}
-async function removeStagedResponseFile({jobId,stagingId}={}){const owner=String(jobId||'').trim(),id=String(stagingId||'').trim();if(!owner||!id)return false;const key=`responseStaging:${owner}:${id}`,tx=await openTransaction(META,'readwrite'),store=tx.objectStore(META);const row=await request(store.get(key));if(row?.value&&String(row.value.jobId)!==owner){try{tx.abort();}catch{}throw storageError('Staged response belongs to another project.','CROSS_PROJECT_RESPONSE_STAGE');}store.delete(key);await complete(tx);return Boolean(row);}
-async function storageHealth(){let persistent=false,estimate={usage:null,quota:null};try{persistent=await hash.readWithDeadline(navigator.storage.persist(),'Requesting persistent storage');estimate=await hash.readWithDeadline(navigator.storage.estimate(),'Measuring available storage');}catch{}return {database:DB_NAME,persistent:Boolean(persistent),usage:estimate.usage??null,quota:estimate.quota??null,lastCommittedRevision:await metaGet('lastCommittedRevision'),lastVerifiedExport:await metaGet('lastVerifiedExport'),migrationStatus:await metaGet('migrationStatus')};}
+async function readStagedResponseFile({jobId,stagingId}={}){const owner=String(jobId||'').trim(),id=String(stagingId||'').trim();if(!owner||!id)throw storageError('JOB_ID and stagingId are required.','RESPONSE_STAGE_ID_REQUIRED');const key=`responseStaging:${owner}:${id}`,stored=await metaGet(key);if(!stored?.blob)throw storageError('Staged response file is unavailable.','RESPONSE_STAGE_NOT_FOUND');if(String(stored.jobId)!==owner)throw storageError('Staged response belongs to another project.','CROSS_PROJECT_RESPONSE_STAGE');if(stored.stagingId!==id||!globalThis.closedLoopWorkflowSchema.validateResponseStagingDescriptor(responseStagingDescriptor(stored)).valid)throw storageError('Staged response identity is invalid.','RESPONSE_STAGE_IDENTITY_MISMATCH');const limit=globalThis.closedLoopWorkflowSchema?.DEFAULT_RESOURCE_LIMITS?.maxRawResponseBytes;if(Number.isFinite(limit)&&stored.blob.size>limit){const digest=await hash.sha256Bytes(stored.blob);if(stored.blob.size!==Number(stored.byteSize)||digest!==String(stored.sha256))throw storageError('Staged response bytes no longer match their captured identity.','RESPONSE_STAGE_REHASH_MISMATCH');await metaPut(key,{...stored,rejection:{code:'OVERSIZED_RESPONSE',byteSize:stored.blob.size,maxRawResponseBytes:limit,at:now()}});throw storageError(`Response file exceeds the ${limit}-byte stage limit. The exact original bytes and rejection receipt remain staged for ${owner}.`,'OVERSIZED_RESPONSE');}const bytes=new Uint8Array(await hash.readWithDeadline(stored.blob.arrayBuffer(),'Reading staged response')),sha256=await hash.sha256Bytes(bytes);if(bytes.byteLength!==Number(stored.byteSize)||sha256!==String(stored.sha256))throw storageError('Staged response bytes no longer match their captured identity.','RESPONSE_STAGE_REHASH_MISMATCH');return {...stored,bytes,blob:stored.blob,storageKey:key};}
+async function removeStagedResponseFile({jobId,stagingId}={}){const owner=String(jobId||'').trim(),id=String(stagingId||'').trim();if(!owner||!id)return false;const key=`responseStaging:${owner}:${id}`,tx=await openTransaction(META,'readwrite'),store=tx.objectStore(META);const row=await request(store.get(key));if(row?.value&&String(row.value.jobId)!==owner){try{tx.abort();}catch{}throw storageError('Staged response belongs to another project.','CROSS_PROJECT_RESPONSE_STAGE');}store.delete(key);store.put({key:responseStagingRetiredKey(owner,id),value:{schema:globalThis.closedLoopWorkflowSchema.RESPONSE_STAGING_RETIREMENT_CONTRACT.schema,jobId:owner,stagingId:id,retiredAt:now()},updatedAt:now()});await complete(tx);recoveredResponseStages.delete(key);return Boolean(row);}
+async function storageHealth(){
+ let persistent,estimate={};
+ try{const result=await hash.readWithDeadline(navigator.storage.persist(),'Requesting persistent storage');if(typeof result==='boolean')persistent=result;}catch{}
+ // A failed persistence probe says nothing about quota, and does not mean
+ // persistence was refused. Keep each unavailable observation unknown.
+ try{estimate=await hash.readWithDeadline(navigator.storage.estimate(),'Measuring available storage')||{};}catch{}
+ const measured=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0?value:null;
+ return {database:DB_NAME,persistent,usage:measured(estimate.usage),quota:measured(estimate.quota),lastCommittedRevision:await metaGet('lastCommittedRevision'),lastVerifiedExport:await metaGet('lastVerifiedExport'),migrationStatus:await metaGet('migrationStatus')};
+}
 function archiveMigrationPayload(project,archive){if(!project||typeof project!=='object')throw new TypeError('A project is required.');project.projectData=project.projectData&&typeof project.projectData==='object'?project.projectData:{};project.projectData.migrationArchives=Array.isArray(project.projectData.migrationArchives)?project.projectData.migrationArchives:[];const record={...clone(archive),operational:false};project.projectData.migrationArchives.push(record);return record;}
 function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(const key of LEGACY_KEYS)try{storage.removeItem(key);}catch{}}
 
-const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB)try{await migrateLegacy();globalThis.closedLoopLegacyMigrationError=null;}catch(error){globalThis.closedLoopLegacyMigrationError=String(error?.stack||error);console.error('Legacy migration failed without deleting the preserved legacy payload; application startup will continue.',error);}return true;})();
-if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE','SAVE_CHECKPOINT'].includes(message.method)||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;
-  const result=message.method==='SAVE_CHECKPOINT'?{checkpointId:await saveCheckpoint(message.args[0],{...message.args[1],operationId:message.operationId})}:{project:message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{operationId:message.operationId})};
+const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB&&!ARCHIVE_PARSER_WORKER){
+ try{await migrateLegacy();globalThis.closedLoopLegacyMigrationError=null;}catch(error){globalThis.closedLoopLegacyMigrationError=String(error?.stack||error);console.error('Legacy migration failed without deleting the preserved legacy payload; application startup will continue.',error);}
+ try{await recoverResponseStaging();globalThis.closedLoopStagingRecoveryError=null;}catch(error){globalThis.closedLoopStagingRecoveryError=String(error?.message||error);console.error('Response staging recovery could not finish. Preserved project and file data remain available.',error);}
+ }return true;})();
+if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE','SAVE_CHECKPOINT','EXTRACT_INBOUND_ARCHIVE'].includes(message.method)||ARCHIVE_PARSER_WORKER&&message.method!=='EXTRACT_INBOUND_ARCHIVE'||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');await ready;globalThis.__closedLoopStorageFault=message.fault;
+  const result=message.method==='EXTRACT_INBOUND_ARCHIVE'?{archiveResult:await parseInboundArchive(message.args[0])}:message.method==='SAVE_CHECKPOINT'?{checkpointId:await saveCheckpoint(message.args[0],{...message.args[1],operationId:message.operationId})}:{project:message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{...message.args[1],operationId:message.operationId})};
   globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,...result});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error)}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,exportLegacyMigrationData,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,prepareExecutionPackageReview,readAuthorizedHandoffMember,prepareCapabilityRequestReview,readAuthorizedCapabilityRequest,exportPackage,importPackage,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
+globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,exportLegacyMigrationData,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readOriginalSourceArchive,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,prepareExecutionPackageReview,readAuthorizedHandoffMember,prepareCapabilityRequestReview,readAuthorizedCapabilityRequest,extractInboundArchive,exportPackage,importPackage,stageBackupImport,pendingBackupImportIdentity,readPendingBackupImport,recoverResponseStaging,listResponseStagingRecovery,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{
 'use strict';

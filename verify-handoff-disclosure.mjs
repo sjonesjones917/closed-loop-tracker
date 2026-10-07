@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {storedArtifactBody,projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {stage01AcceptanceFixture,stage04AcceptanceFixture,acceptPrerequisite,boundedSearchProposal} from './test-fixtures.mjs';
@@ -76,14 +76,14 @@ const contextAllowed=await authorizeSyntheticHandoff(context.r,{project:context.
 const contextFile=await context.r.store.readAuthorizedHandoffMember({...contextAllowed.request,canonicalPath:'context.json'});assert.equal(await context.r.runtime.closedLoopHash.sha256Bytes(contextFile.blob),contextFile.sha256);
 // A prior successful read cannot authorize changed stored bytes or metadata.
 // Every new read must observe the exact returned row and its immutable Blob.
-const contextRow=context.r.rows.get('artifacts').get(contextFile.artifactId),originalContextRow=context.r.copy(contextRow);
-for(const [name,change]of [['blob',row=>{row.blob=new Blob([new Uint8Array(row.blob.size)]);}],['digest',row=>{row.sha256='0'.repeat(64);}],['foreign-job',row=>{row.jobId='FOREIGN-SYNTHETIC-JOB';}]]){const bad=context.r.copy(originalContextRow);change(bad);context.r.rows.get('artifacts').set(contextFile.artifactId,bad);await assert.rejects(()=>context.r.store.readPromptContextFile(contextAllowed.prompt,contextAllowed.project.job.JOB_ID),error=>error.code==='PROMPT_CONTEXT_INTEGRITY_FAILED','DISCLOSURE_CONTEXT_READ_OBSERVATION_ORACLE: '+name);}
+const contextRow=context.r.rows.get('artifacts').get(contextFile.artifactId),originalContextRow=context.r.copy(contextRow),contextBody=storedArtifactBody(context.r,contextFile.artifactId),originalContextBlob=contextBody.blob;
+for(const [name,change]of [['blob',row=>{row.blob=new Blob([new Uint8Array(row.blob.size)]);}],['digest',row=>{row.sha256='0'.repeat(64);}],['foreign-job',row=>{row.jobId='FOREIGN-SYNTHETIC-JOB';}]]){const bad=context.r.copy(originalContextRow);contextBody.blob=originalContextBlob;if(name==='blob')change(contextBody);else change(bad);context.r.rows.get('artifacts').set(contextFile.artifactId,bad);await assert.rejects(()=>context.r.store.readPromptContextFile(contextAllowed.prompt,contextAllowed.project.job.JOB_ID),error=>error.code==='PROMPT_CONTEXT_INTEGRITY_FAILED','DISCLOSURE_CONTEXT_READ_OBSERVATION_ORACLE: '+name);}
 // Metadata size disagreement invalidates observation reuse. The existing reader
 // may still independently rehash exact bytes against the authoritative context.
-context.r.rows.get('artifacts').set(contextFile.artifactId,context.r.copy({...originalContextRow,byteSize:originalContextRow.byteSize+1}));
+contextBody.blob=originalContextBlob;context.r.rows.get('artifacts').set(contextFile.artifactId,context.r.copy({...originalContextRow,byteSize:originalContextRow.byteSize+1}));
 const nativeContextRead=Blob.prototype.arrayBuffer;let contextReadBytes=0;Blob.prototype.arrayBuffer=function(){contextReadBytes+=this.size;return nativeContextRead.call(this);};let sizeReverified;try{sizeReverified=await context.r.store.readPromptContextFile(contextAllowed.prompt,contextAllowed.project.job.JOB_ID);}finally{Blob.prototype.arrayBuffer=nativeContextRead;}
 assert.equal(sizeReverified.byteSize,contextFile.byteSize);assert.ok(contextReadBytes>=contextFile.byteSize*2,'DISCLOSURE_CONTEXT_CHANGED_SIZE_REHASH_ORACLE');
-context.r.rows.get('artifacts').set(contextFile.artifactId,context.r.copy({...originalContextRow,blob:new Blob([originalContextRow.blob])}));const observedAgain=await context.r.store.readPromptContextFile(contextAllowed.prompt,contextAllowed.project.job.JOB_ID);assert.equal(await observedAgain.blob.text(),await contextFile.blob.text(),'DISCLOSURE_CONTEXT_READ_OBSERVATION_CONTROL');cases.push('attached-context-byte-scan-and-guard');
+context.r.rows.get('artifacts').set(contextFile.artifactId,context.r.copy(originalContextRow));contextBody.blob=new Blob([originalContextBlob]);const observedAgain=await context.r.store.readPromptContextFile(contextAllowed.prompt,contextAllowed.project.job.JOB_ID);assert.equal(await observedAgain.blob.text(),await contextFile.blob.text(),'DISCLOSURE_CONTEXT_READ_OBSERVATION_CONTROL');cases.push('attached-context-byte-scan-and-guard');
 
 const inline=await fixture({objective:'Explain this synthetic documentation delimiter: -----BEGIN PRIVATE KEY-----'}),inlineReview=await inline.r.store.prepareExecutionPackageReview(inline.request);
 assert(inlineReview.scan.findings.some(row=>row.canonicalPath==='instruction.txt'),'DISCLOSURE_INSTRUCTION_SCAN_ORACLE');

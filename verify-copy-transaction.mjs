@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {isDeepStrictEqual} from 'node:util';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {storedArtifactBody,projectStoreRuntime} from './test-project-store-runtime.mjs';
 const sourceOverrides=Object.fromEntries([['PROJECT_STORE_SOURCE','project-store.js'],['WORKFLOW_SCHEMA_SOURCE','workflow-schema.js']].filter(([variable])=>process.env[variable]).map(([variable,file])=>[file,fs.readFileSync(process.env[variable],'utf8')]));
 const mutation=process.argv.find(value=>value.startsWith('--fault='))?.slice(8);
 if(mutation&&mutation!=='skip-clone-receipt-validation')throw new Error('Unknown deliberate mutation');
@@ -123,7 +123,7 @@ for(const violation of ['missing','corrupted','filename','mediaType','artifactId
  const fixture=createRuntime();await fixture.store.importPackage(sourceBackup);
  const original=fixture.rows.get('artifacts').get(artifactId);
  if(violation==='missing')fixture.rows.get('artifacts').delete(artifactId);
- else if(violation==='corrupted')fixture.rows.get('artifacts').set(artifactId,{...original,blob:new Blob(['corrupted bytes'])});
+ else if(violation==='corrupted')storedArtifactBody(fixture,artifactId).blob=new Blob(['corrupted bytes']);
  else fixture.rows.get('artifacts').set(artifactId,{...original,[violation]:'INCONSISTENT_SOURCE_IDENTITY'});
  const beforeFailure=new Map([...fixture.rows].map(([key,map])=>[key,new Map(map)])),loaded=await fixture.store.readProject(source.job.JOB_ID);
  await assert.rejects(fixture.store.createProject({...request,commandId:'COPY_'+violation,expectedSourceSha256:loaded.projectSha256}),error=>error.code==='CLONE_SOURCE_FILE_INVALID','COPY_SOURCE_IDENTITY_ORACLE: '+violation);

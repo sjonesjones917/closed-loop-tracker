@@ -24,9 +24,9 @@ const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifie
 const make=()=>{
  assert.equal(source.split(validationAnchor).length-1,1);
  const observed=source.replace(validationAnchor,"globalThis.__verifiedHistoryRoots?.push({checkpointId:entry.id,snapshotSha256:entry.sha256});globalThis.__historyDigestWatch={data:project.projectData,visits:0};"+validationAnchor+"globalThis.__historyDigestReads?.push({checkpointId:entry.id,visits:globalThis.__historyDigestWatch.visits});delete globalThis.__historyDigestWatch;");
- const residencyAnchor='checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);if(entry.id===incoming.activeId)';
+ const residencyAnchor='checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources);if(entry.id===incoming.activeId)';
  assert.equal(observed.split(residencyAnchor).length-1,1);
- const measured=observed.replace(residencyAnchor,'checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);globalThis.__historyRootResidency?.push([...validatedRoots.values()].filter(root=>root?.project).length);if(entry.id===incoming.activeId)');
+ const measured=observed.replace(residencyAnchor,'checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources);globalThis.__historyRootResidency?.push([...validatedRoots.values()].filter(root=>root?.project).length);if(entry.id===incoming.activeId)');
  const inputAnchor='fileContents.delete(a);';
  assert.equal(measured.split(inputAnchor).length-1,1);
  const compatibilityAnchor='withVerifiedRecoveryCustody(artifacts,()=>assertRecoveryCompatibility(body.project));';

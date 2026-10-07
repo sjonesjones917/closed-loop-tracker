@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {validateBrowserExecution,loadBrowserExpectedSite} from './browser-execution-evidence.mjs';
+import {validateBrowserExecution,loadBrowserExpectedSite,waitForBrowserExecutionObservations} from './browser-execution-evidence.mjs';
 
 // Explicit synthetic admission controls. These test receipt rejection, not a
 // browser, physical device, deployed site, or the application assertions.
@@ -27,3 +27,22 @@ for(const [name,mutate]of [
 assert.throws(()=>validate(fixture(),'DEPLOYED'),/scope mismatch/);cases.push('local cannot satisfy deployed');
 assert.equal(await loadBrowserExpectedSite({}),null);await assert.rejects(()=>loadBrowserExpectedSite({CLOSED_LOOP_BROWSER_SCOPE:'LOCAL'}),/expected built artifact directory/);cases.push('unscoped omission and scoped artifact requirement');
 console.log(JSON.stringify({browserExecutionEvidenceVerified:true,basis:'SYNTHETIC_RECEIPT_VALIDATOR_CONTROLS_ONLY',cases}));
+
+// Named synthetic observer scheduling controls; real browser/source evidence is
+// collected separately. The former command drain loses a later source event.
+const workerUrl='http://127.0.0.1:12345/project-store.js?storeWorker=1',observerCases=[];
+const state=()=>({pending:new Set(),errors:[],workerTargets:new Set([workerUrl]),workers:new Set()});
+{
+ const row=state();await Promise.allSettled([...row.pending]);assert.throws(()=>assert.ok(row.workers.has(workerUrl),'WORKER_OBSERVATION_RACE_ORACLE'),/WORKER_OBSERVATION_RACE_ORACLE/);
+ setTimeout(()=>row.workers.add(workerUrl),15);await waitForBrowserExecutionObservations({...row,timeoutMs:200});assert.ok(row.workers.has(workerUrl));observerCases.push('delayed-source-after-command-completion');
+}
+{
+ const row=state();await assert.rejects(()=>waitForBrowserExecutionObservations({...row,timeoutMs:30}),/BROWSER_EXECUTION_EVIDENCE: timed out waiting for parsed script observations/);assert.equal(row.workers.size,0);observerCases.push('missing-worker-source-times-out');
+}
+{
+ const row=state();setTimeout(()=>row.errors.push(new Error('BROWSER_EXECUTION_EVIDENCE: loaded script bytes differ: project-store.js')),10);await assert.rejects(()=>waitForBrowserExecutionObservations({...row,timeoutMs:200}),/loaded script bytes differ: project-store.js/);assert.equal(row.workers.size,0);observerCases.push('wrong-source-error-propagates');
+}
+{
+ const row=state(),pending={};row.workers.add(workerUrl);row.pending.add(pending);setTimeout(()=>row.pending.delete(pending),15);await waitForBrowserExecutionObservations({...row,timeoutMs:200});assert.equal(row.pending.size,0);observerCases.push('pending-source-digest-completes-before-finish');
+}
+console.log(JSON.stringify({browserExecutionObserverScheduling:'PASS',synthetic:true,actualBrowser:false,observerCases}));

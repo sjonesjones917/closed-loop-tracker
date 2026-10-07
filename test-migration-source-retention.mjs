@@ -3,13 +3,13 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync,gzipSync} from 'node:zlib';
 import {pathToFileURL} from 'node:url';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {storedArtifactBody,projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 const plain=value=>JSON.parse(JSON.stringify(value));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const originals=project=>(project.projectData.migrationArchives||[]).filter(row=>row.kind==='ORIGINAL_PROJECT_SOURCE');
 const decodeSource=async row=>Buffer.from(await row.blob.arrayBuffer()).toString((row.sourceEncoding||row.lineage?.originalProjectSource?.sourceEncoding)==='UTF-16LE_CODE_UNITS'?'utf16le':'utf8');
-const retainedSources=async(r,id)=>{const byId=new Map((await r.store.listArtifacts(id)).filter(row=>row.lineage?.originalProjectSource).map(row=>[row.artifactId,row]));for(const source of Object.values((await r.store.historyList(id)).sourceArchives||{})){const file=await r.store.metaGet('recovery:'+id+':bytes:'+source.sha256);assert(file?.blob,'SOURCE_HISTORY_BYTES_ORACLE');byId.set(source.artifactId,{...source,blob:file.blob});}return [...byId.values()];};
+const retainedSources=async(r,id)=>{const byId=new Map((await r.store.listArtifacts(id)).filter(row=>row.lineage?.originalProjectSource).map(row=>[row.artifactId,row]));for(const source of Object.values((await r.store.historyList(id)).sourceArchives||{})){const file=await r.store.readOriginalSourceArchive(id,source.sha256);assert(file?.blob,'SOURCE_HISTORY_BYTES_ORACLE');byId.set(source.artifactId,{...source,blob:file.blob});}return [...byId.values()];};
 
 export async function verifyMigrationSourceRetention({sourceOverrides={},fixtureDirectory=null}={}){
  const cases=[],r=projectStoreRuntime({sourceOverrides}),key=r.store.LEGACY_KEYS[0],olderKey=r.store.LEGACY_KEYS[1];
@@ -36,7 +36,7 @@ export async function verifyMigrationSourceRetention({sourceOverrides={},fixture
  const nextBackup=await destination.store.exportPackage(a.job.JOB_ID),fresh=projectStoreRuntime({sourceOverrides}),next=await fresh.store.importPackage(nextBackup);assert.equal((await retainedSources(fresh,a.job.JOB_ID)).length,4);assert(originals(next).every(row=>row.operational===false));
  const restoredEarlier=(await destination.store.restoreCheckpoint(a.job.JOB_ID,checkpoint,{expectedProjectRevision:restored.revision})).project;assert.deepEqual(plain(originals(restoredEarlier)),plain(originals(a)));assert.deepEqual((await Promise.all((await destination.store.listArtifacts(a.job.JOB_ID)).map(decodeSource))).sort(),[firstText,olderText].sort());assert.equal((await retainedSources(destination,a.job.JOB_ID)).length,3,'SOURCE_HISTORY_SURVIVES_UNDO_ORACLE');cases.push('native-backup-import-reload','exact-import-dedup','distinct-import-source-retained','history-restore-exact-sources','transport-source-survives-undo');
  const activeRow=r.rows.get('artifacts').get(aRows[0].artifactId);r.rows.get('artifacts').delete(aRows[0].artifactId);await assert.rejects(r.store.exportPackage(a.job.JOB_ID),error=>error.code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH','SOURCE_MISSING_BLOB_ORACLE');r.rows.get('artifacts').set(aRows[0].artifactId,activeRow);
- r.rows.get('artifacts').set(aRows[0].artifactId,r.copy({...activeRow,blob:new Blob(['wrong original bytes'])}));await assert.rejects(r.store.exportPackage(a.job.JOB_ID),error=>error.code==='ARTIFACT_INTEGRITY_MISMATCH','SOURCE_CORRUPT_BLOB_ORACLE');r.rows.get('artifacts').set(aRows[0].artifactId,activeRow);
+ const activeBody=storedArtifactBody(r,aRows[0].artifactId),originalBodyBlob=activeBody.blob;activeBody.blob=new Blob(['wrong original bytes']);await assert.rejects(r.store.exportPackage(a.job.JOB_ID),error=>error.code==='ARTIFACT_INTEGRITY_MISMATCH','SOURCE_CORRUPT_BLOB_ORACLE');activeBody.blob=originalBodyBlob;
  await r.store.exportPackage(a.job.JOB_ID);cases.push('missing-original-blocks-export','corrupt-original-blocks-export','restored-valid-source-control');
  const wrong=r.copy(a);originals(wrong)[0].sha256='0'.repeat(64);assert.equal(r.store.validateProjectIntegrity(wrong,{verifyDerived:false}).valid,false,'SOURCE_DESCRIPTOR_INTEGRITY_ORACLE');
  for(const field of ['sha256','sourceSha256','parsedPayloadSha256'])for(const value of [null,[originals(a)[0][field]],{}]){const candidate=r.copy(a);originals(candidate)[0][field]=r.copy(value);assert.equal(r.store.validateProjectIntegrity(candidate,{verifyDerived:false}).valid,false,'SOURCE_SCALAR_DIGEST_ORACLE: '+field);}assert.equal(r.store.validateProjectIntegrity(a,{verifyDerived:false}).valid,true);cases.push('source-digest-fields-require-exact-strings');
@@ -52,7 +52,13 @@ export async function verifyMigrationSourceRetention({sourceOverrides={},fixture
   const prior=await failed.store.createProject({commandId:'SOURCE-IMPORT-PRIOR-'+mode});const stateBefore=failed.copy([...failed.rows]);if(mode==='transaction')failed.runtime.__closedLoopStorageFault='during-import-artifact-write';
   await assert.rejects(failed.store.importPackage(backup),error=>error.code===(mode==='transaction'?'INJECTED_STORAGE_FAILURE':'HISTORY_LIMIT_REACHED'),'SOURCE_ATOMIC_IMPORT_ORACLE');assert.deepEqual(await failed.store.readProject(prior.job.JOB_ID),prior);assert.equal(failed.rows.get('projects').size,1);assert.equal(failed.rows.get('artifacts').size,0);
  }
- const wrongBinding=JSON.parse(gunzipSync(Buffer.from(await nextBackup.arrayBuffer())).toString('utf8')),validSource=Object.values(wrongBinding.recovery.sourceArchives)[0],badSource={...validSource,parsedPayloadSha256:'0'.repeat(64)};wrongBinding.recovery.sourceArchives[r.runtime.closedLoopHash.sha256Value(r.copy(badSource))]=badSource;delete wrongBinding.packageSha256;wrongBinding.packageSha256=r.runtime.closedLoopHash.sha256Value(r.copy(wrongBinding));
+ // Challenge the raw-source parsed binding separately from the additional
+ // canonical-reference equality guard. Noncanonical spelling has distinct raw
+ // and parsed digests, so a missing parser check must still be detectable.
+ const bindingText=gunzipSync(Buffer.from(await nextBackup.arrayBuffer())).toString('utf8').replace('"opaqueExtension":{"decimal":1,"escaped":"a","marker":"ONLY_PROJECT_A","spacing":[1,2]}','"opaqueExtension" : {"decimal":1.000e0,"escaped":"\\u0061","marker":"ONLY_PROJECT_A","spacing":[ 1 , 2 ]}');
+ assert(bindingText.includes('1.000e0'));const bindingStore=projectStoreRuntime({sourceOverrides}),bindingProject=await bindingStore.store.importPackage(new Blob([gzipSync(bindingText)])),bindingBackup=await bindingStore.store.exportPackage(bindingProject.job.JOB_ID);
+ const wrongBinding=JSON.parse(gunzipSync(Buffer.from(await bindingBackup.arrayBuffer())).toString('utf8')),validSource=Object.values(wrongBinding.recovery.sourceArchives).find(source=>source.sha256!==source.parsedPayloadSha256);assert(validSource&&!wrongBinding.recovery.sourceArchiveReferences?.[validSource.sha256],'SOURCE_RAW_BINDING_CONTROL');
+ const badSource={...validSource,parsedPayloadSha256:'0'.repeat(64)};wrongBinding.recovery.sourceArchives[r.runtime.closedLoopHash.sha256Value(r.copy(badSource))]=badSource;delete wrongBinding.packageSha256;wrongBinding.packageSha256=r.runtime.closedLoopHash.sha256Value(r.copy(wrongBinding));
  const rejected=projectStoreRuntime({sourceOverrides});await assert.rejects(rejected.store.importPackage(new Blob([gzipSync(JSON.stringify(wrongBinding))])),error=>error.code==='SOURCE_ARCHIVE_INTEGRITY_FAILED','SOURCE_PAYLOAD_BINDING_ORACLE');assert.equal(rejected.rows.get('projects').size,0);assert.equal(rejected.rows.get('artifacts').size,0);
  cases.push('import-abort-keeps-prior','import-capacity-keeps-prior','rehashed-wrong-payload-binding-rejected');
  const beforeWrite=await r.store.readProject(a.job.JOB_ID),beforeWriteHistory=await r.store.historyList(a.job.JOB_ID);
@@ -86,7 +92,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   let source=fs.readFileSync('project-store.js','utf8');
   const replacements={
    'source-legacy-loss':["const artifacts=[];for(const original of legacySourceSpans.get(source)||[])await retainProjectSource(project,original,artifacts);","const artifacts=[];"],
-   'source-package-loss':["prepared.state.sourceArchives={...(prepared.state.sourceArchives||{}),[sourceKey]:importSource};", ''],
+   'source-package-loss':["prepared.state.sourceArchives={...(prepared.state.sourceArchives||{}),[sourceKey]:importSource};", 'if(prepared.state.sourceArchiveReferences)delete prepared.state.sourceArchiveReferences[sourceRow.sha256];'],
    'source-payload-binding':["await verifyOriginalSourceBindings({job:{JOB_ID:state.jobId},projectData:{migrationArchives:sources}},files,verifiedSources);",''],
    'source-cache-binding':["    const contract=JSON.stringify([source.sourceEncoding,source.parser.identity,source.parser.version])","    if(verifiedSources?.has(row.blob))continue;const contract=JSON.stringify([source.sourceEncoding,source.parser.identity,source.parser.version])"],
    'source-new-write-binding':["  await verifyOriginalSourceBindings(next,files);",''],

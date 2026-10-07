@@ -178,6 +178,58 @@ function attachmentSlotPlan(project,envelope,promptRecord){
   if(envelope.responseType==='DATA_PROPOSAL'&&issued.some(slot=>slot.required&&!seen.has(slot.attachmentSlotId)))error('MISSING_REQUIRED_ATTACHMENT_DECLARATION','A successful response must declare every required issued output slot. Return a corrected response, or a truthful BLOCKED/EXECUTION_FAILED response if the output could not be produced.');
   return slots;
 }
+// Extracted ZIP members remain untrusted transport. The existing prompt,
+// response envelope and issued slots establish their exact logical mapping;
+// canonical proposal admission still runs separately after bytes commit.
+async function validateInboundResponseArchive(project,{archive,members,promptRecord}={}){
+ const contract=schema.INBOUND_RESPONSE_ARCHIVE_CONTRACT,limits=contract.limits,error=(code,message)=>{throw Object.assign(new Error(message),{code});};
+ if(!archive||archive.mediaType!=='application/zip'||archive.parserVersion!==contract.parserVersion||!Number.isSafeInteger(archive.byteSize)||archive.byteSize<0||archive.byteSize>limits.maxArchiveBytes||!/^[a-f0-9]{64}$/.test(String(archive.sha256||'')))error('INBOUND_ARCHIVE_IDENTITY_INVALID','The original archive must have its observed byte size and SHA-256.');
+ if(!Array.isArray(members)||members.length<2||members.length>limits.maxEntries)error('INBOUND_ARCHIVE_MEMBER_COUNT','The archive must contain manifest.json, response.json and only the declared returned files.');
+ const paths=members.map(member=>member?.canonicalPath);let identities;
+ try{identities=hash.normalizeFilenameSet(paths);}catch(cause){error('INBOUND_ARCHIVE_PATH_INVALID',cause.message);}
+ if(paths.some((path,index)=>typeof path!=='string'||identities[index].canonicalPath!==path||new TextEncoder().encode(path).byteLength>limits.maxFilenameBytes||path.split('/').length>limits.maxPathDepth))error('INBOUND_ARCHIVE_PATH_INVALID','Archive members must retain their canonical logical paths.');
+ const byPath=new Map(members.map(member=>[member.canonicalPath,member]));let total=0;
+ for(const member of members){if(!(member.blob instanceof Blob)||!Number.isSafeInteger(member.byteSize)||member.byteSize!==member.blob.size||member.byteSize>limits.maxEntryBytes||!/^[a-f0-9]{64}$/.test(String(member.sha256||'')))error('INBOUND_ARCHIVE_MEMBER_IDENTITY_INVALID','An extracted member lacks verified exact byte metadata.');total+=member.byteSize;}
+ if(!Number.isSafeInteger(total)||total>limits.maxExpandedBytes)error('INBOUND_ARCHIVE_EXPANSION_LIMIT','Expanded archive bytes exceed the published limit.');
+ const manifestMember=byPath.get(contract.manifestFilename),responseMember=byPath.get(contract.responseFilename);
+ if(!manifestMember||!responseMember)error('INBOUND_ARCHIVE_REQUIRED_MEMBER','The archive requires manifest.json and response.json.');
+ if(manifestMember.byteSize>limits.maxManifestBytes||responseMember.byteSize>limits.maxResponseBytes)error('INBOUND_ARCHIVE_CONTROL_SIZE_LIMIT','The manifest or response exceeds its published byte limit.');
+ const decode=async member=>{try{return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await hash.readWithDeadline(member.blob.arrayBuffer(),'Reading inbound archive '+member.canonicalPath));}catch(cause){error('INBOUND_ARCHIVE_UTF8_INVALID',cause.message);}};
+ if(await hash.sha256Bytes(manifestMember.blob)!==manifestMember.sha256)error('INBOUND_ARCHIVE_MEMBER_BYTES_MISMATCH','Actual manifest bytes differ from their extracted identity.');
+ const manifest=strictParse(await decode(manifestMember),{limits:{...schema.DEFAULT_RESOURCE_LIMITS,maxRawResponseBytes:limits.maxManifestBytes}}),shape=schema.validateInboundResponseManifest(manifest);
+ if(!shape.valid)error('INBOUND_ARCHIVE_MANIFEST_INVALID',shape.issues.join(' | '));
+ const {packageManifestSha256,...preimage}=manifest,manifestSha256=hash.sha256Value(preimage);
+ if(packageManifestSha256!==manifestSha256)error('INBOUND_ARCHIVE_MANIFEST_HASH_MISMATCH','Recalculate packageManifestSha256 from the canonical manifest with only that field omitted.');
+ const prompt=promptRecordFor(project,promptRecord);
+ if(!prompt||prompt.invalidatedBy||prompt.jobId!==project?.job?.JOB_ID)error('INBOUND_ARCHIVE_PROMPT_UNAVAILABLE','Use the exact saved, noninvalidated instruction for this project.');
+ const issued=globalThis.closedLoopPromptEngine.promptFileManifest(prompt);
+ for(const key of ['contractProfileId','jobId','stage','operation','packageId','operationReservationId','challengeNonce']){const expected=key==='jobId'?prompt.jobId:issued[key];if(manifest[key]!==expected)error('INBOUND_ARCHIVE_TRANSPORT_MISMATCH','Inbound manifest '+key+' does not match the saved instruction.');}
+ if(hash.sha256Value(manifest.promptIdentity)!==hash.sha256Value(issued.promptIdentity)||hash.sha256Value(manifest.scope)!==hash.sha256Value(issued.scope))error('INBOUND_ARCHIVE_PROMPT_BINDING_MISMATCH','Echo the exact issued promptIdentity and public scope.');
+ const envelope=strictParse(await decode(responseMember),{limits:{...schema.DEFAULT_RESOURCE_LIMITS,maxRawResponseBytes:limits.maxResponseBytes}});
+ if(!object(envelope))error('INBOUND_ARCHIVE_RESPONSE_BINDING_MISMATCH','response.json must contain one response object.');
+ for(const key of ['contractProfileId','jobId','stage','operation','packageId','operationReservationId','challengeNonce'])if(envelope[key]!==manifest[key])error('INBOUND_ARCHIVE_RESPONSE_BINDING_MISMATCH','response.json '+key+' differs from its inbound manifest.');
+ if(!object(envelope)||!object(envelope.promptIdentity)||!object(envelope.scope)||envelope.schema!==schema.RESPONSE_SCHEMA||hash.sha256Value(envelope.promptIdentity)!==hash.sha256Value(manifest.promptIdentity)||hash.sha256Value(envelope.scope)!==hash.sha256Value(manifest.scope))error('INBOUND_ARCHIVE_RESPONSE_BINDING_MISMATCH','response.json must echo the same response schema, exact promptIdentity and scope.');
+ const slots=attachmentSlotPlan(project,envelope,prompt),responseSlot=issued.attachmentSlots.find(slot=>slot.role==='STRUCTURED_RESPONSE'),seenSlots=new Set(),seenPaths=new Set(),files=[];let attachmentBytes=0;
+ if(manifest.members.length!==members.length-1)error('INBOUND_ARCHIVE_MANIFEST_MEMBERS_MISMATCH','List every returned member exactly once; manifest.json itself is excluded.');
+ for(const member of manifest.members){
+  if(member.canonicalPath===contract.manifestFilename||seenPaths.has(member.canonicalPath)||seenSlots.has(member.attachmentSlotId))error('INBOUND_ARCHIVE_DUPLICATE_MEMBER','Each member path and issued slot may occur only once.');seenPaths.add(member.canonicalPath);seenSlots.add(member.attachmentSlotId);
+  const actual=byPath.get(member.canonicalPath);if(!actual)error('INBOUND_ARCHIVE_MISSING_MEMBER','A manifest member is absent: '+safeDiagnosticText(member.canonicalPath));
+  if(member.byteSize!==actual.byteSize||member.sha256!==actual.sha256||await hash.sha256Bytes(actual.blob)!==member.sha256)error('INBOUND_ARCHIVE_MEMBER_BYTES_MISMATCH','Actual member bytes differ from their inbound declaration: '+safeDiagnosticText(member.canonicalPath));
+  if(member.attachmentSlotId===responseSlot?.attachmentSlotId){if(member.canonicalPath!==contract.responseFilename||member.filename!==contract.responseFilename||member.role!==responseSlot.role||member.mediaType!=='application/json'||member.byteSize>responseSlot.maximumSize)error('INBOUND_ARCHIVE_RESPONSE_SLOT_MISMATCH','The structured response must occupy response.json and its exact issued JSON slot.');continue;}
+  const slot=slots.find(row=>row.attachmentSlotId===member.attachmentSlotId);if(!slot)error('INBOUND_ARCHIVE_UNKNOWN_SLOT','An archive member is not declared in response.json for a current issued returned slot.');
+  if(member.role!==slot.role||member.filename!==slot.filename||member.mediaType!==slot.mediaType||member.byteSize!==slot.byteSize||member.sha256!==String(slot.sha256).toLowerCase())error('INBOUND_ARCHIVE_ATTACHMENT_MISMATCH','Manifest and response attachment identity differ for '+safeDiagnosticText(member.filename)+'.');
+  try{hash.normalizeFilename(member.filename,{allowPath:true});}catch(cause){error('INBOUND_ARCHIVE_ATTACHMENT_FILENAME_INVALID',cause.message);}
+  if(!/^[A-Za-z0-9!#$&^_.+-]+\/[A-Za-z0-9!#$&^_.+-]+(?:\s*;[^\r\n]*)?$/.test(member.mediaType))error('INBOUND_ARCHIVE_MEDIA_TYPE_INVALID','An attachment media type must be a valid MIME claim.');
+  const type=member.mediaType.split(';')[0].trim().toLowerCase();
+  if(member.byteSize>slot.maximumSize||slot.expectedDigest&&slot.expectedDigest!==member.sha256||!slot.allowedMediaTypes.some(allowed=>allowed==='*/*'||allowed.toLowerCase()===type||allowed.endsWith('/*')&&type.startsWith(allowed.slice(0,-1).toLowerCase()))||slot.filenameRule.kind==='EXACT_PATH'&&member.filename!==slot.filenameRule.canonicalPath)error('INBOUND_ARCHIVE_SLOT_CONTRACT_MISMATCH','The member violates its issued media, filename, byte or digest constraint.');
+  attachmentBytes+=member.byteSize;files.push({attachmentSlotId:member.attachmentSlotId,blob:new Blob([actual.blob],{type:member.mediaType}),filename:member.filename,mediaType:member.mediaType,byteSize:member.byteSize,sha256:member.sha256});
+ }
+ if(!seenSlots.has(responseSlot?.attachmentSlotId)||files.length!==slots.length||slots.some(slot=>!seenSlots.has(slot.attachmentSlotId)))error('INBOUND_ARCHIVE_MISSING_SLOT','Every declared returned slot and the structured response slot require exactly one member.');
+ if(attachmentBytes>schema.RETURNED_FILE_LIMITS.maxTotalBytes||files.length>limits.maxAttachments)error('INBOUND_ARCHIVE_ATTACHMENT_LIMIT','Returned file count or bytes exceed the published operation limit.');
+ try{hash.normalizeFilenameSet(files.map(file=>file.filename));}catch(cause){error('INBOUND_ARCHIVE_ATTACHMENT_FILENAME_COLLISION',cause.message);}
+ return {response:{blob:new Blob([responseMember.blob],{type:'application/json'}),filename:contract.responseFilename,mediaType:'application/json'},files,manifestSha256,manifest};
+}
+
 function bindAttachmentSlots(project,{rawResponseId,files=[]}={}){
   const next=clone(project);workflow.ensureShape(next);const raw=findRaw(next,rawResponseId);
   if(!raw||!['PRESERVED','VALIDATION_FAILED'].includes(raw.status))throw new Error('Only an unaccepted preserved response may receive returned files.');
@@ -530,6 +582,10 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,rawResp
     for(const evidenceRef of safe(record?.evidenceRefs))if(!evidenceIndex.has(String(evidenceRef)))issues.push(issue('UNRESOLVED_EVIDENCE_REFERENCE',`${path}/evidenceRefs`,`Evidence reference ${evidenceRef} does not exist.`));
     const hasAgentData=object(record?.fields)&&Object.keys(record.fields).some(name=>definition?.fieldDefinitions?.[name]?.provenanceRequired);
     if(hasAgentData&&!safe(record.evidenceRefs).length)issues.push(issue('MISSING_PROVENANCE',`${path}/evidenceRefs`,'Agent-produced canonical record data requires at least one evidence reference.'));
+    if(collection==='verification'&&typeof record?.fields?.VERIFIER_CONTEXT_ID==='string'){
+      const independence=workflow.evaluateContextIndependence(project,{role:'VERIFICATION',iterationId:envelope.scope?.iterationId||envelope.scope?.confirmationIterationId,runId:record.relationships?.RUN_ID?.recordId||envelope.scope?.runId,verifierContextId:record.fields.VERIFIER_CONTEXT_ID});
+      if(independence.code===schema.VERIFICATION_CONTEXT_CONTRACT.mismatchCode)issues.push(issue(independence.code,`${path}/fields/VERIFIER_CONTEXT_ID`,independence.reasons.join(' ')+' Use the independent verifier context supplied for the target run in the current manifest.'));
+    }
     // Stage 06 defines tests before candidate/product bytes necessarily exist.
     // Artifact availability is execution readiness owned by testExecutionPlan()/workflow gates.
     // Explicit current artifactId bindings are still validated above; future CURRENT_PRODUCT/CURRENT_SCOPE bindings stay declarative until execution.
@@ -815,16 +871,58 @@ function createReceipt(project,{stage,promptRecord,rawRecord,validationRecord,pr
 // A response's declared historical identity is provenance, not authority to
 // choose which live request received its application-verified file. Preserve
 // that identity for validation while ending only the exact staged attempt.
+function stagedPromptBinding(project,descriptor){
+ const identity=descriptor?.promptIdentity,promptEngine=globalThis.closedLoopPromptEngine;
+ if(!identity)return {prompt:null,code:'RESPONSE_STAGE_UNBOUND_PROMPT'};
+ if(String(descriptor.jobId)!==String(project?.job?.JOB_ID))return {prompt:null,code:'RESPONSE_STAGE_FOREIGN_PROJECT'};
+ const expected=safe(project.projectData.generatedPrompts).find(record=>!record.invalidatedBy&&Number(record.stage)===Number(descriptor.stage)&&(record.instructionId||record.promptId)===identity.instructionId&&(record.bodySha256||record.sha256)===identity.bodySha256&&record.contractSha256===identity.contractSha256&&record.contextSignature===identity.contextSignature);
+ if(!expected||String(expected.jobId)!==String(project.job.JOB_ID))return {prompt:null,code:'RESPONSE_STAGE_PROMPT_IDENTITY_MISMATCH'};
+ const binding=promptEngine.promptTransportBinding(project,descriptor.stage,expected.operation,expected.instructionId||expected.promptId,expected.scope);
+ if(!binding||binding.operationReservationId!==expected.operationReservationId||!['packageId','operationReservationId','challengeNonce'].every(key=>descriptor[key]===binding[key]))return {prompt:null,code:'RESPONSE_STAGE_TRANSPORT_BINDING_STALE'};
+ try{workflow.assertOperationScope(project,Number(descriptor.stage),expected.operation,expected.scope);}catch{return {prompt:null,code:'RESPONSE_STAGE_SCOPE_STALE'};}
+ return {prompt:expected,code:'RESPONSE_STAGE_CURRENT_REQUEST'};
+}
+// Byte custody alone never establishes current request authority. Recovery has
+// no captured raw response to supply the explicit restored-candidate binding;
+// existing raw/proposal recovery continues through restoredCandidateBinding.
+function stagedResponseRecoveryStatus(project,descriptor){
+ const identity=descriptor?.promptIdentity;
+ // An actual preserved response is historical work, even after its request
+ // completes. Match its bytes and original request; a staging ID alone cannot
+ // turn a different prompt or nonce into that recorded response.
+ const recorded=identity&&safe(project?.projectData?.rawResponses).some(raw=>String(raw.jobId)===String(project?.job?.JOB_ID)&&raw.jobId===descriptor.jobId&&Number(raw.stage)===descriptor.stage&&raw.sha256===descriptor.sha256&&typeof raw.completeRawResponse==='string'&&raw.promptInstructionId===identity.instructionId&&raw.promptBodySha256===identity.bodySha256&&raw.promptContractSha256===identity.contractSha256&&raw.promptContextSignature===identity.contextSignature&&['packageId','operationReservationId','challengeNonce'].every(key=>raw.transport?.[key]===descriptor[key])&&new TextEncoder().encode(raw.completeRawResponse).byteLength===descriptor.byteSize&&hash.rawResponseSha256(raw.completeRawResponse)===descriptor.sha256);
+ if(recorded)return {current:null,code:'RESPONSE_STAGE_ALREADY_RECORDED'};
+ const result=stagedPromptBinding(project,descriptor);
+ if(!result.prompt)return {current:result.code==='RESPONSE_STAGE_UNBOUND_PROMPT'?null:false,code:result.code};
+ if((result.prompt.historyActivationId||null)!==(project.historyActivationId||null))return {current:false,code:'RESPONSE_STAGE_HISTORY_ACTIVATION_STALE'};
+ return {current:true,code:result.code};
+}
+// Cleanup requires positive proof of the original governing request and its
+// obsolescence. An identity mismatch alone is never permission to remove bytes.
+// Storage additionally owns the same-transaction absence-of-reference checks.
+function stagedResponseCleanupStatus(project,descriptor){
+ const no=code=>({eligible:false,code}),yes=code=>({eligible:true,code});
+ if(!schema.validateResponseStagingDescriptor(descriptor).valid)return no('RESPONSE_STAGE_CLEANUP_DESCRIPTOR_INVALID');
+ const identity=descriptor.promptIdentity;
+ if(!identity||descriptor.jobId!==project?.job?.JOB_ID)return no('RESPONSE_STAGE_CLEANUP_ORIGINAL_REQUEST_UNESTABLISHED');
+ const prompt=safe(project?.projectData?.generatedPrompts).find(row=>row.jobId===descriptor.jobId&&Number(row.stage)===descriptor.stage&&(row.instructionId||row.promptId)===identity.instructionId&&(row.bodySha256||row.sha256)===identity.bodySha256&&row.contractSha256===identity.contractSha256&&row.contextSignature===identity.contextSignature);
+ if(!prompt||!['packageId','operationReservationId','challengeNonce'].every(key=>typeof descriptor[key]==='string'&&descriptor[key]&&descriptor[key]===prompt[key]))return no('RESPONSE_STAGE_CLEANUP_ORIGINAL_REQUEST_UNESTABLISHED');
+ const reservation=safe(project.projectData.operationReservations).find(row=>workflow.recordId(row,'operationReservations')===descriptor.operationReservationId),value=key=>workflow.recordValue(reservation,key),originalRevision=value('RESERVATION_REVISION');
+ if(!reservation||value('JOB_ID')!==descriptor.jobId||Number(value('STAGE'))!==descriptor.stage||value('OPERATION')!==prompt.operation||value('PROMPT_ID')!==identity.instructionId||value('PACKAGE_ID')!==descriptor.packageId||value('CHALLENGE_NONCE')!==descriptor.challengeNonce||!Number.isSafeInteger(originalRevision)||originalRevision!==value('EXPECTED_REVISION')||originalRevision!==prompt.scope?.projectRevision||hash.sha256Value(value('SCOPE')||{})!==hash.sha256Value(prompt.scope||{}))return no('RESPONSE_STAGE_CLEANUP_ORIGINAL_REQUEST_UNESTABLISHED');
+ if(stagedResponseRecoveryStatus(project,descriptor).code==='RESPONSE_STAGE_ALREADY_RECORDED')return no('RESPONSE_STAGE_ALREADY_RECORDED');
+ const status=upper(value('STATUS')),transitions=workflow.RESERVATION_TRANSITIONS||{},known=new Set(Object.values(transitions).flat());
+ if(known.has(status)&&!Object.hasOwn(transitions,status))return yes('RESPONSE_STAGE_TERMINAL_REQUEST');
+ if(!Object.hasOwn(transitions,status))return no('RESPONSE_STAGE_CLEANUP_STATUS_UNKNOWN');
+ if(prompt.invalidatedBy||reservation.invalidatedBy)return yes('RESPONSE_STAGE_INVALIDATED_REQUEST');
+ if(Number.isSafeInteger(project.revision)&&project.revision>originalRevision)return yes('RESPONSE_STAGE_RESERVATION_REVISION_STALE');
+ try{workflow.assertOperationScope(project,descriptor.stage,prompt.operation,prompt.scope);}catch(error){if(error.code==='STALE_SCOPE')return yes('RESPONSE_STAGE_SCOPE_STALE');return no('RESPONSE_STAGE_CLEANUP_SCOPE_UNESTABLISHED');}
+ return no('RESPONSE_STAGE_CURRENT_REQUEST');
+}
 function stagedValidationPrompt(project,raw,prompt){
- const transport=raw?.transport,identity=transport?.promptIdentity,promptEngine=globalThis.closedLoopPromptEngine;
+ const transport=raw?.transport;
  if(!transport?.stagingId)return prompt;
- if(!raw||String(raw.jobId)!==String(project.job.JOB_ID)||Number(raw.projectRevisionAtCapture)!==Number(project.revision)||!['AUTHORITATIVE_RESPONSE_FILE','NONAUTHORITATIVE_TEXT_FALLBACK'].includes(transport?.authority)||!transport.stagingId||transport.stagingId!==raw.responseFileStagingId||transport.status!=='HASHED_AND_REVERIFIED'||transport.sha256!==raw.sha256||Number(transport.byteSize)!==Number(raw.responseByteSize)||!identity)return null;
- const expected=safe(project.projectData.generatedPrompts).find(record=>!record.invalidatedBy&&Number(record.stage)===Number(raw.stage)&&(record.instructionId||record.promptId)===identity.instructionId&&(record.bodySha256||record.sha256)===identity.bodySha256&&record.contractSha256===identity.contractSha256&&record.contextSignature===identity.contextSignature);
- if(!expected||String(expected.jobId)!==String(project.job.JOB_ID))return null;
- const binding=promptEngine.promptTransportBinding(project,raw.stage,expected.operation,expected.instructionId||expected.promptId,expected.scope);
- if(!binding||binding.operationReservationId!==expected.operationReservationId||!['packageId','operationReservationId','challengeNonce'].every(key=>transport[key]===binding[key]))return null;
- try{workflow.assertOperationScope(project,Number(raw.stage),expected.operation,expected.scope);}catch{return null;}
- return expected;
+ if(!raw||String(raw.jobId)!==String(project.job.JOB_ID)||Number(raw.projectRevisionAtCapture)!==Number(project.revision)||!['AUTHORITATIVE_RESPONSE_FILE','NONAUTHORITATIVE_TEXT_FALLBACK'].includes(transport?.authority)||!transport.stagingId||transport.stagingId!==raw.responseFileStagingId||transport.status!=='HASHED_AND_REVERIFIED'||transport.sha256!==raw.sha256||Number(transport.byteSize)!==Number(raw.responseByteSize)||!transport.promptIdentity)return null;
+ return stagedPromptBinding(project,{...transport,jobId:raw.jobId,stage:raw.stage}).prompt;
 }
 
 // Intake needs an isolated mutable project, not an encoded copy of its retained
@@ -834,7 +932,7 @@ function captureRaw(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[
   const next=typeof structuredClone==='function'?structuredClone(project):clone(project);workflow.ensureShape(next);const stageNumber=Number(stage),prompt=promptRecordFor(next,promptRecord);
   if(!Number.isInteger(stageNumber)||stageNumber<1||stageNumber>schema.STAGE_COUNT)throw new Error('A valid stage is required for raw capture.');if(!prompt)throw new Error('The controlling persisted prompt is required for raw capture.');
   const rawResponseId=workflow.allocateInfrastructureId(next,'RAW-RESPONSE','rawResponses'),outputId=workflow.allocateInfrastructureId(next,`STAGE-${String(stageNumber).padStart(2,'0')}-OUTPUT`,'generatedOutputs'),rawText=String(text??''),rawSha256=hash.rawResponseSha256(rawText),createdAt=now();
-  const transportRecord=transport&&typeof transport==='object'?clone(transport):{authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true};if(transportRecord?.sha256&&String(transportRecord.sha256)!==rawSha256)throw Object.assign(new Error('Decoded response text does not match the staged response-file SHA-256.'),{code:'RESPONSE_FILE_DECODE_HASH_MISMATCH'});const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId:prompt.scope?.contextId||contextId||'NOT APPLICABLE',runId:prompt.scope?.runId||'NOT APPLICABLE',iteration:prompt.scope?.iterationId||'NOT APPLICABLE',promptInstructionId:prompt.instructionId||prompt.promptId,promptBodySha256:prompt.bodySha256||prompt.sha256,promptContractSha256:prompt.contractSha256,promptContextSignature:prompt.contextSignature,promptScope:clone(prompt.scope||{}),createdAt,sha256:rawSha256,completeRawResponse:rawText,files:clone(files),transport:transportRecord,responseFileStagingId:transportRecord.stagingId||null,responseRawFilename:transportRecord.rawFilename||null,responseMediaType:transportRecord.mediaType||null,responseByteSize:Number.isFinite(Number(transportRecord.byteSize))?Number(transportRecord.byteSize):new TextEncoder().encode(rawText).byteLength,status:'PRESERVED',projectRevisionAtCapture:Number(next.revision||0)};
+  const transportRecord=transport&&typeof transport==='object'?clone(transport):{authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true};if(Object.hasOwn(transportRecord,'archive')){const observation=schema.validateInboundResponseArchiveObservation(transportRecord.archive);if(!observation.valid||transportRecord.archive.selectionArtifactId!==transportRecord.recoverySelectionArtifactId)throw Object.assign(new Error('Inbound archive observation must preserve the exact original selection identity and registered byte/manifest metadata.'),{code:'INBOUND_ARCHIVE_OBSERVATION_INVALID'});}if(transportRecord?.sha256&&String(transportRecord.sha256)!==rawSha256)throw Object.assign(new Error('Decoded response text does not match the staged response-file SHA-256.'),{code:'RESPONSE_FILE_DECODE_HASH_MISMATCH'});const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId:prompt.scope?.contextId||contextId||'NOT APPLICABLE',runId:prompt.scope?.runId||'NOT APPLICABLE',iteration:prompt.scope?.iterationId||'NOT APPLICABLE',promptInstructionId:prompt.instructionId||prompt.promptId,promptBodySha256:prompt.bodySha256||prompt.sha256,promptContractSha256:prompt.contractSha256,promptContextSignature:prompt.contextSignature,promptScope:clone(prompt.scope||{}),createdAt,sha256:rawSha256,completeRawResponse:rawText,files:clone(files),transport:transportRecord,responseFileStagingId:transportRecord.stagingId||null,responseRawFilename:transportRecord.rawFilename||null,responseMediaType:transportRecord.mediaType||null,responseByteSize:Number.isFinite(Number(transportRecord.byteSize))?Number(transportRecord.byteSize):new TextEncoder().encode(rawText).byteLength,status:'PRESERVED',projectRevisionAtCapture:Number(next.revision||0)};
   next.projectData.rawResponses.push(rawRecord);next.projectData.generatedOutputs.push({outputId,rawResponseId,stage:stageNumber,role:rawRecord.role,iteration:rawRecord.iteration,createdAt,sha256:rawSha256,output:rawText,status:'RAW_RESPONSE_PRESERVED'});workflow.addHistory(next,'RAW_RESPONSE_PRESERVED',{stage:stageNumber,rawResponseId,outputId,sha256:rawSha256,promptInstructionId:rawRecord.promptInstructionId});return {project:next,rawRecord,promptRecord:prompt};
 }
 
@@ -998,6 +1096,7 @@ function commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accept
 function prepareAcceptanceCandidate(project,proposalId,options={}){
  const proposal=findProposal(project,proposalId),impact=acceptanceImpact(project,proposalId);
  const result=commit(project,proposalId,{...options,replacementConfirmation:impact});
+ const pointerIssues=workflow.jobPointerIntegrityIssues(result.project,{prior:project});if(pointerIssues.length)throw Object.assign(new Error('The projected response has invalid application identities: '+pointerIssues.join(' | ')),{code:'PROJECT_INTEGRITY_FAILED',issues:pointerIssues});
  return {...result,acceptance:{proposalId,proposalSha256:hash.sha256Value(proposal),rawResponseId:proposal.rawResponseId,stage:Number(proposal.stage),impact:clone(impact)}};
 }
 function validateAcceptanceCandidate(project,candidate,acceptance){
@@ -1073,7 +1172,7 @@ function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
   const generated=createReplacementPrompt(next,target),generatedPromptIds=[generated.instructionId];workflow.addHistory(next,'HUMAN_INPUT_REQUESTS_ANSWERED',{answerCount:changed.length,inputVersion:version.version,requestIds:changed,generatedPromptIds});workflow.recalculate(next);return {project:next,version,answeredCount:changed.length,generatedPromptIds};
 }
 
-globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/6',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,HUMAN_AUTHORITY_CANDIDATE_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,operationProvidesReference,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,validationAwaitsReturnedFiles,planProposal,proposalPreconditions,captureRaw,attachmentSlotPlan,bindAttachmentSlots,prepareCaptured,prepare,commit,prepareAcceptanceCandidate,validateAcceptanceCandidate,restoredCandidateBinding,acceptanceImpact,assertAcceptanceConfirmation,prepareStageContinuation,recoverInvalidSemanticReviews,correctHumanAuthorityCandidates,reject,abandon,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
+globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/6',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,HUMAN_AUTHORITY_CANDIDATE_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,operationProvidesReference,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,validationAwaitsReturnedFiles,planProposal,proposalPreconditions,captureRaw,attachmentSlotPlan,validateInboundResponseArchive,bindAttachmentSlots,prepareCaptured,prepare,commit,prepareAcceptanceCandidate,validateAcceptanceCandidate,restoredCandidateBinding,stagedResponseRecoveryStatus,stagedResponseCleanupStatus,acceptanceImpact,assertAcceptanceConfirmation,prepareStageContinuation,recoverInvalidSemanticReviews,correctHumanAuthorityCandidates,reject,abandon,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
 })();
 ;(()=>{
 'use strict';

@@ -1,7 +1,7 @@
 import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import {bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
+import {syntheticMobileOperations,syntheticMobileTargetFacts} from './mobile-evidence-test-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -30,6 +30,7 @@ assert.match(appSource,/function measureMobileAcceptance\(\)/,'Acceptance measur
 assert.match(appSource,/mobileAcceptanceEvidenceId/,'The application must generate and bind an acceptance evidence ID.');
 assert.doesNotMatch(appSource,/viewport:actorEvidence\.viewport/,'Actor evidence must not override the pinned viewport.');
 const target=createMobileAcceptanceTarget({
+  ...syntheticMobileTargetFacts({performer:'STAGE30-IPHONE-OPERATOR',deviceModel:'iPhone 15'}),
   sourceCommit:'f'.repeat(40),deploymentManifestDigest:'a'.repeat(64),
   origin:MOBILE_ACCEPTANCE_ORIGIN,basePath:MOBILE_ACCEPTANCE_BASE_PATH,
   testProjectId:'STAGE30-MOBILE',procedureVersion:'actual-iphone-safari/1',
@@ -85,6 +86,7 @@ const verificationObservations=[{checkId:'terminal-exact-record-preimage-sha256'
 // The mobile validators are independent oracles: malformed target/evidence classes
 // must remain blocked by both the evidence validator and authenticated submission.
 const mobileEvidence={
+  ...target,
   mobileAcceptanceTargetId:target.mobileAcceptanceTargetId,challenge:target.challenge,
   sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,
   origin:target.origin,basePath:target.basePath,testProjectId:target.testProjectId,

@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
 import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {verifySpecifiedJobFieldRegistry,verifySpecifiedJobFieldMutants,verifySpecifiedCarrierFieldRegistry,verifySpecifiedCarrierFieldMutants,verifyConditionalDeferredManifestCarrier} from './test-specification-field-registry.mjs';
+import {verifySpecifiedJobFieldRegistry,verifySpecifiedJobFieldMutants,verifySpecifiedCarrierFieldRegistry,verifySpecifiedCarrierFieldMutants,verifyConditionalDeferredManifestCarrier,verifyRecoverySourceReferenceCarrier,verifyBackupImportStagingCarrier,verifyResponseStagingRecoveryCarriers,verifyJobPointerTargets,verifyMobileAcceptanceSessionCarriers,verifyMobileAcceptanceSessionMergeContract,verifyArtifactByteReferenceCarrier} from './test-specification-field-registry.mjs';
 
 function loadSchema(source=fs.readFileSync('workflow-schema.js','utf8')){
   const context={console,TextEncoder,TextDecoder,crypto:webcrypto,dispatchEvent(){},Event:function Event(type){this.type=type}};
@@ -184,6 +184,13 @@ const specificationJobFieldMutants=verifySpecifiedJobFieldMutants(loadSchema(sou
 const specificationCarrierFields=verifySpecifiedCarrierFieldRegistry(loadSchema(source));
 const specificationCarrierFieldMutants=verifySpecifiedCarrierFieldMutants(loadSchema(source));
 const conditionalDeferredManifestCarrier=verifyConditionalDeferredManifestCarrier(loadSchema(source));
+const recoverySourceReferenceCarrier=verifyRecoverySourceReferenceCarrier(loadSchema(source));
+const backupImportStagingCarrier=verifyBackupImportStagingCarrier(loadSchema(source));
+const responseStagingRecoveryCarriers=verifyResponseStagingRecoveryCarriers(loadSchema(source));
+const jobPointerTargets=verifyJobPointerTargets(loadSchema(source));
+const mobileAcceptanceSessionCarriers=verifyMobileAcceptanceSessionCarriers(loadSchema(source));
+const mobileAcceptanceSessionMerge=verifyMobileAcceptanceSessionMergeContract(loadSchema(source));
+const artifactByteReferenceCarrier=verifyArtifactByteReferenceCarrier(loadSchema(source));
 assert.throws(()=>verify(source.replace("30:['baselineId','productId','productVersion','deliveryCandidateSetId','releaseId','hashReviewId','evidenceChainVersion']","30:['baselineId','productId']")),/deepStrictEqual|Expected values to be strictly deep-equal/,'Mutation removing terminal scope dimensions must fail.');
 assert.throws(()=>verify(source.replace("addRequiredFamily('humanDecisions'","addRequiredFamily('humanDecisionBROKEN'")),/humanDecisions must be a canonical family/,'Mutation removing humanDecisions must fail.');
 assert.throws(()=>verify(source.replace("const normalizerId=key=>{if(!key)return NO_NORMALIZER_ID;","const normalizerId=key=>{if(!key)return 'closed-loop-normalizer/missing/1';")),/undefined normalizer/,'Undefined normalizer mutation must fail.');
@@ -239,4 +246,4 @@ for(const [field,omittedValue] of [['SOURCE_KIND','PROOF_OBLIGATION'],['VERIFICA
 assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source,'FIELD_REGISTRY_SOURCE_UNCHANGED_ORACLE');
 const restored=verify(source);
 assert.deepEqual(restored,result,'FIELD_REGISTRY_RESTORED_ORACLE');
-console.log(JSON.stringify({...result,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));
+console.log(JSON.stringify({...result,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,recoverySourceReferenceCarrier,backupImportStagingCarrier,responseStagingRecoveryCarriers,jobPointerTargets,mobileAcceptanceSessionCarriers,mobileAcceptanceSessionMerge,artifactByteReferenceCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));

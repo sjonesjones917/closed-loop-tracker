@@ -1,4 +1,4 @@
-import {syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
+import {syntheticMobileOperations,syntheticMobileTargetFacts} from './mobile-evidence-test-fixture.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS,REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS,isClosedLoopUtcInstant} from './verify-mobile-acceptance-evidence.mjs';
@@ -107,6 +107,7 @@ assert.equal(isClosedLoopUtcInstant('2026-09-03T00:00:00.000+00:00'),false,'Offs
 assert.equal(isClosedLoopUtcInstant('2026-02-30T00:00:00.000Z'),false,'Impossible calendar instants must be rejected.');
 
 const target={
+  ...syntheticMobileTargetFacts({performer:'authorized-operator'}),deviceModel:'UNKNOWN',iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1',
   mobileAcceptanceTargetId:'MOBILE-TARGET-001',
   physicalDeviceRequired:true,
   challenge:'0123456789abcdef0123456789abcdef',
@@ -126,6 +127,7 @@ const capabilityProbe={
   capabilities:Object.fromEntries(REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS.map(key=>[key,true]))
 };
 const evidence={
+  ...target,
   mobileAcceptanceEvidenceId:'MOBILE-EVIDENCE-001',
   mobileAcceptanceTargetId:target.mobileAcceptanceTargetId,
   challenge:target.challenge,

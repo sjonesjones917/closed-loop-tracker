@@ -37,7 +37,7 @@ for(const [name,pending,prepared,continuation,message,focus] of [
  ['different pending',{proposalId:'OTHER'},{validation:{valid:true},proposal:{proposalId:'P'}},null,'response already recorded; follow the current action','#next-required-action'],
  ['failed with correction',null,{validation:{valid:false}}, {created:true},'response rejected; corrected instruction saved','#validation-report'],
  ['failed without correction',null,{validation:{valid:false}},null,'validation failed','#validation-report']
-]){const events=[],runtime=createVerifierRuntime({pendingProposal:()=>pending,announce:m=>events.push(['announce',m]),render:()=>events.push(['render']),queueMicrotask:fn=>fn(),$:selector=>({focus:()=>events.push(['focus',selector])})});vm.runInContext(app.slice(start,end)+'globalThis.present=presentPreparedResponse;',runtime);runtime.present(prepared,continuation);assert.deepEqual(events,[['announce',message],['render'],['focus',focus]],'RESPONSE_PREPARATION_FEEDBACK_ORACLE: '+name);cases.push({name,message,focus,result:'PASS'});}
+]){const events=[],runtime=createVerifierRuntime({safe:value=>Array.isArray(value)?value:[],pendingProposal:()=>pending,announce:m=>events.push(['announce',m]),render:()=>events.push(['render']),queueMicrotask:fn=>fn(),$:selector=>({focus:()=>events.push(['focus',selector])})});vm.runInContext(app.slice(start,end)+'globalThis.present=presentPreparedResponse;',runtime);runtime.present(prepared,continuation);assert.deepEqual(events,[['announce',message],['render'],['focus',focus]],'RESPONSE_PREPARATION_FEEDBACK_ORACLE: '+name);cases.push({name,message,focus,result:'PASS'});}
 console.log(JSON.stringify({responsePreparationFeedback:'PASS',synthetic:true,actualBrowser:false,cases}));
 
 }
@@ -184,7 +184,7 @@ for(const change of ['project','stage','revision']){
 
 function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engineSource=engine,promptSource=prompt}={}){
   assert.match(appSource,/id="response-json-file"[^>]*type="file"[^>]*accept="[^"]*(?:application\/json|\.json)/,'The normal external-response path must expose the authoritative JSON file selector.');
-  assert.match(appSource,/const operationSelection=\{\},runSelection=\{\},responseFileSelection=\{\},fileSelectionDrafts=\{\};/,'The file-first UI must retain declared response-file selection state before wiring change and process handlers.');
+  assert.match(appSource,/const operationSelection=\{\},runSelection=\{\},responseFileSelection=\{\},fileSelectionDrafts=\{\},pendingBackupImports=\{\};/,'The file-first UI must retain declared response-file selection state before wiring change and process handlers.');
   assert.match(appSource,/id="process-response-file"/,'The normal path must stage and validate the selected response file.');
   assert.match(appSource,/stageResponseFile\(/,'The UI must stage selected response bytes before canonical ingestion.');
   assert.match(appSource,/async function savePromptRecord\(n(?:,retry=true)?\)[\s\S]*reserveAndBuildPromptRecord\(/,'Saving an external instruction must use the reservation-bound prompt transaction helper in the production path.');
@@ -260,7 +260,7 @@ verify();
  }
 }
 assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
-assert.throws(()=>verify({appSource:app.replace('const operationSelection={},runSelection={},responseFileSelection={},fileSelectionDrafts={};','const operationSelection={},runSelection={};')}),/declared response-file selection state/);
+assert.throws(()=>verify({appSource:app.replace('const operationSelection={},runSelection={},responseFileSelection={},fileSelectionDrafts={},pendingBackupImports={};','const operationSelection={},runSelection={};')}),/declared response-file selection state/);
 assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/read-back mismatch/);
 assert.throws(()=>verify({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/);
 assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/marked authoritative/);

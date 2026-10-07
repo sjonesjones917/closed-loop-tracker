@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import {verifyMobilePreparationUI} from './test-mobile-preparation-ui.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
+import {syntheticMobileTargetFacts,syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -7,7 +10,7 @@ import {createVerifierRuntime} from './verifier-runtime.mjs';
 // observation code; it does not assert physical-device or external-transfer proof.
 const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const cases=[];
-const target={challenge:'c'.repeat(64),mobileAcceptanceTargetId:'DISPOSABLE-MOBILE-TARGET',testProjectId:'DISPOSABLE-MOBILE-PROJECT',sourceCommit:'a'.repeat(40),deploymentManifestDigest:'b'.repeat(64),origin:'https://sjonesjones917.github.io',basePath:'/closed-loop-tracker/',procedureVersion:'actual-iphone-safari/1',viewport:{width:393,height:852,devicePixelRatio:3},safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1'};
+const target={...syntheticMobileTargetFacts({buildIdentity:'UNMANIFESTED_LOCAL_RUNTIME'}),challengeIssuedAt:'2026-10-06T00:00:00.000Z',challengeExpiresAt:'2026-10-07T00:00:00.000Z',challenge:'c'.repeat(64),mobileAcceptanceTargetId:'DISPOSABLE-MOBILE-TARGET',testProjectId:'DISPOSABLE-MOBILE-PROJECT',sourceCommit:'a'.repeat(40),deploymentManifestDigest:'b'.repeat(64),origin:'https://sjonesjones917.github.io',basePath:'/closed-loop-tracker/',procedureVersion:'actual-iphone-safari/1',viewport:{width:393,height:852,devicePixelRatio:3},safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1'};
 function harness(program=source){
  const metadata=new Map(),downloads=[],errors=[],nodes=new Map(),listeners=new Map();
  const get=id=>{if(!nodes.has(id))nodes.set(id,{id:id.slice(1),value:'',textContent:'',disabled:false,isConnected:true,hidden:false,attrs:{},getAttribute(k){return this.attrs[k]??null;},setAttribute(k,v){this.attrs[k]=v;},focus(){document.activeElement=this;},getClientRects(){return [{}];},getBoundingClientRect(){return {width:100,height:44};},classList:{add(){},remove(){},contains(){return false;}},querySelector(){return null;}});return nodes.get(id);};
@@ -19,9 +22,10 @@ function harness(program=source){
 })();`,c);
  c.testErrors=errors;
  const state={job:{JOB_ID:target.testProjectId},revision:7,projectSha256:'d'.repeat(64),projectData:{artifacts:[{fields:{AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}}],promptRecords:[{}],responseRecords:[{}],responseValidations:[{status:'ACCEPTED'}],proposals:[{status:'ACCEPTED'}],executionPackages:[{}],backupCheckpoints:[{fields:{CUSTODY_STATE:'RESTORED'}}]},stages:{28:{derivedData:{DELIVERY_ARTIFACT_IDENTITY_VERIFIED:true}}}};
- const session={jobId:target.testProjectId,target:structuredClone(target),buildIdentity:'UNMANIFESTED_LOCAL_RUNTIME',observations:[],exports:[],receipts:[],probe:{...target,targetId:target.mobileAcceptanceTargetId,probeId:'PROBE',result:'PASS'}};
+ const initialPreparation=syntheticMobileOperations(target).preparation;
+ const session={version:1,initialProjectPackage:structuredClone(initialPreparation.initialProjectPackage),preparation:initialPreparation,jobId:target.testProjectId,target:structuredClone(target),buildIdentity:'UNMANIFESTED_LOCAL_RUNTIME',observations:[],exports:[],receipts:[],probe:{...target,targetId:target.mobileAcceptanceTargetId,probeId:'PROBE',result:'PASS'}};
  get('#mobile-acceptance-target-json').value=JSON.stringify(target);
- const store={ready:Promise.resolve(),metaPut:async(k,v)=>metadata.set(k,structuredClone(v)),metaGet:async k=>metadata.has(k)?vm.runInContext('JSON.parse('+JSON.stringify(JSON.stringify(metadata.get(k)))+')',c):undefined};
+ const store={ready:Promise.resolve(),metaPut:async(k,v)=>{metadata.set(k,structuredClone(v));return v;},metaGet:async k=>metadata.has(k)?vm.runInContext('JSON.parse('+JSON.stringify(JSON.stringify(metadata.get(k)))+')',c):undefined};
  c.test.install(state,session,store);
  return {c,metadata,errors,nodes,downloads,listeners,store};
 }
@@ -52,7 +56,7 @@ const afterError=harness();for(const [k,v] of h.metadata)afterError.metadata.set
 cases.push({caseId:'MOBILE-RUNTIME-FAILURES-SURVIVE-RELOAD',result:'PASS'});
 // Before actual selections the capability probe is incomplete even when every
 // browser API exists. Build verification is tested independently below.
-const probe=harness();probe.c.test.session().probe=null;
+const probe=harness();probe.c.test.session().probe=null;delete probe.c.test.session().preparation;
 // Invoke the actual probe with a byte-valid mock deployment graph.
 const resourceBytes=new Blob(['manifested resource']);const digest=await probe.c.closedLoopHash.sha256Bytes(resourceBytes);
 const manifest={sourceCommit:target.sourceCommit,buildIdentity:'UNMANIFESTED_LOCAL_RUNTIME',runtimeResources:['app-core.js','test-runtime.js','test-worker.js','project-store.js'].map(path=>({path,byteSize:resourceBytes.size,digest}))};manifest.manifestDigest={digest:probe.c.closedLoopHash.sha256Value(vm.runInContext('JSON.parse('+JSON.stringify(JSON.stringify(manifest))+')',probe.c))};
@@ -75,4 +79,9 @@ cases.push({caseId:'MOBILE-CAPABILITIES-REQUIRE-EXECUTED-FILE-OPERATIONS',result
 probe.c.fetch=async url=>String(url).includes('closed-loop-deployment-manifest.json')?{ok:true,json:async()=>vm.runInContext('JSON.parse('+JSON.stringify(JSON.stringify(manifest))+')',probe.c)}:{ok:true,blob:async()=>new Blob(['corrupt'])};
 await assert.rejects(probe.c.test.verifyBuild(probe.c.test.session().target),/bytes differ/);
 cases.push({caseId:'MOBILE-RUNTIME-RESOURCE-BYTE-MISMATCH',result:'PASS'});
-console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM; synthetic DOM, selected Files, metadata store and resource responses',physicalDeviceAcceptance:false,cases},null,2));
+const mobilePreparationUI=await verifyMobilePreparationUI(),preparationFaults=[];
+for(const [fault,oracle]of [['retain-unsaved-preparation','MOBILE_PREPARATION_FAILED_SAVE_ORACLE'],['unpin-actor-at-export','MOBILE_FROZEN_ACTOR_EXPORT_ORACLE'],['omit-preparation-export','MOBILE_EXPORTED_PREPARATION_ORACLE'],['ignore-merged-session','MOBILE_STALE_EXPORT_RUNTIME_ORACLE'],['discard-measured-accessibility-failure','MOBILE_MEASURED_FAILURE_RETAINED_ORACLE']]){
+ const run=await runVerifier(process.execPath,['test-mobile-preparation-ui.mjs','--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});
+ assertDetectedFault(run,oracle,'Mobile preparation UI fault '+fault);preparationFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
+}
+console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM; synthetic DOM, selected Files, metadata store and resource responses',physicalDeviceAcceptance:false,cases,mobilePreparationUI,preparationFaults},null,2));

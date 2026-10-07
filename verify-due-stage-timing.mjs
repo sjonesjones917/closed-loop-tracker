@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {readStoreArchive} from './test-zip.mjs';
 import {responseFixture} from './operator-journey-fixtures.mjs';
 import {execFileSync} from 'node:child_process';
-import {projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,hydrateRetainedPromptContexts,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {storedArtifactBody,projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,hydrateRetainedPromptContexts,bindAcceptanceUi} from './test-project-store-runtime.mjs';
 import {appMarkup} from './test-app-markup.mjs';
 import {isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {authorizeFixtureHandoff,recordProposal,canonicalFixtureRecord,reviewProofFixture,deferredDefinitionResponseFixture,deferredCompatibilityFixtureValues,deferredDefinitionRestorationFixture,deferredDefinitionAdmissionFixture,deferredReviewedPrerequisiteFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
@@ -76,7 +76,7 @@ async function availability(r){
  await restoreArtifactFixture(isolated.store,captured);
  assert.equal(isolated.engine.evaluateTargetAvailabilityCondition(isolated.copy(p),isolated.copy(byteCondition),timing),'TRUE','FIXTURE_CUSTODY_ORACLE: exact captured bytes did not restore availability.');
  await assert.rejects(()=>restoreArtifactFixture(runtime().store,captured.map(row=>({...row,bytesBase64:Buffer.from('wrong bytes').toString('base64')}))),/captured byte identity/,'FIXTURE_CUSTODY_ORACLE: corrupted fixture bytes were accepted.');
- const stored=r.rows.get('artifacts').get(artifactId);stored.blob=new Blob(['corrupted']);await r.store.getArtifact(artifactId);assert.equal(e.evaluateTargetAvailabilityCondition(p,byteCondition,timing),'UNKNOWN','CUSTODY_ORACLE: corrupted bytes retained readiness.');
+ const stored=storedArtifactBody(r,artifactId);stored.blob=new Blob(['corrupted']);await r.store.getArtifact(artifactId);assert.equal(e.evaluateTargetAvailabilityCondition(p,byteCondition,timing),'UNKNOWN','CUSTODY_ORACLE: corrupted bytes retained readiness.');
  stored.blob=raw;await r.store.getArtifact(artifactId);assert.equal(e.evaluateTargetAvailabilityCondition(p,byteCondition,timing),'TRUE');await r.store.deleteArtifact(artifactId,p.job.JOB_ID);assert.equal(e.evaluateTargetAvailabilityCondition(p,byteCondition,timing),'UNKNOWN');
  const pointers=r.engine.clone(p);Object.assign(pointers.job,{CURRENT_ITERATION:'GHOST-ITERATION',CURRENT_CANDIDATE_ID:'GHOST-CANDIDATE',CURRENT_PRODUCT_ID:'GHOST-PRODUCT',CURRENT_PRODUCT_VERSION:'GHOST-VERSION',CURRENT_DELIVERY_CANDIDATE_SET_ID:'GHOST-SET',CURRENT_RELEASE_ID:'GHOST-RELEASE',CURRENT_HASH_REVIEW_ID:'GHOST-REVIEW',CURRENT_EVIDENCE_CHAIN_VERSION:'GHOST-CHAIN'});
  for(const phase of s.VERIFICATION_PHASE_VALUES)assert.notEqual(e.verificationPhaseTargetAvailability(pointers,phase,{PER_RUN_REQUIRED:true}),'TRUE','PHASE_TARGET_ORACLE: bare pointers authorized '+phase);
@@ -647,7 +647,7 @@ async function evidenceChainFrontierCases(r,{requiredBy=30}={}){
  await r.store.deleteArtifact(affirmativeId,p.job.JOB_ID);rejectNativeInput('missing-actual-input-bytes',p);await r.store.putArtifact({artifactId:affirmativeId,jobId:p.job.JOB_ID,blob:affirmativeBlob,filename:'result.txt',mediaType:'text/plain'});
  // Corrupt only the isolated storage double, retaining canonical metadata. The
  // production reader must withdraw custody after hashing the actual bytes.
- const artifactRows=r.rows.get('artifacts'),storedInput=r.copy(artifactRows.get(affirmativeId));artifactRows.set(affirmativeId,{...storedInput,blob:new Blob(['CORRUPTED'])});await r.store.getArtifact(affirmativeId);rejectNativeInput('wrong-actual-input-bytes',p);artifactRows.set(affirmativeId,storedInput);await r.store.getArtifact(affirmativeId);
+ const storedInput=storedArtifactBody(r,affirmativeId),originalInputBlob=storedInput.blob;storedInput.blob=new Blob(['CORRUPTED']);await r.store.getArtifact(affirmativeId);rejectNativeInput('wrong-actual-input-bytes',p);storedInput.blob=originalInputBlob;await r.store.getArtifact(affirmativeId);
  for(const [name,change] of [
   ['changed-current-test-binding',(project,row,currentTest)=>{currentTest.fields.EXECUTABLE_INPUT_BINDINGS.TARGET=r.copy({kind:'ARTIFACT',source:'EXPLICIT_ARTIFACT',artifactId:requirement.id});currentTest.EXECUTABLE_INPUT_BINDINGS=currentTest.fields.EXECUTABLE_INPUT_BINDINGS;e.refreshRecordHashes(currentTest,'tests');}],
   ['changed-current-test-spec',(project,row,currentTest)=>{currentTest.fields.EXECUTABLE_SPEC.steps.at(-1).value='CHANGED';currentTest.EXECUTABLE_SPEC=currentTest.fields.EXECUTABLE_SPEC;e.refreshRecordHashes(currentTest,'tests');}],

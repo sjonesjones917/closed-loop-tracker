@@ -736,7 +736,7 @@ async function main(){
     await store.persistPromptContextFiles(p.projectData.generatedPrompts[0],p);
     const saved=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true,selectProject:false}),actual=await store.readProject(p.job.JOB_ID),rows=await store.listArtifacts(p.job.JOB_ID);
     const shared=rows.length===1,preserved=JSON.stringify(actual.projectData.generatedPrompts)===JSON.stringify(p.projectData.generatedPrompts),identity=saved.projectSha256===actual.projectSha256;
-    const row=rows[0],historyBefore=JSON.stringify(await store.historyList(p.job.JOB_ID)),db=await store.openDatabase(),damage=db.transaction('artifacts','readwrite'),damaged=new Promise((resolve,reject)=>{damage.oncomplete=resolve;damage.onabort=damage.onerror=()=>reject(damage.error);});damage.objectStore('artifacts').put({...row,byteSize:row.byteSize+1});await damaged;
+    const historyBefore=JSON.stringify(await store.historyList(p.job.JOB_ID)),db=await store.openDatabase(),row=await new Promise((resolve,reject)=>{const read=db.transaction('artifacts','readonly').objectStore('artifacts').get(rows[0].artifactId);read.onsuccess=()=>resolve(read.result);read.onerror=()=>reject(read.error);}),damage=db.transaction('artifacts','readwrite'),damaged=new Promise((resolve,reject)=>{damage.oncomplete=resolve;damage.onabort=damage.onerror=()=>reject(damage.error);});damage.objectStore('artifacts').put({...row,byteSize:row.byteSize+1});await damaged;
     let rejected=false,unchanged=false;
     try{
       try{await store.writeProject(actual,{expectedProjectRevision:actual.revision,selectProject:false});}catch(error){rejected=error.code==='PROMPT_CONTEXT_INTEGRITY_FAILED';}
