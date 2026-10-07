@@ -103,9 +103,9 @@ export async function verifyStage01CaptureCacheCompatibility({appSource=fs.readF
 
 export async function verifyResponseIdentityUiBoundary({appSource=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),faultControls=true}={}){
  const f=await fixture('COMPLETE'),{r,p,prompt}=f,failures=bindAcceptanceUi(r,p,null),value=envelope(r,p,prompt,capture(prompt));value.promptIdentity.instructionId={toString:null,valueOf:null};const text=JSON.stringify(value),blob=new Blob([text],{type:'application/json'});Object.defineProperty(blob,'name',{value:'response.json'});
- Object.assign(r.runtime,{promptOptions:()=>r.copy({operation:'COMPLETE'}),currentFileSelection:()=>null,recordMobileValidation:async()=>{},proposalVersionCurrent:()=>true});
+ Object.assign(r.runtime,{schema:r.runtime.closedLoopWorkflowSchema,presentationActions:null,promptOptions:()=>r.copy({operation:'COMPLETE'}),currentFileSelection:()=>null,recordMobileValidation:async()=>{},proposalVersionCurrent:()=>true});
  const owner=name=>{const start=appSource.search(new RegExp('(?:async )?function '+name+'\\(')),a=appSource.indexOf('\nfunction ',start+1),b=appSource.indexOf('\nasync function ',start+1),end=Math.min(...[a,b].filter(index=>index>=0));assert.ok(start>=0&&end>start,'RESPONSE_IDENTITY_UI_OWNER: '+name);return appSource.slice(start,end);};
- vm.runInContext(['promptMatches','responseAttemptPrompt','responsePromptRecord','saveRequiredContinuation','prepareStageResponseFile','presentPreparedResponse'].map(owner).join('\n')+'\nglobalThis.prepareTypeResponse=prepareStageResponseFile;',r.runtime);
+ vm.runInContext(['presentationAction','currentNextAction','stageOperations','selectedOperation','promptMatches','responseAttemptPrompt','responsePromptRecord','saveRequiredContinuation','responseFilePayload','prepareStageResponseFile','presentPreparedResponse'].map(owner).join('\n')+'\nglobalThis.prepareTypeResponse=prepareStageResponseFile;',r.runtime);
  await r.runtime.prepareTypeResponse(blob);
  const artifacts=await r.store.listArtifacts(p.job.JOB_ID),preserved=artifacts.find(row=>row.sha256===digest(text));assert.ok(preserved,'RESPONSE_IDENTITY_UI_STAGED_BYTES');assert.equal(await preserved.blob.text(),text,'RESPONSE_IDENTITY_UI_STAGED_BYTES');
  assert.equal(failures.length,0,'RESPONSE_IDENTITY_UI_ADMISSION_ORACLE: '+failures.map(error=>error?.message||String(error)).join('; '));
@@ -166,8 +166,12 @@ export async function verifyRepresentationObservationTypes({sourceOverrides={}}=
  const isolatedEngineSource=(sourceOverrides['workflow-engine.js']||fs.readFileSync('workflow-engine.js','utf8'))+priorStageProjection;
  const r=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':isolatedEngineSource}}),schema=r.runtime.closedLoopWorkflowSchema,f=vm.runInContext('('+reservationScopeFixture.toString()+')',r.runtime)({core:r.core,schema,engine:r.engine},schema.STAGE_OPERATION_REGISTRY['25:COMPLETE']);
 let p=f.project;
-for(const [key,value]of Object.entries(f.scope)){const name='CURRENT_'+key.replace(/([a-z])([A-Z])/g,'$1_$2').toUpperCase();if(Object.hasOwn(p.job,name))p.job[name]=value;}
+// The scope-only fixture includes unrelated placeholder pointers. This
+// persisted projection claims only the four allocated Stage25 input identities.
+for(const name of Object.keys(schema.JOB_POINTER_TARGETS))p.job[name]=null;
+Object.assign(p.job,{CURRENT_BASELINE_ID:f.scope.baselineId,CURRENT_PRODUCT_ID:f.scope.productId,CURRENT_PRODUCT_VERSION:f.scope.productVersion,CURRENT_DELIVERY_CANDIDATE_SET_ID:f.scope.deliveryCandidateSetId});
 const product=p.projectData.products[0];Object.assign(product.fields,{BASELINE_ID:f.scope.baselineId,PRODUCT_VERSION:f.scope.productVersion});r.engine.refreshRecordHashes(product,'products');
+assert.equal(r.engine.jobPointerIntegrityIssues(p).length,0,'REPRESENTATION_FIXTURE_POINTER_INTEGRITY_ORACLE');
 const artifactId=r.engine.allocateId(p,'artifacts'),blob=new Blob(['literal final bytes'],{type:'text/plain'}),stored=await r.store.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:'result.txt',mediaType:'text/plain'});
 r.engine.registerArtifactBytes(p,{stage:21,artifactId,filename:'result.txt',mediaType:'text/plain',byteSize:stored.byteSize,sha256:stored.sha256,lineage:{productId:f.scope.productId},role:'FINISHED_PRODUCT'});
 p.stages[24].status='COMPLETE';p.stages[24].gate=r.copy({complete:true,blocked:false,reasons:[]});

@@ -168,18 +168,26 @@ await import('./verify-handoff-authorization-ui.mjs');
 }
 
 // Changing selection while raw bytes are being staged must never make the
-// handler read/capture them through the newly selected project or stage.
-for(const change of ['project','stage','revision']){
+// handler read/capture them through a different project, stage, operation or run.
+// The unchanged control reaches an explicit capture sentinel; it does not claim
+// proposal admission or storage correctness from this coordinator fixture.
+const responseOwnerCases=[];
+for(const change of ['project','stage','revision','operation','run','unchanged']){
   let release,entered;const held=new Promise(resolve=>release=resolve),started=new Promise(resolve=>entered=resolve),reads=[],captures=[],failures=[];
-  const source={job:{JOB_ID:'RESPONSE-OWNER'},revision:4,activeStage:1},other={job:{JOB_ID:'RESPONSE-OTHER'},revision:4,activeStage:2};
-  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,current:source,responseActionFailure:null,Blob,TextDecoder,reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),responseAttemptPrompt:()=>({transportBindingRequired:true,instructionId:'PROMPT-OWNER',bodySha256:'hash',contractSha256:'contract',contextSignature:'scope'}),projectStore:{stageResponseFile:async options=>{entered();await held;return {stagingId:'OWNER-STAGED',jobId:options.jobId};},readStagedResponseFile:async options=>{reads.push(options);return {bytes:new Uint8Array([123,125]),sha256:'digest'};}},closedLoopHash:{sha256Text:()=> 'digest'},responsePromptRecord:()=>({scope:{}}),pendingProposal:()=>null,ingestion:{captureRaw:()=>{captures.push(true);throw new Error('CAPTURE_REACHED');}}});
-  vm.runInContext(app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('))+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
-  const pending=runtime.selectResponse(new Blob(['{}'],{type:'application/json'}));await started;
-  if(change==='project')runtime.current=other;else if(change==='stage')source.activeStage=2;else source.revision++;
+  const stage=change==='run'?11:1,operation=stage===11?'EXECUTE_RUN':'COMPLETE',operationSelection={[stage]:operation},runSelection=stage===11?{[stage]:'RUN-OWNER'}:{};
+  const source={job:{JOB_ID:'RESPONSE-OWNER'},revision:4,activeStage:stage},other={job:{JOB_ID:'RESPONSE-OTHER'},revision:4,activeStage:2};
+  const text='{}',digest=createHash('sha256').update(text).digest('hex');
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,current:source,responseActionFailure:null,Blob,TextDecoder,runSelection,selectedOperation:n=>operationSelection[n],reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),responseAttemptPrompt:()=>({transportBindingRequired:true,instructionId:'PROMPT-OWNER',bodySha256:'hash',contractSha256:'contract',contextSignature:'scope'}),projectStore:{stageResponseFile:async options=>{assert.equal(options.jobId,'RESPONSE-OWNER');assert.equal(options.stage,stage);entered();await held;return {stagingId:'OWNER-STAGED',jobId:options.jobId};},readStagedResponseFile:async options=>{reads.push(options);return {bytes:new TextEncoder().encode(text),sha256:digest};}},responsePromptRecord:()=>({scope:{}}),pendingProposal:()=>null,ingestion:{captureRaw:(project,options)=>{assert.equal(project,source);assert.equal(options.text,text);captures.push(true);throw new Error('CAPTURE_REACHED');}}});
+  vm.runInContext(app.slice(app.indexOf('async function responseFilePayload('),app.indexOf('async function prepareStageResponseFallback('))+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
+  const pending=runtime.selectResponse(new Blob([text],{type:'application/json'}));
+  await Promise.race([started,pending.then(()=>{throw new Error('RESPONSE_OWNER_STAGING_BOUNDARY_NOT_REACHED: '+failures.join(' | '));})]);
+  if(change==='project')runtime.current=other;else if(change==='stage')source.activeStage=stage===1?2:12;else if(change==='revision')source.revision++;else if(change==='operation')operationSelection[stage]='SEMANTIC_CHALLENGE';else if(change==='run')runSelection[stage]='RUN-CHANGED';
   release();await pending;
-  assert(captures.length===0,`Response intake captured raw bytes after a ${change} change.`);
+  assert.equal(failures.length,1,'Interrupted response intake must report the preserved staged file.');
   assert(reads.every(row=>row.jobId==='RESPONSE-OWNER'),'Response intake read staged bytes under another project.');
-  assert(failures.length===1,'Interrupted response intake must report the preserved staged file.');
+  if(change==='unchanged'){assert.equal(captures.length,1,'RESPONSE_OWNER_CONFORMING_CONTROL_ORACLE');assert.equal(reads.length,1);assert.equal(failures[0],'CAPTURE_REACHED');}
+  else{assert.equal(captures.length,0,`Response intake captured raw bytes after a ${change} change.`);assert.equal(reads.length,0,'Changed response ownership must stop before reading staged bytes.');assert.match(failures[0],/Project, stage, operation, run, or revision changed/,'RESPONSE_OWNER_PRECISE_FAILURE_ORACLE');}
+  responseOwnerCases.push({change,stage,staged:true,reads:reads.length,captures:captures.length,expectedFailure:change==='unchanged'?'CAPTURE_REACHED':'OWNERSHIP_CHANGED'});
 }
 
 function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engineSource=engine,promptSource=prompt}={}){
@@ -270,7 +278,7 @@ assert.throws(()=>verify({promptSource:prompt.replace('workflow.reserveOperation
 assert.throws(()=>verify({appSource:app.replace('operationReservationId:expectedPrompt.operationReservationId,challengeNonce:expectedPrompt.challengeNonce','operationReservationId:expectedPrompt.operationReservationId')}),/challenge-nonce identity/);
 assert.throws(()=>verify({appSource:app.replaceAll('Export instruction file','Copy instruction text')}),/instruction-file export/);
 
-console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,reservationTransportIdentityComplete:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:10},null,2));
+console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,reservationTransportIdentityComplete:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:10,responseOwnerCases},null,2));
 
 // A saved attempt remains the response's authority after staging advanced the UI
 // revision. Exercise the production handler rather than a fresh-prompt-only path.
@@ -282,9 +290,9 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   // Use the verifier's production hash owner: lane identity includes canonical
   // values as well as raw text. The independent Node digest remains the oracle.
   const dialogs=[],reports=[];let staged=0,captured=0,downloaded=0,renders=0,inlineReplacements=0;const removedStages=[];
-  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,operatorActionInFlight:null,responseActionFailure:null,closedLoopPromptEngine:{version:saved.promptEngineVersion},current,Blob,Uint8Array,TextDecoder,queueMicrotask,safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>renders++,detailViews:new Map(),wireDetails:()=>{},document:{createElement:()=>({content:{firstElementChild:{}}})},esc:String,details:()=>'', $:selector=>selector==='#validation-report'?{focus(){},querySelectorAll:()=>[],replaceWith:()=>inlineReplacements++}:{focus(){}},alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,projectStore:{removeStagedResponseFile:async options=>removedStages.push(options),stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,operatorActionInFlight:null,responseActionFailure:null,closedLoopPromptEngine:{version:saved.promptEngineVersion},current,Blob,Uint8Array,TextDecoder,queueMicrotask,runSelection:{},selectedOperation:()=> 'COMPLETE',safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>renders++,detailViews:new Map(),wireDetails:()=>{},document:{createElement:()=>({content:{firstElementChild:{}}})},esc:String,details:()=>'', $:selector=>selector==='#validation-report'?{focus(){},querySelectorAll:()=>[],replaceWith:()=>inlineReplacements++}:{focus(){}},alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,projectStore:{removeStagedResponseFile:async options=>removedStages.push(options),stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
   const helpers=app.slice(app.indexOf('function promptMatches'),app.indexOf('function operationMarkup'));
-  const handler=app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('));
+  const handler=app.slice(app.indexOf('async function responseFilePayload('),app.indexOf('async function prepareStageResponseFallback('));
   const failurePolicy=app.slice(app.indexOf('const UNCONFIRMED_ACTION_OUTCOME_MESSAGE='),app.indexOf('function reportActionFailure('));
   vm.runInContext(failurePolicy+'\n'+helpers+'\n'+app.slice(app.indexOf('function reportResponseFailure'),app.indexOf('function proposalMarkup'))+'\n'+handler+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
   await runtime.selectResponse(new Blob([text],{type:'application/json'}));

@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {projectStoreRuntime,bindAcceptanceUi,captureArtifactFixture,restoreArtifactFixture} from './test-project-store-runtime.mjs';
 import {readStoreArchive} from './test-zip.mjs';
+import {canonicalFixtureRecord} from './test-fixtures.mjs';
 
 // Controlling prompt/identity contract and explicit current task invariant: references must have been supplied in the
 // permitted operation context. Current scope and verified bytes alone do not
@@ -28,7 +29,14 @@ async function seed(r,{source=false,artifactStage=null,retainedArtifact=false,ob
  let sourceId=null,artifactId=null;
   const ui=fs.readFileSync('app-core.js','utf8'),a=ui.indexOf('function logicalFilePath('),b=ui.indexOf('async function registerStageFiles(',a);
   Object.assign(r.runtime,{current:null,engine:r.engine,core:r.core,projectStore:r.store});vm.runInContext(ui.slice(a,b),r.runtime);
- if(source){p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-PERMISSION-CURRENT';sourceId=r.engine.allocateId(p,'sources');const fields={SOURCE_ID:sourceId,...sourceFields},row={id:sourceId,stage:2,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION},fields,...fields};const own=r.copy(row);r.engine.refreshRecordHashes(own,'sources');p.projectData.sources.push(own);}
+ if(source){
+  // This synthetic prerequisite is a current source, not completed Stage 02.
+  // Let the existing owners allocate its identity and register its version.
+  const row=canonicalFixtureRecord({engine:r.engine,schema:r.runtime.closedLoopWorkflowSchema},p,'sources',sourceFields,{stage:2});
+  sourceId=r.engine.recordId(row,'sources');const version=r.engine.registerStageVersion(p,2,'SYNTHETIC_SOURCE_PERMISSION_PREREQUISITE');
+  assert.equal(p.job.CURRENT_SOURCE_SET_VERSION,version.version,'CONTEXT_REFERENCE_SOURCE_VERSION_ORACLE');
+  assert.equal(row.scope.sourceSetVersion,version.version,'CONTEXT_REFERENCE_SOURCE_MEMBERSHIP_ORACLE');
+ }
  if(artifactStage){
   // Extract the actual application's application-owned allocation + byte intake.
   const file=new Blob(['Preserved negative fixture and authorized invention description.'],{type:'text/plain'});Object.defineProperty(file,'name',{value:'description.txt'});

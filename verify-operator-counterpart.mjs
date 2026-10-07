@@ -698,7 +698,7 @@ for(let stage=diagnosticRecovered?Number(diagnosticRecovered.entryStage):1;stage
     const failures=bindAcceptanceUi(r,saved,'NONE'),ui=fs.readFileSync('app-core.js','utf8');
     const extract=(start,end)=>{const a=ui.indexOf(start),b=ui.indexOf(end,a+start.length);assert.ok(a>=0&&b>a,'Actual response control owner must exist.');return ui.slice(a,b);};
     Object.assign(runtime,{recordValue:r.engine.recordValue,schema:runtime.closedLoopWorkflowSchema,recordMobileValidation:async()=>{},saveRequiredContinuation:async()=>null,selectStageContinuation:()=>{}});
-    vm.runInContext(extract('function canonicalCurrentStage(','function displayedStageAction(')+extract('function stageOperations(','// A saved response may be inspected independently.')+extract('async function savePromptRecord(','function promptTransportFilename(')+extract('async function prepareStageResponseFile(','async function prepareStageResponseFallback('),runtime);
+    vm.runInContext(extract('function canonicalCurrentStage(','function displayedStageAction(')+extract('function stageOperations(','// A saved response may be inspected independently.')+extract('async function savePromptRecord(','function promptTransportFilename(')+extract('async function responseFilePayload(','async function prepareStageResponseFallback('),runtime);
     await runtime.savePromptRecord(saved.activeStage);
     const prompt=runtime.currentPromptRecord(saved.activeStage),request=responseFixture({schema:runtime.schema,engine:r.engine,prompt,manifest:r.prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});
     runtime.responseAttemptPrompt=()=>prompt;runtime.responsePromptRecord=()=>prompt;runtime.proposalVersionCurrent=()=>false;

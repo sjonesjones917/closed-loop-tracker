@@ -46,7 +46,12 @@ function assertPublication(prompt){
 // This fixture proves independent review authority, not a complete journey.
 const fixture=reservationScopeFixture({core,schema,engine:{...engine,refreshRecordHashes:(row,family)=>Object.assign(row,engine.refreshRecordHashes(r.copy(row),family))}},schema.STAGE_OPERATION_REGISTRY['26:COMPLETE']);
 let p=r.copy(fixture.project);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Review the two current audit bodies.';
+// Only the allocated scope inputs are established by this isolated fixture;
+// unrelated scope-helper placeholders are not persisted canonical identities.
+for(const field of Object.keys(schema.JOB_POINTER_TARGETS))p.job[field]=null;
 for(const[key,field]of Object.entries({baselineId:'CURRENT_BASELINE_ID',productId:'CURRENT_PRODUCT_ID',productVersion:'CURRENT_PRODUCT_VERSION',deliveryCandidateSetId:'CURRENT_DELIVERY_CANDIDATE_SET_ID'}))if(fixture.scope[key])p.job[field]=fixture.scope[key];
+const scopedProduct=p.projectData.products[0];Object.assign(scopedProduct.fields,{BASELINE_ID:fixture.scope.baselineId,PRODUCT_VERSION:fixture.scope.productVersion});engine.refreshRecordHashes(scopedProduct,'products');
+assert.equal(engine.jobPointerIntegrityIssues(p).length,0,'S26_FIXTURE_POINTER_INTEGRITY_ORACLE');
 const authorBase=engine.clone(p);
 async function accept(operation,{reviewResult=null,fileFirst=false}={}){
  if(fileFirst){for(const record of p.projectData.generatedPrompts)if(!record.invalidatedBy)await r.store.persistPromptContextFiles(record,p);p=await r.store.writeProject(p,{expectedProjectRevision:0,createOnly:true});}

@@ -33,7 +33,7 @@
     },
     {
       "path": "verification/current-source-delta-review-20261007.json",
-      "sha256": "5c7894d699e3c290f3b81ef5f9d9a42569241774066e4c5b03ef8945ed888a89"
+      "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
     },
     {
       "path": "verification/normative-context-applicability-20261005.json",
@@ -131,6 +131,6 @@
   "reviewCompletedAt": "2026-10-07T01:21:18.248Z",
   "currentDependencyDeltaReview": {
     "path": "verification/current-source-delta-review-20261007.json",
-    "sha256": "5c7894d699e3c290f3b81ef5f9d9a42569241774066e4c5b03ef8945ed888a89"
+    "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
   }
 }

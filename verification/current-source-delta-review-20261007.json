@@ -3972,7 +3972,7 @@
           },
           {
             "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
-            "controllingText": "Stage 30 \u2014 PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY",
+            "controllingText": "Stage 30 — PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY",
             "sourceLocation": {
               "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
               "startLine": 3654,
@@ -8161,7 +8161,7 @@
                 "validateFinalNormativeProof compares report identity with private validated identity; evaluateFinalAcceptance makes mismatch a blocker.",
                 ".github/workflows/pages.yml publish-status constructs report with applyExecutedEvidence then writes that same report as closed-loop-acceptance.json."
               ],
-              "independentOracle": "verify-final-acceptance.mjs lines59\u201375 explicitly constructs expected manifest path and sha(exact read bytes), deletes whole identity and each key, substitutes path/digest, tests all21 exact controls with conforming recovery. Catalog demands exact named population, not a favorable summary alone."
+              "independentOracle": "verify-final-acceptance.mjs lines59–75 explicitly constructs expected manifest path and sha(exact read bytes), deletes whole identity and each key, substitutes path/digest, tests all21 exact controls with conforming recovery. Catalog demands exact named population, not a favorable summary alone."
             },
             "selectedCatalogEntriesUnchangedFromLocalHead": true,
             "currentExecutionRequired": true,
@@ -10640,6 +10640,227 @@
         ],
         "execution": "Normative owner running focused existing13 legacy groups and real fingerprint counterexample/control; reviewer did not duplicate.",
         "qualification": "Retained legacy specimen identity does not alone prove every future regenerated support project; actual built startup/operator evidence stays separate."
+      }
+    },
+    {
+      "path": "/workspace/scratch/pr-review/final-backup-sequence-harness-review.json",
+      "sha256": "f97bcaaf43eedec88a1aab9ba47a030127ba7e3ba9b760ccc2b6b2e79fb3ec10",
+      "record": {
+        "schema": "closed-loop-independent-harness-delta-review/1",
+        "reviewedAtUtc": "2026-10-07T01:31:28.875758+00:00",
+        "reviewer": "/root/pr_inventory_review",
+        "baseCommit": "0bf55f4c5c3d9aec96d3be30f8c0a094683a539d",
+        "status": "APPROVED_HARNESS_DEPENDENCY_CORRECTION_OWNING_LIFECYCLE_PASS",
+        "sourceSha256": {
+          "verify-operator-action-lifecycle.mjs": "145bcbf002337f8dcc9240fbffed2e0ce5a8f6e6a538c3aeeda15b07e556b086",
+          "verify-complete-operator-journey.mjs": "40173709f06b0a985ff8528c75d7aaeef6e24f25686adb17477d73dbceb1af48",
+          "test-retained-history-browser.mjs": "df87262003b9be6eaef9bdbc0278c9c51188d64b78d6c9dbedf9762b55124bc3"
+        },
+        "failure": "Actual extracted final-backup function had acquired two independent canonical-family helper dependencies; the sequence-only Function harness omitted those parameters and failed with ReferenceError before its intended assertions.",
+        "reviewScope": "Complete exact current diff in final-backup sequence block, actual extracted caller, and actual family helper API/content assertions. No production source changed.",
+        "assertionsRetained": [
+          "Actual selected exported bytes",
+          "Exactly one export and one fresh post-import state read",
+          "Naturally accumulated History observed before export",
+          "Exact History export/restore helper inputs and reports",
+          "All30 restored workflow gates and accepted-change count",
+          "Revision/history activation after restore",
+          "All existing six interrupted-operation phase labels"
+        ],
+        "addedScope": [
+          "Inject explicit family observation/verification spies with separate small sentinel results",
+          "Bind pre-export current object, downloaded project, and fresh restored object by exact reference identity",
+          "Reuse exactly the same pre-export observation for both boundaries",
+          "Assert complete11-call dependency order and exact canonicalFamilies report forwarding",
+          "Report canonicalFamilyContentProof:false; actual independent family hashing remains in its real owner and browser journey"
+        ],
+        "testChangeJustification": "Correct the harness to honor the already strengthened function signature/report. It neither bypasses the actual family helper in production nor replaces its content tests with synthetic PASS. Existing sequence assertions remain and new input/order assertions are additive.",
+        "priorFamilyReview": "/workspace/scratch/pr-review/returned-slot-and-backup-family-review.json",
+        "preFixOwnerEvidence": "/workspace/scratch/stage-review/final-backup-sequence-fix/",
+        "metadataImpact": "The single owning verifier source hash must be rebound in affected reviewed input metadata. Existing narrow clause proof definitions remain unchanged.",
+        "execution": "Stage agent owns one scheduled lifecycle run; no duplicate test run by reviewer.",
+        "owningExecutionObservation": {
+          "record": "/workspace/scratch/stage-review/final-backup-sequence-fix/run.json",
+          "ownerRecord": "/workspace/scratch/stage-review/final-backup-sequence-fix/record.json",
+          "exitCode": 0,
+          "environment": "Node22.23.3",
+          "startedAtUtc": "2026-10-07T01:31:15.056547+00:00",
+          "completedAtUtc": "2026-10-07T01:31:46.265750+00:00",
+          "durationSeconds": 31.209048708999035,
+          "sourceSha256": "145bcbf002337f8dcc9240fbffed2e0ce5a8f6e6a538c3aeeda15b07e556b086",
+          "qualification": "Observed owner report; no duplicate independent execution. Root focused ingestion integration remains separate."
+        }
+      }
+    },
+    {
+      "path": "/workspace/scratch/pr-review/response-intake-harness-dependencies-review.json",
+      "sha256": "15f67bae360f2fea3053d8b05848bae45b6ba6f562ac96ae1b25f2393efce2a1",
+      "record": {
+        "schema": "closed-loop-independent-harness-delta-review/1",
+        "reviewedAtUtc": "2026-10-07T01:36:01.643494+00:00",
+        "reviewer": "/root/pr_inventory_review",
+        "status": "APPROVED_BOUNDED_DEPENDENCY_REPAIR_EXECUTION_SCOPED",
+        "sourceSha256": {
+          "test-response-type-boundaries.mjs": "795224a6d8b5a6c13a81dc69072ef511cac15c07e8d311c142bfed0ed8d3db8f",
+          "verify-operator-counterpart.mjs": "22a1a9d15c54002eb9754b9a162e7455aeb0f5fec0cd670c6091d1c6d2152138",
+          "test-project-store-runtime.mjs": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed",
+          "app-core.js": "74036d41bcf1178b7030b6b8ef28087e5becd6d61034c11f896443238d23b6a6"
+        },
+        "scope": "Two exact extracted prepareStageResponseFile harness deltas, surrounding existing setup/assertions, real app helper chain and shared acceptance adapter.",
+        "changes": [
+          "Typed identity fixture loads actual presentationAction/currentNextAction/stageOperations/selectedOperation/responseFilePayload and supplies real schema plus existing null presentation cache. It does not stub out ownership or parsing checks.",
+          "Stage22-to23 counterpart extraction starts at responseFilePayload and still includes prepareStageResponseFile; earlier range already includes the actual operation-selection helpers. Shared adapter supplies operationSelection/runSelection and real persistence owners."
+        ],
+        "assertionsPreserved": [
+          "Exact staged Blob and raw response bytes",
+          "WRONG_VALUE_TYPE at /promptIdentity/instructionId with no accepted change",
+          "Current corrective prompt and feedback",
+          "Existing intentional coercion fault detects its exact admission oracle",
+          "Counterpart initial response preserves completed prerequisites without replacement; validation remains separate from explicit acceptance"
+        ],
+        "limits": [
+          "Typed fixture exercises the actual non-ZIP response path with production storage adapter; archive parsing has separate owners.",
+          "Counterpart full Stage22-to23 fixture has not run in this review; existing full owner remains required.",
+          "Stale operation/run race controls belong to the separate file-first harness and are not duplicated here."
+        ],
+        "evidence": "/workspace/scratch/current-evidence/response-harness-integration/",
+        "reportedOwningResult": "Typed identity control and existing intended fault pass; pre-fix ReferenceError selectedOperation retained. No reviewer execution.",
+        "priorSourceSha256": {
+          "test-response-type-boundaries.mjs": "77738f323ad756a0ffd90ae714f2f2d14111a277ea8ba1dafb95b756d99a6fd4",
+          "verify-operator-counterpart.mjs": "22a1a9d15c54002eb9754b9a162e7455aeb0f5fec0cd670c6091d1c6d2152138",
+          "test-project-store-runtime.mjs": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed",
+          "app-core.js": "74036d41bcf1178b7030b6b8ef28087e5becd6d61034c11f896443238d23b6a6"
+        },
+        "currentSourceAddendum": {
+          "reviewedAtUtc": "2026-10-07T01:56:30.889612+00:00",
+          "scope": "Read subsequent exact Stage25 persisted-scope fixture delta. Earlier reviewed typed identity extraction and every assertion are unchanged. Current whole-file hash is approved by composition of unchanged earlier region plus separately reviewed new caller correction; prior hash retained explicitly.",
+          "additionalReview": "/workspace/scratch/pr-review/persisted-scope-fixture-review.json",
+          "execution": "Prior typed identity pass applies to unchanged extracted handler test region; latest Stage25 owning controls bind the added fixture correction. No full composite receipt created."
+        }
+      }
+    },
+    {
+      "path": "/workspace/scratch/pr-review/file-first-intake-harness-review.json",
+      "sha256": "94a125f404cea73b9e466c49147cfd591e935e5c1ec6630d936a63d2b2f2b578",
+      "record": {
+        "schema": "closed-loop-independent-harness-delta-review/1",
+        "reviewedAtUtc": "2026-10-07T01:36:53.749354+00:00",
+        "reviewer": "/root/pr_inventory_review",
+        "status": "APPROVED_FILE_FIRST_HARNESS_OWNING_SUITE_PASS",
+        "sourceSha256": {
+          "verify-file-first-operator.mjs": "569822f6436034038775d3a62ab115e4a952bcd8e1d25397f0e87e8b8730c1ac",
+          "app-core.js": "74036d41bcf1178b7030b6b8ef28087e5becd6d61034c11f896443238d23b6a6",
+          "workflow-schema.js": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+        },
+        "scope": "Both exact prepareStageResponseFile extracts and surrounding original byte-selection/duplicate-proposal assertions.",
+        "changes": [
+          "Both fixtures now execute actual responseFilePayload plus handler, using production hash/deadline implementation on ordinary JSON bytes.",
+          "Ownership cases retain project/stage/revision races and add supported Stage1 operation change, Stage11 EXECUTE_RUN run change and unchanged conforming capture-boundary control.",
+          "Changed ownership must produce the specific message, no staged-byte read and no raw capture. Unchanged control must read once and reach the explicit capture sentinel using exact source project/text.",
+          "Promise.race fails explicitly when the asynchronous handler returns before entering staging, so missing helper dependencies cannot cause a silent indefinite harness wait.",
+          "Pending-proposal duplicate branch supplies selection maps, retains throwing capture/persist spies, and keeps every old no-duplicate/no-stale/cleanup/no-dialog assertion."
+        ],
+        "limits": [
+          "Coordinator fixture stages through a controlled delayed adapter and deliberately stops at raw capture; no admission/storage/native-browser claim.",
+          "Real raw-first persistence, parser, archive and byte integrity have their separate production owners."
+        ],
+        "existingTests": "No previous behavioral assertion removed or loosened; production source unchanged.",
+        "execution": "One stage-agent owning file-first run pending; no reviewer execution.",
+        "owningExecutionObservation": {
+          "record": "/workspace/scratch/stage-review/file-first-intake-harness-fix/run.json",
+          "result": {
+            "command": "Node22.23.3 verify-file-first-operator.mjs",
+            "start": "2026-10-07T01:36:35.360506+00:00",
+            "finish": "2026-10-07T01:37:39.254400+00:00",
+            "seconds": 63.893082783000864,
+            "exit": 0,
+            "sources": {
+              "verify-file-first-operator.mjs": "569822f6436034038775d3a62ab115e4a952bcd8e1d25397f0e87e8b8730c1ac",
+              "app-core.js": "74036d41bcf1178b7030b6b8ef28087e5becd6d61034c11f896443238d23b6a6",
+              "verifier-runtime.mjs": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933",
+              "hash.js": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+            }
+          },
+          "qualification": "Observed owner execution, not a new reviewer run. Focused ingestion composite result remains separate."
+        }
+      }
+    },
+    {
+      "path": "/workspace/scratch/pr-review/synthetic-version-fixture-review.json",
+      "sha256": "8f8a26e8c93c909cfc5403ae5485331e902a29e00ac1a0ee2904f0cd9d9b16eb",
+      "record": {
+        "schema": "closed-loop-independent-fixture-integrity-review/1",
+        "reviewedAtUtc": "2026-10-07T01:44:19.739640+00:00",
+        "reviewer": "/root/pr_inventory_review",
+        "status": "APPROVED_SYNTHETIC_PREREQUISITE_FIXTURE_CORRECTION",
+        "sourceSha256": {
+          "test-ingestion-context-reference.mjs": "18e4446b5960a39981964a8c2fa80128fc10f6d1008d84111f418130b4d277ee",
+          "verify-production-baseline-authority.mjs": "6e92b2be1cbcbb941df56c5cf425c453a316e0fc07e11e581608d5be24bb2634",
+          "verify-exact-progress.mjs": "be64b6b87a6ac276d59635fcc17bff26ff27abfd1e4595417fc06e8072b17aa5",
+          "test-fixtures.mjs": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d",
+          "workflow-engine.js": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+        },
+        "cause": "New canonical Job pointer integrity correctly rejects fixture-only invented source/requirements/test-suite version strings before the intended context/human-target/progress oracle. Tests need valid synthetic prerequisite records under the existing version owner.",
+        "scope": "All three exact fixture deltas, shared canonicalFixtureRecord and registerStageVersion/publish behavior, and surrounding retained owning assertions. No full runtime audit or upstream completion claim.",
+        "changes": [
+          "Context helper keeps all supplied source fields and uses existing application allocation/canonical fixture construction, then actual Stage2 version registration. Added explicit pointer equality and source membership assertions.",
+          "Human target fixture keeps the same canonical source and every wrong-family/scope/identity and valid persistence/quarantine/retained control; replaces only fabricated SOURCE-v001 with Stage2 owner version.",
+          "Exact progress retains two mandatory requirements and one covering test. Stage4 registration occurs after requirements; each later record receives current scope; Stage6 registration occurs after test. Exact1/2 derivation/save/reload/checkpoint/restore expectations unchanged."
+        ],
+        "authorityBoundary": "registerStageVersion establishes output identity/membership; these calls do not establish completed upstream stages or human/external provenance. Fixtures remain explicitly synthetic, and canonical pointer guards are unchanged.",
+        "regressionProtection": "Existing precise negative controls and conforming controls remain; no assertions removed or weakened. Original seed failure and focused post-fix controls are owner-recorded separately.",
+        "execution": "Owner focused evidence linked; all source files frozen at reviewed hashes. Full composite ingestion remains root-owned.",
+        "owningExecutionObservation": {
+          "record": "/workspace/scratch/normative-review/synthetic-version-fixture-repair.json",
+          "sha256": "9f3e95caab0180671da08bda9a586938f01a84fd3f46df72192a88d3b9b82e4b",
+          "results": [
+            "Context default9 groups including2 original guard counterexamples PASS",
+            "Exact progress3 groups PASS and fractional fault rejected at intended oracle",
+            "Existing first103-line baseline prefix11 assurance and14 target cases PASS, exit0/empty stderr"
+          ],
+          "scope": "Executed focused owners and exact existing source prefix; full baseline lifecycle remains separate. No duplicate reviewer run."
+        }
+      }
+    },
+    {
+      "path": "/workspace/scratch/pr-review/persisted-scope-fixture-review.json",
+      "sha256": "c681bc1b85099f45b12294b6b642faaa01e1f3e06af4be96fca1b7d61222d141",
+      "record": {
+        "schema": "closed-loop-independent-persisted-scope-fixture-review/1",
+        "reviewedAtUtc": "2026-10-07T01:55:44.584212+00:00",
+        "reviewer": "/root/pr_inventory_review",
+        "status": "APPROVED_CALLER_FIXTURE_CORRECTION_OWNING_CONTROLS_PASS",
+        "sourceSha256": {
+          "test-response-type-boundaries.mjs": "795224a6d8b5a6c13a81dc69072ef511cac15c07e8d311c142bfed0ed8d3db8f",
+          "verify-stage26-independent-review.mjs": "393cf76ae3fa39b3ff70d688c2b2809a30ccdb977c37badd1e7968d65738d5cd",
+          "test-reservation-scope-fixture.mjs": "cfe6f9fb9667170d311f971d79088bd7c44b14e00bb5d4f32a412c90e7554aff",
+          "workflow-schema.js": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1",
+          "workflow-engine.js": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+        },
+        "cause": "The shared reservation-only helper intentionally supplies placeholder CURRENT values for pure scope tests. Two callers persisted those placeholders as canonical Job references; current integrity correctly rejected them before the intended Stage25/26 assertions.",
+        "scope": "Complete current Stage25/Stage26 caller corrections, shared reservation fixture, product binding, declared pointer map and retained downstream assertions. Earlier typed UI extraction delta is separately reviewed.",
+        "changes": [
+          "At each persisted caller only, reset the18 declared canonical pointer fields; retain only the four scope inputs actually allocated by that existing fixture: baseline, product, product version and delivery candidate set.",
+          "Fill the existing allocated product BASELINE_ID and PRODUCT_VERSION fields and refresh its hash; add explicit zero pointer integrity issues before storage.",
+          "Shared reservation helper and its pure allocation/unknown-scope tests remain unchanged. Existing explicit prior-stage projection remains exactly scoped to Stage24 or25 and does not replace the Stage25/26 authority/shape consumers."
+        ],
+        "assertionsPreserved": [
+          "Stage25 all54 malformed observation cases, conforming empty inventory, valid incomplete inventory record with negative completion interpretation, actual allocated stored/published bytes and saved ZIP/raw/history controls",
+          "Stage26 controlled author/reviewer independence, reserved raw/context identities, wrong/stale/missing/evidence controls, reconciliation actual file-first save/commit/reload, retained history and fresh independent review",
+          "No canonical validator, ownership guard or expected result relaxed"
+        ],
+        "limits": "Synthetic scope prerequisites only. No completed upstream-stage, real external actor, real rendering or full lifecycle claim. Four allocated identities are not evidence of substantive prerequisites.",
+        "evidence": "Normative owner retains both precise pre-fix unresolved-pointer failures and post-fix focused reports; Stage25 PASS observed, Stage26 owning run pending. No duplicate reviewer execution.",
+        "metadataImpact": "Updated typed helper hash supersedes prior extraction-only version; Stage26 owner is one additional test path. Rebind only after owner freeze and retain both review scopes.",
+        "owningExecutionObservation": {
+          "record": "/workspace/scratch/normative-review/persisted-scope-fixture-repair.json",
+          "sha256": "ec32ad1b216c17537ea7c7ea587244cb462bc799ab9a0727f5421783c35586a2",
+          "results": [
+            "Stage25 all54 type negatives and conforming controls PASS",
+            "Stage26 full owner exit0/empty stderr,14 observations and actual file-first reconciliation->commit/store/read->fresh review->store/read case PASS"
+          ],
+          "qualification": "Actual production transaction-adapter boundaries with explicit priorStagesEstablished:false; no reviewer duplicate run."
+        }
       }
     }
   ]
